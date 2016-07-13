@@ -327,54 +327,49 @@ bool _embedPoints(
           ++nPasses;
         }
       }
-      // FIX: should we only be doing this when we're using the basicKnowledge
-      // terms? I tend to think not, since we want non-crap geometries even when
-      // we aren't doing that extra work
-      if (1) {
-        std::vector<double> e_contribs;
-        double local_e = field->calcEnergy(&e_contribs);
-        // if (e_contribs.size()) {
-        //   std::cerr << "        check: " << local_e / nat << " "
-        //             << *(std::max_element(e_contribs.begin(),
-        //             e_contribs.end()))
-        //             << std::endl;
-        // }
+      std::vector<double> e_contribs;
+      double local_e = field->calcEnergy(&e_contribs);
+      // if (e_contribs.size()) {
+      //   std::cerr << "        check: " << local_e / nat << " "
+      //             << *(std::max_element(e_contribs.begin(),
+      //             e_contribs.end()))
+      //             << std::endl;
+      // }
 
-        // check that neither the energy nor any of the contributions to it are
-        // too high (this is part of github #971)
-        if (local_e / nat >= MAX_MINIMIZED_E_PER_ATOM ||
-            (e_contribs.size() &&
-             *(std::max_element(e_contribs.begin(), e_contribs.end())) >
-                 MAX_MINIMIZED_E_CONTRIB)) {
+      // check that neither the energy nor any of the contributions to it are
+      // too high (this is part of github #971)
+      if (local_e / nat >= MAX_MINIMIZED_E_PER_ATOM ||
+          (e_contribs.size() &&
+           *(std::max_element(e_contribs.begin(), e_contribs.end())) >
+               MAX_MINIMIZED_E_CONTRIB)) {
 #ifdef DEBUG_EMBEDDING
-          std::cerr << " Energy fail: " << local_e / nat << " "
-                    << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+        std::cerr << " Energy fail: " << local_e / nat << " "
+                  << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+                  << std::endl;
+#endif
+        gotCoords = false;
+        continue;
+      }
+      // for each of the atoms in the "tetrahedralCarbons" list, make sure
+      // that there is a minimum volume around them and that they are inside
+      // that volume. (this is part of github #971)
+      BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *tetrahedralCarbons) {
+        // it could happen that the centroid is outside the volume defined
+        // by the other
+        // four points. That is also a fail.
+        if (!_volumeTest(tetSet, *positions) ||
+            !_centerInVolume(tetSet, *positions,
+                             TETRAHEDRAL_CENTERINVOLUME_TOL)) {
+#ifdef DEBUG_EMBEDDING
+          std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
+                    << " vol: " << _volumeTest(tetSet, *positions, true)
+                    << " center: "
+                    << _centerInVolume(tetSet, *positions,
+                                       TETRAHEDRAL_CENTERINVOLUME_TOL, true)
                     << std::endl;
 #endif
           gotCoords = false;
           continue;
-        }
-        // for each of the atoms in the "tetrahedralCarbons" list, make sure
-        // that there is a minimum volume around them and that they are inside
-        // that volume. (this is part of github #971)
-        BOOST_FOREACH (DistGeom::ChiralSetPtr tetSet, *tetrahedralCarbons) {
-          // it could happen that the centroid is outside the volume defined
-          // by the other
-          // four points. That is also a fail.
-          if (!_volumeTest(tetSet, *positions) ||
-              !_centerInVolume(tetSet, *positions,
-                               TETRAHEDRAL_CENTERINVOLUME_TOL)) {
-#ifdef DEBUG_EMBEDDING
-            std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                      << " vol: " << _volumeTest(tetSet, *positions, true)
-                      << " center: "
-                      << _centerInVolume(tetSet, *positions,
-                                         TETRAHEDRAL_CENTERINVOLUME_TOL, true)
-                      << std::endl;
-#endif
-            gotCoords = false;
-            continue;
-          }
         }
       }
 
