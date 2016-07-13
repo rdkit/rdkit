@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-//#define DEBUG_EMBEDDING 1
+// define DEBUG_EMBEDDING 1
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -36,6 +35,10 @@
 #include <RDGeneral/RDThreads.h>
 
 #define ERROR_TOL 0.00001
+// these tolerances, all to detect and filter out bogus conformations, are a
+// delicate balance between sensitive enough to detect obviously bad
+// conformations but not so sensitive that a bunch of ok conformations get
+// filtered out, which slows down the whole conformation generation process
 #define MAX_MINIMIZED_E_PER_ATOM 0.05
 #define MAX_MINIMIZED_E_CONTRIB 0.20
 #define MIN_TETRAHEDRAL_CHIRAL_VOL 0.50
@@ -47,7 +50,7 @@ typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
-                 const RDGeom::PointPtrVect &positions) {
+                 const RDGeom::PointPtrVect &positions, bool verbose = false) {
   RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],
                      (*positions[chiralSet->d_idx0])[1],
                      (*positions[chiralSet->d_idx0])[2]);
@@ -77,15 +80,19 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
 
   RDGeom::Point3D crossp = v1.crossProduct(v2);
   double vol = crossp.dotProduct(v3);
+  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
   if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
   crossp = v1.crossProduct(v2);
   vol = crossp.dotProduct(v4);
+  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
   if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
   crossp = v1.crossProduct(v3);
   vol = crossp.dotProduct(v4);
+  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
   if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
   crossp = v2.crossProduct(v3);
   vol = crossp.dotProduct(v4);
+  if (verbose) std::cerr << "   " << fabs(vol) << std::endl;
   if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) return false;
 
   return true;
@@ -103,7 +110,8 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
 }
 bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
                      unsigned int idx3, unsigned int idx4,
-                     const RDGeom::PointPtrVect &positions, double tol) {
+                     const RDGeom::PointPtrVect &positions, double tol,
+                     bool verbose = false) {
   RDGeom::Point3D p0((*positions[idx0])[0], (*positions[idx0])[1],
                      (*positions[idx0])[2]);
   RDGeom::Point3D p1((*positions[idx1])[0], (*positions[idx1])[1],
@@ -115,7 +123,12 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
   RDGeom::Point3D p4((*positions[idx4])[0], (*positions[idx4])[1],
                      (*positions[idx4])[2]);
   // RDGeom::Point3D centroid = (p1+p2+p3+p4)/4.;
-
+  if (verbose) {
+    std::cerr << _sameSide(p1, p2, p3, p4, p0, tol) << " "
+              << _sameSide(p2, p3, p4, p1, p0, tol) << " "
+              << _sameSide(p3, p4, p1, p2, p0, tol) << " "
+              << _sameSide(p4, p1, p2, p3, p0, tol) << std::endl;
+  }
   bool res = _sameSide(p1, p2, p3, p4, p0, tol) &&
              _sameSide(p2, p3, p4, p1, p0, tol) &&
              _sameSide(p3, p4, p1, p2, p0, tol) &&
@@ -124,14 +137,15 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
 }
 
 bool _centerInVolume(const DistGeom::ChiralSetPtr &chiralSet,
-                     const RDGeom::PointPtrVect &positions, double tol = 0.1) {
+                     const RDGeom::PointPtrVect &positions, double tol = 0.1,
+                     bool verbose = false) {
   if (chiralSet->d_idx0 ==
       chiralSet->d_idx4) {  // this happens for three-coordinate centers
     return true;
   }
   return _centerInVolume(chiralSet->d_idx0, chiralSet->d_idx1,
                          chiralSet->d_idx2, chiralSet->d_idx3,
-                         chiralSet->d_idx4, positions, tol);
+                         chiralSet->d_idx4, positions, tol, verbose);
 }
 bool _boundsFulfilled(const std::vector<int> &atoms,
                       const DistGeom::BoundsMatrix &mmat,
@@ -352,10 +366,10 @@ bool _embedPoints(
                                TETRAHEDRAL_CENTERINVOLUME_TOL)) {
 #ifdef DEBUG_EMBEDDING
             std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: " << iter
-                      << " vol: " << _volumeTest(tetSet, *positions)
+                      << " vol: " << _volumeTest(tetSet, *positions, true)
                       << " center: "
                       << _centerInVolume(tetSet, *positions,
-                                         TETRAHEDRAL_CENTERINVOLUME_TOL)
+                                         TETRAHEDRAL_CENTERINVOLUME_TOL, true)
                       << std::endl;
 #endif
             gotCoords = false;
@@ -366,7 +380,7 @@ bool _embedPoints(
 
       // Check if any of our chiral centers are badly out of whack. If so, try
       // again
-      if (enforceChirality && chiralCenters->size() > 0) {
+      if (gotCoords && enforceChirality && chiralCenters->size() > 0) {
         // check the chiral volume:
         BOOST_FOREACH (DistGeom::ChiralSetPtr chiralSet, *chiralCenters) {
           double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
