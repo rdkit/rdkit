@@ -885,7 +885,7 @@ void testRandomCoords() {
   for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
        ++token) {
     std::string smi = *token;
-    std::cerr << "SMI: " << smi << std::endl;
+    // std::cerr << "SMI: " << smi << std::endl;
     ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
@@ -904,7 +904,7 @@ void testRandomCoords() {
 
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-#if 1
+#if 0
       BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
       BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
       BOOST_LOG(rdInfoLog) << "---" << std::endl;
