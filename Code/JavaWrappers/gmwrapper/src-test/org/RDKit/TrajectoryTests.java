@@ -42,7 +42,7 @@ public class TrajectoryTests extends GraphMolTest {
     public void testTrajectory2D() {
         final int dim = 2;
         final int np = 10;
-        final int ns = 1;
+        final int ns = 5;
         Trajectory traj = new Trajectory(dim, np);
         assertEquals(traj.dimension(), dim);
         assertEquals(traj.numPoints(), np);
@@ -81,13 +81,29 @@ public class TrajectoryTests extends GraphMolTest {
             }
             assertEquals(false, e);
         }
+        for (int i = 0; i < ns; ++i)
+            assertEquals((double)(i), traj.getSnapshot(i).getEnergy(), 0.001);
+        traj.removeSnapshot(0);
+        assertEquals(ns - 1, traj.size());
+        for (int i = 0; i < (ns - 1); ++i)
+            assertEquals((double)(i + 1), traj.getSnapshot(i).getEnergy(), 0.001);
+        traj.insertSnapshot(0, new Snapshot(dv, 999.0));
+        assertEquals(ns, traj.size());
+        Snapshot copySnapshot = new Snapshot(traj.getSnapshot(0));
+        traj.addSnapshot(copySnapshot);
+        assertEquals(ns + 1, traj.size());
+        assertEquals(999.0, traj.getSnapshot(0).getEnergy(), 0.001);
+        assertEquals(1.0, traj.getSnapshot(1).getEnergy(), 0.001);
+        assertEquals(999.0, traj.getSnapshot(traj.size() - 1).getEnergy(), 0.001);
+        Trajectory traj2 = new Trajectory(traj);
+        assertEquals(traj2.size(), traj.size());
     }
 
     @Test
     public void testTrajectory3D() {
         final int dim = 3;
         final int np = 10;
-        final int ns = 1;
+        final int ns = 5;
         Trajectory traj = new Trajectory(dim, np);
         assertEquals(dim, traj.dimension());
         assertEquals(np, traj.numPoints());
@@ -145,6 +161,112 @@ public class TrajectoryTests extends GraphMolTest {
         assertEquals(999.0, traj.getSnapshot(traj.size() - 1).getEnergy(), 0.001);
         Trajectory traj2 = new Trajectory(traj);
         assertEquals(traj2.size(), traj.size());
+    }
+
+    @Test
+    public void testReadAmber() {
+		String rdpath = System.getenv("RDBASE");
+		if (rdpath == null)
+			org.junit.Assert.fail("No definition for RDBASE");
+		File base = new File(rdpath);
+		File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords_bad.trx");
+		String fName = testFile.getAbsolutePath();
+        Trajectory traj = new Trajectory(2, 0);
+        boolean e = false;
+        try {
+            RDKFuncs.readAmberTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+        traj = new Trajectory(3, 3);
+        e = false;
+        try {
+            RDKFuncs.readAmberTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords_bad2.trx");
+		fName = testFile.getAbsolutePath();
+        e = false;
+        traj = new Trajectory(3, 3);
+        try {
+            RDKFuncs.readAmberTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords.trx");
+		fName = testFile.getAbsolutePath();
+        traj = new Trajectory(3, 3);
+        RDKFuncs.readAmberTrajectory(fName, traj);
+        assertEquals(traj.size(), 1);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords2.trx");
+		fName = testFile.getAbsolutePath();
+        traj = new Trajectory(3, 3);
+        RDKFuncs.readAmberTrajectory(fName, traj);
+        assertEquals(traj.size(), 2);
+    }
+
+    @Test
+    public void testReadGromos() {
+		String rdpath = System.getenv("RDBASE");
+		if (rdpath == null)
+			org.junit.Assert.fail("No definition for RDBASE");
+		File base = new File(rdpath);
+		File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords_bad.trc");
+		String fName = testFile.getAbsolutePath();
+        Trajectory traj = new Trajectory(2, 0);
+        boolean e = false;
+        try {
+            RDKFuncs.readGromosTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+        traj = new Trajectory(3, 3);
+        e = false;
+        try {
+            RDKFuncs.readGromosTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords_bad2.trc");
+		fName = testFile.getAbsolutePath();
+        e = false;
+        traj = new Trajectory(3, 3);
+        try {
+            RDKFuncs.readGromosTrajectory(fName, traj);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords.trc");
+		fName = testFile.getAbsolutePath();
+        traj = new Trajectory(3, 3);
+        RDKFuncs.readGromosTrajectory(fName, traj);
+        assertEquals(traj.size(), 1);
+		testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords2.trc");
+		fName = testFile.getAbsolutePath();
+        traj = new Trajectory(3, 3);
+        RDKFuncs.readGromosTrajectory(fName, traj);
+        assertEquals(traj.size(), 2);
     }
 
 	public static void main(String args[]) {
