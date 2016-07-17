@@ -8,15 +8,18 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#include "../RDKitBase.h"
 #include "StructChecker.h"
 
 namespace RDKit {
  namespace StructureCheck {
 
-    unsigned getAtomicNumber(const std::string symbol);
-    bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
+     struct Neighbourhood {     // a set of an atom neighbours
+         std::vector<unsigned> Atoms;      // indices of atoms
+         std::vector<unsigned> Bonds;      // indices of bonds
+     };
 
-    bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair);
+     void SetupNeighbourhood(const ROMol &mol, std::vector<Neighbourhood> &neighbour_array);
  }
 }
 

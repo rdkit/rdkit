@@ -45,7 +45,7 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
         BT_NONE,    // FIVEANDAHALF,
         AROMATIC,
     };
-    return rdbt <= AROMATIC ? bt[rdbt] : BT_NONE; //??
+    return rdbt <= RDKit::Bond::AROMATIC ? bt[rdbt] : BT_NONE; //??
 }
 
 struct AtomNeighbor {

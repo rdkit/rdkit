@@ -1,0 +1,650 @@
+//
+//  Copyright (C) 2016 Novartis Institutes for BioMedical Research
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+#include <math.h>
+#include "StructChecker.h"
+#include "Utilites.h"
+#include "Stereo.h"
+
+namespace RDKit {
+ namespace StructureCheck {
+
+    static const double PI = 3.14159265359;
+    static const double ANGLE_EPSILON = (5.0 * PI / 180.);  // 5 degrees
+    static const double EPS = 0.0000001;   // float type precision ???
+/*
+    static const int NONE = 0;
+    // constants for bond definitions
+    static const int UP                = 0x01;
+    static const int DOWN              = 0x06;
+    static const int EITHER            = 0x04;
+//#define  CIS_TRANS_EITHER  0x03
+//#define  CIS_TRANS_SWAPPED 0x08
+*/
+    struct npoint_t {
+        double x, y, z;
+        int number;
+    };
+
+static
+double Angle(double x1, double y1, double x2, double y2) {
+    // Returns the angle between the two vectors (x1,y1) and (x2,y2) at (0,0).
+    double l1, l2;
+    double cos_alpha, sin_alpha;
+    double result;
+
+    l1 = sqrt(x1*x1 + y1*y1); l2 = sqrt(x2*x2 + y2*y2);
+    if (l1 < 0.00001 || l2 < 0.00001) return (0.0);
+
+    cos_alpha = (x1*x2 + y1*y2) / (l1*l2);
+    if (cos_alpha > 1.0)          // safeguard against round off erros
+        cos_alpha = 1.0;
+    else if (cos_alpha < -1.0)
+        cos_alpha = -1.0;
+    sin_alpha = (x1*y2 - x2*y1) / (l1*l2);
+
+    result = acos(cos_alpha);
+    if (sin_alpha < 0.0)
+        result = 2 * PI - result;
+    return result;
+}
+
+static
+double Volume(struct npoint_t tetra[4]) {
+    // Computes the signed volume of the tetrahedron defined by the four points in tetra[].
+
+    double ax, ay, az, bx, by, bz, cx, cy, cz;
+
+    ax = tetra[1].x - tetra[0].x;
+    ay = tetra[1].y - tetra[0].y;
+    az = tetra[1].z - tetra[0].z;
+    bx = tetra[2].x - tetra[0].x;
+    by = tetra[2].y - tetra[0].y;
+    bz = tetra[2].z - tetra[0].z;
+    cx = tetra[3].x - tetra[0].x;
+    cy = tetra[3].y - tetra[0].y;
+    cz = tetra[3].z - tetra[0].z;
+
+    return (ax*(by*cz - bz*cy) +
+            ay*(bz*cx - bx*cz) +
+            az*(bx*cy - by*cx));
+}
+
+
+int DubiousStereochemistry(RWMol &mol) {
+    /*
+    * Checks if there is some ill-defined stereochemistry in the
+    * molecule *mp. The function returns a bit set integer which defines
+    * the problems encountered.
+    */
+
+    int result = 0;
+//   int is_allene, ndb, jatom;
+
+    std::vector<Neighbourhood> neighbour_array;
+
+    SetupNeighbourhood(mol, neighbour_array);
+
+// look for EITHER bonds
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        const Bond &bond = *mol.getBondWithIdx(i);
+            if (RDKit::Bond::STEREOANY == bond.getStereo()) //== EITHER
+            {
+                result |= EITHER_BOND_FOUND;
+            }
+    }
+// look for stereo bonds to non-stereogenic atoms 
+    for (unsigned i = 0; i < neighbour_array.size(); i++) {
+        const Neighbourhood &nbp = neighbour_array[i];
+        unsigned nmulti = 0;
+        bool  is_allene = false;
+        for (unsigned j = 0; j<nbp.Bonds.size(); j++) {
+            const Bond &bond = *mol.getBondWithIdx(nbp.Bonds[j]);
+            if (RDKit::Bond::SINGLE != bond.getBondType()) {
+                unsigned ndb = 0;
+                nmulti++;
+                if (RDKit::Bond::DOUBLE == bond.getBondType()) {
+                    unsigned jatom = nbp.Atoms[j];
+                    for (unsigned jj = 0; jj<neighbour_array[jatom].Bonds.size(); jj++)
+                        if (RDKit::Bond::DOUBLE == mol.getBondWithIdx(neighbour_array[jatom].Bonds[jj])->getBondType())
+                            ndb++;
+                }
+                if (2 == ndb)
+                    is_allene = true;
+            }
+        }
+        unsigned element = mol.getAtomWithIdx(i)->getAtomicNum();
+        unsigned n_ligands = (unsigned) nbp.Bonds.size();
+        if (!((6 == element && // "C"
+            n_ligands > 2 && n_ligands <= 4 && nmulti == 0) ||
+            ( 6 == element &&  // "C"
+                n_ligands >= 2 && n_ligands <= 3 && nmulti == 1 && is_allene) ||
+            (16 == element &&  // "S"
+                n_ligands > 2 && n_ligands <= 4) ||
+            ( 7 == element &&  // "N"
+                n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
+            (15 == element &&  // "P"
+                n_ligands > 2 && n_ligands <= 4) ||
+            (14 == element &&  // "Si"
+                n_ligands > 2 && n_ligands <= 4) && nmulti == 0))
+
+            for (unsigned j = 0; j < n_ligands; j++) {
+                const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
+                if (bj.getBeginAtomIdx() == i + 1 &&
+                    (RDKit::Bond::STEREOZ == bj.getStereo() ||    // == UP
+                     RDKit::Bond::STEREOE == bj.getStereo() )) {  // == DOWN))
+/*
+smi = "C(\\C/C=C/Cl)=C/O";
+TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
+TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+smi = "O=C\\C=C/F";
+TEST_ASSERT(mol->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+*/
+                    //                    sprintf(msg_buffer,"%10s atom %3d : %s", mp->name, i+1,
+                    //                        "stereobond to non-stereogenic atom");
+                    //                    AddMsgToList(msg_buffer);
+                    result |= STEREO_BOND_AT_NON_STEREO_ATOM;
+                }
+            }
+    }
+    return result;
+}
+
+int FixDubious3DMolecule(RWMol &mol) {
+    /*
+    * Checks if the structure has 3D coordinates and/or flat sp3-carbons with stereo-bonds and
+    * converts the designation to 2D, clearing away any Z-component of the coordinates.
+    * Real 3D structures without stereo designations go through untouched.
+    */
+
+    int result = 0;
+    unsigned nstereo = 0;
+    std::vector<Neighbourhood> neighbour_array;
+
+//    int non_zero_z;
+//    double vol;
+//    int stereo_triple;
+
+    // first check if this is a trivial case i.e. designated '2D'
+    // and count the number of stereo bonds
+//TODO: CHECK Z coordinate of each atom ....................
+// THERE IS NO X,Y,Z coordinates in RDKit atom representaion
+    nstereo = 0;
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        const Bond* bond = mol.getBondWithIdx(i);
+        if (RDKit::Bond::STEREOZ == bond->getStereo()
+         || RDKit::Bond::STEREOE == bond->getStereo()
+//???    || RDKit::Bond::STEREOANY == bond->getStereo()
+        )
+            nstereo++;
+    }
+    if (0 == nstereo)
+        return 0;
+
+    // compute average bond length to use in Volume significance testing
+    double length = 0.0;
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        const Bond* bond = mol.getBondWithIdx(i);
+// THERE IS NO X,Y,Z coordinates in RDKit atom representaion
+/*
+for (unsigned i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
+length += (mp->atom_array[bp->atoms[0] - 1].x - mp->atom_array[bp->atoms[1] - 1].x)*(mp->atom_array[bp->atoms[0] - 1].x - mp->atom_array[bp->atoms[1] - 1].x)
++ (mp->atom_array[bp->atoms[0] - 1].y - mp->atom_array[bp->atoms[1] - 1].y)*(mp->atom_array[bp->atoms[0] - 1].y - mp->atom_array[bp->atoms[1] - 1].y);
+*/
+    }
+    length = sqrt(length / mol.getNumBonds());
+
+    // check if there is a flat sp3 carbon
+    SetupNeighbourhood(mol, neighbour_array);
+    int nflat_sp3 = 0;
+    for (unsigned i = 0; i < neighbour_array.size(); i++)
+    {
+        if (neighbour_array[i].Atoms.size() < 3)
+            continue;
+        RDKit::Atom *atom = mol.getAtomWithIdx(i);
+        unsigned element = atom->getAtomicNum();
+        if ( 6 != element &&  // "C"
+             7 == element &&  // "N"
+            15 == element &&  // "P"
+            16 == element )   // "S"
+            continue;
+        unsigned j;
+        for (j = 0; j < mol.getNumBonds(); j++) {
+            const Bond* bond = mol.getBondWithIdx(j);
+            if (RDKit::Bond::STEREOZ == bond->getStereo()
+             || RDKit::Bond::STEREOE == bond->getStereo()
+             && (i + 1) == bond->getBeginAtomIdx() )
+                break;
+        }
+//???
+        if (j < mol.getNumBonds())
+            continue;  // no stereo designation
+// THERE IS NO X,Y,Z coordinates in RDKit atom representaion
+/*
+        struct npoint_t tetra[4];
+        tetra[0].x = mp->atom_array[i].x; tetra[0].y = mp->atom_array[i].y; tetra[0].z = mp->atom_array[i].z;
+        for (i1 = 0; i1<nbp->n_ligands; i1++)
+            if (mp->bond_array[nbp->bonds[i1]].bond_type != SINGLE &&
+                0 != strcmp(mp->atom_array[i].atom_symbol, "P") &&
+                0 != strcmp(mp->atom_array[i].atom_symbol, "S")) break;
+        if (i1 >= nbp->n_ligands) continue;     // multiple bond found => no sp3 carbon
+        stereo_triple = 0;
+        for (i1 = 0; i1<nbp->n_ligands; i1++)
+        {
+            tetra[1].x = mp->atom_array[nbp->atoms[i1]].x; tetra[1].y = mp->atom_array[nbp->atoms[i1]].y; tetra[1].z = mp->atom_array[nbp->atoms[i1]].z;
+            if (mp->bond_array[nbp->bonds[i1]].bond_type == UP || mp->bond_array[nbp->bonds[i1]].bond_type == DOWN) stereo_triple |= 1;
+            for (i2 = i1 + 1; i2<nbp->n_ligands; i2++)
+            {
+                tetra[2].x = mp->atom_array[nbp->atoms[i2]].x; tetra[2].y = mp->atom_array[nbp->atoms[i2]].y; tetra[2].z = mp->atom_array[nbp->atoms[i2]].z;
+                if (mp->bond_array[nbp->bonds[i2]].bond_type == UP || mp->bond_array[nbp->bonds[i2]].bond_type == DOWN) stereo_triple |= 2;
+                for (i3 = i2 + 1; i3<nbp->n_ligands; i3++)
+                {
+                    tetra[3].x = mp->atom_array[nbp->atoms[i3]].x; tetra[3].y = mp->atom_array[nbp->atoms[i3]].y; tetra[3].z = mp->atom_array[nbp->atoms[i3]].z;
+                    if (mp->bond_array[nbp->bonds[i3]].bond_type == UP || mp->bond_array[nbp->bonds[i3]].bond_type == DOWN) stereo_triple |= 4;
+                    vol = Volume(tetra); if (vol < 0) vol = -vol;
+                    if (!stereo_triple) continue;
+                    if (vol < 0.01*length*length*length)
+                    {
+                        nflat_sp3++;
+                        break;
+                    }
+                    stereo_triple &= ~4;
+                }
+                stereo_triple &= ~2;
+                if (i3 >= nbp->n_ligands) break;
+            }
+            stereo_triple &= ~1;
+            if (i2 >= nbp->n_ligands) break;
+        }
+        */
+    }
+
+// THERE IS NO X,Y,Z coordinates in RDKit atom representaion
+/*
+    if (non_zero_z && 0 == strcmp(mp->dimensionality, "2D"))
+    {
+        for (i = 0; i<mp->n_atoms; i++)
+            mp->atom_array[i].z = 0.0;
+        result |= ZEROED_Z_COORDINATES;
+        AddMsgToList("Cleared z-coordinates in 2D MOL file");
+    }
+    else if (non_zero_z  &&  nstereo > 0 && nflat_sp3 > 0)
+    {
+        strcpy(mp->dimensionality, "2D");
+        result |= CONVERTED_TO_2D;
+        for (i = 0; i<mp->n_atoms; i++)
+            mp->atom_array[i].z = 0.0;
+        result |= ZEROED_Z_COORDINATES;
+        AddMsgToList("Cleared z-coordinates of tilted 2D MOL file");
+    }
+*/
+    return result;
+}
+
+void RemoveDubiousStereochemistry(RWMol& mol) {
+    // Removes ill-defined stereodescriptors.
+    std::vector<Neighbourhood> neighbour_array;
+    SetupNeighbourhood(mol, neighbour_array);
+
+    // remove EITHER marks
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        Bond* bond = mol.getBondWithIdx(i);
+        if (RDKit::Bond::STEREOANY == bond->getStereo()) //== EITHER
+            bond->setStereo(RDKit::Bond::STEREONONE);
+    }
+    // remove stereo marks to non-stereogenic atoms 
+    for (unsigned i = 0; i < neighbour_array.size(); i++) {
+        const Neighbourhood &nbp = neighbour_array[i];
+        unsigned nmulti = 0;
+        for (unsigned j = 0; j < nbp.Atoms.size(); j++) {
+            const Bond &bond = *mol.getBondWithIdx(nbp.Bonds[j]);
+            if (RDKit::Bond::SINGLE != bond.getBondType())
+                nmulti++;
+        }
+
+        unsigned element = mol.getAtomWithIdx(i)->getAtomicNum();
+        unsigned n_ligands = (unsigned) nbp.Bonds.size();
+        if (!((6 == element && // "C"
+            n_ligands > 2 && n_ligands <= 4 && nmulti == 0) ||
+            (16 == element &&  // "S"
+                n_ligands > 2 && n_ligands <= 4) ||
+            (7 == element &&  // "N"
+                n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
+            (15 == element &&  // "P"
+                n_ligands > 2 && n_ligands <= 4) ||
+            (14 == element &&  // "Si"
+                n_ligands > 2 && n_ligands <= 4) && nmulti == 0)) {
+
+            for (unsigned j = 0; j < n_ligands; j++) {
+                Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
+                if (bj.getBeginAtomIdx() == i + 1 &&
+                    (RDKit::Bond::STEREOZ == bj.getStereo()   // == UP
+                  || RDKit::Bond::STEREOE == bj.getStereo())) // == DOWN))
+                    bj.setStereo(RDKit::Bond::STEREONONE);
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// CheckStereo():
+//----------------------------------------------------------------------
+
+static const int ALLENE_PARITY          = -2;
+static const int ILLEGAL_REPRESENTATION = -1;
+static const int UNDEFINED_PARITY       = 0;
+static const int ODD_PARITY             = 1;
+static const int EVEN_PARITY            = 2;
+static inline int INVERT_PARITY(int p) { return ((p) == 0 ? (0) : (3 - (p))); }
+
+struct stereo_bond_t {
+    double x, y;   // relative 2D coordinates
+    RDKit::Bond::BondStereo symbol;    // stereo symbol
+    int number;    // atom number of ligand atom
+    double angle;  // angle in radiants rel. to first bond
+                   // in array (counted counter clockwise)
+};
+
+static
+int Atom3Parity(struct stereo_bond_t ligands[3]) {
+    // Computes the stereo parity defined by three ligands.
+    int a, b;
+    int reference;
+    struct npoint_t tetrahedron[4], h;
+    double angle;
+    int maxnum;
+
+    maxnum = ligands[0].number;
+    for (unsigned i = 1; i<3; i++)
+        if (maxnum < ligands[i].number) maxnum = ligands[i].number;
+
+    reference = (-1);
+    for (unsigned i = 0; i<3; i++)
+        if (ligands[i].symbol != RDKit::Bond::STEREONONE)
+            if (reference == (-1))
+                reference = i;
+            else {
+                // stereo_error = "three attachments with more than 2 stereobonds";
+                return (ILLEGAL_REPRESENTATION);
+            }
+
+    if (reference == (-1)) return (UNDEFINED_PARITY);
+
+    if (reference == 0) { a = 1; b = 2; }
+    else if (reference == 1) { a = 0; b = 2; }
+    else { a = 0; b = 1; }
+
+    angle = Angle(ligands[a].x, ligands[a].y, ligands[b].x, ligands[b].y);
+
+    if (angle < ANGLE_EPSILON || fabs(PI - angle) < ANGLE_EPSILON) {
+        // stereo_error = "three attachments: colinearity violation";
+        return (ILLEGAL_REPRESENTATION);
+    }
+
+    tetrahedron[0].x = 0.0;
+    tetrahedron[0].y = 0.0;
+    tetrahedron[0].z = 0.0;
+    tetrahedron[0].number = maxnum + 1;
+    for (unsigned i = 0; i<3; i++) {
+        tetrahedron[i + 1].x = ligands[i].x;
+        tetrahedron[i + 1].y = ligands[i].y;
+        if (ligands[i].symbol == RDKit::Bond::STEREOZ) // UP)
+            tetrahedron[i + 1].z = 1.0;
+        else if (ligands[i].symbol == RDKit::Bond::STEREOE) // DOWN)
+            tetrahedron[i + 1].z = -1.0;
+        else if (ligands[i].symbol == RDKit::Bond::STEREONONE)
+            tetrahedron[i + 1].z = 0.0;
+        else {
+            // stereo_error = "three attachments: illegal bond symbol";
+            return (ILLEGAL_REPRESENTATION);
+        }
+        tetrahedron[i + 1].number = ligands[i].number;
+    }
+
+    for (unsigned i = 1; i<4; i++)
+        for (unsigned j = i; j>0; j--)
+            if (tetrahedron[j].number < tetrahedron[j - 1].number) {
+                h = tetrahedron[j];
+                tetrahedron[j] = tetrahedron[j - 1];
+                tetrahedron[j - 1] = h;
+            }
+            else
+                break;
+
+    return (Volume(tetrahedron) > 0.0 ? EVEN_PARITY : ODD_PARITY);
+}
+
+static
+int Atom4Parity(struct stereo_bond_t ligands[4]) {
+    /*
+    * Computes the stereo parity defined by four ligands.
+    * Assumes central atom at 0/0/0.
+    */
+    struct npoint_t tetrahedron[4], h;
+    int nup, ndown, nopposite;
+    double angle;
+
+    nup = ndown = 0;
+    for (unsigned i = 0; i<4; i++)
+    {
+        tetrahedron[i].x = ligands[i].x;
+        tetrahedron[i].y = ligands[i].y;
+        tetrahedron[i].z = 0.0;
+        tetrahedron[i].number = ligands[i].number;
+        if (ligands[i].symbol == RDKit::Bond::STEREOZ) { // UP
+            nup++;
+            tetrahedron[i].z = 1.0;
+        }
+        else if (ligands[i].symbol == RDKit::Bond::STEREOE) { // DOWN
+            ndown++;
+            tetrahedron[i].z = (-1.0);
+        }
+        else if (ligands[i].symbol != RDKit::Bond::STEREONONE) {
+            // stereo_error = "illegal bond symbol";
+            return (ILLEGAL_REPRESENTATION);
+        }
+    }
+
+    if (nup == 0 && ndown == 0)
+        return (UNDEFINED_PARITY);
+
+    if (nup > 2 || ndown > 2) {
+        // stereo_error = "too many stereobonds";
+        return (ILLEGAL_REPRESENTATION);
+    }
+
+    if (nup + ndown == 1)    // check for 'umbrellas'
+    {
+        unsigned ij;
+        for (ij = 0; ij < 4; ij++)
+            if (ligands[ij].symbol == RDKit::Bond::STEREOZ || ligands[ij].symbol == RDKit::Bond::STEREOE)
+                break;
+        nopposite = 0;
+        for (unsigned j = 0; j < 4; j++)
+            if (ij == j)
+                continue;
+            else if (ligands[ij].x*ligands[j].x + ligands[ij].y*ligands[j].y < 0)
+                nopposite++;
+        if (nopposite > 2) {
+            // stereo_error = "UMBRELLA: all non-stereo bonds opposite to single stereo bond";
+            return (ILLEGAL_REPRESENTATION);
+        }
+    }
+
+    for (unsigned i = 0; i<2; i++)
+        if((ligands[i].symbol == RDKit::Bond::STEREOZ  &&  ligands[i + 2].symbol == RDKit::Bond::STEREOE)
+         ||(ligands[i].symbol == RDKit::Bond::STEREOE  &&  ligands[i + 2].symbol == RDKit::Bond::STEREOZ)) {
+            // stereo_error = "UP/DOWN opposition";
+            return (ILLEGAL_REPRESENTATION);
+        }
+
+    for (unsigned i = 0; i<4; i++)
+        if ((ligands[i].symbol == RDKit::Bond::STEREOZ
+          && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOZ) //UP
+         || (ligands[i].symbol == RDKit::Bond::STEREOE  // DOWN
+          && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOE)) {
+            // stereo_error = "Adjacent like stereobonds";
+            return (ILLEGAL_REPRESENTATION);
+        }
+
+    for (unsigned i = 0; i<4; i++)
+        if (ligands[i].symbol == RDKit::Bond::STEREONONE  &&
+            ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREONONE  &&
+            ligands[(i + 2) % 4].symbol == RDKit::Bond::STEREONONE) {
+            angle = Angle(ligands[i].x - ligands[(i + 1) % 4].x,
+                ligands[i].y - ligands[(i + 1) % 4].y,
+                ligands[(i + 2) % 4].x - ligands[(i + 1) % 4].x,
+                ligands[(i + 2) % 4].y - ligands[(i + 1) % 4].y);
+            if (angle < (185 * PI / 180)) {
+                // stereo_error = "colinearity or triangle rule violation";
+                return (ILLEGAL_REPRESENTATION);
+            }
+        }
+
+    for (unsigned i = 1; i<4; i++)
+        for (unsigned j = i; j>0; j--)
+            if (tetrahedron[j].number < tetrahedron[j - 1].number) {
+                h = tetrahedron[j];
+                tetrahedron[j] = tetrahedron[j - 1];
+                tetrahedron[j - 1] = h;
+            }
+            else
+                break;
+
+    return (Volume(tetrahedron) > 0.0 ? EVEN_PARITY : ODD_PARITY);
+}
+
+static
+int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
+    /*
+    * Computes the stereo parity of atom number iatom in *mp relative
+    * to its numbering. The immediate neighbours are defined by *nbp
+    * to speed up processing.
+    */
+    struct stereo_bond_t stereo_ligands[4], h;
+    bool  multiple = false, allene = false, stereo = false;
+
+    if (nbp.Atoms.size() < 3 || nbp.Atoms.size() > 4)
+        return ILLEGAL_REPRESENTATION;
+
+    for (unsigned i = 0; i < nbp.Bonds.size(); i++) {
+        const Bond& bi = *mol.getBondWithIdx(i);
+        if (bi.getBondType() != RDKit::Bond::SINGLE)
+        {
+            multiple = true;
+            // check if the multiple bond is part of an allene
+            unsigned jatom = nbp.Atoms[i] + 1;
+            unsigned ndb   = 0;
+            for (unsigned j = 0; j < mol.getNumBonds(); j++) {
+                const Bond& bond = *mol.getBondWithIdx(j);
+                if (bond.getBeginAtomIdx() == jatom || bond.getEndAtomIdx() == jatom)
+                    if (bond.getBondType() == RDKit::Bond::DOUBLE)
+                        ndb++;
+            }
+            if (ndb == 2) allene = true;
+        }
+
+//        stereo_ligands[i].x = mp->atom_array[nbp.Atoms[i]].x - mp->atom_array[iatom - 1].x;
+//        stereo_ligands[i].y = mp->atom_array[nbp.Atoms[i]].y - mp->atom_array[iatom - 1].y;
+        stereo_ligands[i].number = nbp.Atoms[i] + 1;
+        if (bi.getBeginAtomIdx() == iatom)
+        {
+            stereo_ligands[i].symbol = bi.getStereo();
+            if (stereo_ligands[i].symbol == RDKit::Bond::STEREOZ || // UP ||
+                stereo_ligands[i].symbol == RDKit::Bond::STEREOE )  // DOWN
+                stereo = true;
+        }
+        else
+            stereo_ligands[i].symbol = RDKit::Bond::STEREONONE;
+    }
+    unsigned element = mol.getAtomWithIdx(iatom - 1)->getAtomicNum();
+    if (multiple && stereo && 15 != element && 16 != element) { // "P" && "S"
+        if (allene)
+            return (ALLENE_PARITY);
+        else {
+            // stereo_error = "AtomParity: Stereobond at unsaturated atom";
+            return (ILLEGAL_REPRESENTATION);
+        }
+    }
+    else if (multiple && 16 != element) // "S"
+        return (UNDEFINED_PARITY);
+
+    stereo_ligands[0].angle = 0.0;   /* comp. angle rel. to first ligand */
+    for (unsigned i = 1; i < nbp.Atoms.size(); i++)
+        stereo_ligands[i].angle = Angle(stereo_ligands[0].x, stereo_ligands[0].y,
+                                        stereo_ligands[i].x, stereo_ligands[i].y);
+    for (unsigned i = 2; i < nbp.Atoms.size(); i++)    /* sort ligands */
+        for (unsigned j = i; j > 1; j--)
+            if (stereo_ligands[j].angle < stereo_ligands[j - 1].angle)
+            {
+                h = stereo_ligands[j];
+                stereo_ligands[j] = stereo_ligands[j - 1];
+                stereo_ligands[j - 1] = h;
+            }
+            else
+                break;
+
+    return (nbp.Atoms.size() == 3 ? Atom3Parity(stereo_ligands) : Atom4Parity(stereo_ligands));
+}
+
+bool CheckStereo(const ROMol& mol) {
+/*
+* Checks if all potential stereocenters are either completely undefined
+* or attributed with hashes and wedges according to MDL rules.
+*/
+    bool result = true;
+    int  parity;
+    bool center_defined = false;
+    std::vector<Neighbourhood> neighbour_array;
+
+    SetupNeighbourhood(mol, neighbour_array);
+
+    for (unsigned i = 0; i < neighbour_array.size(); i++) {
+        const Neighbourhood &nbp = neighbour_array[i];
+        unsigned element = mol.getAtomWithIdx(i)->getAtomicNum();
+        unsigned n_ligands = (unsigned) nbp.Bonds.size();
+        if ((n_ligands > 2 && n_ligands <= 4)
+            &&( 6 == element  // "C"
+            ||16 == element  // "S"
+            || 7 == element  // "N"
+            || 8 == element  // "O"
+            ||15 == element  // "P"
+            ||14 == element) // "Si"
+            ) {
+            parity = AtomParity(mol, i + 1, nbp);
+            if (parity == ILLEGAL_REPRESENTATION) {   // stereo_error
+                result = false;
+            }
+            else if (parity == EVEN_PARITY || parity == ODD_PARITY || parity == ALLENE_PARITY)
+                center_defined = true;
+            else {
+                for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
+                    const Bond& bond = *mol.getBondWithIdx(j);
+                        if (bond.getBeginAtomIdx() == i + 1
+                         && (RDKit::Bond::STEREOZ == bond.getStereo()    // == UP
+                          || RDKit::Bond::STEREOE == bond.getStereo())) // == DOWN))
+                            // stereobond to non-stereogenic atom
+                            result = false;
+                }
+            }
+        }
+    }
+//TODO:
+    if (    // ?????   mol. &&   //mp->chiral_flag 
+        !center_defined) {
+        // chiral flag set but no stereocenter defined
+        result = false;
+    }
+    return result;
+}
+
+ }// namespace StructureCheck
+} // namespace RDKit
