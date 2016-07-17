@@ -5485,7 +5485,83 @@ void testAdjustQueryProperties() {
     delete qm;
     delete aqm;
   }
+  { // CTAB
+    //  -- only match rgroups
+    std::string mb = "adjust.mol\n"
+        "  ChemDraw06271617272D\n"
+        "\n"
+        "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "  1  2  1  0      \n"
+        "  2  3  2  0      \n"
+        "  3  4  1  0      \n"
+        "  4  5  2  0      \n"
+        "  5  6  1  0      \n"
+        "  6  1  2  0      \n"
+        "  5  7  1  0      \n"
+        "M  END\n";
+    MolOps::AdjustQueryParameters params;
+    params.aromatizeIfPossible = true;
+    params.makeDummiesQueries = true;
+    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+                                 MolOps::ADJUST_IGNOREMAPPED );
+    
+    RWMol *m = MolBlockToMol(mb);
+    MolOps::adjustQueryProperties(*m, &params);
+    MatchVectType match;
+    ROMol *t = SmilesToMol("c1ccccc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete t;
+    // shouldn't match (explicit degree)
+    t = SmilesToMol("c1ccc(Cl)cc1Cl");
+    TEST_ASSERT(!SubstructMatch(*t,*m,match));
+    delete m;
+  }
 
+  { // CTAB
+    //  -- match non rgroups if mapped
+    std::string mb = "adjust.mol\n"
+        "  ChemDraw06271617272D\n"
+        "\n"
+        "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "  1  2  1  0      \n"
+        "  2  3  2  0      \n"
+        "  3  4  1  0      \n"
+        "  4  5  2  0      \n"
+        "  5  6  1  0      \n"
+        "  6  1  2  0      \n"
+        "  5  7  1  0      \n"
+        "M  END\n";
+    MolOps::AdjustQueryParameters params;
+    params.aromatizeIfPossible = true;
+    params.makeDummiesQueries = true;
+    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+                                 MolOps::ADJUST_IGNOREMAPPED );
+    
+    RWMol *m = MolBlockToMol(mb);
+    MolOps::adjustQueryProperties(*m, &params);
+    MatchVectType match;
+    ROMol *t = SmilesToMol("c1ccccc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete t;
+    // should match (mapped!)
+    t = SmilesToMol("c1c(Cl)cc(Cl)cc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

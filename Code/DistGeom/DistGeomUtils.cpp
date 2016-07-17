@@ -279,6 +279,7 @@ ForceFields::ForceField *construct3DForceField(
   }  // torsion constraints
 
   // improper torsions / out-of-plane bend / inversion
+  double oobForceScalingFactor = 10.0;
   for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -306,7 +307,7 @@ ForceFields::ForceField *construct3DForceField(
           new ForceFields::UFF::InversionContrib(
               field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
               improperAtoms[t][n[2]], improperAtoms[t][n[3]],
-              improperAtoms[t][4], improperAtoms[t][5]);
+              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -466,4 +467,55 @@ ForceFields::ForceField *constructPlain3DForceField(
 
   return field;
 }  // constructPlain3DForceField
+
+ForceFields::ForceField *construct3DImproperForceField(
+    const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
+    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<int> &atomNums) {
+  (void)atomNums;
+  unsigned int N = mmat.numRows();
+  CHECK_INVARIANT(N == positions.size(), "");
+  ForceFields::ForceField *field =
+      new ForceFields::ForceField(positions[0]->dimension());
+  for (unsigned int i = 0; i < N; ++i) {
+    field->positions().push_back(positions[i]);
+  }
+
+  // improper torsions / out-of-plane bend / inversion
+  double oobForceScalingFactor = 10.0;
+  for (unsigned int t = 0; t < improperAtoms.size(); ++t) {
+    std::vector<int> n(4);
+    for (unsigned int i = 0; i < 3; ++i) {
+      n[1] = 1;
+      switch (i) {
+        case 0:
+          n[0] = 0;
+          n[2] = 2;
+          n[3] = 3;
+          break;
+
+        case 1:
+          n[0] = 0;
+          n[2] = 3;
+          n[3] = 2;
+          break;
+
+        case 2:
+          n[0] = 2;
+          n[2] = 3;
+          n[3] = 0;
+          break;
+      }
+      ForceFields::UFF::InversionContrib *contrib =
+          new ForceFields::UFF::InversionContrib(
+              field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
+              improperAtoms[t][n[2]], improperAtoms[t][n[3]],
+              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
+      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+    }
+  }
+
+  return field;
+
+} // construct3DImproperForceField
 }

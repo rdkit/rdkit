@@ -247,6 +247,7 @@ typedef enum {
   ADJUST_IGNORERINGATOMS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
   ADJUST_IGNORENONDUMMIES = 0x8,
+  ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 struct AdjustQueryParameters {
@@ -257,13 +258,15 @@ struct AdjustQueryParameters {
 
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
-
+  bool aromatizeIfPossible;
+  
   AdjustQueryParameters()
       : adjustDegree(true),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
-        makeDummiesQueries(true) {}
+        makeDummiesQueries(true),
+        aromatizeIfPossible(true) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
