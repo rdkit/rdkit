@@ -5863,6 +5863,70 @@ void test61Github685() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void test62Github975() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github975: Unnecessary warnings in rxn.validate()"
+      << std::endl;
+
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[N+0,O+0:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[N+0,O+0:1][C+0,N+1:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[NH,OH:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[NH,OH:1][CH2,NH:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[14N,14O:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[14N,14O:1][12C,14N:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -5937,6 +6001,7 @@ int main() {
 
   test60RunSingleReactant();
   test61Github685();
+  test62Github975();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
