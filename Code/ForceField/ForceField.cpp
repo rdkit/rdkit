@@ -200,7 +200,8 @@ int ForceField::minimize(unsigned int snapshotFreq, RDKit::SnapshotVect *snapsho
   this->scatter(points);
   ForceFieldsHelper::calcEnergy eCalc(this);
   ForceFieldsHelper::calcGradient gCalc(this);
-
+  
+  std::cerr << "snapshotFreq = " << snapshotFreq << ", snapshotVect = " << snapshotVect << std::endl;
   int res = BFGSOpt::minimize(dim, points, forceTol, numIters, finalForce,
                               eCalc, gCalc, snapshotFreq, snapshotVect,
                               energyTol, maxIts);
