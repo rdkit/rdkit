@@ -437,11 +437,10 @@ public class TrajectoryTests extends GraphMolTest {
         SDWriter w = new SDWriter(fName);
         ForceField field = ForceField.MMFFGetMoleculeForceField(mol);
         field.initialize();
-        SWIGTYPE_p_std__vectorT_RDKit__Snapshot_t sv = new SWIGTYPE_p_std__vectorT_RDKit__Snapshot_t();
+        SWIGTYPE_p_std__vectorT_RDKit__Snapshot_t sv = Snapshot.SnapshotVect();
         int res = field.minimize(everySteps, sv, maxIts, gradTol);
         assertEquals(0, res);
         Trajectory traj = new Trajectory(3, mol.getNumAtoms(), sv);
-        System.err.println("traj.size() = " + traj.size() + "\n");
         mol.removeConformer(0);
         traj.addConformersToMol(mol);
         traj.clear();
@@ -449,9 +448,7 @@ public class TrajectoryTests extends GraphMolTest {
         traj.addConformersToMol(mol);
         long n2 = mol.getNumConformers();
         assertEquals(n2, n1);
-        System.err.println("nConf = " + mol.getNumConformers() + "\n");
         for (int nConf = 0; nConf < mol.getNumConformers(); ++nConf) {
-            System.err.println("nConf = " + nConf + "\n");
             String ss = String.format("%.4f", traj.getSnapshot(nConf).getEnergy());
             mol.setProp("ENERGY", ss, false);
             w.write(mol, nConf);

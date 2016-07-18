@@ -27,4 +27,8 @@
   Snapshot(const RDKit::Snapshot &other) {
     return new RDKit::Snapshot(other);
   }
+  %newobject SnapshotVect;
+  static std::vector<RDKit::Snapshot> *SnapshotVect() {
+    return new std::vector<RDKit::Snapshot>();
+  }
 }
