@@ -13,6 +13,8 @@ package org.RDKit;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
 
 import org.junit.Test;
 
@@ -214,6 +216,100 @@ public class TrajectoryTests extends GraphMolTest {
         traj = new Trajectory(3, 3);
         RDKFuncs.readAmberTrajectory(fName, traj);
         assertEquals(traj.size(), 2);
+    }
+
+    @Test
+    public void testReadAmberJava() {
+        /*
+        reimplemented the Amber trajectory reader in Java
+        let's check we get the same data as the C++ reader
+        (test for building a trajectory out of Snapshots from Java)
+        */
+		String rdpath = System.getenv("RDBASE");
+		if (rdpath == null)
+			org.junit.Assert.fail("No definition for RDBASE");
+		File base = new File(rdpath);
+		File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords2.trx");
+		String fName = testFile.getAbsolutePath();
+        Trajectory traj = new Trajectory(3, 3);
+        long nCoords = traj.numPoints() * 3;
+        int nSnapshots = 0;
+        BufferedReader r = null;
+        try {
+            r = new BufferedReader(new FileReader(testFile));
+        }
+        catch (Exception e) {
+            org.junit.Assert.fail("Could not open " + fName);
+        }
+        int lineNum = 0;
+        Double_Vect dv = new Double_Vect();
+        int i = 0;
+        String line = null;
+        try {
+            line = r.readLine();
+        }
+        catch (Exception e) {
+            org.junit.Assert.fail("Could not read from " + fName);
+        }
+        while (line != null) {
+            ++lineNum;
+            if (lineNum > 1) {
+                String[] tok = line.split(" +");
+                int j = 0;
+                for (; (i < nCoords) && (j < tok.length); ++j) {
+                    if (tok[j].length() == 0) continue;
+                    dv.add(Double.parseDouble(tok[j]));
+                    ++i;
+                }
+                line = "";
+                if (i == nCoords) {
+                    ++nSnapshots;
+                    traj.addSnapshot(new Snapshot(dv));
+                    dv.clear();
+                    i = 0;
+                    for (; j < tok.length; ++j) {
+                        if (tok[j].length() > 0)
+                            line += tok[j] + " ";
+                    }
+                }
+            }
+            else {
+                line = "";
+            }
+            try {
+                String lineNew = r.readLine();
+                if (lineNew != null)
+                    line += lineNew;
+                else if (line.length() == 0)
+                    line = null;
+            }
+            catch (Exception e) {
+                org.junit.Assert.fail("Could not read from " + fName);
+            }
+        }
+        try {
+            r.close();
+        }
+        catch (Exception e) {
+            org.junit.Assert.fail("Could not close " + fName);
+        }
+        assertEquals(0, i);
+        assertEquals(2, nSnapshots);
+        Trajectory traj2 = new Trajectory(3, 3);
+        RDKFuncs.readAmberTrajectory(fName, traj2);
+        assertEquals(traj2.size(), traj.size());
+        assertEquals(traj2.numPoints(), traj.numPoints());
+        for (int snapshotNum = 0; snapshotNum < traj.size(); ++snapshotNum) {
+            for (int pointNum = 0; pointNum < traj.numPoints(); ++pointNum) {
+                assertEquals(traj2.getSnapshot(snapshotNum).getPoint3D(pointNum).getX(),
+                    traj.getSnapshot(snapshotNum).getPoint3D(pointNum).getX(), 0.001);
+                assertEquals(traj2.getSnapshot(snapshotNum).getPoint3D(pointNum).getY(),
+                    traj.getSnapshot(snapshotNum).getPoint3D(pointNum).getY(), 0.001);
+                assertEquals(traj2.getSnapshot(snapshotNum).getPoint3D(pointNum).getZ(),
+                    traj.getSnapshot(snapshotNum).getPoint3D(pointNum).getZ(), 0.001);
+            }
+        }
     }
 
     @Test
@@ -424,9 +520,9 @@ public class TrajectoryTests extends GraphMolTest {
             "M  CHG  2  11   1  23  -1\n" +
             "M  END\n";
         ROMol mol = RWMol.MolFromMolBlock(molBlock, true, false);
-        int everySteps = 10;
-        int maxIts = 1000;
-        double gradTol = 0.01;
+        final int everySteps = 10;
+        final int maxIts = 1000;
+        final double gradTol = 0.01;
 		String rdpath = System.getenv("RDBASE");
 		if (rdpath == null)
 			org.junit.Assert.fail("No definition for RDBASE");
@@ -454,6 +550,104 @@ public class TrajectoryTests extends GraphMolTest {
             w.write(mol, nConf);
         }
         w.close();
+    }
+
+    @Test
+    public void testAddConformersFromAmberTrajectory() {
+        ROMol mol = RWMol.MolFromSmiles("CCC");
+		String rdpath = System.getenv("RDBASE");
+		if (rdpath == null)
+			org.junit.Assert.fail("No definition for RDBASE");
+		File base = new File(rdpath);
+		File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords.trx");
+		String fName = testFile.getAbsolutePath();
+        {
+            Trajectory traj = new Trajectory(3, mol.getNumAtoms());
+            RDKFuncs.readAmberTrajectory(fName, traj);
+            assertEquals(1, traj.size());
+            for (int i = 0; i < 2; ++i) {
+                traj.addConformersToMol(mol);
+                assertEquals(i + 1, mol.getNumConformers());
+                assertEquals(3, mol.getConformer(i).getNumAtoms());
+                assertEquals(0.1941767, mol.getConformer(i).getAtomPos(0).getX(), 0.001);
+                assertEquals(-0.4088006, mol.getConformer(i).getAtomPos(2).getZ(), 0.001);
+            }
+            mol.clearConformers();
+            boolean e = false;
+            try {
+                traj.addConformersToMol(mol, 1);
+            }
+            catch (GenericRDKitException ex) {
+                e = true;
+            }
+            assertEquals(true, e);
+            assertEquals(0, mol.getNumConformers());
+		}
+        testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords2.trx");
+        fName = testFile.getAbsolutePath();
+        {
+            Trajectory traj = new Trajectory(3, mol.getNumAtoms());
+            RDKFuncs.readAmberTrajectory(fName, traj);
+            assertEquals(2, traj.size());
+            traj.addConformersToMol(mol);
+            assertEquals(2, mol.getNumConformers());
+            mol.clearConformers();
+            traj.addConformersToMol(mol, 0, 0);
+            assertEquals(1, mol.getNumConformers());
+            traj.addConformersToMol(mol, 1);
+            assertEquals(2, mol.getNumConformers());
+        }
+    }
+
+    @Test
+    public void testAddConformersFromGromosTrajectory() {
+        ROMol mol = RWMol.MolFromSmiles("CCC");
+		String rdpath = System.getenv("RDBASE");
+		if (rdpath == null)
+			org.junit.Assert.fail("No definition for RDBASE");
+		File base = new File(rdpath);
+		File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords.trc");
+		String fName = testFile.getAbsolutePath();
+        {
+            Trajectory traj = new Trajectory(3, mol.getNumAtoms());
+            RDKFuncs.readGromosTrajectory(fName, traj);
+            assertEquals(1, traj.size());
+            for (int i = 0; i < 2; ++i) {
+                traj.addConformersToMol(mol);
+                assertEquals(i + 1, mol.getNumConformers());
+                assertEquals(3, mol.getConformer(i).getNumAtoms());
+                assertEquals(1.941767, mol.getConformer(i).getAtomPos(0).getX(), 0.001);
+                assertEquals(-4.088006, mol.getConformer(i).getAtomPos(2).getZ(), 0.001);
+            }
+            mol.clearConformers();
+            boolean e = false;
+            try {
+                traj.addConformersToMol(mol, 1);
+            }
+            catch (GenericRDKitException ex) {
+                e = true;
+            }
+            assertEquals(true, e);
+            assertEquals(0, mol.getNumConformers());
+		}
+        testFile = new File(base, "Code" + File.separator + "GraphMol"
+				+ File.separator + "test_data" + File.separator + "water_coords2.trc");
+        fName = testFile.getAbsolutePath();
+        {
+            Trajectory traj = new Trajectory(3, mol.getNumAtoms());
+            RDKFuncs.readGromosTrajectory(fName, traj);
+            assertEquals(2, traj.size());
+            traj.addConformersToMol(mol);
+            assertEquals(2, mol.getNumConformers());
+            mol.clearConformers();
+            traj.addConformersToMol(mol, 0, 0);
+            assertEquals(1, mol.getNumConformers());
+            traj.addConformersToMol(mol, 1);
+            assertEquals(2, mol.getNumConformers());
+        }
     }
 
 	public static void main(String args[]) {
