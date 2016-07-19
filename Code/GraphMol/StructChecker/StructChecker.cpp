@@ -91,8 +91,6 @@ namespace RDKit {
 */
         if (stereo_result == EITHER_BOND_FOUND) {  // looks for EITHER bonds
             flags |= EITHER_WARNING;
-//            if (stereo_file)    // stereo output file
-//                Cinderella(stereo_file, mol, data_list, result_as_data, "DUBIOUS_STEREO");
             RemoveDubiousStereochemistry(mol);
             flags |= DUBIOUS_STEREO_REMOVED;
         }
@@ -102,8 +100,6 @@ namespace RDKit {
                 flags |= BAD_MOLECULE;
             else
             {
-//              if (stereo_file)    // stereo output file
-//                    Cinderella(stereo_file, mol, data_list, result_as_data, "DUBIOUS_STEREO");
                 RemoveDubiousStereochemistry(mol);
                 flags |= DUBIOUS_STEREO_REMOVED;
             }
