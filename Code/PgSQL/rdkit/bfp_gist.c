@@ -44,25 +44,25 @@
 #include "bitstring.h"
 
 /*
- * Define the compressed Bfp datum representation (GBfp)  to be used
+ * Define the compressed Bfp datum representation (GBfp) to be used
  * as entry in the GiST index
  */
 
 typedef struct {
   char vl_len_[4];
-  uint8 flag;
-  uint8 data[FLEXIBLE_ARRAY_MEMBER];
+  uint8 flag; /* entry data type */
+  uint8 data[FLEXIBLE_ARRAY_MEMBER]; /* leaf or inner data */
 } GBfp;
 
 typedef struct {
   uint32 weight;
-  uint8 fp[FLEXIBLE_ARRAY_MEMBER];
+  uint8 fp[FLEXIBLE_ARRAY_MEMBER]; /* indexed bfp */
 } GBfpLeafData;
 
 typedef struct {
   uint16 minWeight;
   uint16 maxWeight;
-  uint8 fp[FLEXIBLE_ARRAY_MEMBER];
+  uint8 fp[FLEXIBLE_ARRAY_MEMBER]; /* union + intersection bfps */
 } GBfpInnerData;
 
 #define INNER_KEY         0x01
@@ -75,6 +75,9 @@ typedef struct {
 #define GET_LEAF_DATA(x) ((GBfpLeafData *)((x)->data))
 #define GET_INNER_DATA(x) ((GBfpInnerData *)((x)->data))
 
+/* estimate the memory size of the index entries based on the 
+** signature size
+*/
 #define GBFP_LEAF_VARSIZE(x) (sizeof(GBfp) + sizeof(GBfpLeafData) + (x))
 #define GBFP_INNER_VARSIZE(x) (sizeof(GBfp) + sizeof(GBfpInnerData) + 2*(x))
 
@@ -86,145 +89,14 @@ typedef struct {
 
 #define GETENTRY(vec,pos) ((GBfp *) DatumGetPointer((vec)->vector[(pos)].key))
 
+/* collect 'key' into 'result' */
+static void merge_key(GBfp *result, GBfp *key);
 
-static void
-merge_key(GBfp *result, GBfp *key)
-{
-  int siglen = GBFP_INNER_SIGLEN(result);
-  
-  if (IS_LEAF_KEY(result)) { /* FIXME should be an Assert */
-    elog(ERROR, "Unexpected leaf key");
-  }
-  
-  GBfpInnerData * resultData = GET_INNER_DATA(result);
-  
-  if (IS_INNER_KEY(key)) {
-    GBfpInnerData *innerData = GET_INNER_DATA(key);
+/* estimate the "distance"/"difference" between two keys */
+static int keys_distance(GBfp *v1, GBfp *v2);
 
-    if (GBFP_INNER_SIGLEN(key) != siglen) {
-      elog(ERROR, "All fingerprints should be the same length");
-    }
-    
-    if (innerData->minWeight < resultData->minWeight) {
-      resultData->minWeight = innerData->minWeight;
-    }
-    if (innerData->maxWeight > resultData->maxWeight) {
-      resultData->maxWeight = innerData->maxWeight;
-    }
-    bitstringUnion(siglen, resultData->fp, innerData->fp);
-    bitstringIntersection(siglen, resultData->fp+siglen, innerData->fp+siglen);
-  }
-  else {
-    GBfpLeafData *leafData = GET_LEAF_DATA(key);
-      
-    if (GBFP_LEAF_SIGLEN(key) != siglen) {
-      elog(ERROR, "All fingerprints should be the same length");
-    }
-    
-    if (leafData->weight < resultData->minWeight) {
-      resultData->minWeight = leafData->weight;
-    }
-    if (leafData->weight > resultData->maxWeight) {
-      resultData->maxWeight = leafData->weight;
-    }
-    bitstringUnion(siglen, resultData->fp, leafData->fp);
-    bitstringIntersection(siglen, resultData->fp+siglen, leafData->fp);
-  }
-}
-
-static int
-keys_distance(GBfp *v1, GBfp *v2)
-{
-  uint8 *u1, *i1, *u2, *i2;
-  int32 minw1, maxw1, minw2, maxw2;
-  GBfpInnerData *innerData;
-  GBfpLeafData *leafData;
-  int distance;
-  
-  int siglen = GBFP_SIGLEN(v1);
-  
-  if (GBFP_SIGLEN(v2) != siglen) {
-    elog(ERROR, "All fingerprints should be the same length");
-  }
-    
-  if (IS_INNER_KEY(v1)) {
-    innerData = GET_INNER_DATA(v1);
-    u1 = innerData->fp;
-    i1 = innerData->fp+siglen;
-    minw1 = innerData->minWeight;
-    maxw1 = innerData->maxWeight;
-  }
-  else {
-    leafData = GET_LEAF_DATA(v1);
-    u1 = i1 = leafData->fp;
-    minw1 = maxw1 = leafData->weight;
-  }
-    
-  if (IS_INNER_KEY(v2)) {
-    innerData = GET_INNER_DATA(v2);
-    u2 = innerData->fp;
-    i2 = innerData->fp+siglen;
-    minw2 = innerData->minWeight;
-    maxw2 = innerData->maxWeight;
-  }
-  else {
-    leafData = GET_LEAF_DATA(v2);
-    u2 = i2 = leafData->fp;
-    minw2 = maxw2 = leafData->weight;
-  }
-
-  distance = abs(minw1 - minw2) + abs(maxw1 - maxw2);
-  distance *= siglen;
-
-  distance += bitstringHemDistance(siglen, u1, u2);
-  distance += bitstringHemDistance(siglen, i1, i2);
-  
-  return distance;
-}
-
-
-static GBfp *
-copy_inner_key(GBfp *key)
-{
-  int size = VARSIZE(key);
-  GBfp * result = palloc(size);
-  memcpy(result, key, size);
-  return result;
-}
-
-
-static GBfp *
-copy_leaf_key(GBfp *key)
-{
-  GBfp *result;
-  GBfpLeafData *leafData;
-  GBfpInnerData *innerData;
-  int siglen, size;
-  
-  siglen = GBFP_LEAF_SIGLEN(key);
-  leafData = GET_LEAF_DATA(key);
-
-  size = GBFP_INNER_VARSIZE(siglen);
-
-  result = palloc0(size);
-  SET_VARSIZE(result, size);
-  result->flag = INNER_KEY;
-
-  innerData = GET_INNER_DATA(result);
-  innerData->minWeight = innerData->maxWeight = leafData->weight;
-  memcpy(innerData->fp, leafData->fp, siglen);
-  memcpy(innerData->fp+siglen, leafData->fp, siglen);
-
-  return result;
-}
-
-
-static GBfp *
-copy_key(GBfp *key)
-{
-  return IS_INNER_KEY(key) ? copy_inner_key(key) : copy_leaf_key(key);
-}
-
+/* clone 'key' into a new inner key */
+static GBfp * copy_key(GBfp *key);
 
 /*
  * Compress method
@@ -303,6 +175,9 @@ gbfp_decompress(PG_FUNCTION_ARGS)
 
 /*
  * Union method
+ *
+ * summarize the information from a set of keys into a single one
+ * the result is always an inner key
  */
 
 PGDLLEXPORT Datum gbfp_union(PG_FUNCTION_ARGS);
@@ -323,13 +198,14 @@ gbfp_union(PG_FUNCTION_ARGS) {
     key = GETENTRY(entryvec, i);
     merge_key(result, key);
   }
-
   
   PG_RETURN_POINTER(result);
 }
 
 /*
  * Same method
+ *
+ * check if two entries represent the same data
  */
 
 PGDLLEXPORT Datum gbfp_same(PG_FUNCTION_ARGS);
@@ -352,6 +228,9 @@ gbfp_same(PG_FUNCTION_ARGS)
 
 /*
  * Penalty method
+ *
+ * estimate the cost of inserting a new key into an existing one
+ * this latter is always an inner key
  */
 
 PGDLLEXPORT Datum gbfp_penalty(PG_FUNCTION_ARGS);
@@ -366,9 +245,7 @@ gbfp_penalty(PG_FUNCTION_ARGS)
   GBfp *origval = (GBfp *) DatumGetPointer(origentry->key);
   GBfp *newval = (GBfp *) DatumGetPointer(newentry->key);
   
-  if (IS_LEAF_KEY(origval)) { /* FIXME replace with Assert */
-    elog(ERROR, "Unexpected leaf key in gbfp_penalty");
-  }
+  Assert(IS_INNER_KEY(origval));
   
   *penalty = (float) keys_distance(origval, newval);
   
@@ -377,9 +254,9 @@ gbfp_penalty(PG_FUNCTION_ARGS)
 
 /*
  * Picksplit method
+ * 
+ * partition a collection of entries into two clusters
  */
-
-#define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
 
 typedef struct {
   OffsetNumber pos;
@@ -457,7 +334,6 @@ gbfp_picksplit(PG_FUNCTION_ARGS)
   ** initialize two empty subsets
   */
   
-
   if (seed_1 == 0 || seed_2 == 0) {
     /*
     ** all fps were identical and no waste was measured allowing the seeds to
@@ -501,7 +377,6 @@ gbfp_picksplit(PG_FUNCTION_ARGS)
     size_alpha = keys_distance(datum_l, gbfpj);
     size_beta = keys_distance(datum_r, gbfpj);
     
-    /*if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.1)) {*/
     if ((size_alpha < size_beta) ||
 	((size_alpha == size_beta) && (v->spl_nleft < v->spl_nright))) {
       merge_key(datum_l, gbfpj);
@@ -668,15 +543,11 @@ gbfp_consistent(PG_FUNCTION_ARGS)
   }
 
   if (GIST_LEAF(entry)) {
-    if (IS_INNER_KEY(key)) { /* FIXME replace with Assert */
-      elog(ERROR, "Unexpected inner key inside a leaf page");
-    }
+    Assert(IS_LEAF_KEY(key));
     result = gbfp_leaf_consistent(query, GET_LEAF_DATA(key), siglen, strategy);
   }
   else {
-    if (IS_LEAF_KEY(key)) { /* FIXME replace with Assert */
-      elog(ERROR, "Unexpected leaf key inside an inner page");
-    }
+    Assert(IS_INNER_KEY(key));
     result = gbfp_inner_consistent(query, GET_INNER_DATA(key), siglen, strategy);
   }
   
@@ -795,9 +666,7 @@ gbfp_fetch(PG_FUNCTION_ARGS)
   Bfp *bfp;
   GISTENTRY  *retval;
 
-  if (IS_INNER_KEY(gbfp)) { /* FIXME replace with Assert */
-    elog(ERROR, "Unexpected inner key in call to gbfp_fetch");
-  }
+  Assert(IS_LEAF_KEY(gbfp));
 
   siglen = GBFP_LEAF_SIGLEN(gbfp);
   data = GET_LEAF_DATA(gbfp);
@@ -814,5 +683,145 @@ gbfp_fetch(PG_FUNCTION_ARGS)
 		entry->rel, entry->page, entry->offset, FALSE);
   
   PG_RETURN_POINTER(retval);
+}
+
+
+
+/* utility functions */
+
+static void
+merge_key(GBfp *result, GBfp *key)
+{
+  if (IS_LEAF_KEY(result)) {
+    elog(ERROR, "Unexpected leaf key");
+  }
+  
+  int siglen = GBFP_INNER_SIGLEN(result);  
+  GBfpInnerData * resultData = GET_INNER_DATA(result);
+  
+  if (IS_INNER_KEY(key)) {
+    GBfpInnerData *innerData = GET_INNER_DATA(key);
+
+    if (GBFP_INNER_SIGLEN(key) != siglen) {
+      elog(ERROR, "All fingerprints should be the same length");
+    }
+    
+    if (innerData->minWeight < resultData->minWeight) {
+      resultData->minWeight = innerData->minWeight;
+    }
+    if (innerData->maxWeight > resultData->maxWeight) {
+      resultData->maxWeight = innerData->maxWeight;
+    }
+    bitstringUnion(siglen, resultData->fp, innerData->fp);
+    bitstringIntersection(siglen, resultData->fp+siglen, innerData->fp+siglen);
+  }
+  else {
+    GBfpLeafData *leafData = GET_LEAF_DATA(key);
+      
+    if (GBFP_LEAF_SIGLEN(key) != siglen) {
+      elog(ERROR, "All fingerprints should be the same length");
+    }
+    
+    if (leafData->weight < resultData->minWeight) {
+      resultData->minWeight = leafData->weight;
+    }
+    if (leafData->weight > resultData->maxWeight) {
+      resultData->maxWeight = leafData->weight;
+    }
+    bitstringUnion(siglen, resultData->fp, leafData->fp);
+    bitstringIntersection(siglen, resultData->fp+siglen, leafData->fp);
+  }
+}
+
+static int
+keys_distance(GBfp *v1, GBfp *v2)
+{
+  uint8 *u1, *i1, *u2, *i2;
+  int32 minw1, maxw1, minw2, maxw2;
+  GBfpInnerData *innerData;
+  GBfpLeafData *leafData;
+  int distance;
+  
+  int siglen = GBFP_SIGLEN(v1);
+  
+  if (GBFP_SIGLEN(v2) != siglen) {
+    elog(ERROR, "All fingerprints should be the same length");
+  }
+    
+  if (IS_INNER_KEY(v1)) {
+    innerData = GET_INNER_DATA(v1);
+    u1 = innerData->fp;
+    i1 = innerData->fp+siglen;
+    minw1 = innerData->minWeight;
+    maxw1 = innerData->maxWeight;
+  }
+  else {
+    leafData = GET_LEAF_DATA(v1);
+    u1 = i1 = leafData->fp;
+    minw1 = maxw1 = leafData->weight;
+  }
+    
+  if (IS_INNER_KEY(v2)) {
+    innerData = GET_INNER_DATA(v2);
+    u2 = innerData->fp;
+    i2 = innerData->fp+siglen;
+    minw2 = innerData->minWeight;
+    maxw2 = innerData->maxWeight;
+  }
+  else {
+    leafData = GET_LEAF_DATA(v2);
+    u2 = i2 = leafData->fp;
+    minw2 = maxw2 = leafData->weight;
+  }
+
+  distance = abs(minw1 - minw2) + abs(maxw1 - maxw2);
+  distance *= siglen;
+
+  distance += bitstringHemDistance(siglen, u1, u2);
+  distance += bitstringHemDistance(siglen, i1, i2);
+  
+  return distance;
+}
+
+static GBfp *
+copy_inner_key(GBfp *key)
+{
+  int size = VARSIZE(key);
+  GBfp * result = palloc(size);
+  memcpy(result, key, size);
+  return result;
+}
+
+
+static GBfp *
+copy_leaf_key(GBfp *key)
+{
+  GBfp *result;
+  GBfpLeafData *leafData;
+  GBfpInnerData *innerData;
+  int siglen, size;
+  
+  siglen = GBFP_LEAF_SIGLEN(key);
+  leafData = GET_LEAF_DATA(key);
+
+  size = GBFP_INNER_VARSIZE(siglen);
+
+  result = palloc0(size);
+  SET_VARSIZE(result, size);
+  result->flag = INNER_KEY;
+
+  innerData = GET_INNER_DATA(result);
+  innerData->minWeight = innerData->maxWeight = leafData->weight;
+  memcpy(innerData->fp, leafData->fp, siglen);
+  memcpy(innerData->fp+siglen, leafData->fp, siglen);
+
+  return result;
+}
+
+
+static GBfp *
+copy_key(GBfp *key)
+{
+  return IS_INNER_KEY(key) ? copy_inner_key(key) : copy_leaf_key(key);
 }
 
