@@ -8,7 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <math.h>
-#include "../RDGeneral/types.h"
+#include "../RDKitBase.h"
+#include "../../RDGeneral/types.h"
 #include "../../Geometry/point.h"
 #include "StructChecker.h"
 #include "Utilites.h"
@@ -159,27 +160,12 @@ int FixDubious3DMolecule(RWMol &mol) {
 
 
 // take / compute X,Y,Z coordinates of each atom
-    if (0!=mol.getNumConformers())
-        for (RDKit::ROMol::ConstConformerIterator cnfi = mol.beginConformers(); cnfi != mol.endConformers(); cnfi++) {
-            const Conformer &conf = **cnfi;  //mol.getConformer(confId);
-            if (conf.is3D()) {
-                for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
-                    atomPoint[i] = conf.getAtomPos(i);
-                    if (fabs(atomPoint[i].z) >= EPS)
-                        non_zero_z = true;
-                }
-                break;
-            }
-        }
-    if (atomPoint.empty()) {    // compute XYZ
-//TODO:
-       // ???? ..........
-    }
-
-    // first check if this is a trivial case i.e. designated '2D'
+    non_zero_z = getMolAtomPoints(mol, atomPoint);
+    // At first check if this is a trivial case i.e. designated '2D'
     // and count the number of stereo bonds
     if (!non_zero_z) // check Z coordinate of each atom
         return 0;
+
     nstereo = 0;
     for (unsigned i = 0; i < mol.getNumBonds(); i++) {
         const Bond* bond = mol.getBondWithIdx(i);
@@ -219,6 +205,7 @@ int FixDubious3DMolecule(RWMol &mol) {
             15 == element &&  // "P"
             16 == element )   // "S"
             continue;
+
         unsigned j;
         for (j = 0; j < mol.getNumBonds(); j++) {
             const Bond* bond = mol.getBondWithIdx(j);
@@ -233,65 +220,73 @@ int FixDubious3DMolecule(RWMol &mol) {
         double vol = 0.0;
         int stereo_triple;
         const Neighbourhood &nbp = neighbour_array[i];
-        unsigned n_ligands = nbp.Bonds.size();
+        unsigned n_ligands = (unsigned) nbp.Bonds.size();
+        unsigned i1;
         struct npoint_t tetra[4];
         tetra[0].x = atomPoint[i].x; tetra[0].y = atomPoint[i].y; tetra[0].z = atomPoint[i].z;
-        for (unsigned i1 = 0; i1 < n_ligands; i1++)
-            if (mol.getBondWithIdx(nbp.Bonds[i1])->getBondType != RDKit::Bond::SINGLE &&
-                0 != strcmp(mp->atom_array[i].atom_symbol, "P") &&
-                0 != strcmp(mp->atom_array[i].atom_symbol, "S")) break;
-        if (i1 >= nbp->n_ligands) continue;     // multiple bond found => no sp3 carbon
+        for (i1 = 0; i1 < n_ligands; i1++)
+            if (mol.getBondWithIdx(nbp.Bonds[i1])->getBondType() != RDKit::Bond::SINGLE
+             && 16 != element && 15 != element) // "S" "P"
+                break;
+        if (i1 >= n_ligands)
+            continue;     // multiple bond found => no sp3 carbon
         stereo_triple = 0;
-        for (i1 = 0; i1<nbp->n_ligands; i1++)
+        for (i1 = 0; i1 < n_ligands; i1++)
         {
-            tetra[1].x = mp->atom_array[nbp->atoms[i1]].x; tetra[1].y = mp->atom_array[nbp->atoms[i1]].y; tetra[1].z = mp->atom_array[nbp->atoms[i1]].z;
-            if (mp->bond_array[nbp->bonds[i1]].bond_type == UP || mp->bond_array[nbp->bonds[i1]].bond_type == DOWN) stereo_triple |= 1;
-            for (i2 = i1 + 1; i2<nbp->n_ligands; i2++)
+            tetra[1].x = atomPoint[i1].x; 
+            tetra[1].y = atomPoint[i1].y;
+            tetra[1].z = atomPoint[i1].z;
+            if (mol.getBondWithIdx(nbp.Bonds[i1])->getStereo() == RDKit::Bond::STEREOZ
+             || mol.getBondWithIdx(nbp.Bonds[i1])->getStereo() == RDKit::Bond::STEREOE) // UP DOWN
+                stereo_triple |= 1;
+            unsigned i2;
+            for (i2 = i1 + 1; i2 < n_ligands; i2++)
             {
-                tetra[2].x = mp->atom_array[nbp->atoms[i2]].x; tetra[2].y = mp->atom_array[nbp->atoms[i2]].y; tetra[2].z = mp->atom_array[nbp->atoms[i2]].z;
-                if (mp->bond_array[nbp->bonds[i2]].bond_type == UP || mp->bond_array[nbp->bonds[i2]].bond_type == DOWN) stereo_triple |= 2;
-                for (i3 = i2 + 1; i3<nbp->n_ligands; i3++)
-                {
-                    tetra[3].x = mp->atom_array[nbp->atoms[i3]].x; tetra[3].y = mp->atom_array[nbp->atoms[i3]].y; tetra[3].z = mp->atom_array[nbp->atoms[i3]].z;
-                    if (mp->bond_array[nbp->bonds[i3]].bond_type == UP || mp->bond_array[nbp->bonds[i3]].bond_type == DOWN) stereo_triple |= 4;
-                    vol = Volume(tetra); if (vol < 0) vol = -vol;
-                    if (!stereo_triple) continue;
-                    if (vol < 0.01*length*length*length)
-                    {
+                tetra[2].x = atomPoint[i2].x;
+                tetra[2].y = atomPoint[i2].y;
+                tetra[2].z = atomPoint[i2].z;
+                if (mol.getBondWithIdx(nbp.Bonds[i2])->getStereo() == RDKit::Bond::STEREOZ
+                 || mol.getBondWithIdx(nbp.Bonds[i2])->getStereo() == RDKit::Bond::STEREOE) // UP DOWN
+                    stereo_triple |= 2;
+                unsigned i3;
+                for (i3 = i2 + 1; i3 < n_ligands; i3++) {
+                    tetra[3].x = atomPoint[i3].x;
+                    tetra[3].y = atomPoint[i3].y;
+                    tetra[3].z = atomPoint[i3].z;
+                    if (mol.getBondWithIdx(nbp.Bonds[i3])->getStereo() == RDKit::Bond::STEREOZ
+                     || mol.getBondWithIdx(nbp.Bonds[i3])->getStereo() == RDKit::Bond::STEREOE) // UP DOWN
+                        stereo_triple |= 4;
+                    vol = Volume(tetra);
+                    if (vol < 0.)
+                        vol = -vol;
+                    if (!stereo_triple)
+                        continue;
+                    if (vol < 0.01*length*length*length) {
                         nflat_sp3++;
                         break;
                     }
                     stereo_triple &= ~4;
                 }
                 stereo_triple &= ~2;
-                if (i3 >= nbp->n_ligands) break;
+                if (i3 >= n_ligands)
+                    break;
             }
             stereo_triple &= ~1;
-            if (i2 >= nbp->n_ligands) break;
+            if (i2 >= n_ligands)
+                break;
         }
-        */
     }
 
-// THERE IS NO X,Y,Z coordinates in RDKit atom representaion
-/*
-    if (non_zero_z && 0 == strcmp(mp->dimensionality, "2D"))
-    {
-        for (i = 0; i<mp->n_atoms; i++)
-            mp->atom_array[i].z = 0.0;
+    if (non_zero_z && 0 == mol.getConformer().is3D()) // && mol dim is 2D
+        for (unsigned i = 0; i < mol.getNumAtoms(); i++)
+//TODO: ???
+            atomPoint[i].z = 0.0; // set in mol !!!
         result |= ZEROED_Z_COORDINATES;
-        AddMsgToList("Cleared z-coordinates in 2D MOL file");
-    }
-    else if (non_zero_z  &&  nstereo > 0 && nflat_sp3 > 0)
-    {
-        strcpy(mp->dimensionality, "2D");
-RDKit::MolOp::removeStereochemistry(mol);
+        // Cleared z-coordinates in 2D MOL file
+    if (non_zero_z  &&  nstereo > 0 && nflat_sp3 > 0) {
+        RDKit::MolOps::removeStereochemistry(mol);
         result |= CONVERTED_TO_2D;
-        for (i = 0; i<mp->n_atoms; i++)
-            mp->atom_array[i].z = 0.0;
-        result |= ZEROED_Z_COORDINATES;
-        AddMsgToList("Cleared z-coordinates of tilted 2D MOL file");
     }
-*/
     return result;
 }
 
@@ -493,8 +488,8 @@ int Atom4Parity(struct stereo_bond_t ligands[4]) {
 
     for (unsigned i = 0; i<4; i++)
         if ((ligands[i].symbol == RDKit::Bond::STEREOZ
-          && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOZ) //UP
-         || (ligands[i].symbol == RDKit::Bond::STEREOE  // DOWN
+          && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOZ) // UP
+         || (ligands[i].symbol == RDKit::Bond::STEREOE            // DOWN
           && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOE)) {
             // stereo_error = "Adjacent like stereobonds";
             return (ILLEGAL_REPRESENTATION);
@@ -540,6 +535,9 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
     if (nbp.Atoms.size() < 3 || nbp.Atoms.size() > 4)
         return ILLEGAL_REPRESENTATION;
 
+    std::vector<RDGeom::Point3D> atomPoint(mol.getNumAtoms()); // X,Y,Z coordinates of each atom
+    getMolAtomPoints(mol, atomPoint);
+
     for (unsigned i = 0; i < nbp.Bonds.size(); i++) {
         const Bond& bi = *mol.getBondWithIdx(i);
         if (bi.getBondType() != RDKit::Bond::SINGLE)
@@ -557,8 +555,8 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
             if (ndb == 2) allene = true;
         }
 
-//        stereo_ligands[i].x = mp->atom_array[nbp.Atoms[i]].x - mp->atom_array[iatom - 1].x;
-//        stereo_ligands[i].y = mp->atom_array[nbp.Atoms[i]].y - mp->atom_array[iatom - 1].y;
+        stereo_ligands[i].x = atomPoint[i].x - atomPoint[iatom - 1].x;
+        stereo_ligands[i].y = atomPoint[i].y - atomPoint[iatom - 1].y;
         stereo_ligands[i].number = nbp.Atoms[i] + 1;
         if (bi.getBeginAtomIdx() == iatom)
         {
