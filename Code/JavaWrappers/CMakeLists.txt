@@ -14,7 +14,7 @@ if(WIN32)
         FileParsers SmilesParse
 	Depictor SubstructMatch ChemReactions Fingerprints ChemTransforms
         Descriptors MolTransforms  PartialCharges
-	Subgraphs GraphMol DataStructs
+	Subgraphs GraphMol DataStructs Trajectory
 	DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
 	EigenSolvers
 	Optimizer
@@ -36,8 +36,9 @@ else()
         FMCS_static MolDraw2D_static
         FileParsers_static SmilesParse_static
 	Depictor_static SubstructMatch_static ChemReactions_static Fingerprints_static ChemTransforms_static
-	Subgraphs_static GraphMol_static DataStructs_static Descriptors_static PartialCharges_static MolTransforms_static
-	DistGeomHelpers_static DistGeometry_static ForceFieldHelpers_static ForceField_static
+	Subgraphs_static GraphMol_static DataStructs_static Trajectory_static Descriptors_static
+  PartialCharges_static MolTransforms_static DistGeomHelpers_static DistGeometry_static
+  ForceFieldHelpers_static ForceField_static
 	EigenSolvers_static
 	Optimizer_static
 	MolAlign_static
