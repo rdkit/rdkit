@@ -1,8 +1,8 @@
 rdkit_library(StructChecker
-              StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp
-              LINK_LIBRARIES Depictor FileParsers ChemTransforms)
+              StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp
+              LINK_LIBRARIES Depictor FileParsers ChemTransforms Descriptors)
 
-rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h
+rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h
               DEST GraphMol/StructChecker)
 
 rdkit_test(testStructChecker  testStructChecker.cpp 

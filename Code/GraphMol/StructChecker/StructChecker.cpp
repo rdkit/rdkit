@@ -10,6 +10,7 @@
 #include "StructChecker.h"
 #include "Pattern.h"
 #include "Stereo.h"
+#include "StripSmallFragments.h"
 
 namespace RDKit {
  namespace StructureCheck {
@@ -46,27 +47,17 @@ namespace RDKit {
             stereo_result = 1;
             flags |= DUBIOUS_STEREO_REMOVED;
         }
-/*
-        if (remove_minor_fragments)
-        {
-            // Add MF_PRE and MW_PRE data fields
-            new_data_list = AddMWMF(new_data_list, mp, "MW_PRE", "MF_PRE");
-            new_mp = StripSmallFragments(CopyMolecule(mp), &fragments_found);
-            if (new_mp)      // new molecule data structure has been allocated
-            {                // => need to overwrite components pointed to by input pointer
-                             //    and deallocate skeleton container object
-                             // deallocate objects pointed to by components of input (*mp)
-                FreeMoleculeChildObjects(mp);
-                // shallow copy (*new_mp) into 'emptied' container
-                (*mp) = (*new_mp);
-                // deallocate new container struct
-                MyFree((char *)new_mp);
-            }
-            if (fragments_found) result |= FRAGMENTS_FOUND;
-            // Add MF_POST and MW_POST data fields
-            new_data_list = AddMWMF(new_data_list, mp, "MW_POST", "MF_POST");
-        }
 
+        if (Options.RemoveMinorFragments)
+        {
+            AddMWMF(mol, "MW_PRE");            // Add  mol mass data field
+            if (StripSmallFragments(mol)) {
+                flags |= FRAGMENTS_FOUND;
+            }
+            AddMWMF(mol, "MW_POST");            // Add  mol mass data field
+
+        }
+/*
         for (i = 0; i<ntautomers; i++)         // do tautomer standardization 
         {
             fprintf(stderr, "tautomerizing with rule %d\n", i);
@@ -96,18 +87,72 @@ namespace RDKit {
         }
         else if (stereo_result > EITHER_BOND_FOUND) { // more severe errors
             flags |= STEREO_ERROR;
-            if (Options.CheckStereo)
+            if (Options.CheckStereo) {
                 flags |= BAD_MOLECULE;
+            }
             else
             {
                 RemoveDubiousStereochemistry(mol);
                 flags |= DUBIOUS_STEREO_REMOVED;
             }
         }
+//line 1612
+/*
+        if (charges_read && TotalCharge(mol) != Options.DesiredCharge)
+        {
+            bool tmp = RechargeMolecule(mp, desired_charge, &ndeprot, &nrefine);
+            if (mp->symbol_lists || mp->prop_lines)
+                tmp = false;
+            charge_bad = !tmp;
+            flags |= (charge_bad ? BAD_MOLECULE : RECHARGED);
+        }
 
+        if (Options.CheckCollisions && AtomClash(mol))
+            flags |= ATOM_CLASH;
+        if (! Options.GoodAtoms.empty() && ! CheckAtoms(mol, Options.GoodAtoms))
+            flags |= ATOM_CHECK_FAILED;
+*/
+        if (Options.CheckStereo && ! CheckStereo(mol))
+            flags |= STEREO_ERROR;
 
-// ...............
-
+//        if (Options.GroupsToSGroups)
+//            ConvertGroupsToSGroups(mol);
+/*
+//line 1630
+        stereo_bad = FALSE;
+        for (i = 0; i<nstereopat; i++)
+        {
+            ssp = stereo_patterns[i];
+            tmp = ForceStereoTemplate(mp, ssp);
+            if (tmp == (-1))
+            {
+                flags |= STEREO_FORCED_BAD; // problem enforcing stereochemistry of 'ssp->name'
+            }
+            else if (tmp == 15) // "STEREO_FORCED"
+            {
+                flags |= STEREO_TRANSFORMED;    // stereochemistry of 'ssp->name' enforced",
+            }
+        }
+//line 1655
+        for (i = 0; i<npat; i++)         // do template cleaning 
+        {
+            ssp = patterns[i];
+            if (TemplateClean(mol, ssp))
+            {
+                result |= TEMPLATE_TRANSFORMED; // has been cleaned with template 'ssp->name'
+            }
+        }
+//line 1669
+        for (i = 0; i<nrpat; i++)         // do template rotation
+        {
+            ssp = rotate_patterns[i];
+            if (TemplateRotate(mol, ssp))
+            {
+                result |= TEMPLATE_TRANSFORMED; // has been rotated by template 'ssp->name'
+            }
+        }
+   }
+*/
 
 // the end:
         if (0 != (flags & TRANSFORMED)) {   // sanitaze molecule
