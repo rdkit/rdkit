@@ -351,10 +351,8 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     /// elog(WARNING, "fmcs_mol2s_transition() called first time");
     CROMol mol = PG_GETARG_DATUM(1);
     int len;
-    char t[256];
-    sprintf(t, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
             fcinfo->flinfo->fn_mcxt);
-    elog(WARNING, t);
     fcinfo->flinfo->fn_extra =
         SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -380,10 +378,8 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     // mol_to_smiles():
     CROMol mol = PG_GETARG_DATUM(1);
     int len;
-    char t[256];
-    sprintf(t, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-            fcinfo->flinfo->fn_mcxt);
-    elog(WARNING, t);
+    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+            fcinfo->flinfo->fn_mcxt));
     fcinfo->flinfo->fn_extra =
         SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
