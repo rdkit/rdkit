@@ -1,3 +1,36 @@
+# Release_2016.03.3
+(Changes relative to Release_2016.03.2)
+
+## Acknowledgements:
+Brian Kelley, Michal Nowotka, Joos Kiener, Roger Sayle, 'maddogcz', 'michalsta', 'philopon'
+
+## Bug Fixes:
+  - bugreport: invalid handling of negation of aromaticity when parsing SMARTS
+ (github issue #893 from michalsta)
+  - Rdkit 2016_03_1 generate SVG typo in Python bindings
+ (github issue #903 from maddogcz)
+  - initialize boost::once_flag properly
+ (github pull #927 from greglandrum)
+  - sys not imported in IPythonConsole.py
+ (github issue #928 from greglandrum)
+  - mistake in SVG generated for wedged bonds
+ (github issue #932 from greglandrum)
+  - PandasTools AttributeError with pandas-0.18.1
+ (github issue #933 from philopon)
+  - Jupyter Notebooks: Issue with PyMol.MolViewer on Windows
+ (github issue #936 from kienerj)
+  - Subshape module: Not Python 3 compatible
+ (github issue #937 from kienerj)
+  - Bug when removing stereo info?
+ (github pull #946 from mnowotka)
+  - MolDraw2D: default color should not be cyan
+ (github issue #953 from greglandrum)
+  - Fixes includes for older boost/gcc
+ (github pull #966 from bp-kelley)
+  - Unnecessary warnings in rxn.validate()
+ (github issue #975 from greglandrum)
+
+
 # Release_2016.03.2
 (Changes relative to Release_2016.03.1)
 
@@ -27,7 +60,6 @@ Brian Kelley, John May, Roger Sayle, Paolo Tosco, Riccardo Vianello
  (github issue #910 from greglandrum)
   - Cartridge: makefile not using -O2 for C code
  (github issue #920 from rvianello)
-
 
 
 # Release_2016.03.1
