@@ -466,12 +466,14 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
               -1000000, bid));  // lower than anything else can be
           continue;
         }
-        // prefer lower atomic numbers with lower degrees:
-        int nbrScore = bond->getOtherAtom(atom)->getAtomicNum() +
-                       10 * bond->getOtherAtom(atom)->getDegree();
+        // prefer lower atomic numbers with lower degrees and no specified
+        // chirality:
+        const Atom *oatom = bond->getOtherAtom(atom);
+        int nbrScore = oatom->getAtomicNum() + 10 * oatom->getDegree() +
+                       100 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
-        int oIdx = bond->getOtherAtomIdx(idx);
+        int oIdx = oatom->getIdx();
         if (nChiralNbrs[oIdx] < noNbrs) {
           // the counts are negative, so we have to subtract them off
           nbrScore -= 1000 * nChiralNbrs[oIdx];

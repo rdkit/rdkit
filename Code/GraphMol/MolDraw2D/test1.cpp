@@ -1107,6 +1107,50 @@ void testGithub953() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub983() {
+  std::cout << " ----------------- Test Github #983: wedged bonds between "
+               "chiral centers drawn improperly"
+            << std::endl;
+  {
+    // this has an ugly drawing (wedged bond between chiral centers) but we
+    // force it to be drawn that way just to check.
+    std::string mb =
+        "\n\
+  Mrv1561 07241608122D\n\
+\n\
+  6  5  0  0  0  0            999 V2000\n\
+    8.6830   -9.5982    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    9.3975   -9.1857    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+   10.1120   -9.5982    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n\
+    9.3975   -8.3607    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n\
+   10.8264   -9.1857    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   10.1120  -10.4232    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  3  5  1  0  0  0  0\n\
+  3  2  1  1  0  0  0\n\
+  2  4  1  1  0  0  0\n\
+  3  6  1  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb, false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test983_1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 76.0616,71.485 "
+                          "63.338,93.5239 130.309,117.496' "
+                          "style='fill:#000000") != std::string::npos);
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1128,4 +1172,5 @@ int main() {
   testGithub910();
   testGithub932();
   testGithub953();
+  testGithub983();
 }

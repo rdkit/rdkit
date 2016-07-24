@@ -746,8 +746,17 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       }
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
-      if (at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+      // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
+      //           << bond->getBeginAtomIdx() << "-" << bond->getEndAtomIdx()
+      //           << std::endl;
+      // swap the direction if at1 has does not have stereochem set
+      // or if at2 does have stereochem set and the bond starts there
+      if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+           at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
+          (at1->getIdx() != bond->getBeginAtomIdx() &&
+           (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+            at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
+        // std::cerr << "  swap" << std::endl;
         swap(at1_cds, at2_cds);
         swap(col1, col2);
       }
