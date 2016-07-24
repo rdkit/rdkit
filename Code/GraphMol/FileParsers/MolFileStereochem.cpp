@@ -466,8 +466,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
               -1000000, bid));  // lower than anything else can be
           continue;
         }
-        // prefer lower atomic numbers:
-        int nbrScore = bond->getOtherAtom(atom)->getAtomicNum();
+        // prefer lower atomic numbers with lower degrees:
+        int nbrScore = bond->getOtherAtom(atom)->getAtomicNum() +
+                       10 * bond->getOtherAtom(atom)->getDegree();
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
         int oIdx = bond->getOtherAtomIdx(idx);
@@ -476,9 +477,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
           nbrScore -= 1000 * nChiralNbrs[oIdx];
         }
         // prefer bonds to non-ring atoms:
-        nbrScore += 100 * mol.getRingInfo()->numAtomRings(oIdx);
+        nbrScore += 1000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
-        nbrScore += 100 * mol.getRingInfo()->numBondRings(bid);
+        nbrScore += 1000 * mol.getRingInfo()->numBondRings(bid);
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << std::endl;
         nbrScores.push_back(std::make_pair(nbrScore, bid));

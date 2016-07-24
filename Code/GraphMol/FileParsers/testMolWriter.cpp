@@ -1395,11 +1395,11 @@ void testGithub611() {
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
     std::string mb = MolToMolBlock(*m);
-    TEST_ASSERT(mb.find("3  2  1  6") != std::string::npos);
+    TEST_ASSERT(mb.find("3  5  1  1") != std::string::npos);
 
     m->getBondWithIdx(2)->setBondDir(Bond::BEGINWEDGE);
     mb = MolToMolBlock(*m);
-    TEST_ASSERT(mb.find("3  2  1  6") == std::string::npos);
+    TEST_ASSERT(mb.find("3  5  1  1") == std::string::npos);
     TEST_ASSERT(mb.find("3  4  1  1") != std::string::npos);
   }
 }
