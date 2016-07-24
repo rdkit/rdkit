@@ -5,6 +5,11 @@ else(APPLE)
   set (EXTENSION_PREFIX "lib")
   set (EXTENSION_SUFFIX "")
 endif(APPLE)
+
+if(RDK_OPTIMIZE_NATIVE)
+add_definitions(-DUSE_BUILTIN_POPCOUNT)
+endif(RDK_OPTIMIZE_NATIVE)
+
 set(EXTENSION rdkit)
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 if(WIN32)

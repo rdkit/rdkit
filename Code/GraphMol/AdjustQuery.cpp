@@ -18,6 +18,12 @@
 #include <algorithm>
 
 namespace RDKit {
+namespace {
+bool isMapped(const Atom* atom) {
+  return atom->hasProp(common_properties::molAtomMapNumber);
+}
+}
+
 namespace MolOps {
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
@@ -36,10 +42,16 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     params = *inParams;
   }
   const RingInfo *ringInfo = mol.getRingInfo();
-  if (!ringInfo->isInitialized()) {
-    MolOps::symmetrizeSSSR(mol);
-  }
 
+  if(params.aromatizeIfPossible) {
+    unsigned int failed;
+    sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
+  } else {
+    if (!ringInfo->isInitialized()) {
+      MolOps::symmetrizeSSSR(mol);
+    }
+  }
+  
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     Atom *at = mol.getAtomWithIdx(i);
     // pull properties we need from the atom here, once we
@@ -47,8 +59,12 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     unsigned int nRings = ringInfo->numAtomRings(i);
     int atomicNum = at->getAtomicNum();
     if (params.adjustDegree &&
-        !((params.adjustDegreeFlags & ADJUST_RINGSONLY) && !nRings) &&
-        !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum)) {
+        !((params.adjustDegreeFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNORENONDUMMIES) && atomicNum) &&
+        !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) && isMapped(at))
+        ) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
@@ -62,8 +78,12 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
     }  // end of adjust degree
     if (params.adjustRingCount &&
-        !((params.adjustRingCountFlags & ADJUST_RINGSONLY) && !nRings) &&
-        !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum)) {
+        !((params.adjustRingCountFlags & ADJUST_IGNORECHAINATOMS) && !nRings) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNORERINGATOMS) && nRings) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNORENONDUMMIES) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREMAPPED) && isMapped(at)) &&
+          atomicNum)) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);

@@ -29,6 +29,7 @@ namespace Descriptors {
 
   \return the AMW
 */
+extern const std::string amwVersion;
 double calcAMW(const ROMol &mol, bool onlyHeavy = false);
 /*!
   Calculates a molecule's exact molecular weight
@@ -39,6 +40,7 @@ double calcAMW(const ROMol &mol, bool onlyHeavy = false);
 
   \return the exact MW
 */
+extern const std::string exactmwVersion;
 double calcExactMW(const ROMol &mol, bool onlyHeavy = false);
 /*!
   Calculates a molecule's formula

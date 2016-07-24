@@ -60,7 +60,7 @@ Trajectory::Trajectory(const Trajectory &other) :
     addSnapshot(*vectIt);
 }
 
-unsigned int Trajectory::addSnapshot(Snapshot s) {
+unsigned int Trajectory::addSnapshot(const Snapshot &s) {
   return insertSnapshot(d_snapshotVect->size(), s);
 }
 

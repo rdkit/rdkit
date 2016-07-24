@@ -3501,11 +3501,11 @@ CAS<~>
         for pn in m.GetPropNames():
             self.assertTrue(nm.HasProp(pn))
             self.assertEqual(m.GetProp(pn),nm.GetProp(pn))
-            
-  
+
+
   def testUnfoldedRDKFingerprint(self):
     from rdkit.Chem import AllChem
-    
+
     m = Chem.MolFromSmiles('c1ccccc1N')
     fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
     fpDict = fp.GetNonzeroElements()
@@ -3515,21 +3515,21 @@ CAS<~>
     self.assertTrue(464351883 in fpDict)
     self.assertEquals(fpDict[464351883],2)
     self.assertTrue(1949583554 in fpDict)
-    self.assertEquals(fpDict[1949583554],6)    
+    self.assertEquals(fpDict[1949583554],6)
     self.assertTrue(4105342207 in fpDict)
     self.assertEquals(fpDict[4105342207],1)
     self.assertTrue(794080973 in fpDict)
     self.assertEquals(fpDict[794080973],1)
     self.assertTrue(3826517238 in fpDict)
     self.assertEquals(fpDict[3826517238],2)
-    
+
     m = Chem.MolFromSmiles('Cl')
     fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
     fpDict = fp.GetNonzeroElements()
     self.assertEquals(len(fpDict.items()),0)
-    
+
     m = Chem.MolFromSmiles('CCCO')
-    aBits = {} 
+    aBits = {}
     fp = AllChem.UnfoldedRDKFingerprintCountBased(m, bitInfo=aBits)
     fpDict = fp.GetNonzeroElements()
     self.assertEquals(len(fpDict.items()),5)
@@ -3538,18 +3538,18 @@ CAS<~>
     self.assertTrue(1940446997 in fpDict)
     self.assertEquals(fpDict[1940446997],1)
     self.assertTrue(3977409745 in fpDict)
-    self.assertEquals(fpDict[3977409745],1)    
+    self.assertEquals(fpDict[3977409745],1)
     self.assertTrue(4274652475 in fpDict)
     self.assertEquals(fpDict[4274652475],1)
     self.assertTrue(4275705116 in fpDict)
     self.assertEquals(fpDict[4275705116],2)
-    
+
     self.assertTrue(1524090560 in aBits)
     self.assertEquals(aBits[1524090560],[[1,2]])
     self.assertTrue(1940446997 in aBits)
     self.assertEquals(aBits[1940446997],[[0,1]])
     self.assertTrue(3977409745 in aBits)
-    self.assertEquals(aBits[3977409745],[[0,1,2]])    
+    self.assertEquals(aBits[3977409745],[[0,1,2]])
     self.assertTrue(4274652475 in aBits)
     self.assertEquals(aBits[4274652475],[[2]])
     self.assertTrue(4275705116 in aBits)
@@ -3566,12 +3566,72 @@ CAS<~>
     self.assertTrue(709 in aBits)
     self.assertEquals(aBits[709],[[0,1]])
     self.assertTrue(1118 in aBits)
-    self.assertEquals(aBits[1118],[[0,1,2]])    
+    self.assertEquals(aBits[1118],[[0,1,2]])
     self.assertTrue(562 in aBits)
     self.assertEquals(aBits[562],[[2]])
     self.assertTrue(1772 in aBits)
     self.assertEquals(aBits[1772],[[0],[1]])
-    
+
+  def testSimpleAromaticity(self):
+    m=Chem.MolFromSmiles('c1ccccc1')
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.Kekulize(m,True)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.SetAromaticity(m,Chem.AROMATICITY_SIMPLE)
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+
+    m=Chem.MolFromSmiles('c1c[nH]cc1')
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.Kekulize(m,True)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.SetAromaticity(m,Chem.AROMATICITY_SIMPLE)
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+
+    m=Chem.MolFromSmiles('c1cccoocc1')
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.Kekulize(m,True)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.SetAromaticity(m,Chem.AROMATICITY_SIMPLE)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+
+    m=Chem.MolFromSmiles('c1ooc1')
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.Kekulize(m,True)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.SetAromaticity(m,Chem.AROMATICITY_SIMPLE)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+
+
+    m=Chem.MolFromSmiles('C1=CC2=CC=CC=CC2=C1')
+    self.assertTrue(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.Kekulize(m,True)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    Chem.SetAromaticity(m,Chem.AROMATICITY_SIMPLE)
+    self.assertFalse(m.GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+
+  def testGithub955(self):
+    m = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("foo","1")
+    self.assertEqual(list(m.GetAtomWithIdx(0).GetPropNames()),["foo"])
+    m.GetBondWithIdx(0).SetProp("foo","1")
+    self.assertEqual(list(m.GetBondWithIdx(0).GetPropNames()),["foo"])
+
+
 
 
 if __name__ == '__main__':

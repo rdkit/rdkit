@@ -181,34 +181,34 @@ SELECT id, torsion_fp(m) AS f INTO pgtorsfp FROM pgmol;
 SELECT id, atompair_fp(m) AS f INTO pgpairfp FROM pgmol;
 set rdkit.tanimoto_threshold=0.5;
 set rdkit.dice_threshold=0.5;
-SELECT 
-	id, 
-	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f
 LIMIT 10;
  id | tanimoto_sml 
 ----+--------------
 (0 rows)
 
-SELECT 
-	id, 
-	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f
 LIMIT 10;
  id | dice_sml 
 ----+----------
 (0 rows)
 
-SELECT 
-	id, 
-	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+SELECT
+	id,
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f
 LIMIT 10;
    id   |   tanimoto_sml    
 --------+-------------------
@@ -224,13 +224,13 @@ LIMIT 10;
  788060 | 0.333865814696486
 (10 rows)
 
-SELECT 
-	id, 
+SELECT
+	id,
 	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
 	size(f)
 FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+	 (SELECT * FROM pgbfp ORDER BY id) AS t
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f
 LIMIT 10;
    id   |     dice_sml      | size 
 --------+-------------------+------
@@ -247,36 +247,36 @@ LIMIT 10;
 (10 rows)
 
 set rdkit.tanimoto_threshold=0.4;
-SELECT 
-	id, 
-	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+SELECT
+	id,
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f
 LIMIT 10;
    id    |   tanimoto_sml    
 ---------+-------------------
  3761688 | 0.441860465116279
 (1 row)
 
-SELECT 
-	id, 
-	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+SELECT
+	id,
+	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f
 LIMIT 10;
    id    |     dice_sml      
 ---------+-------------------
  3761688 | 0.612903225806452
 (1 row)
 
-SELECT 
-	id, 
-	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f) 
+SELECT
+	id,
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f
 LIMIT 10;
     id    |   tanimoto_sml    
 ----------+-------------------
@@ -287,12 +287,12 @@ LIMIT 10;
  16196768 |             0.375
 (5 rows)
 
-SELECT 
-	id, 
+SELECT
+	id,
 	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f)
 FROM
-	 (SELECT * FROM pgsfp ORDER BY id) AS t 
-WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+	 (SELECT * FROM pgsfp ORDER BY id) AS t
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f
 LIMIT 10;
     id    |     dice_sml      
 ----------+-------------------
@@ -390,10 +390,10 @@ select is_valid_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END');
  is_valid_ctab 
 ---------------
@@ -415,10 +415,10 @@ select mol_from_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END');
  mol_from_ctab  
 ----------------
@@ -471,10 +471,10 @@ select mol_to_ctab(mol_from_ctab('chiral1.mol
    -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
    -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  1  3  1  0      
-  1  4  1  1      
-  1  5  1  0      
+  1  2  1  0
+  1  3  1  0
+  1  4  1  1
+  1  5  1  0
 M  END', true));
                               mol_to_ctab                              
 -----------------------------------------------------------------------
@@ -635,7 +635,7 @@ select 'c1cccn1C'::mol@>qmol_from_smiles('c1cccn1[H]') as match;
 (1 row)
 
 select 'c1ccc[nH]1'::mol@>mol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -657,7 +657,7 @@ M  END') as match;
 (1 row)
 
 select 'c1cccn1C'::mol@>mol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -679,7 +679,7 @@ M  END') as match;
 (1 row)
 
 select 'c1ccc[nH]1'::mol@>qmol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -701,7 +701,7 @@ M  END') as match;
 (1 row)
 
 select 'c1cccn1C'::mol@>qmol_from_ctab('query
-  Mrv0541 04021509592D          
+  Mrv0541 04021509592D
 
   6  6  0  0  0  0            999 V2000
    -0.2652    0.7248    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -719,6 +719,55 @@ select 'c1cccn1C'::mol@>qmol_from_ctab('query
 M  END') as match;
  match 
 -------
+ f
+(1 row)
+
+-- mol_adjust_query_properties
+select 'C1CC1OC'::mol @> 'C1CC1O*'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol,'{"makeDummiesQueries":false}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC1CC1OC'::mol @> 'C1CC1O*'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol);
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'CC1CC1OC'::mol @> mol_adjust_query_properties('C1CC1O*'::mol,'{"adjustDegree":false}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1C(C)OC'::mol @> mol_adjust_query_properties('C1CC1CO*'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1C(C)OC'::mol @> mol_adjust_query_properties('C1CC1CO*'::mol,'{"adjustDegreeFlags":"IGNOREDUMMIES"}');
+ ?column? 
+----------
  f
 (1 row)
 

@@ -2689,10 +2689,15 @@ void testSFIssue1894348() {
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1] == 4);
+  // we remove an H attached to a stereo bond
   m2 = static_cast<RWMol *>(MolOps::removeHs(static_cast<const ROMol &>(*m)));
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1] == 4);
+  // at first the stereoatoms are gone:
+  TEST_ASSERT(m2->getBondWithIdx(2)->getStereoAtoms().size() == 0);
+  // but they can be re-perceived:
+  MolOps::assignStereochemistry(*m2, true, true);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size() == 2);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
   TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
@@ -5382,7 +5387,7 @@ void testAdjustQueryProperties() {
       delete aqm;
       aqp.adjustDegree = true;
       aqp.adjustRingCount = false;
-      aqp.adjustDegreeFlags = MolOps::ADJUST_EMPTY;
+      aqp.adjustDegreeFlags = MolOps::ADJUST_IGNORENONE;
       aqm = MolOps::adjustQueryProperties(*qm, &aqp);
       TEST_ASSERT(aqm);
       TEST_ASSERT(aqm->getNumAtoms() == 6);
@@ -5411,7 +5416,7 @@ void testAdjustQueryProperties() {
       TEST_ASSERT(SubstructMatch(*m, *aqm, match));
 
       delete aqm;
-      aqp.adjustRingCountFlags = MolOps::ADJUST_EMPTY;  // neither "not dummy"
+      aqp.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;  // neither "not dummy"
                                                         // nor "in ring"
                                                         // restrictions
       aqm = MolOps::adjustQueryProperties(*qm, &aqp);
@@ -5480,7 +5485,83 @@ void testAdjustQueryProperties() {
     delete qm;
     delete aqm;
   }
+  { // CTAB
+    //  -- only match rgroups
+    std::string mb = "adjust.mol\n"
+        "  ChemDraw06271617272D\n"
+        "\n"
+        "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "  1  2  1  0      \n"
+        "  2  3  2  0      \n"
+        "  3  4  1  0      \n"
+        "  4  5  2  0      \n"
+        "  5  6  1  0      \n"
+        "  6  1  2  0      \n"
+        "  5  7  1  0      \n"
+        "M  END\n";
+    MolOps::AdjustQueryParameters params;
+    params.aromatizeIfPossible = true;
+    params.makeDummiesQueries = true;
+    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+                                 MolOps::ADJUST_IGNOREMAPPED );
+    
+    RWMol *m = MolBlockToMol(mb);
+    MolOps::adjustQueryProperties(*m, &params);
+    MatchVectType match;
+    ROMol *t = SmilesToMol("c1ccccc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete t;
+    // shouldn't match (explicit degree)
+    t = SmilesToMol("c1ccc(Cl)cc1Cl");
+    TEST_ASSERT(!SubstructMatch(*t,*m,match));
+    delete m;
+  }
 
+  { // CTAB
+    //  -- match non rgroups if mapped
+    std::string mb = "adjust.mol\n"
+        "  ChemDraw06271617272D\n"
+        "\n"
+        "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "  1  2  1  0      \n"
+        "  2  3  2  0      \n"
+        "  3  4  1  0      \n"
+        "  4  5  2  0      \n"
+        "  5  6  1  0      \n"
+        "  6  1  2  0      \n"
+        "  5  7  1  0      \n"
+        "M  END\n";
+    MolOps::AdjustQueryParameters params;
+    params.aromatizeIfPossible = true;
+    params.makeDummiesQueries = true;
+    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+                                 MolOps::ADJUST_IGNOREMAPPED );
+    
+    RWMol *m = MolBlockToMol(mb);
+    MolOps::adjustQueryProperties(*m, &params);
+    MatchVectType match;
+    ROMol *t = SmilesToMol("c1ccccc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete t;
+    // should match (mapped!)
+    t = SmilesToMol("c1c(Cl)cc(Cl)cc1Cl");
+    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -5839,6 +5920,130 @@ void testGithubIssue518() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSimpleAromaticity() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing simple aromaticity"
+                       << std::endl;
+  {
+    std::string smiles = "c1ccccc1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    MolOps::Kekulize(*m, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    delete m;
+  }
+  {
+    std::string smiles = "c1[nH]ccc1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    MolOps::Kekulize(*m, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    delete m;
+  }
+  {  // ring size constraints
+    std::string smiles = "c1cccoocc1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    MolOps::Kekulize(*m, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    delete m;
+  }
+  {  // ring size constraints
+    std::string smiles = "c1coo1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    MolOps::Kekulize(*m, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    delete m;
+  }
+  {  // fused rings are not considered
+    std::string smiles = "C1=CC2=CC=CC=CC2=C1";  // azulene
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    MolOps::Kekulize(*m, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_SIMPLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+//! really dumb aromaticity: any conjugated ring bond is aromatic
+int customAromaticity(RWMol &m) {
+  m.updatePropertyCache();
+  MolOps::setConjugation(m);
+  MolOps::fastFindRings(m);
+  int res = 0;
+  for (ROMol::BondIterator bIt = m.beginBonds(); bIt != m.endBonds(); ++bIt) {
+    if ((*bIt)->getIsConjugated() && queryIsBondInRing(*bIt)) {
+      (*bIt)->setIsAromatic(true);
+      (*bIt)->getBeginAtom()->setIsAromatic(true);
+      (*bIt)->getEndAtom()->setIsAromatic(true);
+      ++res;
+    }
+  }
+  return res;
+}
+
+void testCustomAromaticity() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing custom aromaticity"
+                       << std::endl;
+
+  {
+    std::string smiles = "C1=CC=CC=C1";
+    RWMol *m = SmilesToMol(smiles, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_CUSTOM, customAromaticity);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    delete m;
+  }
+  {
+    std::string smiles = "C1CC=CC=C1";
+    RWMol *m = SmilesToMol(smiles, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_CUSTOM, customAromaticity);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getBondWithIdx(2)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsAromatic() == true);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void testKekulizeErrorReporting() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing error reporting for kekulization"
@@ -6040,6 +6245,7 @@ int main() {
   testGithubIssue518();
   testKekulizeErrorReporting();
   testGithubIssue868();
-
+  testSimpleAromaticity();
+  testCustomAromaticity();
   return 0;
 }

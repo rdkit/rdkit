@@ -29,7 +29,7 @@ namespace RDKit {
  */
 class RWMol : public ROMol {
  public:
-  RWMol() { d_partialBonds.clear(); }
+  RWMol() : ROMol() { d_partialBonds.clear(); }
 
   //! copy constructor with a twist
   /*!
@@ -41,9 +41,9 @@ class RWMol : public ROMol {
     \param confId if this is >=0, the resulting ROMol will contain only
          the specified conformer from \c other.
   */
-  RWMol(const ROMol &other, bool quickCopy = false, int confId = -1) {
+  RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
+      : ROMol(other, quickCopy, confId) {
     d_partialBonds.clear();
-    initFromOther(other, quickCopy, confId);
   };
   RWMol &operator=(const RWMol &);
 

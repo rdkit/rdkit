@@ -385,7 +385,7 @@ void applyHuckelToFused(
     }
 
     // check if the picked subsystem is fused
-    if (!RingUtils::checkFused(curRs, ringNeighs)) {
+    if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
       continue;
     }
 
@@ -618,7 +618,10 @@ int countAtomElec(const Atom *at) {
   return res;
 }
 
-int setAromaticity(RWMol &mol) {
+namespace {
+// use minRingSize=0 or maxRingSize=0 to ignore these constraints
+int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
+                      unsigned int maxRingSize, bool includeFused) {
   // FIX: we will assume for now that if the input molecule came
   // with aromaticity information it is correct and we will not
   // touch it. Loop through the atoms and check if any atom has
@@ -653,6 +656,12 @@ int setAromaticity(RWMol &mol) {
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
   for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
+    unsigned int ringSz = (*vivi).size();
+    // test ring size:
+    if ((minRingSize && ringSz < minRingSize) ||
+        (maxRingSize && ringSz > maxRingSize))
+      continue;
+
     bool allAromatic = true;
     bool allDummy = true;
     for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
@@ -686,40 +695,75 @@ int setAromaticity(RWMol &mol) {
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
 
-  // make the neighbor map for the rings
-  // i.e. a ring is a neighbor a another candidate ring if
-  // shares at least one bond
-  // useful to figure out fused systems
-  INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
+  if (!includeFused) {
+    // now loop over all the candidate rings and check the
+    // huckel rule - skipping fused systems
+    INT_INT_VECT_MAP neighMap;
+    for (unsigned int ri = 0; ri < cRings.size(); ++ri) {
+      INT_VECT fused;
+      fused.push_back(ri);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+    }
+  } else {
+    // make the neighbor map for the rings
+    // i.e. a ring is a neighbor a another candidate ring if
+    // shares at least one bond
+    // useful to figure out fused systems
+    INT_INT_VECT_MAP neighMap;
+    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
 
-  // now loop over all the candidate rings and check the
-  // huckel rule - of course paying attention to fused systems.
-  INT_VECT doneRs;
-  int curr = 0;
-  int cnrs = rdcast<int>(cRings.size());
-  boost::dynamic_bitset<> fusDone(cnrs);
-  INT_VECT fused;
-  while (curr < cnrs) {
-    fused.resize(0);
-    RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+    // now loop over all the candidate rings and check the
+    // huckel rule - of course paying attention to fused systems.
+    INT_VECT doneRs;
+    int curr = 0;
+    int cnrs = rdcast<int>(cRings.size());
+    boost::dynamic_bitset<> fusDone(cnrs);
+    INT_VECT fused;
+    while (curr < cnrs) {
+      fused.resize(0);
+      RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
 
-    int rix;
-    for (rix = 0; rix < cnrs; rix++) {
-      if (!fusDone[rix]) {
-        curr = rix;
+      int rix;
+      for (rix = 0; rix < cnrs; rix++) {
+        if (!fusDone[rix]) {
+          curr = rix;
+          break;
+        }
+      }
+      if (rix == cnrs) {
         break;
       }
-    }
-    if (rix == cnrs) {
-      break;
     }
   }
 
   mol.setProp(common_properties::numArom, narom, true);
 
   return narom;
+}
+
+}  // end of anonymous namespace
+
+int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
+  int res;
+  switch (model) {
+    case AROMATICITY_DEFAULT:
+    case AROMATICITY_RDKIT:
+      res = aromaticityHelper(mol, 0, 0, true);
+      break;
+    case AROMATICITY_SIMPLE:
+      res = aromaticityHelper(mol, 5, 6, false);
+      break;
+    case AROMATICITY_CUSTOM:
+      PRECONDITION(
+          func,
+          "function must be set when aromaticity model is AROMATICITY_CUSTOM");
+      res = func(mol);
+      break;
+    default:
+      throw ValueErrorException("Bad AromaticityModel");
+  }
+  return res;
 }
 
 };  // end of namespace MolOps

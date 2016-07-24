@@ -172,6 +172,11 @@ RETURNS mol
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION mol_adjust_query_properties(mol,cstring default '')
+RETURNS mol
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 
 -- mol conversion functions
 

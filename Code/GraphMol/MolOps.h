@@ -242,28 +242,31 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly = false);
 void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
 
 typedef enum {
-  ADJUST_EMPTY = 0x0,
-  ADJUST_RINGSONLY = 0x1,
+  ADJUST_IGNORENONE = 0x0,
+  ADJUST_IGNORECHAINATOMS = 0x1,
+  ADJUST_IGNORERINGATOMS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
-  ADJUST_SETALL = 0xFFFFFFF
+  ADJUST_IGNORENONDUMMIES = 0x8,
+  ADJUST_IGNOREMAPPED = 0x10,
+  ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 struct AdjustQueryParameters {
   bool adjustDegree; /**< add degree queries */
-  AdjustQueryWhichFlags adjustDegreeFlags;
+  boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
-  AdjustQueryWhichFlags adjustRingCountFlags;
+  boost::uint32_t adjustRingCountFlags;
 
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
-
+  bool aromatizeIfPossible;
+  
   AdjustQueryParameters()
       : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_SETALL),
+        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_SETALL),
-        makeDummiesQueries(true)
-
-  {}
+        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        makeDummiesQueries(true),
+        aromatizeIfPossible(true) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
@@ -359,6 +362,22 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
 //! \overload
 void sanitizeMol(RWMol &mol);
 
+//! Possible aromaticity models
+/*!
+- \c AROMATICITY_DEFAULT at the moment always uses \c AROMATICITY_RDKIT
+- \c AROMATICITY_RDKIT is the standard RDKit model (as documented in the RDKit
+Book)
+- \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
+does not consider the outer envelope of fused rings)
+- \c AROMATICITY_CUSTOM uses a caller-provided function
+*/
+typedef enum {
+  AROMATICITY_DEFAULT = 0x0,  ///< future proofing
+  AROMATICITY_RDKIT = 0x1,
+  AROMATICITY_SIMPLE = 0x2,
+  AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
+} AromaticityModel;
+
 //! Sets up the aromaticity for a molecule
 /*!
 
@@ -368,7 +387,7 @@ void sanitizeMol(RWMol &mol);
   candidates
         for aromaticity. A ring atom is a candidate if it can spare electrons
         to the ring and if it's from the first two rows of the periodic table.
-     -# ased on the candidate atoms, mark the rings to be either candidates
+     -# based on the candidate atoms, mark the rings to be either candidates
         or non-candidates. A ring is a candidate only if all its atoms are
   candidates
      -# apply Hueckel rule to each of the candidate rings to check if the ring
@@ -376,15 +395,19 @@ void sanitizeMol(RWMol &mol);
         aromatic
 
   \param mol the RWMol of interest
+  \param model the aromaticity model to use
+  \param func a custom function for assigning aromaticity (only used when
+  model=\c AROMATICITY_CUSTOM)
 
-  \return 1 on succes, 0 otherwise
+  \return >0 on success, <= 0 otherwise
 
   <b>Assumptions:</b>
     - Kekulization has been done (i.e. \c MolOps::Kekulize() has already
       been called)
 
 */
-int setAromaticity(RWMol &mol);
+int setAromaticity(RWMol &mol, AromaticityModel model = AROMATICITY_DEFAULT,
+                   int (*func)(RWMol &) = NULL);
 
 //! Designed to be called by the sanitizer to handle special cases before
 // anything is done.
