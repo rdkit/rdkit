@@ -15,6 +15,22 @@
 
 namespace RDKit {
 namespace MolDraw2DUtils {
+
+namespace {
+bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
+  // conditions for needing a chiral H:
+  //   - stereochem specified
+  //   - in at least two rings
+  if ((!mol.getRingInfo()->isInitialized() ||
+       mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1) &&
+      (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)) {
+    return true;
+  }
+  return false;
+}
+}  // end of anonymous namespace
+
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords) {
   if (kekulize) {
@@ -24,8 +40,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     std::vector<unsigned int> chiralAts;
     for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
-      if ((*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
-          (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      if (isAtomCandForChiralH(mol, *atIt)) {
         chiralAts.push_back((*atIt)->getIdx());
       }
     }

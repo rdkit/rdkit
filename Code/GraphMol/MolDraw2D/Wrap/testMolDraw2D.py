@@ -42,6 +42,13 @@ class TestCase(unittest.TestCase):
     def testPrepareForDrawing(self):
         m = Chem.MolFromSmiles('c1ccccc1[C@H](F)Cl')
         nm = rdMolDraw2D.PrepareMolForDrawing(m)
+        self.assertEqual(nm.GetNumAtoms(),9)
+        self.assertEqual(nm.GetNumConformers(),1)
+        m = Chem.MolFromSmiles('C1CC[C@H]2NCCCC2C1')
+        nm = rdMolDraw2D.PrepareMolForDrawing(m)
+        self.assertEqual(nm.GetNumAtoms(),11)
+        self.assertEqual(nm.GetNumConformers(),1)
+        nm = rdMolDraw2D.PrepareMolForDrawing(m,addChiralHs=False)
         self.assertEqual(nm.GetNumAtoms(),10)
         self.assertEqual(nm.GetNumConformers(),1)
 

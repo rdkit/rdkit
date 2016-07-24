@@ -462,20 +462,25 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       if (res.find(bid) == res.end()) {
         // very strong preference for Hs:
         if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.push_back(
-              std::make_pair(-1000, bid));  // lower than anything else can be
+          nbrScores.push_back(std::make_pair(
+              -1000000, bid));  // lower than anything else can be
           continue;
         }
-        int nbrScore = 0;
+        // prefer lower atomic numbers:
+        int nbrScore = bond->getOtherAtom(atom)->getAtomicNum();
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
         int oIdx = bond->getOtherAtomIdx(idx);
         if (nChiralNbrs[oIdx] < noNbrs) {
           // the counts are negative, so we have to subtract them off
-          nbrScore -= 10 * nChiralNbrs[oIdx];
+          nbrScore -= 1000 * nChiralNbrs[oIdx];
         }
+        // prefer bonds to non-ring atoms:
+        nbrScore += 100 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
-        nbrScore += mol.getRingInfo()->numBondRings(bid);
+        nbrScore += 100 * mol.getRingInfo()->numBondRings(bid);
+        // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
+        //           << nbrScore << std::endl;
         nbrScores.push_back(std::make_pair(nbrScore, bid));
       }
     }
@@ -1069,7 +1074,6 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
                         singleBondNbrs[nbrBond->getIdx()].end(),
                         (*bondIt)->getIdx()) ==
               singleBondNbrs[nbrBond->getIdx()].end()) {
-
             singleBondNbrs[nbrBond->getIdx()].push_back((*bondIt)->getIdx());
           }
         }

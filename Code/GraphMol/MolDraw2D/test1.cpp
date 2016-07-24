@@ -618,87 +618,129 @@ void test7() {
 
 void test8PrepareMolForDrawing() {
   std::cout << " ----------------- Test8: PrepareMolDrawing" << std::endl;
-  std::string smiles = "c1ccccc1[C@H](F)Cl";
-  ROMol *m = SmilesToMol(smiles);
-  TEST_ASSERT(m);
   {
-    RWMol nm(*m);
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(!nm.getConformer().is3D());
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-    TEST_ASSERT(nm.getAtomWithIdx(9)->getAtomicNum() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::BEGINDASH);
+    std::string smiles = "c1ccccc1[C@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm);
+      TEST_ASSERT(nm.getNumAtoms() == 9);  // this is a test for github #982
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(!nm.getConformer().is3D());
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() !=
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+      TEST_ASSERT(nm.getBondBetweenAtoms(6, 7)->getBondType() == Bond::SINGLE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(6, 7)->getBondDir() ==
+                  Bond::BEGINWEDGE);
 
-    // make sure we can do it again:
-    MolDraw2DUtils::prepareMolForDrawing(nm);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-  }
-  {
-    RWMol nm(*m);
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm, false);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-  }
-  {
-    RWMol nm(*m);
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm, false, false);
-    TEST_ASSERT(nm.getNumAtoms() == 9);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-  }
-  {
-    RWMol nm(*m);
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm, false, true);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-  }
+      // make sure we can do it again:
+      MolDraw2DUtils::prepareMolForDrawing(nm);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() !=
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    }
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm, false);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() ==
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    }
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm, false, false);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() ==
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    }
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm, false, true);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() ==
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+    }
 
-  {
-    RWMol nm(*m);
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm, true, true, false);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() != Bond::AROMATIC);
-    TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
-    TEST_ASSERT(nm.getAtomWithIdx(9)->getAtomicNum() == 1);
-    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(nm.getBondBetweenAtoms(6, 9)->getBondDir() == Bond::NONE);
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm, true, true, false);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getBondType() !=
+                  Bond::AROMATIC);
+      TEST_ASSERT(nm.getBondBetweenAtoms(0, 1)->getIsAromatic());
+      TEST_ASSERT(nm.getBondBetweenAtoms(6, 7)->getBondType() == Bond::SINGLE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(6, 7)->getBondDir() == Bond::NONE);
+    }
+
+    {
+      // by default we don't force conformer generation
+      RWMol nm(*m);
+      RDDepict::compute2DCoords(nm);
+      nm.getConformer().set3D(true);  // it's not really, we're cheating
+      TEST_ASSERT(nm.getNumAtoms() == 9)
+      MolDraw2DUtils::prepareMolForDrawing(nm);
+      TEST_ASSERT(nm.getNumAtoms() == 9);
+      TEST_ASSERT(nm.getNumConformers() == 1);  // we have a conformer anyway
+      TEST_ASSERT(nm.getConformer().is3D());
+
+      // but if we do force, it blows out that conformer:
+      MolDraw2DUtils::prepareMolForDrawing(nm, true, true, true, true);
+      TEST_ASSERT(!nm.getConformer().is3D());
+    }
+
+    delete m;
   }
-
   {
-    // by default we don't force conformer generation
-    RWMol nm(*m);
-    RDDepict::compute2DCoords(nm);
-    nm.getConformer().set3D(true);  // it's not really, we're cheating
-    TEST_ASSERT(nm.getNumAtoms() == 9)
-    MolDraw2DUtils::prepareMolForDrawing(nm);
-    TEST_ASSERT(nm.getNumAtoms() == 10);
-    TEST_ASSERT(nm.getNumConformers() == 1);  // we have a conformer anyway
-    TEST_ASSERT(nm.getConformer().is3D());
+    std::string smiles = "C1CC[C@H]2NCCCC2C1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 10)
+      MolDraw2DUtils::prepareMolForDrawing(nm);
+      TEST_ASSERT(nm.getNumAtoms() == 11);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(!nm.getConformer().is3D());
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 10)->getBondType() == Bond::SINGLE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 10)->getBondDir() ==
+                  Bond::BEGINDASH);
 
-    // but if we do force, it blows out that conformer:
-    MolDraw2DUtils::prepareMolForDrawing(nm, true, true, true, true);
-    TEST_ASSERT(!nm.getConformer().is3D());
+      // make sure we can do it again:
+      MolDraw2DUtils::prepareMolForDrawing(nm);
+      TEST_ASSERT(nm.getNumAtoms() == 11);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 10)->getBondType() == Bond::SINGLE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 10)->getBondDir() ==
+                  Bond::BEGINDASH);
+    }
+    {
+      RWMol nm(*m);
+      TEST_ASSERT(nm.getNumAtoms() == 10)
+      MolDraw2DUtils::prepareMolForDrawing(nm, false, false);
+      TEST_ASSERT(nm.getNumAtoms() == 10);
+      TEST_ASSERT(nm.getNumConformers() == 1);
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 2)->getBondType() == Bond::SINGLE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(3, 2)->getBondDir() ==
+                  Bond::BEGINWEDGE);
+    }
+    delete m;
   }
-
-  delete m;
   std::cerr << " Done" << std::endl;
 }
 
