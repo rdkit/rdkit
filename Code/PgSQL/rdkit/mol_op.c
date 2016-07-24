@@ -278,7 +278,7 @@ PG_FUNCTION_INFO_V1(mol_adjust_query_properties);
 Datum mol_adjust_query_properties(PG_FUNCTION_ARGS) {
   CROMol mol;
   fcinfo->flinfo->fn_extra =
-      SearchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(0), NULL, &mol, NULL);
   Assert(mol != 0);
   char *data = PG_GETARG_CSTRING(1);
