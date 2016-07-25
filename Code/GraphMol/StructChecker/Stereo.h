@@ -46,6 +46,13 @@ void RemoveDubiousStereochemistry(RWMol& mol);
     */
 bool CheckStereo(const ROMol& mol);
 
+    /*
+    * Checks if any two atoms in *mp come closer than 10% of the
+    * average bond length or if an atom is too close the line
+    * between two bonded atoms.
+    */
+bool AtomClash(RWMol &mol, double clash_limit);
+
  }
 }
 

@@ -158,8 +158,7 @@ int FixDubious3DMolecule(RWMol &mol) {
     std::vector<Neighbourhood> neighbour_array;
     std::vector<RDGeom::Point3D> atomPoint(mol.getNumAtoms()); // X,Y,Z coordinates of each atom
 
-
-// take / compute X,Y,Z coordinates of each atom
+// X,Y,Z coordinates of each atom
     non_zero_z = getMolAtomPoints(mol, atomPoint);
     // At first check if this is a trivial case i.e. designated '2D'
     // and count the number of stereo bonds
@@ -658,6 +657,80 @@ bool CheckStereo(const ROMol& mol) {
             result = false;
     }
     return result;
+}
+
+bool AtomClash(RWMol &mol, double clash_limit) {
+    /*
+    * Checks if any two atoms in *mp come closer than 10% of the
+    * average bond length or if an atom is too close the line
+    * between two bonded atoms.
+    */
+    double bond_square_median, dist, min_dist;
+    double rr, rb, bb, h;
+    std::vector<RDGeom::Point3D> atomPoint(mol.getNumAtoms()); // X,Y,Z coordinates of each atom
+
+    getMolAtomPoints(mol, atomPoint);
+
+    // compute median of square of bond lenght (quick/dirty)
+    if (mol.getNumBonds() == 0)
+        return false;
+    std::vector<double> blengths(mol.getNumBonds());
+    blengths[0] = 1.0;
+
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        const Bond* bond = mol.getBondWithIdx(i);
+        unsigned a1 = bond->getBeginAtomIdx();
+        unsigned a2 = bond->getEndAtomIdx();
+        blengths[i] = (atomPoint[a1].x - atomPoint[a2].x)*(atomPoint[a1].x - atomPoint[a2].x) +
+                      (atomPoint[a1].y - atomPoint[a2].y)*(atomPoint[a1].y - atomPoint[a2].y);
+    }
+    for (unsigned i = 1; i <  mol.getNumBonds(); i++)
+        for (unsigned j = i - 1; j >= 0; j--)
+            if (blengths[j] > blengths[j + 1]) {
+                h = blengths[j];
+                blengths[j] = blengths[j + 1];
+                blengths[j + 1] = h;
+            }
+            else
+                break;
+    bond_square_median = blengths[mol.getNumBonds() / 2];
+
+    // Check if two atoms get too close to each other
+    min_dist = bond_square_median;
+    for (unsigned i = 0; i < mol.getNumAtoms(); i++)
+        for (unsigned j = i + 1; j < mol.getNumAtoms(); j++) {
+            dist = (atomPoint[i].x - atomPoint[j].x)*(atomPoint[i].x - atomPoint[j].x) +
+                   (atomPoint[i].y - atomPoint[j].y)*(atomPoint[i].y - atomPoint[j].y);
+            if (dist < clash_limit*clash_limit*bond_square_median) {
+                return true;
+            }
+            if (dist < min_dist)
+                min_dist = dist;
+        }
+
+    // check if atom lies on top of some bond
+    for (unsigned i = 0; i < mol.getNumBonds(); i++) {
+        const Bond* bond = mol.getBondWithIdx(i);
+        unsigned a1 = bond->getBeginAtomIdx();
+        unsigned a2 = bond->getEndAtomIdx();
+        for (unsigned j = 0; j < mol.getNumAtoms(); j++) {
+            if (a1 == j || a2 == j)
+                continue;
+            rr = (atomPoint[j].x - atomPoint[a1].x)*(atomPoint[j].x  - atomPoint[a1].x) +
+                 (atomPoint[j].y - atomPoint[a1].y)*(atomPoint[j].y  - atomPoint[a1].y);
+            bb = (atomPoint[a2].x - atomPoint[a1].x)*(atomPoint[a2].x- atomPoint[a1].x) +
+                 (atomPoint[a2].y - atomPoint[a1].y)*(atomPoint[a2].y- atomPoint[a1].y);
+            rb = (atomPoint[j].x - atomPoint[a1].x)*(atomPoint[a2].x - atomPoint[a1].x) +
+                 (atomPoint[j].y - atomPoint[a1].y)*(atomPoint[a2].y - atomPoint[a1].y);
+            if (0 <= rb  &&   // cos alpha > 0 
+                rb <= bb &&  // projection of r onto b does not exceed b 
+                (rr*bb - rb*rb) / (bb + EPS) <       // distance from bond < limit 
+                clash_limit*clash_limit*bond_square_median) {
+                return true;
+            }
+        }
+    }
+    return false;     /* no clash */
 }
 
  }// namespace StructureCheck

@@ -149,6 +149,34 @@ void test1()
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+//--------------------------------------------------------------------------
+
+void testStereo() // stereochemistry
+{
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "testStereo\n";
+    const char* smols[] = {
+        "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC=C", //Pyrethrin II (C22H28O5)
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)"
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1", //Glucose (glucopyranose) (C6H12O6)
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2" // Bergenin (cuscutin) (a resin) (C14H16O9)
+    };
+
+    StructCheckerOptions options;
+    options.Verbose = true;
+    StructChecker chk(options);
+    for (int i = 0; i<sizeof(smols) / sizeof(smols[0]); i++) {
+        BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
+        RWMol* mol = SmilesToMol(smols[i]);
+        TEST_ASSERT(mol);
+        unsigned flags = chk.checkMolStructure(*mol);
+        delete mol;
+        BOOST_LOG(rdInfoLog) << "......... results ........\n";
+        TEST_ASSERT(true);
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 //==============================================================================
 
 int main(int argc, const char* argv[])
@@ -156,10 +184,17 @@ int main(int argc, const char* argv[])
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
 
+    testStereo();
+
     testFlags();
     testOptions();
+    try {
+        testLoadOptionsFromFiles();
+    }
+    catch (...) {
+        // relative path to patern files must be correct !
+    }
     test1();
-    testLoadOptionsFromFiles();
 
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;

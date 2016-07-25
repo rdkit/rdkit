@@ -6,5 +6,5 @@ rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.
               DEST GraphMol/StructChecker)
 
 rdkit_test(testStructChecker  testStructChecker.cpp 
-           LINK_LIBRARIES StructChecker ChemTransforms Depictor FileParsers SmilesParse 
+           LINK_LIBRARIES StructChecker ChemTransforms Depictor Descriptors FileParsers SmilesParse 
                            GraphMol RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS})

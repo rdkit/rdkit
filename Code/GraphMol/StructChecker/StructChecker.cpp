@@ -22,7 +22,8 @@ namespace RDKit {
             && (mol.getNumAtoms() > Options.MaxMolSize || mol.getNumBonds() > Options.MaxMolSize)) {
             return SIZE_CHECK_FAILED;
         }
-        mol.getRingInfo()->initialize();
+        if( ! mol.getRingInfo()->isInitialized())
+            mol.getRingInfo()->initialize();
 
 /* it uses SDL text
         if (Options.ConvertAtomTexts)
@@ -106,9 +107,11 @@ namespace RDKit {
             charge_bad = !tmp;
             flags |= (charge_bad ? BAD_MOLECULE : RECHARGED);
         }
-
-        if (Options.CheckCollisions && AtomClash(mol))
+*/
+        double clashLimit = 0.15; // see void SetCollisionLimit(int percent)
+        if (Options.CheckCollisions && AtomClash(mol, clashLimit))
             flags |= ATOM_CLASH;
+/*
         if (! Options.GoodAtoms.empty() && ! CheckAtoms(mol, Options.GoodAtoms))
             flags |= ATOM_CHECK_FAILED;
 */
@@ -157,7 +160,8 @@ namespace RDKit {
 // the end:
         if (0 != (flags & TRANSFORMED)) {   // sanitaze molecule
 //???? .............. ????
-            mol.getRingInfo()->initialize();
+            if (!mol.getRingInfo()->isInitialized())
+                mol.getRingInfo()->initialize();
         }
         return flags;
     }

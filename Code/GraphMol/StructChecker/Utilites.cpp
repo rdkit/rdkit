@@ -53,5 +53,6 @@ namespace RDKit {
             }
             return non_zero_z;
         }
+
  }// namespace StructureCheck
 } // namespace RDKit
