@@ -1143,8 +1143,8 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 76.0616,71.485 "
-                          "63.338,93.5239 130.309,117.496' "
+    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+                          "65.8827,89.1161 130.309,117.496' "
                           "style='fill:#000000") != std::string::npos);
     delete m;
   }
@@ -1194,8 +1194,8 @@ M  END";
     std::ofstream outs("test983_2.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<svg:path d='M 107.911,115.963 82.1365,89.2897 "
-                          "74.3974,100.068 107.911,115.963' "
+    TEST_ASSERT(text.find("<svg:path d='M 107.911,115.963 80.5887,91.4454 "
+                          "75.9452,97.9126 107.911,115.963' "
                           "style='fill:#000000;") != std::string::npos);
 
     MolDraw2DUtils::prepareMolForDrawing(*m);
