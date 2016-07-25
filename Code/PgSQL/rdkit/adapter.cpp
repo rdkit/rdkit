@@ -55,6 +55,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #ifdef BUILD_INCHI_SUPPORT
@@ -596,23 +597,33 @@ extern "C" CROMol MolMurckoScaffold(CROMol i) {
 }
 
 namespace {
+typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
-MolOps::AdjustQueryWhichFlags parseWhichString(const std::string &v) {
-  if (v == "IGNORENONE") {
-    return MolOps::ADJUST_IGNORENONE;
-  } else if (v == "IGNORERINGATOMS") {
-    return MolOps::ADJUST_IGNORERINGATOMS;
-  } else if (v == "IGNORECHAINATOMS") {
-    return MolOps::ADJUST_IGNORECHAINATOMS;
-  } else if (v == "IGNOREDUMMIES") {
-    return MolOps::ADJUST_IGNOREDUMMIES;
-  } else if (v == "IGNORENONDUMMIES") {
-    return MolOps::ADJUST_IGNORENONDUMMIES;
-  } else if (v == "IGNOREALL") {
-    return MolOps::ADJUST_IGNOREALL;
-  } else {
-    throw ValueErrorException("Bad which string provided");
+unsigned int parseWhichString(const std::string &txt) {
+  unsigned int res = MolOps::ADJUST_IGNORENONE;
+  boost::char_separator<char> sep("|");
+  tokenizer tokens(txt, sep);
+  tokenizer::iterator token = tokens.begin();
+  while (token != tokens.end()) {
+    std::string v = *token;
+    ++token;
+    if (v == "IGNORENONE") {
+      res |= MolOps::ADJUST_IGNORENONE;
+    } else if (v == "IGNORERINGATOMS") {
+      res |= MolOps::ADJUST_IGNORERINGATOMS;
+    } else if (v == "IGNORECHAINATOMS") {
+      res |= MolOps::ADJUST_IGNORECHAINATOMS;
+    } else if (v == "IGNOREDUMMIES") {
+      res |= MolOps::ADJUST_IGNOREDUMMIES;
+    } else if (v == "IGNORENONDUMMIES") {
+      res |= MolOps::ADJUST_IGNORENONDUMMIES;
+    } else if (v == "IGNOREALL") {
+      res |= MolOps::ADJUST_IGNOREALL;
+    } else {
+      elog(ERROR, "bad which string provided '%s'", v.c_str());
+    }
   }
+  return res;
 }
 
 void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
