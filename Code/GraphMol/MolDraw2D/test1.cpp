@@ -1148,6 +1148,72 @@ M  END";
                           "style='fill:#000000") != std::string::npos);
     delete m;
   }
+  {
+    std::string mb =
+        "\n\
+  Mrv1561 07241616282D\n\
+\n\
+ 12 12  0  0  1  0            999 V2000\n\
+   10.4656   -7.9623    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    9.7496   -8.3748    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n\
+    8.9075   -9.4746    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+    7.5671   -9.4746    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    8.2373   -8.9934    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    8.6497  -10.2651    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    9.0392   -7.9623    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    7.8249  -10.2651    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    7.1547  -10.1792    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.8567   -9.0622    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   10.3338   -8.9591    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    8.6841   -8.6669    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  0  0  0  0\n\
+  3  2  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  5  3  1  0  0  0  0\n\
+  6  3  1  0  0  0  0\n\
+  7  2  1  0  0  0  0\n\
+  8  6  1  0  0  0  0\n\
+  9  4  1  0  0  0  0\n\
+ 10  4  1  0  0  0  0\n\
+  2 11  1  6  0  0  0\n\
+  3 12  1  6  0  0  0\n\
+  8  4  1  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 4)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 4)->getBondDir() == Bond::BEGINWEDGE);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test983_2.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("<svg:path d='M 107.911,115.963 82.1365,89.2897 "
+                          "74.3974,100.068 107.911,115.963' "
+                          "style='fill:#000000;") != std::string::npos);
+
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 4)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 4)->getBondDir() == Bond::BEGINWEDGE);
+
+    RWMol nm(*m);
+    MolDraw2DUtils::prepareMolForDrawing(nm);
+    TEST_ASSERT(nm.getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(2, 1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(2, 4)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(nm.getBondBetweenAtoms(2, 4)->getBondDir() == Bond::BEGINWEDGE);
+
+    delete m;
+  }
+
   std::cerr << " Done" << std::endl;
 }
 

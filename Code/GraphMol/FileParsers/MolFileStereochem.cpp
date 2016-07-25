@@ -379,8 +379,12 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (bond->getBondDir() == Bond::BEGINWEDGE ||
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
-      nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
-      // std::cerr<<"skip: "<<bond->getBeginAtomIdx()<<std::endl;
+      if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+          bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+        nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
+      else if (bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+               bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+        nChiralNbrs[bond->getEndAtomIdx()] = noNbrs + 1;
     }
   }
 
@@ -390,7 +394,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
        ++cai) {
     const Atom *at = *cai;
     if (nChiralNbrs[at->getIdx()] > noNbrs) {
-      // std::cerr<<" SKIPPING1: "<<at->getIdx()<<std::endl;
+      // std::cerr << " SKIPPING1: " << at->getIdx() << std::endl;
       continue;
     }
     Atom::ChiralType type = at->getChiralTag();
@@ -421,12 +425,14 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
               Rankers::argless<INT_VECT>(nChiralNbrs));
   }
 #if 0
-    std::cerr<<"  nbrs: ";
-    std::copy(nChiralNbrs.begin(),nChiralNbrs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<std::endl;
-    std::cerr<<"  order: ";
-    std::copy(indices.begin(),indices.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<std::endl;
+  std::cerr << "  nbrs: ";
+  std::copy(nChiralNbrs.begin(), nChiralNbrs.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
+  std::cerr << "  order: ";
+  std::copy(indices.begin(), indices.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
 #endif
   // picks a bond for each atom that we will wedge when we write the mol file
   // here is what we are going to do
@@ -440,7 +446,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   INT_MAP_INT res;
   BOOST_FOREACH (unsigned int idx, indices) {
     if (nChiralNbrs[idx] > noNbrs) {
-      // std::cerr<<" SKIPPING2: "<<idx<<std::endl;
+      // std::cerr << " SKIPPING2: " << idx << std::endl;
       continue;  // already have a wedged bond here
     }
     const Atom *atom = mol.getAtomWithIdx(idx);
@@ -476,14 +482,15 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         int oIdx = oatom->getIdx();
         if (nChiralNbrs[oIdx] < noNbrs) {
           // the counts are negative, so we have to subtract them off
-          nbrScore -= 1000 * nChiralNbrs[oIdx];
+          nbrScore -= 10000 * nChiralNbrs[oIdx];
         }
         // prefer bonds to non-ring atoms:
         nbrScore += 1000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
         nbrScore += 1000 * mol.getRingInfo()->numBondRings(bid);
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
-        //           << nbrScore << std::endl;
+        //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
+        //           << std::endl;
         nbrScores.push_back(std::make_pair(nbrScore, bid));
       }
     }
