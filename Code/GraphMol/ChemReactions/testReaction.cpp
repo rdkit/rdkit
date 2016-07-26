@@ -5927,6 +5927,33 @@ void test62Github975() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testCopyConstructor() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing copy constructor" << std::endl;
+
+  {
+    std::string smi =
+        "[C:1][C:2][C:3]([O:4])([N:5])[Cl:6]>>[Cl:6].[C:2][C:3]([O:4])([N:5])["
+        "C:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    std::string smi1 = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(rxn);
+    ChemicalReaction *rxn_new = new ChemicalReaction(*rxn);
+    removeMappingNumbersFromReactions(*rxn_new);
+    std::string smi2 = ChemicalReactionToRxnSmiles(*rxn);
+    std::string new_smi = ChemicalReactionToRxnSmiles(*rxn_new);
+    TEST_ASSERT(smi1 == smi2);
+    TEST_ASSERT(smi2 != new_smi);
+    TEST_ASSERT(new_smi == "CCC(N)(O)Cl>>CC(C)(N)O.Cl");
+
+    delete rxn;
+    delete rxn_new;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6002,6 +6029,7 @@ int main() {
   test60RunSingleReactant();
   test61Github685();
   test62Github975();
+  testCopyConstructor();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
