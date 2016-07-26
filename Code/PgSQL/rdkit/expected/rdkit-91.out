@@ -771,3 +771,77 @@ select 'C1CC1C(C)OC'::mol @> mol_adjust_query_properties('C1CC1CO*'::mol,'{"adju
  f
 (1 row)
 
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORENONE"}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNOREALL"}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINATOMS"}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS"}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS|IGNORECHAINATOMS"}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORENONE"}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNOREALL"}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINATOMS"}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS"}');
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS|IGNORECHAINATOMS"}');
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"bogus"}');
+ERROR:  bad which string provided 'BOGUS'
