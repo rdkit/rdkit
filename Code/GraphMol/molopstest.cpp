@@ -3335,6 +3335,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     ROMol *m = MolFileToMol(pathName + "Issue2951221.1.mol");
     TEST_ASSERT(m);
+    TEST_ASSERT(m->getConformer().is3D());
     ROMol *m2 = MolOps::addHs(*m, false, true);
     TEST_ASSERT(m2);
     delete m;
@@ -3349,6 +3350,7 @@ void testSFNetIssue2951221() {
             .dotProduct(
                 (coords[1] - coords[0]).crossProduct(coords[2] - coords[0]));
     TEST_ASSERT(dot > 1.0);
+    delete m2;
   }
 
   {
@@ -3366,6 +3368,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
+    delete m2;
   }
   {
     std::string pathName = getenv("RDBASE");
@@ -3382,6 +3385,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
+    delete m2;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -5416,9 +5420,10 @@ void testAdjustQueryProperties() {
       TEST_ASSERT(SubstructMatch(*m, *aqm, match));
 
       delete aqm;
-      aqp.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;  // neither "not dummy"
-                                                        // nor "in ring"
-                                                        // restrictions
+      aqp.adjustRingCountFlags =
+          MolOps::ADJUST_IGNORENONE;  // neither "not dummy"
+                                      // nor "in ring"
+                                      // restrictions
       aqm = MolOps::adjustQueryProperties(*qm, &aqp);
       TEST_ASSERT(aqm);
       TEST_ASSERT(aqm->getNumAtoms() == 6);
@@ -5485,19 +5490,27 @@ void testAdjustQueryProperties() {
     delete qm;
     delete aqm;
   }
-  { // CTAB
+  {  // CTAB
     //  -- only match rgroups
-    std::string mb = "adjust.mol\n"
+    std::string mb =
+        "adjust.mol\n"
         "  ChemDraw06271617272D\n"
         "\n"
         "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
-        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  "
+        "0\n"
         "  1  2  1  0      \n"
         "  2  3  2  0      \n"
         "  3  4  1  0      \n"
@@ -5509,34 +5522,43 @@ void testAdjustQueryProperties() {
     MolOps::AdjustQueryParameters params;
     params.aromatizeIfPossible = true;
     params.makeDummiesQueries = true;
-    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
-                                 MolOps::ADJUST_IGNOREMAPPED );
-    
+    params.adjustDegreeFlags =
+        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+         MolOps::ADJUST_IGNOREMAPPED);
+
     RWMol *m = MolBlockToMol(mb);
     MolOps::adjustQueryProperties(*m, &params);
     MatchVectType match;
     ROMol *t = SmilesToMol("c1ccccc1Cl");
-    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    TEST_ASSERT(SubstructMatch(*t, *m, match));
     delete t;
     // shouldn't match (explicit degree)
     t = SmilesToMol("c1ccc(Cl)cc1Cl");
-    TEST_ASSERT(!SubstructMatch(*t,*m,match));
+    TEST_ASSERT(!SubstructMatch(*t, *m, match));
     delete m;
   }
 
-  { // CTAB
+  {  // CTAB
     //  -- match non rgroups if mapped
-    std::string mb = "adjust.mol\n"
+    std::string mb =
+        "adjust.mol\n"
         "  ChemDraw06271617272D\n"
         "\n"
         "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
-        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
-        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
-        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
-        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
-        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
-        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0\n"
-        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0\n"
+        "   -1.0717    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  "
+        "0\n"
+        "   -1.0717   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  "
+        "0\n"
+        "   -0.3572   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  "
+        "0\n"
+        "    0.3572   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  "
+        "0\n"
+        "    0.3572    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  "
+        "0\n"
+        "   -0.3572    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  "
+        "0\n"
+        "    1.0717    0.8250    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  "
+        "0\n"
         "  1  2  1  0      \n"
         "  2  3  2  0      \n"
         "  3  4  1  0      \n"
@@ -5548,18 +5570,19 @@ void testAdjustQueryProperties() {
     MolOps::AdjustQueryParameters params;
     params.aromatizeIfPossible = true;
     params.makeDummiesQueries = true;
-    params.adjustDegreeFlags = ( MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
-                                 MolOps::ADJUST_IGNOREMAPPED );
-    
+    params.adjustDegreeFlags =
+        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+         MolOps::ADJUST_IGNOREMAPPED);
+
     RWMol *m = MolBlockToMol(mb);
     MolOps::adjustQueryProperties(*m, &params);
     MatchVectType match;
     ROMol *t = SmilesToMol("c1ccccc1Cl");
-    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    TEST_ASSERT(SubstructMatch(*t, *m, match));
     delete t;
     // should match (mapped!)
     t = SmilesToMol("c1c(Cl)cc(Cl)cc1Cl");
-    TEST_ASSERT(SubstructMatch(*t,*m,match));
+    TEST_ASSERT(SubstructMatch(*t, *m, match));
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -6156,6 +6179,29 @@ void testGithubIssue868() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue908() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 908: "
+                          "AddHs() using 3D coordinates with 2D conformations"
+                       << std::endl;
+  {
+    std::string mb =
+        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n "
+        "  -0.0000   -1.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0 "
+        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  "
+        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0 "
+        " 0  0\n  2  1  1  1\n  2  3  1  0\n  2  4  1  0\nM  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(4).z, 0.0));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6247,5 +6293,7 @@ int main() {
   testGithubIssue868();
   testSimpleAromaticity();
   testCustomAromaticity();
+  testGithubIssue908();
+
   return 0;
 }
