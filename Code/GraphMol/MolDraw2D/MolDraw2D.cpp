@@ -158,8 +158,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   extractAtomCoords(mol, confId);
   extractAtomSymbols(mol);
   calculateScale();
-  setFontSize(font_size_);
-
+  // make sure the font doesn't end up too large (the constants are empirical)
+  if (scale_ <= 40.) {
+    setFontSize(font_size_);
+  } else {
+    setFontSize(font_size_ * 30. / scale_);
+  }
+  // std::cerr << "scale: " << scale_ << " font_size_: " << font_size_
+  //           << std::endl;
   if (drawOptions().includeAtomTags) {
     tagAtoms(mol);
   }
@@ -746,8 +752,17 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       }
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
-      if (at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+      // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
+      //           << bond->getBeginAtomIdx() << "-" << bond->getEndAtomIdx()
+      //           << std::endl;
+      // swap the direction if at1 has does not have stereochem set
+      // or if at2 does have stereochem set and the bond starts there
+      if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+           at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
+          (at1->getIdx() != bond->getBeginAtomIdx() &&
+           (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+            at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
+        // std::cerr << "  swap" << std::endl;
         swap(at1_cds, at2_cds);
         swap(col1, col2);
       }
@@ -807,6 +822,11 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                                const DrawColour &col2) {
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D disp = perp * 0.15;
+  // make sure the displacement isn't too large using the current scale factor
+  // (part of github #985)
+  // the constants are empirical to make sure that the wedge is visible, but not
+  // absurdly large.
+  if (scale_ > 40) disp *= .6;
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 

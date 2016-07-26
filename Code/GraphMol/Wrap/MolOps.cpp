@@ -1902,6 +1902,8 @@ Attributes:\n\
       controls which atoms have a ring-cout query added \n\
   - makeDummiesQueries: \n\
       dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
+  - aromatizeIfPossible: \n\
+      attempts aromaticity perception on the molecule \n\
 \n\
 A note on the flags controlling which atoms are modified: \n\
    These generally limit the set of atoms to be modified.\n\
@@ -1920,7 +1922,9 @@ A note on the flags controlling which atoms are modified: \n\
         .def_readwrite("adjustRingCountFlags",
                        &MolOps::AdjustQueryParameters::adjustRingCountFlags)
         .def_readwrite("makeDummiesQueries",
-                       &MolOps::AdjustQueryParameters::makeDummiesQueries);
+                       &MolOps::AdjustQueryParameters::makeDummiesQueries)
+        .def_readwrite("aromatizeIfPossible",
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible);
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "
