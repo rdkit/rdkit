@@ -58,6 +58,42 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
   MolDraw2D::setColour(col);
 }
 
+void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                                const DrawColour &col1, const DrawColour &col2,
+                                unsigned int nSegments, double vertOffset) {
+  if (nSegments % 2)
+    ++nSegments;  // we're going to assume an even number of segments
+  setColour(col1);
+
+  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D delta = (cds2 - cds1);
+  perp *= vertOffset;
+  delta /= nSegments;
+
+  Point2D c1 = getDrawCoords(cds1);
+
+  std::string col = DrawColourToSVG(colour());
+  unsigned int width = lineWidth();
+  d_os << "<svg:path ";
+  d_os << "d='M" << c1.x << "," << c1.y;
+  for (unsigned int i = 0; i < nSegments; ++i) {
+    Point2D startpt = cds1 + delta * i;
+    Point2D segpt = getDrawCoords(startpt + delta);
+    Point2D cpt1 =
+        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D cpt2 =
+        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
+         << " " << segpt.x << "," << segpt.y;
+  }
+  d_os << "' ";
+
+  d_os << "style='fill:none;stroke:" << col << ";stroke-width:" << width
+       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       << "'";
+  d_os << " />\n";
+}
+
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
   Point2D c1 = getDrawCoords(cds1);
