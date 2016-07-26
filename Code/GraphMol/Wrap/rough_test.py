@@ -3065,6 +3065,14 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m,qps)
     self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
 
+    m = Chem.MolFromSmiles('C1=CC=CC=C1',sanitize=False)
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
+    qp = Chem.AdjustQueryParameters()
+    qp.aromatizeIfPossible = False
+    am = Chem.AdjustQueryProperties(m,qp)
+    self.assertFalse(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
+
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
