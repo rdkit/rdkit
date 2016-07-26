@@ -3335,6 +3335,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     ROMol *m = MolFileToMol(pathName + "Issue2951221.1.mol");
     TEST_ASSERT(m);
+    TEST_ASSERT(m->getConformer().is3D());
     ROMol *m2 = MolOps::addHs(*m, false, true);
     TEST_ASSERT(m2);
     delete m;
@@ -3349,6 +3350,7 @@ void testSFNetIssue2951221() {
             .dotProduct(
                 (coords[1] - coords[0]).crossProduct(coords[2] - coords[0]));
     TEST_ASSERT(dot > 1.0);
+    delete m2;
   }
 
   {
@@ -3366,6 +3368,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
+    delete m2;
   }
   {
     std::string pathName = getenv("RDBASE");
@@ -3382,6 +3385,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
+    delete m2;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

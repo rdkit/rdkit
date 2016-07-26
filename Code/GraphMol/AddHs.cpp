@@ -312,8 +312,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
               minDot = nbr1Vect.dotProduct(nbr3Vect);
               dirVect = nbr1Vect + nbr3Vect;
             }
+            dirVect *= -1;
           }
-          dirVect *= -1;
         } else {
           dirVect = nbr1Vect + nbr2Vect + nbr3Vect;
         }
