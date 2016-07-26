@@ -26,7 +26,7 @@ ifeq ($(USE_AVALON),1)
   AVALONREGRESS=avalon
 endif
 
-POPCOUNTFLAGS=-mpopcnt
+POPCOUNTFLAGS=-DUSE_BUILTIN_POPCOUNT -mpopcnt
 
 ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
@@ -47,7 +47,7 @@ SHLIB_LINK += -pthread
 
 SHLIB_LINK += ${THREADLIBS}
 
-PG_CPPFLAGS = -I${BOOSTHOME}/include -I${RDKIT}/Code -DRDKITVER='"007300"' ${AVALONFLAGS} ${INCHIFLAGS} -DUSE_BUILTIN_POPCOUNT ${POPCOUNTFLAGS}
+PG_CPPFLAGS = -I${BOOSTHOME}/include -I${RDKIT}/Code -DRDKITVER='"007300"' ${AVALONFLAGS} ${INCHIFLAGS} ${POPCOUNTFLAGS}
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-unused-function
