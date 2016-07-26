@@ -62,13 +62,13 @@ if(APPLE)
   set(CMAKE_EXE_LINKER_FLAGS "-bundle -multiply_defined suppress"
               "-Wl,-dead_strip_dylibs -bundle_loader ${PG_BINDIR}/postgres")
   add_executable("${EXTENSION}${EXTENSION_SUFFIX}"
-              adapter.cpp bfp_op.c sfp_op.c cache.c guc.c low_gist.c mol_op.c
+              adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
               rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
 else(APPLE)
   link_directories(${PostgreSQL_LIBRARY_DIRS})
   link_directories(${RDKit_LibDir})
   add_library(${EXTENSION} SHARED
-              adapter.cpp bfp_op.c sfp_op.c cache.c guc.c low_gist.c mol_op.c
+              adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
               rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
   target_link_libraries(${EXTENSION} ${PostgreSQL_LIBRARIES})
   if(WIN32)
