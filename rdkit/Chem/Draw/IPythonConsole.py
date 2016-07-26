@@ -1,5 +1,6 @@
 import sys
 import IPython
+import re
 
 if IPython.release.version < '0.11':
     raise ImportError('this module requires at least v0.11 of IPython')
@@ -134,6 +135,7 @@ def _toPNG(mol):
         d2d.FinishDrawing()
         return d2d.GetDrawingText()
 
+fontSizePattern = re.compile(".*font[-]size[:](.*)px")
 def _toSVG(mol):
     if not ipython_useSVG:
         return None
@@ -154,6 +156,23 @@ def _toSVG(mol):
     d2d.DrawMolecule(mc,highlightAtoms=highlightAtoms)
     d2d.FinishDrawing()
     svg = d2d.GetDrawingText()
+    # fix the svg for clipping text
+    maxFontSize = max( list(map(float, fontSizePattern.findall(svg))) + [0] )
+    if maxFontSize:
+        # hack to rescale the image so the fonts don't clip
+        # This assumes the first fontsize found is appropriate,
+        #  might want to use max
+        scale = min(1.0 - maxFontSize/molSize[0],
+                    1.0 - maxFontSize/molSize[1])
+        g = '<svg:g transform="translate(%d,%d) scale(%s,%s)">'%(
+            maxFontSize/2,maxFontSize/2,
+            scale,scale)
+        
+        pos = svg.find("<svg:rect")
+        pos2 = svg.find("</svg:svg>")
+        if pos >=0 and pos2 >=0:
+            svg = svg[:pos] + g + svg[pos:pos2] + "</svg:g></svg:svg>"
+                    
     return svg.replace("svg:","")
 
 
@@ -163,6 +182,12 @@ def _toReactionPNG(rxn):
     bio = BytesIO()
     img.save(bio,format='PNG')
     return bio.getvalue()
+
+def _toReactionSVG(rxn):
+    if not ipython_useSVG:
+        return None
+    svg = Draw.ReactionToSVG(rxn)
+    return svg.replace("svg:","")
 
 def _GetSubstructMatch(mol, query, **kwargs):
     res = mol.__GetSubstructMatch(query, **kwargs)
@@ -212,6 +237,7 @@ def InstallIPythonRenderer():
     if _canUse3D:
         rdchem.Mol._repr_html_ = _toJSON
     rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
+    rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
     if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
     rdchem.Mol.GetSubstructMatch = _GetSubstructMatch
@@ -232,6 +258,7 @@ def UninstallIPythonRenderer():
     if _canUse3D:
         del rdchem.Mol._repr_html_
     del rdChemReactions.ChemicalReaction._repr_png_
+    del rdChemReactions.ChemicalReaction._repr_svg_
     if hasattr(rdchem.Mol, '__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch = rdchem.Mol.__GetSubstructMatch
         del rdchem.Mol.__GetSubstructMatch

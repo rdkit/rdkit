@@ -2,11 +2,12 @@
 # Copyright (C) 2006-2016 Greg Landrum
 #  All Rights Reserved
 #
-import os,re
+import os,re,sys
 from rdkit.six import iteritems
+from rdkit.Chem import AllChem
 from rdkit.Chem.Draw.MolDrawing import MolDrawing,DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
-
+import logging
 def _getCanvas():
   useAGG=False
   useCairo=False
@@ -427,6 +428,230 @@ def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
     res.paste(nimg,(i*subImgSize[0],0))
   return res
 
+def is2D(conf):
+  """returns True if a conf has 2d coords"""
+  allZeroes = True
+  for atompos in range(conf.GetNumAtoms()):
+    x,y,z = conf.GetAtomPosition(atompos)
+    if z != 0.0:
+      return False
+    if x != 0.0 or y != 0.0:
+      allZeroes = False
+  return not allZeroes
+
+def _cleanupRXN(rxn):
+  """Cleanup reactions so the computed coords are sane for depiction"""
+  for mol in rxn.GetReactants():
+    compute2D=False
+    for conf in mol.GetConformers():
+      compute2D = not is2D(conf)
+
+    try:
+      AllChem.SanitizeMol(mol, 
+                          sanitizeOps=(AllChem.SanitizeFlags.SANITIZE_ALL^ 
+                                       AllChem.SanitizeFlags.SANITIZE_KEKULIZE))
+    except:
+      pass
+    if compute2D:
+      AllChem.Compute2DCoords(mol)
+
+  for mol in rxn.GetProducts():
+    compute2D=False
+    for conf in mol.GetConformers():
+      compute2D = not is2D(conf)
+    try:
+      AllChem.SanitizeMol(mol, 
+                          sanitizeOps=(AllChem.SanitizeFlags.SANITIZE_ALL^ 
+                                       AllChem.SanitizeFlags.SANITIZE_KEKULIZE))
+    except:
+      pass
+    if compute2D:
+      AllChem.Compute2DCoords(mol)  
+  return rxn
+
+#source https://commons.wikimedia.org/wiki/File:Tab_plus.svg
+#  creative commons license (need attribution?  Is link enough? Make our own?)
+
+svg_plus = '''<path d="M -5,95 L 25.950102,95" style="opacity:0.5;fill:#000000;fill-opacity:1 " id="p1" />
+<path d="M -5.4181532,95 L 25,95" style="opacity:0.5;fill:#000000;fill-opacity:0.5" id="p2" />
+<text x="6.9755859" y="14.5" style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;font-family:Arial" id="t" xml:space="preserve">
+<tspan x="6.9755859" y="14.5" style="font-size:14px;text-align:start;text-anchor:start" id="ts">+</tspan></text>
+'''
+
+svg_arrow = '''<path
+     d="M 14.770536,27.531746 25.418045,14.261996 14.729243,0.9901797 8.8071689,0.99322045 16.990033,11.257321 
+        l -16.96481647,0.0038 0.0052585,5.903094 17.07121297,0.001 -8.2708412,10.366437 5.9396892,0 z" />
+'''
+
+from xml.dom import minidom
+fontSizePattern = re.compile(".*font[-]size[:](.*)px")
+def getBBox(svg, width, height):
+  doc = minidom.parseString(svg)  # parseString also exists
+  # get all vector paths
+  path_strings = [path.getAttribute('d') for path
+                  in doc.getElementsByTagName('svg:path')]
+  minx = maxx = miny = maxy = None
+  for i,path in enumerate(path_strings):
+    if path and path[0] == "M":
+      try:
+        for x,y  in [map(float,el.split(",")) for el in path[1:].split(" ") if el]:
+          if minx is None or x < minx:
+            minx = x
+          if miny is None or y < miny:
+            miny = y
+          if maxx is None or x > maxx:
+            maxx = x
+          if maxy is None or y > maxy:
+            maxy = y
+      except ValueError:
+        pass
+
+  # find text areas, assume text is left justified
+  text = [(text.getAttribute('x'), text.getAttribute('y'),
+           text.getAttribute('style'),
+           text.getElementsByTagName('svg:tspan'))
+          for text in doc.getElementsByTagName("svg:text")]
+
+  # assumes fixed width, might be bogus, should at least be greater
+  for x,y,style,tspans in text:
+    try:
+      x = float(x)
+      y = float(y)
+      fontSize = max( list(map(float, fontSizePattern.findall(style))) + [0] )
+      # get the text width
+      count = 0
+      for tspan in tspans:
+        for child in tspan.childNodes:
+          if child.nodeValue:
+            count += len(child.nodeValue)
+            
+      if not count:
+        count = 1
+      xfontSize = fontSize*count
+      if minx is None or x < minx:
+        minx = x
+      if miny is None or y-fontSize < miny:
+        miny = y - fontSize
+      if maxx is None or x+xfontSize > maxx:
+        maxx = x + xfontSize
+      if maxy is None or y > maxy:
+        maxy = y
+
+        
+    except:
+      logging.exception()
+      pass
+    
+  if minx is None: minx = 0
+  if maxx is None: maxx = width
+  if miny is None: miny = 0
+  if maxy is None: maxy = height
+  return minx, maxx, miny, maxy
+
+def makeRect(minx, maxx, miny, maxy):
+  """Make an svg rectangle for debugging purposes"""
+  rect = "<svg:rect style='opacity:0.4;fill:#FF0000;stroke:#000000' width='%s' height='%s' x='%s' y='%s'> </svg:rect>" % (
+    maxx-minx, maxy-miny,
+    minx, miny)
+  return rect
+
+
+def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
+                  scaleRelative=False,
+                  debugRender=False,
+                  **kwargs):
+  """
+  """
+  matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>',re.DOTALL)
+  rect_matcher = re.compile("^(.*width=['])[^']*(.*)")
+  num_reactants = rxn.GetNumReactantTemplates()
+  num_products = rxn.GetNumProductTemplates()
+  # figure out sub image sizes
+  # make a copy so we don't obliterate the original
+  rxn = AllChem.ChemicalReaction(rxn)
+  mols = list(rxn.GetReactants()) + list(rxn.GetProducts())
+
+  # get the relative sizes of the molecules
+  relativeSizes = [float(m.GetNumAtoms()) for m in mols]
+  largest = max(relativeSizes)
+  if scaleRelative:
+    relativeSizes = [x/largest for x in relativeSizes]
+  else:
+    relativeSizes = [1.0] * len(relativeSizes)
+  
+  num_mols = len(mols)
+  svg_size = fullSize = (subImgSize[0] * num_mols + 20*num_reactants + 25, subImgSize[1])
+  
+  blocks = [''] * num_mols
+  hdr = ''
+  ftr='</svg:svg>'
+  rect = ''
+
+  _cleanupRXN(rxn)
+  xOffset = 0
+  xdelta = subImgSize[0]
+
+  # for each molecule make an svg and scale place it in the appropriate
+  #    position
+  top_layer = []
+  for col,mol in enumerate(mols):
+    scale = relativeSizes[col]
+    img_width = int(subImgSize[0] * scale)
+    img_height = int(subImgSize[1] * scale)
+    nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',False))
+    d2d = rdMolDraw2D.MolDraw2DSVG(img_width, img_height)
+    d2d.DrawMolecule(nmol)
+    d2d.FinishDrawing()
+    txt = d2d.GetDrawingText()
+    
+    # compute approx bbox
+    maxFontSize = max( list(map(float, fontSizePattern.findall(txt))) + [0] )
+    minx, maxx, miny, maxy = getBBox(txt, img_width, img_height)
+    
+    h,r,b = matcher.match(txt).groups()
+    if not hdr:
+      # header for the WHOLE image
+      hdr = h.replace("width='%dpx' height='%dpx' >"%(img_width, img_height),
+                      "width='%dpx' height='%dpx' >\n"%(fullSize[0], fullSize[1]))
+
+    if not rect:
+      rect = r
+
+    elem = rect + b + "\n"
+    if debugRender:
+      elem += makeRect(minx,maxx,miny,maxy) + "\n"
+
+    # now fit the "real" bbox into the image by subtracting the
+    #  bits we don't use
+    xOffset -= minx
+    
+    blocks.append('<g transform="translate(%d,%d)" >%s</g>'%(
+      xOffset, subImgSize[1]/2 - miny - (maxy-miny)/2,elem))
+
+    # add a nice offset for the next one
+    xOffset += xdelta*scale
+
+    # add the plus signs
+    if col < num_reactants - 1:
+      start,end = rect_matcher.match(rect.replace("opacity:1.0", "opacity:0.0")).groups()
+      elem = start + repr(20) + end + svg_plus
+      top_layer.append('<g transform="translate(%d,%d)" >%s</g>'%(
+        xOffset-10,subImgSize[1]/2.0 - 10,elem))
+      xOffset += 25
+
+    # add the arrow
+    if col == num_reactants-1:
+      start,end = rect_matcher.match(rect.replace("opacity:1.0", "opacity:0.0")).groups()
+      elem = start + repr(20) + end + svg_arrow
+      top_layer.append('<g transform="translate(%d,%d)" >%s</g>'%(
+        xOffset,subImgSize[1]/2.0 - 20,elem))
+      xOffset += 40
+
+  res = hdr + '\n'.join(blocks+top_layer)+ftr
+  if stripSVGNamespace:
+    res = res.replace('svg:','')
+
+  return res
 
 def MolToQPixmap(mol, size=(300,300), kekulize=True,  wedgeBonds=True,
                  fitImage=False, options=None, **kwargs):
@@ -453,3 +678,4 @@ def MolToQPixmap(mol, size=(300,300), kekulize=True,  wedgeBonds=True,
     drawer.AddMol(mol, **kwargs)
     canvas.flush()
     return canvas.pixmap
+
