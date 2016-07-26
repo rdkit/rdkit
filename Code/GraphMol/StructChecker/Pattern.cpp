@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <map>
+#include "Utilites.h"
 #include "Pattern.h"
 
 namespace RDKit {
@@ -168,6 +169,118 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
             mol.removeBond(bondsToRemove[i].first, bondsToRemove[i].second);
     }
     return transformed;
+}
+
+//-----------------------------------------------------------------------------
+/*
+* Tests if atom i in *mp matches the augmented atom description
+* *aap. nbp[] is used to speed up access to neighbour atoms and
+* bonds. The first matching atom mapping is placed into match[1..].
+* i is stored in match[0].
+*/
+
+static
+bool AAMatch(const ROMol &mol, unsigned i,
+    std::vector<unsigned> &match,
+    const AugmentedAtom *aap,
+    const std::vector<int> &atom_ring_status,
+    const std::vector<Neighbourhood> &nbp) {
+/*
+    if (nbp[i].n_ligands == aap[0].n_ligands &&
+        (aap[0].charge == ANY_CHARGE || mp->atom_array[i].charge == aap[0].charge) &&
+        (aap[0].radical == ANY_RADICAL || mp->atom_array[i].radical == aap[0].radical) &&
+        AtomSymbolMatch(mp->atom_array[i].atom_symbol, aap[0].atom_symbol))
+    {
+        if (0 != atom_ring_status && aap->Topology == RING   &&  atom_ring_status[i] == 0)
+            return false;
+        if (!IsNULL(atom_ring_status) && aap->Topology == CHAIN  &&  atom_ring_status[i] != 0)
+            return false;
+        match[0] = i;
+        return RecMatch(mp, match, 0, aap, nbp);
+    }
+    else 
+*/
+    return false;
+}
+
+//typedef unsigned atom_pair[2];
+static
+void RingState(const ROMol & mol, std::vector<int>& atom_status, std::vector<int> &bond_status) {
+    /*
+    * Computes how many basis rings each bond shares and how many
+    * ring bonds are attached to an atom. The results are stored in
+    * atom_status[] and bond_status[] respectively.
+    */
+    /*
+        bond_set_node *rph, *ring_list;
+        atom_pair *bonds;
+        struct reaccs_bond_t *bp;
+
+        atom_status.resize(mol.getNumAtoms());
+        bond_status.resize(mol.getNumBonds());
+
+        for (unsigned i = 0; i < mol.getNumAtoms(); i++)
+            atom_status[i] = 0;
+        for (unsigned i = 0; i < mol.getNumBonds(); i++)
+            bond_status[i] = 0;
+        if (mol.getNumBonds() == 0)
+            return;
+
+        bonds = TypeAlloc(mp->n_bonds, atom_pair); // get basis rings
+        for (i = 0; i<mp->n_bonds; i++)
+        {
+            bonds[i][0] = mp->bond_array[i].atoms[0];
+            bonds[i][1] = mp->bond_array[i].atoms[1];
+        }
+        ring_list = RingList(bonds, mp->n_bonds);
+        ring_list = CombineRings(ring_list);
+
+        for (rph = ring_list; rph; rph = rph->next)
+            for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
+                if (IsMember(rph->bond_set, i))
+                    bond_status[i]++;
+        for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
+            if (bond_status[i] > 0)
+            {
+                atom_status[bp->atoms[0] - 1]++;
+                atom_status[bp->atoms[1] - 1]++;
+            }
+    // Deallocates a list of bond set nodes.    DisposeBondSetList(ring_list);
+    */
+}
+
+bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) {
+    /*
+    * Checks if every atom in *mp matches one of the augmented atoms
+    * in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or FALSE otherwise.
+    */
+    unsigned len;
+    std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
+    std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
+    std::vector<int> atom_status(mol.getNumAtoms());
+    std::vector<int> bond_status(mol.getNumBonds());
+
+    RingState(mol, atom_status, bond_status);
+    SetupNeighbourhood(mol, neighbours);
+
+    unsigned nmatch = 0;
+    for (unsigned i = 0; i < mol.getNumAtoms(); i++)
+    {
+        for (unsigned j = 0; j < mol.getNumBonds(); j++)
+        {
+            // check for ring state of central atom
+            if (good_atoms[j].Topology == RING   &&  atom_status[i] == 0)
+                continue;
+            if (good_atoms[j].Topology == CHAIN  &&  atom_status[i] != 0)
+                continue;
+            if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size() &&
+                AAMatch(mol, i, match, &good_atoms[j], atom_status, neighbours)) {
+                nmatch++;
+                break;
+            }
+        }
+    }
+    return (nmatch == mol.getNumAtoms());
 }
 
  }// namespace StructureCheck

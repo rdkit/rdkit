@@ -17,6 +17,7 @@ namespace RDKit {
     bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
 
     bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair);
+    bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms);
  }
 }
 
