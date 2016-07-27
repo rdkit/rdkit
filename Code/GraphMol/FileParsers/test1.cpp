@@ -4218,6 +4218,16 @@ void testGithub188() {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+void testRCSBSdf() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing right-aligned elements in RCSB SDF files"
+                       << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/FileParsers/test_data/";
+  RWMol *mol = MolFileToMol(pathName + "s58_rcsb.mol");
+  TEST_ASSERT(mol);
+  delete mol;
+}
 
 void RunTests() {
 #if 1
@@ -4297,6 +4307,7 @@ void RunTests() {
   testGithub741();
 #endif
   testGithub188();
+  testRCSBSdf();
 }
 
 // must be in German Locale for test...
