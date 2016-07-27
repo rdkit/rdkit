@@ -634,9 +634,10 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     if not hdr:
       # header for the WHOLE image
       hdr = h.replace("width='%dpx' height='%dpx' >"%(img_width, img_height),
-                      "width='%dpx' height='%dpx' >\n<g transform='scale(%f,%f)'>"%(
+                      "width='%dpx' height='%dpx' >\n<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='%dpx' height='%dpx' x='0' y='0'> </rect><g transform='scale(%f,%f)'>"%(
                         fullSize[0], fullSize[1],
-                        render_scale, render_scale
+                        fullSize[0], fullSize[1],
+                        render_scale, render_scale,
                       ))
 
     if not rect:
@@ -649,7 +650,8 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     # now fit the "real" bbox into the image by subtracting the
     #  bits we don't use
     xOffset -= minx
-    
+
+    elem = elem.replace("opacity:1.0", "opacity:0.0")
     blocks.append('<g transform="translate(%d,%d)" >%s</g>'%(
       xOffset, subImgSize[1]/2 - miny - (maxy-miny)/2,elem))
 
