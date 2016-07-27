@@ -580,7 +580,7 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   subImgSize = (600.,600.)
   render_scale = max(actualSize[0]/subImgSize[0],
                      actualSize[1]/subImgSize[1])
-  
+  render_scale = 1.
   xdelta = subImgSize[0]
 
   if scaleRelative:
