@@ -2,6 +2,7 @@
 # Copyright (C) 2006-2016 Greg Landrum
 #  All Rights Reserved
 #
+from __future__ import print_function
 import os,re,sys
 from rdkit.six import iteritems
 from rdkit.Chem import AllChem
@@ -455,8 +456,8 @@ def _prepareRxnMol(mol):
   
 def _cleanupRXN(rxn):
   """Cleanup reactions so the computed coords are sane for depiction"""
-  map(_prepareRxnMol, rxn.GetReactants())
-  map(_prepareRxnMol, rxn.GetProducts())
+  for mol in rxn.GetReactants(): _prepareRxnMol(mol)
+  for mol in rxn.GetProducts(): _prepareRxnMol(mol)
   return rxn
 
 #source https://commons.wikimedia.org/wiki/File:Tab_plus.svg
@@ -566,8 +567,6 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   relativeSizes = [1.0] * len(mols)
   
   num_mols = len(mols)
-  svg_size = fullSize = (subImgSize[0] * num_mols + 20*num_reactants + 25 + 20*num_products, subImgSize[1])
-  
   blocks = [''] * num_mols
   hdr = ''
   ftr='</svg:svg>'
@@ -575,6 +574,13 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
 
   _cleanupRXN(rxn)
   xOffset = 0
+
+  # render at a higher resolution
+  actualSize = subImgSize[:]
+  subImgSize = (600.,600.)
+  render_scale = max(actualSize[0]/subImgSize[0],
+                     actualSize[1]/subImgSize[1])
+  
   xdelta = subImgSize[0]
 
   if scaleRelative:
@@ -590,14 +596,23 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
       txt = d2d.GetDrawingText()
       fontSizes.append(max( list(map(float, fontSizePattern.findall(txt))) + [0] ))
 
-    median = fontSizes[:]
+    median = list(set(fontSizes[:]))
     median.sort()
-    print median
     relFont = median[int(len(median)/2)]
-    print fontSizes
-    relativeSizes = [relFont/fn*0.75 for fn in fontSizes]
-    print relativeSizes
+    relativeSizes = [(relFont/fn) for fn in fontSizes]
+    fm = max(relativeSizes)
+    if fm > 1.0:
+      relativeSizes = [rs * 1/fm for rs in relativeSizes]
+    mol_width = 0
+    for rs in relativeSizes:
+      mol_width += subImgSize[0] * rs
+  else:
+    mol_width = subImgSize[0] * len(mols)
     
+  svg_size = fullSize = (render_scale * (mol_width + 20*num_reactants + 25 + 20*num_products),
+                         render_scale * subImgSize[1])
+  
+      
   # for each molecule make an svg and scale place it in the appropriate
   #    position
   top_layer = []
@@ -619,7 +634,10 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     if not hdr:
       # header for the WHOLE image
       hdr = h.replace("width='%dpx' height='%dpx' >"%(img_width, img_height),
-                      "width='%dpx' height='%dpx' >\n"%(fullSize[0], fullSize[1]))
+                      "width='%dpx' height='%dpx' >\n<g transform='scale(%f,%f)'>"%(
+                        fullSize[0], fullSize[1],
+                        render_scale, render_scale
+                      ))
 
     if not rect:
       rect = r
@@ -639,10 +657,10 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     xOffset += xdelta*scale
 
     # add the plus signs
-    if col < num_reactants - 1 or col >= num_reactants:
+    if col < num_reactants - 1 or col >= num_reactants and col < len(mols)-1:
       start,end = rect_matcher.match(rect.replace("opacity:1.0", "opacity:0.0")).groups()
       elem = start + repr(20) + end + svg_plus
-      top_layer.append('<g transform="translate(%d,%d)" >%s</g>'%(
+      top_layer.append('<g transform="translate(%d,%d) scale(1.5,1.5)" >%s</g>'%(
         xOffset-10,subImgSize[1]/2.0 - 10,elem))
       xOffset += 25
 
@@ -650,11 +668,12 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     if col == num_reactants-1:
       start,end = rect_matcher.match(rect.replace("opacity:1.0", "opacity:0.0")).groups()
       elem = start + repr(20) + end + svg_arrow
-      top_layer.append('<g transform="translate(%d,%d)" >%s</g>'%(
-        xOffset,subImgSize[1]/2.0 - 20,elem))
+      top_layer.append('<g transform="translate(%d,%d) scale(1.5,1.5)" >%s</g>'%(
+        xOffset,subImgSize[1]/2.0 - 15,elem))
       xOffset += 40
 
-  res = hdr + '\n'.join(blocks+top_layer)+ftr
+  res = hdr + '\n'.join(blocks+top_layer) + '\n</g>' + ftr 
+  
   if stripSVGNamespace:
     res = res.replace('svg:','')
 
