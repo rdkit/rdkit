@@ -3330,6 +3330,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     ROMol *m = MolFileToMol(pathName + "Issue2951221.1.mol");
     TEST_ASSERT(m);
+    TEST_ASSERT(m->getConformer().is3D());
     ROMol *m2 = MolOps::addHs(*m, false, true);
     TEST_ASSERT(m2);
     delete m;
@@ -3344,6 +3345,7 @@ void testSFNetIssue2951221() {
             .dotProduct(
                 (coords[1] - coords[0]).crossProduct(coords[2] - coords[0]));
     TEST_ASSERT(dot > 1.0);
+    delete m2;
   }
 
   {
@@ -3361,6 +3363,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "S");
+    delete m2;
   }
   {
     std::string pathName = getenv("RDBASE");
@@ -3377,6 +3380,7 @@ void testSFNetIssue2951221() {
     std::string cip;
     m2->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
     TEST_ASSERT(cip == "R");
+    delete m2;
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -5893,6 +5897,29 @@ void testGithubIssue868() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue908() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 908: "
+                          "AddHs() using 3D coordinates with 2D conformations"
+                       << std::endl;
+  {
+    std::string mb =
+        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n "
+        "  -0.0000   -1.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0 "
+        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  "
+        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0 "
+        " 0  0\n  2  1  1  1\n  2  3  1  0\n  2  4  1  0\nM  END\n";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    MolOps::addHs(*m, false, true);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(4).z, 0.0));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -5981,6 +6008,7 @@ int main() {
 #endif
   testGithubIssue518();
   testGithubIssue868();
+  testGithubIssue908();
 
   return 0;
 }
