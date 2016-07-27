@@ -439,9 +439,7 @@ def is2D(conf):
       allZeroes = False
   return not allZeroes
 
-def _cleanupRXN(rxn):
-  """Cleanup reactions so the computed coords are sane for depiction"""
-  for mol in rxn.GetReactants():
+def _prepareRxnMol(mol):
     compute2D=False
     for conf in mol.GetConformers():
       compute2D = not is2D(conf)
@@ -454,19 +452,11 @@ def _cleanupRXN(rxn):
       pass
     if compute2D:
       AllChem.Compute2DCoords(mol)
-
-  for mol in rxn.GetProducts():
-    compute2D=False
-    for conf in mol.GetConformers():
-      compute2D = not is2D(conf)
-    try:
-      AllChem.SanitizeMol(mol, 
-                          sanitizeOps=(AllChem.SanitizeFlags.SANITIZE_ALL^ 
-                                       AllChem.SanitizeFlags.SANITIZE_KEKULIZE))
-    except:
-      pass
-    if compute2D:
-      AllChem.Compute2DCoords(mol)  
+  
+def _cleanupRXN(rxn):
+  """Cleanup reactions so the computed coords are sane for depiction"""
+  map(_prepareRxnMol, rxn.GetReactants())
+  map(_prepareRxnMol, rxn.GetProducts())
   return rxn
 
 #source https://commons.wikimedia.org/wiki/File:Tab_plus.svg
@@ -486,6 +476,7 @@ svg_arrow = '''<path
 from xml.dom import minidom
 fontSizePattern = re.compile(".*font[-]size[:](.*)px")
 def getBBox(svg, width, height):
+  """svg, width, height -> minx, maxx, miny, maxy"""
   doc = minidom.parseString(svg)  # parseString also exists
   # get all vector paths
   path_strings = [path.getAttribute('d') for path
@@ -557,7 +548,7 @@ def makeRect(minx, maxx, miny, maxy):
 
 
 def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
-                  scaleRelative=False,
+                  scaleRelative=True,
                   debugRender=False,
                   **kwargs):
   """
@@ -572,15 +563,10 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   mols = list(rxn.GetReactants()) + list(rxn.GetProducts())
 
   # get the relative sizes of the molecules
-  relativeSizes = [float(m.GetNumAtoms()) for m in mols]
-  largest = max(relativeSizes)
-  if scaleRelative:
-    relativeSizes = [x/largest for x in relativeSizes]
-  else:
-    relativeSizes = [1.0] * len(relativeSizes)
+  relativeSizes = [1.0] * len(mols)
   
   num_mols = len(mols)
-  svg_size = fullSize = (subImgSize[0] * num_mols + 20*num_reactants + 25, subImgSize[1])
+  svg_size = fullSize = (subImgSize[0] * num_mols + 20*num_reactants + 25 + 20*num_products, subImgSize[1])
   
   blocks = [''] * num_mols
   hdr = ''
@@ -591,6 +577,27 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   xOffset = 0
   xdelta = subImgSize[0]
 
+  if scaleRelative:
+    fontSizes = []
+    for col,mol in enumerate(mols):
+      scale = relativeSizes[col]
+      img_width = int(subImgSize[0] * scale)
+      img_height = int(subImgSize[1] * scale)
+      nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kwargs.get('kekulize',False))
+      d2d = rdMolDraw2D.MolDraw2DSVG(img_width, img_height)
+      d2d.DrawMolecule(nmol)
+      d2d.FinishDrawing()
+      txt = d2d.GetDrawingText()
+      fontSizes.append(max( list(map(float, fontSizePattern.findall(txt))) + [0] ))
+
+    median = fontSizes[:]
+    median.sort()
+    print median
+    relFont = median[int(len(median)/2)]
+    print fontSizes
+    relativeSizes = [relFont/fn*0.75 for fn in fontSizes]
+    print relativeSizes
+    
   # for each molecule make an svg and scale place it in the appropriate
   #    position
   top_layer = []
@@ -632,7 +639,7 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     xOffset += xdelta*scale
 
     # add the plus signs
-    if col < num_reactants - 1:
+    if col < num_reactants - 1 or col >= num_reactants:
       start,end = rect_matcher.match(rect.replace("opacity:1.0", "opacity:0.0")).groups()
       elem = start + repr(20) + end + svg_plus
       top_layer.append('<g transform="translate(%d,%d)" >%s</g>'%(
