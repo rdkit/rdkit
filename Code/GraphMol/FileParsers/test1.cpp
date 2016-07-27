@@ -868,7 +868,7 @@ void testIssue399() {
   TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::NONE);
 
   WedgeMolBonds(*m1, &m1->getConformer());
-  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::BEGINWEDGE);
+  TEST_ASSERT(m1->getBondBetweenAtoms(1, 7)->getBondDir() == Bond::BEGINDASH);
 
   delete m1;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

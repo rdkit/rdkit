@@ -279,27 +279,45 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         // direction...
         // correct for this (issue 2951221):
         if (fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) < 0.1) {
-          // compute the normal:
-          dirVect = nbr1Vect.crossProduct(nbr2Vect);
-          std::string cipCode;
-          if (heavyAtom->getPropIfPresent(common_properties::_CIPCode,
-                                          cipCode)) {
-            // the heavy atom is a chiral center, make sure
-            // that we went go the right direction to preserve
-            // its chirality. We use the chiral volume for this:
-            RDGeom::Point3D v1 = dirVect - nbr3Vect;
-            RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
-            RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
-            double vol = v1.dotProduct(v2.crossProduct(v3));
-            // FIX: this is almost certainly wrong and should use the chiral tag
-            if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
-              dirVect *= -1;
+          if ((*cfi)->is3D()) {
+            // compute the normal:
+            dirVect = nbr1Vect.crossProduct(nbr2Vect);
+            std::string cipCode;
+            if (heavyAtom->getPropIfPresent(common_properties::_CIPCode,
+                                            cipCode)) {
+              // the heavy atom is a chiral center, make sure
+              // that we went go the right direction to preserve
+              // its chirality. We use the chiral volume for this:
+              RDGeom::Point3D v1 = dirVect - nbr3Vect;
+              RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
+              RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
+              double vol = v1.dotProduct(v2.crossProduct(v3));
+              // FIX: this is almost certainly wrong and should use the chiral
+              // tag
+              if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
+                dirVect *= -1;
+              }
             }
+          } else {
+            // this was github #908
+            // We're in a 2D conformation, put the H between the two neighbors
+            // that have the widest angle between them:
+            double minDot = nbr1Vect.dotProduct(nbr2Vect);
+            dirVect = nbr1Vect + nbr2Vect;
+            if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
+              minDot = nbr2Vect.dotProduct(nbr3Vect);
+              dirVect = nbr2Vect + nbr3Vect;
+            }
+            if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
+              minDot = nbr1Vect.dotProduct(nbr3Vect);
+              dirVect = nbr1Vect + nbr3Vect;
+            }
+            dirVect *= -1;
           }
         } else {
           dirVect = nbr1Vect + nbr2Vect + nbr3Vect;
-          dirVect.normalize();
         }
+        dirVect.normalize();
         hydPos = heavyPos + dirVect * bondLength;
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
