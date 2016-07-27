@@ -575,12 +575,6 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   _cleanupRXN(rxn)
   xOffset = 0
 
-  # render at a higher resolution
-  actualSize = subImgSize[:]
-  subImgSize = (600.,600.)
-  render_scale = max(actualSize[0]/subImgSize[0],
-                     actualSize[1]/subImgSize[1])
-  render_scale = 1.
   xdelta = subImgSize[0]
 
   if scaleRelative:
@@ -609,8 +603,8 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
   else:
     mol_width = subImgSize[0] * len(mols)
     
-  svg_size = fullSize = (render_scale * (mol_width + 20*num_reactants + 25 + 20*num_products),
-                         render_scale * subImgSize[1])
+  svg_size = fullSize = (mol_width + 20*num_reactants + 25 + 20*num_products,
+                         subImgSize[1])
   
       
   # for each molecule make an svg and scale place it in the appropriate
@@ -634,10 +628,9 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
     if not hdr:
       # header for the WHOLE image
       hdr = h.replace("width='%dpx' height='%dpx' >"%(img_width, img_height),
-                      "width='%dpx' height='%dpx' >\n<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='%dpx' height='%dpx' x='0' y='0'> </rect><g transform='scale(%f,%f)'>"%(
+                      "width='%dpx' height='%dpx' >\n<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='%dpx' height='%dpx' x='0' y='0'> </rect>"%(
                         fullSize[0], fullSize[1],
                         fullSize[0], fullSize[1],
-                        render_scale, render_scale,
                       ))
 
     if not rect:
@@ -674,7 +667,7 @@ def ReactionToSVG(rxn, subImgSize=(200,200), stripSVGNamespace=True,
         xOffset,subImgSize[1]/2.0 - 15,elem))
       xOffset += 40
 
-  res = hdr + '\n'.join(blocks+top_layer) + '\n</g>' + ftr 
+  res = hdr + '\n'.join(blocks+top_layer) + ftr 
   
   if stripSVGNamespace:
     res = res.replace('svg:','')
