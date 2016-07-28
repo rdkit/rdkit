@@ -160,8 +160,9 @@ namespace RDKit {
 // the end:
         if (0 != (flags & TRANSFORMED)) {   // sanitaze molecule
 //???? .............. ????
-            if (!mol.getRingInfo()->isInitialized())
-                mol.getRingInfo()->initialize();
+            if (mol.getRingInfo()->isInitialized())
+                mol.getRingInfo()->reset();
+            mol.getRingInfo()->initialize();
         }
         return flags;
     }
