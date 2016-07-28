@@ -10,6 +10,7 @@
 #include "StructChecker.h"
 #include "Pattern.h"
 #include "Stereo.h"
+#include "ReCharge.h"
 #include "StripSmallFragments.h"
 
 namespace RDKit {
@@ -98,23 +99,20 @@ namespace RDKit {
             }
         }
 //line 1612
-/*
-        if (charges_read && TotalCharge(mol) != Options.DesiredCharge)
+
+        if (TotalCharge(mol) != Options.DesiredCharge)
         {
-            bool tmp = RechargeMolecule(mp, desired_charge, &ndeprot, &nrefine);
-            if (mp->symbol_lists || mp->prop_lines)
-                tmp = false;
-            charge_bad = !tmp;
-            flags |= (charge_bad ? BAD_MOLECULE : RECHARGED);
+            if (RechargeMolecule(mol, Options.DesiredCharge))   //, &ndeprot, &nrefine))
+                flags |= RECHARGED;
         }
-*/
+//
         double clashLimit = 0.15; // see void SetCollisionLimit(int percent)
         if (Options.CheckCollisions && AtomClash(mol, clashLimit))
             flags |= ATOM_CLASH;
-/*
+
         if (! Options.GoodAtoms.empty() && ! CheckAtoms(mol, Options.GoodAtoms))
             flags |= ATOM_CHECK_FAILED;
-*/
+
         if (Options.CheckStereo && ! CheckStereo(mol))
             flags |= STEREO_ERROR;
 
@@ -159,7 +157,7 @@ namespace RDKit {
 
 // the end:
         if (0 != (flags & TRANSFORMED)) {   // sanitaze molecule
-//???? .............. ????
+// + ???? .............. ????
             if (mol.getRingInfo()->isInitialized())
                 mol.getRingInfo()->reset();
             mol.getRingInfo()->initialize();
