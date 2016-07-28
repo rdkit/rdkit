@@ -35,7 +35,7 @@ After building the RDKit, carry out the following steps:
 3) run the "pgsql_install" script:
    
    ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.bat (Windows)
-   sh ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.sh (Linux)
+   sh ${CMAKE_BINARY_DIR}/Code/PgSQL/rdkit/pgsql_install.sh (Linux)
    
    which will install rdkit.sql91.in, rdkit--3.4.sql,
    rdkit.control and rdkit.dll into PostgreSQL 
@@ -57,7 +57,11 @@ After building the RDKit, carry out the following steps:
    -w start (Windows)
    service postgresql start (Linux)
 
-Before running ctest, 
+Before running ctest, make sure that your current user has enough
+PostgreSQL privileges to carry out the database operations required by
+the tests. You might need to set the PGPASSWORD environment variable
+in your shell to avoid authentication issues.
+
 To install the rdkit cartridge into the database DB: 
  psql -c 'CREATE EXTENSION rdkit' DB
 
