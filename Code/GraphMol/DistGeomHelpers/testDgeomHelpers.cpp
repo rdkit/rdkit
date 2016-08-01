@@ -1640,15 +1640,27 @@ void testGithub971() {
         "0\n 14 15  1  0\n 15 16  1  0\n 16 17  1  0\n 17 18  1  0\n 18 19  1  "
         "0\n  9  4  1  0\n 17 11  1  0\n 19 12  1  0\nM  CHG  1  15   1\nM  "
         "END\n";
-    std::string mb = MolToMolBlock(*m);
-    TEST_ASSERT(mb == expectedMb);
+    RWMol *expected = MolBlockToMol(expectedMb);
+    unsigned int nat = expected->getNumAtoms();
+    TEST_ASSERT(nat == m->getNumAtoms());
+    
+    const Conformer &conf1 = m->getConformer(0);
+    const Conformer &conf2 = expected->getConformer(0);
+    for (unsigned int i = 0; i < nat; i++) {
+      TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
+                  expected->getAtomWithIdx(i)->getAtomicNum());
+                  
+      RDGeom::Point3D pt1i = conf1.getAtomPos(i);
+      RDGeom::Point3D pt2i = conf2.getAtomPos(i);
+      TEST_ASSERT( (pt1i - pt2i).length() < 10e-4 );
+    }
     delete m;
+    delete expected;
   }
 }
 
 int main() {
   RDLog::InitLogs();
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
