@@ -23,6 +23,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 #include <clocale>
+#include <cstdlib>
 
 #include <string>
 #include <fstream>
@@ -4347,7 +4348,7 @@ void testParseCHG() {
   while(pos != std::string::npos)
   {
     positions.push_back(pos);
-    size_t num_entries = std::stoi(out.substr(pos+sub.size(), 3));
+    size_t num_entries = strtol(out.substr(pos+sub.size(), 3).c_str(), 0, 10);
     TEST_ASSERT(num_entries==8);
     pos = out.find(sub,pos+1);
   }
