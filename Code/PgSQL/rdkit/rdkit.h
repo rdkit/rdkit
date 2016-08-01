@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-#include "postgres.h"
+#include <postgres.h>
 
 typedef bytea Mol;
 
@@ -49,71 +49,43 @@ typedef bytea Mol;
 #define PG_GETARG_MOL_P_COPY(x) DatumGetMolPCopy(PG_GETARG_DATUM(x))
 #define PG_RETURN_MOL_P(x) PG_RETURN_DATUM(MolPGetDatum(x))
 
-typedef bytea BitmapFingerPrint;
+typedef bytea Bfp;
 
-#define DatumGetBitmapFingerPrintP(x) ((BitmapFingerPrint *)PG_DETOAST_DATUM(x))
-#define DatumGetBitmapFingerPrintPCopy(x) \
-  ((BitmapFingerPrint *)PG_DETOAST_DATUM_COPY(x))
-#define BitmapFingerPrintPGetDatum(x) (PointerGetDatum(x))
+typedef struct {
+  char vl_len_[4];
+  uint16 weight;
+  uint8 fp[FLEXIBLE_ARRAY_MEMBER];
+} BfpSignature;
 
-#define PG_GETARG_BITMAPFINGERPRINT_P(x) \
-  DatumGetBitmapFingerPrintP(PG_GETARG_DATUM(x))
-#define PG_GETARG_BITMAPFINGERPRINT_P_COPY(x) \
-  DatumGetBitmapFingerPrintPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_BITMAPFINGERPRINT_P(x) \
-  PG_RETURN_DATUM(BitmapFingerPrintPGetDatum(x))
+#define DatumGetBfpP(x) ((Bfp *)PG_DETOAST_DATUM(x))
+#define DatumGetBfpPCopy(x) ((Bfp *)PG_DETOAST_DATUM_COPY(x))
+#define BfpPGetDatum(x) (PointerGetDatum(x))
 
-typedef bytea SparseFingerPrint;
+#define PG_GETARG_BFP_P(x) DatumGetBfpP(PG_GETARG_DATUM(x))
+#define PG_GETARG_BFP_P_COPY(x) DatumGetBfpPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_BFP_P(x) PG_RETURN_DATUM(BfpPGetDatum(x))
 
-#define DatumGetSparseFingerPrintP(x) ((SparseFingerPrint *)PG_DETOAST_DATUM(x))
-#define DatumGetSparseFingerPrintPCopy(x) \
-  ((SparseFingerPrint *)PG_DETOAST_DATUM_COPY(x))
-#define SparseFingerPrintPGetDatum(x) (PointerGetDatum(x))
+#define BFP_SIGLEN(x) (VARSIZE(x) - VARHDRSZ)
+  
+typedef bytea Sfp;
 
-#define PG_GETARG_SPARSEFINGERPRINT_P(x) \
-  DatumGetSparseFingerPrintP(PG_GETARG_DATUM(x))
-#define PG_GETARG_SPARSEFINGERPRINT_P_COPY(x) \
-  DatumGetSparseFingerPrintPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_SPARSEFINGERPRINT_P(x) \
-  PG_RETURN_DATUM(SparseFingerPrintPGetDatum(x))
+#define DatumGetSfpP(x) ((Sfp *)PG_DETOAST_DATUM(x))
+#define DatumGetSfpPCopy(x) ((Sfp *)PG_DETOAST_DATUM_COPY(x))
+#define SfpPGetDatum(x) (PointerGetDatum(x))
 
-typedef bytea ChemReactionBA;
+#define PG_GETARG_SFP_P(x) DatumGetSfpP(PG_GETARG_DATUM(x))
+#define PG_GETARG_SFP_P_COPY(x) DatumGetSfpPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_SFP_P(x) PG_RETURN_DATUM(SfpPGetDatum(x))
 
-#define DatumGetChemReactionP(x) ((ChemReactionBA *)PG_DETOAST_DATUM(x))
-#define DatumGetChemReactionPCopy(x) \
-  ((ChemReactionBA *)PG_DETOAST_DATUM_COPY(x))
-#define ChemReactionPGetDatum(x) (PointerGetDatum(x))
+typedef bytea Reaction;
 
-#define PG_GETARG_CHEMREACTION_P(x) DatumGetChemReactionP(PG_GETARG_DATUM(x))
-#define PG_GETARG_CHEMREACTION_P_COPY(x) \
-  DatumGetChemReactionPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_CHEMREACTION_P(x) PG_RETURN_DATUM(ChemReactionPGetDatum(x))
+#define DatumGetReactionP(x) ((Reaction *)PG_DETOAST_DATUM(x))
+#define DatumGetReactionPCopy(x) ((Reaction *)PG_DETOAST_DATUM_COPY(x))
+#define ReactionPGetDatum(x) (PointerGetDatum(x))
 
-/*
- * GUC
- */
-extern double getTanimotoLimit(void);
-extern double getDiceLimit(void);
-extern bool getDoChiralSSS(void);
-extern int getSubstructFpSize(void);
-extern int getMorganFpSize(void);
-extern int getFeatMorganFpSize(void);
-extern int getLayeredFpSize(void);
-extern int getRDKitFpSize(void);
-extern int getHashedTorsionFpSize(void);
-extern int getHashedAtomPairFpSize(void);
-extern int getAvalonFpSize(void);
-extern int getReactionSubstructFpSize(void);
-extern int getReactionSubstructFpType(void);
-extern int getReactionDifferenceFpSize(void);
-extern int getReactionDifferenceFpType(void);
-extern bool getIgnoreReactionAgents(void);
-extern double getReactionStructuralFPAgentBitRatio(void);
-extern bool getMoveUnmappedReactantsToAgents(void);
-extern double getThresholdUnmappedReactantAtoms(void);
-extern bool getInitReaction(void);
-extern int getReactionDifferenceFPWeightNonagents(void);
-extern int getReactionDifferenceFPWeightAgents(void);
+#define PG_GETARG_REACTION_P(x) DatumGetReactionP(PG_GETARG_DATUM(x))
+#define PG_GETARG_REACTION_P_COPY(x) DatumGetReactionPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_REACTION_P(x) PG_RETURN_DATUM(ReactionPGetDatum(x))
 
 /*
  * From/to C/C++
@@ -143,7 +115,7 @@ int molcmp(CROMol i, CROMol a);
 int MolSubstruct(CROMol i, CROMol a);
 int MolSubstructCount(CROMol i, CROMol a, bool uniquify);
 
-bytea *makeMolSign(CROMol data);
+bytea *makeMolSignature(CROMol data);
 
 double MolAMW(CROMol i);
 double MolLogP(CROMol i);
@@ -194,61 +166,58 @@ CROMol MolMurckoScaffold(CROMol i);
 CROMol MolAdjustQueryProperties(CROMol m, const char *params);
 
 /* ExplicitBitVect */
-typedef void *MolBitmapFingerPrint;
-void freeMolBitmapFingerPrint(MolBitmapFingerPrint data);
+typedef void *CBfp;
+void freeCBfp(CBfp data);
 
-MolBitmapFingerPrint constructMolBitmapFingerPrint(BitmapFingerPrint *data);
-BitmapFingerPrint *deconstructMolBitmapFingerPrint(MolBitmapFingerPrint data);
-bytea *makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data);
+CBfp constructCBfp(Bfp *data);
+Bfp *deconstructCBfp(CBfp data);
+BfpSignature *makeBfpSignature(CBfp data);
 
-int MolBitmapFingerPrintSize(MolBitmapFingerPrint a);
+int CBfpSize(CBfp a);
 
-double calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
-double calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
-double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,
-                            float ca, float cb);
+double calcBitmapTanimotoSml(CBfp a, CBfp b);
+double calcBitmapDiceSml(CBfp a, CBfp b);
+double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb);
 
 /* SparseIntVect<boost::int32_t> */
-typedef void *MolSparseFingerPrint;
-void freeMolSparseFingerPrint(MolSparseFingerPrint data);
+typedef void *CSfp;
+void freeCSfp(CSfp data);
 
-MolSparseFingerPrint constructMolSparseFingerPrint(SparseFingerPrint *data);
-SparseFingerPrint *deconstructMolSparseFingerPrint(MolSparseFingerPrint data);
-bytea *makeSignatureSparseFingerPrint(MolSparseFingerPrint data, int numBits);
-bytea *makeLowSparseFingerPrint(MolSparseFingerPrint data, int numInts);
+CSfp constructCSfp(Sfp *data);
+Sfp *deconstructCSfp(CSfp data);
+bytea *makeSfpSignature(CSfp data, int numBits);
+bytea *makeLowSparseFingerPrint(CSfp data, int numInts);
 
-double calcSparseTanimotoSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
-double calcSparseDiceSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
+double calcSparseTanimotoSml(CSfp a, CSfp b);
+double calcSparseDiceSml(CSfp a, CSfp b);
 double calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b,
                                unsigned int szb);
 bool calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt);
 bool calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt);
-MolSparseFingerPrint addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
-MolSparseFingerPrint subtractSFP(MolSparseFingerPrint a,
-                                 MolSparseFingerPrint b);
+CSfp addSFP(CSfp a, CSfp b);
+CSfp subtractSFP(CSfp a, CSfp b);
 
-void countOverlapValues(bytea *sign, MolSparseFingerPrint data, int numBits,
+void countOverlapValues(bytea *sign, CSfp data, int numBits,
                         int *sum, int *overlapSum, int *overlapN);
-void countLowOverlapValues(bytea *sign, MolSparseFingerPrint data, int numInts,
+void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
                            int *querySum, int *keySum, int *overlapUp,
                            int *overlapDown);
 /*
  * Various mol -> fp transformation
  */
 
-MolBitmapFingerPrint makeLayeredBFP(CROMol data);
-MolBitmapFingerPrint makeRDKitBFP(CROMol data);
-MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius);
-MolSparseFingerPrint makeMorganSFP(CROMol data, int radius);
-MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius);
-MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius);
-MolSparseFingerPrint makeAtomPairSFP(CROMol data);
-MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data);
-MolBitmapFingerPrint makeAtomPairBFP(CROMol data);
-MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data);
-MolBitmapFingerPrint makeMACCSBFP(CROMol data);
-MolBitmapFingerPrint makeAvalonBFP(CROMol data, bool isQuery,
-                                   unsigned int bitFlags);
+CBfp makeLayeredBFP(CROMol data);
+CBfp makeRDKitBFP(CROMol data);
+CBfp makeMorganBFP(CROMol data, int radius);
+CSfp makeMorganSFP(CROMol data, int radius);
+CBfp makeFeatMorganBFP(CROMol data, int radius);
+CSfp makeFeatMorganSFP(CROMol data, int radius);
+CSfp makeAtomPairSFP(CROMol data);
+CSfp makeTopologicalTorsionSFP(CROMol data);
+CBfp makeAtomPairBFP(CROMol data);
+CBfp makeTopologicalTorsionBFP(CROMol data);
+CBfp makeMACCSBFP(CROMol data);
+CBfp makeAvalonBFP(CROMol data, bool isQuery, unsigned int bitFlags);
 
 /*
  * Indexes
@@ -265,10 +234,8 @@ typedef struct IntRange {
 
 #define RDKitTanimotoStrategy (1)
 #define RDKitDiceStrategy (2)
-#if PG_VERSION_NUM >= 90100
 #define RDKitOrderByTanimotoStrategy (3)
 #define RDKitOrderByDiceStrategy (4)
-#endif
 #define RDKitContains (3)
 #define RDKitContained (4)
 #define RDKitEquals (6)
@@ -278,32 +245,14 @@ typedef struct IntRange {
 bool calcConsistency(bool isLeaf, uint16 strategy, double nCommonUp,
                      double nCommonDown, double nKey, double nQuery);
 
-/*
- *  Cache subsystem. Molecules and fingerprints I/O is extremely expensive.
- */
-struct MemoryContextData; /* forward declaration to prevent conflicts with C++
-                             */
-void *SearchMolCache(void *cache, struct MemoryContextData *ctx, Datum a,
-                     Mol **m, CROMol *mol, bytea **sign);
-void *SearchBitmapFPCache(void *cache, struct MemoryContextData *ctx, Datum a,
-                          BitmapFingerPrint **f, MolBitmapFingerPrint *fp,
-                          bytea **val);
-void *SearchSparseFPCache(void *cache, struct MemoryContextData *ctx, Datum a,
-                          SparseFingerPrint **f, MolSparseFingerPrint *fp,
-                          bytea **val);
-
 /* Chemical Reactions
  * RDKit::ChemicalReaction */
 typedef void *CChemicalReaction;
 
-void *SearchChemReactionCache(void *cache, struct MemoryContextData *ctx,
-                              Datum a, ChemReactionBA **r,
-                              CChemicalReaction *rxn, bytea **sign);
-
 void freeChemReaction(CChemicalReaction data);
 
-CChemicalReaction constructChemReact(ChemReactionBA *data);
-ChemReactionBA *deconstructChemReact(CChemicalReaction data);
+CChemicalReaction constructChemReact(Reaction *data);
+Reaction *deconstructChemReact(CChemicalReaction data);
 
 CChemicalReaction parseChemReactBlob(char *data, int len);
 CChemicalReaction parseChemReactText(char *data, bool asSmarts,
@@ -321,12 +270,10 @@ int ChemReactNumAgents(CChemicalReaction rxn);
 bytea *makeReactionSign(CChemicalReaction data);
 int ReactionSubstruct(CChemicalReaction rxn, CChemicalReaction rxn2);
 int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2);
-MolBitmapFingerPrint makeReactionBFP(CChemicalReaction data, int size,
-                                     int fpType);
+CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType);
 
 /* Reaction difference fingerprint */
-MolSparseFingerPrint makeReactionDifferenceSFP(CChemicalReaction data, int size,
-                                               int fpType);
+CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
 
 char *computeMolHash(CROMol data, int *len);
 
