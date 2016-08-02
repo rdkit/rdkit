@@ -49,6 +49,22 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
     return rdbt <= RDKit::Bond::AROMATIC ? bt[rdbt] : BT_NONE; //??
 }
 
+
+/*
+* Checks if the ligand is compatible with the bond and the atom.
+*/
+bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge) {
+    if (l.BondType != ANY_BOND  && convertBondType(b.getBondType()) != l.BondType)
+        return false;
+
+    if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical)
+        return false;
+    if ((l.Charge != ANY_CHARGE || use_charge)
+        && l.Charge != ANY_CHARGE  && a.getFormalCharge != l.Charge)
+        return false;
+    return (AtomSymbolMatch(a.getSymbol(), l.AtomSymbol));
+}
+
 struct AtomNeighbor {
     unsigned AtomIdx;   // the molecule's atom
     unsigned BondIdx;   // the molecule's bond

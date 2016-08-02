@@ -15,6 +15,7 @@ namespace RDKit {
 
     unsigned getAtomicNumber(const std::string symbol);
     bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
+    bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge = false);
 
     bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair);
     bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms);

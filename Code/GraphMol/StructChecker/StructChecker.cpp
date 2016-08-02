@@ -52,11 +52,11 @@ namespace RDKit {
 
         if (Options.RemoveMinorFragments)
         {
-            AddMWMF(mol, "MW_PRE");            // Add  mol mass data field
+            AddMWMF(mol, true);     // Add mol mass data field "MW_PRE"
             if (StripSmallFragments(mol)) {
                 flags |= FRAGMENTS_FOUND;
             }
-            AddMWMF(mol, "MW_POST");            // Add  mol mass data field
+            AddMWMF(mol, false);    // Add mol mass data field "MW_POST"
 
         }
 /*
@@ -102,7 +102,9 @@ namespace RDKit {
 
         if (TotalCharge(mol) != Options.DesiredCharge)
         {
-            if (RechargeMolecule(mol, Options.DesiredCharge))   //, &ndeprot, &nrefine))
+            unsigned ndeprot;
+            unsigned nrefine;
+            if (RechargeMolecule(mol, Options.DesiredCharge, ndeprot, nrefine))
                 flags |= RECHARGED;
         }
 //

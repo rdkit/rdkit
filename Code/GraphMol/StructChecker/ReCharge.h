@@ -20,7 +20,7 @@ namespace RDKit {
      * *ndeprot and *nrefine are set to the number of deprotonations
      * and refinement cycles performed.
      */
-     bool RechargeMolecule(RWMol &mol, int desired_charge);
+     bool RechargeMolecule(RWMol &mol, int desired_charge, unsigned &ndeprot, unsigned &nrefine);
 
      /*
      * Returns the total charge of all atoms in molecule.
