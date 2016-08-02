@@ -8,24 +8,45 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#include "StructChecker.h"
+#include "Pattern.h"
+#include "Utilites.h"
 
 namespace RDKit {
  namespace StructureCheck {
-
-     /*
-     * Removes hydrogens from *mp until desired_charge is reached. The
-     * positions for hydrogen removal are selected by "acidity" combined
-     * with a refinement algorithm. It returns TRUE if molecule could be
-     * neutralized and FALSE if any problem were encountered.
-     * *ndeprot and *nrefine are set to the number of deprotonations
-     * and refinement cycles performed.
-     */
-     bool RechargeMolecule(RWMol &mol, int desired_charge, unsigned &ndeprot, unsigned &nrefine);
-
      /*
      * Returns the total charge of all atoms in molecule.
      */
-     int  TotalCharge     (const ROMol &mol);
+     int  TotalCharge(const ROMol &mol);
+
+     class ChargeFix {
+         const StructCheckerOptions &Options;
+         RWMol &Mol;
+         std::vector<unsigned> BondColor;
+         std::vector<unsigned> AtomColor;
+         std::vector<double>   AtompKaValue;
+         std::vector<double>   AtomOldpKaValue;
+     public:
+         ChargeFix(const StructCheckerOptions& op, RWMol &mol) : Options(op), Mol(mol) {}
+         /*
+         * Removes hydrogens from *mp until desired_charge is reached. The
+         * positions for hydrogen removal are selected by "acidity" combined
+         * with a refinement algorithm. It returns TRUE if molecule could be
+         * neutralized and FALSE if any problem were encountered.
+         * *ndeprot and *nrefine are set to the number of deprotonations
+         * and refinement cycles performed.
+         */
+         bool rechargeMolecule(unsigned &ndeprot, unsigned &nrefine);
+
+     private: //internal helpers:
+         bool setpKaValues();
+         void decrementMarkedCharges();
+         int  markMostAcidicAtoms(double &pKa_value, double &gap);
+         int  refineAcidicAtoms(std::vector<unsigned> &numbering);
+         void resetColors();
+         void resetValues();
+     };
+
  }
 }
 

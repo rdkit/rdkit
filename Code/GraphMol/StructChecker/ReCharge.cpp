@@ -7,9 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "StructChecker.h"
-#include "Pattern.h"
-#include "Utilites.h"
 #include "ReCharge.h"
 
 namespace RDKit {
@@ -18,23 +15,169 @@ namespace RDKit {
 /*
 * Returns the total charge of all atoms in molecule.
 */
-    int  TotalCharge     (const ROMol &mol) {
-        int charge = 0;
-        for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
-            const Atom &atom = *mol.getAtomWithIdx(i);
-            charge += atom.getFormalCharge();
-        }
-        return 0;
+int  TotalCharge     (const ROMol &mol) {
+    int charge = 0;
+    for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
+        const Atom &atom = *mol.getAtomWithIdx(i);
+        charge += atom.getFormalCharge();
     }
+    return 0;
+}
+
+//BondColor.resize(Mol.getNumBonds());
+//AtomColor.resize(Mol.getNumAtoms());
+//AtompKaValue.resize(Mol.getNumAtoms());
+
+void ChargeFix::resetColors() {
+
+}
+
+void ChargeFix::resetValues() {
+
+}
+
+
+// Stereo.cpp
+/*
+* Checks if all defined stereocenters in *mp are unambiguously
+* numbered by numbering, i.e. all four ligands get different
+* numbers. It returns TRUE if this is the case and FALSE otherwise.
+*/
+bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
+    std::vector<Neighbourhood> neighbour_array;
+    int parity;
+//int i, j, k, h;
+    int refnum[4], nref;
+
+    SetupNeighbourhood(mol, neighbour_array);
+/*
+    for (i = 0, nbp = neighbour_array; i<mp->n_atoms; i++, nbp++)
+        if (0 == strcmp(mp->atom_array[i].atom_symbol, "C") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4 ||
+            0 == strcmp(mp->atom_array[i].atom_symbol, "S") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4 ||
+            0 == strcmp(mp->atom_array[i].atom_symbol, "N") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4 ||
+            0 == strcmp(mp->atom_array[i].atom_symbol, "O") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4 ||
+            0 == strcmp(mp->atom_array[i].atom_symbol, "P") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4 ||
+            0 == strcmp(mp->atom_array[i].atom_symbol, "Si") &&
+            nbp->n_ligands > 2 && nbp->n_ligands <= 4)
+        {
+            parity = AtomParity(mp, i + 1, nbp);
+            if (parity == EVEN_PARITY || parity == ODD_PARITY)
+            {
+                // extraxt numbers of stereoligands
+                nref = nbp->n_ligands;
+                for (j = 0; j<nref; j++)
+                    refnum[j] = numbering[nbp->atoms[j]];
+                // sort ligands
+                for (j = nref; j>0; j--)
+                    for (k = j; k>0; k--)
+                        if (refnum[k] < refnum[k - 1])
+                        {
+                            h = refnum[k];
+                            refnum[k] = refnum[k - 1];
+                            refnum[k - 1] = h;
+                        }
+                // check if there is a duplicate
+                for (j = 1; j<nref; j++)
+                    if (refnum[j] == refnum[j - 1])
+                    {
+// sprintf(msg_buffer, "%10s    unrefined parity at atom %d", mp->name, i + 1);
+// AddMsgToList(msg_buffer);
+                        return false;
+                    }
+            }
+        }
+*/
+    return true;
+}
+
+
+
+/*
+* Removes hydrogens from *mp until desired_charge is reached. The
+* positions for hydrogen removal are selected by "acidity" combined
+* with a refinement algorithm. It returns TRUE if molecule could be
+* neutralized and FALSE if any problem were encountered.
+* *ndeprot and *nrefine are set to the number of deprotonations
+* and refinement cycles performed.
+*/
+bool ChargeFix::rechargeMolecule(unsigned &ndeprot, unsigned &nrefine) {
+    bool changed = false;
+    int nacid;
+    double gap, pKa_value;
+    double acidity_limit = 24.0;
+    std::vector<unsigned> numbering(Mol.getNumAtoms());
+
+    ndeprot = 0;    // number of deprotonation cycles
+    nrefine = 0;    // number of refinements necessary
+    for (;;)
+    {
+        while (TotalCharge(Mol) > Options.DesiredCharge)
+        {
+            setpKaValues();
+            nacid = markMostAcidicAtoms(gap, acidity_limit);
+            if (pKa_value > acidity_limit) {
+                //                    sprintf(msg_buffer, "pKa_value = %.2g", pKa_value);
+                //                    AddMsgToList(msg_buffer);
+                return false;     // not acidic enough
+            }
+            else if (nacid == 1 || (nacid == TotalCharge(Mol) && gap > 8.0)) { // easy case
+// sprintf(msg_buffer, "pKa = %.2g", pKa_value);
+// AddMsgToList(msg_buffer);
+                decrementMarkedCharges();
+            }
+            else
+                break;
+            ndeprot++;
+        }
+
+        if (TotalCharge(Mol) > Options.DesiredCharge) {
+            nrefine++;
+            //// ?? expl. H ??                numbering = TypeAlloc(mp->n_atoms, int);
+            nacid = refineAcidicAtoms(numbering);
+            if (nacid == 1)
+                decrementMarkedCharges();
+            else if (AllCentersRefined(Mol, numbering))
+            {
+                for (unsigned i = 0; i < Mol.getNumAtoms(); i++) // Select one mark
+//TODO:
+                    if (AtomColor[i] != 0 && nacid != 1) {
+                        nacid--; 
+                        AtomColor[i] = 0;
+                    }
+                decrementMarkedCharges();
+            }
+            else
+            {
+                //                    sprintf(msg_buffer, "%10s: could not fix charges", mp->name);
+                //                    AddMsgToList(msg_buffer);
+                return false;
+            }
+            ndeprot++;
+        }
+        else
+        {
+            resetValues();
+            return true;
+        }
+    }
+    return changed;
+}
 
 /*
 * Estimates the pKa value of acidic atoms in molecule *mp and sets
 * the 'value' fields to this value.
 * It returns TRUE if all went well and FALSE otherwise.
 */
-bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
+bool ChargeFix::setpKaValues() {
+    const ROMol &mol = Mol;
     bool result = true;
-    std::vector<Neighbourhood> neighbour_array(mol.getNumAtoms()); //, *nbp, *nbph;
+    const unsigned na = mol.getNumAtoms();
+    std::vector<Neighbourhood> neighbour_array(na);
     std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
 
     AugmentedAtom *AAp;
@@ -44,24 +187,19 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
     struct reaccs_atom_t *ap, *aap, *bap;
     struct reaccs_bond_t *abp, *bbp;
 
-// !!!
-    static float old_values[MAXATOMS];
+    SetupNeighbourhood(Mol, neighbour_array);
 
+    resetColors();
+    AtomOldpKaValue = AtompKaValue;
+    resetValues();
 
-    SetupNeighbourhood(mp, neighbour_array, mp->n_atoms);
-
-    ResetColors(mp);
-    for (i = 0; i<mp->n_atoms; i++)
-        old_values[i] = mp->atom_array[i].value;
-    ResetValues(mp);
-
-    /* for all atoms in *mp */
-    for (i = 0, ap = mp->atom_array; i<mp->n_atoms; i++, ap++)
-    {                                         /* Is atom acidic? */
+/*
+    for (unsigned i = 0, ap = mp->atom_array; i < na; i++) {
+    // Is atom acidic?
         for (j = 0, AAp = acidic_atoms; j<nacidic; j++, AAp++)
             if (AAMatch(mp, i, match, AAp, (int *)NULL, neighbour_array))
                 break;
-        if (j == nacidic) continue; /* center not acidic -> goto next atom */
+        if (j == nacidic) continue; // center not acidic -> goto next atom 
         ap->color++;
         ap->value = 0.0;
 
@@ -70,7 +208,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
         if (old_values[i] != 0.0)
             fprintf(stderr, "atom %d: '%s'\n", i + 1, AAp->short_name);
 
-        /* add local charge increment */
+        // add local charge increment
         for (j = 0, cip = charge_inc_table; j<ncharge; j++, cip++)
             if (AtomSymbolMatch(ap->atom_symbol, cip->atom_symbol))
             {
@@ -80,7 +218,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 break;
             }
 
-        /* add local atom acidity */
+        // add local atom acidity 
         for (j = 0, ip = atom_acidity_table; j<natomacidity; j++, ip++)
             if (AtomSymbolMatch(ap->atom_symbol, ip->atom_symbol))
             {
@@ -91,12 +229,12 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 break;
             }
 
-        nbp = &neighbour_array[i];      /* for all alpha neighbours */
+        nbp = &neighbour_array[i];      // for all alpha neighbours
         for (j = 0; j<nbp->n_ligands; j++)
         {
-            aap = &mp->atom_array[nbp->atoms[j]];  /* alpha atom */
-            abp = &mp->bond_array[nbp->bonds[j]];  /* alpha bond */
-                                                   /* fetch alpha path conductivity */
+            aap = &mp->atom_array[nbp->atoms[j]];  // alpha atom 
+            abp = &mp->bond_array[nbp->bonds[j]];  // alpha bond 
+                                                   // fetch alpha path conductivity 
             for (k = 0, ppa = alpha_path_table; k<nalphapath; k++, ppa++)
                 if (AtomSymbolMatch(ap->atom_symbol,
                     ppa->path.atom_symbol) &&
@@ -111,7 +249,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 break;
             }
 
-            if (abp->bond_type != SINGLE)
+            if (convertBondType(abp->getBondType()) != SINGLE)
             {
                 if (charge_log && old_values[i] != 0)
                     fprintf(charge_log, "+%d*%c6",
@@ -121,7 +259,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 if (charge_log && old_values[i] != 0) cip->mult_inc_used++;
             }
 
-            /* fetch alpha charge increment */
+            // fetch alpha charge increment 
             if (aap->charge != 0)
             {
                 for (k = 0, cip = charge_inc_table;
@@ -142,7 +280,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 if (charge_log && old_values[i] != 0) cip->alpha_inc_used++;
             }
 
-            /* fetch alpha acidity increment */
+            // fetch alpha acidity increment
             for (k = 0, ip = atom_acidity_table; k<natomacidity; k++, ip++)
                 if (AtomSymbolMatch(aap->atom_symbol, ip->atom_symbol))
                     break;
@@ -161,15 +299,15 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
             if (charge_log && old_values[i] != 0) ppa->cond_used++;
             if (charge_log && old_values[i] != 0) ip->alpha_inc_used++;
 
-            /* for all beta neighbours */
+            // for all beta neighbours 
             nbph = &neighbour_array[nbp->atoms[j]];
             for (k = 0; k<nbph->n_ligands; k++)
             {
-                if (nbph->atoms[k] == i) continue;  /* no loop back */
+                if (nbph->atoms[k] == i) continue;  // no loop back
 
-                bap = &mp->atom_array[nbph->atoms[k]]; /* beta atom */
-                bbp = &mp->bond_array[nbph->bonds[k]]; /* beta bond */
-                for (l = 0, ppb = beta_path_table; l<nbetapath; l++, ppb++) /* fetch beta conductivity */
+                bap = &mp->atom_array[nbph->atoms[k]]; // beta atom
+                bbp = &mp->bond_array[nbph->bonds[k]]; // beta bond
+                for (l = 0, ppb = beta_path_table; l<nbetapath; l++, ppb++) // fetch beta conductivity
                     if (AtomSymbolMatch(ap->atom_symbol, ppb->path.atom_symbol) &&
                         LigandMatches(aap, abp, &ppb->path.ligands[0], FALSE) &&
                         LigandMatches(bap, bbp, &ppb->path.ligands[1], FALSE) &&
@@ -183,7 +321,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                     break;
                 }
 
-                /* fetch beta acidity increment */
+                // fetch beta acidity increment
                 for (l = 0, ip = atom_acidity_table; l<natomacidity; l++, ip++)
                     if (AtomSymbolMatch(bap->atom_symbol, ip->atom_symbol))
                         break;
@@ -202,7 +340,7 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
                 if (charge_log && old_values[i] != 0) ppb->cond_used++;
                 if (charge_log && old_values[i] != 0) ip->beta_inc_used++;
 
-                /* fetch beta charge increment */
+                // fetch beta charge increment
                 if (bap->charge != 0)
                 {
                     for (l = 0, cip = charge_inc_table; l<ncharge; l++, cip++)
@@ -228,92 +366,83 @@ bool SetpKaValues(const ROMol &mol, std::vector<double> &atom_pKa) {
             alpha*(ap->value - 7)*
             alpha*(ap->value - 7);
     }
-
-    MyFree((char *)neighbour_array);
-    return (result);
-}
-
-int MarkMostAcidicAtoms(struct reaccs_molecule_t *mp,
-    double *pKa_value, double *gap)
-    /*
-    * Marks those atoms which have the smallest pKa value of all acidic
-    * (i.e. already marked) atoms. All other marks are removed.
-    * *pKa_value is set to the minimum pKa, and *gap is set to the
-    * pKa difference to the next acidic set of atoms.
-    */
-{
-    double min_pKa, next_pKa;
-    int i, result = 0;
-    struct reaccs_atom_t *ap;
-    double epsilon = 0.000001;
-
-    for (i = 0, min_pKa = 1000.0, ap = mp->atom_array; i<mp->n_atoms; i++, ap++)
-        if (ap->color != NONE  &&  ap->value < min_pKa)
-            min_pKa = ap->value;
-
-    next_pKa = 1000.0;
-    for (i = 0, ap = mp->atom_array; i<mp->n_atoms; i++, ap++)
-        if (ap->color != NONE  &&  ap->value < min_pKa + epsilon)
-        {
-            result++;
-            ap->color = NONE + 1;
-        }
-        else
-        {
-            if (ap->color != NONE  &&  ap->value < next_pKa)
-                next_pKa = ap->value;
-            ap->color = NONE;
-            ap->value = 0;
-        }
-
-    *pKa_value = min_pKa;
-    *gap = next_pKa - min_pKa;
-    return (result);
-}
-
-void DecrementMarkedCharges(struct reaccs_molecule_t *mp)
-/*
-* Decrements the charges of all marked atoms in *mp.
 */
-{
-    int i;
-
-    for (i = 0; i<mp->n_atoms; i++)
-        if (mp->atom_array[i].color != NONE)
-            mp->atom_array[i].charge--;
+    return result;
 }
 
-struct atom_rank_t
+/*
+* Marks those atoms which have the smallest pKa value of all acidic
+* (i.e. already marked) atoms. All other marks are removed.
+* *pKa_value is set to the minimum pKa, and *gap is set to the
+* pKa difference to the next acidic set of atoms.
+*/
+int ChargeFix::markMostAcidicAtoms(double &pKa_value, double &gap) {
+    double min_pKa = 1000.0;
+    double next_pKa= 1000.0;
+    int result = 0;
+    double epsilon = 0.000001;
+    unsigned na = Mol.getNumAtoms();
+
+    for (unsigned i = 0; i < na; i++) {
+        const Atom &atom = *Mol.getAtomWithIdx(i);
+        if (AtomColor[i] != 0 && AtompKaValue[i] < min_pKa)
+            min_pKa = AtompKaValue[i];
+    }
+    for (unsigned i = 0; i < na; i++)
+        if (AtomColor [i] != 0  &&  AtompKaValue [i] < min_pKa + epsilon) {
+            result++;
+            AtomColor [i]= 1;
+        }
+        else {
+            if (AtomColor[i] != 0 &&  AtompKaValue[i] < next_pKa)
+                next_pKa = AtompKaValue[i];
+            AtomColor[i] = 0;
+            AtompKaValue[i] = 0.;
+        }
+
+    pKa_value = min_pKa;
+    gap = next_pKa - min_pKa;
+    return result;
+}
+
+/*
+* Decrements the charges of all marked atoms.
+*/
+void ChargeFix::decrementMarkedCharges()
 {
-    int atom;
-    int rank;
-    int n_ligands;
-    double elneg;
-    int rank_sum;
+    for (unsigned i = 0; i < Mol.getNumAtoms(); i++)
+        if (0!=AtomColor[i])
+            Mol.getAtomWithIdx(i)->setFormalCharge(Mol.getAtomWithIdx(i)->getFormalCharge()-1);
+}
+
+struct atom_rank_t {
+    unsigned atom;
+    unsigned rank;
+    unsigned n_ligands;
+    double   elneg;
+    unsigned rank_sum;
 };
 
-int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
-    int numbering[])
-    /*
-    * Refines the class of acidic atoms to a smaller one based on
-    * the electronegativity of the neighbouring atoms.
-    * It returns the size of this class.
-    */
-{
+/*
+* Refines the class of acidic atoms to a smaller one based on
+* the electronegativity of the neighbouring atoms.
+* It returns the size of this class.
+*/
+int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
     int result = 0;
-    int i, j, min_rank;
-    int changed, do_cis_trans;
-    struct atom_rank_t *atom_ranks, ar_tmp;
-    struct reaccs_bond_t *bp;
+    unsigned min_rank;
+    bool changed, do_cis_trans;
+    std::vector<atom_rank_t> atom_ranks(Mol.getNumAtoms());
+    atom_rank_t ar_tmp;
     double epsilon = 0.000001;
 
-    /* set electronegativities */
-    atom_ranks = TypeAlloc(mp->n_atoms, struct atom_rank_t);
-    for (i = 0; i<mp->n_atoms; i++)
-    {
+    // set electronegativities
+    for (unsigned i = 0; i < atom_ranks.size(); i++) {
         atom_ranks[i].atom = i + 1;
         atom_ranks[i].rank = 0;
         atom_ranks[i].rank_sum = 0;
+// TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/*
         for (j = 0; j<nelneg; j++)
             if (0 == strcmp(mp->atom_array[i].atom_symbol, elneg_table[j].symbol))
             {
@@ -322,17 +451,16 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
             }
         if (j == nelneg)
         {
-            fprintf(stderr, "atom symbol '%s' not in periodic table\n", mp->atom_array[i].atom_symbol);
-            MyFree((char *)atom_ranks);
-            return (-1);
+            //fprintf(stderr, "atom symbol '%s' not in periodic table\n", mp->atom_array[i].atom_symbol);
+            return -1;
         }
-        atom_ranks[i].elneg += 3.0*mp->atom_array[i].charge -
+        atom_ranks[i].elneg += 3.0* Mol.getAtomWithIdx(i)->getFormalCharge() -
             elneg_table[0].value;
+*/
     }
-
-    /* do preliminary ranking based on el. neg. */
-    for (i = 1; i<mp->n_atoms; i++)    /* sort by decreasing elneg. */
-        for (j = i; j>0; j--)
+    // do preliminary ranking based on el. neg.
+    for (unsigned i = 1; i<atom_ranks.size(); i++)    // sort by decreasing elneg. 
+        for (unsigned j = i; j>0; j--)
             if (atom_ranks[j].elneg > atom_ranks[j - 1].elneg + epsilon)
             {
                 ar_tmp = atom_ranks[j];
@@ -341,16 +469,16 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
             }
             else
                 break;
-    atom_ranks[0].rank = 0;            /* set ranks */
-    for (i = 1, j = 0; i<mp->n_atoms; i++)
+    atom_ranks[0].rank = 0; // set ranks
+    for (unsigned i = 1, j = 0; i<atom_ranks.size(); i++)
     {
-        if (atom_ranks[i].elneg < atom_ranks[i - 1].elneg - epsilon) j = i;
+        if (atom_ranks[i].elneg < atom_ranks[i - 1].elneg - epsilon)
+            j = i;
         atom_ranks[i].rank = j;
     }
-    for (i = 1; i<mp->n_atoms; i++)  /* resort by atom number */
-        for (j = i; j>0; j--)
-            if (atom_ranks[j].atom < atom_ranks[j - 1].atom)
-            {
+    for (unsigned i = 1; i < atom_ranks.size(); i++)  // resort by atom number
+        for (unsigned j = i; j>0; j--)
+            if (atom_ranks[j].atom < atom_ranks[j - 1].atom) {
                 ar_tmp = atom_ranks[j];
                 atom_ranks[j] = atom_ranks[j - 1];
                 atom_ranks[j - 1] = ar_tmp;
@@ -358,16 +486,19 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
             else
                 break;
 
-    /* use unsaturation to split ranks (rank sum is misused here) */
-    for (i = 0; i<mp->n_atoms; i++) atom_ranks[i].rank_sum = 0;
-    for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
-        if (bp->bond_type != SINGLE)
+    // use unsaturation to split ranks (rank sum is misused here)
+    for (unsigned i = 0; i<atom_ranks.size(); i++)
+        atom_ranks[i].rank_sum = 0;
+    for (unsigned i = 0; i < Mol.getNumBonds(); i++) {
+        const Bond &bond = *Mol.getBondWithIdx(i);
+        if (convertBondType(bond.getBondType()) != SINGLE)
         {
-            atom_ranks[bp->atoms[0] - 1].rank_sum++;
-            atom_ranks[bp->atoms[1] - 1].rank_sum++;
+            atom_ranks[bond.getBeginAtomIdx()].rank_sum++;
+            atom_ranks[bond.getEndAtomIdx()  ].rank_sum++;
         }
-    for (i = 1; i<mp->n_atoms; i++) /* sort by rank(asc.) + unsat.(desc.) */
-        for (j = i; j>0; j--)
+    }
+    for (unsigned i = 1; i<atom_ranks.size(); i++) // sort by rank(asc.) + unsat.(desc.) 
+        for (unsigned j = i; j>0; j--)
             if (atom_ranks[j].rank < atom_ranks[j - 1].rank ||
                 (atom_ranks[j].rank == atom_ranks[j - 1].rank  &&
                     atom_ranks[j].rank_sum > atom_ranks[j - 1].rank_sum))
@@ -378,14 +509,14 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
             }
             else
                 break;
-    for (i = 1, j = 0; i<mp->n_atoms; i++) /* set new ranks */
+    for (unsigned i = 1, j = 0; i<atom_ranks.size(); i++) // set new ranks
     {
         if (atom_ranks[i].rank > atom_ranks[i - 1].rank ||
             atom_ranks[i].rank_sum < atom_ranks[i - 1].rank_sum) j = i;
         atom_ranks[i].rank = j;
     }
-    for (i = 1; i<mp->n_atoms; i++)    /* restore atom number order */
-        for (j = i; j>0; j--)
+    for (unsigned i = 1; i < atom_ranks.size(); i++)    // restore atom number order
+        for (unsigned j = i; j>0; j--)
             if (atom_ranks[j].atom < atom_ranks[j - 1].atom)
             {
                 ar_tmp = atom_ranks[j];
@@ -395,46 +526,52 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
             else
                 break;
 
-    for (i = 0; i<mp->n_atoms; i++) atom_ranks[i].n_ligands = 0;
-    for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
-    {
-        atom_ranks[bp->atoms[0] - 1].n_ligands++;
-        atom_ranks[bp->atoms[1] - 1].n_ligands++;
+    for (unsigned i = 0; i<atom_ranks.size(); i++)
+        atom_ranks[i].n_ligands = 0;
+    for (unsigned i = 0; i < BondColor.size(); i++) {
+        const Bond &bond = *Mol.getBondWithIdx(i);
+        atom_ranks[bond.getBeginAtomIdx()].n_ligands++;
+        atom_ranks[bond.getEndAtomIdx()].n_ligands++;
     }
 
-    /* refine ranking using neighbour rank sums */
-    do_cis_trans = FALSE;
+    // refine ranking using neighbour rank sums 
+    do_cis_trans = false;
     do
     {
-        for (i = 0; i<mp->n_atoms; i++)
+        for (unsigned i = 0; i < atom_ranks.size(); i++)
             numbering[i] = atom_ranks[i].rank;
-        /* compute rank sums */
-        for (i = 0; i<mp->n_atoms; i++) atom_ranks[i].rank_sum = 0;
-        for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
-        {
-            atom_ranks[bp->atoms[0] - 1].rank_sum +=
-                atom_ranks[bp->atoms[1] - 1].rank;
-            atom_ranks[bp->atoms[1] - 1].rank_sum +=
-                atom_ranks[bp->atoms[0] - 1].rank;
+        // compute rank sums
+        for (unsigned i = 0; i < atom_ranks.size(); i++)
+            atom_ranks[i].rank_sum = 0;
+        for (unsigned i = 0; i < Mol.getNumBonds(); i++) {
+            const Bond &bond = *Mol.getBondWithIdx(i);
+            atom_ranks[bond.getBeginAtomIdx()].rank_sum +=
+                atom_ranks[bond.getEndAtomIdx()].rank;
+            atom_ranks[bond.getEndAtomIdx()].rank_sum +=
+                atom_ranks[bond.getBeginAtomIdx()].rank;
         }
         if (do_cis_trans)
         {
-            CisTransPerception(mp, numbering);
-            for (i = 0, bp = mp->bond_array; i<mp->n_bonds; i++, bp++)
-                if (bp->color != NONE)
+//TODO:     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//            CisTransPerception(Mol, numbering);
+
+            for (unsigned i = 0; i < BondColor.size(); i++) {
+                const Bond &bond = *Mol.getBondWithIdx(i);
+                if (BondColor[i] != 0)
                 {
-                    atom_ranks[bp->atoms[0] - 1].rank_sum += bp->color;
-                    atom_ranks[bp->atoms[1] - 1].rank_sum += bp->color;
+                    atom_ranks[bond.getBeginAtomIdx()].rank_sum += BondColor[i];
+                    atom_ranks[bond.getEndAtomIdx()].rank_sum += BondColor[i];
                 }
+            }
         }
-        for (i = 0; i<mp->n_atoms; i++) /* use average rank sum */
+        for (unsigned i = 0; i < atom_ranks.size(); i++) // use average rank sum
             if (atom_ranks[i].n_ligands > 0)
             {
-                atom_ranks[i].rank_sum *= 10; /* shift dec. point */
+                atom_ranks[i].rank_sum *= 10; // shift dec. point
                 atom_ranks[i].rank_sum /= atom_ranks[i].n_ligands;
             }
-        for (i = 1; i<mp->n_atoms; i++)   /* sort by rank + ranksum */
-            for (j = i; j>0; j--)
+        for (unsigned i = 1; i < atom_ranks.size(); i++)   // sort by rank + ranksum
+            for (unsigned j = i; j>0; j--)
                 if (atom_ranks[j].rank < atom_ranks[j - 1].rank ||
                     (atom_ranks[j].rank == atom_ranks[j - 1].rank  &&
                         atom_ranks[j].rank_sum < atom_ranks[j - 1].rank_sum))
@@ -445,16 +582,17 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
                 }
                 else
                     break;
-        /* compute new ranks */
-        for (i = 1, changed = FALSE, j = 0; i<mp->n_atoms; i++)
+        // compute new ranks
+        changed = false;
+        for (unsigned i = 1, j = 0; i<atom_ranks.size(); i++)
         {
             if (atom_ranks[i].rank > atom_ranks[i - 1].rank ||
                 atom_ranks[i].rank_sum > atom_ranks[i - 1].rank_sum) j = i;
             changed = changed || atom_ranks[i].rank != j;
             atom_ranks[i].rank = j;
         }
-        for (i = 1; i<mp->n_atoms; i++) /* restore atom number order */
-            for (j = i; j>0; j--)
+        for (unsigned i = 1; i<atom_ranks.size(); i++) // restore atom number order 
+            for (unsigned j = i; j>0; j--)
                 if (atom_ranks[j].atom < atom_ranks[j - 1].atom)
                 {
                     ar_tmp = atom_ranks[j];
@@ -465,116 +603,38 @@ int RefineAcidicAtoms(struct reaccs_molecule_t *mp,
                     break;
         if (!changed && !do_cis_trans)
         {
-            do_cis_trans = TRUE;
-            changed = TRUE;
+            do_cis_trans = true;
+            changed = true;
         }
         else
-            do_cis_trans = FALSE;
+            do_cis_trans = false;
     } while (changed);
 
-    /* find smalles rank of coloured atoms */
-    for (i = 0, min_rank = mp->n_atoms; i<mp->n_atoms; i++)
-        if (mp->atom_array[i].color != NONE  &&
-            atom_ranks[i].rank < min_rank)
+    // find smalles rank of coloured atoms 
+    for (unsigned i = 0, min_rank = atom_ranks.size(); i < atom_ranks.size(); i++)
+        if (AtomColor[i] != 0  && atom_ranks[i].rank < min_rank)
             min_rank = atom_ranks[i].rank;
-    for (i = 0; i<mp->n_atoms; i++)
-    {
-        if (mp->atom_array[i].color != NONE  &&
-            atom_ranks[i].rank == min_rank)
-        {                        /* count members of minimum class */
+    for (unsigned i = 0; i < atom_ranks.size(); i++) {
+        if (AtomColor[i] != 0  && atom_ranks[i].rank == min_rank)
+        {                        // count members of minimum class
             result++;
-            mp->atom_array[i].value = atom_ranks[i].rank + 1;
+            AtompKaValue[i] = atom_ranks[i].rank + 1;
         }
         else
-        {                        /* uncolour non-minimum members */
-            mp->atom_array[i].color = NONE;
-            mp->atom_array[i].value = 0;
+        {                        // uncolour non-minimum members
+            AtomColor[i] = 0;
+            AtompKaValue[i] = 0.;
         }
     }
-
-    MyFree((char *)atom_ranks);
-    if (result > 1)
-    {
-        for (i = 0; i<mp->n_atoms; i++)
-            if (mp->atom_array[i].color != NONE)
-            {
-                sprintf(msg_buffer, "atom %d in minimal rank class", i + 1);
-                AddMsgToList(msg_buffer);
+    if (result > 1) {
+        for (unsigned i = 0; i < AtomColor.size(); i++)
+            if (AtomColor[i] != 0) {
+//                sprintf(msg_buffer, "atom %d in minimal rank class", i + 1);
+//                AddMsgToList(msg_buffer);
             }
     }
-    return (result);
+    return result;
 }
-
-/*
-* Removes hydrogens from *mp until desired_charge is reached. The
-* positions for hydrogen removal are selected by "acidity" combined
-* with a refinement algorithm. It returns TRUE if molecule could be
-* neutralized and FALSE if any problem were encountered.
-* *ndeprot and *nrefine are set to the number of deprotonations
-* and refinement cycles performed.
-*/
-    bool RechargeMolecule(RWMol &mol, int desired_charge, unsigned &ndeprot, unsigned &nrefine) {
-        bool changed = false;
-        int nacid;
-        double gap, pKa_value;
-        std::vector<double> atom_pKa (mol.getNumAtoms());
-        double acidity_limit = 24.0;
-        std::vector<unsigned> numbering(mol.getNumAtoms());
-
-        ndeprot = 0;    // number of deprotonation cycles
-        nrefine = 0;    // number of refinements necessary
-        for (;;)
-        {
-            while (TotalCharge(mol) > desired_charge)
-            {
-                SetpKaValues(mol, atom_pKa);
-                nacid = MarkMostAcidicAtoms(mol, pKa_value, gap, acidity_limit);
-                if (pKa_value > acidity_limit) {
-//                    sprintf(msg_buffer, "pKa_value = %.2g", pKa_value);
-//                    AddMsgToList(msg_buffer);
-                    return false;     // not acidic enough
-                }
-                else if (nacid == 1 || (nacid == TotalCharge(mol) && gap > 8.0)) { // easy case
-//                    sprintf(msg_buffer, "pKa = %.2g", pKa_value);
-//                    AddMsgToList(msg_buffer);
-                    DecrementMarkedCharges(mol);
-                }
-                else
-                    break;
-                ndeprot++;
-            }
-
-            if (TotalCharge(mol) > desired_charge) {
-                nrefine++;
-//// ?? expl. H ??                numbering = TypeAlloc(mp->n_atoms, int);
-                nacid = RefineAcidicAtoms(mol, numbering);
-                if (nacid == 1)
-                    DecrementMarkedCharges(mol);
-                else if (AllCentersRefined(mol, numbering))
-                {
-                    for (unsigned i = 0; i < mol.getNumAtoms(); i++) // Select one mark
-                        if (mp->atom_array[i].color != NONE && nacid != 1)
-                        {
-                            nacid--; mp->atom_array[i].color = NONE;
-                        }
-                    DecrementMarkedCharges(mol);
-                }
-                else
-                {
-//                    sprintf(msg_buffer, "%10s: could not fix charges", mp->name);
-//                    AddMsgToList(msg_buffer);
-                    return false;
-                }
-                ndeprot++;
-            }
-            else
-            {
-                ResetValues(mol);
-                return true;
-            }
-        }
-        return changed;
-    }
 
  }// namespace StructureCheck
 } // namespace RDKit

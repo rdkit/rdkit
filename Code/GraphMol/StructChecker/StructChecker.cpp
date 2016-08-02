@@ -104,7 +104,8 @@ namespace RDKit {
         {
             unsigned ndeprot;
             unsigned nrefine;
-            if (RechargeMolecule(mol, Options.DesiredCharge, ndeprot, nrefine))
+            ChargeFix ch(Options, mol);
+            if (ch.rechargeMolecule(ndeprot, nrefine))
                 flags |= RECHARGED;
         }
 //

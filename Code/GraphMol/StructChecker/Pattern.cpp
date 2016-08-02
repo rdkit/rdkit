@@ -14,7 +14,6 @@
 namespace RDKit {
  namespace StructureCheck {
 
-static inline
 RDKit::Bond::BondType convertBondType(AABondType bt) {
     static const RDKit::Bond::BondType rdbt[] = {
         RDKit::Bond::UNSPECIFIED,  //BT_NONE = 0,
@@ -29,7 +28,6 @@ RDKit::Bond::BondType convertBondType(AABondType bt) {
     return bt<= DOUBLE_AROMATIC ? rdbt[bt] : RDKit::Bond::OTHER;    // ??
 }
 
-static inline
 AABondType convertBondType(RDKit::Bond::BondType rdbt) {
     static const AABondType bt[] = {
         BT_NONE,
@@ -60,7 +58,7 @@ bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charg
     if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical)
         return false;
     if ((l.Charge != ANY_CHARGE || use_charge)
-        && l.Charge != ANY_CHARGE  && a.getFormalCharge != l.Charge)
+        && l.Charge != ANY_CHARGE  && a.getFormalCharge() != l.Charge)
         return false;
     return (AtomSymbolMatch(a.getSymbol(), l.AtomSymbol));
 }

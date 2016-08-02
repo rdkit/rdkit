@@ -13,6 +13,9 @@
 namespace RDKit {
  namespace StructureCheck {
 
+     RDKit::Bond::BondType convertBondType(AABondType bt);
+     AABondType convertBondType(RDKit::Bond::BondType rdbt);
+
     unsigned getAtomicNumber(const std::string symbol);
     bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
     bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge = false);
