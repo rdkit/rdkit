@@ -1016,9 +1016,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     throw FileParseException(errout.str());
   }
   symb = text.substr(31, 3);
-  size_t firstChar = symb.find_first_not_of(' ');
-  symb = ((firstChar == std::string::npos)
-    ? "" : symb.substr(firstChar, symb.find_first_of(' ', firstChar)));
+  boost::trim(symb);
 
   // REVIEW: should we handle missing fields at the end of the line?
   massDiff = 0;
