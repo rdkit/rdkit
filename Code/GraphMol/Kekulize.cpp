@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -203,6 +202,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
   INT_DEQUE astack;
   INT_INT_DEQ_MAP options;
   int lastOpt = -1;
+  boost::dynamic_bitset<> localBondsAdded(mol.getNumBonds());
 
   // ok the algorithm goes something like this
   // - start with an atom that has been marked aromatic before
@@ -306,6 +306,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
 
         // add them to the list of bonds to which have been made double
         dBndAdds[bnd->getIdx()] = 1;
+        localBondsAdded[bnd->getIdx()] = 1;
 
         // if this is an atom we previously visted and picked we
         // simply tried a different option now, overwrite the options
@@ -347,6 +348,13 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           // mol.debugMol(std::cerr);
           numBT++;
         } else {
+          // undo any remaining changes we made while here
+          // this was github #962
+          for (unsigned int bidx = 0; bidx < mol.getNumBonds(); ++bidx) {
+            if (localBondsAdded[bidx]) {
+              mol.getBondWithIdx(bidx)->setBondType(Bond::SINGLE);
+            }
+          }
           return false;
         }
       }  // end of else try to backtrack
