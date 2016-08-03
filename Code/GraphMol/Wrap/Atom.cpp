@@ -389,8 +389,18 @@ struct atom_wrapper {
                  1, python::with_custodian_and_ward_postcall<0, 1> >(),
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
-             "Sets the atom's MonomerInfo object.\n\n");
-
+             "Sets the atom's MonomerInfo object.\n\n")
+        .def("GetAtomMapNum", &Atom::getAtomMapNum,
+             "Gets the atoms map number, returns 0 if not set")
+        .def("SetAtomMapNum", &Atom::setAtomMapNum,
+             (python::arg("self"), python::arg("mapno")),
+             "Sets the atoms map number, a value of 0 clears the atom map")
+        .def("GetRlabel", &Atom::getRlabel,
+             "Gets the atom's rlabel, returns 0 if not set")
+        .def("SetRlabel", &Atom::setRlabel,
+             (python::arg("self"), python::arg("rlabel")),
+             "Sets the atom's rlabel, a value of 0 clears the rlabel");
+    
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)
         .value("SP", Atom::SP)

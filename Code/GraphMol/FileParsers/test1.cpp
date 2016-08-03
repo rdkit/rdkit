@@ -1953,7 +1953,29 @@ void testMolFileAtomValues() {
     m->getAtomWithIdx(1)->getProp(common_properties::molFileValue, val);
     TEST_ASSERT(val == "acidchloride");
 
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(!m->getAtomWithIdx(3)->hasProp(common_properties::molAtomMapNumber));
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomMapNum() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomMapNum() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomMapNum() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
+
+    // round trip
+    m->getAtomWithIdx(0)->setAtomMapNum(4);
+    m->getAtomWithIdx(3)->setRlabel(1);
+    RWMol *m2 = MolBlockToMol(MolToMolBlock(*m));
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomMapNum() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomMapNum() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomMapNum() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getRlabel() == 1);
+    
     delete m;
+    delete m2;
   }
 
   {
@@ -4366,6 +4388,9 @@ void testParseCHG() {
   TEST_ASSERT(positions.size() == 3); // 24/3 == 8
   
   delete m;
+}
+
+void testMolAtomMapNumber() {
 }
 
 void RunTests() {

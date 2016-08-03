@@ -360,6 +360,38 @@ class Atom : public RDProps {
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; };
 
+  //! Set the atom map Number of the atom
+  void setAtomMapNum(int mapno) {
+    if (mapno) {
+      setProp(common_properties::molAtomMapNumber, mapno);
+    }
+    else if (hasProp(common_properties::molAtomMapNumber)) {
+      clearProp(common_properties::molAtomMapNumber);
+    }
+  }
+  //! Gets the atom map Number of the atom, if no atom map exists, 0 is returned.
+  int getAtomMapNum() const {
+    int mapno=0;
+    getPropIfPresent(common_properties::molAtomMapNumber, mapno);
+    return mapno;
+  }
+
+  //! Set the atom's RLabel
+  void setRlabel(int rlabel) {
+    if (rlabel) {
+      setProp(common_properties::_MolFileRLabel, static_cast<unsigned int>(rlabel));
+    }
+    else if (hasProp(common_properties::_MolFileRLabel)) {
+      clearProp(common_properties::_MolFileRLabel);
+    }
+  }
+  //! Gets the atom's RLabel
+  int getRlabel() const {
+    unsigned int rlabel=0;
+    getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
+    return static_cast<int>(rlabel);
+  }
+  
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);

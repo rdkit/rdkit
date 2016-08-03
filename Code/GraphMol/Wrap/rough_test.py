@@ -2231,12 +2231,14 @@ CAS<~>
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'2')
+    self.assertEqual(at.GetRlabel(), 2)
 
     at = m.GetAtomWithIdx(4)
     self.assertTrue(at is not None)
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'1')
+    self.assertEqual(at.GetRlabel(), 1)
 
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O',False)
@@ -2579,6 +2581,12 @@ CAS<~>
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
     smi=Chem.MolToSmiles(m)
     self.assertEqual(smi,'CC[*:30]')
+    # try newer api
+    m = Chem.MolFromSmiles('CC*')
+    m.GetAtomWithIdx(2).SetAtomMapNum(30)
+    smi=Chem.MolToSmiles(m)
+    self.assertEqual(smi,'CC[*:30]')
+    
 
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
