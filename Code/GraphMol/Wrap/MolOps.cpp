@@ -319,9 +319,11 @@ int getSSSR(ROMol &mol) {
 PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
                                const ROMol &replacement,
                                bool replaceAll = false,
-                               unsigned int replacementConnectionPoint = 0) {
+                               unsigned int replacementConnectionPoint = 0,
+                               bool useChirality=false) {
   std::vector<ROMOL_SPTR> v = replaceSubstructs(
-      orig, query, replacement, replaceAll, replacementConnectionPoint);
+      orig, query, replacement, replaceAll, replacementConnectionPoint,
+      useChirality);
   PyObject *res = PyTuple_New(v.size());
   for (unsigned int i = 0; i < v.size(); ++i) {
     PyTuple_SetItem(res, i, python::converter::shared_ptr_to_python(v[i]));
@@ -910,6 +912,8 @@ struct molops_wrapper {
       See below for examples.\n\
       Default value is 0 (remove the atoms whether or not the entire fragment matches)\n\
 \n\
+    - useChirality: (optional) match the substructure query using chirality\n\
+\n\
   RETURNS: a new molecule with the substructure removed\n\
 \n\
   NOTES:\n\
@@ -931,7 +935,8 @@ struct molops_wrapper {
 \n";
     python::def("DeleteSubstructs", deleteSubstructs,
                 (python::arg("mol"), python::arg("query"),
-                 python::arg("onlyFrags") = false),
+                 python::arg("onlyFrags") = false,
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
     docString = "Do a Murcko decomposition and return the scaffold";
@@ -963,6 +968,7 @@ struct molops_wrapper {
       Default value is False (return multiple replacements)\n\
     - replacementConnectionPoint: (optional) index of the atom in the replacement that\n\
       the bond should be made to.\n\
+    - useChirality: (optional) match the substructure query using chirality\n\
 \n\
   RETURNS: a tuple of new molecules with the substructures replaced removed\n\
 \n\
@@ -986,7 +992,8 @@ struct molops_wrapper {
     python::def("ReplaceSubstructs", replaceSubstructures,
                 (python::arg("mol"), python::arg("query"),
                  python::arg("replacement"), python::arg("replaceAll") = false,
-                 python::arg("replacementConnectionPoint") = 0),
+                 python::arg("replacementConnectionPoint") = 0,
+                 python::arg("useChirality") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1715,6 +1722,8 @@ ARGUMENTS:\n\
 \n\
     - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
 \n\
+    - useChirality: (optional) match the substructure query using chirality\n\
+\n\
   RETURNS: a new molecule with the sidechains removed\n\
 \n\
   NOTES:\n\
@@ -1733,7 +1742,8 @@ ARGUMENTS:\n\
     - ReplaceSidechains('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
 \n";
     python::def("ReplaceSidechains", replaceSidechains,
-                (python::arg("mol"), python::arg("coreQuery")),
+                (python::arg("mol"), python::arg("coreQuery"),
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -1754,6 +1764,8 @@ ARGUMENTS:\n\
 \n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
                          flagged with a dummy, it will be rejected (None is returned)\n\
+\n\
+    - useChirality: use chirality matching in the coreQuery\n\
 \n\
   RETURNS: a new molecule with the core removed\n\
 \n\
@@ -1780,7 +1792,8 @@ ARGUMENTS:\n\
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
-                 python::arg("requireDummyMatch") = false),
+                 python::arg("requireDummyMatch") = false,
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 

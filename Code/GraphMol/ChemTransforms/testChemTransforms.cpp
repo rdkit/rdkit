@@ -91,6 +91,27 @@ void testDeleteSubstruct() {
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
 
+  // test chiralty
+  smi = "CCO[C@H](N)(P)";
+  mol1 = SmilesToMol(smi);
+  matcher1 = SmartsToMol("O[C@H](N)(P)");
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
+  std::string smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "1 smi: " << smi1 << std::endl;  
+  TEST_ASSERT(smi1 == "CC");
+  delete matcher1;
+  delete mol2;
+  
+  matcher1 = SmartsToMol("O[C@@H](N)(P)");
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "2 smi: " << smi1 << std::endl;
+  TEST_ASSERT(smi1 == "CCO[C@H](N)P");
+  
+  delete mol1;
+  delete matcher1;
+  delete mol2;
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -173,6 +194,30 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect[0]->getNumAtoms() == 3);
   TEST_ASSERT(vect[0]->getNumBonds() == 3);
 
+  // test chirality
+  delete mol1;
+  delete matcher1;
+  sma = "P([C@H](N)O)";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+
+  // test stereo matching
+  smi = "CCP([C@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
+  TEST_ASSERT(vect.size() == 1);
+  std::string smi1 = MolToSmiles(*vect[0], true);
+  TEST_ASSERT(smi1 == "CCNCC");
+
+  smi = "CCP([C@@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  std::cerr << "smi1" << smi1;
+  // no change
+  TEST_ASSERT(smi1 == "CCP(CC)[C@@H](N)O");
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -196,6 +241,7 @@ void testReplaceSubstructs2() {
     std::vector<ROMOL_SPTR> vect = replaceSubstructs(*mol1, *matcher1, *frag);
     TEST_ASSERT(vect.size() == 1);
     TEST_ASSERT(mol1->getNumAtoms() == 5);
+
     TEST_ASSERT(vect[0]->getNumAtoms() == 6);
     std::string csmi1 = MolToSmiles(*vect[0], true);
 
@@ -276,6 +322,19 @@ void testReplaceSidechains() {
   delete mol2;
   delete matcher1;
 
+  sma = "P([C@H](N)O)";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  smi = "CCP([C@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  mol2 = replaceSidechains(*mol1, *matcher1, true);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2, true);
+  std::cerr << "smi1;;; " << smi << std::endl;
+  delete mol1;
+  delete mol2;
+  delete matcher1;
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

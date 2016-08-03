@@ -28,12 +28,13 @@ typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
     \param onlyFrags  if this is set, atoms will only be removed if
                       the entire fragment in which they are found is
                       matched by the query.
+    \param useChirality - if set, match the coreQuery using chirality
 
     \return a copy of \c mol with the matching atoms and bonds (if any)
             removed.
 */
 ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
-                        bool onlyFrags = false);
+                        bool onlyFrags = false, bool useChirality = false);
 
 //! \brief Returns a list of copies of an ROMol with the atoms and bonds that
 //!      match a pattern replaced with the atoms contained in another molecule.
@@ -61,6 +62,8 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
     \param query       the query ROMol
     \param replacement the ROMol to be inserted
     \param replaceAll  if this is true, only a single result, with all
+    \param useChirality - if set, match the coreQuery using chirality
+
    occurances
                        of the substructure replaced, will be returned.
     \param replacementConnectionPoint   index of the atom in the replacement
@@ -73,7 +76,8 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
 */
 std::vector<ROMOL_SPTR> replaceSubstructs(
     const ROMol &mol, const ROMol &query, const ROMol &replacement,
-    bool replaceAll = false, unsigned int replacementConnectionPoint = 0);
+    bool replaceAll = false, unsigned int replacementConnectionPoint = 0,
+    bool useChirality = false);
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      don't fall within a substructure match removed.
@@ -83,11 +87,13 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
 /*!
     \param mol       the ROMol of interest
     \param coreQuery a query ROMol to be used to match the core
+    \param useChirality - if set, match the coreQuery using chirality
 
     \return a copy of \c mol with the non-matching atoms and bonds (if any)
             removed and dummies at the connection points.
 */
-ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery);
+ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
+                         bool useChirality = false);
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      do fall within a substructure match removed.
@@ -112,6 +118,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery);
    considered.
                                Molecules that have sidechains that are attached
                                at other points will be rejected (NULL returned).
+    \param useChirality - if set, match the coreQuery using chirality
 
     \return a copy of \c mol with the non-matching atoms and bonds (if any)
             removed and dummies at the connection points. The client is

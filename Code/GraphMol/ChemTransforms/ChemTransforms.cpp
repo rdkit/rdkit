@@ -52,7 +52,8 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
 }
 }
 
-ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
+ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
+                        bool useChirality) {
   RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
@@ -61,7 +62,9 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
   matches;  // all matches on the molecule - list of list of atom ids
   MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
-  SubstructMatch(*res, query, fgpMatches);
+  const bool uniquify=true;
+  const bool recursionPossible=true;
+  SubstructMatch(*res, query, fgpMatches, uniquify, recursionPossible, useChirality);
 
   // if didn't find any matches nothing to be done here
   // simply return a copy of the molecule
@@ -134,20 +137,24 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
 
 std::vector<ROMOL_SPTR> replaceSubstructs(
     const ROMol &mol, const ROMol &query, const ROMol &replacement,
-    bool replaceAll, unsigned int replacementConnectionPoint) {
+    bool replaceAll, unsigned int replacementConnectionPoint,
+    bool useChirality) {
   PRECONDITION(replacementConnectionPoint < replacement.getNumAtoms(),
                "bad replacementConnectionPoint");
   std::vector<ROMOL_SPTR> res;
   std::vector<MatchVectType> fgpMatches;
 
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-
+  std::cerr << "useChirality " << (int) useChirality << std::endl;
   // do the substructure matching and get the atoms that match the query
-  SubstructMatch(mol, query, fgpMatches);
+  const bool uniquify = true;
+  const bool recursionPossible=true;
+  SubstructMatch(mol, query, fgpMatches, uniquify, recursionPossible, useChirality);
 
   // if we didn't find any matches, there's nothing to be done here
   // simply return a list with a copy of the starting molecule
   if (fgpMatches.size() == 0) {
+    std::cerr << "No match" << std::endl;
     res.push_back(ROMOL_SPTR(new ROMol(mol, false)));
     res[0]->clearComputedProps(false);
     return res;
@@ -234,11 +241,14 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   return res;
 }
 
-ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery) {
+ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
+                         bool useChirality) {
   MatchVectType matchV;
 
   // do the substructure matching and get the atoms that match the query
-  bool matchFound = SubstructMatch(mol, coreQuery, matchV);
+  const bool recursionPossible=true;
+  bool matchFound = SubstructMatch(mol, coreQuery, matchV, recursionPossible,
+                                   useChirality);
 
   // if we didn't find any matches, there's nothing to be done here
   // simply return null to indicate the problem
