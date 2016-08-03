@@ -787,11 +787,18 @@ void testReplaceCoreRequireDummies() {
     ROMol *mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    ROMol *mol2 = replaceCore(*mol1, *matcher, false, true, false);
+    bool replaceDummies = false;
+    bool labelByIndex = true;
+    bool requireDummyMatch = false;
+    ROMol *mol2 = replaceCore(*mol1, *matcher,
+                              replaceDummies, labelByIndex,
+                              requireDummyMatch);
     TEST_ASSERT(mol2);
     TEST_ASSERT(mol2->getNumAtoms() == 5);
     smi = MolToSmiles(*mol2, true);
-    TEST_ASSERT(smi == "[1*]CC.[4*]C");
+    // If dummies existed and were replaced
+    //  use THEIR atom indices
+    TEST_ASSERT(smi == "[2*]CC.[5*]C");
 
     delete mol1;
     delete mol2;
@@ -800,7 +807,13 @@ void testReplaceCoreRequireDummies() {
     mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    mol2 = replaceCore(*mol1, *matcher, false, true, true);
+    replaceDummies = false;
+    labelByIndex = true;
+    requireDummyMatch = true;
+    mol2 = replaceCore(*mol1, *matcher,
+                       replaceDummies, labelByIndex,
+                       requireDummyMatch);
+
     TEST_ASSERT(!mol2);
     delete mol1;
 
@@ -808,7 +821,13 @@ void testReplaceCoreRequireDummies() {
     mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    mol2 = replaceCore(*mol1, *matcher, false, true, true);
+    replaceDummies = false;
+    labelByIndex = true;
+    requireDummyMatch = true;
+    mol2 = replaceCore(*mol1, *matcher,
+                       replaceDummies, labelByIndex,
+                       requireDummyMatch);
+
     TEST_ASSERT(!mol2);
     delete mol1;
 

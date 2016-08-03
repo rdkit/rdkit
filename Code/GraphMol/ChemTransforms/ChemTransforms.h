@@ -121,7 +121,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery);
 */
 ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
                    bool replaceDummies = true, bool labelByIndex = false,
-                   bool requireDummyMatch = false);
+                   bool requireDummyMatch = false, bool useChirality = false);
 
 //! \brief Carries out a Murcko decomposition on the molecule provided
 //!
