@@ -402,17 +402,6 @@ void setMMFFAromaticity(RWMol &mol) {
         for (j = 0; j < atomRings[i].size(); ++j) {
           atom = mol.getAtomWithIdx(atomRings[i][j]);
           atom->setIsAromatic(true);
-          if (atom->getAtomicNum() != 6) {
-//                std::cerr<<"   orig: "<<atom->getNumExplicitHs()<<std::endl;
-#if 1
-            atom->calcImplicitValence(false);
-            int iv = atom->getImplicitValence();
-            if (iv) {
-              atom->setNumExplicitHs(iv);
-              atom->calcImplicitValence(false);
-            }
-#endif
-          }
         }
       }
     }
@@ -444,6 +433,26 @@ void setMMFFAromaticity(RWMol &mol) {
       bond = mol.getBondBetweenAtoms(atomRings[i][j], nextInRing);
       bond->setBondType(Bond::AROMATIC);
       bond->setIsAromatic(true);
+    }
+  }
+  for (i = 0; i < atomRings.size(); ++i) {
+    // if the ring is not aromatic, move to the next one
+    if (!aromRingBitVect[i]) {
+      continue;
+    }
+    for (j = 0; j < atomRings[i].size(); ++j) {
+      atom = mol.getAtomWithIdx(atomRings[i][j]);
+      if (atom->getAtomicNum() != 6) {
+//                std::cerr<<"   orig: "<<atom->getNumExplicitHs()<<std::endl;
+#if 1
+        atom->calcImplicitValence(false);
+        int iv = atom->getImplicitValence();
+        if (iv) {
+          atom->setNumExplicitHs(iv);
+          atom->calcImplicitValence(false);
+        }
+#endif
+      }
     }
   }
 }
