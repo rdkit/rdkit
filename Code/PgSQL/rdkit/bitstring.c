@@ -33,7 +33,7 @@
 
 #ifdef USE_BUILTIN_POPCOUNT
 
-#ifdef __MSC_VER
+#ifdef _MSC_VER
 #include <intrin.h>
 #define POPCNT __popcnt
 typedef unsigned int POPCNT_TYPE;
