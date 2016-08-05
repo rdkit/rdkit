@@ -2231,14 +2231,14 @@ CAS<~>
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'2')
-    self.assertEqual(at.GetRlabel(), 2)
+    self.assertEqual(Chem.MDL.GetRLabel(at),  2)
 
     at = m.GetAtomWithIdx(4)
     self.assertTrue(at is not None)
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'1')
-    self.assertEqual(at.GetRlabel(), 1)
+    self.assertEqual(Chem.MDL.GetRLabel(at), 1)
 
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O',False)
@@ -2579,6 +2579,7 @@ CAS<~>
   def test82Issue288(self):
     m = Chem.MolFromSmiles('CC*')
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
+    
     smi=Chem.MolToSmiles(m)
     self.assertEqual(smi,'CC[*:30]')
     # try newer api
@@ -3647,8 +3648,21 @@ CAS<~>
     m.GetBondWithIdx(0).SetProp("foo","1")
     self.assertEqual(list(m.GetBondWithIdx(0).GetPropNames()),["foo"])
 
+  def testMDLProps(self):
+    m = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetAtomMapNum(1)
+    Chem.MDL.SetAlias(m.GetAtomWithIdx(1), "foo")
+    Chem.MDL.SetValue(m.GetAtomWithIdx(1), "bar")
 
+    m = Chem.MolFromMolBlock(Chem.MolToMolBlock(m))
+    self.assertEquals(m.GetAtomWithIdx(0).GetAtomMapNum(), 1)
+    self.assertEquals(Chem.MDL.GetAlias(m.GetAtomWithIdx(1)), "foo")
+    self.assertEquals(Chem.MDL.GetValue(m.GetAtomWithIdx(1)), "bar")
 
-
+  def testSmilesProps(self):
+    m = Chem.MolFromSmiles("C")
+    Chem.Daylight.SetSupplementalLabel(m.GetAtomWithIdx(0), 'xxx')
+    self.assertEquals(Chem.MolToSmiles(m), "Cxxx")
+    
 if __name__ == '__main__':
   unittest.main()

@@ -361,7 +361,9 @@ class Atom : public RDProps {
   void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; };
 
   //! Set the atom map Number of the atom
-  void setAtomMapNum(int mapno) {
+  void setAtomMapNum(int mapno, bool strict=true) {
+    PRECONDITION(!strict || mapno>=0 && mapno<1000,
+                 "atom map number out of range [0..1000], use strict=false to override");
     if (mapno) {
       setProp(common_properties::molAtomMapNumber, mapno);
     }
@@ -376,22 +378,6 @@ class Atom : public RDProps {
     return mapno;
   }
 
-  //! Set the atom's RLabel
-  void setRlabel(int rlabel) {
-    if (rlabel) {
-      setProp(common_properties::_MolFileRLabel, static_cast<unsigned int>(rlabel));
-    }
-    else if (hasProp(common_properties::_MolFileRLabel)) {
-      clearProp(common_properties::_MolFileRLabel);
-    }
-  }
-  //! Gets the atom's RLabel
-  int getRlabel() const {
-    unsigned int rlabel=0;
-    getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
-    return static_cast<int>(rlabel);
-  }
-  
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
@@ -418,6 +404,30 @@ class Atom : public RDProps {
   AtomMonomerInfo *dp_monomerInfo;
   void initAtom();
 };
+
+namespace MDL {
+//! Set the atom's MDL integer RLabel
+//   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
+void setRLabel(Atom *atm, int rlabel);
+int getRLabel(const Atom *atm);
+
+//! Set the atom's MDL atom alias
+//   Setting to an empty string clears the alias
+void setAlias(Atom *atom, const std::string &alias);
+std::string getAlias(const Atom *atom);
+
+//! Set the atom's MDL atom value
+//   Setting to an empty string clears the value
+void setValue(Atom *atom, const std::string &value);
+std::string getValue(const Atom *atom);
+}
+
+namespace Daylight {
+//! Sets the supplemental label that will follow the atom when writing
+//   smiles strings.
+void setSupplementalLabel(Atom *atom, const std::string &label);
+std::string getSupplementalLabel(const Atom *atom);  
+}
 };
 //! allows Atom objects to be dumped to streams
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);

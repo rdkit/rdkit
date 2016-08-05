@@ -141,6 +141,9 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   return (AtomPDBResidueInfo *)res;
 }
 
+struct MDLDummy {};
+struct DaylightDummy {};
+
 // FIX: is there any reason at all to not just prevent the construction of
 // Atoms?
 std::string atomClassDoc =
@@ -393,13 +396,8 @@ struct atom_wrapper {
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")
         .def("SetAtomMapNum", &Atom::setAtomMapNum,
-             (python::arg("self"), python::arg("mapno")),
-             "Sets the atoms map number, a value of 0 clears the atom map")
-        .def("GetRlabel", &Atom::getRlabel,
-             "Gets the atom's rlabel, returns 0 if not set")
-        .def("SetRlabel", &Atom::setRlabel,
-             (python::arg("self"), python::arg("rlabel")),
-             "Sets the atom's rlabel, a value of 0 clears the rlabel");
+             (python::arg("self"), python::arg("mapno"), python::arg("strict") = false),
+             "Sets the atoms map number, a value of 0 clears the atom map");
     
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)
@@ -434,7 +432,48 @@ These cannot currently be constructed directly from Python\n";
               python::arg("how") = Queries::COMPOSITE_AND,
               python::arg("maintainOrder") = true),
              "combines the query from other with ours");
-  };
+
+    {
+      python::scope MDL = python::class_<MDLDummy>("MDL",
+                                                   "Manipulating MDL Properties on Atoms").
+          def("GetRLabel", MDL::getRLabel,
+              (python::arg("atom")),
+              "Returns the atom's MDL RLabel (this is an integer from 0 to 99)").staticmethod("GetRLabel").
+          def("SetRLabel", MDL::setRLabel,
+              (python::arg("atom"), python::arg("rlabel")),
+              "Sets the atom's MDL RLabel (this is an integer from 0 to 99).\nSetting to 0 clears the rlabel.").staticmethod("SetRLabel").
+          
+          def("GetAlias", MDL::getAlias,
+              (python::arg("atom")),
+              "Returns the atom's MDL alias text").staticmethod("GetAlias").
+          def("SetAlias", MDL::setAlias,
+              (python::arg("atom"), python::arg("rlabel")),
+              "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.").staticmethod("SetAlias").        
+          def("GetValue", MDL::getValue,
+              (python::arg("atom")),
+              "Returns the atom's MDL alias text").staticmethod("GetValue").
+          def("SetValue", MDL::setValue,
+              (python::arg("atom"), python::arg("rlabel")),
+              "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.").staticmethod("SetValue");
+    }
+
+    {
+      python::scope Daylight = python::class_<MDLDummy>("Daylight",
+                                                        "Manipulating Daylight Properties on Atoms")
+          .def("GetSupplementalLabel", Daylight::getSupplementalLabel,
+               (python::arg("atom")),
+               "Gets the supplemental smiles label on an atom, returns an empty string if not present.").staticmethod("GetSupplementalLabel")
+          .def("SetSupplementalLabel", Daylight::setSupplementalLabel,
+               (python::arg("atom"), python::arg("label")),
+               "Sets a supplemental label on an atom that is written to the smiles string.\n" \
+               ">>> m = Chem.MolFromSmiles(\"C\")\n"                    \
+               ">>> Chem.Daylight.SetSupplementalLabel(m.GetAtomWithIdx(0), '???')\n" \
+               ">>> Chem.MolToSmiles(m)\n"                              \
+               "'C???'\n").staticmethod("SetSupplementalLabel");
+      
+    };
+  }
+  
 };
 }  // end of namespace
 void wrap_atom() { RDKit::atom_wrapper::wrap(); }
