@@ -1,5 +1,5 @@
 from rdkit import Chem
-from rdkit.Chem import ChemicalForceFields, rdmolops, rdDistGeom
+from rdkit.Chem import ChemicalForceFields
 from rdkit import RDConfig
 import unittest
 import os
@@ -231,9 +231,10 @@ M  END"""
       and (int(round(uffVdWParams[1] * 1000)) == 85))
 
   def test11(self) :
-    for i in range(2):
+    query = Chem.MolFromSmarts('c1cccn1')
+    for i in [0, 1]:
       m = Chem.MolFromSmiles('Cc1nc(=O)c(C[NH3+])c(-c2c[nH]c3ccccc23)[nH]1')
-      m = rdmolops.AddHs(m)
+      m = Chem.AddHs(m)
       aromaticFlagsBefore = []
       for a in m.GetAtoms():
         aromaticFlagsBefore.append(a.GetIsAromatic())
@@ -248,7 +249,10 @@ M  END"""
       if (i):
         res = not res
       self.failUnless(res)
-      self.failUnless(rdDistGeom.EmbedMolecule(m) == 0)
+      lastNIdx = m.GetSubstructMatch(query)[-1]
+      atom = m.GetAtomWithIdx(lastNIdx)
+      self.failUnless((atom.GetImplicitValence() \
+        + atom.GetExplicitValence()) == 3)
 
 
 if __name__== '__main__':
