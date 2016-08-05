@@ -1643,21 +1643,23 @@ void testGithub971() {
     RWMol *expected = MolBlockToMol(expectedMb);
     unsigned int nat = expected->getNumAtoms();
     TEST_ASSERT(nat == m->getNumAtoms());
-    
+
     const Conformer &conf1 = m->getConformer(0);
     const Conformer &conf2 = expected->getConformer(0);
     for (unsigned int i = 0; i < nat; i++) {
       TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
                   expected->getAtomWithIdx(i)->getAtomicNum());
-                  
+
       RDGeom::Point3D pt1i = conf1.getAtomPos(i);
       RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-      TEST_ASSERT( (pt1i - pt2i).length() < 10e-4 );
+      TEST_ASSERT((pt1i - pt2i).length() < 10e-4);
     }
     delete m;
     delete expected;
   }
 }
+
+void testEmbedParameters() {}
 
 int main() {
   RDLog::InitLogs();
@@ -1819,6 +1821,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
                           "constrained ring systems.\n";
   testGithub971();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
+  testEmbedParameters();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
