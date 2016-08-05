@@ -5920,6 +5920,41 @@ void testGithubIssue908() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue962() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 962: "
+                          "Kekulization issues post successful smiles parsing"
+                       << std::endl;
+  {
+    std::string smi = "C2*c1ccccc1C2";
+    RWMol *m = SmilesToMol(smi, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1));
+    m->updatePropertyCache();
+    MolOps::Kekulize(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2, 1)->getBondType() == Bond::SINGLE);
+
+    delete m;
+  }
+  {  // this one did not cause problems before, but verify!
+    std::string smi = "*2Cc1ccccc1C2";
+    RWMol *m = SmilesToMol(smi, 0, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 9);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 8));
+    m->updatePropertyCache();
+    MolOps::Kekulize(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 8)->getBondType() == Bond::SINGLE);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6005,10 +6040,11 @@ int main() {
   testPotentialStereoBonds();
   testGithubIssue754();
   testGithubIssue805();
-#endif
   testGithubIssue518();
   testGithubIssue868();
   testGithubIssue908();
+#endif
+  testGithubIssue962();
 
   return 0;
 }
