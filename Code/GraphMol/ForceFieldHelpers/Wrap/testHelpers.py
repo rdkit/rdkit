@@ -234,7 +234,6 @@ M  END"""
     query = Chem.MolFromSmarts('c1cccn1')
     for i in [0, 1]:
       m = Chem.MolFromSmiles('Cc1nc(=O)c(C[NH3+])c(-c2c[nH]c3ccccc23)[nH]1')
-      m = Chem.AddHs(m)
       aromaticFlagsBefore = []
       for a in m.GetAtoms():
         aromaticFlagsBefore.append(a.GetIsAromatic())
@@ -249,10 +248,11 @@ M  END"""
       if (i):
         res = not res
       self.failUnless(res)
-      lastNIdx = m.GetSubstructMatch(query)[-1]
-      atom = m.GetAtomWithIdx(lastNIdx)
-      self.failUnless((atom.GetImplicitValence() \
-        + atom.GetExplicitValence()) == 3)
+      pyrroleNIdx = m.GetSubstructMatch(query)[-1]
+      print ('i = ' + str(i) + ', pyrroleNIdx = ' + str(pyrroleNIdx) \
+        + ', GetTotalDegree() = ' \
+        + str(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree()) + '\n')
+      self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
 
 if __name__== '__main__':

@@ -445,11 +445,20 @@ void setMMFFAromaticity(RWMol &mol) {
       if (atom->getAtomicNum() != 6) {
 //                std::cerr<<"   orig: "<<atom->getNumExplicitHs()<<std::endl;
 #if 1
-        atom->calcImplicitValence(false);
-        int iv = atom->getImplicitValence();
+        int iv = atom->getNumImplicitHs();
+        int ev = atom->getNumExplicitHs();
+        int d = atom->getDegree();
+        int td = atom->getTotalDegree();
+        std::cerr << "1) iv = " << iv << ", ev = " << ev
+          << ", d = " << d << ", td = " << td << std::endl;
         if (iv) {
           atom->setNumExplicitHs(iv);
-          atom->calcImplicitValence(false);
+          iv = atom->calcImplicitValence(false);
+          ev = atom->calcExplicitValence(false);
+          d = atom->getDegree();
+          td = atom->getTotalDegree();
+          std::cerr << "2) iv = " << iv << ", ev = " << ev
+            << ", d = " << d << ", td = " << td << std::endl;
         }
 #endif
       }
