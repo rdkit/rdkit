@@ -116,6 +116,11 @@ namespace RDKit {
         std::vector<ROMOL_SPTR> StereoPatterns;
         std::vector<ROMOL_SPTR> FromTautomer;
         std::vector<ROMOL_SPTR> ToTautomer;
+        // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // init + load
+        double Elneg0; // elneg_table[0].value;
+        std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng
+
     public:
         StructCheckerOptions() : AcidityLimit(0.0)
             , RemoveMinorFragments(false)
@@ -130,6 +135,7 @@ namespace RDKit {
             , ConvertAtomTexts(false)
             , GroupsToSGroups(false)
             , Verbose(false)
+            , Elneg0(0.0)   // elneg_table[0].value;
         {}
 
         void clear() { *this = StructCheckerOptions(); }

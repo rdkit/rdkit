@@ -337,13 +337,6 @@ void RemoveDubiousStereochemistry(RWMol& mol) {
 // CheckStereo():
 //----------------------------------------------------------------------
 
-static const int ALLENE_PARITY          = -2;
-static const int ILLEGAL_REPRESENTATION = -1;
-static const int UNDEFINED_PARITY       = 0;
-static const int ODD_PARITY             = 1;
-static const int EVEN_PARITY            = 2;
-static inline int INVERT_PARITY(int p) { return ((p) == 0 ? (0) : (3 - (p))); }
-
 struct stereo_bond_t {
     double x, y;   // relative 2D coordinates
     RDKit::Bond::BondStereo symbol;    // stereo symbol
@@ -521,7 +514,6 @@ int Atom4Parity(struct stereo_bond_t ligands[4]) {
     return (Volume(tetrahedron) > 0.0 ? EVEN_PARITY : ODD_PARITY);
 }
 
-static
 int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
     /*
     * Computes the stereo parity of atom number iatom in *mp relative
@@ -730,7 +722,105 @@ bool AtomClash(RWMol &mol, double clash_limit) {
             }
         }
     }
-    return false;     /* no clash */
+    return false; // no clash
+}
+//--------------------------------------------------------------------------
+
+/*
+* Sets the color field of the defined double bonds in *mp to CIS,
+* TRANS, or NONE depending on the ligands with the lowest numbering[].
+* It returns the number of defined double bonds found.
+*/
+int CisTransPerception(const ROMol &mol, const std::vector<RDGeom::Point3D> &points
+                        , const std::vector<unsigned> &numbering
+                        , std::vector<unsigned> &bondColor) {
+
+    int result = 0;
+    int maxnum = 0;
+    std::vector<Neighbourhood> nba(mol.getNumAtoms());
+    SetupNeighbourhood(mol, nba);
+
+    for (unsigned i = 0; i < bondColor.size(); i++)
+        bondColor[i] = 0;
+    for (unsigned i = 0; i < nba.size(); i++)    // n_atoms
+        if (numbering[i] > maxnum)
+            maxnum = numbering[i];
+
+    for (unsigned i = 0; i < bondColor.size(); i++)
+        if (RDKit::Bond::DOUBLE == mol.getBondWithIdx(i)->getBondType()
+         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDDOWNRIGHT
+         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDUPRIGHT) { // != CIS_TRANS_EITHER
+            unsigned j1 = mol.getBondWithIdx(i)->getBeginAtomIdx();
+            unsigned j2 = mol.getBondWithIdx(i)->getEndAtomIdx();
+            if (6 != mol.getAtomWithIdx(j1)->getAtomicNum())    // C
+                continue;
+            if (16!= mol.getAtomWithIdx(j1)->getAtomicNum())    // N
+                continue;
+            if (6 != mol.getAtomWithIdx(j2)->getAtomicNum())    // C
+                continue;
+            if (16!= mol.getAtomWithIdx(j2)->getAtomicNum())    // N
+                continue;
+            // n_ligands :
+            if (nba[j1].Atoms.size() <= 1 || // no subst.   
+                nba[j2].Atoms.size() <= 1)
+                continue;
+            if (nba[j1].Atoms.size() > 3 ||  // valence error in mol 
+                nba[j2].Atoms.size() > 3)
+                continue;
+
+            bool equal = false;     // find lowest numbered neighbour of j1
+            unsigned at1=0;
+            for (unsigned k = 0, nmin = maxnum; k<nba[j1].Atoms.size(); k++)
+                if (nba[j1].Atoms[k] != j2) // no loop back 
+                {
+                    if (numbering[nba[j1].Atoms[k]] < nmin) { //numbering[nba[j1].atoms[k]]
+                        at1 = nba[j1].Atoms[k];
+                        nmin = numbering[at1];
+                    }
+                    else if (numbering[nba[j1].Atoms[k]] == nmin)
+                        equal = true;
+                }
+            if (equal)     // identical substituents
+                continue;  // no stereochemistry
+
+            equal = false; // find lowest numbered neighbour of j1
+            unsigned at2 = 0;
+            for (unsigned k = 0, nmin = maxnum; k<nba[j2].Atoms.size(); k++) // 
+                if (nba[j2].Atoms[k] != j1) { // no loop back
+                    if (numbering[nba[j2].Atoms[k]] < nmin) {
+                        at2 = nba[j2].Atoms[k];
+                        nmin = numbering[at2];
+                    }
+                    else if (numbering[nba[j2].Atoms[k]] == nmin)
+                        equal = true;
+                }
+            if (equal)     // identical substituents
+                continue;  // no stereochemistry
+
+            // Now, bp points to a double bond, at1 and at2 are the
+            // indices (not numbers) of the atoms with lowest numbering
+            // attached to each end of the bond, and the bond is
+            // guaranteed to be either CIS or TRANS
+                           
+            double x21, y21;
+            double x23, y23;
+            double x32, y32;
+            double x34, y34;
+            double sign;
+            x21 = points[at1].x - points[j1].x;
+            y21 = points[at1].y - points[j1].y;
+            x23 = points[j2].x  - points[j1].x;
+            y23 = points[j2].y  - points[j1].y;
+            x32 = (-x23); y32 = (-y23);
+            x34 = points[at2].x - points[j2].x;
+            y34 = points[at2].y - points[j2].y;
+            sign = (x21*y23 - x23*y21)*(x32*y34 - x34*y32);
+            if (fabs(sign) < 0.001)
+                continue;
+            result++;
+            bondColor[i] = (sign > 0.0 ? CIS : TRANS);
+        }
+    return (result);
 }
 
  }// namespace StructureCheck

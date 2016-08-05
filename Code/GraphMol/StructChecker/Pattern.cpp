@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <map>
-#include "Utilites.h"
 #include "Pattern.h"
 
 namespace RDKit {
@@ -193,7 +192,6 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
 * successfully. nbp[i] describes the neighbour bonds and atoms
 * of atom i+1.
 */
-static
 bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
               const AugmentedAtom &aa,  const std::vector<Neighbourhood> &nbp) {
     bool is_new;
@@ -228,7 +226,6 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
 * bonds. The first matching atom mapping is placed into match[1..].
 * i is stored in match[0].
 */
-static
 bool AAMatch(const ROMol &mol, unsigned i,
     std::vector<unsigned> &match,
     const AugmentedAtom &aa,

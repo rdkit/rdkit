@@ -27,7 +27,10 @@ namespace RDKit {
          std::vector<double>   AtompKaValue;
          std::vector<double>   AtomOldpKaValue;
      public:
-         ChargeFix(const StructCheckerOptions& op, RWMol &mol) : Options(op), Mol(mol) {}
+         ChargeFix(const StructCheckerOptions& op, RWMol &mol) : Options(op), Mol(mol) {
+             resetColors();
+             resetValues();
+         }
          /*
          * Removes hydrogens from *mp until desired_charge is reached. The
          * positions for hydrogen removal are selected by "acidity" combined

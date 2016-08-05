@@ -9,6 +9,7 @@
 //
 #pragma once
 #include "StructChecker.h"
+#include "Utilites.h"
 
 namespace RDKit {
  namespace StructureCheck {
@@ -17,6 +18,17 @@ namespace RDKit {
 static const int ODD      = 1;
 static const int EVEN     = 2;
 static const int UNMARKED = 3;
+
+static const int ALLENE_PARITY = -2;
+static const int ILLEGAL_REPRESENTATION = -1;
+static const int UNDEFINED_PARITY = 0;
+static const int ODD_PARITY = 1;
+static const int EVEN_PARITY = 2;
+static inline int INVERT_PARITY(int p) { return ((p) == 0 ? (0) : (3 - (p))); }
+
+// bond color:
+static const int CIS   = 1;
+static const int TRANS = 2;
 
 // return codes for DubiousStereochemistry()
 static const int EITHER_BOND_FOUND              = 1;
@@ -53,6 +65,21 @@ bool CheckStereo(const ROMol& mol);
     */
 bool AtomClash(RWMol &mol, double clash_limit);
 
+/*
+* Computes the stereo parity of atom number iatom in *mp relative
+* to its numbering. The immediate neighbours are defined by *nbp
+* to speed up processing.
+*/
+int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp);
+
+
+/*
+* Sets the color field of the defined double bonds in *mp to CIS,
+* TRANS, or NONE depending on the ligands with the lowest numbering[].
+* It returns the number of defined double bonds found.
+*/
+int CisTransPerception(const ROMol &mol, const std::vector<RDGeom::Point3D> &points
+    , const std::vector<unsigned> &numbering
+    , std::vector<unsigned>  &bondColor);
  }
 }
-
