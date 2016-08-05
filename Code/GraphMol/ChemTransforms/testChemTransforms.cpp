@@ -99,18 +99,32 @@ void testDeleteSubstruct() {
   std::string smi1 = MolToSmiles(*mol2, true);
   std::cerr << "1 smi: " << smi1 << std::endl;  
   TEST_ASSERT(smi1 == "CC");
-  delete matcher1;
   delete mol2;
-  
+
+  // still matches with non-chiral
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, false);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "1 smi: " << smi1 << std::endl;  
+  TEST_ASSERT(smi1 == "CC");
+  delete matcher1;
+
+
   matcher1 = SmartsToMol("O[C@@H](N)(P)");
   mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
   smi1 = MolToSmiles(*mol2, true);
   std::cerr << "2 smi: " << smi1 << std::endl;
   TEST_ASSERT(smi1 == "CCO[C@H](N)P");
-  
+  delete mol2;
+
+  // still matches with non-chiral
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, false);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "2 smi: " << smi1 << std::endl;
+  TEST_ASSERT(smi1 == "CC");
+  delete mol2;
   delete mol1;
   delete matcher1;
-  delete mol2;
+  
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -208,15 +222,30 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect.size() == 1);
   std::string smi1 = MolToSmiles(*vect[0], true);
   TEST_ASSERT(smi1 == "CCNCC");
-
+  
+  // should also match when matching non-chiral
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  TEST_ASSERT(smi1 == "CCNCC");
+  
   smi = "CCP([C@@H](N)O)CC";
   mol1 = SmilesToMol(smi);
   vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
   TEST_ASSERT(vect.size() == 1);
   smi1 = MolToSmiles(*vect[0], true);
-  std::cerr << "smi1" << smi1;
+  std::cerr << "replaceSub smi1:" << smi1 << std::endl;;
   // no change
   TEST_ASSERT(smi1 == "CCP(CC)[C@@H](N)O");
+
+  // should also match when matching non-chiral  
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  std::cerr << "replaceSub smi1:" << smi1 << std::endl;;
+  // no change
+  TEST_ASSERT(smi1 == "CCNCC");
+  
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -330,7 +359,15 @@ void testReplaceSidechains() {
   mol2 = replaceSidechains(*mol1, *matcher1, true);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2, true);
-  std::cerr << "smi1;;; " << smi << std::endl;
+  std::cerr << "sidechains chiral=true smi1;;; " << smi << std::endl;
+  delete mol2;
+
+  mol2 = replaceSidechains(*mol1, *matcher1, true);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2, true);
+  std::cerr << "sidechains chiral=false smi1;;; " << smi << std::endl;
+
+
   delete mol1;
   delete mol2;
   delete matcher1;
@@ -614,6 +651,76 @@ void testReplaceCore() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+struct CoreTest {
+  const char * smiles;
+  const char * smarts;
+  bool replaceDummies;
+  bool labelByIndex;
+  bool requireDummyMatch;
+  bool useChirality;
+  const char * expected;
+};
+  
+void testReplaceCore2() {
+  const CoreTest tests[] = {
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, false, false, true,  "[1*]NC.[2*]OC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, true,  false, false, "[3*]OC.[4*]NC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, true,  false, true,  "[3*]NC.[4*]OC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
+    
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, true,  "[1*]OC.[2*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, false, "[3*]OC.[4*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, true,  "[3*]OC.[4*]NC"},
+    
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
+
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]CC"},  // seems broken?
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]CC.[4*]C"},
+
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]CC"}    
+  };
+  size_t num_tests = sizeof(tests)/sizeof(CoreTest);
+  for(size_t i=0; i<num_tests; ++i) {
+    ROMOL_SPTR mol(SmilesToMol(tests[i].smiles));
+    ROMOL_SPTR smarts(SmartsToMol(tests[i].smarts));
+    ROMOL_SPTR res(replaceCore(*mol.get(), *smarts.get(),
+                               tests[i].replaceDummies,
+                               tests[i].labelByIndex,
+                               tests[i].requireDummyMatch,
+                               tests[i].useChirality));
+    if(tests[i].expected) {
+      TEST_ASSERT(res.get());
+      std::string smi = MolToSmiles(*res.get(), true);
+      if (smi != tests[i].expected) {
+        std::cerr << i << " " << tests[i].smiles << " " <<
+            tests[i].smarts << " " <<
+            (int)tests[i].replaceDummies << " " <<
+            (int)tests[i].labelByIndex << " " <<
+            (int)tests[i].requireDummyMatch << " " <<
+            (int)tests[i].useChirality << " expected:" <<
+            tests[i].expected << " got => " <<
+            smi << std::endl;
+      }
+      //TEST_ASSERT(smi == tests[i].expected);
+    } else {
+      TEST_ASSERT(!res.get());
+    }
+                   
+  }
+}
 void testReplaceCoreLabels() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
@@ -1748,7 +1855,7 @@ int main() {
   testGithubIssue430();
 #endif
   testGithubIssue511();
-
+  testReplaceCore2();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
