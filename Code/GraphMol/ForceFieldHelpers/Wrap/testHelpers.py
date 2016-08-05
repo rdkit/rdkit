@@ -249,9 +249,6 @@ M  END"""
         res = not res
       self.failUnless(res)
       pyrroleNIdx = m.GetSubstructMatch(query)[-1]
-      print ('i = ' + str(i) + ', pyrroleNIdx = ' + str(pyrroleNIdx) \
-        + ', GetTotalDegree() = ' \
-        + str(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree()) + '\n')
       self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
 
