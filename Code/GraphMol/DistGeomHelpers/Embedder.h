@@ -221,6 +221,61 @@ INT_VECT EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0);
+
+struct EmbedParameters {
+  unsigned int maxIterations;
+  int seed;
+  bool clearConfs;
+  bool useRandomCoords;
+  double boxSizeMult;
+  bool randNegEig;
+  unsigned int numZeroFail;
+  const std::map<int, RDGeom::Point3D> *coordMap;
+  double optimizerForceTol;
+  bool ignoreSmoothingFailures;
+  bool enforceChirality;
+  bool useExpTorsionAnglePrefs;
+  bool useBasicKnowledge;
+  bool verbose;
+  double basinThresh;
+  double pruneRmsThresh;
+  EmbedParameters()
+      : maxIterations(0),
+        seed(-1),
+        clearConfs(true),
+        useRandomCoords(false),
+        boxSizeMult(2.0),
+        randNegEig(true),
+        numZeroFail(1),
+        coordMap(NULL),
+        optimizerForceTol(1e-3),
+        ignoreSmoothingFailures(false),
+        enforceChirality(true),
+        useExpTorsionAnglePrefs(false),
+        useBasicKnowledge(false),
+        verbose(false),
+        basinThresh(5.0),
+        pruneRmsThresh(-1.0){};
+};
+int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
+  return EmbedMolecule(
+      mol, params.maxIterations, params.seed, params.clearConfs,
+      params.useRandomCoords, params.boxSizeMult, params.randNegEig,
+      params.numZeroFail, params.coordMap, params.optimizerForceTol,
+      params.ignoreSmoothingFailures, params.enforceChirality,
+      params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
+      params.basinThresh);
+}
+INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
+                            const EmbedParameters &params) {
+  return EmbedMultipleConfs(
+      mol, numConfs, params.maxIterations, params.seed, params.clearConfs,
+      params.useRandomCoords, params.boxSizeMult, params.randNegEig,
+      params.numZeroFail, params.pruneRmsThresh, params.coordMap,
+      params.optimizerForceTol, params.ignoreSmoothingFailures,
+      params.enforceChirality, params.useExpTorsionAnglePrefs,
+      params.useBasicKnowledge, params.verbose, params.basinThresh);
+}
 }
 }
 
