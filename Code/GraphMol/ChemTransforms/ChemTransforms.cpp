@@ -346,7 +346,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
   RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
   std::vector<Atom *> keepList;
   std::map<int, Atom *> dummyAtomMap;
-  unsigned int nDummies = 0;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -357,6 +356,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
   }
 
   std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
+  std::vector<std::pair<int, Atom*> > dummies;
   
   for (unsigned int j = 0; j < origNumAtoms; ++j) {
     unsigned int i = (unsigned) matchorder_atomidx[j].second;
@@ -369,10 +369,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
       // if we were not in the matching list, still keep
       //  the original indices (replaceDummies=False)
       if (matchingIndices[i] == -1 && allIndices[i] != -1) {
-        if(labelByIndex) {
           mapping = allIndices[i];
-        }
-        
       }
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
@@ -400,17 +397,16 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
             return NULL;
           }
           Atom *newAt = new Atom(0);
-          ++nDummies;
 
-          if (!labelByIndex) {
-            newAt->setIsotope(nDummies);
+          // we want to order the dummies int the same orders as
+          //  the mappings, if not labelling by Index they are in arbitrary order
+          //  right now so save and sort later.
+          if(mapping != -1) {
+            dummies.push_back(std::make_pair(mapping, newAt));
           } else {
-            if (mapping != -1) {
-               newAt->setIsotope(mapping);
-            } else {
-              newAt->setIsotope(matchingIndices[nbrIdx]);
-            }
+            dummies.push_back(std::make_pair(matchingIndices[nbrIdx], newAt));
           }
+
           newMol->addAtom(newAt, false, true);
           dummyAtomMap[nbrIdx] = newAt;
           keepList.push_back(newAt);
@@ -467,6 +463,20 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
       }
     }
   }
+
+  if(!labelByIndex) {
+    // sort the mapping indices, but label from 1..N
+    std::stable_sort(dummies.begin(), dummies.end());
+    for(size_t nDummy=0; nDummy < dummies.size(); ++nDummy) {
+      dummies[nDummy].second->setIsotope(nDummy + 1);
+    }
+  } else {
+    // don't sort, just label by the index
+    for(size_t nDummy=0; nDummy < dummies.size(); ++nDummy) {
+      dummies[nDummy].second->setIsotope(dummies[nDummy].first);
+    }
+  }
+  
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   for (RWMol::AtomIterator atIt = newMol->beginAtoms();

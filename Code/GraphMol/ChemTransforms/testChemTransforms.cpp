@@ -683,14 +683,23 @@ void testReplaceCore2() {
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
 
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
-    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]CC"},  // seems broken?
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]CC.[2*]C"},
+    
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]CC.[4*]C"},
 
     {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
     {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]CC"},
     {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
-    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]CC"}    
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]CC"},
+
+    {"CNOC", "CONC", false, true, false, false, ""},
+    {"PCNOCS", "CONC", false, true, false, false, "[*]S.[3*]P"},
+    {"PCNOCS", "CONC", false, false, false, false, "[1*]S.[2*]P"},
+
+    {"PCONCS", "CONC", false, true, false, false, "[*]P.[3*]S"},
+    {"PCONCS", "CONC", false, false, false, false, "[1*]P.[2*]S"}
+
   };
   size_t num_tests = sizeof(tests)/sizeof(CoreTest);
   for(size_t i=0; i<num_tests; ++i) {
@@ -714,7 +723,7 @@ void testReplaceCore2() {
             tests[i].expected << " got => " <<
             smi << std::endl;
       }
-      //TEST_ASSERT(smi == tests[i].expected);
+      TEST_ASSERT(smi == tests[i].expected);
     } else {
       TEST_ASSERT(!res.get());
     }
