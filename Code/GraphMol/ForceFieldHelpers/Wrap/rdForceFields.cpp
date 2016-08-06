@@ -143,8 +143,9 @@ ForceFields::PyForceField *MMFFGetMoleculeForceField(
   return pyFF;
 }
 
-bool MMFFHasAllMoleculeParams(ROMol &mol) {
-  MMFF::MMFFMolProperties mmffMolProperties(mol);
+bool MMFFHasAllMoleculeParams(const ROMol &mol) {
+  ROMol molCopy(mol);
+  MMFF::MMFFMolProperties mmffMolProperties(molCopy);
 
   return mmffMolProperties.isValid();
 }
