@@ -1058,6 +1058,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
   // -----------------------------------
   // the symbol
+  unsigned int iso = atom.getIsotope();
   if (drawOptions().atomLabels.find(atom.getIdx()) !=
       drawOptions().atomLabels.end()) {
     // specified labels are trump: no matter what else happens we will show
@@ -1068,6 +1069,10 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     symbol = "";
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+  } else if (drawOptions().atomLabelDeuteriumTritium && atom.getAtomicNum() == 1 &&
+             (iso == 2 || iso == 3)) {
+    symbol = ((iso == 2) ? "D" : "T");
+    iso = 0;
   } else {
     std::vector<std::string> preText, postText;
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
@@ -1088,10 +1093,10 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       }
     }
 
-    if (0 != atom.getIsotope()) {
+    if (0 != iso) {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") +
-                        lexical_cast<string>(atom.getIsotope()) +
+                        lexical_cast<string>(iso) +
                         std::string("</sup>"));
     }
 
