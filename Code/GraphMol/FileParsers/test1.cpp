@@ -1952,7 +1952,7 @@ void testMolFileAtomValues() {
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
     m->getAtomWithIdx(1)->getProp(common_properties::molFileValue, val);
     TEST_ASSERT(val == "acidchloride");
-    TEST_ASSERT(MDL::getValue(m->getAtomWithIdx(1)) == "acidchloride")
+    TEST_ASSERT(getAtomValue(m->getAtomWithIdx(1)) == "acidchloride")
                  
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molAtomMapNumber));
@@ -1966,18 +1966,18 @@ void testMolFileAtomValues() {
 
     // round trip
     m->getAtomWithIdx(0)->setAtomMapNum(4);
-    MDL::setRLabel(m->getAtomWithIdx(3), 1);
-    MDL::setAlias(m->getAtomWithIdx(0), "acidchloride");
-    MDL::setValue(m->getAtomWithIdx(0), "foobar");
+    setAtomRLabel(m->getAtomWithIdx(3), 1);
+    setAtomAlias(m->getAtomWithIdx(0), "acidchloride");
+    setAtomValue(m->getAtomWithIdx(0), "foobar");
     RWMol *m2 = MolBlockToMol(MolToMolBlock(*m));
     TEST_ASSERT(m2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getAtomMapNum() == 4);
     TEST_ASSERT(m->getAtomWithIdx(1)->getAtomMapNum() == 2);
     TEST_ASSERT(m->getAtomWithIdx(2)->getAtomMapNum() == 3);
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 0);
-    TEST_ASSERT(MDL::getRLabel(m->getAtomWithIdx(3)) == 1);
-    TEST_ASSERT(MDL::getAlias(m->getAtomWithIdx(0)) == "acidchloride");
-    TEST_ASSERT(MDL::getValue(m->getAtomWithIdx(0)) == "foobar");
+    TEST_ASSERT(getAtomRLabel(m->getAtomWithIdx(3)) == 1);
+    TEST_ASSERT(getAtomAlias(m->getAtomWithIdx(0)) == "acidchloride");
+    TEST_ASSERT(getAtomValue(m->getAtomWithIdx(0)) == "foobar");
                 
     delete m;
     delete m2;
@@ -4398,15 +4398,15 @@ void testParseCHG() {
 void testMDLAtomProps() {
   std::string smi="CC";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
-  MDL::setAlias(mol->getAtomWithIdx(0), "foo");
-  MDL::setValue(mol->getAtomWithIdx(0), "bar");
-  MDL::setRLabel(mol->getAtomWithIdx(0), 1);
+  setAtomAlias(mol->getAtomWithIdx(0), "foo");
+  setAtomValue(mol->getAtomWithIdx(0), "bar");
+  setAtomRLabel(mol->getAtomWithIdx(0), 1);
   mol.reset( MolBlockToMol(MolToMolBlock(*mol.get())) );
-  TEST_ASSERT(MDL::getAlias(mol->getAtomWithIdx(0))=="foo");
-  TEST_ASSERT(MDL::getValue(mol->getAtomWithIdx(0))=="bar");
-  TEST_ASSERT(MDL::getRLabel(mol->getAtomWithIdx(0))==1);
+  TEST_ASSERT(getAtomAlias(mol->getAtomWithIdx(0))=="foo");
+  TEST_ASSERT(getAtomValue(mol->getAtomWithIdx(0))=="bar");
+  TEST_ASSERT(getAtomRLabel(mol->getAtomWithIdx(0))==1);
   try {
-    MDL::setRLabel(mol->getAtomWithIdx(0), 100);
+    setAtomRLabel(mol->getAtomWithIdx(0), 100);
     TEST_ASSERT(0);
   } catch (...) {
   }
@@ -4415,11 +4415,11 @@ void testMDLAtomProps() {
 void testSupplementalSmilesLabel() {
   std::string smi="C";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
-  Daylight::setSupplementalLabel(mol->getAtomWithIdx(0),
-                                 "xxx");
+  setSupplementalSmilesLabel(mol->getAtomWithIdx(0),
+                             "xxx");
   smi = MolToSmiles(*mol.get());
   TEST_ASSERT(smi == "Cxxx");
-  TEST_ASSERT(Daylight::getSupplementalLabel(mol->getAtomWithIdx(0)) ==
+  TEST_ASSERT(getSupplementalSmilesLabel(mol->getAtomWithIdx(0)) ==
               "xxx");
   
 }

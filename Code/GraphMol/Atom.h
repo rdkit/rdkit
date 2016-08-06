@@ -405,29 +405,27 @@ class Atom : public RDProps {
   void initAtom();
 };
 
-namespace MDL {
 //! Set the atom's MDL integer RLabel
 //   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
-void setRLabel(Atom *atm, int rlabel);
-int getRLabel(const Atom *atm);
+void setAtomRLabel(Atom *atm, int rlabel);
+int getAtomRLabel(const Atom *atm);
 
 //! Set the atom's MDL atom alias
 //   Setting to an empty string clears the alias
-void setAlias(Atom *atom, const std::string &alias);
-std::string getAlias(const Atom *atom);
+void setAtomAlias(Atom *atom, const std::string &alias);
+std::string getAtomAlias(const Atom *atom);
 
 //! Set the atom's MDL atom value
 //   Setting to an empty string clears the value
-void setValue(Atom *atom, const std::string &value);
-std::string getValue(const Atom *atom);
-}
+//   This is where recursive smarts get stored in MolBlock Queries
+void setAtomValue(Atom *atom, const std::string &value);
+std::string getAtomValue(const Atom *atom);
 
-namespace Daylight {
 //! Sets the supplemental label that will follow the atom when writing
 //   smiles strings.
-void setSupplementalLabel(Atom *atom, const std::string &label);
-std::string getSupplementalLabel(const Atom *atom);  
-}
+void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
+std::string getSupplementalSmilesLabel(const Atom *atom);  
+
 };
 //! allows Atom objects to be dumped to streams
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);

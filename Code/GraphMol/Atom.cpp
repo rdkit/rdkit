@@ -518,9 +518,7 @@ void Atom::invertChirality() {
   }
 }
 
-namespace MDL {
-
-void setRLabel(Atom *atm, int rlabel) {
+void setAtomRLabel(Atom *atm, int rlabel) {
   PRECONDITION(atm, "bad atom");
   // rlabel ==> n2 => 0..99
   PRECONDITION(rlabel >= 0 && rlabel < 100, "rlabel out of range for MDL files");
@@ -532,14 +530,14 @@ void setRLabel(Atom *atm, int rlabel) {
   }
 }
 //! Gets the atom's RLabel
-int getRLabel(const Atom *atom) {
+int getAtomRLabel(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   unsigned int rlabel=0;
   atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
   return static_cast<int>(rlabel);
 }
 
-void setAlias(Atom *atom, const std::string &alias) {
+void setAtomAlias(Atom *atom, const std::string &alias) {
   PRECONDITION(atom, "bad atom");
   if(alias != "") {
     atom->setProp(common_properties::molFileAlias, alias);
@@ -548,14 +546,14 @@ void setAlias(Atom *atom, const std::string &alias) {
   }
 }
 
-std::string getAlias(const Atom *atom) {
+std::string getAtomAlias(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   std::string alias;
   atom->getPropIfPresent(common_properties::molFileAlias, alias);
   return alias;
 }
 
-void setValue(Atom *atom, const std::string &value) {
+void setAtomValue(Atom *atom, const std::string &value) {
   PRECONDITION(atom, "bad atom");
   if(value != "") {
     atom->setProp(common_properties::molFileValue, value);
@@ -564,17 +562,14 @@ void setValue(Atom *atom, const std::string &value) {
   }
 }
 
-std::string getValue(const Atom *atom) {
+std::string getAtomValue(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   std::string value;
   atom->getPropIfPresent(common_properties::molFileValue, value);
   return value;
 }
 
-}
-
-namespace Daylight {
-void setSupplementalLabel(Atom *atom, const std::string &label) {
+void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
   PRECONDITION(atom, "bad atom");
   if(label != "") {
     atom->setProp(common_properties::_supplementalSmilesLabel, label);
@@ -583,12 +578,11 @@ void setSupplementalLabel(Atom *atom, const std::string &label) {
   }
 }
 
-std::string getSupplementalLabel(const Atom *atom) {
+std::string getSupplementalSmilesLabel(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   std::string label;
   atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label);
   return label;
-}
 }
 
 }  // end o' namespace RDKit

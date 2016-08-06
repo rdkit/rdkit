@@ -433,45 +433,36 @@ These cannot currently be constructed directly from Python\n";
               python::arg("maintainOrder") = true),
              "combines the query from other with ours");
 
-    {
-      python::scope MDL = python::class_<MDLDummy>("MDL",
-                                                   "Manipulating MDL Properties on Atoms").
-          def("GetRLabel", MDL::getRLabel,
-              (python::arg("atom")),
-              "Returns the atom's MDL RLabel (this is an integer from 0 to 99)").staticmethod("GetRLabel").
-          def("SetRLabel", MDL::setRLabel,
-              (python::arg("atom"), python::arg("rlabel")),
-              "Sets the atom's MDL RLabel (this is an integer from 0 to 99).\nSetting to 0 clears the rlabel.").staticmethod("SetRLabel").
-          
-          def("GetAlias", MDL::getAlias,
-              (python::arg("atom")),
-              "Returns the atom's MDL alias text").staticmethod("GetAlias").
-          def("SetAlias", MDL::setAlias,
-              (python::arg("atom"), python::arg("rlabel")),
-              "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.").staticmethod("SetAlias").        
-          def("GetValue", MDL::getValue,
-              (python::arg("atom")),
-              "Returns the atom's MDL alias text").staticmethod("GetValue").
-          def("SetValue", MDL::setValue,
-              (python::arg("atom"), python::arg("rlabel")),
-              "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.").staticmethod("SetValue");
-    }
+    python::def("GetAtomRLabel", getAtomRLabel,
+        (python::arg("atom")),
+        "Returns the atom's MDL AtomRLabel (this is an integer from 0 to 99)");
+    python::def("SetAtomRLabel", setAtomRLabel,
+        (python::arg("atom"), python::arg("rlabel")),
+        "Sets the atom's MDL RLabel (this is an integer from 0 to 99).\nSetting to 0 clears the rlabel.");
+    
+    python::def("GetAtomAlias", getAtomAlias,
+        (python::arg("atom")),
+        "Returns the atom's MDL alias text");
+    python::def("SetAtomAlias", setAtomAlias,
+        (python::arg("atom"), python::arg("rlabel")),
+        "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.");
+    python::def("GetAtomValue", getAtomValue,
+        (python::arg("atom")),
+        "Returns the atom's MDL alias text");
+    python::def("SetAtomValue", setAtomValue,
+        (python::arg("atom"), python::arg("rlabel")),
+        "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.");
 
-    {
-      python::scope Daylight = python::class_<MDLDummy>("Daylight",
-                                                        "Manipulating Daylight Properties on Atoms")
-          .def("GetSupplementalLabel", Daylight::getSupplementalLabel,
-               (python::arg("atom")),
-               "Gets the supplemental smiles label on an atom, returns an empty string if not present.").staticmethod("GetSupplementalLabel")
-          .def("SetSupplementalLabel", Daylight::setSupplementalLabel,
-               (python::arg("atom"), python::arg("label")),
-               "Sets a supplemental label on an atom that is written to the smiles string.\n" \
-               ">>> m = Chem.MolFromSmiles(\"C\")\n"                    \
-               ">>> Chem.Daylight.SetSupplementalLabel(m.GetAtomWithIdx(0), '???')\n" \
-               ">>> Chem.MolToSmiles(m)\n"                              \
-               "'C???'\n").staticmethod("SetSupplementalLabel");
-      
-    };
+    python::def("GetSupplementalSmilesLabel", getSupplementalSmilesLabel,
+        (python::arg("atom")),
+        "Gets the supplemental smiles label on an atom, returns an empty string if not present.");
+    python::def("SetSupplementalSmilesLabel", setSupplementalSmilesLabel,
+        (python::arg("atom"), python::arg("label")),
+        "Sets a supplemental label on an atom that is written to the smiles string.\n" \
+        ">>> m = Chem.MolFromSmiles(\"C\")\n"                           \
+        ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n" \
+        ">>> Chem.MolToSmiles(m)\n"                                     \
+        "'C<xxx>'\n");
   }
   
 };
