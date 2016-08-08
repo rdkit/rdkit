@@ -117,6 +117,10 @@ if(MSVC)
   ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
 endif(MSVC)
 
+if(RDK_BUILD_INCHI_SUPPORT)
+  find_package(Inchi)
+endif(RDK_BUILD_INCHI_SUPPORT)
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #-------
   # pull in python:
