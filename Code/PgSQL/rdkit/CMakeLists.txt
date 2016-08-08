@@ -88,7 +88,7 @@ if(RDK_BUILD_AVALON_SUPPORT)
 endif(RDK_BUILD_AVALON_SUPPORT)
 if(RDK_BUILD_INCHI_SUPPORT)
   set(inchiRegress "inchi")
-  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;Inchi;")
+  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
     "MolHash;FMCS;ChemReactions;ChemTransforms;"
