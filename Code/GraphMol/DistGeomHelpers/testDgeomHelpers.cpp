@@ -1659,7 +1659,23 @@ void testGithub971() {
   }
 }
 
-void testEmbedParameters() {}
+void testEmbedParameters() {
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.dg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+
+    delete ref;
+    delete mol;
+  }
+}
 
 int main() {
   RDLog::InitLogs();
@@ -1667,7 +1683,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
+#if 0
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -1810,7 +1826,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 696: Bad 1-4 bounds matrix "
                           "elements in highly constrained system\n";
   testGithub696();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog)
@@ -1821,6 +1836,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
                           "constrained ring systems.\n";
   testGithub971();
+#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
