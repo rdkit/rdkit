@@ -145,7 +145,6 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   std::vector<MatchVectType> fgpMatches;
 
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-  std::cerr << "useChirality " << (int) useChirality << std::endl;
   // do the substructure matching and get the atoms that match the query
   const bool uniquify = true;
   const bool recursionPossible=true;
@@ -154,7 +153,6 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   // if we didn't find any matches, there's nothing to be done here
   // simply return a list with a copy of the starting molecule
   if (fgpMatches.size() == 0) {
-    std::cerr << "No match" << std::endl;
     res.push_back(ROMOL_SPTR(new ROMol(mol, false)));
     res[0]->clearComputedProps(false);
     return res;
