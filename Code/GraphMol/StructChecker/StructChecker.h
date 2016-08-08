@@ -75,7 +75,8 @@ namespace RDKit {
         RadicalType Radical;
         unsigned    SubstitutionCount; // substitution count 0 = don't care
         AABondType  BondType; // was: short 
-        Ligand() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), SubstitutionCount(0), BondType(ANY_BOND) {}
+        Ligand() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), SubstitutionCount(0)
+                 , BondType(ANY_BOND) {}
     };
 
     struct AugmentedAtom {
@@ -83,10 +84,31 @@ namespace RDKit {
         std::string ShortName;
         int         Charge;
         RadicalType Radical;
-        AATopology    Topology; // this atom in: 1=ring 2=chain 0 don't care
+        AATopology  Topology; // this atom in: 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
         AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(TP_NONE) {}
     };
+
+    struct IncEntry
+    {
+        std::string AtomSymbol;
+        double      LocalInc;
+        double      AlphaInc;
+        double      BetaInc;
+        double      MultInc;
+        int     local_inc_used; //used for charge fix log only
+        int     alpha_inc_used; //used for charge fix log only
+        int     beta_inc_used; //used for charge fix log only
+        int     mult_inc_used; //used for charge fix log only
+    };
+
+    struct PathEntry
+    {
+        AugmentedAtom Path;
+        double        Cond;
+        int           cond_used; //used for charge fix log only
+    };
+    //-------------
 
     ////////////////////////////////////////////////////////////////////////////
     // Structure Check Options
@@ -116,10 +138,18 @@ namespace RDKit {
         std::vector<ROMOL_SPTR> StereoPatterns;
         std::vector<ROMOL_SPTR> FromTautomer;
         std::vector<ROMOL_SPTR> ToTautomer;
-        // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // init + load
+
         double Elneg0; // elneg_table[0].value;
-        std::map<unsigned, double> ElnegTable;   // AtomicNumber -> eleng
+        std::map<unsigned, double> ElnegTable; // AtomicNumber -> eleng
+        std::vector<IncEntry> AtomAcidity;     //atom_acidity_table[]
+        std::vector<IncEntry> ChargeIncTable;  // std::map AtomSymbol(or AtomicNumber) -> IncEntry
+        /* [ReadTransformation() ]
+        * The alpha, beta coefficients of the transfomation function used
+        * to stretch the preliminary pKa values to the actual predictions.
+        * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
+        */
+        double Alpha, Beta;
+        std::vector<PathEntry> AlphaPathTable, BetaPathTable;
 
     public:
         StructCheckerOptions() : AcidityLimit(0.0)
@@ -136,6 +166,8 @@ namespace RDKit {
             , GroupsToSGroups(false)
             , Verbose(false)
             , Elneg0(0.0)   // elneg_table[0].value;
+            , Alpha (0.0)
+            , Beta  (0.0)
         {}
 
         void clear() { *this = StructCheckerOptions(); }
@@ -166,6 +198,7 @@ namespace RDKit {
         void parseTautomerData(const std::vector<std::string> &smartsFrom, 
                                const std::vector<std::string> &smartsTo);
         void setTautomerData(const std::vector<ROMOL_SPTR> &from, const std::vector<ROMOL_SPTR> &to);
+        bool loadChargeDataTables(const std::string &path);     // file path
     };
 
     bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op);

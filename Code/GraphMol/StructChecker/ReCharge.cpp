@@ -172,26 +172,6 @@ void ChargeFix::resetValues() {
 * the 'value' fields to this value.
 * It returns TRUE if all went well and FALSE otherwise.
 */
-struct path_entry_t
-{
-    AugmentedAtom path;
-    double        cond;
-    int           cond_used;
-};
-
-struct inc_entry_t
-{
-    std::string atom_symbol;
-    double local_inc;
-    int local_inc_used;
-    double alpha_inc;
-    int alpha_inc_used;
-    double beta_inc;
-    int beta_inc_used;
-    double mult_inc;
-    int mult_inc_used;
-};
-
 bool ChargeFix::setpKaValues() {
     const ROMol &mol = Mol;
     bool result = true;
@@ -201,8 +181,8 @@ bool ChargeFix::setpKaValues() {
 
     const AugmentedAtom *AAp;
 
-    struct inc_entry_t  *cip, *ip;
-    struct path_entry_t *ppa, *ppb;
+//    struct inc_entry_t  *cip, *ip;
+//    struct path_entry_t *ppa, *ppb;
 
 //    struct reaccs_atom_t *aap, *bap;
 //    struct reaccs_bond_t *abp, *bbp;
@@ -233,113 +213,119 @@ bool ChargeFix::setpKaValues() {
 //        if (charge_log && old_values[i] != 0.0) // Prints the header of an atom prediction line.
 //            StartPredictionLine(AAp->ShortName, i + 1, old_values[i]);
 //        if (old_values[i] != 0.0)
-//            fprintf(stderr, "atom %d: '%s'\n", i + 1, AAp->short_name);
-/*
+//            fprintf(stderr, "atom %d: '%s'\n", i + 1, AAp->short_name); // throw..
+
         // add local charge increment
-        for (unsigned j = 0, cip = charge_inc_table; j<ncharge; j++, cip++)
-            if (AtomSymbolMatch(ap->getSymbol(), charge_inc_table[j].atom_symbol)) {
-                ap->value += ap->charge*cip->local_inc;
-//                if (charge_log && old_values[i] != 0 && ap->charge != NONE) cip->local_inc_used++;
+        for (unsigned j = 0; j < Options.ChargeIncTable.size(); j++)
+            if (AtomSymbolMatch(ap->getSymbol(), Options.ChargeIncTable[j].AtomSymbol)) {
+                AtompKaValue[i] += ap->getFormalCharge() * Options.ChargeIncTable[j].LocalInc;
+//                if (charge_log && old_values[i] != 0 && ap->charge != NONE) Options.ChargeIncTable[j].local_inc_used++;
 //                if (charge_log && old_values[i] != 0) fprintf(charge_log, "+%d*%c3", ap->charge, 'B' + j);
                 break;
             }
 
         // add local atom acidity (atom_acidity_table)
-        for (unsigned j = 0; j < Options.AcidicAtoms.size(); j++)
-            if (AtomSymbolMatch(ap->getSymbol(), Options.AcidicAtoms[j].AtomSymbol))
+        for (unsigned j = 0; j < Options.AtomAcidity.size(); j++)
+            if (AtomSymbolMatch(ap->getSymbol(), Options.AtomAcidity[j].AtomSymbol))
             {
-                ap->value += ip->local_inc;
-                if (charge_log && old_values[i] != 0) ip->local_inc_used++;
-                if (charge_log && old_values[i] != 0)
-                    fprintf(charge_log, "+%c10", 'B' + j);
+                AtompKaValue[i] += Options.AtomAcidity[j].LocalInc; // ip->LocalInc
+//                if (charge_log && old_values[i] != 0) ip->local_inc_used++;
+//                if (charge_log && old_values[i] != 0)
+//                    fprintf(charge_log, "+%c10", 'B' + j);
                 break;
             }
 
         const Neighbourhood &nbp = neighbour_array[i];      // for all alpha neighbours
-        for (unsigned j = 0; j < nbp.Atoms.size(); j++)
-        {
-            aap = &mp->atom_array[nbp->atoms[j]];  // alpha atom 
-            abp = &mp->bond_array[nbp->bonds[j]];  // alpha bond 
-                                                   // fetch alpha path conductivity 
-            for (k = 0, ppa = alpha_path_table; k<nalphapath; k++, ppa++)
-                if (AtomSymbolMatch(ap->atom_symbol,
-                    ppa->path.atom_symbol) &&
-                    LigandMatches(aap, abp, &ppa->path.ligands[0], FALSE) &&
-                    TRUE)
+        for (unsigned j = 0; j < nbp.Atoms.size(); j++) {
+            const Atom &aap = *Mol.getAtomWithIdx(nbp.Atoms[j]);  // alpha atom 
+            const Bond &abp = *Mol.getBondWithIdx(nbp.Bonds[j]);  // alpha bond 
+            const PathEntry *ppa = 0;
+            // fetch alpha Path conductivity 
+            found = false;
+            for (unsigned k = 0; k < Options.AlphaPathTable.size(); k++)
+                if (AtomSymbolMatch(ap->getSymbol(),
+                    Options.AlphaPathTable[k].Path.AtomSymbol)
+                    && LigandMatches(aap, abp, Options.AlphaPathTable[k].Path.Ligands[0], false)) {
+                    ppa = & Options.AlphaPathTable[k];
+                    found = true;
                     break;
-            if (k == nalphapath)
-            {
-// sprintf(msg_buffer, "%10s: no alpha path for atom %d", mp->name, i + 1);
+                }
+            if ( ! found) {
+// sprintf(msg_buffer, "%10s: no alpha Path for atom %d", mp->name, i + 1);
 // AddMsgToList(msg_buffer);
                 result = false;
                 break;
             }
 
-            if (convertBondType(abp->getBondType()) != SINGLE)
-            {
+            if (convertBondType(abp.getBondType()) != SINGLE) {
 //                if (charge_log && old_values[i] != 0)
-//                    fprintf(charge_log, "+%d*%c6", (abp->bond_type - SINGLE), 'B' + (cip - charge_inc_table));
-                ap->value += (abp->bond_type - SINGLE)*cip->mult_inc;
+//                    fprintf(charge_log, "+%d*%c6", (abp->bond_type - SINGLE), 'B' + (cip - ChargeIncTable));
+                AtompKaValue[i] += (convertBondType(abp.getBondType()) - SINGLE) * Options.ChargeIncTable[j].MultInc;
 //                if (charge_log && old_values[i] != 0) cip->mult_inc_used++;
             }
 
             // fetch alpha charge increment 
-            if (aap->charge != 0)
-            {
-                for (k = 0, cip = charge_inc_table;
-                k<ncharge;
-                    k++, cip++)
-                    if (AtomSymbolMatch(aap->atom_symbol, cip->atom_symbol))
+            if (aap.getFormalCharge() != 0) {
+                found = false;
+                for (unsigned k = 0; k < Options.ChargeIncTable.size(); k++)
+                    if (AtomSymbolMatch(aap.getSymbol(), Options.ChargeIncTable[k].AtomSymbol)) {
+                        //                if (charge_log && old_values[i] != 0)
+                        //                    fprintf(charge_log, "+%d*%c4", aap->charge, 'B' + (cip - ChargeIncTable));
+                        AtompKaValue[i] += aap.getFormalCharge() * Options.ChargeIncTable[k].AlphaInc;
+                        //                if (charge_log && old_values[i] != 0) cip->alpha_inc_used++;
+                        found = true;
                         break;
-                if (k == ncharge)
-                {
+                    }
+                if ( ! found) {
 //sprintf(msg_buffer, "%10s: no alpha increment for atom %d", mp->name, i + 1);
 //AddMsgToList(msg_buffer);
                     result = false;
                     break;
                 }
-//                if (charge_log && old_values[i] != 0)
-//                    fprintf(charge_log, "+%d*%c4", aap->charge, 'B' + (cip - charge_inc_table));
-                ap->value += aap->charge*cip->alpha_inc;
-//                if (charge_log && old_values[i] != 0) cip->alpha_inc_used++;
             }
 
             // fetch alpha acidity increment
-            for (k = 0, ip = atom_acidity_table; k<natomacidity; k++, ip++)
-                if (AtomSymbolMatch(aap->atom_symbol, ip->atom_symbol))
+            found = false;
+            for (unsigned k = 0; k < Options.AtomAcidity.size(); k++)
+                if (AtomSymbolMatch(aap.getSymbol(), Options.AtomAcidity[k].AtomSymbol)) {
+//            if (charge_log && old_values[i] != 0)
+//                fprintf(charge_log, "+%c16", 'B' + (ppa - alpha_path_table));
+//            if (charge_log && old_values[i] != 0)
+//                fprintf(charge_log, "*%c11", 'B' + (ip - atom_acidity_table));
+                    AtompKaValue[i] += ppa->Cond * Options.AtomAcidity[k].AlphaInc;
+//            if (charge_log && old_values[i] != 0) ppa->cond_used++;
+//            if (charge_log && old_values[i] != 0) ip->alpha_inc_used++;
+                    found = true;
                     break;
-            if (k == natomacidity)
+                }
+            if ( ! found)
             {
 //                sprintf(msg_buffer, "%10s: no alpha increment for atom %d", mp->name, i + 1);
 //                AddMsgToList(msg_buffer);
                 result = false;
                 break;
             }
-//            if (charge_log && old_values[i] != 0)
-//                fprintf(charge_log, "+%c16", 'B' + (ppa - alpha_path_table));
-//            if (charge_log && old_values[i] != 0)
-//                fprintf(charge_log, "*%c11", 'B' + (ip - atom_acidity_table));
-            ap->value += ppa->cond*ip->alpha_inc;
-//            if (charge_log && old_values[i] != 0) ppa->cond_used++;
-//            if (charge_log && old_values[i] != 0) ip->alpha_inc_used++;
 
             // for all beta neighbours 
-            nbph = &neighbour_array[nbp->atoms[j]];
-            for (k = 0; k<nbph->n_ligands; k++)
-            {
-                if (nbph->atoms[k] == i)
+            const Neighbourhood &nbph = neighbour_array[nbp.Atoms[j]];
+            for (unsigned k = 0; k<nbph.Atoms.size(); k++) {
+                if (nbph.Atoms[k] == i)
                     continue;  // no loop back
 
-                bap = &mp->atom_array[nbph->atoms[k]]; // beta atom
-                bbp = &mp->bond_array[nbph->bonds[k]]; // beta bond
-                unsigned l, nbetapath;
-                for (l = 0, ppb = beta_path_table; l<nbetapath; l++, ppb++) // fetch beta conductivity
-                    if (AtomSymbolMatch(ap->getSymbol(), ppb->path.atom_symbol) &&
-                        LigandMatches(aap, abp, ppb->path.Ligands[0], false) &&
-                        LigandMatches(bap, bbp, ppb->path.Ligands[1], false))
+                const Atom &bap = *Mol.getAtomWithIdx(nbph.Atoms[k]); // beta atom
+                const Bond &bbp = *Mol.getBondWithIdx(nbph.Bonds[k]); // beta bond
+                const PathEntry *ppb = 0;
+                // fetch beta conductivity
+                found = false;
+                for (unsigned l = 0; l < Options.BetaPathTable.size(); l++) // ppb++
+                    if (AtomSymbolMatch(ap->getSymbol(), Options.BetaPathTable[l].Path.AtomSymbol)
+                        && LigandMatches(aap, abp, ppb->Path.Ligands[0], false)
+                        && LigandMatches(bap, bbp, ppb->Path.Ligands[1], false)) {
+                        ppb = &Options.BetaPathTable[k];
+                        found = true;
                         break;
-                if (l == nbetapath)
-                {
+                    }
+                if ( ! found) {
 //                    sprintf(msg_buffer, "%10s: no beta increment for atom %d", mp->name, i + 1);
 //                    AddMsgToList(msg_buffer);
                     result = false;
@@ -347,51 +333,56 @@ bool ChargeFix::setpKaValues() {
                 }
 
                 // fetch beta acidity increment
-                for (l = 0, ip = atom_acidity_table; l<natomacidity; l++, ip++)
-                    if (AtomSymbolMatch(bap->atom_symbol, ip->atom_symbol))
+                found = false;
+                for (unsigned l = 0; l < Options.AtomAcidity.size(); l++) // ip++
+                    if (AtomSymbolMatch(bap.getSymbol(), Options.AtomAcidity[l].AtomSymbol)) {
+                        //                if (charge_log && old_values[i] != 0)
+                        //                    fprintf(charge_log, "+%c20", (int)('B' + (ppb - beta_path_table)));
+                        //                if (charge_log && old_values[i] != 0)
+                        //                    fprintf(charge_log, "*%c12", 'B' + (ip - atom_acidity_table));
+                        AtompKaValue[i] += ppb->Cond * Options.AtomAcidity[l].BetaInc;
+                        //                if (charge_log && old_values[i] != 0) ppb->cond_used++;
+                        //                if (charge_log && old_values[i] != 0) ip->beta_inc_used++;
+                        found = true;
                         break;
-                if (l == natomacidity)
+                    }
+                if ( ! found)
                 {
 //                    sprintf(msg_buffer, "%10s: no beta increment for atom %d", mp->name, i + 1);
 //                    AddMsgToList(msg_buffer);
                     result = false;
                     break;
                 }
-//                if (charge_log && old_values[i] != 0)
-//                    fprintf(charge_log, "+%c20", (int)('B' + (ppb - beta_path_table)));
-//                if (charge_log && old_values[i] != 0)
-//                    fprintf(charge_log, "*%c12", 'B' + (ip - atom_acidity_table));
-                AtompKaValue[i] += ppb->cond*ip->beta_inc;
-//                if (charge_log && old_values[i] != 0) ppb->cond_used++;
-//                if (charge_log && old_values[i] != 0) ip->beta_inc_used++;
 
                 // fetch beta charge increment
-                if (bap->charge != 0)
+                if (bap.getFormalCharge() != 0)
                 {
-                    for (l = 0, cip = charge_inc_table; l<ncharge; l++, cip++)
-                        if (AtomSymbolMatch(bap->atom_symbol, cip->atom_symbol))
+                    found = false;
+                    for (unsigned l = 0; l < Options.ChargeIncTable.size(); l++)
+                        if (AtomSymbolMatch(bap.getSymbol(), Options.ChargeIncTable[l].AtomSymbol)) {
+                            //                    if (charge_log && old_values[i] != 0)
+                            //                        fprintf(charge_log, "+%d*%c5", bap->charge, 'B' + (cip - ChargeIncTable));
+                            AtompKaValue[i] += bap.getFormalCharge() * Options.ChargeIncTable[l].BetaInc;   // ap
+                            found = true;
                             break;
-                    if (l == ncharge)
+                        }
+                    if ( ! found)
                     {
 //                        sprintf(msg_buffer, "%10s: no beta increment for atom %d", mp->name, i + 1);
 //                        AddMsgToList(msg_buffer);
                         result = false;
                         break;
                     }
-//                    if (charge_log && old_values[i] != 0)
-//                        fprintf(charge_log, "+%d*%c5", bap->charge, 'B' + (cip - charge_inc_table));
-                    ap->value += bap->charge*cip->beta_inc;
-//                    if (charge_log && old_values[i] != 0) cip->beta_inc_used++;
                 }
             }
         }
 //        if (charge_log && old_values[i] != 0.0) fprintf(charge_log, "\t%g\n", ap->value);
-
-        ap->value = 7 + beta*(ap->value - 7)
-            + alpha*(ap->value - 7) * alpha*(ap->value - 7) * alpha*(ap->value - 7);
-*/
+        // The function is pKa = 7 + (pKa'-7)*beta + ((pKa' - 7)*alpha) ^ 3.
+        AtompKaValue[i] = 7 + Options.Beta *(AtompKaValue[i] - 7)
+                            + Options.Alpha*(AtompKaValue[i] - 7)
+                             *Options.Alpha*(AtompKaValue[i] - 7)
+                             *Options.Alpha*(AtompKaValue[i] - 7);
     }
-
     return result;
 }
 
@@ -473,7 +464,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
                                 - Options.Elneg0; //elneg_table[0].value;
         else
         {
-            //fprintf(stderr, "atom symbol '%s' not in periodic table\n", mp->atom_array[i].atom_symbol);
+            //fprintf(stderr, "atom symbol '%s' not in periodic table\n", mp->atom_array[i].AtomSymbol);
             return -1;
         }
     }
