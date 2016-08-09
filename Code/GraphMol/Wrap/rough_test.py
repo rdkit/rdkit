@@ -1812,6 +1812,40 @@ CAS<~>
     r = Chem.ReplaceCore(m,core)
     self.assertFalse(r)
 
+    # smiles, smarts, replaceDummies, labelByIndex, useChirality
+    expected = {
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', False, False, False) : '[1*]OC.[2*]NC' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', False, False, True) : '[1*]NC.[2*]OC' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', False, True, False) : '[3*]OC.[4*]NC' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', False, True, True) : '[3*]NC.[4*]OC' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', True, False, False) : '[1*]C.[2*]C' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', True, False, True) : '[1*]C.[2*]C' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', True, True, False) : '[3*]C.[4*]C' ,
+      ('C1O[C@@]1(OC)NC', 'C1O[C@]1(*)*', True, True, True) : '[3*]C.[4*]C' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', False, False, False) : '[1*]OC.[2*]NC' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', False, False, True) : '[1*]OC.[2*]NC' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', False, True, False) : '[3*]OC.[4*]NC' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', False, True, True) : '[3*]OC.[4*]NC' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', True, False, False) : '[1*]C.[2*]C' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', True, False, True) : '[1*]C.[2*]C' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', True, True, False) : '[3*]C.[4*]C' ,
+      ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', True, True, True) : '[3*]C.[4*]C' ,
+    }
+
+    for (smiles, smarts, replaceDummies, labelByIndex, useChirality), expected_smiles in expected.items():
+      nm = Chem.ReplaceCore(
+        Chem.MolFromSmiles(smiles),
+        Chem.MolFromSmarts(smarts),
+        replaceDummies=replaceDummies,
+        labelByIndex=labelByIndex,
+        useChirality=useChirality)
+      if Chem.MolToSmiles(nm, True) != expected_smiles:
+        print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r"%(
+          smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
+        print("expected: %s\ngot: %s"%(expected, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
+
+
   def test47RWMols(self):
     """ test the RWMol class
 
