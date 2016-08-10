@@ -343,10 +343,12 @@ ROMol *replaceCore(const ROMol &mol,
   std::vector<int> allIndices(origNumAtoms, -1);
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
-    PRECONDITION( static_cast<unsigned int>(mvit->first) < core.getNumAtoms(),
-                  "Supplied MatchVect indices out of bounds of the core molecule" );
-    PRECONDITION( static_cast<unsigned int>(mvit->second) < mol.getNumAtoms(),
-                  "Supplied MatchVect indices out of bounds of the target molecule" );
+    if(mvit->first < 0 || mvit->first >= core.getNumAtoms())
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the core molecule" );
+    if(mvit->second < 0 || mvit->second >= mol.getNumAtoms())
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the target molecule" );
     
     if (replaceDummies ||
         core.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
