@@ -87,6 +87,13 @@ namespace RDKit {
         AATopology  Topology; // this atom in: 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
         AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(TP_NONE) {}
+        AugmentedAtom(const std::string &symbol, const std::string &name,
+                      int charge, RadicalType radical, AATopology topology) :
+          AtomSymbol(symbol),
+          ShortName(name),
+          Charge(charge),
+          Radical(radical),
+          Topology(topology) {}
     };
 
     struct IncEntry
@@ -152,23 +159,7 @@ namespace RDKit {
         std::vector<PathEntry> AlphaPathTable, BetaPathTable;
 
     public:
-        StructCheckerOptions() : AcidityLimit(0.0)
-            , RemoveMinorFragments(false)
-            , DesiredCharge(0)
-            , CheckCollisions(false)
-            , CollisionLimitPercent(0)
-            , MaxMolSize(255)
-            , ConvertSText(false)
-            , SqueezeIdentifiers(false)
-            , StripZeros(false)
-            , CheckStereo(false)
-            , ConvertAtomTexts(false)
-            , GroupsToSGroups(false)
-            , Verbose(false)
-            , Elneg0(0.0)   // elneg_table[0].value;
-            , Alpha (0.0)
-            , Beta  (0.0)
-        {}
+        StructCheckerOptions();
 
         void clear() { *this = StructCheckerOptions(); }
 
