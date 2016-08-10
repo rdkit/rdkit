@@ -1,5 +1,5 @@
 rdkit_library(StructChecker
-              StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp
+              AugmentedAtomData.cpp StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp
               LINK_LIBRARIES Depictor FileParsers ChemTransforms Descriptors)
 
 rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h ReCharge.h
