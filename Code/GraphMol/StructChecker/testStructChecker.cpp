@@ -90,32 +90,29 @@ void testLoadOptionsFromFiles()
     StructCheckerOptions options;
 
     BOOST_LOG(rdInfoLog) << "loadGoodAugmentedAtoms checkfgs.chk\n";
-    const std::string rdbase = getenv("RDBASE");
-    const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
-
-    ok = options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk");
+    ok = options.loadGoodAugmentedAtoms("checkfgs.chk");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadAcidicAugmentedAtoms checkfgs.aci\n";
-    ok = options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci");
+    ok = options.loadAcidicAugmentedAtoms("checkfgs.aci");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadAugmentedAtomTranslations checkfgs.trn\n";
-    ok = options.loadAugmentedAtomTranslations(testDataDir + "checkfgs.trn");
+    ok = options.loadAugmentedAtomTranslations("checkfgs.trn");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadPatterns patterns.sdf\n";
-    ok = options.loadPatterns(testDataDir + "patterns.sdf");
+    ok = options.loadPatterns("patterns.sdf");
     TEST_ASSERT(ok);
 
     //....
 
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.sdf\n";
-    ok = options.loadTautomerData(testDataDir + "tautomer.sdf");
+    ok = options.loadTautomerData("tautomer.sdf");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.rdf\n";
-    ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
+    ok = options.loadTautomerData("tautomer.rdf");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
