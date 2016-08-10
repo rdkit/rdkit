@@ -20,11 +20,6 @@
 #include "Invariant.h"
 #include "Dict.h"
 
-namespace detail {
-// used in various places for computed properties
-const std::string computedPropName = "__computedProps";
-}
-
 #include <vector>
 #include <deque>
 #include <map>
@@ -41,6 +36,12 @@ const std::string computedPropName = "__computedProps";
 #include <boost/lexical_cast.hpp>
 
 namespace RDKit {
+
+  namespace detail {
+  // used in various places for computed properties
+  extern const std::string computedPropName;
+  }
+
 namespace common_properties {
 ///////////////////////////////////////////////////////////////
 // Molecule Props
@@ -50,19 +51,19 @@ extern const std::string MolFileComments; // string
 extern const std::string _2DConf;         // int (combine into dimension?)
 extern const std::string _3DConf;         // int
 extern const std::string _doIsoSmiles;    // int (should probably be removed)
-extern const std::string extraRings;      // vec<vec<int> > 
+extern const std::string extraRings;      // vec<vec<int> >
 extern const std::string _smilesAtomOutputOrder; // vec<int> computed
-extern const std::string _StereochemDone; // int 
+extern const std::string _StereochemDone; // int
 extern const std::string _NeedsQueryScan; // int (bool)
 extern const std::string _fragSMARTS;     // std::string
 extern const std::string maxAttachIdx;    // int TemplEnumTools.cpp
-extern const std::string origNoImplicit;  // int (bool) 
+extern const std::string origNoImplicit;  // int (bool)
 extern const std::string ringMembership;  //? unused (molopstest.cpp)
 
 // Computed Values
 // ConnectivityDescriptors
-extern const std::string _connectivityHKDeltas;// std::vector<double> computed 
-extern const std::string _connectivityNVals;   // std::vector<double> computed 
+extern const std::string _connectivityHKDeltas;// std::vector<double> computed
+extern const std::string _connectivityNVals;   // std::vector<double> computed
 
 extern const std::string _crippenLogP;         // double computed
 extern const std::string _crippenLogPContribs; // std::vector<double> computed
@@ -87,7 +88,7 @@ extern const std::string _CrippenMR;   // Unused (in the basement)
 // Atom Props
 
 // Chirality stuff
-extern const std::string _BondsPotentialStereo; // int (or bool) COMPUTED 
+extern const std::string _BondsPotentialStereo; // int (or bool) COMPUTED
 extern const std::string _CIPCode; // std::string COMPUTED
 extern const std::string _CIPRank; // int COMPUTED
 extern const std::string _ChiralityPossible; // int
@@ -99,7 +100,7 @@ extern const std::string _ringStereoWarning; // obsolete ?
 // Smiles parsing
 extern const std::string _SmilesStart; // int
 extern const std::string _TraversalBondIndexOrder; // ? unused
-extern const std::string _TraversalRingClosureBond; // unsigned int 
+extern const std::string _TraversalRingClosureBond; // unsigned int
 extern const std::string _TraversalStartPoint; // bool
 extern const std::string _queryRootAtom; // int SLNParse/SubstructMatch
 extern const std::string _hasMassQuery; // atom bool
@@ -109,25 +110,25 @@ extern const std::string _unspecifiedOrder;// atom int (bool) smarts/smiles
 extern const std::string _RingClosures; // INT_VECT smarts/smiles/canon
 
 // MDL Style Properties (MolFileParser)
-extern const std::string molAtomMapNumber; // int 
-extern const std::string molFileAlias;  // string 
-extern const std::string molFileValue;  // string 
-extern const std::string molInversionFlag; // int 
-extern const std::string molParity;     // int 
-extern const std::string molRxnComponent; // int 
-extern const std::string molRxnRole;    // int 
-extern const std::string molTotValence; // int 
+extern const std::string molAtomMapNumber; // int
+extern const std::string molFileAlias;  // string
+extern const std::string molFileValue;  // string
+extern const std::string molInversionFlag; // int
+extern const std::string molParity;     // int
+extern const std::string molRxnComponent; // int
+extern const std::string molRxnRole;    // int
+extern const std::string molTotValence; // int
 extern const std::string _MolFileRLabel; // int
 extern const std::string _MolFileChiralFlag; // int
 
 extern const std::string dummyLabel; // atom string
 
 // Reaction Information (Reactions.cpp)
-extern const std::string _QueryFormalCharge; //  int 
-extern const std::string _QueryHCount; // int 
+extern const std::string _QueryFormalCharge; //  int
+extern const std::string _QueryHCount; // int
 extern const std::string _QueryIsotope; // int
-extern const std::string _QueryMass; // int = round(float * 1000) 
-extern const std::string _ReactionDegreeChanged; // int (bool) 
+extern const std::string _QueryMass; // int = round(float * 1000)
+extern const std::string _ReactionDegreeChanged; // int (bool)
 extern const std::string NullBond; // int (bool)
 extern const std::string _rgroupAtomMaps;
 extern const std::string _rgroupBonds;
@@ -140,7 +141,7 @@ extern const std::string _Unfinished_SLN_; // int (bool)
 
 // Smarts Smiles
 extern const std::string _brokenChirality; // atom bool
-extern const std::string isImplicit;  // atom int (bool) 
+extern const std::string isImplicit;  // atom int (bool)
 extern const std::string smilesSymbol; // atom string (only used in test?)
 
 // Tripos
