@@ -327,15 +327,29 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
     return 0;
   }
 
+  return replaceCore(mol, coreQuery, matchV,
+                     replaceDummies, labelByIndex,
+                     requireDummyMatch);
+}
+
+ROMol *replaceCore(const ROMol &mol,
+                   const ROMol &core,
+                   const MatchVectType &matchV,
+                   bool replaceDummies,
+                   bool labelByIndex,
+                   bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
   std::vector<int> matchingIndices(origNumAtoms, -1);
   std::vector<int> allIndices(origNumAtoms, -1);
-  //  std::cerr << "replaceDummies " << (int) replaceDummies << std::endl;
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
+    PRECONDITION( static_cast<unsigned int>(mvit->first) < core.getNumAtoms(),
+                  "Supplied MatchVect not compatible with core molecule" );
+    PRECONDITION( static_cast<unsigned int>(mvit->second) < mol.getNumAtoms(),
+                  "Supplied MatchVect not compatible with target molecule" );
+    
     if (replaceDummies ||
-        coreQuery.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
-      //      std::cerr << "matchingIndices[" << mvit->second << "] = " << mvit->first << std::endl;
+        core.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
       matchingIndices[mvit->second] = mvit->first;
     }
     allIndices[mvit->second] = mvit->first;
@@ -389,7 +403,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
         if (matchingIndices[nbrIdx] > -1) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
-              coreQuery.getAtomWithIdx(matchingIndices[nbrIdx])
+              core.getAtomWithIdx(matchingIndices[nbrIdx])
                       ->getAtomicNum() != 0) {
             delete newMol;
             return NULL;

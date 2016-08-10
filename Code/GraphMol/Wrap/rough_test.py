@@ -1833,17 +1833,32 @@ CAS<~>
     }
 
     for (smiles, smarts, replaceDummies, labelByIndex, useChirality), expected_smiles in expected.items():
+      mol = Chem.MolFromSmiles(smiles)
+      core = Chem.MolFromSmarts(smarts)
       nm = Chem.ReplaceCore(
-        Chem.MolFromSmiles(smiles),
-        Chem.MolFromSmarts(smarts),
+        mol,
+        core,
         replaceDummies=replaceDummies,
         labelByIndex=labelByIndex,
         useChirality=useChirality)
+      
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r"%(
           smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
-        print("expected: %s\ngot: %s"%(expected, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
+
+      matchVect = mol.GetSubstructMatch(core, useChirality=useChirality)
+      nm = Chem.ReplaceCore(mol, core, matchVect,
+                            replaceDummies=replaceDummies,
+                            labelByIndex=labelByIndex)
+      if Chem.MolToSmiles(nm, True) != expected_smiles:
+        print("ReplaceCore(%r, %r, %r, replaceDummies=%r, labelByIndex=%rr"%(
+          smiles, smarts, matchVect, replaceDummies, labelByIndex),
+              file=sys.stderr)
+        print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
+      
 
 
   def test47RWMols(self):

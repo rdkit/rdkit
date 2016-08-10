@@ -741,6 +741,40 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   return MolOps::adjustQueryProperties(mol, &params);
 }
 
+ROMol *replaceCoreHelper(const ROMol &mol,
+                         const ROMol &core,
+                         python::object match,
+                         bool replaceDummies,
+                         bool labelByIndex,
+                         bool requireDummyMatch=false) {
+  // convert input to MatchVect
+  MatchVectType matchVect;
+
+  unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
+  
+  for (unsigned int i = 0; i < length; ++i) {
+    int sz = 1;
+    if(PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(), "__len__")) {
+      sz = python::extract<unsigned int>(match[i].attr("__len__")());
+    }
+    
+    int v1,v2;
+    PRECONDITION(sz == 1 || sz == 2, "Input not a vector of (core_atom_idx,molecule_atom_idx) entries");
+    if (sz == 1) {
+      PRECONDITION(length == core.getNumAtoms(),
+           "Not enough entries for matching vectors of type (mol_atom_index_1, mol_atom_index_2)");
+      v1 = (int)i;
+      v2 = python::extract<int>(match[i]);
+    } else if (sz == 2) {
+      v1 = python::extract<int>(match[i][0]);
+      v2 = python::extract<int>(match[i][1]);
+    }
+    matchVect.push_back(std::make_pair(v1,v2));
+  }
+
+  return replaceCore(mol, core, matchVect, replaceDummies, labelByIndex, requireDummyMatch);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -1788,7 +1822,57 @@ ARGUMENTS:\n\
 \n\
     - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
 \n";
-    python::def("ReplaceCore", replaceCore,
+    python::def("ReplaceCore",
+                replaceCoreHelper,
+                (python::arg("mol"), python::arg("core"), python::arg("matches"),
+                 python::arg("replaceDummies") = true,
+                 python::arg("labelByIndex") = false,
+                 python::arg("requireDummyMatch") = false),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());    
+    // ------------------------------------------------------------------------
+    docString =
+        "Removes the core of a molecule and labels the sidechains with dummy atoms.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
+\n\
+    - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
+\n\
+    - labelByIndex: toggles labeling the attachment point dummy atoms with \n\
+                    the index of the core atom they're attached to.\n\
+\n\
+    - requireDummyMatch: if the molecule has side chains that attach at points not\n\
+                         flagged with a dummy, it will be rejected (None is returned)\n\
+\n\
+    - useChirality: use chirality matching in the coreQuery\n\
+\n\
+  RETURNS: a new molecule with the core removed\n\
+\n\
+  NOTES:\n\
+\n\
+    - The original molecule is *not* modified.\n\
+\n\
+  EXAMPLES:\n\
+\n\
+   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
+   to actually use molecules:\n\
+\n\
+    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[1*]'\n\
+\n\
+    - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
+\n\
+    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[1*]C1CCC1[2*]'\n\
+\n\
+    - ReplaceCore('C1CNCC1','N') -> '[1*]CCCC[2*]'\n\
+\n\
+    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
+\n";
+    python::def("ReplaceCore",
+                (ROMol *(*)(const ROMol&, const ROMol&, bool,bool,bool,bool))replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,

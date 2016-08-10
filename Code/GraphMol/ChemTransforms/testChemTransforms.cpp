@@ -727,9 +727,40 @@ void testReplaceCore2() {
     } else {
       TEST_ASSERT(!res.get());
     }
+
+    MatchVectType matchV;
+
+    // do the substructure matching and get the atoms that match the query
+    const bool recursionPossible=true;
+    bool matchFound = SubstructMatch(*mol.get(), *smarts.get(), matchV, recursionPossible,
+                                     tests[i].useChirality);
+    TEST_ASSERT(matchFound);
+    res = ROMOL_SPTR(replaceCore(*mol.get(), *smarts.get(), matchV,
+                                 tests[i].replaceDummies,
+                                 tests[i].labelByIndex,
+                                 tests[i].requireDummyMatch));
+                     
+    if(tests[i].expected) {
+      TEST_ASSERT(res.get());
+      std::string smi = MolToSmiles(*res.get(), true);
+      if (smi != tests[i].expected) {
+        std::cerr << i << " " << tests[i].smiles << " " <<
+            tests[i].smarts << " " <<
+            (int)tests[i].replaceDummies << " " <<
+            (int)tests[i].labelByIndex << " " <<
+            (int)tests[i].requireDummyMatch << " " <<
+            (int)tests[i].useChirality << " expected:" <<
+            tests[i].expected << " got => " <<
+            smi << std::endl;
+      }
+      TEST_ASSERT(smi == tests[i].expected);
+    } else {
+      TEST_ASSERT(!res.get());
+    }
                    
   }
 }
+
 void testReplaceCoreLabels() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
@@ -887,6 +918,39 @@ void testReplaceCorePositions() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testReplaceCoreMatchVect() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect" << std::endl;
+
+  std::map<std::string, int> expected;
+  expected["[1*]N.[2*]O.[3*]P"] = 1;
+  expected["[1*]N.[2*]P.[3*]O"] = 1;
+  expected["[1*]O.[2*]N.[3*]P"] = 1;
+  expected["[1*]O.[2*]P.[3*]N"] = 1;
+  expected["[1*]P.[2*]N.[3*]O"] = 1;
+  expected["[1*]P.[2*]O.[3*]N"] = 1;
+  
+  const char * smiles = "NC1C(O)C1P";
+  const char * smarts = "*C1C(*)C1*";
+  ROMOL_SPTR mol(SmilesToMol(smiles));
+  ROMOL_SPTR query(SmartsToMol(smarts));
+  
+  std::vector<MatchVectType> matches;
+  const bool uniquify = false;
+  unsigned int matchCount = SubstructMatch(*mol.get(), *query.get(), matches, uniquify);
+  TEST_ASSERT(matchCount);
+
+  std::map<std::string,int> results;
+  const bool replaceDummies = false;
+  for(unsigned int i=0; i<matchCount; ++i) {
+    ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), matches[i], replaceDummies));
+    std::string smi = MolToSmiles(*res.get(), true);
+    results[smi] = results[smi] + 1;
+  }
+
+  TEST_ASSERT(expected == results);
+}
+   
 void testMurckoDecomp() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing murcko decomposition" << std::endl;
@@ -1844,6 +1908,7 @@ int main() {
   testReplaceCoreLabels();
   testReplaceCoreCrash();
   testReplaceCorePositions();
+  testReplaceCoreMatchVect();
 
   testMurckoDecomp();
   testReplaceCoreRequireDummies();
