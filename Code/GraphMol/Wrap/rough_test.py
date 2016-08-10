@@ -1859,8 +1859,22 @@ CAS<~>
         print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
       
+    mol = Chem.MolFromSmiles("C")
+    smarts = Chem.MolFromSmarts("C")
+    try:
+      Chem.ReplaceCore(mol, smarts, (3,))
+      self.asssertFalse(True)
+    except:
+      pass
 
-
+    mol = Chem.MolFromSmiles("C")
+    smarts = Chem.MolFromSmarts("C")
+    try:
+      Chem.ReplaceCore(mol, smarts, (0,0))
+      self.asssertFalse(True)
+    except:
+      pass
+    
   def test47RWMols(self):
     """ test the RWMol class
 

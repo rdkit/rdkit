@@ -344,9 +344,9 @@ ROMol *replaceCore(const ROMol &mol,
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
     PRECONDITION( static_cast<unsigned int>(mvit->first) < core.getNumAtoms(),
-                  "Supplied MatchVect not compatible with core molecule" );
+                  "Supplied MatchVect indices out of bounds of the core molecule" );
     PRECONDITION( static_cast<unsigned int>(mvit->second) < mol.getNumAtoms(),
-                  "Supplied MatchVect not compatible with target molecule" );
+                  "Supplied MatchVect indices out of bounds of the target molecule" );
     
     if (replaceDummies ||
         core.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {

@@ -949,6 +949,50 @@ void testReplaceCoreMatchVect() {
   }
 
   TEST_ASSERT(expected == results);
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(1,100) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+  
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(100,1) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(1,-10) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(-10,1) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
 }
    
 void testMurckoDecomp() {

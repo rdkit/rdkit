@@ -759,10 +759,17 @@ ROMol *replaceCoreHelper(const ROMol &mol,
     }
     
     int v1,v2;
-    PRECONDITION(sz == 1 || sz == 2, "Input not a vector of (core_atom_idx,molecule_atom_idx) entries");
+    if (sz != 1 && sz != 2)
+      throw ValueErrorException("Input not a vector of (core_atom_idx,molecule_atom_idx) or (molecule_atom_idx,...) entries" );
     if (sz == 1) {
-      PRECONDITION(length == core.getNumAtoms(),
-           "Not enough entries for matching vectors of type (mol_atom_index_1, mol_atom_index_2)");
+      if(length != core.getNumAtoms()) {
+        std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
+          
+        std::stringstream ss;
+        ss << std::string("When using input vector of type (molecule_atom_idx,...) supplied core requires ")
+           << core.getNumAtoms() << entries;
+        throw ValueErrorException(ss.str());
+      }
       v1 = (int)i;
       v2 = python::extract<int>(match[i]);
     } else if (sz == 2) {
