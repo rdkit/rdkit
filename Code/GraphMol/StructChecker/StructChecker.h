@@ -87,6 +87,14 @@ namespace RDKit {
         AATopology  Topology; // this atom in: 1=ring 2=chain 0 don't care
         std::vector<Ligand> Ligands;
         AugmentedAtom() : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(TP_NONE) {}
+        AugmentedAtom(const char * sym, const char * name, int charge,
+                   RadicalType radical, AATopology topology) :
+          AtomSymbol(sym),
+          ShortName(name),
+          Charge(charge),
+          Radical(radical),
+          Topology(topology),
+          Ligands() {}      
     };
 
     struct IncEntry
