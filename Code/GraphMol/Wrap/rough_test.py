@@ -2265,12 +2265,14 @@ CAS<~>
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'2')
+    self.assertEqual(Chem.GetAtomRLabel(at),  2)
 
     at = m.GetAtomWithIdx(4)
     self.assertTrue(at is not None)
     self.assertTrue(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.assertEqual(p,'1')
+    self.assertEqual(Chem.GetAtomRLabel(at), 1)
 
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O',False)
@@ -2611,8 +2613,15 @@ CAS<~>
   def test82Issue288(self):
     m = Chem.MolFromSmiles('CC*')
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
+    
     smi=Chem.MolToSmiles(m)
     self.assertEqual(smi,'CC[*:30]')
+    # try newer api
+    m = Chem.MolFromSmiles('CC*')
+    m.GetAtomWithIdx(2).SetAtomMapNum(30)
+    smi=Chem.MolToSmiles(m)
+    self.assertEqual(smi,'CC[*:30]')
+    
 
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -3673,8 +3682,21 @@ CAS<~>
     m.GetBondWithIdx(0).SetProp("foo","1")
     self.assertEqual(list(m.GetBondWithIdx(0).GetPropNames()),["foo"])
 
+  def testMDLProps(self):
+    m = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetAtomMapNum(1)
+    Chem.SetAtomAlias(m.GetAtomWithIdx(1), "foo")
+    Chem.SetAtomValue(m.GetAtomWithIdx(1), "bar")
 
+    m = Chem.MolFromMolBlock(Chem.MolToMolBlock(m))
+    self.assertEquals(m.GetAtomWithIdx(0).GetAtomMapNum(), 1)
+    self.assertEquals(Chem.GetAtomAlias(m.GetAtomWithIdx(1)), "foo")
+    self.assertEquals(Chem.GetAtomValue(m.GetAtomWithIdx(1)), "bar")
 
-
+  def testSmilesProps(self):
+    m = Chem.MolFromSmiles("C")
+    Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), 'xxx')
+    self.assertEquals(Chem.MolToSmiles(m), "Cxxx")
+    
 if __name__ == '__main__':
   unittest.main()

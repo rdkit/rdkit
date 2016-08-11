@@ -137,12 +137,12 @@ void TDTWriter::write(const ROMol &mol, int confId) {
     // out to the file
     STR_VECT properties = mol.getPropList();
     STR_VECT compLst;
-    mol.getPropIfPresent(detail::computedPropName, compLst);
+    mol.getPropIfPresent(RDKit::detail::computedPropName, compLst);
 
     STR_VECT_CI pi;
     for (pi = properties.begin(); pi != properties.end(); pi++) {
       // ignore any of the following properties
-      if (((*pi) == detail::computedPropName) ||
+      if (((*pi) == RDKit::detail::computedPropName) ||
           ((*pi) == common_properties::_Name) || ((*pi) == "_MolFileInfo") ||
           ((*pi) == "_MolFileComments") ||
           ((*pi) == common_properties::_MolFileChiralFlag)) {

@@ -517,6 +517,74 @@ void Atom::invertChirality() {
       break;
   }
 }
+
+void setAtomRLabel(Atom *atm, int rlabel) {
+  PRECONDITION(atm, "bad atom");
+  // rlabel ==> n2 => 0..99
+  PRECONDITION(rlabel >= 0 && rlabel < 100, "rlabel out of range for MDL files");
+  if (rlabel) {
+    atm->setProp(common_properties::_MolFileRLabel, static_cast<unsigned int>(rlabel));
+  }
+  else if (atm->hasProp(common_properties::_MolFileRLabel)) {
+    atm->clearProp(common_properties::_MolFileRLabel);
+  }
+}
+//! Gets the atom's RLabel
+int getAtomRLabel(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  unsigned int rlabel=0;
+  atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
+  return static_cast<int>(rlabel);
+}
+
+void setAtomAlias(Atom *atom, const std::string &alias) {
+  PRECONDITION(atom, "bad atom");
+  if(alias != "") {
+    atom->setProp(common_properties::molFileAlias, alias);
+  } else if ( atom->hasProp(common_properties::molFileAlias) ) {
+    atom->clearProp(common_properties::molFileAlias);
+  }
+}
+
+std::string getAtomAlias(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string alias;
+  atom->getPropIfPresent(common_properties::molFileAlias, alias);
+  return alias;
+}
+
+void setAtomValue(Atom *atom, const std::string &value) {
+  PRECONDITION(atom, "bad atom");
+  if(value != "") {
+    atom->setProp(common_properties::molFileValue, value);
+  } else if ( atom->hasProp(common_properties::molFileValue) ) {
+    atom->clearProp(common_properties::molFileValue);
+  }
+}
+
+std::string getAtomValue(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string value;
+  atom->getPropIfPresent(common_properties::molFileValue, value);
+  return value;
+}
+
+void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
+  PRECONDITION(atom, "bad atom");
+  if(label != "") {
+    atom->setProp(common_properties::_supplementalSmilesLabel, label);
+  } else if ( atom->hasProp(common_properties::_supplementalSmilesLabel) ) {
+    atom->clearProp(common_properties::_supplementalSmilesLabel);
+  }
+}
+
+std::string getSupplementalSmilesLabel(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string label;
+  atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label);
+  return label;
+}
+
 }  // end o' namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {

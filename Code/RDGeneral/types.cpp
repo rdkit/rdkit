@@ -14,6 +14,10 @@
 #include "types.h"
 
 namespace RDKit {
+  namespace detail {
+  const std::string computedPropName = "__computedProps";
+  }
+
 namespace common_properties {
 const std::string TWOD = "2D";
 const std::string BalabanJ = "BalabanJ";
