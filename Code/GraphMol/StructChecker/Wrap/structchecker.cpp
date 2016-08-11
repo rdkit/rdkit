@@ -50,22 +50,22 @@ unsigned int checkMolStructureHelper(const StructChecker &checker, ROMol &m) {
 struct struct_wrapper {
   static void wrap() {
     python::enum_<RDKit::StructureCheck::StructChecker::StructureFlags>("StructureFlags")
-        .value("NO_CHANGE", RDKit::StructureCheck::StructChecker::StructureFlags::NO_CHANGE)
-        .value("BAD_MOLECULE", RDKit::StructureCheck::StructChecker::StructureFlags::BAD_MOLECULE)
-        .value("ALIAS_CONVERSION_FAILED",RDKit::StructureCheck::StructChecker::StructureFlags::ALIAS_CONVERSION_FAILED)
-        .value("STEREO_ERROR",RDKit::StructureCheck::StructChecker::StructureFlags::STEREO_ERROR)
-        .value("STEREO_FORCED_BAD",RDKit::StructureCheck::StructChecker::StructureFlags::STEREO_FORCED_BAD)
-        .value("ATOM_CLASH",RDKit::StructureCheck::StructChecker::StructureFlags::ATOM_CLASH)
-        .value("ATOM_CHECK_FAILED",RDKit::StructureCheck::StructChecker::StructureFlags::ATOM_CHECK_FAILED)
-        .value("SIZE_CHECK_FAILED",RDKit::StructureCheck::StructChecker::StructureFlags::SIZE_CHECK_FAILED)
-        .value("TRANSFORMED",RDKit::StructureCheck::StructChecker::StructureFlags::TRANSFORMED)
-        .value("FRAGMENTS_FOUND",RDKit::StructureCheck::StructChecker::StructureFlags::FRAGMENTS_FOUND)
-        .value("EITHER_WARNING",RDKit::StructureCheck::StructChecker::StructureFlags::EITHER_WARNING)
-        .value("DUBIOUS_STEREO_REMOVED",RDKit::StructureCheck::StructChecker::StructureFlags::DUBIOUS_STEREO_REMOVED)
-        .value("RECHARGED",RDKit::StructureCheck::StructChecker::StructureFlags::RECHARGED)
-        .value("STEREO_TRANSFORMED",RDKit::StructureCheck::StructChecker::StructureFlags::STEREO_TRANSFORMED)
-        .value("TEMPLATE_TRANSFORMED",RDKit::StructureCheck::StructChecker::StructureFlags::TEMPLATE_TRANSFORMED)
-        .value("TAUTOMER_TRANSFORMED",RDKit::StructureCheck::StructChecker::StructureFlags::TAUTOMER_TRANSFORMED);
+        .value("NO_CHANGE", RDKit::StructureCheck::StructChecker::NO_CHANGE)
+        .value("BAD_MOLECULE", RDKit::StructureCheck::StructChecker::BAD_MOLECULE)
+        .value("ALIAS_CONVERSION_FAILED",RDKit::StructureCheck::StructChecker::ALIAS_CONVERSION_FAILED)
+        .value("STEREO_ERROR",RDKit::StructureCheck::StructChecker::STEREO_ERROR)
+        .value("STEREO_FORCED_BAD",RDKit::StructureCheck::StructChecker::STEREO_FORCED_BAD)
+        .value("ATOM_CLASH",RDKit::StructureCheck::StructChecker::ATOM_CLASH)
+        .value("ATOM_CHECK_FAILED",RDKit::StructureCheck::StructChecker::ATOM_CHECK_FAILED)
+        .value("SIZE_CHECK_FAILED",RDKit::StructureCheck::StructChecker::SIZE_CHECK_FAILED)
+        .value("TRANSFORMED",RDKit::StructureCheck::StructChecker::TRANSFORMED)
+        .value("FRAGMENTS_FOUND",RDKit::StructureCheck::StructChecker::FRAGMENTS_FOUND)
+        .value("EITHER_WARNING",RDKit::StructureCheck::StructChecker::EITHER_WARNING)
+        .value("DUBIOUS_STEREO_REMOVED",RDKit::StructureCheck::StructChecker::DUBIOUS_STEREO_REMOVED)
+        .value("RECHARGED",RDKit::StructureCheck::StructChecker::RECHARGED)
+        .value("STEREO_TRANSFORMED",RDKit::StructureCheck::StructChecker::STEREO_TRANSFORMED)
+        .value("TEMPLATE_TRANSFORMED",RDKit::StructureCheck::StructChecker::TEMPLATE_TRANSFORMED)
+        .value("TAUTOMER_TRANSFORMED",RDKit::StructureCheck::StructChecker::TAUTOMER_TRANSFORMED);
         
     python::class_<RDKit::StructureCheck::StructCheckerOptions,
                    RDKit::StructureCheck::StructCheckerOptions *>(
