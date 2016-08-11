@@ -27,7 +27,6 @@ if(RDK_BUILD_INCHI_SUPPORT)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
   endif()
 
-  # check whether InChI support is ON after the search
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
                 GraphMol RDGeneral Depictor SubstructMatch SmilesParse
                 ${RDKit_THREAD_LIBS})
@@ -41,25 +40,24 @@ if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES
     ${INCHI_LIBRARIES}
-     RDInchiLib ${INCHI_LIBRARIES}
-     FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol
-     RDGeneral DataStructs RDGeneral RDGeometryLib
-     ${RDKit_THREAD_LIBS})
-
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    # we need an inchi.py... copy in the appropriate one
-    if(RDK_BUILD_INCHI_SUPPORT)
-     add_custom_command(TARGET inchi_support
-                    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
-                       ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
-    else(RDK_BUILD_INCHI_SUPPORT)
-      add_custom_command(TARGET inchi_support
-                    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
-                       ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
-    endif(RDK_BUILD_INCHI_SUPPORT)
-    get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
-            "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
-
+    RDInchiLib ${INCHI_LIBRARIES}
+    FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol
+    RDGeneral DataStructs RDGeneral RDGeometryLib
+    ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_INCHI_SUPPORT)
+
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  # we need an inchi.py... copy in the appropriate one
+  if(RDK_BUILD_INCHI_SUPPORT)
+   add_custom_command(TARGET inchi_support
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+  else(RDK_BUILD_INCHI_SUPPORT)
+    add_custom_command(TARGET inchi_support
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+  endif(RDK_BUILD_INCHI_SUPPORT)
+  get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+          "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
+endif(RDK_BUILD_PYTHON_WRAPPERS)
