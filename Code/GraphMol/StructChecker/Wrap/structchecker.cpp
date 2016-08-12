@@ -70,6 +70,17 @@ struct struct_wrapper {
     python::class_<RDKit::StructureCheck::StructCheckerOptions,
                    RDKit::StructureCheck::StructCheckerOptions *>(
         "StructCheckerOptions", python::init<>())
+        .def_readwrite("AcidityLimit", &RDKit::StructureCheck::StructCheckerOptions::AcidityLimit)
+        .def_readwrite("RemoveMinorFragments", &RDKit::StructureCheck::StructCheckerOptions::RemoveMinorFragments)
+        .def_readwrite("DesiredCharge", &RDKit::StructureCheck::StructCheckerOptions::DesiredCharge)
+        .def_readwrite("CheckCollisions", &RDKit::StructureCheck::StructCheckerOptions::CheckCollisions)
+        .def_readwrite("MaxMolSize", &RDKit::StructureCheck::StructCheckerOptions::MaxMolSize)
+        .def_readwrite("ConvertSText", &RDKit::StructureCheck::StructCheckerOptions::ConvertSText)
+        .def_readwrite("StripZeros", &RDKit::StructureCheck::StructCheckerOptions::StripZeros)
+        .def_readwrite("CheckStereo", &RDKit::StructureCheck::StructCheckerOptions::CheckStereo)
+        .def_readwrite("ConvertAtomTexts", &RDKit::StructureCheck::StructCheckerOptions::ConvertAtomTexts)
+        .def_readwrite("GroupsToSGroups", &RDKit::StructureCheck::StructCheckerOptions::GroupsToSGroups)
+        .def_readwrite("Verbose", &RDKit::StructureCheck::StructCheckerOptions::Verbose)
         .def("LoadGoodAugmentedAtoms", &RDKit::StructureCheck::StructCheckerOptions::loadGoodAugmentedAtoms,
              (python::arg("path")),
              "Load the set of good augmented atoms from the specified file path")
