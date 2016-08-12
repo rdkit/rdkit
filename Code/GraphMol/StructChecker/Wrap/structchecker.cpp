@@ -69,11 +69,21 @@ struct struct_wrapper {
         
     python::class_<RDKit::StructureCheck::StructCheckerOptions,
                    RDKit::StructureCheck::StructCheckerOptions *>(
-        "StructCheckerOptions", python::init<>());
+        "StructCheckerOptions", python::init<>())
+        .def("LoadGoodAugmentedAtoms", &RDKit::StructureCheck::StructCheckerOptions::loadGoodAugmentedAtoms,
+             (python::arg("path")),
+             "Load the set of good augmented atoms from the specified file path")
+        .def("LoadAcidicAugmentedAtoms", &RDKit::StructureCheck::StructCheckerOptions::loadAcidicAugmentedAtoms,
+             (python::arg("path")),
+             "Load the set of acidic augmented atoms from the specified file path")
+        .def("LoadAugmentedAtomTranslations", &RDKit::StructureCheck::StructCheckerOptions::loadAugmentedAtomTranslations,
+             (python::arg("path")),
+             "Load the set of acidic augmented atoms from the specified file path")
+        ;
 
     python::class_<RDKit::StructureCheck::StructChecker>("StructChecker",
                                                          python::init<>())
-        .def(python::init<const RDKit::StructureCheck::StructChecker&>())
+        .def(python::init<const RDKit::StructureCheck::StructCheckerOptions&>())
         .def("CheckMolStructure", &RDKit::StructureCheck::checkMolStructureHelper,
              (python::arg("mol")),
              "Check the structure and return a set of structure flags")
