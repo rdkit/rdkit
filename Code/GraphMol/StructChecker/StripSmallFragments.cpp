@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <map>
+
 #include "../MolOps.h"
 #include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
@@ -41,25 +43,28 @@ namespace RDKit {
         bool removed = false;
 
         std::vector<int>                        frags;
-        std::vector<std::vector<int> >          fragsMolAtomMapping;
-        std::vector<boost::shared_ptr<ROMol> >  molFrags = 
-            RDKit::MolOps::getMolFrags(mol, true, &frags, &fragsMolAtomMapping);
-        // remove all fragments smaller than the biggest one
-        unsigned nf = fragsMolAtomMapping.size(); // for each fragment: RDKit::MolOps::getMolFrags(mol, frags);
-        if (nf > 1) {
+        std::map<unsigned, unsigned>     frag_count;
+        
+        unsigned int nFrags=RDKit::MolOps::getMolFrags(mol, frags);
+        if (nFrags > 1) {
             unsigned maxFragSize = 0;
             unsigned maxSizeFragIdx = 0;
-            for (unsigned i = 0; i < nf; i++) {
-                if (molFrags[i]->getNumAtoms() > maxFragSize) {
-                    maxFragSize = molFrags[i]->getNumAtoms();
-                    maxSizeFragIdx = i;
-                }
-                for (unsigned i = 0; i < molFrags.size(); i++)
-                    if(i != maxSizeFragIdx) {
-                        for (unsigned j = 0; j < molFrags[i]->getNumAtoms(); i++)
-                            mol.removeAtom(j);
-                    }
+            for (unsigned i = 0; i < frags.size(); i++) {
+               if (frag_count.find(frags[i]) != frag_count.end()) {
+                  frag_count.at(frags[i]) = frag_count.at(frags[i]) + 1;
+               } else {
+                  frag_count.insert( std::pair<unsigned, unsigned>(frags[i],1));
+               }
+                
+               if (frag_count.at(frags[i]) > maxFragSize) {
+                  maxFragSize = frag_count.at(frags[i]);
+                  maxSizeFragIdx = frags[i];
+               }
             }
+            for (int i = frags.size() -1; i >= 0; i--)
+                if(frags[i] != maxSizeFragIdx) {
+                   mol.removeAtom(i);
+                }
             removed = true;
         }
         return removed;
