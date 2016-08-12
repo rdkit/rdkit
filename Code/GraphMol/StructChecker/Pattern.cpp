@@ -209,6 +209,8 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
                 nbp[nbph.Atoms[i]].Atoms.size() == aa.Ligands[level].SubstitutionCount)
             && AtomSymbolMatch(atom.getSymbol(), aa.Ligands[level].AtomSymbol)) {
             is_new = true;
+            while(match.size() <= level + 1)
+               match.push_back(0);
             match[level + 1] = nbph.Atoms[i];
             for (unsigned j = 0; j <= level; j++)
                 if (nbph.Atoms[i] == match[j])
@@ -233,6 +235,7 @@ bool AAMatch(const ROMol &mol, unsigned i,
     const std::vector<Neighbourhood> &nbp) {
 
     const Atom &atom = *mol.getAtomWithIdx(i);
+ 
     if (nbp[i].Atoms.size() == aa.Ligands.size() 
      && (aa.Charge == ANY_CHARGE || atom.getFormalCharge() == aa.Charge)
      && (aa.Radical == ANY_RADICAL || atom.getNumRadicalElectrons() == aa.Radical) &&
@@ -242,7 +245,7 @@ bool AAMatch(const ROMol &mol, unsigned i,
             return false;
         if ( ! atom_ring_status.empty() && aa.Topology == CHAIN  &&  atom_ring_status[i] != 0)
             return false;
-        match[0] = i;
+        match.push_back(i);
         return RecMatch(mol, match, 0, aa, nbp);
     }
     else 
