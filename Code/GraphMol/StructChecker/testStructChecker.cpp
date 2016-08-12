@@ -17,6 +17,7 @@
 #include "../Substruct/SubstructMatch.h"
 
 #include "StructChecker.h"
+#include "Stereo.h"
 
 using namespace RDKit;
 using namespace RDKit::StructureCheck;
@@ -93,15 +94,15 @@ void testLoadOptionsFromFiles()
     const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
 
     BOOST_LOG(rdInfoLog) << "loadGoodAugmentedAtoms checkfgs.chk\n";
-    ok = options.loadGoodAugmentedAtoms(rdbase + "checkfgs.chk");
+    ok = options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadAcidicAugmentedAtoms checkfgs.aci\n";
-    ok = options.loadAcidicAugmentedAtoms(rdbase + "checkfgs.aci");
+    ok = options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadAugmentedAtomTranslations checkfgs.trn\n";
-    ok = options.loadAugmentedAtomTranslations(rdbase + "checkfgs.trn");
+    ok = options.loadAugmentedAtomTranslations(testDataDir + "checkfgs.trn");
     TEST_ASSERT(ok);
 
     //BOOST_LOG(rdInfoLog) << "loadPatterns patterns.sdf\n";
@@ -111,11 +112,11 @@ void testLoadOptionsFromFiles()
     //....
 
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.sdf\n";
-    ok = options.loadTautomerData("tautomer.sdf");
+    ok = options.loadTautomerData(testDataDir + "tautomer.sdf");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.rdf\n";
-    ok = options.loadTautomerData("tautomer.rdf");
+    ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
     TEST_ASSERT(ok);
 
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -154,6 +155,39 @@ void test1()
 
 //--------------------------------------------------------------------------
 
+const char * substance_310975001 = "310975001\n" \
+"  -OEChem-06071611182D\n" \
+"\n" \
+" 10 10  0     1  0  0  0  0  0999 V2000\n" \
+"    1.1317   -0.3264    0.0000 N   0  0  3  0  0  0  0  0  0  0  0  0\n" \
+"    0.3470    0.7535    0.0000 C   0  0  3  0  0  0  0  0  0  0  0  0\n" \
+"    0.3470   -0.0715    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    1.1317    1.0084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    1.6166    0.3410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.2363    1.3369    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    1.3452   -1.1233    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -1.0332    1.1233    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.7618   -1.7067    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -1.6166    1.7067    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  3  1  0  0  0  0\n" \
+"  1  5  1  0  0  0  0\n" \
+"  1  7  1  0  0  0  0\n" \
+"  2  3  1  0  0  0  0\n" \
+"  2  4  1  0  0  0  0\n" \
+"  2  6  1  0  0  0  0\n" \
+"  4  5  1  0  0  0  0\n" \
+"  6  8  1  0  0  0  0\n" \
+"  7  9  1  0  0  0  0\n" \
+"  8 10  1  0  0  0  0\n" \
+"M  END\n" \
+"> <EXPECTED>\n" \
+"['stereo_error']\n" \
+"\n" \
+"> <GOT>\n" \
+"['atom_check_failed']\n" \
+"\n" \
+"$$$$\n";
+
 void testStereo() // stereochemistry
 {
     BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
@@ -177,6 +211,17 @@ void testStereo() // stereochemistry
         BOOST_LOG(rdInfoLog) << "......... results ........\n";
         TEST_ASSERT(true);
     }
+
+    {
+      ROMOL_SPTR mol(MolBlockToMol(substance_310975001));
+      std::cerr << (size_t) mol.get() << std::endl;
+      TEST_ASSERT(mol.get());
+      TEST_ASSERT(CheckStereo(*mol.get()) == false);
+      unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
+      TEST_ASSERT(flags & StructChecker::STEREO_ERROR);
+    }
+
+    
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
