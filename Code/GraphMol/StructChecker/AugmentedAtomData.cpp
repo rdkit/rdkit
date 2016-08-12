@@ -722,7 +722,7 @@ void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
   }
   
   struchkOpts.setGoodAugmentedAtoms(good);
-  struchkOpts.setGoodAugmentedAtoms(acidic);
+  struchkOpts.setAcidicAugmentedAtoms(acidic);
   
 }
 
