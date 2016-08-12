@@ -291,7 +291,7 @@ void RingState(const ROMol & mol, std::vector<unsigned>& atom_status, std::vecto
 */
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) {
     std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
-    std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
+    std::vector<unsigned> match(mol.getNumAtoms());    //[MAXNEIGHBOURS + 1];
     std::vector<unsigned> atom_status(mol.getNumAtoms());
     std::vector<unsigned> bond_status(mol.getNumBonds());
 
