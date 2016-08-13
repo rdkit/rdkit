@@ -21,6 +21,7 @@ if 'RDBASE' in os.environ:
   RDDemoDir=os.path.join(RDBaseDir,'Demo')
   RDBinDir=os.path.join(RDBaseDir,'bin')
   RDProjDir=os.path.join(RDBaseDir,'Projects')
+  RDContribDir=os.path.join(RDBaseDir,'Contrib')
 elif 'CONDA_DEFAULT_ENV' in os.environ:
   # we are running in a conda environ.
   RDCodeDir=os.path.dirname(__file__)
@@ -33,6 +34,7 @@ elif 'CONDA_DEFAULT_ENV' in os.environ:
   RDDataDir=os.path.join(_share,'Data')
   RDDocsDir=os.path.join(_share,'Docs')
   RDProjDir=os.path.join(_share,'Projects')
+  RDContribDir=os.path.join(_share,'Contrib')
 else:
   from rdkit.RDPaths import *
 
