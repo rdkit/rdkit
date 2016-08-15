@@ -470,15 +470,12 @@ void findChiralAtomSpecialCases(ROMol &mol,
        ++ait) {
     const Atom *atom = *ait;
     if (atomsSeen[atom->getIdx()]) continue;
-    // atomsUsed.set(atom->getIdx());
     if (atom->getChiralTag() == Atom::CHI_UNSPECIFIED ||
         atom->hasProp(common_properties::_CIPCode) ||
         !mol.getRingInfo()->numAtomRings(atom->getIdx()) ||
         !atomIsCandidateForRingStereochem(mol, atom)) {
       continue;
     }
-    // std::cerr << " bfs from " << atom->getIdx() << std::endl;
-    // ----------
     // do a BFS from this ring atom along ring bonds and find other candidates.
     std::list<const Atom *> nextAtoms;
     // start with finding viable neighbors
@@ -486,18 +483,11 @@ void findChiralAtomSpecialCases(ROMol &mol,
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
       unsigned int bidx = mol[*beg]->getIdx();
-      // std::cerr << "         bond: " << bidx << " "
-      //           << mol.getRingInfo()->numBondRings(bidx) << " ? "
-      //           << bondsSeen[bidx] << std::endl;
       if (!bondsSeen[bidx]) {
         bondsSeen.set(bidx);
         if (mol.getRingInfo()->numBondRings(bidx)) {
           const Atom *oatom = mol[*beg]->getOtherAtom(atom);
-          // std::cerr << "                   oa: " << oatom->getIdx() << " "
-          //           << atomsSeen[oatom->getIdx()] << std::endl;
           if (!atomsSeen[oatom->getIdx()]) {
-            // std::cerr << "                push " << oatom->getIdx()
-            //           << std::endl;
             nextAtoms.push_back(oatom);
             atomsUsed.set(oatom->getIdx());
           }
@@ -515,15 +505,10 @@ void findChiralAtomSpecialCases(ROMol &mol,
       const Atom *ratom = nextAtoms.front();
       nextAtoms.pop_front();
       atomsSeen.set(ratom->getIdx());
-      // std::cerr << "   look at: " << ratom->getIdx() << std::endl;
       if (ratom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !ratom->hasProp(common_properties::_CIPCode) &&
           atomIsCandidateForRingStereochem(mol, ratom)) {
-        // std::cerr << "  special case!" << std::endl;
         int same = (ratom->getChiralTag() == atom->getChiralTag()) ? 1 : -1;
-        // std::cerr << " atoms " << atom->getIdx() << " and " <<
-        // ratom->getIdx()
-        //           << " same? " << same << std::endl;
         ringStereoAtoms.push_back(same * (ratom->getIdx() + 1));
         INT_VECT oringatoms(0);
         ratom->getPropIfPresent(common_properties::_ringStereoAtoms,
@@ -630,9 +615,6 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
       }
       codesSeen[ranks[otherIdx]] = 1;
       nbrs.push_back(std::make_pair(ranks[otherIdx], mol[*beg]->getIdx()));
-      // std::cerr<<"      "<< atom->getIdx() << " " << mol[*beg]->getIdx() <<
-      // "
-      // " << otherIdx << "(" << ranks[otherIdx] <<")"<<std::endl;
       ++beg;
     }
 
@@ -726,11 +708,6 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
         if (nbrIndices.size() == 3 && atom->getTotalNumHs() == 1) {
           ++nSwaps;
         }
-
-        // std::cerr<<"nbrs from "<<atom->getIdx()<<" ";
-        // std::copy(nbrIndices.begin(),nbrIndices.end(),std::ostream_iterator<unsigned
-        // int>(std::cerr," "));
-        // std::cerr<<"nSwaps: "<<nSwaps<<" tag: "<<tag<<std::endl;
 
         // if that number is odd, we'll change our chirality:
         if (nSwaps % 2) {
@@ -1044,23 +1021,10 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
       Atom *atom = *atIt;
-      // std::cerr << " at: " << atom->getIdx() << " " << atom->getChiralTag()
-      //           << " " << atom->hasProp(common_properties::_CIPCode) << " "
-      //           << possibleSpecialCases[atom->getIdx()] << " "
-      //           << atom->hasProp(common_properties::_ringStereoAtoms)
-      //           << std::endl;
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !atom->hasProp(common_properties::_CIPCode) &&
           (possibleSpecialCases[atom->getIdx()] ||
            atom->hasProp(common_properties::_ringStereoAtoms))) {
-        // std::cerr << " possible chiral center: " << atom->getIdx() << ": "
-        //           << atom->getChiralTag() << " "
-        //           << possibleSpecialCases[atom->getIdx()] << " "
-        //           << possibleSpecialCases[atom->getIdx()] << " "
-        //           << atom->getProp<std::vector<int> >(
-        //                      common_properties::_ringStereoAtoms)
-        //                  .size()
-        //           << std::endl;
       }
 
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
