@@ -7,7 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
@@ -1953,11 +1952,15 @@ void testMolFileAtomValues() {
     m->getAtomWithIdx(1)->getProp(common_properties::molFileValue, val);
     TEST_ASSERT(val == "acidchloride");
     TEST_ASSERT(getAtomValue(m->getAtomWithIdx(1)) == "acidchloride")
-                 
-    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
-    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molAtomMapNumber));
-    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::molAtomMapNumber));
-    TEST_ASSERT(!m->getAtomWithIdx(3)->hasProp(common_properties::molAtomMapNumber));
+
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(
+        m->getAtomWithIdx(1)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(
+        m->getAtomWithIdx(2)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(
+        !m->getAtomWithIdx(3)->hasProp(common_properties::molAtomMapNumber));
 
     TEST_ASSERT(m->getAtomWithIdx(0)->getAtomMapNum() == 1);
     TEST_ASSERT(m->getAtomWithIdx(1)->getAtomMapNum() == 2);
@@ -1978,7 +1981,7 @@ void testMolFileAtomValues() {
     TEST_ASSERT(getAtomRLabel(m->getAtomWithIdx(3)) == 1);
     TEST_ASSERT(getAtomAlias(m->getAtomWithIdx(0)) == "acidchloride");
     TEST_ASSERT(getAtomValue(m->getAtomWithIdx(0)) == "foobar");
-                
+
     delete m;
     delete m2;
   }
@@ -3834,6 +3837,34 @@ void testPDBFile() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1023() {
+  BOOST_LOG(rdInfoLog) << "GetSSSR interrupted by segmentation fault"
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase + "github1023.pdb";
+    bool sanitize = false;
+    ROMol *m = PDBFileToMol(fName, sanitize);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 119);
+    TEST_ASSERT(m->getNumBonds() == 399);
+    bool ok = false;
+    try {
+      // the "molecule" isn't something we can properly handle. Expect a
+      // ValueErrorException
+      MolOps::findSSSR(*m);  // this was seg faulting
+    } catch (const ValueErrorException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testGithub166() {
   BOOST_LOG(rdInfoLog)
       << "testing Github 166: skipping sanitization on reading pdb files"
@@ -4258,153 +4289,159 @@ void testRCSBSdf() {
 }
 
 void testParseCHG() {
-
-  // BAD PDB Ligand with CHG line too long (>8) and right and mid-justified symbols
-  const std::string molblock_chg = "2D1G_DVT_B_2001\n" \
-      "  RCSB PDB01151500373D\n" \
-      "Coordinates from PDB:2D1G:B:2001 Model:1 without hydrogens\n" \
-      " 38 60  0  0  0  0            999 V2000\n" \
-      "   19.0320   93.5880   16.2640   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   19.6400   94.8240   15.4350  V  0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   18.1700   95.2990   14.2790 O   0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   19.6000   96.2720   16.5920   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.3140   97.8870   15.9210   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.1880   98.9370   17.1150   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   21.5140   94.4720   15.5850   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.5590   95.9150   15.0470   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.6050   96.4040   14.1390   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.1700   97.4330   15.9940   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   23.1150   97.3160   13.7160   O 0  3  0  0  0  0  0  0  0  0  0  0\n" \
-      "   23.9960   95.5550   15.6610   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.6470   94.8660   13.3320   O 0  3  0  0  0  0  0  0  0  0  0  0\n" \
-      "   23.7710   96.1210   12.1910   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   24.0950   97.6940   11.3470   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   25.2350   95.8110   12.7760   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   23.5040   94.7850   10.9890   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.0160   95.1170    9.8340   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.1580   95.5900    9.6670   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.2300   94.0400    8.6680   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.6710   96.7240    9.1340   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.8370   94.9790   12.6510   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   21.1160   93.9980   11.2840   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.1410   93.8410   13.6860   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   21.6740   96.5770   11.6070   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.5990   98.1610   10.2810   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   23.1590   99.4050    9.4060   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   22.1350   99.1410   12.0500   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   21.4440   98.0120   13.0890   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   21.1330   99.0140   14.4480   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   19.1670   95.7180   12.0250   O 0  3  0  0  0  0  0  0  0  0  0  0\n" \
-      "   19.7240   97.0880   10.6480   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   20.7360   98.5460   10.1630   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   18.2530   97.4600   10.0390   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   19.6430   98.1340   12.3760   O 0  3  0  0  0  0  0  0  0  0  0  0\n" \
-      "   18.5370   96.9390   13.5530   V 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "   18.8160   98.2640   14.7770   O 0  0  0  0  0  0  0  0  0  0  0  0\n" \
-      "   17.0530   97.2880   13.0100   O 0  5  0  0  0  0  0  0  0  0  0  0\n" \
-      "  1  2  1  0  0  0  0\n" \
-      "  2  3  1  0  0  0  0\n" \
-      "  2  4  1  0  0  0  0\n" \
-      "  2  7  1  0  0  0  0\n" \
-      "  2  9  1  0  0  0  0\n" \
-      "  2 24  1  0  0  0  0\n" \
-      "  3 36  1  0  0  0  0\n" \
-      "  4  5  1  0  0  0  0\n" \
-      "  5  6  1  0  0  0  0\n" \
-      "  5  9  1  0  0  0  0\n" \
-      "  5 10  1  0  0  0  0\n" \
-      "  5 30  1  0  0  0  0\n" \
-      "  5 37  1  0  0  0  0\n" \
-      "  7  8  1  0  0  0  0\n" \
-      "  8  9  1  0  0  0  0\n" \
-      "  8 10  1  0  0  0  0\n" \
-      "  8 11  1  0  0  0  0\n" \
-      "  8 12  1  0  0  0  0\n" \
-      "  8 13  1  0  0  0  0\n" \
-      "  9 22  1  0  0  0  0\n" \
-      "  9 29  1  0  0  0  0\n" \
-      "  9 36  1  0  0  0  0\n" \
-      " 11 14  1  0  0  0  0\n" \
-      " 11 29  1  0  0  0  0\n" \
-      " 13 14  1  0  0  0  0\n" \
-      " 13 22  1  0  0  0  0\n" \
-      " 14 15  1  0  0  0  0\n" \
-      " 14 16  1  0  0  0  0\n" \
-      " 14 17  1  0  0  0  0\n" \
-      " 14 28  1  0  0  0  0\n" \
-      " 15 26  1  0  0  0  0\n" \
-      " 17 18  1  0  0  0  0\n" \
-      " 18 19  1  0  0  0  0\n" \
-      " 18 20  1  0  0  0  0\n" \
-      " 18 21  1  0  0  0  0\n" \
-      " 18 23  1  0  0  0  0\n" \
-      " 18 28  1  0  0  0  0\n" \
-      " 19 32  1  0  0  0  0\n" \
-      " 21 26  1  0  0  0  0\n" \
-      " 22 23  1  0  0  0  0\n" \
-      " 22 24  1  0  0  0  0\n" \
-      " 22 28  1  0  0  0  0\n" \
-      " 22 31  1  0  0  0  0\n" \
-      " 25 26  1  0  0  0  0\n" \
-      " 25 29  1  0  0  0  0\n" \
-      " 26 27  1  0  0  0  0\n" \
-      " 26 28  1  0  0  0  0\n" \
-      " 26 33  1  0  0  0  0\n" \
-      " 28 29  1  0  0  0  0\n" \
-      " 28 32  1  0  0  0  0\n" \
-      " 29 30  1  0  0  0  0\n" \
-      " 29 35  1  0  0  0  0\n" \
-      " 31 32  1  0  0  0  0\n" \
-      " 31 36  1  0  0  0  0\n" \
-      " 32 33  1  0  0  0  0\n" \
-      " 32 34  1  0  0  0  0\n" \
-      " 32 35  1  0  0  0  0\n" \
-      " 35 36  1  0  0  0  0\n" \
-      " 36 37  1  0  0  0  0\n" \
-      " 36 38  1  0  0  0  0\n" \
-      "M  CHG 24   1  -1   2  -1   5  -1   6  -1   8  -1   9   4  11   1  12  -1  13   1  14  -1  16  -1  18  -1  20  -1  22  -1  26  -1  27  -1  28   4  29  -1  31   1  32  -1  34  -1  35   1  36  -1  38  -1\n" \
+  // BAD PDB Ligand with CHG line too long (>8) and right and mid-justified
+  // symbols
+  const std::string molblock_chg =
+      "2D1G_DVT_B_2001\n"
+      "  RCSB PDB01151500373D\n"
+      "Coordinates from PDB:2D1G:B:2001 Model:1 without hydrogens\n"
+      " 38 60  0  0  0  0            999 V2000\n"
+      "   19.0320   93.5880   16.2640   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   19.6400   94.8240   15.4350  V  0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   18.1700   95.2990   14.2790 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   19.6000   96.2720   16.5920   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.3140   97.8870   15.9210   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.1880   98.9370   17.1150   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   21.5140   94.4720   15.5850   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.5590   95.9150   15.0470   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.6050   96.4040   14.1390   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.1700   97.4330   15.9940   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   23.1150   97.3160   13.7160   O 0  3  0  0  0  0  0  0  0  0  0  0\n"
+      "   23.9960   95.5550   15.6610   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.6470   94.8660   13.3320   O 0  3  0  0  0  0  0  0  0  0  0  0\n"
+      "   23.7710   96.1210   12.1910   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   24.0950   97.6940   11.3470   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   25.2350   95.8110   12.7760   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   23.5040   94.7850   10.9890   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.0160   95.1170    9.8340   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.1580   95.5900    9.6670   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.2300   94.0400    8.6680   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.6710   96.7240    9.1340   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.8370   94.9790   12.6510   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   21.1160   93.9980   11.2840   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.1410   93.8410   13.6860   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   21.6740   96.5770   11.6070   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.5990   98.1610   10.2810   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   23.1590   99.4050    9.4060   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   22.1350   99.1410   12.0500   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   21.4440   98.0120   13.0890   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   21.1330   99.0140   14.4480   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   19.1670   95.7180   12.0250   O 0  3  0  0  0  0  0  0  0  0  0  0\n"
+      "   19.7240   97.0880   10.6480   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   20.7360   98.5460   10.1630   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   18.2530   97.4600   10.0390   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   19.6430   98.1340   12.3760   O 0  3  0  0  0  0  0  0  0  0  0  0\n"
+      "   18.5370   96.9390   13.5530   V 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "   18.8160   98.2640   14.7770   O 0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   17.0530   97.2880   13.0100   O 0  5  0  0  0  0  0  0  0  0  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2  4  1  0  0  0  0\n"
+      "  2  7  1  0  0  0  0\n"
+      "  2  9  1  0  0  0  0\n"
+      "  2 24  1  0  0  0  0\n"
+      "  3 36  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "  5  9  1  0  0  0  0\n"
+      "  5 10  1  0  0  0  0\n"
+      "  5 30  1  0  0  0  0\n"
+      "  5 37  1  0  0  0  0\n"
+      "  7  8  1  0  0  0  0\n"
+      "  8  9  1  0  0  0  0\n"
+      "  8 10  1  0  0  0  0\n"
+      "  8 11  1  0  0  0  0\n"
+      "  8 12  1  0  0  0  0\n"
+      "  8 13  1  0  0  0  0\n"
+      "  9 22  1  0  0  0  0\n"
+      "  9 29  1  0  0  0  0\n"
+      "  9 36  1  0  0  0  0\n"
+      " 11 14  1  0  0  0  0\n"
+      " 11 29  1  0  0  0  0\n"
+      " 13 14  1  0  0  0  0\n"
+      " 13 22  1  0  0  0  0\n"
+      " 14 15  1  0  0  0  0\n"
+      " 14 16  1  0  0  0  0\n"
+      " 14 17  1  0  0  0  0\n"
+      " 14 28  1  0  0  0  0\n"
+      " 15 26  1  0  0  0  0\n"
+      " 17 18  1  0  0  0  0\n"
+      " 18 19  1  0  0  0  0\n"
+      " 18 20  1  0  0  0  0\n"
+      " 18 21  1  0  0  0  0\n"
+      " 18 23  1  0  0  0  0\n"
+      " 18 28  1  0  0  0  0\n"
+      " 19 32  1  0  0  0  0\n"
+      " 21 26  1  0  0  0  0\n"
+      " 22 23  1  0  0  0  0\n"
+      " 22 24  1  0  0  0  0\n"
+      " 22 28  1  0  0  0  0\n"
+      " 22 31  1  0  0  0  0\n"
+      " 25 26  1  0  0  0  0\n"
+      " 25 29  1  0  0  0  0\n"
+      " 26 27  1  0  0  0  0\n"
+      " 26 28  1  0  0  0  0\n"
+      " 26 33  1  0  0  0  0\n"
+      " 28 29  1  0  0  0  0\n"
+      " 28 32  1  0  0  0  0\n"
+      " 29 30  1  0  0  0  0\n"
+      " 29 35  1  0  0  0  0\n"
+      " 31 32  1  0  0  0  0\n"
+      " 31 36  1  0  0  0  0\n"
+      " 32 33  1  0  0  0  0\n"
+      " 32 34  1  0  0  0  0\n"
+      " 32 35  1  0  0  0  0\n"
+      " 35 36  1  0  0  0  0\n"
+      " 36 37  1  0  0  0  0\n"
+      " 36 38  1  0  0  0  0\n"
+      "M  CHG 24   1  -1   2  -1   5  -1   6  -1   8  -1   9   4  11   1  12  "
+      "-1  13   1  14  -1  16  -1  18  -1  20  -1  22  -1  26  -1  27  -1  28  "
+      " 4  29  -1  31   1  32  -1  34  -1  35   1  36  -1  38  -1\n"
       "M  END\n";
 
-  const int charges[] = {1,-1,2,-1,5,-1,6,-1,8,-1,9,4,11,1,12,-1,13,1,14,-1,16,-1,18,-1,20,-1,22,-1,26,-1,27,-1,28,4,29,-1,31,1,32,-1,34,-1,35,1,36,-1,38,-1,0,0};
+  const int charges[] = {1,  -1, 2,  -1, 5,  -1, 6,  -1, 8,  -1, 9,  4,  11,
+                         1,  12, -1, 13, 1,  14, -1, 16, -1, 18, -1, 20, -1,
+                         22, -1, 26, -1, 27, -1, 28, 4,  29, -1, 31, 1,  32,
+                         -1, 34, -1, 35, 1,  36, -1, 38, -1, 0,  0};
   // Shouldn't seg fault, throw exception or have a null mol
   RWMol *m = MolBlockToMol(molblock_chg);
-  size_t i=0;
-  while(1) {
-    if (charges[i] == 0)
-      break;
+  size_t i = 0;
+  while (1) {
+    if (charges[i] == 0) break;
 
-    TEST_ASSERT(m->getAtomWithIdx((unsigned int)charges[i]-1)->getFormalCharge() == charges[i+1]);
-    i+=2;
+    TEST_ASSERT(
+        m->getAtomWithIdx((unsigned int)charges[i] - 1)->getFormalCharge() ==
+        charges[i + 1]);
+    i += 2;
   }
-  
+
   TEST_ASSERT(m);
   std::string out = MolToMolBlock(*m);
   const std::string sub = "M  CHG";
-  std::vector<size_t> positions; 
-  
+  std::vector<size_t> positions;
+
   size_t pos = out.find(sub, 0);
-  while(pos != std::string::npos)
-  {
+  while (pos != std::string::npos) {
     positions.push_back(pos);
-    size_t num_entries = strtol(out.substr(pos+sub.size(), 3).c_str(), 0, 10);
-    TEST_ASSERT(num_entries==8);
-    pos = out.find(sub,pos+1);
+    size_t num_entries = strtol(out.substr(pos + sub.size(), 3).c_str(), 0, 10);
+    TEST_ASSERT(num_entries == 8);
+    pos = out.find(sub, pos + 1);
   }
-  TEST_ASSERT(positions.size() == 3); // 24/3 == 8
-  
+  TEST_ASSERT(positions.size() == 3);  // 24/3 == 8
+
   delete m;
 }
 
 void testMDLAtomProps() {
-  std::string smi="CC";
+  std::string smi = "CC";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
   setAtomAlias(mol->getAtomWithIdx(0), "foo");
   setAtomValue(mol->getAtomWithIdx(0), "bar");
   setAtomRLabel(mol->getAtomWithIdx(0), 1);
-  mol.reset( MolBlockToMol(MolToMolBlock(*mol.get())) );
-  TEST_ASSERT(getAtomAlias(mol->getAtomWithIdx(0))=="foo");
-  TEST_ASSERT(getAtomValue(mol->getAtomWithIdx(0))=="bar");
-  TEST_ASSERT(getAtomRLabel(mol->getAtomWithIdx(0))==1);
+  mol.reset(MolBlockToMol(MolToMolBlock(*mol.get())));
+  TEST_ASSERT(getAtomAlias(mol->getAtomWithIdx(0)) == "foo");
+  TEST_ASSERT(getAtomValue(mol->getAtomWithIdx(0)) == "bar");
+  TEST_ASSERT(getAtomRLabel(mol->getAtomWithIdx(0)) == 1);
   try {
     setAtomRLabel(mol->getAtomWithIdx(0), 100);
     TEST_ASSERT(0);
@@ -4413,15 +4450,12 @@ void testMDLAtomProps() {
 }
 
 void testSupplementalSmilesLabel() {
-  std::string smi="C";
+  std::string smi = "C";
   ROMOL_SPTR mol(SmilesToMol(smi, false, false));
-  setSupplementalSmilesLabel(mol->getAtomWithIdx(0),
-                             "xxx");
+  setSupplementalSmilesLabel(mol->getAtomWithIdx(0), "xxx");
   smi = MolToSmiles(*mol.get());
   TEST_ASSERT(smi == "Cxxx");
-  TEST_ASSERT(getSupplementalSmilesLabel(mol->getAtomWithIdx(0)) ==
-              "xxx");
-  
+  TEST_ASSERT(getSupplementalSmilesLabel(mol->getAtomWithIdx(0)) == "xxx");
 }
 
 void RunTests() {
@@ -4500,12 +4534,13 @@ void RunTests() {
   testGithub337();
   testGithub360();
   testGithub741();
-#endif
   testGithub188();
   testRCSBSdf();
   testParseCHG();
   testMDLAtomProps();
   testSupplementalSmilesLabel();
+#endif
+  testGithub1023();
 }
 
 // must be in German Locale for test...
