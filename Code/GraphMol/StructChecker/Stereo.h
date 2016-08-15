@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 #pragma once
-#ifndef _RDKIT_CHECK_STEREO_
-#define _RDKIT_CHECK_STEREO_
-
 #include "StructChecker.h"
 #include "Utilites.h"
 
@@ -86,4 +83,3 @@ int CisTransPerception(const ROMol &mol, const std::vector<RDGeom::Point3D> &poi
     , std::vector<unsigned>  &bondColor);
  }
 }
-#endif

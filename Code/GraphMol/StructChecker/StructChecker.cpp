@@ -11,6 +11,7 @@
 #include "Pattern.h"
 #include "Stereo.h"
 #include "ReCharge.h"
+#include "Tautomer.h"
 #include "StripSmallFragments.h"
 #include "AugmentedAtomData.h"
 
@@ -80,22 +81,25 @@ namespace RDKit {
             AddMWMF(mol, false);    // Add mol mass data field "MW_POST"
 
         }
-/*
-        for (i = 0; i<ntautomers; i++)         // do tautomer standardization 
-        {
-            fprintf(stderr, "tautomerizing with rule %d\n", i);
-            for (j = 0;j<3;j++)      // limit to 3 run per rule
+
+        // do tautomer standardization 
+        for (unsigned i = 0; i < Options.FromTautomer.size(); i++) {
+            if (Options.Verbose)
+                BOOST_LOG(rdInfoLog) << "tautomerizing with rule "<< i <<"\n";
+            //fprintf(stderr, "tautomerizing with rule %d\n", i);
+            for (unsigned j = 0;j<3;j++)      // limit to 3 run per rule
             {
-                tmp = ApplyTautomer(mp, from_tautomer[i], to_tautomer[i]);
-                if (!tmp) break;
-                result |= TAUTOMER_TRANSFORMED;
-                sprintf(msg_buffer,
-                    "%10s: has been tautomerized with rule '%s'",
-                    mp->name, from_tautomer[i]->name);
-                AddMsgToList(msg_buffer);
+                StructCheckTautomer sct(mol, Options);
+                if( ! sct.applyTautomer(i))
+                    break;
+                flags |= TAUTOMER_TRANSFORMED;
+                if (Options.Verbose)
+                    BOOST_LOG(rdInfoLog) << "molecule: has been tautomerized with rule " << i << "\n";
+//                sprintf(msg_buffer,"%10s: has been tautomerized with rule '%s'", mp->name, from_tautomer[i]->name);
+//                AddMsgToList(msg_buffer);
             }
         }
-*/
+
 /*        if (!IsNULL(data_list) && !IsNULL(new_data_list))
         {        // append new data list if any
             for (dph = data_list; !IsNULL(dph->next); dph = dph->next)

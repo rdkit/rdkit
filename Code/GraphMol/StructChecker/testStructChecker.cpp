@@ -83,15 +83,11 @@ void testOptions() //PASSED
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void testLoadOptionsFromFiles()
-{
-    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
-    BOOST_LOG(rdInfoLog) << "testLoadOptionsFromFiles FROM CURRENT (.../test) DIRECTORY\n";
+void doLoadOptionsFromFiles(StructCheckerOptions &options) {
     bool ok;
-    StructCheckerOptions options;
-
-    const std::string rdbase = getenv("RDBASE");
+    const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
     const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
+    BOOST_LOG(rdInfoLog) << "testDataDir: " << testDataDir << "\n";
 
     BOOST_LOG(rdInfoLog) << "loadGoodAugmentedAtoms checkfgs.chk\n";
     ok = options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk");
@@ -106,7 +102,7 @@ void testLoadOptionsFromFiles()
     TEST_ASSERT(ok);
 
     //BOOST_LOG(rdInfoLog) << "loadPatterns patterns.sdf\n";
-    //ok = options.loadPatterns("patterns.sdf");
+    //ok = options.loadPatterns("testDataDir + patterns.sdf");
     //TEST_ASSERT(ok);
 
     //....
@@ -118,7 +114,15 @@ void testLoadOptionsFromFiles()
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.rdf\n";
     ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
     TEST_ASSERT(ok);
+}
 
+void testLoadOptionsFromFiles()
+{
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "testLoadOptionsFromFiles FROM CURRENT (.../test) DIRECTORY\n";
+    bool ok;
+    StructCheckerOptions options;
+    doLoadOptionsFromFiles(options);
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -129,6 +133,7 @@ void test1()
     BOOST_LOG(rdInfoLog) << "test1\n";
     const char* smols[] = {
         "CCC", //tmp
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)
     };
 
     StructCheckerOptions options;
@@ -140,7 +145,7 @@ void test1()
         "", // stereoPatternFile = "", // file with stereo patterns
         "");// tautomerFile = "");
     TEST_ASSERT(ok);
-
+    doLoadOptionsFromFiles(options);
     StructChecker chk(options);
     for (int i = 0; i<sizeof(smols) / sizeof(smols[0]); i++) {
         RWMol* mol = SmilesToMol(smols[i]);
@@ -194,7 +199,7 @@ void testStereo() // stereochemistry
     BOOST_LOG(rdInfoLog) << "testStereo\n";
     const char* smols[] = {
         "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC=C", //Pyrethrin II (C22H28O5)
-        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)"
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)
         "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1", //Glucose (glucopyranose) (C6H12O6)
         "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2" // Bergenin (cuscutin) (a resin) (C14H16O9)
     };

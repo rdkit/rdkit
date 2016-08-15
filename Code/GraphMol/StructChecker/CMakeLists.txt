@@ -1,11 +1,11 @@
 rdkit_library(StructChecker
               AugmentedAtomData.cpp 
               StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp
-              Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp
+              Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp Tautomer.cpp
               LINK_LIBRARIES Depictor SubstructMatch FileParsers ChemTransforms Descriptors
                              GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
-rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h ReCharge.h
+rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h ReCharge.h Tautomer.h
               DEST GraphMol/StructChecker)
 
 add_subdirectory(Wrap)
