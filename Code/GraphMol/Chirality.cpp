@@ -476,7 +476,8 @@ void findChiralAtomSpecialCases(ROMol &mol,
         !atomIsCandidateForRingStereochem(mol, atom)) {
       continue;
     }
-    // do a BFS from this ring atom along ring bonds and find other candidates.
+    // do a BFS from this ring atom along ring bonds and find other
+    // stereochemistry candidates.
     std::list<const Atom *> nextAtoms;
     // start with finding viable neighbors
     ROMol::OEDGE_ITER beg, end;
