@@ -24,7 +24,7 @@ RDKit::Bond::BondType convertBondType(AABondType bt) {
         RDKit::Bond::ONEANDAHALF,   //SINGLE_AROMATIC = 6,
         RDKit::Bond::TWOANDAHALF,   //DOUBLE_AROMATIC = 7,
     };
-    return bt<= DOUBLE_AROMATIC ? rdbt[bt] : RDKit::Bond::OTHER;    // ??
+    return (bt<= DOUBLE_AROMATIC ) ? rdbt[bt] : RDKit::Bond::OTHER;    // ??
 }
 
 AABondType convertBondType(RDKit::Bond::BondType rdbt) {
@@ -43,7 +43,7 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
         BT_NONE,    // FIVEANDAHALF,
         AROMATIC,
     };
-    return rdbt <= RDKit::Bond::AROMATIC ? bt[rdbt] : BT_NONE; //??
+    return (rdbt <= RDKit::Bond::AROMATIC) ? bt[rdbt] : BT_NONE; //??
 }
 
 
@@ -199,15 +199,19 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
     if (level == aa.Ligands.size())
         return true;
     const Neighbourhood &nbph = nbp[match[0]];
+    
     for (unsigned i = 0; i < nbph.Atoms.size(); i++) {
         const Atom &atom = *mol.getAtomWithIdx(nbph.Atoms[i]);
         const Bond &bond = *mol.getBondWithIdx(nbph.Bonds[i]);
-        if ((atom.getFormalCharge() == aa.Ligands[level].Charge || aa.Ligands[level].Charge == ANY_CHARGE)
-            && (atom.getNumRadicalElectrons() == aa.Ligands[level].Radical || aa.Ligands[level].Radical == ANY_RADICAL)
-            && convertBondType(bond.getBondType()) == aa.Ligands[level].BondType
-            && (aa.Ligands[level].SubstitutionCount == 0 ||
-                nbp[nbph.Atoms[i]].Atoms.size() == aa.Ligands[level].SubstitutionCount)
-            && AtomSymbolMatch(atom.getSymbol(), aa.Ligands[level].AtomSymbol)) {
+        const Ligand& au_ligand = aa.Ligands[level];
+        
+        if ((atom.getFormalCharge() == au_ligand.Charge || au_ligand.Charge == ANY_CHARGE)
+            && (atom.getNumRadicalElectrons() == au_ligand.Radical || au_ligand.Radical == ANY_RADICAL)
+            && (convertBondType(bond.getBondType()) == au_ligand.BondType 
+                || (bond.getBondType() == RDKit::Bond::AROMATIC && au_ligand.BondType != TRIPLE))
+            && (au_ligand.SubstitutionCount == 0 ||
+                nbp[nbph.Atoms[i]].Atoms.size() == au_ligand.SubstitutionCount)
+            && AtomSymbolMatch(atom.getSymbol(), au_ligand.AtomSymbol)) {
             is_new = true;
             while(match.size() <= level + 1)
                match.push_back(0);
@@ -245,7 +249,10 @@ bool AAMatch(const ROMol &mol, unsigned i,
             return false;
         if ( ! atom_ring_status.empty() && aa.Topology == CHAIN  &&  atom_ring_status[i] != 0)
             return false;
-        match.push_back(i);
+        if(match.size() == 0) {
+           match.push_back(0);
+        }
+        match[0] = i;
         return RecMatch(mol, match, 0, aa, nbp);
     }
     else 
@@ -291,7 +298,7 @@ void RingState(const ROMol & mol, std::vector<unsigned>& atom_status, std::vecto
 */
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) {
     std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
-    std::vector<unsigned> match; //[MAXNEIGHBOURS + 1];
+    std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
     std::vector<unsigned> atom_status(mol.getNumAtoms());
     std::vector<unsigned> bond_status(mol.getNumBonds());
 
@@ -299,6 +306,14 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) 
     SetupNeighbourhood(mol, neighbours);
 
     unsigned nmatch = 0;
+//    int len = good_atoms.size();
+//    for (int xx = 300; xx < 305; xx++) {
+//      BOOST_LOG(rdInfoLog) << xx < "*******\n";
+//      for (int j = 0; j < good_atoms[xx].Ligands.size(); j++) {
+//         BOOST_LOG(rdInfoLog) << good_atoms[xx].Ligands[j].AtomSymbol << "\n";
+//      }
+//   }
+//        BOOST_LOG(rdInfoLog) << "atom idx: " << mol.getAtomWithIdx(i)->getIdx() << " match: " << nmatch << "\n";
     if ( ! good_atoms.empty())
      for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
         for (unsigned j = 0; j < good_atoms.size(); j++)
