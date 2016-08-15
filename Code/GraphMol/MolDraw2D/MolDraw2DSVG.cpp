@@ -61,6 +61,8 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
 void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 const DrawColour &col1, const DrawColour &col2,
                                 unsigned int nSegments, double vertOffset) {
+  PRECONDITION(nSegments > 1, "too few segments");
+
   if (nSegments % 2)
     ++nSegments;  // we're going to assume an even number of segments
   setColour(col1);

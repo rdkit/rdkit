@@ -1159,6 +1159,8 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
 void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                              const DrawColour &col1, const DrawColour &col2,
                              unsigned int nSegments, double vertOffset) {
+  RDUNUSED_PARAM(nSegments);
+  RDUNUSED_PARAM(vertOffset);
   drawLine(cds1, cds2, col1, col2);
 }
 // ****************************************************************************
