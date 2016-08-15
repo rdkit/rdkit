@@ -4643,6 +4643,7 @@ void _renumberTest(const ROMol *m) {
     }
 
     std::string nSmi = MolToSmiles(*nm, true);
+    if (nSmi != refSmi) std::cerr << refSmi << std::endl << nSmi << std::endl;
     TEST_ASSERT(nSmi == refSmi);
     delete nm;
   }
