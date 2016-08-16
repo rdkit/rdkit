@@ -150,7 +150,7 @@ typedef enum {
   BondCompareOrder,
   BondCompareOrderExact
 } BondComparator;
-void setMCSFunctors(MCSParameters &p,
+void setMCSFunctionPtrs(MCSParameters &p,
   AtomComparator atomComp, BondComparator bondComp);
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                   double threshold = 1.0, unsigned timeout = 3600,

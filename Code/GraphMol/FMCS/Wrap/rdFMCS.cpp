@@ -37,7 +37,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
   p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
-  setMCSFunctors(p, atomComp, bondComp);
+  setMCSFunctionPtrs(p, atomComp, bondComp);
   p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   p.BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
 

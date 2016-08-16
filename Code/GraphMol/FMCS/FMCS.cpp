@@ -65,7 +65,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
   }
 }
 
-void setMCSFunctors(MCSParameters &p,
+void setMCSFunctionPtrs(MCSParameters &p,
   AtomComparator atomComp, BondComparator bondComp) {
   switch (atomComp) {
     case AtomCompareAny:
@@ -73,8 +73,6 @@ void setMCSFunctors(MCSParameters &p,
       break;
     case AtomCompareIsotopes:
       p.AtomTyper = MCSAtomCompareIsotopes;
-      std::cerr << "\n*** FindMCSWrapper() AtomCompareIsotopes, p.AtomTyper = "
-        << (unsigned long long)(p.AtomTyper) << " ***\n" << std::endl;
       break;
     default:
       p.AtomTyper = MCSAtomCompareElements;
