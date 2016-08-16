@@ -63,6 +63,10 @@ class MolDraw2DCairo : public MolDraw2D {
   void drawPolygon(const std::vector<Point2D> &cds);
   void clearDrawing();
 
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05);
+
   // using the current scale, work out the size of the label in molecule
   // coordinates
   void getStringSize(const std::string &label, double &label_width,

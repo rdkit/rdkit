@@ -473,6 +473,63 @@ void test5() {
     }
     delete m;
   }
+  {
+    std::string smiles = "*C";
+    std::string nameBase = "test5_2";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m, 0, true);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDrawOptions options;
+    options.dummiesAreAttachments = true;
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
+  {
+    std::string smiles = "CC(F)(Cl)Br";
+    std::string nameBase = "test5_3";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::UNKNOWN);
+    RDDepict::compute2DCoords(*m, 0, true);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    MolDrawOptions options;
+    options.dummiesAreAttachments = true;
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(300, 300, outs);
+      drawer.drawOptions() = options;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete m;
+  }
   std::cout << " Done" << std::endl;
 }
 
@@ -745,9 +802,9 @@ void test8PrepareMolForDrawing() {
 }
 
 void testGithub781() {
-  std::cout
-      << " ----------------- Test Github #781: Rendering single-atom molecules"
-      << std::endl;
+  std::cout << " ----------------- Test Github #781: Rendering single-atom "
+               "molecules"
+            << std::endl;
 
   {
     std::string smiles = "C";
@@ -1036,7 +1093,8 @@ void testGithub910() {
   {
     // this is a ChEMBL molecule
     std::string smiles =
-        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)"
+        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(="
+        "O)"
         "NCC(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N[C@@H](CO)C(=O)O";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -1052,7 +1110,8 @@ void testGithub910() {
   {  // now with Hs
     // this is a ChEMBL molecule
     std::string smiles =
-        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(=O)"
+        "CSCC[C@H](NC(=O)[C@@H](CCC(N)=O)NC(=O)[C@@H](N)Cc1c[nH]c2ccccc12)C(="
+        "O)"
         "NCC(=O)N[C@@H](Cc1c[nH]cn1)C(=O)N[C@@H](CO)C(=O)O";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -1068,9 +1127,9 @@ void testGithub910() {
 }
 
 void testGithub932() {
-  std::cout
-      << " ----------------- Test Github #932: mistake in SVG for wedged bonds"
-      << std::endl;
+  std::cout << " ----------------- Test Github #932: mistake in SVG for "
+               "wedged bonds"
+            << std::endl;
   {
     std::string smiles = "CC[C@](F)(Cl)Br";
     RWMol *m = SmilesToMol(smiles);
@@ -1088,9 +1147,9 @@ void testGithub932() {
 }
 
 void testGithub953() {
-  std::cout
-      << " ----------------- Test Github #953: default color should not be cyan"
-      << std::endl;
+  std::cout << " ----------------- Test Github #953: default color should "
+               "not be cyan"
+            << std::endl;
   {
     std::string smiles = "[Nb]";
     RWMol *m = SmilesToMol(smiles);
