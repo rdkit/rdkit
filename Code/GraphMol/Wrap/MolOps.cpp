@@ -1578,7 +1578,7 @@ struct molops_wrapper {
 \n\
   ALGORITHM:\n\
 \n\
-   This algorithm functions by find all subgraphs between minPath and maxPath in\n \
+   This algorithm functions by find all subgraphs between minPath and maxPath in\n\
    length.  For each subgraph:\n\
 \n\
      1) A hash is calculated.\n\
@@ -1685,7 +1685,7 @@ ARGUMENTS:\n\
 \n\
     - atomCounts: (optional) \n\
         if provided, this should be a list at least as long as the number of atoms\n\
-        in the molecule. It will be used to provide the count of the number \n                      \
+        in the molecule. It will be used to provide the count of the number \n\
         of paths that set bits each atom is involved in.\n\
         NOTE: the list is not zeroed out here.\n\
 \n\
@@ -1743,12 +1743,12 @@ ARGUMENTS:\n\
                 python::return_value_policy<python::manage_new_object>());
 
     docString =
-        "Set the wedging on single bonds in a molecule.\n \
-   The wedging scheme used is that from Mol files.\n \
+        "Set the wedging on single bonds in a molecule.\n\
+   The wedging scheme used is that from Mol files.\n\
 \n\
   ARGUMENTS:\n\
 \n\
-    - molecule: the molecule to update\n \
+    - molecule: the molecule to update\n\
 \n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
@@ -1790,13 +1790,18 @@ ARGUMENTS:\n\
 
     // ------------------------------------------------------------------------
     docString =
-        "Removes the core of a molecule and labels the sidechains with dummy atoms.\n\
+        "Removes the core of a molecule and labels the sidechains with dummy atoms based on\n\
+The matches indices given in the matching vector matches.\n\
+Calling:\n\
+  ReplaceCore(mol,core,mol.GetSubstructMatch(core))\n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to be modified\n\
 \n\
     - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
+\n\
+    - matches: a matching vector of the type returned by mol.GetSubstructMatch(...)\n\
 \n\
     - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
 \n\
@@ -1806,29 +1811,27 @@ ARGUMENTS:\n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
                          flagged with a dummy, it will be rejected (None is returned)\n\
 \n\
-    - useChirality: use chirality matching in the coreQuery\n\
-\n\
   RETURNS: a new molecule with the core removed\n\
 \n\
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
+EXAMPLES:\n\
+    >>> from rdkit.Chem import MolToSmiles, MolFromSmiles, ReplaceCore\n\
+    >>> mol = MolFromSmiles('C1ONNCC1')\n\
+    >>> core = MolFromSmiles('NN')\n\
 \n\
-  EXAMPLES:\n\
+    Note: Using isomericSmiles is necessary to see the labels.\n\
+    >>> MolToSmiles(ReplaceCore(mol, core, mol.GetSubstructMatch(core)), isomericSmiles=True)\n\
+    '[1*]OCCC[2*]'\n\
 \n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
+    Since NN is symmetric, we should actually get two matches here if we don't\n\
+    uniquify the matches.\n\
+    >>> [MolToSmiles(ReplaceCore(mol, core, match), isomericSmiles=True)\n\
+    ...     for match in mol.GetSubstructMatches(core, uniquify=False)]\n\
+    ['[1*]OCCC[2*]', '[1*]CCCO[2*]']\n\
 \n\
-    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[1*]'\n\
-\n\
-    - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
-\n\
-    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[1*]C1CCC1[2*]'\n\
-\n\
-    - ReplaceCore('C1CNCC1','N') -> '[1*]CCCC[2*]'\n\
-\n\
-    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
-\n";
+";
     python::def("ReplaceCore",
                 replaceCoreHelper,
                 (python::arg("mol"), python::arg("core"), python::arg("matches"),
@@ -1865,18 +1868,58 @@ ARGUMENTS:\n\
 \n\
   EXAMPLES:\n\
 \n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
+   >>> from rdkit.Chem import MolToSmiles, MolFromSmiles, MolFromSmarts, ReplaceCore\n\
 \n\
-    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[1*]'\n\
+   Basic usage: remove a core as specified by SMILES (or another molecule).\n\
+   To get the atom labels which are stored as an isotope of the matched atom, \n\
+   the output must be written as isomeric smiles.  \n\
+   A small confusion is that atom isotopes of 0 aren't shown in smiles strings.\n\
 \n\
-    - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
+   Here we remove a ring and leave the decoration (r-group) behind.\n\
 \n\
-    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[1*]C1CCC1[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('CCCC1CCC1'),MolFromSmiles('C1CCC1')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCC'\n\
 \n\
-    - ReplaceCore('C1CNCC1','N') -> '[1*]CCCC[2*]'\n\
+   The isotope label by default is matched by the first connection found. In order to\n\
+   indicate which atom the decoration is attached in the core query, use labelByIndex=True.\n\
+   Here the attachment is from the third atom in the smiles string, which is indexed by 3\n\
+   in the core, like all good computer scientists expect, atoms indices start at 0.\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('CCN1CCC1'),MolFromSmiles('C1CCN1'),\n\
+   ...                         labelByIndex=True),\n\
+   ...   isomericSmiles=True)\n\
+   '[3*]CC'\n\
 \n\
-    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
+   Non-core matches just return None\n\
+   >>> ReplaceCore(MolFromSmiles('CCC1CC1'),MolFromSmiles('C1CCC1'))\n\
+\n\
+   The bond between atoms are considered part of the core and are removed as well\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CC2C1CCC2'),MolFromSmiles('C1CCC1')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCC[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmiles('N')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCCC[2*]'\n\
+\n\
+   When using dummy atoms, cores should be read in as SMARTS.  When read as SMILES\n\
+   dummy atoms only match other dummy atoms.\n\
+   The replaceDummies flag indicates whether matches to the dummy atoms should be considered as part\n\
+   of the core or as part of the decoration (r-group)\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmarts('[*]N[*]'),\n\
+   ...                         replaceDummies=True),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CC[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmarts('[*]N[*]'),\n\
+   ...                         replaceDummies=False),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCCC[2*]'\n\
+\n\
+\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CCC1CN'),MolFromSmarts('C1CCC1[*]'),\n\
+   ...                         replaceDummies=False),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CN'\n\
+\n\
 \n";
     python::def("ReplaceCore",
                 (ROMol *(*)(const ROMol&, const ROMol&, bool,bool,bool,bool))replaceCore,

@@ -9,12 +9,33 @@ it's intended to be shallow, but broad
 """
 from __future__ import print_function
 import os,sys,tempfile,gzip
-import unittest
+import unittest, doctest
 from rdkit import RDConfig,rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit import six
+from rdkit.six import exec_
+
 from rdkit import __version__
+
+# Boost functions are NOT found by doctest, this "fixes" them
+#  by adding the doctests to a fake module
+import imp
+TestReplaceCore = imp.new_module("TestReplaceCore")
+code = """
+from rdkit.Chem import ReplaceCore
+def ReplaceCore(*a, **kw):
+    '''%s
+    '''
+    return Chem.ReplaceCore(*a, **kw)
+"""%"\n".join(
+  [x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
+exec_(code,TestReplaceCore.__dict__)
+
+def load_tests(loader, tests, ignore):
+  tests.addTests(doctest.DocTestSuite(TestReplaceCore))
+  return tests
+
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
