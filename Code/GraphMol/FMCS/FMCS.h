@@ -13,9 +13,8 @@
 #include <stdexcept>
 #include "../RDKitBase.h"
 #include "Graph.h"
-
-#ifndef RDFMCS_DLLIMPORT
-#define RDFMCS_DLLIMPORT
+#ifndef RDKIT_WRAP_DECL
+#define RDKIT_WRAP_DECL
 #endif
 
 namespace RDKit {
@@ -54,28 +53,28 @@ typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p,
                                        const ROMol& mol2, unsigned int bond2,
                                        void* userData);
 
-// Some predefined functions:
-RDFMCS_DLLIMPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
+// Some predefined functors:
+RDKIT_WRAP_DECL bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
                        unsigned int atom1, const ROMol& mol2,
                        unsigned int atom2, void* userData);
 
-RDFMCS_DLLIMPORT bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
+RDKIT_WRAP_DECL bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
                             const ROMol& mol1, unsigned int atom1,
                             const ROMol& mol2, unsigned int atom2,
                             void* userData);
-RDFMCS_DLLIMPORT bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
+RDKIT_WRAP_DECL bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
                             const ROMol& mol1, unsigned int atom1,
                             const ROMol& mol2, unsigned int atom2,
                             void* userData);
 
-RDFMCS_DLLIMPORT bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
+RDKIT_WRAP_DECL bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
                        unsigned int bond1, const ROMol& mol2,
                        unsigned int bond2, void* userData);
-RDFMCS_DLLIMPORT bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
+RDKIT_WRAP_DECL bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
                          unsigned int bond1, const ROMol& mol2,
                          unsigned int bond2,
                          void* userData);  // ignore Aromatization
-RDFMCS_DLLIMPORT bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
+RDKIT_WRAP_DECL bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
                               const ROMol& mol1, unsigned int bond1,
                               const ROMol& mol2, unsigned int bond2,
                               void* userData);

@@ -7,10 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef _WIN32
-#define RDFMCS_DLLIMPORT __declspec(dllimport)
-#endif
-
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
