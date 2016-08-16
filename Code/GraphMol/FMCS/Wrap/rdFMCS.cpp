@@ -7,6 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifdef _WIN32
+#define RDFMCS_DLLIMPORT __declspec(dllimport)
+#endif
+
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
@@ -37,7 +41,28 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.InitialSeed = seedSmarts;
   p.AtomCompareParameters.MatchValences = matchValences;
   p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
-  setMCSFunctionPtrs(p, atomComp, bondComp);
+  switch (atomComp) {
+    case AtomCompareAny:
+      p.AtomTyper = MCSAtomCompareAny;
+      break;
+    case AtomCompareElements:
+      p.AtomTyper = MCSAtomCompareElements;
+      break;
+    case AtomCompareIsotopes:
+      p.AtomTyper = MCSAtomCompareIsotopes;
+      break;
+  }
+  switch (bondComp) {
+    case BondCompareAny:
+      p.BondTyper = MCSBondCompareAny;
+      break;
+    case BondCompareOrder:
+      p.BondTyper = MCSBondCompareOrder;
+      break;
+    case BondCompareOrderExact:
+      p.BondTyper = MCSBondCompareOrderExact;
+      break;
+  }
   p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   p.BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
 

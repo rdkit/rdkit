@@ -14,6 +14,10 @@
 #include "../RDKitBase.h"
 #include "Graph.h"
 
+#ifndef RDFMCS_DLLIMPORT
+#define RDFMCS_DLLIMPORT
+#endif
+
 namespace RDKit {
 struct MCSParameters;
 
@@ -50,28 +54,28 @@ typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p,
                                        const ROMol& mol2, unsigned int bond2,
                                        void* userData);
 
-// Some predefined functors:
-bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
+// Some predefined functions:
+RDFMCS_DLLIMPORT bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
                        unsigned int atom1, const ROMol& mol2,
                        unsigned int atom2, void* userData);
 
-bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
+RDFMCS_DLLIMPORT bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
                             const ROMol& mol1, unsigned int atom1,
                             const ROMol& mol2, unsigned int atom2,
                             void* userData);
-bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
+RDFMCS_DLLIMPORT bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
                             const ROMol& mol1, unsigned int atom1,
                             const ROMol& mol2, unsigned int atom2,
                             void* userData);
 
-bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
+RDFMCS_DLLIMPORT bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
                        unsigned int bond1, const ROMol& mol2,
                        unsigned int bond2, void* userData);
-bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
+RDFMCS_DLLIMPORT bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
                          unsigned int bond1, const ROMol& mol2,
                          unsigned int bond2,
                          void* userData);  // ignore Aromatization
-bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
+RDFMCS_DLLIMPORT bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
                               const ROMol& mol1, unsigned int bond1,
                               const ROMol& mol2, unsigned int bond2,
                               void* userData);
@@ -150,8 +154,6 @@ typedef enum {
   BondCompareOrder,
   BondCompareOrderExact
 } BondComparator;
-void setMCSFunctionPtrs(MCSParameters &p,
-  AtomComparator atomComp, BondComparator bondComp);
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                   double threshold = 1.0, unsigned timeout = 3600,
                   bool verbose = false, bool matchValences = false,

@@ -65,32 +65,6 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
   }
 }
 
-void setMCSFunctionPtrs(MCSParameters &p,
-  AtomComparator atomComp, BondComparator bondComp) {
-  switch (atomComp) {
-    case AtomCompareAny:
-      p.AtomTyper = MCSAtomCompareAny;
-      break;
-    case AtomCompareIsotopes:
-      p.AtomTyper = MCSAtomCompareIsotopes;
-      break;
-    default:
-      p.AtomTyper = MCSAtomCompareElements;
-      break;
-  }
-  switch (bondComp) {
-    case BondCompareAny:
-      p.BondTyper = MCSBondCompareAny;
-      break;
-    case BondCompareOrderExact:
-      p.BondTyper = MCSBondCompareOrderExact;
-      break;
-    default:
-      p.BondTyper = MCSBondCompareOrder;
-      break;
-  }
-}
-
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
                   const MCSParameters* params) {
   MCSParameters p;
