@@ -748,8 +748,9 @@ int CisTransPerception(const ROMol &mol, const std::vector<RDGeom::Point3D> &poi
 
     for (unsigned i = 0; i < bondColor.size(); i++)
         if (RDKit::Bond::DOUBLE == mol.getBondWithIdx(i)->getBondType()
-         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDDOWNRIGHT
-         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDUPRIGHT) { // != CIS_TRANS_EITHER
+//FIX:         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDDOWNRIGHT
+//FIX:         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::ENDUPRIGHT
+         && mol.getBondWithIdx(i)->getBondDir() != RDKit::Bond::EITHERDOUBLE) { // != CIS_TRANS_EITHER
             unsigned j1 = mol.getBondWithIdx(i)->getBeginAtomIdx();
             unsigned j2 = mol.getBondWithIdx(i)->getEndAtomIdx();
             if (6 != mol.getAtomWithIdx(j1)->getAtomicNum())    // C

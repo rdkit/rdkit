@@ -89,6 +89,8 @@ void doLoadOptionsFromFiles(StructCheckerOptions &options) {
     const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
     BOOST_LOG(rdInfoLog) << "testDataDir: " << testDataDir << "\n";
 
+    options.Verbose = true;
+
     BOOST_LOG(rdInfoLog) << "loadGoodAugmentedAtoms checkfgs.chk\n";
     ok = options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk");
     TEST_ASSERT(ok);
@@ -135,9 +137,9 @@ void test1()
         "CCC", //tmp
         "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)
     };
-
     StructCheckerOptions options;
     options.Verbose = true;
+/*
     bool ok = loadOptionsFromFiles(options,
         "", // augmentedAtomTranslationsFile = "",
         "", // patternFile = "",       // file with clean patterns
@@ -145,14 +147,39 @@ void test1()
         "", // stereoPatternFile = "", // file with stereo patterns
         "");// tautomerFile = "");
     TEST_ASSERT(ok);
-    doLoadOptionsFromFiles(options);
+*/
     StructChecker chk(options);
     for (int i = 0; i<sizeof(smols) / sizeof(smols[0]); i++) {
         RWMol* mol = SmilesToMol(smols[i]);
         TEST_ASSERT(mol);
         unsigned flags = chk.checkMolStructure(*mol);
         delete mol;
-        BOOST_LOG(rdInfoLog) << "......... results ........\n";
+        BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags) << "\n";
+        TEST_ASSERT(true);
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test2()
+{
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "test2\n";
+    const char* smols[] = {
+        "CCC", //tmp
+        "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)O2", // Bergenin (cuscutin) (a resin) (C14H16O9)
+    };
+
+    StructCheckerOptions options;
+    options.Verbose = true;
+    doLoadOptionsFromFiles(options);
+
+    StructChecker chk(options);
+    for (int i = 0; i<sizeof(smols) / sizeof(smols[0]); i++) {
+        RWMol* mol = SmilesToMol(smols[i]);
+        TEST_ASSERT(mol);
+        unsigned flags = chk.checkMolStructure(*mol);
+        delete mol;
+        BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags) << "\n";
         TEST_ASSERT(true);
     }
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -192,7 +219,60 @@ const char * substance_310975001 = "310975001\n" \
 "['atom_check_failed']\n" \
 "\n" \
 "$$$$\n";
+//----------------------------------
+//CIS_TRANS_EITHER is BondDir::EITHERDOUBLE (i.e.crossed double bond)
+// squiggle bond from chiral center
+const char *Mrv1561_08171605252D = "Mrv1561_08171605252D\n" \
+"\n\n" \
+"  5  4  0     0  0  0  0  0  0999 V2000\n" \
+"   -1.7411    2.3214    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.9161    2.3214    0.0000 C   0  0  3  0  0  0  0  0  0  0  0  0\n" \
+"   -0.0911    2.3214    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.9161    3.1464    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.9161    1.4964    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  2  1  0  0  0  0\n" \
+"  2  3  1  0  0  0  0\n" \
+"  2  5  1  0  0  0  0\n" \
+"  2  4  1  4  0  0  0\n" \
+"M  END\n" \
+"$$$$\n";
+//Avalon : ['EITHER_WARNING', 'DUBIOUS_STEREO_REMOVED']
+// RDKit : ATOM_CHECK_FAILED
+//--------------------
 
+//    crossed double bond (2D)
+const char *Mrv1561_08171605322D = "Mrv1561 08171605322D 0   0.00000     0.00000     0\n" \
+"\n\n" \
+" 4  3   0     0  0  0  0  0  0999 V2000\n" \
+"   -0.4241   -1.7187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.4009   -1.7187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.8366   -1.0043    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.8134   -2.4332    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  3  1  0  0  0  0\n" \
+"  2  4  1  0  0  0  0\n" \
+"  1  2  2  3  0  0  0\n" \
+"M  END\n" \
+"$$$$\n";
+//Avalon : []
+// RDKit : ATOM_CHECK_FAILED, EITHER_WARNING, DUBIOUS_STEREO_REMOVED
+//--------------------
+
+//squiggle bond from double bond (2D)
+const char *Mrv1561_08171605332D = "Mrv1561 08171605332D 0   0.00000     0.00000     0\n" \
+"\n\n" \
+" 4  3   0     0  0  0  0  0  0999 V2000\n" \
+"   -0.4241   -1.7187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.4009   -1.7187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"   -0.8366   -1.0043    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.8134   -2.4332    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  3  1  0  0  0  0\n" \
+"  1  2  2  0  0  0  0\n" \
+"  2  4  1  0  0  0  0\n" \
+"M  END\n" \
+"$$$$\n";
+//Avalon : ['EITHER_WARNING', 'DUBIOUS_STEREO_REMOVED']
+// RDKit : ATOM_CHECK_FAILED, EITHER_WARNING, DUBIOUS_STEREO_REMOVED
+//------------
 void testStereo() // stereochemistry
 {
     BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
@@ -213,20 +293,47 @@ void testStereo() // stereochemistry
         TEST_ASSERT(mol);
         unsigned flags = chk.checkMolStructure(*mol);
         delete mol;
-        BOOST_LOG(rdInfoLog) << "......... results ........\n";
+        BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags) <<"\n";
         TEST_ASSERT(true);
     }
 
     {
-      ROMOL_SPTR mol(MolBlockToMol(substance_310975001));
-      std::cerr << (size_t) mol.get() << std::endl;
-      TEST_ASSERT(mol.get());
-      TEST_ASSERT(CheckStereo(*mol.get()) == false);
-      unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
-      TEST_ASSERT(flags & StructChecker::STEREO_ERROR);
+        ROMOL_SPTR mol(MolBlockToMol(substance_310975001));
+        //      std::cerr << (size_t) mol.get() << std::endl;
+        TEST_ASSERT(mol.get());
+        TEST_ASSERT(CheckStereo(*mol.get()) == false);
+        unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
+        BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags) << "\n";
+//      TEST_ASSERT(0!=(flags & StructChecker::STEREO_ERROR));
     }
-
-    
+    {
+        const char* substance_set[] = {
+            substance_310975001 ,
+            Mrv1561_08171605252D,
+            Mrv1561_08171605322D,
+            Mrv1561_08171605332D
+        };
+        const unsigned res[] = {
+            StructChecker::STEREO_ERROR,
+            StructChecker::EITHER_WARNING | StructChecker::DUBIOUS_STEREO_REMOVED,
+            0, // ??
+            StructChecker::EITHER_WARNING | StructChecker::DUBIOUS_STEREO_REMOVED,
+        };
+        for (size_t i = 0; i < sizeof(substance_set) / sizeof(*substance_set); i++) {
+            BOOST_LOG(rdInfoLog) << "substance " << i << "\n";
+            ROMOL_SPTR mol(MolBlockToMol(substance_set[i]));
+            TEST_ASSERT(mol.get());
+            if (0 != (res[i] & StructChecker::STEREO_ERROR)) {
+                TEST_ASSERT(CheckStereo(*mol.get()) == false);
+            }
+            else {
+//                TEST_ASSERT(CheckStereo(*mol.get()) == true);
+            }
+            unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
+            BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags) << "\n";
+//            TEST_ASSERT((flags == res[i]);
+        }
+    }
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -248,6 +355,7 @@ int main(int argc, const char* argv[])
         // relative path to patern files must be correct !
     }
     test1();
+    test2();
 
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;
