@@ -9,12 +9,33 @@ it's intended to be shallow, but broad
 """
 from __future__ import print_function
 import os,sys,tempfile,gzip
-import unittest
+import unittest, doctest
 from rdkit import RDConfig,rdBase
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit import six
+from rdkit.six import exec_
+
 from rdkit import __version__
+
+# Boost functions are NOT found by doctest, this "fixes" them
+#  by adding the doctests to a fake module
+import imp
+TestReplaceCore = imp.new_module("TestReplaceCore")
+code = """
+from rdkit.Chem import ReplaceCore
+def ReplaceCore(*a, **kw):
+    '''%s
+    '''
+    return Chem.ReplaceCore(*a, **kw)
+"""%"\n".join(
+  [x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
+exec_(code,TestReplaceCore.__dict__)
+
+def load_tests(loader, tests, ignore):
+  tests.addTests(doctest.DocTestSuite(TestReplaceCore))
+  return tests
+
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -1833,19 +1854,48 @@ CAS<~>
     }
 
     for (smiles, smarts, replaceDummies, labelByIndex, useChirality), expected_smiles in expected.items():
+      mol = Chem.MolFromSmiles(smiles)
+      core = Chem.MolFromSmarts(smarts)
       nm = Chem.ReplaceCore(
-        Chem.MolFromSmiles(smiles),
-        Chem.MolFromSmarts(smarts),
+        mol,
+        core,
         replaceDummies=replaceDummies,
         labelByIndex=labelByIndex,
         useChirality=useChirality)
+      
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r"%(
           smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
-        print("expected: %s\ngot: %s"%(expected, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
 
+      matchVect = mol.GetSubstructMatch(core, useChirality=useChirality)
+      nm = Chem.ReplaceCore(mol, core, matchVect,
+                            replaceDummies=replaceDummies,
+                            labelByIndex=labelByIndex)
+      if Chem.MolToSmiles(nm, True) != expected_smiles:
+        print("ReplaceCore(%r, %r, %r, replaceDummies=%r, labelByIndex=%rr"%(
+          smiles, smarts, matchVect, replaceDummies, labelByIndex),
+              file=sys.stderr)
+        print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
+      
+    mol = Chem.MolFromSmiles("C")
+    smarts = Chem.MolFromSmarts("C")
+    try:
+      Chem.ReplaceCore(mol, smarts, (3,))
+      self.asssertFalse(True)
+    except:
+      pass
 
+    mol = Chem.MolFromSmiles("C")
+    smarts = Chem.MolFromSmarts("C")
+    try:
+      Chem.ReplaceCore(mol, smarts, (0,0))
+      self.asssertFalse(True)
+    except:
+      pass
+    
   def test47RWMols(self):
     """ test the RWMol class
 

@@ -14,6 +14,7 @@
 #include <vector>
 #include <iostream>
 
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include "MolFragmenter.h"
 
 namespace RDKit {
@@ -92,8 +93,52 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     \return a copy of \c mol with the non-matching atoms and bonds (if any)
             removed and dummies at the connection points.
 */
+
+
 ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
                          bool useChirality = false);
+
+//! \brief Returns a copy of an ROMol with the atoms and bonds that
+//!      are referenced by the MatchVector removed.
+//!      MatchVector must be defined between mol and the specified core.
+//!
+//!   dummy atoms are left to indicate attachment points.
+//!    These dummy atoms can be labeled either by the matching index
+//!     in the query or by an arbitrary "first match" found.
+//!    Additional matching options are given below.
+//!
+/*!
+    Note that this is essentially identical to the replaceSidechains function,
+   except we
+    invert the query and replace the atoms that *do* match the query.
+
+    \param mol            - the ROMol of interest
+    \param core           - the core being matched against
+    \param matchVect      - a matchVect of the type returned by Substructure Matching
+    \param replaceDummies - if set, atoms matching dummies in the core will also
+   be replaced
+    \param labelByIndex  - if set, the dummy atoms at attachment points are
+   labelled with the
+                           index+1 of the corresponding atom in the core
+    \param requireDummyMatch - if set, only side chains that are connected to
+   atoms in
+                               the core that have attached dummies will be
+   considered.
+                               Molecules that have sidechains that are attached
+                               at other points will be rejected (NULL returned).
+    \param useChirality - if set, match the coreQuery using chirality
+
+    \return a copy of \c mol with the non-matching atoms and bonds (if any)
+            removed and dummies at the connection points. The client is
+   responsible
+            for deleting this molecule. If the core query is not matched, NULL
+   is returned.
+*/
+ROMol *replaceCore(const ROMol &mol, const ROMol &core,
+                   const MatchVectType &matchVect,
+                   bool replaceDummies = true,
+                   bool labelByIndex = false,
+                   bool requireDummyMatch = false);
 
 //! \brief Returns a copy of an ROMol with the atoms and bonds that
 //!      do fall within a substructure match removed.
