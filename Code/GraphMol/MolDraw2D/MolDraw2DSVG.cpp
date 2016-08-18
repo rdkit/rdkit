@@ -22,13 +22,13 @@ std::string DrawColourToSVG(const DrawColour &col) {
   res[0] = '#';
   unsigned int v;
   unsigned int i = 1;
-  v = int(255 * col.get<0>());
+  v = rdcast<unsigned char>(255 * col.get<0>());
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<1>());
+  v = rdcast<unsigned char>(255 * col.get<1>());
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
-  v = int(255 * col.get<2>());
+  v = rdcast<unsigned char>(255 * col.get<2>());
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   return res;
