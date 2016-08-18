@@ -21,15 +21,16 @@ namespace RDKit {
     bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
     bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge = false);
     bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
-                    const AugmentedAtom &aa, const std::vector<Neighbourhood> &nbp);
+                    const AugmentedAtom &aa, const std::vector<Neighbourhood> &nbp, bool verbose);
     bool AAMatch(const ROMol &mol, unsigned i,
                     std::vector<unsigned> &match,
                     const AugmentedAtom &aa,
                     const std::vector<unsigned> &atom_ring_status,
-                    const std::vector<Neighbourhood> &nbp);
+                    const std::vector<Neighbourhood> &nbp,
+                    bool verbose);
 
     bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair);
-    bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms);
+    bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, bool verbose);
  }
 }
 

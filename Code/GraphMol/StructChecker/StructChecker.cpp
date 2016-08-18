@@ -13,31 +13,10 @@
 #include "ReCharge.h"
 #include "Tautomer.h"
 #include "StripSmallFragments.h"
-#include "AugmentedAtomData.h"
 
 namespace RDKit {
  namespace StructureCheck {
 
- StructCheckerOptions::StructCheckerOptions() : AcidityLimit(0.0)
-                                              , RemoveMinorFragments(false)
-                                              , DesiredCharge(0)
-                                              , CheckCollisions(false)
-                                              , CollisionLimitPercent(0)
-                                              , MaxMolSize(255)
-                                              , ConvertSText(false)
-                                              , SqueezeIdentifiers(false)
-                                              , StripZeros(false)
-                                              , CheckStereo(false)
-                                              , ConvertAtomTexts(false)
-                                              , GroupsToSGroups(false)
-                                              , Verbose(false)
-                                              , Elneg0(0.0)   // elneg_table[0].value;
-                                              , Alpha (0.0)
-                                              , Beta  (0.0)
- {
-   loadDefaultAugmentedAtoms(*this);
- }
- 
     unsigned StructChecker::checkMolStructure(RWMol &mol)const {
         unsigned flags = NO_CHANGE; // == 0. return value
 
@@ -138,8 +117,9 @@ namespace RDKit {
         if (Options.CheckCollisions && AtomClash(mol, clashLimit))
             flags |= ATOM_CLASH;
 
-        if (! Options.GoodAtoms.empty() && ! CheckAtoms(mol, Options.GoodAtoms))
-            flags |= ATOM_CHECK_FAILED;
+        if (! Options.GoodAtoms.empty())
+            if(! CheckAtoms(mol, Options.GoodAtoms, Options.Verbose))
+                flags |= ATOM_CHECK_FAILED;
 
         if (Options.CheckStereo && ! CheckStereo(mol))
             flags |= STEREO_ERROR;

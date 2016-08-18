@@ -200,7 +200,7 @@ bool ChargeFix::setpKaValues() {
         bool found = false;
         const std::vector<unsigned> dummy_atom_ring_status;
         for (unsigned j = 0; j < Options.AcidicAtoms.size(); j++)
-            if (AAMatch(Mol, i, match, Options.AcidicAtoms[j], dummy_atom_ring_status, neighbour_array)) {
+            if (AAMatch(Mol, i, match, Options.AcidicAtoms[j], dummy_atom_ring_status, neighbour_array, Options.Verbose)) {
                 AtomColor[i]++;
                 AtompKaValue[i] = 0.0;
                 AAp = & Options.AcidicAtoms[j];

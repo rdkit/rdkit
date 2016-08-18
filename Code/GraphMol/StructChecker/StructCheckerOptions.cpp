@@ -18,10 +18,31 @@
 #include "../FileParsers/FileParsers.h"
 #include "../FileParsers/MolSupplier.h" //SDF
 #include "../SmilesParse/SmilesParse.h"
+#include "AugmentedAtomData.h"
 #include "StructChecker.h"
 
 namespace RDKit {
     namespace StructureCheck {
+
+        StructCheckerOptions::StructCheckerOptions() : AcidityLimit(0.0)
+            , RemoveMinorFragments(false)
+            , DesiredCharge(0)
+            , CheckCollisions(false)
+            , CollisionLimitPercent(0)
+            , MaxMolSize(255)
+            , ConvertSText(false)
+            , SqueezeIdentifiers(false)
+            , StripZeros(false)
+            , CheckStereo(false)
+            , ConvertAtomTexts(false)
+            , GroupsToSGroups(false)
+            , Verbose(false)
+            , Elneg0(0.0)   // elneg_table[0].value;
+            , Alpha (0.0)
+            , Beta  (0.0)
+        {
+            loadDefaultAugmentedAtoms(*this);
+        }
 
         bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op) {
             if (json.empty())

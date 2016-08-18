@@ -157,8 +157,16 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
                 for (size_t l = 0; l < aa2.Ligands.size(); l++) {
                     Atom* al = mol.getAtomWithIdx(match[l]);
                     const Ligand &ligand = aa2.Ligands[l];
-                    if (al->getSymbol() != ligand.AtomSymbol)
-                        al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol));
+                    {
+//AVALON pattern.c:154
+//                    if (al->getSymbol() != ligand.AtomSymbol) // pattern.c:154
+//                        al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol)); //??? list like "C,N" from file ???
+//TODO: compare RDKit query with comma separated ligand.AtomSymbol
+                        if (!AtomSymbolMatch(al->getSymbol(), ligand.AtomSymbol)) {
+//TODO: parse comma separated ligand.AtomSymbol to RDKit query
+                            al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol));
+                        }
+                    }
                     if (al->getFormalCharge() != ligand.Charge)
                         al->setFormalCharge(ligand.Charge);
                     if (al->getNumRadicalElectrons() != ligand.Radical)
@@ -193,7 +201,7 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
 * of atom i+1.
 */
 bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
-              const AugmentedAtom &aa,  const std::vector<Neighbourhood> &nbp) {
+              const AugmentedAtom &aa,  const std::vector<Neighbourhood> &nbp, bool verbose) {
     bool is_new;
 
     if (level == aa.Ligands.size())
@@ -219,10 +227,15 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
             for (unsigned j = 0; j <= level; j++)
                 if (nbph.Atoms[i] == match[j])
                     is_new = false;
-            if (is_new && RecMatch(mol, match, level + 1, aa, nbp))
+            if (is_new && RecMatch(mol, match, level + 1, aa, nbp, verbose)) {
+//                if (verbose)
+//                    BOOST_LOG(rdInfoLog) << "RecMatch level=" << level << " ret TRUE\n";
                 return true;
+            }
         }
     }
+//    if (verbose)
+//        BOOST_LOG(rdInfoLog) << "RecMatch level="<< level << " ret FALSE\n";
     return false;
 }
 
@@ -236,7 +249,8 @@ bool AAMatch(const ROMol &mol, unsigned i,
     std::vector<unsigned> &match,
     const AugmentedAtom &aa,
     const std::vector<unsigned> &atom_ring_status,
-    const std::vector<Neighbourhood> &nbp) {
+    const std::vector<Neighbourhood> &nbp,
+    bool verbose) {
 
     const Atom &atom = *mol.getAtomWithIdx(i);
  
@@ -245,18 +259,21 @@ bool AAMatch(const ROMol &mol, unsigned i,
      && (aa.Radical == ANY_RADICAL || atom.getNumRadicalElectrons() == aa.Radical) &&
         AtomSymbolMatch(atom.getSymbol(), aa.AtomSymbol))
     {
-        if ( ! atom_ring_status.empty() && aa.Topology == RING   &&  atom_ring_status[i] == 0)
+        if (!atom_ring_status.empty() && aa.Topology == RING   &&  atom_ring_status[i] == 0) {
             return false;
-        if ( ! atom_ring_status.empty() && aa.Topology == CHAIN  &&  atom_ring_status[i] != 0)
+        }
+        if (!atom_ring_status.empty() && aa.Topology == CHAIN  &&  atom_ring_status[i] != 0) {
             return false;
+        }
         if(match.size() == 0) {
            match.push_back(0);
         }
         match[0] = i;
-        return RecMatch(mol, match, 0, aa, nbp);
+        return RecMatch(mol, match, 0, aa, nbp, verbose);
     }
-    else 
+    else {
         return false;
+    }
 }
 
 
@@ -296,11 +313,15 @@ void RingState(const ROMol & mol, std::vector<unsigned>& atom_status, std::vecto
 * Checks if every atom in *mp matches one of the augmented atoms
 * in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or FALSE otherwise.
 */
-bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) {
+bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, bool verbose) {
+    if (good_atoms.empty())
+        return true;
     std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
     std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
     std::vector<unsigned> atom_status(mol.getNumAtoms());
     std::vector<unsigned> bond_status(mol.getNumBonds());
+//    if(verbose)
+//        BOOST_LOG(rdInfoLog) << "CheckAtoms: " << mol.getNumAtoms() << " atoms in molecule\n";
 
     RingState(mol, atom_status, bond_status);
     SetupNeighbourhood(mol, neighbours);
@@ -313,22 +334,29 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms) 
 //         BOOST_LOG(rdInfoLog) << good_atoms[xx].Ligands[j].AtomSymbol << "\n";
 //      }
 //   }
-//        BOOST_LOG(rdInfoLog) << "atom idx: " << mol.getAtomWithIdx(i)->getIdx() << " match: " << nmatch << "\n";
-    if ( ! good_atoms.empty())
-     for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
+
+    for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
+        unsigned prevn = nmatch;
         for (unsigned j = 0; j < good_atoms.size(); j++)
         {
             // check for ring state of central atom. Ring matches to ring only
-            if (good_atoms[j].Topology == RING   && 0 == atom_status[i])
+            if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
                 continue;
-            if (good_atoms[j].Topology == CHAIN  && 0 != atom_status[i])
+            }
+            if (good_atoms[j].Topology == CHAIN && 0 != atom_status[i]) {
                 continue;
+            }
+
             if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size()
-             && AAMatch(mol, i, match, good_atoms[j], atom_status, neighbours)) {
+             && AAMatch(mol, i, match, good_atoms[j], atom_status, neighbours, verbose)) {
                 nmatch++;
                 break;
             }
         }
+        if (verbose && nmatch == prevn) // UNMATCHED atom
+            BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
+            << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i]
+            << " nmatch=" << nmatch << "\n";
     }
     return (nmatch == mol.getNumAtoms());
 }
