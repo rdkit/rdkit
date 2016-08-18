@@ -1,3 +1,46 @@
+# Release_2016.03.4
+(Changes relative to Release_2016.03.3)
+
+## Acknowledgements:
+Brian Cole, Brian Kelley, Sereina Riniker, Nadine Scheider, Gianluca Sforna, Paolo Tosco, Riccardo Vianello
+
+## Bug Fixes:
+  - MergeQueryHs explicit H warning when no explicit Hs were actually used
+ (github issue #868 from bp-kelley)
+  - AddHs() using 3D coordinates with 2D conformations
+ (github issue #908 from greglandrum)
+  - Kekulization issues post successful smiles parsing
+ (github issue #962 from bp-kelley)
+  - prepareMolForDrawing(): Do not add Hs to some three-coordinate Cs
+ (github issue #982 from greglandrum)
+  - MolDraw2D: wedged bonds between chiral centers drawn improperly
+ (github issue #983 from greglandrum)
+  - Fix format-security GCC warning
+ (github pull #984 from giallu)
+  - MolDraw2D scaling problems
+ (github issue #985 from greglandrum)
+  - Right-justified elements in RCSB SDF files raise an exception
+ (github issue #995 from ptosco)
+  - ChemReactions: Bugfix in copy constructor
+ (github pull #996 from NadineSchneider)
+  - PgSQL README typos
+ (github pull #997 from ptosco)
+  - Fixes middle-justified symbols in sd files, adds M_CHG tests
+ (github pull #1002 from bp-kelley)
+  - Fixes MMFF94 aromaticity perception and ChemicalForceFields.MMFFHasAllMoleculeParams()
+ (github pull #1007 from ptosco)
+  - Fix Inchi being hardcoded into PostgreSQL
+ (github pull #1009 from ptosco)
+  - Support ETKDG from within the SWIG wrappers
+ (github pull #1010 from greglandrum)
+  - fix non-inchi build
+ (github pull #1018 from ptosco)
+  - FMCS fix for Windows DLLs
+ (github pull #1030 from ptosco)
+  - Cause ImportError from failed dlopen of the rdBase.so shared library to propagate.
+ (github pull #1032 from coleb)
+
+
 # Release_2016.03.3
 (Changes relative to Release_2016.03.2)
 
