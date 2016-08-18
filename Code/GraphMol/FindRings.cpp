@@ -209,7 +209,7 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
             iter!=res.end();++iter){
           std::cerr<<iter-res.begin()<<": ";
           std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;          
+          std::cerr<<std::endl;
         }
 #endif
 
@@ -345,8 +345,9 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
           ringBonds.set(bIdx);
           ringAtoms.set(nring[i]);
         }
-        ringBonds.set(tMol.getBondBetweenAtoms(
-                               nring[0], nring[nring.size() - 1])->getIdx());
+        ringBonds.set(
+            tMol.getBondBetweenAtoms(nring[0], nring[nring.size() - 1])
+                ->getIdx());
         ringAtoms.set(nring[nring.size() - 1]);
 #if 0
           std::cerr<<"    res: "<<invr<<" | ";
@@ -721,8 +722,9 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
       }      // end of nbrIdx not part of current path and not a done atom
     }        // end of loop over neighbors of current atom
   }          // moving to the next node
-  return rdcast<unsigned int>(rings.size());  // if we are here we should have found everything around
-                        // the node
+  return rdcast<unsigned int>(
+      rings.size());  // if we are here we should have found everything around
+                      // the node
 }
 
 bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
@@ -745,15 +747,17 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
     while (nbrIdx != endNbrs) {
       if (*nbrIdx == endAtomIdx) {
         if (currAtomIdx != startAtomIdx) {
-          tv.push_back(rdcast<unsigned int>(*nbrIdx));
+          INT_VECT nv(tv);
+
+          nv.push_back(rdcast<unsigned int>(*nbrIdx));
           // make sure the ring we just found isn't already in our set
           // of rings (this was an extension of sf.net issue 249)
           boost::uint32_t invr =
-              RingUtils::computeRingInvariant(tv, tMol.getNumAtoms());
+              RingUtils::computeRingInvariant(nv, tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             // we're done!
-            res.resize(tv.size());
-            std::copy(tv.begin(), tv.end(), res.begin());
+            res.resize(nv.size());
+            std::copy(nv.begin(), nv.end(), res.begin());
             return true;
           }
         } else {
@@ -764,6 +768,7 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
         //} else if(ringAtoms[*nbrIdx]){
         INT_VECT nv(tv);
         nv.push_back(rdcast<unsigned int>(*nbrIdx));
+
         bfsq.push_back(nv);
       }
       ++nbrIdx;
@@ -925,7 +930,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
 #if 0
             std::cerr<<"  d2nodes post: ";
             std::copy(d2nodes.begin(),d2nodes.end(),std::ostream_iterator<int>(std::cerr," "));
-            std::cerr<<std::endl;          
+            std::cerr<<std::endl;
             std::cerr<<"  ring bonds: "<<ringBonds<<std::endl;
 #endif
         INT_VECT_CI d2i;
@@ -982,7 +987,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
             iter!=fragRes.end();++iter){
           std::cerr<<iter-fragRes.begin()<<": ";
           std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;          
+          std::cerr<<std::endl;
         }
 #endif
     int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
@@ -1042,7 +1047,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
         for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
             iter!=fragRes.end();++iter){
           std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;          
+          std::cerr<<std::endl;
         }
 #endif
 
