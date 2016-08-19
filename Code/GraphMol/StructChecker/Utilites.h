@@ -22,6 +22,9 @@ namespace RDKit {
         void SetupNeighbourhood(const ROMol &mol, std::vector<Neighbourhood> &neighbour_array);
         bool getMolAtomPoints(const ROMol& mol, std::vector<RDGeom::Point3D> &atomPoint);
 
+        std::string LogNeighbourhood(const ROMol &mol,
+                                     unsigned int idx,
+                                     const std::vector<Neighbourhood> &bneighbour_array);
     }
 }
 

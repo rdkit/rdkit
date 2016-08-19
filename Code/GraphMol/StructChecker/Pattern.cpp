@@ -439,13 +439,15 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
 //      }
 //   }
 
+    
     for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
         unsigned prevn = nmatch;
         //DEBUG:
         if (verbose)
             BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << i << " "
             << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << " neighbours="<< neighbours[i].Atoms.size()<<"\n";
-        for (unsigned j = 0; j < good_atoms.size(); j++)
+        unsigned int j = 0;
+        for (; j < good_atoms.size(); j++)
         {
             // check for ring state of central atom. Ring matches to ring only
             if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
@@ -484,6 +486,12 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
             BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
             << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i]
             << " nmatch=" << nmatch << "\n";
+
+        if ( verbose && j == good_atoms.size() ) { // failed this atom .. log it
+          BOOST_LOG(rdWarningLog) << LogNeighbourhood(mol, i, neighbours)
+                                  << std::endl;
+        }
+        
     }
     return (nmatch == mol.getNumAtoms());
 }
