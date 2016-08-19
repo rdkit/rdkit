@@ -38,6 +38,7 @@ typedef boost::tuple<float, float, float> DrawColour;
 typedef std::vector<unsigned int> DashPattern;
 
 struct MolDrawOptions {
+  bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments;  // draws "breaks" at dummy atoms
   bool circleAtoms;            // draws circles under highlighted atoms
   DrawColour highlightColour;  // default highlight color
@@ -60,7 +61,8 @@ struct MolDrawOptions {
   std::vector<std::vector<int> > atomRegions;  // regions
 
   MolDrawOptions()
-      : dummiesAreAttachments(false),
+      : atomLabelDeuteriumTritium(false),
+        dummiesAreAttachments(false),
         circleAtoms(true),
         highlightColour(1, .5, .5),
         continuousHighlight(true),

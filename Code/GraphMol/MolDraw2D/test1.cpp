@@ -1276,6 +1276,119 @@ M  END";
   std::cerr << " Done" << std::endl;
 }
 
+void testDeuteriumTritium() {
+  std::cout << " ----------------- Test Deuterium, Tritium" << std::endl;
+  {
+    std::string deuterium = "C([2H])([2H])([2H])[2H]";
+    ROMol *m = SmilesToMol(deuterium);
+    RDDepict::compute2DCoords(*m);
+    std::string nameBase = "testNoDeuterium";
+    std::ofstream outs((nameBase + ".svg").c_str());
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawOptions().atomLabelDeuteriumTritium = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.close();
+    std::ifstream ins((nameBase + ".svg").c_str());
+    bool ok = true;
+    unsigned int count = 0;
+    while (ok) {
+      std::string line;
+      std::getline(ins, line);
+      ok = (ins.good() && !ins.eof());
+      if (!ok) continue;
+      if ((line.find("baseline-shift:super") != std::string::npos)
+        && (line.find(">2<") != std::string::npos)
+        && (line.find(">H<") != std::string::npos))
+        ++count;
+    }
+    TEST_ASSERT(count == 4);
+    delete m;
+  }
+  {
+    std::string tritium = "C([3H])([3H])([3H])[3H]";
+    ROMol *m = SmilesToMol(tritium);
+    RDDepict::compute2DCoords(*m);
+    std::string nameBase = "testNoTritium";
+    std::ofstream outs((nameBase + ".svg").c_str());
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawOptions().atomLabelDeuteriumTritium = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.close();
+    std::ifstream ins((nameBase + ".svg").c_str());
+    bool ok = true;
+    unsigned int count = 0;
+    while (ok) {
+      std::string line;
+      std::getline(ins, line);
+      ok = (ins.good() && !ins.eof());
+      if (!ok) continue;
+      if ((line.find("baseline-shift:super") != std::string::npos)
+        && (line.find(">3<") != std::string::npos)
+        && (line.find(">H<") != std::string::npos))
+        ++count;
+    }
+    TEST_ASSERT(count == 4);
+    delete m;
+  }
+  {
+    std::string deuterium = "C([2H])([2H])([2H])[2H]";
+    ROMol *m = SmilesToMol(deuterium);
+    RDDepict::compute2DCoords(*m);
+    std::string nameBase = "testDeuterium";
+    std::ofstream outs((nameBase + ".svg").c_str());
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawOptions().atomLabelDeuteriumTritium = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.close();
+    std::ifstream ins((nameBase + ".svg").c_str());
+    bool ok = true;
+    unsigned int count = 0;
+    while (ok) {
+      std::string line;
+      std::getline(ins, line);
+      ok = (ins.good() && !ins.eof());
+      if (!ok) continue;
+      if ((line.find("baseline-shift:super") == std::string::npos)
+        && (line.find(">2<") == std::string::npos)
+        && (line.find(">D<") != std::string::npos))
+        ++count;
+    }
+    TEST_ASSERT(count == 4);
+    delete m;
+  }
+  {
+    std::string tritium = "C([3H])([3H])([3H])[3H]";
+    ROMol *m = SmilesToMol(tritium);
+    RDDepict::compute2DCoords(*m);
+    std::string nameBase = "testTritium";
+    std::ofstream outs((nameBase + ".svg").c_str());
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawOptions().atomLabelDeuteriumTritium = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.close();
+    std::ifstream ins((nameBase + ".svg").c_str());
+    bool ok = true;
+    unsigned int count = 0;
+    while (ok) {
+      std::string line;
+      std::getline(ins, line);
+      ok = (ins.good() && !ins.eof());
+      if (!ok) continue;
+      if ((line.find("baseline-shift:super") == std::string::npos)
+        && (line.find(">3<") == std::string::npos)
+        && (line.find(">T<") != std::string::npos))
+        ++count;
+    }
+    TEST_ASSERT(count == 4);
+    delete m;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1298,4 +1411,5 @@ int main() {
   testGithub932();
   testGithub953();
   testGithub983();
+  testDeuteriumTritium();
 }
