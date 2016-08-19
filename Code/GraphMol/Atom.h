@@ -304,7 +304,6 @@ class Atom : public RDProps {
     return Match(what.get());
   };
 
-
   //! returns the perturbation order for a list of integers
   /*!
 
@@ -360,6 +359,25 @@ class Atom : public RDProps {
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; };
 
+  //! Set the atom map Number of the atom
+  void setAtomMapNum(int mapno, bool strict = true) {
+    PRECONDITION(
+        !strict || (mapno >= 0 && mapno < 1000),
+        "atom map number out of range [0..1000], use strict=false to override");
+    if (mapno) {
+      setProp(common_properties::molAtomMapNumber, mapno);
+    } else if (hasProp(common_properties::molAtomMapNumber)) {
+      clearProp(common_properties::molAtomMapNumber);
+    }
+  }
+  //! Gets the atom map Number of the atom, if no atom map exists, 0 is
+  //! returned.
+  int getAtomMapNum() const {
+    int mapno = 0;
+    getPropIfPresent(common_properties::molAtomMapNumber, mapno);
+    return mapno;
+  }
+
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
@@ -386,6 +404,27 @@ class Atom : public RDProps {
   AtomMonomerInfo *dp_monomerInfo;
   void initAtom();
 };
+
+//! Set the atom's MDL integer RLabel
+//   Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
+void setAtomRLabel(Atom *atm, int rlabel);
+int getAtomRLabel(const Atom *atm);
+
+//! Set the atom's MDL atom alias
+//   Setting to an empty string clears the alias
+void setAtomAlias(Atom *atom, const std::string &alias);
+std::string getAtomAlias(const Atom *atom);
+
+//! Set the atom's MDL atom value
+//   Setting to an empty string clears the value
+//   This is where recursive smarts get stored in MolBlock Queries
+void setAtomValue(Atom *atom, const std::string &value);
+std::string getAtomValue(const Atom *atom);
+
+//! Sets the supplemental label that will follow the atom when writing
+//   smiles strings.
+void setSupplementalSmilesLabel(Atom *atom, const std::string &label);
+std::string getSupplementalSmilesLabel(const Atom *atom);
 };
 //! allows Atom objects to be dumped to streams
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at);

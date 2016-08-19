@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8.8)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
   set (EXTENSION_SUFFIX ".so")
@@ -172,10 +174,15 @@ string(REGEX REPLACE "'" "" PG_EXTVERSION ${PG_EXTVERSION})
 if(MSVC)
   set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
 endif(MSVC)
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
+               "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql91.in\" "
-    "\"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")

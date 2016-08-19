@@ -52,7 +52,8 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
 }
 }
 
-ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
+ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
+                        bool useChirality) {
   RWMol *res = static_cast<RWMol *>(new ROMol(mol, false));
   std::vector<MatchVectType> fgpMatches;
   std::vector<MatchVectType>::const_iterator mati;
@@ -61,7 +62,9 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
   matches;  // all matches on the molecule - list of list of atom ids
   MatchVectType::const_iterator mi;
   // do the substructure matching and get the atoms that match the query
-  SubstructMatch(*res, query, fgpMatches);
+  const bool uniquify=true;
+  const bool recursionPossible=true;
+  SubstructMatch(*res, query, fgpMatches, uniquify, recursionPossible, useChirality);
 
   // if didn't find any matches nothing to be done here
   // simply return a copy of the molecule
@@ -134,16 +137,18 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags) {
 
 std::vector<ROMOL_SPTR> replaceSubstructs(
     const ROMol &mol, const ROMol &query, const ROMol &replacement,
-    bool replaceAll, unsigned int replacementConnectionPoint) {
+    bool replaceAll, unsigned int replacementConnectionPoint,
+    bool useChirality) {
   PRECONDITION(replacementConnectionPoint < replacement.getNumAtoms(),
                "bad replacementConnectionPoint");
   std::vector<ROMOL_SPTR> res;
   std::vector<MatchVectType> fgpMatches;
 
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
-
   // do the substructure matching and get the atoms that match the query
-  SubstructMatch(mol, query, fgpMatches);
+  const bool uniquify = true;
+  const bool recursionPossible=true;
+  SubstructMatch(mol, query, fgpMatches, uniquify, recursionPossible, useChirality);
 
   // if we didn't find any matches, there's nothing to be done here
   // simply return a list with a copy of the starting molecule
@@ -234,11 +239,14 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   return res;
 }
 
-ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery) {
+ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
+                         bool useChirality) {
   MatchVectType matchV;
 
   // do the substructure matching and get the atoms that match the query
-  bool matchFound = SubstructMatch(mol, coreQuery, matchV);
+  const bool recursionPossible=true;
+  bool matchFound = SubstructMatch(mol, coreQuery, matchV, recursionPossible,
+                                   useChirality);
 
   // if we didn't find any matches, there's nothing to be done here
   // simply return null to indicate the problem
@@ -305,11 +313,13 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery) {
 
 ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
                    bool replaceDummies, bool labelByIndex,
-                   bool requireDummyMatch) {
+                   bool requireDummyMatch, bool useChirality) {
   MatchVectType matchV;
 
   // do the substructure matching and get the atoms that match the query
-  bool matchFound = SubstructMatch(mol, coreQuery, matchV);
+  const bool recursionPossible=true;
+  bool matchFound = SubstructMatch(mol, coreQuery, matchV, recursionPossible,
+                                   useChirality);
 
   // if we didn't find any matches, there's nothing to be done here
   // simply return null to indicate the problem
@@ -317,26 +327,64 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
     return 0;
   }
 
+  return replaceCore(mol, coreQuery, matchV,
+                     replaceDummies, labelByIndex,
+                     requireDummyMatch);
+}
+
+ROMol *replaceCore(const ROMol &mol,
+                   const ROMol &core,
+                   const MatchVectType &matchV,
+                   bool replaceDummies,
+                   bool labelByIndex,
+                   bool requireDummyMatch) {
   unsigned int origNumAtoms = mol.getNumAtoms();
   std::vector<int> matchingIndices(origNumAtoms, -1);
+  std::vector<int> allIndices(origNumAtoms, -1);
   for (MatchVectType::const_iterator mvit = matchV.begin();
        mvit != matchV.end(); mvit++) {
+    if(mvit->first < 0 || mvit->first >= rdcast<int>(core.getNumAtoms()))
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the core molecule" );
+    if(mvit->second < 0 || mvit->second >= rdcast<int>(mol.getNumAtoms()))
+      throw ValueErrorException(
+          "Supplied MatchVect indices out of bounds of the target molecule" );
+    
     if (replaceDummies ||
-        coreQuery.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
+        core.getAtomWithIdx(mvit->first)->getAtomicNum() > 0) {
       matchingIndices[mvit->second] = mvit->first;
     }
+    allIndices[mvit->second] = mvit->first;
   }
 
   RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
   std::vector<Atom *> keepList;
   std::map<int, Atom *> dummyAtomMap;
-  unsigned int nDummies = 0;
+
+  // go through the matches in query order, not target molecule
+  //  order
+  std::vector<std::pair<int,int> > matchorder_atomidx;
   for (unsigned int i = 0; i < origNumAtoms; ++i) {
+    int queryatom = allIndices[i];
+    matchorder_atomidx.push_back( std::make_pair(queryatom, i) );
+  }
+
+  std::sort(matchorder_atomidx.begin(), matchorder_atomidx.end());
+  std::vector<std::pair<int, Atom*> > dummies;
+  
+  for (unsigned int j = 0; j < origNumAtoms; ++j) {
+    unsigned int i = (unsigned) matchorder_atomidx[j].second;
+    
     if (matchingIndices[i] == -1) {
       Atom *sidechainAtom = newMol->getAtomWithIdx(i);
       // we're keeping the sidechain atoms:
       keepList.push_back(sidechainAtom);
-
+      int mapping = -1;
+      // if we were not in the matching list, still keep
+      //  the original indices (replaceDummies=False)
+      if (matchingIndices[i] == -1 && allIndices[i] != -1) {
+          mapping = allIndices[i];
+      }
       // loop over our neighbors and see if any are in the match:
       std::list<unsigned int> nbrList;
       ROMol::ADJ_ITER nbrIter, endNbrs;
@@ -357,19 +405,22 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
         if (matchingIndices[nbrIdx] > -1) {
           // we've matched an atom in the core.
           if (requireDummyMatch &&
-              coreQuery.getAtomWithIdx(matchingIndices[nbrIdx])
+              core.getAtomWithIdx(matchingIndices[nbrIdx])
                       ->getAtomicNum() != 0) {
             delete newMol;
             return NULL;
           }
           Atom *newAt = new Atom(0);
-          ++nDummies;
 
-          if (!labelByIndex) {
-            newAt->setIsotope(nDummies);
+          // we want to order the dummies int the same orders as
+          //  the mappings, if not labelling by Index they are in arbitrary order
+          //  right now so save and sort later.
+          if(mapping != -1) {
+            dummies.push_back(std::make_pair(mapping, newAt));
           } else {
-            newAt->setIsotope(matchingIndices[nbrIdx]);
+            dummies.push_back(std::make_pair(matchingIndices[nbrIdx], newAt));
           }
+
           newMol->addAtom(newAt, false, true);
           dummyAtomMap[nbrIdx] = newAt;
           keepList.push_back(newAt);
@@ -426,6 +477,20 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
       }
     }
   }
+
+  if(!labelByIndex) {
+    // sort the mapping indices, but label from 1..N
+    std::stable_sort(dummies.begin(), dummies.end());
+    for(size_t nDummy=0; nDummy < dummies.size(); ++nDummy) {
+      dummies[nDummy].second->setIsotope(nDummy + 1);
+    }
+  } else {
+    // don't sort, just label by the index
+    for(size_t nDummy=0; nDummy < dummies.size(); ++nDummy) {
+      dummies[nDummy].second->setIsotope(dummies[nDummy].first);
+    }
+  }
+  
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   for (RWMol::AtomIterator atIt = newMol->beginAtoms();

@@ -1459,7 +1459,7 @@ AS
     FUNCTION    6   gbfp_picksplit (internal, internal),
     FUNCTION    7   gbfp_same (internal, internal, internal),
     FUNCTION    8   (bfp, bfp) gbfp_distance(internal, bytea, smallint, oid),
-    FUNCTION    9   gbfp_fetch (internal),
+    @RDKIT_PG_BFP_GIST_FETCH@
 STORAGE         bytea;
 
 CREATE OPERATOR CLASS gist_sfp_ops

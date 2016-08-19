@@ -34,8 +34,8 @@ protected:
     const STR_VECT &tmp = dp_props.keys();
     STR_VECT res, computed;
     if (!includeComputed &&
-        getPropIfPresent(detail::computedPropName, computed)) {
-      computed.push_back(detail::computedPropName);
+        getPropIfPresent(RDKit::detail::computedPropName, computed)) {
+      computed.push_back(RDKit::detail::computedPropName);
     }
 
     STR_VECT::const_iterator pos = tmp.begin();
@@ -48,7 +48,7 @@ protected:
     }
     return res;
   }
-  
+
   //! sets a \c property value
   /*!
     \param key the name under which the \c property should be stored.
@@ -64,10 +64,10 @@ protected:
   void setProp(const std::string &key, T val, bool computed = false) const {
     if (computed) {
       STR_VECT compLst;
-      getPropIfPresent(detail::computedPropName, compLst);
+      getPropIfPresent(RDKit::detail::computedPropName, compLst);
       if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
         compLst.push_back(key);
-        dp_props.setVal(detail::computedPropName, compLst);
+        dp_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
     // setProp(key.c_str(),val);
@@ -126,11 +126,11 @@ protected:
   //! \overload
   void clearProp(const std::string &key) const {
     STR_VECT compLst;
-    if (getPropIfPresent(detail::computedPropName, compLst)) {
+    if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
       STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
         compLst.erase(svi);
-        dp_props.setVal(detail::computedPropName, compLst);
+        dp_props.setVal(RDKit::detail::computedPropName, compLst);
       }
     }
     dp_props.clearVal(key);
@@ -139,10 +139,10 @@ protected:
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {
     STR_VECT compLst;
-    if (getPropIfPresent(detail::computedPropName, compLst)) {
+    if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
       BOOST_FOREACH (const std::string &sv, compLst) { dp_props.clearVal(sv); }
       compLst.clear();
-      dp_props.setVal(detail::computedPropName, compLst);
+      dp_props.setVal(RDKit::detail::computedPropName, compLst);
     }
   }
 };

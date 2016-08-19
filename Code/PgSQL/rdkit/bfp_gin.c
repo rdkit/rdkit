@@ -32,7 +32,11 @@
 #include <postgres.h>
 
 #include <access/gin.h>
+#if PG_VERSION_NUM >= 90500
 #include <access/stratnum.h>
+#else
+#include <access/skey.h>
+#endif
 #include <fmgr.h>
 
 #include "rdkit.h"

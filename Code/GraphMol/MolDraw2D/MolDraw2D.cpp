@@ -771,6 +771,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       } else {
         drawWedgedBond(at1_cds, at2_cds, true, col1, col2);
       }
+    } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
+      // unspecified stereo
+      drawWavyLine(at1_cds, at2_cds, col1, col2);
     } else {
       // in all other cases, we will definitely want to draw a line between the
       // two atoms
@@ -1158,18 +1161,22 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
   drawPolygon(pts);
 }
 
+void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                             const DrawColour &col1, const DrawColour &col2,
+                             unsigned int nSegments, double vertOffset) {
+  RDUNUSED_PARAM(nSegments);
+  RDUNUSED_PARAM(vertOffset);
+  drawLine(cds1, cds2, col1, col2);
+}
 // ****************************************************************************
 //  we draw the line at cds2, perpendicular to the line cds1-cds2
 void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
                                    const DrawColour &col, double len,
                                    unsigned int nSegments) {
-  if (nSegments % 2)
-    ++nSegments;  // we're going to assume an even number of segments
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
   Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
-  setColour(col);
-  drawLine(p1, p2);
+  drawWavyLine(p1, p2, col, col, nSegments);
 }
 
 }  // EO namespace RDKit

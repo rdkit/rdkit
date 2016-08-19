@@ -91,6 +91,41 @@ void testDeleteSubstruct() {
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms() == 4);
 
+  // test chiralty
+  smi = "CCO[C@H](N)(P)";
+  mol1 = SmilesToMol(smi);
+  matcher1 = SmartsToMol("O[C@H](N)(P)");
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
+  std::string smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "1 smi: " << smi1 << std::endl;  
+  TEST_ASSERT(smi1 == "CC");
+  delete mol2;
+
+  // still matches with non-chiral
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, false);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "1 smi: " << smi1 << std::endl;  
+  TEST_ASSERT(smi1 == "CC");
+  delete matcher1;
+
+
+  matcher1 = SmartsToMol("O[C@@H](N)(P)");
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "2 smi: " << smi1 << std::endl;
+  TEST_ASSERT(smi1 == "CCO[C@H](N)P");
+  delete mol2;
+
+  // still matches with non-chiral
+  mol2 = deleteSubstructs(*mol1, *matcher1, false, false);
+  smi1 = MolToSmiles(*mol2, true);
+  std::cerr << "2 smi: " << smi1 << std::endl;
+  TEST_ASSERT(smi1 == "CC");
+  delete mol2;
+  delete mol1;
+  delete matcher1;
+  
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -173,6 +208,45 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect[0]->getNumAtoms() == 3);
   TEST_ASSERT(vect[0]->getNumBonds() == 3);
 
+  // test chirality
+  delete mol1;
+  delete matcher1;
+  sma = "P([C@H](N)O)";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+
+  // test stereo matching
+  smi = "CCP([C@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
+  TEST_ASSERT(vect.size() == 1);
+  std::string smi1 = MolToSmiles(*vect[0], true);
+  TEST_ASSERT(smi1 == "CCNCC");
+  
+  // should also match when matching non-chiral
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  TEST_ASSERT(smi1 == "CCNCC");
+  
+  smi = "CCP([C@@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  std::cerr << "replaceSub smi1:" << smi1 << std::endl;;
+  // no change
+  TEST_ASSERT(smi1 == "CCP(CC)[C@@H](N)O");
+
+  // should also match when matching non-chiral  
+  vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
+  TEST_ASSERT(vect.size() == 1);
+  smi1 = MolToSmiles(*vect[0], true);
+  std::cerr << "replaceSub smi1:" << smi1 << std::endl;;
+  // no change
+  TEST_ASSERT(smi1 == "CCNCC");
+  
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -196,6 +270,7 @@ void testReplaceSubstructs2() {
     std::vector<ROMOL_SPTR> vect = replaceSubstructs(*mol1, *matcher1, *frag);
     TEST_ASSERT(vect.size() == 1);
     TEST_ASSERT(mol1->getNumAtoms() == 5);
+
     TEST_ASSERT(vect[0]->getNumAtoms() == 6);
     std::string csmi1 = MolToSmiles(*vect[0], true);
 
@@ -276,6 +351,27 @@ void testReplaceSidechains() {
   delete mol2;
   delete matcher1;
 
+  sma = "P([C@H](N)O)";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  smi = "CCP([C@H](N)O)CC";
+  mol1 = SmilesToMol(smi);
+  mol2 = replaceSidechains(*mol1, *matcher1, true);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2, true);
+  std::cerr << "sidechains chiral=true smi1;;; " << smi << std::endl;
+  delete mol2;
+
+  mol2 = replaceSidechains(*mol1, *matcher1, true);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2, true);
+  std::cerr << "sidechains chiral=false smi1;;; " << smi << std::endl;
+
+
+  delete mol1;
+  delete mol2;
+  delete matcher1;
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -555,6 +651,116 @@ void testReplaceCore() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+struct CoreTest {
+  const char * smiles;
+  const char * smarts;
+  bool replaceDummies;
+  bool labelByIndex;
+  bool requireDummyMatch;
+  bool useChirality;
+  const char * expected;
+};
+  
+void testReplaceCore2() {
+  const CoreTest tests[] = {
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, false, false, true,  "[1*]NC.[2*]OC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, true,  false, false, "[3*]OC.[4*]NC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, true,  false, true,  "[3*]NC.[4*]OC"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
+    {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
+    
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, true,  "[1*]OC.[2*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, false, "[3*]OC.[4*]NC"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, true,  "[3*]OC.[4*]NC"},
+    
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
+    {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
+
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]CC.[2*]C"},
+    
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
+    {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]CC.[4*]C"},
+
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
+    {"C1O[C@]1(OC)NCC",  "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]CC"},
+
+    {"CNOC", "CONC", false, true, false, false, ""},
+    {"PCNOCS", "CONC", false, true, false, false, "[*]S.[3*]P"},
+    {"PCNOCS", "CONC", false, false, false, false, "[1*]S.[2*]P"},
+
+    {"PCONCS", "CONC", false, true, false, false, "[*]P.[3*]S"},
+    {"PCONCS", "CONC", false, false, false, false, "[1*]P.[2*]S"}
+
+  };
+  size_t num_tests = sizeof(tests)/sizeof(CoreTest);
+  for(size_t i=0; i<num_tests; ++i) {
+    ROMOL_SPTR mol(SmilesToMol(tests[i].smiles));
+    ROMOL_SPTR smarts(SmartsToMol(tests[i].smarts));
+    ROMOL_SPTR res(replaceCore(*mol.get(), *smarts.get(),
+                               tests[i].replaceDummies,
+                               tests[i].labelByIndex,
+                               tests[i].requireDummyMatch,
+                               tests[i].useChirality));
+    if(tests[i].expected) {
+      TEST_ASSERT(res.get());
+      std::string smi = MolToSmiles(*res.get(), true);
+      if (smi != tests[i].expected) {
+        std::cerr << i << " " << tests[i].smiles << " " <<
+            tests[i].smarts << " " <<
+            (int)tests[i].replaceDummies << " " <<
+            (int)tests[i].labelByIndex << " " <<
+            (int)tests[i].requireDummyMatch << " " <<
+            (int)tests[i].useChirality << " expected:" <<
+            tests[i].expected << " got => " <<
+            smi << std::endl;
+      }
+      TEST_ASSERT(smi == tests[i].expected);
+    } else {
+      TEST_ASSERT(!res.get());
+    }
+
+    MatchVectType matchV;
+
+    // do the substructure matching and get the atoms that match the query
+    const bool recursionPossible=true;
+    bool matchFound = SubstructMatch(*mol.get(), *smarts.get(), matchV, recursionPossible,
+                                     tests[i].useChirality);
+    TEST_ASSERT(matchFound);
+    res = ROMOL_SPTR(replaceCore(*mol.get(), *smarts.get(), matchV,
+                                 tests[i].replaceDummies,
+                                 tests[i].labelByIndex,
+                                 tests[i].requireDummyMatch));
+                     
+    if(tests[i].expected) {
+      TEST_ASSERT(res.get());
+      std::string smi = MolToSmiles(*res.get(), true);
+      if (smi != tests[i].expected) {
+        std::cerr << i << " " << tests[i].smiles << " " <<
+            tests[i].smarts << " " <<
+            (int)tests[i].replaceDummies << " " <<
+            (int)tests[i].labelByIndex << " " <<
+            (int)tests[i].requireDummyMatch << " " <<
+            (int)tests[i].useChirality << " expected:" <<
+            tests[i].expected << " got => " <<
+            smi << std::endl;
+      }
+      TEST_ASSERT(smi == tests[i].expected);
+    } else {
+      TEST_ASSERT(!res.get());
+    }
+                   
+  }
+}
+
 void testReplaceCoreLabels() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
@@ -712,6 +918,83 @@ void testReplaceCorePositions() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testReplaceCoreMatchVect() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect" << std::endl;
+
+  std::map<std::string, int> expected;
+  expected["[1*]N.[2*]O.[3*]P"] = 1;
+  expected["[1*]N.[2*]P.[3*]O"] = 1;
+  expected["[1*]O.[2*]N.[3*]P"] = 1;
+  expected["[1*]O.[2*]P.[3*]N"] = 1;
+  expected["[1*]P.[2*]N.[3*]O"] = 1;
+  expected["[1*]P.[2*]O.[3*]N"] = 1;
+  
+  const char * smiles = "NC1C(O)C1P";
+  const char * smarts = "*C1C(*)C1*";
+  ROMOL_SPTR mol(SmilesToMol(smiles));
+  ROMOL_SPTR query(SmartsToMol(smarts));
+  
+  std::vector<MatchVectType> matches;
+  const bool uniquify = false;
+  unsigned int matchCount = SubstructMatch(*mol.get(), *query.get(), matches, uniquify);
+  TEST_ASSERT(matchCount);
+
+  std::map<std::string,int> results;
+  const bool replaceDummies = false;
+  for(unsigned int i=0; i<matchCount; ++i) {
+    ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), matches[i], replaceDummies));
+    std::string smi = MolToSmiles(*res.get(), true);
+    results[smi] = results[smi] + 1;
+  }
+
+  TEST_ASSERT(expected == results);
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(1,100) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+  
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(100,1) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(1,-10) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+
+  {
+    MatchVectType fake;
+    fake.push_back( std::make_pair(-10,1) );
+    try {
+      ROMOL_SPTR res(replaceCore(*mol.get(), *query.get(), fake, replaceDummies));
+      TEST_ASSERT(0);
+    } catch (...) {
+      BOOST_LOG(rdInfoLog) << "-- caught error";
+    }
+  }
+}
+   
 void testMurckoDecomp() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing murcko decomposition" << std::endl;
@@ -787,11 +1070,18 @@ void testReplaceCoreRequireDummies() {
     ROMol *mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    ROMol *mol2 = replaceCore(*mol1, *matcher, false, true, false);
+    bool replaceDummies = false;
+    bool labelByIndex = true;
+    bool requireDummyMatch = false;
+    ROMol *mol2 = replaceCore(*mol1, *matcher,
+                              replaceDummies, labelByIndex,
+                              requireDummyMatch);
     TEST_ASSERT(mol2);
     TEST_ASSERT(mol2->getNumAtoms() == 5);
     smi = MolToSmiles(*mol2, true);
-    TEST_ASSERT(smi == "[1*]CC.[4*]C");
+    // If dummies existed and were replaced
+    //  use THEIR atom indices
+    TEST_ASSERT(smi == "[2*]CC.[5*]C");
 
     delete mol1;
     delete mol2;
@@ -800,7 +1090,13 @@ void testReplaceCoreRequireDummies() {
     mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    mol2 = replaceCore(*mol1, *matcher, false, true, true);
+    replaceDummies = false;
+    labelByIndex = true;
+    requireDummyMatch = true;
+    mol2 = replaceCore(*mol1, *matcher,
+                       replaceDummies, labelByIndex,
+                       requireDummyMatch);
+
     TEST_ASSERT(!mol2);
     delete mol1;
 
@@ -808,7 +1104,13 @@ void testReplaceCoreRequireDummies() {
     mol1 = SmilesToMol(smi);
     TEST_ASSERT(mol1);
 
-    mol2 = replaceCore(*mol1, *matcher, false, true, true);
+    replaceDummies = false;
+    labelByIndex = true;
+    requireDummyMatch = true;
+    mol2 = replaceCore(*mol1, *matcher,
+                       replaceDummies, labelByIndex,
+                       requireDummyMatch);
+
     TEST_ASSERT(!mol2);
     delete mol1;
 
@@ -1650,6 +1952,7 @@ int main() {
   testReplaceCoreLabels();
   testReplaceCoreCrash();
   testReplaceCorePositions();
+  testReplaceCoreMatchVect();
 
   testMurckoDecomp();
   testReplaceCoreRequireDummies();
@@ -1670,7 +1973,7 @@ int main() {
   testGithubIssue430();
 #endif
   testGithubIssue511();
-
+  testReplaceCore2();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
