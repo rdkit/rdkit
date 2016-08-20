@@ -423,6 +423,8 @@ ROMol *fragmentOnBonds(
     unsigned int bidx = bond->getBeginAtomIdx();
     unsigned int eidx = bond->getEndAtomIdx();
     Bond::BondType bT = bond->getBondType();
+    Bond::BondDir bD = bond->getBondDir();
+    unsigned int bondidx;
     res->removeBond(bidx, eidx);
     if (nCutsPerAtom) {
       (*nCutsPerAtom)[bidx] += 1;
@@ -441,9 +443,12 @@ ROMol *fragmentOnBonds(
       }
       unsigned int idx1 = res->addAtom(at1, false, true);
       if (bondTypes) bT = (*bondTypes)[i];
-      res->addBond(eidx, at1->getIdx(), bT);
+      bondidx = res->addBond(eidx, at1->getIdx(), bT) - 1;
+      res->getBondWithIdx(bondidx)->setBondDir(bD);
+      
       unsigned int idx2 = res->addAtom(at2, false, true);
-      res->addBond(bidx, at2->getIdx(), bT);
+      bondidx = res->addBond(at2->getIdx(), bidx, bT) - 1;
+      res->getBondWithIdx(bondidx)->setBondDir(bD);
 
       // figure out if we need to change the stereo tags on the atoms:
       if (mol.getAtomWithIdx(bidx)->getChiralTag() ==
