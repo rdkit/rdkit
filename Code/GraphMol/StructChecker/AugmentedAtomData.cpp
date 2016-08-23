@@ -29,20 +29,21 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "AugmentedAtomData.h"
+#include "StructChecker.h"
 
 namespace RDKit {
 namespace StructureCheck {
-namespace {
-struct AugmentedAtom_t {
-  const char * atomSymbol;
-  const char * shortName;
-  int charge;
-  RadicalType radical;
-  AATopology topology;
-};
 
-const AugmentedAtom_t GoodAtoms[] = {
+    struct AugmentedAtom_t {
+        const char *atomSymbol;
+        const char *shortName;
+        int charge;
+        RadicalType radical;
+        AATopology  topology;
+    };
+
+static
+const AugmentedAtom_t DefaultGoodAtoms[] = {
 {"Li,Na,K,Rb,Cs,Fr,Tl", "Li,Na,K,Rb,Cs,Fr,Tl+1", 0, RT_NONE, TP_NONE},
 {"Be,Mg,Ca,Sr,Ba,Ra,Sn,Pb", "Be,Mg,Ca,Sr,Ba,Ra,Sn,Pb+2", 1, RT_NONE, TP_NONE},
 {"Al,Ga,In,Tl,Sb,Bi,Fe", "Al,Ga,In,Tl,Sb,Bi,Fe+3", 2, RT_NONE, TP_NONE},
@@ -652,7 +653,8 @@ const AugmentedAtom_t GoodAtoms[] = {
 {"Zr", "Zr(-N+1)(-N+1)(-N+1)(-N+1)(-N,O)(-N,O)(-N,O)(-N,O)", 0, RT_NONE, TP_NONE}
 };
 
-const AugmentedAtom_t AcidicAtoms[] = {
+static
+const AugmentedAtom_t DefaultAcidicAtoms[] = {
 {"C", "C", 0, RT_NONE, TP_NONE},
 {"C", "C(-A)", 0, RT_NONE, TP_NONE},
 {"C", "C(-A)(-A)", 0, RT_NONE, TP_NONE},
@@ -696,35 +698,5 @@ const AugmentedAtom_t AcidicAtoms[] = {
 {"I", "I", 0, RT_NONE, TP_NONE}
 };
 
-}
-
-void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
-  std::vector<AugmentedAtom> good;
-  good.reserve(sizeof(GoodAtoms)/sizeof(AugmentedAtom));
-  
-  for(size_t i=0; i<sizeof(GoodAtoms)/sizeof(AugmentedAtom); ++i) {
-    good.push_back(AugmentedAtom(GoodAtoms[i].atomSymbol,
-                                 GoodAtoms[i].shortName,
-                                 GoodAtoms[i].charge,
-                                 GoodAtoms[i].radical,
-                                 GoodAtoms[i].topology));
-  }
-
-  std::vector<AugmentedAtom> acidic;
-  acidic.reserve(sizeof(AcidicAtoms)/sizeof(AugmentedAtom));
-  
-  for(size_t i=0; i<sizeof(AcidicAtoms)/sizeof(AugmentedAtom); ++i) {
-    acidic.push_back(AugmentedAtom(AcidicAtoms[i].atomSymbol,
-                                   AcidicAtoms[i].shortName,
-                                   AcidicAtoms[i].charge,
-                                   AcidicAtoms[i].radical,
-                                   AcidicAtoms[i].topology));
-  }
-  
-  struchkOpts.setGoodAugmentedAtoms(good);
-  struchkOpts.setAcidicAugmentedAtoms(acidic);
-  
-}
-
-} // namespace StructureCheck
+ } // namespace StructureCheck
 } // RDKit

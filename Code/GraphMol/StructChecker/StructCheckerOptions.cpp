@@ -18,31 +18,12 @@
 #include "../FileParsers/FileParsers.h"
 #include "../FileParsers/MolSupplier.h" //SDF
 #include "../SmilesParse/SmilesParse.h"
-#include "AugmentedAtomData.h"
 #include "StructChecker.h"
+
+#include "AugmentedAtomData.cpp"
 
 namespace RDKit {
     namespace StructureCheck {
-
-        StructCheckerOptions::StructCheckerOptions() : AcidityLimit(0.0)
-            , RemoveMinorFragments(false)
-            , DesiredCharge(0)
-            , CheckCollisions(false)
-            , CollisionLimitPercent(0)
-            , MaxMolSize(255)
-            , ConvertSText(false)
-            , SqueezeIdentifiers(false)
-            , StripZeros(false)
-            , CheckStereo(false)
-            , ConvertAtomTexts(false)
-            , GroupsToSGroups(false)
-            , Verbose(false)
-            , Elneg0(0.0)   // elneg_table[0].value;
-            , Alpha (0.0)
-            , Beta  (0.0)
-        {
-            loadDefaultAugmentedAtoms(*this);
-        }
 
         bool parseOptionsJSON(const std::string &json, StructCheckerOptions &op) {
             if (json.empty())
@@ -459,6 +440,40 @@ bool ReadAAPairs(const std::string &path, std::vector<std::pair<AugmentedAtom, A
 }
 
 //=====================================================================
+static
+void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
+    std::vector<AugmentedAtom> good;
+    good.reserve(sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms));
+
+    for (size_t i = 0; i<sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms); ++i) {
+        good.push_back(AugmentedAtom("",
+            DefaultGoodAtoms[i].shortName,
+            DefaultGoodAtoms[i].charge,
+            DefaultGoodAtoms[i].radical,
+            DefaultGoodAtoms[i].topology));
+        if (!StringToAugmentedAtom(DefaultGoodAtoms[i].atomSymbol, good.back())) {
+            throw "INTERNAL ERROR in default data";
+        }
+    }
+
+    std::vector<AugmentedAtom> acidic;
+    acidic.reserve(sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms));
+
+    for (size_t i = 0; i<sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms); ++i) {
+        acidic.push_back(AugmentedAtom("",
+            DefaultAcidicAtoms[i].shortName,
+            DefaultAcidicAtoms[i].charge,
+            DefaultAcidicAtoms[i].radical,
+            DefaultAcidicAtoms[i].topology));
+        if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].atomSymbol, acidic.back())) {
+            throw "INTERNAL ERROR in default data";
+        }
+    }
+    struchkOpts.setGoodAugmentedAtoms(good);
+    struchkOpts.setAcidicAugmentedAtoms(acidic);
+
+}
+//=====================================================================
 
 bool StructCheckerOptions::loadAugmentedAtomTranslations(const std::string &path) {
     AugmentedAtomPairs.clear();
@@ -666,6 +681,26 @@ bool loadChargeDataTables(const std::string &path) {
     std::vector<path_entry_t> alpha_path_table, beta_path_table;
 */
     return true;
+}
+
+StructCheckerOptions::StructCheckerOptions() : AcidityLimit(0.0)
+, RemoveMinorFragments(false)
+, DesiredCharge(0)
+, CheckCollisions(false)
+, CollisionLimitPercent(0)
+, MaxMolSize(255)
+, ConvertSText(false)
+, SqueezeIdentifiers(false)
+, StripZeros(false)
+, CheckStereo(false)
+, ConvertAtomTexts(false)
+, GroupsToSGroups(false)
+, Verbose(false)
+, Elneg0(0.0)   // elneg_table[0].value;
+, Alpha (0.0)
+, Beta  (0.0)
+{
+    loadDefaultAugmentedAtoms(*this);
 }
 
  }// namespace StructureCheck

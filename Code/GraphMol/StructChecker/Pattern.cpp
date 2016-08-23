@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <map>
+#include "../QueryAtom.h"
 #include "Pattern.h"
 
 namespace RDKit {
@@ -60,6 +61,31 @@ bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charg
         && l.Charge != ANY_CHARGE  && a.getFormalCharge() != l.Charge)
         return false;
     return (AtomSymbolMatch(a.getSymbol(), l.AtomSymbol));
+}
+
+static void applyAtomSymbolList(const std::string symbol, Atom &atom) {
+// replace mol atom with Ligrad.AtomSymbol
+    // single atom symbol:
+    if (std::string::npos == symbol.find(',')) {
+        atom.setAtomicNum(getAtomicNumber(symbol));
+        return;
+    }
+    // comma separated list of atom symbols:
+    char *context;
+#ifdef WIN32
+#define strtok_r strtok_s   // thread safe strtok()
+#endif
+    const char *atsym = symbol.c_str();
+    char buf[512];
+    char *tokp;
+    strcpy(buf, symbol.c_str());
+    tokp = strtok_r(buf, ",", &context);
+    atom.setAtomicNum(getAtomicNumber(tokp));
+    QueryAtom a(atom); // copy all mol's atom properties to keep its
+    for (tokp = strtok_r((char *)NULL, ",", &context); tokp; tokp = strtok_r((char *)NULL, ",", &context)) {
+         a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)), Queries::COMPOSITE_OR);
+     }
+    atom = a;
 }
 
 struct AtomNeighbor {
@@ -160,11 +186,10 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
                     {
 //AVALON pattern.c:154
 //                    if (al->getSymbol() != ligand.AtomSymbol) // pattern.c:154
-//                        al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol)); //??? list like "C,N" from file ???
-//TODO: compare RDKit query with comma separated ligand.AtomSymbol
+//                        al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol)); //??? list like "C,N"
+//TODO: compare RDKit query atom with comma separated ligand.AtomSymbol
                         if (!AtomSymbolMatch(al->getSymbol(), ligand.AtomSymbol)) {
-//TODO: parse comma separated ligand.AtomSymbol to RDKit query
-                            al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol));
+                            applyAtomSymbolList(ligand.AtomSymbol, *al);
                         }
                     }
                     if (al->getFormalCharge() != ligand.Charge)

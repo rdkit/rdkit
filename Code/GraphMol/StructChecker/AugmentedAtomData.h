@@ -28,14 +28,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-
+#pragma once
 #ifndef _RDKIT_AUGMENTEDATOMDATA_H_
 #define _RDKIT_AUGMENTEDATOMDATA_H_
 #include "StructChecker.h"
 
 namespace RDKit {
   namespace StructureCheck {
-    void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts);
+      struct AugmentedAtom_t {
+          const char *atomSymbol;
+          const char *shortName;
+          int charge;
+          RadicalType radical;
+          AATopology  topology;
+      };
+      extern const AugmentedAtom_t *GoodAtoms;
+      extern const AugmentedAtom_t *AcidicAtoms;
   }
 }
 
