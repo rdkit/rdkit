@@ -400,6 +400,52 @@ class TestCase(unittest.TestCase) :
                     - mol2.GetConformer().GetAtomPosition(i)).LengthSq()
             msd /= mol.GetNumAtoms()
             self.assertTrue(msd < MSD_TOLERANCE)
+    def _compareConfs(self,mol,ref,molConfId,refConfId):
+        self.assertEqual(mol.GetNumAtoms(),ref.GetNumAtoms());
+        molConf = mol.GetConformer(molConfId)
+        refConf = mol.GetConformer(refConfId)
+        for i in range(mol.GetNumAtoms()):
+            mp = molConf.GetAtomPosition(i)
+            rp = refConf.GetAtomPosition(i)
+            self.assertAlmostEqual((mp-rp).Length(),0.0,4)
+    def test9EmbedParams(self):
+        mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
+
+        fn = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
+                             'test_data','simple_torsion.dg.mol')
+        ref = Chem.MolFromMolFile(fn,removeHs=False)
+        params = rdDistGeom.EmbedParameters()
+        params.randomSeed=42
+        self.assertEqual(rdDistGeom.EmbedMolecule(mol,params),0)
+        self._compareConfs(mol,ref,0,0)
+
+        fn = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
+                             'test_data','simple_torsion.etdg.mol')
+        ref = Chem.MolFromMolFile(fn,removeHs=False)
+        params = rdDistGeom.EmbedParameters()
+        params.randomSeed=42
+        params.useExpTorsionAnglePrefs=True
+        self.assertEqual(rdDistGeom.EmbedMolecule(mol,params),0)
+        self._compareConfs(mol,ref,0,0)
+
+        fn = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
+                             'test_data','simple_torsion.etkdg.mol')
+        ref = Chem.MolFromMolFile(fn,removeHs=False)
+        params = rdDistGeom.EmbedParameters()
+        params.randomSeed=42
+        params.useExpTorsionAnglePrefs=True
+        params.useBasicKnowledge=True
+        self.assertEqual(rdDistGeom.EmbedMolecule(mol,params),0)
+        self._compareConfs(mol,ref,0,0)
+
+        fn = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
+                             'test_data','simple_torsion.kdg.mol')
+        ref = Chem.MolFromMolFile(fn,removeHs=False)
+        params = rdDistGeom.EmbedParameters()
+        params.randomSeed=42
+        params.useBasicKnowledge=True
+        self.assertEqual(rdDistGeom.EmbedMolecule(mol,params),0)
+        self._compareConfs(mol,ref,0,0)
 
 
 if __name__ == '__main__':
