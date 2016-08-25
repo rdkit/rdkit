@@ -224,6 +224,7 @@ INT_VECT EmbedMultipleConfs(
 
 struct EmbedParameters {
   unsigned int maxIterations;
+  int numThreads;
   int randomSeed;
   bool clearConfs;
   bool useRandomCoords;
@@ -241,6 +242,7 @@ struct EmbedParameters {
   double pruneRmsThresh;
   EmbedParameters()
       : maxIterations(0),
+        numThreads(1),
         randomSeed(-1),
         clearConfs(true),
         useRandomCoords(false),
@@ -266,15 +268,22 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
       params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
       params.basinThresh);
 }
+inline void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
+                               const EmbedParameters &params) {
+  EmbedMultipleConfs(
+      mol, res, numConfs, params.numThreads, params.maxIterations,
+      params.randomSeed, params.clearConfs, params.useRandomCoords,
+      params.boxSizeMult, params.randNegEig, params.numZeroFail,
+      params.pruneRmsThresh, params.coordMap, params.optimizerForceTol,
+      params.ignoreSmoothingFailures, params.enforceChirality,
+      params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
+      params.basinThresh);
+}
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    const EmbedParameters &params) {
-  return EmbedMultipleConfs(
-      mol, numConfs, params.maxIterations, params.randomSeed, params.clearConfs,
-      params.useRandomCoords, params.boxSizeMult, params.randNegEig,
-      params.numZeroFail, params.pruneRmsThresh, params.coordMap,
-      params.optimizerForceTol, params.ignoreSmoothingFailures,
-      params.enforceChirality, params.useExpTorsionAnglePrefs,
-      params.useBasicKnowledge, params.verbose, params.basinThresh);
+  INT_VECT res;
+  EmbedMultipleConfs(mol, res, numConfs, params);
+  return res;
 }
 }
 }
