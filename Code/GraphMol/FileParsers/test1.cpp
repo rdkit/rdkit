@@ -4458,6 +4458,49 @@ void testSupplementalSmilesLabel() {
   TEST_ASSERT(getSupplementalSmilesLabel(mol->getAtomWithIdx(0)) == "xxx");
 }
 
+void testGithub1034() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1034: Squiggle bonds from CTABs lost post-parsing"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase + "github1034.1.mol";
+    bool sanitize = true;
+    RWMol *m = MolFileToMol(fName, sanitize);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() != Bond::UNKNOWN);
+    TEST_ASSERT(
+        m->getBondWithIdx(2)->hasProp(common_properties::_UnknownStereo));
+  }
+  {
+    std::string fName;
+    fName = rdbase + "github1034.1.mol";
+    bool sanitize = false;
+    RWMol *m = MolFileToMol(fName, sanitize);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+    MolOps::assignStereochemistry(*m, true, true);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4539,8 +4582,9 @@ void RunTests() {
   testParseCHG();
   testMDLAtomProps();
   testSupplementalSmilesLabel();
-#endif
   testGithub1023();
+#endif
+  testGithub1034();
 }
 
 // must be in German Locale for test...
