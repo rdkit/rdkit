@@ -1,0 +1,72 @@
+310928901
+  -OEChem-07211613022D
+
+  9  9  0     0  0  0  0  0  0999 V2000
+    1.3673   -0.2100    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3673    0.0675    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+   -0.6529    1.3050    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6529    0.4800    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0
+    0.9548   -0.9245    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0616    0.0675    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1479   -0.7530    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8153    0.4031    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4652   -1.3050    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  5  1  0  0  0  0
+  1  8  1  0  0  0  0
+  2  4  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  6  1  0  0  0  0
+  5  7  2  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+M  CHG  2   2  -1   4   1
+M  END
+> <PUBCHEM_COMPOUND_ID_TYPE>
+0
+
+> <PUBCHEM_TOTAL_CHARGE>
+0
+
+> <PUBCHEM_SUBSTANCE_ID>
+310928901
+
+> <PUBCHEM_SUBSTANCE_VERSION>
+1
+
+> <PUBCHEM_EXT_DATASOURCE_NAME>
+11752
+
+> <PUBCHEM_EXT_DATASOURCE_REGID>
+BD233904
+
+> <PUBCHEM_SUBSTANCE_SYNONYM>
+1073-18-3
+3-Methyl-4-nitroisothiazole
+
+> <PUBCHEM_GENERIC_REGISTRY_NAME>
+1073-18-3
+
+> <PUBCHEM_XREF_EXT_ID>
+BD233904
+
+> <PUBCHEM_EXT_DATASOURCE_URL>
+http://www.bidepharmatech.com/en/index.html
+
+> <PUBCHEM_EXT_SUBSTANCE_URL>
+http://www.bidepharmatech.com/en/goodsview_goodscode_BD233904.html
+
+> <PUBCHEM_CID_ASSOCIATIONS>
+23261603  1
+
+> <PUBCHEM_COORDINATE_TYPE>
+1
+3
+
+> <EXPECTED>
+[]
+
+> <GOT>
+['atom_check_failed']
+
+$$$$

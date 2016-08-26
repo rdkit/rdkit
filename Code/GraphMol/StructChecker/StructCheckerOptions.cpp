@@ -87,8 +87,7 @@ namespace RDKit {
 //=====================================================================
 // File parsers helper functions:
 
-static const
-    char* bond_to_string[] = // ordered in according with BondType values
+static const char* bond_to_string[] = // ordered in according with BondType values
     {
         "?",
         "-",
@@ -101,7 +100,7 @@ static const
         "*"
     };
 
-static
+//used in unit test
 bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
 /*
 * The syntax of a augmented atom string is as follows:
@@ -446,12 +445,17 @@ void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
     good.reserve(sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms));
 
     for (size_t i = 0; i<sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms); ++i) {
-        good.push_back(AugmentedAtom("",
-            DefaultGoodAtoms[i].shortName,
-            DefaultGoodAtoms[i].charge,
-            DefaultGoodAtoms[i].radical,
-            DefaultGoodAtoms[i].topology));
-        if (!StringToAugmentedAtom(DefaultGoodAtoms[i].atomSymbol, good.back())) {
+//DEBUG:
+if (i >= 12 && i <= 21) // 'C'
+    BOOST_LOG(rdInfoLog) << "loadDefaultAugmentedAtoms i=" << i << "\n";
+
+        good.push_back(AugmentedAtom());
+            //"",
+            //DefaultGoodAtoms[i].str,
+            //DefaultGoodAtoms[i].charge,
+            //DefaultGoodAtoms[i].radical,
+            //DefaultGoodAtoms[i].topology));
+        if (!StringToAugmentedAtom(DefaultGoodAtoms[i].str, good.back())) {
             throw "INTERNAL ERROR in default data";
         }
     }
@@ -460,12 +464,13 @@ void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
     acidic.reserve(sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms));
 
     for (size_t i = 0; i<sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms); ++i) {
-        acidic.push_back(AugmentedAtom("",
-            DefaultAcidicAtoms[i].shortName,
-            DefaultAcidicAtoms[i].charge,
-            DefaultAcidicAtoms[i].radical,
-            DefaultAcidicAtoms[i].topology));
-        if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].atomSymbol, acidic.back())) {
+        acidic.push_back(AugmentedAtom());
+            //"",
+            //DefaultAcidicAtoms[i].str,
+            //DefaultAcidicAtoms[i].charge,
+            //DefaultAcidicAtoms[i].radical,
+            //DefaultAcidicAtoms[i].topology));
+        if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].str, acidic.back())) {
             throw "INTERNAL ERROR in default data";
         }
     }

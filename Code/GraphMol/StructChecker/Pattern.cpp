@@ -223,7 +223,7 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
 * Recursively searches *mp for the next atom to be appended to
 * match[0..level]. Returns TRUE if all ligands in aap are mapped
 * successfully. nbp[i] describes the neighbour bonds and atoms
-* of atom i+1.
+* of atom i.
 */
 bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
               const AugmentedAtom &aa,  const std::vector<Neighbourhood> &nbp, bool verbose) {
@@ -234,6 +234,13 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
     const Neighbourhood &nbph = nbp[match[0]];
     
     for (unsigned i = 0; i < nbph.Atoms.size(); i++) {
+        is_new = true;
+        for (unsigned j = 1; j < match.size(); j++)
+            if (nbph.Atoms[i] == match[j])
+                is_new = false;
+        if (!is_new)
+            continue;
+
         const Atom &atom = *mol.getAtomWithIdx(nbph.Atoms[i]);
         const Bond &bond = *mol.getBondWithIdx(nbph.Bonds[i]);
         const Ligand& au_ligand = aa.Ligands[level];
@@ -245,22 +252,17 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
             && (au_ligand.SubstitutionCount == 0 ||
                 nbp[nbph.Atoms[i]].Atoms.size() == au_ligand.SubstitutionCount)
             && AtomSymbolMatch(atom.getSymbol(), au_ligand.AtomSymbol)) {
-            is_new = true;
-            while(match.size() <= level + 1)
-               match.push_back(0);
-            match[level + 1] = nbph.Atoms[i];
-            for (unsigned j = 0; j <= level; j++)
-                if (nbph.Atoms[i] == match[j])
-                    is_new = false;
-            if (is_new && RecMatch(mol, match, level + 1, aa, nbp, verbose)) {
-//                if (verbose)
-//                    BOOST_LOG(rdInfoLog) << "RecMatch level=" << level << " ret TRUE\n";
+
+            match.push_back(nbph.Atoms[i]);
+            if (RecMatch(mol, match, level + 1, aa, nbp, verbose)) {
+                if (verbose)
+                    BOOST_LOG(rdInfoLog) << "RecMatch level=" << level << " ret TRUE\n";
                 return true;
             }
         }
     }
-//    if (verbose)
-//        BOOST_LOG(rdInfoLog) << "RecMatch level="<< level << " ret FALSE\n";
+    if (verbose)
+        BOOST_LOG(rdInfoLog) << "RecMatch level="<< level << " ret FALSE\n";
     return false;
 }
 
@@ -291,7 +293,7 @@ bool AAMatch(const ROMol &mol, unsigned i,
             return false;
         }
         if(match.size() == 0) {
-           match.push_back(0);
+           match.push_back(i);
         }
         match[0] = i;
         return RecMatch(mol, match, 0, aa, nbp, verbose);
@@ -342,7 +344,6 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
     if (good_atoms.empty())
         return true;
     std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
-    std::vector<unsigned> match;    //[MAXNEIGHBOURS + 1];
     std::vector<unsigned> atom_status(mol.getNumAtoms());
     std::vector<unsigned> bond_status(mol.getNumBonds());
 //    if(verbose)
@@ -366,17 +367,33 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
         {
             // check for ring state of central atom. Ring matches to ring only
             if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
+//DEBUG:
+                if (verbose && j >= 12 && j <= 21) // 'C'
+                    BOOST_LOG(rdInfoLog) << "UNMATCHED ring state RING of atom idx=" << i << " "
+                    << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << "\n";
                 continue;
             }
             if (good_atoms[j].Topology == CHAIN && 0 != atom_status[i]) {
+//DEBUG:
+                if (verbose && j >= 12 && j <= 21) // 'C'
+                    BOOST_LOG(rdInfoLog) << "UNMATCHED ring state CHAIN of atom idx=" << i << " "
+                    << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << "\n";
                 continue;
             }
 
+//DEBUG:
+            if (verbose && j >= 12 && j <= 21) // 'C'
+                BOOST_LOG(rdInfoLog) << "AAMatch";
+
+            std::vector<unsigned> match;    //unused [MAXNEIGHBOURS + 1];
             if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size()
-             && AAMatch(mol, i, match, good_atoms[j], atom_status, neighbours, verbose)) {
+                && AAMatch(mol, i, match, good_atoms[j], atom_status, neighbours, verbose)) {
                 nmatch++;
                 break;
             }
+//DEBUG:
+            else if (verbose && j >= 12 && j <= 21) // 'C'
+                BOOST_LOG(rdInfoLog) << " ret FALSE\n";
         }
         if (verbose && nmatch == prevn) // UNMATCHED atom
             BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "

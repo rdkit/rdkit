@@ -35,8 +35,8 @@ namespace RDKit {
 namespace StructureCheck {
 
     struct AugmentedAtom_t {
-        const char *atomSymbol;
-        const char *shortName;
+        const char *dummy;    // atomSymbol;
+        const char *str;    // atomSymbol; shortName;
         int charge;
         RadicalType radical;
         AATopology  topology;
