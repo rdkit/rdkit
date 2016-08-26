@@ -884,25 +884,25 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
           (*bondIt)->getStereoAtoms().clear();
         }
       }
-      if (!hasStereoBonds && (*bondIt)->getBondType() == Bond::DOUBLE) {
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getBeginAtom());
-        while (!hasStereoBonds && beg != end) {
-          const BOND_SPTR nbond = mol[*beg];
-          ++beg;
-          if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
-              nbond->getBondDir() == Bond::ENDUPRIGHT) {
-            hasStereoBonds = true;
-          }
+    }
+    if (!hasStereoBonds && (*bondIt)->getBondType() == Bond::DOUBLE) {
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getBeginAtom());
+      while (!hasStereoBonds && beg != end) {
+        const BOND_SPTR nbond = mol[*beg];
+        ++beg;
+        if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
+            nbond->getBondDir() == Bond::ENDUPRIGHT) {
+          hasStereoBonds = true;
         }
-        boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getEndAtom());
-        while (!hasStereoBonds && beg != end) {
-          const BOND_SPTR nbond = mol[*beg];
-          ++beg;
-          if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
-              nbond->getBondDir() == Bond::ENDUPRIGHT) {
-            hasStereoBonds = true;
-          }
+      }
+      boost::tie(beg, end) = mol.getAtomBonds((*bondIt)->getEndAtom());
+      while (!hasStereoBonds && beg != end) {
+        const BOND_SPTR nbond = mol[*beg];
+        ++beg;
+        if (nbond->getBondDir() == Bond::ENDDOWNRIGHT ||
+            nbond->getBondDir() == Bond::ENDUPRIGHT) {
+          hasStereoBonds = true;
         }
       }
     }
