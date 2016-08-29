@@ -303,6 +303,20 @@ ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what) {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(int what) {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      what, queryAtomNumRadicalElectrons);
+  res->setDescription("AtomNumRadicalElectrons");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery() {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasChiralTag);
+  res->setDescription("AtomHasChiralTag");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryIsAtomInRing);

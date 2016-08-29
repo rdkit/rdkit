@@ -117,6 +117,13 @@ static inline int queryAtomFormalCharge(Atom const *at) {
 static inline int queryAtomHybridization(Atom const *at) {
   return at->getHybridization();
 };
+static inline int queryAtomNumRadicalElectrons(Atom const *at) {
+  return at->getNumRadicalElectrons();
+};
+static inline int queryAtomHasChiralTag(Atom const *at) {
+  return at->getChiralTag() != Atom::CHI_UNSPECIFIED;
+};
+
 unsigned int queryAtomBondProduct(Atom const *at);
 unsigned int queryAtomAllBondProduct(Atom const *at);
 
@@ -327,6 +334,23 @@ T *makeAtomHybridizationQuery(int what, const std::string &descr) {
 }
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what);
+
+//! returns a Query for matching the number of radical electrons
+template <class T>
+T *makeAtomNumRadicalElectronsQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNumRadicalElectrons, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(int what);
+
+//! returns a Query for matching whether or not chirality has been set on the
+//! atom
+template <class T>
+T *makeAtomHasChiralTagQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(true, queryAtomHasChiralTag, descr);
+}
+//! \overloadquery
+ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery();
 
 //! returns a Query for matching atoms with unsaturation:
 template <class T>
@@ -597,25 +621,23 @@ class HasPropWithValueQuery
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
       } catch (KeyErrorException e) {
         res = false;
-        }
-        catch (boost::bad_any_cast) {
-          res = false;
-        }
+      } catch (boost::bad_any_cast) {
+        res = false;
+      }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                            \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
         res = false;
       }
 #endif
-#endif        
+#endif
     }
     if (this->getNegation()) {
       res = !res;
@@ -667,18 +689,17 @@ class HasPropWithValueQuery<TargetPtr, std::string>
         res = false;
       }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                             \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
-          res = false;
-        }
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
+        res = false;
+      }
 #endif
 #endif
     }
