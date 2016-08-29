@@ -354,6 +354,14 @@ BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   return res;
 }
 
+BOND_EQUALS_QUERY *makeBondHasStereoQuery() {
+  BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondHasStereo);
+  res->setDescription("BondStereo");
+  return res;
+}
+
 BOND_EQUALS_QUERY *makeBondIsInRingQuery() {
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
   res->setVal(true);

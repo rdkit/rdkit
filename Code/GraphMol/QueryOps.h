@@ -139,6 +139,9 @@ static inline int queryBondDir(Bond const *bond) {
 static inline int queryIsBondInNRings(Bond const *at) {
   return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
 };
+static inline int queryBondHasStereo(Bond const *bnd) {
+  return bnd->getStereo() > Bond::STEREONONE;
+};
 
 // -------------------------------------------------
 // ring queries
@@ -407,6 +410,8 @@ ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery();
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);
 //! returns a Query for matching bond directions
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what);
+//! returns a Query for matching bonds with stereo set
+BOND_EQUALS_QUERY *makeBondHasStereoQuery();
 //! returns a Query for matching ring bonds
 BOND_EQUALS_QUERY *makeBondIsInRingQuery();
 //! returns a Query for matching bonds in rings of a particular size

@@ -721,6 +721,29 @@ void testExtraAtomQueries() {
   }
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
+void testExtraBondQueries() {
+  BOOST_LOG(rdErrorLog) << "---------------------- Test extra bond queries"
+                        << std::endl;
+
+  {  // stereo
+    QueryBond qB;
+    qB.setQuery(makeBondHasStereoQuery());
+    Bond b1(Bond::DOUBLE);
+    TEST_ASSERT(!qB.Match(&b1));
+    b1.setStereo(Bond::STEREOE);
+    TEST_ASSERT(qB.Match(&b1));
+    b1.setStereo(Bond::STEREOANY);
+    TEST_ASSERT(qB.Match(&b1));
+    qB.getQuery()->setNegation(true);
+    b1.setStereo(Bond::STEREONONE);
+    TEST_ASSERT(qB.Match(&b1));
+    b1.setStereo(Bond::STEREOE);
+    TEST_ASSERT(!qB.Match(&b1));
+    b1.setStereo(Bond::STEREOANY);
+    TEST_ASSERT(!qB.Match(&b1));
+  }
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -740,6 +763,7 @@ int main() {
   testHasPropWithDoubleValueMatch();
 #endif
   testExtraAtomQueries();
+  testExtraBondQueries();
 
   return 0;
 }
