@@ -165,6 +165,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
       clearDrawing();
     }
     extractAtomCoords(mol, confId, true);
+    extractAtomSymbols(mol);
     calculateScale();
     // make sure the font doesn't end up too large (the constants are empirical)
     if (scale_ <= 40.) {
@@ -174,8 +175,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     }
   } else {
     extractAtomCoords(mol, confId, false);
+    extractAtomSymbols(mol);
   }
-  extractAtomSymbols(mol);
 
   // std::cerr << "scale: " << scale_ << " font_size_: " << font_size_
   //           << std::endl;
