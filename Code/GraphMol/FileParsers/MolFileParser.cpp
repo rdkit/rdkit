@@ -294,11 +294,11 @@ void ParseSGroup2000STYLine(RWMol *mol, const std::string &text,
       errout << "SGroup line too short: '" << text << "' on line " << line;
       throw FileParseException(errout.str());
     }
-#if 0        
+#if 0
         int nbr;
         try {
           nbr = FileParserUtils::toInt(text.substr(spos,4));
-        } 
+        }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
           errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
@@ -462,7 +462,8 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
           case 6:
             BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. "
                                        "This will not match degree >6. The MDL "
-                                       "spec says it should.  line: " << line;
+                                       "spec says it should.  line: "
+                                    << line;
             q->setVal(6);
             break;
           default:
@@ -523,7 +524,8 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
           std::ostringstream errout;
           errout << "Value " << count << " is not supported as an unsaturation "
                                          "query (only 0 and 1 are allowed). "
-                                         "line: " << line;
+                                         "line: "
+                 << line;
           throw FileParseException(errout.str());
         }
       }
@@ -2460,7 +2462,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       if (nAtoms != 0 || nBonds != 0) {
         std::ostringstream errout;
         errout << "V3000 mol blocks should have 0s in the initial counts line. "
-                  "(line: " << line << ")";
+                  "(line: "
+               << line << ")";
         if (strictParsing) {
           delete res;
           res = NULL;

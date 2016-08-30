@@ -766,6 +766,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   std::vector<Bond *> followupBonds;
 
   Bond *bond1 = 0, *obond1 = 0;
+  bool squiggleBondSeen = false;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg].get();
@@ -788,11 +789,17 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         bond1 = tBond;
       }
     }
+    if (tBond->getBondType() == Bond::SINGLE &&
+        tBond->getBondDir() == Bond::UNKNOWN) {
+      squiggleBondSeen = true;
+      break;
+    }
+
     ++beg;
   }
-  if (!bond1) {
-    // no single bonds from the beginning atom, mark
-    // the double bond as directionless and return:
+  // Don't do any direction setting if we've seen a squiggle bond, but do mark
+  // the double bond as a crossed bond and return
+  if (!bond1 || squiggleBondSeen) {
     dblBond->setBondDir(Bond::EITHERDOUBLE);
     return;
   }
@@ -820,9 +827,17 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
         bond2 = tBond;
       }
     }
+    if (tBond->getBondType() == Bond::SINGLE &&
+        tBond->getBondDir() == Bond::UNKNOWN) {
+      squiggleBondSeen = true;
+      break;
+    }
+
     ++beg;
   }
-  if (!bond2) {
+  // Don't do any direction setting if we've seen a squiggle bond, but do mark
+  // the double bond as a crossed bond and return
+  if (!bond2 || squiggleBondSeen) {
     dblBond->setBondDir(Bond::EITHERDOUBLE);
     return;
   }

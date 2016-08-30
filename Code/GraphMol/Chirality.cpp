@@ -319,9 +319,10 @@ void findAtomNeighborDirHelper(const ROMol &mol, const Atom *atom,
     // check whether this bond is explictly set to have unknown stereo
     if (!hasExplicitUnknownStereo) {
       int explicit_unknown_stereo;
-      if (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                      explicit_unknown_stereo) &&
-          explicit_unknown_stereo)
+      if (bond->getBondDir() == Bond::UNKNOWN  // there's a squiggle bond
+          || (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                          explicit_unknown_stereo) &&
+              explicit_unknown_stereo))
         hasExplicitUnknownStereo = true;
     }
 
@@ -875,10 +876,13 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     if (cleanIt) {
-      if ((*bondIt)->getBondType() == Bond::DOUBLE &&
-          (*bondIt)->getStereo() != Bond::STEREOANY) {
-        (*bondIt)->setStereo(Bond::STEREONONE);
-        (*bondIt)->getStereoAtoms().clear();
+      if ((*bondIt)->getBondType() == Bond::DOUBLE) {
+        if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
+          (*bondIt)->setStereo(Bond::STEREOANY);
+        } else if ((*bondIt)->getStereo() != Bond::STEREOANY) {
+          (*bondIt)->setStereo(Bond::STEREONONE);
+          (*bondIt)->getStereoAtoms().clear();
+        }
       }
     }
     if (!hasStereoBonds && (*bondIt)->getBondType() == Bond::DOUBLE) {
@@ -903,7 +907,6 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       }
     }
   }
-
   UINT_VECT atomRanks;
   bool keepGoing = hasStereoAtoms | hasStereoBonds;
   bool changedStereoAtoms, changedStereoBonds;
@@ -1105,11 +1108,12 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
                 dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
                 dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
               }  // end of different number of neighbors on beg and end atoms
-            }  // end of check that beg and end atoms have at least 1 neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+            }    // end of check that beg and end atoms have at least 1
+                 // neighbor:
+          }      // end of 2 and 3 coordinated atoms only
+        }        // end of we want it or CIP code is not set
+      }          // end of double bond
+    }            // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
