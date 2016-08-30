@@ -301,12 +301,12 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   if (drawOptions().flagCloseContactsDist >= 0) {
     highlightCloseContacts();
   }
-  {
-    Point2D p1(0, 0), p2(0, 0), offset(0.1, 0.1);
-    p1 -= offset;
-    p2 += offset;
-    drawEllipse(p1, p2);
-  }
+  // {
+  //   Point2D p1(0, 0), p2(0, 0), offset(0.1, 0.1);
+  //   p1 -= offset;
+  //   p2 += offset;
+  //   drawEllipse(p1, p2);
+  // }
 }
 
 void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
@@ -320,7 +320,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                highlight_bond_map, highlight_radii, confId);
   if (legend != "") {
     // the 0.94 is completely empirical and was brought over from Python
-    Point2D loc = getAtomCoords(std::make_pair(width_ / 2., 0.94 * height_));
+    Point2D loc =
+        getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
 
     double o_font_size = fontSize();
     setFontSize(options_.legendFontSize /
@@ -492,6 +493,9 @@ void MolDraw2D::calculateScale(int width, int height) {
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
     Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
+    // that used the offset, we need to remove that:
+    mid.x -= x_offset_;
+    mid.y += y_offset_;
     x_trans_ = (width / 2 - mid.x) / scale_;
     y_trans_ = (mid.y - height / 2) / scale_;
     // std::cerr << " mid: " << mid << " " << scale_ << "    " << x_trans_ <<

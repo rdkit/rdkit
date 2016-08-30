@@ -1498,6 +1498,72 @@ M  END";
   std::cerr << " Done" << std::endl;
 }
 
+void test11DrawMolGrid() {
+  std::cout << " ----------------- Testing drawing a grid of molecules"
+            << std::endl;
+
+  std::string smiles =
+      "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
+  RWMol *m1 = SmilesToMol(smiles);
+  TEST_ASSERT(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  RDGeom::Point3D c1 = MolTransforms::computeCentroid(m1->getConformer());
+  for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = m1->getConformer().getAtomPos(i);
+    p -= c1;
+  }
+  smiles = "NC(=O)[C@H](Cl)Sc1ncns1";  // made up
+  RWMol *m2 = SmilesToMol(smiles);
+  TEST_ASSERT(m2);
+  MolDraw2DUtils::prepareMolForDrawing(*m2);
+  RDGeom::Point3D c2 = MolTransforms::computeCentroid(m2->getConformer());
+  for (unsigned int i = 0; i < m2->getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
+    p -= c2;
+  }
+
+  {
+    MolDraw2DSVG drawer(500, 400, 250, 200);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*m2, "m2");
+    drawer.setOffset(0, 200);
+    drawer.drawMolecule(*m2, "m3");
+    drawer.setOffset(250, 200);
+    drawer.drawMolecule(*m1, "m4");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test11_1.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+  }
+  {  // drawing "out of order"
+    MolDraw2DSVG drawer(500, 400, 250, 200);
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.setOffset(0, 0);
+    drawer.drawMolecule(*m2, "m2");
+    drawer.setOffset(0, 200);
+    drawer.drawMolecule(*m1, "m3");
+    drawer.setOffset(250, 200);
+    drawer.drawMolecule(*m2, "m4");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test11_2.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+  }
+  delete m1;
+  delete m2;
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 0
@@ -1522,4 +1588,5 @@ int main() {
   testDeuteriumTritium();
 #endif
   test10DrawSecondMol();
+  test11DrawMolGrid();
 }
