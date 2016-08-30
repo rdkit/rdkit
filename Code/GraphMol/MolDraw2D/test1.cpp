@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -1297,9 +1298,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") != std::string::npos)
-        && (line.find(">2<") != std::string::npos)
-        && (line.find(">H<") != std::string::npos))
+      if ((line.find("baseline-shift:super") != std::string::npos) &&
+          (line.find(">2<") != std::string::npos) &&
+          (line.find(">H<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1324,9 +1325,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") != std::string::npos)
-        && (line.find(">3<") != std::string::npos)
-        && (line.find(">H<") != std::string::npos))
+      if ((line.find("baseline-shift:super") != std::string::npos) &&
+          (line.find(">3<") != std::string::npos) &&
+          (line.find(">H<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1351,9 +1352,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") == std::string::npos)
-        && (line.find(">2<") == std::string::npos)
-        && (line.find(">D<") != std::string::npos))
+      if ((line.find("baseline-shift:super") == std::string::npos) &&
+          (line.find(">2<") == std::string::npos) &&
+          (line.find(">D<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1378,9 +1379,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") == std::string::npos)
-        && (line.find(">3<") == std::string::npos)
-        && (line.find(">T<") != std::string::npos))
+      if ((line.find("baseline-shift:super") == std::string::npos) &&
+          (line.find(">3<") == std::string::npos) &&
+          (line.find(">T<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1389,9 +1390,73 @@ void testDeuteriumTritium() {
   std::cerr << " Done" << std::endl;
 }
 
+void test10DrawSecondMol() {
+  std::cout << " ----------------- Testing drawing a second molecule"
+            << std::endl;
+  {
+    std::string mb1 =
+        "\n\
+  Mrv1561 08301611102D\n\
+\n\
+  3  2  0  0  0  0            999 V2000\n\
+   -2.5670    1.3616    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.8525    1.7741    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.1380    1.3616    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+M  END";
+
+    RWMol *m1 = MolBlockToMol(mb1);
+    TEST_ASSERT(m1);
+    MolOps::sanitizeMol(*m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    RDGeom::Point3D c1 = MolTransforms::computeCentroid(m1->getConformer());
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      RDGeom::Point3D &p = m1->getConformer().getAtomPos(i);
+      p -= c1;
+    }
+    std::string mb2 =
+        "\n\
+  Mrv1561 08301611122D\n\
+\n\
+  3  2  0  0  0  0            999 V2000\n\
+   -1.9900    2.2136    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.5775    1.4991    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.9900    0.7846    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+M  END";
+    RWMol *m2 = MolBlockToMol(mb2);
+    TEST_ASSERT(m2);
+    MolOps::sanitizeMol(*m2);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+    RDGeom::Point3D c2 = MolTransforms::computeCentroid(m2->getConformer());
+    for (unsigned int i = 0; i < m2->getNumAtoms(); ++i) {
+      RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
+      p -= c2;
+    }
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawOptions().padding = 0.2;
+    drawer.drawMolecule(*m1);
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_1.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+    delete m1;
+    delete m2;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -1406,10 +1471,11 @@ int main() {
   test9MolLegends();
   testGithub852();
   testGithub860();
-#endif
   testGithub910();
   testGithub932();
   testGithub953();
   testGithub983();
   testDeuteriumTritium();
+#endif
+  test10DrawSecondMol();
 }
