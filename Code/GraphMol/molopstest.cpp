@@ -4643,6 +4643,7 @@ void _renumberTest(const ROMol *m) {
     }
 
     std::string nSmi = MolToSmiles(*nm, true);
+    if (nSmi != refSmi) std::cerr << refSmi << std::endl << nSmi << std::endl;
     TEST_ASSERT(nSmi == refSmi);
     delete nm;
   }
@@ -6243,6 +6244,37 @@ void testGithubIssue962() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue1021() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 1021: "
+         "AssignStereochemistry() giving incorrect results after "
+         "FastFindRings()"
+      << std::endl;
+  {
+    std::string smi = "C[C@H]1CC2CCCC(C1)[C@H]2N";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 11);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    m->clearComputedProps();
+    bool cleanit = true, force = true;
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    m->clearComputedProps();
+    MolOps::fastFindRings(*m);
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6334,8 +6366,10 @@ int main() {
   testSimpleAromaticity();
   testCustomAromaticity();
   testGithubIssue908();
-#endif
   testGithubIssue962();
+
+#endif
+  testGithubIssue1021();
 
   return 0;
 }
