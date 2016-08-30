@@ -136,6 +136,8 @@ class MolDraw2D {
   double scale() const { return scale_; }
   void calculateScale(int width, int height);
   void calculateScale() { calculateScale(panel_width_, panel_height_); };
+  void setScale(int width, int height, const Point2D &minv,
+                const Point2D &maxv);
   void setOffset(int x, int y) {
     x_offset_ = x;
     y_offset_ = y;
@@ -209,6 +211,7 @@ class MolDraw2D {
   };
 
  private:
+  bool needs_scale_;
   int width_, height_, panel_width_, panel_height_;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;

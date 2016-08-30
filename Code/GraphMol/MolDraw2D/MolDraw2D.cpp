@@ -28,7 +28,8 @@ namespace RDKit {
 
 // ****************************************************************************
 MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
-    : width_(width),
+    : needs_scale_(true),
+      width_(width),
       height_(height),
       panel_width_(panelWidth > 0 ? panelWidth : width),
       panel_height_(panelHeight > 0 ? panelHeight : height),
@@ -170,7 +171,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     }
     extractAtomCoords(mol, confId, true);
     extractAtomSymbols(mol);
-    calculateScale();
+    if (needs_scale_) {
+      calculateScale();
+      needs_scale_ = false;
+    }
     // make sure the font doesn't end up too large (the constants are empirical)
     if (scale_ <= 40.) {
       setFontSize(font_size_);
@@ -413,6 +417,48 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
 
 // ****************************************************************************
 void MolDraw2D::setFontSize(double new_size) { font_size_ = new_size; }
+
+// ****************************************************************************
+void MolDraw2D::setScale(int width, int height, const Point2D &minv,
+                         const Point2D &maxv) {
+  PRECONDITION(width > 0, "bad width");
+  PRECONDITION(height > 0, "bad height");
+  needs_scale_ = false;
+
+  x_min_ = minv.x;
+  y_min_ = minv.y;
+  double x_max = maxv.x;
+  double y_max = maxv.y;
+
+  x_range_ = x_max - x_min_;
+  y_range_ = y_max - y_min_;
+  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  } else {
+    scale_ = 0;
+  }
+  // put a buffer round the drawing and calculate a final scale
+  x_min_ -= drawOptions().padding * x_range_;
+  x_range_ *= 1 + 2 * drawOptions().padding;
+  y_min_ -= drawOptions().padding * y_range_;
+  y_range_ *= 1 + 2 * drawOptions().padding;
+
+  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    double y_mid = y_min_ + 0.5 * y_range_;
+    double x_mid = x_min_ + 0.5 * x_range_;
+    Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
+    // that used the offset, we need to remove that:
+    mid.x -= x_offset_;
+    mid.y += y_offset_;
+    x_trans_ = (width / 2 - mid.x) / scale_;
+    y_trans_ = (mid.y - height / 2) / scale_;
+  } else {
+    scale_ = 0.;
+    x_trans_ = 0.;
+    y_trans_ = 0.;
+  }
+}
 
 // ****************************************************************************
 void MolDraw2D::calculateScale(int width, int height) {

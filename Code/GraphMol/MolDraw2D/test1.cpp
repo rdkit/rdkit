@@ -1481,6 +1481,50 @@ M  END";
     outs << text;
     outs.flush();
   }
+  {
+    MolDraw2DSVG drawer(200, 400, 200, 200);
+    Point2D minv(1000, 1000);
+    Point2D maxv(-1000, -1000);
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &pti = m1->getConformer().getAtomPos(i);
+      minv.x = std::min(minv.x, pti.x);
+      minv.y = std::min(minv.y, pti.y);
+      maxv.x = std::max(maxv.x, pti.x);
+      maxv.y = std::max(maxv.y, pti.y);
+    }
+    drawer.setScale(200, 200, minv, maxv);
+    drawer.drawMolecule(*m1);
+    drawer.setOffset(0, 200);
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_5.svg");
+    outs << text;
+    outs.flush();
+  }
+  {
+    MolDraw2DSVG drawer(200, 400, 200, 200);
+    Point2D minv(1000, 1000);
+    Point2D maxv(-1000, -1000);
+    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &pti = m1->getConformer().getAtomPos(i);
+      minv.x = std::min(minv.x, pti.x);
+      minv.y = std::min(minv.y, pti.y);
+      maxv.x = std::max(maxv.x, pti.x);
+      maxv.y = std::max(maxv.y, pti.y);
+    }
+    drawer.drawOptions().padding = 0.2;
+    drawer.setScale(200, 200, minv, maxv);
+    drawer.drawMolecule(*m1);
+    drawer.setOffset(0, 200);
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_6.svg");
+    outs << text;
+    outs.flush();
+  }
+
   delete m1;
   delete m2;
   std::cerr << " Done" << std::endl;
