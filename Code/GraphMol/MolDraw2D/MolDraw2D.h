@@ -39,9 +39,9 @@ typedef std::vector<unsigned int> DashPattern;
 
 struct MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
-  bool dummiesAreAttachments;  // draws "breaks" at dummy atoms
-  bool circleAtoms;            // draws circles under highlighted atoms
-  DrawColour highlightColour;  // default highlight color
+  bool dummiesAreAttachments;      // draws "breaks" at dummy atoms
+  bool circleAtoms;                // draws circles under highlighted atoms
+  DrawColour highlightColour;      // default highlight color
   bool continuousHighlight;  // highlight by drawing an outline *underneath* the
                              // molecule
   int flagCloseContactsDist;  // if positive, this will be used as a cutoff (in
@@ -190,9 +190,13 @@ class MolDraw2D {
   MolDrawOptions &drawOptions() { return options_; }
   const MolDrawOptions &drawOptions() const { return options_; }
 
-  const std::vector<Point2D> &atomCoords() const { return at_cds_; };
+  const std::vector<Point2D> &atomCoords() const {
+    PRECONDITION(activeMolIdx_ >= 0, "no index");
+    return at_cds_[activeMolIdx_];
+  };
   const std::vector<std::pair<std::string, OrientType> > &atomSyms() const {
-    return atom_syms_;
+    PRECONDITION(activeMolIdx_ >= 0, "no index");
+    return atom_syms_[activeMolIdx_];
   };
 
  private:
@@ -205,13 +209,15 @@ class MolDraw2D {
   double font_size_;
   int curr_width_;
   bool fill_polys_;
+  int activeMolIdx_;
+
   DrawColour curr_colour_;
   DashPattern curr_dash_;
   MolDrawOptions options_;
 
-  std::vector<Point2D> at_cds_;  // from mol
-  std::vector<int> atomic_nums_;
-  std::vector<std::pair<std::string, OrientType> > atom_syms_;
+  std::vector<std::vector<Point2D> > at_cds_;  // from mol
+  std::vector<std::vector<int> > atomic_nums_;
+  std::vector<std::vector<std::pair<std::string, OrientType> > > atom_syms_;
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
@@ -224,7 +230,7 @@ class MolDraw2D {
                        const std::map<int, DrawColour> *highlight_map = NULL);
   DrawColour getColourByAtomicNum(int atomic_num);
 
-  void extractAtomCoords(const ROMol &mol, int confId);
+  void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
