@@ -21,7 +21,7 @@ static const char* AtomSymbol[] = { // Periodic Table
     "Li",
     "Be",
     "B",
-    "C",
+    "C",  // 6
     "N",
     "O",
     "F",

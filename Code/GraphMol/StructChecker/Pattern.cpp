@@ -52,9 +52,8 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
 * Checks if the ligand is compatible with the bond and the atom.
 */
 bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge) {
-    if (l.BondType != ANY_BOND  && convertBondType(b.getBondType()) != l.BondType)
+    if (l.BondType != ANY_BOND  && ! isBondTypeMatch(b, l.BondType))
         return false;
-
     if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical)
         return false;
     if ((l.Charge != ANY_CHARGE || use_charge)
@@ -155,7 +154,7 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
                         if ((0 == ligand.SubstitutionCount || neighbors[j].size() == ligand.SubstitutionCount)
                             && (ANY_CHARGE == ligand.Charge  || nbrAtom->getFormalCharge() == ligand.Charge)
                             && (ANY_RADICAL== ligand.Radical || nbrAtom->getNumRadicalElectrons() == ligand.Radical)
-                            &&((ANY_BOND  == ligand.BondType || convertBondType(nbrBond->getBondType()) == ligand.BondType)
+                            &&((ANY_BOND  == ligand.BondType || isBondTypeMatch(*nbrBond, ligand.BondType))
                              ||(SINGLE_DOUBLE == ligand.BondType 
                                 && (RDKit::Bond::SINGLE == nbrBond->getBondType() 
                                  || RDKit::Bond::DOUBLE == nbrBond->getBondType())))
@@ -219,12 +218,87 @@ bool TransformAugmentedAtoms(RWMol &mol, const std::vector<std::pair<AugmentedAt
 // CheckAtoms():
 //-----------------------------------------------------------------------------
 
+bool isBondTypeMatch(const RDKit::Bond &b, AABondType lbt) {
+
+    RDKit::Bond::BondType bt = b.getBondType();
+    bool aromatic = b.getIsAromatic();
+
+    if (ANY_BOND == lbt)
+        return true;
+    else if (lbt == AROMATIC)
+        return aromatic
+            || bt == RDKit::Bond::AROMATIC
+            || bt == RDKit::Bond::ONEANDAHALF
+            || bt == RDKit::Bond::TWOANDAHALF
+            || bt == RDKit::Bond::THREEANDAHALF;
+    else if (lbt == SINGLE_AROMATIC)
+        return (bt == RDKit::Bond::ONEANDAHALF || (aromatic && bt == RDKit::Bond::SINGLE));
+    else if (lbt == DOUBLE_AROMATIC)
+        return (bt == RDKit::Bond::TWOANDAHALF || (aromatic && bt == RDKit::Bond::DOUBLE));
+    else if (lbt == SINGLE)
+        return (bt == RDKit::Bond::SINGLE || bt == RDKit::Bond::ONEANDAHALF || bt == RDKit::Bond::AROMATIC || aromatic);
+    else if (lbt == DOUBLE)
+        return (bt == RDKit::Bond::DOUBLE || bt == RDKit::Bond::TWOANDAHALF || bt == RDKit::Bond::AROMATIC || aromatic);
+    else if (lbt == TRIPLE)
+        return (bt == RDKit::Bond::TRIPLE || bt == RDKit::Bond::THREEANDAHALF || bt == RDKit::Bond::AROMATIC);
+    else
+        return false;
+}
+
 /*
 * Recursively searches *mp for the next atom to be appended to
 * match[0..level]. Returns TRUE if all ligands in aap are mapped
 * successfully. nbp[i] describes the neighbour bonds and atoms
 * of atom i.
 */
+bool RecMatch(const ROMol &mol, unsigned atomIdx,
+    const AugmentedAtom &aa, const std::vector<Neighbourhood> &nbp, bool verbose) {
+
+    unsigned nmatch = 0;
+    const Neighbourhood &nbph = nbp[atomIdx];
+    std::vector<bool> visited(aa.Ligands.size());
+    for (unsigned j = 0; j < visited.size(); j++)
+        visited[j] = false;
+
+    for (unsigned i = 0; i < nbph.Atoms.size(); i++) {
+
+        const Atom &atom = *mol.getAtomWithIdx(nbph.Atoms[i]);
+        const Bond &bond = *mol.getBondWithIdx(nbph.Bonds[i]);
+        bool found = false;
+
+        for (unsigned j = 0; !found && j < aa.Ligands.size(); j++)
+            if (!visited[j]) {
+                const Ligand& au_ligand = aa.Ligands[j];
+
+                if (au_ligand.Charge != ANY_CHARGE && atom.getFormalCharge() != au_ligand.Charge)
+                    continue;
+                if (au_ligand.Radical != ANY_RADICAL && atom.getNumRadicalElectrons() != au_ligand.Radical)
+                    continue;
+                if (au_ligand.SubstitutionCount != 0 && nbp[nbph.Atoms[i]].Atoms.size() != au_ligand.SubstitutionCount)
+                    continue;
+                if (!isBondTypeMatch(bond, au_ligand.BondType))
+                    continue;
+                if ( ! AtomSymbolMatch(atom.getSymbol(), au_ligand.AtomSymbol))
+                    continue;
+                //found matched item:
+                nmatch++;
+                visited[j] = true;
+                found = true;
+                break;
+            }
+    }
+    if(aa.Ligands.size() == nmatch) {   // all matched
+
+        if (verbose)
+            BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE\n";
+        return true;
+    }
+    if (verbose)
+        BOOST_LOG(rdInfoLog) << "RecMatch ret FALSE " << aa.Ligands.size() << " " << aa.ShortName << "\n";
+    return false;
+}
+
+/*OLD version (==avalon code)
 bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
               const AugmentedAtom &aa,  const std::vector<Neighbourhood> &nbp, bool verbose) {
     bool is_new;
@@ -262,10 +336,10 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
         }
     }
     if (verbose)
-        BOOST_LOG(rdInfoLog) << "RecMatch level="<< level << " ret FALSE\n";
+        BOOST_LOG(rdInfoLog) << "RecMatch level="<< level << " ret FALSE "<< aa.Ligands.size()<<" "<< aa.ShortName <<"\n";
     return false;
 }
-
+*/
 /*
 * Tests if atom i in *mp matches the augmented atom description
 * *aap. nbp[] is used to speed up access to neighbour atoms and
@@ -273,7 +347,7 @@ bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level
 * i is stored in match[0].
 */
 bool AAMatch(const ROMol &mol, unsigned i,
-    std::vector<unsigned> &match,
+//    std::vector<unsigned> &match,
     const AugmentedAtom &aa,
     const std::vector<unsigned> &atom_ring_status,
     const std::vector<Neighbourhood> &nbp,
@@ -287,16 +361,20 @@ bool AAMatch(const ROMol &mol, unsigned i,
         AtomSymbolMatch(atom.getSymbol(), aa.AtomSymbol))
     {
         if (!atom_ring_status.empty() && aa.Topology == RING   &&  atom_ring_status[i] == 0) {
-            return false;
+            //DEBUG:
+            if (verbose)
+                BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " aa.Topology RING. ret FALSE\n";
+        return false;
         }
         if (!atom_ring_status.empty() && aa.Topology == CHAIN  &&  atom_ring_status[i] != 0) {
+            if (verbose)
+                BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " aa.Topology CHAIN. ret FALSE\n";
             return false;
         }
-        if(match.size() == 0) {
-           match.push_back(i);
-        }
-        match[0] = i;
-        return RecMatch(mol, match, 0, aa, nbp, verbose);
+//        if(match.size() == 0) {           match.push_back(i);        }
+//        match[0] = i;
+        return RecMatch(mol, i, aa, nbp, verbose);
+//        return RecMatch(mol, match, 0, aa, nbp, verbose);
     }
     else {
         return false;
@@ -363,37 +441,44 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
 
     for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
         unsigned prevn = nmatch;
+        //DEBUG:
+        if (verbose)
+            BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << i << " "
+            << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << " neighbours="<< neighbours[i].Atoms.size()<<"\n";
         for (unsigned j = 0; j < good_atoms.size(); j++)
         {
             // check for ring state of central atom. Ring matches to ring only
             if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
 //DEBUG:
-                if (verbose && j >= 12 && j <= 21) // 'C'
+                if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum()==6) // 'C'
                     BOOST_LOG(rdInfoLog) << "UNMATCHED ring state RING of atom idx=" << i << " "
                     << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << "\n";
                 continue;
             }
             if (good_atoms[j].Topology == CHAIN && 0 != atom_status[i]) {
 //DEBUG:
-                if (verbose && j >= 12 && j <= 21) // 'C'
+                if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum() == 6) // 'C'
                     BOOST_LOG(rdInfoLog) << "UNMATCHED ring state CHAIN of atom idx=" << i << " "
                     << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i] << "\n";
                 continue;
             }
 
 //DEBUG:
-            if (verbose && j >= 12 && j <= 21) // 'C'
-                BOOST_LOG(rdInfoLog) << "AAMatch";
+//            if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum() == 6) // 'C'
+//                BOOST_LOG(rdInfoLog) << "AAMatch i="<<i<<" j="<<j;
 
             std::vector<unsigned> match;    //unused [MAXNEIGHBOURS + 1];
             if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size()
-                && AAMatch(mol, i, match, good_atoms[j], atom_status, neighbours, verbose)) {
+                && AAMatch(mol, i, good_atoms[j], atom_status, neighbours, verbose)) {
+//DEBUG:
+                if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum() == 6) // 'C'
+                    BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j << " ret TRUE !\n";
                 nmatch++;
                 break;
             }
 //DEBUG:
-            else if (verbose && j >= 12 && j <= 21) // 'C'
-                BOOST_LOG(rdInfoLog) << " ret FALSE\n";
+            else if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum() == 6) // 'C'
+                BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j << " ret FALSE\n";
         }
         if (verbose && nmatch == prevn) // UNMATCHED atom
             BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "

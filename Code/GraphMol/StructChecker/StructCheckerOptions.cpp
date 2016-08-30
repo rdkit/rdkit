@@ -445,16 +445,7 @@ void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
     good.reserve(sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms));
 
     for (size_t i = 0; i<sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms); ++i) {
-//DEBUG:
-if (i >= 12 && i <= 21) // 'C'
-    BOOST_LOG(rdInfoLog) << "loadDefaultAugmentedAtoms i=" << i << "\n";
-
         good.push_back(AugmentedAtom());
-            //"",
-            //DefaultGoodAtoms[i].str,
-            //DefaultGoodAtoms[i].charge,
-            //DefaultGoodAtoms[i].radical,
-            //DefaultGoodAtoms[i].topology));
         if (!StringToAugmentedAtom(DefaultGoodAtoms[i].str, good.back())) {
             throw "INTERNAL ERROR in default data";
         }
@@ -465,11 +456,6 @@ if (i >= 12 && i <= 21) // 'C'
 
     for (size_t i = 0; i<sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms); ++i) {
         acidic.push_back(AugmentedAtom());
-            //"",
-            //DefaultAcidicAtoms[i].str,
-            //DefaultAcidicAtoms[i].charge,
-            //DefaultAcidicAtoms[i].radical,
-            //DefaultAcidicAtoms[i].topology));
         if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].str, acidic.back())) {
             throw "INTERNAL ERROR in default data";
         }

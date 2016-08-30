@@ -35,7 +35,7 @@ int  TotalCharge     (const ROMol &mol) {
 bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
     std::vector<Neighbourhood> neighbour_array;
     int parity;
-    int refnum[4], nref;
+    unsigned refnum[4], nref;
 
     SetupNeighbourhood(mol, neighbour_array);
     for (unsigned i = 0; i < neighbour_array.size(); i++) {
@@ -53,7 +53,7 @@ bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
             parity = AtomParity(mol, i, nbp); // avalon: i + 1 ???
             if (parity == EVEN_PARITY || parity == ODD_PARITY) {
                 // extraxt numbers of stereoligands
-                nref = nbp.Atoms.size();
+                nref = (unsigned) nbp.Atoms.size();
                 for (unsigned j = 0; j < nref; j++)
                     refnum[j] = numbering[nbp.Atoms[j]];
                 // sort ligands
@@ -90,8 +90,8 @@ bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
 */
 bool ChargeFix::rechargeMolecule(unsigned &ndeprot, unsigned &nrefine) {
     bool changed = false;
-    int nacid;
-    double gap, pKa_value;
+    int  nacid = 0;
+    double gap = 0.0, pKa_value = 0.0;
     double acidity_limit = 24.0;
     std::vector<unsigned> numbering(Mol.getNumAtoms());
 
@@ -200,7 +200,7 @@ bool ChargeFix::setpKaValues() {
         bool found = false;
         const std::vector<unsigned> dummy_atom_ring_status;
         for (unsigned j = 0; j < Options.AcidicAtoms.size(); j++)
-            if (AAMatch(Mol, i, match, Options.AcidicAtoms[j], dummy_atom_ring_status, neighbour_array, Options.Verbose)) {
+            if (AAMatch(Mol, i, Options.AcidicAtoms[j], dummy_atom_ring_status, neighbour_array, Options.Verbose)) {
                 AtomColor[i]++;
                 AtompKaValue[i] = 0.0;
                 AAp = & Options.AcidicAtoms[j];
@@ -446,7 +446,6 @@ struct atom_rank_t {
 */
 int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
     int result = 0;
-    unsigned min_rank;
     bool changed, do_cis_trans;
     std::vector<atom_rank_t> atom_ranks(Mol.getNumAtoms());
     atom_rank_t ar_tmp;
@@ -615,7 +614,8 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
     } while (changed);
 
     // find smalles rank of coloured atoms 
-    for (unsigned i = 0, min_rank = atom_ranks.size(); i < atom_ranks.size(); i++)
+    unsigned min_rank = (unsigned)atom_ranks.size();
+    for (unsigned i = 0; i < atom_ranks.size(); i++)
         if (AtomColor[i] != 0  && atom_ranks[i].rank < min_rank)
             min_rank = atom_ranks[i].rank;
     for (unsigned i = 0; i < atom_ranks.size(); i++) {

@@ -20,10 +20,10 @@ namespace RDKit {
     unsigned getAtomicNumber(const std::string symbol);
     bool AtomSymbolMatch(const std::string symbol, const std::string pattern);
     bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l, bool use_charge = false);
-    bool RecMatch(const ROMol &mol, std::vector<unsigned> &match, unsigned int level,
-                    const AugmentedAtom &aa, const std::vector<Neighbourhood> &nbp, bool verbose);
+    bool isBondTypeMatch(const RDKit::Bond &b, AABondType lbt);
+    bool RecMatch(const ROMol &mol, unsigned atomIdx,
+        const AugmentedAtom &aa, const std::vector<Neighbourhood> &nbp, bool verbose);
     bool AAMatch(const ROMol &mol, unsigned i,
-                    std::vector<unsigned> &match,
                     const AugmentedAtom &aa,
                     const std::vector<unsigned> &atom_ring_status,
                     const std::vector<Neighbourhood> &nbp,

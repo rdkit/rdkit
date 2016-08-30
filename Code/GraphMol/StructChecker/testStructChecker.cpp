@@ -65,9 +65,12 @@ void testOptionsJSON() //PASSED
 
     StructCheckerOptions options;
 
+    BOOST_LOG(rdInfoLog) << "str='{}'\n";
     TEST_ASSERT( parseOptionsJSON("{}", options));
+    BOOST_LOG(rdInfoLog) << "str='{...error..}'\n";
     TEST_ASSERT(!parseOptionsJSON("{...error..}", options));
     bool ok;
+    BOOST_LOG(rdInfoLog) << "str='{\"Verbose\": true, \"CheckStereo\": true}'\n";
     ok = parseOptionsJSON("{\"Verbose\": true, \"CheckStereo\": true}", options);
     TEST_ASSERT(ok && options.Verbose && options.CheckStereo);
 //    BOOST_LOG(rdInfoLog) << "......... results ........\n";
@@ -354,7 +357,6 @@ void testStereo() // stereochemistry
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-// FAILED
 void testOptionsDefault() {
     BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
     BOOST_LOG(rdInfoLog) << "testOptionsDefault\n";
@@ -363,7 +365,7 @@ void testOptionsDefault() {
         "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC=C", //Pyrethrin II (C22H28O5)
     };
 
-    StructCheckerOptions options; // intial GoodAtoms loading is INCORRECT. There is no Ligands!
+    StructCheckerOptions options;
     options.Verbose = true;
     StructChecker chk(options);
     for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
@@ -378,7 +380,6 @@ void testOptionsDefault() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-// FAILED
 void testCheckAtomWithDefaultGoodAtoms() {
     BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
     BOOST_LOG(rdInfoLog) << "testCheckAtom\n";
@@ -450,9 +451,9 @@ void testCheckAtomFiles() {
 //      BOOST_LOG(rdInfoLog) << "EXPECTED RES: " << exp;
       
       TEST_ASSERT(mol.get());
-      BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+      BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
       unsigned flags = chk.checkMolStructure(*mol.get());
-      BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
+      BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
       BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(flags) << "\n";
 //      TEST_ASSERT(0 == flags);
    }
@@ -484,8 +485,7 @@ void testCheckMatch() {
 
     aa.push_back(AugmentedAtom("", "C(-N,O,P,S,I+1)", 0, RT_NONE, TP_NONE));
     StringToAugmentedAtom("C(-N,O,P,S,I+1)", aa.back());
-    res = AAMatch(*mol, 0, //unsigned i,
-                  match, aa[0], atom_ring_status, nbp, true);
+    res = AAMatch(*mol, 0, aa[0], atom_ring_status, nbp, true);
     BOOST_LOG(rdInfoLog) << "AAMatch() res"<< (res ? " = TRUE" : " = FALSE") << std::endl;
     //    TEST_ASSERT(res);
 
@@ -508,12 +508,11 @@ int main(int argc, const char* argv[])
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
 
-    testCheckMatch();
-// FAILED AtomCheck()
-    testOptionsDefault();
-//return 0; //tmp
+    testCheckAtomFiles();
+return 0; //tmp
 
     testFlags();
+    testOptionsDefault();
     testOptionsJSON();
     try {
         testLoadOptionsFromFiles();
@@ -521,21 +520,18 @@ int main(int argc, const char* argv[])
     catch (...) {
         // relative path to patern files must be correct !
     }
-// FAILED AtomCheck()
     testOptionsDefault();
 
     test1();
     test2();
 
+    testCheckMatch();
     testCheckAtom();
-    // FAILED    
+    testCheckAtomFiles();
     testCheckAtomWithDefaultGoodAtoms();
 
     testStereo();
     
-    // FAILED ATOM CHECK FAIL
-    testCheckAtomFiles();
-
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;
 }
