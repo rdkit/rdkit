@@ -1445,9 +1445,6 @@ M  END";
     std::ofstream outs("test10_1.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   {
     MolDraw2DSVG drawer(200, 200);
@@ -1459,9 +1456,6 @@ M  END";
     std::ofstream outs("test10_2.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   {
     MolDraw2DSVG drawer(400, 200, 200, 200);
@@ -1474,9 +1468,6 @@ M  END";
     std::ofstream outs("test10_3.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   {
     MolDraw2DSVG drawer(200, 400, 200, 200);
@@ -1489,9 +1480,6 @@ M  END";
     std::ofstream outs("test10_4.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   delete m1;
   delete m2;
@@ -1536,9 +1524,6 @@ void test11DrawMolGrid() {
     std::ofstream outs("test11_1.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   {  // drawing "out of order"
     MolDraw2DSVG drawer(500, 400, 250, 200);
@@ -1555,9 +1540,6 @@ void test11DrawMolGrid() {
     std::ofstream outs("test11_2.svg");
     outs << text;
     outs.flush();
-    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-    //                       "65.8827,89.1161 130.309,117.496' "
-    //                       "style='fill:#000000") != std::string::npos);
   }
   delete m1;
   delete m2;
@@ -1566,7 +1548,7 @@ void test11DrawMolGrid() {
 
 int main() {
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test4();

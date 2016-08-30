@@ -140,7 +140,7 @@ class MolDraw2D {
     x_offset_ = x;
     y_offset_ = y;
   }
-  std::pair<int, int> offset() { return std::make_pair(x_offset_, y_offset_); }
+  Point2D offset() { return Point2D(x_offset_, y_offset_); }
 
   virtual double fontSize() const { return font_size_; }
   // set font size in molecule coordinate units. That's probably Angstrom for
