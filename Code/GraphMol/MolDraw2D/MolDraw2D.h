@@ -86,7 +86,8 @@ class MolDraw2D {
     TextDrawSubscript
   } TextDrawType;
 
-  MolDraw2D(int width, int height);
+  MolDraw2D(int width, int height, int panelWidth = -1, int panelHeight = -1);
+
   virtual ~MolDraw2D() {}
 
   virtual void drawMolecule(
@@ -132,8 +133,14 @@ class MolDraw2D {
   virtual int width() const { return width_; }
   virtual int height() const { return height_; }
 
-  virtual double scale() const { return scale_; }
-  virtual void calculateScale();
+  double scale() const { return scale_; }
+  void calculateScale(int width, int height);
+  void calculateScale() { calculateScale(panel_width_, panel_height_); };
+  void setOffset(int x, int y) {
+    x_offset_ = x;
+    y_offset_ = y;
+  }
+  std::pair<int, int> offset() { return std::make_pair(x_offset_, y_offset_); }
 
   virtual double fontSize() const { return font_size_; }
   // set font size in molecule coordinate units. That's probably Angstrom for
@@ -202,10 +209,11 @@ class MolDraw2D {
   };
 
  private:
-  int width_, height_;
+  int width_, height_, panel_width_, panel_height_;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
+  int x_offset_, y_offset_;  // translation in screen coordinates
   // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
   // than the default width of a double bond)
   double font_size_;

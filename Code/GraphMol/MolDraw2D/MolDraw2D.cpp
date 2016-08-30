@@ -27,12 +27,16 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-MolDraw2D::MolDraw2D(int width, int height)
+MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
     : width_(width),
       height_(height),
+      panel_width_(panelWidth > 0 ? panelWidth : width),
+      panel_height_(panelHeight > 0 ? panelHeight : height),
       scale_(1.0),
       x_trans_(0.0),
       y_trans_(0.0),
+      x_offset_(0),
+      y_offset_(0),
       font_size_(0.5),
       curr_width_(2),
       fill_polys_(true),
@@ -373,6 +377,8 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
   // y is now the distance from the top of the image, we need to
   // invert that:
+  x += x_offset_;
+  y -= y_offset_;
   y = height() - y;
   return Point2D(x, y);
 }
@@ -408,7 +414,9 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
 void MolDraw2D::setFontSize(double new_size) { font_size_ = new_size; }
 
 // ****************************************************************************
-void MolDraw2D::calculateScale() {
+void MolDraw2D::calculateScale(int width, int height) {
+  PRECONDITION(width > 0, "bad width");
+  PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
   x_min_ = y_min_ = numeric_limits<double>::max();
@@ -425,13 +433,13 @@ void MolDraw2D::calculateScale() {
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
   if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width_) / x_range_, double(height_) / y_range_);
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
   } else {
     scale_ = 0;
   }
 
-  std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-            << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
+  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
+  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
@@ -461,14 +469,14 @@ void MolDraw2D::calculateScale() {
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    scale_ = std::min(double(width_) / x_range_, double(height_) / y_range_);
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
   }
 
-  std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-            << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
+  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
+  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   // put a 5% buffer round the drawing and calculate a final scale
   x_min_ -= drawOptions().padding * x_range_;
@@ -476,18 +484,19 @@ void MolDraw2D::calculateScale() {
   y_min_ -= drawOptions().padding * y_range_;
   y_range_ *= 1 + 2 * drawOptions().padding;
 
-  std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-            << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
+  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
+  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width_) / x_range_, double(height_) / y_range_);
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
     Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-    x_trans_ = (width_ / 2 - mid.x) / scale_;
-    y_trans_ = (mid.y - height_ / 2) / scale_;
-    std::cerr << " mid: " << mid << " " << scale_ << "    " << x_trans_ << "-"
-              << y_trans_ << std::endl;
+    x_trans_ = (width / 2 - mid.x) / scale_;
+    y_trans_ = (mid.y - height / 2) / scale_;
+    // std::cerr << " mid: " << mid << " " << scale_ << "    " << x_trans_ <<
+    // "-"
+    //           << y_trans_ << std::endl;
   } else {
     scale_ = 0.;
     x_trans_ = 0.;

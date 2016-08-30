@@ -1393,9 +1393,8 @@ void testDeuteriumTritium() {
 void test10DrawSecondMol() {
   std::cout << " ----------------- Testing drawing a second molecule"
             << std::endl;
-  {
-    std::string mb1 =
-        "\n\
+  std::string mb1 =
+      "\n\
   Mrv1561 08301611102D\n\
 \n\
   3  2  0  0  0  0            999 V2000\n\
@@ -1406,17 +1405,17 @@ void test10DrawSecondMol() {
   2  3  1  0  0  0  0\n\
 M  END";
 
-    RWMol *m1 = MolBlockToMol(mb1);
-    TEST_ASSERT(m1);
-    MolOps::sanitizeMol(*m1);
-    MolDraw2DUtils::prepareMolForDrawing(*m1);
-    RDGeom::Point3D c1 = MolTransforms::computeCentroid(m1->getConformer());
-    for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
-      RDGeom::Point3D &p = m1->getConformer().getAtomPos(i);
-      p -= c1;
-    }
-    std::string mb2 =
-        "\n\
+  RWMol *m1 = MolBlockToMol(mb1);
+  TEST_ASSERT(m1);
+  MolOps::sanitizeMol(*m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  RDGeom::Point3D c1 = MolTransforms::computeCentroid(m1->getConformer());
+  for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = m1->getConformer().getAtomPos(i);
+    p -= c1;
+  }
+  std::string mb2 =
+      "\n\
   Mrv1561 08301611122D\n\
 \n\
   3  2  0  0  0  0            999 V2000\n\
@@ -1426,16 +1425,17 @@ M  END";
   1  2  1  0  0  0  0\n\
   2  3  1  0  0  0  0\n\
 M  END";
-    RWMol *m2 = MolBlockToMol(mb2);
-    TEST_ASSERT(m2);
-    MolOps::sanitizeMol(*m2);
-    MolDraw2DUtils::prepareMolForDrawing(*m2);
-    RDGeom::Point3D c2 = MolTransforms::computeCentroid(m2->getConformer());
-    for (unsigned int i = 0; i < m2->getNumAtoms(); ++i) {
-      RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
-      p -= c2;
-    }
+  RWMol *m2 = MolBlockToMol(mb2);
+  TEST_ASSERT(m2);
+  MolOps::sanitizeMol(*m2);
+  MolDraw2DUtils::prepareMolForDrawing(*m2);
+  RDGeom::Point3D c2 = MolTransforms::computeCentroid(m2->getConformer());
+  for (unsigned int i = 0; i < m2->getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
+    p -= c2;
+  }
 
+  {
     MolDraw2DSVG drawer(200, 200);
     drawer.drawOptions().padding = 0.2;
     drawer.drawMolecule(*m1);
@@ -1448,9 +1448,53 @@ M  END";
     // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
     //                       "65.8827,89.1161 130.309,117.496' "
     //                       "style='fill:#000000") != std::string::npos);
-    delete m1;
-    delete m2;
   }
+  {
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawOptions().padding = 0.2;
+    drawer.drawMolecule(*m2);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_2.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(400, 200, 200, 200);
+    drawer.drawOptions().padding = 0.2;
+    drawer.drawMolecule(*m1);
+    drawer.setOffset(200, 0);
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_3.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(200, 400, 200, 200);
+    drawer.drawOptions().padding = 0.2;
+    drawer.drawMolecule(*m1);
+    drawer.setOffset(0, 200);
+    drawer.drawMolecule(*m2);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test10_4.svg");
+    outs << text;
+    outs.flush();
+    // TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
+    //                       "65.8827,89.1161 130.309,117.496' "
+    //                       "style='fill:#000000") != std::string::npos);
+  }
+  delete m1;
+  delete m2;
   std::cerr << " Done" << std::endl;
 }
 
