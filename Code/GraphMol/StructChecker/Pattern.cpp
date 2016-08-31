@@ -363,7 +363,8 @@ aa.Ligands.size()<<" "<< aa.ShortName <<"\n";
 * bonds. The first matching atom mapping is placed into match[1..].
 * i is stored in match[0].
 */
-bool AAMatch(const ROMol &mol, unsigned i, std::vector<unsigned> &match,
+bool AAMatch(const ROMol &mol, unsigned i, 
+             //std::vector<unsigned> &match,
              const AugmentedAtom &aa,
              const std::vector<unsigned> &atom_ring_status,
              const std::vector<Neighbourhood> &nbp, bool verbose) {
