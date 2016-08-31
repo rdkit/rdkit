@@ -97,6 +97,32 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete hbm;
   delete har;
 }
+void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
+                          python::object highlight_atoms,
+                          python::object highlight_bonds,
+                          python::object highlight_atom_map,
+                          python::object highlight_bond_map,
+                          python::object highlight_atom_radii,
+                          python::object pconfIds, python::object plegends) {
+  rdk_auto_ptr<std::vector<ROMol *> > mols = pythonObjectToVect<ROMol *>(pmols);
+  // rdk_auto_ptr<std::vector<int> > highlightAtoms =
+  //     pythonObjectToVect(highlight_atoms,
+  //     static_cast<int>(mol.getNumAtoms()));
+  // rdk_auto_ptr<std::vector<int> > highlightBonds =
+  //     pythonObjectToVect(highlight_bonds,
+  //     static_cast<int>(mol.getNumBonds()));
+  // FIX: support these
+  // std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
+  // std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
+  // std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+  //
+  rdk_auto_ptr<std::vector<int> > confIds = pythonObjectToVect<int>(pconfIds);
+  rdk_auto_ptr<std::vector<std::string> > legends =
+      pythonObjectToVect<std::string>(plegends);
+
+  self.drawMolecules(*mols, legends.get(), NULL, NULL, NULL, NULL, NULL,
+                     confIds.get());
+}
 
 #ifdef RDK_CAIRO_BUILD
 python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
@@ -177,6 +203,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::arg("highlightAtomRadii") = python::object(),
            python::arg("confId") = -1, python::arg("legend") = std::string("")),
           "renders a molecule\n")
+      .def("DrawMolecules", RDKit::drawMoleculesHelper2,
+           (python::arg("self"), python::arg("mols"),
+            python::arg("highlightAtoms") = python::object(),
+            python::arg("highlightBonds") = python::object(),
+            python::arg("highlightAtomColors") = python::object(),
+            python::arg("highlightBondColors") = python::object(),
+            python::arg("highlightAtomRadii") = python::object(),
+            python::arg("confIds") = python::object(),
+            python::arg("legends") = python::object()),
+           "renders multiple molecules\n")
       .def("Width", &RDKit::MolDraw2D::width,
            "get the width of the drawing canvas")
       .def("Height", &RDKit::MolDraw2D::height,
