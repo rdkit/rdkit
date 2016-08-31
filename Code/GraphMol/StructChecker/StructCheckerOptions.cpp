@@ -146,7 +146,7 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
         str++;
         int value;
         if (*str >= '1' && *str <= '7') {
-            value = *str - '1';
+            value = *str - '0';
             aa.Charge = (*str == '-') ? (-value) : (value);
             str++;
         }
@@ -217,7 +217,7 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
             str++;
             int value;
             if (*str >= '1' && *str <= '7') {
-                value = *str - '1';
+                value = *str - '0';
                 aa.Ligands.back().Charge = (*str == '-') ? (-value) : (value);
                 str++;
             }
