@@ -110,7 +110,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     if (ch.rechargeMolecule(ndeprot, nrefine)) flags |= RECHARGED;
   }
   //
-  double clashLimit = 0.15;  // see void SetCollisionLimit(int percent)
+  const double clashLimit = Options.CollisionLimitPercent/100.0;
   if (Options.CheckCollisions && AtomClash(mol, clashLimit))
     flags |= ATOM_CLASH;
 

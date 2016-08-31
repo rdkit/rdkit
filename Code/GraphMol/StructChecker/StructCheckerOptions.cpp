@@ -663,7 +663,7 @@ StructCheckerOptions::StructCheckerOptions()
       RemoveMinorFragments(false),
       DesiredCharge(0),
       CheckCollisions(false),
-      CollisionLimitPercent(0),
+      CollisionLimitPercent(15),
       MaxMolSize(255),
       ConvertSText(false),
       SqueezeIdentifiers(false),

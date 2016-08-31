@@ -22,7 +22,7 @@ struct Neighbourhood {          // a set of an atom neighbours
 void SetupNeighbourhood(const ROMol &mol,
                         std::vector<Neighbourhood> &neighbour_array);
 bool getMolAtomPoints(const ROMol &mol,
-                      std::vector<RDGeom::Point3D> &atomPoint);
+                      std::vector<RDGeom::Point3D> &atomPoint, bool twod=false);
 
 std::string LogNeighbourhood(
     const ROMol &mol, unsigned int idx,

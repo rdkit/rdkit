@@ -33,7 +33,8 @@ void SetupNeighbourhood(const ROMol &mol,
 }
 
 bool getMolAtomPoints(const ROMol &mol,
-                      std::vector<RDGeom::Point3D> &atomPoint) {
+                      std::vector<RDGeom::Point3D> &atomPoint,
+                      bool twod) {
   bool non_zero_z = false;
   atomPoint.resize(mol.getNumAtoms());
   // take X,Y,Z coordinates of each atom
@@ -41,7 +42,7 @@ bool getMolAtomPoints(const ROMol &mol,
     for (RDKit::ROMol::ConstConformerIterator cnfi = mol.beginConformers();
          cnfi != mol.endConformers(); cnfi++) {
       const Conformer &conf = **cnfi;  // mol.getConformer(confId);
-      if (conf.is3D()) {
+      if (twod || conf.is3D()) {
         for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
           atomPoint[i] = conf.getAtomPos(i);
           if (fabs(atomPoint[i].z) >= 1.e-7) non_zero_z = true;

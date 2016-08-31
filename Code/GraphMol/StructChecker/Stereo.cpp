@@ -680,7 +680,8 @@ bool AtomClash(RWMol &mol, double clash_limit) {
   std::vector<RDGeom::Point3D> atomPoint(
       mol.getNumAtoms());  // X,Y,Z coordinates of each atom
 
-  getMolAtomPoints(mol, atomPoint);
+  bool twod=true;
+  getMolAtomPoints(mol, atomPoint, twod);
 
   // compute median of square of bond lenght (quick/dirty)
   if (mol.getNumBonds() == 0) return false;
@@ -696,14 +697,16 @@ bool AtomClash(RWMol &mol, double clash_limit) {
                   (atomPoint[a1].y - atomPoint[a2].y) *
                       (atomPoint[a1].y - atomPoint[a2].y);
   }
-  for (unsigned i = 1; i < mol.getNumBonds(); i++)
-    for (unsigned j = i - 1; j >= 0; j--)
+  for (unsigned i = 1; i < mol.getNumBonds(); i++) {
+    for (int j = rdcast<int>(i) - 1; j >= 0; j--) {
       if (blengths[j] > blengths[j + 1]) {
         h = blengths[j];
         blengths[j] = blengths[j + 1];
         blengths[j + 1] = h;
       } else
         break;
+    }
+  }
   bond_square_median = blengths[mol.getNumBonds() / 2];
 
   // Check if two atoms get too close to each other
@@ -741,10 +744,14 @@ bool AtomClash(RWMol &mol, double clash_limit) {
                (atomPoint[a2].x - atomPoint[a1].x) +
            (atomPoint[j].y - atomPoint[a1].y) *
                (atomPoint[a2].y - atomPoint[a1].y);
+
       if (0 <= rb &&   // cos alpha > 0
           rb <= bb &&  // projection of r onto b does not exceed b
           (rr * bb - rb * rb) / (bb + EPS) <  // distance from bond < limit
               clash_limit * clash_limit * bond_square_median) {
+        BOOST_LOG(rdWarningLog) << "atom " << j << " " <<
+            100*sqrt((rr*bb-rb*rb)/(bb*bond_square_median+EPS)) <<
+            "% of average bond length " << a1 << "-" << a2 << std::endl;
         std::cerr << "clash 2" << std::endl;
         return true;
       }

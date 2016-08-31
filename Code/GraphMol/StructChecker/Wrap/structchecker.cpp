@@ -94,6 +94,9 @@ struct struct_wrapper {
         .def_readwrite(
             "CheckCollisions",
             &RDKit::StructureCheck::StructCheckerOptions::CheckCollisions)
+        .def_readwrite(
+            "CollisionLimitPercent",
+            &RDKit::StructureCheck::StructCheckerOptions::CollisionLimitPercent)
         .def_readwrite("MaxMolSize",
                        &RDKit::StructureCheck::StructCheckerOptions::MaxMolSize)
         .def_readwrite(
