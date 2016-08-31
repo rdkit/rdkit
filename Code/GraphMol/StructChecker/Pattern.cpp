@@ -482,6 +482,51 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms, 
             else if (verbose && j >= 12 && j <= 21 && mol.getAtomWithIdx(i)->getAtomicNum() == 6) // 'C'
                 BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j << " ret FALSE\n";
         }
+        if ( j == good_atoms.size() ) { // failed this atom .. log it
+          std::stringstream oss;
+          // FIX ME turn into utility func?
+          std::string name;
+          mol.getPropIfPresent(common_properties::_Name, name);
+          oss << name << "    atom " << i << "   AA : ";
+          const Atom &atm = *mol.getAtomWithIdx(i);
+          oss << atm.getSymbol();
+          
+          if (atm.getFormalCharge())
+            oss << (atm.getFormalCharge() > 0 ? "+" : "-") <<
+                atm.getFormalCharge();
+          
+          if (atm.getNumRadicalElectrons())
+            oss << atm.getNumRadicalElectrons();
+
+          // XXX FIX ME nbrs not sorted correctly...
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds(&atm);
+          while(beg!=end){
+            BOND_SPTR bond=mol[*beg];
+            const Atom &nbr = *mol.getAtomWithIdx(
+                bond->getOtherAtomIdx(atm.getIdx()) );
+            std::string bs = "";
+            switch (bond->getBondType()) {
+              case Bond::SINGLE: bs = "-"; break;
+              case Bond::DOUBLE: bs = "="; break;
+              case Bond::TRIPLE: bs = "#"; break;
+              case Bond::AROMATIC: bs = "~"; break;
+            }
+            if (bs.size())
+              oss << "(" << bs << nbr.getSymbol();
+            else
+              oss << "(" << "?" << (int)bond->getBondType() << "?" << nbr.getSymbol();
+            if (nbr.getFormalCharge())
+              oss << (nbr.getFormalCharge() > 0 ? "+" : "-") <<
+                  nbr.getFormalCharge();
+            
+            if (nbr.getNumRadicalElectrons())
+              oss << nbr.getNumRadicalElectrons();
+            oss << ")";
+            ++beg;
+          }
+          BOOST_LOG(rdWarningLog) << oss.str() << std::endl;
+        }
         if (verbose && nmatch == prevn) // UNMATCHED atom
             BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
             << mol.getAtomWithIdx(i)->getSymbol() << " status=" << atom_status[i]
