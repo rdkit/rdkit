@@ -187,5 +187,21 @@ EndFeature
     for feat in feats:
       feat.GetPos()
 
+
+  def testBaseFeaturesFile(self):
+    """Tests the Basefeatures.fdef file which comes out of the box in RDKit"""
+    fdefName = os.path.join(RDConfig.RDDataDir,'BaseFeatures.fdef')
+    factory = ChemicalFeatures.BuildFeatureFactory(fdefName)
+    
+    # test that the nitro group gives us two Acceptors as in the discussion here:
+    # http://goo.gl/OqUAHD
+    features = factory.GetFeaturesForMol(Chem.MolFromSmiles('C[N+](=O)[O-]'))
+    self.assertEqual(2, len(features), "There should be two acceptors in a nitro group")
+    for feat in features:
+        fType = feat.GetType()
+        self.assertEqual(fType, "SingleAtomAcceptor", "Nitro feature type should be SingleAtomAcceptor and not: " + fType)
+        
+    
+
 if __name__ == '__main__':
   unittest.main()
