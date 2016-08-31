@@ -72,11 +72,13 @@ QAFUNC1(Hybridization, makeAtomHybridizationQuery, int);
 QAFUNC1(InNRings, makeAtomInNRingsQuery, int);
 QAFUNC1(MinRingSize, makeAtomMinRingSizeQuery, int);
 QAFUNC1(RingBondCount, makeAtomRingBondCountQuery, int);
+QAFUNC1(NumRadicalElectrons, makeAtomNumRadicalElectronsQuery, int);
 
 QAFUNC2(IsUnsaturatedQueryAtom, makeAtomUnsaturatedQuery, int);
 QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);
 QAFUNC2(IsAliphaticQueryAtom, makeAtomAliphaticQuery, int);
 QAFUNC2(IsInRingQueryAtom, makeAtomInRingQuery, int);
+QAFUNC2(HasChiralTagQueryAtom, makeAtomHasChiralTagQuery, int);
 
 QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {
   QueryAtom *res = new QueryAtom();
@@ -151,11 +153,13 @@ struct queries_wrapper {
     QADEF1(InNRings);
     QADEF1(MinRingSize);
     QADEF1(RingBondCount);
+    QADEF1(NumRadicalElectrons)
 
     QADEF2(IsUnsaturated);
     QADEF2(IsAromatic);
     QADEF2(IsAliphatic);
     QADEF2(IsInRing);
+    QADEF2(HasChiralTag);
 
     python::def("HasPropQueryAtom", HasPropQueryAtom,
                 (python::arg("propname"), python::arg("negate") = false),
