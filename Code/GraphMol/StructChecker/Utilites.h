@@ -12,19 +12,20 @@
 #include "StructChecker.h"
 
 namespace RDKit {
-    namespace StructureCheck {
+namespace StructureCheck {
 
-        struct Neighbourhood {     // a set of an atom neighbours
-            std::vector<unsigned> Atoms;      // indices of atoms
-            std::vector<unsigned> Bonds;      // indices of bonds
-        };
+struct Neighbourhood {          // a set of an atom neighbours
+  std::vector<unsigned> Atoms;  // indices of atoms
+  std::vector<unsigned> Bonds;  // indices of bonds
+};
 
-        void SetupNeighbourhood(const ROMol &mol, std::vector<Neighbourhood> &neighbour_array);
-        bool getMolAtomPoints(const ROMol& mol, std::vector<RDGeom::Point3D> &atomPoint);
+void SetupNeighbourhood(const ROMol &mol,
+                        std::vector<Neighbourhood> &neighbour_array);
+bool getMolAtomPoints(const ROMol &mol,
+                      std::vector<RDGeom::Point3D> &atomPoint);
 
-        std::string LogNeighbourhood(const ROMol &mol,
-                                     unsigned int idx,
-                                     const std::vector<Neighbourhood> &bneighbour_array);
-    }
+std::string LogNeighbourhood(
+    const ROMol &mol, unsigned int idx,
+    const std::vector<Neighbourhood> &bneighbour_array);
 }
-
+}

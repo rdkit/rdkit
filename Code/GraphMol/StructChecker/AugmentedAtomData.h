@@ -34,17 +34,17 @@
 #include "StructChecker.h"
 
 namespace RDKit {
-  namespace StructureCheck {
-      struct AugmentedAtom_t {
-          const char *atomSymbol;
-          const char *shortName;
-          int charge;
-          RadicalType radical;
-          AATopology  topology;
-      };
-      extern const AugmentedAtom_t *GoodAtoms;
-      extern const AugmentedAtom_t *AcidicAtoms;
-  }
+namespace StructureCheck {
+struct AugmentedAtom_t {
+  const char *atomSymbol;
+  const char *shortName;
+  int charge;
+  RadicalType radical;
+  AATopology topology;
+};
+extern const AugmentedAtom_t *GoodAtoms;
+extern const AugmentedAtom_t *AcidicAtoms;
+}
 }
 
 #endif

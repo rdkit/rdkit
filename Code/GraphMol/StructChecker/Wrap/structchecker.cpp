@@ -43,71 +43,114 @@ unsigned int checkMolStructureHelper(const StructChecker &checker, ROMol &m) {
   RWMol &fixer = static_cast<RWMol &>(m);
   return checker.checkMolStructure(fixer);
 }
-
 }
 }
 
 struct struct_wrapper {
   static void wrap() {
-    python::enum_<RDKit::StructureCheck::StructChecker::StructureFlags>("StructureFlags")
+    python::enum_<RDKit::StructureCheck::StructChecker::StructureFlags>(
+        "StructureFlags")
         .value("NO_CHANGE", RDKit::StructureCheck::StructChecker::NO_CHANGE)
-        .value("BAD_MOLECULE", RDKit::StructureCheck::StructChecker::BAD_MOLECULE)
-        .value("ALIAS_CONVERSION_FAILED",RDKit::StructureCheck::StructChecker::ALIAS_CONVERSION_FAILED)
-        .value("STEREO_ERROR",RDKit::StructureCheck::StructChecker::STEREO_ERROR)
-        .value("STEREO_FORCED_BAD",RDKit::StructureCheck::StructChecker::STEREO_FORCED_BAD)
-        .value("ATOM_CLASH",RDKit::StructureCheck::StructChecker::ATOM_CLASH)
-        .value("ATOM_CHECK_FAILED",RDKit::StructureCheck::StructChecker::ATOM_CHECK_FAILED)
-        .value("SIZE_CHECK_FAILED",RDKit::StructureCheck::StructChecker::SIZE_CHECK_FAILED)
-        .value("TRANSFORMED",RDKit::StructureCheck::StructChecker::TRANSFORMED)
-        .value("FRAGMENTS_FOUND",RDKit::StructureCheck::StructChecker::FRAGMENTS_FOUND)
-        .value("EITHER_WARNING",RDKit::StructureCheck::StructChecker::EITHER_WARNING)
-        .value("DUBIOUS_STEREO_REMOVED",RDKit::StructureCheck::StructChecker::DUBIOUS_STEREO_REMOVED)
-        .value("RECHARGED",RDKit::StructureCheck::StructChecker::RECHARGED)
-        .value("STEREO_TRANSFORMED",RDKit::StructureCheck::StructChecker::STEREO_TRANSFORMED)
-        .value("TEMPLATE_TRANSFORMED",RDKit::StructureCheck::StructChecker::TEMPLATE_TRANSFORMED)
-        .value("TAUTOMER_TRANSFORMED",RDKit::StructureCheck::StructChecker::TAUTOMER_TRANSFORMED);
-        
+        .value("BAD_MOLECULE",
+               RDKit::StructureCheck::StructChecker::BAD_MOLECULE)
+        .value("ALIAS_CONVERSION_FAILED",
+               RDKit::StructureCheck::StructChecker::ALIAS_CONVERSION_FAILED)
+        .value("STEREO_ERROR",
+               RDKit::StructureCheck::StructChecker::STEREO_ERROR)
+        .value("STEREO_FORCED_BAD",
+               RDKit::StructureCheck::StructChecker::STEREO_FORCED_BAD)
+        .value("ATOM_CLASH", RDKit::StructureCheck::StructChecker::ATOM_CLASH)
+        .value("ATOM_CHECK_FAILED",
+               RDKit::StructureCheck::StructChecker::ATOM_CHECK_FAILED)
+        .value("SIZE_CHECK_FAILED",
+               RDKit::StructureCheck::StructChecker::SIZE_CHECK_FAILED)
+        .value("TRANSFORMED", RDKit::StructureCheck::StructChecker::TRANSFORMED)
+        .value("FRAGMENTS_FOUND",
+               RDKit::StructureCheck::StructChecker::FRAGMENTS_FOUND)
+        .value("EITHER_WARNING",
+               RDKit::StructureCheck::StructChecker::EITHER_WARNING)
+        .value("DUBIOUS_STEREO_REMOVED",
+               RDKit::StructureCheck::StructChecker::DUBIOUS_STEREO_REMOVED)
+        .value("RECHARGED", RDKit::StructureCheck::StructChecker::RECHARGED)
+        .value("STEREO_TRANSFORMED",
+               RDKit::StructureCheck::StructChecker::STEREO_TRANSFORMED)
+        .value("TEMPLATE_TRANSFORMED",
+               RDKit::StructureCheck::StructChecker::TEMPLATE_TRANSFORMED)
+        .value("TAUTOMER_TRANSFORMED",
+               RDKit::StructureCheck::StructChecker::TAUTOMER_TRANSFORMED);
+
     python::class_<RDKit::StructureCheck::StructCheckerOptions,
                    RDKit::StructureCheck::StructCheckerOptions *>(
         "StructCheckerOptions", python::init<>())
-        .def_readwrite("AcidityLimit", &RDKit::StructureCheck::StructCheckerOptions::AcidityLimit)
-        .def_readwrite("RemoveMinorFragments", &RDKit::StructureCheck::StructCheckerOptions::RemoveMinorFragments)
-        .def_readwrite("DesiredCharge", &RDKit::StructureCheck::StructCheckerOptions::DesiredCharge)
-        .def_readwrite("CheckCollisions", &RDKit::StructureCheck::StructCheckerOptions::CheckCollisions)
-        .def_readwrite("MaxMolSize", &RDKit::StructureCheck::StructCheckerOptions::MaxMolSize)
-        .def_readwrite("ConvertSText", &RDKit::StructureCheck::StructCheckerOptions::ConvertSText)
-        .def_readwrite("StripZeros", &RDKit::StructureCheck::StructCheckerOptions::StripZeros)
-        .def_readwrite("CheckStereo", &RDKit::StructureCheck::StructCheckerOptions::CheckStereo)
-        .def_readwrite("ConvertAtomTexts", &RDKit::StructureCheck::StructCheckerOptions::ConvertAtomTexts)
-        .def_readwrite("GroupsToSGroups", &RDKit::StructureCheck::StructCheckerOptions::GroupsToSGroups)
-        .def_readwrite("Verbose", &RDKit::StructureCheck::StructCheckerOptions::Verbose)
-        .def("LoadGoodAugmentedAtoms", &RDKit::StructureCheck::StructCheckerOptions::loadGoodAugmentedAtoms,
+        .def_readwrite(
+            "AcidityLimit",
+            &RDKit::StructureCheck::StructCheckerOptions::AcidityLimit)
+        .def_readwrite(
+            "RemoveMinorFragments",
+            &RDKit::StructureCheck::StructCheckerOptions::RemoveMinorFragments)
+        .def_readwrite(
+            "DesiredCharge",
+            &RDKit::StructureCheck::StructCheckerOptions::DesiredCharge)
+        .def_readwrite(
+            "CheckCollisions",
+            &RDKit::StructureCheck::StructCheckerOptions::CheckCollisions)
+        .def_readwrite("MaxMolSize",
+                       &RDKit::StructureCheck::StructCheckerOptions::MaxMolSize)
+        .def_readwrite(
+            "ConvertSText",
+            &RDKit::StructureCheck::StructCheckerOptions::ConvertSText)
+        .def_readwrite("StripZeros",
+                       &RDKit::StructureCheck::StructCheckerOptions::StripZeros)
+        .def_readwrite(
+            "CheckStereo",
+            &RDKit::StructureCheck::StructCheckerOptions::CheckStereo)
+        .def_readwrite(
+            "ConvertAtomTexts",
+            &RDKit::StructureCheck::StructCheckerOptions::ConvertAtomTexts)
+        .def_readwrite(
+            "GroupsToSGroups",
+            &RDKit::StructureCheck::StructCheckerOptions::GroupsToSGroups)
+        .def_readwrite("Verbose",
+                       &RDKit::StructureCheck::StructCheckerOptions::Verbose)
+        .def(
+            "LoadGoodAugmentedAtoms",
+            &RDKit::StructureCheck::StructCheckerOptions::
+                loadGoodAugmentedAtoms,
+            (python::arg("path")),
+            "Load the set of good augmented atoms from the specified file path")
+        .def("LoadAcidicAugmentedAtoms",
+             &RDKit::StructureCheck::StructCheckerOptions::
+                 loadAcidicAugmentedAtoms,
              (python::arg("path")),
-             "Load the set of good augmented atoms from the specified file path")
-        .def("LoadAcidicAugmentedAtoms", &RDKit::StructureCheck::StructCheckerOptions::loadAcidicAugmentedAtoms,
+             "Load the set of acidic augmented atoms from the specified file "
+             "path")
+        .def("LoadAugmentedAtomTranslations",
+             &RDKit::StructureCheck::StructCheckerOptions::
+                 loadAugmentedAtomTranslations,
              (python::arg("path")),
-             "Load the set of acidic augmented atoms from the specified file path")
-        .def("LoadAugmentedAtomTranslations", &RDKit::StructureCheck::StructCheckerOptions::loadAugmentedAtomTranslations,
-             (python::arg("path")),
-             "Load the set of acidic augmented atoms from the specified file path")
-        ;
+             "Load the set of acidic augmented atoms from the specified file "
+             "path");
 
     python::class_<RDKit::StructureCheck::StructChecker>("StructChecker",
                                                          python::init<>())
-        .def(python::init<const RDKit::StructureCheck::StructCheckerOptions&>())
-        .def("CheckMolStructure", &RDKit::StructureCheck::checkMolStructureHelper,
+        .def(
+            python::init<const RDKit::StructureCheck::StructCheckerOptions &>())
+        .def("CheckMolStructure",
+             &RDKit::StructureCheck::checkMolStructureHelper,
              (python::arg("mol")),
              "Check the structure and return a set of structure flags")
-        .def("StructureFlagsToString", &RDKit::StructureCheck::StructChecker::StructureFlagsToString,
+        .def("StructureFlagsToString",
+             &RDKit::StructureCheck::StructChecker::StructureFlagsToString,
              (python::arg("flags")),
-             "Return the structure flags as a human readable string").staticmethod(
-                 "StructureFlagsToString")
-        .def("StringToStructureFlags", &RDKit::StructureCheck::StructChecker::StringToStructureFlags,
+             "Return the structure flags as a human readable string")
+        .staticmethod("StructureFlagsToString")
+        .def("StringToStructureFlags",
+             &RDKit::StructureCheck::StructChecker::StringToStructureFlags,
              (python::arg("str")),
-             "Convert a comma seperated string to the appropriate structure flags").
-        staticmethod("StringToStructureFlags");
+             "Convert a comma seperated string to the appropriate structure "
+             "flags")
+        .staticmethod("StringToStructureFlags");
   }
 };
 
 BOOST_PYTHON_MODULE(rdStructChecker) { struct_wrapper::wrap(); }
-

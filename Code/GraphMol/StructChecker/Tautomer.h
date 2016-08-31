@@ -11,15 +11,16 @@
 #include "StructChecker.h"
 
 namespace RDKit {
- namespace StructureCheck {
+namespace StructureCheck {
 
-     class StructCheckTautomer {
-         RWMol &Mol;
-         const StructCheckerOptions &Options;
-     public:
-         StructCheckTautomer(RWMol &mol, const StructCheckerOptions &options) : Mol(mol), Options(options) {}
-         bool applyTautomer(unsigned it);
-     };
- };
+class StructCheckTautomer {
+  RWMol &Mol;
+  const StructCheckerOptions &Options;
+
+ public:
+  StructCheckTautomer(RWMol &mol, const StructCheckerOptions &options)
+      : Mol(mol), Options(options) {}
+  bool applyTautomer(unsigned it);
+};
+};
 }
-

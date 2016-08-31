@@ -11,10 +11,10 @@
 #include "StructChecker.h"
 
 namespace RDKit {
- namespace StructureCheck {
-     bool StripSmallFragments(RWMol &mol);
-     void AddMWMF(RWMol &mol, bool pre); // set mol formula & mass properties "MW_PRE" or "MW_POST"
-
- }
+namespace StructureCheck {
+bool StripSmallFragments(RWMol &mol);
+void AddMWMF(
+    RWMol &mol,
+    bool pre);  // set mol formula & mass properties "MW_PRE" or "MW_POST"
 }
-
+}
