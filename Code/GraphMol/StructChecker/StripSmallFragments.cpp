@@ -41,7 +41,7 @@ void AddMWMF(RWMol &mol,
 }
 
 bool StripSmallFragments(RWMol &mol, bool verbose) {
-  const bool sanitize=true;
+  const bool sanitize=false;
   std::vector<boost::shared_ptr<ROMol> > frags = MolOps::getMolFrags(mol, sanitize);
   size_t maxFragSize = 0;
   size_t maxFragIdx = 0;
