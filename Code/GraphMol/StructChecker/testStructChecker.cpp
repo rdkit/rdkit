@@ -83,10 +83,17 @@ void testOptionsJSON()  // PASSED
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void doLoadOptionsFromFiles(StructCheckerOptions& options) {
+void doLoadOptionsFromFiles(StructCheckerOptions& options,
+                            const std::string& dirBase = "",
+                            bool strict = true) {
   bool ok;
   const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
-  const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
+  std::string testDataDir;
+  if (dirBase == "") {
+    testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
+  } else {
+    testDataDir = dirBase;
+  }
   if (options.Verbose)
     BOOST_LOG(rdInfoLog) << "testDataDir: " << testDataDir << "\n";
 
@@ -98,7 +105,7 @@ void doLoadOptionsFromFiles(StructCheckerOptions& options) {
   if (options.Verbose)
     BOOST_LOG(rdInfoLog) << "loadAcidicAugmentedAtoms checkfgs.aci\n";
   ok = options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci");
-  TEST_ASSERT(ok);
+  TEST_ASSERT(!strict || ok);
 
   if (options.Verbose)
     BOOST_LOG(rdInfoLog) << "loadAugmentedAtomTranslations checkfgs.trn\n";
@@ -114,12 +121,12 @@ void doLoadOptionsFromFiles(StructCheckerOptions& options) {
   if (options.Verbose)
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.sdf\n";
   ok = options.loadTautomerData(testDataDir + "tautomer.sdf");
-  TEST_ASSERT(ok);
+  TEST_ASSERT(!strict || ok);
 
   if (options.Verbose)
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.rdf\n";
   ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
-  TEST_ASSERT(ok);
+  TEST_ASSERT(!strict || ok);
 
   options.Verbose = true;
 }
@@ -139,12 +146,11 @@ void testLoadOptionsFromFiles() {
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test1\n";
-  const char*
-      smols[] = {
-          "CCC",  // tmp
-          "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
-          "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
-      };
+  const char* smols[] = {
+      "CCC",  // tmp
+      "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
+      "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
+  };
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
   options.Verbose = true;
@@ -174,12 +180,11 @@ void test1() {
 void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test2\n";
-  const char*
-      smols[] = {
-          "CCC",  // tmp
-          "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
-          "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
-      };
+  const char* smols[] = {
+      "CCC",  // tmp
+      "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
+      "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
+  };
 
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
@@ -295,19 +300,17 @@ void testStereo()  // stereochemistry
 {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testStereo\n";
-  const char*
-      smols[] =
-          {
-           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
-           "C",  // Pyrethrin II (C22H28O5)
-           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
-           "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
-           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1",  // Glucose
-                                                                // (glucopyranose)
-                                                                // (C6H12O6)
-           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
-           "O2"  // Bergenin (cuscutin) (a resin) (C14H16O9)
-          };
+  const char* smols[] = {
+      "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
+      "CC=C",  // Pyrethrin II (C22H28O5)
+      "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(="
+      "O)O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
+      "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1",  // Glucose
+                                                           // (glucopyranose)
+                                                           // (C6H12O6)
+      "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(="
+      "O)O2"  // Bergenin (cuscutin) (a resin) (C14H16O9)
+  };
 
   StructCheckerOptions options;
   //    doLoadOptionsFromFiles(options);
@@ -323,8 +326,9 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
-    BOOST_LOG(rdInfoLog) << "FLAGS:" << StructChecker::StructureFlagsToString(
-                                            flags) << "\n";
+    BOOST_LOG(rdInfoLog) << "FLAGS:"
+                         << StructChecker::StructureFlagsToString(flags)
+                         << "\n";
     TEST_ASSERT(true);
   }
 
@@ -337,8 +341,9 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(CheckStereo(*mol.get()) == false);
     unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
-    BOOST_LOG(rdInfoLog) << "FLAGS: " << StructChecker::StructureFlagsToString(
-                                             flags) << "\n";
+    BOOST_LOG(rdInfoLog) << "FLAGS: "
+                         << StructChecker::StructureFlagsToString(flags)
+                         << "\n";
     //      TEST_ASSERT(0!=(flags & StructChecker::STEREO_ERROR));
   }
   {
@@ -366,10 +371,12 @@ void testStereo()  // stereochemistry
       */
       unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
       BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
-      BOOST_LOG(rdInfoLog) << "ref: " << StructChecker::StructureFlagsToString(
-                                             res[i]) << "\n";
-      BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(
-                                             flags) << "\n";
+      BOOST_LOG(rdInfoLog) << "ref: "
+                           << StructChecker::StructureFlagsToString(res[i])
+                           << "\n";
+      BOOST_LOG(rdInfoLog) << "RES: "
+                           << StructChecker::StructureFlagsToString(flags)
+                           << "\n";
       //            TEST_ASSERT((flags == res[i]);
       BOOST_LOG(rdInfoLog) << "-------\n";
     }
@@ -380,15 +387,14 @@ void testStereo()  // stereochemistry
 void testOptionsDefault() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testOptionsDefault\n";
-  const char*
-      smols[] =
-          {
-           //        "COC(=O)C",
-           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
-           "C",  // Pyrethrin II (C22H28O5)
-          };
+  const char* smols[] = {
+      "COC(=O)C",
+      "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
+      "CC=C",  // Pyrethrin II (C22H28O5)
+  };
 
-  StructCheckerOptions options;
+  StructCheckerOptions
+      options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
   options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
@@ -399,7 +405,7 @@ void testOptionsDefault() {
     delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
-    //        TEST_ASSERT(0!=flags);
+    TEST_ASSERT(0 != flags);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -407,12 +413,9 @@ void testOptionsDefault() {
 void testCheckAtomWithDefaultGoodAtoms() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckAtom\n";
-  const char*
-      smols[] =
-          {
-           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
-           "C",  // Pyrethrin II (C22H28O5)
-          };
+  const char* smols[] = {
+      "COC(=O)C",
+  };
 
   StructCheckerOptions
       options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
@@ -435,7 +438,7 @@ void testCheckAtom() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "testCheckAtom\n";
   const char* smols[] = {
-      "CO"  //, "COC(=O)C",
+      "COC(=O)C",
   };
 
   StructCheckerOptions options;
@@ -573,6 +576,81 @@ void testNitro() {
   TEST_ASSERT(!(flags & StructChecker::ATOM_CHECK_FAILED));
 }
 
+void testSpecificExamples() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "testSpecificExamples\n";
+  StructCheckerOptions options;
+  const std::string rdbase = getenv("RDBASE");
+  const std::string testDataDir = rdbase + "/Data/struchk/";
+  doLoadOptionsFromFiles(options, testDataDir, false);
+
+  options.RemoveMinorFragments = true;
+  options.CheckCollisions = true;
+  options.CollisionLimitPercent = 3;
+  options.CheckStereo = true;
+  options.MaxMolSize = 999;
+  options.Verbose = true;
+  StructChecker chk(options);
+  {
+    const char* smols[] = {
+        "C[N+](C)(C)C",
+        "CC(=C)C(OCC[N+](C)(C)C)=[N+](S(=O)(=O)C(F)(F)F)S(=O)(=O)C(F)(F)F",
+        "OC(=O)[C@@H]1CC=CN1"};
+
+    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+      BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
+      RWMol* mol = SmilesToMol(smols[i]);
+      TEST_ASSERT(mol);
+      unsigned flags = chk.checkMolStructure(*mol);
+      delete mol;
+      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
+                           << "\n";
+      TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
+      //        TEST_ASSERT(!(flags & StructChecker::ATOM_CHECK_FAILED));
+    }
+  }
+  {
+    std::string molb =
+        "\n"
+        "  Mrv1561 08261616022D\n"
+        "\n"
+        "  8  8  0  0  1  0            999 V2000\n"
+        "    3.2170    2.5920    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    2.2609    1.5301    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    3.5724    0.4125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    4.3260    0.0770    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    4.8781    0.6901    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    3.6586    1.2330    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    4.4656    1.4045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    3.0455    1.7850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  1  8  2  0  0  0  0\n"
+        "  2  8  1  0  0  0  0\n"
+        "  3  4  1  0  0  0  0\n"
+        "  3  6  1  0  0  0  0\n"
+        "  4  5  2  0  0  0  0\n"
+        "  5  7  1  0  0  0  0\n"
+        "  6  7  1  0  0  0  0\n"
+        "  6  8  1  6  0  0  0\n"
+        "M  END\n";
+
+    RWMol* mol = MolBlockToMol(molb);
+    TEST_ASSERT(mol);
+    unsigned flags = chk.checkMolStructure(*mol);
+    delete mol;
+    BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
+                         << "\n";
+    TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 //==============================================================================
 
 int main(int argc, const char* argv[]) {
@@ -580,8 +658,8 @@ int main(int argc, const char* argv[]) {
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
 
-  testCheckAtomFiles();
-
+// return 0; //tmp
+#if 1
   testFlags();
   testOptionsDefault();
   testOptionsJSON();
@@ -590,18 +668,21 @@ int main(int argc, const char* argv[]) {
   } catch (...) {
     // relative path to patern files must be correct !
   }
+  // FAILED
   testOptionsDefault();
 
   test1();
   test2();
 
-  testCheckMatch();
   testCheckAtom();
   testCheckAtomFiles();
   testCheckAtomWithDefaultGoodAtoms();
 
   testStereo();
   testNitro();
+#endif
+  testSpecificExamples();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return 0;

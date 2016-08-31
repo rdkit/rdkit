@@ -87,12 +87,11 @@ bool loadOptionsFromFiles(
 //=====================================================================
 // File parsers helper functions:
 
-static const char *
-    bond_to_string[] =  // ordered in according with BondType values
+static const char
+    *bond_to_string[] =  // ordered in according with BondType values
     {"?", "-", "=", "#", "~", "-=", "-~", "=~", "*"};
 
-// used in unit test
-bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
+static bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
   /*
   * The syntax of a augmented atom string is as follows:
   *
@@ -101,7 +100,7 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
   * Bond symbols and charge descriptors are defined in the symbol tables
   * 'bond_to_string' and 'charge_to_string'.
   * '@' means central atom is in ring, '!@' means central atom is not in ring,
-  *omitting means any topography could match.
+  * omitting means any topography could match.
   */
 
   size_t i;
@@ -430,8 +429,10 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
 
   for (size_t i = 0; i < sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms);
        ++i) {
-    good.push_back(AugmentedAtom());
-    if (!StringToAugmentedAtom(DefaultGoodAtoms[i].str, good.back())) {
+    good.push_back(AugmentedAtom(
+        "", DefaultGoodAtoms[i].shortName, DefaultGoodAtoms[i].charge,
+        DefaultGoodAtoms[i].radical, DefaultGoodAtoms[i].topology));
+    if (!StringToAugmentedAtom(DefaultGoodAtoms[i].atomSymbol, good.back())) {
       throw "INTERNAL ERROR in default data";
     }
   }
@@ -441,8 +442,11 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
 
   for (size_t i = 0;
        i < sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms); ++i) {
-    acidic.push_back(AugmentedAtom());
-    if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].str, acidic.back())) {
+    acidic.push_back(AugmentedAtom(
+        "", DefaultAcidicAtoms[i].shortName, DefaultAcidicAtoms[i].charge,
+        DefaultAcidicAtoms[i].radical, DefaultAcidicAtoms[i].topology));
+    if (!StringToAugmentedAtom(DefaultAcidicAtoms[i].atomSymbol,
+                               acidic.back())) {
       throw "INTERNAL ERROR in default data";
     }
   }

@@ -41,7 +41,11 @@ void AddMWMF(RWMol &mol,
 
 bool StripSmallFragments(RWMol &mol) {
   bool removed = false;
-
+  // there may be an argument about how much sense this makes, but it's
+  // consistent with the avalon toolkit behavior
+  // if (mol.hasProp(RDKit::common_properties::_MolFileChiralFlag)) {
+  //   mol.clearProp(RDKit::common_properties::_MolFileChiralFlag);
+  // }
   std::vector<int> frags;
   std::map<unsigned, unsigned> frag_count;
 

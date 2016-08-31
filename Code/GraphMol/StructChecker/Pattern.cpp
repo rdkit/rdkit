@@ -47,7 +47,9 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
 */
 bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l,
                    bool use_charge) {
-  if (l.BondType != ANY_BOND && !isBondTypeMatch(b, l.BondType)) return false;
+  if (l.BondType != ANY_BOND && convertBondType(b.getBondType()) != l.BondType)
+    return false;
+
   if (l.Radical != ANY_RADICAL && a.getNumRadicalElectrons() != l.Radical)
     return false;
   if ((l.Charge != ANY_CHARGE || use_charge) && l.Charge != ANY_CHARGE &&
@@ -105,7 +107,7 @@ bool TransformAugmentedAtoms(
     unsigned a2 = bond->getBeginAtomIdx();
     neighbors[a1].push_back(AtomNeighbor(a2, i));
     neighbors[a2].push_back(AtomNeighbor(a1, i));
-    bondInRing[i] = false;  // init
+    bondInRing[i] = false;                    // init
     atomInRing[a1] = atomInRing[a2] = false;  // init
   }
 
@@ -157,7 +159,8 @@ bool TransformAugmentedAtoms(
                   (ANY_RADICAL == ligand.Radical ||
                    nbrAtom->getNumRadicalElectrons() == ligand.Radical) &&
                   ((ANY_BOND == ligand.BondType ||
-                    isBondTypeMatch(*nbrBond, ligand.BondType)) ||
+                    convertBondType(nbrBond->getBondType()) ==
+                        ligand.BondType) ||
                    (SINGLE_DOUBLE == ligand.BondType &&
                     (RDKit::Bond::SINGLE == nbrBond->getBondType() ||
                      RDKit::Bond::DOUBLE == nbrBond->getBondType()))) &&
@@ -360,8 +363,7 @@ aa.Ligands.size()<<" "<< aa.ShortName <<"\n";
 * bonds. The first matching atom mapping is placed into match[1..].
 * i is stored in match[0].
 */
-bool AAMatch(const ROMol &mol, unsigned i,
-             //    std::vector<unsigned> &match,
+bool AAMatch(const ROMol &mol, unsigned i, std::vector<unsigned> &match,
              const AugmentedAtom &aa,
              const std::vector<unsigned> &atom_ring_status,
              const std::vector<Neighbourhood> &nbp, bool verbose) {
@@ -428,13 +430,15 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
 
 /*
 * Checks if every atom in *mp matches one of the augmented atoms
-* in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or FALSE
+* in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or
+* FALSE
 * otherwise.
 */
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
                 bool verbose) {
   if (good_atoms.empty()) return true;
   std::vector<Neighbourhood> neighbours(mol.getNumAtoms());
+  std::vector<unsigned> match;  //[MAXNEIGHBOURS + 1];
   std::vector<unsigned> atom_status(mol.getNumAtoms());
   std::vector<unsigned> bond_status(mol.getNumBonds());
   //    if(verbose)

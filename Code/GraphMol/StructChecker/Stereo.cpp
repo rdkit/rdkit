@@ -367,6 +367,8 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
         reference = i;
       else {
         // stereo_error = "three attachments with more than 2 stereobonds";
+        std::cerr << "three attachments with more than 2 stereobonds"
+                  << std::endl;
         return (ILLEGAL_REPRESENTATION);
       }
 
@@ -387,6 +389,8 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
 
   if (angle < ANGLE_EPSILON || fabs(PI - angle) < ANGLE_EPSILON) {
     // stereo_error = "three attachments: colinearity violation";
+    std::cerr << "three attachments colinearity violation" << std::endl;
+
     return (ILLEGAL_REPRESENTATION);
   }
 
@@ -405,6 +409,7 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
       tetrahedron[i + 1].z = 0.0;
     else {
       // stereo_error = "three attachments: illegal bond symbol";
+      std::cerr << "three attachments illegal bond symbol" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
     tetrahedron[i + 1].number = ligands[i].number;
@@ -445,6 +450,8 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
       tetrahedron[i].z = (-1.0);
     } else if (ligands[i].symbol != RDKit::Bond::STEREONONE) {
       // stereo_error = "illegal bond symbol";
+      std::cerr << "illegal bond symbol" << std::endl;
+
       return (ILLEGAL_REPRESENTATION);
     }
   }
@@ -453,6 +460,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
 
   if (nup > 2 || ndown > 2) {
     // stereo_error = "too many stereobonds";
+    std::cerr << "too many stereobonds" << std::endl;
     return (ILLEGAL_REPRESENTATION);
   }
 
@@ -472,6 +480,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
     if (nopposite > 2) {
       // stereo_error = "UMBRELLA: all non-stereo bonds opposite to single
       // stereo bond";
+      std::cerr << "umbrella" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
   }
@@ -482,6 +491,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
         (ligands[i].symbol == RDKit::Bond::STEREOE &&
          ligands[i + 2].symbol == RDKit::Bond::STEREOZ)) {
       // stereo_error = "UP/DOWN opposition";
+      std::cerr << "up/down" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
 
@@ -491,6 +501,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
         || (ligands[i].symbol == RDKit::Bond::STEREOE          // DOWN
             && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOE)) {
       // stereo_error = "Adjacent like stereobonds";
+      std::cerr << "adjacent like" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
 
@@ -504,6 +515,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
                     ligands[(i + 2) % 4].y - ligands[(i + 1) % 4].y);
       if (angle < (185 * PI / 180)) {
         // stereo_error = "colinearity or triangle rule violation";
+        std::cerr << "colinearity or triangle rule" << std::endl;
         return (ILLEGAL_REPRESENTATION);
       }
     }
@@ -568,6 +580,7 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
       return (ALLENE_PARITY);
     else {
       // stereo_error = "AtomParity: Stereobond at unsaturated atom";
+      std::cerr << "stereobond at unsaturated atom" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
   } else if (multiple && 16 != element)  // "S"
@@ -623,10 +636,12 @@ bool CheckStereo(const ROMol &mol) {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
           const Bond &bond = *mol.getBondWithIdx(j);
           if (bond.getBeginAtomIdx() == i + 1 &&
-              (RDKit::Bond::STEREOZ == bond.getStereo()       // == UP
-               || RDKit::Bond::STEREOE == bond.getStereo()))  // == DOWN))
+              (RDKit::Bond::STEREOZ == bond.getStereo()         // == UP
+               || RDKit::Bond::STEREOE == bond.getStereo())) {  // == DOWN))
             // stereobond to non-stereogenic atom
+            std::cerr << "stereobond to nonstereogenic" << std::endl;
             result = false;
+          }
         }
       }
     }
@@ -635,21 +650,21 @@ bool CheckStereo(const ROMol &mol) {
   if (!center_defined) {  // no stereocenter defined
     unsigned int chiralFlag = 0;
     if (mol.getPropIfPresent(RDKit::common_properties::_MolFileChiralFlag,
-                             chiralFlag) ||
-        mol.getPropIfPresent(RDKit::common_properties::_ChiralityPossible,
                              chiralFlag))
       ;
     else
       for (unsigned j = 0; j < mol.getNumBonds(); j++) {
         const Bond *bond = mol.getBondWithIdx(j);
-        if (bond->getBondDir() != RDKit::Bond::NONE &&
-            bond->getBondDir() != RDKit::Bond::UNKNOWN) {
+        if (bond->getBondDir() == Bond::BEGINWEDGE ||
+            bond->getBondDir() == Bond::BEGINDASH) {
           chiralFlag = 1;
           break;
         }
       }
-    if (chiralFlag != 0)  // chiral flag set but no stereocenter defined
+    if (chiralFlag != 0) {  // chiral flag set but no stereocenter defined
+      std::cerr << "chiral flag, no stereocenter" << std::endl;
       result = false;
+    }
   }
   return result;
 }
@@ -700,6 +715,8 @@ bool AtomClash(RWMol &mol, double clash_limit) {
               (atomPoint[i].x - atomPoint[j].x) +
           (atomPoint[i].y - atomPoint[j].y) * (atomPoint[i].y - atomPoint[j].y);
       if (dist < clash_limit * clash_limit * bond_square_median) {
+        std::cerr << "clash 1" << std::endl;
+
         return true;
       }
       if (dist < min_dist) min_dist = dist;
@@ -728,6 +745,7 @@ bool AtomClash(RWMol &mol, double clash_limit) {
           rb <= bb &&  // projection of r onto b does not exceed b
           (rr * bb - rb * rb) / (bb + EPS) <  // distance from bond < limit
               clash_limit * clash_limit * bond_square_median) {
+        std::cerr << "clash 2" << std::endl;
         return true;
       }
     }
