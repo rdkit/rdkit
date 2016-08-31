@@ -12,7 +12,7 @@
 
 namespace RDKit {
 namespace StructureCheck {
-bool StripSmallFragments(RWMol &mol);
+bool StripSmallFragments(RWMol &mol, bool verbose=false);
 void AddMWMF(
     RWMol &mol,
     bool pre);  // set mol formula & mass properties "MW_PRE" or "MW_POST"

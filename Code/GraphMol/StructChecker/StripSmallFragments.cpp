@@ -12,6 +12,7 @@
 #include "../MolOps.h"
 #include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
+#include "../SmilesParse/SmilesWrite.h"
 
 namespace RDKit {
 namespace StructureCheck {
@@ -39,39 +40,37 @@ void AddMWMF(RWMol &mol,
   mol.setProp((pre ? "MW_PRE" : "MW_POST"), mass);
 }
 
-bool StripSmallFragments(RWMol &mol) {
-  bool removed = false;
-  // there may be an argument about how much sense this makes, but it's
-  // consistent with the avalon toolkit behavior
-  // if (mol.hasProp(RDKit::common_properties::_MolFileChiralFlag)) {
-  //   mol.clearProp(RDKit::common_properties::_MolFileChiralFlag);
-  // }
-  std::vector<int> frags;
-  std::map<unsigned, unsigned> frag_count;
+bool StripSmallFragments(RWMol &mol, bool verbose) {
+  const bool sanitize=true;
+  std::vector<boost::shared_ptr<ROMol> > frags = MolOps::getMolFrags(mol, sanitize);
+  size_t maxFragSize = 0;
+  size_t maxFragIdx = 0;
+  if (frags.size() == 1)
+    return false;
+  
+  for(size_t i=0; i<frags.size(); ++i) {
+    const unsigned int fragSize = frags[i].get()->getNumAtoms();
+    if(fragSize >= maxFragSize) {
+      maxFragSize = fragSize;
+      maxFragIdx = i;
+    }
+  }
 
-  unsigned int nFrags = RDKit::MolOps::getMolFrags(mol, frags);
-  if (nFrags > 1) {
-    unsigned maxFragSize = 0;
-    unsigned maxSizeFragIdx = 0;
-    for (unsigned i = 0; i < frags.size(); i++) {
-      if (frag_count.find(frags[i]) != frag_count.end()) {
-        frag_count.at(frags[i]) = frag_count.at(frags[i]) + 1;
-      } else {
-        frag_count.insert(std::pair<unsigned, unsigned>(frags[i], 1));
-      }
-
-      if (frag_count.at(frags[i]) > maxFragSize) {
-        maxFragSize = frag_count.at(frags[i]);
-        maxSizeFragIdx = frags[i];
+  if(verbose) {
+    std::string name = "<no name>";
+    mol.getPropIfPresent(common_properties::_Name, name);
+    for(size_t i=0; i<frags.size(); ++i) {
+      if (i != maxFragIdx) {
+        BOOST_LOG(rdWarningLog) << name << " removed " << frags[i].get()->getNumAtoms()
+                                << " atoms" << std::endl;
       }
     }
-    for (int i = frags.size() - 1; i >= 0; i--)
-      if (frags[i] != maxSizeFragIdx) {
-        mol.removeAtom(i);
-      }
-    removed = true;
+
   }
-  return removed;
+  mol = *frags[maxFragIdx].get();
+  BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
+    
+  return true;
 }
 
 }  // namespace StructureCheck

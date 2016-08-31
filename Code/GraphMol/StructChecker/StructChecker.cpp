@@ -51,7 +51,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
 
   if (Options.RemoveMinorFragments) {
     AddMWMF(mol, true);  // Add mol mass data field "MW_PRE"
-    if (StripSmallFragments(mol)) {
+    if (StripSmallFragments(mol, Options.Verbose)) {
       flags |= FRAGMENTS_FOUND;
     }
     AddMWMF(mol, false);  // Add mol mass data field "MW_POST"
