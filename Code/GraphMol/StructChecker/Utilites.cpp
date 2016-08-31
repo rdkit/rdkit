@@ -91,7 +91,7 @@ namespace RDKit {
           oss << atm.getSymbol();
           
           if (atm.getFormalCharge())
-            oss << (atm.getFormalCharge() > 0 ? "+" : "-") <<
+            oss << (atm.getFormalCharge() > 0 ? "+" : "") <<
                 atm.getFormalCharge();
           
           if (atm.getNumRadicalElectrons())
@@ -127,7 +127,7 @@ namespace RDKit {
             else
               oss << "(" << "?" << (int)nbr.get<1>() << "?" << nbr.get<0>();
             if (nbr.get<2>())
-              oss << (nbr.get<2>() > 0 ? "+" : "-") <<
+              oss << (nbr.get<2>() > 0 ? "+" : "") <<
                   nbr.get<2>();
             
             if (nbr.get<3>())
