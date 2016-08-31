@@ -43,10 +43,11 @@ void AddMWMF(RWMol &mol,
 bool StripSmallFragments(RWMol &mol, bool verbose) {
   const bool sanitize=false;
   std::vector<boost::shared_ptr<ROMol> > frags = MolOps::getMolFrags(mol, sanitize);
+  if (frags.size() <= 1)
+    return false;
+
   size_t maxFragSize = 0;
   size_t maxFragIdx = 0;
-  if (frags.size() == 1)
-    return false;
   
   for(size_t i=0; i<frags.size(); ++i) {
     const unsigned int fragSize = frags[i].get()->getNumAtoms();

@@ -24,6 +24,11 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
                                   mol.getNumBonds() > Options.MaxMolSize)) {
     return SIZE_CHECK_FAILED;
   }
+
+  if (mol.getNumAtoms() == 0) {
+    return SIZE_CHECK_FAILED;
+  }
+  
   if (!mol.getRingInfo()->isInitialized()) mol.getRingInfo()->initialize();
 
   /* it uses SDL text
