@@ -1590,9 +1590,40 @@ void test11DrawMolGrid() {
   std::cerr << " Done" << std::endl;
 }
 
+void test12DrawMols() {
+  std::cout << " ----------------- Testing drawMolecules" << std::endl;
+
+  std::string smiles =
+      "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
+  RWMol *m1 = SmilesToMol(smiles);
+  TEST_ASSERT(m1);
+  smiles = "NC(=O)[C@H](Cl)Sc1ncns1";  // made up
+  RWMol *m2 = SmilesToMol(smiles);
+  TEST_ASSERT(m2);
+  std::vector<ROMol *> mols;
+  mols.push_back(m1);
+  mols.push_back(m2);
+  mols.push_back(m1);
+  mols.push_back(m2);
+  mols.push_back(m1);
+  mols.push_back(m2);
+  {
+    MolDraw2DSVG drawer(750, 400, 250, 200);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_1.svg");
+    outs << text;
+    outs.flush();
+  }
+  delete m1;
+  delete m2;
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -1612,7 +1643,8 @@ int main() {
   testGithub953();
   testGithub983();
   testDeuteriumTritium();
-#endif
   test10DrawSecondMol();
   test11DrawMolGrid();
+#endif
+  test12DrawMols();
 }

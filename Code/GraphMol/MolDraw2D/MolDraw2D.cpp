@@ -12,6 +12,8 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include <cstdlib>
 #include <limits>
@@ -306,10 +308,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     highlightCloseContacts();
   }
   // {
-  //   Point2D p1(0, 0), p2(0, 0), offset(0.1, 0.1);
-  //   p1 -= offset;
-  //   p2 += offset;
-  //   drawEllipse(p1, p2);
+  //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);
+  //   setColour(DrawColour(0, 0, 0));
+  //   setFillPolys(false);
+  //   drawRect(p1, p2);
   // }
 }
 
@@ -338,6 +340,64 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     setFontSize(o_font_size);
   }
 }
+
+void MolDraw2D::drawMolecules(
+    const std::vector<ROMol *> &mols, const std::vector<std::string> *legends,
+    const std::vector<std::vector<int> > *highlight_atoms,
+    const std::vector<std::vector<int> > *highlight_bonds,
+    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
+    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
+    const std::vector<std::map<int, double> > *highlight_radii,
+    const std::vector<int> *confIds) {
+  PRECONDITION(!legends || legends->size() == mols.size(), "bad size");
+  PRECONDITION(!highlight_atoms || highlight_atoms->size() == mols.size(),
+               "bad size");
+  PRECONDITION(!highlight_bonds || highlight_bonds->size() == mols.size(),
+               "bad size");
+  PRECONDITION(
+      !highlight_atom_maps || highlight_atom_maps->size() == mols.size(),
+      "bad size");
+  PRECONDITION(
+      !highlight_bond_maps || highlight_bond_maps->size() == mols.size(),
+      "bad size");
+  PRECONDITION(!highlight_radii || highlight_radii->size() == mols.size(),
+               "bad size");
+  PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
+
+  std::vector<RWMol> tmols;
+  tmols.reserve(mols.size());
+  Point2D minP, maxP;
+  minP.x = minP.y = numeric_limits<double>::max();
+  maxP.x = maxP.y = -numeric_limits<double>::max();
+  for (unsigned int i = 0; i < mols.size(); ++i) {
+    tmols.push_back(*(mols[i]));
+    MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
+    Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
+    RDGeom::Point3D centroid = MolTransforms::computeCentroid(conf, false);
+    for (unsigned int j = 0; j < conf.getNumAtoms(); ++j) {
+      RDGeom::Point3D &pj = conf.getAtomPos(j);
+      pj -= centroid;
+      minP.x = std::min(minP.x, pj.x);
+      minP.y = std::min(minP.y, pj.y);
+      maxP.x = std::max(maxP.x, pj.x);
+      maxP.y = std::max(maxP.y, pj.y);
+    }
+  }
+  setScale(panelWidth(), panelHeight(), minP, maxP);
+  int nCols = width() / panelWidth();
+  for (unsigned int i = 0; i < mols.size(); ++i) {
+    int row = i / nCols;
+    int col = i % nCols;
+    setOffset(col * panelWidth(), row * panelHeight());
+    drawMolecule(tmols[i], legends ? (*legends)[i] : "",
+                 highlight_atoms ? &(*highlight_atoms)[i] : NULL,
+                 highlight_bonds ? &(*highlight_bonds)[i] : NULL,
+                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : NULL,
+                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : NULL,
+                 highlight_radii ? &(*highlight_radii)[i] : NULL,
+                 confIds ? (*confIds)[i] : -1);
+  }
+};
 
 void MolDraw2D::highlightCloseContacts() {
   if (drawOptions().flagCloseContactsDist < 0) return;

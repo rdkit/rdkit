@@ -116,6 +116,16 @@ class MolDraw2D {
       const std::map<int, DrawColour> *highlight_bond_map = NULL,
       const std::map<int, double> *highlight_radii = NULL, int confId = -1);
 
+  virtual void drawMolecules(
+      const std::vector<ROMol *> &mols,
+      const std::vector<std::string> *legends = NULL,
+      const std::vector<std::vector<int> > *highlight_atoms = NULL,
+      const std::vector<std::vector<int> > *highlight_bonds = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
+      const std::vector<std::map<int, double> > *highlight_radii = NULL,
+      const std::vector<int> *confIds = NULL);
+
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
   // have
@@ -132,6 +142,8 @@ class MolDraw2D {
 
   virtual int width() const { return width_; }
   virtual int height() const { return height_; }
+  virtual int panelWidth() const { return panel_width_; }
+  virtual int panelHeight() const { return panel_height_; }
 
   double scale() const { return scale_; }
   void calculateScale(int width, int height);

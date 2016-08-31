@@ -38,7 +38,7 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp
   LINK_LIBRARIES
-  FileParsers SmilesParse Depictor RDGeometryLib
+  FileParsers SmilesParse Depictor MolTransforms RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
   ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
