@@ -87,8 +87,8 @@ bool loadOptionsFromFiles(
 //=====================================================================
 // File parsers helper functions:
 
-static const char
-    *bond_to_string[] =  // ordered in according with BondType values
+static const char *
+    bond_to_string[] =  // ordered in according with BondType values
     {"?", "-", "=", "#", "~", "-=", "-~", "=~", "*"};
 
 // used in unit test
@@ -101,7 +101,7 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
   * Bond symbols and charge descriptors are defined in the symbol tables
   * 'bond_to_string' and 'charge_to_string'.
   * '@' means central atom is in ring, '!@' means central atom is not in ring,
-  * omitting means any topography could match.
+  *omitting means any topography could match.
   */
 
   size_t i;
@@ -132,14 +132,13 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
     aa.Charge = ANY_CHARGE;
     str += 2;
   } else if (*str == '-' || *str == '+') {
+    int sign = (*str == '-') ? (-1) : (1);
     str++;
-    int value;
     if (*str >= '1' && *str <= '7') {
-      value = *str - '0';
-      aa.Charge = (*str == '-') ? (-value) : (value);
+      aa.Charge = sign * (*str - '0');
       str++;
     } else {  // no match
-      BOOST_LOG(rdErrorLog) << "syntax error '" << str << "'\n";
+      BOOST_LOG(rdErrorLog) << "syntax error '" << str - 1 << "'\n";
       return false;
     }
   } else
@@ -202,14 +201,13 @@ bool StringToAugmentedAtom(const char *str, AugmentedAtom &aa) {
       aa.Ligands.back().Charge = ANY_CHARGE;
       str += 2;
     } else if (*str == '-' || *str == '+') {
+      int sign = (*str == '-') ? (-1) : (1);
       str++;
-      int value;
       if (*str >= '1' && *str <= '7') {
-        value = *str - '0';
-        aa.Ligands.back().Charge = (*str == '-') ? (-value) : (value);
+        aa.Ligands.back().Charge = sign * (*str - '0');
         str++;
       } else {  // no match
-        BOOST_LOG(rdErrorLog) << "syntax error '" << str << "'\n";
+        BOOST_LOG(rdErrorLog) << "syntax error '" << str - 1 << "'\n";
         return false;
       }
     } else

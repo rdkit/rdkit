@@ -50,7 +50,7 @@ bool getMolAtomPoints(const ROMol &mol,
       }
     }
   if (atomPoint.empty()) {  // compute XYZ
-                            // TODO:
+    // TODO:
     // ???? ..........
   }
   return non_zero_z;

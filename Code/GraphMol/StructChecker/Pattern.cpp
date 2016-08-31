@@ -105,7 +105,7 @@ bool TransformAugmentedAtoms(
     unsigned a2 = bond->getBeginAtomIdx();
     neighbors[a1].push_back(AtomNeighbor(a2, i));
     neighbors[a2].push_back(AtomNeighbor(a1, i));
-    bondInRing[i] = false;                    // init
+    bondInRing[i] = false;  // init
     atomInRing[a1] = atomInRing[a2] = false;  // init
   }
 
@@ -295,7 +295,8 @@ bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
   }
   if (aa.Ligands.size() == nmatch) {  // all matched
 
-    if (verbose) BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE\n";
+    if (verbose)
+      BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE " << aa.ShortName << "\n";
     return true;
   }
   if (verbose)
@@ -381,6 +382,7 @@ bool AAMatch(const ROMol &mol, unsigned i,
     }
     if (!atom_ring_status.empty() && aa.Topology == CHAIN &&
         atom_ring_status[i] != 0) {
+      // DEBUG:
       if (verbose)
         BOOST_LOG(rdInfoLog) << "AAMatch i=" << i
                              << " aa.Topology CHAIN. ret FALSE\n";
@@ -455,6 +457,22 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
   for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
     unsigned prevn = nmatch;
     // DEBUG:
+    if (verbose) {
+      char nstr[512] = "";
+      for (size_t j = 0; j < neighbours[i].Atoms.size(); j++) {
+        const Atom &a = *mol.getAtomWithIdx(neighbours[i].Atoms[j]);
+        snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), ", %s",
+                 a.getSymbol().c_str());
+        if (0 != a.getFormalCharge())
+          snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), "%+d",
+                   a.getFormalCharge());
+      }
+      BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << i << ", "
+                           << mol.getAtomWithIdx(i)->getSymbol()
+                           << " status=" << atom_status[i]
+                           << " neighbours=" << neighbours[i].Atoms.size()
+                           << nstr << "\n";
+    }
     if (verbose)
       BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << i << " "
                            << mol.getAtomWithIdx(i)->getSymbol()

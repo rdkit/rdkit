@@ -139,8 +139,8 @@ void testLoadOptionsFromFiles() {
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test1\n";
-  const char* smols[] =
-      {
+  const char*
+      smols[] = {
           "CCC",  // tmp
           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
           "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
@@ -174,8 +174,8 @@ void test1() {
 void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "test2\n";
-  const char* smols[] =
-      {
+  const char*
+      smols[] = {
           "CCC",  // tmp
           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
           "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
@@ -298,15 +298,15 @@ void testStereo()  // stereochemistry
   const char*
       smols[] =
           {
-              "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
-              "CC=C",  // Pyrethrin II (C22H28O5)
-              "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(="
-              "O)O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
-              "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1",  // Glucose
-                                                                   // (glucopyranose)
-                                                                   // (C6H12O6)
-              "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(="
-              "O)O2"  // Bergenin (cuscutin) (a resin) (C14H16O9)
+           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
+           "C",  // Pyrethrin II (C22H28O5)
+           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
+           "O2",  // Bergenin (cuscutin) (a resin) (C14H16O9)
+           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H](O)[C@@H](O)1",  // Glucose
+                                                                // (glucopyranose)
+                                                                // (C6H12O6)
+           "OC[C@@H](O1)[C@@H](O)[C@H](O)[C@@H]2[C@@H]1c3c(O)c(OC)c(O)cc3C(=O)"
+           "O2"  // Bergenin (cuscutin) (a resin) (C14H16O9)
           };
 
   StructCheckerOptions options;
@@ -323,9 +323,8 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
-    BOOST_LOG(rdInfoLog) << "FLAGS:"
-                         << StructChecker::StructureFlagsToString(flags)
-                         << "\n";
+    BOOST_LOG(rdInfoLog) << "FLAGS:" << StructChecker::StructureFlagsToString(
+                                            flags) << "\n";
     TEST_ASSERT(true);
   }
 
@@ -338,9 +337,8 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(CheckStereo(*mol.get()) == false);
     unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
-    BOOST_LOG(rdInfoLog) << "FLAGS: "
-                         << StructChecker::StructureFlagsToString(flags)
-                         << "\n";
+    BOOST_LOG(rdInfoLog) << "FLAGS: " << StructChecker::StructureFlagsToString(
+                                             flags) << "\n";
     //      TEST_ASSERT(0!=(flags & StructChecker::STEREO_ERROR));
   }
   {
@@ -368,12 +366,10 @@ void testStereo()  // stereochemistry
       */
       unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol*>(mol.get()));
       BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
-      BOOST_LOG(rdInfoLog) << "ref: "
-                           << StructChecker::StructureFlagsToString(res[i])
-                           << "\n";
-      BOOST_LOG(rdInfoLog) << "RES: "
-                           << StructChecker::StructureFlagsToString(flags)
-                           << "\n";
+      BOOST_LOG(rdInfoLog) << "ref: " << StructChecker::StructureFlagsToString(
+                                             res[i]) << "\n";
+      BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(
+                                             flags) << "\n";
       //            TEST_ASSERT((flags == res[i]);
       BOOST_LOG(rdInfoLog) << "-------\n";
     }
@@ -387,9 +383,9 @@ void testOptionsDefault() {
   const char*
       smols[] =
           {
-              //        "COC(=O)C",
-              "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
-              "CC=C",  // Pyrethrin II (C22H28O5)
+           //        "COC(=O)C",
+           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
+           "C",  // Pyrethrin II (C22H28O5)
           };
 
   StructCheckerOptions options;
@@ -414,8 +410,8 @@ void testCheckAtomWithDefaultGoodAtoms() {
   const char*
       smols[] =
           {
-              "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC="
-              "CC=C",  // Pyrethrin II (C22H28O5)
+           "COC(=O)C(\\C)=C\\C1C(C)(C)[C@H]1C(=O)O[C@@H]2C(C)=C(C(=O)C2)CC=CC="
+           "C",  // Pyrethrin II (C22H28O5)
           };
 
   StructCheckerOptions
@@ -489,9 +485,8 @@ void testCheckAtomFiles() {
     BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
     unsigned flags = chk.checkMolStructure(*mol.get());
     BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
-    BOOST_LOG(rdInfoLog) << "RES: "
-                         << StructChecker::StructureFlagsToString(flags)
-                         << "\n";
+    BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(
+                                           flags) << "\n";
     //      TEST_ASSERT(0 == flags);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
