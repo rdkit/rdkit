@@ -370,6 +370,10 @@ void MolDraw2D::drawMolecules(
   minP.x = minP.y = numeric_limits<double>::max();
   maxP.x = maxP.y = -numeric_limits<double>::max();
   for (unsigned int i = 0; i < mols.size(); ++i) {
+    if (!mols[i]) {
+      tmols.push_back(RWMol());
+      continue;
+    }
     tmols.push_back(*(mols[i]));
     MolDraw2DUtils::prepareMolForDrawing(tmols[i]);
     Conformer &conf = tmols[i].getConformer(confIds ? (*confIds)[i] : -1);
@@ -386,6 +390,8 @@ void MolDraw2D::drawMolecules(
   setScale(panelWidth(), panelHeight(), minP, maxP);
   int nCols = width() / panelWidth();
   for (unsigned int i = 0; i < mols.size(); ++i) {
+    if (!mols[i]) continue;
+
     int row = i / nCols;
     int col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());

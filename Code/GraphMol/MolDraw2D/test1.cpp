@@ -1616,6 +1616,19 @@ void test12DrawMols() {
     outs << text;
     outs.flush();
   }
+
+  {
+    mols[2] = NULL;
+    mols[4] = NULL;
+    MolDraw2DSVG drawer(750, 400, 250, 200);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_2.svg");
+    outs << text;
+    outs.flush();
+  }
+
   delete m1;
   delete m2;
   std::cerr << " Done" << std::endl;
