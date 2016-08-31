@@ -501,6 +501,43 @@ void testCheckMatch() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+const char * nitro="nitro.mol\n" \
+"  ChemDraw08311606582D\n" \
+"\n" \
+"  4  3  0  0  0  0  0  0  0  0999 V2000\n" \
+"   -0.7145   -0.6188    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.0000    0.6188    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.0000   -0.2062    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0\n" \
+"    0.7145   -0.6188    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" \
+"  1  3  1  0      \n" \
+"  2  3  2  0      \n" \
+"  3  4  1  0      \n" \
+"M  CHG  2   1  -1   3   1\n" \
+"M  END";
+
+void testNitro() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "checking nitro groups\n";
+  
+  const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
+  const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
+  
+  StructCheckerOptions options;
+  TEST_ASSERT(options.loadGoodAugmentedAtoms(
+      testDataDir + "checkfgs.chk"));
+  options.Verbose = true;
+  StructChecker chk(options);
+
+
+  ROMOL_SPTR mol(MolBlockToMol(nitro));
+  RWMol *rwmol = dynamic_cast<RWMol*>(mol.get());
+  TEST_ASSERT(rwmol != 0);
+  unsigned flags = chk.checkMolStructure(*rwmol);
+  // N+1 should match N+1(=N,O)(-N,O-1)(-C,N,S) but doesn't
+  std::cerr << "flags " << flags << std::endl;
+  TEST_ASSERT(!(flags & StructChecker::ATOM_CHECK_FAILED) );
+}
+
 //==============================================================================
 
 int main(int argc, const char* argv[])
@@ -509,7 +546,6 @@ int main(int argc, const char* argv[])
     BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
 
     testCheckAtomFiles();
-return 0; //tmp
 
     testFlags();
     testOptionsDefault();
@@ -531,7 +567,7 @@ return 0; //tmp
     testCheckAtomWithDefaultGoodAtoms();
 
     testStereo();
-    
+    testNitro();
     BOOST_LOG(rdInfoLog) << "*******************************************************\n";
     return 0;
 }
