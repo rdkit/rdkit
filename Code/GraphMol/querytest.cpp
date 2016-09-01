@@ -719,6 +719,45 @@ void testExtraAtomQueries() {
     a1.setChiralTag(Atom::CHI_OTHER);
     TEST_ASSERT(!qA.Match(&a1));
   }
+
+  {  // missing chiral tags
+    QueryAtom qA;
+    qA.setQuery(makeAtomMissingChiralTagQuery());
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(!qA.Match(&a1));
+
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    a1.setProp(common_properties::_ChiralityPossible, 1);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(!qA.Match(&a1));
+
+    qA.getQuery()->setNegation(true);
+    a1.clearProp(common_properties::_ChiralityPossible);
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(qA.Match(&a1));
+
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    a1.setProp(common_properties::_ChiralityPossible, 1);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 void testExtraBondQueries() {

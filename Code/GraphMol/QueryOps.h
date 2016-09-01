@@ -123,6 +123,10 @@ static inline int queryAtomNumRadicalElectrons(Atom const *at) {
 static inline int queryAtomHasChiralTag(Atom const *at) {
   return at->getChiralTag() != Atom::CHI_UNSPECIFIED;
 };
+static inline int queryAtomMissingChiralTag(Atom const *at) {
+  return at->getChiralTag() == Atom::CHI_UNSPECIFIED &&
+         at->hasProp(common_properties::_ChiralityPossible);
+};
 
 unsigned int queryAtomBondProduct(Atom const *at);
 unsigned int queryAtomAllBondProduct(Atom const *at);
@@ -354,6 +358,15 @@ T *makeAtomHasChiralTagQuery(const std::string &descr) {
 }
 //! \overloadquery
 ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery();
+
+//! returns a Query for matching whether or not a potentially chiral atom is
+//! missing a chiral tag
+template <class T>
+T *makeAtomMissingChiralTagQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(true, queryAtomMissingChiralTag, descr);
+}
+//! \overloadquery
+ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery();
 
 //! returns a Query for matching atoms with unsaturation:
 template <class T>

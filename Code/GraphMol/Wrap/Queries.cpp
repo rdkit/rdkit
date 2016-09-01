@@ -79,6 +79,7 @@ QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);
 QAFUNC2(IsAliphaticQueryAtom, makeAtomAliphaticQuery, int);
 QAFUNC2(IsInRingQueryAtom, makeAtomInRingQuery, int);
 QAFUNC2(HasChiralTagQueryAtom, makeAtomHasChiralTagQuery, int);
+QAFUNC2(MissingChiralTagQueryAtom, makeAtomMissingChiralTagQuery, int);
 
 QueryAtom *HasPropQueryAtom(const std::string &propname, bool negate) {
   QueryAtom *res = new QueryAtom();
@@ -160,6 +161,7 @@ struct queries_wrapper {
     QADEF2(IsAliphatic);
     QADEF2(IsInRing);
     QADEF2(HasChiralTag);
+    QADEF2(MissingChiralTag);
 
     python::def("HasPropQueryAtom", HasPropQueryAtom,
                 (python::arg("propname"), python::arg("negate") = false),
