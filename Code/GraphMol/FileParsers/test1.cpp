@@ -4550,6 +4550,13 @@ void testGithub1049() {
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 8);
     TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge() == 0);
 
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 1);
+    TEST_ASSERT((m->getAtomWithIdx(2)->getFormalCharge() == -1 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == 0) ||
+                (m->getAtomWithIdx(2)->getFormalCharge() == 0 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == -1));
+
     delete m;
   }
   {  // with stereo (this one did not work)
@@ -4565,6 +4572,13 @@ void testGithub1049() {
     TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge() == 0);
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 8);
     TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge() == 0);
+
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 1);
+    TEST_ASSERT((m->getAtomWithIdx(2)->getFormalCharge() == -1 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == 0) ||
+                (m->getAtomWithIdx(2)->getFormalCharge() == 0 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == -1));
 
     delete m;
   }
