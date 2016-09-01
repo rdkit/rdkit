@@ -1,0 +1,205 @@
+#   File: 	struchk.aci
+#
+#   Purpose:	Contains parameters used to estimate the next
+#	position of a molecule to be available for
+#	deprotonation. One application is fixing the
+#	charges in structures preprocessed by STRUCHK.EXE
+#
+#	The parameters are fitted to a set of reference
+#	structures taken from the following sources:
+#	March, Hollemann/Wiberg, Klumpp, CRC-Handbook
+#
+# augmented atoms considered acidic
+41
+"C"
+"C(-A)"
+"C(-A)(-A)"
+"C(=A)"
+"C(-A)(-A)(-A)"
+"C(=A)(-A)"
+"C(#A)"
+"N"
+"N(-A)"
+"N(=A)"
+"N(-A)(-A)"
+"N+1"
+"N+1(-A)"
+"N+1(-A)(-A)"
+"N+1(-A)(-A)(-A)"
+"N-1(-A)"
+"P"
+"P(-A)"
+"P(-A)(-A)"
+"P(=A)(-A)"
+"P+1"
+"P+1(-A)"
+"P+1(-A)(-A)"
+"O"
+"O(-A)"
+"O+1"
+"O+1(-A)"
+"O+1(-A)(-A)"
+"O+1(=A)"
+"S"
+"S+1"
+"S(-A)"
+"S+1(-A)"
+"Se"
+"Se(-A)"
+"Te"
+"Te(-A)"
+"F"
+"Cl"
+"Br"
+"I"
+# charge increments, hlocal(symbol), halpha(symbol), hbeta(symbol), mult_inc
+2
+O	-8.1	-5.9	-2.6	-0.0
+A	-8.4	-5.9	-2.6	-1.6
+# element acidity factors, flocal(symbol), falpha(symbol), fbeta(symbol)
+13
+B			18.7	0.7	-0.4
+C			18.7	-0.2	-0.4
+N			16.7	-3.3	-2.6
+O			10.3	-1.3	-2.0
+F			4.7	0.7	-1.4
+P			13.8	-1.7	-0.9
+S			8.8	-0.9	-1.8
+Se			5.1	-0.9	-1.0
+Te			4.4	0.3	-1.0
+Cl			-0.2	-2.9	-1.0
+Br			-0.3	0.0	-1.0
+I			-0.4	2.5	-1.0
+A			8.0	0.5	-1.0
+# alpha condictivities, galpha(path)
+8
+"B(-B,C,N,O,F)"		0.8
+"C(-B,C,N,O,F)"		0.8
+"N(-B,C,N,O,F)"		0.5
+"O(-B,C,N,O,F)"		0.1
+"A(-B,C,N,O,F)"		0.9
+"A(-A)"			0.6
+"A(=A)"			0.8
+"A(#A)"			1.9
+# beta conductivities, gbeta(path)
+10
+"A(-B,C,N,O)(-A)"	0.3
+"O(-A)(-A)"		0.5
+"A(-A)(-A)"		1.5
+"A(-B,C,N,O)(=A)"	2.0
+"O(-A)(=A)"		1.7
+"A(-A)(=A)"		0.8
+"A(-A)(#A)"		1.6
+"A(=A)(-A)"		0.0
+"A(=A)(=A)"		1.3
+"A(#A)(-A)"		1.6
+# transformation polynom coefficient.
+# transformation is pKa = 7+(x-7)*beta+((x-7)*alpha)^3
+# alpha		beta
+  0.2452	1.6358
+# electronegativity used for relaxation process
+# The carbon entry must!! be the first one.
+103
+C  2.55
+N  3.04
+O  3.44
+F  3.98
+P  2.19
+S  2.58
+Cl 3.16
+As 2.18 
+Se 2.55 
+Br 2.96
+Sb 2.05 
+Te 2.10 
+I  2.66
+Si 1.90 
+H  2.20
+He 0.00
+Li 0.98 
+Be 1.57 
+B  2.04 
+Ne 0.00
+Na 0.93 
+Mg 1.31 
+Al 1.61 
+Ar 0.00
+K  0.82 
+Ca 1.00 
+Sc 1.36 
+Ti 1.54 
+V  1.63 
+Cr 1.66 
+Mn 1.55 
+Fe 1.83 
+Co 1.88 
+Ni 1.91 
+Cu 1.90 
+Zn 1.65 
+Ga 1.81 
+Ge 2.01 
+Kr 0.00
+Rb 0.82 
+Sr 0.95 
+Y  1.22 
+Zr 1.33 
+Nb 1.60 
+Mo 2.16 
+Tc 1.90 
+Ru 2.20 
+Rh 2.28 
+Pd 2.20 
+Ag 1.93 
+Cd 1.69 
+In 1.78 
+Sn 1.96 
+Xe 0.00
+Cs 0.79 
+Ba 0.89 
+La 1.10 
+Ce 1.12 
+Pr 1.13 
+Nd 1.14 
+Pm 1.20 
+Sm 1.17 
+Eu 1.20 
+Gd 1.20 
+Tb 1.20 
+Dy 1.22 
+Ho 1.23 
+Er 1.24 
+Tm 1.25 
+Yb 1.10 
+Lu 1.27 
+Hf 1.30 
+Ta 1.50 
+W  2.36 
+Re 1.90 
+Os 2.20 
+Ir 2.20 
+Pt 2.28 
+Au 2.54 
+Hg 2.00
+Tl 2.04 
+Pb 2.33 
+Bi 2.02 
+Po 2.00 
+At 2.20 
+Rn 0.00
+Fr 0.70 
+Ra 0.90 
+Ac 1.10 
+Th 1.30 
+Pa 1.50 
+U  1.38 
+Np 1.36 
+Pu 1.28 
+Am 1.30 
+Cm 1.30 
+Bk 1.30 
+Cf 1.30 
+Es 1.30 
+Fm 1.30 
+Md 0.00 
+No 0.00 
+Lr 0.00 
