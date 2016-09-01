@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -4530,6 +4529,63 @@ void testGithub1034() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1049() {
+  BOOST_LOG(rdInfoLog) << "Test github 1049: MolOps::cleanUp() being called by "
+                          "CTAB parser even when sanitization isn't on"
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {  // no stereo (this one worked before)
+    std::string fName;
+    fName = rdbase + "github1049.1.mol";
+    bool sanitize = false;
+    RWMol *m = MolFileToMol(fName, sanitize);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum() == 8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 8);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge() == 0);
+
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 1);
+    TEST_ASSERT((m->getAtomWithIdx(2)->getFormalCharge() == -1 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == 0) ||
+                (m->getAtomWithIdx(2)->getFormalCharge() == 0 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == -1));
+
+    delete m;
+  }
+  {  // with stereo (this one did not work)
+    std::string fName;
+    fName = rdbase + "github1049.2.mol";
+    bool sanitize = false;
+    RWMol *m = MolFileToMol(fName, sanitize);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum() == 8);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getFormalCharge() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 8);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge() == 0);
+
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == 1);
+    TEST_ASSERT((m->getAtomWithIdx(2)->getFormalCharge() == -1 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == 0) ||
+                (m->getAtomWithIdx(2)->getFormalCharge() == 0 &&
+                 m->getAtomWithIdx(3)->getFormalCharge() == -1));
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4614,6 +4670,7 @@ void RunTests() {
   testGithub1023();
 #endif
   testGithub1034();
+  testGithub1049();
 }
 
 // must be in German Locale for test...

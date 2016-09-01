@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2537,19 +2536,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     // sign that chirality ever existed and makes us sad... so first
     // perceive chirality, then remove the Hs and sanitize.
     //
-    // One exception to this (of course, there's always an exception):
-    // DetectAtomStereoChemistry() needs to check the number of
-    // implicit hydrogens on atoms to detect if things can be
-    // chiral. However, if we ask for the number of implicit Hs before
-    // we've called MolOps::cleanUp() on the molecule, we'll get
-    // exceptions for common "weird" cases like a nitro group
-    // mis-represented as -N(=O)=O.  *SO*... we need to call
-    // cleanUp(), then detect the stereochemistry.
-    // (this was Issue 148)
-    //
     const Conformer &conf = res->getConformer();
     if (chiralityPossible) {
-      MolOps::cleanUp(*res);
       DetectAtomStereoChemistry(*res, &conf);
     }
 

@@ -647,12 +647,6 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
 void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
 
-  // make sure we've calculated the implicit valence on each atom:
-  for (RWMol::AtomIterator atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
-       ++atomIt) {
-    (*atomIt)->calcImplicitValence(false);
-  }
-
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     Bond *bond = *bondIt;
@@ -663,7 +657,7 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
         Atom *atom = bond->getBeginAtom();
         if (atom->getImplicitValence() == -1) {
           atom->calcExplicitValence();
-          atom->calcImplicitValence();
+          atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = FindAtomStereochemistry(mol, bond, conf);
         atom->setChiralTag(code);
