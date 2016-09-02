@@ -13,6 +13,7 @@
 #include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
 #include "../SmilesParse/SmilesWrite.h"
+#include "../FileParsers/MolFileStereochem.h"
 
 namespace RDKit {
 namespace StructureCheck {
@@ -85,22 +86,43 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
   //  fragment.
   if (checkChiral) {
     bool ischiral = false;
-    // are chiral tags set
-    for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-         ++atIt) {
-      if ( (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-           (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ) {
-        ischiral = true;
-        break;
+    
+    RWMol copy(mol);
+    try {
+      MolOps::sanitizeMol(copy);
+      ClearSingleBondDirFlags(copy);
+      const Conformer &conf = copy.getConformer();
+      DetectBondStereoChemistry(copy, &conf);
+      MolOps::assignStereochemistry(copy, true, true, true);
+      for (ROMol::AtomIterator atIt =copy.beginAtoms(); atIt != copy.endAtoms();
+           ++atIt) {
+        if((*atIt)->hasProp(common_properties::_ChiralityPossible)) {
+          ischiral = true;
+          checkChiral = false;
+          break;
+        }
       }
+    } catch (...) {
     }
 
-    for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-         ++bondIt) {
-      if ((*bondIt)->getBondDir() == Bond::BEGINDASH ||
-          (*bondIt)->getBondDir() == Bond::BEGINWEDGE) {
-        ischiral = true;
-        break;
+    // are chiral tags set
+    if(checkChiral) {
+      for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
+           ++atIt) {
+        if ( (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+             (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ) {
+          ischiral = true;
+          break;
+        }
+      }
+      
+      for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
+           ++bondIt) {
+        if ((*bondIt)->getBondDir() == Bond::BEGINDASH ||
+            (*bondIt)->getBondDir() == Bond::BEGINWEDGE) {
+          ischiral = true;
+          break;
+        }
       }
     }
     
