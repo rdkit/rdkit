@@ -335,7 +335,7 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
               nmulti == 0)) {
       for (unsigned j = 0; j < n_ligands; j++) {
         Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
-        if (bj.getBeginAtomIdx() == i + 1 &&
+        if (bj.getBeginAtomIdx() == i &&
             (RDKit::Bond::BEGINWEDGE == bj.getBondDir()       // == UP
              || RDKit::Bond::BEGINDASH == bj.getBondDir()))  // == DOWN))
           bj.setBondDir(RDKit::Bond::NONE);
@@ -643,7 +643,7 @@ bool CheckStereo(const ROMol &mol) {
       else {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
           const Bond &bond = *mol.getBondWithIdx(j);
-          if (bond.getBeginAtomIdx() == i + 1 &&
+          if (bond.getBeginAtomIdx() == i &&
               (RDKit::Bond::BEGINWEDGE == bond.getBondDir()         // == UP
                || RDKit::Bond::BEGINDASH == bond.getBondDir())) {  // == DOWN))
             // stereobond to non-stereogenic atom
