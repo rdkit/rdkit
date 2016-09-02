@@ -213,7 +213,7 @@ class TestCase(unittest.TestCase):
       for snapshotNum in range(len(traj)):
         for pointNum in range(traj.NumPoints()):
           for i in range(3):
-            self.assertEqual(traj.GetSnapshot(snapshotNum).GetPoint3D(pointNum)[i],
+            self.assertAlmostEqual(traj.GetSnapshot(snapshotNum).GetPoint3D(pointNum)[i],
               traj2.GetSnapshot(snapshotNum).GetPoint3D(pointNum)[i])
 
     def testReadGromos(self):

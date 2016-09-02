@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8.8)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
   set (EXTENSION_SUFFIX ".so")
@@ -63,13 +65,13 @@ if(APPLE)
               "-Wl,-dead_strip_dylibs -bundle_loader ${PG_BINDIR}/postgres")
   add_executable("${EXTENSION}${EXTENSION_SUFFIX}"
               adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
-              rdkit_gist.c rdkit_io.c rxn_op.c sfp_op.c)
+              rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
 else(APPLE)
   link_directories(${PostgreSQL_LIBRARY_DIRS})
   link_directories(${RDKit_LibDir})
   add_library(${EXTENSION} SHARED
               adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
-              rdkit_gist.c rdkit_io.c rxn_op.c sfp_op.c)
+              rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
   target_link_libraries(${EXTENSION} ${PostgreSQL_LIBRARIES})
   if(WIN32)
     target_link_libraries(${EXTENSION} postgres)
@@ -88,7 +90,7 @@ if(RDK_BUILD_AVALON_SUPPORT)
 endif(RDK_BUILD_AVALON_SUPPORT)
 if(RDK_BUILD_INCHI_SUPPORT)
   set(inchiRegress "inchi")
-  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;Inchi;")
+  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
     "MolHash;FMCS;ChemReactions;ChemTransforms;"
@@ -172,10 +174,15 @@ string(REGEX REPLACE "'" "" PG_EXTVERSION ${PG_EXTVERSION})
 if(MSVC)
   set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
 endif(MSVC)
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
+               "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql91.in\" "
-    "\"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")

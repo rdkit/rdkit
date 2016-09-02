@@ -319,9 +319,11 @@ int getSSSR(ROMol &mol) {
 PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
                                const ROMol &replacement,
                                bool replaceAll = false,
-                               unsigned int replacementConnectionPoint = 0) {
+                               unsigned int replacementConnectionPoint = 0,
+                               bool useChirality=false) {
   std::vector<ROMOL_SPTR> v = replaceSubstructs(
-      orig, query, replacement, replaceAll, replacementConnectionPoint);
+      orig, query, replacement, replaceAll, replacementConnectionPoint,
+      useChirality);
   PyObject *res = PyTuple_New(v.size());
   for (unsigned int i = 0; i < v.size(); ++i) {
     PyTuple_SetItem(res, i, python::converter::shared_ptr_to_python(v[i]));
@@ -739,6 +741,47 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   return MolOps::adjustQueryProperties(mol, &params);
 }
 
+ROMol *replaceCoreHelper(const ROMol &mol,
+                         const ROMol &core,
+                         python::object match,
+                         bool replaceDummies,
+                         bool labelByIndex,
+                         bool requireDummyMatch=false) {
+  // convert input to MatchVect
+  MatchVectType matchVect;
+
+  unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
+  
+  for (unsigned int i = 0; i < length; ++i) {
+    int sz = 1;
+    if(PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(), "__len__")) {
+      sz = python::extract<unsigned int>(match[i].attr("__len__")());
+    }
+    
+    int v1,v2;
+    if (sz != 1 && sz != 2)
+      throw ValueErrorException("Input not a vector of (core_atom_idx,molecule_atom_idx) or (molecule_atom_idx,...) entries" );
+    if (sz == 1) {
+      if(length != core.getNumAtoms()) {
+        std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
+          
+        std::stringstream ss;
+        ss << std::string("When using input vector of type (molecule_atom_idx,...) supplied core requires ")
+           << core.getNumAtoms() << entries;
+        throw ValueErrorException(ss.str());
+      }
+      v1 = (int)i;
+      v2 = python::extract<int>(match[i]);
+    } else if (sz == 2) {
+      v1 = python::extract<int>(match[i][0]);
+      v2 = python::extract<int>(match[i][1]);
+    }
+    matchVect.push_back(std::make_pair(v1,v2));
+  }
+
+  return replaceCore(mol, core, matchVect, replaceDummies, labelByIndex, requireDummyMatch);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -910,6 +953,8 @@ struct molops_wrapper {
       See below for examples.\n\
       Default value is 0 (remove the atoms whether or not the entire fragment matches)\n\
 \n\
+    - useChirality: (optional) match the substructure query using chirality\n\
+\n\
   RETURNS: a new molecule with the substructure removed\n\
 \n\
   NOTES:\n\
@@ -931,7 +976,8 @@ struct molops_wrapper {
 \n";
     python::def("DeleteSubstructs", deleteSubstructs,
                 (python::arg("mol"), python::arg("query"),
-                 python::arg("onlyFrags") = false),
+                 python::arg("onlyFrags") = false,
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
     docString = "Do a Murcko decomposition and return the scaffold";
@@ -963,6 +1009,7 @@ struct molops_wrapper {
       Default value is False (return multiple replacements)\n\
     - replacementConnectionPoint: (optional) index of the atom in the replacement that\n\
       the bond should be made to.\n\
+    - useChirality: (optional) match the substructure query using chirality\n\
 \n\
   RETURNS: a tuple of new molecules with the substructures replaced removed\n\
 \n\
@@ -986,7 +1033,8 @@ struct molops_wrapper {
     python::def("ReplaceSubstructs", replaceSubstructures,
                 (python::arg("mol"), python::arg("query"),
                  python::arg("replacement"), python::arg("replaceAll") = false,
-                 python::arg("replacementConnectionPoint") = 0),
+                 python::arg("replacementConnectionPoint") = 0,
+                 python::arg("useChirality") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1530,7 +1578,7 @@ struct molops_wrapper {
 \n\
   ALGORITHM:\n\
 \n\
-   This algorithm functions by find all subgraphs between minPath and maxPath in\n \
+   This algorithm functions by find all subgraphs between minPath and maxPath in\n\
    length.  For each subgraph:\n\
 \n\
      1) A hash is calculated.\n\
@@ -1637,7 +1685,7 @@ ARGUMENTS:\n\
 \n\
     - atomCounts: (optional) \n\
         if provided, this should be a list at least as long as the number of atoms\n\
-        in the molecule. It will be used to provide the count of the number \n                      \
+        in the molecule. It will be used to provide the count of the number \n\
         of paths that set bits each atom is involved in.\n\
         NOTE: the list is not zeroed out here.\n\
 \n\
@@ -1695,12 +1743,12 @@ ARGUMENTS:\n\
                 python::return_value_policy<python::manage_new_object>());
 
     docString =
-        "Set the wedging on single bonds in a molecule.\n \
-   The wedging scheme used is that from Mol files.\n \
+        "Set the wedging on single bonds in a molecule.\n\
+   The wedging scheme used is that from Mol files.\n\
 \n\
   ARGUMENTS:\n\
 \n\
-    - molecule: the molecule to update\n \
+    - molecule: the molecule to update\n\
 \n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
@@ -1714,6 +1762,8 @@ ARGUMENTS:\n\
     - mol: the molecule to be modified\n\
 \n\
     - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
+\n\
+    - useChirality: (optional) match the substructure query using chirality\n\
 \n\
   RETURNS: a new molecule with the sidechains removed\n\
 \n\
@@ -1733,10 +1783,63 @@ ARGUMENTS:\n\
     - ReplaceSidechains('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
 \n";
     python::def("ReplaceSidechains", replaceSidechains,
-                (python::arg("mol"), python::arg("coreQuery")),
+                (python::arg("mol"), python::arg("coreQuery"),
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
+    // ------------------------------------------------------------------------
+    docString =
+        "Removes the core of a molecule and labels the sidechains with dummy atoms based on\n\
+The matches indices given in the matching vector matches.\n\
+Calling:\n\
+  ReplaceCore(mol,core,mol.GetSubstructMatch(core))\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
+\n\
+    - matches: a matching vector of the type returned by mol.GetSubstructMatch(...)\n\
+\n\
+    - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
+\n\
+    - labelByIndex: toggles labeling the attachment point dummy atoms with \n\
+                    the index of the core atom they're attached to.\n\
+\n\
+    - requireDummyMatch: if the molecule has side chains that attach at points not\n\
+                         flagged with a dummy, it will be rejected (None is returned)\n\
+\n\
+  RETURNS: a new molecule with the core removed\n\
+\n\
+  NOTES:\n\
+\n\
+    - The original molecule is *not* modified.\n\
+EXAMPLES:\n\
+    >>> from rdkit.Chem import MolToSmiles, MolFromSmiles, ReplaceCore\n\
+    >>> mol = MolFromSmiles('C1ONNCC1')\n\
+    >>> core = MolFromSmiles('NN')\n\
+\n\
+    Note: Using isomericSmiles is necessary to see the labels.\n\
+    >>> MolToSmiles(ReplaceCore(mol, core, mol.GetSubstructMatch(core)), isomericSmiles=True)\n\
+    '[1*]OCCC[2*]'\n\
+\n\
+    Since NN is symmetric, we should actually get two matches here if we don't\n\
+    uniquify the matches.\n\
+    >>> [MolToSmiles(ReplaceCore(mol, core, match), isomericSmiles=True)\n\
+    ...     for match in mol.GetSubstructMatches(core, uniquify=False)]\n\
+    ['[1*]OCCC[2*]', '[1*]CCCO[2*]']\n\
+\n\
+";
+    python::def("ReplaceCore",
+                replaceCoreHelper,
+                (python::arg("mol"), python::arg("core"), python::arg("matches"),
+                 python::arg("replaceDummies") = true,
+                 python::arg("labelByIndex") = false,
+                 python::arg("requireDummyMatch") = false),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());    
     // ------------------------------------------------------------------------
     docString =
         "Removes the core of a molecule and labels the sidechains with dummy atoms.\n\
@@ -1755,6 +1858,8 @@ ARGUMENTS:\n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
                          flagged with a dummy, it will be rejected (None is returned)\n\
 \n\
+    - useChirality: use chirality matching in the coreQuery\n\
+\n\
   RETURNS: a new molecule with the core removed\n\
 \n\
   NOTES:\n\
@@ -1763,24 +1868,66 @@ ARGUMENTS:\n\
 \n\
   EXAMPLES:\n\
 \n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
+   >>> from rdkit.Chem import MolToSmiles, MolFromSmiles, MolFromSmarts, ReplaceCore\n\
 \n\
-    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[1*]'\n\
+   Basic usage: remove a core as specified by SMILES (or another molecule).\n\
+   To get the atom labels which are stored as an isotope of the matched atom, \n\
+   the output must be written as isomeric smiles.  \n\
+   A small confusion is that atom isotopes of 0 aren't shown in smiles strings.\n\
 \n\
-    - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
+   Here we remove a ring and leave the decoration (r-group) behind.\n\
 \n\
-    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[1*]C1CCC1[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('CCCC1CCC1'),MolFromSmiles('C1CCC1')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCC'\n\
 \n\
-    - ReplaceCore('C1CNCC1','N') -> '[1*]CCCC[2*]'\n\
+   The isotope label by default is matched by the first connection found. In order to\n\
+   indicate which atom the decoration is attached in the core query, use labelByIndex=True.\n\
+   Here the attachment is from the third atom in the smiles string, which is indexed by 3\n\
+   in the core, like all good computer scientists expect, atoms indices start at 0.\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('CCN1CCC1'),MolFromSmiles('C1CCN1'),\n\
+   ...                         labelByIndex=True),\n\
+   ...   isomericSmiles=True)\n\
+   '[3*]CC'\n\
 \n\
-    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
+   Non-core matches just return None\n\
+   >>> ReplaceCore(MolFromSmiles('CCC1CC1'),MolFromSmiles('C1CCC1'))\n\
+\n\
+   The bond between atoms are considered part of the core and are removed as well\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CC2C1CCC2'),MolFromSmiles('C1CCC1')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCC[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmiles('N')),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCCC[2*]'\n\
+\n\
+   When using dummy atoms, cores should be read in as SMARTS.  When read as SMILES\n\
+   dummy atoms only match other dummy atoms.\n\
+   The replaceDummies flag indicates whether matches to the dummy atoms should be considered as part\n\
+   of the core or as part of the decoration (r-group)\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmarts('[*]N[*]'),\n\
+   ...                         replaceDummies=True),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CC[2*]'\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CNCC1'),MolFromSmarts('[*]N[*]'),\n\
+   ...                         replaceDummies=False),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CCCC[2*]'\n\
+\n\
+\n\
+   >>> MolToSmiles(ReplaceCore(MolFromSmiles('C1CCC1CN'),MolFromSmarts('C1CCC1[*]'),\n\
+   ...                         replaceDummies=False),\n\
+   ...             isomericSmiles=True)\n\
+   '[1*]CN'\n\
+\n\
 \n";
-    python::def("ReplaceCore", replaceCore,
+    python::def("ReplaceCore",
+                (ROMol *(*)(const ROMol&, const ROMol&, bool,bool,bool,bool))replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
-                 python::arg("requireDummyMatch") = false),
+                 python::arg("requireDummyMatch") = false,
+                 python::arg("useChirality") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -1902,6 +2049,8 @@ Attributes:\n\
       controls which atoms have a ring-cout query added \n\
   - makeDummiesQueries: \n\
       dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
+  - aromatizeIfPossible: \n\
+      attempts aromaticity perception on the molecule \n\
 \n\
 A note on the flags controlling which atoms are modified: \n\
    These generally limit the set of atoms to be modified.\n\
@@ -1920,7 +2069,9 @@ A note on the flags controlling which atoms are modified: \n\
         .def_readwrite("adjustRingCountFlags",
                        &MolOps::AdjustQueryParameters::adjustRingCountFlags)
         .def_readwrite("makeDummiesQueries",
-                       &MolOps::AdjustQueryParameters::makeDummiesQueries);
+                       &MolOps::AdjustQueryParameters::makeDummiesQueries)
+        .def_readwrite("aromatizeIfPossible",
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible);
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "

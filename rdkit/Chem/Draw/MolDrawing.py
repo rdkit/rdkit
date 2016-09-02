@@ -37,6 +37,7 @@ class DrawingOptions(object):
   atomLabelFontFace= "sans"
   atomLabelFontSize= 12
   atomLabelMinFontSize= 7
+  atomLabelDeuteriumTritium = False
 
   bondLineWidth= 1.2
   dblBondOffset= .25
@@ -449,6 +450,13 @@ class MolDrawing(object):
           symbolLength = len(symbol)
         else:
           base = atom.GetSymbol()
+          if (base == 'H' and (iso == 2 or iso == 3)
+            and self.drawingOptions.atomLabelDeuteriumTritium):
+            if (iso == 2):
+              base = 'D'
+            else:
+              base = 'T'
+            iso = 0
           symbolLength = len(base)  
           if not atom.HasQuery():
             nHs = atom.GetTotalNumHs()

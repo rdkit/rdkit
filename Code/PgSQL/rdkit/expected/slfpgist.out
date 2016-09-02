@@ -1,4 +1,4 @@
-CREATE INDEX fpidx ON pgsfp USING gist (f sfp_low_ops);
+CREATE INDEX fpidx ON pgsfp USING gist (f gist_sfp_low_ops);
 SET rdkit.tanimoto_threshold = 0.6;
 SET rdkit.dice_threshold = 0.6;
 SET enable_indexscan=off;

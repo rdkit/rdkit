@@ -51,7 +51,7 @@ class Trajectory {
                takes ownership of the snapshot coordinates
         \return the zero-based index position of the added Snapshot
      */
-    unsigned int addSnapshot(Snapshot s);
+    unsigned int addSnapshot(const Snapshot &s);
     /*! \param snapshotNum is the zero-based index of the retrieved Snapshot
         \return a const reference to the relevant Snapshot in the Trajectory
      */

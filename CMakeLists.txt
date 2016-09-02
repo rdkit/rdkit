@@ -46,10 +46,16 @@ if(NOT MSVC)
   endif()
 endif()
 
-
 if(RDK_BUILD_SWIG_WRAPPERS!=ON)
   set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
   set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
+endif()
+
+if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
+  if(NOT RDK_INSTALL_STATIC_LIBS)
+    message("Enabling RDK_INSTALL_STATIC_LIBS because RDK_PGSQL_STATIC is set.")
+    set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
+  endif(NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
 include(TestBigEndian)
@@ -120,6 +126,10 @@ if(MSVC)
   SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
   ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
 endif(MSVC)
+
+if(RDK_BUILD_INCHI_SUPPORT)
+  find_package(Inchi)
+endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #-------

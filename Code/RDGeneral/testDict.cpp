@@ -37,18 +37,18 @@ void testGithub940() {
   {  // tests computed props
     STR_VECT computed;
     Dict *d = new Dict();
-    d->setVal(detail::computedPropName, computed);
+    d->setVal(RDKit::detail::computedPropName, computed);
     computed.push_back("foo");
-    d->setVal(detail::computedPropName, computed);
+    d->setVal(RDKit::detail::computedPropName, computed);
     delete d;
   }
   {  // tests computed props
     STR_VECT computed;
     Dict *d = new Dict();
-    d->setVal(detail::computedPropName, computed);
+    d->setVal(RDKit::detail::computedPropName, computed);
     computed.push_back("foo");
-    d->setVal(detail::computedPropName, computed);
-    d->clearVal(detail::computedPropName);
+    d->setVal(RDKit::detail::computedPropName, computed);
+    d->clearVal(RDKit::detail::computedPropName);
     delete d;
   }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
@@ -110,13 +110,13 @@ void testRDAny() {
   { // tests computed props
     STR_VECT computed;
     Dict d;
-    d.setVal(detail::computedPropName, computed);
+    d.setVal(RDKit::detail::computedPropName, computed);
     computed.push_back("foo");
-    d.setVal(detail::computedPropName, computed);
-    STR_VECT computed2 = d.getVal<STR_VECT>(detail::computedPropName);
+    d.setVal(RDKit::detail::computedPropName, computed);
+    STR_VECT computed2 = d.getVal<STR_VECT>(RDKit::detail::computedPropName);
     TEST_ASSERT(computed2[0] == "foo");
     Dict d2(d);
-    computed2 = d2.getVal<STR_VECT>(detail::computedPropName);
+    computed2 = d2.getVal<STR_VECT>(RDKit::detail::computedPropName);
     TEST_ASSERT(computed2[0] == "foo");
   }
   

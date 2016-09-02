@@ -230,6 +230,26 @@ M  END"""
     self.failUnless((int(round(uffVdWParams[0] * 1000)) == 3754)
       and (int(round(uffVdWParams[1] * 1000)) == 85))
 
+  def test11(self) :
+    query = Chem.MolFromSmarts('c1cccn1')
+    for i in [0, 1]:
+      m = Chem.MolFromSmiles('Cc1nc(=O)c(C[NH3+])c(-c2c[nH]c3ccccc23)[nH]1')
+      aromaticFlagsBefore = []
+      for a in m.GetAtoms():
+        aromaticFlagsBefore.append(a.GetIsAromatic())
+      if (i):
+        self.failUnless(ChemicalForceFields.MMFFGetMoleculeProperties(m))
+      else:
+        self.failUnless(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
+      aromaticFlagsAfter = []
+      for a in m.GetAtoms():
+        aromaticFlagsAfter.append(a.GetIsAromatic())
+      res = (aromaticFlagsBefore == aromaticFlagsAfter)
+      if (i):
+        res = not res
+      self.failUnless(res)
+      pyrroleNIdx = m.GetSubstructMatch(query)[-1]
+      self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
 
 if __name__== '__main__':

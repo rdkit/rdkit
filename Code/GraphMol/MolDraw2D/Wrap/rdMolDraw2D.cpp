@@ -134,6 +134,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       //.def_readwrite("highlightColour",&RDKit::MolDrawOptions::highlightColour)
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
+      .def_readwrite("atomLabelDeuteriumTritium", &RDKit::MolDrawOptions::atomLabelDeuteriumTritium,
+                     "labels deuterium as D and tritium as T")
       .def_readwrite("continuousHighlight",
                      &RDKit::MolDrawOptions::continuousHighlight)
       .def_readwrite("flagCloseContactsDist",

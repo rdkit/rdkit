@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -294,11 +293,11 @@ void ParseSGroup2000STYLine(RWMol *mol, const std::string &text,
       errout << "SGroup line too short: '" << text << "' on line " << line;
       throw FileParseException(errout.str());
     }
-#if 0        
+#if 0
         int nbr;
         try {
           nbr = FileParserUtils::toInt(text.substr(spos,4));
-        } 
+        }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
           errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
@@ -462,7 +461,8 @@ void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,
           case 6:
             BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. "
                                        "This will not match degree >6. The MDL "
-                                       "spec says it should.  line: " << line;
+                                       "spec says it should.  line: "
+                                    << line;
             q->setVal(6);
             break;
           default:
@@ -523,7 +523,8 @@ void ParseUnsaturationLine(RWMol *mol, const std::string &text,
           std::ostringstream errout;
           errout << "Value " << count << " is not supported as an unsaturation "
                                          "query (only 0 and 1 are allowed). "
-                                         "line: " << line;
+                                         "line: "
+                 << line;
           throw FileParseException(errout.str());
         }
       }
@@ -1018,7 +1019,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     throw FileParseException(errout.str());
   }
   symb = text.substr(31, 3);
-  symb = symb.substr(0, symb.find(' '));
+  boost::trim(symb);
 
   // REVIEW: should we handle missing fields at the end of the line?
   massDiff = 0;
@@ -2460,7 +2461,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       if (nAtoms != 0 || nBonds != 0) {
         std::ostringstream errout;
         errout << "V3000 mol blocks should have 0s in the initial counts line. "
-                  "(line: " << line << ")";
+                  "(line: "
+               << line << ")";
         if (strictParsing) {
           delete res;
           res = NULL;
@@ -2534,19 +2536,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     // sign that chirality ever existed and makes us sad... so first
     // perceive chirality, then remove the Hs and sanitize.
     //
-    // One exception to this (of course, there's always an exception):
-    // DetectAtomStereoChemistry() needs to check the number of
-    // implicit hydrogens on atoms to detect if things can be
-    // chiral. However, if we ask for the number of implicit Hs before
-    // we've called MolOps::cleanUp() on the molecule, we'll get
-    // exceptions for common "weird" cases like a nitro group
-    // mis-represented as -N(=O)=O.  *SO*... we need to call
-    // cleanUp(), then detect the stereochemistry.
-    // (this was Issue 148)
-    //
     const Conformer &conf = res->getConformer();
     if (chiralityPossible) {
-      MolOps::cleanUp(*res);
       DetectAtomStereoChemistry(*res, &conf);
     }
 

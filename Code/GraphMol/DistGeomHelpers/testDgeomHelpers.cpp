@@ -885,6 +885,7 @@ void testRandomCoords() {
   for (tokenizer::iterator token = tokens.begin(); token != tokens.end();
        ++token) {
     std::string smi = *token;
+    // std::cerr << "SMI: " << smi << std::endl;
     ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
@@ -1425,8 +1426,10 @@ void testMultiThreadMultiConf() {
     TEST_ASSERT(pVect.size() == p2Vect.size());
     double msd = 0.0;
     for (unsigned int i = 0; i < pVect.size(); ++i) {
-      const RDGeom::Point3D *p = dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
-      const RDGeom::Point3D *p2 = dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
+      const RDGeom::Point3D *p =
+          dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
+      const RDGeom::Point3D *p2 =
+          dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
       TEST_ASSERT(p && p2);
       msd += (*p - *p2).lengthSq();
     }
@@ -1599,9 +1602,65 @@ void testGithub697() {
   }
 }
 
+void testGithub971() {
+  {
+    // sample molecule found by Sereina
+    std::string smi = "C/C(=C\\c1ccccc1)CN1C2CC[NH2+]CC1CC2";
+
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 0, 0xf00d);
+    TEST_ASSERT(cid >= 0);
+    MolOps::removeHs(*m);
+    std::string expectedMb =
+        "\n     RDKit          3D\n\n 19 21  0  0  0  0  0  0  0  0999 V2000\n "
+        "   1.1258   -1.3888    0.9306 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n    1.0779   -0.1065    0.1565 C   0  0  0  0  0  0  0  0  0  0  0 "
+        " 0\n    2.2519    0.2795   -0.3483 C   0  0  0  0  0  0  0  0  0  0  "
+        "0  0\n    3.5245   -0.0901    0.2817 C   0  0  0  0  0  0  0  0  0  0 "
+        " 0  0\n    4.2551    0.9456    0.8411 C   0  0  0  0  0  0  0  0  0  "
+        "0  0  0\n    5.6137    0.8099    1.0965 C   0  0  0  0  0  0  0  0  0 "
+        " 0  0  0\n    6.2293   -0.3871    0.7552 C   0  0  0  0  0  0  0  0  "
+        "0  0  0  0\n    5.4107   -1.4793    0.4938 C   0  0  0  0  0  0  0  0 "
+        " 0  0  0  0\n    4.2354   -1.1874   -0.1873 C   0  0  0  0  0  0  0  "
+        "0  0  0  0  0\n   -0.0943    0.0572   -0.7601 C   0  0  0  0  0  0  0 "
+        " 0  0  0  0  0\n   -1.3242    0.2903   -0.0524 N   0  0  0  0  0  0  "
+        "0  0  0  0  0  0\n   -2.1468    1.1490   -0.9044 C   0  0  0  0  0  0 "
+        " 0  0  0  0  0  0\n   -3.1678    1.9193   -0.1239 C   0  0  0  0  0  "
+        "0  0  0  0  0  0  0\n   -2.9879    1.6714    1.3508 C   0  0  0  0  0 "
+        " 0  0  0  0  0  0  0\n   -3.3579    0.3480    1.7662 N   0  0  0  0  "
+        "0  0  0  0  0  0  0  0\n   -3.4586   -0.6011    0.7007 C   0  0  0  0 "
+        " 0  0  0  0  0  0  0  0\n   -2.1733   -0.8977   -0.0058 C   0  0  0  "
+        "0  0  0  0  0  0  0  0  0\n   -2.5650   -1.1467   -1.4589 C   0  0  0 "
+        " 0  0  0  0  0  0  0  0  0\n   -2.7401    0.2591   -1.9624 C   0  0  "
+        "0  0  0  0  0  0  0  0  0  0\n  1  2  1  0\n  2  3  2  0\n  3  4  1  "
+        "0\n  4  5  2  0\n  5  6  1  0\n  6  7  2  0\n  7  8  1  0\n  8  9  2  "
+        "0\n  2 10  1  0\n 10 11  1  0\n 11 12  1  0\n 12 13  1  0\n 13 14  1  "
+        "0\n 14 15  1  0\n 15 16  1  0\n 16 17  1  0\n 17 18  1  0\n 18 19  1  "
+        "0\n  9  4  1  0\n 17 11  1  0\n 19 12  1  0\nM  CHG  1  15   1\nM  "
+        "END\n";
+    RWMol *expected = MolBlockToMol(expectedMb);
+    unsigned int nat = expected->getNumAtoms();
+    TEST_ASSERT(nat == m->getNumAtoms());
+    
+    const Conformer &conf1 = m->getConformer(0);
+    const Conformer &conf2 = expected->getConformer(0);
+    for (unsigned int i = 0; i < nat; i++) {
+      TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
+                  expected->getAtomWithIdx(i)->getAtomicNum());
+                  
+      RDGeom::Point3D pt1i = conf1.getAtomPos(i);
+      RDGeom::Point3D pt2i = conf2.getAtomPos(i);
+      TEST_ASSERT( (pt1i - pt2i).length() < 10e-4 );
+    }
+    delete m;
+    delete expected;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
-
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
@@ -1755,6 +1814,11 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "\t More ChEMBL molecules failing bounds smoothing.\n";
   testGithub697();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
+                          "constrained ring systems.\n";
+  testGithub971();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

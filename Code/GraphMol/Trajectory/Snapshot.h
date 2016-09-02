@@ -60,9 +60,6 @@ class Snapshot {
     void setEnergy(double energy) {
       d_energy = energy;
     }
-    /*! \brief Frees the pointer to the array of doubles where the
-        coordinates for this Snapshot are stored
-     */
   private:
     // Pointer to the parent Trajectory object
     const Trajectory *d_trajectory;

@@ -158,8 +158,14 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   extractAtomCoords(mol, confId);
   extractAtomSymbols(mol);
   calculateScale();
-  setFontSize(font_size_);
-
+  // make sure the font doesn't end up too large (the constants are empirical)
+  if (scale_ <= 40.) {
+    setFontSize(font_size_);
+  } else {
+    setFontSize(font_size_ * 30. / scale_);
+  }
+  // std::cerr << "scale: " << scale_ << " font_size_: " << font_size_
+  //           << std::endl;
   if (drawOptions().includeAtomTags) {
     tagAtoms(mol);
   }
@@ -746,8 +752,17 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       }
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
-      if (at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
+      // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
+      //           << bond->getBeginAtomIdx() << "-" << bond->getEndAtomIdx()
+      //           << std::endl;
+      // swap the direction if at1 has does not have stereochem set
+      // or if at2 does have stereochem set and the bond starts there
+      if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+           at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
+          (at1->getIdx() != bond->getBeginAtomIdx() &&
+           (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+            at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
+        // std::cerr << "  swap" << std::endl;
         swap(at1_cds, at2_cds);
         swap(col1, col2);
       }
@@ -756,6 +771,9 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       } else {
         drawWedgedBond(at1_cds, at2_cds, true, col1, col2);
       }
+    } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
+      // unspecified stereo
+      drawWavyLine(at1_cds, at2_cds, col1, col2);
     } else {
       // in all other cases, we will definitely want to draw a line between the
       // two atoms
@@ -807,6 +825,11 @@ void MolDraw2D::drawWedgedBond(const Point2D &cds1, const Point2D &cds2,
                                const DrawColour &col2) {
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D disp = perp * 0.15;
+  // make sure the displacement isn't too large using the current scale factor
+  // (part of github #985)
+  // the constants are empirical to make sure that the wedge is visible, but not
+  // absurdly large.
+  if (scale_ > 40) disp *= .6;
   Point2D end1 = cds2 + disp;
   Point2D end2 = cds2 - disp;
 
@@ -1038,6 +1061,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
   // -----------------------------------
   // the symbol
+  unsigned int iso = atom.getIsotope();
   if (drawOptions().atomLabels.find(atom.getIdx()) !=
       drawOptions().atomLabels.end()) {
     // specified labels are trump: no matter what else happens we will show
@@ -1048,6 +1072,10 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     symbol = "";
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+  } else if (drawOptions().atomLabelDeuteriumTritium && atom.getAtomicNum() == 1 &&
+             (iso == 2 || iso == 3)) {
+    symbol = ((iso == 2) ? "D" : "T");
+    iso = 0;
   } else {
     std::vector<std::string> preText, postText;
     int num_h = (atom.getAtomicNum() == 6 && atom.getDegree() > 0)
@@ -1068,10 +1096,10 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       }
     }
 
-    if (0 != atom.getIsotope()) {
+    if (0 != iso) {
       // isotope always comes before the symbol
       preText.push_back(std::string("<sup>") +
-                        lexical_cast<string>(atom.getIsotope()) +
+                        lexical_cast<string>(iso) +
                         std::string("</sup>"));
     }
 
@@ -1133,18 +1161,22 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
   drawPolygon(pts);
 }
 
+void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                             const DrawColour &col1, const DrawColour &col2,
+                             unsigned int nSegments, double vertOffset) {
+  RDUNUSED_PARAM(nSegments);
+  RDUNUSED_PARAM(vertOffset);
+  drawLine(cds1, cds2, col1, col2);
+}
 // ****************************************************************************
 //  we draw the line at cds2, perpendicular to the line cds1-cds2
 void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
                                    const DrawColour &col, double len,
                                    unsigned int nSegments) {
-  if (nSegments % 2)
-    ++nSegments;  // we're going to assume an even number of segments
   Point2D perp = calcPerpendicular(cds1, cds2);
   Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
   Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
-  setColour(col);
-  drawLine(p1, p2);
+  drawWavyLine(p1, p2, col, col, nSegments);
 }
 
 }  // EO namespace RDKit

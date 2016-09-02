@@ -38,6 +38,7 @@ typedef boost::tuple<float, float, float> DrawColour;
 typedef std::vector<unsigned int> DashPattern;
 
 struct MolDrawOptions {
+  bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments;  // draws "breaks" at dummy atoms
   bool circleAtoms;            // draws circles under highlighted atoms
   DrawColour highlightColour;  // default highlight color
@@ -60,7 +61,8 @@ struct MolDrawOptions {
   std::vector<std::vector<int> > atomRegions;  // regions
 
   MolDrawOptions()
-      : dummiesAreAttachments(false),
+      : atomLabelDeuteriumTritium(false),
+        dummiesAreAttachments(false),
         circleAtoms(true),
         highlightColour(1, .5, .5),
         continuousHighlight(true),
@@ -175,8 +177,11 @@ class MolDraw2D {
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2);
   virtual void drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
                                   const DrawColour &col, double len = 1.0,
-                                  unsigned int nSegments = 8);
-
+                                  unsigned int nSegments = 16);
+  virtual void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                            const DrawColour &col1, const DrawColour &col2,
+                            unsigned int nSegments = 16,
+                            double vertOffset = 0.05);
   virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
 
   virtual bool fillPolys() const { return fill_polys_; }
@@ -235,9 +240,6 @@ class MolDraw2D {
   void drawAtomLabel(int atom_num,
                      const std::vector<int> *highlight_atoms = NULL,
                      const std::map<int, DrawColour> *highlight_map = NULL);
-
-  // calculate normalised perpendicular to vector between two coords
-  Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
   // cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
   // into
   // the ring.
@@ -247,7 +249,8 @@ class MolDraw2D {
   // perpendicular
   // pointing into the inside of the bond
   Point2D bondInsideDoubleBond(const ROMol &mol, const BOND_SPTR &bond);
-  // calculate normalised perpendicular to vector between two coords, such that
+  // calculate normalised perpendicular to vector between two coords, such
+  // that
   // it's inside the angle made between (1 and 2) and (2 and 3).
   Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                  const Point2D &cds3);
@@ -262,6 +265,7 @@ class MolDraw2D {
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
       const Atom &atom, const Point2D &nbr_sum);
 
+ protected:
   virtual void doContinuousHighlighting(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::vector<int> *highlight_bonds,
@@ -270,6 +274,9 @@ class MolDraw2D {
       const std::map<int, double> *highlight_radii);
 
   virtual void highlightCloseContacts();
+
+  // calculate normalised perpendicular to vector between two coords
+  Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 };
 }
 
