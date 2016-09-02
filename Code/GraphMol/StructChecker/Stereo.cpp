@@ -220,7 +220,7 @@ int FixDubious3DMolecule(RWMol &mol) {
       const Bond *bond = mol.getBondWithIdx(j);
       if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
           RDKit::Bond::BEGINDASH == bond->getBondDir() &&
-              (i + 1) == bond->getBeginAtomIdx())
+              i == bond->getBeginAtomIdx())
         break;
     }
     if (j < mol.getNumBonds()) continue;  // no stereo designation
@@ -634,7 +634,7 @@ bool CheckStereo(const ROMol &mol) {
                                               || 15 == element   // "P"
                                               || 14 == element)  // "Si"
         ) {
-      parity = AtomParity(mol, i + 1, nbp);
+      parity = AtomParity(mol, i, nbp);
       if (parity == ILLEGAL_REPRESENTATION) {  // stereo_error
         result = false;
       } else if (parity == EVEN_PARITY || parity == ODD_PARITY ||
