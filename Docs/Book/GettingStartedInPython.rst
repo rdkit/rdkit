@@ -13,7 +13,10 @@ not a manual.
 If you find mistakes, or have suggestions for improvements, please
 either fix them yourselves in the source document (the .rst file) or
 send them to the mailing list: rdkit-devel@lists.sourceforge.net
-
+In particular, if you find yourself spending time working out how to
+do something that doesn't appear to be documented please contribute by writing
+it up for this document. Contributing to the documentation is a great service
+both to the RDKit community and to your future self.
 
 Reading and Writing Molecules
 *****************************
@@ -752,7 +755,45 @@ True
 >>> m2.HasSubstructMatch(Chem.MolFromSmiles('C[C@H](F)Cl'),useChirality=True)
 False
 
+Atom Map Indices in SMARTS
+==========================
 
+It is possible to attach indices to the atoms in the SMARTS
+pattern. This is most often done in reaction SMARTS (see `Chemical
+Reactions`_), but is more general than that.  For example, in the
+SMARTS patterns for torsion angle analysis published by Guba `et al.`
+(``DOI: acs.jcim.5b00522``) indices are used to define the four atoms of
+the torsion of interest. This allows additional atoms to be used to
+define the environment of the four torsion atoms, as in
+``[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]`` for an aromatic C=N
+torsion.  We might wonder in passing why they didn't use
+recursive SMARTS for this, which would have made life easier, but it
+is what it is. The atom lists from ``GetSubstructureMatches`` are
+guaranteed to be in order of the SMARTS, but in this case we'll get five
+atoms so we need a way of picking out, in the correct order, the four of
+interest.  When the SMARTS is parsed, the relevant atoms are assigned an
+atom map number property that we can easily extract:
+
+>>> qmol = Chem.MolFromSmarts( '[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]' )
+>>> ind_map = {}
+>>> for atom in qmol.GetAtoms() :
+...     map_num = atom.GetAtomMapNum()
+...     if map_num:
+...         ind_map[map_num-1] = atom.GetIdx()
+>>> ind_map
+{0: 0, 1: 1, 2: 3, 3: 4}
+>>> map_list = [ind_map[x] for x in sorted(ind_map)]
+>>> map_list
+[0, 1, 3, 4]
+
+Then, when using the query on a molecule you can get the indices of the four
+matching atoms like this:
+
+>>> mol = Chem.MolFromSmiles('Cc1cccc(C)c1C(C)=NC')
+>>> for match in mol.GetSubstructMatches( qmol ) :
+...     mas = [match[x] for x in map_list]
+...     print(mas)
+[1, 7, 8, 10]
 
 Chemical Transformations
 ************************
