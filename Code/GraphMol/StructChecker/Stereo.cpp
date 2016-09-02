@@ -582,7 +582,7 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
     } else
       stereo_ligands[i].direction = RDKit::Bond::NONE;
   }
-  unsigned element = mol.getAtomWithIdx(iatom - 1)->getAtomicNum();
+  unsigned element = mol.getAtomWithIdx(iatom)->getAtomicNum();
   if (multiple && stereo && 15 != element && 16 != element) {  // "P" && "S"
     if (allene)
       return (ALLENE_PARITY);
