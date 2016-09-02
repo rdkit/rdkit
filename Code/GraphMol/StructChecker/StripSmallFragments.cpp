@@ -69,8 +69,6 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
 
   }
   mol = *frags[maxFragIdx].get();
-  BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
-    
   return true;
 }
 
