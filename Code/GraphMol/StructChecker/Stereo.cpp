@@ -635,13 +635,17 @@ bool CheckStereo(const ROMol &mol) {
                                               || 14 == element)  // "Si"
         ) {
       parity = AtomParity(mol, i, nbp);
-      std::cerr << "atom " << i << " parity " << parity << std::endl;
+      
+      const Atom *atom = mol.getAtomWithIdx(i);
+      if (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+          atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+        center_defined = true;
+        
       if (parity == ILLEGAL_REPRESENTATION) {  // stereo_error
         result = false;
       } else if (parity == EVEN_PARITY || parity == ODD_PARITY ||
                  parity == ALLENE_PARITY) {
         center_defined = true;
-        std::cerr << "defining center" << std::endl;
       }
       else {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
