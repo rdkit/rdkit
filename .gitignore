@@ -1,0 +1,6 @@
+/build*/
+__pycache__/
+*.pyc
+/Code/docs/
+/Code/JavaWrappers/gmwrapper/src/*
+/Code/JavaWrappers/gmwrapper/doc/*
