@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <math.h>
+#include <boost/format.hpp>
+
 #include "../RDKitBase.h"
 #include "../../RDGeneral/types.h"
 #include "../../Geometry/point.h"
@@ -136,9 +138,13 @@ int DubiousStereochemistry(RWMol &mol) {
 
       for (unsigned j = 0; j < n_ligands; j++) {
         const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
-        if (bj.getBeginAtomIdx() == i + 1 &&
+        if (bj.getBeginAtomIdx() == i  &&
             (RDKit::Bond::BEGINWEDGE == bj.getBondDir() ||   // == UP
              RDKit::Bond::BEGINDASH == bj.getBondDir())) {  // == DOWN))
+          std::string name;
+          mol.getPropIfPresent(common_properties::_Name, name);
+          BOOST_LOG(rdWarningLog) << boost::format("%10s    atom %3d : %s")%
+              name % i % "stereobond to non-stereogenic atom" << std::endl;
           result |= STEREO_BOND_AT_NON_STEREO_ATOM;
         }
       }
