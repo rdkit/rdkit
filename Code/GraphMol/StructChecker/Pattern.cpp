@@ -299,9 +299,9 @@ bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
       BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE " << aa.ShortName << "\n";
     return true;
   }
-  if (verbose)
-    BOOST_LOG(rdInfoLog) << "RecMatch ret FALSE " << aa.Ligands.size() << " "
-                         << aa.ShortName << "\n";
+  //  if (verbose)
+  //    BOOST_LOG(rdInfoLog) << "RecMatch ret FALSE " << aa.Ligands.size() << " "
+  //                         << aa.ShortName << "\n";
   return false;
 }
 
@@ -375,17 +375,17 @@ bool AAMatch(const ROMol &mol, unsigned i,
     if (!atom_ring_status.empty() && aa.Topology == RING &&
         atom_ring_status[i] == 0) {
       // DEBUG:
-      if (verbose)
-        BOOST_LOG(rdInfoLog) << "AAMatch i=" << i
-                             << " aa.Topology RING. ret FALSE\n";
+      //if (verbose)
+      //  BOOST_LOG(rdInfoLog) << "AAMatch i=" << i
+      //                       << " aa.Topology RING. ret FALSE\n";
       return false;
     }
     if (!atom_ring_status.empty() && aa.Topology == CHAIN &&
         atom_ring_status[i] != 0) {
       // DEBUG:
-      if (verbose)
-        BOOST_LOG(rdInfoLog) << "AAMatch i=" << i
-                             << " aa.Topology CHAIN. ret FALSE\n";
+      //if (verbose)
+      //  BOOST_LOG(rdInfoLog) << "AAMatch i=" << i
+      //                       << " aa.Topology CHAIN. ret FALSE\n";
       return false;
     }
     //        if(match.size() == 0) {           match.push_back(i);        }
@@ -510,18 +510,18 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size() &&
           AAMatch(mol, i, good_atoms[j], atom_status, neighbours, verbose)) {
         // DEBUG:
-        if (verbose && j >= 12 && j <= 21 &&
-            mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
-          BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j
-                               << " ret TRUE !\n";
+        //        if (verbose && j >= 12 && j <= 21 &&
+        //            mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
+        //          BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j
+        //                               << " ret TRUE !\n";
         nmatch++;
         break;
       }
       // DEBUG:
-      else if (verbose && j >= 12 && j <= 21 &&
-               mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
-        BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j
-                             << " ret FALSE\n";
+      //      else if (verbose && j >= 12 && j <= 21 &&
+      //               mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
+      //        BOOST_LOG(rdInfoLog) << "AAMatch i=" << i << " j=" << j
+      //                             << " ret FALSE\n";
     }
     if (verbose && nmatch == prevn)  // UNMATCHED atom
       BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
