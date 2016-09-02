@@ -147,6 +147,8 @@ Contribution from Paul Czodrowski
 
 Contribution from Sereina Riniker
 
+*Note* as of the 2016.09.1 release this functionality is part of the RDKit core.
+
 ### NP_Score: Natural-product likeness score
 
 Python source for an implementation of the NP score algorithm described in the publication:
@@ -157,6 +159,14 @@ Peter Ertl, Silvio Roggo, and Ansgar Schuffenhauer
 http://pubs.acs.org/doi/abs/10.1021/ci700286x
 
 Contribution from Peter Ertl
+
+### AtomAtomSimilarity: atom-atom-path method for fragment similarity
+
+Python source for an implementation of the Atom-Atom-Path similarity method for fragments described in the publication:
+
+Gobbi, A., Giannetti, A. M., Chen, H. & Lee, M.-L. "Atom-Atom-Path similarity and Sphere Exclusion clustering: tools for prioritizing fragment hits." *J. Cheminformatics* **7** 11 (2015). http://dx.doi.org10.1186/s13321-015-0056-8
+
+Contribution from Richard Hall
 
 ## Footnotes
 
