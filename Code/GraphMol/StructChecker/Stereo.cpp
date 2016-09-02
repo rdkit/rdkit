@@ -571,8 +571,8 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
       if (ndb == 2) allene = true;
     }
 
-    stereo_ligands[i].x = atomPoint[i].x - atomPoint[iatom - 1].x;
-    stereo_ligands[i].y = atomPoint[i].y - atomPoint[iatom - 1].y;
+    stereo_ligands[i].x = atomPoint[i].x - atomPoint[iatom].x;
+    stereo_ligands[i].y = atomPoint[i].y - atomPoint[iatom].y;
     stereo_ligands[i].number = nbp.Atoms[i] + 1;
     if (bi.getBeginAtomIdx() == iatom) {
       stereo_ligands[i].direction = bi.getBondDir();
@@ -635,11 +635,14 @@ bool CheckStereo(const ROMol &mol) {
                                               || 14 == element)  // "Si"
         ) {
       parity = AtomParity(mol, i, nbp);
+      std::cerr << "atom " << i << " parity " << parity << std::endl;
       if (parity == ILLEGAL_REPRESENTATION) {  // stereo_error
         result = false;
       } else if (parity == EVEN_PARITY || parity == ODD_PARITY ||
-                 parity == ALLENE_PARITY)
+                 parity == ALLENE_PARITY) {
         center_defined = true;
+        std::cerr << "defining center" << std::endl;
+      }
       else {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
           const Bond &bond = *mol.getBondWithIdx(j);
