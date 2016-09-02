@@ -68,7 +68,46 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
     }
 
   }
+
+  // we need to save chirality for checking later
+  bool checkChiral = false;
+  if(mol.hasProp(RDKit::common_properties::_MolFileChiralFlag)) {
+    unsigned int chiralflag = mol.getProp<unsigned int>(
+        RDKit::common_properties::_MolFileChiralFlag);
+    frags[maxFragIdx].get()->setProp<unsigned int>(
+        RDKit::common_properties::_MolFileChiralFlag, chiralflag);
+    checkChiral = chiralflag != 0;
+  }
+     
   mol = *frags[maxFragIdx].get();
+
+  // We need to see if the mol file's chirality possibly came from this
+  //  fragment.
+  if (checkChiral) {
+    bool ischiral = false;
+    // are chiral tags set
+    for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
+         ++atIt) {
+      if ( (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+           (*atIt)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ) {
+        ischiral = true;
+        break;
+      }
+    }
+
+    for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
+         ++bondIt) {
+      if ((*bondIt)->getBondDir() == Bond::BEGINDASH ||
+          (*bondIt)->getBondDir() == Bond::BEGINWEDGE) {
+        ischiral = true;
+        break;
+      }
+    }
+    
+    if (!ischiral) {
+      mol.setProp<unsigned int>(RDKit::common_properties::_MolFileChiralFlag, 0);
+    }
+  }
   return true;
 }
 
