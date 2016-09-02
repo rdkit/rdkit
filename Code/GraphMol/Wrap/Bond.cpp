@@ -328,6 +328,7 @@ struct bond_wrapper {
         .value("BEGINDASH", Bond::BEGINDASH)
         .value("ENDDOWNRIGHT", Bond::ENDDOWNRIGHT)
         .value("ENDUPRIGHT", Bond::ENDUPRIGHT)
+        .value("EITHERDOUBLE", Bond::EITHERDOUBLE)
         .value("UNKNOWN", Bond::UNKNOWN);
     python::enum_<Bond::BondStereo>("BondStereo")
         .value("STEREONONE", Bond::STEREONONE)
