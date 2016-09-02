@@ -747,9 +747,6 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       Point2D perp = calcPerpendicular(at1_cds, at2_cds) * double_bond_offset;
       drawLine(at1_cds + perp, at2_cds + perp, col1, col2);
       drawLine(at1_cds - perp, at2_cds - perp, col1, col2);
-      if (bt == Bond::TRIPLE) {
-        drawLine(at1_cds, at2_cds, col1, col2);
-      }
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
       // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
