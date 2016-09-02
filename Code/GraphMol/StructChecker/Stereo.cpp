@@ -90,8 +90,9 @@ int DubiousStereochemistry(RWMol &mol) {
   // look for EITHER bonds
   for (unsigned i = 0; i < mol.getNumBonds(); i++) {
     const Bond &bond = *mol.getBondWithIdx(i);
-    if (RDKit::Bond::STEREOANY == bond.getStereo())  //== EITHER
+    if (RDKit::Bond::UNKNOWN == bond.getBondDir())  //== EITHER
     {
+      std::cerr << "bond " << i << ": Either bond found" << std::endl;
       result |= EITHER_BOND_FOUND;
     }
   }
@@ -118,6 +119,7 @@ int DubiousStereochemistry(RWMol &mol) {
     }
     unsigned element = mol.getAtomWithIdx(i)->getAtomicNum();
     unsigned n_ligands = (unsigned)nbp.Bonds.size();
+
     if (!((6 == element &&  // "C"
            n_ligands > 2 && n_ligands <= 4 && nmulti == 0) ||
           (6 == element &&  // "C"
@@ -135,8 +137,8 @@ int DubiousStereochemistry(RWMol &mol) {
       for (unsigned j = 0; j < n_ligands; j++) {
         const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
         if (bj.getBeginAtomIdx() == i + 1 &&
-            (RDKit::Bond::STEREOZ == bj.getStereo() ||   // == UP
-             RDKit::Bond::STEREOE == bj.getStereo())) {  // == DOWN))
+            (RDKit::Bond::BEGINWEDGE == bj.getBondDir() ||   // == UP
+             RDKit::Bond::BEGINDASH == bj.getBondDir())) {  // == DOWN))
           result |= STEREO_BOND_AT_NON_STEREO_ATOM;
         }
       }
@@ -170,9 +172,9 @@ int FixDubious3DMolecule(RWMol &mol) {
   nstereo = 0;
   for (unsigned i = 0; i < mol.getNumBonds(); i++) {
     const Bond *bond = mol.getBondWithIdx(i);
-    if (RDKit::Bond::STEREOZ == bond->getStereo() ||
-        RDKit::Bond::STEREOE == bond->getStereo()
-        //???    || RDKit::Bond::STEREOANY == bond->getStereo()
+    if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
+        RDKit::Bond::BEGINDASH == bond->getBondDir()
+        //???    || RDKit::Bond::EITHERDOUBLE == bond->getBondDir()
         )
       nstereo++;
   }
@@ -210,8 +212,8 @@ int FixDubious3DMolecule(RWMol &mol) {
     unsigned j;
     for (j = 0; j < mol.getNumBonds(); j++) {
       const Bond *bond = mol.getBondWithIdx(j);
-      if (RDKit::Bond::STEREOZ == bond->getStereo() ||
-          RDKit::Bond::STEREOE == bond->getStereo() &&
+      if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
+          RDKit::Bond::BEGINDASH == bond->getBondDir() &&
               (i + 1) == bond->getBeginAtomIdx())
         break;
     }
@@ -237,30 +239,30 @@ int FixDubious3DMolecule(RWMol &mol) {
       tetra[1].x = atomPoint[i1].x;
       tetra[1].y = atomPoint[i1].y;
       tetra[1].z = atomPoint[i1].z;
-      if (mol.getBondWithIdx(nbp.Bonds[i1])->getStereo() ==
-              RDKit::Bond::STEREOZ ||
-          mol.getBondWithIdx(nbp.Bonds[i1])->getStereo() ==
-              RDKit::Bond::STEREOE)  // UP DOWN
+      if (mol.getBondWithIdx(nbp.Bonds[i1])->getBondDir() ==
+              RDKit::Bond::BEGINWEDGE ||
+          mol.getBondWithIdx(nbp.Bonds[i1])->getBondDir() ==
+              RDKit::Bond::BEGINDASH)  // UP DOWN
         stereo_triple |= 1;
       unsigned i2;
       for (i2 = i1 + 1; i2 < n_ligands; i2++) {
         tetra[2].x = atomPoint[i2].x;
         tetra[2].y = atomPoint[i2].y;
         tetra[2].z = atomPoint[i2].z;
-        if (mol.getBondWithIdx(nbp.Bonds[i2])->getStereo() ==
-                RDKit::Bond::STEREOZ ||
-            mol.getBondWithIdx(nbp.Bonds[i2])->getStereo() ==
-                RDKit::Bond::STEREOE)  // UP DOWN
+        if (mol.getBondWithIdx(nbp.Bonds[i2])->getBondDir() ==
+                RDKit::Bond::BEGINWEDGE ||
+            mol.getBondWithIdx(nbp.Bonds[i2])->getBondDir() ==
+                RDKit::Bond::BEGINDASH)  // UP DOWN
           stereo_triple |= 2;
         unsigned i3;
         for (i3 = i2 + 1; i3 < n_ligands; i3++) {
           tetra[3].x = atomPoint[i3].x;
           tetra[3].y = atomPoint[i3].y;
           tetra[3].z = atomPoint[i3].z;
-          if (mol.getBondWithIdx(nbp.Bonds[i3])->getStereo() ==
-                  RDKit::Bond::STEREOZ ||
-              mol.getBondWithIdx(nbp.Bonds[i3])->getStereo() ==
-                  RDKit::Bond::STEREOE)  // UP DOWN
+          if (mol.getBondWithIdx(nbp.Bonds[i3])->getBondDir() ==
+                  RDKit::Bond::BEGINWEDGE ||
+              mol.getBondWithIdx(nbp.Bonds[i3])->getBondDir() ==
+                  RDKit::Bond::BEGINDASH)  // UP DOWN
             stereo_triple |= 4;
           vol = Volume(tetra);
           if (vol < 0.) vol = -vol;
@@ -300,8 +302,8 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
   // remove EITHER marks
   for (unsigned i = 0; i < mol.getNumBonds(); i++) {
     Bond *bond = mol.getBondWithIdx(i);
-    if (RDKit::Bond::STEREOANY == bond->getStereo())  //== EITHER
-      bond->setStereo(RDKit::Bond::STEREONONE);
+    if (RDKit::Bond::UNKNOWN == bond->getBondDir())  //== EITHER
+      bond->setBondDir(RDKit::Bond::NONE);
   }
   // remove stereo marks to non-stereogenic atoms
   for (unsigned i = 0; i < neighbour_array.size(); i++) {
@@ -328,9 +330,9 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
       for (unsigned j = 0; j < n_ligands; j++) {
         Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
         if (bj.getBeginAtomIdx() == i + 1 &&
-            (RDKit::Bond::STEREOZ == bj.getStereo()       // == UP
-             || RDKit::Bond::STEREOE == bj.getStereo()))  // == DOWN))
-          bj.setStereo(RDKit::Bond::STEREONONE);
+            (RDKit::Bond::BEGINWEDGE == bj.getBondDir()       // == UP
+             || RDKit::Bond::BEGINDASH == bj.getBondDir()))  // == DOWN))
+          bj.setBondDir(RDKit::Bond::NONE);
       }
     }
   }
@@ -342,7 +344,7 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
 
 struct stereo_bond_t {
   double x, y;                     // relative 2D coordinates
-  RDKit::Bond::BondStereo symbol;  // stereo symbol
+  RDKit::Bond::BondDir direction;  // stereo direction to this atom coord
   int number;                      // atom number of ligand atom
   double angle;                    // angle in radiants rel. to first bond
                                    // in array (counted counter clockwise)
@@ -362,7 +364,7 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
 
   reference = (-1);
   for (unsigned i = 0; i < 3; i++)
-    if (ligands[i].symbol != RDKit::Bond::STEREONONE)
+    if (ligands[i].direction != RDKit::Bond::NONE)
       if (reference == (-1))
         reference = i;
       else {
@@ -401,11 +403,11 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
   for (unsigned i = 0; i < 3; i++) {
     tetrahedron[i + 1].x = ligands[i].x;
     tetrahedron[i + 1].y = ligands[i].y;
-    if (ligands[i].symbol == RDKit::Bond::STEREOZ)  // UP)
+    if (ligands[i].direction == RDKit::Bond::BEGINWEDGE)  // UP)
       tetrahedron[i + 1].z = 1.0;
-    else if (ligands[i].symbol == RDKit::Bond::STEREOE)  // DOWN)
+    else if (ligands[i].direction == RDKit::Bond::BEGINDASH)  // DOWN)
       tetrahedron[i + 1].z = -1.0;
-    else if (ligands[i].symbol == RDKit::Bond::STEREONONE)
+    else if (ligands[i].direction == RDKit::Bond::NONE)
       tetrahedron[i + 1].z = 0.0;
     else {
       // stereo_error = "three attachments: illegal bond symbol";
@@ -442,13 +444,13 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
     tetrahedron[i].y = ligands[i].y;
     tetrahedron[i].z = 0.0;
     tetrahedron[i].number = ligands[i].number;
-    if (ligands[i].symbol == RDKit::Bond::STEREOZ) {  // UP
+    if (ligands[i].direction == RDKit::Bond::BEGINWEDGE) {  // UP
       nup++;
       tetrahedron[i].z = 1.0;
-    } else if (ligands[i].symbol == RDKit::Bond::STEREOE) {  // DOWN
+    } else if (ligands[i].direction == RDKit::Bond::BEGINDASH) {  // DOWN
       ndown++;
       tetrahedron[i].z = (-1.0);
-    } else if (ligands[i].symbol != RDKit::Bond::STEREONONE) {
+    } else if (ligands[i].direction != RDKit::Bond::NONE) {
       // stereo_error = "illegal bond symbol";
       std::cerr << "illegal bond symbol" << std::endl;
 
@@ -468,8 +470,8 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
   {
     unsigned ij;
     for (ij = 0; ij < 4; ij++)
-      if (ligands[ij].symbol == RDKit::Bond::STEREOZ ||
-          ligands[ij].symbol == RDKit::Bond::STEREOE)
+      if (ligands[ij].direction == RDKit::Bond::BEGINWEDGE ||
+          ligands[ij].direction == RDKit::Bond::BEGINDASH)
         break;
     nopposite = 0;
     for (unsigned j = 0; j < 4; j++)
@@ -486,29 +488,29 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
   }
 
   for (unsigned i = 0; i < 2; i++)
-    if ((ligands[i].symbol == RDKit::Bond::STEREOZ &&
-         ligands[i + 2].symbol == RDKit::Bond::STEREOE) ||
-        (ligands[i].symbol == RDKit::Bond::STEREOE &&
-         ligands[i + 2].symbol == RDKit::Bond::STEREOZ)) {
+    if ((ligands[i].direction == RDKit::Bond::BEGINWEDGE &&
+         ligands[i + 2].direction == RDKit::Bond::BEGINDASH) ||
+        (ligands[i].direction == RDKit::Bond::BEGINDASH &&
+         ligands[i + 2].direction == RDKit::Bond::BEGINWEDGE)) {
       // stereo_error = "UP/DOWN opposition";
       std::cerr << "up/down" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
 
   for (unsigned i = 0; i < 4; i++)
-    if ((ligands[i].symbol == RDKit::Bond::STEREOZ &&
-         ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOZ)  // UP
-        || (ligands[i].symbol == RDKit::Bond::STEREOE          // DOWN
-            && ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREOE)) {
+    if ((ligands[i].direction == RDKit::Bond::BEGINWEDGE &&
+         ligands[(i + 1) % 4].direction == RDKit::Bond::BEGINWEDGE)  // UP
+        || (ligands[i].direction == RDKit::Bond::BEGINDASH          // DOWN
+            && ligands[(i + 1) % 4].direction == RDKit::Bond::BEGINDASH)) {
       // stereo_error = "Adjacent like stereobonds";
       std::cerr << "adjacent like" << std::endl;
       return (ILLEGAL_REPRESENTATION);
     }
 
   for (unsigned i = 0; i < 4; i++)
-    if (ligands[i].symbol == RDKit::Bond::STEREONONE &&
-        ligands[(i + 1) % 4].symbol == RDKit::Bond::STEREONONE &&
-        ligands[(i + 2) % 4].symbol == RDKit::Bond::STEREONONE) {
+    if (ligands[i].direction == RDKit::Bond::NONE &&
+        ligands[(i + 1) % 4].direction == RDKit::Bond::NONE &&
+        ligands[(i + 2) % 4].direction == RDKit::Bond::NONE) {
       angle = Angle(ligands[i].x - ligands[(i + 1) % 4].x,
                     ligands[i].y - ligands[(i + 1) % 4].y,
                     ligands[(i + 2) % 4].x - ligands[(i + 1) % 4].x,
@@ -567,12 +569,12 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
     stereo_ligands[i].y = atomPoint[i].y - atomPoint[iatom - 1].y;
     stereo_ligands[i].number = nbp.Atoms[i] + 1;
     if (bi.getBeginAtomIdx() == iatom) {
-      stereo_ligands[i].symbol = bi.getStereo();
-      if (stereo_ligands[i].symbol == RDKit::Bond::STEREOZ ||  // UP ||
-          stereo_ligands[i].symbol == RDKit::Bond::STEREOE)    // DOWN
+      stereo_ligands[i].direction = bi.getBondDir();
+      if (stereo_ligands[i].direction == RDKit::Bond::BEGINWEDGE ||  // UP ||
+          stereo_ligands[i].direction == RDKit::Bond::BEGINDASH)    // DOWN
         stereo = true;
     } else
-      stereo_ligands[i].symbol = RDKit::Bond::STEREONONE;
+      stereo_ligands[i].direction = RDKit::Bond::NONE;
   }
   unsigned element = mol.getAtomWithIdx(iatom - 1)->getAtomicNum();
   if (multiple && stereo && 15 != element && 16 != element) {  // "P" && "S"
@@ -636,8 +638,8 @@ bool CheckStereo(const ROMol &mol) {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
           const Bond &bond = *mol.getBondWithIdx(j);
           if (bond.getBeginAtomIdx() == i + 1 &&
-              (RDKit::Bond::STEREOZ == bond.getStereo()         // == UP
-               || RDKit::Bond::STEREOE == bond.getStereo())) {  // == DOWN))
+              (RDKit::Bond::BEGINWEDGE == bond.getBondDir()         // == UP
+               || RDKit::Bond::BEGINDASH == bond.getBondDir())) {  // == DOWN))
             // stereobond to non-stereogenic atom
             std::cerr << "stereobond to nonstereogenic" << std::endl;
             result = false;
