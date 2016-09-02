@@ -657,25 +657,14 @@ bool CheckStereo(const ROMol &mol) {
       }
     }
   }
-  // TODO: Is it correct check ?
-  if (!center_defined) {  // no stereocenter defined
-    unsigned int chiralFlag = 0;
-    if (mol.getPropIfPresent(RDKit::common_properties::_MolFileChiralFlag,
-                             chiralFlag))
-      ;
-    else
-      for (unsigned j = 0; j < mol.getNumBonds(); j++) {
-        const Bond *bond = mol.getBondWithIdx(j);
-        if (bond->getBondDir() == Bond::BEGINWEDGE ||
-            bond->getBondDir() == Bond::BEGINDASH) {
-          chiralFlag = 1;
-          break;
-        }
-      }
-    if (chiralFlag != 0) {  // chiral flag set but no stereocenter defined
-      std::cerr << "chiral flag, no stereocenter" << std::endl;
-      result = false;
-    }
+
+  unsigned int chiralFlag = 0;
+  mol.getPropIfPresent(RDKit::common_properties::_MolFileChiralFlag,
+                       chiralFlag);
+  
+  if (chiralFlag && !center_defined) {  // no stereocenter defined
+    std::cerr << "chiral flag, no stereocenter" << std::endl;
+    result = false;
   }
   return result;
 }
