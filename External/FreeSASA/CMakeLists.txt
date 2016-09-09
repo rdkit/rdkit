@@ -18,6 +18,13 @@ if(needDownload)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if(NOT MSVC)
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+     else()
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c99")
+     endif()
+endif()
+
 set (freesasa_clib_srcs
     freesasa-master/src/classifier.c
     freesasa-master/src/classifier_naccess.c
