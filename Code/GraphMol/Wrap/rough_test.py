@@ -3771,5 +3771,9 @@ CAS<~>
     Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), 'xxx')
     self.assertEquals(Chem.MolToSmiles(m), "Cxxx")
 
+  def testGithub1051(self):
+    # just need to test that this exists:
+    self.assertTrue(Chem.BondDir.EITHERDOUBLE)
+
 if __name__ == '__main__':
   unittest.main()
