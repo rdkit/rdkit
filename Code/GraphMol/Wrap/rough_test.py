@@ -1862,7 +1862,7 @@ CAS<~>
         replaceDummies=replaceDummies,
         labelByIndex=labelByIndex,
         useChirality=useChirality)
-      
+
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r"%(
           smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
@@ -1879,7 +1879,7 @@ CAS<~>
               file=sys.stderr)
         print("expected: %s\ngot: %s"%(expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
-      
+
     mol = Chem.MolFromSmiles("C")
     smarts = Chem.MolFromSmarts("C")
     try:
@@ -1895,7 +1895,7 @@ CAS<~>
       self.asssertFalse(True)
     except:
       pass
-    
+
   def test47RWMols(self):
     """ test the RWMol class
 
@@ -2663,7 +2663,7 @@ CAS<~>
   def test82Issue288(self):
     m = Chem.MolFromSmiles('CC*')
     m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
-    
+
     smi=Chem.MolToSmiles(m)
     self.assertEqual(smi,'CC[*:30]')
     # try newer api
@@ -2671,7 +2671,7 @@ CAS<~>
     m.GetAtomWithIdx(2).SetAtomMapNum(30)
     smi=Chem.MolToSmiles(m)
     self.assertEqual(smi,'CC[*:30]')
-    
+
 
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -2851,6 +2851,29 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l,(3,6))
 
+    m = Chem.MolFromSmiles('N[CH][CH]')
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,(1,2))
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,(2,))
+
+    m = Chem.MolFromSmiles('F[C@H](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,(1,))
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,())
+
+    m = Chem.MolFromSmiles('F[CH](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,())
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l,(1,))
 
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
@@ -3747,6 +3770,6 @@ CAS<~>
     m = Chem.MolFromSmiles("C")
     Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), 'xxx')
     self.assertEquals(Chem.MolToSmiles(m), "Cxxx")
-    
+
 if __name__ == '__main__':
   unittest.main()
