@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy
 import time
 import unittest
@@ -120,7 +121,7 @@ def getpathintegers(m1, uptolength=7):
 					pathuniqueint = val4
 				pathintegers[idx].append(pathuniqueint)
 #sorted lists allow for a quicker comparison algorithm
-	for p in pathintegers.itervalues():
+	for p in pathintegers.values():
 		p.sort()
 	return pathintegers
 
@@ -316,7 +317,7 @@ CN(C)CCCNC1=CC=NC2=CC(Cl)=CC=C12
 	for a, api in zip(mols, pathints):
 		for b, bpi in zip(mols, pathints):
 			sim = AtomAtomPathSimilarity(a, b, m1pathintegers=api, m2pathintegers=bpi)
-	print 'time to compute %dx%d matrix: %.2fs'%(na, nb, time.time()-start)
+	print('time to compute %dx%d matrix: %.2fs'%(na, nb, time.time()-start))
 
 class TestAtomAtomPathSimilarity(unittest.TestCase):
 	def test_paper(self):
