@@ -18,14 +18,17 @@ if(needDownload)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if(NOT MSVC)
-     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-     else()
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c99")
-     endif()
-else()
-  add_definitions( -D__func__=__FUNCTION__ )
-endif()
+macro(use_c99)
+  if (CMAKE_VERSION VERSION_LESS "3.1")
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+      set (CMAKE_C_FLAGS "--std=gnu99 ${CMAKE_C_FLAGS}")
+    endif ()
+  else ()
+    set (CMAKE_C_STANDARD 99)
+  endif ()
+endmacro(use_c99)
+
+use_c99()
 
 set (freesasa_clib_srcs
     freesasa-master/src/classifier.c
