@@ -49,27 +49,6 @@ set (freesasa_clib_srcs
     freesasa-master/src/util.c
     )
 
-if(MSVC)
- SET_SOURCE_FILES_PROPERTIES(
-    freesasa-master/src/classifier.c
-    freesasa-master/src/classifier_naccess.c
-    freesasa-master/src/classifier_oons.c
-    freesasa-master/src/classifier_protor.c
-    freesasa-master/src/coord.c
-    freesasa-master/src/freesasa.c
-    freesasa-master/src/lexer.c
-    freesasa-master/src/nb.c
-    freesasa-master/src/parser.c
-    freesasa-master/src/pdb.c
-    freesasa-master/src/rsa.c
-    freesasa-master/src/sasa_lr.c
-    freesasa-master/src/sasa_sr.c
-    freesasa-master/src/selection.c
-    freesasa-master/src/structure.c
-    freesasa-master/src/util.c 
-    PROPERTIES LANGUAGE CXX )
-endif()
-
 add_definitions(-DUSE_THREADS=0)
 rdkit_library(freesasa_clib ${freesasa_clib_srcs})
 include_directories("freesasa-master/src")
