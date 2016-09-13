@@ -37,7 +37,7 @@ it is intended to be shallow but broad.
 
 from __future__ import print_function
 import doctest,unittest,os
-from rdkit.six.moves import cPickle
+import pickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger=logger()
@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
         pat = Chem.MolFromSmarts("c:c:c:c:c")
         matcher.SetPattern(pat)
         matcher.SetMinCount(1)
-        
+
         entry = FilterCatalog.FilterCatalogEntry("Bar", matcher)
         if FilterCatalog.FilterCatalogCanSerialize():
             pickle = entry.Serialize()
@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase):
         matcher = FilterCatalog.ExclusionList()
         matcher.SetExclusionPatterns([matcher])
         self.assertTrue(not matcher.HasMatch(mol))
-        
+
         #pat = Chem.MolFromSmarts("c:c:c:c:c")
         #entry.SetOnPattern(pat)
         #entry.SetOffPatterns([pat,pat,pat])
@@ -122,7 +122,7 @@ class TestCase(unittest.TestCase):
         print(and_match)
         print(or_match)
         print(not_match)
-        
+
 
     def test2FilterCatalogTest(self):
         tests = ((FilterCatalogParams.FilterCatalogs.PAINS_A, 16),
@@ -130,20 +130,22 @@ class TestCase(unittest.TestCase):
                  (FilterCatalogParams.FilterCatalogs.PAINS_C, 409),
                  (FilterCatalogParams.FilterCatalogs.PAINS, 409+16+55))
 
-        
+
         for catalog_idx, num in tests:
             params = FilterCatalog.FilterCatalogParams()
             print ("*"*44)
             print ("Testing:", catalog_idx, int(catalog_idx))
             self.assertTrue(params.AddCatalog(catalog_idx))
             catalog1 = FilterCatalog.FilterCatalog(params)
-            
+
             if FilterCatalog.FilterCatalogCanSerialize():
-                pickle = catalog1.Serialize();
-                catalog2 = FilterCatalog.FilterCatalog(pickle)
-                catalogs = [catalog1, catalog2]
+                pkl = catalog1.Serialize();
+                catalog2 = FilterCatalog.FilterCatalog(pkl)
+                catalog3 = pickle.loads(pickle.dumps(catalog1))
+                catalogs = [catalog1, catalog2, catalog3]
             else:
                 catalogs = [catalog1]
+                self.failUnlessRaises(RuntimeError,lambda:pickle.dumps(catalog1))
 
             catalogs.append( FilterCatalog.FilterCatalog(catalog_idx) )
             for index,catalog in enumerate(catalogs):
@@ -164,11 +166,11 @@ class TestCase(unittest.TestCase):
                                               "doi:10.1021/jm901137j.")
                         elif key == "Scope":
                             self.assertEquals(entry.GetProp(key), "PAINS filters (family A)")
-                            
+
                     self.assertEqual(entry.GetDescription(),"hzone_phenol_A(479)")
                     result = catalog.GetMatches(mol)
                     self.assertEquals(len(result), 1)
-                    
+
                     for entry in result:
                         for filtermatch in entry.GetFilterMatches(mol):
                             self.assertEquals(str(filtermatch.filterMatch), "hzone_phenol_A(479)")
@@ -179,7 +181,7 @@ class TestCase(unittest.TestCase):
                                                (4, 25), (5, 24),
                                                (6, 18), (7, 17),
                                                (8, 16), (9, 21)])
-                            
+
                 elif catalog_idx == FilterCatalogParams.FilterCatalogs.PAINS_B:
                     mol = Chem.MolFromSmiles("FC(F)(F)Oc1ccc(NN=C(C#N)C#N)cc1") # CHEMBL457504
                     entry = catalog.GetFirstMatch(mol)
@@ -205,7 +207,7 @@ class TestCase(unittest.TestCase):
         exclusionFilter = FilterCatalog.ExclusionList()
         exclusionFilter.AddPattern(matcher)
         self.assertFalse(exclusionFilter.HasMatch(mol))
-        
+
         matches2 = exclusionFilter.GetMatches(mol)
 
         self.assertTrue(matches)
@@ -226,7 +228,7 @@ class TestCase(unittest.TestCase):
         m = Chem.MolFromSmiles("N")
         self.assertFalse(matcher.HasMatch(m))
 
-        
+
     def testZinc(self):
         params = FilterCatalog.FilterCatalogParams(FilterCatalogParams.FilterCatalogs.ZINC)
         catalog = FilterCatalog.FilterCatalog(params)
@@ -239,17 +241,17 @@ class TestCase(unittest.TestCase):
         m = Chem.MolFromSmiles("CN"*20)
         entry = catalog.GetFirstMatch(m)
         self.assertEquals(catalog.GetFirstMatch(m), None)
-        
+
     def testSmartsMatcherAPI(self):
         sm = FilterCatalog.SmartsMatcher("Too many carbons", "[#6]", 40+1)
         sm2 = FilterCatalog.SmartsMatcher("ok # carbons", "[#6]", 0, 40)
         sm3 = FilterCatalog.FilterMatchOps.Not(sm2)
-        
+
         m = Chem.MolFromSmiles("C"*40)
         self.assertFalse(sm.HasMatch(m))
         self.assertTrue(sm2.HasMatch(m))
         self.assertFalse(sm3.HasMatch(m))
-        
+
         m = Chem.MolFromSmiles("C"*41)
         self.assertTrue(sm.HasMatch(m))
         self.assertFalse(sm2.HasMatch(m))
@@ -290,7 +292,7 @@ class TestCase(unittest.TestCase):
             if catalog.GetEntryWithIdx(i).GetDescription() == desc:
                 newcount += 1
         self.assertEquals(count, newcount+1)
-        
+
 
     def testPyFilter(self):
         class MyFilterMatcher(FilterCatalog.FilterMatcher):
@@ -299,7 +301,7 @@ class TestCase(unittest.TestCase):
 
             def HasMatch(self, mol):
                 return True
-            
+
             def GetMatches(self, mol, vect):
                 v = FilterCatalog.MatchTypeVect()
                 v.append(FilterCatalog.IntPair(1,1))
@@ -323,7 +325,7 @@ class TestCase(unittest.TestCase):
         self.assertEquals(not_match.HasMatch(mol), False)
         # test memory
         del func
-        
+
         self.assertEquals(not_match.HasMatch(mol), False)
         self.assertEquals( [[tuple(x) for x in filtermatch.atomPairs]
                           for filtermatch in not_match.GetMatches(mol)],
@@ -360,7 +362,7 @@ class TestCase(unittest.TestCase):
         catalogEntry = fc.GetFirstMatch(mol)
 
     def testFilterHierarchyMatcher(self):
-        # test 
+        # test
         root = FilterCatalog.FilterHierarchyMatcher()
         sm = h = FilterCatalog.SmartsMatcher("Halogen",
                                          "[$([F,Cl,Br,I]-!@[#6]);!$([F,Cl,Br,I]"
@@ -371,11 +373,11 @@ class TestCase(unittest.TestCase):
             node = FilterCatalog.FilterHierarchyMatcher(matcher)
             self.assertEquals(matcher.GetName(), node.GetName())
             return node
-        
+
         sm = FilterCatalog.SmartsMatcher("Halogen.Aromatic",
                                          "[F,Cl,Br,I;$(*-!@c)]")
         root.AddChild(hierarchy(sm))
-        
+
         sm = FilterCatalog.SmartsMatcher("Halogen.NotFluorine",
                                          "[$([Cl,Br,I]-!@[#6]);!$([Cl,Br,I]"
                                          "-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S]"
@@ -385,14 +387,14 @@ class TestCase(unittest.TestCase):
             FilterCatalog.SmartsMatcher("Halogen.NotFluorine.Aliphatic",
                                         "[$([Cl,Br,I]-!@C);!$([Cl,Br,I]"
                                         "-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](=[O,S,N]))]"),
-            
+
             FilterCatalog.SmartsMatcher("Halogen.NotFluorine.Aromatic",
                                         "[$([Cl,Br,I]-!@c)]")
             ]]
         for child in halogen_notf_children:
             node.AddChild(child)
         root.AddChild(node)
-        
+
         sm = FilterCatalog.SmartsMatcher("Halogen.Bromine",
                                          "[Br;$([Br]-!@[#6]);!$([Br]-!@C-!@[F,Cl,Br,I])"
                                          ";!$([Br]-[C,S](=[O,S,N]))]", 1)
@@ -408,9 +410,9 @@ class TestCase(unittest.TestCase):
             ]]
         for child in halogen_bromine_children:
             node.AddChild(child)
-        
+
         root.AddChild(node)
-        
+
 
         m = Chem.MolFromSmiles("CCl")
         assert h.HasMatch(m)
@@ -418,7 +420,7 @@ class TestCase(unittest.TestCase):
         self.assertEquals(len(res), 1)
         self.assertEquals([ match.filterMatch.GetName() for match in res ],
                           ['Halogen.NotFluorine.Aliphatic'])
-        
+
         m = Chem.MolFromSmiles("c1ccccc1Cl")
         assert h.HasMatch(m)
         res = root.GetMatches(m)
@@ -428,7 +430,7 @@ class TestCase(unittest.TestCase):
         assert h.HasMatch(m)
         res = root.GetMatches(m)
         self.assertEquals(len(res), 3)
-        
+
         self.assertEquals([ match.filterMatch.GetName() for match in res ],
                           ['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic',
                            'Halogen.Bromine.Aromatic'])
@@ -437,7 +439,7 @@ class TestCase(unittest.TestCase):
         assert h.HasMatch(m)
         res = root.GetMatches(m)
         self.assertEquals(len(res), 1)
-        
+
         self.assertEquals([ match.filterMatch.GetName() for match in res ],
                           ['Halogen.Aromatic'])
 
@@ -447,10 +449,10 @@ class TestCase(unittest.TestCase):
 
         self.assertEquals([ match.filterMatch.GetName() for match in res ],
                           ['Halogen.NotFluorine.Aliphatic', 'Halogen.Bromine.Aliphatic'])
-        
+
     def testFunctionalGroupHierarchy(self):
         fc = FilterCatalog.GetFunctionalGroupHierarchy()
-        
+
         matches = [ (Chem.MolFromSmiles("CCl"),
                      ['Halogen.Aliphatic', 'Halogen.NotFluorine.Aliphatic']),
                     (Chem.MolFromSmiles("c1ccccc1Cl"),
@@ -479,12 +481,12 @@ class TestCase(unittest.TestCase):
             for mol, res in matches:
                 self.assertEquals(res, [match.filterMatch.GetName()
                                         for match in fc.GetFilterMatches(mol)])
-                    
+
 
     def testFlattenedFunctionalGroupHierarchy(self):
         queryDefs = FilterCatalog.GetFlattenedFunctionalGroupHierarchy()
         items = sorted(queryDefs.items())
-        
+
         matches = [ (Chem.MolFromSmiles("CCl"),
                      ['Halogen', 'Halogen.Aliphatic', 'Halogen.NotFluorine',
                       'Halogen.NotFluorine.Aliphatic']),
@@ -502,8 +504,8 @@ class TestCase(unittest.TestCase):
         for mol, res in matches:
             hits = [name for  name, pat in items if mol.HasSubstructMatch(pat)]
             self.assertEquals(hits, res)
-            
 
-        
+
+
 if __name__ == '__main__':
     unittest.main()
