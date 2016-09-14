@@ -97,6 +97,32 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete hbm;
   delete har;
 }
+void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
+                          python::object highlight_atoms,
+                          python::object highlight_bonds,
+                          python::object highlight_atom_map,
+                          python::object highlight_bond_map,
+                          python::object highlight_atom_radii,
+                          python::object pconfIds, python::object plegends) {
+  rdk_auto_ptr<std::vector<ROMol *> > mols = pythonObjectToVect<ROMol *>(pmols);
+  // rdk_auto_ptr<std::vector<int> > highlightAtoms =
+  //     pythonObjectToVect(highlight_atoms,
+  //     static_cast<int>(mol.getNumAtoms()));
+  // rdk_auto_ptr<std::vector<int> > highlightBonds =
+  //     pythonObjectToVect(highlight_bonds,
+  //     static_cast<int>(mol.getNumBonds()));
+  // FIX: support these
+  // std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
+  // std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
+  // std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
+  //
+  rdk_auto_ptr<std::vector<int> > confIds = pythonObjectToVect<int>(pconfIds);
+  rdk_auto_ptr<std::vector<std::string> > legends =
+      pythonObjectToVect<std::string>(plegends);
+
+  self.drawMolecules(*mols, legends.get(), NULL, NULL, NULL, NULL, NULL,
+                     confIds.get());
+}
 
 #ifdef RDK_CAIRO_BUILD
 python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
@@ -134,7 +160,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       //.def_readwrite("highlightColour",&RDKit::MolDrawOptions::highlightColour)
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
-      .def_readwrite("atomLabelDeuteriumTritium", &RDKit::MolDrawOptions::atomLabelDeuteriumTritium,
+      .def_readwrite("atomLabelDeuteriumTritium",
+                     &RDKit::MolDrawOptions::atomLabelDeuteriumTritium,
                      "labels deuterium as D and tritium as T")
       .def_readwrite("continuousHighlight",
                      &RDKit::MolDrawOptions::continuousHighlight)
@@ -150,7 +177,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "font size in pixels of the legend (if drawn)")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
-          "offset (in Angstroms) for the extra lines in a multiple bond");
+          "offset (in Angstroms) for the extra lines in a multiple bond")
+      .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
+                     "fraction of empty space to leave around molecule");
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -174,10 +203,26 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::arg("highlightAtomRadii") = python::object(),
            python::arg("confId") = -1, python::arg("legend") = std::string("")),
           "renders a molecule\n")
+      .def("DrawMolecules", RDKit::drawMoleculesHelper2,
+           (python::arg("self"), python::arg("mols"),
+            python::arg("highlightAtoms") = python::object(),
+            python::arg("highlightBonds") = python::object(),
+            python::arg("highlightAtomColors") = python::object(),
+            python::arg("highlightBondColors") = python::object(),
+            python::arg("highlightAtomRadii") = python::object(),
+            python::arg("confIds") = python::object(),
+            python::arg("legends") = python::object()),
+           "renders multiple molecules\n")
       .def("Width", &RDKit::MolDraw2D::width,
            "get the width of the drawing canvas")
       .def("Height", &RDKit::MolDraw2D::height,
            "get the height of the drawing canvas")
+      .def("SetOffset", &RDKit::MolDraw2D::setOffset,
+           "set the offset (in drawing coordinates) for the drawing")
+      .def("Offset", &RDKit::MolDraw2D::offset,
+           "returns the offset (in drawing coordinates) for the drawing")
+      .def("SetScale", &RDKit::MolDraw2D::setScale,
+           "uses the values provided to set the drawing scaling")
       .def("DrawString", &RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
@@ -190,6 +235,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
                                      python::init<int, int>())
+      .def(python::init<int, int, int, int>())
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("GetDrawingText", &RDKit::MolDraw2DSVG::getDrawingText,
@@ -200,6 +246,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DCairo", docString.c_str(),
                                      python::init<int, int>())
+      .def(python::init<int, int, int, int>())
       .def("FinishDrawing", &RDKit::MolDraw2DCairo::finishDrawing,
            "add the last bits to finish the drawing")
       .def("GetDrawingText", &RDKit::getCairoDrawingText,

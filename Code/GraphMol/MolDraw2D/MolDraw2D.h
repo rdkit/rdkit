@@ -39,9 +39,9 @@ typedef std::vector<unsigned int> DashPattern;
 
 struct MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
-  bool dummiesAreAttachments;  // draws "breaks" at dummy atoms
-  bool circleAtoms;            // draws circles under highlighted atoms
-  DrawColour highlightColour;  // default highlight color
+  bool dummiesAreAttachments;      // draws "breaks" at dummy atoms
+  bool circleAtoms;                // draws circles under highlighted atoms
+  DrawColour highlightColour;      // default highlight color
   bool continuousHighlight;  // highlight by drawing an outline *underneath* the
                              // molecule
   int flagCloseContactsDist;  // if positive, this will be used as a cutoff (in
@@ -57,6 +57,7 @@ struct MolDrawOptions {
   DrawColour legendColour;    // color to be used for the legend (if present)
   double multipleBondOffset;  // offset (in Angstroms) for the extra lines in a
                               // multiple bond
+  double padding;  // fraction of empty space to leave around the molecule
   std::map<int, std::string> atomLabels;       // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
 
@@ -72,7 +73,8 @@ struct MolDrawOptions {
         backgroundColour(1, 1, 1),
         legendFontSize(12),
         legendColour(0, 0, 0),
-        multipleBondOffset(0.15){};
+        multipleBondOffset(0.15),
+        padding(0.05){};
 };
 
 class MolDraw2D {
@@ -84,7 +86,8 @@ class MolDraw2D {
     TextDrawSubscript
   } TextDrawType;
 
-  MolDraw2D(int width, int height);
+  MolDraw2D(int width, int height, int panelWidth = -1, int panelHeight = -1);
+
   virtual ~MolDraw2D() {}
 
   virtual void drawMolecule(
@@ -113,6 +116,16 @@ class MolDraw2D {
       const std::map<int, DrawColour> *highlight_bond_map = NULL,
       const std::map<int, double> *highlight_radii = NULL, int confId = -1);
 
+  virtual void drawMolecules(
+      const std::vector<ROMol *> &mols,
+      const std::vector<std::string> *legends = NULL,
+      const std::vector<std::vector<int> > *highlight_atoms = NULL,
+      const std::vector<std::vector<int> > *highlight_bonds = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
+      const std::vector<std::map<int, double> > *highlight_radii = NULL,
+      const std::vector<int> *confIds = NULL);
+
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
   // have
@@ -129,9 +142,19 @@ class MolDraw2D {
 
   virtual int width() const { return width_; }
   virtual int height() const { return height_; }
+  virtual int panelWidth() const { return panel_width_; }
+  virtual int panelHeight() const { return panel_height_; }
 
-  virtual double scale() const { return scale_; }
-  virtual void calculateScale();
+  double scale() const { return scale_; }
+  void calculateScale(int width, int height);
+  void calculateScale() { calculateScale(panel_width_, panel_height_); };
+  void setScale(int width, int height, const Point2D &minv,
+                const Point2D &maxv);
+  void setOffset(int x, int y) {
+    x_offset_ = x;
+    y_offset_ = y;
+  }
+  Point2D offset() { return Point2D(x_offset_, y_offset_); }
 
   virtual double fontSize() const { return font_size_; }
   // set font size in molecule coordinate units. That's probably Angstrom for
@@ -190,28 +213,36 @@ class MolDraw2D {
   MolDrawOptions &drawOptions() { return options_; }
   const MolDrawOptions &drawOptions() const { return options_; }
 
-  const std::vector<Point2D> &atomCoords() const { return at_cds_; };
+  const std::vector<Point2D> &atomCoords() const {
+    PRECONDITION(activeMolIdx_ >= 0, "no index");
+    return at_cds_[activeMolIdx_];
+  };
   const std::vector<std::pair<std::string, OrientType> > &atomSyms() const {
-    return atom_syms_;
+    PRECONDITION(activeMolIdx_ >= 0, "no index");
+    return atom_syms_[activeMolIdx_];
   };
 
  private:
-  int width_, height_;
+  bool needs_scale_;
+  int width_, height_, panel_width_, panel_height_;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
+  int x_offset_, y_offset_;  // translation in screen coordinates
   // font_size_ in molecule coordinate units. Default 0.5 (a bit bigger
   // than the default width of a double bond)
   double font_size_;
   int curr_width_;
   bool fill_polys_;
+  int activeMolIdx_;
+
   DrawColour curr_colour_;
   DashPattern curr_dash_;
   MolDrawOptions options_;
 
-  std::vector<Point2D> at_cds_;  // from mol
-  std::vector<int> atomic_nums_;
-  std::vector<std::pair<std::string, OrientType> > atom_syms_;
+  std::vector<std::vector<Point2D> > at_cds_;  // from mol
+  std::vector<std::vector<int> > atomic_nums_;
+  std::vector<std::vector<std::pair<std::string, OrientType> > > atom_syms_;
   Point2D bbox_[2];
 
   // draw the char, with the bottom left hand corner at cds
@@ -224,7 +255,7 @@ class MolDraw2D {
                        const std::map<int, DrawColour> *highlight_map = NULL);
   DrawColour getColourByAtomicNum(int atomic_num);
 
-  void extractAtomCoords(const ROMol &mol, int confId);
+  void extractAtomCoords(const ROMol &mol, int confId, bool updateBBox);
   void extractAtomSymbols(const ROMol &mol);
 
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
