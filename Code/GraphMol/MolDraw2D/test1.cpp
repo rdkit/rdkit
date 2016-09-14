@@ -1297,9 +1297,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") != std::string::npos)
-        && (line.find(">2<") != std::string::npos)
-        && (line.find(">H<") != std::string::npos))
+      if ((line.find("baseline-shift:super") != std::string::npos) &&
+          (line.find(">2<") != std::string::npos) &&
+          (line.find(">H<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1324,9 +1324,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") != std::string::npos)
-        && (line.find(">3<") != std::string::npos)
-        && (line.find(">H<") != std::string::npos))
+      if ((line.find("baseline-shift:super") != std::string::npos) &&
+          (line.find(">3<") != std::string::npos) &&
+          (line.find(">H<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1351,9 +1351,9 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") == std::string::npos)
-        && (line.find(">2<") == std::string::npos)
-        && (line.find(">D<") != std::string::npos))
+      if ((line.find("baseline-shift:super") == std::string::npos) &&
+          (line.find(">2<") == std::string::npos) &&
+          (line.find(">D<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
@@ -1378,15 +1378,34 @@ void testDeuteriumTritium() {
       std::getline(ins, line);
       ok = (ins.good() && !ins.eof());
       if (!ok) continue;
-      if ((line.find("baseline-shift:super") == std::string::npos)
-        && (line.find(">3<") == std::string::npos)
-        && (line.find(">T<") != std::string::npos))
+      if ((line.find("baseline-shift:super") == std::string::npos) &&
+          (line.find(">3<") == std::string::npos) &&
+          (line.find(">T<") != std::string::npos))
         ++count;
     }
     TEST_ASSERT(count == 4);
     delete m;
   }
   std::cerr << " Done" << std::endl;
+}
+
+void testCrossedBonds() {
+  std::cerr << " ----------------- Test crossed bonds" << std::endl;
+  {
+    std::string smiles = "CC=CC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    m->getBondWithIdx(1)->setBondDir(Bond::EITHERDOUBLE);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    std::string nameBase = "crossed_bonds";
+    std::ofstream outs((nameBase + ".svg").c_str());
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.close();
+  }
+  std::cerr << "Done" << std::endl;
 }
 
 int main() {
@@ -1412,4 +1431,5 @@ int main() {
   testGithub953();
   testGithub983();
   testDeuteriumTritium();
+  testCrossedBonds();
 }

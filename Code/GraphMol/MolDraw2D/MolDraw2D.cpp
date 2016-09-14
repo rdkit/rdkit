@@ -747,9 +747,6 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
       Point2D perp = calcPerpendicular(at1_cds, at2_cds) * double_bond_offset;
       drawLine(at1_cds + perp, at2_cds + perp, col1, col2);
       drawLine(at1_cds - perp, at2_cds - perp, col1, col2);
-      if (bt == Bond::TRIPLE) {
-        drawLine(at1_cds, at2_cds, col1, col2);
-      }
     } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond->getBondDir() ||
                                       Bond::BEGINDASH == bond->getBondDir())) {
       // std::cerr << "WEDGE: from " << at1->getIdx() << " | "
@@ -774,6 +771,12 @@ void MolDraw2D::drawBond(const ROMol &mol, const BOND_SPTR &bond, int at1_idx,
     } else if (Bond::SINGLE == bt && Bond::UNKNOWN == bond->getBondDir()) {
       // unspecified stereo
       drawWavyLine(at1_cds, at2_cds, col1, col2);
+    } else if (Bond::DOUBLE == bt && Bond::EITHERDOUBLE == bond->getBondDir()) {
+      // crossed bond
+      Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+      perp *= double_bond_offset;
+      drawLine(at1_cds + perp, at2_cds - perp, col1, col2);
+      drawLine(at1_cds - perp, at2_cds + perp, col1, col2);
     } else {
       // in all other cases, we will definitely want to draw a line between the
       // two atoms
@@ -1072,8 +1075,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     symbol = "";
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
-  } else if (drawOptions().atomLabelDeuteriumTritium && atom.getAtomicNum() == 1 &&
-             (iso == 2 || iso == 3)) {
+  } else if (drawOptions().atomLabelDeuteriumTritium &&
+             atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
     iso = 0;
   } else {
@@ -1098,8 +1101,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
     if (0 != iso) {
       // isotope always comes before the symbol
-      preText.push_back(std::string("<sup>") +
-                        lexical_cast<string>(iso) +
+      preText.push_back(std::string("<sup>") + lexical_cast<string>(iso) +
                         std::string("</sup>"));
     }
 
