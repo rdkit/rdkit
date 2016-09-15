@@ -27,7 +27,7 @@ if(needDownload)
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
       set(FREESASA_SRC_DIR "freesasa-master")
   endif()
-endif()
+endif(needDownload)
 
 macro(use_c99)
   if (CMAKE_VERSION VERSION_LESS "3.1")
