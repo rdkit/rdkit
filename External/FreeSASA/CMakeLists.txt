@@ -10,12 +10,23 @@ endif()
 
 if(needDownload)
   # don't actually use the md5 here
-  downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
-        "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz" 
-        "")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-    ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  if(MSVC)
+    downloadAndCheckMD5("https://github.com/bp-kelley/freesasa/archive/msvc-fixes.tar.gz"
+          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz" 
+          "")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+      ${CMAKE_CURRENT_SOURCE_DIR}/msvc-fixes.tar.gz
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    set(FREESASA_SRC_DIR "freesasa-msvc-fixes")
+  else()
+    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
+          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz" 
+          "")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+      ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      set(FREESASA_SRC_DIR "freesasa-master")
+  endif()
 endif()
 
 macro(use_c99)
@@ -31,27 +42,27 @@ endmacro(use_c99)
 use_c99()
 
 set (freesasa_clib_srcs
-    freesasa-master/src/classifier.c
-    freesasa-master/src/classifier_naccess.c
-    freesasa-master/src/classifier_oons.c
-    freesasa-master/src/classifier_protor.c
-    freesasa-master/src/coord.c
-    freesasa-master/src/freesasa.c
-    freesasa-master/src/lexer.c
-    freesasa-master/src/nb.c
-    freesasa-master/src/parser.c
-    freesasa-master/src/pdb.c
-    freesasa-master/src/rsa.c
-    freesasa-master/src/sasa_lr.c
-    freesasa-master/src/sasa_sr.c
-    freesasa-master/src/selection.c
-    freesasa-master/src/structure.c
-    freesasa-master/src/util.c
+    ${FREESASA_SRC_DIR}/src/classifier.c
+    ${FREESASA_SRC_DIR}/src/classifier_naccess.c
+    ${FREESASA_SRC_DIR}/src/classifier_oons.c
+    ${FREESASA_SRC_DIR}/src/classifier_protor.c
+    ${FREESASA_SRC_DIR}/src/coord.c
+    ${FREESASA_SRC_DIR}/src/freesasa.c
+    ${FREESASA_SRC_DIR}/src/lexer.c
+    ${FREESASA_SRC_DIR}/src/nb.c
+    ${FREESASA_SRC_DIR}/src/parser.c
+    ${FREESASA_SRC_DIR}/src/pdb.c
+    ${FREESASA_SRC_DIR}/src/rsa.c
+    ${FREESASA_SRC_DIR}/src/sasa_lr.c
+    ${FREESASA_SRC_DIR}/src/sasa_sr.c
+    ${FREESASA_SRC_DIR}/src/selection.c
+    ${FREESASA_SRC_DIR}/src/structure.c
+    ${FREESASA_SRC_DIR}/src/util.c
     )
 
 add_definitions(-DUSE_THREADS=0)
 rdkit_library(freesasa_clib ${freesasa_clib_srcs})
-include_directories("freesasa-master/src")
+include_directories("${FREESASA_SRC_DIR}/src")
 
 rdkit_library(FreeSASALib RDFreeSASA.cpp SHARED LINK_LIBRARIES freesasa_clib GraphMol DataStructs RDGeometryLib RDGeneral )
 rdkit_headers(RDFreeSASA.h DEST GraphMol)
