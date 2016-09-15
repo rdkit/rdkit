@@ -18,6 +18,7 @@ if(needDownload)
       ${CMAKE_CURRENT_SOURCE_DIR}/msvc-fixes.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set(FREESASA_SRC_DIR "freesasa-msvc-fixes")
+    set(FREESASA_GETLINE "getline.c")
   else()
     downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz" 
@@ -26,8 +27,9 @@ if(needDownload)
       ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
       set(FREESASA_SRC_DIR "freesasa-master")
+      set(FREESASA_GETLINE "") 
   endif()
-endif(needDownload)
+endif()
 
 macro(use_c99)
   if (CMAKE_VERSION VERSION_LESS "3.1")
@@ -58,6 +60,7 @@ set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/selection.c
     ${FREESASA_SRC_DIR}/src/structure.c
     ${FREESASA_SRC_DIR}/src/util.c
+    ${FREESASA_GETLINE}
     )
 
 add_definitions(-DUSE_THREADS=0)
