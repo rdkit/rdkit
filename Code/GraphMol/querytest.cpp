@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2002-2013 Rational Discovery LLC
+//   Copyright (C) 2002-2016 Rational Discovery LLC and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -520,7 +519,8 @@ void testIssue2892580() {
 
 void testGithub153() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test github issue 53: query "
-                           "molecules not matching [R]" << std::endl;
+                           "molecules not matching [R]"
+                        << std::endl;
   RWMol *m = SmartsToMol("[C]1-[C]-[C]1");
   MolOps::findSSSR(*m);
 
@@ -678,6 +678,112 @@ void testHasPropWithDoubleValueMatch() {
   }
 }
 
+void testExtraAtomQueries() {
+  BOOST_LOG(rdErrorLog) << "---------------------- Test extra atom queries"
+                        << std::endl;
+
+  {  // radicals
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumRadicalElectronsQuery(1));
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setNumRadicalElectrons(1);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setNumRadicalElectrons(2);
+    TEST_ASSERT(!qA.Match(&a1));
+    qA.getQuery()->setNegation(true);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setNumRadicalElectrons(0);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setNumRadicalElectrons(1);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+  {  // chiral tags
+    QueryAtom qA;
+    qA.setQuery(makeAtomHasChiralTagQuery());
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(qA.Match(&a1));
+    qA.getQuery()->setNegation(true);
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+
+  {  // missing chiral tags
+    QueryAtom qA;
+    qA.setQuery(makeAtomMissingChiralTagQuery());
+    Atom a1(6);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(!qA.Match(&a1));
+
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    a1.setProp(common_properties::_ChiralityPossible, 1);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(!qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(!qA.Match(&a1));
+
+    qA.getQuery()->setNegation(true);
+    a1.clearProp(common_properties::_ChiralityPossible);
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(qA.Match(&a1));
+    a1.setChiralTag(Atom::CHI_OTHER);
+    TEST_ASSERT(qA.Match(&a1));
+
+    a1.setChiralTag(Atom::CHI_UNSPECIFIED);
+    a1.setProp(common_properties::_ChiralityPossible, 1);
+    TEST_ASSERT(!qA.Match(&a1));
+  }
+
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+void testExtraBondQueries() {
+  BOOST_LOG(rdErrorLog) << "---------------------- Test extra bond queries"
+                        << std::endl;
+
+  {  // stereo
+    QueryBond qB;
+    qB.setQuery(makeBondHasStereoQuery());
+    Bond b1(Bond::DOUBLE);
+    TEST_ASSERT(!qB.Match(&b1));
+    b1.setStereo(Bond::STEREOE);
+    TEST_ASSERT(qB.Match(&b1));
+    b1.setStereo(Bond::STEREOANY);
+    TEST_ASSERT(qB.Match(&b1));
+    qB.getQuery()->setNegation(true);
+    b1.setStereo(Bond::STEREONONE);
+    TEST_ASSERT(qB.Match(&b1));
+    b1.setStereo(Bond::STEREOE);
+    TEST_ASSERT(!qB.Match(&b1));
+    b1.setStereo(Bond::STEREOANY);
+    TEST_ASSERT(!qB.Match(&b1));
+  }
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   test1();
@@ -695,5 +801,8 @@ int main() {
   testHasPropWithValueMatch();
   testHasPropWithDoubleValueMatch();
 #endif
+  testExtraAtomQueries();
+  testExtraBondQueries();
+
   return 0;
 }

@@ -1,21 +1,21 @@
-/* 
+/*
  * $Id: MemoryTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
- * met: 
+ * met:
  *
- *     * Redistributions of source code must retain the above copyright 
+ *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following 
- *       disclaimer in the documentation and/or other materials provided 
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- *     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
- *       nor the names of its contributors may be used to endorse or promote 
+ *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+ *       nor the names of its contributors may be used to endorse or promote
  *       products derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -38,17 +38,17 @@ import org.junit.Test;
 
 /**
  * A few tests to verify memory-relates issues between Java and C++.
- * 
+ *
  * Verify garbage collection correctly frees Java and C++ memory.
  * Call it manually, otherwise it only gets called at the end of all tests
  */
 public class MemoryTests extends GraphMolTest {
 
 	Runtime r = Runtime.getRuntime();
-	static final int ITERATIONS = 50000; 
+	static final int ITERATIONS = 50000;
 
 	@SuppressWarnings("unused")
-	@Test
+	//@Test
 	public void testGarbageCollection1() {
 		for(int i=0;i<ITERATIONS;i++){
 			ROMol m1 = RWMol.MolFromSmiles("C1=CC=CC=C1");
@@ -58,9 +58,9 @@ public class MemoryTests extends GraphMolTest {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
-	@Test 
+	//@Test
 	public void testGarbageCollection2(){
 		int i = 0;
 		ROMol mol;
@@ -74,11 +74,11 @@ public class MemoryTests extends GraphMolTest {
 		}
 	}
 
-	@Test
+	//@Test
 	public void testConformerOwnership() {
 		for (int i = 0; i < 50000; i++) {
 			ROMol mol = RWMol.MolFromSmiles("CC");
-			
+
 			for(int j=0; j<100;j++) {
 			Conformer conf = new Conformer(2);
 			conf.setAtomPos(0, new Point3D(-0.5, 0.0, 0.0));
@@ -99,7 +99,7 @@ public class MemoryTests extends GraphMolTest {
 		}
 	}
 
-	@Test 
+	//@Test
 	public void testAtomsAfterGarbageCollection() {
 		String smiles="c1ccccc1";
 		RWMol mol1 = RWMol.MolFromSmiles(smiles);
@@ -114,7 +114,7 @@ public class MemoryTests extends GraphMolTest {
 			mol1.replaceAtom(i,atom,false);
 			assertEquals(47, mol1.getAtomWithIdx(i).getAtomicNum());
 		}
-		
+
 		// Atom's now out of scope and eligible for garbage collection!
 		// Make sure we still have access to it, even after the Java object was destroyed.
 		Runtime.getRuntime().gc();
@@ -126,9 +126,20 @@ public class MemoryTests extends GraphMolTest {
 		}
 	}
 
+@Test
+public void testRenumberAtoms() {
+  String smiles="c1ccccc1";
+  RWMol mol1 = RWMol.MolFromSmiles(smiles);
+  UInt_Vect newNums = new UInt_Vect();
+  for(long i=mol1.getNumAtoms()-1;i>=0;i--){ newNums.add(i); }
+  for(int i=0;i<10000000;i++){
+     ROMol m = RDKFuncs.renumberAtoms(mol1,newNums);
+     m.delete();
+     if(i%10000 == 0) System.out.println(" Done: "+i+"\n");
+   }
+}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.MemoryTests");
 	}
 }
-
-

@@ -303,6 +303,27 @@ ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what) {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(int what) {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      what, queryAtomNumRadicalElectrons);
+  res->setDescription("AtomNumRadicalElectrons");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery() {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasChiralTag);
+  res->setDescription("AtomHasChiralTag");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery() {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomMissingChiralTag);
+  res->setDescription("AtomMissingChiralTag");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryIsAtomInRing);
@@ -337,6 +358,14 @@ BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what) {
   res->setVal(what);
   res->setDataFunc(queryBondDir);
   res->setDescription("BondDir");
+  return res;
+}
+
+BOND_EQUALS_QUERY *makeBondHasStereoQuery() {
+  BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
+  res->setVal(true);
+  res->setDataFunc(queryBondHasStereo);
+  res->setDescription("BondStereo");
   return res;
 }
 

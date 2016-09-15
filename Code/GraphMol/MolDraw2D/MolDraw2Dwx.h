@@ -26,8 +26,9 @@ namespace RDKit {
 
 class MolDraw2Dwx : public MolDraw2D {
  public:
-  MolDraw2Dwx(int width, int height, wxDC &dc)
-      : MolDraw2D(width, height), m_dc(dc) {
+  MolDraw2Dwx(int width, int height, wxDC &dc, int panelWidth = -1,
+              int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight), m_dc(dc) {
     // m_dc.SetFont(wxFont(10, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
     // wxFONTWEIGHT_NORMAL));
   }

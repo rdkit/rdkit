@@ -25,12 +25,15 @@ namespace RDKit {
 class MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
-  MolDraw2DCairo(int width, int height, cairo_t *cr)
-      : MolDraw2D(width, height), dp_cr(cr) {
+  MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
+                 int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
   };
-  MolDraw2DCairo(int width, int height) : MolDraw2D(width, height) {
+  MolDraw2DCairo(int width, int height, int panelWidth = -1,
+                 int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     dp_cr = cairo_create(surf);
