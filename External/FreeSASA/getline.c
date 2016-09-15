@@ -9,5 +9,7 @@ getline (lineptr, n, stream)
      size_t *n;
      FILE *stream;
 {
+  // do nothing implementation
+  //  we don't use these functionalities of freesasa
   return 0;
 }
