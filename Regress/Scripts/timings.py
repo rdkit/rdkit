@@ -4,10 +4,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Recap
 from rdkit.RDLogger import logger
-if (sys.version_info < (3, 0, 0)):
-  gzipReadMode = 'rb'
-else:
-  gzipReadMode = 'rt'
 
 logger = logger()
 
@@ -20,7 +16,7 @@ if len(sys.argv)>1:
         tests[x] = 1
 ts = []
 
-sdData = gzip.open('../Data/mols.1000.sdf.gz', gzipReadMode).read()
+sdData = gzip.open('../Data/mols.1000.sdf.gz').read()
 logger.info('mols from sdf')
 suppl = Chem.SDMolSupplier()
 suppl.SetData(sdData)
@@ -39,13 +35,13 @@ logger.info('Results1: %.2f seconds, %d passed, %d failed'%(t2-t1,nMols,nBad))
 ts.append(t2-t1)
 
 if tests[2]:
-    lines = gzip.open('../Data/mols.1000.txt.gz', gzipReadMode).readlines()
+    lines = gzip.open('../Data/mols.1000.txt.gz').readlines()
     logger.info('mols from smiles')
     nMols=0
     nBad=0
     t1=time.time()
     for line in lines:
-        line = line.strip().split(' ')
+        line = line.decode().strip().split(' ')
         m = Chem.MolFromSmiles(line[1])
         if m:
             nMols+=1
@@ -56,8 +52,8 @@ if tests[2]:
     ts.append(t2-t1)
 
 if tests[3] or tests[4] or tests[5]:
-    pattData = gzip.open('../Data/queries.txt.gz', gzipReadMode).readlines()
-    pattData = [x.strip().replace('[H]','').replace('()','') for x in pattData]
+    pattData = gzip.open('../Data/queries.txt.gz').readlines()
+    pattData = [x.decode().strip().replace('[H]','').replace('()','') for x in pattData]
     logger.info('patterns from smiles')
     patts = []
     t1=time.time()
