@@ -94,7 +94,8 @@ class FeatMapParser(object):
           try:
             featMap.dirScoreMode = getattr(FeatMaps.FeatDirScoreMode, val)
           except AttributeError:
-            raise FeatMapParseError('DirScoreMode %s not recognized on line %d' % (val, self._lineNum))
+            raise FeatMapParseError('DirScoreMode %s not recognized on line %d' %
+                                    (val, self._lineNum))
         else:
           raise FeatMapParseError('Unrecognized keyword %s on line %d' % (keyword, self._lineNum))
       l = self._NextLine().strip()
@@ -122,7 +123,8 @@ class FeatMapParser(object):
           except AttributeError:
             raise FeatMapParseError('Profile %s not recognized on line %d' % (val, self._lineNum))
         else:
-          raise FeatMapParseError('FeatMapParam option %s not recognized on line %d' % (name, self._lineNum))
+          raise FeatMapParseError('FeatMapParam option %s not recognized on line %d' %
+                                  (name, self._lineNum))
       params[family] = param
       l = self._NextLine()
 
@@ -180,7 +182,8 @@ class FeatMapParser(object):
           pos = self._parsePoint(val)
           p.featDirs.append(pos)
         else:
-          raise FeatMapParseError('FeatPoint option %s not recognized on line %d' % (name, self._lineNum))
+          raise FeatMapParseError('FeatPoint option %s not recognized on line %d' %
+                                  (name, self._lineNum))
         i += 1
       feats.append(p)
       l = self._NextLine()

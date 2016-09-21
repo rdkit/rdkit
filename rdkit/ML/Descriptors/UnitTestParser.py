@@ -18,7 +18,8 @@ class TestCase(unittest.TestCase):
     self.aDict = {'Fe':{'d1':1, 'd2':2}, 'Pt':{'d1':10, 'd2':20}}
     self.pDict = {'d1':100., 'd2':200.}
     self.compos = [('Fe', 1), ('Pt', 1)]
-    self.cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "MEAN($1)", "DEV($2)", "MAX($1)", "MIN($2)", "SUM($1)/$a"]
+    self.cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "MEAN($1)", "DEV($2)",
+                   "MAX($1)", "MIN($2)", "SUM($1)/$a"]
     self.results = [11., 33., 5.5, 9., 10., 2., 0.11]
     self.tol = 0.0001
   def testSingleCalcs(self):

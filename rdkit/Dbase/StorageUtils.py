@@ -218,7 +218,8 @@ def RegisterItems(conn, table, values, columnName, rows,
   qs = ','.join(DbModule.placeHolder * nVals)
   curs.execute("create temporary table regitemstemp (%(columnName)s)" % locals())
   curs.executemany("insert into regitemstemp values (?)", [(x,) for x in values])
-  query = 'select %(columnName)s,%(idColName)s from %(table)s where %(columnName)s in (select * from regitemstemp)' % locals()
+  query = ('select %(columnName)s,%(idColName)s ' +
+           'from %(table)s where %(columnName)s in (select * from regitemstemp)') % locals()
   curs.execute(query)
 
   dbData = curs.fetchall()

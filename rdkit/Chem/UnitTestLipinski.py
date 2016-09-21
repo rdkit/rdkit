@@ -46,36 +46,46 @@ class TestCase(unittest.TestCase):
       if m:
         calc = Lipinski.NHOHCount(m)
         orig = int(m.GetProp('NUM_LIPINSKIHDONORS'))
-        assert calc == orig, 'bad num h donors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num h donors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         calc = Lipinski.NOCount(m)
         orig = int(m.GetProp('NUM_LIPINSKIHACCEPTORS'))
-        assert calc == orig, 'bad num h acceptors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num h acceptors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         calc = Lipinski.NumHDonors(m)
         orig = int(m.GetProp('NUM_HDONORS'))
-        assert calc == orig, 'bad num h donors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num h donors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         calc = Lipinski.NumHAcceptors(m)
         orig = int(m.GetProp('NUM_HACCEPTORS'))
-        assert calc == orig, 'bad num h acceptors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num h acceptors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         calc = Lipinski.NumHeteroatoms(m)
         orig = int(m.GetProp('NUM_HETEROATOMS'))
-        assert calc == orig, 'bad num heteroatoms for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num heteroatoms for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         calc = Lipinski.NumRotatableBonds(m)
         orig = int(m.GetProp(rot_prop))
-        assert calc == orig, 'bad num rotors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num rotors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
         # test the underlying numrotatable bonds
-        calc = rdMolDescriptors.CalcNumRotatableBonds(m, rdMolDescriptors.NumRotatableBondsOptions.NonStrict)
+        calc = rdMolDescriptors.CalcNumRotatableBonds(
+          m, rdMolDescriptors.NumRotatableBondsOptions.NonStrict)
         orig = int(m.GetProp(NonStrict))
-        assert calc == orig, 'bad num rotors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num rotors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
-        calc = rdMolDescriptors.CalcNumRotatableBonds(m, rdMolDescriptors.NumRotatableBondsOptions.Strict)
+        calc = rdMolDescriptors.CalcNumRotatableBonds(
+          m, rdMolDescriptors.NumRotatableBondsOptions.Strict)
         orig = int(m.GetProp(Strict))
-        assert calc == orig, 'bad num rotors for mol %d (%s): %d != %d' % (idx, m.GetProp('SMILES'), calc, orig)
+        assert calc == orig, ('bad num rotors for mol %d (%s): %d != %d' %
+                              (idx, m.GetProp('SMILES'), calc, orig))
 
       idx += 1
 

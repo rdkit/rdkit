@@ -31,7 +31,8 @@ class TestCase(unittest.TestCase):
       mol = Chem.MolFromSmiles(smi)
       ans = numpy.array(vals)
       res = numpy.array(calc.CalcDescriptors(mol))
-      self.assertTrue(max(abs(res - ans)) < 1e-4, 'bad descriptor values for SMILES %s (%s)' % (smi, str(res)))
+      self.assertTrue(max(abs(res - ans)) < 1e-4,
+                      'bad descriptor values for SMILES %s (%s)' % (smi, str(res)))
 
   def testCalcVals(self):
     self._testVals(self.calc, self.testD)

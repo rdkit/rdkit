@@ -494,12 +494,14 @@ def stringformatTest():
                 "<b><sub>bold+sub</sub></b> hello <u><super>underline+super</super></u>")
 
         # break down the various string widths
-        print('sw("<b><sub>bold+sub</sub></b>") = ', stringWidth(canvas, "<b><sub>bold+sub</sub></b>"))
+        print('sw("<b><sub>bold+sub</sub></b>") = ', stringWidth(canvas,
+                                                                 "<b><sub>bold+sub</sub></b>"))
         print('sw(" hello ") = ', stringWidth(canvas, " hello "))
         print('sw("<u><super>underline+super</super></u>") = ',
               stringWidth(canvas, "<u><super>underline+super</super></u>"))
 
-        pwidth1 = canvas.stringWidth("bold+sub", Font(size=canvas.defaultFont.size - sizedelta, bold=1))
+        pwidth1 = canvas.stringWidth("bold+sub", Font(size=canvas.defaultFont.size - sizedelta,
+                                                      bold=1))
         print("pwidth1 = ", pwidth1)
         pwidth2 = canvas.stringWidth(" hello ")
         print("pwidth2 = ", pwidth2)
@@ -515,7 +517,8 @@ def stringformatTest():
         canvas = PDFCanvas('bigtest2.pdf')
         x = 10
         y = canvas.defaultFont.size * 1.5
-        drawString(canvas, "&alpha; &beta; <chi/> &Delta; <delta/>", x, y, Font(size=16), color=blue)
+        drawString(canvas, "&alpha; &beta; <chi/> &Delta; <delta/>", x, y, Font(size=16),
+                   color=blue)
         print("line starting with alpha should be font size 16")
         y = y + 30
         drawString(canvas, "&epsiv; &eta; &Gamma; <gamma/>", x, y, color=green)

@@ -68,7 +68,8 @@ class TestCase(unittest.TestCase):
           except Exception:
             ok = 0
           assert ok, 'Line %d: TPSA Calculation failed for SMILES %s' % (lineNo, smi)
-          assert feq(calc, ans), 'Line %d: bad TPSA for SMILES %s (%.2f != %.2f)' % (lineNo, smi, calc, ans)
+          assert feq(calc, ans), ('Line %d: bad TPSA for SMILES %s ' +
+                                  '(%.2f != %.2f)') % (lineNo, smi, calc, ans)
 
   def testHsAndTPSA(self):
     """
@@ -114,7 +115,8 @@ class TestCase(unittest.TestCase):
           mol = Chem.MolFromSmiles(smi)
           mol = Chem.AddHs(mol)
           calc = MolSurf.TPSA(mol)
-          self.assertTrue(feq(calc, ans), 'bad TPSA for SMILES %s (%.2f != %.2f)' % (smi, calc, ans))
+          self.assertTrue(feq(calc, ans),
+                          'bad TPSA for SMILES %s (%.2f != %.2f)' % (smi, calc, ans))
 
 
 if __name__ == '__main__':

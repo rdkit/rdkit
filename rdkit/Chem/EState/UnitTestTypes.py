@@ -56,7 +56,8 @@ class TestCase(unittest.TestCase):
                                 'sNH2', 'dssC', 'sOH', 'dO']),
       ('c1nc[n-]c1CC(N)C(O)=O', ['aaCH', 'aaN', 'aaCH', 'aaN', 'aasC', 'ssCH2', 'sssCH',
                                 'sNH2', 'dssC', 'sOH', 'dO']),
-      ('c1cccc2c1cccc2', ['aaCH', 'aaCH', 'aaCH', 'aaCH', 'aaaC', 'aaaC', 'aaCH', 'aaCH', 'aaCH', 'aaCH']),
+      ('c1cccc2c1cccc2', ['aaCH', 'aaCH', 'aaCH', 'aaCH', 'aaaC', 'aaaC', 'aaCH',
+                          'aaCH', 'aaCH', 'aaCH']),
       ]
     self._validate(data, show=0)
 

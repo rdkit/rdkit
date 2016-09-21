@@ -22,7 +22,8 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
   """
   if core and corePattern:
     if not core.GetNumAtoms(onlyExplicit=True) == corePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError('When a pattern is provided, it must have the same number of atoms as the core')
+      raise ValueError('When a pattern is provided, ' +
+                       'it must have the same number of atoms as the core')
     coreMatch = core.GetSubstructMatch(corePattern)
     if not coreMatch:
       raise ValueError("Core does not map to itself")

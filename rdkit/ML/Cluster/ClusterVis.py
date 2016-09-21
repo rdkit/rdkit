@@ -210,9 +210,11 @@ def DrawClusterTree(cluster, canvas, size,
      - terminal node types are determined using their _GetData()_ methods
 
   """
-  renderer = ClusterRenderer(canvas, size, ptColors, lineWidth, showIndices, showNodes, stopAtCentroids,
-                             logScale, tooClose)
+  renderer = ClusterRenderer(canvas, size, ptColors, lineWidth, showIndices, showNodes,
+                             stopAtCentroids, logScale, tooClose)
   renderer.DrawTree(cluster)
+
+
 def _DrawClusterTree(cluster, canvas, size,
                     ptColors=[], lineWidth=None,
                     showIndices=0,

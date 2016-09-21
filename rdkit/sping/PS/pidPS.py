@@ -651,7 +651,8 @@ translate
             lines = s.split('\n')
             lineHeight = self.fontHeight(font)
 
-            if angle == 0 :  # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
+            # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
+            if angle == 0 :
                for line in lines:
                   self._drawStringOneLineNoRot(line, x, y, font=font, **kwargs)
             else :  # general case, rotated text
@@ -698,7 +699,8 @@ translate
         # save current matrix, translate to center of ellipse, scale by rx ry, and draw
         # a circle of unit radius in counterclockwise dir, return to original matrix
         # arguments are (cx, cy, rx, ry, startAngle, endAngle)
-        ellipsePath = 'matrix currentmatrix %s %s neg translate %s %s scale 0 0 1 %s %s arc setmatrix'
+        ellipsePath = ('matrix currentmatrix %s %s neg translate %s %s ' +
+                       'scale 0 0 1 %s %s arc setmatrix')
 
         # choice between newpath and moveto beginning of arc
         # go with newpath for precision, does this violate any assumptions in code???
@@ -883,7 +885,8 @@ translate
             y2 = y1 + imgheight
        drawwidth = x2 - x1
        drawheight = y2 - y1
-       print('Image size (%d, %d); Draw size (%d, %d)' % (imgwidth, imgheight, drawwidth, drawheight))
+       print('Image size (%d, %d); Draw size (%d, %d)' % (imgwidth, imgheight,
+                                                          drawwidth, drawheight))
        # now I need to tell postscript how big image is
 
        # "image operators assume that they receive sample data from

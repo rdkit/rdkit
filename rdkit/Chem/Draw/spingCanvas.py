@@ -89,7 +89,8 @@ class Canvas(CanvasBase):
       fillColor = pid.transparent
     else:
       fillColor = color
-    self.canvas.drawPolygon(ps, edgeColor=edgeColor, edgeWidth=int(edgeWidth), fillColor=fillColor, closed=1)
+    self.canvas.drawPolygon(ps, edgeColor=edgeColor, edgeWidth=int(edgeWidth),
+                            fillColor=fillColor, closed=1)
 
   def addCanvasDashedWedge(self, p1, p2, p3, dash=(2, 2), color=(0, 0, 0),
                            color2=None, **kwargs):

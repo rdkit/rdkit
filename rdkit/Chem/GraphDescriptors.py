@@ -268,7 +268,8 @@ def _pyChiNv_(mol, order=2):
   size 3.
 
   """
-  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0) for hkd in _hkDeltas(mol, skipHs=0)])
+  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0)
+                        for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
     accum += numpy.prod(deltas[numpy.array(path)])

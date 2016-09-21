@@ -84,9 +84,11 @@ def HeavyAtomCount(mol):
 HeavyAtomCount.version = "1.0.1"
 
 
-_bulkConvert = ("CalcFractionCSP3", "CalcNumAromaticRings", "CalcNumSaturatedRings", "CalcNumAromaticHeterocycles",
-              "CalcNumAromaticCarbocycles", "CalcNumSaturatedHeterocycles", "CalcNumSaturatedCarbocycles", "CalcNumAliphaticRings",
-              "CalcNumAliphaticHeterocycles", "CalcNumAliphaticCarbocycles")
+_bulkConvert = ("CalcFractionCSP3", "CalcNumAromaticRings", "CalcNumSaturatedRings",
+                "CalcNumAromaticHeterocycles", "CalcNumAromaticCarbocycles",
+                "CalcNumSaturatedHeterocycles", "CalcNumSaturatedCarbocycles",
+                "CalcNumAliphaticRings", "CalcNumAliphaticHeterocycles",
+                "CalcNumAliphaticCarbocycles")
 for txt in _bulkConvert:
   _cfn = getattr(rdMolDescriptors, txt)
   _fn = lambda x, y = _cfn:y(x)

@@ -156,7 +156,8 @@ class PDFDocument:
 
     def writeTrailer(self, f):
         f.write('trailer' + LINEEND)
-        f.write('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos) + LINEEND)
+        f.write('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1,
+                                                             self.infopos) + LINEEND)
         f.write('startxref' + LINEEND)
         f.write(str(self.startxref) + LINEEND)
 

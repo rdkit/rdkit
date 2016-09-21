@@ -76,7 +76,8 @@ RDKIT_CONVERSION_ERROR = ERROR_DICT['RDKIT_CONVERSION_ERROR']
 INCHI_READWRITE_ERROR = ERROR_DICT['INCHI_READWRITE_ERROR']
 NULL_MOL = ERROR_DICT['NULL_MOL']
 
-BAD_SET = pyAvalonTools.StruChkResult.bad_set | INCHI_COMPUTATION_ERROR | RDKIT_CONVERSION_ERROR | INCHI_READWRITE_ERROR | NULL_MOL
+BAD_SET = (pyAvalonTools.StruChkResult.bad_set | INCHI_COMPUTATION_ERROR | RDKIT_CONVERSION_ERROR |
+           INCHI_READWRITE_ERROR | NULL_MOL)
 
 GET_STEREO_RE = re.compile(r'^InChI=1S(.*?)/(t.*?)/m\d/s1(.*$)')
 NULL_SMILES_RE = re.compile(r'^\s*$|^\s*NO_STRUCTURE\s*$', re.IGNORECASE)
@@ -318,7 +319,7 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
     key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
     if key_string:
         return "{0}|{1}".format(MOL_KEY_VERSION,
-                                base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode())  # pylint: disable=E1101
+                  base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode())
     else:
         return None
 
@@ -349,7 +350,8 @@ def ErrorBitsToText(err):
             error_text_list.append(err_dict_key)
     return error_text_list
 
-MolKeyResult = namedtuple('MolKeyResult', ['mol_key', 'error', 'inchi', 'fixed_ctab', 'stereo_code', 'stereo_comment'])
+MolKeyResult = namedtuple('MolKeyResult', ['mol_key', 'error', 'inchi', 'fixed_ctab',
+                                           'stereo_code', 'stereo_comment'])
 def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
     """
     >>> from rdkit.Chem.MolKey import MolKey
@@ -414,15 +416,18 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
             if (not stereo_comment) and len(info_flds) > 1:
                 extra_structure_desc = info_flds[1].strip()
         else:
-            logger.warn('stereo code {0} not recognized. Using default value for ctab.'.format(code_fld))
+            fmt = 'stereo code {0} not recognized. Using default value for ctab.'
+            logger.warn(fmt.format(code_fld))
 
     if not (err & BAD_SET):
-        (n_stereo, n_undef_stereo, is_meso, dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
+        stereo_info = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
+        (n_stereo, n_undef_stereo, is_meso, dummy) = stereo_info
         if stereo_category == None or stereo_category == 'DEFAULT' :  # compute if not set
             stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo,
                                                                n_undef_stereo)
     else:
-        raise NotImplementedError("currently cannot generate correct keys for molecules with struchk errors")
+        msg = "currently cannot generate correct keys for molecules with struchk errors"
+        raise NotImplementedError(msg)
     key = _identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
     return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 

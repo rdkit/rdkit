@@ -79,7 +79,8 @@ class TestAtomTypes(MCSTestCase):
     def test_atom_compare_default(self):
         self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]):[#6]:[#6]')
     def test_atom_compare_elements(self):
-        self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]):[#6]:[#6]', atomCompare="elements")
+        self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]):[#6]:[#6]',
+                           atomCompare="elements")
 
     def test_atom_compare_any(self):
         # Note: bond aromaticies must still match!
@@ -212,7 +213,8 @@ class TestRingMatchesRingOnly(MCSTestCase):
         self.assert_search(SELECT(ring_mols, 1, 7), 9, 9)
     def test_ring_only_select_1_7_any_atoms(self):
         # Should match everything
-        self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, ringMatchesRingOnly=True, atomCompare="any")
+        self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, ringMatchesRingOnly=True,
+                           atomCompare="any")
 
 class TestCompleteRingsOnly(MCSTestCase):
     # C12CCCC(N2)CCCC1 6-and-7-bridge-rings-with-N
@@ -242,7 +244,8 @@ class TestCompleteRingsOnly(MCSTestCase):
         self.assert_search(SELECT(ring_mols, 1, 7), 9, 9, completeRingsOnly=True)
     def test_ring_only_select_1_7_any_atoms(self):
         # Should match everything
-        self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, completeRingsOnly=True, atomCompare="any")
+        self.assert_search(SELECT(ring_mols, 1, 7), 10, 11, completeRingsOnly=True,
+                           atomCompare="any")
 
     def test_ring_to_nonring_bond(self):
         # Should allow the cO in phenol to match the CO in the other structure

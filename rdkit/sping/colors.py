@@ -3,63 +3,67 @@ from rdkit import six
 # Color
 #-------------------------------------------------------------------------
 class Color:
-        """This class is used to represent color.  Components red, green, blue
-        are in the range 0 (dark) to 1 (full intensity)."""
+    """This class is used to represent color.  Components red, green, blue
+    are in the range 0 (dark) to 1 (full intensity)."""
 
-        def __init__(self, red=0, green=0, blue=0):
-                "Initialize with red, green, blue in range [0-1]."
-                _float = float
-                d = self.__dict__
-                d["red"] = _float(red)
-                d["green"] = _float(green)
-                d["blue"] = _float(blue)
+    def __init__(self, red=0, green=0, blue=0):
+        "Initialize with red, green, blue in range [0-1]."
+        _float = float
+        d = self.__dict__
+        d["red"] = _float(red)
+        d["green"] = _float(green)
+        d["blue"] = _float(blue)
 
-        def __setattr__(self, name, value):
-                raise TypeError("piddle.Color has read-only attributes")
+    def __setattr__(self, name, value):
+        raise TypeError("piddle.Color has read-only attributes")
 
-        def __mul__(self, x):
-                return Color(self.red * x, self.green * x, self.blue * x)
+    def __mul__(self, x):
+        return Color(self.red * x, self.green * x, self.blue * x)
 
-        def __rmul__(self, x):
-                return Color(self.red * x, self.green * x, self.blue * x)
+    def __rmul__(self, x):
+        return Color(self.red * x, self.green * x, self.blue * x)
 
-        def __div__(self, x):
-                return Color(self.red / x, self.green / x, self.blue / x)
+    def __div__(self, x):
+        return Color(self.red / x, self.green / x, self.blue / x)
 
-        def __rdiv__(self, x):
-                return Color(self.red / x, self.green / x, self.blue / x)
+    def __rdiv__(self, x):
+        return Color(self.red / x, self.green / x, self.blue / x)
 
-        def __add__(self, x):
-                return Color(self.red + x.red, self.green + x.green, self.blue + x.blue)
+    def __add__(self, x):
+        return Color(self.red + x.red, self.green + x.green, self.blue + x.blue)
 
-        def __sub__(self, x):
-                return Color(self.red - x.red, self.green - x.green, self.blue - x.blue)
+    def __sub__(self, x):
+        return Color(self.red - x.red, self.green - x.green, self.blue - x.blue)
 
-        def __repr__(self):
-                return "Color(%1.2f,%1.2f,%1.2f)" % (self.red, self.green, self.blue)
+    def __repr__(self):
+        return "Color(%1.2f,%1.2f,%1.2f)" % (self.red, self.green, self.blue)
 
-        def __hash__(self):
-                return hash((self.red, self.green, self.blue))
+    def __hash__(self):
+        return hash((self.red, self.green, self.blue))
 
-        def __cmp__(self, other):
-                try:
-                        dsum = 4 * self.red - 4 * other.red + 2 * self.green - 2 * other.green + self.blue - other.blue
-                except Exception:
-                        return -1
-                if dsum > 0: return 1
-                if dsum < 0: return -1
-                return 0
-        def toHexRGB(self):
-                "Convert the color back to an integer suitable for the "
-                "0xRRGGBB hex representation"
-                r = int(0xFF * self.red)
-                g = int(0xFF * self.green)
-                b = int(0xFF * self.blue)
-                # print "r= %d, g=%d, b = %d" % (r,b,g)
-                return (r << 16) + (g << 8) + b
+    def __cmp__(self, other):
+        try:
+            dsum = (4 * self.red - 4 * other.red +
+                    2 * self.green - 2 * other.green +
+                    self.blue - other.blue)
+        except Exception:
+            return -1
+        if dsum > 0:
+          return 1
+        if dsum < 0:
+          return -1
+        return 0
 
-        def toHexStr(self):
-                return "0x%.6x" % self.toHexRGB()
+    def toHexRGB(self):
+        "Convert the color back to an integer suitable for the 0xRRGGBB hex representation"
+        r = int(0xFF * self.red)
+        g = int(0xFF * self.green)
+        b = int(0xFF * self.blue)
+        # print "r= %d, g=%d, b = %d" % (r,b,g)
+        return (r << 16) + (g << 8) + b
+
+    def toHexStr(self):
+        return "0x%.6x" % self.toHexRGB()
 
 def HexColor(val):
         """This class converts a hex string, or an actual integer number,

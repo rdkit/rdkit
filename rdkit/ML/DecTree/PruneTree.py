@@ -209,8 +209,10 @@ def PruneTree(tree, trainExamples, testExamples, minimizeTestErrorOnly=1):
 # -------
 def _testRandom():
   from rdkit.ML.DecTree import randomtest
-  # examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=20,randScale=0.25,nExamples = 200)
-  examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nVars=10, randScale=0.5, nExamples=200)
+  # examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=20,randScale=0.25,
+  #                                                             nExamples = 200)
+  examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nVars=10, randScale=0.5,
+                                                                nExamples=200)
   tree, frac = CrossValidate.CrossValidationDriver(examples, attrs, nPossibleVals)
   tree.Print()
   tree.Pickle('orig.pkl')

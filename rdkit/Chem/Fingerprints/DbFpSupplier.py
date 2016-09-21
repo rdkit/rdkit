@@ -39,7 +39,8 @@ class DbFpSupplier(VLibNode):
     self._fpColName = fpColName.upper()
     self._colNames = [x.upper() for x in self._data.GetColumnNames()]
     if self._fpColName not in self._colNames:
-      raise ValueError('fp column name "%s" not found in result set: %s' % (self._fpColName, str(self._colNames)))
+      raise ValueError('fp column name "%s" not found in result set: %s' %
+                       (self._fpColName, str(self._colNames)))
     self.fpCol = self._colNames.index(self._fpColName)
     del self._colNames[self.fpCol]
     self._colNames = tuple(self._colNames)

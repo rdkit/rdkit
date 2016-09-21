@@ -396,7 +396,8 @@ class Composite(object):
       try:
         self._mapOrder[i] = colNames.index(descs[i])
       except ValueError:
-        raise ValueError('cannot find descriptor name: %s in set %s' % (repr(descs[i]), repr(colNames)))
+        raise ValueError('cannot find descriptor name: %s in set %s' % (repr(descs[i]),
+                                                                        repr(colNames)))
     try:
       self._mapOrder[-1] = colNames.index(descs[-1])
     except ValueError:

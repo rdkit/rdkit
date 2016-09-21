@@ -26,7 +26,10 @@ supplier = Supply.SupplyNode(contents=mols)
 print('initial:', len([x for x in supplier]))
 
 # filter out anything with a transition metal or lanthanide:
-metals = '[#21,#22,#23,#24,#25,#26,#27,#28,#29,#39,#40,#41,#42,#43,#44,#45,#46,#47,#57,#58,#59,#60,#61,#62,#63,#64,#65,#66,#67,#68,#69,#70,#71,#72,#73,#74,#75,#76,#77,#78,#79]'
+metals = ('[#21,#22,#23,#24,#25,#26,#27,#28,#29,' +
+          '#39,#40,#41,#42,#43,#44,#45,#46,#47,' +
+          '#57,#58,#59,#60,#61,#62,#63,#64,#65,#66,#67,' +
+          '#68,#69,#70,#71,#72,#73,#74,#75,#76,#77,#78,#79]')
 smaFilter = SmartsMolFilter.SmartsFilter(patterns=[metals], counts=[1])
 smaFilter.SetNegate(1)
 smaFilter.AddParent(supplier)

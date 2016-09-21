@@ -154,7 +154,8 @@ class TestCase(unittest.TestCase):
                 if catalog_idx in [FilterCatalogParams.FilterCatalogs.PAINS_A,
                                    FilterCatalogParams.FilterCatalogs.PAINS]:
                     # http://chemistrycompass.com/chemsearch/58909/
-                    mol = Chem.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
+                    mol = Chem.MolFromSmiles(
+                      "O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
                     entry = catalog.GetFirstMatch(mol)
                     for key in entry.GetPropList():
                         if key == "Reference":

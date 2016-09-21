@@ -83,11 +83,13 @@ reactionDefs = (
 
   "[n;+0:1]-!@[C:2]>>[n:1][*].[C:2][*]",  # aromatic nitrogen - aliphatic carbon
 
-  "[O:3]=[C:4]-@[N;+0:1]-!@[C:2]>>[O:3]=[C:4]-[N:1][*].[C:2][*]",  # lactam nitrogen - aliphatic carbon
+  # lactam nitrogen - aliphatic carbon
+  "[O:3]=[C:4]-@[N;+0:1]-!@[C:2]>>[O:3]=[C:4]-[N:1][*].[C:2][*]",
 
   "[c:1]-!@[c:2]>>[c:1][*].[*][c:2]",  # aromatic carbon - aromatic carbon
 
-  "[n;+0:1]-!@[c:2]>>[n:1][*].[*][c:2]",  # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
+  # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
+  "[n;+0:1]-!@[c:2]>>[n:1][*].[*][c:2]",
 
   "[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]>>[#7:1][*].[*][S:2](=[O:3])=[O:4]",  # sulphonamide
   )

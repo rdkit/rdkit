@@ -96,7 +96,9 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
 
 
 def ErrorStats(conn, where, enrich=1):
-  fields = 'overall_error,holdout_error,overall_result_matrix,holdout_result_matrix,overall_correct_conf,overall_incorrect_conf,holdout_correct_conf,holdout_incorrect_conf'
+  fields = ('overall_error,holdout_error,overall_result_matrix,holdout_result_matrix,' +
+            'overall_correct_conf,overall_incorrect_conf,holdout_correct_conf,' +
+            'holdout_incorrect_conf')
   try:
     data = conn.GetData(fields=fields, where=where)
   except Exception:

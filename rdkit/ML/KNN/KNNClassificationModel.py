@@ -4,9 +4,11 @@
 #      All Rights Reserved
 #
 
-""" Define the class _KNNClassificationModel_, used to represent a k-nearest neighbhors classification model
+"""
+  Define the class _KNNClassificationModel_, used to represent a
+  k-nearest neighbhors classification model
 
-    Inherits from _KNNModel_
+  Inherits from _KNNModel_
 """
 
 from rdkit.ML.KNN import KNNModel

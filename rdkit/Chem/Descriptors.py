@@ -158,7 +158,8 @@ def MinAbsPartialCharge(mol, force=False):
   return min(abs(v1), abs(v2))
 MinAbsPartialCharge.version = "1.0.0"
 
-from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
+from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex
+from rdkit.Chem.EState.EState import MaxAbsEStateIndex, MinAbsEStateIndex
 
 _setupDescriptors(locals())
 

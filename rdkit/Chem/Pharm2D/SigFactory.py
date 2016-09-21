@@ -246,7 +246,10 @@ class SigFactory(object):
     except ValueError:
       fams = self.GetFeatFamilies()
       fams = [fams[x] for x in featIndices]
-      raise IndexError('distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s' % (fams, dists, self._bins, self._scaffolds))
+      raise IndexError(
+        'distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s' % (fams, dists,
+                                                                                 self._bins,
+                                                                                 self._scaffolds))
 
     return startIdx + offset + bin
 

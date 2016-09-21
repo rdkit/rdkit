@@ -3,10 +3,10 @@
 """"Parse Doxygen-generated html files to get out stuff we want for Javadocs
 
 Most code here works on doxytext:  this is text taken from Doxygen-generated html created by
-processing the C++ code.  That html is viewed with Firefox and the appropriate pieces (now starting at
-"Detailed Descripted"are just copied and pasted into a text file.  Note that some of the Doxygen-generated
-files don't have that section and for now this program can't handle them without some additional annotation
-by hand.
+processing the C++ code.  That html is viewed with Firefox and the appropriate pieces
+(now starting at "Detailed Descripted"are just copied and pasted into a text file.
+Note that some of the Doxygen-generated files don't have that section and for now this
+program can't handle them without some additional annotation by hand.
 """
 from __future__ import print_function
 
@@ -16,7 +16,8 @@ import re
 
 def list_class_files(dir):
     return [name for name in os.listdir(dir)
-             if (name.startswith('class_') and (not name.endswith('png')) and name.find('-members') == -1)]
+             if (name.startswith('class_') and (not name.endswith('png')) and
+                 name.find('-members') == -1)]
 
 def get_detail(fname):
     bs = BeautifulSoup(open(fname).read())
@@ -302,7 +303,8 @@ Notes:
 
 '''
 _renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
-_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)',
+                      flags=(re.M | re.I | re.DOTALL))
 _rereturn = re.compile('^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _rereturn2 = re.compile('^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _reusage = re.compile('^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))

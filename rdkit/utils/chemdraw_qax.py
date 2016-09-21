@@ -10,7 +10,8 @@ if sys.platform == 'win32':
   import win32com.client.gencache
   import win32clipboard
   try:
-    cdxModule = win32com.client.gencache.EnsureModule("{AF2D2DBA-75E4-4123-BC0B-A57BD5C5C5D2}", 0, 7, 0)
+    cdxModule = win32com.client.gencache.EnsureModule("{AF2D2DBA-75E4-4123-BC0B-A57BD5C5C5D2}", 
+                                                      0, 7, 0)
   except Exception:
     raise ImportError("Chemdraw 6.0 or greater does not appear to be installed.")
 else:

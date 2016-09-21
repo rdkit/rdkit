@@ -422,7 +422,8 @@ if __name__ == '__main__':
   pDict = {'d1':100., 'd2':200.}
   compos = [('Fe', 1), ('Pt', 1)]
 
-  cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)", "MEAN($1)", "DEV($2)", "MAX($1)", "MIN($1)/MAX($1)",
+  cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)",
+            "MEAN($1)", "DEV($2)", "MAX($1)", "MIN($1)/MAX($1)",
             "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))", "foo"]
 
   for cExpr in cExprs:

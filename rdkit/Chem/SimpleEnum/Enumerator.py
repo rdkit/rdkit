@@ -57,9 +57,9 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   >>> reactantLabels
   (((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))
 
-  If there are functional group labels in the input reaction (via atoms with molFileValue properties),
-  the corresponding atoms will have queries added to them so that they only match such things. We can
-  see this here:
+  If there are functional group labels in the input reaction (via atoms with molFileValue
+  properties), the corresponding atoms will have queries added to them so that they only
+  match such things. We can see this here:
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
   >>> r1 = rxn.GetReactantTemplate(0)
@@ -156,7 +156,11 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
                                               propName)
   return rdChemReactions.PreprocessReaction(reaction, propName=propName)
 
-def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False, funcGroupFilename=os.path.join(RDConfig.RDDataDir, 'Functional_Group_Hierarchy.txt'), propName='molFileValue'):
+
+def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False,
+                      funcGroupFilename=os.path.join(RDConfig.RDDataDir,
+                                                     'Functional_Group_Hierarchy.txt'),
+                      propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
@@ -192,7 +196,8 @@ def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False, funcGroupFile
   """
   nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
   if nError: raise ValueError('bad reaction')
-  if len(bbLists) != nReacts: raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
+  if len(bbLists) != nReacts:
+    raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
   def _uniqueOnly(lst):
     seen = []
     for entry in lst:

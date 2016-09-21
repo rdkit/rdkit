@@ -105,7 +105,7 @@ EndPoints
     fm1 = self.p.Parse()
     self.assertTrue(fm1.GetNumFeatures() == 4)
     self.assertTrue(FeatMapUtils.MergeFeatPoints(fm1, FeatMapUtils.MergeMetric.Distance,
-                                                 mergeMethod=FeatMapUtils.MergeMethod.WeightedAverage))
+                                          mergeMethod=FeatMapUtils.MergeMethod.WeightedAverage))
     self.assertTrue(fm1.GetNumFeatures() == 3)
     self.assertTrue(pteq(fm1.GetFeature(0).GetPos(), Point3D(1.00, 0, 0)))
     self.assertTrue(pteq(fm1.GetFeature(1).GetPos(), Point3D(1.225, 0, 0)))

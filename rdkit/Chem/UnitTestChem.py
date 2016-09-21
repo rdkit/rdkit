@@ -89,7 +89,8 @@ class TestCase(unittest.TestCase):
       assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
       assert len(newSmi1) > 0, 'empty smi1'
       assert len(newSmi2) > 0, 'empty smi2'
-      assert newSmi1 == newSmi2, 'string compare failed:\n%s\n\t!=\n%s\norig smiles:\n%s' % (newSmi1, newSmi2, smi)
+      assert newSmi1 == newSmi2, ('string compare failed:\n' +
+                                  '%s\n\t!=\n%s\norig smiles:\n%s') % (newSmi1, newSmi2, smi)
 
 
   def testPkl1(self):

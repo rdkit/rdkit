@@ -78,7 +78,8 @@ class InchiInfo(object):
 
         connection_layers = {}
         if reconn_match:
-            (connection_layers['id_disconnected'], connection_layers['id_reconnected']) = reconn_match.groups()
+            g = reconn_match.groups()
+            (connection_layers['id_disconnected'], connection_layers['id_reconnected']) = g
         else:
             (connection_layers['id']) = rest
 
@@ -87,7 +88,8 @@ class InchiInfo(object):
             fixed_h_layers[conn_layer] = {}
             fixed_match = fixed_h_re.match(connection_layers[conn_layer])
             if fixed_match:
-                (fixed_h_layers[conn_layer]['main'], fixed_h_layers[conn_layer]['fixed_h']) = fixed_match.groups()
+                g = fixed_match.groups()
+                (fixed_h_layers[conn_layer]['main'], fixed_h_layers[conn_layer]['fixed_h']) = g
             else:
                 fixed_h_layers[conn_layer]['main'] = connection_layers[conn_layer]
 
@@ -98,7 +100,8 @@ class InchiInfo(object):
                 inchi[i0_layer][i1_layer] = {}
                 iso_match = isotope_re.match(fixed_h_layers[i0_layer][i1_layer])
                 if iso_match:
-                    (inchi[i0_layer][i1_layer]['non-isotopic'], inchi[i0_layer][i1_layer]['isotopic']) = iso_match.groups()
+                    (inchi[i0_layer][i1_layer]['non-isotopic'],
+                     inchi[i0_layer][i1_layer]['isotopic']) = iso_match.groups()
                 else:
                     inchi[i0_layer][i1_layer]['non-isotopic'] = fixed_h_layers[i0_layer][i1_layer]
 
@@ -119,8 +122,9 @@ class InchiInfo(object):
                 sp3_stereo[fixed_layer] = {}
                 for iso_layer in self.parsed_inchi[con_layer][fixed_layer]:
                     sp3_stereo[fixed_layer][iso_layer] = {}
-                    stereo_match = stereo_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
-                    stereo_all_match = stereo_all_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
+                    s = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
+                    stereo_match = stereo_re.match(s)
+                    stereo_all_match = stereo_all_re.match(s)
                     num_stereo = 0
                     num_undef_stereo = 0
                     is_meso = False
@@ -131,7 +135,7 @@ class InchiInfo(object):
                     if stereo_match:
                         stereo = stereo_match.group(1)
                     #    match patterns with only undefined stereo or for the MESO case
-                    elif stereo_all_match :
+                    elif stereo_all_match:
                         stereo = stereo_all_match.group(1)
                         is_meso = len(defined_stereo_re.findall(stereo)) > 1
                     #    Number of ALL stereo centres
@@ -141,8 +145,10 @@ class InchiInfo(object):
                     num_undef_stereo = len(undef_stereo_centers)
                     #    Meso centres    --    VT     --    2011.12.08
                     inchi_layer = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
-                    is_meso = is_meso or (num_undef_stereo > 1 and _is_achiral_by_symmetry(inchi_layer))
-                    sp3_stereo[fixed_layer][iso_layer] = (num_stereo, num_undef_stereo, is_meso, stereo)
+                    is_meso = is_meso or (num_undef_stereo > 1 and
+                                          _is_achiral_by_symmetry(inchi_layer))
+                    sp3_stereo[fixed_layer][iso_layer] = (num_stereo, num_undef_stereo,
+                                                          is_meso, stereo)
         return sp3_stereo
 
     def get_mobile_h(self):
@@ -158,7 +164,8 @@ class InchiInfo(object):
                 for iso_layer in self.parsed_inchi[con_layer][fixed_layer]:
                     num_groups = 0
                     mobile_h_groups = ''
-                    h_layer_match = h_layer_re.match(self.parsed_inchi[con_layer][fixed_layer][iso_layer])
+                    s = self.parsed_inchi[con_layer][fixed_layer][iso_layer]
+                    h_layer_match = h_layer_re.match(s)
                     if h_layer_match:
                         mobile_h_matches = mobile_h_group_re.findall(h_layer_match.group(1))
                         num_groups = len(mobile_h_matches)
@@ -181,9 +188,15 @@ mobile1 = 'InChI=1S/C5H5N3O2/c6-4(9)3-1-7-2-8-5(3)10/h1-2H,(H2,6,9)(H,7,8,10)'  
 mobile2 = 'InChI=1S/C7H10N4O/c1-4-2-5(3-6(8)12)11-7(9)10-4/h2H,3H2,1H3,(H2,8,12)(H2,9,10,11)'
 
 # sp3 stereo
-sugar1 = 'InChI=1S/C14H20O9/c1-6-11(20-7(2)15)12(21-8(3)16)13(22-9(4)17)14(19-6)23-10(5)18/h6,11-14H,1-5H3/t6-,11-,12+,13+,14?/m0/s1'  # L-rhamnopyranose (source: chemspider)
-sugar2 = 'InChI=1S/C12H20O6/c1-11(2)14-5-6(16-11)8-7(13)9-10(15-8)18-12(3,4)17-9/h6-10,13H,5H2,1-4H3/t6-,7-,8-,9-,10-/m1/s1'  # MFCD00135634 (Diacetone-D-Glucose, souce: chemspider)
-sp3_unk = 'InChI=1S/C12H21NO4/c1-8(2)10(12(15)16-3)13-11(14)9-5-4-6-17-7-9/h8-10H,4-7H2,1-3H3,(H,13,14)/t9?,10-/m0/s1'  # derived from ChemSpider 34044335
+# L-rhamnopyranose (source: chemspider)
+sugar1 = ('InChI=1S/C14H20O9/c1-6-11(20-7(2)15)12(21-8(3)16)13(22-9(4)17)14(19-6)23' +
+          '-10(5)18/h6,11-14H,1-5H3/t6-,11-,12+,13+,14?/m0/s1')
+# MFCD00135634 (Diacetone-D-Glucose, souce: chemspider)
+sugar2 = ('InChI=1S/C12H20O6/c1-11(2)14-5-6(16-11)8-7(13)9-10(15-8)18-12(3,4)17-9/h6-' +
+          '10,13H,5H2,1-4H3/t6-,7-,8-,9-,10-/m1/s1')
+# derived from ChemSpider 34044335
+sp3_unk = ('InChI=1S/C12H21NO4/c1-8(2)10(12(15)16-3)13-11(14)9-5-4-6-17-7-9/h8-' +
+           '10H,4-7H2,1-3H3,(H,13,14)/t9?,10-/m0/s1')
 
 class TestInchiInfo(unittest.TestCase):
 

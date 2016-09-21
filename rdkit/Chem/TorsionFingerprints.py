@@ -416,7 +416,8 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
       d = 0
     else:
       # get shortest distance between the 4 atoms and add 1 to get bond distance
-      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2]) + 1
+      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1],
+              distmat[aid2][bid2]) + 1
     w = math.exp(-beta * (d * d))
     weights.append(w)
 
@@ -431,7 +432,8 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
       bid1 = b.GetBeginAtomIdx()
       bid2 = b.GetEndAtomIdx()
       # get shortest distance between the 4 atoms and add 1 to get bond distance
-      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1], distmat[aid2][bid2]) + 1
+      d = min(distmat[aid1][bid1], distmat[aid1][bid2], distmat[aid2][bid1],
+              distmat[aid2][bid2]) + 1
       tmp.append(d)
     # calculate weights and append to list
     # Note: the description in the paper is not very clear, the following
@@ -509,7 +511,8 @@ def _getSameAtomOrder(mol1, mol2):
     return Chem.Mol(mol2)
 
 # some wrapper functions
-def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
+def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal',
+                            symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two list of conformers
       of a molecule
 
@@ -531,7 +534,8 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
 
       Return: list of TFD values
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius,
+                                  ignoreColinearBonds=ignoreColinearBonds)
   torsions1 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds1]
   torsions2 = [CalculateTorsionAngles(mol, tl, tlr, confId=cid) for cid in confIds2]
   tfd = []
@@ -546,7 +550,8 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
         tfd.append(CalculateTFD(t1, t2))
   return tfd
 
-def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
+def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal',
+                           symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two molecules.
       Important: The two molecules must be instances of the same molecule
 
@@ -572,7 +577,8 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
     raise ValueError("The two molecules must be instances of the same molecule!")
   mol2 = _getSameAtomOrder(mol1, mol2)
-  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
+  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius,
+                                  ignoreColinearBonds=ignoreColinearBonds)
   # first molecule
   torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
   # second molecule
@@ -610,9 +616,11 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColin
                  d, e, f,
                  g, h, i, j]
   """
-  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius, ignoreColinearBonds=ignoreColinearBonds)
+  tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius,
+                                  ignoreColinearBonds=ignoreColinearBonds)
   numconf = mol.GetNumConformers()
-  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId()) for conf in mol.GetConformers()]
+  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId())
+              for conf in mol.GetConformers()]
   tfdmat = []
   if useWeights:
     weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)

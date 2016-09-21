@@ -156,9 +156,9 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(ps[0][0].GetNumAtoms() == 3)
 
   def test4ErrorHandling(self):
-    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])Q.[N:3]>>[C:1](=[O:2])[N:3]':rdChemReactions.ReactionFromSmarts(x))
-    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]Q':rdChemReactions.ReactionFromSmarts(x))
-    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]>>CC':rdChemReactions.ReactionFromSmarts(x))
+    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])Q.[N:3]>>[C:1](=[O:2])[N:3]':rdChemReactions.ReactionFromSmarts(x))  # noqa
+    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]Q':rdChemReactions.ReactionFromSmarts(x))  # noqa
+    self.assertRaises(ValueError, lambda x='[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]>>CC':rdChemReactions.ReactionFromSmarts(x))  # noqa
 
     block = """$RXN
 
@@ -292,7 +292,7 @@ M  END
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]Cl>>[C:1]')
     self.assertTrue(rxn)
     self.assertRaises(ValueError, lambda x=rxn:x.RunReactants(()))
-    self.assertRaises(ValueError, lambda x=rxn:x.RunReactants((Chem.MolFromSmiles('CC'), Chem.MolFromSmiles('C'))))
+    self.assertRaises(ValueError, lambda x=rxn:x.RunReactants((Chem.MolFromSmiles('CC'), Chem.MolFromSmiles('C'))))  # noqa
     ps = rxn.RunReactants((Chem.MolFromSmiles('CCCl'),))
     self.assertTrue(len(ps) == 1)
     self.assertTrue(len(ps[0]) == 1)
@@ -319,7 +319,7 @@ M  END
   def test9AromaticityTransfer(self):
     # this was issue 2664121
     mol = Chem.MolFromSmiles('c1ccc(C2C3(Cc4c(cccc4)C2)CCCC3)cc1')
-    rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')
+    rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')  # noqa
     products = rxn.RunReactants([mol])
     self.assertEqual(len(products), 6)
     for p in products:
@@ -409,7 +409,7 @@ M  END
     self.assertRaises(ValueError, lambda :rxn.GetReactantTemplate(1))
 
   def test14Matchers(self):
-    rxn = rdChemReactions.ReactionFromSmarts('[C;!$(C(-O)-O):1](=[O:2])[O;H,-1].[N;!H0:3]>>[C:1](=[O:2])[N:3]')
+    rxn = rdChemReactions.ReactionFromSmarts('[C;!$(C(-O)-O):1](=[O:2])[O;H,-1].[N;!H0:3]>>[C:1](=[O:2])[N:3]')  # noqa
     self.assertTrue(rxn)
     rxn.Initialize()
     self.assertTrue(rxn.IsMoleculeReactant(Chem.MolFromSmiles('OC(=O)C')))
@@ -422,7 +422,7 @@ M  END
 
   def test15Replacements(self):
     rxn = rdChemReactions.ReactionFromSmarts('[{amine}:1]>>[*:1]-C',
-                                             replacements={'{amine}':'$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])'})
+                                             replacements={'{amine}':'$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])'})  # noqa
     self.assertTrue(rxn)
     rxn.Initialize()
     reactants = (Chem.MolFromSmiles('CCN'),)
@@ -494,7 +494,7 @@ M  END
     self.assertRaises(ValueError, lambda : rxn.RunReactants((None,)))
 
   def test19RemoveUnmappedMoleculesToAgents(self):
-    rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]")
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]")  # noqa
     self.failUnless(rxn)
     rxn.Initialize()
     self.failUnless(rxn.GetNumReactantTemplates() == 3)
@@ -526,7 +526,7 @@ M  END
 
   def test20CheckCopyConstructedReactionAtomProps(self):
     RLABEL = "_MolFileRLabel"
-    amine_rxn = '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
+    amine_rxn = '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'  # noqa
     rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
     res = []
     for atom in rxn.GetReactantTemplate(0).GetAtoms():
@@ -546,7 +546,7 @@ M  END
 
   def test21CheckRawIters(self):
     RLABEL = "_MolFileRLabel"
-    amine_rxn = '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'
+    amine_rxn = '$RXN\n\n      ISIS     090220091541\n\n  2  1\n$MOL\n\n  -ISIS-  09020915412D\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\n   -2.9083   -0.4708    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   -2.3995   -0.1771    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -2.4042    0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  2  3  2  0  0  0  0\nV    2 aldehyde\nM  RGP  1   1   1\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    2.8375   -0.2500    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n    3.3463    0.0438    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0  0  0  0\nV    2 amine\nM  RGP  1   1   2\nM  END\n$MOL\n\n  -ISIS-  09020915412D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n   13.3088    0.9436    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   13.8206    1.2321    0.0000 R#  0  0  0  0  0  0  0  0  0  1  0  0\n   13.3028    0.3561    0.0000 N   0  0  0  0  0  0  0  0  0  4  0  0\n   12.7911    0.0676    0.0000 R#  0  0  0  0  0  0  0  0  0  3  0  0\n  1  3  1  0  0  0  0\n  1  2  1  0  0  0  0\n  3  4  1  0  0  0  0\nM  RGP  2   2   1   4   2\nM  END\n'  # noqa
     rxn = rdChemReactions.ReactionFromRxnBlock(amine_rxn)
     reactants = rxn.GetReactants()
     self.assertEquals(len(reactants), rxn.GetNumReactantTemplates())
@@ -569,14 +569,15 @@ M  END
     # Novartis Institutes for BioMedical Research, Novartis Pharma AG, Forum 1,
     # Novartis Campus, CH-4056 Basel, Switzerland Swiss Federal Institute of Technology (ETH)
     #  Zurich, Switzerland
-    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"  # noqa
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     reagents = [Chem.MolFromSmiles(x) for x in  ['C=CCN=C=S', 'NCc1ncc(Cl)cc1Br']]
     res = rxn.RunReactants(reagents)
     self.assertTrue(res)
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("C=CCNC(N)=S"))]
     expected_result.sort()
-    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:1]=S.[*:3]CC=C"), isomericSmiles=True)]
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:1]=S.[*:3]CC=C"),
+                                                   isomericSmiles=True)]
     sidechains_nodummy_expected_result = [ [0, [3, ], [1, ]], [3, [1, ], [2, ]] ]
     sidechains_nodummy = []
 
@@ -612,7 +613,8 @@ M  END
 
     expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("NCNCc1ncc(Cl)cc1Br"))]
     expected_result.sort()
-    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:2]Cc1ncc(Cl)cc1Br"), isomericSmiles=True)]
+    sidechains_expected_result = [Chem.MolToSmiles(Chem.MolFromSmiles("[*:2]Cc1ncc(Cl)cc1Br"),
+                                                   isomericSmiles=True)]
     sidechains_expected_result.sort()
 
     res = rxn.RunReactant(reagents[1], 1)
@@ -649,7 +651,7 @@ M  END
     self.assertEquals(sidechains, sidechains_expected_result)
 
   def test23CheckNonProduct(self):
-    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"  # noqa
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     mol = Chem.MolFromSmiles("CCCCCCCC")
     m = rdChemReactions.ReduceProductToSideChains(mol)
@@ -659,11 +661,13 @@ M  END
     self.assertTrue(m.GetNumAtoms() == 0)
 
   def testPreprocess(self):
-        testFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'SimpleEnum', 'test_data', 'boronic1.rxn')
+        testFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'SimpleEnum', 'test_data',
+                                'boronic1.rxn')
         rxn = rdChemReactions.ReactionFromRxnFile(testFile)
         rxn.Initialize()
         res = rdChemReactions.PreprocessReaction(rxn)
-        self.assertEquals(res, (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))))
+        self.assertEquals(res,
+                          (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))))
 
 
 if __name__ == '__main__':

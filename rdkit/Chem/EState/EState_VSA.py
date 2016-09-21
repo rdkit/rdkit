@@ -74,7 +74,8 @@ def _InstallDescriptors():
   for i in range(len(vsaBins)):
     fn = lambda x, y = i:VSA_EState_(x, force=0)[y]
     if i > 0:
-      fn.__doc__ = "VSA EState Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, vsaBins[i - 1], vsaBins[i])
+      fn.__doc__ = "VSA EState Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1,
+                                                                        vsaBins[i - 1], vsaBins[i])
     else:
       fn.__doc__ = "VSA EState Descriptor %d (-inf < x < % 4.2f)" % (i + 1, vsaBins[i])
     name = "VSA_EState%d" % (i + 1)
@@ -91,7 +92,9 @@ def _InstallDescriptors():
   for i in range(len(estateBins)):
     fn = lambda x, y = i:EState_VSA_(x, force=0)[y]
     if i > 0:
-      fn.__doc__ = "EState VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, estateBins[i - 1], estateBins[i])
+      fn.__doc__ = "EState VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1,
+                                                                        estateBins[i - 1],
+                                                                        estateBins[i])
     else:
       fn.__doc__ = "EState VSA Descriptor %d (-inf < x < % 4.2f)" % (i + 1, estateBins[i])
     name = "EState_VSA%d" % (i + 1)

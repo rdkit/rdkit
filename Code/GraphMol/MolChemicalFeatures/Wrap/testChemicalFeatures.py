@@ -22,8 +22,9 @@ class TestCase(unittest.TestCase):
     pass
 
   def testBasic(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
-                                                             'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data', 'featDef.txt'))
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures',
+                   'test_data', 'featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     fNames = cfac.GetFeatureFamilies()
@@ -67,8 +68,9 @@ class TestCase(unittest.TestCase):
 
 
   def testIncludeOnly(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
-                                                             'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data', 'featDef.txt'))
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures',
+                   'test_data', 'featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     mol = Chem.MolFromSmiles("COCN")
@@ -78,8 +80,10 @@ class TestCase(unittest.TestCase):
     self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="HBondDonor") == 1)
     self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="Bogus") == 0)
 
-    self.failUnlessRaises(IndexError, lambda : cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
-    self.failUnlessRaises(IndexError, lambda : cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
+    self.failUnlessRaises(IndexError,
+                          lambda : cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
+    self.failUnlessRaises(IndexError,
+                          lambda : cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
     f = cfac.GetMolFeature(mol, 0, includeOnly="HBondDonor")
     self.failUnless(f.GetFamily() == 'HBondDonor')
 

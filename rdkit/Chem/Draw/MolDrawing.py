@@ -102,9 +102,12 @@ class MolDrawing(object):
 
   def transformPoint(self, pos):
     res = [0, 0]
-    res[0] = (pos[0] + self.molTrans[0]) * self.currDotsPerAngstrom * self.drawingOptions.useFraction + self.drawingTrans[0]
-    res[1] = self.canvasSize[1] - ((pos[1] + self.molTrans[1]) * self.currDotsPerAngstrom * self.drawingOptions.useFraction + \
-                                 self.drawingTrans[1])
+    res[0] = ((pos[0] + self.molTrans[0]) *
+              self.currDotsPerAngstrom * self.drawingOptions.useFraction +
+              self.drawingTrans[0])
+    res[1] = self.canvasSize[1] - ((pos[1] + self.molTrans[1]) *
+                                   self.currDotsPerAngstrom * self.drawingOptions.useFraction +
+                                   self.drawingTrans[1])
     return res
 
 
@@ -170,14 +173,17 @@ class MolDrawing(object):
             continue
           a3 = otherBond.GetOtherAtom(a1)
           if a3.GetIdx() != a2Idx:
-            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx()) * self.drawingOptions.coordScale)
+            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx()) *
+                                     self.drawingOptions.coordScale)
             dx2 = p3[0] - p1[0]
             dy2 = p3[1] - p1[1]
             dotP = dx2 * offsetX + dy2 * offsetY
             if dotP < 0:
               perp += math.pi
-              offsetX = math.cos(perp) * self.drawingOptions.dblBondOffset * self.currDotsPerAngstrom
-              offsetY = math.sin(perp) * self.drawingOptions.dblBondOffset * self.currDotsPerAngstrom
+              offsetX = (math.cos(perp) *
+                         self.drawingOptions.dblBondOffset * self.currDotsPerAngstrom)
+              offsetY = (math.sin(perp) *
+                         self.drawingOptions.dblBondOffset * self.currDotsPerAngstrom)
 
     fracP1, fracP2 = self._getOffsetBondPts(p1, p2,
                                            offsetX, offsetY,
@@ -187,19 +193,22 @@ class MolDrawing(object):
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
     if labelSize != None:
-      labelSizeOffset = [labelSize[0][0] / 2 + (cmp(p2[0], p1[0]) * labelSize[0][2]), labelSize[0][1] / 2]
+      labelSizeOffset = [labelSize[0][0] / 2 + (cmp(p2[0], p1[0]) * labelSize[0][2]),
+                         labelSize[0][1] / 2]
       if p1[1] == p2[1]:
         newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
       else:
         if abs(labelSizeOffset[1] * (p2[0] - p1[0]) / (p2[1] - p1[1])) < labelSizeOffset[0]:
-          newpos[0] = p1[0] + cmp(p2[0], p1[0]) * abs(labelSizeOffset[1] * (p2[0] - p1[0]) / (p2[1] - p1[1]))
+          newpos[0] = p1[0] + cmp(p2[0], p1[0]) * abs(labelSizeOffset[1] *
+                                                      (p2[0] - p1[0]) / (p2[1] - p1[1]))
         else:
           newpos[0] = p1[0] + cmp(p2[0], p1[0]) * labelSizeOffset[0]
       if p1[0] == p2[0]:
         newpos[1] = p1[1] + cmp(p2[1], p1[1]) * labelSizeOffset[1]
       else:
         if abs(labelSizeOffset[0] * (p1[1] - p2[1]) / (p2[0] - p1[0])) < labelSizeOffset[1]:
-          newpos[1] = p1[1] + cmp(p2[1], p1[1]) * abs(labelSizeOffset[0] * (p1[1] - p2[1]) / (p2[0] - p1[0]))
+          newpos[1] = p1[1] + cmp(p2[1], p1[1]) * abs(labelSizeOffset[0] *
+                                                      (p1[1] - p2[1]) / (p2[0] - p1[0]))
         else:
           newpos[1] = p1[1] + cmp(p2[1], p1[1]) * labelSizeOffset[1]
     else:
@@ -262,10 +271,10 @@ class MolDrawing(object):
       else:
         self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
     elif bType == Chem.BondType.DOUBLE:
-      crossBond = (self.drawingOptions.showUnknownDoubleBonds and \
-                     bond.GetStereo() == Chem.BondStereo.STEREOANY)
-      if not crossBond and \
-            (bond.IsInRing() or (atom.GetDegree() != 1 and bond.GetOtherAtom(atom).GetDegree() != 1)):
+      crossBond = (self.drawingOptions.showUnknownDoubleBonds and
+                   bond.GetStereo() == Chem.BondStereo.STEREOANY)
+      if (not crossBond and (bond.IsInRing() or
+                             (atom.GetDegree() != 1 and bond.GetOtherAtom(atom).GetDegree() != 1))):
         self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
         fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
         self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2)
@@ -420,7 +429,8 @@ class MolDrawing(object):
         if nbrIdx > idx:
           nbrPos = self.atomPs[mol].get(nbrIdx, None)
           if nbrPos is None:
-            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx) * self.drawingOptions.coordScale)
+            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx) *
+                                         self.drawingOptions.coordScale)
             self.atomPs[mol][nbrIdx] = nbrPos
             self.boundingBoxes[mol][0] = min(self.boundingBoxes[mol][0], nbrPos[0])
             self.boundingBoxes[mol][1] = min(self.boundingBoxes[mol][1], nbrPos[1])
@@ -508,10 +518,13 @@ class MolDrawing(object):
             symbolLength += mapNumLength
           deg = atom.GetDegree()
           # This should be done in a better way in the future:
-          # 'baseOffset' should be determined by getting the size of 'isotope' and the size of 'base', or the size of 'mapNum' and the size of 'base'
-          # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact position of the base
+          # 'baseOffset' should be determined by getting the size of 'isotope'
+          # and the size of 'base', or the size of 'mapNum' and the size of 'base'
+          # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact
+          # position of the base
           if deg == 0:
-            if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O', 'S', 'Se', 'Te', 'F', 'Cl', 'Br', 'I', 'At'):
+            if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O', 'S', 'Se', 'Te', 'F',
+                                                                       'Cl', 'Br', 'I', 'At'):
               symbol = '%s%s%s%s%s%s' % (hs, isotope, base, chg, rad, mapNum)
             else:
               symbol = '%s%s%s%s%s%s' % (isotope, base, hs, chg, rad, mapNum)
@@ -573,7 +586,8 @@ class MolDrawing(object):
               color = self.drawingOptions.defaultColor
               color2 = color
           self._drawBond(bond, atom, nbr, pos, nbrPos, conf,
-                           color=color, width=width, color2=color2, labelSize1=labelSizes[idx], labelSize2=labelSizes[nbrIdx])
+                         color=color, width=width, color2=color2,
+                         labelSize1=labelSizes[idx], labelSize2=labelSizes[nbrIdx])
 
     # if we modified the bond wedging state, undo those changes now
     if obds:

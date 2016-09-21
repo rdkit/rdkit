@@ -272,37 +272,56 @@ def GetCommandLine(details):
   """
   args = ['BuildComposite']
   args.append('-n %d' % (details.nModels))
-  if details.filterFrac != 0.0: args.append('-F %.3f -v %d' % (details.filterFrac, details.filterVal))
-  if details.modelFilterFrac != 0.0: args.append('--modelFiltFrac=%.3f --modelFiltVal=%d' % (details.modelFilterFrac,
-                                                                  details.modelFilterVal))
-  if details.splitRun: args.append('-s -f %.3f' % (details.splitFrac))
-  if details.shuffleActivities: args.append('-S')
-  if details.randomActivities: args.append('-r')
-  if details.threshold > 0.0: args.append('-t %.3f' % (details.threshold))
-  if details.activityBounds: args.append('-Q "%s"' % (details.activityBoundsVals))
-  if details.dbName: args.append('-d %s' % (details.dbName))
-  if details.detailedRes: args.append('-D')
-  if hasattr(details, 'noScreen') and details.noScreen: args.append('--noScreen')
+  if details.filterFrac != 0.0:
+    args.append('-F %.3f -v %d' % (details.filterFrac, details.filterVal))
+  if details.modelFilterFrac != 0.0:
+    args.append('--modelFiltFrac=%.3f --modelFiltVal=%d' % (details.modelFilterFrac,
+                                                            details.modelFilterVal))
+  if details.splitRun:
+    args.append('-s -f %.3f' % (details.splitFrac))
+  if details.shuffleActivities:
+    args.append('-S')
+  if details.randomActivities:
+    args.append('-r')
+  if details.threshold > 0.0:
+    args.append('-t %.3f' % (details.threshold))
+  if details.activityBounds:
+    args.append('-Q "%s"' % (details.activityBoundsVals))
+  if details.dbName:
+    args.append('-d %s' % (details.dbName))
+  if details.detailedRes:
+    args.append('-D')
+  if hasattr(details, 'noScreen') and details.noScreen:
+    args.append('--noScreen')
   if details.persistTblName and details.dbName:
     args.append('-p %s' % (details.persistTblName))
   if details.note:
     args.append('-N %s' % (details.note))
   if details.useTrees:
-    if details.limitDepth > 0: args.append('-L %d' % (details.limitDepth))
-    if details.lessGreedy: args.append('-g')
+    if details.limitDepth > 0:
+      args.append('-L %d' % (details.limitDepth))
+    if details.lessGreedy:
+      args.append('-g')
     if details.qBounds:
       shortBounds = listutils.CompactListRepr(details.qBounds)
-      if details.qBounds: args.append('-q "%s"' % (shortBounds))
+      if details.qBounds:
+        args.append('-q "%s"' % (shortBounds))
     else:
-      if details.qBounds: args.append('-q "%s"' % (details.qBoundCount))
+      if details.qBounds:
+        args.append('-q "%s"' % (details.qBoundCount))
 
-    if details.pruneIt: args.append('--prune')
-    if details.startAt: args.append('-G %d' % details.startAt)
-    if details.recycleVars: args.append('--recycle')
-    if details.randomDescriptors: args.append('--randomDescriptors=%d' % details.randomDescriptors)
+    if details.pruneIt:
+      args.append('--prune')
+    if details.startAt:
+      args.append('-G %d' % details.startAt)
+    if details.recycleVars:
+      args.append('--recycle')
+    if details.randomDescriptors:
+      args.append('--randomDescriptors=%d' % details.randomDescriptors)
   if details.useSigTrees:
     args.append('--doSigTree')
-    if details.limitDepth > 0: args.append('-L %d' % (details.limitDepth))
+    if details.limitDepth > 0:
+      args.append('-L %d' % (details.limitDepth))
     if details.randomDescriptors:
       args.append('--randomDescriptors=%d' % details.randomDescriptors)
 
@@ -627,7 +646,8 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   devs = devs * counts
   devs = numpy.sqrt(devs * devs)
   avgDev = sum(devs) / sum(counts)
-  message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f' % (100.*averageErr, 100.*avgDev))
+  message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f' % (
+    100.0 * averageErr, 100.0 * avgDev))
 
   if details.bayesModel:
     composite.Train(trainExamples, verbose=0)
@@ -643,14 +663,14 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     if details.splitRun:
       message('Testing all hold-out examples')
       wrong = testall(composite, testExamples, badExamples)
-      message('%d examples (%% %5.2f) were misclassified' % (len(wrong),
-							   100.*float(len(wrong)) / float(len(testExamples))))
+      message('%d examples (%% %5.2f) were misclassified' % (
+        len(wrong), 100.0 * float(len(wrong)) / float(len(testExamples))))
       _runDetails.holdout_error = float(len(wrong)) / len(testExamples)
     else:
       message('Testing all examples')
       wrong = testall(composite, namedExamples, badExamples)
-      message('%d examples (%% %5.2f) were misclassified' % (len(wrong),
-							   100.*float(len(wrong)) / float(len(namedExamples))))
+      message('%d examples (%% %5.2f) were misclassified' % (
+        len(wrong), 100.0 * float(len(wrong)) / float(len(namedExamples))))
       _runDetails.overall_error = float(len(wrong)) / len(namedExamples)
 
   if details.detailedRes:
@@ -828,7 +848,8 @@ def ParseArgs(runDetails):
       runDetails.outName = val
     elif arg == '-Q':
       qBounds = eval(val)
-      assert type(qBounds) in [type([]), type(())], 'bad argument type for -Q, specify a list as a string'
+      assert type(qBounds) in [type([]), type(())], ('bad argument type for -Q, ' +
+                                                     'specify a list as a string')
       runDetails.activityBounds = qBounds
       runDetails.activityBoundsVals = val
     elif arg == '-p':
@@ -869,7 +890,8 @@ def ParseArgs(runDetails):
       runDetails.limitDepth = int(val)
     elif arg == '-q':
       qBounds = eval(val)
-      assert type(qBounds) in [type([]), type(())], 'bad argument type for -q, specify a list as a string'
+      assert type(qBounds) in [type([]), type(())], ('bad argument type for -q, ' +
+                                                     'specify a list as a string')
       runDetails.qBoundCount = val
       runDetails.qBounds = qBounds
     elif arg == '-V':
@@ -940,7 +962,8 @@ def ParseArgs(runDetails):
 # #         runDetails.svmKernel=SVM.kernels[val]
 # #     elif arg == '--svmType':
 # #       if val not in SVM.machineTypes.keys():
-# #         message('type %s not in list of available machines:\n%s\n'%(val,SVM.machineTypes.keys()))
+# #         fmt = 'type %s not in list of available machines:\n%s\n'
+# #         message(fmt%(val,SVM.machineTypes.keys()))
 # #         sys.exit(-1)
 # #       else:
 # #         runDetails.svmType=SVM.machineTypes[val]
@@ -996,7 +1019,8 @@ if __name__ == '__main__':
 
   if _runDetails.nRuns > 1:
     for i in range(_runDetails.nRuns):
-      sys.stderr.write('---------------------------------\n\tDoing %d of %d\n---------------------------------\n' % (i + 1, _runDetails.nRuns))
+      sys.stderr.write(('---------------------------------\n\tDoing %d of %d' +
+                        '\n---------------------------------\n') % (i + 1, _runDetails.nRuns))
       RunIt(_runDetails)
   else:
     if _runDetails.profileIt:

@@ -47,12 +47,14 @@ class TestCase(unittest.TestCase):
       ffeat.SetType("HBondDonor1")
       self.assertTrue(ffeat.GetType() == "HBondDonor1")
 
-      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0))
+      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                   geom.Point3D(1.0, 2.0, 3.0))
       self.assertTrue(ffeat.GetId() == -1)
       self.assertTrue(ffeat.GetFamily() == "HBondDonor")
       self.assertTrue(ffeat.GetType() == "HBondDonor1")
 
-      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0), id=123)
+      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                   geom.Point3D(1.0, 2.0, 3.0), id=123)
       self.assertTrue(ffeat.GetId() == 123)
       self.assertTrue(ffeat.GetFamily() == "HBondDonor")
       self.assertTrue(ffeat.GetType() == "HBondDonor1")
@@ -60,7 +62,9 @@ class TestCase(unittest.TestCase):
       pos = ffeat.GetPos()
       self.assertTrue(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
 
-      ffeat = ChemicalFeatures.FreeChemicalFeature(id=123, type="HBondDonor1", family="HBondDonor", loc=geom.Point3D(1.0, 2.0, 3.0))
+      ffeat = ChemicalFeatures.FreeChemicalFeature(id=123, type="HBondDonor1",
+                                                   family="HBondDonor",
+                                                   loc=geom.Point3D(1.0, 2.0, 3.0))
       self.assertTrue(ffeat.GetId() == 123)
       self.assertTrue(ffeat.GetFamily() == "HBondDonor")
       self.assertTrue(ffeat.GetType() == "HBondDonor1")
@@ -68,7 +72,8 @@ class TestCase(unittest.TestCase):
       self.assertTrue(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
 
     def testPickle(self):
-      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0), 123)
+      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                   geom.Point3D(1.0, 2.0, 3.0), 123)
       pkl = cPickle.dumps(ffeat)
       ffeat2 = cPickle.loads(pkl, encoding='bytes')
       self.assertTrue(ffeat2.GetId() == ffeat.GetId());
@@ -92,7 +97,8 @@ class TestCase(unittest.TestCase):
 
       # uncomment the following to generate (overrwrite) new version of pickled
       # data file
-      # cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
+      # cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir,
+      #              'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
       inTF = open(os.path.join(RDConfig.RDBaseDir,
                               'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'), 'r')
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')

@@ -93,7 +93,7 @@ def _cgoArrowhead(viewer, tail, head, radius, color, label, headFrac=0.3, nSteps
 
   cgo = [BEGIN, TRIANGLE_FAN,
          COLOR, color[0], color[1], color[2],
-          NORMAL, dv.x, dv.y, dv.z,
+         NORMAL, dv.x, dv.y, dv.z,
          VERTEX, head.x + dv.x, head.y + dv.y, head.z + dv.z]
   base = [BEGIN, TRIANGLE_FAN,
           COLOR, color[0], color[1], color[2],
@@ -119,6 +119,7 @@ def _cgoArrowhead(viewer, tail, head, radius, color, label, headFrac=0.3, nSteps
 
   # viewer.server.renderCGO(cgo,label)
   _globalArrowCGO.extend(cgo)
+
 
 def ShowArrow(viewer, tail, head, radius, color, label, transparency=0, includeArrowhead=True):
   global _globalArrowCGO
@@ -181,7 +182,8 @@ def ShowMolFeats(mol, factory, viewer, radius=0.5, confId=-1, showOnly=True,
       print('%s\t%.3f\t%.3f\t%.3f\t1.0\t# %s' % (family, pos.x, pos.y, pos.z, aidText))
 
     if featMapFile:
-      print("  family=%s pos=(%.3f,%.3f,%.3f) weight=1.0" % (family, pos.x, pos.y, pos.z), end='', file=featMapFile)
+      print("  family=%s pos=(%.3f,%.3f,%.3f) weight=1.0" % (family, pos.x, pos.y, pos.z),
+            end='', file=featMapFile)
 
     if useFeatDirs:
       ps = []
@@ -269,7 +271,8 @@ if __name__ == '__main__':
   try:
     v = MolViewer()
   except Exception:
-    logger.error('Unable to connect to PyMol server.\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.')
+    logger.error('Unable to connect to PyMol server.' +
+                 '\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.')
     sys.exit(1)
   if options.clearAll:
     v.DeleteAll()

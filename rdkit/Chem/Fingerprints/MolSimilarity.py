@@ -82,8 +82,9 @@ def ScreenInDb(details, mol):
         conn.password = details.dbPassword
     except Exception:
       import traceback
-      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n' % (details.dbName,
-                                                                     details.tableName))
+      FingerprintMols.error(
+        'Error: Problems establishing connection to database: %s|%s\n' % (details.dbName,
+                                                                          details.tableName))
       traceback.print_exc()
 
   if details.metric not in (DataStructs.TanimotoSimilarity,
@@ -132,8 +133,9 @@ def GetFingerprints(details):
         conn.password = details.dbPassword
     except Exception:
       import traceback
-      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n' % (details.dbName,
-                                                                     details.tableName))
+      FingerprintMols.error(
+        'Error: Problems establishing connection to database: %s|%s\n' % (details.dbName,
+                                                                          details.tableName))
       traceback.print_exc()
     cmd = _ConstructSQL(details, extraFields=details.fpColName)
     curs = conn.GetCursor()
@@ -238,7 +240,8 @@ def ScreenFromDetails(details, mol=None):
     try:
       outF = open(details.outFileName, 'w+')
     except IOError:
-      FingerprintMols.error("Error: could not open output file %s for writing\n" % (details.outFileName))
+      fmt = "Error: could not open output file %s for writing\n"
+      FingerprintMols.error(fmt % (details.outFileName))
       return None
   else:
     outF = None

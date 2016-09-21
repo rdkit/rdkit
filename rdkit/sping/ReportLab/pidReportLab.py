@@ -113,22 +113,23 @@ class RLCanvas(Canvas):
     else:
       w = self.defaultLineWidth
 
-    self.drawing.add(shapes.Line(x1, self.fixY(y1), x2, self.fixY(y2), strokeColor=color, strokeWidth=w,
-                                 strokeDashArray=dash))
+    self.drawing.add(shapes.Line(x1, self.fixY(y1), x2, self.fixY(y2), strokeColor=color,
+                                 strokeWidth=w, strokeDashArray=dash))
     return
 
   def drawCurve(self, x1, y1, x2, y2, x3, y3, x4, y4, closed=0, **kwargs):
     "Draw a Bezier curve with control points x1,y1 to x4,y4."
     pts = self.curvePoints(x1, y1, x2, y2, x3, y3, x4, y4)
     if not closed:
-      pointlist = [ (pts[x][0], pts[x][1], pts[x + 1][0], pts[x + 1][1]) for x in range(len(pts) - 1)]
+      pointlist = [(pts[x][0], pts[x][1], pts[x + 1][0], pts[x + 1][1])
+                   for x in range(len(pts) - 1)]
       self.drawLines(pointlist, **kwargs)
     else:
       self.drawPolygon(pointlist, closed=1, **kwargs)
 
   def drawArc(self, x1, y1, x2, y2, startAng=0, extent=360,
-                  edgeColor=None, edgeWidth=None, fillColor=None,
-                  dash=None, **kwargs):
+              edgeColor=None, edgeWidth=None, fillColor=None,
+              dash=None, **kwargs):
     """Draw a partial ellipse inscribed within the rectangle x1,y1,x2,y2,
     starting at startAng degrees and covering extent degrees.   Angles
     start with 0 to the right (+x) and increase counter-clockwise.
@@ -271,7 +272,8 @@ def dashtest():
 
   canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4, dash=(3, 3))
 
-  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4, dash=(3, 3))
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4,
+                 dash=(3, 3))
 
   canvas.defaultLineWidth = 4
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon, dash=(3, 3))

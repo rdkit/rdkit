@@ -190,7 +190,8 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1,
     for vol in excludedVolumes:
       vol.pos = numpy.array(coords[vol.index])
 
-  # print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1]), file=sys.stderr)
+  # print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1]),
+  #       file=sys.stderr)
   mol.AddConformer(conf)
 
 def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
@@ -261,7 +262,7 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False,
   for each of the pharmacophore's features.
 
     >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
+    ...          ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
     ...   ]
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 1.0)
@@ -547,12 +548,17 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None,
         d = numpy.sqrt(numpy.dot(v, v))
         if i not in indices:
           if d < 5.0:
-            logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%d,%.0f)' % (i, idx, exVol.exclusionDist, 1000, forceConstant))
+            logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%d,%.0f)' % (i, idx,
+                                                                           exVol.exclusionDist,
+                                                                           1000, forceConstant))
             ff.AddDistanceConstraint(i, idx, exVol.exclusionDist, 1000,
                                      forceConstant)
 
         else:
-          logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%.3f,%.0f)' % (i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant))
+          logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%.3f,%.0f)' % (i, idx,
+                                                                           bm[exVol.index, i],
+                                                                           bm[i, exVol.index],
+                                                                           forceConstant))
           ff.AddDistanceConstraint(i, idx, bm[exVol.index, i], bm[i, exVol.index],
                                    forceConstant)
       idx += 1
@@ -565,7 +571,8 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None,
     print(Chem.MolToMolBlock(mol))
     for i, vol in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
-      print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos), file=sys.stderr)
+      print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
+            file=sys.stderr)
   needsMore = ff.Minimize()
   nPasses = 0
   while needsMore and nPasses < maxPasses:
@@ -580,7 +587,8 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None,
     print(Chem.MolToMolBlock(mol))
     for i, vol in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
-      print('   % 7.4f   % 7.4f   % 7.4f Sb  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos), file=sys.stderr)
+      print('   % 7.4f   % 7.4f   % 7.4f Sb  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
+            file=sys.stderr)
   ff = None
   return e1, e2
 
@@ -680,8 +688,10 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
 
     >>> import os.path
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,
+    ...  'BaseFeatures.fdef'))
+    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor',
+    ...  Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> m = Chem.MolFromSmiles('FCCN')
@@ -715,8 +725,10 @@ def _getFeatDict(mol, featFactory, features):
 
     >>> import os.path
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,
+    ...  'BaseFeatures.fdef'))
+    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor',
+    ...  Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> d =_getFeatDict(m,featFactory,activeFeats)
@@ -754,8 +766,10 @@ def MatchFeatsToMol(mol, featFactory, features):
 
     >>> import os.path
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,
+    ...  'BaseFeatures.fdef'))
+    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor',
+    ...  Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> match,mList = MatchFeatsToMol(m,featFactory,activeFeats)
@@ -964,7 +978,8 @@ def Check2DBounds(atomMatch, mol, pcophore):
   a molecule satisfies a pharmacophore's 2D restrictions
 
 
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor',
+    ...  Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> pcophore.setUpperBound2D(0,1,3)

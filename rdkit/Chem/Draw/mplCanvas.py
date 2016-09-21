@@ -103,4 +103,5 @@ class Canvas(CanvasBase):
         canvas.add_line(Line2D((pts1[i][0], mp[0]), (pts1[i][1], mp[1]), color=color, **kwargs))
         canvas.add_line(Line2D((mp[0], pts2[i][0]), (mp[1], pts2[i][1]), color=color2, **kwargs))
       else:
-        canvas.add_line(Line2D((pts1[i][0], pts2[i][0]), (pts1[i][1], pts2[i][1]), color=color, **kwargs))
+        canvas.add_line(Line2D((pts1[i][0], pts2[i][0]),
+                               (pts1[i][1], pts2[i][1]), color=color, **kwargs))

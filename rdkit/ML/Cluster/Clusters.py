@@ -198,7 +198,8 @@ class Cluster(object):
     if not showData or self.GetData() is None:
       print('%s%s%s Metric: %f' % ('  ' * level, self.GetName(), offset, self.GetMetric()))
     else:
-      print('%s%s%s Data: %f\t Metric: %f' % ('  ' * level, self.GetName(), offset, self.GetData(), self.GetMetric()))
+      print('%s%s%s Data: %f\t Metric: %f' % ('  ' * level, self.GetName(), offset,
+                                              self.GetData(), self.GetMetric()))
 
     for child in self.GetChildren():
       child.Print(level=level + 1, showData=showData, offset=offset)

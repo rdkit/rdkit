@@ -46,7 +46,8 @@ def FormCounts(bitVects, actVals, whichBit, nPossibleActs, nPossibleBitVals=2):
     This is really intended for internal use.
 
   """
-  if len(bitVects) != len(actVals): raise ValueError('var and activity lists should be the same length')
+  if len(bitVects) != len(actVals):
+    raise ValueError('var and activity lists should be the same length')
   res = numpy.zeros((nPossibleBitVals, nPossibleActs), numpy.integer)
   for i in range(len(bitVects)):
     res[bitVects[i][whichBit], actVals[i]] += 1
@@ -71,7 +72,8 @@ def CalcInfoGains(bitVects, actVals, nPossibleActs, nPossibleBitVals=2):
      a list of floats
 
   """
-  if len(bitVects) != len(actVals): raise ValueError('var and activity lists should be the same length')
+  if len(bitVects) != len(actVals):
+    raise ValueError('var and activity lists should be the same length')
   nBits = len(bitVects[0])
   res = numpy.zeros(nBits, Float)
 

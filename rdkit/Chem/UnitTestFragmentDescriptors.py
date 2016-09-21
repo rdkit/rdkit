@@ -123,7 +123,9 @@ class TestCase(unittest.TestCase):
     self._runTest(data, Fragments.fr_para_hydroxylation)
 
   def test11(self):
-    data = [('C1C(C=C2[C@](C1)([C@]3([C@@](CC2)([C@]4([C@](CC3)([C@@H](CC4)O)C)[H])[H])[H])C)=O', 1),  # testosterone 6beta hydroxylation includedbut not dienone
+    data = [  # testosterone 6beta hydroxylation includedbut not dienone
+            ('C1C(C=C2[C@](C1)([C@]3([C@@](CC2)([C@]4([C@](CC3)([C@@H](CC4)O)C)[H])[H])[H])C)=O',
+             1),
             ('CCC=CCCC', 2),
             ('C=CC', 1),
             ('C=CCO', 0)
@@ -155,7 +157,8 @@ class TestCase(unittest.TestCase):
             ('N12CCC(CC2)CC1', 0),  # bridged N
             ('N1(CCC)CCCCC1', 1),
             ('CCC1(CCCCN(C)C1)C2=CC=CC(O)=C2', 1),  # meptazinol
-            ('C1(=C2C3=C(C=C1)C[C@@H]4[C@]5([C@@]3([C@H]([C@H](CC5)O)O2)CCN4CC6CCC6)O)O', 1),  # nalbuphine
+            # nalbuphine
+            ('C1(=C2C3=C(C=C1)C[C@@H]4[C@]5([C@@]3([C@H]([C@H](CC5)O)O2)CCN4CC6CCC6)O)O', 1),
             ('CC1N=C2CCCCN2C(=O)C=1CCN3CCC(CC3)C4=NOC5C=C(F)C=CC4=5', 1),  # risperidone
             ('N1CCOCC1', 0),  # morpholino group
             ('n1ccccc1', 0)
@@ -164,14 +167,17 @@ class TestCase(unittest.TestCase):
 
   def test15(self):
     data = [('C(COC(NC(C)C)=O)(COC(N)=O)(CCC)C', 1),  # carisoprodol
-            ('CN(CC3=CSC(C(C)C)=N3)C(N[C@@H]([C@H](C)C)C(N[C@@H](CC4=CC=CC=C4)C[C@H](O)[C@H](CC2=CC=CC=C2)NC(OCC1=CN=CS1)=O)=O)=O', 1),  # ritonavir
+            ('CN(CC3=CSC(C(C)C)=N3)C(N[C@@H]([C@H](C)C)C(N[C@@H](CC4=CC=CC=C4)' +
+             'C[C@H](O)[C@H](CC2=CC=CC=C2)NC(OCC1=CN=CS1)=O)=O)=O', 1),  # ritonavir
             ('c1(C)ccccc1CCN', 0)
             ]
     self._runTest(data, Fragments.fr_alkyl_carbamate)
 
   def test16(self):
     data = [('C1(CCC(O1)=O)(C)CC/C=C\CC', 1),
-            ('CN(CC3=CSC(C(C)C)=N3)C(N[C@@H]([C@H](C)C)C(N[C@@H](CC4=CC=CC=C4)C[C@H](O)[C@H](CC2=CC=CC=C2)NC(OCC1=CN=CS1)=O)=O)=O', 0),  # ritonavir
+            # ritonavir
+            ('CN(CC3=CSC(C(C)C)=N3)C(N[C@@H]([C@H](C)C)C(N[C@@H](CC4=CC=CC=C4)' +
+             'C[C@H](O)[C@H](CC2=CC=CC=C2)NC(OCC1=CN=CS1)=O)=O)=O', 0),
             ('c1(C)ccccc1CCN', 0)
             ]
     self._runTest(data, Fragments.fr_lactone)
@@ -185,7 +191,8 @@ class TestCase(unittest.TestCase):
     self._runTest(data, Fragments.fr_ketone_Topliss)
 
   def test18(self):
-    data = [('C1=CC(=CC=C1C(N[C@@H](CCC(O)=O)C(O)=O)=O)N(CC2=NC3C(=NC(=NC=3N=C2)N)N)C', 2),  # methotrexate
+    data = [  # methotrexate
+            ('C1=CC(=CC=C1C(N[C@@H](CCC(O)=O)C(O)=O)=O)N(CC2=NC3C(=NC(=NC=3N=C2)N)N)C', 2),
             ('S(NC1=NC=CC=N1)(=O)(=O)C2=CC=C(C=C2)N', 1),  # sulfadiazine
             ('S(NC1=NC=CC=N1)(=O)(=O)C2=CC=C(C=C2)', 0),
             ('c1ccccc1-C(=O)-CCO', 0),
@@ -213,7 +220,8 @@ class TestCase(unittest.TestCase):
 
   def test21(self):
     data = [('C/C(C(C)=O)=N\O', 1),
-            ('C(=N/OC(C(=O)O)(C)C)(/C1=CS[N+](=N1)C)C(N[C@@H]2C(N([C@@H]2C)S(O)(=O)=O)=O)=O', 1),  # aztreonam
+            # aztreonam
+            ('C(=N/OC(C(=O)O)(C)C)(/C1=CS[N+](=N1)C)C(N[C@@H]2C(N([C@@H]2C)S(O)(=O)=O)=O)=O', 1),
             ('c1ccccc1OCC', 0),
 	    ]
     self._runTest(data, Fragments.fr_oxime)

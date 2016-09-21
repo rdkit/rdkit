@@ -150,7 +150,8 @@ class MolViewer(object):
                                 name='neighborhood', showSurface=False):
     """ selects the area of a protein around a specified object/selection name;
     optionally adds a surface to that """
-    self.server.do('select %(name)s,byres (%(aroundObj)s around %(distance)f) and %(inObj)s' % locals())
+    fmt = 'select %(name)s,byres (%(aroundObj)s around %(distance)f) and %(inObj)s'
+    self.server.do(fmt % locals())
 
 
     if showSurface:

@@ -59,8 +59,10 @@ def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey',
   c.execute(cmd)
   return c.fetchall()
 
+
 def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', password='masterkey',
-            removeDups=-1, join='', forceList=0, transform=None, randomAccess=1, extras=None, cn=None):
+            removeDups=-1, join='', forceList=0, transform=None, randomAccess=1,
+            extras=None, cn=None):
   """ a more flexible method to get a set of data from a table
 
     **Arguments**

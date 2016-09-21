@@ -197,7 +197,8 @@ class _HtmlPiddleWriter:
         self.send_line_break()
         self.y = self.y + self.oldLineHeight
         border = self.fsizex
-        self.pc.drawLine(border, self.y, self.rmargin - border, self.y, piddle.Color(0.0, 0.0, 200 / 255.0))
+        self.pc.drawLine(border, self.y, self.rmargin - border, self.y,
+                         piddle.Color(0.0, 0.0, 200 / 255.0))
         self.y = self.y + self.oldLineHeight
 
     def send_literal_data(self, data):
@@ -252,7 +253,8 @@ class _HtmlPiddleWriter:
     def OutputLine(self, text, linebreak=0):
         if text:
             if TRACE: print('olt:', text)
-            if TRACE: print('olf:', self.font.size, self.font.bold, self.font.italic, self.font.underline, self.font.face)
+            if TRACE: print('olf:', self.font.size, self.font.bold, self.font.italic,
+                            self.font.underline, self.font.face)
             self.pc.drawString(text, self.x, self.y, self.font, self.color)
             # if self.anchor:
             #    o.anchor = self.anchor

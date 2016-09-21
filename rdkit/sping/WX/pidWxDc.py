@@ -248,9 +248,11 @@ class PiddleWxDc(sping_pid.Canvas):
         linelist = []
         if len(pointlist) > 1:
             for i in range(1, len(pointlist)):
-                linelist.append((pointlist[i - 1][0], pointlist[i - 1][1], pointlist[i][0], pointlist[i][1]))
+                linelist.append((pointlist[i - 1][0], pointlist[i - 1][1],
+                                 pointlist[i][0], pointlist[i][1]))
             else:
-                linelist.append((pointlist[0][0], pointlist[0][1], pointlist[0][0], pointlist[0][1]))
+                linelist.append((pointlist[0][0], pointlist[0][1],
+                                 pointlist[0][0], pointlist[0][1]))
         self.drawLines(linelist, edgeColor, edgeWidth)
 
     # no colors apply to drawImage; the image is drawn as-is

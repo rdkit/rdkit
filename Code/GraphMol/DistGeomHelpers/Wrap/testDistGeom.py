@@ -188,7 +188,8 @@ class TestCase(unittest.TestCase) :
         for i, ci in enumerate(cs):
             for j in range(i + 1, len(cs)):
                 cj = cs[j]
-                self.assertTrue(Chem.MolToMolBlock(m, confId=ci) != Chem.MolToMolBlock(m, confId=cj))
+                self.assertTrue(Chem.MolToMolBlock(m, confId=ci) !=
+                                Chem.MolToMolBlock(m, confId=cj))
 
     def test6RmsPruning(self):
         smiles = ['CC(C)CC(NC(C1[N+]CCC1)=O)C([O-])=O',
@@ -383,7 +384,8 @@ class TestCase(unittest.TestCase) :
             energies.append(ee)
 
         mol2 = Chem.AddHs(Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC"))
-        cids2 = rdDistGeom.EmbedMultipleConfs(mol2, 200, maxAttempts=30, randomSeed=100, numThreads=4)
+        cids2 = rdDistGeom.EmbedMultipleConfs(mol2, 200, maxAttempts=30, randomSeed=100,
+                                              numThreads=4)
         self.assertTrue(lstEq(cids, cids2))
         nenergies = []
         for cid in cids2:

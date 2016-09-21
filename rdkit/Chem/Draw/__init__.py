@@ -79,7 +79,8 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True,
             HTML color codes into the RGB tuple representation, eg.
 
               from matplotlib.colors import ColorConverter
-              img = Draw.MolToImage(m, highlightAtoms=[1,2], highlightColor=ColorConverter().to_rgb('aqua'))
+              img = Draw.MolToImage(m, highlightAtoms=[1,2],
+                                    highlightColor=ColorConverter().to_rgb('aqua'))
               img.save("molecule.png")
 
       RETURNS:
@@ -365,7 +366,8 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
         txt = d2d.GetDrawingText()
         h, r, b = matcher.match(txt).groups()
         if not hdr:
-            hdr = h.replace("width='%dpx' height='%dpx' >" % subImgSize, "width='%dpx' height='%dpx' >" % fullSize)
+            hdr = h.replace("width='%dpx' height='%dpx' >" % subImgSize,
+                            "width='%dpx' height='%dpx' >" % fullSize)
         if not rect:
             rect = r
         blocks[i] = b
@@ -373,7 +375,8 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
     row = i // molsPerRow
     col = i % molsPerRow
     elem = rect + elem
-    blocks[i] = '<g transform="translate(%d,%d)" >%s</g>' % (col * subImgSize[0], row * subImgSize[1], elem)
+    blocks[i] = '<g transform="translate(%d,%d)" >%s</g>' % (col * subImgSize[0],
+                                                             row * subImgSize[1], elem)
   res = hdr + '\n'.join(blocks) + ftr
   if stripSVGNamespace:
     res = res.replace('svg:', '')

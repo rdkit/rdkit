@@ -81,7 +81,8 @@ def delete_bonds(mol, bonds, ftype, hac):
     modifiedMol = em.GetMol()
 
     # do not do a full sanitization, but do find rings and calculate valences:
-    Chem.SanitizeMol(modifiedMol, Chem.SanitizeFlags.SANITIZE_PROPERTIES | Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
+    Chem.SanitizeMol(modifiedMol,
+                     Chem.SanitizeFlags.SANITIZE_PROPERTIES | Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
 
     fragmented_smi = Chem.MolToSmiles(modifiedMol, True)
 
@@ -373,7 +374,9 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
                 # pMol.GetAtomWithIdx(key).SetAtomicNum(6)
 
         try:
-            Chem.SanitizeMol(pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^ Chem.SANITIZE_SETAROMATICITY)
+            Chem.SanitizeMol(pMol,
+                             sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^
+                                          Chem.SANITIZE_SETAROMATICITY))
         except Exception:
             sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
             pMol = Chem.Mol(mol.ToBinary())
@@ -447,7 +450,8 @@ def GetFraggleSimilarity(queryMol, refMol, tverskyThresh=0.8):
     result = 0.0
     bestMatch = None
     for frag in frags:
-        rdksim, fragsim = compute_fraggle_similarity_for_subs(refMol, queryMol, qSmi, frag, tverskyThresh)
+        rdksim, fragsim = compute_fraggle_similarity_for_subs(refMol, queryMol, qSmi,
+                                                              frag, tverskyThresh)
         if fragsim > result:
             result = fragsim
             bestMatch = frag
@@ -461,7 +465,8 @@ def GetFraggleSimilarity(queryMol, refMol, tverskyThresh=0.8):
 #
 def _test():
   import doctest, sys
-  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
+  return doctest.testmod(sys.modules["__main__"],
+                         optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
 
 
 if __name__ == '__main__':

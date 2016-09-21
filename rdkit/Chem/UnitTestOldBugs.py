@@ -97,8 +97,10 @@ class TestCase(unittest.TestCase):
     problems with AllChem.GetBestRMS() and molecules with Hs
 
     """
-    m0 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'github112_tgt.mol'), removeHs=False)
-    m1 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'github112_qry.mol'), removeHs=False)
+    m0 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data',
+                                          'github112_tgt.mol'), removeHs=False)
+    m1 = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data',
+                                          'github112_qry.mol'), removeHs=False)
     rms = AllChem.GetBestRMS(m0, m1)
     self.assertAlmostEqual(rms, 0.456, 3)
 

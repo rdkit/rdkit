@@ -448,7 +448,8 @@ class Canvas:
 
 
 
-        def drawRect(self, x1, y1, x2, y2, edgeColor=None, edgeWidth=None, fillColor=None, dash=None, **kwargs):
+        def drawRect(self, x1, y1, x2, y2, edgeColor=None, edgeWidth=None, fillColor=None,
+                     dash=None, **kwargs):
                 "Draw the rectangle between x1,y1, and x2,y2. \
                 These should have x1<x2 and y1<y2."
 
@@ -594,7 +595,8 @@ class AffineMatrix:
             self.A = [1.0, 0, 0, 1.0, 0.0, 0.0]  # set to identity
 
     def scale(self, sx, sy):
-        self.A = [sx * self.A[0], sx * self.A[1], sy * self.A[2], sy * self.A[3], self.A[4], self.A[5] ]
+        self.A = [sx * self.A[0], sx * self.A[1], sy * self.A[2], sy * self.A[3],
+                  self.A[4], self.A[5] ]
 
     def rotate(self, theta):
         "counter clockwise rotation in standard SVG/libart coordinate system"

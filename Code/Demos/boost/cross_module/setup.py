@@ -24,7 +24,7 @@ boostInc = '-isystem%s' % (extDir + "/boost_1_29_0")
 incDirs = []
 # FIX: there's gotta be a better way of doing this
 pyLibDir = '/usr/lib/python2.2/config'
-boostLibDir = extDir + "/boost_1_29_0/libs/python/build/bin/libboost_python.so/gcc/debug/runtime-link-dynamic/shared-linkable-true/"
+boostLibDir = extDir + "/boost_1_29_0/libs/python/build/bin/libboost_python.so/gcc/debug/runtime-link-dynamic/shared-linkable-true/"  # noqa
 boostLib = "boost_python"
 libDirs = [boostLibDir, pyLibDir]
 libraries = [boostLib, "python2.2"]  # have to include g++ here or we get link errors with boost

@@ -163,7 +163,8 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(ptEq(pos, expected[i], 0.001))
 
   def test4SamplingSpread(self):
-    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
+    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
+                                           'test_data/7UPJ_xtal.mol'))
 
 
     # default mode
@@ -180,7 +181,8 @@ class TestCase(unittest.TestCase) :
 
 
   def test5SamplingMimic3D(self):
-    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
+    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
+                                           'test_data/7UPJ_xtal.mol'))
     dmat3D = getDistMat(mol)
 
     # now mimic the coordinate with a very small weight

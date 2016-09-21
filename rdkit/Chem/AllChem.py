@@ -108,8 +108,10 @@ def GenerateDepictionMatching2DStructure(mol, reference, confId=-1,
 
   """
   if reference and referencePattern:
-    if not reference.GetNumAtoms(onlyExplicit=True) == referencePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError('When a pattern is provided, it must have the same number of atoms as the reference')
+    if not (reference.GetNumAtoms(onlyExplicit=True) ==
+            referencePattern.GetNumAtoms(onlyExplicit=True)):
+      raise ValueError('When a pattern is provided, ' +
+                       'it must have the same number of atoms as the reference')
     referenceMatch = reference.GetSubstructMatch(referencePattern)
     if not referenceMatch:
       raise ValueError("Reference does not map to itself")
@@ -190,7 +192,8 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
       raise ValueError('mol %s does not match mol %s' % (ref.GetProp('_Name'),
                                                        probe.GetProp('_Name')))
     if len(matches) > 1e6:
-      warnings.warn("{} matches detected for molecule {}, this may lead to a performance slowdown.".format(len(matches), probe.GetProp('_Name')))
+      msg = "{} matches detected for molecule {}, this may lead to a performance slowdown."
+      warnings.warn(msg.format(len(matches), probe.GetProp('_Name')))
     maps = [list(enumerate(match)) for match in matches]
   bestRMS = 1000.
   for amap in maps:

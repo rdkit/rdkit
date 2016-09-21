@@ -221,11 +221,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
     self.assertTrue([x.GetIsAromatic() for x in aList] == [1, 1, 0, 0])
-    self.assertTrue([x.GetHybridization() for x in aList] == [Chem.HybridizationType.SP2, Chem.HybridizationType.SP2,
-                                                   Chem.HybridizationType.SP3, Chem.HybridizationType.SP3], \
-                                                   [x.GetHybridization() for x in aList])
-
-
+    self.assertTrue([x.GetHybridization() for x in aList] ==
+                    [Chem.HybridizationType.SP2, Chem.HybridizationType.SP2,
+                     Chem.HybridizationType.SP3, Chem.HybridizationType.SP3],
+                    [x.GetHybridization() for x in aList])
 
   def test8Bond(self):
     mol = Chem.MolFromSmiles('n1ccccc1CC(=O)O')
@@ -549,9 +548,12 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 4)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
-    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3, Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
-    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=1)) == 1, Chem.FindAllPathsOfLengthN(m, 4, useBonds=1))
-    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=1)) == 0, Chem.FindAllPathsOfLengthN(m, 5, useBonds=1))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
+                    Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=1)) == 1,
+                    Chem.FindAllPathsOfLengthN(m, 4, useBonds=1))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=1)) == 0,
+                    Chem.FindAllPathsOfLengthN(m, 5, useBonds=1))
 
     #
     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
@@ -565,7 +567,8 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles("CCC(C)CC")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
-    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4, Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4,
+                    Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
 
     m = Chem.MolFromSmiles("CCCC(C)C")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
@@ -580,7 +583,8 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles("CC(C)(C)CC")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 7)
-    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3, Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
+    self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
+                    Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
 
     m = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 6)
@@ -648,7 +652,8 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles("CC(C)(C)CC")
     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 5)
     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 2)) == 7)
-    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 7, Chem.FindAllSubgraphsOfLengthN(m, 3))
+    self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 3)) == 7,
+                    Chem.FindAllSubgraphsOfLengthN(m, 3))
 
     m = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(len(Chem.FindAllSubgraphsOfLengthN(m, 1)) == 6)
@@ -1166,7 +1171,8 @@ mol-4,CCOC
     with self.assertRaisesRegexp(Exception, ""):
       smiSup[4]
 
-    sys.stderr.write('>>> This may result in an infinite loop.  It should finish almost instantly\n')
+    sys.stderr.write(
+      '>>> This may result in an infinite loop.  It should finish almost instantly\n')
     self.assertEqual(len(smiSup), 4)
     sys.stderr.write('<<< OK, it finished.\n')
 
@@ -1181,7 +1187,8 @@ mol-4,CCOC
                                       titleLine=0)
     propNames = []
     propNames.append("Column_2")
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data', 'outSmiles.txt')
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap',
+                         'test_data', 'outSmiles.txt')
     writer = Chem.SmilesWriter(ofile)
     writer.SetProps(propNames)
     for mol in smiSup :
@@ -1190,8 +1197,10 @@ mol-4,CCOC
 
   def test28SmilesReverse(self):
     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    props = ["34.14", "25.78", "106.51", "82.78", "60.16", "87.74", "37.38", "77.28", "65.18", "0.00"]
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data', 'outSmiles.txt')
+    props = ["34.14", "25.78", "106.51", "82.78", "60.16", "87.74",
+             "37.38", "77.28", "65.18", "0.00"]
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap',
+                         'test_data', 'outSmiles.txt')
     # ofile = "test_data/outSmiles.csv"
     smiSup = Chem.SmilesMolSupplier(ofile)
     i = 0
@@ -1205,7 +1214,8 @@ mol-4,CCOC
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
                                             'test_data', 'NCI_aids_few.sdf')
     # fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data', 'outNCI_few.sdf');
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap',
+                         'test_data', 'outNCI_few.sdf');
     writer = Chem.SDWriter(ofile);
     sdSup = Chem.SDMolSupplier(fileN)
     for mol in sdSup :
@@ -1239,7 +1249,8 @@ mol-4,CCOC
     """
     m1 = Chem.MolFromSmiles('N12[CH](SC(C)(C)[CH]1C(O)=O)[CH](C2=O)NC(=O)[CH](N)c3ccccc3')
     self.assertTrue(m1.GetNumAtoms() == 24)
-    m2 = Chem.MolFromSmiles('C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C(=O)2)C=CC=1')
+    m2 = Chem.MolFromSmiles(
+      'C1C=C([CH](N)C(=O)N[C]2([H])[C]3([H])SC(C)(C)[CH](C(=O)O)N3C(=O)2)C=CC=1')
     self.assertTrue(m2.GetNumAtoms() == 24)
 
     smi1 = Chem.MolToSmiles(m1)
@@ -1853,7 +1864,7 @@ CAS<~>
       ('C1O[C@]1(OC)NC', 'C1O[C@]1(*)*', True, True, True) : '[3*]C.[4*]C' ,
     }
 
-    for (smiles, smarts, replaceDummies, labelByIndex, useChirality), expected_smiles in expected.items():
+    for (smiles, smarts, replaceDummies, labelByIndex, useChirality), expected_smiles in expected.items():  # noqa
       mol = Chem.MolFromSmiles(smiles)
       core = Chem.MolFromSmarts(smarts)
       nm = Chem.ReplaceCore(
@@ -1866,7 +1877,8 @@ CAS<~>
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r" % (
           smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
-        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)),
+              file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
 
       matchVect = mol.GetSubstructMatch(core, useChirality=useChirality)
@@ -1877,7 +1889,8 @@ CAS<~>
         print("ReplaceCore(%r, %r, %r, replaceDummies=%r, labelByIndex=%rr" % (
           smiles, smarts, matchVect, replaceDummies, labelByIndex),
               file=sys.stderr)
-        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)),
+              file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
 
     mol = Chem.MolFromSmiles("C")
@@ -1992,7 +2005,8 @@ CAS<~>
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
                                             'test_data', 'fewSmi.csv')
     count = 0
-    for m in Chem.SmilesMolSupplier(fileN, titleLine=False, smilesColumn=1, delimiter=','): count += 1
+    for m in Chem.SmilesMolSupplier(fileN, titleLine=False, smilesColumn=1, delimiter=','):
+      count += 1
     self.assertEqual(count, 10)
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
@@ -2272,7 +2286,8 @@ CAS<~>
                                       titleLine=0)
     ms = [x for x in smiSup]
 
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data', 'outSmiles.txt')
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outSmiles.txt')
     writer = Chem.SmilesWriter(ofile)
     for mol in ms:
       writer.write(mol)
@@ -2534,7 +2549,8 @@ CAS<~>
     self.assertEqual(res, Chem.SanitizeFlags.SANITIZE_PROPERTIES)
 
     m = Chem.MolFromSmiles('c1cccc1', sanitize=False)
-    res = Chem.SanitizeMol(m, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE,
+    res = Chem.SanitizeMol(m, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^
+                           Chem.SanitizeFlags.SANITIZE_KEKULIZE,
                            catchErrors=True)
     self.assertEqual(res, Chem.SanitizeFlags.SANITIZE_NONE)
 
@@ -2657,7 +2673,8 @@ CAS<~>
     self.assertFalse('CarboxylicAcid' in d)
 
   def test81Issue275(self):
-    smi = Chem.MolToSmiles(Chem.MurckoDecompose(Chem.MolFromSmiles('CCCCC[C@H]1CC[C@H](C(=O)O)CC1')))
+    smi = Chem.MolToSmiles(Chem.MurckoDecompose(
+      Chem.MolFromSmiles('CCCCC[C@H]1CC[C@H](C(=O)O)CC1')))
     self.assertEqual(smi, 'C1CCCCC1')
 
   def test82Issue288(self):
@@ -2791,14 +2808,16 @@ CAS<~>
     nm = Chem.FragmentOnBonds(m, bs)
     frags = Chem.GetMolFrags(nm)
     self.assertEqual(len(frags), 5)
-    self.assertEqual(frags, ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    self.assertEqual(frags, ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13),
+                             (6, 7, 15, 18), (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm, True)
     self.assertEqual(smi, '[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
 
     nm = Chem.FragmentOnBonds(m, bs, dummyLabels=labels)
     frags = Chem.GetMolFrags(nm)
     self.assertEqual(len(frags), 5)
-    self.assertEqual(frags, ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    self.assertEqual(frags, ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13),
+                             (6, 7, 15, 18), (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm, True)
     self.assertEqual(smi, '[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
 
@@ -2950,9 +2969,11 @@ CAS<~>
 
     # doc tests
     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
-    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
+    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4),
+                                                             breakTies=False)),
                       [0, 6, 0, 6, -1, -1, -1, -1])
-    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
+    self.assertEquals(list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8),
+                                                             breakTies=False)),
                       [-1, -1, -1, -1, 0, 6, 0, 6])
 
   def test93RWMolsAsROMol(self):
@@ -3052,7 +3073,8 @@ CAS<~>
         q = query(name, t)
         self.assertEqual(v, [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
         q = query(name, t, negate=True)
-        self.assertEqual(sorted(set(range(14)) - set(v)), [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
+        self.assertEqual(sorted(set(range(14)) - set(v)),
+                         [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
 
     # check tolerances
     self.assertEqual([x.GetIdx() for x in m.GetAtomsMatchingQuery(
@@ -3191,7 +3213,7 @@ CAS<~>
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
-                                            'test_data', 'NCI_aids_few.sdf.gz')
+                         'test_data', 'NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
     suppl = Chem.ForwardSDMolSupplier(inf)
     m0 = next(suppl)
@@ -3204,7 +3226,9 @@ CAS<~>
       helm = 'PEPTIDE1{C.Y.I.Q.N.C.P.L.G}$$$$'
       seq = 'CYIQNCPLG'
       fasta = '>\nCYIQNCPLG\n'
-      smi = 'CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O'
+      smi = ('CC[C@H](C)[C@H](NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@@H](N)CS)C(=O)' +
+             'N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)' +
+             'N[C@@H](CS)C(=O)N1CCC[C@H]1C(=O)N[C@@H](CC(C)C)C(=O)NCC(=O)O')
 
       m = Chem.MolFromSequence(seq)
       self.assertTrue(m is not None)

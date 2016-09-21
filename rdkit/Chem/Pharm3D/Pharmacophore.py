@@ -184,7 +184,8 @@ class ExplicitPharmacophore:
       if txt:
         splitL = spaces.split(txt)
         if len(splitL) < 5:
-          logger.error('Input line %d only contains %d fields, 5 are required. Read failed.' % (lineNum, len(splitL)))
+          logger.error('Input line %d only contains %d fields, 5 are required. Read failed.' %
+                       (lineNum, len(splitL)))
           return
         fName = splitL[0]
         try:
@@ -195,7 +196,8 @@ class ExplicitPharmacophore:
         except ValueError:
           logger.error('Error parsing a number of line %d. Read failed.' % (lineNum))
           return
-        feats.append(ChemicalFeatures.FreeChemicalFeature(fName, fName, Geometry.Point3D(xP, yP, zP)))
+        feats.append(ChemicalFeatures.FreeChemicalFeature(fName, fName,
+                                                          Geometry.Point3D(xP, yP, zP)))
         rads.append(rad)
     self._initializeFeats(feats, rads)
 

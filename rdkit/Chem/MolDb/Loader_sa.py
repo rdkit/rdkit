@@ -118,7 +118,8 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
     if os.path.exists(dbName):
       raise IOError('could not delete old database %s' % dbName)
   sIter = iter(suppl)
-  setattr(Compound, nameCol.lower(), Column(nameCol.lower(), String, default=defaultVal, unique=uniqNames))
+  setattr(Compound, nameCol.lower(),
+          Column(nameCol.lower(), String, default=defaultVal, unique=uniqNames))
   if not skipSmiles:
     Compound.smiles = Column(Text, unique=True)
   if not skipProps:

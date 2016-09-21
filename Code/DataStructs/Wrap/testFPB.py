@@ -74,10 +74,11 @@ class TestCase(unittest.TestCase):
 
    def test5Contains(self):
        " an example based on substructure screening "
-       filename = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData', 'zinc_all_clean.100.patt1k.fpb')
+       filename = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData',
+                               'zinc_all_clean.100.patt1k.fpb')
        fpbr = DataStructs.FPBReader(filename)
        fpbr.Init()
-       bytes = b'\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x000\x00@\x00 \x00\x00 \x00\x00\x02@\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00`\x07\x00\x04\x00"\x14\x02\x00\x00"\x00\x00\x00\x00\x08\x00\x80\x00\x00@\x00@\x00\x80\x00\x00\x00\x00B\x00\x00\x80\x00\x80\x08\x00\x04\x00@\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x80\x04\x00\x00\x0c\x00\x00\x00@\x88\x10\x10\x00\x00\x88\x00@'
+       bytes = b'\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x000\x00@\x00 \x00\x00 \x00\x00\x02@\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00`\x07\x00\x04\x00"\x14\x02\x00\x00"\x00\x00\x00\x00\x08\x00\x80\x00\x00@\x00@\x00\x80\x00\x00\x00\x00B\x00\x00\x80\x00\x80\x08\x00\x04\x00@\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00  \x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x80\x04\x00\x00\x0c\x00\x00\x00@\x88\x10\x10\x00\x00\x88\x00@'  # noqa
        nbrs = fpbr.GetContainingNeighbors(bytes)
        self.assertEqual(len(nbrs), 9)
        ids = sorted(fpbr.GetId(x) for x in nbrs)
@@ -94,10 +95,14 @@ class TestCase(unittest.TestCase):
    def test6MultiFPBReaderTani(self):
        basen = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData')
        mfpbr = DataStructs.MultiFPBReader()
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
        mfpbr.Init();
        self.assertEqual(mfpbr.GetNumBits(), 1024);
        self.assertEqual(len(mfpbr), 4);
@@ -154,10 +159,14 @@ class TestCase(unittest.TestCase):
    def test7MultiFPBReaderContains(self):
        basen = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData')
        mfpbr = DataStructs.MultiFPBReader()
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
        mfpbr.Init();
        self.assertEqual(mfpbr.GetNumBits(), 1024);
        self.assertEqual(len(mfpbr), 4);
@@ -213,10 +222,14 @@ class TestCase(unittest.TestCase):
    def test8MultiFPBReaderContainsInitOnSearch(self):
        basen = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData')
        mfpbr = DataStructs.MultiFPBReader(initOnSearch=True)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
-       self.assertEqual(mfpbr.AddReader(DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.1.patt.fpb"))), 1)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.2.patt.fpb"))), 2)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.3.patt.fpb"))), 3)
+       self.assertEqual(mfpbr.AddReader(
+         DataStructs.FPBReader(os.path.join(basen, "zinc_random200.4.patt.fpb"))), 4)
 
        fps = "40081010824820021000500010110410003000402b20285000a4040240010030050000" + \
                "080001420040009000003d04086007080c03b31d920004220400074008098010206080" + \

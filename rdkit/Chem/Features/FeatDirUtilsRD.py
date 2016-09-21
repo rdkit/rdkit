@@ -295,7 +295,8 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
       # only the hydrogen atom direction needs to be used
       return ((cpt, bvec),), 'linear'
     else :
-      # we have a non-planar configuration - we will assume sp3 and compute a second direction vector
+      # we have a non-planar configuration - we will assume sp3 and compute a second
+      # direction vector
       ovec = _findAvgVec(conf, cpt, nbrs)
       ovec *= (-1.0 * scale)
       ovec += cpt
@@ -346,15 +347,16 @@ def GetDonor1FeatVects(conf, featAtoms, scale=1.5) :
   v1 += cpt
   return ((cpt, v1),), 'cone'
 
-def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
+
+def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5):
   """
   Get the direction vectors for Acceptor of type 1
 
   This is a acceptor with one heavy atom neighbor. There are two possibilities we will
   consider here
   1. The bond to the heavy atom is a single bond e.g. CO
-     In this case we don't know the exact direction and we just use the inversion of this bond direction
-     and mark this direction as a 'cone'
+     In this case we don't know the exact direction and we just use the
+     inversion of this bond direction and mark this direction as a 'cone'
   2. The bond to the heavy atom is a double bond e.g. C=O
      In this case the we have two possible direction except in some special cases e.g. SO2
      where again we will use bond direction

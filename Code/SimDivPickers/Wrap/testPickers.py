@@ -44,7 +44,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(lmaxmin)
 
   def test1HierarchPick(self) :
-    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data', 'points.csv')
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap',
+                         'test_data', 'points.csv')
     with open(fname) as infil:
       lines = infil.readlines()
     self.dataPts = numpy.zeros((len(lines), 2), 'd')

@@ -66,22 +66,31 @@ class TestCase(unittest.TestCase):
     fmap.AddFeature(fs[0], 1.0)
     self.assertTrue(len(fmap.GetFeatures()) == 1)
 
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
     self.assertTrue(feq(sc, math.exp(-1)))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
     self.assertTrue(feq(sc, math.exp(-2.25)))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
     self.assertTrue(feq(sc, 1.0))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
     self.assertTrue(feq(sc, 0))
 
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Acceptor', '', Point3D(1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Acceptor', '', Point3D(1, 0, 0)))
     self.assertTrue(feq(sc, 0))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Acceptor', '', Point3D(1, 0, 0)),
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Acceptor', '', Point3D(1, 0, 0)),
                                typeMatch=False)
     self.assertTrue(feq(sc, math.exp(-1)))
 
-    self.assertRaises(IndexError, lambda: fmap.GetFeatFeatScore(fmap.GetFeature(1), FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0))))
+    self.assertRaises(IndexError,
+                      lambda: fmap.GetFeatFeatScore(fmap.GetFeature(1),
+                                                    FreeChemicalFeature('Aromatic', '',
+                                                                        Point3D(0, 0, 0))))
 
   def test3FeatFeatScoreTriangle(self):
     aFmp = FeatMaps.FeatMapParams()
@@ -96,13 +105,17 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(fmap.GetFeatures()) == 1)
 
 
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
     self.assertTrue(feq(sc, 0.5))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
     self.assertTrue(feq(sc, 0.25))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
     self.assertTrue(feq(sc, 1.0))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
     self.assertTrue(feq(sc, 0))
 
   def test4FeatFeatScoreBox(self):
@@ -116,13 +129,17 @@ class TestCase(unittest.TestCase):
     fmap.AddFeature(fs[0], 1.1)
     self.assertTrue(len(fmap.GetFeatures()) == 1)
 
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1, 0, 0)))
     self.assertTrue(feq(sc, 1.1))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(1.5, 0, 0)))
     self.assertTrue(feq(sc, 1.1))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(0, 0, 0)))
     self.assertTrue(feq(sc, 1.1))
-    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0), FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),
+                               FreeChemicalFeature('Aromatic', '', Point3D(2.1, 0, 0)))
     self.assertTrue(feq(sc, 0))
 
   def test5ScoreFeats(self):

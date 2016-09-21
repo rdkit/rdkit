@@ -26,7 +26,8 @@ class TestCase(unittest.TestCase):
         attrs = range(1, nvars + 1)
         npvals = [0] + [3] * nvars + [2]
         qBounds = [0] + [2] * nvars + [0]
-        mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds, silent=True)
+        mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds,
+                                                       silent=True)
 
         self.assertAlmostEqual(mod._classProbs[0], 0.5000, 4)
         self.assertAlmostEqual(mod._classProbs[1], 0.5000, 4)

@@ -176,7 +176,8 @@ def _AsciiBase85Encode(input):
             temp, c4 = divmod(temp, 85)
             temp, c3 = divmod(temp, 85)
             c1, c2 = divmod(temp, 85)
-            assert ((85 ** 4) * c1) + ((85 ** 3) * c2) + ((85 ** 2) * c3) + (85 * c4) + c5 == num, 'dodgy code!'
+            assert ((85 ** 4) * c1 + (85 ** 3) * c2 +
+                    (85 ** 2) * c3 + (85 * c4) + c5 == num), 'dodgy code!'
             outstream.write(chr(c1 + 33))
             outstream.write(chr(c2 + 33))
             outstream.write(chr(c3 + 33))

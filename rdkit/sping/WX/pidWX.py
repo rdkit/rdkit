@@ -124,7 +124,8 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
     self.quitButton = wxButton(self, qID, "Quit")
     self.clearButton = wxButton(self, cID, "Clear")
-    self.click = wxCheckBox(self, bID, "Click")  # This checkbox is down when the left button is pressed
+    # This checkbox is down when the left button is pressed
+    self.click = wxCheckBox(self, bID, "Click")
 
     self.Reposition()  # set up sizes for layout
 
@@ -217,7 +218,8 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
 class WXCanvas(PiddleWxDc):
 
-  def __init__(self, size=(300, 300), name="piddleWX", status_bar=None, interactive=1, show_status=1):
+  def __init__(self, size=(300, 300), name="piddleWX", status_bar=None, interactive=1,
+               show_status=1):
     """Works like all other PIDDLE canvases, except with extra interactive controls.
        interactive is set if the canvas is to use the interactive parts of
        the PIDDLE API, and show_status controls if the default status bar is
@@ -238,7 +240,8 @@ class WXCanvas(PiddleWxDc):
     else:
       status_area = 0
 
-    window.SetSize(wxSize(size[0] + (size[0] - CSize[0]), size[1] + (size[1] - CSize[1] + status_area)))
+    window.SetSize(wxSize(size[0] + (size[0] - CSize[0]),
+                          size[1] + (size[1] - CSize[1] + status_area)))
 
     # This bitmap is used to buffer drawing commands.  It is set to the same
     # depth as the screen - explicitly changing it can cause errors when it

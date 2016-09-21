@@ -52,7 +52,8 @@ class TestCase(unittest.TestCase):
 
   def testClassify(self):
     " testing classification "
-    argV = ['CrPt3', 'fcc', 'AuCu3', 58.09549962, 36, 4, 0.228898, 2.219, 1, 3.67481803894, 1, 0, 1, 0.619669341609, 14.523874905]
+    argV = ['CrPt3', 'fcc', 'AuCu3', 58.09549962, 36, 4, 0.228898, 2.219, 1, 3.67481803894,
+            1, 0, 1, 0.619669341609, 14.523874905]
     nameV = ['composition', 'Structure', 'Structure_Type', 'Volume',
              'Electrons_Per_Unit', 'Atoms_Per_Unit', 'Hardness', 'DOS_Ef',
              'isferro', 'max_atomic', 'has3d', 'has4d', 'has5d',

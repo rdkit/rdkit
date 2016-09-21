@@ -171,7 +171,8 @@ class Network:
       return results
 
   def GetLastOutputs(self):
-    """ returns the complete list of output layer values from the last time this node classified anything"""
+    """ returns the complete list of output layer values from the last time
+    this node classified anything"""
     return self.lastResults
 
   def __str__(self):

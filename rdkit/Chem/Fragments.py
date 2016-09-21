@@ -40,7 +40,8 @@ def _LoadPatterns(fileName=None):
             patt = Chem.MolFromSmarts(sma)
             if not patt or patt.GetNumAtoms() == 0:
               raise ImportError('Smarts %s could not be parsed' % (repr(sma)))
-            fn = lambda mol, countUnique = True, pattern = patt:_CountMatches(mol, pattern, unique=countUnique)
+            fn = (lambda mol, countUnique=True, pattern=patt:
+                  _CountMatches(mol, pattern, unique=countUnique))
             fn.__doc__ = descr
             name = name.replace('=', '_')
             name = name.replace('-', '_')

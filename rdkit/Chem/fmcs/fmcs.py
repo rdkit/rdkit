@@ -445,7 +445,8 @@ def assign_isotopes_from_class_tag(mol, atom_class_tag):
         raise ValueError("Missing atom class tag %r" % (atom_class_tag,))
     fields = atom_classes.split()
     if len(fields) != mol.GetNumAtoms():
-        raise ValueError("Mismatch between the number of atoms (#%d) and the number of atom classes (%d)" % (
+        raise ValueError(
+          "Mismatch between the number of atoms (#%d) and the number of atom classes (%d)" % (
             mol.GetNumAtoms(), len(fields)))
     new_isotopes = []
     for field in fields:
@@ -453,7 +454,8 @@ def assign_isotopes_from_class_tag(mol, atom_class_tag):
             raise ValueError("Atom class %r from tag %r must be a number" % (field, atom_class_tag))
         isotope = int(field)
         if not (1 <= isotope <= 10000):
-            raise ValueError("Atom class %r from tag %r must be in the range 1 to 10000" % (field, atom_class_tag))
+            raise ValueError(
+              "Atom class %r from tag %r must be in the range 1 to 10000" % (field, atom_class_tag))
         new_isotopes.append(isotope)
 
     save_isotopes(mol, get_isotopes(mol))
@@ -599,8 +601,10 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matc
             new_bond_smarts_types.append(bond_smarts)
         bond_smarts_types = new_bond_smarts_types
 
-    canonical_bondtypes = get_canonical_bondtypes(rdmol, bonds, atom_smarts_types, bond_smarts_types)
-    return TypedMolecule(rdmol, atoms, bonds, atom_smarts_types, bond_smarts_types, canonical_bondtypes)
+    canonical_bondtypes = get_canonical_bondtypes(rdmol, bonds, atom_smarts_types,
+                                                  bond_smarts_types)
+    return TypedMolecule(rdmol, atoms, bonds, atom_smarts_types, bond_smarts_types,
+                         canonical_bondtypes)
 
 
 # Create a TypedMolecule using the user-defined atom classes (Not implemented!)
@@ -627,27 +631,32 @@ def get_specified_types(rdmol, atom_types, ringMatchesRingOnly):
     bond_smarts_types = get_bond_smarts_types(mol, bonds, ringMatchesRingOnly)
     canonical_bondtypes = get_canonical_bondtypes(mol, bonds, atom_smarts_types, bond_smarts_types)
 
-    return TypedMolecule(mol, atoms, bonds, atom_smarts_types, bond_smarts_types, canonical_bondtypes)
+    return TypedMolecule(mol, atoms, bonds, atom_smarts_types, bond_smarts_types,
+                         canonical_bondtypes)
 
 
-def convert_input_to_typed_molecules(mols, atom_typer, bond_typer, matchValences, ringMatchesRingOnly):
+def convert_input_to_typed_molecules(mols, atom_typer, bond_typer, matchValences,
+                                     ringMatchesRingOnly):
     typed_mols = []
     for molno, rdmol in enumerate(mols):
         typed_mol = get_typed_molecule(rdmol, atom_typer, bond_typer,
-                                       matchValences=matchValences, ringMatchesRingOnly=ringMatchesRingOnly)
+                                       matchValences=matchValences,
+                                       ringMatchesRingOnly=ringMatchesRingOnly)
         typed_mols.append(typed_mol)
 
     return typed_mols
 
+
 def _check_atom_classes(molno, num_atoms, atom_classes):
     if num_atoms != len(atom_classes):
-        raise ValueError("mols[%d]: len(atom_classes) must be the same as the number of atoms" % (molno,))
+        raise ValueError(
+          "mols[%d]: len(atom_classes) must be the same as the number of atoms" % (molno,))
     for atom_class in atom_classes:
         if not isinstance(atom_class, int):
             raise ValueError("mols[%d]: atom_class elements must be integers" % (molno,))
         if not (1 <= atom_class < 1000):
-            raise ValueError("mols[%d]: atom_class elements must be in the range 1 <= value < 1000" %
-                             (molno,))
+            msg = "mols[%d]: atom_class elements must be in the range 1 <= value < 1000"
+            raise ValueError(msg % (molno,))
 
 #############################################
 
@@ -705,7 +714,8 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
     orig_bonds = []
     new_bond_smarts_types = []
     new_canonical_bondtypes = []
-    for bond, bond_smarts, canonical_bondtype in zip(typed_mol.rdmol_bonds, typed_mol.bond_smarts_types,
+    for bond, bond_smarts, canonical_bondtype in zip(typed_mol.rdmol_bonds,
+                                                     typed_mol.bond_smarts_types,
                                                      typed_mol.canonical_bondtypes):
         if canonical_bondtype in supported_canonical_bondtypes:
             orig_bonds.append(bond)
@@ -762,7 +772,8 @@ def find_upper_fragment_size_limits(rdmol, atoms):
 
 EnumerationMolecule = collections.namedtuple("Molecule", "rdmol atoms bonds directed_edges")
 Atom = collections.namedtuple("Atom", "real_atom atom_smarts bond_indices is_in_ring")
-Bond = collections.namedtuple("Bond", "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
+Bond = collections.namedtuple("Bond",
+                              "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
 
 # A Bond is linked to by two 'DirectedEdge's; one for each direction.
 # The DirectedEdge.bond_index references the actual RDKit bond instance.
@@ -850,7 +861,8 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
                 zip(rdmol.GetBonds(), typed_fragment.orig_bonds,
                     typed_fragment.bond_smarts_types, typed_fragment.canonical_bondtypes)):
             atom_indices = [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()]
-            bonds.append(Bond(bond, bond_smarts, canonical_bondtype, atom_indices, orig_bond.IsInRing()))
+            bonds.append(Bond(bond, bond_smarts, canonical_bondtype, atom_indices,
+                              orig_bond.IsInRing()))
 
             directed_edges[atom_indices[0]].append(DirectedEdge(bond_index, atom_indices[1]))
             directed_edges[atom_indices[1]].append(DirectedEdge(bond_index, atom_indices[0]))
@@ -940,12 +952,15 @@ class CangenNode(object):
 # The outgoing edge information is used to generate the SMARTS output
 # The index numbers are offsets in the subgraph, not in the original molecule
 OutgoingEdge = collections.namedtuple("OutgoingEdge",
-                                      "from_atom_index bond_index bond_smarts other_node_idx other_node")
+                                      "from_atom_index bond_index bond_smarts " +
+                                      "other_node_idx other_node")
+
 
 # Convert a Subgraph of a given EnumerationMolecule into a list of
 # CangenNodes. This contains the more specialized information I need
 # for canonicalization and for SMARTS generation.
-def get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, do_initial_assignment=True):
+def get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment,
+                             do_initial_assignment=True):
     # The subgraph contains a set of atom and bond indices in the enumeration_mol.
     # The CangenNode corresponds to an atom in the subgraph, plus relations
     # to other atoms in the subgraph.
@@ -989,7 +1004,8 @@ def get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, do_init
     if do_initial_assignment:
         # Do the initial graph invariant assignment. (Step 1 of the CANON algorithm)
         # These are consistent only inside of the given 'atom_assignment' lookup.
-        for atom_index, node, canonical_label in zip(subgraph.atom_indices, cangen_nodes, canonical_labels):
+        for atom_index, node, canonical_label in zip(subgraph.atom_indices, cangen_nodes,
+                                                     canonical_labels):
             # The initial invariant is the sorted canonical bond labels
             # plus the atom smarts, separated by newline characters.
             #
@@ -1231,11 +1247,13 @@ def generate_smarts(cangen_nodes):
                         if bond_idx not in unclosed_closures:
                             # This is new. Add as a ring closure.
                             closure = heappop(available_closures)
-                            smiles_terms.append(get_closure_label(outgoing_edge.bond_smarts, closure))
+                            smiles_terms.append(get_closure_label(outgoing_edge.bond_smarts,
+                                                                  closure))
                             unclosed_closures[bond_idx] = closure
                         else:
                             closure = unclosed_closures[bond_idx]
-                            smiles_terms.append(get_closure_label(outgoing_edge.bond_smarts, closure))
+                            smiles_terms.append(get_closure_label(outgoing_edge.bond_smarts,
+                                                                  closure))
                             heappush(available_closures, closure)
                             del unclosed_closures[bond_idx]
                     else:
@@ -1397,8 +1415,10 @@ def find_extensions(atom_indices, visited_bond_indices, directed_edges):
 #   - the set of newly added atom indices (or None)
 #   - the new subgraph
 
-def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, internal_bonds, external_edges):
-    # print "Subgraph", len(subgraph.atom_indices), len(subgraph.bond_indices), "X", enumeration_mol.rdmol.GetNumAtoms()
+def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices,
+                            internal_bonds, external_edges):
+    # print("Subgraph", len(subgraph.atom_indices), len(subgraph.bond_indices),
+    #       "X", enumeration_mol.rdmol.GetNumAtoms())
     # print "subgraph atoms", subgraph.atom_indices
     # print "subgraph bonds", subgraph.bond_indices
     # print "internal", internal_bonds, "external", external_edges
@@ -1416,18 +1436,20 @@ def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, int
     # only external edges
     if not internal_bonds:
         it = nonempty_powerset(external_edges)
-        exclude_bonds = set(chain(visited_bond_indices, (edge.bond_index for edge in external_edges)))
+        exclude_bonds = set(chain(visited_bond_indices,
+                                  (edge.bond_index for edge in external_edges)))
         for external_ext in it:
             new_atoms = frozenset(ext.end_atom_index for ext in external_ext)
             atom_indices = frozenset(chain(subgraph.atom_indices, new_atoms))
             bond_indices = frozenset(chain(subgraph.bond_indices,
-                                            (ext.bond_index for ext in external_ext)))
+                                           (ext.bond_index for ext in external_ext)))
             num_possible_atoms, num_possible_bonds = find_extension_size(
                 enumeration_mol, new_atoms, exclude_bonds, external_ext)
 
             # num_possible_atoms = len(enumeration_mol.atoms) - len(atom_indices)
             # num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices)
-            yield new_atoms, Subgraph(atom_indices, bond_indices), num_possible_atoms, num_possible_bonds
+            yield (new_atoms, Subgraph(atom_indices, bond_indices),
+                   num_possible_atoms, num_possible_bonds)
         return
 
     # Both internal bonds and external edges
@@ -1456,7 +1478,8 @@ def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, int
             for internal_bond in internal_powerset:
                 bond_indices2 = frozenset(chain(bond_indices, internal_bond))
                 # num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices2)
-                yield new_atoms, Subgraph(atom_indices, bond_indices2), num_possible_atoms, num_possible_bonds
+                yield (new_atoms, Subgraph(atom_indices, bond_indices2),
+                       num_possible_atoms, num_possible_bonds)
 
 
 def find_extension_size(enumeration_mol, known_atoms, exclude_bonds, directed_edges):
@@ -1586,7 +1609,11 @@ class VerboseCachingTargetsMatcher(object):
         return True
 
     def report(self):
-        print >> sys.stderr, "%d tests of %d unique SMARTS, cache: %d True %d False, search: %d True %d False (%d substructure tests)" % (self.num_lookups, len(self.cache), self.num_cached_true, self.num_cached_false, self.num_search_true, self.num_search_false, self.num_matches)
+        msg = ("%d tests of %d unique SMARTS, cache: %d True %d False, " +
+               "search: %d True %d False (%d substructure tests)")
+        print >> sys.stderr, msg % (self.num_lookups, len(self.cache), self.num_cached_true,
+                                    self.num_cached_false, self.num_search_true,
+                                    self.num_search_false, self.num_matches)
 
 
 ##### Different maximization algorithms ######
@@ -1648,7 +1675,8 @@ class _SingleBest(object):
         self.timer.mark("new best")
         if self.verbose:
             dt = self.timer.mark_times["new best"] - self.timer.mark_times["start fmcs"]
-            sys.stderr.write("Best after %.1fs: %d atoms %d bonds %s\n" % (dt, num_atoms, num_bonds, smarts))
+            sys.stderr.write("Best after %.1fs: %d atoms %d bonds %s\n" % (dt, num_atoms,
+                                                                           num_bonds, smarts))
         return sizes
 
     def get_result(self, completed):
@@ -1757,7 +1785,8 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
                 if outgoing_edge.end_atom_index in atom_depth:
                     # print "We have a ring"
                     # It's a ring! Mark everything as being in a ring
-                    confirmed_ring_bonds.update(bond_stack[atom_depth[outgoing_edge.end_atom_index]:])
+                    confirmed_ring_bonds.update(
+                      bond_stack[atom_depth[outgoing_edge.end_atom_index]:])
                     confirmed_ring_bonds.add(outgoing_edge.bond_index)
                     if len(confirmed_ring_bonds) == len(ring_bonds):
                         # print "Success!"
@@ -1766,7 +1795,8 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
                     continue
 
                 # New atom. Need to explore it.
-                # print "we have a new bond", outgoing_edge.bond_index, "to atom", outgoing_edge.end_atom_index
+                # print("we have a new bond", outgoing_edge.bond_index,
+                #       "to atom", outgoing_edge.end_atom_index)
                 if next_bond_index is None:
                     # This will be the immediate next bond to search in the DFS
                     next_bond_index = outgoing_edge.bond_index
@@ -1779,7 +1809,8 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
             if next_bond_index is None:
                 # Could not find a path to take. Might be because we looped back.
                 if this_is_a_ring:
-                    # assert prev_bond_index in confirmed_ring_bonds, (prev_bond_index, confirmed_ring_bonds)
+                    # assert prev_bond_index in confirmed_ring_bonds, \
+                    #   (prev_bond_index, confirmed_ring_bonds)
                     # We did! That means we can backtrack
                     while backtrack_stack:
                         old_size, prev_bond_index, current_atom_index = backtrack_stack.pop()
@@ -1853,8 +1884,8 @@ _maximize_options = {
 
 ###### The engine of the entire system. Enumerate subgraphs and see if they match. #####
 
-def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_targets, hits, timeout,
-                        heappush, heappop):
+def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_targets,
+                        hits, timeout, heappush, heappop):
     if timeout is None:
         end_time = None
     else:
@@ -1921,7 +1952,8 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
 
             a1, a2 = bond.atom_indices
             outgoing_edges = [e for e in (directed_edges[a1] + directed_edges[a2])
-                  if e.end_atom_index not in bond.atom_indices and e.bond_index not in visited_bond_indices]
+                              if (e.end_atom_index not in bond.atom_indices and
+                                  e.bond_index not in visited_bond_indices)]
 
             empty_internal = frozenset()
             if not outgoing_edges:
@@ -1946,7 +1978,8 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
                 return False
 
         # print "There are", len(seeds), "seeds", seeds[0][:2]
-        score, _, old_subgraph, visited_bond_indices, internal_bonds, external_edges, mol, directed_edges = heappop(seeds)
+        (score, _, old_subgraph, visited_bond_indices, internal_bonds,
+         external_edges, mol, directed_edges) = heappop(seeds)
 
         new_visited_bond_indices = visited_bond_indices.copy()
         new_visited_bond_indices.update(internal_bonds)
@@ -1955,7 +1988,8 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
         new_visited_bond_indices.update(edge.bond_index for edge in external_edges)
 
         for new_atoms, new_subgraph, num_remaining_atoms, num_remaining_bonds in \
-               all_subgraph_extensions(mol, old_subgraph, visited_bond_indices, internal_bonds, external_edges):
+               all_subgraph_extensions(mol, old_subgraph, visited_bond_indices,
+                                       internal_bonds, external_edges):
             if prune(new_subgraph, mol, num_remaining_atoms, num_remaining_bonds, best_sizes):
                 # print "PRUNE", make_canonical_smarts(new_subgraph, mol, atom_assignment)
                 continue
@@ -2023,7 +2057,9 @@ class VerboseHeapOps(object):
         print >> sys.stderr, "  %d subgraphs enumerated, %d processed" % (
             self.num_seeds_added, self.num_seeds_processed)
 
-def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, maximize=Default.maximize,
+
+def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
+                maximize=Default.maximize,
                 completeRingsOnly=Default.completeRingsOnly,
                 timeout=Default.timeout,
                 timer=None, verbose=False, verboseDelay=1.0):
@@ -2063,13 +2099,14 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, 
         stop_time = time.time() + timeout
 
     for query_index, fragmented_query_mol in enumerate(fragmented_mols):
-        enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol, minNumAtoms)
+        enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol,
+                                                                        minNumAtoms)
 
         targets = typed_mols
         if timeout is not None:
             remaining_time = stop_time - time.time()
-        success = enumerate_subgraphs(enumerated_query_fragments, prune, atom_assignment, matches_all_targets, hits,
-                                      remaining_time, push, pop)
+        success = enumerate_subgraphs(enumerated_query_fragments, prune, atom_assignment,
+                                      matches_all_targets, hits, remaining_time, push, pop)
         if query_index + threshold_count >= len(fragmented_mols):
             break
         if not success:
@@ -2177,7 +2214,8 @@ def fmcs(mols, minNumAtoms=2,
             # The subgraph can never have more types of a given count.
 
 
-    fragmented_mols = [remove_unknown_bondtypes(typed_mol, bondtype_counts) for typed_mol in typed_mols]
+    fragmented_mols = [remove_unknown_bondtypes(typed_mol, bondtype_counts)
+                       for typed_mol in typed_mols]
     timer.mark("end fragment")
 
     sizes = []
@@ -2442,17 +2480,18 @@ def _get_match_bond_indices(pat, mol, match_atom_indices):
         bond_indices.append(bond.GetIdx())
     return bond_indices
 
+
 def main(args=None):
-    parser = argparse.ArgumentParser(description="Find the maximum common substructure of a set of structures",
-         epilog="For more details on these options, see https://bitbucket.org/dalke/fmcs/")
+    parser = argparse.ArgumentParser(
+        description="Find the maximum common substructure of a set of structures",
+        epilog="For more details on these options, see https://bitbucket.org/dalke/fmcs/")
     parser.add_argument("filename", nargs=1,
                         help="SDF or SMILES file")
 
-    parser.add_argument("--maximize", choices=["atoms", "bonds"],
-                        default=Default.maximize,
-                        help="Maximize the number of 'atoms' or 'bonds' in the MCS. (Default: %s)" % (Default.maximize,))
-    parser.add_argument("--min-num-atoms", type=parse_num_atoms, default=2,
-                        metavar="INT",
+    parser.add_argument("--maximize", choices=["atoms", "bonds"], default=Default.maximize,
+                        help=("Maximize the number of 'atoms' or 'bonds' in the MCS. " +
+                              "(Default: %s)" % (Default.maximize,)))
+    parser.add_argument("--min-num-atoms", type=parse_num_atoms, default=2, metavar="INT",
                         help="Minimimum number of atoms in the MCS (Default: 2)")
 
     class CompareAction(argparse.Action):
@@ -2462,106 +2501,118 @@ def main(args=None):
             namespace.bondCompare = bondCompare_name
 
     parser.add_argument("--compare", choices=["topology", "elements", "types"],
-                        default=None, action=CompareAction, help=
-                        "Use 'topology' as a shorthand for '--atom-compare any --bond-compare any', "
-                        "'elements' is '--atom-compare elements --bond-compare any', "
-                        "and 'types' is '--atom-compare elements --bond-compare bondtypes' "
-                        "(Default: types)")
+                        default=None, action=CompareAction, help=(
+                          "Use 'topology' as a shorthand for '--atom-compare any " +
+                          "--bond-compare any', " +
+                          "'elements' is '--atom-compare elements --bond-compare any', " +
+                          "and 'types' is '--atom-compare elements --bond-compare bondtypes' " +
+                          "(Default: types)"))
 
     parser.add_argument("--atom-compare", choices=["any", "elements", "isotopes"],
                         default=None, help=(
-                            "Specify the atom comparison method. With 'any', every atom matches every "
-                            "other atom. With 'elements', atoms match only if they contain the same element. "
-                            "With 'isotopes', atoms match only if they have the same isotope number; element "
-                            "information is ignored so [5C] and [5P] are identical. This can be used to "
-                            "implement user-defined atom typing. "
-                            "(Default: elements)"))
+                          "Specify the atom comparison method. With 'any', every atom " +
+                          "matches every other atom. With 'elements', atoms match only " +
+                          "if they contain the same element. " +
+                          "With 'isotopes', atoms match only if they have the same " +
+                          "isotope number; element information is ignored so [5C] and [5P] " +
+                          "are identical. This can be used to implement user-defined " +
+                          "atom typing. (Default: elements)"))
 
     parser.add_argument("--bond-compare", choices=["any", "bondtypes"],
                         default="bondtypes", help=(
-                            "Specify the bond comparison method. With 'any', every bond matches every "
-                            "other bond. With 'bondtypes', bonds are the same only if their bond types "
-                            "are the same. (Default: bondtypes)"))
+                          "Specify the bond comparison method. With 'any', every bond " +
+                          "matches every other bond. With 'bondtypes', bonds are the " +
+                          "same only if their bond types are the same. (Default: bondtypes)"))
 
-    parser.add_argument("--threshold", default="1.0", type=parse_threshold, help=
-                        "Minimum structure match threshold. A value of 1.0 means that the common "
-                        "substructure must be in all of the input structures. A value of 0.8 finds "
-                        "the largest substructure which is common to at least 80%% of the input "
-                        "structures. (Default: 1.0)")
+    parser.add_argument("--threshold", default="1.0", type=parse_threshold, help=(
+                          "Minimum structure match threshold. A value of 1.0 means " +
+                          "that the common substructure must be in all of the input " +
+                          "structures. A value of 0.8 finds the largest substructure " +
+                          "which is common to at least 80%% of the input " +
+                          "structures. (Default: 1.0)"))
 
-    parser.add_argument("--atom-class-tag", metavar="TAG", help=
-                        "Use atom class assignments from the field 'TAG'. The tag data must contain a space "
-                        "separated list of integers in the range 1-10000, one for each atom. Atoms are "
-                        "identical if and only if their corresponding atom classes are the same. Note "
-                        "that '003' and '3' are treated as identical values. (Not used by default)")
+    parser.add_argument("--atom-class-tag", metavar="TAG", help=(
+                          "Use atom class assignments from the field 'TAG'. The tag " +
+                          "data must contain a space separated list of integers in the " +
+                          "range 1-10000, one for each atom. Atoms are identical if and " +
+                          "only if their corresponding atom classes are the same. Note " +
+                          "that '003' and '3' are treated as identical values. " +
+                          "(Not used by default)"))
 
     # # parser.add_argument("--match-valences", action="store_true",
     # #                     help=
-    # #                     "Modify the atom comparison so that two atoms must also have the same total "
-    # #                     "bond order in order to match.")
+    # #                     "Modify the atom comparison so that two atoms must also have "
+    # #                     "the same total bond order in order to match.")
 
+    parser.add_argument("--ring-matches-ring-only", action="store_true", help=(
+                          "Modify the bond comparison so that ring bonds only match " +
+                          "ring bonds and chain bonds only match chain bonds. " +
+                          "(Ring atoms can still match non-ring atoms.) "))
 
-    parser.add_argument("--ring-matches-ring-only", action="store_true",
-                        help=
-                        "Modify the bond comparison so that ring bonds only match ring bonds and chain "
-                        "bonds only match chain bonds. (Ring atoms can still match non-ring atoms.) ")
-
-    parser.add_argument("--complete-rings-only", action="store_true",
-                        help=
-                        "If a bond is a ring bond in the input structures and a bond is in the MCS "
-                        "then the bond must also be in a ring in the MCS. Selecting this option also "
-                        "enables --ring-matches-ring-only.")
+    parser.add_argument("--complete-rings-only", action="store_true", help=(
+                          "If a bond is a ring bond in the input structures and a bond " +
+                          "is in the MCS then the bond must also be in a ring in the MCS. " +
+                          "Selecting this option also enables --ring-matches-ring-only."))
 
     parser.add_argument("--select", type=parse_select, action="store",
-                        default="1-",
-                        help=
-                        "Select a subset of the input records to process. Example: 1-10,13,20,50- "
-                        "(Default: '1-', which selects all structures)")
+                        default="1-", help=(
+                          "Select a subset of the input records to process. " +
+                          "Example: 1-10,13,20,50- (Default: '1-', which selects all structures)"))
 
     parser.add_argument("--timeout", type=parse_timeout, metavar="SECONDS",
-                        default=Default.timeout,
-                        help=
-                        "Report the best solution after running for at most 'timeout' seconds. "
-                        "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString,))
+                        default=Default.timeout, help=(
+                          "Report the best solution after running for at most 'timeout' seconds. " +
+                          "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString,)))
 
     parser.add_argument("--output", "-o", metavar="FILENAME",
                         help="Write the results to FILENAME (Default: use stdout)")
 
-    parser.add_argument("--output-format", choices=["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
-                        default="smarts", help=
-                        "'smarts' writes the SMARTS pattern including the atom and bond criteria. "
-                        "'fragment-smiles' writes a matching fragment as a SMILES string. "
-                        "'fragment-sdf' writes a matching fragment as a SD file; see --save-atom-class for "
-                        "details on how atom class information is saved. "
-                        "'complete-sdf' writes the entire SD file with the fragment information stored in "
-                        "the tag specified by --save-fragment-indices-tag. (Default: smarts)")
+    parser.add_argument("--output-format", default="smarts",
+                        choices=["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
+                        help=(
+                          "'smarts' writes the SMARTS pattern including the atom and bond " +
+                          "criteria. 'fragment-smiles' writes a matching fragment as a " +
+                          "SMILES string. 'fragment-sdf' writes a matching fragment as a " +
+                          "SD file; see --save-atom-class for details on how atom class " +
+                          "information is saved. 'complete-sdf' writes the entire SD file " +
+                          "with the fragment information stored in the tag specified by " +
+                          "--save-fragment-indices-tag. (Default: smarts)"))
 
     parser.add_argument("--output-all", action="store_true",
-                        help=
-                        "By default the structure output formats only show an MCS for the first input structure. "
-                        "If this option is enabled then an MCS for all of the structures are shown.")
+                        help=(
+                          "By default the structure output formats only show an MCS for the " +
+                          "first input structure. If this option is enabled then an MCS " +
+                          "for all of the structures are shown."))
 
-    parser.add_argument("--save-atom-class-tag", metavar="TAG", help=
-                        "If atom classes are specified (via --class-tag) and the output format is 'fragment-sdf' "
-                        "then save the substructure atom classes to the tag TAG, in fragment atom order. By "
-                        "default this is the value of --atom-class-tag.")
+    parser.add_argument("--save-atom-class-tag", metavar="TAG",
+                        help=(
+                          "If atom classes are specified (via --class-tag) and the output " +
+                          "format is 'fragment-sdf' then save the substructure atom classes " +
+                          "to the tag TAG, in fragment atom order. By default this is the " +
+                          "value of --atom-class-tag."))
 
-    parser.add_argument("--save-counts-tag", metavar="TAG", help=
-                        "Save the fragment count, atom count, and bond count to the specified SD tag as "
-                        "space separated integers, like '1 9 8'. (The fragment count will not be larger than "
-                        "1 until fmcs supports disconnected MCSes.)")
+    parser.add_argument("--save-counts-tag", metavar="TAG",
+                        help=(
+                          "Save the fragment count, atom count, and bond count to the " +
+                          "specified SD tag as space separated integers, like '1 9 8'. " +
+                          "(The fragment count will not be larger than 1 until fmcs " +
+                          "supports disconnected MCSes.)"))
 
-    parser.add_argument("--save-atom-indices-tag", metavar="TAG", help=
-                        "If atom classes are specified and the output format is 'complete-sdf' "
-                        "then save the MCS fragment atom indices to the tag TAG, in MCS order. "
-                        "(Default: mcs-atom-indices)")
+    parser.add_argument("--save-atom-indices-tag", metavar="TAG",
+                        help=(
+                          "If atom classes are specified and the output format is " +
+                          "'complete-sdf' then save the MCS fragment atom indices " +
+                          "to the tag TAG, in MCS order. (Default: mcs-atom-indices)"))
 
-    parser.add_argument("--save-smarts-tag", metavar="TAG", help=
-                        "Save the MCS SMARTS to the specified SD tag. Uses '-' if there is no MCS")
+    parser.add_argument("--save-smarts-tag", metavar="TAG",
+                        help=(
+                          "Save the MCS SMARTS to the specified SD tag. " +
+                          "Uses '-' if there is no MCS"))
 
-    parser.add_argument("--save-smiles-tag", metavar="TAG", help=
-                        "Save the fragment SMILES to the specified SD tag. Uses '-' if there is no MCS")
-
+    parser.add_argument("--save-smiles-tag", metavar="TAG",
+                        help=(
+                          "Save the fragment SMILES to the specified SD tag. " +
+                          "Uses '-' if there is no MCS"))
 
     parser.add_argument("--times", action="store_true",
                         help="Print timing information to stderr")
@@ -2602,12 +2653,13 @@ def main(args=None):
 
     # RDKit uses special property names starting with "_"
     # It's dangerous to use some of them directly
-    for name in ("atom_class_tag", "save_atom_class_tag", "save_counts_tag", "save_atom_indices_tag",
-                 "save_smarts_tag", "save_smiles_tag"):
+    for name in ("atom_class_tag", "save_atom_class_tag", "save_counts_tag",
+                 "save_atom_indices_tag", "save_smarts_tag", "save_smiles_tag"):
         value = getattr(args, name)
         if value is not None:
             if value.startswith("_"):
-                parser.error("--%s value may not start with a '_': %r" % (name.replace("_", "-"), value))
+                msg = "--%s value may not start with a '_': %r"
+                parser.error(msg % (name.replace("_", "-"), value))
 
     # Set up some defaults depending on the output format
     atom_class_tag = args.atom_class_tag
@@ -2674,7 +2726,8 @@ def main(args=None):
                verboseDelay=1.0,
         )
 
-    msg_format = "Total time %(total).2f seconds: load %(load).2f fragment %(fragment).2f select %(select).2f enumerate %(enumerate).2f"
+    msg_format = ("Total time %(total).2f seconds: load %(load).2f fragment %(fragment).2f " +
+                  "select %(select).2f enumerate %(enumerate).2f")
     times["total"] = times["mcs"] + times["load"]
 
     if mcs and mcs.completed:

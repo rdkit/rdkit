@@ -53,7 +53,8 @@ class TestCase(unittest.TestCase):
   def testTorsionFingerprints(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
     refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1DWD_ligand.pdb')
-    ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+    ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)' +
+                             'c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     mol = Chem.MolFromPDBFile(refFile)
     mol = AllChem.AssignBondOrdersFromTemplate(ref, mol)
 
@@ -111,7 +112,8 @@ class TestCase(unittest.TestCase):
   def testTorsionFingerprintsAtomReordering(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
     refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1DWD_ligand.pdb')
-    ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
+    ref = Chem.MolFromSmiles(
+      'NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     mol1 = Chem.MolFromPDBFile(refFile)
     mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
 
@@ -125,13 +127,15 @@ class TestCase(unittest.TestCase):
   def testTorsionFingerprintsColinearBonds(self):
     # test that single bonds adjacent to triple bonds are ignored
     mol = Chem.MolFromSmiles('CCC#CCC')
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
+      mol, ignoreColinearBonds=True)
     self.assertEqual(len(tors_list), 0)
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=True)
     self.assertEqual(len(weights), 0)
 
     # test that they are not ignored, but alternative atoms searched for
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
+      mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 1)
     self.assertEqual(tors_list[0][0][0], (0, 1, 4, 5))
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=False)
@@ -139,9 +143,11 @@ class TestCase(unittest.TestCase):
 
     # test that single bonds adjacent to terminal triple bonds are always ignored
     mol = Chem.MolFromSmiles('C#CCC')
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
+      mol, ignoreColinearBonds=True)
     self.assertEqual(len(tors_list), 0)
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
+    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
+      mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 0)
 
 if __name__ == '__main__':

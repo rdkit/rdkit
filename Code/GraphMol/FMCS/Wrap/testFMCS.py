@@ -26,7 +26,9 @@ class TestCase(unittest.TestCase):
         mcs = rdFMCS.FindMCS(ms)
         self.assertEqual(mcs.numBonds, 21)
         self.assertEqual(mcs.numAtoms, 21)
-        self.assertEqual(mcs.smartsString, '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
+        self.assertEqual(mcs.smartsString,
+                         '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-' +
+                         '[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         for m in ms:
@@ -35,7 +37,9 @@ class TestCase(unittest.TestCase):
         mcs = rdFMCS.FindMCS(ms, threshold=0.8)
         self.assertEqual(mcs.numBonds, 21)
         self.assertEqual(mcs.numAtoms, 21)
-        self.assertEqual(mcs.smartsString, '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
+        self.assertEqual(mcs.smartsString,
+                         '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-' +
+                         '[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
         qm = Chem.MolFromSmarts(mcs.smartsString)
         self.failUnless(qm is not None)
         for m in ms:

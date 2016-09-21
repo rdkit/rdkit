@@ -62,7 +62,8 @@ class TestCase(unittest.TestCase):
             self.assertEqual(fcat.GetEntryBitId(id), id)
             self.assertEqual(fcat.GetEntryOrder(id), fcat.GetBitOrder(id))
             self.assertEqual(fcat.GetEntryDescription(id), fcat.GetBitDescription(id))
-            self.assertEqual(tuple(fcat.GetEntryFuncGroupIds(id)), tuple(fcat.GetBitFuncGroupIds(id)))
+            self.assertEqual(tuple(fcat.GetEntryFuncGroupIds(id)),
+                             tuple(fcat.GetBitFuncGroupIds(id)))
 
     def test3FPgenerator(self) :
         with open(self.smiName, 'r') as smiF:
@@ -80,7 +81,8 @@ class TestCase(unittest.TestCase):
         fpgen = FragmentCatalog.FragFPGenerator()
         obits = [3, 2, 3, 3, 2, 3, 5, 5, 5, 4, 5, 6]
         obls = [(0, 1, 2), (1, 3), (1, 4, 5), (1, 6, 7), (0, 8), (0, 6, 9), (0, 1, 2, 3, 10),
-                (0, 1, 2, 8, 11), (1, 3, 4, 5, 12), (1, 4, 5, 13), (1, 3, 6, 7, 14), (0, 1, 6, 7, 9, 15)]
+                (0, 1, 2, 8, 11), (1, 3, 4, 5, 12), (1, 4, 5, 13),
+                (1, 3, 6, 7, 14), (0, 1, 6, 7, 9, 15)]
         for i in range(len(smiles)):
             smi = smiles[i]
             mol = Chem.MolFromSmiles(smi)

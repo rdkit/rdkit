@@ -18,7 +18,8 @@ try:
   import pythoncom
   from win32com.client import gencache, Dispatch, constants
   import win32com.client.gencache
-  cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7, 0)
+  cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}",
+                                                    0, 7, 0)
 except Exception:
   cdxModule = None
   _cdxVersion = 0

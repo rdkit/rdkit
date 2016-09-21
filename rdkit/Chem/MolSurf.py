@@ -219,23 +219,24 @@ PEOE_VSA_ = rdMolDescriptors.PEOE_VSA_
 # install the various VSA descriptors in the namespace
 def _InstallDescriptors():
   for i in range(len(mrBins)):
-    fn = lambda x, y = i:SMR_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: SMR_VSA_(x, force=0)[y]
     if i > 0:
-      fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, mrBins[i - 1], mrBins[i])
+      fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1,
+                                                                        mrBins[i - 1], mrBins[i])
     else:
       fn.__doc__ = "MOE MR VSA Descriptor %d (-inf < x < % 4.2f)" % (i + 1, mrBins[i])
     name = "SMR_VSA%d" % (i + 1)
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y = i:SMR_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: SMR_VSA_(x, force=0)[y]
   fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, mrBins[i - 1])
   fn.version = "1.0.1"
   name = "SMR_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(logpBins)):
-    fn = lambda x, y = i:SlogP_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: SlogP_VSA_(x, force=0)[y]
     if i > 0:
       fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, logpBins[i - 1],
                                                                       logpBins[i])
@@ -245,14 +246,14 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y = i:SlogP_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: SlogP_VSA_(x, force=0)[y]
   fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, logpBins[i - 1])
   fn.version = "1.0.1"
   name = "SlogP_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(chgBins)):
-    fn = lambda x, y = i:PEOE_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: PEOE_VSA_(x, force=0)[y]
     if i > 0:
       fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, chgBins[i - 1],
                                                                         chgBins[i])
@@ -262,7 +263,7 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y = i:PEOE_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: PEOE_VSA_(x, force=0)[y]
   fn.version = "1.0.1"
   fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, chgBins[i - 1])
   name = "PEOE_VSA%d" % (i + 1)
@@ -394,7 +395,8 @@ def _pyTPSAContribs(mol, verbose=False):
           tmp = 28.5 - numNeighbors * 8.6 + nHs * 1.5
           if tmp < 0.0: tmp = 0.0
       if verbose:
-        print('\t', atom.GetIdx(), atom.GetSymbol(), atNum, nHs, nSing, nDoub, nTrip, nArom, chg, tmp)
+        print('\t', atom.GetIdx(), atom.GetSymbol(), atNum, nHs, nSing, nDoub, nTrip, nArom,
+              chg, tmp)
 
       res[atom.GetIdx()] = tmp
   return res

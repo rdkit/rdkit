@@ -107,7 +107,8 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   minCount = sigFactory.minPointCount
   maxCount = sigFactory.maxPointCount
   if maxCount > 3:
-    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\nSetting maxCount to 3.')
+    logger.warning(' Pharmacophores with more than 3 points are not currently supported.' +
+                   '\nSetting maxCount to 3.')
     maxCount = 3
 
   # generate the molecule's distance matrix, if required

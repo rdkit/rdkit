@@ -274,7 +274,8 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3,
         else:
           j += 1
       res.append(ptP)
-      # print '% 3d'%i,'% 5.2f % 5.2f % 5.2f'%tuple(list(ptI.location)),' - ','% 5.2f % 5.2f % 5.2f'%tuple(list(ptJ.location))
+      # print('% 3d'%i,'% 5.2f % 5.2f % 5.2f'%tuple(list(ptI.location)),
+      #       ' - ','% 5.2f % 5.2f % 5.2f'%tuple(list(ptJ.location)))
     i += 1
   return res
 

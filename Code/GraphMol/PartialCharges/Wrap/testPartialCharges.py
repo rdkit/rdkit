@@ -17,10 +17,13 @@ class TestCase(unittest.TestCase):
         pass
 
     def test0HalgrenSet(self) :
-        smiSup = Chem.SmilesMolSupplier(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'Wrap', 'test_data', 'halgren.smi'), delimiter='\t')
+        smiSup = Chem.SmilesMolSupplier(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
+                                                     'PartialCharges', 'Wrap', 'test_data',
+                                                     'halgren.smi'), delimiter='\t')
 
         # parse the original file
-        with open(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'Wrap', 'test_data', 'halgren_out.txt'),
+        with open(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'Wrap',
+                               'test_data', 'halgren_out.txt'),
                   'r') as infil:
             lines = infil.readlines()
 
@@ -46,12 +49,14 @@ class TestCase(unittest.TestCase):
           i += 1
 
     def test1PPDataset(self):
-        fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'Wrap', 'test_data', 'PP_descrs_regress.2.csv')
+        fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges',
+                             'Wrap', 'test_data', 'PP_descrs_regress.2.csv')
         infil = open(fileN, 'r')
         lines = infil.readlines()
         infil.close()
 
-        infile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'Wrap', 'test_data', 'PP_combi_charges.pkl')
+        infile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges',
+                              'Wrap', 'test_data', 'PP_combi_charges.pkl')
         with open(infile, 'r') as cchtFile:
             buf = cchtFile.read().replace('\r\n', '\n').encode('utf-8')
             cchtFile.close()

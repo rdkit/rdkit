@@ -321,7 +321,8 @@ class PILCanvas(Canvas):
     if color == transparent: return
 
     # draw into an offscreen Image
-    # tmpsize was originally 1.2* stringWidth, added code to give enough room for single character strings (piddle bug#121995)
+    # tmpsize was originally 1.2* stringWidth, added code to give enough room
+    # for single character strings (piddle bug#121995)
     sHeight = (self.fontAscent(font) + self.fontDescent(font))
     sWidth = self.stringWidth(s, font)
     tempsize = max(sWidth * 1.2, sHeight * 2.0)

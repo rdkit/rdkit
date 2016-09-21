@@ -69,7 +69,8 @@ class NaiveBayesClassifier :
     # to a numpy array instead of a dictionary. The three dimension array is indexed
     # on the the activity class, the discriptor ID and the descriptor binID
     # self._condProbs = {}
-    # self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1, max(self._nPosVals)+1), 'd')
+    # self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1,
+    #                                max(self._nPosVals)+1), 'd')
     self._condProbs = [None] * self._nClasses
     for i in range(self._nClasses):
       if not (hasattr(self, '_useSigs') and self._useSigs):

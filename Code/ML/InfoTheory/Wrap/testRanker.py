@@ -146,8 +146,9 @@ class TestCase(unittest.TestCase):
             res = None
         self.assertTrue(res is not None)
 
-    def test4Issue237(self) :
-        with open(os.path.join(RDConfig.RDBaseDir, 'Code', 'ML', 'InfoTheory', 'Wrap', 'testData', 'Issue237.pkl'), 'r') as inTF:
+    def test4Issue237(self):
+        with open(os.path.join(RDConfig.RDBaseDir, 'Code', 'ML', 'InfoTheory', 'Wrap',
+                               'testData', 'Issue237.pkl'), 'r') as inTF:
             buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
             inTF.close()
         with io.BytesIO(buf) as inF:

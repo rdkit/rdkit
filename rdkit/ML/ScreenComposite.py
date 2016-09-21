@@ -547,7 +547,8 @@ def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, sc
     if verbose:
       print('Misclassifications: %d (%%%4.2f)' % (misCount, 100.*float(misCount) / nCounted))
       print('N Skipped: %d (%%%4.2f)' % (nSkipped, 100.*float(nSkipped) / nData))
-      print('\tGood Votes Skipped: %d (%%%4.2f)' % (goodSkipped, 100.*float(goodSkipped) / nSkipped))
+      print('\tGood Votes Skipped: %d (%%%4.2f)' % (goodSkipped,
+                                                    100.*float(goodSkipped) / nSkipped))
       print('\tBad Votes Skipped: %d (%%%4.2f)' % (badSkipped, 100.*float(badSkipped) / nSkipped))
   else:
     if verbose:
@@ -988,17 +989,20 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
     else:
       pctErr = 0.0
 
-    outTxt.append('<p>%d of %d examples were misclassified (%%%4.2f)' % (nBad, nGood + nBad, pctErr))
+    outTxt.append('<p>%d of %d examples were misclassified (%%%4.2f)' % (nBad, nGood + nBad,
+                                                                         pctErr))
     if nRej > 0:
       pctErr = 100.*float(nBad) / (nGood + nBad + nRej)
       outTxt.append('<p>                %d of %d overall: (%%%4.2f)' % (nBad, nTotal, pctErr))
       pctRej = 100.*float(nRej) / nTotal
       outTxt.append('<p>%d of %d examples were rejected (%%%4.2f)' % (nRej, nTotal, pctRej))
     if nGood != 0:
-      outTxt.append('<p>The correctly classified examples had an average confidence of %6.4f' % avgGood)
+      fmt = '<p>The correctly classified examples had an average confidence of %6.4f'
+      outTxt.append(fmt % avgGood)
 
     if nBad != 0:
-      outTxt.append('<p>The incorrectly classified examples had an average confidence of %6.4f' % avgBad)
+      fmt = '<p>The incorrectly classified examples had an average confidence of %6.4f'
+      outTxt.append(fmt % avgBad)
     if nRej != 0:
       outTxt.append('<p>The rejected examples had an average confidence of %6.4f' % avgSkip)
   else:
@@ -1006,28 +1010,30 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
     nClass = nBad[0] + nGood[0]
     devClass = nBad[1] + nGood[1]
     if nClass:
-      pctErr = 100.*float(nBad[0]) / nClass
-      devPctErr = 100.*float(nBad[1]) / nClass
+      pctErr = 100.0 * float(nBad[0]) / nClass
+      devPctErr = 100.0 * float(nBad[1]) / nClass
     else:
       pctErr = 0.0
       devPctErr = 0.0
 
-    outTxt.append('<p>%.2f(%.2f) of %.2f(%.2f) examples were misclassified (%%%4.2f(%4.2f))' % \
+    outTxt.append('<p>%.2f(%.2f) of %.2f(%.2f) examples were misclassified (%%%4.2f(%4.2f))' %
                   (nBad[0], nBad[1], nClass, devClass, pctErr, devPctErr))
     if nRej > 0:
-      pctErr = 100.*float(nBad[0]) / nTotal
-      devPctErr = 100.*float(nBad[1]) / nTotal
-      outTxt.append('<p>                %.2f(%.2f) of %d overall: (%%%4.2f(%4.2f))' % \
+      pctErr = 100.0 * float(nBad[0]) / nTotal
+      devPctErr = 100.0 * float(nBad[1]) / nTotal
+      outTxt.append('<p>                %.2f(%.2f) of %d overall: (%%%4.2f(%4.2f))' %
                     (nBad[0], nBad[1], nTotal, pctErr, devPctErr))
-      pctRej = 100.*float(nRej[0]) / nTotal
-      devPctRej = 100.*float(nRej[1]) / nTotal
-      outTxt.append('<p>%.2f(%.2f) of %d examples were rejected (%%%4.2f(%4.2f))' % \
+      pctRej = 100.0 * float(nRej[0]) / nTotal
+      devPctRej = 100.0 * float(nRej[1]) / nTotal
+      outTxt.append('<p>%.2f(%.2f) of %d examples were rejected (%%%4.2f(%4.2f))' %
                     (nRej[0], nRej[1], nTotal, pctRej, devPctRej))
     if nGood != 0:
-      outTxt.append('<p>The correctly classified examples had an average confidence of %6.4f(%.4f)' % avgGood)
+      fmt = '<p>The correctly classified examples had an average confidence of %6.4f(%.4f)'
+      outTxt.append(fmt % avgGood)
 
     if nBad != 0:
-      outTxt.append('<p>The incorrectly classified examples had an average confidence of %6.4f(%.4f)' % avgBad)
+      fmt = '<p>The incorrectly classified examples had an average confidence of %6.4f(%.4f)'
+      outTxt.append(fmt % avgBad)
     if nRej != 0:
       outTxt.append('<p>The rejected examples had an average confidence of %6.4f(%.4f)' % avgSkip)
 
@@ -1510,20 +1516,17 @@ if __name__ == '__main__':
 
         nClassified = avgNGood + avgNBad
         nExamples = nClassified + avgNSkip
-        print('Misclassifications: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d' % (100 * avgNBad / nExamples,
-                                                                         100 * devNBad / nExamples,
-                                                                          avgNBad, devNBad,
-                                                                          nExamples))
+        print('Misclassifications: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d' %
+              (100 * avgNBad / nExamples, 100 * devNBad / nExamples,
+               avgNBad, devNBad, nExamples))
         if avgNSkip > 0:
-          print('\tthreshold: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d' % (100 * avgNBad / nClassified,
-                                                                               100 * devNBad / nClassified,
-                                                                               avgNBad, devNBad,
-                                                                               nClassified))
+          print('\tthreshold: \t%%%5.2f(%%%5.2f)   %4.1f(%4.1f) / %d' %
+                (100 * avgNBad / nClassified, 100 * devNBad / nClassified,
+                 avgNBad, devNBad, nClassified))
           print()
-          print('Number Skipped: %%%4.2f(%%%4.2f)    %4.2f(%4.2f)' % (100 * avgNSkip / nExamples,
-                                                                    100 * devNSkip / nExamples,
-                                                                    avgNSkip, devNSkip))
-
+          print('Number Skipped: %%%4.2f(%%%4.2f)    %4.2f(%4.2f)' %
+                (100 * avgNSkip / nExamples, 100 * devNSkip / nExamples,
+                 avgNSkip, devNSkip))
 
         print()
         print('Confidences:')

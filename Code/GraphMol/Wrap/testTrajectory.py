@@ -408,7 +408,8 @@ class TestCase(unittest.TestCase):
       maxIts = 1000
       gradTol = 0.01
       rdbase = os.environ['RDBASE']
-      fName = os.path.join(rdbase, 'Code', 'GraphMol', 'Wrap', 'test_data', 'bilastine_trajectory.sdf')
+      fName = os.path.join(rdbase, 'Code', 'GraphMol', 'Wrap', 'test_data', 
+                           'bilastine_trajectory.sdf')
       w = Chem.SDWriter(fName)
       field = ChemicalForceFields.MMFFGetMoleculeForceField(mol,
         ChemicalForceFields.MMFFGetMoleculeProperties(mol))

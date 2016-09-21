@@ -140,7 +140,9 @@ class TestCase(unittest.TestCase):
         pvi /= numpy.sqrt(numpy.dot(pvi, pvi))
         pvj = pts[j]
         pvj /= numpy.sqrt(numpy.dot(pvj, pvj))
-        assert feq(numpy.dot(vi, vj), numpy.dot(pvi, pvj)), 'bad dot: %4.4f %4.4f' % (numpy.dot(vi, vj), numpy.dot(pvi, pvj))
+        assert feq(numpy.dot(vi, vj), numpy.dot(pvi, pvj)), ('bad dot: %4.4f %4.4f' %
+                                                             (numpy.dot(vi, vj),
+                                                              numpy.dot(pvi, pvj)))
 
 if __name__ == '__main__':
   unittest.main()

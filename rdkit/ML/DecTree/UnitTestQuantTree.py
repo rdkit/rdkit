@@ -165,18 +165,19 @@ class TestCase(unittest.TestCase):
   def test6Bug29_2(self):
     """ a more extensive test of the cmp stuff using pickled trees"""
     import os
-    with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'CmpTree1.pkl'), 'r') as t1TFile:
+    with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree',
+                           'test_data', 'CmpTree1.pkl'), 'r') as t1TFile:
       buf = t1TFile.read().replace('\r\n', '\n').encode('utf-8')
       t1TFile.close()
     with io.BytesIO(buf) as t1File:
       t1 = cPickle.load(t1File)
-    with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'CmpTree2.pkl'), 'r') as t2TFile:
+    with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree',
+                           'test_data', 'CmpTree2.pkl'), 'r') as t2TFile:
       buf = t2TFile.read().replace('\r\n', '\n').encode('utf-8')
       t2TFile.close()
     with io.BytesIO(buf) as t2File:
       t2 = cPickle.load(t2File)
     assert cmp(t1, t2), 'equality failed'
-
 
   def test7Recycle(self):
     """ try recycling descriptors """

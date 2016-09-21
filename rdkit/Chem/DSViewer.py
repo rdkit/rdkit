@@ -187,7 +187,8 @@ class MolViewer(object):
     elif self.displayables.has_key(whichSelection.lower()):
       whichSelection = whichSelection.lower()
       whichSelection = self.displayables[whichSelection].id
-      d = str(self.doc.DoCommand('GetPropertyValue molecule RD_Visual=%d; atom select=true: id=?' % whichSelection))
+      d = str(self.doc.DoCommand(('GetPropertyValue molecule RD_Visual=%d; '+
+                                  'atom select=true: id=?') % whichSelection))
       molIds = [whichSelection] * (d.count(',') + 1)
     else:
       d = None

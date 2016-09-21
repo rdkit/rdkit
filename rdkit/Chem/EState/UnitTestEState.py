@@ -80,7 +80,8 @@ class TestCase(unittest.TestCase):
     data = [
       ('CC(N)C(=O)O', [1.42, -0.73, 4.84, -0.96, 9.57, 7.86]),
       ('CCOCC', [1.99, 0.84, 4.83, 0.84, 1.99]),
-      ('CCSCC', [2.17, 1.26, 1.96, 1.26, 2.17]),  # NOTE: this does not match the values in the paper
+      # NOTE: this does not match the values in the paper
+      ('CCSCC', [2.17, 1.26, 1.96, 1.26, 2.17]),
       ('CC(=O)OC', [1.36, -0.24, 9.59, 4.11, 1.35]),
       ('CC(=S)OC', [1.73, 0.59, 4.47, 4.48, 1.56]),
       ]

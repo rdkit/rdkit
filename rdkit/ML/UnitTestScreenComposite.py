@@ -43,7 +43,8 @@ class TestCase(unittest.TestCase):
     tgt = 5
     self.assertEqual(len(compos), tgt)
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = \
+      ScreenComposite.ScreenFromDetails(compos, self.details)
     self.assertEqual(nGood, 93)
     self.assertEqual(misCount, 2)
     self.assertEqual(nSkipped, 0)
@@ -68,7 +69,8 @@ class TestCase(unittest.TestCase):
     tgt = 5
     self.assertEqual(len(compos), tgt)
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 28)
     self.assertEqual(misCount, 1)
     self.assertEqual(nSkipped, 0)
@@ -93,7 +95,8 @@ class TestCase(unittest.TestCase):
     tgt = 5
     self.assertEqual(len(compos), tgt, 'bad composite loaded: %d != %d' % (len(compos), tgt))
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 65)
     self.assertEqual(misCount, 1)
     self.assertEqual(nSkipped, 0)
@@ -119,7 +122,8 @@ class TestCase(unittest.TestCase):
     tgt = 5
     self.assertEqual(len(compos), tgt)
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 91)
     self.assertEqual(misCount, 1)
     self.assertEqual(nSkipped, 3)
@@ -195,7 +199,8 @@ class TestCase(unittest.TestCase):
     tgt = 10
     self.assertEqual(len(compos), tgt)
     self.details.shuffleActivities = 1
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 50)
     self.assertEqual(misCount, 53)
     self.assertEqual(nSkipped, 0)
@@ -219,7 +224,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(compos), tgt)
     self.details.shuffleActivities = 1
     self.details.doHoldout = 1
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 19)
     self.assertEqual(misCount, 12)
     self.assertEqual(nSkipped, 0)
@@ -243,7 +249,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(compos), tgt)
     self.details.shuffleActivities = 1
     self.details.doTraining = 1
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 31)
     self.assertEqual(misCount, 41)
     self.assertEqual(nSkipped, 0)
@@ -268,7 +275,8 @@ class TestCase(unittest.TestCase):
     self.details.filterVal = 1
     self.details.filterFrac = .33
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood, 90)
     self.assertEqual(misCount, 13)
     self.assertEqual(nSkipped, 0)
@@ -294,7 +302,8 @@ class TestCase(unittest.TestCase):
     self.details.filterVal = 1
     self.details.filterFrac = .33
 
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
 
     self.assertEqual(nGood, 37)
     self.assertEqual(misCount, 6)
@@ -318,7 +327,8 @@ class TestCase(unittest.TestCase):
     tgt = 10
     self.assertEqual(len(compos), tgt)
     self.details.doHoldout = 1
-    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(compos, self.details)
+    nGood, misCount, nSkipped, avgGood, avgBad, avgSkip, tbl = ScreenComposite.ScreenFromDetails(
+      compos, self.details)
     self.assertEqual(nGood , 25)
     self.assertEqual(misCount , 6)
     self.assertEqual(nSkipped , 0)

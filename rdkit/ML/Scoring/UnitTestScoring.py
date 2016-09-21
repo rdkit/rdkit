@@ -70,7 +70,8 @@ class TestCase(unittest.TestCase):
         enrich = Scoring.CalcEnrichment(self.scoreWorstCase, self.index, self.fractions)
         self.assertAlmostEqual(enrich[0], 0.0, self.acc)
         # empty list
-        self.assertRaises(ValueError, Scoring.CalcEnrichment, self.scoreEmptyList, self.index, self.fractions)
+        self.assertRaises(ValueError, Scoring.CalcEnrichment,
+                          self.scoreEmptyList, self.index, self.fractions)
         # all actives
         enrich = Scoring.CalcEnrichment(self.scoreAllActives, self.index, self.fractions)
         self.assertAlmostEqual(enrich[0], 1.0, self.acc)
@@ -86,9 +87,11 @@ class TestCase(unittest.TestCase):
         enrich = Scoring.CalcEnrichment(self.scoreBestCase, self.index, [0.0])
         self.assertAlmostEqual(enrich[0], float(self.numActives), self.acc)
         # fraction < 0
-        self.assertRaises(ValueError, Scoring.CalcEnrichment, self.scoreBestCase, self.index, [-0.05])
+        self.assertRaises(ValueError, Scoring.CalcEnrichment,
+                          self.scoreBestCase, self.index, [-0.05])
         # fraction > 1
-        self.assertRaises(ValueError, Scoring.CalcEnrichment, self.scoreBestCase, self.index, [1.5])
+        self.assertRaises(ValueError, Scoring.CalcEnrichment,
+                          self.scoreBestCase, self.index, [1.5])
 
     def test2(self):
         """ test RIE """
@@ -135,7 +138,8 @@ class TestCase(unittest.TestCase):
         bedroc = Scoring.CalcBEDROC(self.scoreWorstCase, self.index, self.alpha)
         self.assertAlmostEqual(bedroc, 0.0, self.acc)
         # empty list
-        self.assertRaises(ValueError, Scoring.CalcBEDROC, self.scoreEmptyList, self.index, self.alpha)
+        self.assertRaises(ValueError, Scoring.CalcBEDROC,
+                          self.scoreEmptyList, self.index, self.alpha)
         # alpha == 0.0
         self.assertRaises(ValueError, Scoring.CalcBEDROC, self.scoreBestCase, self.index, 0.0)
         # all actives

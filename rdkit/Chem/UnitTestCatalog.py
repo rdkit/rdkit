@@ -35,7 +35,8 @@ class TestCase(unittest.TestCase):
                      ]
     self.list2Acts = [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]
     self.list2Obls = [(0, 1, 2), (1, 3), (1, 4, 5), (1, 6, 7), (0, 8), (0, 6, 9), (0, 1, 2, 3, 10),
-                      (0, 1, 2, 8, 11), (1, 3, 4, 5, 12), (1, 4, 5, 13), (1, 3, 6, 7, 14), (0, 1, 6, 7, 9, 15)]
+                      (0, 1, 2, 8, 11), (1, 3, 4, 5, 12), (1, 4, 5, 13),
+                      (1, 3, 6, 7, 14), (0, 1, 6, 7, 9, 15)]
 
     ffile = os.path.join(RDConfig.RDDataDir, 'FunctionalGroups.txt')
     self.catParams = FragmentCatalog.FragCatParams(1, 6, ffile)

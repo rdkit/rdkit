@@ -122,7 +122,8 @@ def BuildFuncGroupHierarchy(fileNm=None, data=None, force=False):
     if len(splitL) > 3:
       rxnSmarts = splitL[3]
 
-    node = FGHierarchyNode(name, patt, smarts=smarts, label=label, parent=parent, rxnSmarts=rxnSmarts)
+    node = FGHierarchyNode(name, patt, smarts=smarts, label=label, parent=parent,
+                           rxnSmarts=rxnSmarts)
     if parent:
       parent.children.append(node)
     else:

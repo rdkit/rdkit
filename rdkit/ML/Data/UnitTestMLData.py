@@ -89,7 +89,8 @@ class TestCase(unittest.TestCase):
   def testGeneralPickle(self):
     " testing DataSet pickling"
     self.setUpGeneralLoad()
-    DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl', self.d)
+    DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl',
+                               self.d)
     with open(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl', 'rb') as f:
       vNames = cPickle.load(f)
       qBounds = cPickle.load(f)

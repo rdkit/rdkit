@@ -10,7 +10,8 @@ import os, sys, copy
 import unittest
 import math
 from rdkit import Chem
-from rdkit.Chem import rdMolAlign, rdMolTransforms, rdMolDescriptors, rdDistGeom, ChemicalForceFields
+from rdkit.Chem import rdMolAlign, rdMolTransforms, rdMolDescriptors, rdDistGeom
+from rdkit.Chem import ChemicalForceFields
 
 def lstFeq(l1, l2, tol=1.e-4):
   if (len(list(l1)) != len(list(l2))):
@@ -115,7 +116,8 @@ class TestCase(unittest.TestCase):
       # make sure something sensible happens if we provide a stupid
       # argument:
       rmsvals = 4
-      self.assertRaises(AttributeError, rdMolAlign.AlignMolConformers, mol, atomIds=aids, RMSlist=rmsvals)
+      self.assertRaises(AttributeError,
+                        rdMolAlign.AlignMolConformers, mol, atomIds=aids, RMSlist=rmsvals)
 
     def test5MMFFO3A(self):
       sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
@@ -366,7 +368,8 @@ class TestCase(unittest.TestCase):
         O3A code generating incorrect results for multiconformer molecules
       """
       def _multiConfFromSmiles(smiles, nConfs=10, maxIters=500):
-          """Adds hydrogens to molecule and optimises a chosen number of conformers.  Returns the optimised RDKit mol."""
+          """Adds hydrogens to molecule and optimises a chosen number of conformers.
+          Returns the optimised RDKit mol."""
           idea = Chem.MolFromSmiles(smiles)
           idea = Chem.AddHs(idea)
           confs = rdDistGeom.EmbedMultipleConfs(idea, nConfs)
@@ -375,7 +378,8 @@ class TestCase(unittest.TestCase):
               opt = ChemicalForceFields.MMFFOptimizeMolecule(idea, confId=conf, maxIters=maxIters)
           return idea
       def _confsToAlignedMolsList(multiConfMol):
-          """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a list of RDKit mols."""
+          """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a
+          list of RDKit mols."""
           rdMolAlign.AlignMolConformers(multiConfMol)
           ms = []
           cids = [x.GetId() for x in multiConfMol.GetConformers()]
@@ -456,7 +460,8 @@ class TestCase(unittest.TestCase):
 
       for i, m in enumerate(bzr_ms):
         # prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(m)
-        algs = rdMolAlign.GetO3AForProbeConfs(m, bzr_ms_o[0], numThreads=4  # ,prbPyMMFFMolProperties=prbParams,
+        algs = rdMolAlign.GetO3AForProbeConfs(m, bzr_ms_o[0], numThreads=4
+                                              # ,prbPyMMFFMolProperties=prbParams,
                                               # refPyMMFFMolProperties=refParams
                                               )
         self.failUnlessEqual(len(algs), nConfs)

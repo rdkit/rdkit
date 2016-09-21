@@ -65,7 +65,8 @@ def PackageToXml(pkg, summary="N/A", trainingDataId='N/A',
   summ.text = summary
   calc = pkg.GetCalculator()
   descrs = SubElement(head, "ModelDescriptors")
-  for name, summary, func in zip(calc.GetDescriptorNames(), calc.GetDescriptorSummaries(), calc.GetDescriptorFuncs()):
+  for name, summary, func in zip(calc.GetDescriptorNames(), calc.GetDescriptorSummaries(),
+                                 calc.GetDescriptorFuncs()):
     descr = SubElement(descrs, "Descriptor")
     elem = SubElement(descr, "DescriptorName")
     elem.text = name

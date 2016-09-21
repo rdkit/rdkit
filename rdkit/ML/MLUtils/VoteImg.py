@@ -4,7 +4,8 @@
 #  Copyright (C) 2000  greg Landrum
 #
 
-""" functionality for generating an image showing the results of a composite model voting on a data set
+""" functionality for generating an image showing the results of a composite model
+  voting on a data set
 
   Uses *Numeric* and *PIL*
 
@@ -12,6 +13,7 @@
 from __future__ import print_function
 import numpy
 from PIL import Image, ImageDraw
+
 
 def CollectVotes(composite, data, badOnly):
   """ collects the votes from _composite_ for the examples in _data_
@@ -104,7 +106,8 @@ def BuildVoteImage(nModels, data, values, trueValues=[],
   maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
   datab = data.astype('B')
-  img = getattr(Image, 'frombytes', Image.fromstring)('L', (nModels, nData), getattr(datab, 'tobytes', datab.tostring)())
+  img = getattr(Image, 'frombytes', Image.fromstring)('L', (nModels, nData),
+                                                      getattr(datab, 'tobytes', datab.tostring)())
 
   if addLine:
     img = img.convert('RGB')

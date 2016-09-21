@@ -121,11 +121,11 @@ class Canvas(CanvasBase):
     elif self.image is not None:
       # on linux at least it seems like the PIL images are BGRA, not RGBA:
       if hasattr(self.surface, 'get_data'):
-        getattr(self.image, 'frombytes', self.image.fromstring)(bytes(self.surface.get_data()),
-                                                              "raw", "BGRA", 0, 1)
+        getattr(self.image, 'frombytes', self.image.fromstring)(
+          bytes(self.surface.get_data()), "raw", "BGRA", 0, 1)
       else:
-        getattr(self.image, 'frombytes', self.image.fromstring)(bytes(self.surface.get_data_as_rgba()),
-                                                              "raw", "RGBA", 0, 1)
+        getattr(self.image, 'frombytes', self.image.fromstring)(
+          bytes(self.surface.get_data_as_rgba()), "raw", "RGBA", 0, 1)
       self.surface.finish()
     elif self.imageType == "png":
       if hasattr(self.surface, 'get_data'):

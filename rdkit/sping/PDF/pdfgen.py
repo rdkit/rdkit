@@ -640,7 +640,8 @@ class Canvas:
             imagedata.append('BI')  # begin image
 
             # this describes what is in the image itself
-            imagedata.append('/W %0.4f /H %0.4f /BPC 8 /CS /RGB /F [/A85 /Fl]' % (imgwidth, imgheight))
+            imagedata.append('/W %0.4f /H %0.4f /BPC 8 /CS /RGB /F [/A85 /Fl]' %
+                             (imgwidth, imgheight))
             imagedata.append('ID')
 
             # use a flate filter and Ascii Base 85 to compress
@@ -921,9 +922,11 @@ class PDFTextObject:
         # flip "y" coordinate for top down coordinate system -cwl
         # (1  0)   (a  b)      ( a   b)
         # (0 -1)   (c  d)   =  (-c  -d)
-        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' % (a, b, -c, -d, e, f))  # top down
+        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' %
+                          (a, b, -c, -d, e, f))  # top down
 
-        # self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' % (a, b, c, d, e, f)) #bottom up
+        # self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' %
+        #                   (a, b, c, d, e, f)) #bottom up
         # we only measure coords relative to present text matrix
         self._x = e
         self._y = f

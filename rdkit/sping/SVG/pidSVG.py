@@ -100,7 +100,8 @@ class SVGCanvas(Canvas):
     self._txt += """<svg:svg version="1.1" baseProfile="full"
         xmlns:svg="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xml:space="preserve" width="%dpx" height="%dpx" %s>\n""" % (self.size[0], self.size[1], extraHeaderText)
+        xml:space="preserve" width="%dpx" height="%dpx" %s>\n""" % (self.size[0], self.size[1], 
+                                                                    extraHeaderText)
 
   def _findExternalFontName(self, font):  # copied from piddlePDF by cwl- hack away!
         """Attempts to return proper font name.
@@ -700,7 +701,8 @@ def dashtest():
 
   canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4, dash=(3, 3))
 
-  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4, dash=(3, 3))
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4,
+                 dash=(3, 3))
 
   canvas.defaultLineWidth = 4
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon, dash=(3, 3))

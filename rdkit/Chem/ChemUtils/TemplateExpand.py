@@ -68,8 +68,8 @@ Usage: TemplateExpand [options] template <sidechains>
                          the input files) will be combined to form a name for each
                          product molecule.
 
-   --3D :                Generate 3d coordinates for the product molecules instead of 2d coordinates,
-                         requires the --moltemplate option
+   --3D :                Generate 3d coordinates for the product molecules instead of
+                         2d coordinates, requires the --moltemplate option
 
    --tether :            refine the 3d conformations using a tethered minimization
 
@@ -206,7 +206,8 @@ def ConstructSidechains(suppl, sma=None, replace=True, useAll=False):
       continue
     if patt:
       if not mol.HasSubstructMatch(patt):
-        logger.warning('The substructure pattern did not match sidechain %d. This may result in errors.' % (idx + 1))
+        fmt = 'The substructure pattern did not match sidechain %d. This may result in errors.'
+        logger.warning(fmt % (idx + 1))
       if replace:
         tmp = list(Chem.ReplaceSubstructs(mol, patt, replacement))
         if not useAll: tmp = [tmp[0]]
@@ -315,7 +316,8 @@ if __name__ == '__main__':
     if not molTemplate:
       raise ValueError('the --3D option is only useable in combination with --moltemplate')
     if redrawTemplate:
-      logger.warning('--redrawTemplate does not make sense in combination with --molTemplate. removing it')
+      logger.warning('--redrawTemplate does not make sense in combination with ' +
+                     '--molTemplate. removing it')
       redrawTemplate = False
 
 
@@ -366,7 +368,8 @@ if __name__ == '__main__':
     for i, template in enumerate(templates):
       for j, (patt, replace) in enumerate(templateSmarts):
         if not template.HasSubstructMatch(patt):
-          logger.error('template %d did not match sidechain pattern %d, skipping it' % (i + 1, j + 1))
+          logger.error('template %d did not match sidechain pattern %d, skipping it' % (i + 1,
+                                                                                        j + 1))
           template = None
           break
         template = Chem.ReplaceSubstructs(template, patt, replace)[0]

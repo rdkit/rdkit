@@ -68,45 +68,63 @@ class TestCase(unittest.TestCase):
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
-    for w, r in zip(weights, refWeights): self.assertEqual(w, r)
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
+    for w, r in zip(weights, refWeights):
+      self.assertEqual(w, r)
 
-    fig, maxWeight = sm.GetSimilarityMapForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
+    fig, maxWeight = sm.GetSimilarityMapForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
     self.assertEqual(maxWeight, 0.5)
 
     weights, maxWeight = sm.GetStandardizedWeights(weights)
     self.assertEqual(maxWeight, 0.5)
     refWeights = [1.0, 1.0, 1.0, -1.0, 1.0, 1.0]
-    for w, r in zip(weights, refWeights): self.assertEqual(w, r)
+    for w, r in zip(weights, refWeights):
+      self.assertEqual(w, r)
 
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='count'))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='count'))
     self.assertTrue(weights[3] < 0)
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv',
+                                                                 useFeatures=True))
     self.assertTrue(weights[3] < 0)
 
     # hashed AP BV
     refWeights = [0.09523, 0.17366, 0.17366, -0.23809, 0.17366, 0.17366]
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='bv', nBits=1024))
-    for w, r in zip(weights, refWeights): self.assertAlmostEqual(w, r, 4)
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2,
+      lambda m, i: sm.GetAPFingerprint(m, i, fpType='bv', nBits=1024))
+    for w, r in zip(weights, refWeights):
+      self.assertAlmostEqual(w, r, 4)
 
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='normal'))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='normal'))
     self.assertTrue(weights[3] < 0)
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='hashed'))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='hashed'))
     self.assertTrue(weights[3] < 0)
 
     # hashed TT BV
     refWeights = [0.5, 0.5, -0.16666, -0.5, -0.16666, 0.5]
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
-    for w, r in zip(weights, refWeights): self.assertAlmostEqual(w, r, 4)
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2,
+      lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
+    for w, r in zip(weights, refWeights):
+      self.assertAlmostEqual(w, r, 4)
 
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='normal'))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='normal'))
     self.assertTrue(weights[3] < 0)
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='hashed'))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='hashed'))
     self.assertTrue(weights[3] < 0)
 
     # RDK fingerprint BV
     refWeights = [0.42105, 0.42105, 0.42105, -0.32895, 0.42105, 0.42105]
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetRDKFingerprint(m, i, nBits=1024, nBitsPerHash=1))
+    weights = sm.GetAtomicWeightsForFingerprint(
+      self.mol1, self.mol2, lambda m, i: sm.GetRDKFingerprint(m, i, nBits=1024, nBitsPerHash=1))
     for w, r in zip(weights, refWeights): self.assertAlmostEqual(w, r, 4)
 
   def testSimilarityMapKWArgs(self):

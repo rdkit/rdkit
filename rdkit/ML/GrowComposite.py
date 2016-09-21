@@ -234,7 +234,8 @@ def GrowIt(details, composite, progressCallback=None,
   devs = numpy.sqrt(devs * devs)
   avgDev = sum(devs) / sum(counts)
   if _verbose:
-    message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f' % (100.*averageErr, 100.*avgDev))
+    message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f' % (100.0 * averageErr,
+                                                                                100.0 * avgDev))
 
   if details.bayesModel:
     composite.Train(trainExamples, verbose=0)
@@ -245,7 +246,9 @@ def GrowIt(details, composite, progressCallback=None,
       message('Testing all examples')
     wrong = BuildComposite.testall(composite, namedExamples, badExamples)
     if _verbose:
-      message('%d examples (%% %5.2f) were misclassified' % (len(wrong), 100.*float(len(wrong)) / float(len(namedExamples))))
+      message('%d examples (%% %5.2f) were misclassified' % (len(wrong),
+                                                             100.0 * float(len(wrong)) /
+                                                             float(len(namedExamples))))
     _runDetails.overall_error = float(len(wrong)) / len(namedExamples)
 
   if details.detailedRes:
@@ -480,12 +483,14 @@ def ParseArgs(runDetails):
       runDetails.limitDepth = int(val)
     elif arg == '-q':
       qBounds = eval(val)
-      assert type(qBounds) in (types.TupleType, types.ListType), 'bad argument type for -q, specify a list as a string'
+      assert type(qBounds) in (types.TupleType, types.ListType), \
+        'bad argument type for -q, specify a list as a string'
       runDetails.qBoundCount = val
       runDetails.qBounds = qBounds
     elif arg == '-Q':
       qBounds = eval(val)
-      assert type(qBounds) in [type([]), type(())], 'bad argument type for -Q, specify a list as a string'
+      assert type(qBounds) in [type([]), type(())], \
+        'bad argument type for -Q, specify a list as a string'
       runDetails.activityBounds = qBounds
       runDetails.activityBoundsVals = val
     elif arg == '-V':
@@ -511,7 +516,9 @@ if __name__ == '__main__':
   nModels = len(initModels)
   if nModels > 1:
     for i in range(nModels):
-      sys.stderr.write('---------------------------------\n\tDoing %d of %d\n---------------------------------\n' % (i + 1, nModels))
+      fmt = ('---------------------------------\n\tDoing %d of %d\n' +
+             '---------------------------------\n')
+      sys.stderr.write(fmt % (i + 1, nModels))
       composite = GrowIt(_runDetails, initModels[i], setDescNames=1)
       if _runDetails.balTable and _runDetails.balCnt:
         composites = BalanceComposite(_runDetails, composite)
