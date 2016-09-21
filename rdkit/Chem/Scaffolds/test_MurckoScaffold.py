@@ -5,15 +5,24 @@
 # pylint: disable=missing-docstring
 
 from collections import namedtuple
+import doctest
 import unittest
 
 from rdkit import Chem
+from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.Chem.Scaffolds.MurckoScaffold import (GetScaffoldForMol, _pyGetScaffoldForMol,
                                                  MurckoScaffoldSmilesFromSmiles,
                                                  MurckoScaffoldSmiles, MakeScaffoldGeneric)
 
 
 TestMolecule = namedtuple('TestMolecule', 'smiles,scaffold')
+
+
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(MurckoScaffold, optionflags=doctest.ELLIPSIS))
+  return tests
+
 
 class TestCase(unittest.TestCase):
 
