@@ -9,28 +9,28 @@ Purpose:
     The HTMLPiddler class accepts an HTML string and a few layout constraints,
     and renders the HTML on a piddle canvas. This code is mainly a demonstration
     and proof-of-concept, and is not really intended for real work.
-    
+
 Usage:
-    piddler = HTMLPiddler(html=aHtmlString, 
-                              start=(startX, startY), 
-                              xLimits=(leftMarginX, rightMarginX), 
-                              font=aPiddleFontForDefault, 
+    piddler = HTMLPiddler(html=aHtmlString,
+                              start=(startX, startY),
+                              xLimits=(leftMarginX, rightMarginX),
+                              font=aPiddleFontForDefault,
                               color=aPiddleColorForDefault)
     piddler.renderOn(aPiddleCanvas)
-    
+
     see also demo() functions at end of this file
-    
+
 Example:
     Just run this module as a python script (must have piddle installed)
-    
+
 Limitations:
     -only renders a subset of HTML (mostly text-related tags)
     -content between unsupported tags may not be rendered at all
-    
+
 Implementation:
     -derived largely on "demo07.py" from Jim Ahlstrom's WPY distribution (see credits)
     -uses the parser-formatter-writer model from the python standard library
-    
+
 Credits:
     PIDDLE
         author: Joe Strout <joe@strout.net>, et al
@@ -43,20 +43,20 @@ Credits:
     HTMLPiddler.py
         author: Jeff Kunce <kuncej@mail.conservation.state.mo.us>
         download: http://starship.python.net/crew/jjkunce/
-        disclaimers: * NO WARRANTIES * USE AT YOUR OWN RISK *    
-    
+        disclaimers: * NO WARRANTIES * USE AT YOUR OWN RISK *
+
 '''
 from __future__ import print_function
 import htmllib, formatter, string
 from types import *
 import piddle
 
-TRACE=0
+TRACE = 0
 
 class HTMLPiddler:
     '''jjk  02/01/00'''
-    
-    def __init__(self, html='', start=(0,0), xLimits=(0,800), font=None, color=None): 
+
+    def __init__(self, html='', start=(0, 0), xLimits=(0, 800), font=None, color=None):
         '''instance initializer
         jjk  02/01/00'''
         self.html = html
@@ -76,11 +76,11 @@ class HTMLPiddler:
         parser.close()
 
 class _HtmlParser(htmllib.HTMLParser):
-    
+
     def anchor_bgn(self, href, name, type):
         htmllib.HTMLParser.anchor_bgn(self, href, name, type)
         self.formatter.writer.anchor_bgn(href, name, type)
-    
+
     def anchor_end(self):
         htmllib.HTMLParser.anchor_end(self)
         self.formatter.writer.anchor_end()
@@ -88,12 +88,12 @@ class _HtmlParser(htmllib.HTMLParser):
 
 
 class _HtmlPiddleWriter:
-    
+
     FontSizeDict = {"h1":36, "h2":24, "h3":18, "h4":12, "h5":10, "h6":8}
     DefaultFontSize = 12
-    
+
     def __init__(self, aHTMLPiddler, aPiddleCanvas):
-        self.piddler = aHTMLPiddler	#view = view
+        self.piddler = aHTMLPiddler  # view = view
         self.pc = aPiddleCanvas
         self.anchor = None
         self.lineHeight = 0
@@ -103,29 +103,29 @@ class _HtmlPiddleWriter:
         s = "W" * 20
         x = self.pc.stringWidth(s, self.font)
         y = self.pc.fontHeight(self.font)
-        x = (x + 19) / 20	# Largest character size
+        x = (x + 19) / 20  # Largest character size
         self.fsizex = x
         self.fsizey = self.oldLineHeight = y
         self.indentSize = x * 3
         self.lmargin, self.rmargin = self.piddler.xLimits
         self.x, self.y = self.piddler.start
-        self.indent = self.lmargin + (x/3)
-        
+        self.indent = self.lmargin + (x / 3)
+
     def anchor_bgn(self, href, name, type):
         if href:
             self.oldcolor = self.color
-            self.color = piddle.Color(0.0, 0.0, 200/255.0)
+            self.color = piddle.Color(0.0, 0.0, 200 / 255.0)
             self.anchor = (href, name, type)
-            
+
     def anchor_end(self):
         if self.anchor:
             self.color = self.oldcolor
             self.anchor = None
-            
+
     # Start of methods required by the formatter
-    
+
     def new_font(self, fontParams):
-        if TRACE: print('nf',fontParams)
+        if TRACE: print('nf', fontParams)
         # fontParams is None, or the tuple (size, i, b, tt)
         if not fontParams:
             fontParams = (None, None, None, None)
@@ -135,43 +135,43 @@ class _HtmlPiddleWriter:
         except KeyError:
             points = self.DefaultFontSize
         if fontParams[3]:
-            face = "courier"    #"modern"
+            face = "courier"  # "modern"
         elif type(size) is StringType and size[0] == "h":
-            face = "helvetica"	#"swiss"
+            face = "helvetica"  # "swiss"
         else:
-            face = "times"	#"roman"
-        italic = fontParams[1]	# Italic indicator
-        if italic==None:
+            face = "times"  # "roman"
+        italic = fontParams[1]  # Italic indicator
+        if italic == None:
             italic = 0
-        bold = fontParams[2]	# Bold indicator
-        if bold==None:
+        bold = fontParams[2]  # Bold indicator
+        if bold == None:
             bold = 0
         self.font = piddle.Font(points, bold, italic, face=face)
-        x = self.pc.stringWidth('W'*20, self.font)
-        self.fsizex = (x + 19) / 20	# Largest character size
+        x = self.pc.stringWidth('W' * 20, self.font)
+        self.fsizex = (x + 19) / 20  # Largest character size
         self.fsizey = self.pc.fontHeight(self.font)
 
     def new_margin(self, margin, level):
         self.send_line_break()
         self.indent = self.x = self.lmargin + self.indentSize * level
-        
+
     def new_spacing(self, spacing):
         self.send_line_break()
         t = "new_spacing(%s)" % repr(spacing)
         self.OutputLine(t, 1)
-        
+
     def new_styles(self, styles):
         self.send_line_break()
         t = "new_styles(%s)" % repr(styles)
         self.OutputLine(t, 1)
-        
+
     def send_label_data(self, data):
         if data == "*":
             w = self.pc.stringWidth(data, self.font) / 3
             h = self.pc.fontHeight(self.font) / 3
             x = self.indent - w
-            y = self.y - w 
-            self.pc.drawRect(x, y, x-w, y-w)
+            y = self.y - w
+            self.pc.drawRect(x, y, x - w, y - w)
         else:
             w = self.pc.stringWidth(data, self.font)
             h = self.pc.fontHeight(self.font)
@@ -179,11 +179,11 @@ class _HtmlPiddleWriter:
             if x < 0:
                 x = 0
             self.pc.drawString(data, x, self.y, self.font, self.color)
-        
+
     def send_paragraph(self, blankline):
         self.send_line_break()
         self.y = self.y + self.oldLineHeight * blankline
-            
+
     def send_line_break(self):
         if self.lineHeight:
             self.y = self.y + self.lineHeight
@@ -192,14 +192,14 @@ class _HtmlPiddleWriter:
         self.x = self.indent
         self.atbreak = 0
         if TRACE: raw_input('lb')
-            
+
     def send_hor_rule(self):
         self.send_line_break()
         self.y = self.y + self.oldLineHeight
         border = self.fsizex
-        self.pc.drawLine(border, self.y, self.rmargin-border, self.y, piddle.Color(0.0, 0.0, 200/255.0))
+        self.pc.drawLine(border, self.y, self.rmargin - border, self.y, piddle.Color(0.0, 0.0, 200 / 255.0))
         self.y = self.y + self.oldLineHeight
-        
+
     def send_literal_data(self, data):
         if not data:
             return
@@ -210,7 +210,7 @@ class _HtmlPiddleWriter:
             text = string.expandtabs(l)
         self.OutputLine(text, 0)
         self.atbreak = 0
-        
+
     def send_flowing_data(self, data):
         if not data:
             return
@@ -218,7 +218,7 @@ class _HtmlPiddleWriter:
         text = ""
         pixels = chars = 0
         for word in string.split(data):
-            bword = " " + word	# blank + word
+            bword = " " + word  # blank + word
             length = len(bword)
             # The current line is "text" and its size is
             #    "pixels" pixels plus "chars" characters.
@@ -230,10 +230,10 @@ class _HtmlPiddleWriter:
                 text = text + bword
                 chars = chars + length
             else:
-                w = self.pc.stringWidth(text+bword, self.font)
+                w = self.pc.stringWidth(text + bword, self.font)
                 h = self.pc.fontHeight(self.font)
-                if TRACE: print('sfd T:', text+bword)
-                if TRACE: print('sfd',self.x,w,self.x+w,self.rmargin)
+                if TRACE: print('sfd T:', text + bword)
+                if TRACE: print('sfd', self.x, w, self.x + w, self.rmargin)
                 if self.x + w < self.rmargin:
                     # Word fits.
                     text = text + bword
@@ -248,13 +248,13 @@ class _HtmlPiddleWriter:
             atbreak = 1
         self.OutputLine(text, 0)
         self.atbreak = data[-1] in string.whitespace
-        
-    def OutputLine(self, text, linebreak = 0):
+
+    def OutputLine(self, text, linebreak=0):
         if text:
-            if TRACE: print('olt:',text)
-            if TRACE: print('olf:',self.font.size, self.font.bold, self.font.italic, self.font.underline, self.font.face)
+            if TRACE: print('olt:', text)
+            if TRACE: print('olf:', self.font.size, self.font.bold, self.font.italic, self.font.underline, self.font.face)
             self.pc.drawString(text, self.x, self.y, self.font, self.color)
-            #if self.anchor:
+            # if self.anchor:
             #    o.anchor = self.anchor
             self.lineHeight = max(self.lineHeight, self.pc.fontHeight(self.font))
             self.x = self.x + self.pc.stringWidth(text, self.font)
@@ -268,10 +268,10 @@ Comments and complaints to jim@interet.com
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation.
 
 JAMES C. AHLSTROM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
@@ -295,10 +295,10 @@ default font and color, and should start at specified start coordinates.
 and renders the HTML on a piddle canvas
 <P>An Example:
 <PRE>
-    piddler = HTMLPiddler(html=aHtmlString, 
-                              start=(startX, startY), 
-                              xLimits=(leftMarginX, rightMarginX), 
-                              font=aPiddleFontForDefault, 
+    piddler = HTMLPiddler(html=aHtmlString,
+                              start=(startX, startY),
+                              xLimits=(leftMarginX, rightMarginX),
+                              font=aPiddleFontForDefault,
                               color=aPiddleColorForDefault)
     piddler.renderOn(aPiddleCanvas)
 </PRE>
@@ -308,8 +308,8 @@ and renders the HTML on a piddle canvas
     <LI>only renders a subset of HTML (mostly text-related tags)
     <LI>content between unsupported tags may not be rendered at all
 </UL>
-    
-<P><b>HTMLPiddler</b> is derived largely on "demo07.py" from the 
+
+<P><b>HTMLPiddler</b> is derived largely on "demo07.py" from the
 <A HREF="http://www.python.org/ftp/python/wpy/">WPY distribution</A>
 by <A HREF="mailto:jim@interet.com">Jim Ahlstrom</A>
 
@@ -323,59 +323,59 @@ is not really intended for real work.</i>
 
 def demoPDF(html):
     import piddlePDF
-    pc = piddlePDF.PDFCanvas((750,1000),'HTMLPiddler.pdf')
-    pc.drawLine(100,100,250,150, color=piddle.green)
-    pc.drawRect(100,100,650,900, edgeColor=piddle.pink)
-    ptt = HTMLPiddler(html, (250,150), (100,650))
+    pc = piddlePDF.PDFCanvas((750, 1000), 'HTMLPiddler.pdf')
+    pc.drawLine(100, 100, 250, 150, color=piddle.green)
+    pc.drawRect(100, 100, 650, 900, edgeColor=piddle.pink)
+    ptt = HTMLPiddler(html, (250, 150), (100, 650))
     ptt.renderOn(pc)
     pc.save()
 
 def demoPIL(html):
     print('be patient, this is a little slow...')
     import piddlePIL
-    pc = piddlePIL.PILCanvas((800,600), 'HTMLPiddler')
-    pc.drawLine(0,0,100,80, color=piddle.green)
-    pc.drawRect(50,50,750,550, edgeColor=piddle.pink)
-    ptt = HTMLPiddler(html, (100,80), (50,750))
+    pc = piddlePIL.PILCanvas((800, 600), 'HTMLPiddler')
+    pc.drawLine(0, 0, 100, 80, color=piddle.green)
+    pc.drawRect(50, 50, 750, 550, edgeColor=piddle.pink)
+    ptt = HTMLPiddler(html, (100, 80), (50, 750))
     ptt.renderOn(pc)
     pc.save(format='tif')
 
 def demoTK(html):
     import piddleTK
-    pc = piddleTK.TKCanvas((800,600))
-    pc.drawLine(0,0,50,50, color=piddle.green)
-    pc.drawRect(10,10,590,790, edgeColor=piddle.pink)
-    ptt = HTMLPiddler(html, (50,50), (10,790))
+    pc = piddleTK.TKCanvas((800, 600))
+    pc.drawLine(0, 0, 50, 50, color=piddle.green)
+    pc.drawRect(10, 10, 590, 790, edgeColor=piddle.pink)
+    ptt = HTMLPiddler(html, (50, 50), (10, 790))
     pc.flush()
     ptt.renderOn(pc)
-    
+
 def demoWX(html):
     import piddleWX
-    pc = piddleWX.WXCanvas((800,600))
-    pc.drawLine(0,0,50,50, color=piddle.green)
-    pc.drawRect(10,10,590,790, edgeColor=piddle.pink)
-    ptt = HTMLPiddler(html, (50,50), (10,790))
+    pc = piddleWX.WXCanvas((800, 600))
+    pc.drawLine(0, 0, 50, 50, color=piddle.green)
+    pc.drawRect(10, 10, 590, 790, edgeColor=piddle.pink)
+    ptt = HTMLPiddler(html, (50, 50), (10, 790))
     pc.flush()
     ptt.renderOn(pc)
-    
+
 def demo(html=DEMO_HTML):
-    
+
     while 1:
         print('Demo of HTMLPiddler.py')
         print('   1. piddlePDF')
         print('   2. piddlePIL')
-        #print('   3. piddleTK')
-        #print('   4. piddleWX')
+        # print('   3. piddleTK')
+        # print('   4. piddleWX')
         print('   0. EXIT')
         sel = raw_input('Enter Selection Number: ')
         try: sel = string.atoi(string.strip(sel))
         except Exception: sel = -1
-        if (sel==0): break
-        elif (sel==1): demoPDF(html)
-        elif (sel==2): demoPIL(html)
-        elif (sel==3): demoTK(html)
-        elif (sel==4): demoWX(html)
+        if (sel == 0): break
+        elif (sel == 1): demoPDF(html)
+        elif (sel == 2): demoPIL(html)
+        elif (sel == 3): demoTK(html)
+        elif (sel == 4): demoWX(html)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     import pdb
     demo()

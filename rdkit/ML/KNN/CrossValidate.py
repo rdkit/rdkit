@@ -17,7 +17,7 @@ def makeClassificationModel(numNeigh, attrs, distFunc) :
 def makeRegressionModel(numNeigh, attrs, distFunc) :
   return KNNRegressionModel(numNeigh, attrs, distFunc)
 
-def CrossValidate(knnMod,testExamples,appendExamples=0):
+def CrossValidate(knnMod, testExamples, appendExamples=0):
   """
   Determines the classification error for the testExamples
 
@@ -37,7 +37,7 @@ def CrossValidate(knnMod,testExamples,appendExamples=0):
       """
   nTest = len(testExamples)
 
-  if isinstance(knnMod,KNNClassificationModel):
+  if isinstance(knnMod, KNNClassificationModel):
     badExamples = []
     nBad = 0
     for i in range(nTest):
@@ -47,15 +47,15 @@ def CrossValidate(knnMod,testExamples,appendExamples=0):
       if (trueRes != res) :
         badExamples.append(testEx)
         nBad += 1
-    return float(nBad)/nTest, badExamples
-  elif isinstance(knnMod,KNNRegressionModel):
-    devSum=0.0
+    return float(nBad) / nTest, badExamples
+  elif isinstance(knnMod, KNNRegressionModel):
+    devSum = 0.0
     for i in range(nTest):
       testEx = testExamples[i]
       trueRes = testEx[-1]
       res = knnMod.PredictExample(testEx, appendExamples)
-      devSum += abs(trueRes-res)
-    return devSum/nTest,None
+      devSum += abs(trueRes - res)
+    return devSum / nTest, None
   raise ValueError("Unrecognized Model Type")
 
 def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
@@ -86,13 +86,13 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
       """
 
   nTot = len(examples)
-  if not kwargs.get('replacementSelection',0):
-    testIndices,trainIndices = SplitData.SplitIndices(nTot,holdOutFrac,
-                                                      silent=1,legacy=1,
+  if not kwargs.get('replacementSelection', 0):
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac,
+                                                      silent=1, legacy=1,
                                                       replacement=0)
   else:
-    testIndices,trainIndices = SplitData.SplitIndices(nTot,holdOutFrac,
-                                                      silent=1,legacy=0,
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac,
+                                                      silent=1, legacy=0,
                                                       replacement=1)
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
@@ -101,7 +101,7 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
   nTrain = len(trainExamples)
 
   if not silent:
-    print("Training with %d examples"%(nTrain))
+    print("Training with %d examples" % (nTrain))
 
   knnMod = modelBuilder(numNeigh, attrs, distFunc)
 
@@ -109,14 +109,14 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
   knnMod.SetTestExamples(testExamples)
 
   if not calcTotalError:
-    xValError,badExamples = CrossValidate(knnMod, testExamples,appendExamples=1)
+    xValError, badExamples = CrossValidate(knnMod, testExamples, appendExamples=1)
   else:
-    xValError,badExamples = CrossValidate(knnMod, examples,appendExamples=0)
+    xValError, badExamples = CrossValidate(knnMod, examples, appendExamples=0)
 
   if not silent :
-    print('Validation error was %%%4.2f'%(100*xValError))
+    print('Validation error was %%%4.2f' % (100 * xValError))
 
   knnMod._trainIndices = trainIndices
   return knnMod, xValError
-    
-    
+
+

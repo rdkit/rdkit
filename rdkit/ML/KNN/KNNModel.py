@@ -29,7 +29,7 @@ class KNNModel(object):
   """
   def __init__(self, k, attrs, dfunc, radius=None) :
     self._setup(k, attrs, dfunc, radius)
-      
+
   def _setup(self, k, attrs, dfunc, radius) :
     self._examples = []
     self._trainingExamples = []
@@ -55,7 +55,7 @@ class KNNModel(object):
   def GetTrainingExamples(self):
     return self._trainingExamples
 
-  def SetTrainingExamples(self,examples):
+  def SetTrainingExamples(self, examples):
     self._trainingExamples = examples
 
   def GetTestExamples(self) :
@@ -64,15 +64,15 @@ class KNNModel(object):
   def SetTestExamples(self, examples) :
     self._testExamples = examples
 
-  def GetNeighbors(self,example):
+  def GetNeighbors(self, example):
     """ Returns the k nearest neighbors of the example
 
     """
     nbrs = TopNContainer(self._k)
     for trex in self._trainingExamples:
       dist = self._dfunc(trex, example, self._attrs)
-      if self._radius is None or dist<self._radius:
-        nbrs.Insert(-dist,trex)
+      if self._radius is None or dist < self._radius:
+        nbrs.Insert(-dist, trex)
     nbrs.reverse()
     return [x for x in nbrs]
-    
+

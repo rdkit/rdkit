@@ -44,7 +44,7 @@ class FilterMatcher(PythonFilterMatcher):
     def GetMatches(self, mol, matchVect):
         """GetMatches(mol, matchVect) -> returns True if the filter matches
         (By default, this calls HasMatch and does not modify matchVect)
-        
+
         matchVect is a vector of FilterMatch's which hold the matching
         filter and the matched query_atom, mol_atom pairs if applicable.
         To append to this vector:
@@ -63,4 +63,4 @@ class FilterMatcher(PythonFilterMatcher):
     def GetName(self):
         return self.name
 
-    
+

@@ -1,4 +1,4 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
 #
 #  Copyright (C) 2000-2008  greg Landrum
@@ -36,7 +36,7 @@ class Network:
   """ a neural network
 
   """
-  def ConstructRandomWeights(self,minWeight=-1,maxWeight=1):
+  def ConstructRandomWeights(self, minWeight=-1, maxWeight=1):
     """initialize all the weights in the network to random numbers
 
       **Arguments**
@@ -44,14 +44,14 @@ class Network:
         - minWeight: the minimum value a weight can take
 
         - maxWeight: the maximum value a weight can take
-        
+
     """
     for node in self.nodeList:
       inputs = node.GetInputs()
       if inputs:
-        weights = [random.uniform(minWeight,maxWeight) for x in range(len(inputs))]
+        weights = [random.uniform(minWeight, maxWeight) for x in range(len(inputs))]
         node.SetWeights(weights)
-    
+
 
   def FullyConnectNodes(self):
     """ Fully connects each layer in the network to the one above it
@@ -59,22 +59,22 @@ class Network:
 
      **Note**
        this sets the connections, but does not assign weights
-       
+
     """
     nodeList = range(self.numInputNodes)
     nConnections = 0
     for layer in xrange(self.numHiddenLayers):
-      for i in self.layerIndices[layer+1]:
+      for i in self.layerIndices[layer + 1]:
         self.nodeList[i].SetInputs(nodeList)
         nConnections = nConnections + len(nodeList)
-      nodeList = self.layerIndices[layer+1]
+      nodeList = self.layerIndices[layer + 1]
 
     for i in self.layerIndices[-1]:
       self.nodeList[i].SetInputs(nodeList)
       nConnections = nConnections + len(nodeList)
     self.nConnections = nConnections
-    
-  def ConstructNodes(self,nodeCounts,actFunc,actFuncParms):
+
+  def ConstructNodes(self, nodeCounts, actFunc, actFuncParms):
     """ build an unconnected network and set node counts
 
       **Arguments**
@@ -87,25 +87,25 @@ class Network:
     self.nodeCounts = nodeCounts
     self.numInputNodes = nodeCounts[0]
     self.numOutputNodes = nodeCounts[-1]
-    self.numHiddenLayers = len(nodeCounts)-2
-    self.numInHidden = [None]*self.numHiddenLayers
+    self.numHiddenLayers = len(nodeCounts) - 2
+    self.numInHidden = [None] * self.numHiddenLayers
     for i in xrange(self.numHiddenLayers):
-      self.numInHidden[i] = nodeCounts[i+1]
+      self.numInHidden[i] = nodeCounts[i + 1]
 
     numNodes = sum(self.nodeCounts)
-    self.nodeList = [None]*(numNodes)
+    self.nodeList = [None] * (numNodes)
     for i in xrange(numNodes):
-      self.nodeList[i] = NetNode.NetNode(i,self.nodeList,
+      self.nodeList[i] = NetNode.NetNode(i, self.nodeList,
                                          actFunc=actFunc,
                                          actFuncParms=actFuncParms)
 
-    self.layerIndices = [None]*len(nodeCounts)
+    self.layerIndices = [None] * len(nodeCounts)
     start = 0
     for i in xrange(len(nodeCounts)):
       end = start + nodeCounts[i]
-      self.layerIndices[i] = range(start,end)
+      self.layerIndices[i] = range(start, end)
       start = end
-      
+
   def GetInputNodeList(self):
     """ returns a list of input node indices
     """
@@ -114,11 +114,11 @@ class Network:
     """ returns a list of output node indices
     """
     return self.layerIndices[-1]
-  def GetHiddenLayerNodeList(self,which):
+  def GetHiddenLayerNodeList(self, which):
     """ returns a list of hidden nodes in the specified layer
     """
-    return self.layerIndices[which+1]
-  
+    return self.layerIndices[which + 1]
+
   def GetNumNodes(self):
     """ returns the total number of nodes
     """
@@ -129,7 +129,7 @@ class Network:
     """
     return self.numHiddenLayers
 
-  def GetNode(self,which):
+  def GetNode(self, which):
     """ returns a particular node
     """
     return self.nodeList[which]
@@ -137,8 +137,8 @@ class Network:
     """ returns a list of all nodes
     """
     return self.nodeList
-  
-  def ClassifyExample(self,example,appendExamples=0):
+
+  def ClassifyExample(self, example, appendExamples=0):
     """ classifies a given example and returns the results of the output layer.
 
       **Arguments**
@@ -153,40 +153,40 @@ class Network:
 
     """
     if len(example) > self.numInputNodes:
-      if len(example)-self.numInputNodes > self.numOutputNodes:
+      if len(example) - self.numInputNodes > self.numOutputNodes:
         example = example[1:-self.numOutputNodes]
       else:
         example = example[:-self.numOutputNodes]
     assert len(example) == self.numInputNodes
     totNumNodes = sum(self.nodeCounts)
-    results = numpy.zeros(totNumNodes,numpy.float64)
+    results = numpy.zeros(totNumNodes, numpy.float64)
     for i in xrange(self.numInputNodes):
       results[i] = example[i]
-    for i in xrange(self.numInputNodes,totNumNodes):
+    for i in xrange(self.numInputNodes, totNumNodes):
       self.nodeList[i].Eval(results)
     self.lastResults = results[:]
     if self.numOutputNodes == 1:
       return results[-1]
     else:
       return results
-  
+
   def GetLastOutputs(self):
     """ returns the complete list of output layer values from the last time this node classified anything"""
     return self.lastResults
-  
+
   def __str__(self):
     """ provides a string representation of the network """
     outStr = 'Network:\n'
     for i in xrange(len(self.nodeList)):
-      outStr = outStr + '\tnode(% 3d):\n'%i
-      outStr = outStr + '\t\tinputs:  %s\n'%(str(self.nodeList[i].GetInputs()))
-      outStr = outStr + '\t\tweights: %s\n'%(str(self.nodeList[i].GetWeights()))
+      outStr = outStr + '\tnode(% 3d):\n' % i
+      outStr = outStr + '\t\tinputs:  %s\n' % (str(self.nodeList[i].GetInputs()))
+      outStr = outStr + '\t\tweights: %s\n' % (str(self.nodeList[i].GetWeights()))
 
-    outStr = outStr + 'Total Number of Connections: % 4d'%self.nConnections
+    outStr = outStr + 'Total Number of Connections: % 4d' % self.nConnections
     return outStr
-    
-  def __init__(self,nodeCounts,nodeConnections=None,
-               actFunc=ActFuncs.Sigmoid,actFuncParms=(),
+
+  def __init__(self, nodeCounts, nodeConnections=None,
+               actFunc=ActFuncs.Sigmoid, actFuncParms=(),
                weightBounds=1):
     """ Constructor
 
@@ -212,32 +212,32 @@ class Network:
         - weightBounds:  a float which provides the boundary on the random initial weights
 
 
-  
+
     """
-    self.ConstructNodes(nodeCounts,actFunc,actFuncParms)
+    self.ConstructNodes(nodeCounts, actFunc, actFuncParms)
     self.FullyConnectNodes()
-    self.ConstructRandomWeights(minWeight=-weightBounds,maxWeight=weightBounds)
+    self.ConstructRandomWeights(minWeight=-weightBounds, maxWeight=weightBounds)
     self.lastResults = []
 
 if __name__ == '__main__':
 
   print('[2,2,2]')
-  net = Network([2,2,2])
+  net = Network([2, 2, 2])
   print(net)
 
   print('[2,4,1]')
-  net = Network([2,4,1])
+  net = Network([2, 4, 1])
   print(net)
 
   print('[2,2]')
-  net = Network([2,2])
+  net = Network([2, 2])
   print(net)
-  input = [1,0]
+  input = [1, 0]
   res = net.ClassifyExample(input)
-  print(input,'->',res)
-  input = [0,1]
+  print(input, '->', res)
+  input = [0, 1]
   res = net.ClassifyExample(input)
-  print(input,'->',res)
-  input = [.5,.5]
+  print(input, '->', res)
+  input = [.5, .5]
   res = net.ClassifyExample(input)
-  print(input,'->',res)
+  print(input, '->', res)

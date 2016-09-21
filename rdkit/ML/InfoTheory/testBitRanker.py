@@ -1,6 +1,6 @@
 from __future__ import print_function
 from rdkit import RDConfig
-RDConfig.usePgSQL=0
+RDConfig.usePgSQL = 0
 import unittest
 from rdkit.ML import InfoTheory
 from rdkit import DataStructs
@@ -8,8 +8,8 @@ from rdkit.Dbase.DbConnection import DbConnect
 import os
 from rdkit.six.moves import cPickle as pickle
 
-def feq(v1,v2,tol2=1e-4):
-    return abs(v1-v2)<=tol2
+def feq(v1, v2, tol2=1e-4):
+    return abs(v1 - v2) <= tol2
 
 def getFingerprints(conn) :
     data = conn.GetData(table='signatures', fields='mol_name,fingerprint')
@@ -45,13 +45,13 @@ class TestCase(unittest.TestCase):
 
     def test0Ranker(self) :
         nbits = 5000
-        dbName = os.path.join('../','test_data', 'FEW_CDK2.GDB')
+        dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
         conn = DbConnect(dbName)
         fps = getFingerprints(conn)
         nameAct = getNameAct(conn)
         sl = len(fps.values()[0])
         rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.ENTROPY)
-        
+
         print("Collecting Votes ....")
         for key in nameAct.keys() :
             if nameAct[key] == 100 :
@@ -62,21 +62,21 @@ class TestCase(unittest.TestCase):
         # now do the ranking
         print("ranking bits ....")
         topN = rnkr.GetTopN(nbits)
-        
+
         # get the combichem ranked list from a file
         cfile = os.path.join('test_data', 'combiRank.out')
         combiInfo = ReadCombiInfo(cfile)
         # now check if the infocontents are the same as the combichem stuff
         print("Comparing bit info contents ....")
         for i in range(900) :
-            assert feq(topN[i,1], combiInfo[i])
+            assert feq(topN[i, 1], combiInfo[i])
 
         ofile = os.path.join('test_data', 'rdTopBits.txt')
         rnkr.WriteTopBitsToFile(ofile)
-        
+
     def test1BiasRanker(self) :
         nbits = 5000
-        dbName = os.path.join('../','test_data', 'FEW_CDK2.GDB')
+        dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
         conn = DbConnect(dbName)
         fps = getFingerprints(conn)
         nameAct = getNameAct(conn)
@@ -100,11 +100,11 @@ class TestCase(unittest.TestCase):
         # now check if the infocontents are the same as the combichem stuff
         print("Comparing bit info contents ....")
         for i in range(nbits) :
-            assert feq(topN[i,1], combiInfo[i])
-            
+            assert feq(topN[i, 1], combiInfo[i])
+
     def test2ChiSquare(self) :
         nbits = 5000
-        dbName = os.path.join('../','test_data', 'FEW_CDK2.GDB')
+        dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
         conn = DbConnect(dbName)
         fps = getFingerprints(conn)
         nameAct = getNameAct(conn)
@@ -128,10 +128,10 @@ class TestCase(unittest.TestCase):
         # now check if the infocontents are the same as the combichem stuff
         print("Comparing bit info contents ....")
         for i in range(nbits) :
-            assert feq(topN[i,1], combiInfo[i])
-        #rnkr.WriteTopBitsToFile("chiBitsBias.txt")
-                
+            assert feq(topN[i, 1], combiInfo[i])
+        # rnkr.WriteTopBitsToFile("chiBitsBias.txt")
+
 if __name__ == '__main__':
     unittest.main()
-    
-        
+
+

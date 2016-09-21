@@ -4,7 +4,7 @@
 
 """
 from rdkit import RDConfig
-import unittest,os
+import unittest, os
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import TorsionFingerprints
@@ -13,7 +13,7 @@ class TestCase(unittest.TestCase):
 
   def testConformerRMS(self):
     m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1,2)
+    cids = AllChem.EmbedMultipleConfs(m1, 2)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=1))
@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
     # test that the prealigned flag is working
     rms1 = AllChem.GetConformerRMS(m1, 0, 1, prealigned=True)
     rms2 = AllChem.GetConformerRMS(m1, 0, 1, prealigned=False)
-    self.assertTrue((rms1>rms2))
+    self.assertTrue((rms1 > rms2))
 
     # test that RMS is the same as calculated by AlignMol()
     self.assertAlmostEqual(rms2, AllChem.GetBestRMS(m2, m1, 1, 0), 3)
@@ -33,7 +33,7 @@ class TestCase(unittest.TestCase):
 
   def testConformerRMSMatrix(self):
     m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1,3)
+    cids = AllChem.EmbedMultipleConfs(m1, 3)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=0))
@@ -52,11 +52,11 @@ class TestCase(unittest.TestCase):
 
   def testTorsionFingerprints(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
-    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand.pdb')
+    refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1DWD_ligand.pdb')
     ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     mol = Chem.MolFromPDBFile(refFile)
     mol = AllChem.AssignBondOrdersFromTemplate(ref, mol)
-    
+
     # the torsion lists
     tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol)
     self.assertEqual(len(tors_list), 11)
@@ -71,7 +71,7 @@ class TestCase(unittest.TestCase):
     # the weights
     weights = TorsionFingerprints.CalculateTorsionWeights(mol)
     self.assertAlmostEqual(weights[4], 1.0)
-    self.assertEqual(len(weights),len(tors_list+tors_list_rings))
+    self.assertEqual(len(weights), len(tors_list + tors_list_rings))
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, 15, 14)
     self.assertAlmostEqual(weights[3], 1.0)
     self.assertRaises(ValueError, TorsionFingerprints.CalculateTorsionWeights, mol, 15, 3)
@@ -85,7 +85,7 @@ class TestCase(unittest.TestCase):
     # the torsion fingerprint deviation
     tfd = TorsionFingerprints.CalculateTFD(torsions, torsions)
     self.assertAlmostEqual(tfd, 0.0)
-    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1PPC_ligand.pdb')
+    refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1PPC_ligand.pdb')
     mol2 = Chem.MolFromPDBFile(refFile)
     mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
     torsions2 = TorsionFingerprints.CalculateTorsionAngles(mol2, tors_list, tors_list_rings)
@@ -107,15 +107,15 @@ class TestCase(unittest.TestCase):
 
     tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
     self.assertEqual(len(tfdmat), 3)
-    
+
   def testTorsionFingerprintsAtomReordering(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
-    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand.pdb')
+    refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1DWD_ligand.pdb')
     ref = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     mol1 = Chem.MolFromPDBFile(refFile)
     mol1 = AllChem.AssignBondOrdersFromTemplate(ref, mol1)
 
-    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','1DWD_ligand_reordered.pdb')
+    refFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '1DWD_ligand_reordered.pdb')
     mol2 = Chem.MolFromPDBFile(refFile)
     mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
 

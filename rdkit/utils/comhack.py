@@ -26,7 +26,7 @@ Then everything will work ...
 import sys
 import __builtin__
 
-#save the import-Method (either McMillan's import or Python's)
+# save the import-Method (either McMillan's import or Python's)
 mcimport = __builtin__.__import__
 
 def _myimport(name, globals=None, locals=None, fromlist=None):
@@ -35,15 +35,15 @@ def _myimport(name, globals=None, locals=None, fromlist=None):
     besides win32com modules automatically genrated by win32com.gencache
     """
     try:
-        #fails with ImportError, if McMillan has overwritten Python's native import
-        #and win32com.gen_py tries to generate a module
+        # fails with ImportError, if McMillan has overwritten Python's native import
+        # and win32com.gen_py tries to generate a module
         return mcimport(name, globals, locals, fromlist)
     except ImportError as err:
         if name.startswith('win32com.gen_py'):
-            #this is the Python-Native Import Method, if a patched McMillan-Installer exists
+            # this is the Python-Native Import Method, if a patched McMillan-Installer exists
             return __oldimport__(name, globals, locals, fromlist)
         else:
-            #win32com needs this ImportError 
+            # win32com needs this ImportError
             raise err
 
 
@@ -62,15 +62,15 @@ def set_gen_path(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    #check, if McMillan runs ...
+    # check, if McMillan runs ...
     frozen = sys.__dict__.get("frozen", 0)
 
-    #set the gencache path
+    # set the gencache path
     win32com.gen_py.__path__ = [path]
     win32com.__gen_path__ = path
 
     if not frozen:
         return
 
-    #setup our import method, if McMillan runs.
+    # setup our import method, if McMillan runs.
     __builtin__.__import__ = _myimport

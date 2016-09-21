@@ -3,34 +3,34 @@
 # This work was funded by Roche and generously donated to the free
 # and open source cheminformatics community.
 
-## Copyright (c) 2012 Andrew Dalke Scientific AB
-## Andrew Dalke <dalke@dalkescientific.com>
-##
-## All rights reserved.
-##
-## Redistribution and use in source and binary forms, with or without
-## modification, are permitted provided that the following conditions are
-## met:
-##
-##   * Redistributions of source code must retain the above copyright
-##     notice, this list of conditions and the following disclaimer.
-##
-##   * Redistributions in binary form must reproduce the above copyright
-##     notice, this list of conditions and the following disclaimer in
-##     the documentation and/or other materials provided with the
-##     distribution.
-##
-## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-## "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-## LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-## A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-## HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-## SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-## LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-## DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-## THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# # Copyright (c) 2012 Andrew Dalke Scientific AB
+# # Andrew Dalke <dalke@dalkescientific.com>
+# #
+# # All rights reserved.
+# #
+# # Redistribution and use in source and binary forms, with or without
+# # modification, are permitted provided that the following conditions are
+# # met:
+# #
+# #   * Redistributions of source code must retain the above copyright
+# #     notice, this list of conditions and the following disclaimer.
+# #
+# #   * Redistributions in binary form must reproduce the above copyright
+# #     notice, this list of conditions and the following disclaimer in
+# #     the documentation and/or other materials provided with the
+# #     distribution.
+# #
+# # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 """FMCS - Find Maximum Common Substructure
@@ -258,7 +258,7 @@ from collections import defaultdict
 import time
 
 
-### A place to set global options
+# ## A place to set global options
 # (Is this really useful?)
 
 class Default(object):
@@ -329,7 +329,7 @@ else:
             int_mass = int(round(mass * 1000))
             if int_mass % 1000 == 0:
                 # This is close enough that RDKit's match will work
-                atom_smarts = "%d*" % (int_mass//1000)
+                atom_smarts = "%d*" % (int_mass // 1000)
             else:
                 # Probably in natural abundance. In any case,
                 # there's no SMARTS for this pattern, so force
@@ -338,7 +338,7 @@ else:
                 atom_smarts = "0*"
             atom_smarts_types.append(atom_smarts)
         return atom_smarts_types
-    
+
 
 # Match any bond
 def bond_typer_any(bonds):
@@ -414,7 +414,7 @@ else:
             raise ValueError("Mismatch between the number of atoms and the number of isotopes")
         for atom, isotope in zip(mol.GetAtoms(), isotopes):
             atom.SetMass(isotope)
-    
+
 _isotope_dict = weakref.WeakKeyDictionary()
 _atom_class_dict = weakref.WeakKeyDictionary()
 
@@ -481,7 +481,7 @@ class TypedMolecule(object):
         # atoms and bond as a Python list than to do GetAtoms() and
         # GetBonds() again. The stage 2 TypedMolecule does not use
         # these.
-        
+
         self.rdmol_atoms = rdmol_atoms
         self.rdmol_bonds = rdmol_bonds
 
@@ -503,7 +503,7 @@ class TypedMolecule(object):
 # produce a FragmentedTypedMolecule containing the same atom
 # information but containing only bonds with those
 # canonical_bondtypes.
-        
+
 class FragmentedTypedMolecule(object):
     def __init__(self, rdmol, rdmol_atoms, orig_atoms, orig_bonds,
                  atom_smarts_types, bond_smarts_types, canonical_bondtypes):
@@ -521,7 +521,7 @@ class FragmentedTypedMolecule(object):
 # A FragmentedTypedMolecule can contain multiple fragments. Once I've
 # picked the FragmentedTypedMolecule to use for enumeration, I extract
 # each of the fragments as the basis for an EnumerationMolecule.
-        
+
 class TypedFragment(object):
     def __init__(self, rdmol,
                  orig_atoms, orig_bonds,
@@ -549,14 +549,14 @@ def get_canonical_bondtypes(rdmol, bonds, atom_smarts_types, bond_smarts_types):
             atom1_smarts, atom2_smarts = atom2_smarts, atom1_smarts
         canonical_bondtypes.append("[%s]%s[%s]" % (atom1_smarts, bond_smarts, atom2_smarts))
     return canonical_bondtypes
-    
+
 
 # Create a TypedMolecule using the element-based typing scheme
 
 # TODO: refactor this. It doesn't seem right to pass boolean flags.
 
-def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences = Default.matchValences,
-                       ringMatchesRingOnly = Default.ringMatchesRingOnly):
+def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matchValences,
+                       ringMatchesRingOnly=Default.ringMatchesRingOnly):
     atoms = list(rdmol.GetAtoms())
     atom_smarts_types = atom_typer(atoms)
 
@@ -572,7 +572,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences = Default.ma
                 atom_smarts_type += valence_str
             new_atom_smarts_types.append(atom_smarts_type)
         atom_smarts_types = new_atom_smarts_types
-        
+
 
     # Store and reuse the bond information because I use it twice.
     # In a performance test, the times went from 2.0 to 1.4 seconds by doing this.
@@ -595,7 +595,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences = Default.ma
                     bond_smarts += ";!@"
                 else:
                     bond_smarts += "!@"
-                    
+
             new_bond_smarts_types.append(bond_smarts)
         bond_smarts_types = new_bond_smarts_types
 
@@ -609,7 +609,7 @@ def get_specified_types(rdmol, atom_types, ringMatchesRingOnly):
     raise NotImplementedError("not tested!")
     # Make a copy because I will do some destructive edits
     rdmol = copy.copy(rdmol)
-    
+
     atom_smarts_types = []
     atoms = list(mol.GetAtoms())
     for atom, atom_type in zip(atoms, atom_types):
@@ -684,7 +684,7 @@ def get_canonical_bondtype_counts(typed_mols):
     overall_counts = defaultdict(list)
     for typed_mol in typed_mols:
         bondtype_counts = get_counts(typed_mol.canonical_bondtypes)
-        for k,v in bondtype_counts.items():
+        for k, v in bondtype_counts.items():
             overall_counts[k].append(v)
     return overall_counts
 
@@ -696,7 +696,7 @@ def get_canonical_bondtype_counts(typed_mols):
 def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
     emol = Chem.EditableMol(Chem.Mol())
 
-    # Copy all of the atoms, even those which don't have any bonds. 
+    # Copy all of the atoms, even those which don't have any bonds.
     for atom in typed_mol.rdmol_atoms:
         emol.AddAtom(atom)
 
@@ -840,7 +840,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
         for atom, orig_atom, atom_smarts_type in zip(rdmol.GetAtoms(), typed_fragment.orig_atoms,
                                                 typed_fragment.atom_smarts_types):
             bond_indices = [bond.GetIdx() for bond in atom.GetBonds()]
-            #assert atom.GetSymbol() == orig_atom.GetSymbol()
+            # assert atom.GetSymbol() == orig_atom.GetSymbol()
             atom_smarts = '[' + atom_smarts_type + ']'
             atoms.append(Atom(atom, atom_smarts, bond_indices, orig_atom.IsInRing()))
 
@@ -859,7 +859,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
         fragments.append(fragment)
 
     # Optimistically try the largest fragments first
-    fragments.sort(key = lambda fragment: len(fragment.atoms), reverse=True)
+    fragments.sort(key=lambda fragment: len(fragment.atoms), reverse=True)
     return fragments
 
 
@@ -887,10 +887,10 @@ def gen_primes():
     while 1:
         if q not in d:
             yield q
-            d[q*q].append(q)
+            d[q * q].append(q)
         else:
             for p in d[q]:
-                d[p+q].append(p)
+                d[p + q].append(p)
             del d[q]
         q += 1
 
@@ -910,7 +910,7 @@ def _get_nth_prime(n):
 # Prime it with more values then will likely occur
 _get_nth_prime(1000)
 
-###
+# ##
 
 # The CANON algorithm is documented as:
 #  (1) Set atomic vector to initial invariants. Go to step 3.
@@ -963,7 +963,7 @@ def get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, do_init
         canonical_labels.append([])
 
     # Build the neighbor and directed edge lists
-     
+
     for bond_index in subgraph.bond_indices:
         bond = enumeration_mol.bonds[bond_index]
         from_atom_index, to_atom_index = bond.atom_indices
@@ -1011,7 +1011,7 @@ def get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, do_init
 
 # Rank a sorted list (by value) of CangenNodes
 def rerank(cangen_nodes):
-    rank = 0     # Note: Initial rank is 1, in line with the Weininger paper
+    rank = 0  # Note: Initial rank is 1, in line with the Weininger paper
     prev_value = -1
     for node in cangen_nodes:
         if node.value != prev_value:
@@ -1032,22 +1032,22 @@ def find_duplicates(cangen_nodes, start, end):
         else:
             if count > 1:
                 # New subrange containing duplicates
-                result.append( (start, index) )
+                result.append((start, index))
             count = 1
             prev_value = node.value
             start = index
     if count > 1:
         # Last elements were duplicates
-        result.append( (start, end) )
+        result.append((start, end))
     return result
 
-#@profile 
+# @profile
 def canon(cangen_nodes):
     # Precondition: node.value is set to the initial invariant
     # (1) Set atomic vector to initial invariants (assumed on input)
-    
+
     # Do the initial ranking
-    cangen_nodes.sort(key = lambda node: node.value)
+    cangen_nodes.sort(key=lambda node: node.value)
     rerank(cangen_nodes)
 
     # Keep refining the sort order until it's unambiguous
@@ -1056,8 +1056,8 @@ def canon(cangen_nodes):
     # Find the start/end range for each stretch of duplicates
     duplicates = find_duplicates(cangen_nodes, 0, len(cangen_nodes))
 
-    PRIMES = _primes # micro-optimization; make this a local name lookup
-    
+    PRIMES = _primes  # micro-optimization; make this a local name lookup
+
     while duplicates:
         # (2) Set vector to product of primes corresponding to neighbor's ranks
         for node in cangen_nodes:
@@ -1072,12 +1072,12 @@ def canon(cangen_nodes):
             for neighbor in node.neighbors:
                 p *= neighbor.value
             node.value = p
-            
+
 
         # (3) Sort vector, maintaining stability over previous ranks
         # (I maintain stability by refining ranges in the
         # master_sort_order based on the new ranking)
-        cangen_nodes.sort(key = lambda node: node.value)
+        cangen_nodes.sort(key=lambda node: node.value)
 
         # (4) rank atomic vector
         rerank(cangen_nodes)
@@ -1089,14 +1089,14 @@ def canon(cangen_nodes):
             # Special case when there's only two elements to store.
             # This optimization sped up cangen by about 8% because I
             # don't go through the sort machinery
-            if start+2 == end:
-                node1, node2 = master_sort_order[start], master_sort_order[end-1]
+            if start + 2 == end:
+                node1, node2 = master_sort_order[start], master_sort_order[end - 1]
                 if node1.value > node2.value:
                     master_sort_order[start] = node2
-                    master_sort_order[end-1] = node1
+                    master_sort_order[end - 1] = node1
             else:
                 subset = master_sort_order[start:end]
-                subset.sort(key = lambda node: node.value)
+                subset.sort(key=lambda node: node.value)
                 master_sort_order[start:end] = subset
 
             subset_duplicates = find_duplicates(master_sort_order, start, end)
@@ -1110,17 +1110,17 @@ def canon(cangen_nodes):
         # Yippee! No duplicates left. Everything has a unique value.
         if not new_duplicates:
             break
-            
+
         # (5) If not invariant partitioning, go to step 2
         if not unchanged:
             duplicates = new_duplicates
             continue
-        
+
         duplicates = new_duplicates
-        
+
         # (6) On first pass, save partitioning as symmetry classes
-        pass # I don't need this information
-        
+        pass  # I don't need this information
+
         # (7) If highest rank is smaller than number of nodes, break ties, go to step 2
         # I follow the Weininger algorithm and use 2*rank or 2*rank-1.
         # This requires that the first rank is 1, not 0.
@@ -1132,13 +1132,13 @@ def canon(cangen_nodes):
         # from the end than the beginning.
         start, end = duplicates[-1]
         cangen_nodes[start].value -= 1
-        if end == start+2:
+        if end == start + 2:
             # There were only two nodes with the same value. Now there
             # are none. Remove information about that duplicate.
             del duplicates[-1]
         else:
             # The first N-1 values are still duplicates.
-            duplicates[-1] = (start+1, end)
+            duplicates[-1] = (start + 1, end)
         rerank(cangen_nodes)
 
     # Restore to the original order (ordered by subgraph atom index)
@@ -1175,7 +1175,7 @@ def generate_smarts(cangen_nodes):
     visited_atoms = [0] * len(cangen_nodes)
     closure_bonds = set()
 
-    ## First, find the closure bonds using a DFS
+    # # First, find the closure bonds using a DFS
     stack = []
     atom_idx = start_index
     stack.extend(reversed(cangen_nodes[atom_idx].outgoing_edges))
@@ -1204,7 +1204,7 @@ def generate_smarts(cangen_nodes):
     #   1: add the bond's SMARTS and put the other atom on the machine
     #   3: add a ')' to the SMARTS
     #   4: add a '(' and the bond SMARTS
-    
+
     smiles_terms = []
     stack = [(0, (start_index, -1))]
     while stack:
@@ -1245,7 +1245,7 @@ def generate_smarts(cangen_nodes):
                             continue
                         if num_neighbors == 0:
                             # This is the first bond. There's a good chance that
-                            # it's the only bond. 
+                            # it's the only bond.
                             data = (outgoing_edge.other_node_idx, bond_idx)
                             bond_smarts = outgoing_edge.bond_smarts
                         else:
@@ -1255,7 +1255,7 @@ def generate_smarts(cangen_nodes):
                                 # This direction doesn't need the (branch) characters.
                                 stack.append((0, data))
                                 stack.append((1, bond_smarts))
-                            
+
                             # Add information for this bond
                             stack.append((3, None))
                             stack.append((0, (outgoing_edge.other_node_idx, bond_idx)))
@@ -1268,9 +1268,9 @@ def generate_smarts(cangen_nodes):
                 smiles_terms.append(bond_smarts)
         elif action == 1:
             # Process a bond which does not need '()'s
-            smiles_terms.append(data) # 'data' is bond_smarts
+            smiles_terms.append(data)  # 'data' is bond_smarts
             continue
-            
+
         elif action == 3:
             smiles_terms.append(')')
         elif action == 4:
@@ -1287,16 +1287,16 @@ def generate_smarts(cangen_nodes):
 # in the input size.)
 def make_canonical_smarts(subgraph, enumeration_mol, atom_assignment):
     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
-    #canon(cangen_nodes)
+    # canon(cangen_nodes)
     smarts = generate_smarts(cangen_nodes)
     return smarts
 
-## def make_semicanonical_smarts(subgraph, enumeration_mol, atom_assignment):
-##     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
-##     # There's still some order because of the canonical bond typing, but it isn't perfect
-##     #canon(cangen_nodes)
-##     smarts = generate_smarts(cangen_nodes)
-##     return smarts
+# # def make_semicanonical_smarts(subgraph, enumeration_mol, atom_assignment):
+# #     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
+# #     # There's still some order because of the canonical bond typing, but it isn't perfect
+# #     #canon(cangen_nodes)
+# #     smarts = generate_smarts(cangen_nodes)
+# #     return smarts
 
 def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, False)
@@ -1306,7 +1306,7 @@ def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
     smarts = generate_smarts(cangen_nodes)
     return smarts
 
-        
+
 ############## Subgraph enumeration ##################
 
 # A 'seed' is a subgraph containing a subset of the atoms and bonds in
@@ -1333,33 +1333,33 @@ def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
 # simple stack or deque wouldn't work because the new seeds have
 # between 1 to N-1 new atoms and bonds.
 
-    
+
 # Some useful preamble code
-    
+
 # Taken from the Python documentation
 def powerset(iterable):
     "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
     s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 # Same as the above except the empty term is not returned
 def nonempty_powerset(iterable):
     "nonempty_powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
     s = list(iterable)
-    it = chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    it = chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
     next(it)
     return it
 
 
 # Call this to get a new unique function. Used to break ties in the
 # priority queue.
-#tiebreaker = itertools.count().next
+# tiebreaker = itertools.count().next
 def _Counter():
     c = itertools.count()
     return lambda: next(c)
 tiebreaker = _Counter()
 
-### The enumeration code
+# ## The enumeration code
 
 
 # Given a set of atoms, find all of the ways to leave those atoms.
@@ -1398,13 +1398,13 @@ def find_extensions(atom_indices, visited_bond_indices, directed_edges):
 #   - the new subgraph
 
 def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, internal_bonds, external_edges):
-    #print "Subgraph", len(subgraph.atom_indices), len(subgraph.bond_indices), "X", enumeration_mol.rdmol.GetNumAtoms()
-    #print "subgraph atoms", subgraph.atom_indices
-    #print "subgraph bonds", subgraph.bond_indices
-    #print "internal", internal_bonds, "external", external_edges
+    # print "Subgraph", len(subgraph.atom_indices), len(subgraph.bond_indices), "X", enumeration_mol.rdmol.GetNumAtoms()
+    # print "subgraph atoms", subgraph.atom_indices
+    # print "subgraph bonds", subgraph.bond_indices
+    # print "internal", internal_bonds, "external", external_edges
     # only internal bonds
     if not external_edges:
-        #assert internal_bonds, "Must have at least one internal bond"
+        # assert internal_bonds, "Must have at least one internal bond"
         it = nonempty_powerset(internal_bonds)
         for internal_bond in it:
             # Make the new subgraphs
@@ -1425,8 +1425,8 @@ def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, int
             num_possible_atoms, num_possible_bonds = find_extension_size(
                 enumeration_mol, new_atoms, exclude_bonds, external_ext)
 
-            #num_possible_atoms = len(enumeration_mol.atoms) - len(atom_indices)
-            #num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices)
+            # num_possible_atoms = len(enumeration_mol.atoms) - len(atom_indices)
+            # num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices)
             yield new_atoms, Subgraph(atom_indices, bond_indices), num_possible_atoms, num_possible_bonds
         return
 
@@ -1452,10 +1452,10 @@ def all_subgraph_extensions(enumeration_mol, subgraph, visited_bond_indices, int
                                             (ext.bond_index for ext in external_ext)))
             num_possible_atoms, num_possible_bonds = find_extension_size(
                 enumeration_mol, atom_indices, exclude_bonds, external_ext)
-            #num_possible_atoms = len(enumeration_mol.atoms) - len(atom_indices)
+            # num_possible_atoms = len(enumeration_mol.atoms) - len(atom_indices)
             for internal_bond in internal_powerset:
                 bond_indices2 = frozenset(chain(bond_indices, internal_bond))
-                #num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices2)
+                # num_possible_bonds = len(enumeration_mol.bonds) - len(bond_indices2)
                 yield new_atoms, Subgraph(atom_indices, bond_indices2), num_possible_atoms, num_possible_bonds
 
 
@@ -1463,37 +1463,37 @@ def find_extension_size(enumeration_mol, known_atoms, exclude_bonds, directed_ed
     num_remaining_atoms = num_remaining_bonds = 0
     visited_atoms = set(known_atoms)
     visited_bonds = set(exclude_bonds)
-    #print "start atoms", visited_atoms
-    #print "start bonds", visited_bonds
-    #print "Along", [directed_edge.bond_index for directed_edge in directed_edges]
+    # print "start atoms", visited_atoms
+    # print "start bonds", visited_bonds
+    # print "Along", [directed_edge.bond_index for directed_edge in directed_edges]
     for directed_edge in directed_edges:
-        #print "Take", directed_edge
+        # print "Take", directed_edge
         stack = [directed_edge.end_atom_index]
 
         # simple depth-first search search
         while stack:
             atom_index = stack.pop()
             for next_edge in enumeration_mol.directed_edges[atom_index]:
-                #print "Visit", next_edge.bond_index, next_edge.end_atom_index
+                # print "Visit", next_edge.bond_index, next_edge.end_atom_index
                 bond_index = next_edge.bond_index
                 if bond_index in visited_bonds:
-                    #print "Seen bond", bond_index
+                    # print "Seen bond", bond_index
                     continue
                 num_remaining_bonds += 1
                 visited_bonds.add(bond_index)
-                #print "New BOND!", bond_index, "count", num_remaining_bonds
+                # print "New BOND!", bond_index, "count", num_remaining_bonds
 
                 next_atom_index = next_edge.end_atom_index
                 if next_atom_index in visited_atoms:
-                    #print "Seen atom"
+                    # print "Seen atom"
                     continue
                 num_remaining_atoms += 1
-                #print "New atom!", next_atom_index, "count", num_remaining_atoms
+                # print "New atom!", next_atom_index, "count", num_remaining_atoms
                 visited_atoms.add(next_atom_index)
 
                 stack.append(next_atom_index)
-                
-    #print "==>", num_remaining_atoms, num_remaining_bonds
+
+    # print "==>", num_remaining_atoms, num_remaining_bonds
     return num_remaining_atoms, num_remaining_bonds
 
 # Check if a SMARTS is in all targets.
@@ -1513,14 +1513,14 @@ class CachingTargetsMatcher(dict):
         assert self._num_allowed_errors >= 0, (self.required_match_count, self._num_allowed_errors)
         self.targets = self.targets[1:]
         self._num_allowed_errors = len(self.targets) - self.required_match_count
-        
+
     def __missing__(self, smarts):
         num_allowed_errors = self._num_allowed_errors
         if num_allowed_errors < 0:
             raise AssertionError("I should never be called")
             self[smarts] = False
             return False
-        
+
         pat = Chem.MolFromSmarts(smarts)
         if pat is None:
             raise AssertionError("Bad SMARTS: %r" % (smarts,))
@@ -1554,7 +1554,7 @@ class VerboseCachingTargetsMatcher(object):
         if self._num_allowed_errors > 1:
             self.targets = self.targets[1:]
             self._num_allowed_errors = len(self.targets) - self.required_match_count
-            
+
     def __getitem__(self, smarts, missing=object()):
         self.num_lookups += 1
         x = self.cache.get(smarts, missing)
@@ -1564,7 +1564,7 @@ class VerboseCachingTargetsMatcher(object):
             else:
                 self.num_cached_false += 1
             return x
-        
+
         pat = Chem.MolFromSmarts(smarts)
         if pat is None:
             raise AssertionError("Bad SMARTS: %r" % (smarts,))
@@ -1573,21 +1573,21 @@ class VerboseCachingTargetsMatcher(object):
             if not MATCH(target, pat):
                 # Does not match. No need to continue processing
                 self.num_search_false += 1
-                self.num_matches += i+1
+                self.num_matches += i + 1
                 self.cache[smarts] = False
                 N = len(self.targets)
                 return False
                 # TODO: should I move the mismatch structure forward
                 # so that it's tested earlier next time?
         # Matches everything
-        self.num_matches += i+1
+        self.num_matches += i + 1
         self.num_search_true += 1
         self.cache[smarts] = True
         return True
-        
+
     def report(self):
-        print >>sys.stderr, "%d tests of %d unique SMARTS, cache: %d True %d False, search: %d True %d False (%d substructure tests)" % (self.num_lookups, len(self.cache), self.num_cached_true, self.num_cached_false, self.num_search_true, self.num_search_false, self.num_matches)
-        
+        print >> sys.stderr, "%d tests of %d unique SMARTS, cache: %d True %d False, search: %d True %d False (%d substructure tests)" % (self.num_lookups, len(self.cache), self.num_cached_true, self.num_cached_false, self.num_search_true, self.num_search_false, self.num_matches)
+
 
 ##### Different maximization algorithms ######
 def prune_maximize_bonds(subgraph, mol, num_remaining_atoms, num_remaining_bonds, best_sizes):
@@ -1607,7 +1607,7 @@ def prune_maximize_bonds(subgraph, mol, num_remaining_atoms, num_remaining_bonds
             return True
 
     return False
-    
+
 
 def prune_maximize_atoms(subgraph, mol, num_remaining_atoms, num_remaining_bonds, best_sizes):
     # Quick check if this is a viable search direction
@@ -1624,8 +1624,8 @@ def prune_maximize_atoms(subgraph, mol, num_remaining_atoms, num_remaining_bonds
         if diff_bonds <= 0:
             return True
     else:
-        #print "Could still have", diff_atoms
-        #print num_atoms, num_remaining_atoms, best_num_atoms
+        # print "Could still have", diff_atoms
+        # print num_atoms, num_remaining_atoms, best_num_atoms
         pass
 
     return False
@@ -1662,12 +1662,12 @@ class MCSResult(object):
         self.completed = completed
     def __nonzero__(self):
         return self.smarts is not None
-        
+
 
 class SingleBestAtoms(_SingleBest):
     def add_new_match(self, subgraph, mol, smarts):
         sizes = self.sizes
-        
+
         # See if the subgraph match is better than the previous best
         num_subgraph_atoms = len(subgraph.atom_indices)
         if num_subgraph_atoms < sizes[0]:
@@ -1683,7 +1683,7 @@ class SingleBestAtoms(_SingleBest):
 class SingleBestBonds(_SingleBest):
     def add_new_match(self, subgraph, mol, smarts):
         sizes = self.sizes
-        
+
         # See if the subgraph match is better than the previous best
         num_subgraph_bonds = len(subgraph.bond_indices)
         if num_subgraph_bonds < sizes[1]:
@@ -1696,12 +1696,12 @@ class SingleBestBonds(_SingleBest):
 
 
 
-### Check if there are any ring atoms; used in --complete-rings-only
+# ## Check if there are any ring atoms; used in --complete-rings-only
 
 # This is (yet) another depth-first graph search algorithm
 
 def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
-    #print "check", smarts, len(subgraph.atom_indices), len(subgraph.bond_indices)
+    # print "check", smarts, len(subgraph.atom_indices), len(subgraph.bond_indices)
 
     atoms = enumeration_mol.atoms
     bonds = enumeration_mol.bonds
@@ -1713,7 +1713,7 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
         if bond.is_in_ring:
             ring_bonds.append(bond_index)
 
-    #print len(ring_bonds), "ring bonds"
+    # print len(ring_bonds), "ring bonds"
     if not ring_bonds:
         # No need to check .. this is an acceptable structure
         return True
@@ -1728,7 +1728,7 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
     confirmed_ring_bonds = set()
     subgraph_ring_bond_indices = set(ring_bonds)
     for bond_index in ring_bonds:
-        #print "start with", bond_index, "in?", bond_index in confirmed_ring_bonds
+        # print "start with", bond_index, "in?", bond_index in confirmed_ring_bonds
         if bond_index in confirmed_ring_bonds:
             continue
         # Start a new search, starting from this bond
@@ -1755,18 +1755,18 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
                     continue
 
                 if outgoing_edge.end_atom_index in atom_depth:
-                    #print "We have a ring"
+                    # print "We have a ring"
                     # It's a ring! Mark everything as being in a ring
                     confirmed_ring_bonds.update(bond_stack[atom_depth[outgoing_edge.end_atom_index]:])
                     confirmed_ring_bonds.add(outgoing_edge.bond_index)
                     if len(confirmed_ring_bonds) == len(ring_bonds):
-                        #print "Success!"
+                        # print "Success!"
                         return True
                     this_is_a_ring = True
                     continue
 
                 # New atom. Need to explore it.
-                #print "we have a new bond", outgoing_edge.bond_index, "to atom", outgoing_edge.end_atom_index
+                # print "we have a new bond", outgoing_edge.bond_index, "to atom", outgoing_edge.end_atom_index
                 if next_bond_index is None:
                     # This will be the immediate next bond to search in the DFS
                     next_bond_index = outgoing_edge.bond_index
@@ -1774,12 +1774,12 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
                 else:
                     # Otherwise, backtrack and examine the other bonds
                     backtrack_stack.append(
-                        (len(bond_stack), outgoing_edge.bond_index, outgoing_edge.end_atom_index) )
+                        (len(bond_stack), outgoing_edge.bond_index, outgoing_edge.end_atom_index))
 
             if next_bond_index is None:
                 # Could not find a path to take. Might be because we looped back.
                 if this_is_a_ring:
-                    #assert prev_bond_index in confirmed_ring_bonds, (prev_bond_index, confirmed_ring_bonds)
+                    # assert prev_bond_index in confirmed_ring_bonds, (prev_bond_index, confirmed_ring_bonds)
                     # We did! That means we can backtrack
                     while backtrack_stack:
                         old_size, prev_bond_index, current_atom_index = backtrack_stack.pop()
@@ -1805,13 +1805,13 @@ def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
                 current_atom_index = next_atom_index
 
         # If we reached here then try the next bond
-        #print "Try again"
+        # print "Try again"
 
 
 class SingleBestAtomsCompleteRingsOnly(_SingleBest):
     def add_new_match(self, subgraph, mol, smarts):
         sizes = self.sizes
-        
+
         # See if the subgraph match is better than the previous best
         num_subgraph_atoms = len(subgraph.atom_indices)
         if num_subgraph_atoms < sizes[0]:
@@ -1824,17 +1824,17 @@ class SingleBestAtomsCompleteRingsOnly(_SingleBest):
         if check_completeRingsOnly(smarts, subgraph, mol):
             return self._new_best(num_subgraph_atoms, num_subgraph_bonds, smarts)
         return sizes
-        
+
 
 class SingleBestBondsCompleteRingsOnly(_SingleBest):
     def add_new_match(self, subgraph, mol, smarts):
         sizes = self.sizes
-        
+
         # See if the subgraph match is better than the previous best
         num_subgraph_bonds = len(subgraph.bond_indices)
         if num_subgraph_bonds < sizes[1]:
             return sizes
-        
+
         num_subgraph_atoms = len(subgraph.atom_indices)
         if num_subgraph_bonds == sizes[1] and num_subgraph_atoms <= sizes[0]:
             return sizes
@@ -1842,7 +1842,7 @@ class SingleBestBondsCompleteRingsOnly(_SingleBest):
         if check_completeRingsOnly(smarts, subgraph, mol):
             return self._new_best(num_subgraph_atoms, num_subgraph_bonds, smarts)
         return sizes
-    
+
 _maximize_options = {
     ("atoms", False): (prune_maximize_atoms, SingleBestAtoms),
     ("atoms", True): (prune_maximize_atoms, SingleBestAtomsCompleteRingsOnly),
@@ -1861,7 +1861,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
         end_time = time.time() + timeout
 
     seeds = []
-        
+
     best_sizes = (0, 0)
     # Do a quick check for the not uncommon case where one of the input fragments
     # is the largest substructure or one off from the largest.
@@ -1877,8 +1877,8 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
             smarts = make_arbitrary_smarts(subgraph, mol, atom_assignment)
             if matches_all_targets[smarts]:
                 best_sizes = hits.add_new_match(subgraph, mol, smarts)
-            
-    
+
+
     for mol in enumeration_mols:
         directed_edges = mol.directed_edges
         # Using 20001 random ChEMBL pairs, timeout=15.0 seconds
@@ -1892,13 +1892,13 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
             bond_index, bond = bond_data
             a1, a2 = bond.atom_indices
             return bond.is_in_ring + atoms[a1].is_in_ring + atoms[a2].is_in_ring
-        sorted_bonds.sort(key = get_bond_ring_score)
+        sorted_bonds.sort(key=get_bond_ring_score)
 
         visited_bond_indices = set()
-        num_remaining_atoms = len(mol.atoms)-2
+        num_remaining_atoms = len(mol.atoms) - 2
         num_remaining_bonds = len(mol.bonds)
-        for bond_index, bond in sorted_bonds: #enumerate(mol.bonds): #
-            #print "bond_index", bond_index, len(mol.bonds)
+        for bond_index, bond in sorted_bonds:  # enumerate(mol.bonds): #
+            # print "bond_index", bond_index, len(mol.bonds)
             visited_bond_indices.add(bond_index)
             num_remaining_bonds -= 1
             subgraph = Subgraph(bond.atom_indices, frozenset([bond_index]))
@@ -1910,13 +1910,13 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
             # SMARTS as make_canonical_smarts, but that doesn't matter.
             # 1) I know it's canonical, 2) it's faster, and 3) there is
             # no place else which generates single-bond canonical SMARTS.
-            #smarts = make_canonical_smarts(subgraph, mol, atom_assignment)
+            # smarts = make_canonical_smarts(subgraph, mol, atom_assignment)
             smarts = bond.canonical_bondtype
             if matches_all_targets[smarts]:
                 best_sizes = hits.add_new_match(subgraph, mol, smarts)
             else:
                 # This can happen if there's a threshold
-                #raise AssertionError("This should never happen: %r" % (smarts,))
+                # raise AssertionError("This should never happen: %r" % (smarts,))
                 continue
 
             a1, a2 = bond.atom_indices
@@ -1934,7 +1934,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
                 heappush(seeds, (-1, tiebreaker(), subgraph,
                                  visited_bond_indices.copy(), empty_internal, outgoing_edges,
                                  mol, directed_edges))
-    
+
     # I made so many subtle mistakes where I used 'subgraph' instead
     # of 'new_subgraph' in the following section that I finally
     # decided to get rid of 'subgraph' and use 'old_subgraph' instead.
@@ -1944,27 +1944,27 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
         if end_time:
             if time.time() >= end_time:
                 return False
-            
-        #print "There are", len(seeds), "seeds", seeds[0][:2]
+
+        # print "There are", len(seeds), "seeds", seeds[0][:2]
         score, _, old_subgraph, visited_bond_indices, internal_bonds, external_edges, mol, directed_edges = heappop(seeds)
 
         new_visited_bond_indices = visited_bond_indices.copy()
         new_visited_bond_indices.update(internal_bonds)
-        ## for edge in external_edges:
-        ##     assert edge.bond_index not in new_visited_bond_indices
+        # # for edge in external_edges:
+        # #     assert edge.bond_index not in new_visited_bond_indices
         new_visited_bond_indices.update(edge.bond_index for edge in external_edges)
 
         for new_atoms, new_subgraph, num_remaining_atoms, num_remaining_bonds in \
                all_subgraph_extensions(mol, old_subgraph, visited_bond_indices, internal_bonds, external_edges):
             if prune(new_subgraph, mol, num_remaining_atoms, num_remaining_bonds, best_sizes):
-                #print "PRUNE", make_canonical_smarts(new_subgraph, mol, atom_assignment)
+                # print "PRUNE", make_canonical_smarts(new_subgraph, mol, atom_assignment)
                 continue
             smarts = make_canonical_smarts(new_subgraph, mol, atom_assignment)
             if matches_all_targets[smarts]:
-                #print "YES", smarts
+                # print "YES", smarts
                 best_sizes = hits.add_new_match(new_subgraph, mol, smarts)
             else:
-                #print "NO", smarts
+                # print "NO", smarts
                 continue
 
             if not new_atoms:
@@ -2002,11 +2002,11 @@ class VerboseHeapOps(object):
         self.verboseDelay = verboseDelay
         self._time_for_next_report = time.time() + verboseDelay
         self.trigger = trigger
-        
+
     def heappush(self, seeds, item):
         self.num_seeds_added += 1
         return heappush(seeds, item)
-    
+
     def heappop(self, seeds):
         if time.time() >= self._time_for_next_report:
             self.trigger()
@@ -2020,13 +2020,13 @@ class VerboseHeapOps(object):
         self.report()
 
     def report(self):
-        print >>sys.stderr, "  %d subgraphs enumerated, %d processed" % (
+        print >> sys.stderr, "  %d subgraphs enumerated, %d processed" % (
             self.num_seeds_added, self.num_seeds_processed)
 
-def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, maximize = Default.maximize,
-                completeRingsOnly = Default.completeRingsOnly,
-                timeout = Default.timeout,
-                timer = None, verbose=False, verboseDelay=1.0):
+def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, maximize=Default.maximize,
+                completeRingsOnly=Default.completeRingsOnly,
+                timeout=Default.timeout,
+                timer=None, verbose=False, verboseDelay=1.0):
     assert timer is not None
     assert 0 < threshold_count <= len(fragmented_mols), threshold_count
     assert len(fragmented_mols) == len(typed_mols)
@@ -2035,18 +2035,18 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, 
         threshold_count = len(fragmented_mols)
     else:
         assert threshold_count >= 2, threshold_count
-    
+
     atom_assignment = Uniquer()
     if verbose:
         if verboseDelay < 0.0:
             raise ValueError("verboseDelay may not be negative")
-        matches_all_targets = VerboseCachingTargetsMatcher(typed_mols[1:], threshold_count-1)
+        matches_all_targets = VerboseCachingTargetsMatcher(typed_mols[1:], threshold_count - 1)
         heapops = VerboseHeapOps(matches_all_targets.report, verboseDelay)
         push = heapops.heappush
         pop = heapops.heappop
         end_verbose = heapops.trigger_report
     else:
-        matches_all_targets = CachingTargetsMatcher(typed_mols[1:], threshold_count-1)
+        matches_all_targets = CachingTargetsMatcher(typed_mols[1:], threshold_count - 1)
         push = heappush
         pop = heappop
         end_verbose = lambda: 1
@@ -2061,10 +2061,10 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, 
     remaining_time = None
     if timeout is not None:
         stop_time = time.time() + timeout
-    
+
     for query_index, fragmented_query_mol in enumerate(fragmented_mols):
         enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol, minNumAtoms)
-        
+
         targets = typed_mols
         if timeout is not None:
             remaining_time = stop_time - time.time()
@@ -2075,14 +2075,14 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, 
         if not success:
             break
         matches_all_targets.shift_targets()
-        
+
     end_verbose()
 
     result = hits.get_result(success)
     if result.num_atoms < minNumAtoms:
         return MCSResult(-1, -1, None, result.completed)
     return result
-        
+
 ########## Main driver for the MCS code
 
 class Timer(object):
@@ -2094,11 +2094,11 @@ class Timer(object):
 def _update_times(timer, times):
     if times is None:
         return
-    for (dest, start, end) in ( ("fragment", "start fmcs", "end fragment"),
+    for (dest, start, end) in (("fragment", "start fmcs", "end fragment"),
                                 ("select", "end fragment", "end select"),
                                 ("enumerate", "end select", "end fmcs"),
                                 ("best_found", "start fmcs", "new best"),
-                                ("mcs", "start fmcs", "end fmcs") ):
+                                ("mcs", "start fmcs", "end fmcs")):
         try:
             diff = timer.mark_times[end] - timer.mark_times[start]
         except KeyError:
@@ -2113,7 +2113,7 @@ def _get_threshold_count(num_mols, threshold):
     threshold_count = int(x)
     if threshold_count < x:
         threshold_count += 1
-    
+
     if threshold_count < 2:
         # You can specify 0.00001 or -2.3 but you'll still get
         # at least one *common* substructure.
@@ -2123,13 +2123,13 @@ def _get_threshold_count(num_mols, threshold):
 
 
 def fmcs(mols, minNumAtoms=2,
-         maximize = Default.maximize,
-         atomCompare = Default.atomCompare,
-         bondCompare = Default.bondCompare,
-         threshold = 1.0,
-         matchValences = Default.matchValences,
-         ringMatchesRingOnly = False,
-         completeRingsOnly = False,
+         maximize=Default.maximize,
+         atomCompare=Default.atomCompare,
+         bondCompare=Default.bondCompare,
+         threshold=1.0,
+         matchValences=Default.matchValences,
+         ringMatchesRingOnly=False,
+         completeRingsOnly=False,
          timeout=Default.timeout,
          times=None,
          verbose=False,
@@ -2149,7 +2149,7 @@ def fmcs(mols, minNumAtoms=2,
     if threshold_count > len(mols):
         # Threshold is too high. No possible matches.
         return MCSResult(-1, -1, None, 1)
-        
+
     if completeRingsOnly:
         ringMatchesRingOnly = True
 
@@ -2165,8 +2165,8 @@ def fmcs(mols, minNumAtoms=2,
 
     # Make copies of all of the molecules so I can edit without worrying about the original
     typed_mols = convert_input_to_typed_molecules(mols, atom_typer, bond_typer,
-                                                  matchValences = matchValences,
-                                                  ringMatchesRingOnly = ringMatchesRingOnly)
+                                                  matchValences=matchValences,
+                                                  ringMatchesRingOnly=ringMatchesRingOnly)
     bondtype_counts = get_canonical_bondtype_counts(typed_mols)
     supported_bondtypes = set()
     for bondtype, count_list in bondtype_counts.items():
@@ -2176,7 +2176,7 @@ def fmcs(mols, minNumAtoms=2,
             # Keep track of the counts while building the subgraph.
             # The subgraph can never have more types of a given count.
 
-    
+
     fragmented_mols = [remove_unknown_bondtypes(typed_mol, bondtype_counts) for typed_mol in typed_mols]
     timer.mark("end fragment")
 
@@ -2202,7 +2202,7 @@ def fmcs(mols, minNumAtoms=2,
                 max_num_atoms = num_atoms
             if num_bonds < max_num_bonds:
                 max_num_bonds = num_bonds
-            sizes.append( (num_bonds, num_atoms, tiebreaker, typed_mol, fragmented_mol) )
+            sizes.append((num_bonds, num_atoms, tiebreaker, typed_mol, fragmented_mol))
 
     if len(sizes) < threshold_count:
         timer.mark("end select")
@@ -2216,13 +2216,13 @@ def fmcs(mols, minNumAtoms=2,
     # Break ties with the smallest number of atoms.
     # Break secondary ties by position.
     sizes.sort()
-    #print "Using", Chem.MolToSmiles(sizes[0][4].rdmol)
+    # print "Using", Chem.MolToSmiles(sizes[0][4].rdmol)
 
     timer.mark("end select")
 
     # Extract the (typed mol, fragmented mol) pairs.
     fragmented_mols = [size_info[4] for size_info in sizes]  # used as queries
-    typed_mols = [size_info[3].rdmol for size_info in sizes]    # used as targets
+    typed_mols = [size_info[3].rdmol for size_info in sizes]  # used as targets
 
     timer.mark("start enumeration")
     mcs_result = compute_mcs(fragmented_mols, typed_mols, minNumAtoms,
@@ -2253,7 +2253,7 @@ def subgraph_to_fragment(mol, subgraph):
                      bond.GetBondType())
 
     return emol.GetMol()
-    
+
 
 # Convert a subgraph into a SMILES
 def make_fragment_smiles(mcs, mol, subgraph, args=None):
@@ -2307,7 +2307,7 @@ def _save_other_tags(mol, fragment, mcs, orig_mol, subgraph, args):
         else:
             smarts = "-"
         mol.SetProp(args.save_smarts_tag, smarts)
-    
+
 
 # Convert a subgraph into an SD file
 def make_fragment_sdf(mcs, mol, subgraph, args):
@@ -2325,7 +2325,7 @@ def make_fragment_sdf(mcs, mol, subgraph, args):
 
     return _MolToSDBlock(fragment)
 
-# 
+#
 def make_complete_sdf(mcs, mol, subgraph, args):
     fragment = copy.copy(mol)
     _copy_sd_tags(mol, fragment)
@@ -2385,7 +2385,7 @@ class starting_from(object):
     def __init__(self, left):
         self.left = left
     def __contains__(self, value):
-        return self.left <= value 
+        return self.left <= value
 
 range_pat = re.compile(r"(\d+)-(\d*)")
 value_pat = re.compile("(\d+)")
@@ -2400,28 +2400,28 @@ def parse_select(s):
             left = int(m.group(1))
             right = m.group(2)
             if not right:
-                ranges.append(starting_from(left-1))
+                ranges.append(starting_from(left - 1))
             else:
-                ranges.append( xrange(left-1, int(right)) )
+                ranges.append(xrange(left - 1, int(right)))
         else:
             # Selected a single value
             m = value_pat.match(s, start)
             if m is not None:
                 val = int(m.group(1))
-                ranges.append( xrange(val-1, val) )
+                ranges.append(xrange(val - 1, val))
             else:
-                raise argparse.ArgumentTypeError("Unknown character at position %d of %r" %(
-                    start+1, s))
+                raise argparse.ArgumentTypeError("Unknown character at position %d of %r" % (
+                    start + 1, s))
         start = m.end()
         # Check if this is the end of string or a ','
-        t = s[start:start+1]
+        t = s[start:start + 1]
         if not t:
             break
         if t == ",":
             start += 1
             continue
         raise argparse.ArgumentTypeError("Unknown character at position %d of %r" % (
-            start+1, s))
+            start + 1, s))
     return ranges
 
 
@@ -2444,7 +2444,7 @@ def _get_match_bond_indices(pat, mol, match_atom_indices):
 
 def main(args=None):
     parser = argparse.ArgumentParser(description="Find the maximum common substructure of a set of structures",
-         epilog = "For more details on these options, see https://bitbucket.org/dalke/fmcs/")
+         epilog="For more details on these options, see https://bitbucket.org/dalke/fmcs/")
     parser.add_argument("filename", nargs=1,
                         help="SDF or SMILES file")
 
@@ -2461,7 +2461,7 @@ def main(args=None):
             namespace.atomCompare = atomCompare_name
             namespace.bondCompare = bondCompare_name
 
-    parser.add_argument("--compare", choices = ["topology", "elements", "types"],
+    parser.add_argument("--compare", choices=["topology", "elements", "types"],
                         default=None, action=CompareAction, help=
                         "Use 'topology' as a shorthand for '--atom-compare any --bond-compare any', "
                         "'elements' is '--atom-compare elements --bond-compare any', "
@@ -2495,10 +2495,10 @@ def main(args=None):
                         "identical if and only if their corresponding atom classes are the same. Note "
                         "that '003' and '3' are treated as identical values. (Not used by default)")
 
-    ## parser.add_argument("--match-valences", action="store_true",
-    ##                     help=
-    ##                     "Modify the atom comparison so that two atoms must also have the same total "
-    ##                     "bond order in order to match.")
+    # # parser.add_argument("--match-valences", action="store_true",
+    # #                     help=
+    # #                     "Modify the atom comparison so that two atoms must also have the same total "
+    # #                     "bond order in order to match.")
 
 
     parser.add_argument("--ring-matches-ring-only", action="store_true",
@@ -2527,7 +2527,7 @@ def main(args=None):
     parser.add_argument("--output", "-o", metavar="FILENAME",
                         help="Write the results to FILENAME (Default: use stdout)")
 
-    parser.add_argument("--output-format", choices = ["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
+    parser.add_argument("--output-format", choices=["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
                         default="smarts", help=
                         "'smarts' writes the SMARTS pattern including the atom and bond criteria. "
                         "'fragment-smiles' writes a matching fragment as a SMILES string. "
@@ -2593,9 +2593,9 @@ def main(args=None):
 
     if args.atomCompare is None:
         if args.atom_class_tag is None:
-            args.atomCompare = "elements" # Default atom comparison
+            args.atomCompare = "elements"  # Default atom comparison
         else:
-            args.atomCompare = "isotopes" # Assing the atom classes to the isotope fields
+            args.atomCompare = "isotopes"  # Assing the atom classes to the isotope fields
     else:
         if args.atom_class_tag is not None:
             parser.error("Cannot specify both --atom-compare and --atom-class-tag fields")
@@ -2629,49 +2629,49 @@ def main(args=None):
     structures = []
     if args.verbosity > 1:
         sys.stderr.write("Loading structures from %s ..." % (filename,))
-        
+
     for molno, mol in enumerate(reader):
         if not any(molno in range_ for range_ in args.select):
             continue
         if mol is None:
-            print >>sys.stderr, "Skipping unreadable structure #%d" % (molno+1,)
+            print >> sys.stderr, "Skipping unreadable structure #%d" % (molno + 1,)
             continue
         if atom_class_tag is not None:
             try:
                 assign_isotopes_from_class_tag(mol, atom_class_tag)
             except ValueError as err:
-                raise SystemExit("Structure #%d: %s" % (molno+1, err))
+                raise SystemExit("Structure #%d: %s" % (molno + 1, err))
         structures.append(mol)
         if args.verbosity > 1:
             if len(structures) % 100 == 0:
                 sys.stderr.write("\rLoaded %d structures from %s ..." % (len(structures), filename))
-                sys.stderr.flush() # not needed; it's stderr. But I'm cautious.
+                sys.stderr.flush()  # not needed; it's stderr. But I'm cautious.
 
     if args.verbosity > 1:
         sys.stderr.write("\r")
 
-    times = {"load": time.time()-t1}
-    
+    times = {"load": time.time() - t1}
+
     if args.verbosity:
-        print >>sys.stderr, "Loaded", len(structures), "structures from", filename, "    "
+        print >> sys.stderr, "Loaded", len(structures), "structures from", filename, "    "
 
     if len(structures) < 2:
         raise SystemExit("Input file %r must contain at least two structures" % (filename,))
 
     mcs = fmcs(structures,
-               minNumAtoms = args.minNumAtoms,
-               maximize = args.maximize,
-               atomCompare = args.atomCompare,
-               bondCompare = args.bondCompare,
-               threshold = args.threshold,
-               #matchValences = args.matchValences,
-               matchValences = False, # Do I really want to support this?
-               ringMatchesRingOnly = args.ringMatchesRingOnly,
-               completeRingsOnly = args.completeRingsOnly,
-               timeout = args.timeout,
-               times = times,
-               verbose = args.verbosity > 1,
-               verboseDelay = 1.0,
+               minNumAtoms=args.minNumAtoms,
+               maximize=args.maximize,
+               atomCompare=args.atomCompare,
+               bondCompare=args.bondCompare,
+               threshold=args.threshold,
+               # matchValences = args.matchValences,
+               matchValences=False,  # Do I really want to support this?
+               ringMatchesRingOnly=args.ringMatchesRingOnly,
+               completeRingsOnly=args.completeRingsOnly,
+               timeout=args.timeout,
+               times=times,
+               verbose=args.verbosity > 1,
+               verboseDelay=1.0,
         )
 
     msg_format = "Total time %(total).2f seconds: load %(load).2f fragment %(fragment).2f select %(select).2f enumerate %(enumerate).2f"
@@ -2727,7 +2727,7 @@ def main(args=None):
         outfile.close()
 
     if args.times or args.verbosity:
-        print >>sys.stderr, msg_format % times
+        print >> sys.stderr, msg_format % times
 
 if __name__ == "__main__":
     import argparse

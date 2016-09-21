@@ -1,12 +1,12 @@
 # -*- coding: latin-1 -*-
-#pdfdoc.py
-""" 
-PDFgen is a library to generate PDF files containing text and graphics.  It is the 
-foundation for a complete reporting solution in Python.  
+# pdfdoc.py
+"""
+PDFgen is a library to generate PDF files containing text and graphics.  It is the
+foundation for a complete reporting solution in Python.
 
 The module pdfdoc.py handles the 'outer structure' of PDF documents, ensuring that
-all objects are properly cross-referenced and indexed to the nearest byte.  The 
-'inner structure' - the page descriptions - are presumed to be generated before 
+all objects are properly cross-referenced and indexed to the nearest byte.  The
+'inner structure' - the page descriptions - are presumed to be generated before
 each page is saved.
 pdfgen.py calls this and provides a 'canvas' object to handle page marking operators.
 piddlePDF calls pdfgen and offers a high-level interface.
@@ -31,7 +31,7 @@ except ImportError:
 from .pdfgeom import bezierArc
 
 from . import pdfutils
-from .pdfutils import LINEEND   # this constant needed in both
+from .pdfutils import LINEEND  # this constant needed in both
 from . import pdfmetrics
 ##############################################################
 #
@@ -42,16 +42,16 @@ from . import pdfmetrics
 
 
 StandardEnglishFonts = [
-    'Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique',  
-    'Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique', 
+    'Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique',
+    'Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique',
     'Helvetica-BoldOblique',
     'Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic',
-    'Symbol','ZapfDingbats']
+    'Symbol', 'ZapfDingbats']
 
 PDFError = 'PDFError'
 AFMDIR = '.'
 
-A4 = (595.27,841.89)   #default page size
+A4 = (595.27, 841.89)  # default page size
 
 class PDFDocument:
     """Responsible for linking and writing out the whole document.
@@ -64,48 +64,48 @@ class PDFDocument:
     def __init__(self):
         self.objects = []
         self.objectPositions = {}
-        
+
         self.fonts = MakeType1Fonts()
 
-        #mapping of Postscriptfont names to internal ones;
-        #needs to be dynamically built once we start adding
-        #fonts in.
+        # mapping of Postscriptfont names to internal ones;
+        # needs to be dynamically built once we start adding
+        # fonts in.
         self.fontMapping = {}
         for i in range(len(StandardEnglishFonts)):
             psname = StandardEnglishFonts[i]
-            pdfname = '/F%d' % (i+1)
+            pdfname = '/F%d' % (i + 1)
             self.fontMapping[psname] = pdfname
-        
-            
+
+
         self.pages = []
         self.pagepositions = []
-        
+
         # position 1
         cat = PDFCatalog()
         cat.RefPages = 3
         cat.RefOutlines = 2
         self.add('Catalog', cat)
-    
+
         # position 2 - outlines
         outl = PDFOutline()
         self.add('Outline', outl)
-    
+
         # position 3 - pages collection
         self.PageCol = PDFPageCollection()
-        self.add('PagesTreeRoot',self.PageCol)
-    
+        self.add('PagesTreeRoot', self.PageCol)
+
         # positions 4-16 - fonts
         fontstartpos = len(self.objects) + 1
         for font in self.fonts:
-            self.add('Font.'+font.keyname, font)
+            self.add('Font.' + font.keyname, font)
         self.fontdict = MakeFontDictionary(fontstartpos, len(self.fonts))
-        
+
         # position 17 - Info
-        self.info = PDFInfo()  #hang onto it!
+        self.info = PDFInfo()  # hang onto it!
         self.add('Info', self.info)
-        self.infopos = len(self.objects)  #1-based, this gives its position
-    
-    
+        self.infopos = len(self.objects)  # 1-based, this gives its position
+
+
     def add(self, key, obj):
         self.objectPositions[key] = len(self.objects)  # its position
         self.objects.append(obj)
@@ -117,24 +117,24 @@ class PDFDocument:
         cross-linking; an object can call self.doc.getPosition("Page001")
         to find out where the object keyed under "Page001" is stored."""
         return self.objectPositions[key]
-    
+
     def setTitle(self, title):
         "embeds in PDF file"
         self.info.title = title
-        
+
     def setAuthor(self, author):
         "embedded in PDF file"
         self.info.author = author
-            
+
     def setSubject(self, subject):
         "embeds in PDF file"
         self.info.subject = subject
-            
-    
+
+
     def printXref(self):
         self.startxref = sys.stdout.tell()
         print('xref')
-        print(0,len(self.objects) + 1)
+        print(0, len(self.objects) + 1)
         print('0000000000 65535 f')
         for pos in self.xref:
             print('%0.10d 00000 n' % pos)
@@ -147,7 +147,7 @@ class PDFDocument:
         for pos in self.xref:
             f.write('%0.10d 00000 n' % pos + LINEEND)
 
-    
+
     def printTrailer(self):
         print('trailer')
         print('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos))
@@ -156,9 +156,9 @@ class PDFDocument:
 
     def writeTrailer(self, f):
         f.write('trailer' + LINEEND)
-        f.write('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos)  + LINEEND)
+        f.write('<< /Size %d /Root %d 0 R /Info %d 0 R>>' % (len(self.objects) + 1, 1, self.infopos) + LINEEND)
         f.write('startxref' + LINEEND)
-        f.write(str(self.startxref)  + LINEEND)
+        f.write(str(self.startxref) + LINEEND)
 
     def SaveToFile(self, filename):
         fileobj = open(filename, 'wb')
@@ -173,7 +173,7 @@ class PDFDocument:
         i = 1
         self.xref = []
         f.write("%PDF-1.2" + LINEEND)  # for CID support
-        f.write("%�춾" + LINEEND)
+        f.write("%�춾" + LINEEND)
         for obj in self.objects:
             pos = f.tell()
             self.xref.append(pos)
@@ -184,14 +184,14 @@ class PDFDocument:
         self.writeXref(f)
         self.writeTrailer(f)
         f.write('%%EOF')  # no lineend needed on this one!
-        
+
         # with the Mac, we need to tag the file in a special
-        #way so the system knows it is a PDF file.
-        #This supplied by Joe Strout
+        # way so the system knows it is a PDF file.
+        # This supplied by Joe Strout
         if os.name == 'mac':
-            import macfs  #@UnresolvedImport
-            try: 
-                macfs.FSSpec(filename).SetCreatorType('CARO','PDF ')
+            import macfs  # @UnresolvedImport
+            try:
+                macfs.FSSpec(filename).SetCreatorType('CARO', 'PDF ')
             except Exception:
                 pass
 
@@ -199,7 +199,7 @@ class PDFDocument:
     def printPDF(self):
         "prints it to standard output.  Logs positions for doing trailer"
         print("%PDF-1.0")
-        print("%�춾")
+        print("%�춾")
         i = 1
         self.xref = []
         for obj in self.objects:
@@ -215,21 +215,21 @@ class PDFDocument:
 
     def addPage(self, page):
         """adds page and stream at end.  Maintains pages list"""
-        #page.buildstream()
-        pos = len(self.objects) # work out where added
-        
-        page.ParentPos = 3   #pages collection
+        # page.buildstream()
+        pos = len(self.objects)  # work out where added
+
+        page.ParentPos = 3  # pages collection
         page.info = {
             'parentpos':3,
             'fontdict':self.fontdict,
             'contentspos':pos + 2,
             }
-        
-        self.PageCol.PageList.append(pos+1)  
-        self.add('Page%06d'% len(self.PageCol.PageList), page)
-        #self.objects.append(page)
-        self.add('PageStream%06d'% len(self.PageCol.PageList), page.stream)
-        #self.objects.append(page.stream)
+
+        self.PageCol.PageList.append(pos + 1)
+        self.add('Page%06d' % len(self.PageCol.PageList), page)
+        # self.objects.append(page)
+        self.add('PageStream%06d' % len(self.PageCol.PageList), page.stream)
+        # self.objects.append(page.stream)
 
     def hasFont(self, psfontname):
         return self.fontMapping.has_key(psfontname)
@@ -244,7 +244,7 @@ class PDFDocument:
         fontnames = self.fontMapping.keys()
         fontnames.sort()
         return fontnames
-    
+
 ##############################################################
 #
 #            Utilities
@@ -255,7 +255,7 @@ class OutputGrabber:
     """At times we need to put something in the place of standard
     output.  This grabs stdout, keeps the data, and releases stdout
     when done.
-    
+
     NOT working well enough!"""
     def __init__(self):
         self.oldoutput = sys.stdout
@@ -265,27 +265,27 @@ class OutputGrabber:
     def write(self, x):
         if not self.closed:
             self.data.append(x)
-    
+
     def getData(self):
         return string.join(self.data)
 
     def close(self):
         sys.stdout = self.oldoutput
         self.closed = 1
-        
+
     def __del__(self):
         if not self.closed:
             self.close()
-    
-                
+
+
 def testOutputGrabber():
     gr = OutputGrabber()
     for i in range(10):
-        print('line',i)
+        print('line', i)
     data = gr.getData()
     gr.close()
-    print('Data...',data)
-    
+    print('Data...', data)
+
 
 ##############################################################
 #
@@ -308,7 +308,7 @@ class PDFObject:
         file.write('% base PDF object' + LINEEND)
     def printPDF(self):
         self.save(sys.stdout)
-    
+
 
 class PDFLiteral(PDFObject):
     " a ready-made one you wish to quote"
@@ -328,7 +328,7 @@ class PDFCatalog(PDFObject):
                         '/Pages %d 0 R',
                         '/Outlines %d 0 R',
                         '>>'
-                        ],LINEEND
+                        ], LINEEND
                         )
     def save(self, file):
         file.write(self.template % (self.RefPages, self.RefOutlines) + LINEEND)
@@ -355,13 +355,13 @@ class PDFInfo(PDFObject):
                 "/Subject (%s)",
                 ">>"
                 ], LINEEND
-            ) % ( 
-    pdfutils._escape(self.title), 
-    pdfutils._escape(self.author), 
-    self.datestr, 
+            ) % (
+    pdfutils._escape(self.title),
+    pdfutils._escape(self.author),
+    self.datestr,
     pdfutils._escape(self.subject)
     ) + LINEEND)
-    
+
 
 
 class PDFOutline(PDFObject):
@@ -402,7 +402,7 @@ class PDFPage(PDFObject):
     of objects as well."""
     def __init__(self):
         self.drawables = []
-        self.pagewidth = 595  #these are overridden by piddlePDF
+        self.pagewidth = 595  # these are overridden by piddlePDF
         self.pageheight = 842
         self.stream = PDFStream()
         self.hasImages = 0
@@ -418,16 +418,16 @@ class PDFPage(PDFObject):
                 '   /Font %(fontdict)s',
                 '   /ProcSet %(procsettext)s',
                 '   >>',
-                '/MediaBox [0 0 %(pagewidth)d %(pageheight)d]',  #A4 by default
+                '/MediaBox [0 0 %(pagewidth)d %(pageheight)d]',  # A4 by default
                 '/Contents %(contentspos)d 0 R',
                 '%(transitionString)s',
                 '>>'],
             LINEEND)
     def setCompression(self, onoff=0):
         "Turns page compression on or off"
-        assert onoff in [0,1], "Page compression options are 1=on, 2=off"
+        assert onoff in [0, 1], "Page compression options are 1=on, 2=off"
         self.stream.compression = onoff
-        
+
     def save(self, file):
         self.info['pagewidth'] = self.pagewidth
         self.info['pageheight'] = self.pageheight
@@ -442,7 +442,7 @@ class PDFPage(PDFObject):
 
     def clear(self):
         self.drawables = []
-    
+
     def setStream(self, data):
         if type(data) is ListType:
             data = string.join(data, LINEEND)
@@ -461,23 +461,23 @@ class PDFStream(PDFObject):
         self.data = data
 
     def save(self, file):
-        #avoid crashes if they wrote nothing in the page
+        # avoid crashes if they wrote nothing in the page
         if self.data == None:
              self.data = TestStream
 
         if self.compression == 1:
-            comp = zlib.compress(self.data)   #this bit is very fast...
-            base85 = pdfutils._AsciiBase85Encode(comp) #...sadly this isn't
+            comp = zlib.compress(self.data)  # this bit is very fast...
+            base85 = pdfutils._AsciiBase85Encode(comp)  # ...sadly this isn't
             wrapped = pdfutils._wrap(base85)
             data_to_write = wrapped
         else:
             data_to_write = self.data
         # the PDF length key should contain the length including
         # any extra LF pairs added by Print on DOS.
-        
-        #lines = len(string.split(self.data,'\n'))
-        #length = len(self.data) + lines   # one extra LF each
-        length = len(data_to_write) + len(LINEEND)    #AR 19980202
+
+        # lines = len(string.split(self.data,'\n'))
+        # length = len(self.data) + lines   # one extra LF each
+        length = len(data_to_write) + len(LINEEND)  # AR 19980202
         if self.compression:
             file.write('<< /Length %d /Filter [/ASCII85Decode /FlateDecode]>>' % length + LINEEND)
         else:
@@ -527,7 +527,7 @@ class PDFType1Font(PDFObject):
         file.write(self.template % (self.keyname, self.fontname) + LINEEND)
 
 
-       
+
 
 
 
@@ -544,19 +544,19 @@ def MakeType1Fonts():
     fonts = []
     pos = 1
     for fontname in StandardEnglishFonts:
-        font = PDFType1Font('F'+str(pos), fontname)
+        font = PDFType1Font('F' + str(pos), fontname)
         fonts.append(font)
         pos = pos + 1
     return fonts
 
 def MakeFontDictionary(startpos, count):
-    "returns a font dictionary assuming they are all in the file from startpos"    
+    "returns a font dictionary assuming they are all in the file from startpos"
     dict = "  <<" + LINEEND
     pos = startpos
     for i in range(count):
         dict = dict + '\t\t/F%d %d 0 R ' % (i + 1, startpos + i) + LINEEND
     dict = dict + "\t\t>>" + LINEEND
     return dict
-        
+
 if __name__ == '__main__':
     print('For test scripts, run test1.py to test6.py')

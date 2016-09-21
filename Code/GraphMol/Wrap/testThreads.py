@@ -23,7 +23,7 @@ def runner(func, args):
     else:
         res = getattr(ref_mol, func)()
     if func in expected:
-        assert res == expected[func], "Got %r expected %r"%(ers, expected[func])
+        assert res == expected[func], "Got %r expected %r" % (ers, expected[func])
     return res
 
 funcs = ["GetSubstructMatch",
@@ -33,35 +33,35 @@ funcs = ["GetSubstructMatch",
 # get the expected results from the non-thread version
 for func in funcs:
     expected[func] = runner(func, core_mol)
-    
 
-nthreads = int(multiprocessing.cpu_count() * 100 / 4) # 100 threads per cpu
+
+nthreads = int(multiprocessing.cpu_count() * 100 / 4)  # 100 threads per cpu
 threads = []
 for i in range(0, nthreads):
     for func in funcs:
-        t = threading.Thread(target=runner, args=(func,core_mol))
+        t = threading.Thread(target=runner, args=(func, core_mol))
         t.start()
         threads.append(t)
-    t = threading.Thread(target=runner, args=("ToBinary",None))        
+    t = threading.Thread(target=runner, args=("ToBinary", None))
     t.start()
     threads.append(t)
 for t in threads:
     t.join()
 
 def LogError():
-    i=0
+    i = 0
     while 1:
-        if i==10: break
-        i+=1
+        if i == 10: break
+        i += 1
         Chem.LogErrorMsg(str(i) + ":: My dog has fleas")
 
 def LogWarning():
-    i=0
+    i = 0
     while 1:
-        if i==10: break
-        i+=1
+        if i == 10: break
+        i += 1
         Chem.LogWarningMsg(str(i) + ":: All good boys to fine")
-    
+
 # this spews a ton of logging info...
 #  that is all intermingled...
 if 0:
@@ -69,7 +69,7 @@ if 0:
     threads = []
     for i in range(0, nthreads):
         for func in funcs:
-            if i%2 == 0:
+            if i % 2 == 0:
                 t = threading.Thread(target=LogError)
             else:
                 t = threading.Thread(target=LogWarning)
@@ -92,7 +92,7 @@ nthreads = int(multiprocessing.cpu_count())
 threads = []
 for i in range(0, nthreads):
     for func in funcs:
-        if i%2 == 0:
+        if i % 2 == 0:
             t = threading.Thread(target=LogError)
         else:
             t = threading.Thread(target=LogWarning)
@@ -101,7 +101,7 @@ for i in range(0, nthreads):
     t = threading.Thread(target=LogWarning)
     t.start()
     threads.append(t)
-    
+
 for t in threads:
     t.join()
 sys.stderr = err

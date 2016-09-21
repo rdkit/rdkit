@@ -16,10 +16,10 @@ class KNNClassificationModel(KNNModel.KNNModel) :
 
   """
 
-  def __init__(self, k, attrs, dfunc,radius=None) :
-    self._setup(k, attrs, dfunc,radius)
-        
-    self._badExamples = [] # list of examples incorrectly classified
+  def __init__(self, k, attrs, dfunc, radius=None) :
+    self._setup(k, attrs, dfunc, radius)
+
+    self._badExamples = []  # list of examples incorrectly classified
 
   def type(self):
     return "Classification Model"
@@ -52,7 +52,7 @@ class KNNClassificationModel(KNNModel.KNNModel) :
     """
     if appendExamples:
       self._examples.append(example)
-      
+
     # first find the k-closest examples in the traning set
     knnLst = self.GetNeighbors(example)
 

@@ -3,13 +3,13 @@ from rdkit import Chem
 from rdkit.Chem import ChemicalForceFields, rdtrajectory
 from rdkit.Chem.rdtrajectory import Snapshot, \
   Trajectory, ReadAmberTrajectory, ReadGromosTrajectory
-import os,sys
+import os, sys
 import unittest
 
 from rdkit import RDConfig
 
 def feq(v1, v2, tol=1.0e-4):
-    return abs(v1-v2) < tol
+    return abs(v1 - v2) < tol
 
 class TestCase(unittest.TestCase):
     def setUp(self) :
@@ -403,7 +403,7 @@ class TestCase(unittest.TestCase):
         ' 33 71  1  0\n' \
         'M  CHG  2  11   1  23  -1\n' \
         'M  END\n'
-      mol = Chem.MolFromMolBlock(molBlock, removeHs = False)
+      mol = Chem.MolFromMolBlock(molBlock, removeHs=False)
       everySteps = 10
       maxIts = 1000
       gradTol = 0.01
@@ -493,6 +493,6 @@ class TestCase(unittest.TestCase):
       traj.AddConformersToMol(mol, 1)
       self.assertEqual(mol.GetNumConformers(), 2)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     print("Testing Trajectory wrapper")
     unittest.main()

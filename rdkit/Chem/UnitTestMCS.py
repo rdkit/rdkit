@@ -19,7 +19,7 @@ class MCSTestCase(unittest.TestCase):
         result = MCS.FindMCS(smiles, **kwargs)
         self.assert_result(result, completed=1, numAtoms=numAtoms, numBonds=numBonds,
                            smarts=smarts)
-        
+
     def assert_result(self, result, completed=_ignore, numAtoms=_ignore,
                       numBonds=_ignore, smarts=_ignore):
         if completed is not _ignore:
@@ -39,7 +39,7 @@ CO methanol""")
 class TestMinAtoms(MCSTestCase):
     def test_min_atoms_2(self):
         self.assert_search(simple_mols, 2, 1, minNumAtoms=2)
-        
+
     def test_min_atoms_3(self):
         self.assert_search(simple_mols, -1, -1, smarts=None, minNumAtoms=3)
 
@@ -66,7 +66,7 @@ class TextMaximize(MCSTestCase):
         self.assert_search(maximize_mols, 7, 6, maximize="atoms")
     def test_maximize_bonds(self):
         self.assert_search(maximize_mols, 6, 7, maximize="bonds")
-        
+
 atomtype_mols = load_smiles("""
 c1ccccc1O phenol
 CCCCCCOn1cccc1 different-answers-depending-on-type
@@ -89,7 +89,7 @@ class TestAtomTypes(MCSTestCase):
     def test_atom_compare_any_bond_compare_any(self):
         # Linear chain of 7 atoms
         self.assert_search(atomtype_mols, 7, 6, atomCompare="any", bondCompare="any")
-        
+
     def test_bond_compare_any(self):
         # Linear chain of 7 atoms
         self.assert_search(atomtype_mols, 7, 6, bondCompare="any")
@@ -120,7 +120,7 @@ c1ccccc1ONCCCCCCCCCC second
 """)
 
 class TestBondTypes(MCSTestCase):
-    # C1CCCCC1OC#CC#CC#CC#CC#CC 
+    # C1CCCCC1OC#CC#CC#CC#CC#CC
     # c1ccccc1ONCCCCCCCCCC second
     def test_bond_compare_default(self):
         # Match the 'CCCCCC' part of the first ring, with the second's tail
@@ -132,7 +132,7 @@ class TestBondTypes(MCSTestCase):
     def test_bond_compare_any(self):
         # the CC#CC chain matches the CCCC tail
         self.assert_search(bondtype_mols, 10, 9, bondCompare="any")
-        
+
     def test_atom_compare_elements_bond_compare_any(self):
         self.assert_search(bondtype_mols, 10, 9, atomCompare="elements", bondCompare="any")
 
@@ -154,8 +154,8 @@ class TestValences(MCSTestCase):
     def test_valence_compare_valence(self):
         # match 'CCCCN' to '[CH-]CCCC' (but in reverse)
         self.assert_search(valence_mols, 5, 4, matchValences=True, atomCompare="any")
-    
-        
+
+
 
 
 ring_mols = load_smiles("""
@@ -170,7 +170,7 @@ C12CCCC(O2)CCCC1 6-and-7-bridge-rings-with-O
 
 
 def SELECT(mols, *offsets):
-    return [mols[offset-1] for offset in offsets]
+    return [mols[offset - 1] for offset in offsets]
 
 class TestRingMatchesRingOnly(MCSTestCase):
     # C12CCCC(N2)CCCC1 6-and-7-bridge-rings-with-N
@@ -258,9 +258,9 @@ class TestTimeout(MCSTestCase):
         result = MCS.FindMCS(lengthy_mols, timeout=0.1)
         self.assert_result(result, completed=0)
         self.assertTrue(result.numAtoms > 1)
-        self.assertTrue(result.numBonds >= result.numAtoms-1, (result.numAtoms, result.numBonds))
+        self.assertTrue(result.numBonds >= result.numAtoms - 1, (result.numAtoms, result.numBonds))
         t2 = time.time()
-        self.assertTrue(t2-t1 < 0.5, t2-t1)
+        self.assertTrue(t2 - t1 < 0.5, t2 - t1)
 
     # Check for non-negative values
     def test_timeout_negative(self):

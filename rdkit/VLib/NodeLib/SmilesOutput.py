@@ -3,7 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys,types
+import sys, types
 from rdkit import Chem
 from rdkit import six
 
@@ -32,28 +32,28 @@ class OutputNode(BaseOutputNode):
     >>> ms = [x for x in node]
     >>> len(ms)
     4
-    >>> txt = sio.getvalue() 
+    >>> txt = sio.getvalue()
     >>> repr(txt)
     "'1, C1CCC1\\\\n2, C1CC1\\\\n3, C=O\\\\n4, CCN\\\\n'"
 
   """
-  def __init__(self,dest=None,delim='\t',idField=None,**kwargs):
-    BaseOutputNode.__init__(self,dest=dest,strFunc=self.smilesOut)
+  def __init__(self, dest=None, delim='\t', idField=None, **kwargs):
+    BaseOutputNode.__init__(self, dest=dest, strFunc=self.smilesOut)
     self._dest = dest
     self._idField = idField
     self._delim = delim
     self._nDumped = 0
-    
+
   def reset(self):
     BaseOutputNode.reset(self)
-    self._nDumped=0
+    self._nDumped = 0
 
-  def smilesOut(self,mol):
+  def smilesOut(self, mol):
     self._nDumped += 1
-    if type(mol) in (tuple,list):
+    if type(mol) in (tuple, list):
       args = mol
       mol = args[0]
-      if len(args)>1:
+      if len(args) > 1:
         args = args[1:]
       else:
         args = []
@@ -65,20 +65,20 @@ class OutputNode(BaseOutputNode):
     else:
       label = str(self._nDumped)
     smi = Chem.MolToSmiles(mol)
-    outp = [label,smi]+args
-    return '%s\n'%(self._delim.join(outp))
+    outp = [label, smi] + args
+    return '%s\n' % (self._delim.join(outp))
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
 
-  
+

@@ -18,16 +18,16 @@ class BitClusterer(object):
     def __init__(self, idList, nCluster, type=rdsimdiv.ClusterMethod.WARD):
         self._clusters = []
         self._bidList = idList
-        #self._matGen = BitCorrelationMatGenerator(idList)
+        # self._matGen = BitCorrelationMatGenerator(idList)
         self._nClusters = nCluster
         self._type = type
 
     def ClusterBits(self, corrMat) :
         # clutering code actually needs distances so, take 1/val for each element in corMat
-        distMat = 1/corrMat
+        distMat = 1 / corrMat
 
         pkr = rdsimdiv.HierarchicalClusterPicker(self._type)
-        
+
         cls = pkr.Cluster(distMat, len(self._bidList), self._nClusters)
         # map the clusters to the actual bit ids
         self._clusters = []
@@ -41,22 +41,22 @@ class BitClusterer(object):
     def SetClusters(self, clusters):
         assert len(clusters) == self._nClusters
         self._clusters = clusters
-        
+
     def GetClusters(self) :
         return self._clusters
 
     def MapToClusterScores(self, fp) :
         """ Map the fingerprint to a real valued vector of score based on the bit clusters
 
-        The dimension of the vector is same as the number of clusters. Each value in the 
+        The dimension of the vector is same as the number of clusters. Each value in the
         vector corresponds to the number of bits in the corresponding cluster
         that are turned on in the fingerprint
 
         ARGUMENTS:
-         - fp : the fingerprint 
+         - fp : the fingerprint
         """
-    
-        scores = [0]*self._nClusters
+
+        scores = [0] * self._nClusters
 
         i = 0
         for cls in self._clusters:
@@ -83,6 +83,6 @@ class BitClusterer(object):
                     ebv.SetBit(i)
                     break
             i += 1
-        
+
         return ebv
-        
+

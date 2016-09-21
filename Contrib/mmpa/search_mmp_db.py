@@ -36,18 +36,18 @@ import re
 import sqlite3
 import subprocess
 from optparse import OptionParser
-from indexing import cansmirk,heavy_atom_count
+from indexing import cansmirk, heavy_atom_count
 from rfrag import fragment_mol
 
-def cmpd_not_in_db_mmp_query(in_smi,cmpd_id):
+def cmpd_not_in_db_mmp_query(in_smi, cmpd_id):
 
     query_contexts = set()
-    cmpd_frags = fragment_mol(in_smi,cmpd_id)
+    cmpd_frags = fragment_mol(in_smi, cmpd_id)
     for row in cmpd_frags:
         row = row.rstrip()
-        row_fields = re.split(',',row)
+        row_fields = re.split(',', row)
         if(row_fields[3].count(".") == 1):
-            a,b = row_fields[3].split(".")
+            a, b = row_fields[3].split(".")
             query_contexts.add(a)
             query_contexts.add(b)
         else:
@@ -55,7 +55,7 @@ def cmpd_not_in_db_mmp_query(in_smi,cmpd_id):
 
     q_string = "','".join(query_contexts)
     q_string = "'%s'" % (q_string)
-        
+
     query_sql = """
     select  c.cmpd_id,
             c.core_smi,
@@ -68,9 +68,9 @@ def cmpd_not_in_db_mmp_query(in_smi,cmpd_id):
     results = cursor.fetchall()
 
     cmpd_size = heavy_atom_count(in_smi)
-    print_smallest_change_mmp(results,cmpd_id,cmpd_size)
+    print_smallest_change_mmp(results, cmpd_id, cmpd_size)
 
-def run_mmp_query(cmpd_id,cmpd_size):
+def run_mmp_query(cmpd_id, cmpd_size):
     query_sql = """
     select  c.cmpd_id,
             c.core_smi,
@@ -82,32 +82,32 @@ def run_mmp_query(cmpd_id,cmpd_size):
     cursor.execute(query_sql)
     results = cursor.fetchall()
 
-    print_smallest_change_mmp(results,cmpd_id,cmpd_size)
+    print_smallest_change_mmp(results, cmpd_id, cmpd_size)
 
-def print_smallest_change_mmp(db_results,cmpd_id,query_size):
+def print_smallest_change_mmp(db_results, cmpd_id, query_size):
 
-    uniq_list={}
+    uniq_list = {}
     for r in db_results:
         if(r[0] != cmpd_id):
-            #print r
-            #for each unique compound keep the largest one in common
+            # print r
+            # for each unique compound keep the largest one in common
             if(r[0] not in uniq_list):
                 uniq_list[r[0]] = r
-            elif(r[3] > uniq_list[r[0]][3]  ):
+            elif(r[3] > uniq_list[r[0]][3]):
                 uniq_list[r[0]] = r
 
     for key, value in uniq_list.items():
-        size_of_change = query_size-value[3]
-        #print "q_size: %s, Size od change: %s, Ratio: %s" % (query_size,size_of_change,float(size_of_change)/query_size)
+        size_of_change = query_size - value[3]
+        # print "q_size: %s, Size od change: %s, Ratio: %s" % (query_size,size_of_change,float(size_of_change)/query_size)
         if(use_ratio):
-            if(float(size_of_change)/query_size <= ratio):
-                cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
+            if(float(size_of_change) / query_size <= ratio):
+                cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key,))
                 rsmi = cursor.fetchone()[0]
-                print("%s,%s,%s,%s,%s,%s" % (smi,rsmi,id,value[0],value[1],value[2]))
+                print("%s,%s,%s,%s,%s,%s" % (smi, rsmi, id, value[0], value[1], value[2]))
         elif(size_of_change <= max_size):
-            cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
+            cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key,))
             rsmi = cursor.fetchone()[0]
-            print("%s,%s,%s,%s,%s,%s" % (search_string,rsmi,id,value[0],value[1],value[2]))
+            print("%s,%s,%s,%s,%s,%s" % (search_string, rsmi, id, value[0], value[1], value[2]))
 
 def run_subs_query(subs):
 
@@ -130,29 +130,29 @@ def run_subs_query(subs):
             and lhs_smi.cmpd_id = lhs.cmpd_id
             and rhs_smi.cmpd_id = rhs.cmpd_id
             and lhs.cmpd_id != rhs.cmpd_id
-            and rhs_smi.cmpd_size-context_table.context_size <= %s""" % (subs,max_size)
+            and rhs_smi.cmpd_size-context_table.context_size <= %s""" % (subs, max_size)
     cursor.execute(query_sql)
     results = cursor.fetchall()
 
-    for r in results:        
-        #make sure it is not the same core on both sides
+    for r in results:
+        # make sure it is not the same core on both sides
         if(r[2] != r[5]):
-            #cansmirk
-            smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
+            # cansmirk
+            smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
             if(have_id):
-                print("%s,%s,%s,%s,%s,%s,%s,%s" % (subs,id,r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s,%s,%s" % (subs, id, r[0], r[3], r[1], r[4], smirks, context))
             else:
-                print("%s,%s,%s,%s,%s,%s,%s" % (subs,r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s,%s" % (subs, r[0], r[3], r[1], r[4], smirks, context))
 
 def run_subs_smarts_query(subs_smarts):
 
-    #set os enviroment for rdkit to use sqllite
+    # set os enviroment for rdkit to use sqllite
     os.environ['RD_USESQLLITE'] = '1'
     temp_core_ni_file = 'temp_core_ni_file_%s' % (os.getpid())
-    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent >%s" % (pre,subs_smarts,temp_core_ni_file)
+    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent >%s" % (pre, subs_smarts, temp_core_ni_file)
     subprocess.Popen(cmd, shell=True).wait()
 
-    infile=open(temp_core_ni_file, 'r')
+    infile = open(temp_core_ni_file, 'r')
     for row in infile:
         row = row.rstrip()
 
@@ -176,43 +176,43 @@ def run_subs_smarts_query(subs_smarts):
                 and rhs_smi.cmpd_id = rhs.cmpd_id
                 and lhs.cmpd_id != rhs.cmpd_id
                 and rhs_smi.cmpd_size-context_table.context_size <= %s
-                and lhs_smi.cmpd_size-context_table.context_size <= %s""" % (row,max_size,max_size)
+                and lhs_smi.cmpd_size-context_table.context_size <= %s""" % (row, max_size, max_size)
         cursor.execute(query_sql)
         results = cursor.fetchall()
 
-        for r in results:            
-            #cansmirk
-            smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
+        for r in results:
+            # cansmirk
+            smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
             if(have_id):
-                print("%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s,%s" % (id, r[0], r[3], r[1], r[4], smirks, context))
             else:
-                print("%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s" % (r[0], r[3], r[1], r[4], smirks, context))
     infile.close()
-    #remove temporary files
+    # remove temporary files
     os.unlink(temp_core_ni_file)
 
 def run_trans_smarts_query(transform):
 
-    lhs,rhs = transform.split(">>")
+    lhs, rhs = transform.split(">>")
     matching_lhs = []
     matching_rhs = []
 
-    #set os enviroment for rdkit to use sqllite
+    # set os enviroment for rdkit to use sqllite
     os.environ['RD_USESQLLITE'] = '1'
 
-    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre,lhs)
+    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre, lhs)
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output = p1.communicate()[0].decode().rstrip()
-    matching_lhs=output.split("\n")
-    #sys.stderr.write("rhs: %s\n" % (len(matching_lhs)) )
+    matching_lhs = output.split("\n")
+    # sys.stderr.write("rhs: %s\n" % (len(matching_lhs)) )
 
-    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre,rhs)
+    cmd = "python $RDBASE/Projects/DbCLI/SearchDb.py --dbDir=%s_smarts --smarts='%s' --silent" % (pre, rhs)
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output = p1.communicate()[0].decode().rstrip()
-    matching_rhs=output.split("\n")
-    #sys.stderr.write("rhs: %s\n" % (len(matching_rhs)) )
+    matching_rhs = output.split("\n")
+    # sys.stderr.write("rhs: %s\n" % (len(matching_rhs)) )
 
-    #sys.stderr.write('SQLlite method\n')
+    # sys.stderr.write('SQLlite method\n')
     lhs_q_string = "','".join(matching_lhs)
     lhs_q_string = "'%s'" % (lhs_q_string)
 
@@ -238,23 +238,23 @@ def run_trans_smarts_query(transform):
             and rhs_smi.cmpd_id = rhs.cmpd_id
             and lhs.cmpd_id != rhs.cmpd_id
             and rhs_smi.cmpd_size-context_table.context_size <= %s
-            and lhs_smi.cmpd_size-context_table.context_size <= %s """ % (lhs_q_string,rhs_q_string,max_size,max_size)
+            and lhs_smi.cmpd_size-context_table.context_size <= %s """ % (lhs_q_string, rhs_q_string, max_size, max_size)
 
     cursor.execute(query_sql)
     results = cursor.fetchall()
 
     for r in results:
-        smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
+        smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
         if(have_id):
-            print("%s,%s,%s,%s,%s,%s,%s,%s" % (transform,id,r[0],r[3],r[1],r[4],smirks,context))
+            print("%s,%s,%s,%s,%s,%s,%s,%s" % (transform, id, r[0], r[3], r[1], r[4], smirks, context))
         else:
-            print("%s,%s,%s,%s,%s,%s,%s" % (transform,r[0],r[3],r[1],r[4],smirks,context))
+            print("%s,%s,%s,%s,%s,%s,%s" % (transform, r[0], r[3], r[1], r[4], smirks, context))
 
 def run_trans_query(transform):
 
-    lhs,rhs = transform.split(">>")
+    lhs, rhs = transform.split(">>")
 
-    #remove connectivity info
+    # remove connectivity info
     lhs_ni = remove_numbers(lhs)
     rhs_ni = remove_numbers(rhs)
 
@@ -274,19 +274,19 @@ def run_trans_query(transform):
     where   lhs.context_id = rhs.context_id
             and context_table.context_id = rhs.context_id
             and lhs_smi.cmpd_id = lhs.cmpd_id
-            and rhs_smi.cmpd_id = rhs.cmpd_id""" % (lhs_ni,rhs_ni)
+            and rhs_smi.cmpd_id = rhs.cmpd_id""" % (lhs_ni, rhs_ni)
 
     cursor.execute(query_sql)
     results = cursor.fetchall()
 
     for r in results:
-        smirks,context = cansmirk(str(r[2]),str(r[5]),str(r[6]))
-        #make sure connectivity is correct
+        smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
+        # make sure connectivity is correct
         if(smirks == transform):
             if(have_id):
-                print("%s,%s,%s,%s,%s,%s,%s" % (id,r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s,%s" % (id, r[0], r[3], r[1], r[4], smirks, context))
             else:
-                print("%s,%s,%s,%s,%s,%s" % (r[0],r[3],r[1],r[4],smirks,context))
+                print("%s,%s,%s,%s,%s,%s" % (r[0], r[3], r[1], r[4], smirks, context))
 
 def remove_numbers(in_string):
 
@@ -297,7 +297,7 @@ def remove_numbers(in_string):
     return out_string
 
 
-#quick class to help with the formatting of optparse
+# quick class to help with the formatting of optparse
 class MyParser(OptionParser):
     def format_description(self, formatter):
         return self.description
@@ -326,22 +326,22 @@ transform. The transform SMARTS are input as LHS_SMARTS>>RHS_SMARTS (eg.
 [#0]c1ccccc1>>[#0]c1ccncc1). Note: This search can take a long time to run if a
 very general SMARTS expression is used.
 """)
-parser.add_option('-t','--type',action='store', dest='type', type='string',
+parser.add_option('-t', '--type', action='store', dest='type', type='string',
                   help='Type of search required. Options are: mmp, subs, trans, subs_smarts, trans_smarts')
-parser.add_option('-m','--maxsize',action='store', dest='maxsize', type='int',
+parser.add_option('-m', '--maxsize', action='store', dest='maxsize', type='int',
                   help='Maximum size of change (in heavy atoms) allowed in matched molecular pairs identified. DEFAULT=10. \
                   Note: This option overrides the ratio option if both are specified.')
-parser.add_option('-r','--ratio',action='store', dest='ratio', type='float',
+parser.add_option('-r', '--ratio', action='store', dest='ratio', type='float',
                   help='Only applicable with the mmp search type. Maximum ratio of change allowed in matched molecular pairs identified. The ratio is: size of change / \
                   size of cmpd (in terms of heavy atoms) for the QUERY MOLECULE. DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.')
-parser.add_option('-p','--prefix',action='store', dest='prefix', type='string',
+parser.add_option('-p', '--prefix', action='store', dest='prefix', type='string',
                   help='Prefix for the db file. DEFAULT=mmp')
 
-#parse the command line options
+# parse the command line options
 (options, args) = parser.parse_args()
 
-#note max heavy atom count does not
-#include the attachement points (*)
+# note max heavy atom count does not
+# include the attachement points (*)
 max_size = 10
 ratio = 0.3
 use_ratio = False
@@ -361,7 +361,7 @@ elif(options.ratio != None):
     use_ratio = True
 
 if(options.type != None):
-    if( (options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or (options.type == "subs_smarts") or (options.type == "trans_smarts")):
+    if((options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or (options.type == "subs_smarts") or (options.type == "trans_smarts")):
         search_type = options.type
     else:
         print("Unrecognised search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts")
@@ -374,11 +374,11 @@ if(options.prefix != None):
     pre = options.prefix
     db_name = "%s.db" % (pre)
 
-#connect to db
+# connect to db
 con = sqlite3.connect(db_name)
 cursor = con.cursor()
 
-#these setting increase performance
+# these setting increase performance
 cursor.execute('PRAGMA main.page_size = 4096;')
 cursor.execute('PRAGMA main.cache_size=10000;')
 cursor.execute('PRAGMA main.locking_mode=EXCLUSIVE;')
@@ -387,41 +387,41 @@ cursor.execute('PRAGMA main.journal_mode=WAL;')
 cursor.execute('PRAGMA main.cache_size=5000;')
 cursor.execute('PRAGMA main.temp_store = MEMORY;')
 
-#read the STDIN
+# read the STDIN
 for line in sys.stdin:
 
     line = line.rstrip()
-    line_fields = re.split('\s|,',line)
+    line_fields = re.split('\s|,', line)
 
     if(len(line_fields) == 1):
-        id=line_fields[0]
+        id = line_fields[0]
         have_id = False
     else:
-        id=line_fields[1]
+        id = line_fields[1]
 
     search_string = line_fields[0]
 
     if(search_type == "mmp"):
-        #check smiles is in the database
-        cursor.execute("SELECT cmpd_id,cmpd_size FROM cmpd_smisp WHERE smiles = ?", (search_string, ))
+        # check smiles is in the database
+        cursor.execute("SELECT cmpd_id,cmpd_size FROM cmpd_smisp WHERE smiles = ?", (search_string,))
         d_res = cursor.fetchone()
 
-        #cmpd in the db
-        if( d_res ):
-            id_in_db,query_size = d_res
-            run_mmp_query(id_in_db,query_size)
+        # cmpd in the db
+        if(d_res):
+            id_in_db, query_size = d_res
+            run_mmp_query(id_in_db, query_size)
         else:
-            #print "Not in db"
-            cmpd_not_in_db_mmp_query(search_string,id)
+            # print "Not in db"
+            cmpd_not_in_db_mmp_query(search_string, id)
 
-    #if doing a subs query
+    # if doing a subs query
     elif(search_type == "subs"):
         run_subs_query(search_string)
 
     elif(search_type == "trans"):
         run_trans_query(search_string)
 
-    #smarts queries
+    # smarts queries
     elif(search_type == "subs_smarts"):
         run_subs_smarts_query(search_string)
 

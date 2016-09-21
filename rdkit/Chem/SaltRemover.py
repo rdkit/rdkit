@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -33,15 +33,15 @@
 #
 
 from rdkit import Chem
-import os,re
+import os, re
 
 from rdkit import RDConfig
 
 class SaltRemover(object):
-  defnFilename=os.path.join(RDConfig.RDDataDir,'Salts.txt')
+  defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
   defnData = None
   salts = None
-  def __init__(self,defnFilename=None,defnData=None):
+  def __init__(self, defnFilename=None, defnData=None):
     if defnFilename:
       self.defnFilename = defnFilename
     self.defnData = defnData
@@ -62,14 +62,14 @@ class SaltRemover(object):
     Traceback (most recent call last):
       ...
     ValueError: [Cl,fail]
-    
+
     """
     whitespace = re.compile(r'[\t ]+')
     if self.defnData:
       from rdkit.six.moves import cStringIO as StringIO
       inF = StringIO(self.defnData)
     else:
-      inF = open(self.defnFilename,'r')
+      inF = open(self.defnFilename, 'r')
     self.salts = []
     for line in inF:
       line = line.strip().split('//')[0]
@@ -80,7 +80,7 @@ class SaltRemover(object):
           raise ValueError(line)
         self.salts.append(salt)
 
-  def StripMol(self,mol,dontRemoveEverything=False):
+  def StripMol(self, mol, dontRemoveEverything=False):
     """
 
     >>> remover = SaltRemover(defnData="[Cl,Br]")
@@ -140,41 +140,41 @@ class SaltRemover(object):
     2
 
     """
-    def _applyPattern(m,salt,notEverything):
+    def _applyPattern(m, salt, notEverything):
       nAts = m.GetNumAtoms()
       if not nAts:
         return m
       res = m
 
-      t = Chem.DeleteSubstructs(res,salt,True)
-      if not t or (notEverything and t.GetNumAtoms()==0):
+      t = Chem.DeleteSubstructs(res, salt, True)
+      if not t or (notEverything and t.GetNumAtoms() == 0):
         return res;
       else:
         res = t
-      while res.GetNumAtoms() and nAts>res.GetNumAtoms():
+      while res.GetNumAtoms() and nAts > res.GetNumAtoms():
         nAts = res.GetNumAtoms()
-        t = Chem.DeleteSubstructs(res,salt,True)
-        if notEverything and t.GetNumAtoms()==0:
+        t = Chem.DeleteSubstructs(res, salt, True)
+        if notEverything and t.GetNumAtoms() == 0:
           break
         else:
           res = t
       return res
 
-    if dontRemoveEverything and len(Chem.GetMolFrags(mol))<=1:
+    if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
       return mol
-    modified=False
-    for i,salt in enumerate(self.salts):
-      tMol = _applyPattern(mol,salt,dontRemoveEverything)
+    modified = False
+    for i, salt in enumerate(self.salts):
+      tMol = _applyPattern(mol, salt, dontRemoveEverything)
       if tMol is not mol:
         mol = tMol
-        modified=True
-        if dontRemoveEverything and len(Chem.GetMolFrags(mol))<=1:
+        modified = True
+        if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
           break
-    if modified and mol.GetNumAtoms()>0:
+    if modified and mol.GetNumAtoms() > 0:
       Chem.SanitizeMol(mol)
     return mol
 
-  def __call__(self,mol,dontRemoveEverything=False):
+  def __call__(self, mol, dontRemoveEverything=False):
     """
 
     >>> remover = SaltRemover(defnData="[Cl,Br]")
@@ -189,19 +189,19 @@ class SaltRemover(object):
     4
 
     """
-    return self.StripMol(mol,dontRemoveEverything=dontRemoveEverything)
+    return self.StripMol(mol, dontRemoveEverything=dontRemoveEverything)
 
-  
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

@@ -5,7 +5,7 @@ splitExpr = re.compile('[\t\ ]')
 from rdkit import Chem
 
 def runit(fName):
-  inLines = open(fName,'r').readlines()
+  inLines = open(fName, 'r').readlines()
   nFailed = 0
   nPassed = 0
   nTried = 0
@@ -19,11 +19,11 @@ def runit(fName):
       if m:
         nPassed += 1
       else:
-        print('\t%s failed'%repr(smi))
-        print('\tline: %s'%(repr(line)))
+        print('\t%s failed' % repr(smi))
+        print('\tline: %s' % (repr(line)))
         nFailed += 1
-      m = None  
-  print('%d of %d passed'%(nPassed,nTried))
+      m = None
+  print('%d of %d passed' % (nPassed, nTried))
 
 if __name__ == '__main__':
   import sys

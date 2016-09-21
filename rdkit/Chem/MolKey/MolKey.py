@@ -31,7 +31,7 @@
 # Created by Greg Landrum based on code from Thomas Mueller
 # August 2012
 #
-#pylint: disable=C0111,W0311
+# pylint: disable=C0111,W0311
 try:
     from rdkit.Avalon import pyAvalonTools
 except ImportError:
@@ -42,7 +42,7 @@ from rdkit import RDConfig
 from rdkit import Chem
 from collections import namedtuple
 import logging
-import os,re,uuid,base64,hashlib,tempfile
+import os, re, uuid, base64, hashlib, tempfile
 
 class MolIdentifierException(Exception):
     pass
@@ -84,7 +84,7 @@ PATTERN_NULL_MOL = r'^([\s0]+[1-9]+[\s]+V[\w]*)'
 
 CHIRAL_POS = 12
 
-T_NULL_MOL = (NULL_MOL, '')     # the NULL mol result tuple
+T_NULL_MOL = (NULL_MOL, '')  # the NULL mol result tuple
 
 stereo_code_dict = {}
 stereo_code_dict['DEFAULT'] = 0
@@ -171,17 +171,17 @@ def _ctab_remove_chiral_flag(ctab_lines):
 
     return rval
 
-__initCalled=False
-def initStruchk(configDir=None,logFile=None):
+__initCalled = False
+def initStruchk(configDir=None, logFile=None):
   global __initCalled
   if configDir is None:
-    configDir=os.path.join(RDConfig.RDDataDir,'struchk')
-  if configDir[-1]!=os.path.sep:
-    configDir+=os.path.sep
+    configDir = os.path.join(RDConfig.RDDataDir, 'struchk')
+  if configDir[-1] != os.path.sep:
+    configDir += os.path.sep
   if logFile is None:
-    fd = tempfile.NamedTemporaryFile(suffix='.log',delete=False)
+    fd = tempfile.NamedTemporaryFile(suffix='.log', delete=False)
     fd.close()
-    logFile= fd.name
+    logFile = fd.name
   struchk_init = '''-tm
 -ta {0}checkfgs.trn
 -tm
@@ -192,10 +192,10 @@ def initStruchk(configDir=None,logFile=None):
 -cs
 -cn 999
 -l {1}\n'''.format(configDir, logFile)
-  initRes=pyAvalonTools.InitializeCheckMol(struchk_init)
+  initRes = pyAvalonTools.InitializeCheckMol(struchk_init)
   if initRes:
-    raise ValueError('bad result from InitializeCheckMol: '+str(initRes))
-  __initCalled=True
+    raise ValueError('bad result from InitializeCheckMol: ' + str(initRes))
+  __initCalled = True
 
 def CheckCTAB(ctab, isSmiles=True):
     if not __initCalled:
@@ -207,7 +207,7 @@ def CheckCTAB(ctab, isSmiles=True):
         mol_str = _fix_line_ends(mol_str)
         mol_str = _fix_chemdraw_header(mol_str)
 
-        if isSmiles:                  # branch for NULL_MOL checks
+        if isSmiles:  # branch for NULL_MOL checks
             if mol_str and NULL_SMILES_RE.match(mol_str):
                 rval = T_NULL_MOL
             else:
@@ -221,12 +221,12 @@ def CheckCTAB(ctab, isSmiles=True):
             _ctab_remove_chiral_flag(ctab_lines)
             if not _ctab_has_atoms(ctab_lines):
                 rval = T_NULL_MOL
-            else: # reassemble the ctab lines into one string.
+            else:  # reassemble the ctab lines into one string.
                 mol_str = '\n'.join(ctab_lines)
                 rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
     return rval
 
-InchiResult = namedtuple('InchiResult',['error','inchi','fixed_ctab'])
+InchiResult = namedtuple('InchiResult', ['error', 'inchi', 'fixed_ctab'])
 def GetInchiForCTAB(ctab):
     """
     >>> from rdkit.Chem.MolKey import MolKey
@@ -272,7 +272,7 @@ def _make_racemate_inchi(inchi):
 def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_stereo=None):
     if err & NULL_MOL :
         return _get_null_mol_identification_string(extra_stereo)
-    elif err & BAD_SET:       # bad molecules get special key
+    elif err & BAD_SET:  # bad molecules get special key
         return _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo)
 
     # make key string
@@ -295,17 +295,17 @@ def _get_null_mol_identification_string(extra_stereo) :
 def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
     pieces = []
     ctab_str = ctab
-    if ctab_str:       # make the ctab part of the key if available
+    if ctab_str:  # make the ctab part of the key if available
         ctab_str = _fix_line_ends(ctab_str)
         ctab_str = _fix_chemdraw_header(ctab_str)
         ctab_str = '\n'.join(ctab_str.split('\n')[3:])
-        pieces.append(ctab_str.replace('\n', r'\n')) # make a handy one-line string
+        pieces.append(ctab_str.replace('\n', r'\n'))  # make a handy one-line string
     else:
         pass
-    if stereo_category: # add xtra info if available
+    if stereo_category:  # add xtra info if available
         key_string = 'ST={0}'.format(stereo_category)
         pieces.append(key_string)
-    if extra_stereo: # add xtra info if available
+    if extra_stereo:  # add xtra info if available
         key_string = 'XTR={0}'.format(extra_stereo)
         pieces.append(key_string)
     key_string = '/'.join(pieces)
@@ -318,7 +318,7 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
     key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
     if key_string:
         return "{0}|{1}".format(MOL_KEY_VERSION,
-                                base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()) #pylint: disable=E1101
+                                base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode())  # pylint: disable=E1101
     else:
         return None
 
@@ -327,18 +327,18 @@ def _get_chiral_identification_string(n_def, n_udf) :
     assert n_udf >= 0
     id_str = 'OTHER'
 
-    if n_def == 0 :             # no defined stereocenters
-        if n_udf == 0 :         # no undefined ones either
+    if n_def == 0 :  # no defined stereocenters
+        if n_udf == 0 :  # no undefined ones either
             id_str = 'S_ACHIR'  # -> achiral
-        elif n_udf == 1 :       # one undefined, no defined
-            id_str = 'R_ONE'    # -> racemate by convention
-        else:                   # several undefined, no defined
-            id_str = 'S_UNKN'   # -> can't say anything based on the drawing
-    else:                       # some stereo defined
-        if n_udf == 0 :         # fully specified stereo
-            id_str = 'S_ABS'    # -> absolute stereo
-        else:                   # multiple possibilities
-            id_str = 'S_PART'   # -> assume single compound (can usually be separated)
+        elif n_udf == 1 :  # one undefined, no defined
+            id_str = 'R_ONE'  # -> racemate by convention
+        else:  # several undefined, no defined
+            id_str = 'S_UNKN'  # -> can't say anything based on the drawing
+    else:  # some stereo defined
+        if n_udf == 0 :  # fully specified stereo
+            id_str = 'S_ABS'  # -> absolute stereo
+        else:  # multiple possibilities
+            id_str = 'S_PART'  # -> assume single compound (can usually be separated)
     return id_str
 
 def ErrorBitsToText(err):
@@ -349,8 +349,8 @@ def ErrorBitsToText(err):
             error_text_list.append(err_dict_key)
     return error_text_list
 
-MolKeyResult=namedtuple('MolKeyResult',['mol_key','error','inchi','fixed_ctab','stereo_code','stereo_comment'])
-def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
+MolKeyResult = namedtuple('MolKeyResult', ['mol_key', 'error', 'inchi', 'fixed_ctab', 'stereo_code', 'stereo_comment'])
+def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
     """
     >>> from rdkit.Chem.MolKey import MolKey
     >>> from rdkit.Avalon import pyAvalonTools
@@ -406,7 +406,7 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
     # read or estimate stereo category and/or extra structure description
     stereo_category = None
     extra_structure_desc = stereo_comment
-    if stereo_info:     # check stereo_info field for coded stereo category and extra stereo info
+    if stereo_info:  # check stereo_info field for coded stereo category and extra stereo info
         info_flds = stereo_info.split(' ', 1)
         code_fld = info_flds[0]
         if code_fld in stereo_code_dict:
@@ -433,11 +433,11 @@ def GetKeyForCTAB(ctab,stereo_info=None,stereo_comment=None,logger=None):
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

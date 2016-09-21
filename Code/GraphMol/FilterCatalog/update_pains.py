@@ -21,7 +21,7 @@ PAINS_C_FILENAME = os.path.join(DIRNAME, "pains_c.in")
 for fn in (PAINS_CSV, FILTER_IN,
            PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
     if not os.path.exists(fn):
-        raise IOError("Could not find necessary file: %s",fn)
+        raise IOError("Could not find necessary file: %s", fn)
 
 sa = set(pains_a)
 sb = set(pains_b)
@@ -30,30 +30,30 @@ sc = set(pains_c)
 PAINS = {}
 
 for smiles, name in csv.reader(open(PAINS_CSV)):
-    name = name.replace("<regId=","").replace(">","")
+    name = name.replace("<regId=", "").replace(">", "")
     PAINS[name] = smiles
 
 PAINS_A = []
 for n in pains_a:
-    PAINS_A.append((n,PAINS[n]))
+    PAINS_A.append((n, PAINS[n]))
     del PAINS[n]
 PAINS_B = []
 for n in pains_b:
-    PAINS_B.append((n,PAINS[n]))
+    PAINS_B.append((n, PAINS[n]))
     del PAINS[n]
 PAINS_C = []
 for n in pains_c:
-    PAINS_C.append((n,PAINS[n]))
+    PAINS_C.append((n, PAINS[n]))
     del PAINS[n]
 assert not PAINS
 
-PAINS_A = [ '{"%s","%s",0,""}'%(name, smiles) for name, smiles in PAINS_A]
+PAINS_A = [ '{"%s","%s",0,""}' % (name, smiles) for name, smiles in PAINS_A]
 PAINS_A = "const FilterData_t PAINS_A[] = {\n%s\n};" % ",\n".join(PAINS_A)
-    
-PAINS_B = [ '{"%s","%s",0,""}'%(name, smiles) for name, smiles in PAINS_B]
+
+PAINS_B = [ '{"%s","%s",0,""}' % (name, smiles) for name, smiles in PAINS_B]
 PAINS_B = "const FilterData_t PAINS_B[] = {\n%s\n};" % ",\n".join(PAINS_B)
 
-PAINS_C = [ '{"%s","%s",0,""}'%(name, smiles) for name, smiles in PAINS_C]
+PAINS_C = [ '{"%s","%s",0,""}' % (name, smiles) for name, smiles in PAINS_C]
 PAINS_C = "const FilterData_t PAINS_C[] = {\n%s\n};" % ",\n".join(PAINS_C)
 
 def write_pains(filename, data):
@@ -66,7 +66,7 @@ def write_pains(filename, data):
             f.write(data)
         else:
         # wb = means don't convert newline to windows style
-            open(filename,'wb').write(data)
+            open(filename, 'wb').write(data)
 
 write_pains(PAINS_A_FILENAME, PAINS_A)
 write_pains(PAINS_B_FILENAME, PAINS_B)

@@ -17,11 +17,11 @@ import re
 def list_class_files(dir):
     return [name for name in os.listdir(dir)
              if (name.startswith('class_') and (not name.endswith('png')) and name.find('-members') == -1)]
-    
+
 def get_detail(fname):
     bs = BeautifulSoup(open(fname).read())
     det = bs.find(text='Detailed Description')
-    return [bs,  det]
+    return [bs, det]
 
 _example = \
 """int RDKit::Atom::getPerturbationOrder 	( 	INT_LIST  	probe 	 )  	const
@@ -39,7 +39,7 @@ Returns:
     	getPerturbationOrder([1,0,2,3]) = 1
     	getPerturbationOrder([1,2,3,0]) = 3
     	getPerturbationOrder([1,2,0,3]) = 2
-    	
+
 
 See the class documentation for a more detailed description of our representation of chirality.
 
@@ -91,16 +91,16 @@ enum RDKit::Atom::ChiralType
 store type of chirality
 
 Enumerator:
-    CHI_UNSPECIFIED 	
+    CHI_UNSPECIFIED
 
     chirality that hasn't been specified
-    CHI_TETRAHEDRAL_CW 	
+    CHI_TETRAHEDRAL_CW
 
     tetrahedral: clockwise rotation (SMILES @)
-    CHI_TETRAHEDRAL_CCW 	
+    CHI_TETRAHEDRAL_CCW
 
     tetrahedral: counter-clockwise rotation (SMILES @)
-    CHI_OTHER 	
+    CHI_OTHER
 
     some unrecognized type of chirality
 
@@ -109,15 +109,15 @@ enum RDKit::Atom::HybridizationType
 store hybridization
 
 Enumerator:
-    UNSPECIFIED 	
+    UNSPECIFIED
 
     hybridization that hasn't been specified
-    OTHER 	
+    OTHER
 
     unrecognized hybridization
 
 Member Function Documentation
-int RDKit::Atom::calcExplicitValence 	( 	bool  	strict = true 	 )  	
+int RDKit::Atom::calcExplicitValence 	( 	bool  	strict = true 	 )
 
 calculates and returns our explicit valence
 
@@ -125,7 +125,7 @@ Notes:
 
     * requires an owning molecule
 
-int RDKit::Atom::calcImplicitValence 	( 	bool  	strict = true 	 )  	
+int RDKit::Atom::calcImplicitValence 	( 	bool  	strict = true 	 )
 
 calculates and returns our implicit valence
 
@@ -199,7 +199,7 @@ Returns:
     	getPerturbationOrder([1,0,2,3]) = 1
     	getPerturbationOrder([1,2,3,0]) = 3
     	getPerturbationOrder([1,2,0,3]) = 2
-    	
+
 
 See the class documentation for a more detailed description of our representation of chirality.
 
@@ -209,13 +209,13 @@ Notes:
 
 template<typename T >
 void RDKit::Atom::getProp 	( 	const std::string  	key,
-		T &  	res	 
+		T &  	res
 	) 			const [inline]
 
 This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 template<typename T >
 void RDKit::Atom::getProp 	( 	const char *  	key,
-		T &  	res	 
+		T &  	res
 	) 			const [inline]
 
 allows retrieval of a particular property value
@@ -274,14 +274,14 @@ Notes:
 template<typename T >
 void RDKit::Atom::setProp 	( 	const std::string  	key,
 		T  	val,
-		bool  	computed = false	 
+		bool  	computed = false
 	) 			const [inline]
 
 This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.
 template<typename T >
 void RDKit::Atom::setProp 	( 	const char *  	key,
 		T  	val,
-		bool  	computed = false	 
+		bool  	computed = false
 	) 			const [inline]
 
 sets a property value
@@ -291,7 +291,7 @@ Parameters:
     	val 	the value to be stored
     	computed 	(optional) allows the property to be flagged computed.
 
-void RDKit::Atom::updatePropertyCache 	( 	bool  	strict = true 	 )  	
+void RDKit::Atom::updatePropertyCache 	( 	bool  	strict = true 	 )
 
 calculates any of our lazy properties
 
@@ -301,22 +301,22 @@ Notes:
     * the current lazy properties are implicit and explicit valence
 
 '''
-_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)',  flags=(re.M | re.I | re.DOTALL))
+_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _rereturn = re.compile('^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _rereturn2 = re.compile('^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _reusage = re.compile('^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 
-def make_method_doc(doxy_method_text,  class_name):
-    for f in (do_usage,  do_note,  do_param,  do_return):
+def make_method_doc(doxy_method_text, class_name):
+    for f in (do_usage, do_note, do_param, do_return):
         doxy_method_text = f(doxy_method_text)
     # Create paragraphs
-    doxy_method_text = doxy_method_text.replace('\n\n', '\n<p>\n') 
+    doxy_method_text = doxy_method_text.replace('\n\n', '\n<p>\n')
     # But no paragraph markers just before tag
-    doxy_method_text = doxy_method_text.replace('<p>@',  '<p>\n@')
+    doxy_method_text = doxy_method_text.replace('<p>@', '<p>\n@')
     # Get rid of double quotes -- note that this causes an error with initialized string parameters
-    doxy_method_text = doxy_method_text.replace('"',  "'")
-    # Get lines 
+    doxy_method_text = doxy_method_text.replace('"', "'")
+    # Get lines
     lines = doxy_method_text.split('\n')
     # Build header -- don't want type there
     header = lines[0][lines[0].find(class_name):]
@@ -324,30 +324,30 @@ def make_method_doc(doxy_method_text,  class_name):
     while (header.find(')') < 0):
         start += 1
         header += ' ' + lines[start - 1]
-       ##  print header
+       # #  print header
     # Or [] annotation
-    header = header.replace('[inline]',  '')
-    header = header.replace('[virtual]',  '')
-    header = header.replace('[protected]',  '')
-    header = header.replace('[explicit]',  '')
-    header = '%javamethodmodifiers ' +  header + '"\n/**\n'
-    return header +  '\n'.join(lines[start:] ) + '\n*/\npublic";\n'
+    header = header.replace('[inline]', '')
+    header = header.replace('[virtual]', '')
+    header = header.replace('[protected]', '')
+    header = header.replace('[explicit]', '')
+    header = '%javamethodmodifiers ' + header + '"\n/**\n'
+    return header + '\n'.join(lines[start:]) + '\n*/\npublic";\n'
 
-def make_class_doc(doxy_text,  class_name):
-    for f in (do_usage,  do_note):
+def make_class_doc(doxy_text, class_name):
+    for f in (do_usage, do_note):
         doxy_text = f(doxy_text)
     # Create paragraphs
-    doxy_text = doxy_text.replace('\n\n', '\n<p>\n') 
+    doxy_text = doxy_text.replace('\n\n', '\n<p>\n')
     # But no paragraph markers just before tag
-    doxy_text = doxy_text.replace('<p>@',  '<p>\n@')
+    doxy_text = doxy_text.replace('<p>@', '<p>\n@')
     # Get rid of double quotes
-    doxy_text = doxy_text.replace('"',  "'")
+    doxy_text = doxy_text.replace('"', "'")
     # Get lines
     lines = doxy_text.split('\n')
     # Build header -- don't want type there
     header = '%typemap(javaimports) ' + class_name + ' "\n/** '
-    return header +  '\n'.join(lines) + ' */"\n'
-    
+    return header + '\n'.join(lines) + ' */"\n'
+
 
 def do_note(doxy_text):
     m1 = _renote.search(doxy_text)
@@ -362,7 +362,7 @@ def do_note(doxy_text):
                 if line.startswith('*'):
                     line = line[1:].strip()
                 new_text = new_text + '<li>' + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
+        doxy_text = doxy_text.replace(repl, new_text)
     return doxy_text
 
 def do_param(doxy_text):
@@ -376,7 +376,7 @@ def do_param(doxy_text):
             line = line.strip()
             if len(line) > 0:
                 new_text = new_text + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
+        doxy_text = doxy_text.replace(repl, new_text)
     return doxy_text
 
 def do_return(doxy_text):
@@ -392,7 +392,7 @@ def do_return(doxy_text):
             line = line.strip()
             if len(line) > 0:
                 new_text = new_text + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
+        doxy_text = doxy_text.replace(repl, new_text)
     return doxy_text
 
 def do_usage(doxy_text):
@@ -404,12 +404,12 @@ def do_usage(doxy_text):
         new_text = '<p>@example\n<pre><code>\n'
         for line in m1.group(2).split('\n'):
             new_text = new_text + line + '\n'
-        ## doxy_text = _reusage.sub(new_text,  doxy_text) + '</code></pre>\n'
+        # # doxy_text = _reusage.sub(new_text,  doxy_text) + '</code></pre>\n'
         new_text += '</code></pre>\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
+        doxy_text = doxy_text.replace(repl, new_text)
     return doxy_text
 
-def do_methods(doxy_text,  class_name):
+def do_methods(doxy_text, class_name):
     methods = []
     method_lines = []
     in_method_region = False
@@ -419,20 +419,20 @@ def do_methods(doxy_text,  class_name):
         elif in_method_region:
             if line.find(class_name) >= 0 or line.find('Member Data') >= 0:
                 if len(method_lines) > 0:
-                    methods.append(make_method_doc('\n'.join(method_lines),  class_name))
+                    methods.append(make_method_doc('\n'.join(method_lines), class_name))
                 if line.find('Member Data') >= 0:
                     in_method_region = False
                 else:
                     method_lines = [line]
             else:
                 method_lines.append(line)
-        
+
     if len(method_lines) > 0:
-        methods.append(make_method_doc('\n'.join(method_lines),  class_name))
+        methods.append(make_method_doc('\n'.join(method_lines), class_name))
     method_lines = [line]
     return methods
 
-def do_class(doxy_text,  class_name):
+def do_class(doxy_text, class_name):
     in_class_region = False
     class_doc = ''
     for line in doxy_text.split('\n'):
@@ -442,21 +442,21 @@ def do_class(doxy_text,  class_name):
         elif in_class_region:
             if line.strip().endswith('Documentation') :
                 if len(class_lines) > 0:
-                    class_doc = make_class_doc('\n'.join(class_lines),  class_name)
+                    class_doc = make_class_doc('\n'.join(class_lines), class_name)
                     in_class_region = False
             else:
                 class_lines.append(line)
-                    
+
     return class_doc
 
 if __name__ == '__main__':
     import sys
     text = open(sys.argv[1]).read()
     class_name = sys.argv[2]
-    print(do_class(text,  class_name))
-    docs = do_methods(text,  class_name)
+    print(do_class(text, class_name))
+    docs = do_methods(text, class_name)
     for doc in docs:
         print(doc)
-        
-        
-    
+
+
+

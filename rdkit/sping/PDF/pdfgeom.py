@@ -9,7 +9,7 @@ So far, just Robert Kern's bezierArc.
 """
 from math import sin, cos, pi, ceil
 
-def bezierArc(x1,y1, x2,y2, startAng=0, extent=90):
+def bezierArc(x1, y1, x2, y2, startAng=0, extent=90):
     """bezierArc(x1,y1, x2,y2, startAng=0, extent=90) --> List of Bezier
 curve control points.
 
@@ -24,7 +24,7 @@ The resulting coordinates are of the form (x1,y1, x2,y2, x3,y3, x4,y4)
 such that the curve goes from (x1, y1) to (x4, y4) with (x2, y2) and
 (x3, y3) as their respective Bezier control points."""
 
-    x1,y1, x2,y2 = min(x1,x2), max(y1,y2), max(x1,x2), min(y1,y2)
+    x1, y1, x2, y2 = min(x1, x2), max(y1, y2), max(x1, x2), min(y1, y2)
 
     if abs(extent) <= 90:
         arcList = [startAng]
@@ -32,13 +32,13 @@ such that the curve goes from (x1, y1) to (x4, y4) with (x2, y2) and
         Nfrag = 1
     else:
         arcList = []
-        Nfrag = int(ceil(abs(extent)/90.))
+        Nfrag = int(ceil(abs(extent) / 90.))
         fragAngle = float(extent) / Nfrag
 
-    x_cen = (x1+x2)/2.
-    y_cen = (y1+y2)/2.
-    rx = (x2-x1)/2.
-    ry = (y2-y1)/2.
+    x_cen = (x1 + x2) / 2.
+    y_cen = (y1 + y2) / 2.
+    rx = (x2 - x1) / 2.
+    ry = (y2 - y1) / 2.
     halfAng = fragAngle * pi / 360.
     kappa = abs(4. / 3. * (1. - cos(halfAng)) / sin(halfAng))
 
@@ -46,12 +46,12 @@ such that the curve goes from (x1, y1) to (x4, y4) with (x2, y2) and
         sign = -1
     else:
         sign = 1
-    
+
     pointList = []
 
     for i in range(Nfrag):
-        theta0 = (startAng + i*fragAngle) * pi / 180.
-        theta1 = (startAng + (i+1)*fragAngle) *pi / 180.
+        theta0 = (startAng + i * fragAngle) * pi / 180.
+        theta1 = (startAng + (i + 1) * fragAngle) * pi / 180.
         if fragAngle > 0:
             pointList.append((x_cen + rx * cos(theta0),
                               y_cen - ry * sin(theta0),

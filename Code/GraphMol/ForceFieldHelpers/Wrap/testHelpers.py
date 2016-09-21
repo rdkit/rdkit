@@ -4,50 +4,50 @@ from rdkit import RDConfig
 import unittest
 import os
 
-def feq(v1,v2,tol2=1e-4):
-  return abs(v1-v2)<=tol2
+def feq(v1, v2, tol2=1e-4):
+  return abs(v1 - v2) <= tol2
 
 class TestCase(unittest.TestCase):
   def setUp(self) :
-    self.dirName=os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
-                              'ForceFieldHelpers','UFF','test_data')
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
+                              'ForceFieldHelpers', 'UFF', 'test_data')
 
   def test1(self) :
-    fName = os.path.join(self.dirName,'benzene.mol')
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
     m = Chem.MolFromMolFile(fName)
-    self.failUnless(ChemicalForceFields.UFFOptimizeMolecule(m,maxIters=1))
+    self.failUnless(ChemicalForceFields.UFFOptimizeMolecule(m, maxIters=1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m,vdwThresh=2.0))
+    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m, vdwThresh=2.0))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m,confId=-1))
+    self.failIf(ChemicalForceFields.UFFOptimizeMolecule(m, confId=-1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failUnlessRaises(ValueError,lambda :ChemicalForceFields.UFFOptimizeMolecule(m,confId=1))
+    self.failUnlessRaises(ValueError, lambda :ChemicalForceFields.UFFOptimizeMolecule(m, confId=1))
 
 
   def test2(self) :
-    fName = os.path.join(self.dirName,'benzene.mol')
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.failUnless(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r==0)
+    self.failUnless(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2<e1);
-    
+    self.failUnless(e2 < e1);
+
     # test keyword args:
     r = ff.Minimize(forceTol=1e-8)
-    self.failUnless(r==0)
+    self.failUnless(r == 0)
 
     # test keyword args:
     r = ff.Minimize(energyTol=1e-3)
-    self.failUnless(r==0)
+    self.failUnless(r == 0)
 
   def test3(self) :
     molB = """
@@ -64,15 +64,15 @@ class TestCase(unittest.TestCase):
   1  4  1  0
 M  END"""
     m = Chem.MolFromMolBlock(molB)
-    
+
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.failUnless(ff)
     e1 = ff.CalcEnergy()
     r = ff.Minimize()
-    self.failUnless(r==0)
+    self.failUnless(r == 0)
     e2 = ff.CalcEnergy()
-    self.failUnless(e2<e1);
-    
+    self.failUnless(e2 < e1);
+
   def test4(self) :
     m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
     self.failIf(ChemicalForceFields.UFFHasAllMoleculeParams(m))
@@ -82,21 +82,21 @@ M  END"""
 
 
   def test5(self) :
-    fName = os.path.join(self.dirName,'benzene.mol')
+    fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName)
     self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m))
     # make sure that keyword arguments work:
     m = Chem.MolFromMolFile(fName)
-    self.failUnless(ChemicalForceFields.MMFFOptimizeMolecule(m, maxIters = 1))
+    self.failUnless(ChemicalForceFields.MMFFOptimizeMolecule(m, maxIters=1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, nonBondedThresh = 2.0))
+    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, nonBondedThresh=2.0))
 
     m = Chem.MolFromMolFile(fName)
-    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, confId = -1))
+    self.failIf(ChemicalForceFields.MMFFOptimizeMolecule(m, confId=-1))
 
     m = Chem.MolFromMolFile(fName)
-    self.failUnlessRaises(ValueError, lambda :ChemicalForceFields.MMFFOptimizeMolecule(m, confId = 1))
+    self.failUnlessRaises(ValueError, lambda :ChemicalForceFields.MMFFOptimizeMolecule(m, confId=1))
 
 
   def test6(self) :
@@ -110,13 +110,13 @@ M  END"""
     self.failUnless(r == 0)
     e2 = ff.CalcEnergy()
     self.failUnless(e2 < e1);
-    
+
     # test keyword args:
-    r = ff.Minimize(forceTol = 1.0e-8)
+    r = ff.Minimize(forceTol=1.0e-8)
     self.failUnless(r == 0)
 
     # test keyword args:
-    r = ff.Minimize(energyTol = 1.0e-3)
+    r = ff.Minimize(energyTol=1.0e-3)
     self.failUnless(r == 0)
 
   def test7(self) :
@@ -134,7 +134,7 @@ M  END"""
   1  4  1  0
 M  END"""
     m = Chem.MolFromMolBlock(molB)
-    
+
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.failUnless(ff)
@@ -143,7 +143,7 @@ M  END"""
     self.failUnless(r == 0)
     e2 = ff.CalcEnergy()
     self.failUnless(e2 < e1);
-    
+
   def test8(self) :
     m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
     self.failIf(ChemicalForceFields.MMFFHasAllMoleculeParams(m))
@@ -252,7 +252,7 @@ M  END"""
       self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     unittest.main()
 
-    
+

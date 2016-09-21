@@ -88,7 +88,7 @@ class _LazyDescr(object):
         except ImportError:
             # See the nice big comment in MovedModule.__getattr__.
             raise AttributeError("%s could not be imported " % self.name)
-        setattr(obj, self.name, result) # Invokes __set__.
+        setattr(obj, self.name, result)  # Invokes __set__.
         # This is a bit ugly, but it avoids running this again.
         delattr(obj.__class__, self.name)
         return result
@@ -207,7 +207,7 @@ _moved_attributes = [
     MovedModule("BaseHTTPServer", "BaseHTTPServer", "http.server"),
     MovedModule("CGIHTTPServer", "CGIHTTPServer", "http.server"),
     MovedModule("SimpleHTTPServer", "SimpleHTTPServer", "http.server"),
-    #MovedModule("cPickle", "cPickle", "pickle"),
+    # MovedModule("cPickle", "cPickle", "pickle"),
     MovedModule("cPickle", "rdkit._py2_pickle", "pickle"),
     MovedModule("queue", "Queue"),
     MovedModule("reprlib", "repr"),
@@ -656,7 +656,7 @@ def add_metaclass(metaclass):
 
 # added as part of the RDKit port
 if PY3:
-    def cmp(t1,t2):
-        return (t1<t2)*-1 or (t1>t2)*1
+    def cmp(t1, t2):
+        return (t1 < t2) * -1 or (t1 > t2) * 1
 else:
-    cmp=cmp
+    cmp = cmp

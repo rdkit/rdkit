@@ -2,7 +2,7 @@
 ## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
-#pylint: disable=E1101,C0111,R0904
+# pylint: disable=E1101,C0111,R0904
 from __future__ import print_function
 
 import rdkit.Numerics.rdAlignment as rdAlg
@@ -37,12 +37,12 @@ class TestCase(unittest.TestCase):
     prbPts = np.zeros((2, 3), np.float)
 
     refPts[1, 0] = 1.0
-            
+
     prbPts[0, 0] = 2.0
     prbPts[0, 1] = 2.0
     prbPts[1, 0] = 2.0
     prbPts[1, 1] = 3.0
-              
+
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
     refLst = list(refPts)
@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
     for item in list(prbPts):
       self.assertTrue(lstFeq(transformPoint(res[1], item), refLst[cnt]))
       cnt += 1
-      
+
     # repeat with with lists or tuples
     refPts = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0))
     prbPts = ((2.0, 2.0, 0.0), (2.0, 3.0, 0.0))
@@ -67,7 +67,7 @@ class TestCase(unittest.TestCase):
     refPts[1, 0] = 1.0
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
-              
+
   def test2Weights(self) :
     refPts = np.array([[-math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0],
                        [math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0],
@@ -84,7 +84,7 @@ class TestCase(unittest.TestCase):
     for item in list(prbPts):
       self.assertTrue(lstFeq(transformPoint(res[1], item), target[cnt]))
       cnt += 1
-      
+
     weights = np.array([1.0, 1.0, 2.0], np.float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, weights)
     self.assertTrue(feq(res[0], 3.75))
@@ -126,7 +126,7 @@ class TestCase(unittest.TestCase):
     wts = [1.0, 1.0, 1.0, 1.0]
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
     self.assertTrue(feq(res[0], 0.0))
-    
+
     # test reflection
     prbPts = np.array([[2.0, 2.0, 3.0],
                             [3.0, 2.0, 3.0],
@@ -134,7 +134,7 @@ class TestCase(unittest.TestCase):
                             [2.0, 3.0, 3.0]], np.float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
     self.assertTrue(feq(res[0], 1.0))
-    
+
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, 1)
     self.assertTrue(feq(res[0], 0.0))
     cnt = 0
@@ -184,7 +184,7 @@ class TestCase(unittest.TestCase):
                       lambda : rdAlg.GetAlignmentTransform(refPts, prbPts))
 
 
-        
+
 if __name__ == '__main__':
   print("Testing Alignment Wrapper code:")
   unittest.main()

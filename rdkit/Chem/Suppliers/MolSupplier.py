@@ -30,9 +30,9 @@ class MolSupplier(object):
       return res
     else:
       raise StopIteration
-  
+
   def NextMol(self):
     """   Must be implemented in child class
- 
+
     """
     pass

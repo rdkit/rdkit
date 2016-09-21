@@ -39,14 +39,14 @@ from rdkit import DataStructs
 parser = OptionParser(description="Program to Tversky search results as part of Fraggle",
                     epilog="Format of input file: whole mol smiles,ID,fraggle split smiles\t\t"
                     "Output: query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim")
-parser.add_option('-f','--frags',dest='f_file', type='string', 
+parser.add_option('-f', '--frags', dest='f_file', type='string',
                   help="File containing the query fragmentations from Fraggle")
-parser.add_option('-c','--cutoff',dest='cutoff', type='float', default=0.8,
+parser.add_option('-c', '--cutoff', dest='cutoff', type='float', default=0.8,
                   help="Cutoff for Tversy similarity. Only Tversky results with similarity greater than the cutoff will be output. DEFAULT = 0.8")
 
 
 
-#parse the command line options
+# parse the command line options
 (options, args) = parser.parse_args()
 
 if(options.f_file is None):
@@ -56,53 +56,53 @@ if(options.f_file is None):
 if((options.cutoff < 0) or (options.cutoff > 1)):
     print("Please specify a Tversky cut-off between 0-1")
     sys.exit(1)
-    
-#sys.exit(1)
-queries=[]
-query_info=[]
 
-q_split_input = open(options.f_file,"r")
+# sys.exit(1)
+queries = []
+query_info = []
+
+q_split_input = open(options.f_file, "r")
 
 for line in q_split_input:
     info = line.rstrip().split(",")
 
     qmol = Chem.MolFromSmiles(info[2])
-    #print info[2]
+    # print info[2]
     if qmol is None:
-        sys.stderr.write("Can't generate mol for: %s\n" % (info[2]) )
-        continue 
+        sys.stderr.write("Can't generate mol for: %s\n" % (info[2]))
+        continue
 
-    #generate fp of query_substructs
+    # generate fp of query_substructs
     qfp = Chem.RDKFingerprint(qmol, maxPath=5, fpSize=1024, nBitsPerHash=2)
 
     queries.append(qfp)
-    query_info.append( (info[0],info[1],info[2]) )
+    query_info.append((info[0], info[1], info[2]))
 
 fragments = len(query_info)
-    
+
 for line in sys.stdin:
 
     line = line.rstrip()
-    smi,id = re.split('\s|,',line)
-    #print smi,id
+    smi, id = re.split('\s|,', line)
+    # print smi,id
 
     mol = Chem.MolFromSmiles(smi)
     if mol is None:
-        sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
-        continue 
-    
+        sys.stderr.write("Can't generate mol for: %s\n" % (smi))
+        continue
+
     mfp = Chem.RDKFingerprint(mol, maxPath=5, fpSize=1024, nBitsPerHash=2)
-    #print smi   
-    
-    res = DataStructs.BulkTverskySimilarity(mfp,queries,0,1,False)
-    
-    #query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
+    # print smi
+
+    res = DataStructs.BulkTverskySimilarity(mfp, queries, 0, 1, False)
+
+    # query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
     for i in xrange(fragments):
         if(res[i] >= options.cutoff):
-            print("%s,%s,%s,%s,%s,%s" % (query_info[i][2],query_info[i][0],query_info[i][1],smi,id,res[i]))
+            print("%s,%s,%s,%s,%s,%s" % (query_info[i][2], query_info[i][0], query_info[i][1], smi, id, res[i]))
 
-            
-            
-    
-    
-    
+
+
+
+
+

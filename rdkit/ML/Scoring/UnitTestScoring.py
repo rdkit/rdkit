@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -45,17 +45,17 @@ class TestCase(unittest.TestCase):
         self.numActives = 20
         self.numDecoys = 380
         self.numMol = self.numActives + self.numDecoys
-        act = [[1] for x in range(0,self.numActives)]
-        dcy = [[0] for x in range(0,self.numDecoys)]
+        act = [[1] for x in range(0, self.numActives)]
+        dcy = [[0] for x in range(0, self.numDecoys)]
         self.scoreBestCase = act + dcy
         self.scoreWorstCase = dcy + act
         self.scoreEmptyList = []
-        self.scoreAllActives = [[1] for x in range(0,self.numMol)]
-        self.scoreAllDecoys = [[0] for x in range(0,self.numMol)]
-        self.index = 0 # where the active/inactive information lies
+        self.scoreAllActives = [[1] for x in range(0, self.numMol)]
+        self.scoreAllDecoys = [[0] for x in range(0, self.numMol)]
+        self.index = 0  # where the active/inactive information lies
         # test the 5% fraction
-        self.fractions = [float(self.numActives)/self.numMol]
-        self.fracSmall = [self.fractions[0]/100]
+        self.fractions = [float(self.numActives) / self.numMol]
+        self.fracSmall = [self.fractions[0] / 100]
         # exponential weight
         self.alpha = 100.0
         # accuracy for float number comparison
@@ -94,11 +94,11 @@ class TestCase(unittest.TestCase):
         """ test RIE """
         ratio = float(self.numActives) / self.numMol
         # best case
-        RIEmax = ((1 - math.exp(-self.alpha*ratio)) / (1 - math.exp(-self.alpha))) / ratio
+        RIEmax = ((1 - math.exp(-self.alpha * ratio)) / (1 - math.exp(-self.alpha))) / ratio
         rie = Scoring.CalcRIE(self.scoreBestCase, self.index, self.alpha)
         self.assertAlmostEqual(rie, RIEmax, self.acc)
         # worst case
-        RIEmin = ((1 - math.exp(self.alpha*ratio)) / (1 - math.exp(self.alpha))) / ratio
+        RIEmin = ((1 - math.exp(self.alpha * ratio)) / (1 - math.exp(self.alpha))) / ratio
         rie = Scoring.CalcRIE(self.scoreWorstCase, self.index, self.alpha)
         self.assertAlmostEqual(rie, RIEmin, self.acc)
         # empty list
