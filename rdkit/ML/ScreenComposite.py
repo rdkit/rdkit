@@ -155,7 +155,8 @@ def error(msg):
   sys.stderr.write('ERROR: %s\n' % (msg))
 
 def CalcEnrichment(mat, tgt=1):
-  if tgt < 0 or tgt >= mat.shape[0]: return 0
+  if tgt < 0 or tgt >= mat.shape[0]:
+    return 0
   nPts = float(sum(sum(mat)))
   nTgtPred = float(sum(mat[:, tgt]))
   if nTgtPred:
@@ -213,7 +214,8 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
     if hasattr(tmp, '_trainIndices') and type(tmp._trainIndices) != dict:
       tis = {}
       if hasattr(tmp, '_trainIndices'):
-        for v in tmp._trainIndices: tis[v] = 1
+        for v in tmp._trainIndices:
+          tis[v] = 1
       tmp._trainIndices = tis
 
 
@@ -238,7 +240,8 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
     else:
       answer = example[-1]
     res[i] = answer, pred, conf
-    if callback: callback(i)
+    if callback:
+      callback(i)
   return res
 
 def DetailedScreen(indices, data, composite, threshold=0, screenResults=None,
@@ -291,9 +294,12 @@ def DetailedScreen(indices, data, composite, threshold=0, screenResults=None,
     screenResults = CollectResults(indices, data, composite, callback=callback,
                                    appendExamples=appendExamples,
                                    errorEstimate=errorEstimate)
-  if goodVotes is None: goodVotes = []
-  if badVotes is None:  badVotes = []
-  if noVotes is None:   noVotes = []
+  if goodVotes is None:
+    goodVotes = []
+  if badVotes is None:
+    badVotes = []
+  if noVotes is None:
+    noVotes = []
   for i in range(len(screenResults)):
     answer, pred, conf = screenResults[i]
     if conf > threshold:
@@ -432,7 +438,8 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     rowCounts = numpy.sum(vTab, 1)
     message('')
     for i in range(nResultCodes):
-      if rowCounts[i] == 0: rowCounts[i] = 1
+      if rowCounts[i] == 0:
+        rowCounts[i] = 1
       row = vTab[i]
       message('    ', noRet=1)
       for j in range(nResultCodes):
@@ -445,7 +452,8 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     message('')
     message('    ', noRet=1)
     for i in range(nResultCodes):
-      if colCounts[i] == 0: colCounts[i] = 1
+      if colCounts[i] == 0:
+        colCounts[i] = 1
       message(' % 6.2f' % (100.*vTab[i, i] / colCounts[i]), noRet=1)
     message('')
 
@@ -1076,7 +1084,8 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
   if not hasattr(details, 'predPlot') or not details.predPlot:
     return
 
-  if verbose: message('\n-> Constructing Prediction (Hanneke) Plot')
+  if verbose:
+    message('\n-> Constructing Prediction (Hanneke) Plot')
   outF = open(details.predPlot, 'w+')
   gnuF = open('%s.gnu' % details.predPlot, 'w+')
   # first get the ids of the data points we screened:
@@ -1095,7 +1104,8 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
   else:
     actConn = DbConnect(details.dbName, details.predActTable,
                          user=details.dbUser, password=details.dbPassword)
-  if verbose: message('\t-> Pulling Activity Data')
+  if verbose:
+    message('\t-> Pulling Activity Data')
   pts = []
 
   if type(ptIds[0]) not in [type(''), type(u'')]:
@@ -1110,7 +1120,8 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
   rawD = actConn.GetData(fields='%s,%s' % (idName, actColName),
                          where=whereTxt, extras=ptIds)
   # order the data returned:
-  if verbose: message('\t-> Creating Plot')
+  if verbose:
+    message('\t-> Creating Plot')
   acts = [None] * len(ptIds)
   for entry in rawD:
     id, act = entry
@@ -1543,7 +1554,8 @@ if __name__ == '__main__':
           rowCounts = numpy.sum(voteTab, 1)
           print()
           for i in range(nResultCodes):
-            if rowCounts[i] == 0: rowCounts[i] = 1
+            if rowCounts[i] == 0:
+              rowCounts[i] = 1
             row = voteTab[i]
             message('    ', noRet=1)
             for j in range(nResultCodes):
@@ -1556,7 +1568,8 @@ if __name__ == '__main__':
           message('')
           message('    ', noRet=1)
           for i in range(nResultCodes):
-            if colCounts[i] == 0: colCounts[i] = 1
+            if colCounts[i] == 0:
+              colCounts[i] = 1
             message(' % 6.2f' % (100.*voteTab[i, i] / colCounts[i]), noRet=1)
           message('')
           if details.enrichTgt > -1:
@@ -1598,7 +1611,8 @@ if __name__ == '__main__':
         rowCounts = numpy.sum(voteTab, 1)
         message('')
         for i in range(nResultCodes):
-          if rowCounts[i] == 0: rowCounts[i] = 1
+          if rowCounts[i] == 0:
+            rowCounts[i] = 1
           row = voteTab[i]
           message('    ', noRet=1)
           for j in range(nResultCodes):
@@ -1611,7 +1625,8 @@ if __name__ == '__main__':
         message('')
         message('    ', noRet=1)
         for i in range(nResultCodes):
-          if colCounts[i] == 0: colCounts[i] = 1
+          if colCounts[i] == 0:
+            colCounts[i] = 1
           message(' % 6.2f' % (100.*voteTab[i, i] / colCounts[i]), noRet=1)
         message('')
       if details.errorAnalysis:

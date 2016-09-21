@@ -59,8 +59,10 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
   Note:
     If fpFunction needs additional parameters, use a lambda construct
   """
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'): delattr(refMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
+  if hasattr(refMol, '_fpInfo'):
+    delattr(refMol, '_fpInfo')
   refFP = fpFunction(refMol, -1)
   probeFP = fpFunction(probeMol, -1)
   baseSimilarity = metric(refFP, probeFP)
@@ -70,8 +72,10 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
     newFP = fpFunction(probeMol, atomId)
     newSimilarity = metric(refFP, newFP)
     weights.append(baseSimilarity - newSimilarity)
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'): delattr(refMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
+  if hasattr(refMol, '_fpInfo'):
+    delattr(refMol, '_fpInfo')
   return weights
 
 
@@ -85,7 +89,8 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
     fpFunction -- the fingerprint function
     predictionFunction -- the prediction function of the ML model
   """
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
   probeFP = fpFunction(probeMol, -1)
   baseProba = predictionFunction(probeFP)
   # loop over atoms
@@ -94,7 +99,8 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
     newFP = fpFunction(probeMol, atomId)
     newProba = predictionFunction(newFP)
     weights.append(baseProba - newProba)
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
   return weights
 
 
@@ -135,7 +141,8 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
     alpha -- the alpha blending value for the contour lines
     kwargs -- additional arguments for drawing
   """
-  if mol.GetNumAtoms() < 2: raise ValueError("too few atoms")
+  if mol.GetNumAtoms() < 2: 
+    raise ValueError("too few atoms")
   fig = Draw.MolToMPL(mol, coordScale=coordScale, size=size, **kwargs)
   if sigma is None:
     if mol.GetNumBonds() > 0:
@@ -231,7 +238,8 @@ def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1,
     raise ValueError("Unknown Atom pairs fingerprint type")
   if atomId < 0:
     return apDict[fpType](mol, nBits, minLength, maxLength, nBitsPerEntry, 0, **kwargs)
-  if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
+  if atomId >= mol.GetNumAtoms():
+    raise ValueError("atom index greater than number of atoms")
   return apDict[fpType](mol, nBits, minLength, maxLength, nBitsPerEntry, [atomId], **kwargs)
 
 
@@ -290,7 +298,8 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048,
 
   any additional keyword arguments will be passed to the fingerprinting function.
   """
-  if fpType not in ['bv', 'count']: raise ValueError("Unknown Morgan fingerprint type")
+  if fpType not in ['bv', 'count']:
+    raise ValueError("Unknown Morgan fingerprint type")
   if not hasattr(mol, '_fpInfo'):
     info = {}
     # get the fingerprint
@@ -308,22 +317,28 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048,
     for bit, es in iteritems(info):
       for at1, rad in es:
         if rad == 0:  # for radius 0
-          if fpType == 'bv': bitmap[at1][bit] = 1
-          else: bitmap[at1].append(bit)
+          if fpType == 'bv':
+            bitmap[at1][bit] = 1
+          else:
+            bitmap[at1].append(bit)
         else:  # for radii > 0
           env = Chem.FindAtomEnvironmentOfRadiusN(mol, rad, at1)
           amap = {}
           submol = Chem.PathToSubmol(mol, env, atomMap=amap)
           for at2 in amap.keys():
-            if fpType == 'bv': bitmap[at2][bit] = 1
-            else: bitmap[at2].append(bit)
+            if fpType == 'bv':
+              bitmap[at2][bit] = 1
+            else:
+              bitmap[at2].append(bit)
     mol._fpInfo = (molFp, bitmap)
 
   if atomId < 0:
     return mol._fpInfo[0]
   else:  # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+    if atomId >= mol.GetNumAtoms(): 
+      raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2:
+      raise ValueError("_fpInfo not set")
     if fpType == 'bv':
       molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId]  # xor
     else:  # count
@@ -361,8 +376,10 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
   if atomId < 0:
     return mol._fpInfo[0]
   else:  # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+    if atomId >= mol.GetNumAtoms():
+      raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2:
+      raise ValueError("_fpInfo not set")
     molFp = copy.deepcopy(mol._fpInfo[0])
     molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
     return molFp

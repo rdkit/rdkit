@@ -125,7 +125,8 @@ class TestCase(unittest.TestCase):
     refWeights = [0.42105, 0.42105, 0.42105, -0.32895, 0.42105, 0.42105]
     weights = sm.GetAtomicWeightsForFingerprint(
       self.mol1, self.mol2, lambda m, i: sm.GetRDKFingerprint(m, i, nBits=1024, nBitsPerHash=1))
-    for w, r in zip(weights, refWeights): self.assertAlmostEqual(w, r, 4)
+    for w, r in zip(weights, refWeights):
+      self.assertAlmostEqual(w, r, 4)
 
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV

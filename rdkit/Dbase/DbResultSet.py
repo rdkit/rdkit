@@ -129,7 +129,8 @@ class RandomAccessDbResultSet(DbResultBase):
         r = self.cursor.fetchone()
       self.cursor = None
   def __getitem__(self, idx):
-    if idx < 0: raise IndexError("negative indices not supported")
+    if idx < 0: 
+      raise IndexError("negative indices not supported")
     if self.cursor is None:
       if len(self.results):
         if idx >= len(self.results):

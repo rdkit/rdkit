@@ -135,7 +135,8 @@ def AnalyzeSparseVects(bitVects, actVals):
 
   """
   nPts = len(bitVects)
-  if nPts != len(actVals): raise ValueError('var and activity lists should be the same length')
+  if nPts != len(actVals):
+    raise ValueError('var and activity lists should be the same length')
   nBits = bitVects[0].GetSize()
 
   actives = numpy.zeros(nBits, numpy.integer)

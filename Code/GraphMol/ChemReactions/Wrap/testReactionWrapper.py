@@ -305,7 +305,8 @@ M  END
       ps = rxn.RunReactants((Chem.MolFromSmiles('CCCl'),))
       self.assertTrue(len(ps) == 1)
       self.assertTrue(len(ps[0]) == 1)
-      if not i % 1000: print(i)
+      if not i % 1000:
+        print(i)
 
   def test8Properties(self):
     rxn = rdChemReactions.ReactionFromSmarts('[O:1]>>[O:1][3#0]')

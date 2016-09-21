@@ -144,7 +144,8 @@ if __name__ == '__main__':
 
             if nbrFile:
                 for dist, data in nbrs:
-                    if data is None: continue
+                    if data is None:
+                        continue
                     nnm, nsmi, nfp, nproperty = data
                     outRow = [str(id), nm, smi, nnm, nsmi, str(nproperty), str(dist - 1.)]
                     id += 1

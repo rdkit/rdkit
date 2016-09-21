@@ -37,7 +37,8 @@ class BitEnsemble(object):
     obl = other.GetOnBits()
     cnt = 0
     for bit in self.GetBits():
-      if bit in obl: cnt += 1
+      if bit in obl:
+        cnt += 1
     return cnt
 
 
@@ -45,7 +46,8 @@ class BitEnsemble(object):
     """ other must support __getitem__() """
     cnt = 0
     for bit in self.GetBits():
-      if other[bit]: cnt += 1
+      if other[bit]:
+        cnt += 1
     return cnt
 
 

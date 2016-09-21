@@ -497,7 +497,8 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
   """
 #DOC
   """
-  if frac < 0 or frac > 1: raise ValueError('filter fraction out of bounds')
+  if frac < 0 or frac > 1:
+    raise ValueError('filter fraction out of bounds')
   try:
     inData[0][col]
   except IndexError:
@@ -653,11 +654,13 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
   nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
   if shuffle:
-    if runDetails: runDetails.shuffled = 1
+    if runDetails:
+      runDetails.shuffled = 1
     acts = dataSet.GetResults()[:]
     random.shuffle(acts, random=random.random)
   else:
-    if runDetails: runDetails.randomized = 1
+    if runDetails:
+      runDetails.randomized = 1
     acts = [random.randint(0, nPossible) for x in len(examples)]
   for i in range(nPts):
     tmp = dataSet[i]

@@ -246,7 +246,8 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
       res[bmIdx, j:dim] = 0
       res[j:dim, bmIdx] = 1000
 
-  if smoothIt: DG.DoTriangleSmoothing(res)
+  if smoothIt:
+    DG.DoTriangleSmoothing(res)
   return res
 
 def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False,
@@ -364,7 +365,8 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
 
   if bounds is None:
     bounds = MolDG.GetMoleculeBoundsMatrix(mol)
-  if smoothFirst: DG.DoTriangleSmoothing(bounds)
+  if smoothFirst:
+    DG.DoTriangleSmoothing(bounds)
 
   bm = bounds.copy()
   # print '------------'
@@ -422,7 +424,8 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
         res.append(m2)
       else:
         logger.debug('Removed embedding due to chiral constraints.')
-      if len(res) == targetNumber: break
+      if len(res) == targetNumber:
+        break
   return bm, res, nFailed
 
 def isNaN(v):
@@ -873,7 +876,8 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
   """
   nPts = bm.shape[0]
   k = numpy.zeros(nPts, numpy.int0)
-  for idx in indices: k[idx] = 1
+  for idx in indices:
+    k[idx] = 1
   for i in indices:
     row = bm[i]
     for j in range(i + 1, nPts):

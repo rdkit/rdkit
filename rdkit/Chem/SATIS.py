@@ -82,11 +82,14 @@ def SATISTypes(mol, neighborsToInclude=4):
     bonds = atom.GetBonds()
     nBonds = len(bonds)
     otherIndices = [-1] * nBonds
-    if _debug: print(code[0], end='')
+    if _debug:
+      print(code[0], end='')
     for j in range(nBonds):
       otherIndices[j] = bonds[j].GetOtherAtom(atom).GetIdx()
-      if _debug: print(otherIndices[j], end='')
-    if _debug: print()
+      if _debug:
+        print(otherIndices[j], end='')
+    if _debug:
+      print()
     otherNums = [atomicNums[x] for x in otherIndices] + \
                 [1] * atom.GetTotalNumHs()
     otherNums.sort()

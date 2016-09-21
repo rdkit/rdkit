@@ -75,7 +75,8 @@ class Canvas(CanvasBase):
     return (bw, bh, offset)
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
-    if not fill and not stroke: return
+    if not fill and not stroke:
+      return
     edgeWidth = kwargs.get('lineWidth', 0)
     edgeColor = pid.transparent
     color = convertColor(color)
@@ -99,7 +100,8 @@ class Canvas(CanvasBase):
     pts1 = self._getLinePoints(p1, p2, dash)
     pts2 = self._getLinePoints(p1, p3, dash)
 
-    if len(pts2) < len(pts1): pts2, pts1 = pts1, pts2
+    if len(pts2) < len(pts1):
+      pts2, pts1 = pts1, pts2
 
     for i in range(len(pts1)):
       self.canvas.drawLine(pts1[i][0], pts1[i][1], pts2[i][0], pts2[i][1],

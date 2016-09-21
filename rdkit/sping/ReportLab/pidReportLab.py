@@ -102,7 +102,8 @@ class RLCanvas(Canvas):
     "Draw a straight line between x1,y1 and x2,y2."
     # set color...
     if color:
-      if color == transparent: return
+      if color == transparent: 
+        return
     elif self.defaultLineColor == transparent:
       return
     else:
@@ -178,7 +179,8 @@ class RLCanvas(Canvas):
   def drawString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     # set color...
     if color:
-      if color == transparent: return
+      if color == transparent: 
+        return
     elif self.defaultLineColor == transparent:
       return
     else:

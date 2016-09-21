@@ -54,7 +54,8 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
       ans = pt[-1]
     votes = model.GetVoteDetails()
     for i in range(startSize):
-      if votes[i] == ans: scores[i] += weight1
+      if votes[i] == ans:
+        scores[i] += weight1
   if names2 is not None:
     model.SetInputOrder(names2)
   for pt in set2:
@@ -65,7 +66,8 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
       ans = pt[-1]
     votes = model.GetVoteDetails()
     for i in range(startSize):
-      if votes[i] == ans: scores[i] += weight2
+      if votes[i] == ans:
+        scores[i] += weight2
   # normalize the scores
   nPts = S1 + S2
   scores /= nPts

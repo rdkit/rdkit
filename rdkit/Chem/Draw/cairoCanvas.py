@@ -272,7 +272,8 @@ class Canvas(CanvasBase):
     return textSize
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
-    if not fill and not stroke: return
+    if not fill and not stroke:
+      return
     dps = []
     self.ctx.set_source_rgb(*color)
     self.ctx.move_to(ps[0][0], ps[0][1])
@@ -295,7 +296,8 @@ class Canvas(CanvasBase):
     pts1 = self._getLinePoints(p1, p2, dash)
     pts2 = self._getLinePoints(p1, p3, dash)
 
-    if len(pts2) < len(pts1): pts2, pts1 = pts1, pts2
+    if len(pts2) < len(pts1):
+      pts2, pts1 = pts1, pts2
 
     for i in range(len(pts1)):
       self.ctx.move_to(pts1[i][0], pts1[i][1])
@@ -304,7 +306,8 @@ class Canvas(CanvasBase):
 
   def addCircle(self, center, radius, color=(0, 0, 0), fill=True, stroke=False, alpha=1.0,
                 **kwargs):
-    if not fill and not stroke: return
+    if not fill and not stroke:
+      return
     dps = []
     # import pdb; pdb.set_trace();
     self.ctx.set_source_rgba(color[0], color[1], color[2], alpha)

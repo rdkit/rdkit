@@ -66,7 +66,8 @@ def _Pruner(node, level=0):
         favor smaller trees.
 
   """
-  if _verbose: print('  ' * level, '<%d>  ' % level, '>>> Pruner')
+  if _verbose:
+    print('  ' * level, '<%d>  ' % level, '>>> Pruner')
   children = node.GetChildren()[:]
 
   bestTree = copy.deepcopy(node)
@@ -85,9 +86,11 @@ def _Pruner(node, level=0):
       bestTree.Print()
       print()
     if len(examples):
-      if _verbose: print('  ' * level, '<%d>  ' % level, '  Examples', len(examples))
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '  Examples', len(examples))
       if not child.GetTerminal():
-        if _verbose: print('  ' * level, '<%d>  ' % level, '    Nonterminal')
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, '    Nonterminal')
 
         workTree = copy.deepcopy(bestTree)
         #
@@ -120,7 +123,8 @@ def _Pruner(node, level=0):
           print('  ' * level, '<%d>  ' % level, 'ATTEMPT:')
           workTree.Print()
         newErr = _GetLocalError(workTree)
-        if _verbose: print('  ' * level, '<%d>  ' % level, '---> ', newErr, bestErr)
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, '---> ', newErr, bestErr)
         if newErr <= bestErr:
           bestErr = newErr
           bestTree = copy.deepcopy(workTree)
@@ -128,13 +132,16 @@ def _Pruner(node, level=0):
             print('  ' * level, '<%d>  ' % level, 'PRUNING:')
             workTree.Print()
         else:
-          if _verbose: print('  ' * level, '<%d>  ' % level, 'FAIL')
+          if _verbose:
+            print('  ' * level, '<%d>  ' % level, 'FAIL')
           # whoops... put the child back in:
           workTree.ReplaceChildIndex(i, child)
       else:
-        if _verbose: print('  ' * level, '<%d>  ' % level, '    Terminal')
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, '    Terminal')
     else:
-      if _verbose: print('  ' * level, '<%d>  ' % level, '  No Examples', len(examples))
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '  No Examples', len(examples))
       #
       # FIX:  we need to figure out what to do here (nodes that contain
       #   no examples in the testing set).  I can concoct arguments for
@@ -143,8 +150,10 @@ def _Pruner(node, level=0):
       #
       pass
 
-  if _verbose: print('  ' * level, '<%d>  ' % level, '<<< out')
+  if _verbose:
+    print('  ' * level, '<%d>  ' % level, '<<< out')
   return bestTree
+
 
 def PruneTree(tree, trainExamples, testExamples, minimizeTestErrorOnly=1):
   """ implements a reduced-error pruning of decision trees

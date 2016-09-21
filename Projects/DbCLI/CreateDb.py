@@ -196,7 +196,8 @@ def CreateDb(options, dataFilename='', supplier=None):
         if not options.silent:
           logger.info('Guessing that mol format is %s. Use --molFormat argument if this is wrong.' % repr(options.molFormat))
       if options.molFormat == 'smiles':
-        if options.delimiter == '\\t': options.delimiter = '\t'
+        if options.delimiter == '\\t':
+          options.delimiter = '\t'
         supplier = Chem.SmilesMolSupplier(dataFilename,
                                         titleLine=options.titleLine,
                                         delimiter=options.delimiter,
@@ -205,7 +206,8 @@ def CreateDb(options, dataFilename='', supplier=None):
                                         )
       else:
         supplier = Chem.SDMolSupplier(dataFilename)
-    if not options.silent: logger.info('Reading molecules and constructing molecular database.')
+    if not options.silent:
+      logger.info('Reading molecules and constructing molecular database.')
     Loader.LoadDb(supplier, os.path.join(options.outDir, options.molDbName),
                   errorsTo=errFile, regName=options.regName, nameCol=options.molIdName,
                   skipProps=options.skipProps, defaultVal=options.missingPropertyVal,
@@ -299,7 +301,8 @@ def CreateDb(options, dataFilename='', supplier=None):
   gobbi2DRows = []
   morganRows = []
 
-  if not options.silent: logger.info('Generating fingerprints and descriptors:')
+  if not options.silent:
+    logger.info('Generating fingerprints and descriptors:')
   molConn = DbConnect(os.path.join(options.outDir, options.molDbName))
   molCurs = molConn.GetCursor()
   if not options.skipSmiles:
@@ -320,7 +323,8 @@ def CreateDb(options, dataFilename='', supplier=None):
       mol = Chem.Mol(pkl)
     else:
       mol = Chem.Mol(str(pkl))
-    if not mol: continue
+    if not mol:
+      continue
 
     if options.doPairs:
       pairs = FingerprintUtils.BuildAtomPairFP(mol)

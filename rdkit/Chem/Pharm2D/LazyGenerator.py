@@ -93,9 +93,10 @@ class Generator(object):
     tmp = Matcher.GetAtomsMatchingBit(self.sig, idx, self.mol,
                                       dMat=self.dMat, justOne=1,
                                       matchingAtoms=self.pattMatches)
-    if not tmp or len(tmp) == 0: res = 0
-    else: res = 1
-
+    if not tmp or len(tmp) == 0:
+      res = 0
+    else:
+      res = 1
     if self.bits is not None:
       self.bits[idx] = res
     return res
@@ -139,7 +140,8 @@ if __name__ == '__main__':
   print('Using the Lazy Generator')
   t1 = time.time()
   for i in range(len(mols)):
-    if not i % 10: print('done mol %d of %d' % (i, len(mols)))
+    if not i % 10:
+      print('done mol %d of %d' % (i, len(mols)))
     gen = Generator(factory, mols[i])
     for bit in bits:
       v = gen[bit]
@@ -150,7 +152,8 @@ if __name__ == '__main__':
   print('Generating and checking signatures')
   t1 = time.time()
   for i in range(len(mols)):
-    if not i % 10: print('done mol %d of %d' % (i, len(mols)))
+    if not i % 10:
+      print('done mol %d of %d' % (i, len(mols)))
     sig = Generate.Gen2DFingerprint(mols[i], factory)
     for bit in bits:
       v = sig[bit]

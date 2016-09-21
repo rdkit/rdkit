@@ -210,7 +210,8 @@ def ConstructSidechains(suppl, sma=None, replace=True, useAll=False):
         logger.warning(fmt % (idx + 1))
       if replace:
         tmp = list(Chem.ReplaceSubstructs(mol, patt, replacement))
-        if not useAll: tmp = [tmp[0]]
+        if not useAll:
+          tmp = [tmp[0]]
         for i, entry in enumerate(tmp):
           entry = MoveDummyNeighborsToBeginning(entry)
           if not entry:

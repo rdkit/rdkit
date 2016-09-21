@@ -154,9 +154,11 @@ def drawStrings(canvas):
 
   saver = StateSaver(canvas)  # leave canvas state as you found it, restores state when leaves scope
   def Write(canvas, s, font, curs):
-    if font: canvas.defaultFont = font
+    if font:
+      canvas.defaultFont = font
     text = s
-    while text and text[-1] == '\n': text = text[:-1]
+    while text and text[-1] == '\n':
+      text = text[:-1]
     canvas.drawString(text, x=curs[0], y=curs[1])
     if s[-1] == '\n':
       curs[0] = 10
@@ -361,14 +363,22 @@ def mainLoop():
     # print backends on left, tests on right, indicate chosen one of each
     i = 0
     while i < len(backends) or i < len(tests):
-      try: bstr = str(i + 1) + '. ' + backends[i]
-      except Exception: bstr = ''
-      try: tstr = chr(65 + i) + '. ' + tests[i].__name__
-      except Exception: tstr = ''
-      if i == backend: bflag = '==>'
-      else: bflag = ''
-      if i == test: tflag = '==>'
-      else: tflag = ''
+      try:
+        bstr = str(i + 1) + '. ' + backends[i]
+      except Exception:
+        bstr = ''
+      try:
+        tstr = chr(65 + i) + '. ' + tests[i].__name__
+      except Exception:
+        tstr = ''
+      if i == backend:
+        bflag = '==>'
+      else:
+        bflag = ''
+      if i == test:
+        tflag = '==>'
+      else:
+        tflag = ''
       print("%10s %-20s %10s %-20s" % (bflag, bstr, tflag, tstr))
       i = i + 1
     print()
@@ -376,11 +386,14 @@ def mainLoop():
     inp = raw_input("Selection (0 to exit): ")
     print()
 
-    if inp == '0': return
+    if inp == '0':
+      return
     if inp:
       testinp = ''
-      if inp[-1] in string.letters: testinp = inp[-1]
-      elif inp[0] in string.letters: testinp = inp[0]
+      if inp[-1] in string.letters:
+        testinp = inp[-1]
+      elif inp[0] in string.letters:
+        testinp = inp[0]
       backinp = string.join(filter(lambda x:x in '0123456789', inp))
       if backinp:
         backend = int(backinp) - 1
@@ -388,16 +401,20 @@ def mainLoop():
           docstr = __import__('sping.' + backends[backend], globals(), locals(),
 														backends[backend]).__doc__
           # docstr = __import__('sping.'+backends[backend]).__doc__
-          if docstr: print(docstr)
-          else: print("<no doc string>")
-        else: backend = None
+          if docstr:
+            print(docstr)
+          else:
+            print("<no doc string>")
+        else:
+          backend = None
       if testinp:
         test = ord(string.upper(testinp[0])) - ord('A')
         if test >= 0 and test < len(tests):
           docstr = tests[test].__doc__
           if docstr:
             print(docstr)
-        else: test = None
+        else:
+          test = None
     print
 
     # now, if we have a valid backend and test, run it

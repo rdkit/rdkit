@@ -292,7 +292,8 @@ class Canvas:
                 "Find the height of one line of text (baseline to baseline) of the given font."
                 # the following approxmation is correct for PostScript fonts,
                 # and should be close for most others:
-                if not font: font = self.defaultFont
+                if not font: 
+                  font = self.defaultFont
                 return 1.2 * font.size
 
         def fontAscent(self, font=None):
@@ -316,7 +317,8 @@ class Canvas:
 
                 # "Guesstimate" a proper number of points for the arc:
                 steps = min(max(xScale, yScale) * (extent / 10.0) / 10, 200)
-                if steps < 5: steps = 5
+                if steps < 5:
+                  steps = 5
 
                 from math import sin, cos, pi
 

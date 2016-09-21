@@ -72,7 +72,8 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose: print('no match found for feature:', featIdx)
+      if _verbose:
+        print('no match found for feature:', featIdx)
       return []
 
   if _verbose:
@@ -89,7 +90,8 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
 
   res = []
   for protoPharm in protoPharmacophores:
-    if _verbose: print('protoPharm:', protoPharm)
+    if _verbose:
+      print('protoPharm:', protoPharm)
     for i in range(len(distsToCheck)):
       dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
       a1, a2 = distsToCheck[i]
@@ -100,17 +102,20 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
       #
       idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
       dist = dMat[idx1, idx2]
-      if _verbose: print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
+      if _verbose:
+        print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
       if dist < dLow or dist >= dHigh:
         break
     else:
-      if _verbose: print('Found one')
+      if _verbose:
+        print('Found one')
       # we found it
       protoPharm.sort()
       protoPharm = tuple(protoPharm)
       if protoPharm not in res:
         res.append(protoPharm)
-        if justOne: break
+        if justOne:
+          break
   return res
 
 if __name__ == '__main__':

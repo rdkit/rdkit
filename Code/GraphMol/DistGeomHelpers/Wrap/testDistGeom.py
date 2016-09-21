@@ -244,8 +244,10 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
             self.assertTrue(abs(vol - tgtVol) < 1 or abs(vol + tgtVol) < 1)
-            if vol < 0: nNeg += 1
-            else: nPos += 1
+            if vol < 0:
+                nNeg += 1
+            else:
+                nPos += 1
         self.assertTrue(nPos > 0)
         self.assertTrue(nNeg > 0)
 
@@ -275,8 +277,10 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
             self.assertTrue(abs(vol - tgtVol) < 1 or abs(vol + tgtVol) < 1)
-            if vol < 0: nNeg += 1
-            else: nPos += 1
+            if vol < 0:
+                nNeg += 1
+            else:
+                nPos += 1
 
         self.assertTrue(nPos > 0)
         self.assertTrue(nNeg > 0)
@@ -314,8 +318,10 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
             self.assertTrue(abs(vol1 - expectedV1) < 1 or abs(vol1 + expectedV1) < 1)
-            if vol1 < 0: nNeg += 1
-            else: nPos += 1
+            if vol1 < 0:
+                nNeg += 1
+            else:
+                nPos += 1
 
 
             vol2 = computeChiralVol(conf.GetAtomPosition(17),

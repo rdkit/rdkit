@@ -195,7 +195,8 @@ def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False,
 
   """
   nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
-  if nError: raise ValueError('bad reaction')
+  if nError:
+    raise ValueError('bad reaction')
   if len(bbLists) != nReacts:
     raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
   def _uniqueOnly(lst):

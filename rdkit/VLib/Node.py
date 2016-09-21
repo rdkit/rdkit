@@ -162,7 +162,8 @@ class VLibNode(object):
 
     """
     # sys.stderr.write('DESTROY: %s\n'%(str(self)))
-    if hasattr(self, '_destroyed'): return
+    if hasattr(self, '_destroyed'):
+      return
     self._destroyed = 1
 
     if notify:

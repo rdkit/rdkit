@@ -21,7 +21,8 @@ import math, exceptions
 def CalcROC(scores, col):
     """ Determines a ROC curve """
     numMol = len(scores)
-    if numMol == 0: raise ValueError('score list is empty')
+    if numMol == 0:
+      raise ValueError('score list is empty')
     TPR = [0] * numMol  # True positive rate: TP/(TP+FP)
     TNR = [0] * numMol  # True negative rate: TN/(TN+FN)
     numActives = 0
@@ -63,8 +64,10 @@ def CalcAUC(scores, col):
 def _RIEHelper(scores, col, alpha):
     numMol = len(scores)
     alpha = float(alpha)
-    if numMol == 0: raise ValueError('score list is empty')
-    if alpha <= 0.0: raise ValueError('alpha must be greater than zero')
+    if numMol == 0:
+        raise ValueError('score list is empty')
+    if alpha <= 0.0:
+        raise ValueError('alpha must be greater than zero')
 
     denom = 1.0 / numMol * ((1 - math.exp(-alpha)) / (math.exp(alpha / numMol) - 1))
     numActives = 0
@@ -120,10 +123,13 @@ def CalcBEDROC(scores, col, alpha):
 def CalcEnrichment(scores, col, fractions):
     """ Determines the enrichment factor for a set of fractions """
     numMol = len(scores)
-    if numMol == 0: raise ValueError('score list is empty')
-    if len(fractions) == 0: raise ValueError('fraction list is empty')
+    if numMol == 0: 
+        raise ValueError('score list is empty')
+    if len(fractions) == 0: 
+        raise ValueError('fraction list is empty')
     for i in fractions:
-        if i > 1 or i < 0: raise ValueError('fractions must be between [0,1]')
+        if i > 1 or i < 0: 
+            raise ValueError('fractions must be between [0,1]')
 
     numPerFrac = [math.ceil(numMol * f) for f in fractions]
     numPerFrac.append(numMol)
@@ -136,7 +142,8 @@ def CalcEnrichment(scores, col, fractions):
             enrich.append(1.0 * numActives * numMol / i)
             numPerFrac.pop(0)
         active = scores[i][col]
-        if active: numActives += 1
+        if active: 
+            numActives += 1
 
     if numActives > 0:  # check that there are actives
         enrich = [e / numActives for e in enrich]

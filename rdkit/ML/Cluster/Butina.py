@@ -59,7 +59,8 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
   if isDistData and len(data) > (nPts * (nPts - 1) / 2):
     logger.warning("Distance matrix is too long")
   nbrLists = [None] * nPts
-  for i in range(nPts): nbrLists[i] = []
+  for i in range(nPts):
+    nbrLists[i] = []
 
   dmIdx = 0
   for i in range(nPts):
@@ -101,7 +102,8 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
       # consider unassigned and affected compounds
       for x, y in enumerate(tLists):
         y1 = y[1]
-        if seen[y1] or (y1 not in nbrNbr): continue
+        if seen[y1] or (y1 not in nbrNbr):
+          continue
         # update the number of neighbors
         nbrLists[y1] = set(nbrLists[y1]).difference(tRes)
         tLists[x] = (len(nbrLists[y1]), y1)

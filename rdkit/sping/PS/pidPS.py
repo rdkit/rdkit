@@ -558,7 +558,8 @@ translate
 
 
     def _updateLineWidth(self, width):
-       if width == None: width = self.defaultLineWidth
+       if width == None:
+          width = self.defaultLineWidth
        if width != self._currentWidth:
           self._currentWidth = width
           self.code.append('%s setlinewidth' % width)

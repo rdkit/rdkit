@@ -120,7 +120,8 @@ class QtCanvas(pid.Canvas):
     "Draw a straight line between x1,y1 and x2,y2."
     # set color...
     if color:
-      if color == pid.transparent: return
+      if color == pid.transparent:
+        return
     elif self.defaultLineColor == pid.transparent:
       return
     else:
@@ -186,7 +187,8 @@ class QtCanvas(pid.Canvas):
       self._pen.setColor(qColor)
 
     # set edge width...
-    if edgeWidth is None: edgeWidth = self.defaultLineWidth
+    if edgeWidth is None:
+      edgeWidth = self.defaultLineWidth
     self._pen.setWidth(edgeWidth)
     self._pen.setJoinStyle(Qt.RoundJoin)
 
@@ -232,7 +234,8 @@ class QtCanvas(pid.Canvas):
   def drawString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     # set color...
     if color:
-      if color == pid.transparent: return
+      if color == pid.transparent:
+        return
     elif self.defaultLineColor == pid.transparent:
       return
     else:

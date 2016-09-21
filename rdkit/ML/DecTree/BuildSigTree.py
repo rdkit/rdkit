@@ -99,7 +99,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
      a SigTree.SigTreeNode with the root of the decision tree
 
   """
-  if verbose: print('  ' * depth, 'Build')
+  if verbose:
+    print('  ' * depth, 'Build')
   tree = SigTree.SigTreeNode(None, 'node', level=depth)
   tree.SetData(-666)
   # tree.SetExamples(examples)
@@ -114,7 +115,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
   # print('    '*depth,'counts:',counts)
 
   nzCounts = numpy.nonzero(counts)[0]
-  if verbose: print('  ' * depth, '\tcounts:', counts)
+  if verbose:
+    print('  ' * depth, '\tcounts:', counts)
   if len(nzCounts) == 1:
     # bottomed out because there is only one result code left
     #  with any counts (i.e. there's only one type of example
@@ -138,7 +140,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
     fp = examples[0][1]
     nBits = fp.GetNumBits()
     ranker = InfoTheory.InfoBitRanker(nBits, nPossibleRes, metric)
-    if biasList: ranker.SetBiasList(biasList)
+    if biasList:
+      ranker.SetBiasList(biasList)
     if CMIM is not None and useCMIM > 0 and not ensemble:
       ensemble = CMIM.SelectFeatures(examples, useCMIM, bvCol=1)
     if random:
@@ -182,7 +185,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       return tree
     best = int(bitInfo[0])
     # print('  '*depth,'\tbest:',bitInfo)
-    if verbose: print('  ' * depth, '\tbest:', bitInfo)
+    if verbose:
+      print('  ' * depth, '\tbest:', bitInfo)
     # set some info at this node
     tree.SetName('Bit-%d' % (best))
     tree.SetLabel(best)

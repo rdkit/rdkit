@@ -252,7 +252,8 @@ def _DrawClusterTree(cluster, canvas, size,
     lineWidth = VisOpts.lineWidth
   pts = cluster.GetPoints()
   nPts = len(pts)
-  if nPts <= 1: return
+  if nPts <= 1:
+    return
   xSpace = float(size[0] - 2 * VisOpts.xOffset) / float(nPts - 1)
   if logScale > 0:
     v = _scaleMetric(cluster.GetMetric(), logScale)

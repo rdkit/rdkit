@@ -47,7 +47,8 @@ def numBridgeheadsAndSpiro(mol, ri=None):
   return nBridgehead, nSpiro
 
 def calculateScore(m):
-  if _fscores is None: readFragmentScores()
+  if _fscores is None:
+    readFragmentScores()
 
   # fragment score
   fp = rdMolDescriptors.GetMorganFingerprint(m, 2)  # <- 2 is the *radius* of the circular fingerprint
@@ -67,7 +68,8 @@ def calculateScore(m):
   nBridgeheads, nSpiro = numBridgeheadsAndSpiro(m, ri)
   nMacrocycles = 0
   for x in ri.AtomRings():
-    if len(x) > 8: nMacrocycles += 1
+    if len(x) > 8:
+      nMacrocycles += 1
 
   sizePenalty = nAtoms ** 1.005 - nAtoms
   stereoPenalty = math.log10(nChiralCenters + 1)
@@ -78,7 +80,8 @@ def calculateScore(m):
   # This differs from the paper, which defines:
   #  macrocyclePenalty = math.log10(nMacrocycles+1)
   # This form generates better results when 2 or more macrocycles are present
-  if nMacrocycles > 0: macrocyclePenalty = math.log10(2)
+  if nMacrocycles > 0:
+    macrocyclePenalty = math.log10(2)
 
   score2 = 0. - sizePenalty - stereoPenalty - spiroPenalty - bridgePenalty - macrocyclePenalty
 
@@ -96,9 +99,12 @@ def calculateScore(m):
   max = 2.5
   sascore = 11. - (sascore - min + 1) / (max - min) * 9.
   # smooth the 10-end
-  if sascore > 8.: sascore = 8. + math.log(sascore + 1. - 9.)
-  if sascore > 10.: sascore = 10.0
-  elif sascore < 1.: sascore = 1.0
+  if sascore > 8.:
+    sascore = 8. + math.log(sascore + 1. - 9.)
+  if sascore > 10.:
+    sascore = 10.0
+  elif sascore < 1.:
+    sascore = 1.0
 
   return sascore
 

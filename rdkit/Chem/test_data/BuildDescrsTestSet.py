@@ -21,7 +21,8 @@ def runIt(inFileName, outFileName, smiCol=0, maxMols=-1, delim=','):
   for line in inD:
     if line[0] != '#':
       splitL = line.strip().split(delim)
-      if not splitL: continue
+      if not splitL:
+        continue
       smi = splitL[smiCol].strip()
       mol = Chem.MolFromSmiles(smi)
       print(smi)

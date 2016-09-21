@@ -116,7 +116,8 @@ if __name__ == '__main__':
   cPickle.dump(shape, file('subshape.pkl', 'w+'))
   for i, pt in enumerate(shape.skelPts):
     v.server.sphere(tuple(pt.location), .5, (1, 0, 1), 'Pt-%d' % i)
-    if not hasattr(pt, 'shapeDirs'): continue
+    if not hasattr(pt, 'shapeDirs'):
+      continue
     momBeg = pt.location - pt.shapeDirs[0]
     momEnd = pt.location + pt.shapeDirs[0]
     v.server.cylinder(tuple(momBeg), tuple(momEnd), .1, (1, 0, 1), 'v-%d' % i)

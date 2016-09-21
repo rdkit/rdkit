@@ -214,7 +214,8 @@ def ShowStats(statD, enrich=1):
   colCounts = sum(tmp)
   rowCounts = sum(tmp, 1)
   for i in range(len(tmp)):
-    if rowCounts[i] == 0: rowCounts[i] = 1
+    if rowCounts[i] == 0:
+      rowCounts[i] = 1
     row = tmp[i]
     print('\t\t', end='')
     for j in range(len(row)):
@@ -226,7 +227,8 @@ def ShowStats(statD, enrich=1):
   print()
   print('\t\t', end='')
   for i in range(len(tmp)):
-    if colCounts[i] == 0: colCounts[i] = 1
+    if colCounts[i] == 0:
+      colCounts[i] = 1
     print('% 6.2f' % (100.*tmp[i, i] / colCounts[i]), end='')
   print()
   if enrich > -1 and 'oAvgEnrich' in statD:
@@ -239,7 +241,8 @@ def ShowStats(statD, enrich=1):
     colCounts = sum(tmp)
     rowCounts = sum(tmp, 1)
     for i in range(len(tmp)):
-      if rowCounts[i] == 0: rowCounts[i] = 1
+      if rowCounts[i] == 0:
+        rowCounts[i] = 1
       row = tmp[i]
       print('\t\t', end='')
       for j in range(len(row)):
@@ -251,7 +254,8 @@ def ShowStats(statD, enrich=1):
     print()
     print('\t\t', end='')
     for i in range(len(tmp)):
-      if colCounts[i] == 0: colCounts[i] = 1
+      if colCounts[i] == 0:
+        colCounts[i] = 1
       print('% 6.2f' % (100.*tmp[i, i] / colCounts[i]), end='')
     print()
     if enrich > -1 and 'hAvgEnrich' in statD:

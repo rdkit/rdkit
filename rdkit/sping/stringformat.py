@@ -418,7 +418,8 @@ def allTagCombos(canvas, x, y, font=None, color=None, angle=0):
         Starts at given x,y and returns possible next (x,y)."""
 
         oldDefault = canvas.defaultFont
-        if font: canvas.defaultFont = font
+        if font:
+            canvas.defaultFont = font
 
         oldx = x
         dx = stringWidth(canvas, " ")

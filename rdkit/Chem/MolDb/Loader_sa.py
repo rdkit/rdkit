@@ -85,7 +85,8 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
       cmpd.MolLogP = Crippen.MolLogP(mol)
     pns = list(mol.GetPropNames())
     for pi, pn in enumerate(pns):
-      if pn.lower() == nameCol.lower(): continue
+      if pn.lower() == nameCol.lower():
+        continue
       pv = mol.GetProp(pn).strip()
       if pn in globalProps:
         setattr(cmpd, pn.lower(), pv)
@@ -129,9 +130,11 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       except StopIteration:
         numForPropScan = 0
         break
-      if not m: continue
+      if not m:
+        continue
       for pn in m.GetPropNames():
-        if pn.lower() == nameCol.lower(): continue
+        if pn.lower() == nameCol.lower():
+          continue
         if pn not in globalProps:
           globalProps[pn] = 1
           setattr(Compound, pn.lower(), Column(pn.lower(), String, default=defaultVal))

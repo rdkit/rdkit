@@ -55,7 +55,8 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
     pns = list(mol.GetPropNames())
     pD = {}
     for pi, pn in enumerate(pns):
-      if pn.lower() == nameCol.lower(): continue
+      if pn.lower() == nameCol.lower():
+        continue
       pv = mol.GetProp(pn).strip()
       if pv.find('>') < 0 and pv.find('<') < 0:
         colTyp = globalProps.get(pn, 2)
@@ -126,7 +127,8 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
                    keepHs=keepHs, skipProps=skipProps,
                    addComputedProps=addComputedProps, skipSmiles=skipSmiles,
                    uniqNames=uniqNames, namesSeen=namesSeen)
-    if row is None: continue
+    if row is None:
+      continue
     rows.append([nDone] + row)
     if not silent and not nDone % 100:
       logger.info('  done %d' % nDone)
@@ -196,7 +198,8 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
                    keepHs=keepHs, skipProps=skipProps,
                    addComputedProps=addComputedProps, skipSmiles=skipSmiles,
                    uniqNames=uniqNames, namesSeen=namesSeen)
-    if not row: continue
+    if not row:
+      continue
     rows.append([nDone] + row)
     if not silent and not nDone % 100:
       logger.info('  done %d' % nDone)

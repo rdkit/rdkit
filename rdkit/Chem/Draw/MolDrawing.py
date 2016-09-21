@@ -25,10 +25,14 @@ class Font(object):
   weight = 'normal'
   name = None
   def __init__(self, face=None, size=None, name=None, weight=None):
-    if face: self.face = face
-    if size: self.size = size
-    if name: self.name = name
-    if weight: self.weight = weight
+    if face:
+      self.face = face
+    if size:
+      self.size = size
+    if name:
+      self.name = name
+    if weight:
+      self.weight = weight
 
 class DrawingOptions(object):
   dotsPerAngstrom = 30
@@ -315,7 +319,8 @@ class MolDrawing(object):
 
     nAts = mol.GetNumAtoms()
     for i in range(nAts):
-      if ignoreHs and mol.GetAtomWithIdx(i).GetAtomicNum() == 1: continue
+      if ignoreHs and mol.GetAtomWithIdx(i).GetAtomicNum() == 1:
+        continue
       pos = conf.GetAtomPosition(i) * self.drawingOptions.coordScale
       xAccum += pos[0]
       yAccum += pos[1]
@@ -420,11 +425,13 @@ class MolDrawing(object):
           self.boundingBoxes[mol][2] = max(self.boundingBoxes[mol][2], pos[0])
           self.boundingBoxes[mol][3] = max(self.boundingBoxes[mol][3], pos[1])
 
-      if not drawAtom: continue
+      if not drawAtom:
+        continue
       nbrSum = [0, 0]
       for bond in atom.GetBonds():
         nbr = bond.GetOtherAtom(atom)
-        if ignoreHs and nbr.GetAtomicNum() == 1: continue
+        if ignoreHs and nbr.GetAtomicNum() == 1:
+          continue
         nbrIdx = nbr.GetIdx()
         if nbrIdx > idx:
           nbrPos = self.atomPs[mol].get(nbrIdx, None)

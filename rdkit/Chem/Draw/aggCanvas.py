@@ -145,7 +145,8 @@ class Canvas(CanvasBase):
       else:
         dPos = [pos[0] - w / 2 + offset, pos[1] - h / 2.]
 
-      if supH: dPos[1] += supH
+      if supH:
+        dPos[1] += supH
       for txt, fmt, tw, th in dblocks:
         tPos = dPos[:]
         if fmt == 'sub':
@@ -162,7 +163,8 @@ class Canvas(CanvasBase):
 
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
-    if not fill and not stroke: return
+    if not fill and not stroke:
+      return
     dps = []
     for p in ps:
       dps.extend(p)
@@ -182,7 +184,8 @@ class Canvas(CanvasBase):
     pts1 = self._getLinePoints(p1, p2, dash)
     pts2 = self._getLinePoints(p1, p3, dash)
 
-    if len(pts2) < len(pts1): pts2, pts1 = pts1, pts2
+    if len(pts2) < len(pts1):
+      pts2, pts1 = pts1, pts2
 
     for i in range(len(pts1)):
       self.draw.line((pts1[i][0], pts1[i][1], pts2[i][0], pts2[i][1]), pen)

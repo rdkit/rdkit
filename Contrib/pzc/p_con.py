@@ -433,7 +433,8 @@ class p_con:
             AllChem.Compute2DCoords(cpd)
             cpd.SetProp("_Name", str(cpd_counter))
             cpd_counter += 1
-            for tag in SDtags: cpd.SetProp(str(tag), str(entry[tag]))
+            for tag in SDtags:
+                cpd.SetProp(str(tag), str(entry[tag]))
             self.sd_entries.append(cpd)
         return True
 
@@ -556,7 +557,8 @@ class p_con:
             result.append(cpd)
 
         self.sd_entries = result
-        if self.verbous: print("## act: %d, inact: %d" % (j, i))
+        if self.verbous:
+            print("## act: %d, inact: %d" % (j, i))
         return True
 
 
@@ -569,7 +571,8 @@ class p_con:
         for mol in self.sd_entries:
             properties = mol.GetPropNames()
             for tag in properties:
-                if tag in sd_tags: mol.ClearProp(tag)
+                if tag in sd_tags:
+                    mol.ClearProp(tag)
             result.append(mol)
 
         self.sd_entries = result
@@ -722,14 +725,17 @@ class p_con:
     def save_model_info(self, outfile, mode="html"):
         """create html- or csv-File for models according to mode (default: "html")"""
         if mode == "csv":
-            if not outfile.endswith(".csv"): outfile += ".csv"
+            if not outfile.endswith(".csv"):
+                outfile += ".csv"
             csv_file = open(outfile, "wb")
             csv_file_writer = csv.writer(csv_file, delimiter=";", quotechar=' ')
-            for line in self.csv_text: csv_file_writer.writerow(line)
+            for line in self.csv_text:
+                csv_file_writer.writerow(line)
             csv_file.flush()
             csv_file.close()
         elif mode == "html":
-            if not outfile.endswith(".html"): outfile += ".html"
+            if not outfile.endswith(".html"):
+                outfile += ".html"
             def lines2list(lines):
                 return lines
 
@@ -1064,12 +1070,16 @@ table th[class*="col-"] {
                     l_replaced = []
                     for elem in l:
                         elem_string = str(elem)
-                        if elem_string.find("pkl") == -1: l_replaced.append(elem_string.replace("_", "±"))
-                        else: l_replaced.append(elem_string)
+                        if elem_string.find("pkl") == -1:
+                            l_replaced.append(elem_string.replace("_", "±"))
+                        else:
+                            l_replaced.append(elem_string)
 
                     c = ""
-                    if i == best: c = "#9CC089"
-                    if i == worst: c = "#FF3333"
+                    if i == best:
+                        c = "#9CC089"
+                    if i == worst:
+                        c = "#FF3333"
 
                     html.append(html_tElements % tuple([c] + l_replaced))
                     i += 1
@@ -1098,8 +1108,10 @@ table th[class*="col-"] {
                 def getActInact(cpds):
                     act, inact = 0, 0
                     for cpd in cpds:
-                        if int(cpd.GetProp('TL')) == 0: inact += 1
-                        else: act += 1
+                        if int(cpd.GetProp('TL')) == 0:
+                            inact += 1
+                        else:
+                            act += 1
                     return act, inact
 
                 act_count, inact_count = getActInact(cpds)
@@ -1116,8 +1128,10 @@ table th[class*="col-"] {
                     accList = []
                     errList = []
                     for x in data[1:]:
-                        if x[col].find("_") == -1: continue
-                        if x[col].find(".pkl") != -1:continue
+                        if x[col].find("_") == -1:
+                            continue
+                        if x[col].find(".pkl") != -1:
+                            continue
                         spl = x[col].split("_")
                         accList.append(float(spl[0]))
                         errList.append(float(spl[1]))
@@ -1137,7 +1151,8 @@ table th[class*="col-"] {
                 fig, ax = plt.subplots()
                 fig.set_size_inches(15, 6)
                 ticks = np.arange(0.0, 12.0, 1.2)
-                if len(self.model) == 1: ticks = np.arange(0.0, 1.0, 1.5)
+                if len(self.model) == 1:
+                    ticks = np.arange(0.0, 1.0, 1.5)
                 width = 0.15
                 plots = plotLists(8)
                 ax.set_xticks(ticks + 0.75)
@@ -1173,7 +1188,8 @@ table th[class*="col-"] {
     def save_mols(self, outfile, gzip=True):
         """create SD-File of current molecules in self.sd_entries"""
         sdw = Chem.SDWriter(outfile + ".tmp")
-        for mol in self.sd_entries: sdw.write(mol)
+        for mol in self.sd_entries:
+            sdw.write(mol)
         sdw.flush()
         sdw.close()
         if not gzip:
@@ -1195,7 +1211,8 @@ table th[class*="col-"] {
 
     def load_models(self, model_files):
         """load model or list of models into self.model"""
-        if type(model_files) == str: model_files = [model_files]
+        if type(model_files) == str:
+            model_files = [model_files]
         i = 0
         for mod_file in model_files:
             model = open(mod_file, 'r')
@@ -1232,8 +1249,10 @@ table th[class*="col-"] {
             if use:
                 dataDescrs_array = np.asarray(pattern)
                 y_predict = int(clf_RF.predict(dataDescrs_array)[0])
-                if y_predict == 0: inactive += 1
-                if y_predict == 1: active += 1
+                if y_predict == 0:
+                    inactive += 1
+                if y_predict == 1:
+                    active += 1
                 sample.SetProp("TL_prediction", str(y_predict))
         return (active, inactive)
 

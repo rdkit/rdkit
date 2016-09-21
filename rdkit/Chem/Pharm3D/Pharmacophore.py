@@ -76,14 +76,16 @@ class Pharmacophore:
     return True
 
   def setUpperBound(self, i, j, val, checkBounds=False):
-    if (checkBounds): self._checkBounds(i, j)
-    if (i > j):
+    if checkBounds:
+      self._checkBounds(i, j)
+    if i > j:
       j, i = i, j
     self._boundsMat[i, j] = val
 
   def setLowerBound(self, i, j, val, checkBounds=False):
-    if (checkBounds): self._checkBounds(i, j)
-    if (j > i):
+    if checkBounds:
+      self._checkBounds(i, j)
+    if j > i:
       j, i = i, j
     self._boundsMat[i, j] = val
 
@@ -99,14 +101,16 @@ class Pharmacophore:
 
 
   def setUpperBound2D(self, i, j, val, checkBounds=False):
-    if (checkBounds): self._checkBounds(i, j)
-    if (i > j):
+    if checkBounds:
+      self._checkBounds(i, j)
+    if i > j:
       j, i = i, j
     self._boundsMat2D[i, j] = val
 
   def setLowerBound2D(self, i, j, val, checkBounds=False):
-    if (checkBounds): self._checkBounds(i, j)
-    if (j > i):
+    if checkBounds:
+      self._checkBounds(i, j)
+    if j > i:
       j, i = i, j
     self._boundsMat2D[i, j] = val
 

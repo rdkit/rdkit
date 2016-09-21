@@ -96,7 +96,8 @@ def GetTableNames(dBase, user='sysdba', password='masterkey',
 
 
 def GetColumnInfoFromCursor(cursor):
-  if cursor is None or cursor.description is None: return []
+  if cursor is None or cursor.description is None: 
+    return []
   results = []
   if not RDConfig.useSqlLite:
     for item in cursor.description:
@@ -116,7 +117,8 @@ def GetColumnInfoFromCursor(cursor):
   else:
     from rdkit.six import PY2, PY3
     r = cursor.fetchone()
-    if not r: return results
+    if not r: 
+      return results
     for i, v in enumerate(r):
       cName = cursor.description[i][0]
       typ = type(v)

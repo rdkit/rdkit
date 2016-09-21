@@ -31,7 +31,8 @@ class TestCase(unittest.TestCase):
       inds = EState.EStateIndices(mol)
 
       maxV = max(abs(ans - inds))
-      if show: print(inds)
+      if show:
+        print(inds)
       assert maxV < tol, 'bad EStates for smiles: %s' % (smi)
 
 

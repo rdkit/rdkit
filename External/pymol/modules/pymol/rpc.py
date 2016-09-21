@@ -225,7 +225,8 @@ is white
   """
   global cgoDict
 
-  if color2 is None: color2 = color1
+  if color2 is None:
+    color2 = color1
   r1, g1, b1 = color1
   r2, g2, b2 = color2
   x1, y1, z1 = end1

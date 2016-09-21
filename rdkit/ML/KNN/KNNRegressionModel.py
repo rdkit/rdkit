@@ -63,7 +63,8 @@ class KNNRegressionModel(KNNModel.KNNModel) :
     accum = 0.0
     denom = 0.0
     for knn in knnLst:
-      if knn[1] is None: continue
+      if knn[1] is None:
+        continue
       if weightedAverage:
         dist = knn[0]
         if dist == 0.0:

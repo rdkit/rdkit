@@ -71,7 +71,8 @@ class TestCase(unittest.TestCase):
         nWrong = 0
         for eg in examples:
             p = mdl.ClassifyExample(eg)
-            if p != eg[-1]: nWrong += 1
+            if p != eg[-1]:
+                nWrong += 1
         self.assertEqual(nWrong, 1)
 
         bitEx = []
@@ -79,7 +80,8 @@ class TestCase(unittest.TestCase):
             newEg = [eg[0], None, eg[-1]]
             bv = ExplicitBitVect(nvars)
             for i in range(nvars):
-                if eg[i + 1]: bv.SetBit(i)
+                if eg[i + 1]:
+                    bv.SetBit(i)
             newEg[1] = bv
             bitEx.append(newEg)
 
@@ -89,7 +91,8 @@ class TestCase(unittest.TestCase):
         nWrong = 0
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
-            if p != eg[-1]: nWrong += 1
+            if p != eg[-1]:
+                nWrong += 1
         self.assertEqual(nWrong, 1)
 
         # now compare:
@@ -124,11 +127,13 @@ class TestCase(unittest.TestCase):
             newEg = [eg[0], None, eg[-1]]
             bv = ExplicitBitVect(nvars)
             for i in range(origNVars):
-                if eg[i + 1]: bv.SetBit(i)
+                if eg[i + 1]:
+                    bv.SetBit(i)
 
             # this bit will yield perfect accuracy if
             #  the attrs argument isn't being used properly:
-            if eg[-1]: bv.SetBit(origNVars)
+            if eg[-1]:
+                bv.SetBit(origNVars)
             newEg[1] = bv
             bitEx.append(newEg)
 
@@ -138,7 +143,8 @@ class TestCase(unittest.TestCase):
         nWrong = 0
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
-            if p != eg[-1]: nWrong += 1
+            if p != eg[-1]:
+                nWrong += 1
         self.assertEqual(nWrong, 1)
 
     def _test5(self) :  # disabled because CMIM was removed
@@ -160,7 +166,8 @@ class TestCase(unittest.TestCase):
             newEg = [eg[0], None, eg[-1]]
             bv = ExplicitBitVect(nvars)
             for i in range(nvars):
-                if eg[i + 1]: bv.SetBit(i)
+                if eg[i + 1]:
+                    bv.SetBit(i)
 
             # this bit will yield perfect accuracy if
             #  the attrs argument isn't being used properly:
@@ -173,7 +180,8 @@ class TestCase(unittest.TestCase):
         nWrong = 0
         for eg in bitEx:
             p = mdl2.ClassifyExample(eg)
-            if p != eg[-1]: nWrong += 1
+            if p != eg[-1]:
+                nWrong += 1
         self.assertEqual(nWrong, 1)
 
 if __name__ == '__main__':

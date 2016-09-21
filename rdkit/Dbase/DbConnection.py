@@ -108,7 +108,8 @@ class DbConnect(object):
 
 
     """
-    if not table: table = self.tableName
+    if not table:
+      table = self.tableName
     return DbInfo.GetColumnNames(self.dbName, table,
                                   self.user, self.password,
                                   join=join, what=what, cn=self.cn)
@@ -129,7 +130,8 @@ class DbConnect(object):
 
 
     """
-    if not table: table = self.tableName
+    if not table:
+      table = self.tableName
     return DbInfo.GetColumnNamesAndTypes(self.dbName, table,
                                           self.user, self.password,
                                           join=join, what=what, cn=self.cn)
@@ -150,7 +152,8 @@ class DbConnect(object):
         - this uses _DbUtils.GetColumns_
 
     """
-    if not table: table = self.tableName
+    if not table:
+      table = self.tableName
     return DbUtils.GetColumns(self.dbName, table, fields,
                               self.user, self.password,
                               join=join)
@@ -234,7 +237,8 @@ class DbConnect(object):
 
     """
     self.cursor = None
-    if self.cn is not None: self.cn.close()
+    if self.cn is not None:
+      self.cn.close()
     self.cn = None
 
   def AddTable(self, tableName, colString):

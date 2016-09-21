@@ -273,22 +273,29 @@ class TreeNode:
     try:
       nChildren = len(self.children)
       oChildren = len(other.children)
-      if str(type(self)) < str(type(other)): return True
-      if self.name < other.name: return True
+      if str(type(self)) < str(type(other)):
+        return True
+      if self.name < other.name:
+        return True
       if self.label is not None:
         if other.label is not None:
-          if self.label < other.label: return True
+          if self.label < other.label:
+            return True
         else:
           return False
       elif other.label is not None:
         return True
-      if nChildren < oChildren: return True
-      if nChildren > oChildren: return False
+      if nChildren < oChildren:
+        return True
+      if nChildren > oChildren:
+        return False
       for i in range(nChildren):
-        if self.children[i] < other.children[i]: return True
+        if self.children[i] < other.children[i]:
+          return True
     except AttributeError:
       return True
     return False
+
   def __eq__(self, other):
     return not self < other and not other < self
 

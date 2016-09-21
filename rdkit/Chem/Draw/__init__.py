@@ -288,7 +288,8 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
     import Image
   except ImportError:
     from PIL import Image
-  if legends is None: legends = [None] * len(mols)
+  if legends is None:
+    legends = [None] * len(mols)
   res = Image.new("RGBA", (subImgSize[0] * len(mols), subImgSize[1]))
   for i, mol in enumerate(mols):
     res.paste(MolToImage(mol, subImgSize, legend=legends[i], **kwargs), (i * subImgSize[0], 0))
@@ -321,10 +322,12 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
     import Image
   except ImportError:
     from PIL import Image
-  if legends is None: legends = [''] * len(mols)
+  if legends is None:
+    legends = [''] * len(mols)
 
   nRows = len(mols) // molsPerRow
-  if len(mols) % molsPerRow : nRows += 1
+  if len(mols) % molsPerRow :
+    nRows += 1
 
   res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
   for i, mol in enumerate(mols):
@@ -343,13 +346,15 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   """ returns an SVG of the grid
   """
   matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>', re.DOTALL)
-  if legends is None: legends = [''] * len(mols)
+  if legends is None:
+    legends = [''] * len(mols)
   hdr = ''
   ftr = '</svg:svg>'
   rect = ''
 
   nRows = len(mols) // molsPerRow
-  if len(mols) % molsPerRow : nRows += 1
+  if len(mols) % molsPerRow:
+    nRows += 1
 
   blocks = [''] * (nRows * molsPerRow)
 

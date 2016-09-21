@@ -139,7 +139,8 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
     if hasattr(tmp, '_trainIndices') and type(tmp._trainIndices) != types.DictType:
       tis = {}
       if hasattr(tmp, '_trainIndices'):
-        for v in tmp._trainIndices: tis[v] = 1
+        for v in tmp._trainIndices:
+          tis[v] = 1
       tmp._trainIndices = tis
 
   res = []
@@ -148,7 +149,8 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
   else:
     needsQuant = 0
 
-  if not indices: indices = range(len(data))
+  if not indices:
+    indices = range(len(data))
   nTrueActives = 0
   for i in indices:
     if errorEstimate:

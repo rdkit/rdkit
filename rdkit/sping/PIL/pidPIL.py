@@ -27,7 +27,7 @@ modified for use with sping.
 This requires Imaging to be installed as a package PIL
 """
 
-# ##	 6/22/99: updated drawString to handle non-integer x and y
+# ##   6/22/99: updated drawString to handle non-integer x and y
 
 from rdkit.sping.pid import *
 try:
@@ -57,11 +57,12 @@ except Exception:
   _ascents = {}
   _descents = {}
 # finally:
-# 	pass	# (just here so we can comment out the except clause for debugging)
+#   pass  # (just here so we can comment out the except clause for debugging)
 
 def _closestSize(size):
   supported = [8, 10, 12, 14, 18, 24]  # list of supported sizes
-  if size in supported: return size
+  if size in supported:
+    return size
   best = supported[0]
   bestdist = abs(size - best)
   for trial in supported[1:]:
@@ -72,37 +73,48 @@ def _closestSize(size):
   return best
 
 def _pilFontPath(face, size, bold=0):
-  if face == 'monospaced': face = 'courier'
-  elif face == 'serif': face = 'times'
-  elif face == 'sansserif' or face == 'system': face = 'helvetica'
+  if face == 'monospaced':
+    face = 'courier'
+  elif face == 'serif':
+    face = 'times'
+  elif face == 'sansserif' or face == 'system':
+    face = 'helvetica'
 
-  if bold and face != 'symbol': fname = "%s-bold-%d.pil" % (face, size)
-  else: fname = "%s-%d.pil" % (face, size)
+  if bold and face != 'symbol':
+    fname = "%s-bold-%d.pil" % (face, size)
+  else:
+    fname = "%s-%d.pil" % (face, size)
   path = os.path.join(_fontprefix, fname)
   return path
 
 def _matchingFontPath(font):
   # returns a font path which matches info in our font metrics
-  if font.face: face = font.face
-  else: face = 'times'
+  if font.face:
+    face = font.face
+  else:
+    face = 'times'
 
   size = _closestSize(font.size)
   if isinstance(face, six.string_types):
     path = _pilFontPath(face, size, font.bold)
     path = path.split(os.sep)[-1]
-    if path in _widthmaps.keys(): return path
+    if path in _widthmaps.keys():
+      return path
   else:
     for item in font.face:
       path = _pilFontPath(item, size, font.bold)
       path = path.split(os.sep)[-1]
-      if path in _widthmaps.keys(): return path
+      if path in _widthmaps.keys():
+        return path
   # not found?  Try it with courier, which should always be there
   path = _pilFontPath('courier', size, font.bold)
   return path.split(os.sep)[-1]
 
 def _pilFont(font):
-  if font.face: face = font.face
-  else: face = 'times'
+  if font.face:
+    face = font.face
+  else:
+    face = 'times'
 
   size = _closestSize(font.size)
   if isinstance(face, six.string_types):
@@ -116,8 +128,10 @@ def _pilFont(font):
       try:
         pilfont = ImageFont.load_path(_pilFontPath(item, size, font.bold))
         break
-      except Exception: pass
-    if pilfont == None: return 0  # font not found!
+      except Exception:
+        pass
+    if pilfont == None:
+      return 0  # font not found!
   return pilfont
 
 class PILCanvas(Canvas):
@@ -177,8 +191,10 @@ class PILCanvas(Canvas):
     "Return the logical width of the string if it were drawn \
     in the current font (defaults to self.defaultFont)."
 
-    if not font: font = self.defaultFont
-    if not _widthmaps: return font.size * len(s)
+    if not font:
+      font = self.defaultFont
+    if not _widthmaps:
+      return font.size * len(s)
 
     path = _matchingFontPath(font)
     map = _widthmaps[path]
@@ -190,8 +206,10 @@ class PILCanvas(Canvas):
   def fontAscent(self, font=None):
     "Find the ascent (height above base) of the given font."
 
-    if not font: font = self.defaultFont
-    if not _ascents: return font.size
+    if not font:
+      font = self.defaultFont
+    if not _ascents:
+      return font.size
 
     path = _matchingFontPath(font)
     return _ascents[path]
@@ -199,8 +217,10 @@ class PILCanvas(Canvas):
   def fontDescent(self, font=None):
     "Find the descent (extent below base) of the given font."
 
-    if not font: font = self.defaultFont
-    if not _descents: return font.size / 2
+    if not font:
+      font = self.defaultFont
+    if not _descents:
+      return font.size / 2
 
     path = _matchingFontPath(font)
     return _descents[path]
@@ -218,9 +238,11 @@ class PILCanvas(Canvas):
       return
 
     if color:
-      if color == transparent: return
+      if color == transparent:
+        return
       self._setColor(color)
-    elif self.defaultLineColor == transparent: return
+    elif self.defaultLineColor == transparent:
+       return
 
     if not dash:
       self._pen.line((x1, y1, x2, y2), fill=self._color, width=w)
@@ -238,7 +260,8 @@ class PILCanvas(Canvas):
       dashOn = 1
       while dist < lineLen:
         currL = dash[currDash % len(dash)]
-        if(dist + currL > lineLen): currL = lineLen - dist
+        if(dist + currL > lineLen):
+          currL = lineLen - dist
         endP = (pos[0] + currL * cosT, pos[1] + currL * sinT)
         if dashOn:
           self.drawLine(pos[0], pos[1], endP[0], endP[1],
@@ -299,7 +322,8 @@ class PILCanvas(Canvas):
       # and does not support thick edges, we'll use our drawLine instead
       # OFI: use default color/width to speed this up!
       oldp = pts[0]
-      if closed: pts.append(oldp)
+      if closed:
+        pts.append(oldp)
       for p in pts[1:]:
         self.drawLine(oldp[0], oldp[1], p[0], p[1],
                       edgeColor, edgeWidth, dash=dash,
@@ -314,11 +338,13 @@ class PILCanvas(Canvas):
       self.drawMultiLineString(s, x, y, font, color, angle,
                                **kwargs)
       return
-    if not font: font = self.defaultFont
+    if not font:
+      font = self.defaultFont
 
     if not color:
       color = self.defaultLineColor
-    if color == transparent: return
+    if color == transparent:
+      return
 
     # draw into an offscreen Image
     # tmpsize was originally 1.2* stringWidth, added code to give enough room
@@ -331,7 +357,8 @@ class PILCanvas(Canvas):
     temppen = ImageDraw.ImageDraw(tempimg)
 
     pilfont = _pilFont(font)
-    if not pilfont: raise ValueError("bad font: %s" % font)
+    if not pilfont:
+      raise ValueError("bad font: %s" % font)
     pos = [4, int(tempsize / 2 - self.fontAscent(font)) - self.fontDescent(font)]
     temppen.text(pos, s, font=pilfont, fill=(255, 255, 255))
     pos[1] = int(tempsize / 2)
@@ -372,73 +399,74 @@ class PILCanvas(Canvas):
 
 def test():
 # ... for testing...
-	canvas = PILCanvas()
+  canvas = PILCanvas()
 
-	canvas.defaultLineColor = Color(0.7, 0.7, 1.0)  # light blue
-	canvas.drawLines(map(lambda i:(i * 10, 0, i * 10, 300), range(30)))
-	canvas.drawLines(map(lambda i:(0, i * 10, 300, i * 10), range(30)))
-	canvas.defaultLineColor = black
+  canvas.defaultLineColor = Color(0.7, 0.7, 1.0)  # light blue
+  canvas.drawLines(map(lambda i:(i * 10, 0, i * 10, 300), range(30)))
+  canvas.drawLines(map(lambda i:(0, i * 10, 300, i * 10), range(30)))
+  canvas.defaultLineColor = black
 
-	canvas.drawLine(10, 200, 20, 190, color=red)
+  canvas.drawLine(10, 200, 20, 190, color=red)
 
-	canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4)
+  canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4)
 
-	canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4)
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4)
 
-	canvas.defaultLineWidth = 4
-	canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon)
-	canvas.drawCurve(20, 20, 100, 50, 50, 100, 160, 160)
+  canvas.defaultLineWidth = 4
+  canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon)
+  canvas.drawCurve(20, 20, 100, 50, 50, 100, 160, 160)
 
-	canvas.drawString("This is a test!", 30, 130, Font(face="times", size=16, bold=1),
-			color=green, angle=-45)
+  canvas.drawString("This is a test!", 30, 130, Font(face="times", size=16, bold=1),
+      color=green, angle=-45)
 
-	canvas.drawString("This is a test!", 30, 130, color=red, angle=45)
+  canvas.drawString("This is a test!", 30, 130, color=red, angle=45)
 
-	polypoints = [ (160, 120), (130, 190), (210, 145), (110, 145), (190, 190) ]
-	canvas.drawPolygon(polypoints, fillColor=lime, edgeColor=red, edgeWidth=3, closed=1)
+  polypoints = [ (160, 120), (130, 190), (210, 145), (110, 145), (190, 190) ]
+  canvas.drawPolygon(polypoints, fillColor=lime, edgeColor=red, edgeWidth=3, closed=1)
 
-	canvas.drawRect(200, 200, 260, 260, edgeColor=yellow, edgeWidth=5)
-	canvas.drawLine(200, 260, 260, 260, color=green, width=5)
-	canvas.drawLine(260, 200, 260, 260, color=red, width=5)
+  canvas.drawRect(200, 200, 260, 260, edgeColor=yellow, edgeWidth=5)
+  canvas.drawLine(200, 260, 260, 260, color=green, width=5)
+  canvas.drawLine(260, 200, 260, 260, color=red, width=5)
 
-	# now, for testing, save the image as a PNG file
-	canvas.flush()
-	canvas.getImage().save("test.png")
+  # now, for testing, save the image as a PNG file
+  canvas.flush()
+  canvas.getImage().save("test.png")
 
 
-	return canvas
+  return canvas
 
 def testit(canvas, s, x, y, font=None):
-	canvas.defaultLineColor = black
-	canvas.drawString(s, x, y, font=font)
-	canvas.defaultLineColor = blue
-	w = canvas.stringWidth(s, font=font)
-	canvas.drawLine(x, y, x + w, y)
-	canvas.drawLine(x, y - canvas.fontAscent(font=font), x + w, y - canvas.fontAscent(font=font))
-	canvas.drawLine(x, y + canvas.fontDescent(font=font), x + w, y + canvas.fontDescent(font=font))
+  canvas.defaultLineColor = black
+  canvas.drawString(s, x, y, font=font)
+  canvas.defaultLineColor = blue
+  w = canvas.stringWidth(s, font=font)
+  canvas.drawLine(x, y, x + w, y)
+  canvas.drawLine(x, y - canvas.fontAscent(font=font), x + w, y - canvas.fontAscent(font=font))
+  canvas.drawLine(x, y + canvas.fontDescent(font=font), x + w, y + canvas.fontDescent(font=font))
 
 def test2():
 
-	canvas = PILCanvas()
-	testit(canvas, "Foogar", 20, 30)
+  canvas = PILCanvas()
+  testit(canvas, "Foogar", 20, 30)
 
-	testit(canvas, "Foogar", 20, 90, font=Font(size=24))
-	global dammit
-	dammit = _pilFont(Font(size=24))
+  testit(canvas, "Foogar", 20, 90, font=Font(size=24))
+  global dammit
+  dammit = _pilFont(Font(size=24))
 
-	testit(canvas, "Foogar", 20, 150, font=Font(face='courier', size=24))
+  testit(canvas, "Foogar", 20, 150, font=Font(face='courier', size=24))
 
-	testit(canvas, "Foogar", 20, 240, font=Font(face='courier'))
-
-
-	import piddleQD
-	global qdcanvas
-	try:
-		qdcanvas.close()
-	except Exception: pass
-	qdcanvas = piddleQD.QDCanvas()
-	qdcanvas.drawImage(canvas.getImage(), 0, 0);
+  testit(canvas, "Foogar", 20, 240, font=Font(face='courier'))
 
 
-if __name__ == '__main__': test()
+  import piddleQD
+  global qdcanvas
+  try:
+    qdcanvas.close()
+  except Exception:
+    pass
+  qdcanvas = piddleQD.QDCanvas()
+  qdcanvas.drawImage(canvas.getImage(), 0, 0);
 
+
+if __name__ == '__main__':
+  test()

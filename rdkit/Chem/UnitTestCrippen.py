@@ -108,7 +108,8 @@ class TestCase(unittest.TestCase):
     verbose = 0
     nFails = 0
     while not done:
-      if verbose: print('---------------')
+      if verbose:
+        print('---------------')
       try:
         smi, refContribs = cPickle.load(inF)
       except EOFError:

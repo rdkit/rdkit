@@ -38,7 +38,8 @@ class TestCase(unittest.TestCase):
         traceback.print_exc()
 
   def _confirm(self, tblName, dbName=None):
-    if dbName is None: dbName = self.dbName
+    if dbName is None:
+      dbName = self.dbName
     conn = DbConnect(dbName, tblName)
     res = conn.GetColumnNamesAndTypes()
     assert len(res) == len(self.colHeads), 'bad number of columns'

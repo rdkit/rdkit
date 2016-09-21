@@ -54,12 +54,14 @@ class TestCase(unittest.TestCase):
         rd = torsions[i].GetNonzeroElements()
         for k, v in pd.iteritems():
           if rd.has_key(k):
-            if rd[k] != v: print('>>>1', k, v, rd[k])
+            if rd[k] != v:
+              print('>>>1', k, v, rd[k])
           else:
             print('>>>2', k, v)
         for k, v in rd.iteritems():
           if pd.has_key(k):
-            if pd[k] != v: print('>>>3', k, v, pd[k])
+            if pd[k] != v:
+              print('>>>3', k, v, pd[k])
           else:
             print('>>>4', k, v)
 

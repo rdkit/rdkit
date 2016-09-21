@@ -217,7 +217,8 @@ class VectCollection(object):
     tmp = {}
     for k in keep:
       tmp[k] = self.__vects[k]
-    if verbose: print('uniquify:', len(self.__vects), '->', len(tmp))
+    if verbose:
+      print('uniquify:', len(self.__vects), '->', len(tmp))
     self.__vects = tmp
 
 

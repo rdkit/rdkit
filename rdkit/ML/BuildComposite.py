@@ -228,7 +228,8 @@ def message(msg):
       - msg: the string to be displayed
 
   """
-  if _verbose: sys.stdout.write('%s\n' % (msg))
+  if _verbose:
+    sys.stdout.write('%s\n' % (msg))
 
 
 def testall(composite, examples, badExamples=[]):
@@ -370,11 +371,13 @@ def GetCommandLine(details):
 # #     if not details.svmShrink:
 # #       args.append('--svmShrink')
 
-  if details.replacementSelection: args.append('--replacementSelection')
+  if details.replacementSelection:
+    args.append('--replacementSelection')
 
 
   # this should always be last:
-  if details.tableName: args.append(details.tableName)
+  if details.tableName:
+    args.append(details.tableName)
 
   return ' '.join(args)
 
@@ -803,7 +806,8 @@ def SetDefaults(runDetails=None):
 
 
   """
-  if runDetails is None: runDetails = _runDetails
+  if runDetails is None:
+    runDetails = _runDetails
   return CompositeRun.SetDefaults(runDetails)
 
 def ParseArgs(runDetails):

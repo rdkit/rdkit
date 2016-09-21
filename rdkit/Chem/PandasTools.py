@@ -206,7 +206,8 @@ def _molge(x, y):
   This has the effect that the pandas/numpy rowfilter can be used for substructure filtering
   (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
   """
-  if x is None or y is None: return False
+  if x is None or y is None:
+    return False
   if hasattr(x, '_substructfp'):
     if not hasattr(y, '_substructfp'):
       y._substructfp = _fingerprinter(y, True)
@@ -326,12 +327,14 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
   records = []
   indices = []
   for i, mol in enumerate(Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None))):
-    if mol is None: continue
+    if mol is None:
+      continue
     row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
     if molColName is not None and not embedProps:
       for prop in mol.GetPropNames():
         mol.ClearProp(prop)
-    if mol.HasProp('_Name'): row[idName] = mol.GetProp('_Name')
+    if mol.HasProp('_Name'):
+      row[idName] = mol.GetProp('_Name')
     if smilesName is not None:
       row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
     if molColName is not None and not includeFingerprints:
@@ -341,7 +344,8 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     records.append(row)
     indices.append(i)
 
-  if close is not None: close()
+  if close is not None:
+    close()
   RenderImagesInAllDataFrames(images=True)
   return pd.DataFrame(records, index=indices)
 
@@ -400,7 +404,8 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
         mol.SetProp(p, str(cell_value))
     writer.write(mol)
   writer.close()
-  if close is not None: close()
+  if close is not None:
+    close()
 
 _saltRemover = None
 def RemoveSaltsFromFrame(frame, molCol='ROMol'):

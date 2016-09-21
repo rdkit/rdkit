@@ -1999,7 +1999,8 @@ CAS<~>
     ms = [x for x in Chem.SDMolSupplier(fileN)]
     self.assertEqual(len(ms), 16)
     count = 0
-    for m in Chem.SDMolSupplier(fileN): count += 1
+    for m in Chem.SDMolSupplier(fileN):
+      count += 1
     self.assertEqual(count, 16)
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
@@ -2012,7 +2013,8 @@ CAS<~>
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers',
                                             'test_data', 'acd_few.tdt')
     count = 0
-    for m in Chem.TDTMolSupplier(fileN): count += 1
+    for m in Chem.TDTMolSupplier(fileN):
+      count += 1
     self.assertEqual(count, 10)
 
   def test49Issue1932365(self):
@@ -2196,7 +2198,8 @@ CAS<~>
 
 
   def test56LazySDMolSupplier(self) :
-    if not hasattr(Chem, 'CompressedSDMolSupplier'): return
+    if not hasattr(Chem, 'CompressedSDMolSupplier'):
+      return
 
     self.assertRaises(ValueError, lambda : Chem.CompressedSDMolSupplier('nosuchfile.sdf.gz'))
 

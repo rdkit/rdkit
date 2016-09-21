@@ -316,11 +316,13 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         if '\n' in s or '\r' in s:
             self.drawMultiLineString(s, x, y, font, color, angle)
             return
-        if not font: font = pilCan.defaultFont
+        if not font:
+            font = pilCan.defaultFont
 
         if not color:
             color = self.defaultLineColor
-        if color == rdkit.sping.pid.transparent: return
+        if color == rdkit.sping.pid.transparent:
+            return
 
         # draw into an offscreen Image
         tempsize = pilCan.stringWidth(s, font) * 1.2
@@ -332,7 +334,8 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         temppen.setink((255, 255, 255))
         pilfont = pp._pilFont(font)
 
-        if not pilfont: raise ValueError("Bad font: %s" % font)
+        if not pilfont:
+            raise ValueError("Bad font: %s" % font)
 
         temppen.setfont(pilfont)
         pos = [4, int(tempsize / 2 - pilCan.fontAscent(font)) - pilCan.fontDescent(font)]

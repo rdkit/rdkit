@@ -69,11 +69,13 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
   nAts = conf.GetNumAtoms()
   nbrLists = [[] for x in range(nAts)]
   for i in range(nAts):
-    if(mol.GetAtomWithIdx(i).GetAtomicNum() <= 1): continue
+    if(mol.GetAtomWithIdx(i).GetAtomicNum() <= 1):
+      continue
     pi = conf.GetAtomPosition(i)
     nbrLists[i].append((i, pi))
     for j in range(i + 1, nAts):
-      if(mol.GetAtomWithIdx(j).GetAtomicNum() <= 1): continue
+      if(mol.GetAtomWithIdx(j).GetAtomicNum() <= 1):
+        continue
       pj = conf.GetAtomPosition(j)
       dist = pi.Distance(conf.GetAtomPosition(j))
       if dist < winRad:
@@ -89,7 +91,8 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
 
   while 1:
     for i in range(nAts):
-      if not nbrLists[i]: continue
+      if not nbrLists[i]:
+        continue
       pos = Geometry.Point3D(0, 0, 0)
       totWt = 0.0
       if len(nbrLists[i]) < nbrCount:

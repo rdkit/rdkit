@@ -166,7 +166,8 @@ class FeatMap(object):
       raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
 
     if mapScoreVect:
-      for i in range(nFeats): mapScoreVect[i] = 0.0
+      for i in range(nFeats):
+        mapScoreVect[i] = 0.0
     else:
       mapScoreVect = [0.0] * nFeats
 
@@ -175,7 +176,8 @@ class FeatMap(object):
     else:
       defScore = 0.0
     if featsScoreVect:
-      for i in range(nToScore): featsScoreVect[i] = defScore
+      for i in range(nToScore):
+        featsScoreVect[i] = defScore
     else:
       featsScoreVect = [defScore] * nToScore
 

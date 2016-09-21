@@ -196,24 +196,25 @@ class NaiveBayesClassifier :
 
 
     # for key in self._condProbs:
-    for cls in range(self._nClasses) :
-      if not cls in ncls: continue
+    for cls in range(self._nClasses):
+      if not cls in ncls:
+        continue
       # cls = key[0]
       tmp = self._condProbs[cls]
       for ai in self._attrs:
         if not self._useSigs:
           nbnds = self._nPosVals[ai]
-          if (self._qBounds[ai] > 0) :
+          if self._qBounds[ai] > 0:
             nbnds = self._qBounds[ai]
         else:
           nbnds = 2
         for bid in range(nbnds):
-          if self._mEstimateVal <= 0.0 :
+          if self._mEstimateVal <= 0.0:
             # this is simple the fraction of of time this descriptor component assume
             # this value for the examples that belong a specific class
             # self._condProbs[key] = (float(self._condProbs[key]))/ncls[cls]
             tmp[ai][bid] /= ncls[cls]
-          else :
+          else:
             # this a bit more complicated form - more appropriate for unbalanced data
             # see "Machine Learning" by Tom Mitchell section 6.9.1.1
 

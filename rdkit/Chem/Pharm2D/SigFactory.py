@@ -210,8 +210,10 @@ class SigFactory(object):
     nPoints = len(featIndices)
     if nPoints > 3:
       raise NotImplementedError('>3 points not supported')
-    if nPoints < self.minPointCount: raise IndexError('bad number of points')
-    if nPoints > self.maxPointCount: raise IndexError('bad number of points')
+    if nPoints < self.minPointCount:
+      raise IndexError('bad number of points')
+    if nPoints > self.maxPointCount:
+      raise IndexError('bad number of points')
 
     # this is the start of the nPoint-point pharmacophores
     startIdx = self._starts[nPoints]
@@ -224,15 +226,18 @@ class SigFactory(object):
       tmp.sort()
       featIndices = tmp
 
-    if featIndices[0] < 0: raise IndexError('bad feature index')
-    if max(featIndices) >= self._nFeats: raise IndexError('bad feature index')
+    if featIndices[0] < 0:
+      raise IndexError('bad feature index')
+    if max(featIndices) >= self._nFeats:
+      raise IndexError('bad feature index')
 
     if nPoints == 3:
       featIndices, dists = Utils.OrderTriangle(featIndices, dists)
 
 
     offset = Utils.CountUpTo(self._nFeats, nPoints, featIndices)
-    if _verbose: print('offset for feature %s: %d' % (str(featIndices), offset))
+    if _verbose:
+      print('offset for feature %s: %d' % (str(featIndices), offset))
     offset *= len(self._scaffolds[len(dists)])
 
 

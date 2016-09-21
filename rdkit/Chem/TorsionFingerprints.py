@@ -156,7 +156,8 @@ def _getBondsForTorsions(mol, ignoreColinearBonds):
   bonds = []
   doneBonds = [0] * mol.GetNumBonds()
   for b in mol.GetBonds():
-    if b.IsInRing(): continue
+    if b.IsInRing():
+      continue
     a1 = b.GetBeginAtomIdx()
     a2 = b.GetEndAtomIdx()
     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom(), a2)
@@ -302,7 +303,8 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
     for atoms in quartets:
       p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
       tmpTors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4) / math.pi) * 180.0
-      if tmpTors < 0: tmpTors += 360.0  # angle between 0 and 360
+      if tmpTors < 0:
+        tmpTors += 360.0  # angle between 0 and 360
       tors.append(tmpTors)
     torsions.append((tors, maxdev))
   # rings
@@ -332,7 +334,8 @@ def _findCentralBond(mol, distmat):
   stds = []
   for i in range(mol.GetNumAtoms()):
     # only consider non-terminal atoms
-    if len(_getHeavyAtomNeighbors(mol.GetAtomWithIdx(i))) < 2: continue
+    if len(_getHeavyAtomNeighbors(mol.GetAtomWithIdx(i))) < 2:
+      continue
     tmp = [d for d in distmat[i]]
     tmp.pop(i)
     stds.append((std(tmp), i))
@@ -373,7 +376,8 @@ def _calculateBeta(mol, distmat, aid1):
     bid1 = b.GetBeginAtom().GetIdx()
     bid2 = b.GetEndAtom().GetIdx()
     d = max([distmat[aid1][bid1], distmat[aid1][bid2]])
-    if (d > dmax): dmax = d
+    if (d > dmax):
+      dmax = d
   dmax2 = dmax / 2.0
   beta = -math.log(0.1) / (dmax2 * dmax2)
   return beta

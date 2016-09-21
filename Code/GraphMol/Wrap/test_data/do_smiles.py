@@ -12,8 +12,10 @@ def runit(fName):
   for line in inLines:
     if len(line):
       smi = splitExpr.split(line)[1]
-      if smi[-1] == '\n': smi = smi[:-1]
-      if smi[-1] == '\r': smi = smi[:-1]
+      if smi[-1] == '\n':
+        smi = smi[:-1]
+      if smi[-1] == '\r':
+        smi = smi[:-1]
       nTried += 1
       m = Chem.MolFromSmiles(smi)
       if m:

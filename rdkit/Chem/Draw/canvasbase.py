@@ -77,7 +77,8 @@ class CanvasBase:
         currDash = 0
         while dist < lineLen:
             currL = dash[currDash % len(dash)]
-            if (dist + currL > lineLen): currL = lineLen - dist
+            if (dist + currL > lineLen):
+                currL = lineLen - dist
             endP = (pos[0] + currL * cosT, pos[1] + currL * sinT)
             pts.append(endP)
             pos = endP

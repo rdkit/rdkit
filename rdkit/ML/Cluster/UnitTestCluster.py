@@ -61,7 +61,8 @@ class TestCase(unittest.TestCase):
     assert indices == [8, 7, 5, 6], 'bad index order'
 
   def testMurtaghUPGMA(self):
-    if Murtagh is None: return
+    if Murtagh is None:
+      return
     nPts = 5
     sz = 5
     dataP = numpy.random.random((nPts, sz))

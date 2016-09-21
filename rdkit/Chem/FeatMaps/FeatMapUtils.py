@@ -163,7 +163,8 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
             else:
               break
       # print '    bottom:',mergeThem
-      if mergeThem: break
+      if mergeThem:
+        break
     if mergeThem:
       res = True
       featI = fm.GetFeature(fi)

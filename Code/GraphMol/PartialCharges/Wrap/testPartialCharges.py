@@ -78,7 +78,8 @@ class TestCase(unittest.TestCase):
                 if not feq(rdch, combiCharges[smi][ai], 1.e-2) :
                     failed = True
                     print(smi, ai, rdch, combiCharges[smi][ai])
-            if failed: rdmol.Debug()
+            if failed:
+                rdmol.Debug()
             self.assertFalse(failed)
 
     def test2Params(self):

@@ -66,7 +66,8 @@ def GetTriangles(nPts):
 
   """
   global _trianglesInPharmacophore
-  if nPts < 3: return []
+  if nPts < 3:
+    return []
   res = _trianglesInPharmacophore.get(nPts, [])
   if not res:
     idx1, idx2, idx3 = (0, 1, nPts - 1)
@@ -99,10 +100,12 @@ def BinsTriangleInequality(d1, d2, d3):
        d1(upper) + d2(upper) >= d3(lower)
 
   """
-  if d1[1] + d2[1] < d3[0]: return False
-  if d2[1] + d3[1] < d1[0]: return False
-  if d3[1] + d1[1] < d2[0]: return False
-
+  if d1[1] + d2[1] < d3[0]:
+    return False
+  if d2[1] + d3[1] < d1[0]:
+    return False
+  if d3[1] + d1[1] < d2[0]:
+    return False
   return True
 
 def ScaffoldPasses(combo, bins=None):
@@ -184,7 +187,8 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
               NumCombinations(nValsOver, nLevsUnder))
       accum += NumCombinations(nValsOver, nLevsUnder)
     accum += CountUpTo(nItems, nSlots, vs, idx + 1, vs[idx])
-  if _verbose: print('  ' * idx, '>', accum)
+  if _verbose:
+    print('  ' * idx, '>', accum)
   if idx == 0:
     _countCache[(nItems, nSlots, tuple(vs))] = accum
   return accum
@@ -284,7 +288,8 @@ def GetUniqueCombinations(choices, classes, which=0):
       for other in tmp:
         idxThere = 0
         for x in other:
-          if x[1] == thing:idxThere += 1
+          if x[1] == thing:
+            idxThere += 1
         if not idxThere:
           newL = [(classes[which], thing)] + other
           newL.sort()
@@ -361,8 +366,10 @@ def OrderTriangle(featIndices, dists):
     ([0, 0, 1], [1, 3, 2])
 
   """
-  if len(featIndices) != 3: raise ValueError('bad indices')
-  if len(dists) != 3: raise ValueError('bad dists')
+  if len(featIndices) != 3:
+    raise ValueError('bad indices')
+  if len(dists) != 3:
+    raise ValueError('bad dists')
 
   fs = set(featIndices)
   if len(fs) == 3:

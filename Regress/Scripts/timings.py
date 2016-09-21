@@ -170,7 +170,8 @@ if tests[13]:
     nBad = 0
     for mol in mols:
         cid = AllChem.EmbedMolecule(mol, randomSeed=0xF00D)
-        if cid < 0: nBad += 1
+        if cid < 0:
+            nBad += 1
     t2 = time.time()
     logger.info('Results13: %.2f seconds %d failures' % (t2 - t1, nBad))
     ts.append(t2 - t1)
@@ -179,7 +180,8 @@ if tests[14]:
     logger.info('UFF optimizing those:')
     t1 = time.time()
     for mol in mols:
-        if not mol.GetNumConformers(): continue
+        if not mol.GetNumConformers():
+            continue
         mol = Chem.Mol(mol)
         needMore = 1
         while needMore:
@@ -211,8 +213,10 @@ if tests[17]:
     t1 = time.time()
     for i, mol in enumerate(mols):
         mol = Chem.Mol(mol)
-        if not mol.GetNumConformers(): continue
-        if not AllChem.MMFFHasAllMoleculeParams(mol): continue
+        if not mol.GetNumConformers():
+            continue
+        if not AllChem.MMFFHasAllMoleculeParams(mol):
+            continue
         needMore = 1
         while needMore:
             try:

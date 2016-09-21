@@ -105,7 +105,8 @@ def _pyGetAtomContribs(mol, patts=None, order=None, verbose=0, force=0):
           if nAtomsFound >= nAtoms:
             done = True
             break
-    if done: break
+    if done:
+      break
   mol._crippenContribs = atomContribs
   return atomContribs
 

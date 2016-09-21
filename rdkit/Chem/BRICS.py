@@ -284,7 +284,8 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
   letter = re.compile('[a-z,A-Z]')
   indices = list(range(len(bondMatchers)))
   bondsDone = set()
-  if randomizeOrder: random.shuffle(indices, random=random.random)
+  if randomizeOrder:
+    random.shuffle(indices, random=random.random)
 
   envMatches = {}
   for env, patt in iteritems(environMatchers):
@@ -296,7 +297,8 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
     else:
       compats = bondMatchers[gpIdx]
     for i1, i2, bType, patt in compats:
-      if not envMatches['L' + i1] or not envMatches['L' + i2]: continue
+      if not envMatches['L' + i1] or not envMatches['L' + i2]:
+        continue
       matches = mol.GetSubstructMatches(patt)
       i1 = letter.sub('', i1)
       i2 = letter.sub('', i2)
@@ -462,7 +464,8 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
           print(smartsGps[gpIdx][rxnIdx])
         ps = reaction.RunReactants((mol,))
         if ps:
-          if not silent: print(nSmi, '->', len(ps), 'products')
+          if not silent:
+            print(nSmi, '->', len(ps), 'products')
           for prodSeq in ps:
             seqOk = True
             # we want to disqualify small fragments, so sort the product sequence by size

@@ -69,7 +69,8 @@ def _pyHallKierAlpha(m):
   rC = PeriodicTable.nameTable['C'][5]
   for atom in m.GetAtoms():
     atNum = atom.GetAtomicNum()
-    if not atNum: continue
+    if not atNum:
+      continue
     symb = atom.GetSymbol()
     alphaV = PeriodicTable.hallKierAlphas.get(symb, None)
     if alphaV is not None:
@@ -536,7 +537,8 @@ def _CreateBondDictEtc(mol, numAtoms):
   for aBond in mol.GetBonds():
     atom1 = aBond.GetBeginAtomIdx()
     atom2 = aBond.GetEndAtomIdx()
-    if atom1 > atom2: atom2, atom1 = atom1, atom2
+    if atom1 > atom2:
+      atom2, atom1 = atom1, atom2
     if not aBond.GetIsAromatic():
       bondDict[(atom1, atom2)] = aBond.GetBondType()
     else:

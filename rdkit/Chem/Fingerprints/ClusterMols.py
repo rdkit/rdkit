@@ -62,7 +62,7 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
       nSoFar += 1
   return res
 
-def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True, 
+def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
                   returnDistances=False):
   message('Generating distance matrix.\n')
   dMat = GetDistanceMatrix(data, metric)

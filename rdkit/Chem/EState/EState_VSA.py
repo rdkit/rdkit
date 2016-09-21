@@ -31,7 +31,8 @@ def VSA_EState_(mol, bins=None, force=1):
   if not force and hasattr(mol, '_vsaEState'):
     return mol._vsaEState
 
-  if bins is None: bins = estateBins
+  if bins is None:
+    bins = estateBins
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 
@@ -59,7 +60,8 @@ def EState_VSA_(mol, bins=None, force=1):
   if not force and hasattr(mol, '_eStateVSA'):
     return mol._eStateVSA
 
-  if bins is None: bins = estateBins
+  if bins is None:
+    bins = estateBins
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 

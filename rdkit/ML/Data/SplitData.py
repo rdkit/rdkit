@@ -106,7 +106,8 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
     resTest = []
     for i in range(nTrain):
       val = int(RDRandom.random() * nPts)
-      if val == nPts: val = nPts - 1
+      if val == nPts:
+        val = nPts - 1
       resData[i] = val
     for i in range(nPts):
       if i not in resData:

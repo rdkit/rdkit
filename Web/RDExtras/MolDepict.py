@@ -30,9 +30,12 @@ def page(req, smiles='', width=300, height=300, highlight='[]',
     </table>
     </center>""" % (url, width, height, imgUrl, width, height)
     page += '<center><b>SMILES:</b>%s</center>' % smiles
-  if not smiles: smiles = '""'
-  if not numbers or numbers == 'off': checked = ""
-  else: checked = "checked"
+  if not smiles:
+    smiles = '""'
+  if not numbers or numbers == 'off':
+    checked = ""
+  else:
+    checked = "checked"
   page += """<center>
   <form action="/RDExtras/MolDepict.py/page">
   <input type=text name="smiles" value=%s size=80>

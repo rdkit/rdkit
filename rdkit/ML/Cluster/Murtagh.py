@@ -43,8 +43,10 @@ def _LookupDist(dists, i, j, n):
    distance matrix _dists_
 
   """
-  if i == j: return 0.0
-  if i > j: i, j = j, i
+  if i == j:
+    return 0.0
+  if i > j:
+    i, j = j, i
   return dists[j * (j - 1) / 2 + i]
 
 

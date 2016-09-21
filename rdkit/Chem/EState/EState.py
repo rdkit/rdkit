@@ -16,13 +16,21 @@ import numpy
 from rdkit import Chem
 
 def GetPrincipleQuantumNumber(atNum):
-  if atNum <= 2: return 1
-  elif atNum <= 10: return 2
-  elif atNum <= 18: return 3
-  elif atNum <= 36: return 4
-  elif atNum <= 54: return 5
-  elif atNum <= 86: return 6
-  else: return 7
+  """ Returns principal quantum number """
+  if atNum <= 2:
+    return 1
+  elif atNum <= 10:
+    return 2
+  elif atNum <= 18:
+    return 3
+  elif atNum <= 36:
+    return 4
+  elif atNum <= 54:
+    return 5
+  elif atNum <= 86:
+    return 6
+  else:
+    return 7
 
 
 def EStateIndices(mol, force=1):

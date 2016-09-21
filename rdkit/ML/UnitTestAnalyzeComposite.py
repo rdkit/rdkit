@@ -17,8 +17,10 @@ from rdkit.ML import AnalyzeComposite
 from rdkit.six.moves import cPickle as pickle
 
 def feq(a, b, tol=1e-4):
-  if abs(a - b) > tol: return 0
-  else: return 1
+  if abs(a - b) > tol:
+    return 0
+  else:
+    return 1
 
 class TestCase(unittest.TestCase):
   def setUp(self):

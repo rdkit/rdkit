@@ -118,7 +118,8 @@ def message(msg):
       - msg: the string to be displayed
 
   """
-  if _verbose: sys.stdout.write('%s\n' % (msg))
+  if _verbose: 
+    sys.stdout.write('%s\n' % (msg))
 
 def GrowIt(details, composite, progressCallback=None,
            saveIt=1, setDescNames=0, data=None):
@@ -409,7 +410,8 @@ def SetDefaults(runDetails=None):
 
 
   """
-  if runDetails is None: runDetails = _runDetails
+  if runDetails is None: 
+    runDetails = _runDetails
   return CompositeRun.SetDefaults(runDetails)
 
 def ParseArgs(runDetails):

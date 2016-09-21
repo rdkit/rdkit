@@ -121,7 +121,8 @@ def pySMR_VSA_(mol, bins=None, force=1):
       if res.all():
         return res
 
-  if bins is None: bins = mrBins
+  if bins is None:
+    bins = mrBins
   Crippen._Init()
   propContribs = Crippen._GetAtomContribs(mol, force=force)
   volContribs = _LabuteHelper(mol)
@@ -155,7 +156,8 @@ def pySlogP_VSA_(mol, bins=None, force=1):
       if res.all():
         return res
 
-  if bins is None: bins = logpBins
+  if bins is None:
+    bins = logpBins
   Crippen._Init()
   propContribs = Crippen._GetAtomContribs(mol, force=force)
   volContribs = _LabuteHelper(mol)
@@ -184,7 +186,8 @@ def pyPEOE_VSA_(mol, bins=None, force=1):
     else:
       if res.all():
         return res
-  if bins is None: bins = chgBins
+  if bins is None:
+    bins = chgBins
   Crippen._Init()
   # print('\ts:',repr(mol.GetMol()))
   # print('\t\t:',len(mol.GetAtoms()))
@@ -345,55 +348,89 @@ def _pyTPSAContribs(mol, verbose=False):
       tmp = -1
       if atNum == 7:
         if numNeighbors == 1:
-          if nHs == 0 and nTrip == 1 and chg == 0: tmp = 23.79
-          elif nHs == 1 and nDoub == 1 and chg == 0: tmp = 23.85
-          elif nHs == 2 and nSing == 1 and chg == 0: tmp = 26.02
-          elif nHs == 2 and nDoub == 1 and chg == 1: tmp = 25.59
-          elif nHs == 3 and nSing == 1 and chg == 1: tmp = 27.64
+          if nHs == 0 and nTrip == 1 and chg == 0:
+            tmp = 23.79
+          elif nHs == 1 and nDoub == 1 and chg == 0:
+            tmp = 23.85
+          elif nHs == 2 and nSing == 1 and chg == 0:
+            tmp = 26.02
+          elif nHs == 2 and nDoub == 1 and chg == 1:
+            tmp = 25.59
+          elif nHs == 3 and nSing == 1 and chg == 1:
+            tmp = 27.64
         elif numNeighbors == 2:
-          if nHs == 0 and nSing == 1 and nDoub == 1 and chg == 0: tmp = 12.36
-          elif nHs == 0 and nTrip == 1 and nDoub == 1 and chg == 0: tmp = 13.60
+          if nHs == 0 and nSing == 1 and nDoub == 1 and chg == 0:
+            tmp = 12.36
+          elif nHs == 0 and nTrip == 1 and nDoub == 1 and chg == 0:
+            tmp = 13.60
           elif nHs == 1 and nSing == 2 and chg == 0:
-            if not in3Ring: tmp = 12.03
-            else: tmp = 21.94
-          elif nHs == 0 and nTrip == 1 and nSing == 1 and chg == 1: tmp = 4.36
-          elif nHs == 1 and nDoub == 1 and nSing == 1 and chg == 1: tmp = 13.97
-          elif nHs == 2 and nSing == 2 and chg == 1: tmp = 16.61
-          elif nHs == 0 and nArom == 2 and chg == 0: tmp = 12.89
-          elif nHs == 1 and nArom == 2 and chg == 0: tmp = 15.79
-          elif nHs == 1 and nArom == 2 and chg == 1: tmp = 14.14
+            if not in3Ring:
+              tmp = 12.03
+            else:
+              tmp = 21.94
+          elif nHs == 0 and nTrip == 1 and nSing == 1 and chg == 1:
+            tmp = 4.36
+          elif nHs == 1 and nDoub == 1 and nSing == 1 and chg == 1:
+            tmp = 13.97
+          elif nHs == 2 and nSing == 2 and chg == 1:
+            tmp = 16.61
+          elif nHs == 0 and nArom == 2 and chg == 0:
+            tmp = 12.89
+          elif nHs == 1 and nArom == 2 and chg == 0:
+            tmp = 15.79
+          elif nHs == 1 and nArom == 2 and chg == 1:
+            tmp = 14.14
         elif numNeighbors == 3:
           if nHs == 0 and nSing == 3 and chg == 0:
-            if not in3Ring: tmp = 3.24
-            else: tmp = 3.01
-          elif nHs == 0 and nSing == 1 and nDoub == 2 and chg == 0: tmp = 11.68
-          elif nHs == 0 and nSing == 2 and nDoub == 1 and chg == 1: tmp = 3.01
-          elif nHs == 1 and nSing == 3 and chg == 1: tmp = 4.44
-          elif nHs == 0 and nArom == 3 and chg == 0: tmp = 4.41
-          elif nHs == 0 and nSing == 1 and nArom == 2 and chg == 0: tmp = 4.93
-          elif nHs == 0 and nDoub == 1 and nArom == 2 and chg == 0: tmp = 8.39
-          elif nHs == 0 and nArom == 3 and chg == 1: tmp = 4.10
-          elif nHs == 0 and nSing == 1 and nArom == 2 and chg == 1: tmp = 3.88
+            if not in3Ring:
+              tmp = 3.24
+            else:
+              tmp = 3.01
+          elif nHs == 0 and nSing == 1 and nDoub == 2 and chg == 0:
+            tmp = 11.68
+          elif nHs == 0 and nSing == 2 and nDoub == 1 and chg == 1:
+            tmp = 3.01
+          elif nHs == 1 and nSing == 3 and chg == 1:
+            tmp = 4.44
+          elif nHs == 0 and nArom == 3 and chg == 0:
+            tmp = 4.41
+          elif nHs == 0 and nSing == 1 and nArom == 2 and chg == 0:
+            tmp = 4.93
+          elif nHs == 0 and nDoub == 1 and nArom == 2 and chg == 0:
+            tmp = 8.39
+          elif nHs == 0 and nArom == 3 and chg == 1:
+            tmp = 4.10
+          elif nHs == 0 and nSing == 1 and nArom == 2 and chg == 1:
+            tmp = 3.88
         elif numNeighbors == 4:
-          if nHs == 0 and nSing == 4 and chg == 1: tmp = 0.00
+          if nHs == 0 and nSing == 4 and chg == 1:
+            tmp = 0.00
         if tmp < 0.0:
           tmp = 30.5 - numNeighbors * 8.2 + nHs * 1.5
-          if tmp < 0.0: tmp = 0.0
+          if tmp < 0.0:
+            tmp = 0.0
       elif atNum == 8:
         # print(nHs,nSing,chg)
         if numNeighbors == 1:
-          if nHs == 0 and nDoub == 1 and chg == 0: tmp = 17.07
-          elif nHs == 1 and nSing == 1 and chg == 0: tmp = 20.23
-          elif nHs == 0 and nSing == 1 and chg == -1: tmp = 23.06
+          if nHs == 0 and nDoub == 1 and chg == 0:
+            tmp = 17.07
+          elif nHs == 1 and nSing == 1 and chg == 0:
+            tmp = 20.23
+          elif nHs == 0 and nSing == 1 and chg == -1:
+            tmp = 23.06
         elif numNeighbors == 2:
           if nHs == 0 and nSing == 2 and chg == 0:
-            if not in3Ring: tmp = 9.23
-            else: tmp = 12.53
-          elif nHs == 0 and nArom == 2 and chg == 0: tmp = 13.14
+            if not in3Ring:
+              tmp = 9.23
+            else:
+              tmp = 12.53
+          elif nHs == 0 and nArom == 2 and chg == 0:
+            tmp = 13.14
 
         if tmp < 0.0:
           tmp = 28.5 - numNeighbors * 8.6 + nHs * 1.5
-          if tmp < 0.0: tmp = 0.0
+          if tmp < 0.0:
+            tmp = 0.0
       if verbose:
         print('\t', atom.GetIdx(), atom.GetSymbol(), atNum, nHs, nSing, nDoub, nTrip, nArom,
               chg, tmp)

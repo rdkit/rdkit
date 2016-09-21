@@ -145,7 +145,8 @@ def GetNextId(conn, table, idColName='Id'):
   max = 0
   for val in vals:
     val = RDIdToInt(val[0], validate=0)
-    if val > max: max = val
+    if val > max:
+      max = val
   max += 1
   return max
 

@@ -100,7 +100,7 @@ class SVGCanvas(Canvas):
     self._txt += """<svg:svg version="1.1" baseProfile="full"
         xmlns:svg="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xml:space="preserve" width="%dpx" height="%dpx" %s>\n""" % (self.size[0], self.size[1], 
+        xml:space="preserve" width="%dpx" height="%dpx" %s>\n""" % (self.size[0], self.size[1],
                                                                     extraHeaderText)
 
   def _findExternalFontName(self, font):  # copied from piddlePDF by cwl- hack away!
@@ -283,7 +283,8 @@ class SVGCanvas(Canvas):
     "Draw a straight line between x1,y1 and x2,y2."
     # set color...
     if color:
-      if color == transparent: return
+      if color == transparent:
+        return
     elif self.defaultLineColor == transparent:
       return
     else:
@@ -334,7 +335,8 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None: edgeWidth = self.defaultLineWidth
+    if edgeWidth == None:
+      edgeWidth = self.defaultLineWidth
 
     # SVG markers
     edgeStr = 'stroke="%s" stroke-width="%d"' % (_ColorToSVG(edgeColor), int(edgeWidth))
@@ -433,7 +435,8 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None: edgeWidth = self.defaultLineWidth
+    if edgeWidth == None:
+      edgeWidth = self.defaultLineWidth
 
     # SVG markers
     edgeStr = 'stroke="%s" stroke-width"%d"' % (_ColorToSVG(edgeColor), int(edgeWidth))
@@ -484,7 +487,8 @@ class SVGCanvas(Canvas):
       edgeColor = self.defaultLineColor
 
     # set edge width...
-    if edgeWidth == None: edgeWidth = self.defaultLineWidth
+    if edgeWidth == None:
+      edgeWidth = self.defaultLineWidth
 
     # SVG markers
     edgeStr = 'stroke="%s" stroke-width="%d"' % (_ColorToSVG(edgeColor), int(edgeWidth))
@@ -504,7 +508,8 @@ class SVGCanvas(Canvas):
   def drawString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     # set color...
     if color:
-      if color == transparent: return
+      if color == transparent:
+        return
     elif self.defaultLineColor == transparent:
       return
     else:
@@ -572,7 +577,8 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None: edgeWidth = self.defaultLineWidth
+    if edgeWidth == None:
+      edgeWidth = self.defaultLineWidth
 
     # SVG markers
     edgeStr = 'stroke="%s" stroke-width="%d"' % (_ColorToSVG(edgeColor), int(edgeWidth))

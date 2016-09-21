@@ -169,7 +169,8 @@ def RecapDecompose(mol, allNodes=None, minFragmentSize=0, onlyUseReactions=None)
   while activePool:
     nSmi = next(iterkeys(activePool))
     node = activePool.pop(nSmi)
-    if not node.mol: continue
+    if not node.mol:
+      continue
     for rxnIdx, reaction in enumerate(reactions):
       if onlyUseReactions and rxnIdx not in onlyUseReactions:
         continue

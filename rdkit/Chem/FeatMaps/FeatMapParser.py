@@ -157,7 +157,8 @@ class FeatMapParser(object):
     l = self._NextLine()
     while l and l != 'EndPoints':
       vals = featLineSplitter.split(l)
-      while vals.count(''): vals.remove('')
+      while vals.count(''):
+        vals.remove('')
       p = FeatMapPoint.FeatMapPoint()
 
       i = 0

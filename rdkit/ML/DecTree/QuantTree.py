@@ -47,7 +47,8 @@ class QuantTreeNode(DecTree.DecTreeNode):
       return self.label
     else:
       val = example[self.label]
-      if not hasattr(self, 'nBounds'): self.nBounds = len(self.qBounds)
+      if not hasattr(self, 'nBounds'):
+        self.nBounds = len(self.qBounds)
       if self.nBounds:
         for i, bound in enumerate(self.qBounds):
           if val < bound:
@@ -69,9 +70,12 @@ class QuantTreeNode(DecTree.DecTreeNode):
     return (self < other) * -1 or (other < self) * 1
 
   def __lt__(self, other):
-    if str(type(self)) < str(type(other)): return True
-    if self.qBounds < other.qBounds: return True
-    if Tree.TreeNode.__lt__(self, other): return True
+    if str(type(self)) < str(type(other)):
+      return True
+    if self.qBounds < other.qBounds:
+      return True
+    if Tree.TreeNode.__lt__(self, other):
+      return True
     return False
   def __eq__(self, other):
     return not self < other and not other < self

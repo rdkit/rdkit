@@ -87,7 +87,8 @@ def GetNeighborLists(probes, topN, pool,
   nDone = 0
   for nm, fp in pool:
     nDone += 1
-    if not silent and not nDone % 1000: logger.info('  searched %d rows' % nDone)
+    if not silent and not nDone % 1000:
+      logger.info('  searched %d rows' % nDone)
     if(simMetric == DataStructs.DiceSimilarity):
       scores = DataStructs.BulkDiceSimilarity(fp, validFps)
       for i, score in enumerate(scores):
@@ -261,7 +262,8 @@ def RunSearch(options, queryFilename):
 
     if not options.silent:
       msg = 'Reading query molecules'
-      if fpBuilder: msg += ' and generating fingerprints'
+      if fpBuilder:
+        msg += ' and generating fingerprints'
       logger.info(msg)
     probes = []
     i = 0
@@ -295,7 +297,8 @@ def RunSearch(options, queryFilename):
     conn = DbConnect(molDbName)
     curs = conn.GetCursor()
     if options.queryMol:
-      if not options.silent: logger.info('Doing substructure query')
+      if not options.silent:
+        logger.info('Doing substructure query')
       if options.propQuery:
         where = 'where %s' % options.propQuery
       else:
@@ -352,7 +355,8 @@ def RunSearch(options, queryFilename):
         logger.info('   Fingerprint screenout rate: %d of %d (%%%.2f)' % (nFiltered, nToDo, 100.*nFiltered / nToDo))
 
     elif options.propQuery:
-      if not options.silent: logger.info('Doing property query')
+      if not options.silent:
+        logger.info('Doing property query')
       propQuery = options.propQuery.split(';')[0]
       curs.execute('select %(idCol)s from molecules where %(propQuery)s' % locals())
       ids = [x[0] for x in curs.fetchall()]
@@ -361,7 +365,8 @@ def RunSearch(options, queryFilename):
 
   t1 = time.time()
   if probes:
-    if not options.silent: logger.info('Finding Neighbors')
+    if not options.silent:
+      logger.info('Finding Neighbors')
     conn = DbConnect(dbName)
     cns = conn.GetColumnNames(fpTableName)
     curs = conn.GetCursor()
@@ -409,9 +414,11 @@ def RunSearch(options, queryFilename):
           nbrs.append((nbrGuid, scores[j]))
       nbrLists[(i, nm)] = nbrs
     t2 = time.time()
-    if not options.silent: logger.info('The search took %.1f seconds' % (t2 - t1))
+    if not options.silent:
+      logger.info('The search took %.1f seconds' % (t2 - t1))
 
-    if not options.silent: logger.info('Creating output')
+    if not options.silent:
+      logger.info('Creating output')
 
 
     curs = mConn.GetCursor()
@@ -431,19 +438,23 @@ def RunSearch(options, queryFilename):
       for i, nm in ks:
         nbrs = nbrLists[(i, nm)]
         nbrTxt = options.outputDelim.join([nm] + ['%s%s%.3f' % (nmDict[id], options.outputDelim, score) for id, score in nbrs])
-        if outF: print(nbrTxt, file=outF)
+        if outF:
+          print(nbrTxt, file=outF)
     else:
       labels = ['%s%sSimilarity' % (x[1], options.outputDelim) for x in ks]
-      if outF: print(options.outputDelim.join(labels), file=outF)
+      if outF:
+        print(options.outputDelim.join(labels), file=outF)
       for i in range(options.topN):
         outL = []
         for idx, nm in ks:
           nbr = nbrLists[(idx, nm)][i]
           outL.append(nmDict[nbr[0]])
           outL.append('%.3f' % nbr[1])
-        if outF: print(options.outputDelim.join(outL), file=outF)
+        if outF:
+          print(options.outputDelim.join(outL), file=outF)
   else:
-    if not options.silent: logger.info('Creating output')
+    if not options.silent:
+      logger.info('Creating output')
     curs = mConn.GetCursor()
     ids = [(x,) for x in set(ids)]
     curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)' % locals())
@@ -453,7 +464,8 @@ def RunSearch(options, queryFilename):
     nmDict = {}
     for guid, id in curs.fetchall():
       nmDict[guid] = str(id)
-    if outF: print('\n'.join(nmDict.values()), file=outF)
+    if outF:
+      print('\n'.join(nmDict.values()), file=outF)
   if molsOut and ids:
     molDbName = os.path.join(options.dbDir, options.molDbName)
     cns = [x.lower() for x in mConn.GetColumnNames('molecules')]
@@ -487,7 +499,8 @@ def RunSearch(options, queryFilename):
       if smilesOut:
         print('%s %s' % (smi, str(row[1])), file=smilesOut)
       row = curs.fetchone()
-  if not options.silent: logger.info('Done!')
+  if not options.silent:
+    logger.info('Done!')
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
 import os

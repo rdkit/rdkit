@@ -39,7 +39,8 @@ def dividetask(data, task, silent=True):
             logger.info('task(%d) done %d' % (mpi.world.rank, i + 1))
     if mpi.world.rank == 0:
         tmp = mpi.gather(mpi.world, res, 0)
-        for res in tmp: allRes.extend(res)
+        for res in tmp:
+            allRes.extend(res)
     else:
         mpi.gather(mpi.world, res, 0)
     return allRes
