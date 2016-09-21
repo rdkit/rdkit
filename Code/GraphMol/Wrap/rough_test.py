@@ -3775,5 +3775,15 @@ CAS<~>
     # just need to test that this exists:
     self.assertTrue(Chem.BondDir.EITHERDOUBLE)
 
+  def testGithub1041(self):
+    a = Chem.Atom(6)
+    self.assertRaises(RuntimeError,lambda : a.GetOwningMol())
+    self.assertRaises(RuntimeError,lambda : a.GetNeighbors())
+    self.assertRaises(RuntimeError,lambda : a.GetBonds())
+    self.assertRaises(RuntimeError,lambda : a.IsInRing())
+    self.assertRaises(RuntimeError,lambda : a.IsInRingSize(4))
+
+
+
 if __name__ == '__main__':
   unittest.main()
