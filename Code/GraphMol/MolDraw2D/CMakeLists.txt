@@ -39,12 +39,14 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp
   LINK_LIBRARIES
   FileParsers SmilesParse Depictor MolTransforms RDGeometryLib
-  RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol EigenSolvers
+RDGeometryLib
   ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   FileParsers SmilesParse Depictor RDGeometryLib
-  RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
+RDGeometryLib
   MolDraw2D ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
 if(RDK_BUILD_QT_DEMO)
