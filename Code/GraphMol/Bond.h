@@ -14,7 +14,7 @@
 #include <iostream>
 
 // Ours
-// FIX: grn...
+#include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
@@ -44,7 +44,7 @@ typedef boost::shared_ptr<Atom> ATOM_SPTR;
           clients who need to store extra data on Bond objects.
 
 */
-class Bond : public RDProps{
+class Bond : public RDProps {
   friend class RWMol;
   friend class ROMol;
 
@@ -144,7 +144,10 @@ class Bond : public RDProps{
   bool getIsConjugated() const { return df_isConjugated; };
 
   //! returns a reference to the ROMol that owns this Bond
-  ROMol &getOwningMol() const { return *dp_mol; };
+  ROMol &getOwningMol() const {
+    PRECONDITION(dp_mol, "no owner");
+    return *dp_mol;
+  };
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
