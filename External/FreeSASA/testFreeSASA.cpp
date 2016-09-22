@@ -347,6 +347,9 @@ ExpectedClasses ExpectedProtor1d3z[] = {
     {600, 1, "Polar", 1.42},  {601, 1, "Polar", 1.46}};
 
 void testPDB() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing FreeSASA basics"
+                       << std::endl;
+
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase +=
       "/External/FreeSASA/freesasa-master/tests/data/1d3z.pdb";
@@ -375,7 +378,7 @@ void testPDB() {
   opts.d_alg = FreeSASA::SASAOpts::ShrakeRupley;
 
   double sasa = FreeSASA::calcSASA(*m, radii, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);  
+  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
 
   delete m;
@@ -387,7 +390,7 @@ void testPDB() {
   ROMol *mnoh = MolOps::removeHs(*m);
   FreeSASA::classifyAtoms(*mnoh, radii);
   sasa = FreeSASA::calcSASA(*mnoh, radii, opts);
-  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);  
+  TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
   const QueryAtom *apolar = FreeSASA::makeAPolarAtomQuery();
   const QueryAtom *polar = FreeSASA::makePolarAtomQuery();
@@ -396,12 +399,14 @@ void testPDB() {
   double polard = FreeSASA::calcSASA(*mnoh, radii, polar, opts);
   std::cerr << " polar " << polard << std::endl;
   std::cerr << " apolar " << apolard << std::endl;
-  
+
   TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
-  
+
 
   delete m;
   delete mnoh;
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+
 }
 
 int main() {

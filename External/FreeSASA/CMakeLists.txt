@@ -12,22 +12,23 @@ if(needDownload)
   # don't actually use the md5 here
   if(MSVC)
     downloadAndCheckMD5("https://github.com/bp-kelley/freesasa/archive/msvc-fixes.tar.gz"
-          "${CMAKE_CURRENT_SOURCE_DIR}/msvc-fixes.tar.gz" 
+          "${CMAKE_CURRENT_SOURCE_DIR}/msvc-fixes.tar.gz"
           "")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
       ${CMAKE_CURRENT_SOURCE_DIR}/msvc-fixes.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    set(FREESASA_SRC_DIR "freesasa-msvc-fixes")
+    file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/freesasa-msvc-fixes ${CMAKE_CURRENT_SOURCE_DIR}/freesasa-master)
+    set(FREESASA_SRC_DIR "freesasa-master")
     set(FREESASA_GETLINE "getline.c")
   else()
     downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
-          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz" 
+          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
           "")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
       ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
       set(FREESASA_SRC_DIR "freesasa-master")
-      set(FREESASA_GETLINE "") 
+      set(FREESASA_GETLINE "")
   endif()
 endif()
 
@@ -75,4 +76,3 @@ rdkit_test(testFreeSASALib testFreeSASA.cpp
                           GraphMol DataStructs RDGeometryLib RDGeneral)
 
 endif(RDK_BUILD_FREESASA_SUPPORT)
-    
