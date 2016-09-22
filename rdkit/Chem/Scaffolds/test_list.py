@@ -1,10 +1,11 @@
+"""
+  Run unit tests and doctests for MurckoScaffolds
+"""
 
 tests = [
   ("python", "test_MurckoScaffold.py", {}),
   ("python", "MurckoScaffold.py", {}),
   ]
-
-
 
 longTests = [
   ]

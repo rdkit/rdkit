@@ -6,13 +6,14 @@
   Generation of Murcko scaffolds from a molecule
 """
 
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
 murckoTransforms = [AllChem.ReactionFromSmarts('[*:1]-[!#1;D1]>>[*:1][H]'),
-                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]#[AD1]>>[*:1][H]'),
-                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]=[AD1]>>[*:1][H]'),
-                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D3](=[AD1])=[AD1]>>[*:1][H]')]
+                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]#[AD1]>>[*:1][H]'),
+                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]=[AD1]>>[*:1][H]'),
+                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D3](=[AD1])=[AD1]>>[*:1][H]')]
 
 
 def MakeScaffoldGeneric(mol):
@@ -48,12 +49,13 @@ def MakeScaffoldGeneric(mol):
 
 
 murckoPatts = ['[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]',
-         '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
-         '[!#1;D1;$([D1]-[!#1;!n])]']
+               '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
+               '[!#1;D1;$([D1]-[!#1;!n])]']
 murckoQ = '[' + ','.join(['$(%s)' % x for x in murckoPatts]) + ']'
 murckoQ = Chem.MolFromSmarts(murckoQ)
 murckoPatts = [Chem.MolFromSmarts(x) for x in murckoPatts]
 aromaticNTransform = AllChem.ReactionFromSmarts('[n:1]-[D1]>>[nH:1]')
+
 def GetScaffoldForMol(mol):
   """ Return molecule object containing scaffold of mol
 
@@ -68,7 +70,7 @@ def GetScaffoldForMol(mol):
   'c1ccc(Oc2ccccn2)cc1'
 
   """
-  if 1:
+  if 1:  # pylint: disable=using-constant-test
     res = Chem.MurckoDecompose(mol)
     res.ClearComputedProps()
     res.UpdatePropertyCache()
@@ -76,6 +78,7 @@ def GetScaffoldForMol(mol):
   else:
     res = _pyGetScaffoldForMol(mol)
   return res
+
 
 def _pyGetScaffoldForMol(mol):
   while mol.HasSubstructMatch(murckoQ):
@@ -85,28 +88,10 @@ def _pyGetScaffoldForMol(mol):
     if atom.GetAtomicNum() == 6 and atom.GetNoImplicit() and atom.GetExplicitValence() < 4:
       atom.SetNoImplicit(False)
   h = Chem.MolFromSmiles('[H]')
-  mol = Chem.ReplaceSubstructs(mol, Chem.MolFromSmarts('[D1;$([D1]-n)]'), h, True)[0];
+  mol = Chem.ReplaceSubstructs(mol, Chem.MolFromSmarts('[D1;$([D1]-n)]'), h, True)[0]
   mol = Chem.RemoveHs(mol)
-  # while 1:
-  #  ps = aromaticNTransform.RunReactants([mol])
-  #  if ps:
-  #    mol = ps[0][0]
-  #  else:
-  #    break
   return mol
 
-def MurckoScaffoldSmilesFromSmiles(smiles, includeChirality=False):
-  """ Returns MurckScaffold Smiles from smiles
-
-  >>> MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
-  'c1ccc(Oc2ccccn2)cc1'
-
-  """
-  mol = Chem.MolFromSmiles(smiles)
-  scaffold = GetScaffoldForMol(mol)
-  if not scaffold:
-    return None
-  return Chem.MolToSmiles(scaffold, includeChirality)
 
 def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
   """ Returns MurckScaffold Smiles from smiles
@@ -120,25 +105,35 @@ def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
   """
   if smiles:
     mol = Chem.MolFromSmiles(smiles)
-  else:
-    mol = mol
   if mol is None:
     raise ValueError('No molecule provided')
   scaffold = GetScaffoldForMol(mol)
   if not scaffold:
-    return None
+    return None  # pragma: nocover
   return Chem.MolToSmiles(scaffold, includeChirality)
+
+
+def MurckoScaffoldSmilesFromSmiles(smiles, includeChirality=False):
+  """ Returns MurckScaffold Smiles from smiles
+
+  >>> MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
+  'c1ccc(Oc2ccccn2)cc1'
+
+  """
+  return MurckoScaffoldSmiles(smiles=smiles, includeChirality=includeChirality)
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
 
