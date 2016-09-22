@@ -1236,11 +1236,17 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
     atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     // additional reasons to skip the atom:
-    if (atom->getDegree() < 3 ||        // not enough explicit neighbors
-        atom->getTotalDegree() != 4 ||  // not enough total neighbors
-        atom->getTotalNumHs(true) > 1   // more than two Hs
-        ) {
+    if (atom->getDegree() < 3 || atom->getTotalDegree() > 4) {
+      // not enough explicit neighbors or too many total neighbors
       continue;
+    } else {
+      int anum = atom->getAtomicNum();
+      if (anum != 16 && anum != 34 &&  // S or Se are special
+                                       // (just using the InChI list for now)
+          (atom->getTotalDegree() != 4 ||  // not enough total neighbors
+           atom->getTotalNumHs(true) > 1)) {
+        continue;
+      }
     }
     const RDGeom::Point3D &p0 = conf.getAtomPos(atom->getIdx());
     ROMol::ADJ_ITER nbrIdx, endNbrs;

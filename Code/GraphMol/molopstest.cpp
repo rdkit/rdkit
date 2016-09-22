@@ -6274,6 +6274,63 @@ void testGithubIssue1021() {
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+void testGithubIssue607() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 607: "
+         "AssignAtomChiralTagsFromStructure() not recognizing chiral S"
+      << std::endl;
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    ROMol *m = MolFileToMol(pathName + "1a9u.zwitterion.sdf");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 27);
+    MolOps::assignChiralTypesFrom3D(*m);
+
+    TEST_ASSERT(m->getAtomWithIdx(26)->getAtomicNum() == 16);
+    TEST_ASSERT(m->getAtomWithIdx(26)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    ROMol *m = MolFileToMol(pathName + "1a9u.sdf");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 27);
+    MolOps::assignChiralTypesFrom3D(*m);
+
+    TEST_ASSERT(m->getAtomWithIdx(26)->getAtomicNum() == 16);
+    TEST_ASSERT(m->getAtomWithIdx(26)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+  {  // convert S -> Se and test again
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    ROMol *m = MolFileToMol(pathName + "1a9u.zwitterion.sdf");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 27);
+    m->getAtomWithIdx(26)->setAtomicNum(34);
+    MolOps::assignChiralTypesFrom3D(*m);
+    TEST_ASSERT(m->getAtomWithIdx(26)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+  {  // convert S -> Se and test again
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    ROMol *m = MolFileToMol(pathName + "1a9u.sdf");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 27);
+    m->getAtomWithIdx(26)->setAtomicNum(34);
+    MolOps::assignChiralTypesFrom3D(*m);
+    TEST_ASSERT(m->getAtomWithIdx(26)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -6368,8 +6425,9 @@ int main() {
   testGithubIssue908();
   testGithubIssue962();
 
-#endif
   testGithubIssue1021();
+#endif
+  testGithubIssue607();
 
   return 0;
 }
