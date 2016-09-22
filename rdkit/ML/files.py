@@ -5,7 +5,7 @@
 """
 from __future__ import print_function
 import numpy
-import string,re
+import string, re
 
 class ReFile:
   """convenience class for dealing with files with comments
@@ -49,15 +49,15 @@ class ReFile:
 
     """
     self.inFile.seek(0)
-    
-  def __init__(self,fileName,mode='r',comment=r'#',trailer=r'\n'):
+
+  def __init__(self, fileName, mode='r', comment=r'#', trailer=r'\n'):
     if trailer is not None and trailer != '':
       comment = comment + r'|' + trailer
     self.regExp = re.compile(comment)
-    self.inFile = open(fileName,mode)
-    
+    self.inFile = open(fileName, mode)
 
-def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
+
+def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   """ read in the data file and return a tuple of two Numeric arrays:
   (independant variables, dependant variables).
 
@@ -76,7 +76,7 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
    a tuple of two Numeric arrays:
 
     (independant variables, dependant variables).
-  
+
   """
   inFile = ReFile(fileName)
   dataLines = inFile.readlines()
@@ -86,24 +86,24 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
     _convfunc = float
   else:
     _convfunc = int
-    
-  nIndVars = len(string.split(dataLines[0]))-1
-  indVarMat = numpy.zeros((nPts,nIndVars),dataType)
-  depVarVect = numpy.zeros(nPts,dataType)
+
+  nIndVars = len(string.split(dataLines[0])) - 1
+  indVarMat = numpy.zeros((nPts, nIndVars), dataType)
+  depVarVect = numpy.zeros(nPts, dataType)
   for i in range(nPts):
     splitLine = string.split(dataLines[i])
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]
-    indVarMat[i,:] = map(_convfunc,splitLine)
+    indVarMat[i, :] = map(_convfunc, splitLine)
 
-  return indVarMat,depVarVect
+  return indVarMat, depVarVect
 
 
 if __name__ == '__main__':
   import sys
 
   fileN = sys.argv[1]
-  iV,dV = ReadDataFile(fileN)
+  iV, dV = ReadDataFile(fileN)
   print('iV:', iV)
   print('dV:', dV)
-  
+

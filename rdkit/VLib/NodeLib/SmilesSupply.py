@@ -3,7 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys,os.path
+import sys, os.path
 from rdkit import RDConfig
 from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
@@ -34,13 +34,13 @@ class SmilesSupplyNode(SupplyNode):
     >>> suppl.next().GetProp("_Name")
     'AMIODARONE'
     >>> suppl.reset()
-  
+
   """
-  def __init__(self,fileName,delim="\t",nameColumn=1,smilesColumn=0,titleLine=0,
+  def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=0,
                **kwargs):
-    SupplyNode.__init__(self,**kwargs)
+    SupplyNode.__init__(self, **kwargs)
     self._fileName = fileName
-    self._supplier = Chem.SmilesMolSupplier(self._fileName,delimiter=delim,
+    self._supplier = Chem.SmilesMolSupplier(self._fileName, delimiter=delim,
                                             smilesColumn=smilesColumn,
                                             nameColumn=nameColumn,
                                             titleLine=titleLine)
@@ -59,19 +59,19 @@ class SmilesSupplyNode(SupplyNode):
 
 if six.PY3:
     SmilesSupplyNode.__next__ = SmilesSupplyNode.next
-  
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
 
-  
+

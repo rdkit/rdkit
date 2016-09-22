@@ -4,24 +4,24 @@ import IPython
 if IPython.release.version < '0.11':
     raise ImportError('this module requires at least v0.11 of IPython')
 elif IPython.release.version < '2.0':
-    install_nbextension=None
-    _canUse3D=False
+    install_nbextension = None
+    _canUse3D = False
 else:
     try:
         try:
             from notebook.nbextensions import install_nbextension
-            _canUse3D=True
+            _canUse3D = True
         except ImportError:
             #  Older IPythonVersion location
             from IPython.html.nbextensions import install_nbextension
-            _canUse3D=True
+            _canUse3D = True
     except ImportError:
         # can't find notebook extensions for integrating javascript
         #  with Jupyter/IPython, disable widgets.
-        _canUse3D=False
+        _canUse3D = False
         sys.stderr.write("*"*44)
         sys.stderr.write("\nCannot import nbextensions\n")
-        sys.stderr.write("Current IPython/Jupyter version is %s\n"%
+        sys.stderr.write("Current IPython/Jupyter version is %s\n" %
                          IPython.release.version)
         sys.stderr.write("Disabling 3D rendering\n")
         sys.stderr.write("*"*44)
@@ -33,7 +33,7 @@ from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
 from rdkit.Chem import Draw
 from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.six import BytesIO,StringIO
+from rdkit.six import BytesIO, StringIO
 import copy
 import os
 import json
@@ -106,31 +106,31 @@ def _toJSON(mol):
 
 
 def _toPNG(mol):
-    if hasattr(mol,'__sssAtoms'):
-        highlightAtoms=mol.__sssAtoms
+    if hasattr(mol, '__sssAtoms'):
+        highlightAtoms = mol.__sssAtoms
     else:
-        highlightAtoms=[]
+        highlightAtoms = []
     try:
         mol.GetAtomWithIdx(0).GetExplicitValence()
     except RuntimeError:
         mol.UpdatePropertyCache(False)
 
-    if not hasattr(rdMolDraw2D,'MolDraw2DCairo'):
+    if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
         mc = copy.deepcopy(mol)
         try:
-            img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
+            img = Draw.MolToImage(mc, size=molSize, kekulize=kekulizeStructures,
                                 highlightAtoms=highlightAtoms)
         except ValueError:  # <- can happen on a kekulization failure
             mc = copy.deepcopy(mol)
-            img = Draw.MolToImage(mc,size=molSize,kekulize=False,
+            img = Draw.MolToImage(mc, size=molSize, kekulize=False,
                                 highlightAtoms=highlightAtoms)
         bio = BytesIO()
-        img.save(bio,format='PNG')
+        img.save(bio, format='PNG')
         return bio.getvalue()
     else:
-        nmol = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulizeStructures)
-        d2d = rdMolDraw2D.MolDraw2DCairo(molSize[0],molSize[1])
-        d2d.DrawMolecule(nmol,highlightAtoms=highlightAtoms)
+        nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
+        d2d = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
+        d2d.DrawMolecule(nmol, highlightAtoms=highlightAtoms)
         d2d.FinishDrawing()
         return d2d.GetDrawingText()
 
@@ -147,21 +147,21 @@ def _toSVG(mol):
         mol.UpdatePropertyCache(False)
 
     try:
-        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulizeStructures)
-    except ValueError: # <- can happen on a kekulization failure
-        mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=False)
-    d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0],molSize[1])
-    d2d.DrawMolecule(mc,highlightAtoms=highlightAtoms)
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
+    except ValueError:  # <- can happen on a kekulization failure
+        mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+    d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
+    d2d.DrawMolecule(mc, highlightAtoms=highlightAtoms)
     d2d.FinishDrawing()
     svg = d2d.GetDrawingText()
-    return svg.replace("svg:","")
+    return svg.replace("svg:", "")
 
 
 def _toReactionPNG(rxn):
     rc = copy.deepcopy(rxn)
-    img = Draw.ReactionToImage(rc,subImgSize=(int(molSize[0]/3), molSize[1]))
+    img = Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]))
     bio = BytesIO()
-    img.save(bio,format='PNG')
+    img.save(bio, format='PNG')
     return bio.getvalue()
 
 def _GetSubstructMatch(mol, query, **kwargs):
@@ -186,11 +186,11 @@ def _GetSubstructMatches(mol, query, **kwargs):
 def display_pil_image(img):
     """displayhook function for PIL Images, rendered as PNG"""
     bio = BytesIO()
-    img.save(bio,format='PNG')
+    img.save(bio, format='PNG')
     return bio.getvalue()
 
 _MolsToGridImageSaved = None
-def ShowMols(mols,**kwargs):
+def ShowMols(mols, **kwargs):
     global _MolsToGridImageSaved
     if 'useSVG' not in kwargs:
         # use SVG by default
@@ -199,7 +199,7 @@ def ShowMols(mols,**kwargs):
         fn = _MolsToGridImageSaved
     else:
         fm = Draw.MolsToGridImage
-    res = fn(mols,**kwargs)
+    res = fn(mols, **kwargs)
     if kwargs['useSVG']:
         return SVG(res)
     else:

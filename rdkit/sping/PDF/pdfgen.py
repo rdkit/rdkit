@@ -1,6 +1,6 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
-#pdfgen.py
+# pdfgen.py
 """
 PDFgen is a library to generate PDF files containing text and graphics.  It is the
 foundation for a complete reporting solution in Python.  It is also the
@@ -46,10 +46,10 @@ Progress Reports:
         range between 0 and 1 -cwl
 
 """
-##  0.81    1999-10-13:
-##
-##
-##
+# #  0.81    1999-10-13:
+# #
+# #
+# #
 from __future__ import print_function
 import os
 import sys
@@ -77,17 +77,17 @@ class PDFError(ValueError):
 
 FILL_EVEN_ODD = 0
 FILL_NON_ZERO = 1
-    #this is used by path-closing routines.
-    #map stroke, fill, fillmode -> operator
+    # this is used by path-closing routines.
+    # map stroke, fill, fillmode -> operator
     # fillmode: 1 = non-Zero (obviously), 0 = evenOdd
-PATH_OPS = {(0, 0, FILL_EVEN_ODD) : 'n',  #no op
-            (0, 0, FILL_NON_ZERO) : 'n',  #no op
-            (1, 0, FILL_EVEN_ODD) : 'S',  #stroke only
-            (1, 0, FILL_NON_ZERO) : 'S',  #stroke only
-            (0, 1, FILL_EVEN_ODD) : 'f*',  #Fill only
-            (0, 1, FILL_NON_ZERO) : 'f',  #Fill only
-            (1, 1, FILL_EVEN_ODD) : 'B*',  #Stroke and Fill
-            (1, 1, FILL_NON_ZERO) : 'B',  #Stroke and Fill
+PATH_OPS = {(0, 0, FILL_EVEN_ODD) : 'n',  # no op
+            (0, 0, FILL_NON_ZERO) : 'n',  # no op
+            (1, 0, FILL_EVEN_ODD) : 'S',  # stroke only
+            (1, 0, FILL_NON_ZERO) : 'S',  # stroke only
+            (0, 1, FILL_EVEN_ODD) : 'f*',  # Fill only
+            (0, 1, FILL_NON_ZERO) : 'f',  # Fill only
+            (1, 1, FILL_EVEN_ODD) : 'B*',  # Stroke and Fill
+            (1, 1, FILL_NON_ZERO) : 'B',  # Stroke and Fill
             }
 
 close = 'h'
@@ -109,7 +109,7 @@ class Canvas:
     state'.  Just started development at 5/9/99, not in use yet.
 
     """
-    def __init__(self,filename,pagesize=(595.27,841.89), bottomup = 1):
+    def __init__(self, filename, pagesize=(595.27, 841.89), bottomup=1):
         """Most of the attributes are private - we will use set/get methods
         as the preferred interface.  Default page size is A4."""
         self._filename = filename
@@ -118,36 +118,36 @@ class Canvas:
         self._currentPageHasImages = 1
         self._pageTransitionString = ''
 
-        self._pageCompression = 1  #on by default - turn off when debugging!
-        self._pageNumber = 1   # keep a count
-        self._code = []    #where the current page's marking operators accumulate
+        self._pageCompression = 1  # on by default - turn off when debugging!
+        self._pageNumber = 1  # keep a count
+        self._code = []  # where the current page's marking operators accumulate
 
-        #PostScript has the origin at bottom left. It is easy to achieve a top-
-        #down coord system by translating to the top of the page and setting y
-        #scale to -1, but then text is inverted.  So self.bottomup is used
-        #to also set the text matrix accordingly.  You can now choose your
-        #drawing coordinates.
+        # PostScript has the origin at bottom left. It is easy to achieve a top-
+        # down coord system by translating to the top of the page and setting y
+        # scale to -1, but then text is inverted.  So self.bottomup is used
+        # to also set the text matrix accordingly.  You can now choose your
+        # drawing coordinates.
         self.bottomup = bottomup
         if self.bottomup:
-            #set initial font
-            #self._preamble = 'BT /F9 12 Tf 14.4 TL ET'
+            # set initial font
+            # self._preamble = 'BT /F9 12 Tf 14.4 TL ET'
             self._preamble = '1 0 0 1 0 0 cm BT /F9 12 Tf 14.4 TL ET'
         else:
-            #switch coordinates, flip text and set font
-            #self._preamble = '1 0 0 -1 0 %0.4f cm BT /F9 12 Tf 14.4 TL ET' % self._pagesize[1]
+            # switch coordinates, flip text and set font
+            # self._preamble = '1 0 0 -1 0 %0.4f cm BT /F9 12 Tf 14.4 TL ET' % self._pagesize[1]
             self._preamble = '1 0 0 -1 0 %0.4f cm BT /F9 12 Tf 14.4 TL ET' % self._pagesize[1]
 
-        #initial graphics state
+        # initial graphics state
         self._x = 0
         self._y = 0
         self._fontname = 'Times-Roman'
         self._fontsize = 12
-        self._textMode = 0  #track if between BT/ET
+        self._textMode = 0  # track if between BT/ET
         self._leading = 14.4
         self._currentMatrix = (1., 0., 0., 1., 0., 0.)
-        self._fillMode = 0   #even-odd
+        self._fillMode = 0  # even-odd
 
-        #text state
+        # text state
         self._charSpace = 0
         self._wordSpace = 0
         self._horizScale = 100
@@ -159,22 +159,22 @@ class Canvas:
         # line drawing
         self._lineCap = 0
         self._lineJoin = 0
-        self._lineDash = None  #not done
+        self._lineDash = None  # not done
         self._lineWidth = 0
         self._mitreLimit = 0
 
-        self._fillColorRGB = (0,0,0)
-        self._strokeColorRGB = (0,0,0)
+        self._fillColorRGB = (0, 0, 0)
+        self._strokeColorRGB = (0, 0, 0)
 
     def _escape(self, s):
         """PDF escapes are like Python ones, but brackets need slashes before them too.
         Use Python's repr function and chop off the quotes first"""
         s = repr(s)[1:-1]
-        s = string.replace(s, '(','\(')
-        s = string.replace(s, ')','\)')
+        s = string.replace(s, '(', '\(')
+        s = string.replace(s, ')', '\)')
         return s
 
-    #info functions - non-standard
+    # info functions - non-standard
     def setAuthor(self, author):
         self._doc.setAuthor(author)
 
@@ -196,13 +196,13 @@ class Canvas:
         page.hasImages = self._currentPageHasImages
         page.pageTransitionString = self._pageTransitionString
         page.setCompression(self._pageCompression)
-        #print stream
+        # print stream
         page.setStream([self._preamble] + self._code)
         self._doc.addPage(page)
 
-        #now get ready for the next one
+        # now get ready for the next one
         self._pageNumber = self._pageNumber + 1
-        self._code = []    # ready for more...
+        self._code = []  # ready for more...
         self._currentPageHasImages = 0
 
     def getPageNumber(self):
@@ -230,7 +230,7 @@ class Canvas:
 
 
     def addLiteral(self, s, escaped=1):
-        if escaped==0:
+        if escaped == 0:
             s = self._escape(s)
         self._code.append(s)
 
@@ -242,19 +242,19 @@ class Canvas:
         ######################################################################
 
 
-    def transform(self, a,b,c,d,e,f):
+    def transform(self, a, b, c, d, e, f):
         """How can Python track this?"""
-        a0,b0,c0,d0,e0,f0 = self._currentMatrix
-        self._currentMatrix = (a0*a+c0*b,    b0*a+d0*b,
-                               a0*c+c0*d,    b0*c+d0*d,
-                               a0*e+c0*f+e0, b0*e+d0*f+f0)
-        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f cm' % (a,b,c,d,e,f))
+        a0, b0, c0, d0, e0, f0 = self._currentMatrix
+        self._currentMatrix = (a0 * a + c0 * b, b0 * a + d0 * b,
+                               a0 * c + c0 * d, b0 * c + d0 * d,
+                               a0 * e + c0 * f + e0, b0 * e + d0 * f + f0)
+        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f cm' % (a, b, c, d, e, f))
 
     def translate(self, dx, dy):
-        self.transform(1,0,0,1,dx,dy)
+        self.transform(1, 0, 0, 1, dx, dy)
 
     def scale(self, x, y):
-        self.transform(x,0,0,y,0,0)
+        self.transform(x, 0, 0, y, 0, 0)
 
     def rotate(self, theta):
         """Canvas.rotate(theta)
@@ -266,7 +266,7 @@ class Canvas:
 
     def skew(self, alpha, beta):
         tanAlpha = tan(alpha * pi / 180)
-        tanBeta  = tan(beta  * pi / 180)
+        tanBeta = tan(beta * pi / 180)
         self.transform(1, tanAlpha, tanBeta, 1, 0, 0)
 
         ######################################################################
@@ -305,7 +305,7 @@ class Canvas:
 
 
         #--------first the line drawing methods-----------------------
-    def line(self, x1,y1, x2,y2):
+    def line(self, x1, y1, x2, y2):
         "As it says"
         self._code.append('n %0.4f %0.4f m %0.4f %0.4f l S' % (x1, y1, x2, y2))
 
@@ -313,7 +313,7 @@ class Canvas:
         """As line(), but slightly more efficient for lots of them -
         one stroke operation and one less function call"""
         self._code.append('n')
-        for (x1,y1,x2,y2) in linelist:
+        for (x1, y1, x2, y2) in linelist:
             self._code.append('%0.4f %0.4f m %0.4f %0.4f l' % (x1, y1, x2, y2))
         self._code.append('S')
 
@@ -326,9 +326,9 @@ class Canvas:
         y0, y1 = ylist[0], ylist[-1]
         x0, x1 = xlist[0], xlist[-1]
         for x in xlist:
-            lines.append(x,y0,x,y1)
+            lines.append(x, y0, x, y1)
         for y in ylist:
-            lines.append(x0,y,x1,y)
+            lines.append(x0, y, x1, y)
         self.lines(lines)
 
     def bezier(self, x1, y1, x2, y2, x3, y3, x4, y4):
@@ -336,7 +336,7 @@ class Canvas:
         self._code.append('n %0.4f %0.4f m %0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c S' %
                           (x1, y1, x2, y2, x3, y3, x4, y4)
                           )
-    def arc(self, x1,y1, x2,y2, startAng=0, extent=90):
+    def arc(self, x1, y1, x2, y2, startAng=0, extent=90):
         """Contributed to piddlePDF by Robert Kern, 28/7/99.
         Trimmed down by AR to remove color stuff for pdfgen.canvas and
         revert to positive coordinates.
@@ -349,8 +349,8 @@ class Canvas:
         The algorithm is an elliptical generalization of the formulae in
         Jim Fitzsimmon's TeX tutorial <URL: http://www.tinaja.com/bezarc1.pdf>."""
 
-        pointList = pdfgeom.bezierArc(x1,y1, x2,y2, startAng, extent)
-        #move to first point
+        pointList = pdfgeom.bezierArc(x1, y1, x2, y2, startAng, extent)
+        # move to first point
         self._code.append('n %0.4f %0.4f m' % pointList[0][:2])
         for curve in pointList:
             self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % curve[2:])
@@ -367,22 +367,22 @@ class Canvas:
     def ellipse(self, x1, y1, x2, y2, stroke=1, fill=0):
         """Uses bezierArc, which conveniently handles 360 degrees -
         nice touch Robert"""
-        pointList = pdfgeom.bezierArc(x1,y1, x2,y2, 0, 360)
-        #move to first point
+        pointList = pdfgeom.bezierArc(x1, y1, x2, y2, 0, 360)
+        # move to first point
         self._code.append('n %0.4f %0.4f m' % pointList[0][:2])
         for curve in pointList:
             self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % curve[2:])
-        #finish
+        # finish
         self._code.append(PATH_OPS[stroke, fill, self._fillMode])
 
 
-    def wedge(self, x1,y1, x2,y2, startAng, extent, stroke=1, fill=0):
+    def wedge(self, x1, y1, x2, y2, startAng, extent, stroke=1, fill=0):
         """Like arc, but connects to the centre of the ellipse.
         Most useful for pie charts and PacMan!"""
 
-        x_cen  = (x1+x2)/2.
-        y_cen  = (y1+y2)/2.
-        pointList = pdfgeom.bezierArc(x1,y1, x2,y2, startAng, extent)
+        x_cen = (x1 + x2) / 2.
+        y_cen = (y1 + y2) / 2.
+        pointList = pdfgeom.bezierArc(x1, y1, x2, y2, startAng, extent)
 
         self._code.append('n %0.4f %0.4f m' % (x_cen, y_cen))
         # Move the pen to the center of the rectangle
@@ -406,9 +406,9 @@ class Canvas:
     def roundRect(self, x, y, width, height, radius, stroke=1, fill=0):
         """Draws a rectangle with rounded corners.  The corners are
         approximately quadrants of a circle, with the given radius."""
-        #use a precomputed set of factors for the bezier approximation
-        #to a circle. There are six relevant points on the x axis and y axis.
-        #sketch them and it should all make sense!
+        # use a precomputed set of factors for the bezier approximation
+        # to a circle. There are six relevant points on the x axis and y axis.
+        # sketch them and it should all make sense!
         t = 0.4472 * radius
 
         x0 = x
@@ -428,21 +428,21 @@ class Canvas:
         self._code.append('n %0.4f %0.4f m' % (x2, y0))
         self._code.append('%0.4f %0.4f l' % (x3, y0))  # bottom row
         self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c'
-                         % (x4, y0, x5, y1, x5, y2)) # bottom right
+                         % (x4, y0, x5, y1, x5, y2))  # bottom right
 
         self._code.append('%0.4f %0.4f l' % (x5, y3))  # right edge
         self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c'
-                         % (x5, y4, x4, y5, x3, y5)) # top right
+                         % (x5, y4, x4, y5, x3, y5))  # top right
 
         self._code.append('%0.4f %0.4f l' % (x2, y5))  # top row
         self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c'
-                         % (x1, y5, x0, y4, x0, y3)) # top left
+                         % (x1, y5, x0, y4, x0, y3))  # top left
 
         self._code.append('%0.4f %0.4f l' % (x0, y2))  # left edge
         self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c'
-                         % (x0, y1, x1, y0, x2, y0)) # bottom left
+                         % (x0, y1, x1, y0, x2, y0))  # bottom left
 
-        self._code.append('h')  #close off, although it should be where it started anyway
+        self._code.append('h')  # close off, although it should be where it started anyway
 
 
         self._code.append(PATH_OPS[stroke, fill, self._fillMode])
@@ -458,7 +458,7 @@ class Canvas:
 
     def drawString(self, x, y, text):
         """Draws a string in the current text styles."""
-        #we could inline this for speed if needed
+        # we could inline this for speed if needed
         t = self.beginText(x, y)
         t.textLine(text)
         self.drawText(t)
@@ -474,7 +474,7 @@ class Canvas:
         """Draws a string right-aligned with the y coordinate.  I
         am British so the spelling is correct, OK?"""
         width = self.stringWidth(text, self._fontname, self._fontsize)
-        t = self.beginText(x - 0.5*width, y)
+        t = self.beginText(x - 0.5 * width, y)
         t.textLine(text)
         self.drawText(t)
 
@@ -485,7 +485,7 @@ class Canvas:
         fontnames.sort()
         return fontnames
 
-    def setFont(self, psfontname, size, leading = None):
+    def setFont(self, psfontname, size, leading=None):
         """Sets the font.  If leading not specified, defaults to 1.2 x
         font size. Raises a readable exception if an illegal font
         is supplied.  Font names are case-sensitive! Keeps track
@@ -509,13 +509,13 @@ class Canvas:
 
     def setLineCap(self, mode):
         """0=butt,1=round,2=square"""
-        assert mode in (0,1,2), "Line caps allowed: 0=butt,1=round,2=square"
+        assert mode in (0, 1, 2), "Line caps allowed: 0=butt,1=round,2=square"
         self._lineCap = mode
         self._code.append('%d J' % mode)
 
     def setLineJoin(self, mode):
         """0=mitre, 1=round, 2=bevel"""
-        assert mode in (0,1,2), "Line Joins allowed: 0=mitre, 1=round, 2=bevel"
+        assert mode in (0, 1, 2), "Line Joins allowed: 0=mitre, 1=round, 2=bevel"
         self._lineJoin = mode
         self._code.append('%d j' % mode)
 
@@ -534,11 +534,11 @@ class Canvas:
 
     def setFillColorRGB(self, r, g, b):
         self._fillColorRGB = (r, g, b)
-        self._code.append('%0.4f %0.4f %0.4f rg' % (r,g,b))
+        self._code.append('%0.4f %0.4f %0.4f rg' % (r, g, b))
 
     def setStrokeColorRGB(self, r, g, b):
         self._strokeColorRGB = (r, g, b)
-        self._code.append('%0.4f %0.4f %0.4f RG' % (r,g,b))
+        self._code.append('%0.4f %0.4f %0.4f RG' % (r, g, b))
 
     # path stuff - the separate path object builds it
     def beginPath(self):
@@ -568,7 +568,7 @@ class Canvas:
         #   Image routines
         #
         ######################################################
-    def drawInlineImage(self, image, x,y, width=None,height=None):
+    def drawInlineImage(self, image, x, y, width=None, height=None):
         """Draw a PIL Image into the specified rectangle.  If width and
         height are omitted, they are calculated from the image size.
         Also allow file names as well as images.  This allows a
@@ -589,8 +589,8 @@ class Canvas:
 
         if type(image) == StringType:
             if os.path.splitext(image)[1] in ['.jpg', '.JPG']:
-            #directly process JPEG files
-            #open file, needs some error handling!!
+            # directly process JPEG files
+            # open file, needs some error handling!!
                 imageFile = open(image, 'rb')
                 info = self.readJPEGInfo(imageFile)
                 imgwidth, imgheight = info[0], info[1]
@@ -598,18 +598,18 @@ class Canvas:
                     colorSpace = 'DeviceGray'
                 elif info[2] == 3:
                     colorSpace = 'DeviceRGB'
-                else: #maybe should generate an error, is this right for CMYK?
+                else:  # maybe should generate an error, is this right for CMYK?
                     colorSpace = 'DeviceCMYK'
-                imageFile.seek(0)               #reset file pointer
+                imageFile.seek(0)  # reset file pointer
                 imagedata = []
-                imagedata.append('BI')   # begin image
+                imagedata.append('BI')  # begin image
                 # this describes what is in the image itself
-                imagedata.append('/Width %0.4f /Height %0.4f' %(info[0], info[1]))
+                imagedata.append('/Width %0.4f /Height %0.4f' % (info[0], info[1]))
                 imagedata.append('/BitsPerComponent 8')
                 imagedata.append('/ColorSpace /%s' % colorSpace)
                 imagedata.append('/Filter [ /ASCII85Decode /DCTDecode]')
                 imagedata.append('ID')
-                #write in blocks of (??) 60 characters per line to a list
+                # write in blocks of (??) 60 characters per line to a list
                 compressed = imageFile.read()
                 encoded = pdfutils._AsciiBase85Encode(compressed)
                 outstream = StringIO(encoded)
@@ -621,35 +621,36 @@ class Canvas:
             else:
                 if not pdfutils.cachedImageExists(image):
                     pdfutils.cacheImageFile(image)
-                #now we have one cached, slurp it in
+                # now we have one cached, slurp it in
                 cachedname = os.path.splitext(image)[0] + '.a85'
-                imagedata = open(cachedname,'rb').readlines()
-                #trim off newlines...
+                imagedata = open(cachedname, 'rb').readlines()
+                # trim off newlines...
                 imagedata = map(string.strip, imagedata)
 
-                #parse line two for width, height
+                # parse line two for width, height
                 words = string.split(imagedata[1])
                 imgwidth = string.atoi(words[1])
                 imgheight = string.atoi(words[3])
         else:
-            #PIL Image
-            #work out all dimensions
+            # PIL Image
+            # work out all dimensions
             myimage = image.convert('RGB')
             imgwidth, imgheight = myimage.size
             imagedata = []
-            imagedata.append('BI')   # begin image
+            imagedata.append('BI')  # begin image
 
             # this describes what is in the image itself
-            imagedata.append('/W %0.4f /H %0.4f /BPC 8 /CS /RGB /F [/A85 /Fl]' % (imgwidth, imgheight))
+            imagedata.append('/W %0.4f /H %0.4f /BPC 8 /CS /RGB /F [/A85 /Fl]' %
+                             (imgwidth, imgheight))
             imagedata.append('ID')
 
-            #use a flate filter and Ascii Base 85 to compress
+            # use a flate filter and Ascii Base 85 to compress
             raw = getattr(myimage, 'tobytes', myimage.tostring)()
             assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
-            compressed = zlib.compress(raw)   #this bit is very fast...
-            encoded = pdfutils._AsciiBase85Encode(compressed) #...sadly this isn't
+            compressed = zlib.compress(raw)  # this bit is very fast...
+            encoded = pdfutils._AsciiBase85Encode(compressed)  # ...sadly this isn't
 
-            #write in blocks of (??) 60 characters per line to a list
+            # write in blocks of (??) 60 characters per line to a list
             outstream = StringIO(encoded)
             dataline = outstream.read(60)
             while dataline != "":
@@ -657,23 +658,23 @@ class Canvas:
                 dataline = outstream.read(60)
             imagedata.append('EI')
 
-        #now build the PDF for the image.
+        # now build the PDF for the image.
         if not width:
             width = imgwidth
         if not height:
             height = imgheight
 
         # this says where and how big to draw it
-        #self._code.append('ET')
-        #self._code.append('q %0.4f 0 0 %0.4f %0.4f %0.4f cm' % (width, height, x, y+height))
+        # self._code.append('ET')
+        # self._code.append('q %0.4f 0 0 %0.4f %0.4f %0.4f cm' % (width, height, x, y+height))
         if self.bottomup:
             self._code.append('q %0.4f 0 0 %0.4f %0.4f %0.4f cm' % (width, height, x, y))
         else:
             # multiply  height by (-1) to overcome flip in coordinate system -cwl
-            self._code.append('q %0.4f 0 0 %0.4f %0.4f %0.4f cm' % (width, -height, x, y+height))
+            self._code.append('q %0.4f 0 0 %0.4f %0.4f %0.4f cm' % (width, -height, x, y + height))
         self._code.extend(imagedata)
         self._code.append('Q')
-        #self._code.append('BT')
+        # self._code.append('BT')
 
 #########################################################################
 #
@@ -689,46 +690,46 @@ class Canvas:
         "Read width, height and number of components from JPEG file"
         import struct
 
-        #Acceptable JPEG Markers:
+        # Acceptable JPEG Markers:
         #  SROF0=baseline, SOF1=extended sequential or SOF2=progressive
         validMarkers = [0xC0, 0xC1, 0xC2]
 
-        #JPEG markers without additional parameters
+        # JPEG markers without additional parameters
         noParamMarkers = \
             [ 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0x01 ]
 
-        #Unsupported JPEG Markers
+        # Unsupported JPEG Markers
         unsupportedMarkers = \
             [ 0xC3, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF ]
 
-        #read JPEG marker segments until we find SOFn marker or EOF
+        # read JPEG marker segments until we find SOFn marker or EOF
         done = 0
         while not done:
             x = struct.unpack('B', image.read(1))
-            if x[0] == 0xFF:                    #found marker
+            if x[0] == 0xFF:  # found marker
                 x = struct.unpack('B', image.read(1))
-                #print "Marker: ", '%0.2x' % x[0]
-                #check marker type is acceptable and process it
+                # print "Marker: ", '%0.2x' % x[0]
+                # check marker type is acceptable and process it
                 if x[0] in validMarkers:
-                    image.seek(2, 1)            #skip segment length
-                    x = struct.unpack('B', image.read(1)) #data precision
+                    image.seek(2, 1)  # skip segment length
+                    x = struct.unpack('B', image.read(1))  # data precision
                     if x[0] != 8:
                         raise PDFError(' JPEG must have 8 bits per component')
                     y = struct.unpack('BB', image.read(2))
                     height = (y[0] << 8) + y[1]
                     y = struct.unpack('BB', image.read(2))
-                    width =  (y[0] << 8) + y[1]
+                    width = (y[0] << 8) + y[1]
                     y = struct.unpack('B', image.read(1))
-                    color =  y[0]
+                    color = y[0]
                     return width, height, color
                     done = 1
                 elif x[0] in unsupportedMarkers:
                     raise PDFError(' Unsupported JPEG marker: {%0.2x}'.format(x[0]))
                 elif x[0] not in noParamMarkers:
-                    #skip segments with parameters
-                    #read length and skip the data
+                    # skip segments with parameters
+                    # read length and skip the data
                     x = struct.unpack('BB', image.read(2))
-                    image.seek( (x[0] << 8) + x[1] - 2, 1)
+                    image.seek((x[0] << 8) + x[1] - 2, 1)
 
     def setPageCompression(self, onoff=1):
         """Possible values 1 or 0 (1 for 'on' is the default).
@@ -740,7 +741,7 @@ class Canvas:
 
 
     def setPageTransition(self, effectname=None, duration=1,
-                        direction=0,dimension='H',motion='I'):
+                        direction=0, dimension='H', motion='I'):
         """PDF allows page transition effects for use when giving
         presentations.  There are six possible effects.  You can
         just guive the effect name, or supply more advanced options
@@ -766,8 +767,8 @@ class Canvas:
             self._pageTransitionString = ''
             return
 
-        #first check each optional argument has an allowed value
-        if direction in [0,90,180,270]:
+        # first check each optional argument has an allowed value
+        if direction in [0, 90, 180, 270]:
             direction_arg = '/Di /%d' % direction
         else:
             raise PDFError(' directions allowed are 0,90,180,270')
@@ -777,7 +778,7 @@ class Canvas:
         else:
             raise PDFError('dimension values allowed are H and V')
 
-        if motion in ['I','O']:
+        if motion in ['I', 'O']:
             motion_arg = '/M /%s' % motion
         else:
             raise PDFError('motion values allowed are I and O')
@@ -820,19 +821,19 @@ class PDFPathObject:
     Path objects are probably not long, so we pack onto one line"""
     def __init__(self):
         self._code = []
-        self._code.append('n')   #newpath
+        self._code.append('n')  # newpath
 
     def getCode(self):
         "pack onto one line; used internally"
         return string.join(self._code, ' ')
     def moveTo(self, x, y):
-        self._code.append('%0.4f %0.4f m' % (x,y))
+        self._code.append('%0.4f %0.4f m' % (x, y))
     def lineTo(self, x, y):
-        self._code.append('%0.4f %0.4f l' % (x,y))
+        self._code.append('%0.4f %0.4f l' % (x, y))
     def curveTo(self, x1, y1, x2, y2, x3, y3):
         self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % (x1, y1, x2, y2, x3, y3))
 
-    def arc(self, x1,y1, x2,y2, startAng=0, extent=90):
+    def arc(self, x1, y1, x2, y2, startAng=0, extent=90):
         """Contributed to piddlePDF by Robert Kern, 28/7/99.
         Draw a partial ellipse inscribed within the rectangle x1,y1,x2,y2,
         starting at startAng degrees and covering extent degrees.   Angles
@@ -842,16 +843,16 @@ class PDFPathObject:
         The algorithm is an elliptical generalization of the formulae in
         Jim Fitzsimmon's TeX tutorial <URL: http://www.tinaja.com/bezarc1.pdf>."""
 
-        pointList = pdfgeom.bezierArc(x1,y1, x2,y2, startAng, extent)
-        #move to first point
+        pointList = pdfgeom.bezierArc(x1, y1, x2, y2, startAng, extent)
+        # move to first point
         self._code.append('%0.4f %0.4f m' % pointList[0][:2])
         for curve in pointList:
             self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % curve[2:])
 
-    def arcTo(self, x1,y1, x2,y2, startAng=0, extent=90):
+    def arcTo(self, x1, y1, x2, y2, startAng=0, extent=90):
         """Like arc, but draws a line from the current point to
         the start if the start is not the current point."""
-        pointList = pdfgeom.bezierArc(x1,y1, x2,y2, startAng, extent)
+        pointList = pdfgeom.bezierArc(x1, y1, x2, y2, startAng, extent)
         self._code.append('%0.4f %0.4f l' % pointList[0][:2])
         for curve in pointList:
             self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % curve[2:])
@@ -863,7 +864,7 @@ class PDFPathObject:
 
     def ellipse(self, x, y, width, height):
         """adds an ellipse to the path"""
-        pointList = pdfgeom.bezierArc(x, y, x + width,y + height, 0, 360)
+        pointList = pdfgeom.bezierArc(x, y, x + width, y + height, 0, 360)
         self._code.append('%0.4f %0.4f m' % pointList[0][:2])
         for curve in pointList:
             self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f c' % curve[2:])
@@ -892,10 +893,10 @@ class PDFTextObject:
     and graphics.  To output text, ask te canvas for a text object
     with beginText(x, y).  Do not construct one directly. It keeps
     track of x and y coordinates relative to its origin."""
-    def __init__(self, canvas, x=0,y=0):
+    def __init__(self, canvas, x=0, y=0):
         self._code = []
         self._code.append('BT')
-        self._canvas = canvas  #canvas sets this so it has access to size info
+        self._canvas = canvas  # canvas sets this so it has access to size info
         self._fontname = self._canvas._fontname
         self._fontsize = self._canvas._fontsize
         self._leading = self._canvas._leading
@@ -909,22 +910,24 @@ class PDFTextObject:
 
     def setTextOrigin(self, x, y):
         if self._canvas.bottomup:
-            self._code.append('1 0 0 1 %0.4f %0.4f Tm' % (x, y)) #bottom up
+            self._code.append('1 0 0 1 %0.4f %0.4f Tm' % (x, y))  # bottom up
         else:
-            self._code.append('1 0 0 -1 %0.4f %0.4f Tm' % (x, y))  #top down
+            self._code.append('1 0 0 -1 %0.4f %0.4f Tm' % (x, y))  # top down
         self._x = x
         self._y = y
-        self._x0 = x #the margin
+        self._x0 = x  # the margin
 
     def setTextTransform(self, a, b, c, d, e, f):
         "Like setTextOrigin, but does rotation, scaling etc."
         # flip "y" coordinate for top down coordinate system -cwl
         # (1  0)   (a  b)      ( a   b)
         # (0 -1)   (c  d)   =  (-c  -d)
-        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' % (a, b, -c, -d, e, f))  #top down
+        self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' %
+                          (a, b, -c, -d, e, f))  # top down
 
-        #self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' % (a, b, c, d, e, f)) #bottom up
-        #we only measure coords relative to present text matrix
+        # self._code.append('%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f Tm' %
+        #                   (a, b, c, d, e, f)) #bottom up
+        # we only measure coords relative to present text matrix
         self._x = e
         self._y = f
 
@@ -946,7 +949,7 @@ class PDFTextObject:
         """Returns current y position relative to the last origin."""
         return self._y
 
-    def setFont(self, psfontname, size, leading = None):
+    def setFont(self, psfontname, size, leading=None):
         """Sets the font.  If leading not specified, defaults to 1.2 x
         font size. Raises a readable exception if an illegal font
         is supplied.  Font names are case-sensitive! Keeps track
@@ -994,23 +997,23 @@ class PDFTextObject:
         6 = Fill then stroke and add to clipping path
         7 = Add to clipping path"""
 
-        assert mode in (0,1,2,3,4,5,6,7), "mode must be in (0,1,2,3,4,5,6,7)"
+        assert mode in (0, 1, 2, 3, 4, 5, 6, 7), "mode must be in (0,1,2,3,4,5,6,7)"
         self._textRenderMode = mode
         self._code.append('%d Tr' % mode)
 
     def setRise(self, rise):
         "Move text baseline up or down to allow superscrip/subscripts"
         self._rise = rise
-        self._y = self._y - rise    # + ?  _textLineMatrix?
+        self._y = self._y - rise  # + ?  _textLineMatrix?
         self._code.append('%0.4f Ts' % rise)
 
     def setStrokeColorRGB(self, r, g, b):
         self._strokeColorRGB = (r, g, b)
-        self._code.append('%0.4f %0.4f %0.4f RG' % (r,g,b))
+        self._code.append('%0.4f %0.4f %0.4f RG' % (r, g, b))
 
     def setFillColorRGB(self, r, g, b):
         self._fillColorRGB = (r, g, b)
-        self._code.append('%0.4f %0.4f %0.4f rg' % (r,g,b))
+        self._code.append('%0.4f %0.4f %0.4f rg' % (r, g, b))
 
 
     def textOut(self, text):
@@ -1039,8 +1042,8 @@ class PDFTextObject:
         whitespace."""
         if type(stuff) == StringType:
             lines = string.split(string.strip(stuff), '\n')
-            if trim==1:
-                lines = map(string.strip,lines)
+            if trim == 1:
+                lines = map(string.strip, lines)
         elif type(stuff) == ListType:
             lines = stuff
         elif type(stuff) == TupleType:

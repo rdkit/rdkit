@@ -1,4 +1,4 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
 # $Id$
 #
@@ -34,32 +34,32 @@ def FingerprintMol(mol):
   esIndices = EStateIndices(mol)
 
   nPatts = len(AtomTypes.esPatterns)
-  counts = numpy.zeros(nPatts,numpy.int)
-  sums = numpy.zeros(nPatts,numpy.float)
+  counts = numpy.zeros(nPatts, numpy.int)
+  sums = numpy.zeros(nPatts, numpy.float)
 
-  for i,(name,pattern) in enumerate(AtomTypes.esPatterns):
-    matches = mol.GetSubstructMatches(pattern,uniquify=1)
+  for i, (name, pattern) in enumerate(AtomTypes.esPatterns):
+    matches = mol.GetSubstructMatches(pattern, uniquify=1)
     counts[i] = len(matches)
     for match in matches:
       sums[i] += esIndices[match[0]]
-  return counts,sums
+  return counts, sums
 
 
 if __name__ == '__main__':
   from rdkit import Chem
-  smis = ['CC','CCC','c1[nH]cnc1CC(N)C(O)=O','NCCc1ccc(O)c(O)c1']
+  smis = ['CC', 'CCC', 'c1[nH]cnc1CC(N)C(O)=O', 'NCCc1ccc(O)c(O)c1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
-    print(smi,Chem.MolToSmiles(m))
+    print(smi, Chem.MolToSmiles(m))
     types = AtomTypes.TypeAtoms(m)
     for i in range(m.GetNumAtoms()):
-      print('%d %4s: %s'%(i+1,m.GetAtomWithIdx(i).GetSymbol(),str(types[i])))
+      print('%d %4s: %s' % (i + 1, m.GetAtomWithIdx(i).GetSymbol(), str(types[i])))
     es = EStateIndices(m)
-    counts,sums = FingerprintMol(m)
+    counts, sums = FingerprintMol(m)
     for i in range(len(AtomTypes.esPatterns)):
       if counts[i]:
-        name,patt = AtomTypes.esPatterns[i]
-        print('%6s, % 2d, % 5.4f'%(name,counts[i],sums[i]))
+        name, patt = AtomTypes.esPatterns[i]
+        print('%6s, % 2d, % 5.4f' % (name, counts[i], sums[i]))
     for i in range(len(es)):
-      print('% 2d, % 5.4f'%(i+1,es[i]))
+      print('% 2d, % 5.4f' % (i + 1, es[i]))
     print('--------')

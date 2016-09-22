@@ -36,11 +36,11 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
 #            convention: use flag _inXFlag
-#pylint: disable=W0311,E1103,E1101
+# pylint: disable=W0311,E1103,E1101
 from __future__ import print_function
 from rdkit.sping.pid import *
 from io import StringIO
-from . import psmetrics # for font info
+from . import psmetrics  # for font info
 import math
 from rdkit.six import string_types
 
@@ -58,10 +58,10 @@ PiddleLegalFonts = {"helvetica": "helvetica",  # note: keys are lowercased
                     "serif": "times",
                     "sansserif": "helvetica",
                     "monospaced": "courier",
-                    "symbol" : "symbol"} # Could add more...
+                    "symbol" : "symbol"}  # Could add more...
 
 
-Roman="Roman"; Bold="Bold"; Italic="Italic"
+Roman = "Roman"; Bold = "Bold"; Italic = "Italic"
 
 
 
@@ -105,7 +105,7 @@ def latin1FontEncoding(fontname):
     """use this to generating PS code for re-encoding a font as ISOLatin1
     from font with name 'fontname' defines reencoded font, 'fontname-ISOLatin1'"""
 
-    latin1FontTemplate =  """/%s findfont
+    latin1FontTemplate = """/%s findfont
 dup length dict begin
   {1 index /FID ne
         {def}
@@ -171,14 +171,14 @@ class PsDSC:
     def __init__(self):
         pass
 
-    ## Genral DSC conventions
+    # # Genral DSC conventions
     def documentHeader(self):
         return  "%!PS-Adobe-3.0"
 
 
-    def boundingBoxStr(self, x0, y0, x1,y1):
+    def boundingBoxStr(self, x0, y0, x1, y1):
         "coordinates of bbox in default PS coordinates"
-        return "%%BoundingBox: " + "%s %s %s %s" % (x0, y0, x1,y1)
+        return "%%BoundingBox: " + "%s %s %s %s" % (x0, y0, x1, y1)
 
     def BeginPageStr(self, pageSetupStr, pageName=None):
 
@@ -189,7 +189,7 @@ class PsDSC:
         self.inPageFlag = 1  # keep track
 
         if not pageName:
-            pageDeclaration = r"%%Page: %d %d"%(1,1)  # default 1
+            pageDeclaration = r"%%Page: %d %d" % (1, 1)  # default 1
         else:
             pageDeclaration = "%%Page: " + pageName
 
@@ -198,7 +198,7 @@ class PsDSC:
 /pgsave save def
 """
         # print pageSetupStr ???
-        return ret  + pageSetupStr  + "\n%%EndPageSetup"
+        return ret + pageSetupStr + "\n%%EndPageSetup"
 
     def EndPageStr(self):
         self.inPageFlag = 0
@@ -208,7 +208,7 @@ class EpsDSC(PsDSC):
     def __init__(self):
         PsDSC.__init__(self)
 
-    ## Genral DSC conventions
+    # # Genral DSC conventions
     def documentHeader(self):
         return  "%!PS-Adobe-3.0 EPSF-3.0"
 
@@ -231,11 +231,11 @@ class PSCanvas(Canvas):
     Note: All font encodings must be taken care in __init__, you can't add
           more after this"""
 
-    def __init__(self,size=(300,300),name='piddlePS',
+    def __init__(self, size=(300, 300), name='piddlePS',
                  PostScriptLevel=2,
                  fontMapEncoding=PSFontMapLatin1Enc):
 
-       Canvas.__init__(self,size,name)
+       Canvas.__init__(self, size, name)
        width, height = self.size = size
        self.filename = name
        if len(name) < 3 or name[-3:].lower() != '.ps':
@@ -254,7 +254,7 @@ class PSCanvas(Canvas):
        self.dsc = PsDSC()  # handle document structing conventions
 
        c = self._currentColor = self.defaultLineColor
-       r,g,b = c.red, c.green, c.blue
+       r, g, b = c.red, c.green, c.blue
 
        w = self._currentWidth = self.defaultLineWidth
 
@@ -268,21 +268,21 @@ class PSCanvas(Canvas):
        # Page Structure State
        #----------------------
        self._inDocumentFlag = 0  # this is set in psBeginDocument
-       self._inPageFlag = 0   # we have't started a page
+       self._inPageFlag = 0  # we have't started a page
 
-       self.pageNum = 1   # User is free to reset this or even make this a string
+       self.pageNum = 1  # User is free to reset this or even make this a string
 
 
        self.psBeginDocument()
 
-       ## finally begin the first page ##
-       self.psBeginPage() # each psBeginPage() needs to be closed w/ a psEndPage()
+       # # finally begin the first page ##
+       self.psBeginPage()  # each psBeginPage() needs to be closed w/ a psEndPage()
 
 
     def psBeginDocument(self):
         # General DSC Prolog := <header> [<defaults>] <procedures>
         self.code.append(self.dsc.documentHeader())
-        self.code.append(self.dsc.boundingBoxStr(0,0,self.size[0],self.size[1]))
+        self.code.append(self.dsc.boundingBoxStr(0, 0, self.size[0], self.size[1]))
         self.code.append("%%Pages: (atend)")
         self._inDocumentFlag = 1  # we need a Trailer to fix this up
 
@@ -315,7 +315,7 @@ class PSCanvas(Canvas):
 
             # signal end of file
             # check on need for %%EOF
-            self.code.append("%%EOF") # remove \n at end of EOF
+            self.code.append("%%EOF")  # remove \n at end of EOF
 
 
 
@@ -323,18 +323,18 @@ class PSCanvas(Canvas):
         # call this function when beginning a new page but before any piddle drawing commands
         # pagesetup contains code to insert into DSC page 'header'
         if not pageName:
-            pageName = "%s %s" %(self.pageNum,self.pageNum)
+            pageName = "%s %s" % (self.pageNum, self.pageNum)
         pagesetup = self._psPageSetupStr(self.size[1], self.defaultLineColor,
                                        self._findFont(self.defaultFont),
                                        self.defaultFont.size,
                                        self.defaultLineWidth)
-        self.code.append(self.dsc.BeginPageStr(pageSetupStr= pagesetup, pageName=pageName ))
+        self.code.append(self.dsc.BeginPageStr(pageSetupStr=pagesetup, pageName=pageName))
         self._inPageFlag = 1
 
 
-    def _psPageSetupStr(self,pageheight, initialColor, font_family, font_size, line_width):
+    def _psPageSetupStr(self, pageheight, initialColor, font_family, font_size, line_width):
         "ps code for settin up coordinate system for page in accords w/ piddle standards"
-        r,g,b = initialColor.red, initialColor.green, initialColor.blue
+        r, g, b = initialColor.red, initialColor.green, initialColor.blue
         return '''
 %% initialize
 
@@ -357,7 +357,7 @@ translate
 
 
 
-    def _findFont(self,font):
+    def _findFont(self, font):
 
         requested = font.face or "Serif"  # Serif is the default
         if isinstance(requested, string_types):
@@ -383,7 +383,7 @@ translate
 
 
 
-    def _findExternalFontName(self, font):       #copied from piddlePDF by cwl- hack away!
+    def _findExternalFontName(self, font):  # copied from piddlePDF by cwl- hack away!
         """Attempts to return proper font name.
         PDF uses a standard 14 fonts referred to
         by name. Default to self.defaultFont('Helvetica').
@@ -413,7 +413,7 @@ translate
             return 'Helvetica'
 
         name = face + '-'
-        if font.bold and face in ['Courier','Helvetica','Times']:
+        if font.bold and face in ['Courier', 'Helvetica', 'Times']:
             name = name + 'Bold'
         if font.italic and face in ['Courier', 'Helvetica']:
             name = name + 'Oblique'
@@ -424,7 +424,7 @@ translate
             name = name + 'Roman'
         # symbol and ZapfDingbats cannot be modified!
 
-        #trim and return
+        # trim and return
         if name[-1] == '-':
             name = name[0:-1]
         return name
@@ -457,7 +457,7 @@ translate
     def resetToDefaults(self):
         self._currentColor = self.defaultLineColor
         self._currentWidth = self.defaultLineWidth
-        self._currentFont  = self.defaultFont
+        self._currentFont = self.defaultFont
 
 
     def flush(self):
@@ -504,7 +504,7 @@ translate
 
         fileobj.write(finalizationCode.join(linesep))
         #  fileobj.close()  ### avoid this for now
-        ## clean up my mess: This is not a good way to do things FIXME!!! ???
+        # # clean up my mess: This is not a good way to do things FIXME!!! ???
         self.code = preserveCode
         self._inPageFlag = preserve_inPageFlag
         self._inDocumentFlag = preserve_inDocumentFlag
@@ -521,7 +521,7 @@ translate
                                      self.fontMapEncoding["EncodingName"]) * font.size * 0.001
 
 
-    ### def fontHeight(self, font=None) ### use default piddle method
+    # ## def fontHeight(self, font=None) ### use default piddle method
     # distance between baseline of two lines of text 1.2 * font.size for piddle.py
     # Thus is 1.2 times larger than postscript minimum baseline to baseline separation
     # for single-spaced text.  fontHeight() used internally for drawString() multi-line text
@@ -545,20 +545,21 @@ translate
        color = color or self.defaultLineColor
        if color != self._currentColor:
           self._currentColor = color
-          r,g,b = color.red, color.green, color.blue
-          self.code.append('%s %s %s setrgbcolor' % (r,g,b))
+          r, g, b = color.red, color.green, color.blue
+          self.code.append('%s %s %s setrgbcolor' % (r, g, b))
 
 
     def _updateFillColor(self, color):
        color = color or self.defaultFillColor
        if color != self._currentColor:
           self._currentColor = color
-          r,g,b = color.red, color.green, color.blue
-          self.code.append('%s %s %s setrgbcolor' % (r,g,b))
+          r, g, b = color.red, color.green, color.blue
+          self.code.append('%s %s %s setrgbcolor' % (r, g, b))
 
 
     def _updateLineWidth(self, width):
-       if width == None: width = self.defaultLineWidth
+       if width == None:
+          width = self.defaultLineWidth
        if width != self._currentWidth:
           self._currentWidth = width
           self.code.append('%s setlinewidth' % width)
@@ -574,13 +575,13 @@ translate
 
 
     def drawLine(self, x1, y1, x2, y2, color=None, width=None,
-                 dash=None,**kwargs):
+                 dash=None, **kwargs):
        self._updateLineColor(color)
        self._updateLineWidth(width)
        if dash is not None:
-           dashTxt = '['+'%d '*len(dash)+']'
-           dashTxt = dashTxt%dash
-           self.code.append('%s centerdash'%dashTxt)
+           dashTxt = '[' + '%d ' * len(dash) + ']'
+           dashTxt = dashTxt % dash
+           self.code.append('%s centerdash' % dashTxt)
        if self._currentColor != transparent:
           self.code.append('%s %s neg moveto %s %s neg lineto stroke' %
                            (x1, y1, x2, y2))
@@ -589,7 +590,7 @@ translate
 
 
 
-    def drawLines(self, lineList, color=None, width=None,dash=None,**kwargs):
+    def drawLines(self, lineList, color=None, width=None, dash=None, **kwargs):
        self._updateLineColor(color)
        self._updateLineWidth(width)
        codeline = '%s %s neg moveto %s %s neg lineto stroke'
@@ -603,21 +604,21 @@ translate
         # escaped" with backslashes."""
         # Have not handled characters that are converted normally in python strings
         # i.e. \n -> newline
-        str = s.replace(chr(0x5C), r'\\' )
-        str = str.replace('(', '\(' )
+        str = s.replace(chr(0x5C), r'\\')
+        str = str.replace('(', '\(')
         str = str.replace(')', '\)')
         return str
 
     # ??? check to see if \n response is handled correctly (should move cursor down)
 
-    def _drawStringOneLineNoRot(self, s, x, y, font=None,**kwargs) :
+    def _drawStringOneLineNoRot(self, s, x, y, font=None, **kwargs) :
        # PRE: x and y and position at which to place text
        # PRE: helper function, only called from drawString(..)
        text = self._escape(s)
-       self.code.append('%s %s neg moveto (%s) show' % (x,y,text))
+       self.code.append('%s %s neg moveto (%s) show' % (x, y, text))
        if self._currentFont.underline:
            swidth = self.stringWidth(s, self._currentFont)
-           ypos =  (0.5 * self.fontDescent(self._currentFont))
+           ypos = (0.5 * self.fontDescent(self._currentFont))
            thickness = 0.08 * self._currentFont.size  # relate to font.descent?
            self.code.extend(['%s setlinewidth' % thickness,
                              '0 %s neg rmoveto' % (ypos),
@@ -634,14 +635,14 @@ translate
 
        if self._currentFont.underline:
           swidth = self.stringWidth(s, self._currentFont)
-          dy =  (0.5 * self.fontDescent(self._currentFont))
+          dy = (0.5 * self.fontDescent(self._currentFont))
           thickness = 0.08 * self._currentFont.size  # relate to font.descent?
           self.code.extend(['%s setlinewidth' % thickness,
-                            '%f %f neg moveto' % (x, dy+y),
+                            '%f %f neg moveto' % (x, dy + y),
                             '%f 0 rlineto stroke' % swidth])
 
 
-    def drawString(self, s, x, y, font=None, color=None, angle=0,**kwargs):
+    def drawString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
         """drawString(self, s, x, y, font=None, color=None, angle=0)
         draw a string s at position x,y"""
         self._updateLineColor(color)
@@ -651,24 +652,25 @@ translate
             lines = s.split('\n')
             lineHeight = self.fontHeight(font)
 
-            if angle == 0 :   # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
+            # do special case of angle = 0 first. Avoids a bunch of gsave/grestore ops
+            if angle == 0 :
                for line in lines:
-                  self._drawStringOneLineNoRot(line, x, y, font=font,**kwargs)
-            else : # general case, rotated text
+                  self._drawStringOneLineNoRot(line, x, y, font=font, **kwargs)
+            else :  # general case, rotated text
                self.code.extend([
                   'gsave',
-                  '%s %s neg translate' % (x,y),
-                  repr(angle)+' rotate'])
+                  '%s %s neg translate' % (x, y),
+                  repr(angle) + ' rotate'])
                down = 0
                for line in lines :
-                  self._drawStringOneLine(line, 0, 0+down, font, color, angle,
+                  self._drawStringOneLine(line, 0, 0 + down, font, color, angle,
                                           **kwargs)
                   down = down + lineHeight
                self.code.extend(['grestore'])
 
     def drawCurve(self, x1, y1, x2, y2, x3, y3, x4, y4,
                   edgeColor=None, edgeWidth=None, fillColor=None, closed=0,
-                  dash=None,**kwargs):
+                  dash=None, **kwargs):
        codeline = '%s %s neg moveto %s %s neg %s %s neg %s %s neg curveto'
        data = (x1, y1, x2, y2, x3, y3, x4, y4)
        self._updateFillColor(fillColor)
@@ -683,32 +685,33 @@ translate
 
     ########################################################################################
 
-    def drawRoundRect(self, x1,y1, x2,y2, rx=8, ry=8,
+    def drawRoundRect(self, x1, y1, x2, y2, rx=8, ry=8,
                       edgeColor=None, edgeWidth=None, fillColor=None,
-                      dash=None,**kwargs):
+                      dash=None, **kwargs):
         "Draw a rounded rectangle between x1,y1, and x2,y2, \
         with corners inset as ellipses with x radius rx and y radius ry. \
         These should have x1<x2, y1<y2, rx>0, and ry>0."
         # Path is drawn in counter-clockwise direction"
 
-        x1, x2 = min(x1,x2), max(x1, x2) # from piddle.py
-        y1, y2 = min(y1,y2), max(y1, y2)
+        x1, x2 = min(x1, x2), max(x1, x2)  # from piddle.py
+        y1, y2 = min(y1, y2), max(y1, y2)
 
         # Note: arcto command draws a line from current point to beginning of arc
         # save current matrix, translate to center of ellipse, scale by rx ry, and draw
         # a circle of unit radius in counterclockwise dir, return to original matrix
         # arguments are (cx, cy, rx, ry, startAngle, endAngle)
-        ellipsePath = 'matrix currentmatrix %s %s neg translate %s %s scale 0 0 1 %s %s arc setmatrix'
+        ellipsePath = ('matrix currentmatrix %s %s neg translate %s %s ' +
+                       'scale 0 0 1 %s %s arc setmatrix')
 
         # choice between newpath and moveto beginning of arc
         # go with newpath for precision, does this violate any assumptions in code???
         # rrcode = ['%s %s neg moveto' % (x1+rx, y1)]  # this also works
-        rrcode = ['newpath'] # Round Rect code path
+        rrcode = ['newpath']  # Round Rect code path
         # upper left corner ellipse is first
-        rrcode.append(ellipsePath % (x1+rx, y1+ry, rx, ry, 90, 180))
-        rrcode.append(ellipsePath % (x1+rx, y2-ry, rx, ry, 180, 270))
-        rrcode.append(ellipsePath % (x2-rx, y2-ry, rx, ry, 270, 360))
-        rrcode.append(ellipsePath % (x2-rx, y1+ry, rx, ry, 0,  90) )
+        rrcode.append(ellipsePath % (x1 + rx, y1 + ry, rx, ry, 90, 180))
+        rrcode.append(ellipsePath % (x1 + rx, y2 - ry, rx, ry, 180, 270))
+        rrcode.append(ellipsePath % (x2 - rx, y2 - ry, rx, ry, 270, 360))
+        rrcode.append(ellipsePath % (x2 - rx, y1 + ry, rx, ry, 0, 90))
         rrcode.append('closepath')
 
         # This is what you are required to do to take care of all color cases
@@ -727,23 +730,23 @@ translate
 
 
 
-    def drawEllipse(self, x1,y1, x2,y2, edgeColor=None, edgeWidth=None,
-                    fillColor=None,dash=None,**kwargs):
+    def drawEllipse(self, x1, y1, x2, y2, edgeColor=None, edgeWidth=None,
+                    fillColor=None, dash=None, **kwargs):
         "Draw an orthogonal ellipse inscribed within the rectangle x1,y1,x2,y2. \
         These should have x1<x2 and y1<y2."
-        #Just invoke drawArc to actually draw the ellipse
-        self.drawArc(x1,y1, x2,y2, edgeColor=edgeColor, edgeWidth=edgeWidth,
+        # Just invoke drawArc to actually draw the ellipse
+        self.drawArc(x1, y1, x2, y2, edgeColor=edgeColor, edgeWidth=edgeWidth,
                 fillColor=fillColor)
 
-    def drawArc(self, x1,y1, x2,y2, startAng=0, extent=360, edgeColor=None,
+    def drawArc(self, x1, y1, x2, y2, startAng=0, extent=360, edgeColor=None,
                 edgeWidth=None, fillColor=None, dash=None, **kwargs):
         "Draw a partial ellipse inscribed within the rectangle x1,y1,x2,y2, \
         starting at startAng degrees and covering extent degrees.   Angles \
         start with 0 to the right (+x) and increase counter-clockwise. \
         These should have x1<x2 and y1<y2."
-        #calculate centre of ellipse
-        cx, cy = (x1+x2)/2.0, (y1+y2)/2.0
-        rx, ry = (x2-x1)/2.0, (y2-y1)/2.0
+        # calculate centre of ellipse
+        cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+        rx, ry = (x2 - x1) / 2.0, (y2 - y1) / 2.0
 
         codeline = self._genArcCode(x1, y1, x2, y2, startAng, extent)
 
@@ -751,7 +754,7 @@ translate
         self._updateFillColor(fillColor)
 
         if self._currentColor != transparent:
-            self.code.append('%s %s neg moveto' % (cx,cy)) # move to center of circle
+            self.code.append('%s %s neg moveto' % (cx, cy))  # move to center of circle
             self.code.append(codeline + ' eofill')
 
         # stroke portion
@@ -760,27 +763,27 @@ translate
 
         if self._currentColor != transparent:
             # move current point to start of arc, note negative angle because y increases down
-            self.code.append('%s %s neg moveto' % (cx+rx*math.cos(-startAng),
-                                                   cy+ry*math.sin(-startAng)))
+            self.code.append('%s %s neg moveto' % (cx + rx * math.cos(-startAng),
+                                                   cy + ry * math.sin(-startAng)))
             self.code.append(codeline + ' stroke')
 
     def _genArcCode(self, x1, y1, x2, y2, startAng, extent):
         "Calculate the path for an arc inscribed in rectangle defined by (x1,y1),(x2,y2)"
-        #calculate semi-minor and semi-major axes of ellipse
-        xScale = abs((x2-x1)/2.0)
-        yScale = abs((y2-y1)/2.0)
-        #calculate centre of ellipse
-        x, y = (x1+x2)/2.0, (y1+y2)/2.0
+        # calculate semi-minor and semi-major axes of ellipse
+        xScale = abs((x2 - x1) / 2.0)
+        yScale = abs((y2 - y1) / 2.0)
+        # calculate centre of ellipse
+        x, y = (x1 + x2) / 2.0, (y1 + y2) / 2.0
 
-        codeline = 'matrix currentmatrix '+\
-                '%s %s neg translate %s %s scale 0 0 1 %s %s %s '+\
+        codeline = 'matrix currentmatrix ' + \
+                '%s %s neg translate %s %s scale 0 0 1 %s %s %s ' + \
                 'setmatrix'
 
         if extent >= 0:
-            arc='arc'
+            arc = 'arc'
         else:
-            arc='arcn'
-        data = (x,y, xScale, yScale, startAng, startAng+extent, arc)
+            arc = 'arcn'
+        data = (x, y, xScale, yScale, startAng, startAng + extent, arc)
 
         return codeline % data
 
@@ -812,7 +815,7 @@ translate
 
     def drawFigure(self, partList,
                    edgeColor=None, edgeWidth=None, fillColor=None, closed=0,
-                   dash=None,**kwargs):
+                   dash=None, **kwargs):
 
        figureCode = []
        first = 1
@@ -831,8 +834,8 @@ translate
 
            elif op == figureArc:
                first = 0
-               x1,y1,x2,y2,startAngle,extent = args[:6]
-               figureCode.append(self._genArcCode(x1,y1,x2,y2,startAngle,extent))
+               x1, y1, x2, y2, startAngle, extent = args[:6]
+               figureCode.append(self._genArcCode(x1, y1, x2, y2, startAngle, extent))
 
            elif op == figureCurve:
                if first:
@@ -842,7 +845,7 @@ translate
                    figureCode.append("%s %s neg lineto" % tuple(args[:2]))
                figureCode.append("%s %s neg %s %s neg %s %s neg curveto" % tuple(args[2:]))
            else:
-               raise TypeError("unknown figure operator: "+op)
+               raise TypeError("unknown figure operator: " + op)
 
        if closed:
            figureCode.append("closepath")
@@ -862,7 +865,7 @@ translate
     #    ._drawImageLevel2, the choice is made in .__init__ depending on option
 
 
-    def _drawImageLevel1(self, image, x1, y1, x2=None,y2=None,**kwargs):
+    def _drawImageLevel1(self, image, x1, y1, x2=None, y2=None, **kwargs):
         # Postscript Level1 version available for fallback mode when Level2 doesn't work
        """drawImage(self,image,x1,y1,x2=None,y2=None) : If x2 and y2 are ommitted, they are
        calculated from image size.  (x1,y1) is upper left of image, (x2,y2) is lower right of
@@ -883,7 +886,8 @@ translate
             y2 = y1 + imgheight
        drawwidth = x2 - x1
        drawheight = y2 - y1
-       print('Image size (%d, %d); Draw size (%d, %d)' % (imgwidth, imgheight, drawwidth, drawheight))
+       print('Image size (%d, %d); Draw size (%d, %d)' % (imgwidth, imgheight,
+                                                          drawwidth, drawheight))
        # now I need to tell postscript how big image is
 
        # "image operators assume that they receive sample data from
@@ -903,8 +907,8 @@ translate
 
        self.code.extend([
            'gsave',
-           '%s %s translate' % (x1,-y1 - drawheight), # need to start are lower left of image
-           '%s %s scale' % (drawwidth,drawheight),
+           '%s %s translate' % (x1, -y1 - drawheight),  # need to start are lower left of image
+           '%s %s scale' % (drawwidth, drawheight),
            '/scanline %d 3 mul string def' % imgwidth  # scanline by multiples of image width
            ])
 
@@ -923,8 +927,8 @@ translate
        # piddlePDF again
 
        rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
-       assert len(rawimage) == imgwidth*imgheight, 'Wrong amount of data for image'
-       #compressed = zlib.compress(rawimage) # no zlib at moment
+       assert len(rawimage) == imgwidth * imgheight, 'Wrong amount of data for image'
+       # compressed = zlib.compress(rawimage) # no zlib at moment
        hex_encoded = self._AsciiHexEncode(rawimage)
 
        # write in blocks of 78 chars per line
@@ -933,9 +937,9 @@ translate
        dataline = outstream.read(78)
        while dataline != "":
            self.code.append(dataline)
-           dataline= outstream.read(78)
-       self.code.append('% end of image data') # for clarity
-       self.code.append('grestore') # return coordinates to normal
+           dataline = outstream.read(78)
+       self.code.append('% end of image data')  # for clarity
+       self.code.append('grestore')  # return coordinates to normal
 
     # end of drawImage
 
@@ -948,7 +952,7 @@ translate
         output.reset()
         return output.read()
 
-    def _drawImageLevel2(self, image, x1,y1, x2=None,y2=None): # Postscript Level2 version
+    def _drawImageLevel2(self, image, x1, y1, x2=None, y2=None):  # Postscript Level2 version
         try:
             from PIL import Image
         except ImportError:
@@ -962,8 +966,8 @@ translate
 #             return
 
 
-        ### what sort of image are we to draw
-        if image.mode=='L' :
+        # ## what sort of image are we to draw
+        if image.mode == 'L' :
             print('found image.mode= L')
             imBitsPerComponent = 8
             imNumComponents = 1
@@ -988,8 +992,8 @@ translate
         drawheight = y2 - y1
         self.code.extend([
             'gsave',
-            '%s %s translate' % (x1,-y1 - drawheight), # need to start are lower left of image
-            '%s %s scale' % (drawwidth,drawheight)])
+            '%s %s translate' % (x1, -y1 - drawheight),  # need to start are lower left of image
+            '%s %s scale' % (drawwidth, drawheight)])
 
         if imNumComponents == 3 :
             self.code.append('/DeviceRGB setcolorspace')
@@ -1001,7 +1005,7 @@ translate
 <<
 /ImageType 1
 /Width %d /Height %d  %% dimensions of source image
-/BitsPerComponent %d""" % (imwidth, imheight, imBitsPerComponent) )
+/BitsPerComponent %d""" % (imwidth, imheight, imBitsPerComponent))
 
         if imNumComponents == 1:
             self.code.append('/Decode [0 1]')
@@ -1014,8 +1018,8 @@ translate
                           'image'])
         # after image operator just need to dump image dat to file as hexstring
         rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
-        assert len(rawimage) == imwidth*imheight, 'Wrong amount of data for image'
-        #compressed = zlib.compress(rawimage) # no zlib at moment
+        assert len(rawimage) == imwidth * imheight, 'Wrong amount of data for image'
+        # compressed = zlib.compress(rawimage) # no zlib at moment
         hex_encoded = self._AsciiHexEncode(rawimage)
 
         # write in blocks of 78 chars per line
@@ -1024,6 +1028,6 @@ translate
         dataline = outstream.read(78)
         while dataline != "":
             self.code.append(dataline)
-            dataline= outstream.read(78)
-        self.code.append('> % end of image data') # > is EOD for hex encoded filterfor clarity
-        self.code.append('grestore') # return coordinates to normal
+            dataline = outstream.read(78)
+        self.code.append('> % end of image data')  # > is EOD for hex encoded filterfor clarity
+        self.code.append('grestore')  # return coordinates to normal

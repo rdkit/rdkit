@@ -51,7 +51,7 @@ M  END"""
     OPT_SLEEP_SEC = 0.2
     MAX_OPT_SLEEP_SEC = 3
     v = Value('b', False)
-    optProcess = Process(target = optFunc, args = (v, mol))
+    optProcess = Process(target=optFunc, args=(v, mol))
     optProcess.start()
     s = 0.0
     while ((s < MAX_OPT_SLEEP_SEC) and (not v.value)):
@@ -275,7 +275,7 @@ M  END"""
     self.assertTrue(r == 0)
     conf = m.GetConformer()
     angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
-    self.assertEquals(int(angle), 10)#(int(angle) == 10)
+    self.assertEquals(int(angle), 10)  # (int(angle) == 10)
 
   def testMMFFTorsionConstraints(self) :
     m = Chem.MolFromMolBlock(self.molB, True, False)
@@ -338,5 +338,5 @@ M  END"""
 
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     unittest.main()

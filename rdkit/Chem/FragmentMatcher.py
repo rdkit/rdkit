@@ -48,9 +48,9 @@ class FragmentMatcher(object):
     self._onPatt = None
     self._offPatts = []
 
-  def AddExclusion(self,sma):
+  def AddExclusion(self, sma):
     self._offPatts.append(Chem.MolFromSmarts(sma))
-  def Init(self,sma):
+  def Init(self, sma):
     self._onPatt = Chem.MolFromSmarts(sma)
 
   def GetSMARTS(self):
@@ -59,7 +59,7 @@ class FragmentMatcher(object):
     pass
 
 
-  def HasMatch(self,mol):
+  def HasMatch(self, mol):
     if self._onPatt is None:
       return 0
     t = mol.HasSubstructMatch(self._onPatt)
@@ -70,32 +70,32 @@ class FragmentMatcher(object):
         if mol.HasSubstructMatch(patt):
           return 0
     return 1
-  
-  def GetMatch(self,mol):
+
+  def GetMatch(self, mol):
     if self._onPatt is None:
       return None
     return mol.GetSubstructMatch(self._onPatt)
-  
-  def GetMatches(self,mol,uniquify=1):
+
+  def GetMatches(self, mol, uniquify=1):
     if self._onPatt is None:
       return None
-    return mol.GetSubstructMatches(self._onPatt,uniquify)
-  
-  def GetBond(self,idx):
+    return mol.GetSubstructMatches(self._onPatt, uniquify)
+
+  def GetBond(self, idx):
     if self._onPatt is None:
       return None
     return self._onPatt.GetBondWithIdx(idx)
-    
-    
+
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

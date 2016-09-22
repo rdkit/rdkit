@@ -36,11 +36,11 @@ it is intended to be shallow but broad.
 """
 
 from __future__ import print_function
-import doctest,unittest,os
+import doctest, unittest, os
 import pickle
 from rdkit import RDConfig
 from rdkit.RDLogger import logger
-logger=logger()
+logger = logger()
 from rdkit import Chem
 from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
 
         self.assertTrue(entry.GetDescription() == "Bar")
         self.assertTrue(matcher.GetMinCount() == 1)
-        self.assertTrue(matcher.GetMaxCount() == 2**32-1)
+        self.assertTrue(matcher.GetMaxCount() == 2 ** 32 - 1)
         self.assertTrue(matcher.IsValid())
 
         entry.SetDescription("Foo")
@@ -93,10 +93,10 @@ class TestCase(unittest.TestCase):
         matcher.SetExclusionPatterns([matcher])
         self.assertTrue(not matcher.HasMatch(mol))
 
-        #pat = Chem.MolFromSmarts("c:c:c:c:c")
-        #entry.SetOnPattern(pat)
-        #entry.SetOffPatterns([pat,pat,pat])
-        #self.assertTrue(not entry.HasMatch(pat))
+        # pat = Chem.MolFromSmarts("c:c:c:c:c")
+        # entry.SetOnPattern(pat)
+        # entry.SetOffPatterns([pat,pat,pat])
+        # self.assertTrue(not entry.HasMatch(pat))
 
     def test1FilterMatchOps(self):
         mol = Chem.MolFromSmiles("c1ccccc1")
@@ -128,7 +128,7 @@ class TestCase(unittest.TestCase):
         tests = ((FilterCatalogParams.FilterCatalogs.PAINS_A, 16),
                  (FilterCatalogParams.FilterCatalogs.PAINS_B, 55),
                  (FilterCatalogParams.FilterCatalogs.PAINS_C, 409),
-                 (FilterCatalogParams.FilterCatalogs.PAINS, 409+16+55))
+                 (FilterCatalogParams.FilterCatalogs.PAINS, 409 + 16 + 55))
 
 
         for catalog_idx, num in tests:
@@ -145,16 +145,17 @@ class TestCase(unittest.TestCase):
                 catalogs = [catalog1, catalog2, catalog3]
             else:
                 catalogs = [catalog1]
-                self.failUnlessRaises(RuntimeError,lambda:pickle.dumps(catalog1))
+                self.failUnlessRaises(RuntimeError, lambda:pickle.dumps(catalog1))
 
-            catalogs.append( FilterCatalog.FilterCatalog(catalog_idx) )
-            for index,catalog in enumerate(catalogs):
-                self.assertEqual(catalog.GetNumEntries(),num)
+            catalogs.append(FilterCatalog.FilterCatalog(catalog_idx))
+            for index, catalog in enumerate(catalogs):
+                self.assertEqual(catalog.GetNumEntries(), num)
 
                 if catalog_idx in [FilterCatalogParams.FilterCatalogs.PAINS_A,
                                    FilterCatalogParams.FilterCatalogs.PAINS]:
                     # http://chemistrycompass.com/chemsearch/58909/
-                    mol = Chem.MolFromSmiles("O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
+                    mol = Chem.MolFromSmiles(
+                      "O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2")
                     entry = catalog.GetFirstMatch(mol)
                     for key in entry.GetPropList():
                         if key == "Reference":
@@ -167,7 +168,7 @@ class TestCase(unittest.TestCase):
                         elif key == "Scope":
                             self.assertEquals(entry.GetProp(key), "PAINS filters (family A)")
 
-                    self.assertEqual(entry.GetDescription(),"hzone_phenol_A(479)")
+                    self.assertEqual(entry.GetDescription(), "hzone_phenol_A(479)")
                     result = catalog.GetMatches(mol)
                     self.assertEquals(len(result), 1)
 
@@ -183,13 +184,13 @@ class TestCase(unittest.TestCase):
                                                (8, 16), (9, 21)])
 
                 elif catalog_idx == FilterCatalogParams.FilterCatalogs.PAINS_B:
-                    mol = Chem.MolFromSmiles("FC(F)(F)Oc1ccc(NN=C(C#N)C#N)cc1") # CHEMBL457504
+                    mol = Chem.MolFromSmiles("FC(F)(F)Oc1ccc(NN=C(C#N)C#N)cc1")  # CHEMBL457504
                     entry = catalog.GetFirstMatch(mol)
                     self.assertTrue(entry)
                     self.assertEquals(entry.GetDescription(), "cyano_imine_B(17)")
 
                 elif catalog_idx == FilterCatalogParams.FilterCatalogs.PAINS_C:
-                    mol = Chem.MolFromSmiles("O=C1C2OC2C(=O)c3cc4CCCCc4cc13") # CHEMBL476649
+                    mol = Chem.MolFromSmiles("O=C1C2OC2C(=O)c3cc4CCCCc4cc13")  # CHEMBL476649
                     entry = catalog.GetFirstMatch(mol)
                     self.assertTrue(entry)
                     self.assertEquals(entry.GetDescription(), "keto_keto_gamma(5)")
@@ -243,7 +244,7 @@ class TestCase(unittest.TestCase):
         self.assertEquals(catalog.GetFirstMatch(m), None)
 
     def testSmartsMatcherAPI(self):
-        sm = FilterCatalog.SmartsMatcher("Too many carbons", "[#6]", 40+1)
+        sm = FilterCatalog.SmartsMatcher("Too many carbons", "[#6]", 40 + 1)
         sm2 = FilterCatalog.SmartsMatcher("ok # carbons", "[#6]", 0, 40)
         sm3 = FilterCatalog.FilterMatchOps.Not(sm2)
 
@@ -258,7 +259,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(sm3.HasMatch(m))
 
     def testAddEntry(self):
-        sm = FilterCatalog.SmartsMatcher("Too many carbons", "[#6]", 40+1)
+        sm = FilterCatalog.SmartsMatcher("Too many carbons", "[#6]", 40 + 1)
         entry = FilterCatalog.FilterCatalogEntry("Bar", sm)
         fc = FilterCatalog.FilterCatalog()
         fc.AddEntry(entry)
@@ -271,7 +272,7 @@ class TestCase(unittest.TestCase):
         entry = catalog.GetEntryWithIdx(10)
         desc = entry.GetDescription()
         count = 0
-        descs = set( [ catalog.GetEntryWithIdx(i).GetDescription()
+        descs = set([ catalog.GetEntryWithIdx(i).GetDescription()
                        for i in range (catalog.GetNumEntries())])
         for i in range(catalog.GetNumEntries()):
             if catalog.GetEntryWithIdx(i).GetDescription() == desc:
@@ -281,9 +282,9 @@ class TestCase(unittest.TestCase):
         print ("*"*44)
         self.assertTrue(catalog.RemoveEntry(entry))
         del entry
-        self.assertTrue(catalog.GetNumEntries() == sz-1)
+        self.assertTrue(catalog.GetNumEntries() == sz - 1)
 
-        descs2 = set( [ catalog.GetEntryWithIdx(i).GetDescription()
+        descs2 = set([ catalog.GetEntryWithIdx(i).GetDescription()
                         for i in range(catalog.GetNumEntries())])
         print (descs - descs2)
 
@@ -291,7 +292,7 @@ class TestCase(unittest.TestCase):
         for i in range(catalog.GetNumEntries()):
             if catalog.GetEntryWithIdx(i).GetDescription() == desc:
                 newcount += 1
-        self.assertEquals(count, newcount+1)
+        self.assertEquals(count, newcount + 1)
 
 
     def testPyFilter(self):
@@ -304,8 +305,8 @@ class TestCase(unittest.TestCase):
 
             def GetMatches(self, mol, vect):
                 v = FilterCatalog.MatchTypeVect()
-                v.append(FilterCatalog.IntPair(1,1))
-                match = FilterCatalog.FilterMatch(self,v)
+                v.append(FilterCatalog.IntPair(1, 1))
+                match = FilterCatalog.FilterMatch(self, v)
                 vect.append(match)
                 return True
 
@@ -315,9 +316,9 @@ class TestCase(unittest.TestCase):
         self.assertEquals(func.HasMatch(mol), True)
 
         or_match = FilterMatchOps.Or(func, func)
-        self.assertEquals( [[tuple(x) for x in filtermatch.atomPairs]
+        self.assertEquals([[tuple(x) for x in filtermatch.atomPairs]
                           for filtermatch in or_match.GetMatches(mol)],
-                           [[(1,1)],[(1,1)]])
+                           [[(1, 1)], [(1, 1)]])
 
 
         not_match = FilterMatchOps.Not(func)
@@ -327,7 +328,7 @@ class TestCase(unittest.TestCase):
         del func
 
         self.assertEquals(not_match.HasMatch(mol), False)
-        self.assertEquals( [[tuple(x) for x in filtermatch.atomPairs]
+        self.assertEquals([[tuple(x) for x in filtermatch.atomPairs]
                           for filtermatch in not_match.GetMatches(mol)],
                            [])
 
@@ -353,7 +354,7 @@ class TestCase(unittest.TestCase):
                 mw = rdMolDescriptors.CalcExactMolWt(mol)
                 return not self.minMw <= mw <= self.maxMw
 
-        entry = FilterCatalog.FilterCatalogEntry("MW Violation", MWFilter(100,500))
+        entry = FilterCatalog.FilterCatalogEntry("MW Violation", MWFilter(100, 500))
         fc = FilterCatalog.FilterCatalog()
         fc.AddEntry(entry)
         self.assertTrue(entry.GetDescription() == "MW Violation")

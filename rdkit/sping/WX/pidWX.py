@@ -87,8 +87,8 @@ from wxPython.wx import *
 from pidWxDc import PiddleWxDc
 
 __version__ = "1.0"
-__date__    = "February 6, 2000"
-__author__  = "Paul & Kevin Jacobs"
+__date__ = "February 6, 2000"
+__author__ = "Paul & Kevin Jacobs"
 
 class _WXCanvasDefaultStatusBar(wxStatusBar):
   """This status bar displays clear and quit buttons, as well as the
@@ -98,17 +98,17 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
     # These are terribly wrong here in the init under wxGTK but they firm up after a while
     # I think they need to be set in OnSize event
-    
-    #wxStatusBar.__init__(self, canvas.window, -1) # known to work w/ wxGTK 
+
+    # wxStatusBar.__init__(self, canvas.window, -1) # known to work w/ wxGTK
 
     wxStatusBar.__init__(self, canvas.window, -1, pos, size)  # original
     self.parentwindow = canvas.window
-    self.parentwindow.SetStatusBar(self) # added because it seems to be necessary
+    self.parentwindow.SetStatusBar(self)  # added because it seems to be necessary
 
-    
+
     self.SetFieldsCount(3)
 
-    self.sizeChanged = false    
+    self.sizeChanged = false
     self.text = ""
     self.old_text = ""
 
@@ -122,19 +122,20 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     # under linux this field value is wrong at this point in constructor so use OnSize event as well
     # Note: under windows the field sizes are correct at this point
 
-    self.quitButton= wxButton(self, qID, "Quit")
+    self.quitButton = wxButton(self, qID, "Quit")
     self.clearButton = wxButton(self, cID, "Clear")
-    self.click = wxCheckBox(self, bID, "Click")  # This checkbox is down when the left button is pressed 
+    # This checkbox is down when the left button is pressed
+    self.click = wxCheckBox(self, bID, "Click")
 
     self.Reposition()  # set up sizes for layout
-    
+
     EVT_BUTTON(self, qID, canvas._OnQuit)
     EVT_BUTTON(self, cID, canvas._OnClear)
     EVT_PAINT(self, self.repaint)
     EVT_SIZE(self, self.OnSize)
     EVT_IDLE(self, self.OnIdle)
 
-    
+
   def repaint(self, event):
     dc = wxPaintDC(self)
     self.draw(dc)
@@ -144,7 +145,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     self.draw(dc)
 
   def draw(self, dc):
-    # 
+    #
     field = self.GetFieldRect(1)
     extents = dc.GetTextExtent(self.old_text)
     dc.SetPen(wxTRANSPARENT_PEN)
@@ -153,11 +154,11 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     dc.DrawRectangle(field.x, field.y, field.width, field.height)
     dc.SetFont(wxFont(9, wxDEFAULT, wxNORMAL, wxNORMAL))
     extents = dc.GetTextExtent(self.text)
-    dc.DrawText(self.text, field.x + field.width/2 - extents[0]/2, field.y)
+    dc.DrawText(self.text, field.x + field.width / 2 - extents[0] / 2, field.y)
     self.old_text = self.text
 
   def SetStatusText(self, s):
-    self.text  =  s
+    self.text = s
     self.redraw()
 
   def OnOver(self, x, y):
@@ -191,33 +192,34 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
       self.Reposition()
 
   def Reposition(self):
-    #print "Field Rects:"
-    #print self.GetFieldRect(0)
-    #print self.GetFieldRect(1)
-    #print self.GetFieldRect(2)
+    # print "Field Rects:"
+    # print self.GetFieldRect(0)
+    # print self.GetFieldRect(1)
+    # print self.GetFieldRect(2)
 
     # layout field 0 with Buttons for quit and clear
 
     field = self.GetFieldRect(0)
     self.quitButton.SetPosition(wxPoint(field.x, field.y))
-    self.quitButton.SetSize(wxSize(field.width/2, field.height) )
-    
-    self.clearButton.SetPosition(wxPoint(field.x + field.width/2, field.y))
-    self.clearButton.SetSize(wxSize(field.width/2, field.height) )
-    
+    self.quitButton.SetSize(wxSize(field.width / 2, field.height))
+
+    self.clearButton.SetPosition(wxPoint(field.x + field.width / 2, field.y))
+    self.clearButton.SetSize(wxSize(field.width / 2, field.height))
+
     # layout sizing of field 1 w/ check box
 
     field = self.GetFieldRect(1)
-    self.click.SetPosition(wxPoint(field.x + field.width/2 -20, field.y))
+    self.click.SetPosition(wxPoint(field.x + field.width / 2 - 20, field.y))
     self.click.SetSize(wxSize(100, field.height))
-    
+
     self.sizeChanged = false
 
 ############################################################################
 
 class WXCanvas(PiddleWxDc):
 
-  def __init__(self, size=(300,300), name="piddleWX", status_bar = None, interactive = 1, show_status = 1):
+  def __init__(self, size=(300, 300), name="piddleWX", status_bar=None, interactive=1,
+               show_status=1):
     """Works like all other PIDDLE canvases, except with extra interactive controls.
        interactive is set if the canvas is to use the interactive parts of
        the PIDDLE API, and show_status controls if the default status bar is
@@ -238,7 +240,8 @@ class WXCanvas(PiddleWxDc):
     else:
       status_area = 0
 
-    window.SetSize(wxSize(size[0] + (size[0] - CSize[0]), size[1] + (size[1] - CSize[1]+ status_area)))
+    window.SetSize(wxSize(size[0] + (size[0] - CSize[0]),
+                          size[1] + (size[1] - CSize[1] + status_area)))
 
     # This bitmap is used to buffer drawing commands.  It is set to the same
     # depth as the screen - explicitly changing it can cause errors when it
@@ -271,25 +274,25 @@ class WXCanvas(PiddleWxDc):
     # status bar.
 
     # onClick: x,y is Canvas coordinates of mouseclick def
-    def ignoreClick(canvas,x,y):
-      canvas.sb.OnClick(x,y)
+    def ignoreClick(canvas, x, y):
+      canvas.sb.OnClick(x, y)
     self.onClick = ignoreClick
 
     # onOver: x,y is Canvas location of mouse
-    def ignoreOver(canvas,x,y):
-      canvas.sb.OnOver(x,y)
+    def ignoreOver(canvas, x, y):
+      canvas.sb.OnOver(x, y)
     self.onOver = ignoreOver
 
     # onKey: key is printable character or one of the constants above;
     #    modifiers is a tuple containing any of (modshift, modControl)
-    def ignoreKey(canvas,key,modifiers):
+    def ignoreKey(canvas, key, modifiers):
       pass
     self.onKey = ignoreKey
 
     # onClickUp: This is an extension:  It registers mouse left-button up
     # events
-    def ignoreClickUp(canvas,x,y):
-      canvas.sb.OnClickUp(x,y)
+    def ignoreClickUp(canvas, x, y):
+      canvas.sb.OnClickUp(x, y)
     self.onClickUp = ignoreClickUp
 
     self.interactive = interactive
@@ -349,11 +352,11 @@ class WXCanvas(PiddleWxDc):
     if event.ShiftDown():
       modifier.append('modshift')
 
-    self.onKey(self, key, tuple(modifier) )
+    self.onKey(self, key, tuple(modifier))
 
   def _OnPaint(self, event):
     dc = wxPaintDC(self.window)
-    dc.Blit(0,0,self.size[0],self.size[1],self.MemDc,0,0,wxCOPY)
+    dc.Blit(0, 0, self.size[0], self.size[1], self.MemDc, 0, 0, wxCOPY)
     del dc
 
   def _OnQuit(self, event):
@@ -364,7 +367,7 @@ class WXCanvas(PiddleWxDc):
     """Clears the canvas by emptying the memory buffer, and redrawing"""
     self.MemDc.Clear()
     dc = wxClientDC(self.window)
-    dc.Blit(0,0,self.size[0],self.size[1],self.MemDc,0,0,wxCOPY)
+    dc.Blit(0, 0, self.size[0], self.size[1], self.MemDc, 0, 0, wxCOPY)
 
   #############################################################
 
@@ -381,15 +384,15 @@ class WXCanvas(PiddleWxDc):
   #------------ general management -------------
   def clear(self):
     self.Clear()
-    dc  = wxClientDC(self.window)
-    dc.Blit(0,0,self.size[0], self.size[1], self.MemDc,0,0,wxCOPY)
+    dc = wxClientDC(self.window)
+    dc.Blit(0, 0, self.size[0], self.size[1], self.MemDc, 0, 0, wxCOPY)
 
   def flush(self):
     """Copies the contents of the memory buffer to the screen and enters the
        application main loop"""
 
     dc = wxClientDC(self.window)
-    dc.Blit(0,0,self.size[0],self.size[1],self.MemDc,0,0,wxCOPY)
+    dc.Blit(0, 0, self.size[0], self.size[1], self.MemDc, 0, 0, wxCOPY)
     del dc
 
   def setInfoLine(self, s):

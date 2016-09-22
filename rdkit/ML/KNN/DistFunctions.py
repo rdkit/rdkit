@@ -25,7 +25,7 @@ def EuclideanDist(ex1, ex2, attrs) :
     """
     dist = 0.0
     for i in attrs:
-        dist += (ex1[i] - ex2[i])**2
+        dist += (ex1[i] - ex2[i]) ** 2
     dist = math.sqrt(dist)
     return dist
 
@@ -55,7 +55,7 @@ def TanimotoDist(ex1, ex2, attrs) :
             if (ex1[i] and ex2[i]) :
                 inter += 1
     if(unin != 0.0):
-        return (1 - inter/unin)
+        return (1 - inter / unin)
     else:
         return 1.0
 
@@ -64,11 +64,11 @@ def TanimotoDist(ex1, ex2, attrs) :
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
 

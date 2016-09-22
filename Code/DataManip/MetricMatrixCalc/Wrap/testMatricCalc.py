@@ -6,8 +6,8 @@ import numpy
 import random
 from rdkit import DataStructs
 
-def feq(v1,v2,tol2=1e-4):
-    return abs(v1-v2)<=tol2
+def feq(v1, v2, tol2=1e-4):
+    return abs(v1 - v2) <= tol2
 
 class TestCase(unittest.TestCase):
 
@@ -18,30 +18,30 @@ class TestCase(unittest.TestCase):
         exp = numpy.array([1., 1.414213, 1.0], 'd')
 
         # initialize a double array and check if get back the expected distances
-        desc = numpy.zeros((3,2), 'd')
-        desc[1,0] = 1.0
-        desc[2,0] = 1.0
-        desc[2,1] = 1.0
+        desc = numpy.zeros((3, 2), 'd')
+        desc[1, 0] = 1.0
+        desc[2, 0] = 1.0
+        desc[2, 1] = 1.0
 
         dmat = rdmmc.GetEuclideanDistMat(desc)
         for i in range(numpy.shape(dmat)[0]) :
             assert feq(dmat[i], exp[i])
 
         # repeat with an flaot array
-        desc = numpy.zeros((3,2), 'f')
-        desc[1,0] = 1.0
-        desc[2,0] = 1.0
-        desc[2,1] = 1.0
+        desc = numpy.zeros((3, 2), 'f')
+        desc[1, 0] = 1.0
+        desc[2, 0] = 1.0
+        desc[2, 1] = 1.0
 
         dmat = rdmmc.GetEuclideanDistMat(desc)
         for i in range(numpy.shape(dmat)[0]) :
             assert feq(dmat[i], exp[i])
 
         # finally with an interger array
-        desc = numpy.zeros((3,2), 'i')
-        desc[1,0] = 1
-        desc[2,0] = 1
-        desc[2,1] = 1
+        desc = numpy.zeros((3, 2), 'i')
+        desc[1, 0] = 1
+        desc[2, 0] = 1
+        desc[2, 1] = 1
 
         dmat = rdmmc.GetEuclideanDistMat(desc)
         for i in range(numpy.shape(dmat)[0]) :
@@ -84,7 +84,7 @@ class TestCase(unittest.TestCase):
         for i in range(numpy.shape(dmat)[0]) :
             assert feq(dmat[i], exp[i])
 
-        #test with ints
+        # test with ints
         desc = [[0, 0],
                 [1, 0],
                 [1, 1]]
@@ -96,23 +96,23 @@ class TestCase(unittest.TestCase):
         n = 30
         m = 5
 
-        dscArr = numpy.zeros((n,m), 'd')
+        dscArr = numpy.zeros((n, m), 'd')
         for i in range(n):
             for j in range(m):
-                dscArr[i,j] = random.random()
+                dscArr[i, j] = random.random()
         dmatArr = rdmmc.GetEuclideanDistMat(dscArr)
 
         dscLL = []
         for i in range(n) :
             row = []
             for j in range(m):
-                row.append(dscArr[i,j])
+                row.append(dscArr[i, j])
             dscLL.append(row)
         dmatLL = rdmmc.GetEuclideanDistMat(dscLL)
 
         assert numpy.shape(dmatArr) == numpy.shape(dmatLL)
 
-        for i in range(n*(n-1)//2):
+        for i in range(n * (n - 1) // 2):
             assert feq(dmatArr[i], dmatLL[i])
 
     def test4ebv(self) :
@@ -131,9 +131,9 @@ class TestCase(unittest.TestCase):
 
         sMat = rdmmc.GetTanimotoSimMat(lst)
 
-        for i in range(n*(n-1)//2) :
-            assert feq(sMat[i] + dMat[i], 1.0) 
-                        
+        for i in range(n * (n - 1) // 2) :
+            assert feq(sMat[i] + dMat[i], 1.0)
+
     def test5sbv(self) :
 
         n = 30
@@ -150,8 +150,8 @@ class TestCase(unittest.TestCase):
 
         sMat = rdmmc.GetTanimotoSimMat(lst)
 
-        for i in range(n*(n-1)//2) :
-            assert feq(sMat[i] + dMat[i], 1.0) 
-                        
+        for i in range(n * (n - 1) // 2) :
+            assert feq(sMat[i] + dMat[i], 1.0)
+
 if __name__ == '__main__':
     unittest.main()

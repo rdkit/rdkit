@@ -20,7 +20,7 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
 
-def pyScorePath(mol,path,size,atomCodes=None):
+def pyScorePath(mol, path, size, atomCodes=None):
   """ Returns a score for an individual path.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
@@ -47,37 +47,37 @@ def pyScorePath(mol,path,size,atomCodes=None):
   1
 
   """
-  codes = [None]*size
+  codes = [None] * size
   for i in range(size):
-    if i==0 or i==(size-1):
+    if i == 0 or i == (size - 1):
       sub = 1
     else:
       sub = 2
     if not atomCodes:
-      codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]),sub)
+      codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]), sub)
     else:
       base = atomCodes[path[i]]
-      codes[i]=base-sub
+      codes[i] = base - sub
 
   # "canonicalize" the code vector:
-  beg=0
-  end = len(codes)-1
+  beg = 0
+  end = len(codes) - 1
   while(beg < end):
     if codes[beg] > codes[end]:
       codes.reverse()
       break
-    elif codes[beg]==codes[end]:
+    elif codes[beg] == codes[end]:
       beg += 1
       end -= 1
     else:
       break
   accum = 0
   for i in range(size):
-    accum |= codes[i] << (rdMolDescriptors.AtomPairsParameters.codeSize*i)
+    accum |= codes[i] << (rdMolDescriptors.AtomPairsParameters.codeSize * i)
   return accum
 
-def ExplainPathScore(score,size=4):
-  """ 
+def ExplainPathScore(score, size=4):
+  """
 
   >>> m = Chem.MolFromSmiles('C=CC')
   >>> score=pyScorePath(m,(0,1,2),3)
@@ -124,48 +124,49 @@ def ExplainPathScore(score,size=4):
   (('O', 1, 0), ('O', 2, 0), ('O', 2, 0), ('O', 1, 0))
 
   """
-  codeMask=(1<<rdMolDescriptors.AtomPairsParameters.codeSize)-1
-  res=[None]*size
-  #print '>>>>>>>>>>>',score,size,codeMask
+  codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
+  res = [None] * size
+  # print '>>>>>>>>>>>',score,size,codeMask
   for i in range(size):
-    if i==0 or i==(size-1):
+    if i == 0 or i == (size - 1):
       sub = 1
     else:
       sub = 2
-    code = score&codeMask
-    #print i,code,score
-    score = score>>rdMolDescriptors.AtomPairsParameters.codeSize
-    symb,nBranch,nPi = Utils.ExplainAtomCode(code)
-    expl = symb,nBranch+sub,nPi
+    code = score & codeMask
+    # print i,code,score
+    score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
+    symb, nBranch, nPi = Utils.ExplainAtomCode(code)
+    expl = symb, nBranch + sub, nPi
     res[i] = expl
   return tuple(res)
 
-from rdkit.Chem.rdMolDescriptors import GetTopologicalTorsionFingerprint,GetHashedTopologicalTorsionFingerprint
-GetTopologicalTorsionFingerprintAsIntVect=rdMolDescriptors.GetTopologicalTorsionFingerprint
-def GetTopologicalTorsionFingerprintAsIds(mol,targetSize=4):
-  iv = GetTopologicalTorsionFingerprint(mol,targetSize)
-  res=[]
-  for k,v in iv.GetNonzeroElements().iteritems():
-    res.extend([k]*v)
+from rdkit.Chem.rdMolDescriptors import GetTopologicalTorsionFingerprint
+from rdkit.Chem.rdMolDescriptors import GetHashedTopologicalTorsionFingerprint
+GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
+def GetTopologicalTorsionFingerprintAsIds(mol, targetSize=4):
+  iv = GetTopologicalTorsionFingerprint(mol, targetSize)
+  res = []
+  for k, v in iv.GetNonzeroElements().iteritems():
+    res.extend([k] * v)
   res.sort()
   return res
 
-  
-  
+
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-  
-  
+
+
 

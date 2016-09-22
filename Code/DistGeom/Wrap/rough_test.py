@@ -9,7 +9,7 @@
 
 Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
-#pylint: disable=E1101,C0111,R0904
+# pylint: disable=E1101,C0111,R0904
 import unittest
 import numpy as np
 from rdkit import DistanceGeometry as DG
@@ -31,14 +31,14 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(arr[0, 1], 1.0))
     self.assertTrue(feq(arr[1, 0], 1.0))
     self.assertTrue(feq(arr[1, 2], 1.0))
-    
+
   def test2SmoothFail(self):
     arr = np.array([[0, 1.0, 5.0],
                     [1.0, 0, 1.0],
                     [3.0, 1.0, 0]], np.float)
     self.assertFalse(DG.DoTriangleSmoothing(arr))
-    
-    
+
+
   def test3SmoothPass(self):
     arr = np.array([[0, 1.1, 5.0],
                     [0.9, 0, 1.1],
@@ -49,8 +49,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(arr[0, 1], 1.1))
     self.assertTrue(feq(arr[1, 0], 0.9))
     self.assertTrue(feq(arr[1, 2], 1.1))
-    
-  
+
+
   def test4Embed(self):
     arr = np.array([[0, 1.0, 5.0],
                     [1.0, 0, 1.0],
@@ -63,13 +63,13 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(d1, 1.0, 0.001))
     d2 = np.dot(v2, v2)
     self.assertTrue(feq(d2, 1.0, 0.001))
-    
+
   def test5EmbedFail(self):
     arr = np.array([[0, 1.0, 5.0],
                     [1.0, 0, 1.0],
                     [3.0, 1.0, 0]], np.float)
     self.assertRaises(ValueError, lambda : DG.EmbedBoundsMatrix(arr))
-    #DG.EmbedBoundsMatrix(arr,randomizeOnFailure=0,randomSeed=1)
+    # DG.EmbedBoundsMatrix(arr,randomizeOnFailure=0,randomSeed=1)
     DG.EmbedBoundsMatrix(arr, randomizeOnFailure=1)
 
   def test6EmbedConstraints(self):
@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
     v1 = coords[0] - coords[1]
     v2 = coords[1] - coords[2]
     d1 = np.dot(v1, v1)
-    
+
     self.assertTrue(feq(d1, 1.0, 2e-3))
     d2 = np.dot(v2, v2)
     self.assertTrue(feq(d2, 1.0, 2e-3))

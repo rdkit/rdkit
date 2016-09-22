@@ -1,7 +1,7 @@
 from rdkit import RDConfig
 import unittest
 from rdkit import Chem
-from rdkit.Chem import Draw,AllChem
+from rdkit.Chem import Draw, AllChem
 from rdkit.Chem.Draw import rdMolDraw2D
 
 class TestCase(unittest.TestCase):
@@ -11,30 +11,30 @@ class TestCase(unittest.TestCase):
     def test1(self) :
         m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
         AllChem.Compute2DCoords(m)
-        d = Draw.MolDraw2DSVG(300,300)
+        d = Draw.MolDraw2DSVG(300, 300)
         d.DrawMolecule(m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
-        self.assertTrue(txt.find("<svg:svg")!=-1)
-        self.assertTrue(txt.find("</svg:svg>")!=-1)
+        self.assertTrue(txt.find("<svg:svg") != -1)
+        self.assertTrue(txt.find("</svg:svg>") != -1)
 
     def test2(self) :
         m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
         AllChem.Compute2DCoords(m)
-        d = Draw.MolDraw2DSVG(300,300)
+        d = Draw.MolDraw2DSVG(300, 300)
         do = d.drawOptions()
-        do.atomLabels[3]='foolabel'
+        do.atomLabels[3] = 'foolabel'
         d.DrawMolecule(m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
-        self.assertTrue(txt.find("foolabel")!=-1)
+        self.assertTrue(txt.find("foolabel") != -1)
 
     def testGithubIssue571(self) :
-        if not hasattr(Draw,'MolDraw2DCairo'):
+        if not hasattr(Draw, 'MolDraw2DCairo'):
             return
         m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
         AllChem.Compute2DCoords(m)
-        d = Draw.MolDraw2DCairo(300,300)
+        d = Draw.MolDraw2DCairo(300, 300)
         d.DrawMolecule(m)
         d.FinishDrawing()
         txt = d.GetDrawingText()
@@ -42,15 +42,15 @@ class TestCase(unittest.TestCase):
     def testPrepareForDrawing(self):
         m = Chem.MolFromSmiles('c1ccccc1[C@H](F)Cl')
         nm = rdMolDraw2D.PrepareMolForDrawing(m)
-        self.assertEqual(nm.GetNumAtoms(),9)
-        self.assertEqual(nm.GetNumConformers(),1)
+        self.assertEqual(nm.GetNumAtoms(), 9)
+        self.assertEqual(nm.GetNumConformers(), 1)
         m = Chem.MolFromSmiles('C1CC[C@H]2NCCCC2C1')
         nm = rdMolDraw2D.PrepareMolForDrawing(m)
-        self.assertEqual(nm.GetNumAtoms(),11)
-        self.assertEqual(nm.GetNumConformers(),1)
-        nm = rdMolDraw2D.PrepareMolForDrawing(m,addChiralHs=False)
-        self.assertEqual(nm.GetNumAtoms(),10)
-        self.assertEqual(nm.GetNumConformers(),1)
+        self.assertEqual(nm.GetNumAtoms(), 11)
+        self.assertEqual(nm.GetNumConformers(), 1)
+        nm = rdMolDraw2D.PrepareMolForDrawing(m, addChiralHs=False)
+        self.assertEqual(nm.GetNumAtoms(), 10)
+        self.assertEqual(nm.GetNumConformers(), 1)
 
     def testRepeatedPrepareForDrawingCalls(self):
         m = Chem.MolFromMolBlock("""
@@ -128,18 +128,18 @@ class TestCase(unittest.TestCase):
  28 23  1  0     0  0
 M  END""")
         nm = Draw.PrepareMolForDrawing(m)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,1).GetBondType(),Chem.BondType.SINGLE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,1).GetBondDir(),Chem.BondDir.NONE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,7).GetBondType(),Chem.BondType.SINGLE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,7).GetBondDir(),Chem.BondDir.BEGINWEDGE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 1).GetBondType(), Chem.BondType.SINGLE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 1).GetBondDir(), Chem.BondDir.NONE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 7).GetBondType(), Chem.BondType.SINGLE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 7).GetBondDir(), Chem.BondDir.BEGINWEDGE)
         nm = Draw.PrepareMolForDrawing(nm)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,1).GetBondType(),Chem.BondType.SINGLE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,1).GetBondDir(),Chem.BondDir.NONE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,7).GetBondType(),Chem.BondType.SINGLE)
-        self.assertEqual(nm.GetBondBetweenAtoms(2,7).GetBondDir(),Chem.BondDir.BEGINWEDGE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 1).GetBondType(), Chem.BondType.SINGLE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 1).GetBondDir(), Chem.BondDir.NONE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 7).GetBondType(), Chem.BondType.SINGLE)
+        self.assertEqual(nm.GetBondBetweenAtoms(2, 7).GetBondDir(), Chem.BondDir.BEGINWEDGE)
 
 
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     unittest.main()

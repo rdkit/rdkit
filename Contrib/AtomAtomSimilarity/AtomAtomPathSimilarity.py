@@ -19,12 +19,12 @@ _BK_ = {
 }
 _BONDSYMBOL_ = {1: '-', 2:'=', 3:'#', 4:':'}
 
-#_nAT_ = 217 # 108*2+1
-_nAT_ = 223 # Gobbi code actually uses the first prime higher than 217, not 217 itself
+# _nAT_ = 217 # 108*2+1
+_nAT_ = 223  # Gobbi code actually uses the first prime higher than 217, not 217 itself
 _nBT_ = 5
 
-#def FindAllPathsOfLengthN_Gobbi(mol, length, rootedAtAtom=-1, uniquepaths=True):
-#	return FindAllPathsOfLengthMToN(mol, length, length, rootedAtAtom=rootedAtAtom, uniquepaths=uniquepaths)
+# def FindAllPathsOfLengthN_Gobbi(mol, length, rootedAtAtom=-1, uniquepaths=True):
+# 	return FindAllPathsOfLengthMToN(mol, length, length, rootedAtAtom=rootedAtAtom, uniquepaths=uniquepaths)
 
 def FindAllPathsOfLengthMToN_Gobbi(mol, minlength, maxlength, rootedAtAtom=-1, uniquepaths=True):
 	'''this function returns the same set of bond paths as the Gobbi paper.  These differ a little from the rdkit FindAllPathsOfLengthMToN function'''
@@ -33,7 +33,7 @@ def FindAllPathsOfLengthMToN_Gobbi(mol, minlength, maxlength, rootedAtAtom=-1, u
 		if rootedAtAtom == -1 or atom.GetIdx() == rootedAtAtom:
 			path = []
 			visited = set([atom.GetIdx()])
-#			visited = set()
+# 			visited = set()
 			_FindAllPathsOfLengthMToN_Gobbi(atom, path, minlength, maxlength, visited, paths)
 
 	if uniquepaths:
@@ -55,7 +55,7 @@ def _FindAllPathsOfLengthMToN_Gobbi(atom, path, minlength, maxlength, visited, p
 			bidx = bond.GetIdx()
 			path.append(bidx)
 			if len(path) >= minlength and len(path) <= maxlength:
-				paths.append( tuple(path) )
+				paths.append(tuple(path))
 			if len(path) < maxlength:
 				a1 = bond.GetBeginAtom()
 				a2 = bond.GetEndAtom()
@@ -79,8 +79,8 @@ def getpathintegers(m1, uptolength=7):
 	for a in m1.GetAtoms():
 		idx = a.GetIdx()
 		pathintegers[idx] = []
-#		for pathlength in range(1, uptolength+1):
-#			for path in rdmolops.FindAllPathsOfLengthN(m1, pathlength, rootedAtAtom=idx):
+# 		for pathlength in range(1, uptolength+1):
+# 			for path in rdmolops.FindAllPathsOfLengthN(m1, pathlength, rootedAtAtom=idx):
 		for ipath, path in enumerate(FindAllPathsOfLengthMToN_Gobbi(m1, 1, uptolength, rootedAtAtom=idx, uniquepaths=False)):
 				strpath = []
 				currentidx = idx
@@ -95,7 +95,7 @@ def getpathintegers(m1, uptolength=7):
 					ak = a.GetAtomicNum()
 					if a.GetIsAromatic():
 						ak += 108
-#trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
+# trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
 					if a.GetIdx() == idx:
 						ak = None
 					if ak is not None:
@@ -104,15 +104,15 @@ def getpathintegers(m1, uptolength=7):
 							strpath.append(astr.lower())
 						else:
 							strpath.append(astr)
-					res.append( (bk, ak) )
+					res.append((bk, ak))
 					currentidx = a.GetIdx()
-				pathuniqueint = numpy.ushort(0) # work with 16 bit unsigned integers and ignore overflow...
+				pathuniqueint = numpy.ushort(0)  # work with 16 bit unsigned integers and ignore overflow...
 				for ires, (bi, ai) in enumerate(res):
-#use 16 bit unsigned integer arithmetic to reproduce the Gobbi ints
-#					pathuniqueint = ((pathuniqueint+bi)*_nAT_+ai)*_nBT_
-					val1 = pathuniqueint+numpy.ushort(bi)
+# use 16 bit unsigned integer arithmetic to reproduce the Gobbi ints
+# 					pathuniqueint = ((pathuniqueint+bi)*_nAT_+ai)*_nBT_
+					val1 = pathuniqueint + numpy.ushort(bi)
 					val2 = val1 * numpy.ushort(_nAT_)
-#trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
+# trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
 					if ai is not None:
 						val3 = val2 + numpy.ushort(ai)
 						val4 = val3 * numpy.ushort(_nBT_)
@@ -120,7 +120,7 @@ def getpathintegers(m1, uptolength=7):
 						val4 = val2
 					pathuniqueint = val4
 				pathintegers[idx].append(pathuniqueint)
-#sorted lists allow for a quicker comparison algorithm
+# sorted lists allow for a quicker comparison algorithm
 	for p in pathintegers.values():
 		p.sort()
 	return pathintegers
@@ -133,12 +133,12 @@ def getcommon(l1, ll1, l2, ll2):
 	while (ix1 < ll1) and (ix2 < ll2):
 		a1 = l1[ix1]
 		a2 = l2[ix2]
-#a1 is < or > more often that ==
+# a1 is < or > more often that ==
 		if a1 < a2:
 			ix1 += 1
 		elif a1 > a2:
 			ix2 += 1
-		else: # a1 == a2:
+		else:  # a1 == a2:
 			ncommon += 1
 			ix1 += 1
 			ix2 += 1
@@ -147,7 +147,7 @@ def getcommon(l1, ll1, l2, ll2):
 def getsimaibj(aipaths, bjpaths, naipaths, nbjpaths):
 	'''returns the similarity of two sorted path lists.  Equation 2'''
 	nc = getcommon(aipaths, naipaths, bjpaths, nbjpaths)
-	sim = float(nc + 1)/(max(naipaths, nbjpaths)*2 - nc + 1)
+	sim = float(nc + 1) / (max(naipaths, nbjpaths) * 2 - nc + 1)
 	return sim
 
 def getmappings(simmatrixarray):
@@ -158,7 +158,7 @@ def getmappings(simmatrixarray):
 	it = numpy.nditer(costarray, flags=['multi_index'], op_flags=['writeonly'])
 	dsu = []
 	for a in it:
-		dsu.append( (a, it.multi_index[0], it.multi_index[1]) )
+		dsu.append((a, it.multi_index[0], it.multi_index[1]))
 	dsu.sort()
 
 	seena = set()
@@ -168,7 +168,7 @@ def getmappings(simmatrixarray):
 		if a not in seena and b not in seenb:
 			seena.add(a)
 			seenb.add(b)
-			mappings.append( (a,b) )
+			mappings.append((a, b))
 
 	return mappings[:min(simmatrixarray.shape)]
 
@@ -186,7 +186,7 @@ def getsimab(mappings, simmatrixdict):
 	score = 0.0
 	for a, b in mappings:
 		score += simmatrixdict[a][b]
-	simab = score/(max(naa, nab)*2 - score)
+	simab = score / (max(naa, nab) * 2 - score)
 	return simab
 
 def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
@@ -195,7 +195,7 @@ def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
 	aidata = [((ai.GetAtomicNum(), ai.GetIsAromatic()), ai.GetIdx()) for ai in m1.GetAtoms()]
 	bjdata = [((bj.GetAtomicNum(), bj.GetIsAromatic()), bj.GetIdx()) for bj in m2.GetAtoms()]
 
-	simmatrixarray = numpy.zeros( (len(aidata), len(bjdata)) )
+	simmatrixarray = numpy.zeros((len(aidata), len(bjdata)))
 
 	for ai, (aitype, aiidx) in enumerate(aidata):
 		aipaths = m1pathintegers[aiidx]
@@ -217,7 +217,7 @@ def AtomAtomPathSimilarity(m1, m2, m1pathintegers=None, m2pathintegers=None):
 
 	simmatrix = getsimmatrix(m1, m1pathintegers, m2, m2pathintegers)
 
-#	mappings = getmappings(simmatrix)
+# 	mappings = getmappings(simmatrix)
 	mappings = gethungarianmappings(simmatrix)
 
 	simab = getsimab(mappings, simmatrix)
@@ -248,7 +248,7 @@ def test2():
 		for s2 in smileslist:
 			m1 = Chem.MolFromSmiles(s1)
 			m2 = Chem.MolFromSmiles(s2)
-			sims.append('%.4f'%AtomAtomPathSimilarity(m1, m2))
+			sims.append('%.4f' % AtomAtomPathSimilarity(m1, m2))
 	return sims
 
 def test3():
@@ -262,12 +262,12 @@ def test3():
 	for m1 in (m1a, m1b, m2a, m2b):
 		for m2 in (m1a, m1b, m2a, m2b):
 			sim = AtomAtomPathSimilarity(m1, m2)
-			res.append('%.2f'%sim)
+			res.append('%.2f' % sim)
 	return res
 
 def timeit():
-#these are the first 40 smiles in the Gobbi 13321_2015_56_MOESM2_ESM file'''
-	molstr =  '''C[C@@H](O)[C@@H]1OCC[C@@H](C)[C@H](O)C(=O)OC[C@]23CCC(C)=C[C@H]2O[C@@H]4C[C@@H](OC(=O)C=CC=C1)[C@@]3(C)[C@@]45CO5
+# these are the first 40 smiles in the Gobbi 13321_2015_56_MOESM2_ESM file'''
+	molstr = '''C[C@@H](O)[C@@H]1OCC[C@@H](C)[C@H](O)C(=O)OC[C@]23CCC(C)=C[C@H]2O[C@@H]4C[C@@H](OC(=O)C=CC=C1)[C@@]3(C)[C@@]45CO5
 CC1=C[C@H]2O[C@@H]3C[C@H]4OC(=O)C=CC=CC(=O)OCCC(C)=CC(=O)OC[C@@]2(CC1)[C@]4(C)[C@]35CO5
 CC1=CC(=O)OC[C@]23C[C@H](O)C(C)=C[C@H]2O[C@@H]4C[C@@H](OC(=O)C=CC=CC(=O)OCC1)[C@@]3(C)[C@]45CO5
 CC1(C)N=C(N)N=C(N)N1C2=CC=C(Br)C=C2
@@ -317,14 +317,14 @@ CN(C)CCCNC1=CC=NC2=CC(Cl)=CC=C12
 	for a, api in zip(mols, pathints):
 		for b, bpi in zip(mols, pathints):
 			sim = AtomAtomPathSimilarity(a, b, m1pathintegers=api, m2pathintegers=bpi)
-	print('time to compute %dx%d matrix: %.2fs'%(na, nb, time.time()-start))
+	print('time to compute %dx%d matrix: %.2fs' % (na, nb, time.time() - start))
 
 class TestAtomAtomPathSimilarity(unittest.TestCase):
 	def test_paper(self):
-		self.assertEqual('%.3f'%test0(), '0.066')
+		self.assertEqual('%.3f' % test0(), '0.066')
 
 	def test_getcommon(self):
-		self.assertEqual(getcommon([2,2,2,3,3,3], 6, [1,2,3,3,4,5], 6), 3)
+		self.assertEqual(getcommon([2, 2, 2, 3, 3, 3], 6, [1, 2, 3, 3, 4, 5], 6), 3)
 
 	def test_pathintegers(self):
 		self.assertEqual(test1(), [
@@ -339,5 +339,5 @@ class TestAtomAtomPathSimilarity(unittest.TestCase):
 		self.assertEqual(test3(), ['1.00', '0.19', '0.06', '0.09', '0.19', '1.00', '0.12', '0.05', '0.06', '0.12', '1.00', '0.15', '0.09', '0.05', '0.15', '1.00'])
 
 if __name__ == "__main__":
-#	unittest.main()
+# 	unittest.main()
 	timeit()

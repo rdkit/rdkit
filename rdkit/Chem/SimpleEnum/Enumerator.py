@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -39,7 +39,7 @@ from rdkit.Chem import rdChemReactions
 
 import os
 
-def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
+def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'):
   """
   >>> from rdkit.Chem import AllChem
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
@@ -57,15 +57,15 @@ def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
   >>> reactantLabels
   (((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),))
 
-  If there are functional group labels in the input reaction (via atoms with molFileValue properties),
-  the corresponding atoms will have queries added to them so that they only match such things. We can
-  see this here:
+  If there are functional group labels in the input reaction (via atoms with molFileValue
+  properties), the corresponding atoms will have queries added to them so that they only
+  match such things. We can see this here:
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
   >>> r1 = rxn.GetReactantTemplate(0)
   >>> m1 = Chem.MolFromSmiles('CCBr')
   >>> m2 = Chem.MolFromSmiles('c1ccccc1Br')
-  
+
   These both match because the reaction file itself just has R1-Br:
   >>> m1.HasSubstructMatch(r1)
   True
@@ -154,9 +154,13 @@ def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
     return rdChemReactions.PreprocessReaction(reaction,
                                               queryDict,
                                               propName)
-  return rdChemReactions.PreprocessReaction(reaction, propName=propName)  
+  return rdChemReactions.PreprocessReaction(reaction, propName=propName)
 
-def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
+
+def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False,
+                      funcGroupFilename=os.path.join(RDConfig.RDDataDir,
+                                                     'Functional_Group_Hierarchy.txt'),
+                      propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
@@ -179,7 +183,7 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
   6
   >>> print(smis)
   ['CCCc1ccccc1', 'CCCc1ccccn1', 'CCCc1cccnc1', 'CCc1ccccc1', 'CCc1ccccn1', 'CCc1cccnc1']
-  
+
   The nastiness can be avoided at the cost of some memory by asking for only unique products:
   >>> prods = EnumerateReaction(rxn,(reacts1,reacts2),uniqueProductsOnly=True)
   >>> prods = list(prods)
@@ -188,21 +192,23 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
   >>> print(sorted([Chem.MolToSmiles(x[0]) for x in prods]))
   ['CCCc1ccccc1', 'CCCc1ccccn1', 'CCCc1cccnc1', 'CCc1ccccc1', 'CCc1ccccn1', 'CCc1cccnc1']
 
-  
+
   """
-  nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(reaction)
-  if nError: raise ValueError('bad reaction')
-  if len(bbLists) != nReacts: raise ValueError('%d reactants in reaction, %d bb lists supplied'%(nReacts,len(bbLists)))
+  nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
+  if nError:
+    raise ValueError('bad reaction')
+  if len(bbLists) != nReacts:
+    raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
   def _uniqueOnly(lst):
-    seen=[]
+    seen = []
     for entry in lst:
       if entry:
-        smi = '.'.join(sorted([Chem.MolToSmiles(x,True) for x in entry]))
+        smi = '.'.join(sorted([Chem.MolToSmiles(x, True) for x in entry]))
         if smi not in seen:
           seen.append(smi)
           yield entry
-  
-  ps = AllChem.EnumerateLibraryFromReaction(reaction,bbLists)
+
+  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
   if not uniqueProductsOnly:
     return ps
   else:
@@ -216,12 +222,12 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
 

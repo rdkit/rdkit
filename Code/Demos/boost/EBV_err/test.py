@@ -1,5 +1,5 @@
 from __future__ import print_function
-#from DataStructs import cDataStructs
+# from DataStructs import cDataStructs
 from DataStructs import cDataStructs
 import moduleA
 import moduleB
@@ -34,7 +34,7 @@ print("created fp")
 
 fp = moduleB.GetEBV()
 
-#print("*****************************")
-#print("Testing crossing A to B")
-#moduleB.testCrossA(A)
-#print("*****************************")
+# print("*****************************")
+# print("Testing crossing A to B")
+# moduleB.testCrossA(A)
+# print("*****************************")

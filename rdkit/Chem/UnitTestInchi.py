@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -48,8 +48,8 @@ from rdkit.six.moves.cPickle import loads
 curdir = os.path.dirname(os.path.abspath(__file__))
 
 esc = chr(27)
-red = esc + '[31m' 
-green = esc + '[32m' 
+red = esc + '[31m'
+green = esc + '[32m'
 reset = esc + '[0m'
 
 class NoReentrySDMolSupplier(object):
@@ -71,7 +71,7 @@ class NoReentrySDMolSupplier(object):
         self.fileclose()
         self.f = gzip.open(self.filepath, 'r')
         self.valid = True
-        
+
     def next(self):
         buf = ''
         for line in self.f:
@@ -131,16 +131,18 @@ def inchiDiff(inchi1, inchi2):
     return '/'.join(inchi1[:i]) + red + '/' + '/'.join(inchi1[i:]) + \
         '\n' + reset + \
         '/'.join(inchi2[:i]) + red + '/' + '/'.join(inchi2[i:]) + \
-        reset 
+        reset
 
 class RegressionTest(unittest.TestCase):
     def testPrechloricAcid(self):
         examples = (
                 ('OCl(=O)(=O)=O', 'InChI=1S/ClHO4/c2-1(3,4)5/h(H,2,3,4,5)'),
-                ('CC1=CC2=NCC(CN2C=C1)C(=O)c3ccc4cc(C)ccc4c3.OCl(=O)(=O)=O', 
-                    'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19-12-22-20-10-15(2)7-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'),
+                ('CC1=CC2=NCC(CN2C=C1)C(=O)c3ccc4cc(C)ccc4c3.OCl(=O)(=O)=O',
+                 'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19' +
+                 '-12-22-20-10-15(2)7-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'),
                 ('CNc1ccc2nc3ccccc3[n+](C)c2c1.[O-]Cl(=O)(=O)=O',
-                    'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'),
+                 'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-' +
+                 '11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'),
                 )
         for smiles, expected in examples:
             m = MolFromSmiles(smiles)
@@ -153,15 +155,15 @@ class TestCase(unittest.TestCase):
         self.dataset = dict()
         self.dataset_inchi = dict()
         inf = gzip.open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
-                                     'pubchem-hard-set.sdf.gz'),'r')
-        self.dataset['problematic'] = ForwardSDMolSupplier(inf,sanitize=False,removeHs=False)
+                                     'pubchem-hard-set.sdf.gz'), 'r')
+        self.dataset['problematic'] = ForwardSDMolSupplier(inf, sanitize=False, removeHs=False)
         with open(os.path.join(RDConfig.RDCodeDir, 'Chem/test_data',
-                               'pubchem-hard-set.inchi'),'r') as intF:
+                               'pubchem-hard-set.inchi'), 'r') as intF:
           buf = intF.read().replace('\r\n', '\n').encode('latin1')
           intF.close()
         with io.BytesIO(buf) as inF:
           pkl = inF.read()
-        self.dataset_inchi['problematic'] = loads(pkl,encoding='latin1')
+        self.dataset_inchi['problematic'] = loads(pkl, encoding='latin1')
         # disable logging
         DisableLog('rdApp.warning')
 
@@ -172,7 +174,7 @@ class TestCase(unittest.TestCase):
         for fp, f in self.dataset.items():
             inchi_db = self.dataset_inchi[fp]
             same, diff, reasonable = 0, 0, 0
-            for i_,m in enumerate(f):
+            for i_, m in enumerate(f):
                 if m is None:
                     continue
                 ref_inchi = inchi_db[m.GetProp('PUBCHEM_COMPOUND_CID')]
@@ -200,19 +202,21 @@ class TestCase(unittest.TestCase):
                             continue
 
                     diff += 1
-                    print('InChI mismatch for PubChem Compound ' + 
-                          m.GetProp('PUBCHEM_COMPOUND_CID') + 
-                          '\n' + MolToSmiles(m,True) + '\n' + inchiDiff(x, y))
+                    print('InChI mismatch for PubChem Compound ' +
+                          m.GetProp('PUBCHEM_COMPOUND_CID') +
+                          '\n' + MolToSmiles(m, True) + '\n' + inchiDiff(x, y))
                     print()
 
                 else:
                     same += 1
 
-            print(green + "InChI write Summary: %d identical, %d suffix variance, %d reasonable" % (same, diff, reasonable) + reset)
+            print(green +
+                  "InChI write Summary: %d identical, %d suffix variance, %d reasonable" % (
+                    same, diff, reasonable) + reset)
             self.assertEqual(same, 1164)
             self.assertEqual(diff, 0)
             self.assertEqual(reasonable, 17)
-            
+
 
     def test1InchiReadPubChem(self):
         for fp, f in self.dataset.items():
@@ -264,7 +268,7 @@ class TestCase(unittest.TestCase):
                         continue
 
                     diff += 1
-                    print(green + 'Empty mol for PubChem Compound ' + 
+                    print(green + 'Empty mol for PubChem Compound ' +
                           cid + '\n' + reset)
                     continue
                 if x != y:
@@ -295,13 +299,15 @@ class TestCase(unittest.TestCase):
                         continue
 
                     diff += 1
-                    print(green + 'Molecule mismatch for PubChem Compound ' + 
-                          cid + '\n' + reset + 
+                    print(green + 'Molecule mismatch for PubChem Compound ' +
+                          cid + '\n' + reset +
                           inchiDiff(x, y) + reset)
                     print()
                 else:
                     same += 1
-            print(green + "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (same, diff, reasonable) + reset)
+            print(green +
+                  "InChI Read Summary: %d identical, %d  variance, %d reasonable variance" % (
+                    same, diff, reasonable) + reset)
             self.assertEqual(same, 620)
             self.assertEqual(diff, 0)
             self.assertEqual(reasonable, 561)

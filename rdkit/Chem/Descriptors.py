@@ -13,28 +13,28 @@ from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import collections
 
 def _isCallable(thing):
-  return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
-              hasattr(thing,'__call__')
+  return (hasattr(collections, 'Callable') and isinstance(thing, collections.Callable)) or \
+              hasattr(thing, '__call__')
 
-_descList=[]
+_descList = []
 def _setupDescriptors(namespace):
-  global _descList,descList
-  from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen
+  global _descList, descList
+  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen
   from rdkit.Chem.EState import EState_VSA
-  mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Crippen,Fragments]
+  mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
   otherMods = [Chem]
 
-  for nm,thing in namespace.items():
-    if nm[0]!='_' and _isCallable(thing):
-      _descList.append((nm,thing))
+  for nm, thing in namespace.items():
+    if nm[0] != '_' and _isCallable(thing):
+      _descList.append((nm, thing))
 
   others = []
   for mod in otherMods:
     tmp = dir(mod)
     for name in tmp:
       if name[0] != '_':
-        thing = getattr(mod,name)
+        thing = getattr(mod, name)
         if _isCallable(thing):
           others.append(name)
 
@@ -44,18 +44,18 @@ def _setupDescriptors(namespace):
     for name in tmp:
       if name[0] != '_' and name[-1] != '_' and name not in others:
         # filter out python reference implementations:
-        if name[:2]=='py' and name[2:] in tmp:
+        if name[:2] == 'py' and name[2:] in tmp:
           continue
-        thing = getattr(mod,name)
+        thing = getattr(mod, name)
         if _isCallable(thing):
-          namespace[name]=thing
-          _descList.append((name,thing))
-  descList=_descList
+          namespace[name] = thing
+          _descList.append((name, thing))
+  descList = _descList
 
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-MolWt = lambda *x,**y:_rdMolDescriptors._CalcMolWt(*x,**y)
-MolWt.version=_rdMolDescriptors._CalcMolWt_version
-MolWt.__doc__="""The average molecular weight of the molecule
+MolWt = lambda *x, **y:_rdMolDescriptors._CalcMolWt(*x, **y)
+MolWt.version = _rdMolDescriptors._CalcMolWt_version
+MolWt.__doc__ = """The average molecular weight of the molecule
 
   >>> MolWt(Chem.MolFromSmiles('CC'))
   30.07
@@ -64,8 +64,8 @@ MolWt.__doc__="""The average molecular weight of the molecule
 
 """
 
-HeavyAtomMolWt=lambda x:MolWt(x,True)
-HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
+HeavyAtomMolWt = lambda x:MolWt(x, True)
+HeavyAtomMolWt.__doc__ = """The average molecular weight of the molecule ignoring hydrogens
 
   >>> HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
   24.02...
@@ -73,11 +73,11 @@ HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring 
   49.46
 
 """
-HeavyAtomMolWt.version="1.0.0"
+HeavyAtomMolWt.version = "1.0.0"
 
-ExactMolWt = lambda *x,**y:_rdMolDescriptors.CalcExactMolWt(*x,**y)
-ExactMolWt.version=_rdMolDescriptors._CalcExactMolWt_version
-ExactMolWt.__doc__="""The exact molecular weight of the molecule
+ExactMolWt = lambda *x, **y:_rdMolDescriptors.CalcExactMolWt(*x, **y)
+ExactMolWt.version = _rdMolDescriptors._CalcExactMolWt_version
+ExactMolWt.__doc__ = """The exact molecular weight of the molecule
 
   >>> ExactMolWt(Chem.MolFromSmiles('CC'))
   30.04...
@@ -102,7 +102,7 @@ def NumValenceElectrons(mol):
   tbl = Chem.GetPeriodicTable()
   return sum(tbl.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetFormalCharge() +
              atom.GetTotalNumHs() for atom in mol.GetAtoms())
-NumValenceElectrons.version="1.1.0"
+NumValenceElectrons.version = "1.1.0"
 
 def NumRadicalElectrons(mol):
   """ The number of radical electrons the molecule has
@@ -121,44 +121,45 @@ def NumRadicalElectrons(mol):
 
   """
   return sum(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
-NumRadicalElectrons.version="1.1.0"
+NumRadicalElectrons.version = "1.1.0"
 
-def _ChargeDescriptors(mol,force=False):
-  if not force and hasattr(mol,'_chargeDescriptors'):
+def _ChargeDescriptors(mol, force=False):
+  if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
   chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
-  minChg=500.
-  maxChg=-500.
+  minChg = 500.
+  maxChg = -500.
   for at in mol.GetAtoms():
     chg = float(at.GetProp('_GasteigerCharge'))
-    minChg = min(chg,minChg)
-    maxChg = max(chg,maxChg)
-  res = (minChg,maxChg)
-  mol._chargeDescriptors=res
+    minChg = min(chg, minChg)
+    maxChg = max(chg, maxChg)
+  res = (minChg, maxChg)
+  mol._chargeDescriptors = res
   return res
 
 
-def MaxPartialCharge(mol,force=False):
-  _,res = _ChargeDescriptors(mol,force)
+def MaxPartialCharge(mol, force=False):
+  _, res = _ChargeDescriptors(mol, force)
   return res
-MaxPartialCharge.version="1.0.0"
+MaxPartialCharge.version = "1.0.0"
 
-def MinPartialCharge(mol,force=False):
-  res,_ = _ChargeDescriptors(mol,force)
+def MinPartialCharge(mol, force=False):
+  res, _ = _ChargeDescriptors(mol, force)
   return res
-MinPartialCharge.version="1.0.0"
+MinPartialCharge.version = "1.0.0"
 
-def MaxAbsPartialCharge(mol,force=False):
-  v1,v2 = _ChargeDescriptors(mol,force)
-  return max(abs(v1),abs(v2))
-MaxAbsPartialCharge.version="1.0.0"
+def MaxAbsPartialCharge(mol, force=False):
+  v1, v2 = _ChargeDescriptors(mol, force)
+  return max(abs(v1), abs(v2))
+MaxAbsPartialCharge.version = "1.0.0"
 
-def MinAbsPartialCharge(mol,force=False):
-  v1,v2 = _ChargeDescriptors(mol,force)
-  return min(abs(v1),abs(v2))
-MinAbsPartialCharge.version="1.0.0"
+def MinAbsPartialCharge(mol, force=False):
+  v1, v2 = _ChargeDescriptors(mol, force)
+  return min(abs(v1), abs(v2))
+MinAbsPartialCharge.version = "1.0.0"
 
-from rdkit.Chem.EState.EState import MaxEStateIndex,MinEStateIndex,MaxAbsEStateIndex,MinAbsEStateIndex
+from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex
+from rdkit.Chem.EState.EState import MaxAbsEStateIndex, MinAbsEStateIndex
 
 _setupDescriptors(locals())
 
@@ -184,7 +185,7 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
-    
+
 
 
 #------------------------------------
@@ -192,10 +193,10 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS)
+  import doctest, sys
+  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

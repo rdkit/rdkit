@@ -88,7 +88,7 @@ class _LazyDescr(object):
         except ImportError:
             # See the nice big comment in MovedModule.__getattr__.
             raise AttributeError("%s could not be imported " % self.name)
-        setattr(obj, self.name, result) # Invokes __set__.
+        setattr(obj, self.name, result)  # Invokes __set__.
         # This is a bit ugly, but it avoids running this again.
         delattr(obj.__class__, self.name)
         return result
@@ -207,7 +207,7 @@ _moved_attributes = [
     MovedModule("BaseHTTPServer", "BaseHTTPServer", "http.server"),
     MovedModule("CGIHTTPServer", "CGIHTTPServer", "http.server"),
     MovedModule("SimpleHTTPServer", "SimpleHTTPServer", "http.server"),
-    #MovedModule("cPickle", "cPickle", "pickle"),
+    # MovedModule("cPickle", "cPickle", "pickle"),
     MovedModule("cPickle", "rdkit._py2_pickle", "pickle"),
     MovedModule("queue", "Queue"),
     MovedModule("reprlib", "repr"),
@@ -278,7 +278,7 @@ del attr
 
 Module_six_moves_urllib_parse._moved_attributes = _urllib_parse_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_parse"] = sys.modules[__name__ + ".moves.urllib.parse"] = Module_six_moves_urllib_parse(__name__ + ".moves.urllib_parse")
+sys.modules[__name__ + ".moves.urllib_parse"] = sys.modules[__name__ + ".moves.urllib.parse"] = Module_six_moves_urllib_parse(__name__ + ".moves.urllib_parse")  # noqa
 
 
 class Module_six_moves_urllib_error(_LazyModule):
@@ -296,7 +296,7 @@ del attr
 
 Module_six_moves_urllib_error._moved_attributes = _urllib_error_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_error"] = sys.modules[__name__ + ".moves.urllib.error"] = Module_six_moves_urllib_error(__name__ + ".moves.urllib.error")
+sys.modules[__name__ + ".moves.urllib_error"] = sys.modules[__name__ + ".moves.urllib.error"] = Module_six_moves_urllib_error(__name__ + ".moves.urllib.error")  # noqa
 
 
 class Module_six_moves_urllib_request(_LazyModule):
@@ -344,7 +344,7 @@ del attr
 
 Module_six_moves_urllib_request._moved_attributes = _urllib_request_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_request"] = sys.modules[__name__ + ".moves.urllib.request"] = Module_six_moves_urllib_request(__name__ + ".moves.urllib.request")
+sys.modules[__name__ + ".moves.urllib_request"] = sys.modules[__name__ + ".moves.urllib.request"] = Module_six_moves_urllib_request(__name__ + ".moves.urllib.request")  # noqa
 
 
 class Module_six_moves_urllib_response(_LazyModule):
@@ -363,7 +363,7 @@ del attr
 
 Module_six_moves_urllib_response._moved_attributes = _urllib_response_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_response"] = sys.modules[__name__ + ".moves.urllib.response"] = Module_six_moves_urllib_response(__name__ + ".moves.urllib.response")
+sys.modules[__name__ + ".moves.urllib_response"] = sys.modules[__name__ + ".moves.urllib.response"] = Module_six_moves_urllib_response(__name__ + ".moves.urllib.response")  # noqa
 
 
 class Module_six_moves_urllib_robotparser(_LazyModule):
@@ -379,7 +379,7 @@ del attr
 
 Module_six_moves_urllib_robotparser._moved_attributes = _urllib_robotparser_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_robotparser"] = sys.modules[__name__ + ".moves.urllib.robotparser"] = Module_six_moves_urllib_robotparser(__name__ + ".moves.urllib.robotparser")
+sys.modules[__name__ + ".moves.urllib_robotparser"] = sys.modules[__name__ + ".moves.urllib.robotparser"] = Module_six_moves_urllib_robotparser(__name__ + ".moves.urllib.robotparser")  # noqa
 
 
 class Module_six_moves_urllib(types.ModuleType):
@@ -656,7 +656,7 @@ def add_metaclass(metaclass):
 
 # added as part of the RDKit port
 if PY3:
-    def cmp(t1,t2):
-        return (t1<t2)*-1 or (t1>t2)*1
+    def cmp(t1, t2):
+        return (t1 < t2) * -1 or (t1 > t2) * 1
 else:
-    cmp=cmp
+    cmp = cmp

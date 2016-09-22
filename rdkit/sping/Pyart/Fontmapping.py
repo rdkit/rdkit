@@ -1,24 +1,24 @@
-## font mapping stuff ##
+# # font mapping stuff ##
 # by default, I'm using the standard acrobat fonts so that pdfmetrics should work well
-# 
+#
 DefaultFace = 'times'
 
 import string
 # these are the required fonts for piddle
 
 
-PidLegalFonts = { "courier": "courier", # note: keys are lowercased 
-                  "helvetica": "helvetica",  
+PidLegalFonts = { "courier": "courier",  # note: keys are lowercased
+                  "helvetica": "helvetica",
                   "monospaced": "courier",
                   "sansserif": "helvetica",
                   "serif": "times",
                   "times": "times",
                   "symbol" : "symbol",
-                  "zapfdingbats": "zapfdingbats"} # Could add more...
+                  "zapfdingbats": "zapfdingbats"}  # Could add more...
 
 
-#PidLegalShapes:
-Roman="Roman"; Bold="Bold"; Italic="Italic"; BoldItalic = "BoldOblique"
+# PidLegalShapes:
+Roman = "Roman"; Bold = "Bold"; Italic = "Italic"; BoldItalic = "BoldOblique"
 
 MapPid2PyartFontName = { ("helvetica", Roman): "Helvetica",
                          ("helvetica", Bold): "Helvetica-Bold",
@@ -36,10 +36,10 @@ MapPid2PyartFontName = { ("helvetica", Roman): "Helvetica",
                          ("symbol", Bold) :  "Symbol",
                          ("symbol", Italic) : "Symbol",
                          ("symbol", BoldItalic) : "Symbol",
-                         ("zapfdingbats", Roman ) : "ZapfDingbats",
-                         ("zapfdingbats", Bold ) : "ZapfDingbats",
-                         ("zapfdingbats", Italic ) : "ZapfDingbats",
-                         ("zapfdingbats", BoldItalic ) : "ZapfDingbats" }
+                         ("zapfdingbats", Roman) : "ZapfDingbats",
+                         ("zapfdingbats", Bold) : "ZapfDingbats",
+                         ("zapfdingbats", Italic) : "ZapfDingbats",
+                         ("zapfdingbats", BoldItalic) : "ZapfDingbats" }
 
 
 #  PDFFontMapping = { ("helvetica", Roman): "Helvetica",
@@ -74,10 +74,10 @@ def getPyartName(pidfont):
 
     face = pidfont.face or DefaultFace
     # print "pidfont.face = %s" % pidfont.face
-    
+
     face = string.lower(face)
     if PidLegalFonts.has_key(face):
-        return MapPid2PyartFontName[ ( PidLegalFonts[face], shape) ]
+        return MapPid2PyartFontName[ (PidLegalFonts[face], shape) ]
     else:
         raise ValueError("Illegal Font")
 
@@ -92,7 +92,7 @@ getPdfName = getPyartName
 
 #      face = pidfont.face or DefaultFace
 #      # print "pidfont.face = %s" % pidfont.face
-    
+
 #      face = string.lower(face)
 #      if PidLegalFonts.has_key(face):
 #          return PDFFontMapping[ ( PidLegalFonts[face], shape) ]

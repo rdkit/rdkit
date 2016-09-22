@@ -27,9 +27,9 @@ class SimilarityScreener(object):
       metric: a function that takes two arguments and returns a similarity
               measure between them
 
-      dataSource: the source pool from which to draw, needs to support 
+      dataSource: the source pool from which to draw, needs to support
               a next() method
-              
+
       fingerprinter: a function that takes a molecule and returns a
              fingerprint of the appropriate format
 
@@ -38,7 +38,7 @@ class SimilarityScreener(object):
        subclasses must support either an iterator interface
        or __len__ and __getitem__
   """
-  def __init__(self,probe=None,metric=None,dataSource=None,fingerprinter=None):
+  def __init__(self, probe=None, metric=None, dataSource=None, fingerprinter=None):
     self.metric = metric
     self.dataSource = dataSource
     self.fingerprinter = fingerprinter
@@ -50,11 +50,11 @@ class SimilarityScreener(object):
     pass
 
   # FIX: add setters/getters for attributes
-  def SetProbe(self,probeFingerprint):
+  def SetProbe(self, probeFingerprint):
     """ sets our probe fingerprint """
     self.probe = probeFingerprint
 
-  def GetSingleFingerprint(self,probe):
+  def GetSingleFingerprint(self, probe):
     """ returns a fingerprint for a single probe object
 
      This is potentially useful in initializing our internal
@@ -77,13 +77,13 @@ class ThresholdScreener(SimilarityScreener):
        Hits are *not* stored locally, so if a client resets
        the iteration and starts over, the same amount of work must
        be done to retrieve the hits.
-       
+
      - The thinness and laziness forces us to support only forward
        iteration (not random access)
 
   """
-  def __init__(self,threshold,**kwargs):
-    SimilarityScreener.__init__(self,**kwargs)
+  def __init__(self, threshold, **kwargs):
+    SimilarityScreener.__init__(self, **kwargs)
     self.threshold = threshold
     self.dataIter = iter(self.dataSource)
   # FIX: add setters/getters for attributes
@@ -98,11 +98,11 @@ class ThresholdScreener(SimilarityScreener):
       #  that's how we stop when no match is found
       obj = six.next(self.dataIter)
       fp = self.fingerprinter(obj)
-      sim = DataStructs.FingerprintSimilarity(fp,self.probe,self.metric)
+      sim = DataStructs.FingerprintSimilarity(fp, self.probe, self.metric)
       if sim >= self.threshold:
         res = obj
         done = 1
-    return sim,res
+    return sim, res
 
   def Reset(self):
     """ used to reset our internal state so that iteration
@@ -132,8 +132,8 @@ class TopNScreener(SimilarityScreener):
       - supports forward iteration and getitem
 
   """
-  def __init__(self,num,**kwargs):
-    SimilarityScreener.__init__(self,**kwargs)
+  def __init__(self, num, **kwargs):
+    SimilarityScreener.__init__(self, **kwargs)
     self.numToGet = num
     self.topN = None
     self._pos = 0
@@ -160,15 +160,15 @@ class TopNScreener(SimilarityScreener):
     self.topN = TopNContainer.TopNContainer(self.numToGet)
     for obj in self.dataSource:
       fp = self.fingerprinter(obj)
-      sim = DataStructs.FingerprintSimilarity(fp,self.probe,self.metric)
-      self.topN.Insert(sim,obj)
+      sim = DataStructs.FingerprintSimilarity(fp, self.probe, self.metric)
+      self.topN.Insert(sim, obj)
 
   def __len__(self):
     if self.topN is None:
       self._initTopN()
     return self.numToGet
-  
-  def __getitem__(self,idx):
+
+  def __getitem__(self, idx):
     if self.topN is None:
       self._initTopN()
     return self.topN[idx]

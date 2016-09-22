@@ -19,9 +19,9 @@ class KNNRegressionModel(KNNModel.KNNModel) :
   """
 
   def __init__(self, k, attrs, dfunc, radius=None) :
-    self._setup(k, attrs, dfunc,radius)
+    self._setup(k, attrs, dfunc, radius)
 
-    self._badExamples = [] # list of examples incorrectly classified
+    self._badExamples = []  # list of examples incorrectly classified
 
   def type(self):
     return "Regression Model"
@@ -35,7 +35,7 @@ class KNNRegressionModel(KNNModel.KNNModel) :
   def NameModel(self, varNames) :
     self.SetName(self.type())
 
-  def PredictExample(self, example, appendExamples=0, weightedAverage=0,neighborList=None) :
+  def PredictExample(self, example, appendExamples=0, weightedAverage=0, neighborList=None) :
     """ Generates a prediction for an example by looking at its closest neighbors
 
     **Arguments**
@@ -63,16 +63,17 @@ class KNNRegressionModel(KNNModel.KNNModel) :
     accum = 0.0
     denom = 0.0
     for knn in knnLst:
-      if knn[1] is None: continue
+      if knn[1] is None:
+        continue
       if weightedAverage:
         dist = knn[0]
-        if dist==0.0:
+        if dist == 0.0:
           w = 1.
         else:
-          w = 1./dist
+          w = 1. / dist
       else:
-        w=1.0
-      accum += w*knn[1][-1]
+        w = 1.0
+      accum += w * knn[1][-1]
       denom += w
     if denom:
       accum /= denom

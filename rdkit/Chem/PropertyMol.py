@@ -47,7 +47,7 @@ class PropertyMol(Chem.Mol):
    but the Property mols still convert all values to strings before storing:
    >>> pm.GetProp('IntVal')
    '1'
-   
+
    This is a test for sf.net issue 2880943: make sure properties end up in SD files:
    >>> import tempfile,os
    >>> fn = tempfile.mktemp('.sdf')
@@ -78,38 +78,39 @@ class PropertyMol(Chem.Mol):
    ...   pass
 
 
-   
+
   """
-  __getstate_manages_dict__=True
-  def __init__(self,mol):
-    if not isinstance(mol,Chem.Mol): return
-    Chem.Mol.__init__(self,mol)
+  __getstate_manages_dict__ = True
+  def __init__(self, mol):
+    if not isinstance(mol, Chem.Mol):
+      return
+    Chem.Mol.__init__(self, mol)
     for pn in mol.GetPropNames(includePrivate=True):
-      self.SetProp(pn,mol.GetProp(pn))
-  def SetProp(self,nm,val):
-    Chem.Mol.SetProp(self,nm,str(val))
+      self.SetProp(pn, mol.GetProp(pn))
+  def SetProp(self, nm, val):
+    Chem.Mol.SetProp(self, nm, str(val))
   def __getstate__(self):
-    pDict={}
+    pDict = {}
     for pn in self.GetPropNames(includePrivate=True):
       pDict[pn] = self.GetProp(pn)
     return {'pkl':self.ToBinary(),
             'propD':pDict}
-  def __setstate__(self,stateD):
-    Chem.Mol.__init__(self,stateD['pkl'])
-    for prop,val in stateD['propD'].items():
-      self.SetProp(prop,val)
+  def __setstate__(self, stateD):
+    Chem.Mol.__init__(self, stateD['pkl'])
+    for prop, val in stateD['propD'].items():
+      self.SetProp(prop, val)
 
-    
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS)
+  import doctest, sys
+  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-  
+

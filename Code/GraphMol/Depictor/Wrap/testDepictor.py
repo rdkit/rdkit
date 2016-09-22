@@ -1,9 +1,9 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
 #
 #  $Id: testDepictor.py 2112 2012-07-02 09:47:45Z glandrum $
 #
-#pylint:disable=E1101,C0111,C0103,R0904
+# pylint:disable=E1101,C0111,C0103,R0904
 from __future__ import division, print_function
 import unittest
 import os, sys
@@ -34,7 +34,7 @@ def getDistMat(mol):
       pj = conf.GetAtomPosition(j)
       pj -= pi
       res[idx + j] = pj.Length()
-            
+
   return res
 
 def compareCoords(m, molFile):
@@ -91,7 +91,7 @@ def stereoCompare(smilesFile):
       for bnd in dbnds:
         obnd = nmol.GetBondBetweenAtoms(match[bnd.GetBeginAtomIdx()], match[bnd.GetEndAtomIdx()])
         assert(obnd.GetBondType() == Chem.BondType.DOUBLE)
-      if ok: 
+      if ok:
         break
     if not ok:
       print(Chem.MolToMolBlock(mol), file=sys.stderr)
@@ -106,7 +106,7 @@ class TestCase(unittest.TestCase) :
     # causes problems every time anything changes.
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor',
                                         'test_data', 'first_200.tpsa.csv')
-    #smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
+    # smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
 
     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor',
                          'test_data', 'first_200.python.sdf')
@@ -116,7 +116,7 @@ class TestCase(unittest.TestCase) :
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor',
                          'test_data', "cis_trans_cases.csv")
     self.assertTrue(stereoCompare(fileN))
-      
+
   def test2Coords(self) :
     m1 = Chem.MolFromSmiles('C1CCC1CC')
     coordMap = {0:Geometry.Point2D(0, 0),
@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase) :
   def test3IssueSF1526844(self):
     t = Chem.MolFromSmiles('c1nc(N)ccc1')
     rdDepictor.Compute2DCoords(t, canonOrient=False)
-    
+
     m2 = Chem.MolFromSmiles('c1nc(NC=O)ccc1')
     AlignDepict.AlignDepict(m2, t)
     expected = [Geometry.Point3D(1.5, 0.0, 0.0),
@@ -163,41 +163,43 @@ class TestCase(unittest.TestCase) :
       self.assertTrue(ptEq(pos, expected[i], 0.001))
 
   def test4SamplingSpread(self):
-    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
+    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
+                                           'test_data/7UPJ_xtal.mol'))
 
 
     # default mode
     rdDepictor.Compute2DCoords(mol, canonOrient=False)
-    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 
+    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
                                                     'test_data/7UPJ_default.mol')))
 
 
     # spread the structure as much as possible by sampling
     rdDepictor.Compute2DCoords(mol, canonOrient=False, nFlipsPerSample=3, nSample=100,
                                sampleSeed=100, permuteDeg4Nodes=1)
-    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 
+    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
                                                     'test_data/7UPJ_spread.mol')))
 
-    
+
   def test5SamplingMimic3D(self):
-    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
+    mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
+                                           'test_data/7UPJ_xtal.mol'))
     dmat3D = getDistMat(mol)
 
     # now mimic the coordinate with a very small weight
     rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
-    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 
+    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
                                                     'test_data/7UPJ_mimic3D_1.mol')))
-    
+
     # now mimic the coordinate with a very small weight
     rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
-    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 
+    self.assertTrue(compareCoords(mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
                                                     'test_data/7UPJ_mimic3D_2.mol')))
 
-    #mb = Chem.MolToMolBlock(mol)
-    #ofile = open('../test_data/7UPJ_mimic3D_2.mol', 'w')
-    #ofile.write(mb)
-    #ofile.close()
-    
+    # mb = Chem.MolToMolBlock(mol)
+    # ofile = open('../test_data/7UPJ_mimic3D_2.mol', 'w')
+    # ofile.write(mb)
+    # ofile.close()
+
   def test6ChangeBondLength(self):
     m = Chem.MolFromSmiles('CC')
     rdDepictor.Compute2DCoords(m)
@@ -212,6 +214,6 @@ class TestCase(unittest.TestCase) :
     conf = m.GetConformer()
     self.assertAlmostEqual(conf.GetAtomPosition(0).x, -0.750, 3)
     self.assertAlmostEqual(conf.GetAtomPosition(1).x, 0.750, 3)
-    
+
 if __name__ == '__main__':
   unittest.main()

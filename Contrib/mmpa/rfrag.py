@@ -31,7 +31,7 @@
 # Created by Jameed Hussain, July 2013
 #
 # Modifications and optimizations by Greg Landrum, July 2015
-# 
+#
 from __future__ import print_function
 import sys
 import re
@@ -46,63 +46,63 @@ def find_correct(f_array):
     for f in f_array:
         attachments = f.count("*")
         if (attachments == 1):
-            side_chains = "%s.%s" % (side_chains,f)
+            side_chains = "%s.%s" % (side_chains, f)
         else:
             core = f
 
     side_chains = side_chains.lstrip('.')
 
-    #cansmi the side chains
+    # cansmi the side chains
     temp = Chem.MolFromSmiles(side_chains)
-    side_chains = Chem.MolToSmiles( temp, isomericSmiles=True )
+    side_chains = Chem.MolToSmiles(temp, isomericSmiles=True)
 
-    #and cansmi the core
+    # and cansmi the core
     temp = Chem.MolFromSmiles(core)
-    core = Chem.MolToSmiles( temp, isomericSmiles=True )
+    core = Chem.MolToSmiles(temp, isomericSmiles=True)
 
-    return core,side_chains
+    return core, side_chains
 
-def delete_bonds(smi,id,mol,bonds,out):
+def delete_bonds(smi, id, mol, bonds, out):
 
-    #use the same parent mol object and create editable mol
+    # use the same parent mol object and create editable mol
     em = Chem.EditableMol(mol)
 
-    #loop through the bonds to delete
+    # loop through the bonds to delete
     isotope = 0
     isotope_track = {};
     for i in bonds:
         isotope += 1
-        #remove the bond
-        em.RemoveBond(i[0],i[1])
+        # remove the bond
+        em.RemoveBond(i[0], i[1])
 
-        #now add attachement points
+        # now add attachement points
         newAtomA = em.AddAtom(Chem.Atom(0))
-        em.AddBond(i[0],newAtomA,Chem.BondType.SINGLE)
+        em.AddBond(i[0], newAtomA, Chem.BondType.SINGLE)
 
         newAtomB = em.AddAtom(Chem.Atom(0))
-        em.AddBond(i[1],newAtomB,Chem.BondType.SINGLE)
+        em.AddBond(i[1], newAtomB, Chem.BondType.SINGLE)
 
-        #keep track of where to put isotopes
+        # keep track of where to put isotopes
         isotope_track[newAtomA] = isotope
         isotope_track[newAtomB] = isotope
 
 
-    #should be able to get away without sanitising mol
-    #as the existing valencies/atoms not changed
+    # should be able to get away without sanitising mol
+    # as the existing valencies/atoms not changed
     modifiedMol = em.GetMol()
 
-    #canonical smiles can be different with and without the isotopes
-    #hence to keep track of duplicates use fragmented_smi_noIsotopes
-    fragmented_smi_noIsotopes = Chem.MolToSmiles(modifiedMol,isomericSmiles=True)
+    # canonical smiles can be different with and without the isotopes
+    # hence to keep track of duplicates use fragmented_smi_noIsotopes
+    fragmented_smi_noIsotopes = Chem.MolToSmiles(modifiedMol, isomericSmiles=True)
 
     valid = True
     fragments = fragmented_smi_noIsotopes.split(".")
 
-    #check if its a valid triple cut
+    # check if its a valid triple cut
     if(isotope == 3):
         valid = False
         for f in fragments:
-            matchObj = re.search( '\*.*\*.*\*', f)
+            matchObj = re.search('\*.*\*.*\*', f)
             if matchObj:
                 valid = True
                 break
@@ -113,50 +113,50 @@ def delete_bonds(smi,id,mol,bonds,out):
 
             fragments = fragmented_smi_noIsotopes.split(".")
 
-            #print fragmented_smi_noIsotopes
+            # print fragmented_smi_noIsotopes
             s1 = Chem.MolFromSmiles(fragments[0])
             s2 = Chem.MolFromSmiles(fragments[1])
 
-            #need to cansmi again as smiles can be different
-            output = '%s,%s,,%s.%s' % (smi,id,Chem.MolToSmiles(s1,isomericSmiles=True),Chem.MolToSmiles(s2,isomericSmiles=True) )
-            if( (output in out) == False):
+            # need to cansmi again as smiles can be different
+            output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(s1, isomericSmiles=True), Chem.MolToSmiles(s2, isomericSmiles=True))
+            if((output in out) == False):
                 out.add(output)
 
         elif (isotope >= 2):
-            #add the isotope labels
+            # add the isotope labels
             for key in isotope_track:
-                #to add isotope lables
+                # to add isotope lables
                 modifiedMol.GetAtomWithIdx(key).SetIsotope(isotope_track[key])
-            fragmented_smi = Chem.MolToSmiles(modifiedMol,isomericSmiles=True)
+            fragmented_smi = Chem.MolToSmiles(modifiedMol, isomericSmiles=True)
 
-            #change the isotopes into labels - currently can't add SMARTS or labels to mol
+            # change the isotopes into labels - currently can't add SMARTS or labels to mol
             fragmented_smi = re.sub('\[1\*\]', '[*:1]', fragmented_smi)
             fragmented_smi = re.sub('\[2\*\]', '[*:2]', fragmented_smi)
             fragmented_smi = re.sub('\[3\*\]', '[*:3]', fragmented_smi)
 
             fragments = fragmented_smi.split(".")
 
-            #identify core/side chains and cansmi them
-            core,side_chains = find_correct(fragments)
+            # identify core/side chains and cansmi them
+            core, side_chains = find_correct(fragments)
 
-            #now change the labels on sidechains and core
-            #to get the new labels, cansmi the dot-disconnected side chains
-            #the first fragment in the side chains has attachment label 1, 2nd: 2, 3rd: 3
-            #then change the labels accordingly in the core
+            # now change the labels on sidechains and core
+            # to get the new labels, cansmi the dot-disconnected side chains
+            # the first fragment in the side chains has attachment label 1, 2nd: 2, 3rd: 3
+            # then change the labels accordingly in the core
 
-            #this is required by the indexing script, as the side-chains are "keys" in the index
-            #this ensures the side-chains always have the same numbering
+            # this is required by the indexing script, as the side-chains are "keys" in the index
+            # this ensures the side-chains always have the same numbering
 
             isotope_track = {}
             side_chain_fragments = side_chains.split(".")
 
-            for s in range( len(side_chain_fragments) ):
-                matchObj = re.search( '\[\*\:([123])\]', side_chain_fragments[s] )
+            for s in range(len(side_chain_fragments)):
+                matchObj = re.search('\[\*\:([123])\]', side_chain_fragments[s])
                 if matchObj:
-                    #add to isotope_track with key: old_isotope, value:
-                    isotope_track[matchObj.group(1)] = str(s+1)
+                    # add to isotope_track with key: old_isotope, value:
+                    isotope_track[matchObj.group(1)] = str(s + 1)
 
-            #change the labels if required
+            # change the labels if required
             if(isotope_track['1'] != '1'):
                 core = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]' , core)
                 side_chains = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]' , side_chains)
@@ -169,33 +169,33 @@ def delete_bonds(smi,id,mol,bonds,out):
                     core = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]' , core)
                     side_chains = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]' , side_chains)
 
-            #now remove the XX
+            # now remove the XX
             core = re.sub('XX', '' , core)
             side_chains = re.sub('XX', '' , side_chains)
 
-            output = '%s,%s,%s,%s' % (smi,id,core,side_chains)
-            if( (output in out) == False):
+            output = '%s,%s,%s,%s' % (smi, id, core, side_chains)
+            if((output in out) == False):
                 out.add(output)
 
-def fragment_mol(smi,id):
+def fragment_mol(smi, id):
 
     mol = Chem.MolFromSmiles(smi)
 
-    #different cuts can give the same fragments
-    #to use outlines to remove them
+    # different cuts can give the same fragments
+    # to use outlines to remove them
     outlines = set()
 
     if(mol == None):
-        sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
+        sys.stderr.write("Can't generate mol for: %s\n" % (smi))
     else:
-        frags = rdMMPA.FragmentMol(mol,pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]",resultsAsMols=False)
-        for core,chains in frags:
-            output = '%s,%s,%s,%s' % (smi,id,core,chains)
-            if( not (output in outlines) ):
+        frags = rdMMPA.FragmentMol(mol, pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]", resultsAsMols=False)
+        for core, chains in frags:
+            output = '%s,%s,%s,%s' % (smi, id, core, chains)
+            if(not (output in outlines)):
                 outlines.add(output)
     return outlines
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     if (len(sys.argv) >= 2):
         print("Program that fragments a user input set of smiles.")
@@ -205,17 +205,17 @@ if __name__=='__main__':
         print("Output: whole mol smiles,ID,core,context\n")
         sys.exit(1)
 
-    #read the STDIN
+    # read the STDIN
     for line in sys.stdin:
 
         line = line.rstrip()
 
-        line_fields = re.split('\s|,',line)
+        line_fields = re.split('\s|,', line)
         smiles = line_fields[0]
         cmpd_id = line_fields[1]
 
-        #returns a set containing the output
-        o = fragment_mol(smiles,cmpd_id)
+        # returns a set containing the output
+        o = fragment_mol(smiles, cmpd_id)
 
         for l in o:
             print(l)
@@ -235,4 +235,4 @@ user	0m9.704s
 sys	0m0.043s
 
 
-"""                        
+"""

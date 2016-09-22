@@ -25,15 +25,15 @@ class WxCanvasError(RuntimeError):
 
 class PiddleWxDc(sping_pid.Canvas):
 
-    def __init__(self, aWxDc, size=(300,300), name="piddleWX"): 
+    def __init__(self, aWxDc, size=(300, 300), name="piddleWX"):
         sping_pid.Canvas.__init__(self, size, name)
         self.dc = aWxDc
         self.dc.BeginDrawing()
 
-    def __del__(self): 
+    def __del__(self):
         self.dc.EndDrawing()
 
-    def _getWXcolor(self, color, default = None):
+    def _getWXcolor(self, color, default=None):
         '''Converts PIDDLE colors to wx colors'''
         if color is not None:
            if color == sping_pid.transparent:
@@ -44,9 +44,9 @@ class PiddleWxDc(sping_pid.Canvas):
         if default is not None:
           return self._getWXcolor(default)
         else:
-          return None   # End of the line
+          return None  # End of the line
 
-    def _getWXbrush(self, color, default_color = None):
+    def _getWXbrush(self, color, default_color=None):
         '''Converts PIDDLE colors to a wx brush'''
 
         if color == sping_pid.transparent:
@@ -62,7 +62,7 @@ class PiddleWxDc(sping_pid.Canvas):
 
         return wxBrush(wxcolor)
 
-    def _getWXpen(self, width, color, default_color = None):
+    def _getWXpen(self, width, color, default_color=None):
         '''Converts PIDDLE colors to a wx pen'''
 
         if width is None or width < 0:
@@ -89,17 +89,17 @@ class PiddleWxDc(sping_pid.Canvas):
         #  match them to individual fonts, this is difficult to do in a platform
         #  independant way
         if font.face is None or font.face == 'times':
-            family = wxDEFAULT 
+            family = wxDEFAULT
         elif font.face == 'courier' or font.face == 'monospaced':
-            family = wxMODERN 
+            family = wxMODERN
         elif font.face == 'helvetica' or font.face == 'sansserif':
-            family = wxSWISS 
+            family = wxSWISS
         elif font.face == 'serif' or font.face == 'symbol':
-            family = wxDEFAULT 
+            family = wxDEFAULT
         else:
             family = wxDEFAULT
-        weight = wxNORMAL 
-        style = wxNORMAL 
+        weight = wxNORMAL
+        style = wxNORMAL
         underline = 0
         if font.bold == 1:
             weight = wxBOLD
@@ -124,7 +124,7 @@ class PiddleWxDc(sping_pid.Canvas):
 
     def clear(self):
         self.dc.Clear()
-    
+
   #------------ string/font info ------------
 
     def stringWidth(self, s, font=None):
@@ -152,19 +152,19 @@ class PiddleWxDc(sping_pid.Canvas):
   # Note default parameters "=None" means use the defaults set in the
   # Canvas method: defaultLineColor, etc.
 
-    def drawLine(self, x1,y1, x2,y2, color=None, width=None):
+    def drawLine(self, x1, y1, x2, y2, color=None, width=None):
         '''Draw a straight line between x1,y1 and x2,y2.'''
 
         if width is None or width < 0:
             width = self.defaultLineWidth
         self.dc.SetPen(self._getWXpen(width, color, self.defaultLineColor))
-        self.dc.DrawLine(x1,y1,x2,y2)
+        self.dc.DrawLine(x1, y1, x2, y2)
 
-    def drawString(self, s, x,y, font=None, color=None, angle=None):
+    def drawString(self, s, x, y, font=None, color=None, angle=None):
         '''Draw a string starting at location x,y.
         NOTE: the baseline goes on y; drawing covers (y-ascent,y+descent)
         Text rotation (angle%360 != 0) is not supported.'''
-        
+
         self._setWXfont(font)
 
         if color == sping_pid.transparent:
@@ -177,11 +177,11 @@ class PiddleWxDc(sping_pid.Canvas):
             wx_color = wxBLACK;
 
         self.dc.SetTextForeground(wx_color)
-            
+
         if '\n' in s or '\r' in s:
-          #normalize line ends
-          s = string.replace(s, '\r\n','\n')
-          s = string.replace(s, '\n\r','\n')
+          # normalize line ends
+          s = string.replace(s, '\r\n', '\n')
+          s = string.replace(s, '\n\r', '\n')
           lines = string.split(s, '\n')
         else:
           lines = [s]
@@ -190,16 +190,16 @@ class PiddleWxDc(sping_pid.Canvas):
           self._drawRotatedString(lines, x, y, font, wx_color, angle)
         else:
           line_height = self.fontHeight(font)
-          for l in range(0,len(lines)):
-            self.dc.DrawText(lines[l], x, y - self.fontAscent(font) + l*line_height)
+          for l in range(0, len(lines)):
+            self.dc.DrawText(lines[l], x, y - self.fontAscent(font) + l * line_height)
 
-    def _drawRotatedString(self, lines, x, y, font = None, color = None, angle=0):
+    def _drawRotatedString(self, lines, x, y, font=None, color=None, angle=0):
 
         import math
-        
+
         # [kbj] Hack since the default system font may not be able to rotate.
         if font is None:
-          font = sping_pid.Font(face='helvetica')            
+          font = sping_pid.Font(face='helvetica')
           self._setWXfont(font)
 
         ascent = self.fontAscent(font)
@@ -208,23 +208,23 @@ class PiddleWxDc(sping_pid.Canvas):
         rad = angle * math.pi / 180.
         s = math.sin(rad)
         c = math.cos(rad)
-        dx = s*height
-        dy = c*height
+        dx = s * height
+        dy = c * height
         lx = x - dx
-        ly = y - c*ascent
+        ly = y - c * ascent
 
         for i in range(0, len(lines)):
-          self.dc.DrawRotatedText(lines[i], lx + i*dx, ly + i*dy, angle) 
-        
+          self.dc.DrawRotatedText(lines[i], lx + i * dx, ly + i * dy, angle)
+
     # drawPolygon: For fillable shapes, edgeColor defaults to
     # self.defaultLineColor, edgeWidth defaults to self.defaultLineWidth, and
     # fillColor defaults to self.defaultFillColor.  Specify "don't fill" by
     # passing fillColor=transparent.
 
     def drawPolygon(self, pointlist, edgeColor=None, edgeWidth=None, fillColor=None, closed=0):
-        """drawPolygon(pointlist) -- draws a polygon 
+        """drawPolygon(pointlist) -- draws a polygon
         pointlist: a list of (x,y) tuples defining vertices
-        closed:    if 1, adds an extra segment connecting the last point 
+        closed:    if 1, adds an extra segment connecting the last point
             to the first
         """
 
@@ -248,13 +248,15 @@ class PiddleWxDc(sping_pid.Canvas):
         linelist = []
         if len(pointlist) > 1:
             for i in range(1, len(pointlist)):
-                linelist.append( (pointlist[i-1][0], pointlist[i-1][1], pointlist[i][0], pointlist[i][1]) )
+                linelist.append((pointlist[i - 1][0], pointlist[i - 1][1],
+                                 pointlist[i][0], pointlist[i][1]))
             else:
-                linelist.append( (pointlist[0][0], pointlist[0][1], pointlist[0][0], pointlist[0][1]))
+                linelist.append((pointlist[0][0], pointlist[0][1],
+                                 pointlist[0][0], pointlist[0][1]))
         self.drawLines(linelist, edgeColor, edgeWidth)
 
     # no colors apply to drawImage; the image is drawn as-is
-    def drawImage(self, image, x1,y1, x2=None,y2=None):
+    def drawImage(self, image, x1, y1, x2=None, y2=None):
         """Draw a PIL Image into the specified rectangle.  If x2 and y2 are
         omitted, they are calculated from the image size.
         jjk  11/03/99"""
@@ -268,14 +270,14 @@ class PiddleWxDc(sping_pid.Canvas):
             except ImportError:
                 raise RuntimeError("PIL not available!")
 
-        if (x2 and y2 and x2>x1 and y2>y1):
-            imgPil = image.resize((x2-x1,y2-y1))
+        if (x2 and y2 and x2 > x1 and y2 > y1):
+            imgPil = image.resize((x2 - x1, y2 - y1))
         else:
             imgPil = image
-        if (imgPil.mode!='RGB'):
+        if (imgPil.mode != 'RGB'):
             imgPil = imgPil.convert('RGB')
-        imgData = getattr(imgPil, 'tobytes', imgPil.tostring)('raw','RGB')
-        imgWx = wxEmptyImage(imgPil.size[0],imgPil.size[1])
+        imgData = getattr(imgPil, 'tobytes', imgPil.tostring)('raw', 'RGB')
+        imgWx = wxEmptyImage(imgPil.size[0], imgPil.size[1])
         imgWx.SetData(imgData)
         self.dc.DrawBitmap(imgWx.ConvertToBitmap(), x1, y1)
 

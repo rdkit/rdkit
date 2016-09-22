@@ -4,9 +4,11 @@
 #      All Rights Reserved
 #
 
-""" Define the class _KNNClassificationModel_, used to represent a k-nearest neighbhors classification model
+"""
+  Define the class _KNNClassificationModel_, used to represent a
+  k-nearest neighbhors classification model
 
-    Inherits from _KNNModel_
+  Inherits from _KNNModel_
 """
 
 from rdkit.ML.KNN import KNNModel
@@ -16,10 +18,10 @@ class KNNClassificationModel(KNNModel.KNNModel) :
 
   """
 
-  def __init__(self, k, attrs, dfunc,radius=None) :
-    self._setup(k, attrs, dfunc,radius)
-        
-    self._badExamples = [] # list of examples incorrectly classified
+  def __init__(self, k, attrs, dfunc, radius=None) :
+    self._setup(k, attrs, dfunc, radius)
+
+    self._badExamples = []  # list of examples incorrectly classified
 
   def type(self):
     return "Classification Model"
@@ -52,7 +54,7 @@ class KNNClassificationModel(KNNModel.KNNModel) :
     """
     if appendExamples:
       self._examples.append(example)
-      
+
     # first find the k-closest examples in the traning set
     knnLst = self.GetNeighbors(example)
 

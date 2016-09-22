@@ -13,7 +13,7 @@ class SupplyNode(VLibNode):
 
   Assumptions:
     1) no parents
-  
+
   Usage Example:
     >>> supplier = SupplyNode(contents=[1,2,3])
     >>> supplier.next()
@@ -31,11 +31,11 @@ class SupplyNode(VLibNode):
     1
     >>> [x for x in supplier]
     [1, 2, 3]
-    
+
 
   """
-  def __init__(self,contents=None,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+  def __init__(self, contents=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     if contents is not None:
       self._contents = contents
     else:
@@ -49,27 +49,27 @@ class SupplyNode(VLibNode):
     if self._pos == len(self._contents):
       raise StopIteration
 
-    res=self._contents[self._pos]
+    res = self._contents[self._pos]
     self._pos += 1
     return res
-  def AddParent(self,parent,notify=1):
+  def AddParent(self, parent, notify=1):
     raise ValueError('SupplyNodes do not have parents')
 
 if six.PY3:
     SupplyNode.__next__ = SupplyNode.next
-  
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
 
 
-  
+
