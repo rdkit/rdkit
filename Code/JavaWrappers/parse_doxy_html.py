@@ -14,14 +14,18 @@ from BeautifulSoup import *
 import os
 import re
 
+
 def list_class_files(dir):
-    return [name for name in os.listdir(dir)
-             if (name.startswith('class_') and (not name.endswith('png')) and name.find('-members') == -1)]
-    
+  return [
+    name for name in os.listdir(dir)
+    if (name.startswith('class_') and (not name.endswith('png')) and name.find('-members') == -1)
+  ]
+
+
 def get_detail(fname):
-    bs = BeautifulSoup(open(fname).read())
-    det = bs.find(text='Detailed Description')
-    return [bs,  det]
+  bs = BeautifulSoup(open(fname).read())
+  det = bs.find(text='Detailed Description')
+  return [bs, det]
 
 _example = \
 """int RDKit::Atom::getPerturbationOrder 	( 	INT_LIST  	probe 	 )  	const
@@ -301,162 +305,168 @@ Notes:
     * the current lazy properties are implicit and explicit valence
 
 '''
-_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)',  flags=(re.M | re.I | re.DOTALL))
-_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_renote = re.compile('^\w*(Notes?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
+_reparam = re.compile('^\w*(Param(?:eter)?s?[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I |
+                                                                                  re.DOTALL))
 _rereturn = re.compile('^\w*(Returns[:])(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _rereturn2 = re.compile('^\w*(Returns)\s+(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 _reusage = re.compile('^\w*(Usage[:]?)(?:.*?$)(.*?)((^\w)|\Z)', flags=(re.M | re.I | re.DOTALL))
 
-def make_method_doc(doxy_method_text,  class_name):
-    for f in (do_usage,  do_note,  do_param,  do_return):
-        doxy_method_text = f(doxy_method_text)
-    # Create paragraphs
-    doxy_method_text = doxy_method_text.replace('\n\n', '\n<p>\n') 
-    # But no paragraph markers just before tag
-    doxy_method_text = doxy_method_text.replace('<p>@',  '<p>\n@')
-    # Get rid of double quotes -- note that this causes an error with initialized string parameters
-    doxy_method_text = doxy_method_text.replace('"',  "'")
-    # Get lines 
-    lines = doxy_method_text.split('\n')
-    # Build header -- don't want type there
-    header = lines[0][lines[0].find(class_name):]
-    start = 1
-    while (header.find(')') < 0):
-        start += 1
-        header += ' ' + lines[start - 1]
-       ##  print header
-    # Or [] annotation
-    header = header.replace('[inline]',  '')
-    header = header.replace('[virtual]',  '')
-    header = header.replace('[protected]',  '')
-    header = header.replace('[explicit]',  '')
-    header = '%javamethodmodifiers ' +  header + '"\n/**\n'
-    return header +  '\n'.join(lines[start:] ) + '\n*/\npublic";\n'
 
-def make_class_doc(doxy_text,  class_name):
-    for f in (do_usage,  do_note):
-        doxy_text = f(doxy_text)
-    # Create paragraphs
-    doxy_text = doxy_text.replace('\n\n', '\n<p>\n') 
-    # But no paragraph markers just before tag
-    doxy_text = doxy_text.replace('<p>@',  '<p>\n@')
-    # Get rid of double quotes
-    doxy_text = doxy_text.replace('"',  "'")
-    # Get lines
-    lines = doxy_text.split('\n')
-    # Build header -- don't want type there
-    header = '%typemap(javaimports) ' + class_name + ' "\n/** '
-    return header +  '\n'.join(lines) + ' */"\n'
-    
+def make_method_doc(doxy_method_text, class_name):
+  for f in (do_usage, do_note, do_param, do_return):
+    doxy_method_text = f(doxy_method_text)
+  # Create paragraphs
+  doxy_method_text = doxy_method_text.replace('\n\n', '\n<p>\n')
+  # But no paragraph markers just before tag
+  doxy_method_text = doxy_method_text.replace('<p>@', '<p>\n@')
+  # Get rid of double quotes -- note that this causes an error with initialized string parameters
+  doxy_method_text = doxy_method_text.replace('"', "'")
+  # Get lines
+  lines = doxy_method_text.split('\n')
+  # Build header -- don't want type there
+  header = lines[0][lines[0].find(class_name):]
+  start = 1
+  while (header.find(')') < 0):
+    start += 1
+    header += ' ' + lines[start - 1]
+  ##  print header
+  # Or [] annotation
+  header = header.replace('[inline]', '')
+  header = header.replace('[virtual]', '')
+  header = header.replace('[protected]', '')
+  header = header.replace('[explicit]', '')
+  header = '%javamethodmodifiers ' + header + '"\n/**\n'
+  return header + '\n'.join(lines[start:]) + '\n*/\npublic";\n'
+
+
+def make_class_doc(doxy_text, class_name):
+  for f in (do_usage, do_note):
+    doxy_text = f(doxy_text)
+  # Create paragraphs
+  doxy_text = doxy_text.replace('\n\n', '\n<p>\n')
+  # But no paragraph markers just before tag
+  doxy_text = doxy_text.replace('<p>@', '<p>\n@')
+  # Get rid of double quotes
+  doxy_text = doxy_text.replace('"', "'")
+  # Get lines
+  lines = doxy_text.split('\n')
+  # Build header -- don't want type there
+  header = '%typemap(javaimports) ' + class_name + ' "\n/** '
+  return header + '\n'.join(lines) + ' */"\n'
+
 
 def do_note(doxy_text):
-    m1 = _renote.search(doxy_text)
-    if m1 != None:
-        repl = m1.group(0)
-        if repl[-1] != '\n':
-            repl = repl[:-1]
-        new_text = '<p>@notes\n'
-        for line in m1.group(2).split('\n'):
-            line = line.strip()
-            if len(line) > 0:
-                if line.startswith('*'):
-                    line = line[1:].strip()
-                new_text = new_text + '<li>' + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
-    return doxy_text
+  m1 = _renote.search(doxy_text)
+  if m1 != None:
+    repl = m1.group(0)
+    if repl[-1] != '\n':
+      repl = repl[:-1]
+    new_text = '<p>@notes\n'
+    for line in m1.group(2).split('\n'):
+      line = line.strip()
+      if len(line) > 0:
+        if line.startswith('*'):
+          line = line[1:].strip()
+        new_text = new_text + '<li>' + line + '\n'
+    doxy_text = doxy_text.replace(repl, new_text)
+  return doxy_text
+
 
 def do_param(doxy_text):
-    m1 = _reparam.search(doxy_text)
-    if m1 != None:
-        repl = m1.group(0)
-        if repl[-1] != '\n':
-            repl = repl[:-1]
-        new_text = '<p>@param\n'
-        for line in m1.group(2).split('\n'):
-            line = line.strip()
-            if len(line) > 0:
-                new_text = new_text + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
-    return doxy_text
+  m1 = _reparam.search(doxy_text)
+  if m1 != None:
+    repl = m1.group(0)
+    if repl[-1] != '\n':
+      repl = repl[:-1]
+    new_text = '<p>@param\n'
+    for line in m1.group(2).split('\n'):
+      line = line.strip()
+      if len(line) > 0:
+        new_text = new_text + line + '\n'
+    doxy_text = doxy_text.replace(repl, new_text)
+  return doxy_text
+
 
 def do_return(doxy_text):
-    m1 = _rereturn.search(doxy_text)
-    if m1 == None:
-        m1 = _rereturn2.search(doxy_text)
-    if m1 != None:
-        repl = m1.group(0)
-        if repl[-1] != '\n':
-            repl = repl[:-1]
-        new_text = '<p>@return\n'
-        for line in m1.group(2).split('\n'):
-            line = line.strip()
-            if len(line) > 0:
-                new_text = new_text + line + '\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
-    return doxy_text
+  m1 = _rereturn.search(doxy_text)
+  if m1 == None:
+    m1 = _rereturn2.search(doxy_text)
+  if m1 != None:
+    repl = m1.group(0)
+    if repl[-1] != '\n':
+      repl = repl[:-1]
+    new_text = '<p>@return\n'
+    for line in m1.group(2).split('\n'):
+      line = line.strip()
+      if len(line) > 0:
+        new_text = new_text + line + '\n'
+    doxy_text = doxy_text.replace(repl, new_text)
+  return doxy_text
+
 
 def do_usage(doxy_text):
-    m1 = _reusage.search(doxy_text)
-    if m1 != None:
-        repl = m1.group(0)
-        if repl[-1] != '\n':
-            repl = repl[:-1]
-        new_text = '<p>@example\n<pre><code>\n'
-        for line in m1.group(2).split('\n'):
-            new_text = new_text + line + '\n'
-        ## doxy_text = _reusage.sub(new_text,  doxy_text) + '</code></pre>\n'
-        new_text += '</code></pre>\n'
-        doxy_text = doxy_text.replace(repl, new_text) 
-    return doxy_text
+  m1 = _reusage.search(doxy_text)
+  if m1 != None:
+    repl = m1.group(0)
+    if repl[-1] != '\n':
+      repl = repl[:-1]
+    new_text = '<p>@example\n<pre><code>\n'
+    for line in m1.group(2).split('\n'):
+      new_text = new_text + line + '\n'
+    ## doxy_text = _reusage.sub(new_text,  doxy_text) + '</code></pre>\n'
+    new_text += '</code></pre>\n'
+    doxy_text = doxy_text.replace(repl, new_text)
+  return doxy_text
 
-def do_methods(doxy_text,  class_name):
-    methods = []
-    method_lines = []
-    in_method_region = False
-    for line in doxy_text.split('\n'):
-        if line.find('Function Documentation') >= 0:
-            in_method_region = True
-        elif in_method_region:
-            if line.find(class_name) >= 0 or line.find('Member Data') >= 0:
-                if len(method_lines) > 0:
-                    methods.append(make_method_doc('\n'.join(method_lines),  class_name))
-                if line.find('Member Data') >= 0:
-                    in_method_region = False
-                else:
-                    method_lines = [line]
-            else:
-                method_lines.append(line)
-        
-    if len(method_lines) > 0:
-        methods.append(make_method_doc('\n'.join(method_lines),  class_name))
-    method_lines = [line]
-    return methods
 
-def do_class(doxy_text,  class_name):
-    in_class_region = False
-    class_doc = ''
-    for line in doxy_text.split('\n'):
-        if line.find('Detailed Description') >= 0:
-            in_class_region = True
-            class_lines = []
-        elif in_class_region:
-            if line.strip().endswith('Documentation') :
-                if len(class_lines) > 0:
-                    class_doc = make_class_doc('\n'.join(class_lines),  class_name)
-                    in_class_region = False
-            else:
-                class_lines.append(line)
-                    
-    return class_doc
+def do_methods(doxy_text, class_name):
+  methods = []
+  method_lines = []
+  in_method_region = False
+  for line in doxy_text.split('\n'):
+    if line.find('Function Documentation') >= 0:
+      in_method_region = True
+    elif in_method_region:
+      if line.find(class_name) >= 0 or line.find('Member Data') >= 0:
+        if len(method_lines) > 0:
+          methods.append(make_method_doc('\n'.join(method_lines), class_name))
+        if line.find('Member Data') >= 0:
+          in_method_region = False
+        else:
+          method_lines = [line]
+      else:
+        method_lines.append(line)
+
+  if len(method_lines) > 0:
+    methods.append(make_method_doc('\n'.join(method_lines), class_name))
+  method_lines = [line]
+  return methods
+
+
+def do_class(doxy_text, class_name):
+  in_class_region = False
+  class_doc = ''
+  for line in doxy_text.split('\n'):
+    if line.find('Detailed Description') >= 0:
+      in_class_region = True
+      class_lines = []
+    elif in_class_region:
+      if line.strip().endswith('Documentation'):
+        if len(class_lines) > 0:
+          class_doc = make_class_doc('\n'.join(class_lines), class_name)
+          in_class_region = False
+      else:
+        class_lines.append(line)
+
+  return class_doc
+
 
 if __name__ == '__main__':
-    import sys
-    text = open(sys.argv[1]).read()
-    class_name = sys.argv[2]
-    print(do_class(text,  class_name))
-    docs = do_methods(text,  class_name)
-    for doc in docs:
-        print(doc)
-        
-        
-    
+  import sys
+  text = open(sys.argv[1]).read()
+  class_name = sys.argv[2]
+  print(do_class(text, class_name))
+  docs = do_methods(text, class_name)
+  for doc in docs:
+    print(doc)

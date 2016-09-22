@@ -7,7 +7,9 @@ from rdkit import Chem
 from rdkit.Chem import ChemicalForceFields
 from rdkit.Chem import rdMolTransforms
 
+
 class OptSafe:
+
   def __init__(self):
     self.minInfLoop = """minInfLoop
      RDKit          3D
@@ -51,7 +53,7 @@ M  END"""
     OPT_SLEEP_SEC = 0.2
     MAX_OPT_SLEEP_SEC = 3
     v = Value('b', False)
-    optProcess = Process(target = optFunc, args = (v, mol))
+    optProcess = Process(target=optFunc, args=(v, mol))
     optProcess.start()
     s = 0.0
     while ((s < MAX_OPT_SLEEP_SEC) and (not v.value)):
@@ -63,9 +65,10 @@ M  END"""
     optProcess.join()
     return bool(v.value)
 
+
 class TestCase(unittest.TestCase):
 
-  def setUp(self) :
+  def setUp(self):
     self.molB = """butane
      RDKit          3D
 butane
@@ -105,7 +108,7 @@ butane
   9 12  1  0  0  0  0
 M  END"""
 
-  def testUFFMinInfLoop(self) :
+  def testUFFMinInfLoop(self):
     os = OptSafe()
     m = Chem.MolFromMolBlock(os.minInfLoop)
     self.assertTrue(m)
@@ -117,7 +120,7 @@ M  END"""
       pass
     self.assertTrue(ok)
 
-  def testUFFDistanceConstraints(self) :
+  def testUFFDistanceConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
@@ -136,7 +139,7 @@ M  END"""
     dist = rdMolTransforms.GetBondLength(conf, 1, 3)
     self.assertTrue(dist > 1.79)
 
-  def testUFFAngleConstraints(self) :
+  def testUFFAngleConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
@@ -163,10 +166,10 @@ M  END"""
     angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
     self.assertEqual(int(angle), 10)
 
-  def testUFFTorsionConstraints(self) :
+  def testUFFTorsionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     conf = m.GetConformer()
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 50.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 50.0)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
     ff.UFFAddTorsionConstraint(1, 3, 6, 8, False, 10.0, 20.0, 1.0e5)
@@ -174,7 +177,7 @@ M  END"""
     self.assertTrue(r == 0)
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertTrue(int(dihedral) == 20)
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, -30.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, -30.0)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
     ff.UFFAddTorsionConstraint(1, 3, 6, 8, True, -10.0, -8.0, 1.0e5)
@@ -183,7 +186,7 @@ M  END"""
     conf = m.GetConformer()
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertEquals(int(dihedral), -40)
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 30.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 30.0)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
     ff.UFFAddTorsionConstraint(1, 3, 6, 8, False, -10.0, -8.0, 1.0e6)
@@ -193,7 +196,7 @@ M  END"""
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertTrue(int(dihedral) == -10)
 
-  def testUFFPositionConstraints(self) :
+  def testUFFPositionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
@@ -205,7 +208,7 @@ M  END"""
     q = conf.GetAtomPosition(1)
     self.assertTrue((p - q).Length() < 0.3)
 
-  def testUFFFixedAtoms(self) :
+  def testUFFFixedAtoms(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
     self.assertTrue(ff)
@@ -217,7 +220,7 @@ M  END"""
     fq = conf.GetAtomPosition(1)
     self.assertTrue((fp - fq).Length() < 0.01)
 
-  def testMMFFMinInfLoop(self) :
+  def testMMFFMinInfLoop(self):
     os = OptSafe()
     m = Chem.MolFromMolBlock(os.minInfLoop)
     self.assertTrue(m)
@@ -229,7 +232,7 @@ M  END"""
       pass
     self.assertTrue(ok)
 
-  def testMMFFDistanceConstraints(self) :
+  def testMMFFDistanceConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
@@ -249,7 +252,7 @@ M  END"""
     dist = rdMolTransforms.GetBondLength(conf, 1, 3)
     self.assertTrue(dist > 1.79)
 
-  def testMMFFAngleConstraints(self) :
+  def testMMFFAngleConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
@@ -275,12 +278,12 @@ M  END"""
     self.assertTrue(r == 0)
     conf = m.GetConformer()
     angle = rdMolTransforms.GetAngleDeg(conf, 1, 3, 6)
-    self.assertEquals(int(angle), 10)#(int(angle) == 10)
+    self.assertEquals(int(angle), 10)  #(int(angle) == 10)
 
-  def testMMFFTorsionConstraints(self) :
+  def testMMFFTorsionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     conf = m.GetConformer()
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 50.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 50.0)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.assertTrue(ff)
@@ -289,7 +292,7 @@ M  END"""
     self.assertTrue(r == 0)
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertEquals(int(dihedral), 20)
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, -30.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, -30.0)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.assertTrue(ff)
     ff.MMFFAddTorsionConstraint(1, 3, 6, 8, True, -10.0, -8.0, 1.0e5)
@@ -298,7 +301,7 @@ M  END"""
     conf = m.GetConformer()
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertTrue(int(dihedral) == -40)
-    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 30.0);
+    rdMolTransforms.SetDihedralDeg(conf, 1, 3, 6, 8, 30.0)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.assertTrue(ff)
     ff.MMFFAddTorsionConstraint(1, 3, 6, 8, False, -10.0, -8.0, 1.0e5)
@@ -308,7 +311,7 @@ M  END"""
     dihedral = rdMolTransforms.GetDihedralDeg(conf, 1, 3, 6, 8)
     self.assertTrue(int(dihedral) == -10)
 
-  def testMMFFPositionConstraints(self) :
+  def testMMFFPositionConstraints(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
@@ -321,7 +324,7 @@ M  END"""
     q = conf.GetAtomPosition(1)
     self.assertTrue((p - q).Length() < 0.3)
 
-  def testMMFFFixedAtoms(self) :
+  def testMMFFFixedAtoms(self):
     m = Chem.MolFromMolBlock(self.molB, True, False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
@@ -335,8 +338,5 @@ M  END"""
     self.assertTrue((fp - fq).Length() < 0.01)
 
 
-
-
-
-if __name__== '__main__':
-    unittest.main()
+if __name__ == '__main__':
+  unittest.main()
