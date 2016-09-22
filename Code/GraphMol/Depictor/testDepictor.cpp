@@ -802,6 +802,27 @@ void testGitHubIssue910() {
     delete m;
   }
 }
+
+void testGitHubIssue1073() {
+  // computeInitialCoords() should call the SSSR code before it calls
+  // assignStereochemistry()
+  {
+    std::string smarts = "[a]12[a][a][a][a][a]1[a][a][a]2";
+    RWMol *m = SmartsToMol(smarts);
+    TEST_ASSERT(m);
+
+    RDDepict::compute2DCoords(*m);
+
+    RingInfo *ri = m->getRingInfo();
+    TEST_ASSERT(ri->isInitialized());
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 6));
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 5));
+    TEST_ASSERT(!ri->isAtomInRingOfSize(0, 9));
+
+    delete m;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -965,5 +986,13 @@ int main() {
   testGitHubIssue910();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1073\n";
+  testGitHubIssue1073();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
   return (0);
 }
