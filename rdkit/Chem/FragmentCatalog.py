@@ -14,18 +14,19 @@ from rdkit import Chem
 from rdkit.Chem.rdfragcatalog import *
 
 
-def message(msg,dest=sys.stdout):
+def message(msg, dest=sys.stdout):
   dest.write(msg)
 
 
 class BitGainsInfo(object):
-  id=-1
-  description=''
-  gain=0.0
-  nPerClass=None
-  
-def ProcessGainsFile(fileName,nToDo=-1,delim=',',haveDescriptions=1):
-  inFile = open(fileName,'r')
+  id = -1
+  description = ''
+  gain = 0.0
+  nPerClass = None
+
+
+def ProcessGainsFile(fileName, nToDo=-1, delim=',', haveDescriptions=1):
+  inFile = open(fileName, 'r')
   nRead = 0
   res = []
   for line in inFile.xreadlines():
@@ -43,13 +44,14 @@ def ProcessGainsFile(fileName,nToDo=-1,delim=',',haveDescriptions=1):
       nPerClass = []
       for entry in splitL[col:]:
         nPerClass.append(int(entry))
-      bit.nPerClass = nPerClass  
+      bit.nPerClass = nPerClass
       res.append(bit)
-      if len(res)==nToDo:
+      if len(res) == nToDo:
         break
-  return res   
+  return res
 
-def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
+
+def BuildAdjacencyList(catalog, bits, limitInclusion=1, orderLevels=0):
   adjs = {}
   levels = {}
   bitIds = [bit.id for bit in bits]
@@ -57,7 +59,7 @@ def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
     entry = catalog.GetBitEntryId(bitId)
     tmp = []
     order = catalog.GetEntryOrder(entry)
-    s = levels.get(order,set())
+    s = levels.get(order, set())
     s.add(bitId)
     levels[order] = s
     for down in catalog.GetEntryDownIds(entry):
@@ -65,7 +67,7 @@ def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
       if not limitInclusion or id in bitIds:
         tmp.append(id)
         order = catalog.GetEntryOrder(down)
-        s = levels.get(order,set())
+        s = levels.get(order, set())
         s.add(id)
         levels[order] = s
     adjs[bitId] = tmp
@@ -79,17 +81,17 @@ def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
       l = [ids[x] for x in countOrder]
       l.reverse()
       levels[order] = l
-  return adjs,levels
+  return adjs, levels
 
-def GetMolsMatchingBit(mols,bit,fps):
+
+def GetMolsMatchingBit(mols, bit, fps):
   res = []
-  if isinstance(bit,BitGainsInfo):
+  if isinstance(bit, BitGainsInfo):
     bitId = bit.id
   else:
     bitId = bit
-  for i,mol in enumerate(mols):
+  for i, mol in enumerate(mols):
     fp = fps[i]
     if fp[bitId]:
       res.append(mol)
   return res
-

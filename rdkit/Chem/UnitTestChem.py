@@ -11,13 +11,14 @@
 """basic unit testing code for the molecule boost wrapper
 
 """
-import unittest,os
+import unittest, os
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit import Chem
 
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     self.bigSmiList = [
       "CC1=CC(=O)C=CC1=O",
@@ -70,12 +71,11 @@ class TestCase(unittest.TestCase):
       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(=[O+]2)CC",
       "OC(=O)[CH](CC1=CC=CC=C1)C2=CC=CC=C2",
       "CCC1=C(N)C=C(C)N=C1",
-      ]
-
+    ]
 
   def _testPkl10(self):
     " testing 5k molecule pickles "
-    inLines = open('%s/NCI/first_5K.smi'%(RDConfig.RDDataDir),'r').readlines()
+    inLines = open('%s/NCI/first_5K.smi' % (RDConfig.RDDataDir), 'r').readlines()
     smis = []
     for line in inLines:
       smis.append(line.split('\t')[0])
@@ -85,12 +85,12 @@ class TestCase(unittest.TestCase):
       newSmi1 = Chem.MolToSmiles(newM1)
       newM2 = cPickle.loads(cPickle.dumps(newM1))
       newSmi2 = Chem.MolToSmiles(newM2)
-      assert newM1.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert newM2.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert len(newSmi1)>0,'empty smi1'
-      assert len(newSmi2)>0,'empty smi2'
-      assert newSmi1==newSmi2,'string compare failed:\n%s\n\t!=\n%s\norig smiles:\n%s'%(newSmi1,newSmi2,smi)
-
+      assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert len(newSmi1) > 0, 'empty smi1'
+      assert len(newSmi2) > 0, 'empty smi2'
+      assert newSmi1 == newSmi2, 'string compare failed:\n%s\n\t!=\n%s\norig smiles:\n%s' % (
+        newSmi1, newSmi2, smi)
 
   def testPkl1(self):
     " testing single molecule pickle "
@@ -98,7 +98,7 @@ class TestCase(unittest.TestCase):
     outS = Chem.MolToSmiles(m)
     m2 = cPickle.loads(cPickle.dumps(m))
     outS2 = Chem.MolToSmiles(m2)
-    assert outS==outS2,"bad pickle: %s != %s"%(outS,outS2)
+    assert outS == outS2, "bad pickle: %s != %s" % (outS, outS2)
 
   def testPkl2(self):
     """ further pickle tests """
@@ -109,20 +109,20 @@ class TestCase(unittest.TestCase):
       newM2 = cPickle.loads(cPickle.dumps(newM1))
       oldSmi = Chem.MolToSmiles(newM1)
       newSmi = Chem.MolToSmiles(newM2)
-      assert newM1.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert newM2.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert oldSmi==newSmi,'string compare failed: %s != %s'%(oldSmi,newSmi)
+      assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert oldSmi == newSmi, 'string compare failed: %s != %s' % (oldSmi, newSmi)
 
   def testPkl(self):
     " testing molecule pickle "
     import tempfile
-    f,self.fName = tempfile.mkstemp('.pkl')
-    f=None
+    f, self.fName = tempfile.mkstemp('.pkl')
+    f = None
     self.m = Chem.MolFromSmiles('CC(=O)CC')
-    outF = open(self.fName,'wb+')
-    cPickle.dump(self.m,outF)
+    outF = open(self.fName, 'wb+')
+    cPickle.dump(self.m, outF)
     outF.close()
-    inF = open(self.fName,'rb')
+    inF = open(self.fName, 'rb')
     m2 = cPickle.load(inF)
     inF.close()
     try:
@@ -131,8 +131,7 @@ class TestCase(unittest.TestCase):
       pass
     oldSmi = Chem.MolToSmiles(self.m)
     newSmi = Chem.MolToSmiles(m2)
-    assert oldSmi==newSmi,'string compare failed'
-
+    assert oldSmi == newSmi, 'string compare failed'
 
   def testRings(self):
     " testing SSSR handling "
@@ -140,11 +139,11 @@ class TestCase(unittest.TestCase):
     for i in range(m.GetNumAtoms()):
       at = m.GetAtomWithIdx(i)
       n = at.GetAtomicNum()
-      if n==8:
-        assert not at.IsInRingSize(4),'atom %d improperly in ring'%(i)
+      if n == 8:
+        assert not at.IsInRingSize(4), 'atom %d improperly in ring' % (i)
       else:
-        assert at.IsInRingSize(4),'atom %d not in ring of size 4'%(i)
+        assert at.IsInRingSize(4), 'atom %d not in ring of size 4' % (i)
+
+
 if __name__ == '__main__':
   unittest.main()
-
-

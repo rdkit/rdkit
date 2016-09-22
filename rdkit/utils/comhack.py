@@ -29,48 +29,49 @@ import __builtin__
 #save the import-Method (either McMillan's import or Python's)
 mcimport = __builtin__.__import__
 
+
 def _myimport(name, globals=None, locals=None, fromlist=None):
-    """
+  """
     Tell all modules to imported by McMillan's (or Python's) import.method,
     besides win32com modules automatically genrated by win32com.gencache
     """
-    try:
-        #fails with ImportError, if McMillan has overwritten Python's native import
-        #and win32com.gen_py tries to generate a module
-        return mcimport(name, globals, locals, fromlist)
-    except ImportError as err:
-        if name.startswith('win32com.gen_py'):
-            #this is the Python-Native Import Method, if a patched McMillan-Installer exists
-            return __oldimport__(name, globals, locals, fromlist)
-        else:
-            #win32com needs this ImportError 
-            raise err
+  try:
+    #fails with ImportError, if McMillan has overwritten Python's native import
+    #and win32com.gen_py tries to generate a module
+    return mcimport(name, globals, locals, fromlist)
+  except ImportError as err:
+    if name.startswith('win32com.gen_py'):
+      #this is the Python-Native Import Method, if a patched McMillan-Installer exists
+      return __oldimport__(name, globals, locals, fromlist)
+    else:
+      #win32com needs this ImportError
+      raise err
 
 
 def set_gen_path(path):
-    """
+  """
     Set the gencache Path
     If not set, all Modules (win32com) will be generated to support/gen_py of your apllication.
     """
-    import os
+  import os
 
-    import win32com
-    import win32com.gen_py
+  import win32com
+  import win32com.gen_py
 
-    path = os.path.abspath(path)
+  path = os.path.abspath(path)
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+  if not os.path.exists(path):
+    os.makedirs(path)
 
-    #check, if McMillan runs ...
-    frozen = sys.__dict__.get("frozen", 0)
+  #check, if McMillan runs ...
+  frozen = sys.__dict__.get("frozen", 0)
 
-    #set the gencache path
-    win32com.gen_py.__path__ = [path]
-    win32com.__gen_path__ = path
+  #set the gencache path
+  win32com.gen_py.__path__ = [path]
+  win32com.__gen_path__ = path
 
-    if not frozen:
-        return
+  if not frozen:
+    return
 
-    #setup our import method, if McMillan runs.
-    __builtin__.__import__ = _myimport
+  #setup our import method, if McMillan runs.
+  __builtin__.__import__ = _myimport

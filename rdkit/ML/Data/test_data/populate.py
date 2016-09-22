@@ -2,7 +2,7 @@ import RDConfig
 from Dbase import DbUtils
 from io import StringIO
 
-basic_2class="""ID,VAL,ACT
+basic_2class = """ID,VAL,ACT
 id-1,1.0,0
 id-2,23.0,1
 id-3,4.0,0
@@ -16,7 +16,7 @@ id-10,2585.0,1
 id-11,55.0,0
 id-12,12.0,1
 """
-float_2class="""ID,VAL,ACT
+float_2class = """ID,VAL,ACT
 id-1,1.0,-0.1
 id-2,23.0,1.2
 id-3,4.0,0.5
@@ -31,7 +31,6 @@ id-11,55.0,0.9
 id-12,12.0,3.0
 """
 io = StringIO(basic_2class)
-DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'basic_2class',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase, 'basic_2class', io)
 io = StringIO(float_2class)
-DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'float_2class',io)
-
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase, 'float_2class', io)

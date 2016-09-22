@@ -8,42 +8,42 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-
 """unit testing code for the SD file handling stuff
 
 """
-import unittest,sys,os
+import unittest, sys, os
 from rdkit import RDConfig
 from rdkit import Chem
 import tempfile
 from rdkit.six.moves import cStringIO as StringIO
 from rdkit.six import next
+
+
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    self.fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
+    self.fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
 
-  
   def _testReader(self):
     " tests reads using a file name "
     supp = Chem.SDMolSupplier(self.fName)
     for i in range(10):
       m = next(supp)
-      assert m,'read %d failed'%i
-      assert m.GetNumAtoms(),'no atoms in mol %d'%i
+      assert m, 'read %d failed' % i
+      assert m.GetNumAtoms(), 'no atoms in mol %d' % i
     i = 100
-    m = supp[i-1]
-    assert m,'read %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
-    
+    m = supp[i - 1]
+    assert m, 'read %d failed' % i
+    assert m.GetNumAtoms(), 'no atoms in mol %d' % i
+
     l = len(supp)
-    assert l == 200,'bad supplier length: %d'%(l)
+    assert l == 200, 'bad supplier length: %d' % (l)
 
     i = 12
-    m = supp[i-1]
-    assert m,'back index %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
-
+    m = supp[i - 1]
+    assert m, 'back index %d failed' % i
+    assert m.GetNumAtoms(), 'no atoms in mol %d' % i
 
     try:
       m = supp[201]
@@ -51,11 +51,11 @@ class TestCase(unittest.TestCase):
       fail = 1
     else:
       fail = 0
-    assert fail,'out of bound read did not fail'
+    assert fail, 'out of bound read did not fail'
 
   def test_Writer(self):
     " tests writes using a file name "
-    with open(self.fName,'r') as inf:
+    with open(self.fName, 'r') as inf:
       inD = inf.read()
     supp = Chem.SDMolSupplier(self.fName)
     outName = tempfile.mktemp('.sdf')
@@ -68,7 +68,7 @@ class TestCase(unittest.TestCase):
     # The writer does not have an explicit "close()" so need to
     # let the garbage collector kick in to close the file.
     writer = None
-    with open(outName,'r') as inf:
+    with open(outName, 'r') as inf:
       outD = inf.read()
     # The file should be closed, but if it isn't, and this
     # is Windows, then the unlink() can fail. Wait and try again.
@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
         os.unlink(outName)
       except Exception:
         pass
-    self.assertEqual(inD.count('$$$$'),outD.count('$$$$'),'bad nMols in output')
+    self.assertEqual(inD.count('$$$$'), outD.count('$$$$'), 'bad nMols in output')
 
   def _testStreamRoundtrip(self):
     inD = open(self.fName).read()
@@ -93,7 +93,7 @@ class TestCase(unittest.TestCase):
       writer.write(m)
     writer.flush()
     writer = None
-    outD = open(outName,'r').read()
+    outD = open(outName, 'r').read()
     try:
       os.unlink(outName)
     except Exception:
@@ -103,13 +103,13 @@ class TestCase(unittest.TestCase):
         os.unlink(outName)
       except Exception:
         pass
-    assert inD.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
+    assert inD.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
     io = StringIO(outD)
     supp = Chem.SDMolSupplier(stream=io)
     outD2 = supp.Dump()
-    assert outD2.count('$$$$')==len(supp),'bad nMols in output'
-    assert outD2.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
-    assert outD2==outD,'bad outd'
+    assert outD2.count('$$$$') == len(supp), 'bad nMols in output'
+    assert outD2.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
+    assert outD2 == outD, 'bad outd'
 
   def _testLazyDataRoundtrip(self):
     inD = open(self.fName).read()
@@ -121,7 +121,7 @@ class TestCase(unittest.TestCase):
       writer.write(m)
     writer.flush()
     writer = None
-    outD = open(outName,'r').read()
+    outD = open(outName, 'r').read()
     try:
       os.unlink(outName)
     except Exception:
@@ -131,12 +131,12 @@ class TestCase(unittest.TestCase):
         os.unlink(outName)
       except Exception:
         pass
-    assert inD.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
+    assert inD.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
     supp = SDMolSupplier.LazySDMolSupplier(inD=outD)
     outD2 = supp.Dump()
-    assert outD2.count('$$$$')==len(supp),'bad nMols in output'
-    assert outD2.count('$$$$')==outD.count('$$$$'),'bad nMols in output'
-    assert outD2==outD,'bad outd'
+    assert outD2.count('$$$$') == len(supp), 'bad nMols in output'
+    assert outD2.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
+    assert outD2 == outD, 'bad outd'
 
   def _testLazyIter(self):
     " tests lazy reads using the iterator interface "
@@ -144,19 +144,18 @@ class TestCase(unittest.TestCase):
 
     nDone = 0
     for mol in supp:
-      assert mol,'read %d failed'%i
-      assert mol.GetNumAtoms(),'no atoms in mol %d'%i
+      assert mol, 'read %d failed' % i
+      assert mol.GetNumAtoms(), 'no atoms in mol %d' % i
       nDone += 1
-    assert nDone==200,'bad number of molecules: %d'%(nDone)
+    assert nDone == 200, 'bad number of molecules: %d' % (nDone)
 
     l = len(supp)
-    assert l == 200,'bad supplier length: %d'%(l)
+    assert l == 200, 'bad supplier length: %d' % (l)
 
     i = 12
-    m = supp[i-1]
-    assert m,'back index %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
-
+    m = supp[i - 1]
+    assert m, 'back index %d failed' % i
+    assert m.GetNumAtoms(), 'no atoms in mol %d' % i
 
     try:
       m = supp[201]
@@ -164,11 +163,8 @@ class TestCase(unittest.TestCase):
       fail = 1
     else:
       fail = 0
-    assert fail,'out of bound read did not fail'
-
-
+    assert fail, 'out of bound read did not fail'
 
 
 if __name__ == '__main__':
   unittest.main()
-

@@ -10,9 +10,10 @@
 #
 from rdkit import RDConfig
 from rdkit import Chem
-import sys,csv
+import sys, csv
 
-def Convert(suppl,outFile,keyCol='',stopAfter=-1,includeChirality=0,smilesFrom=''):
+
+def Convert(suppl, outFile, keyCol='', stopAfter=-1, includeChirality=0, smilesFrom=''):
   w = csv.writer(outFile)
   mol = suppl[0]
   propNames = list(mol.GetPropNames())
@@ -30,11 +31,11 @@ def Convert(suppl,outFile,keyCol='',stopAfter=-1,includeChirality=0,smilesFrom='
     if not mol:
       continue
     if not smilesFrom or not mol.HasProp(smilesFrom):
-      smi = Chem.MolToSmiles(mol,includeChirality)
+      smi = Chem.MolToSmiles(mol, includeChirality)
     else:
       smi = mol.GetProp(smilesFrom)
       tMol = Chem.MolFromSmiles(smi)
-      smi = Chem.MolToSmiles(tMol,includeChirality)
+      smi = Chem.MolToSmiles(tMol, includeChirality)
     outL = []
     if keyCol:
       outL.append(str(mol.GetProp(keyCol)))
@@ -50,23 +51,27 @@ def Convert(suppl,outFile,keyCol='',stopAfter=-1,includeChirality=0,smilesFrom='
       break
   return
 
-
 #-------------------
 #  Testing:
 import unittest
+
+
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     pass
+
   def tearDown(self):
     pass
+
   def test1(self):
     import os
     from rdkit.six.moves import cStringIO as StringIO  #@UnresolvedImport #pylint: disable=F0401
-    fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
+    fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()
     try:
-      Convert(suppl,io)
+      Convert(suppl, io)
     except Exception:
       import traceback
       traceback.print_exc()
@@ -75,18 +80,19 @@ class TestCase(unittest.TestCase):
     lines = txt.split('\n')
     if not lines[-1]:
       del lines[-1]
-    self.assertTrue(len(lines)==201,'bad num lines: %d'%len(lines))
+    self.assertTrue(len(lines) == 201, 'bad num lines: %d' % len(lines))
     line0 = lines[0].split(',')
-    self.assertEqual(len(line0),20)
-    self.assertTrue(line0[0]=='SMILES')
+    self.assertEqual(len(line0), 20)
+    self.assertTrue(line0[0] == 'SMILES')
+
   def test2(self):
     import os
     from rdkit.six.moves import cStringIO as StringIO  #@UnresolvedImport #pylint: disable=F0401
-    fName = os.path.join(RDConfig.RDDataDir,'NCI','first_200.props.sdf')
+    fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()
     try:
-      Convert(suppl,io,keyCol='AMW',stopAfter=5)
+      Convert(suppl, io, keyCol='AMW', stopAfter=5)
     except Exception:
       import traceback
       traceback.print_exc()
@@ -95,20 +101,15 @@ class TestCase(unittest.TestCase):
     lines = txt.split('\n')
     if not lines[-1]:
       del lines[-1]
-    self.assertTrue(len(lines)==6,'bad num lines: %d'%len(lines))
+    self.assertTrue(len(lines) == 6, 'bad num lines: %d' % len(lines))
     line0 = lines[0].split(',')
-    self.assertEqual(len(line0),20)
-    self.assertTrue(line0[0]=='AMW')
-    self.assertTrue(line0[1]=='SMILES')
-    
-    
-    
-  
+    self.assertEqual(len(line0), 20)
+    self.assertTrue(line0[0] == 'AMW')
+    self.assertTrue(line0[1] == 'SMILES')
 
 
-
-#-------------------
-#  CLI STuff:
+  #-------------------
+  #  CLI STuff:
 def Usage():
   message = """
   Usage: SDFToCSV [-k keyCol] inFile.sdf [outFile.csv]
@@ -118,16 +119,13 @@ def Usage():
   sys.exit(-1)
 
 
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import getopt
 
   try:
-    args,extras = getopt.getopt(sys.argv[1:],'hk:',
-                                ['test',
-                                 'chiral',
-                                 'smilesCol=',
-                                 ])
+    args, extras = getopt.getopt(sys.argv[1:], 'hk:', ['test',
+                                                       'chiral',
+                                                       'smilesCol=', ])
   except Exception:
     import traceback
     traceback.print_exc()
@@ -135,35 +133,33 @@ if __name__=='__main__':
 
   keyCol = ''
   testIt = 0
-  useChirality=0
-  smilesCol=''
-  for arg,val in args:
-    if arg=='-k':
+  useChirality = 0
+  smilesCol = ''
+  for arg, val in args:
+    if arg == '-k':
       keyCol = val
-    elif arg=='--chiral':
-      useChirality=1
-    elif arg=='--smilesCol':
-      smilesCol=val
-    elif arg=='--test':
-      testIt=1
-    elif arg=='-h':
+    elif arg == '--chiral':
+      useChirality = 1
+    elif arg == '--smilesCol':
+      smilesCol = val
+    elif arg == '--test':
+      testIt = 1
+    elif arg == '-h':
       Usage()
 
-  if not testIt and len(extras)<1:
+  if not testIt and len(extras) < 1:
     Usage()
-      
 
   if not testIt:
     inFilename = extras[0]
-    if len(extras)>1:
+    if len(extras) > 1:
       outFilename = extras[1]
-      outF = open(outFilename,'w+')
+      outF = open(outFilename, 'w+')
     else:
       outF = sys.stdout
 
     suppl = Chem.SDMolSupplier(inFilename)
-    Convert(suppl,outF,keyCol=keyCol,includeChirality=useChirality,smilesFrom=smilesCol)
+    Convert(suppl, outF, keyCol=keyCol, includeChirality=useChirality, smilesFrom=smilesCol)
   else:
     sys.argv = [sys.argv[0]]
     unittest.main()
-

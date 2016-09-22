@@ -60,8 +60,8 @@ def GetFrame(mol, mode='Scaff'):
     for neighbor in mol.GetAtomWithIdx(NonRingAtom).GetNeighbors():
       if neighbor.GetIdx() in RingAtoms:
         RingNeighbors.append(NonRingAtom)
-        Paths.append([neighbor.GetIdx(), NonRingAtom
-                      ])  #The ring Atoms having a non ring Nieghbor will be the start of a walk
+        #The ring Atoms having a non ring Neighbor will be the start of a walk
+        Paths.append([neighbor.GetIdx(), NonRingAtom])
         break
   PosConnectors = [x for x in NonRingAtoms if x not in RingNeighbors
                    ]  #Only these Atoms are potential starting points of a Linker chain

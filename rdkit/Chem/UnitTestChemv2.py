@@ -11,13 +11,15 @@
 """basic unit testing code for the rdkit Boost wrapper
 
 """
-import unittest,os
+import unittest, os
 from rdkit.six.moves import cPickle
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     self.bigSmiList = [
       "CC1=CC(=O)C=CC1=O",
@@ -70,31 +72,31 @@ class TestCase(unittest.TestCase):
       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(=[O+]2)CC",
       "OC(=O)[CH](CC1=CC=CC=C1)C2=CC=CC=C2",
       "CCC1=C(N)C=C(C)N=C1",
-      ]
+    ]
 
   def test1(self):
     """ basic building stuff """
     m = Chem.MolFromSmiles('COC(=O)O')
 
     a1 = m.GetAtomWithIdx(1)
-    assert a1.GetAtomicNum()==8
-    assert m.GetAtomWithIdx(2).GetAtomicNum()==6
+    assert a1.GetAtomicNum() == 8
+    assert m.GetAtomWithIdx(2).GetAtomicNum() == 6
     b1 = m.GetBondWithIdx(1)
-    assert b1.GetBondType()==Chem.BondType.SINGLE
-    assert m.GetBondWithIdx(2).GetBondType()==Chem.BondType.DOUBLE
-    assert m.GetBondBetweenAtoms(0,1).GetBondType()==Chem.BondType.SINGLE
-    assert m.GetBondBetweenAtoms(2,3).GetBondType()==Chem.BondType.DOUBLE
+    assert b1.GetBondType() == Chem.BondType.SINGLE
+    assert m.GetBondWithIdx(2).GetBondType() == Chem.BondType.DOUBLE
+    assert m.GetBondBetweenAtoms(0, 1).GetBondType() == Chem.BondType.SINGLE
+    assert m.GetBondBetweenAtoms(2, 3).GetBondType() == Chem.BondType.DOUBLE
 
   def test2(self):
     """ editing/persistance basics """
     m = Chem.MolFromSmiles('COC(=C)O')
 
     a1 = m.GetAtomWithIdx(3)
-    assert a1.GetAtomicNum()==6,'bad atom order'
+    assert a1.GetAtomicNum() == 6, 'bad atom order'
     a1.SetAtomicNum(7)
-    assert a1.GetAtomicNum()==7,'bad atom order'
-    assert m.GetAtomWithIdx(3).GetAtomicNum()==7,'atom order not stored'
-        
+    assert a1.GetAtomicNum() == 7, 'bad atom order'
+    assert m.GetAtomWithIdx(3).GetAtomicNum() == 7, 'atom order not stored'
+
   def test3(self):
     """ SMARTS basics """
     m = Chem.MolFromSmiles('COC(=O)O')
@@ -104,26 +106,26 @@ class TestCase(unittest.TestCase):
     assert not m.HasSubstructMatch(p2)
 
     #assert p.GetSMARTS()=='CO','bad getsmarts'
-    assert p.GetNumAtoms()==2
-    assert p.GetNumBonds()==1
+    assert p.GetNumAtoms() == 2
+    assert p.GetNumBonds() == 1
 
     assert m.HasSubstructMatch(p)
     matches = m.GetSubstructMatches(p)
-    assert len(matches)==3
+    assert len(matches) == 3
     match = matches[0]
-    assert len(match)==2,'bad match length'
-    matches = m.GetSubstructMatches(p,0)
-    assert len(matches)==3
+    assert len(match) == 2, 'bad match length'
+    matches = m.GetSubstructMatches(p, 0)
+    assert len(matches) == 3
     match = matches[0]
-    assert len(match)==2,'bad match length'
+    assert len(match) == 2, 'bad match length'
 
     p = Chem.MolFromSmarts('COC')
     assert m.HasSubstructMatch(p)
     matches = m.GetSubstructMatches(p)
-    assert len(matches)==1
-    matches = m.GetSubstructMatches(p,0)
-    assert len(matches)==2
-    
+    assert len(matches) == 1
+    matches = m.GetSubstructMatches(p, 0)
+    assert len(matches) == 2
+
   def test4Pkl2(self):
     """ further pickle tests """
     smis = self.bigSmiList
@@ -134,50 +136,49 @@ class TestCase(unittest.TestCase):
       newM2 = cPickle.loads(cPickle.dumps(newM1))
       oldSmi = Chem.MolToSmiles(newM1)
       newSmi = Chem.MolToSmiles(newM2)
-      assert newM1.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert newM2.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert oldSmi==newSmi,'string compare failed: %s != %s'%(oldSmi,newSmi)
+      assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
+      assert oldSmi == newSmi, 'string compare failed: %s != %s' % (oldSmi, newSmi)
 
   def test5Data(self):
     """ testing Get/Set/HasData """
     m = Chem.MolFromSmiles('CCOC')
     try:
-      m.SetProp('foo','3')
+      m.SetProp('foo', '3')
     except Exception:
-      ok=0
+      ok = 0
     else:
-      ok=1
+      ok = 1
     assert ok
 
     try:
       v = m.GetProp('foo')
     except Exception:
-      ok=0
+      ok = 0
     else:
-      ok=1
+      ok = 1
     assert ok
-    assert v=='3'
+    assert v == '3'
 
     try:
       v = m.GetProp('monkey')
     except KeyError:
-      ok=1
+      ok = 1
     except Exception:
-      ok=0
+      ok = 0
     else:
-      ok=0
+      ok = 0
     assert ok
 
   def testIssue399(self):
     m = Chem.MolFromSmiles('C[C@H]1CO1')
     AllChem.Compute2DCoords(m)
-    Chem.WedgeMolBonds(m,m.GetConformer())
-    self.assertTrue(m.GetBondWithIdx(0).GetBondDir()==Chem.rdchem.BondDir.BEGINDASH)
-    self.assertTrue(m.GetBondWithIdx(1).GetBondDir()==Chem.rdchem.BondDir.NONE)                              
-    self.assertTrue(m.GetBondWithIdx(2).GetBondDir()==Chem.rdchem.BondDir.NONE)                              
-    self.assertTrue(m.GetBondWithIdx(3).GetBondDir()==Chem.rdchem.BondDir.NONE)
-    
+    Chem.WedgeMolBonds(m, m.GetConformer())
+    self.assertTrue(m.GetBondWithIdx(0).GetBondDir() == Chem.rdchem.BondDir.BEGINDASH)
+    self.assertTrue(m.GetBondWithIdx(1).GetBondDir() == Chem.rdchem.BondDir.NONE)
+    self.assertTrue(m.GetBondWithIdx(2).GetBondDir() == Chem.rdchem.BondDir.NONE)
+    self.assertTrue(m.GetBondWithIdx(3).GetBondDir() == Chem.rdchem.BondDir.NONE)
+
 
 if __name__ == '__main__':
   unittest.main()
-

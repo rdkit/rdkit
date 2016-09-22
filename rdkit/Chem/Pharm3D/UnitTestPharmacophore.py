@@ -9,10 +9,10 @@
 #  of the RDKit source tree.
 #
 from rdkit import RDConfig
-import unittest,sys,os
+import unittest, sys, os
 from rdkit.six.moves import cPickle
 from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures,AllChem
+from rdkit.Chem import ChemicalFeatures, AllChem
 import EmbedLib
 import gzip
 
@@ -20,10 +20,13 @@ from rdkit import DistanceGeometry as DG
 from rdkit import Geometry
 import Pharmacophore
 
-def feq(n1,n2,tol=1e-5):
-  return abs(n1-n2)<=tol
+
+def feq(n1, n2, tol=1e-5):
+  return abs(n1 - n2) <= tol
+
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     self.fdefBlock = \
                    """DefineFeature HAcceptor1 [N,O;H0]
@@ -41,87 +44,82 @@ class TestCase(unittest.TestCase):
 
     self.featFactory = ChemicalFeatures.BuildFeatureFactoryFromString(self.fdefBlock)
     self.feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
-                                           Geometry.Point3D(0.0, 0.0, 0.0)),
+                                                       Geometry.Point3D(0.0, 0.0, 0.0)),
                   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
-                                           Geometry.Point3D(2.65, 0.0, 0.0)),
+                                                       Geometry.Point3D(2.65, 0.0, 0.0)),
                   ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
-                                           Geometry.Point3D(5.12, 0.908, 0.0)),
-                  ]
-    self.pcophore=Pharmacophore.Pharmacophore(self.feats)
+                                                       Geometry.Point3D(5.12, 0.908, 0.0)), ]
+    self.pcophore = Pharmacophore.Pharmacophore(self.feats)
 
   def test1Basics(self):
     pcophore = self.pcophore
-    self.assertTrue(len(pcophore.getFeatures())==3)
+    self.assertTrue(len(pcophore.getFeatures()) == 3)
     self.assertTrue(pcophore.getFeature(0))
     self.assertTrue(pcophore.getFeature(1))
     self.assertTrue(pcophore.getFeature(2))
-    self.assertRaises(IndexError,pcophore.getFeature,3)
-    
+    self.assertRaises(IndexError, pcophore.getFeature, 3)
+
   def test2BoundSetting(self):
     pcophore = self.pcophore
 
-    pcophore.setUpperBound(0,1,3.0)
-    self.assertTrue(feq(pcophore.getUpperBound(0,1),3.0))
-    self.assertTrue(feq(pcophore.getUpperBound(1,0),3.0))
-    pcophore.setUpperBound(1,0,5.0)
-    self.assertTrue(feq(pcophore.getUpperBound(0,1),5.0))
-    self.assertTrue(feq(pcophore.getUpperBound(1,0),5.0))
-    self.assertRaises(IndexError,pcophore.setUpperBound,0,3,2.0)
-    self.assertRaises(ValueError,pcophore.setUpperBound,0,3,2.0,checkBounds=True)
-    self.assertRaises(IndexError,pcophore.setUpperBound,3,0,2.0)
-    self.assertRaises(ValueError,pcophore.setUpperBound,3,0,2.0,checkBounds=True)
+    pcophore.setUpperBound(0, 1, 3.0)
+    self.assertTrue(feq(pcophore.getUpperBound(0, 1), 3.0))
+    self.assertTrue(feq(pcophore.getUpperBound(1, 0), 3.0))
+    pcophore.setUpperBound(1, 0, 5.0)
+    self.assertTrue(feq(pcophore.getUpperBound(0, 1), 5.0))
+    self.assertTrue(feq(pcophore.getUpperBound(1, 0), 5.0))
+    self.assertRaises(IndexError, pcophore.setUpperBound, 0, 3, 2.0)
+    self.assertRaises(ValueError, pcophore.setUpperBound, 0, 3, 2.0, checkBounds=True)
+    self.assertRaises(IndexError, pcophore.setUpperBound, 3, 0, 2.0)
+    self.assertRaises(ValueError, pcophore.setUpperBound, 3, 0, 2.0, checkBounds=True)
 
-
-    pcophore.setLowerBound(0,1,2.0)
-    self.assertTrue(feq(pcophore.getLowerBound(0,1),2.0))
-    self.assertTrue(feq(pcophore.getLowerBound(1,0),2.0))
-    pcophore.setLowerBound(1,0,3.0)
-    self.assertTrue(feq(pcophore.getLowerBound(0,1),3.0))
-    self.assertTrue(feq(pcophore.getLowerBound(1,0),3.0))
-    self.assertRaises(IndexError,pcophore.setLowerBound,0,3,2.0)
-    self.assertRaises(ValueError,pcophore.setLowerBound,0,3,2.0,checkBounds=True)
-    self.assertRaises(IndexError,pcophore.setLowerBound,3,0,2.0)
-    self.assertRaises(ValueError,pcophore.setLowerBound,3,0,2.0,checkBounds=True)
+    pcophore.setLowerBound(0, 1, 2.0)
+    self.assertTrue(feq(pcophore.getLowerBound(0, 1), 2.0))
+    self.assertTrue(feq(pcophore.getLowerBound(1, 0), 2.0))
+    pcophore.setLowerBound(1, 0, 3.0)
+    self.assertTrue(feq(pcophore.getLowerBound(0, 1), 3.0))
+    self.assertTrue(feq(pcophore.getLowerBound(1, 0), 3.0))
+    self.assertRaises(IndexError, pcophore.setLowerBound, 0, 3, 2.0)
+    self.assertRaises(ValueError, pcophore.setLowerBound, 0, 3, 2.0, checkBounds=True)
+    self.assertRaises(IndexError, pcophore.setLowerBound, 3, 0, 2.0)
+    self.assertRaises(ValueError, pcophore.setLowerBound, 3, 0, 2.0, checkBounds=True)
 
   def test3Bound2DSetting(self):
     pcophore = self.pcophore
 
-    pcophore.setUpperBound2D(0,1,3)
-    self.assertTrue(pcophore.getUpperBound2D(0,1)==3)
-    self.assertTrue(pcophore.getUpperBound2D(1,0)==3)
-    pcophore.setUpperBound2D(1,0,5)
-    self.assertTrue(pcophore.getUpperBound2D(0,1)==5)
-    self.assertTrue(pcophore.getUpperBound2D(1,0)==5)
-    self.assertRaises(IndexError,pcophore.setUpperBound2D,0,3,2)
-    self.assertRaises(ValueError,pcophore.setUpperBound2D,0,3,2,checkBounds=True)
-    self.assertRaises(IndexError,pcophore.setUpperBound2D,3,0,2)
-    self.assertRaises(ValueError,pcophore.setUpperBound2D,3,0,2,checkBounds=True)
+    pcophore.setUpperBound2D(0, 1, 3)
+    self.assertTrue(pcophore.getUpperBound2D(0, 1) == 3)
+    self.assertTrue(pcophore.getUpperBound2D(1, 0) == 3)
+    pcophore.setUpperBound2D(1, 0, 5)
+    self.assertTrue(pcophore.getUpperBound2D(0, 1) == 5)
+    self.assertTrue(pcophore.getUpperBound2D(1, 0) == 5)
+    self.assertRaises(IndexError, pcophore.setUpperBound2D, 0, 3, 2)
+    self.assertRaises(ValueError, pcophore.setUpperBound2D, 0, 3, 2, checkBounds=True)
+    self.assertRaises(IndexError, pcophore.setUpperBound2D, 3, 0, 2)
+    self.assertRaises(ValueError, pcophore.setUpperBound2D, 3, 0, 2, checkBounds=True)
 
-    pcophore.setLowerBound2D(0,1,3)
-    self.assertTrue(pcophore.getLowerBound2D(0,1)==3)
-    self.assertTrue(pcophore.getLowerBound2D(1,0)==3)
-    pcophore.setLowerBound2D(1,0,5)
-    self.assertTrue(pcophore.getLowerBound2D(0,1)==5)
-    self.assertTrue(pcophore.getLowerBound2D(1,0)==5)
-    self.assertRaises(IndexError,pcophore.setLowerBound2D,0,3,2)
-    self.assertRaises(ValueError,pcophore.setLowerBound2D,0,3,2,checkBounds=True)
-    self.assertRaises(IndexError,pcophore.setLowerBound2D,3,0,2)
-    self.assertRaises(ValueError,pcophore.setLowerBound2D,3,0,2,checkBounds=True)
+    pcophore.setLowerBound2D(0, 1, 3)
+    self.assertTrue(pcophore.getLowerBound2D(0, 1) == 3)
+    self.assertTrue(pcophore.getLowerBound2D(1, 0) == 3)
+    pcophore.setLowerBound2D(1, 0, 5)
+    self.assertTrue(pcophore.getLowerBound2D(0, 1) == 5)
+    self.assertTrue(pcophore.getLowerBound2D(1, 0) == 5)
+    self.assertRaises(IndexError, pcophore.setLowerBound2D, 0, 3, 2)
+    self.assertRaises(ValueError, pcophore.setLowerBound2D, 0, 3, 2, checkBounds=True)
+    self.assertRaises(IndexError, pcophore.setLowerBound2D, 3, 0, 2)
+    self.assertRaises(ValueError, pcophore.setLowerBound2D, 3, 0, 2, checkBounds=True)
 
   def test4Github252(self):
-    fdef= os.path.join(RDConfig.RDDataDir,'BaseFeatures.fdef')
+    fdef = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
     feat_factory = ChemicalFeatures.BuildFeatureFactory(fdef)
 
     m1 = Chem.MolFromSmiles('Cc1ccccc1')
     feats = feat_factory.GetFeaturesForMol(m1)
-    self.assertRaises(RuntimeError,lambda:Pharmacophore.Pharmacophore(feats))
+    self.assertRaises(RuntimeError, lambda: Pharmacophore.Pharmacophore(feats))
 
     AllChem.Compute2DCoords(m1)
     Pharmacophore.Pharmacophore(feats)
 
 
-    
-    
 if __name__ == '__main__':
   unittest.main()
-

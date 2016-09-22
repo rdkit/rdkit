@@ -25,11 +25,7 @@ if __name__ == '__main__':
   import files
 
   fileN = sys.argv[1]
-  iV,dV = files.ReadDataFile(fileN)
-  eVals,eVects=PrincipalComponents(iV)
+  iV, dV = files.ReadDataFile(fileN)
+  eVals, eVects = PrincipalComponents(iV)
   print('eVals: ', eVals)
   print('eVects:', eVects)
-  
-
-  
-

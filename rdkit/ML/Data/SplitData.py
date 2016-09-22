@@ -6,14 +6,15 @@
 #
 from __future__ import print_function
 import random
-import os.path,sys
+import os.path, sys
 
-from rdkit import RDConfig,RDRandom
+from rdkit import RDConfig, RDRandom
 from rdkit.six.moves import xrange
 
-SeqTypes=(list, tuple)
+SeqTypes = (list, tuple)
 
-def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
+
+def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
   """ splits a set of indices into a data set into 2 pieces
 
     **Arguments**
@@ -97,16 +98,17 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   [0, 2, 3, 6, 7, 8, 9]
   
   """
-  if frac<0. or frac > 1.:
-    raise ValueError('frac must be between 0.0 and 1.0 (frac=%f)'%(frac))
+  if frac < 0. or frac > 1.:
+    raise ValueError('frac must be between 0.0 and 1.0 (frac=%f)' % (frac))
 
   if replacement:
-    nTrain = int(nPts*frac)
-    resData = [None]*nTrain
+    nTrain = int(nPts * frac)
+    resData = [None] * nTrain
     resTest = []
     for i in range(nTrain):
-      val = int(RDRandom.random()*nPts)
-      if val==nPts: val = nPts-1
+      val = int(RDRandom.random() * nPts)
+      if val == nPts:
+        val = nPts - 1
       resData[i] = val
     for i in range(nPts):
       if i not in resData:
@@ -122,19 +124,19 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
         resTest.append(i)
   else:
     perm = list(xrange(nPts))
-    random.shuffle(perm,random=random.random)
-    nTrain = int(nPts*frac)
-    
+    random.shuffle(perm, random=random.random)
+    nTrain = int(nPts * frac)
+
     resData = list(perm[:nTrain])
     resTest = list(perm[nTrain:])
-        
-  if not silent:
-    print('Training with %d (of %d) points.'%(len(resData),nPts))
-    print('\t%d points are in the hold-out set.'%(len(resTest)))
-  return resData,resTest
 
-  
-def SplitDataSet(data,frac,silent=0):
+  if not silent:
+    print('Training with %d (of %d) points.' % (len(resData), nPts))
+    print('\t%d points are in the hold-out set.' % (len(resTest)))
+  return resData, resTest
+
+
+def SplitDataSet(data, frac, silent=0):
   """ splits a data set into two pieces
 
     **Arguments**
@@ -150,24 +152,22 @@ def SplitDataSet(data,frac,silent=0):
      a 2-tuple containing the two new data sets.
 
   """
-  if frac>0. or frac < 1.:
+  if frac > 0. or frac < 1.:
     raise ValueError('frac must be between 0.0 and 1.0')
 
   nOrig = len(data)
-  train,test = SplitIndices(nOrig,frac,silent=1)
+  train, test = SplitIndices(nOrig, frac, silent=1)
   resData = [data[x] for x in train]
   resTest = [data[x] for x in test]
 
   if not silent:
-    print('Training with %d (of %d) points.'%(len(resData),nOrig))
-    print('\t%d points are in the hold-out set.'%(len(resTest)))
-  return resData,resTest
+    print('Training with %d (of %d) points.' % (len(resData), nOrig))
+    print('\t%d points are in the hold-out set.' % (len(resTest)))
+  return resData, resTest
 
 
-def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
-                labelCol='',
-                useActs=0,nActs=2,actCol='',actBounds=[],
-                silent=0):
+def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='', useActs=0,
+                nActs=2, actCol='', actBounds=[], silent=0):
   """  "splits" a data set held in a DB by returning lists of ids
 
   **Arguments**:
@@ -236,32 +236,32 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   
   """
   if not table:
-    table=conn.tableName
-  if actBounds and len(actBounds)!=nActs-1:
+    table = conn.tableName
+  if actBounds and len(actBounds) != nActs - 1:
     raise ValueError('activity bounds list length incorrect')
   if useActs:
     if type(fracs) not in SeqTypes:
-      fracs = tuple([fracs]*nActs)
+      fracs = tuple([fracs] * nActs)
     for frac in fracs:
-      if frac <0.0 or frac>1.0:
+      if frac < 0.0 or frac > 1.0:
         raise ValueError('fractions must be between 0.0 and 1.0')
   else:
     if type(fracs) in SeqTypes:
       frac = fracs[0]
-      if frac<0.0 or frac>1.0:
+      if frac < 0.0 or frac > 1.0:
         raise ValueError('fractions must be between 0.0 and 1.0')
     else:
       frac = fracs
   # start by getting the name of the ID column:
-  colNames = conn.GetColumnNames(table=table,what=fields,join=join)
+  colNames = conn.GetColumnNames(table=table, what=fields, join=join)
   idCol = colNames[0]
 
   if not useActs:
     # get the IDS:
-    d = conn.GetData(table=table,fields=idCol,join=join)
+    d = conn.GetData(table=table, fields=idCol, join=join)
     ids = [x[0] for x in d]
     nRes = len(ids)
-    train,test = SplitIndices(nRes,frac,silent=1)
+    train, test = SplitIndices(nRes, frac, silent=1)
     trainPts = [ids[x] for x in train]
     testPts = [ids[x] for x in test]
   else:
@@ -269,37 +269,39 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
     testPts = []
     if not actCol:
       actCol = colNames[-1]
-    whereBase=where.strip()
-    if whereBase.find('where')!=0:
-      whereBase = 'where '+whereBase
+    whereBase = where.strip()
+    if whereBase.find('where') != 0:
+      whereBase = 'where ' + whereBase
     if where:
       whereBase += ' and '
     for act in range(nActs):
       frac = fracs[act]
       if not actBounds:
-        whereTxt = whereBase + '%s=%d'%(actCol,act)
+        whereTxt = whereBase + '%s=%d' % (actCol, act)
       else:
         whereTxt = whereBase
-        if act!=0:
-          whereTxt += '%s>=%f '%(actCol,actBounds[act-1])
-        if act < nActs-1:
-          if act!=0:
+        if act != 0:
+          whereTxt += '%s>=%f ' % (actCol, actBounds[act - 1])
+        if act < nActs - 1:
+          if act != 0:
             whereTxt += 'and '
-          whereTxt += '%s<%f'%(actCol,actBounds[act])
-      d = conn.GetData(table=table,fields=idCol,join=join,where=whereTxt)
+          whereTxt += '%s<%f' % (actCol, actBounds[act])
+      d = conn.GetData(table=table, fields=idCol, join=join, where=whereTxt)
       ids = [x[0] for x in d]
       nRes = len(ids)
-      train,test = SplitIndices(nRes,frac,silent=1)
+      train, test = SplitIndices(nRes, frac, silent=1)
       trainPts.extend([ids[x] for x in train])
       testPts.extend([ids[x] for x in test])
-      
-  return trainPts,testPts
-      
+
+  return trainPts, testPts
+
+
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

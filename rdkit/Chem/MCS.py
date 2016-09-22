@@ -31,7 +31,6 @@
 ## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from rdkit.Chem import fmcs
 from rdkit.Chem.fmcs import Default
-
 """MCS - find a Maximum Common Substructure
 
 This software finds the maximum common substructure of a set of
@@ -44,7 +43,6 @@ and the double-bond ring bond converted to "=;@" while the respective
 chain-only version are "[C;!R]" and "=;!@".
 
 """
-
 
 # The simplified algorithm description is:
 #
@@ -235,39 +233,42 @@ chain-only version are "[C;!R]" and "=;!@".
 
 __all__ = ["FindMCS"]
 
-        
 ########## Main driver for the MCS code
 
+
 class MCSResult(object):
-   def __init__(self, obj):
-        self.numAtoms = obj.num_atoms
-        self.numBonds = obj.num_bonds
-        self.smarts = obj.smarts
-        self.completed = obj.completed
-   def __nonzero__(self):
-        return self.smarts is not None
-   def __repr__(self):
-       return "MCSResult(numAtoms=%d, numBonds=%d, smarts=%r, completed=%d)" % (
-           self.numAtoms, self.numBonds, self.smarts, self.completed)
-   def __str__(self):
-       msg = "MCS %r has %d atoms and %d bonds" % (self.smarts, self.numAtoms, self.numBonds)
-       if not self.completed:
-           msg += " (timed out)"
-       return msg        
+
+  def __init__(self, obj):
+    self.numAtoms = obj.num_atoms
+    self.numBonds = obj.num_bonds
+    self.smarts = obj.smarts
+    self.completed = obj.completed
+
+  def __nonzero__(self):
+    return self.smarts is not None
+
+  def __repr__(self):
+    return "MCSResult(numAtoms=%d, numBonds=%d, smarts=%r, completed=%d)" % (
+      self.numAtoms, self.numBonds, self.smarts, self.completed)
+
+  def __str__(self):
+    msg = "MCS %r has %d atoms and %d bonds" % (self.smarts, self.numAtoms, self.numBonds)
+    if not self.completed:
+      msg += " (timed out)"
+    return msg
 
 
-
-def FindMCS(mols, minNumAtoms=2,
-            maximize = Default.maximize,
-            atomCompare = Default.atomCompare,
-            bondCompare = Default.bondCompare,
-            matchValences = Default.matchValences,
-            ringMatchesRingOnly = False,
-            completeRingsOnly = False,
+def FindMCS(mols,
+            minNumAtoms=2,
+            maximize=Default.maximize,
+            atomCompare=Default.atomCompare,
+            bondCompare=Default.bondCompare,
+            matchValences=Default.matchValences,
+            ringMatchesRingOnly=False,
+            completeRingsOnly=False,
             timeout=Default.timeout,
-            threshold=None,
-            ):
-    """Find the maximum common substructure of a set of molecules
+            threshold=None, ):
+  """Find the maximum common substructure of a set of molecules
 
     In the simplest case, pass in a list of molecules and get back
     an MCSResult object which describes the MCS:
@@ -351,32 +352,30 @@ def FindMCS(mols, minNumAtoms=2,
 
     (The MCS after 50 seconds contained 511 atoms.)
     """
-    ores= fmcs.fmcs(mols,
-               minNumAtoms = minNumAtoms,
-               maximize = maximize,
-               atomCompare = atomCompare,
-               bondCompare = bondCompare,
-               threshold = threshold,
-               matchValences = matchValences,
-               ringMatchesRingOnly = ringMatchesRingOnly,
-               completeRingsOnly = completeRingsOnly,
-               timeout = timeout,
-        )
-    return MCSResult(ores)
+  ores = fmcs.fmcs(mols,
+                   minNumAtoms=minNumAtoms,
+                   maximize=maximize,
+                   atomCompare=atomCompare,
+                   bondCompare=bondCompare,
+                   threshold=threshold,
+                   matchValences=matchValences,
+                   ringMatchesRingOnly=ringMatchesRingOnly,
+                   completeRingsOnly=completeRingsOnly,
+                   timeout=timeout, )
+  return MCSResult(ores)
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"],
-                         optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+                         optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-   

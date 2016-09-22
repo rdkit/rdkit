@@ -2,7 +2,7 @@ from rdkit import RDConfig
 from rdkit.Dbase import DbUtils
 from io import StringIO
 
-ferro_quant="""COMPOUND,MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC
+ferro_quant = """COMPOUND,MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC
 AlFe3,2,1,1,1,0,0,1
 Co2Nb,1,0,2,1,1,0,0
 Co2Y,1,0,2,1,1,0,0
@@ -99,7 +99,7 @@ Ta,0,0,2,0,0,1,0
 V,1,0,1,1,0,0,0
 W,1,0,2,0,0,1,0
 """
-ferro_noquant="""COMPOUND,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,MAX_DED,ISFERROMAGNETIC
+ferro_noquant = """COMPOUND,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,MAX_DED,ISFERROMAGNETIC
 FeCo,0.734059888337,11.579436685,1,0,0,3.53454303741,1
 Ni,0.917132325319,10.903552,1,0,0,1.89935600758,1
 Fe,0.676821728076,11.8199515,1,0,0,3.53454303741,1
@@ -204,7 +204,7 @@ Fe32Pt,0.672765581933,11.9812996935,1,0,1,3.53454303741,1
 Fe9Pt,0.662584205604,12.3757854936,1,0,1,3.53454303741,1
 Fe9Rh,0.664715105171,12.1856716313,1,1,0,3.53454303741,1
 """
-ferro_noquant_realact="""COMPOUND,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,MAX_DED,ISFERROMAGNETIC
+ferro_noquant_realact = """COMPOUND,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,MAX_DED,ISFERROMAGNETIC
 FeCo,0.734059888337,11.579436685,1,0,0,3.53454303741,1.1
 Ni,0.917132325319,10.903552,1,0,0,1.89935600758,1.1
 Fe,0.676821728076,11.8199515,1,0,0,3.53454303741,1.1
@@ -311,8 +311,8 @@ Fe9Rh,0.664715105171,12.1856716313,1,1,0,3.53454303741,1.1
 """
 
 io = StringIO(ferro_quant)
-DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_quant',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase, 'ferro_quant', io)
 io = StringIO(ferro_noquant)
-DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_noquant',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase, 'ferro_noquant', io)
 io = StringIO(ferro_noquant_realact)
-DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_noquant_realact',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase, 'ferro_noquant_realact', io)

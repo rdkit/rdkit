@@ -9,19 +9,24 @@ from rdkit import DataStructs
 from rdkit.DataStructs.TopNContainer import TopNContainer
 import bisect
 
+
 class GenericPicker(object):
   _picks = None
-  def MakePicks(self,force=0):
+
+  def MakePicks(self, force=0):
     raise NotImplementedError("GenericPicker is a virtual base class")
+
   def __len__(self):
     if self._picks is None:
       self.MakePicks()
     return len(self._picks)
-  def __getitem__(self,which):
+
+  def __getitem__(self, which):
     if self._picks is None:
       self.MakePicks()
     return self._picks[which]
-  
+
+
 class TopNOverallPicker(GenericPicker):
   """  A class for picking the top N overall best matches across a library
 
@@ -91,7 +96,8 @@ class TopNOverallPicker(GenericPicker):
   'acid-2'
   
   """
-  def __init__(self,numToPick=10,probeFps=None,dataSet=None,
+
+  def __init__(self, numToPick=10, probeFps=None, dataSet=None,
                simMetric=DataStructs.TanimotoSimilarity):
     """
 
@@ -104,7 +110,7 @@ class TopNOverallPicker(GenericPicker):
     self.simMetric = simMetric
     self._picks = None
 
-  def MakePicks(self,force=0):
+  def MakePicks(self, force=0):
     if self._picks is not None and not force:
       return
     picks = TopNContainer(self.numToPick)
@@ -112,14 +118,14 @@ class TopNOverallPicker(GenericPicker):
       origFp = fp
       bestScore = -1.0
       for probeFp in self.probes:
-        score = DataStructs.FingerprintSimilarity(origFp,probeFp,
-                                                  self.simMetric)
-        bestScore = max(score,bestScore)
-      picks.Insert(bestScore,fp)
+        score = DataStructs.FingerprintSimilarity(origFp, probeFp, self.simMetric)
+        bestScore = max(score, bestScore)
+      picks.Insert(bestScore, fp)
     self._picks = []
-    for score,pt in picks:
-      self._picks.append((pt,score))
-    self._picks.reverse()  
+    for score, pt in picks:
+      self._picks.append((pt, score))
+    self._picks.reverse()
+
 
 class SpreadPicker(GenericPicker):
   """  A class for picking the best matches across a library
@@ -192,9 +198,9 @@ class SpreadPicker(GenericPicker):
   'ether-2'
   
   """
-  def __init__(self,numToPick=10,probeFps=None,dataSet=None,
-               simMetric=DataStructs.TanimotoSimilarity,
-               expectPickles=True,onlyNames=False):
+
+  def __init__(self, numToPick=10, probeFps=None, dataSet=None,
+               simMetric=DataStructs.TanimotoSimilarity, expectPickles=True, onlyNames=False):
     """
 
       dataSet should be a sequence of BitVectors or, if expectPickles
@@ -206,36 +212,35 @@ class SpreadPicker(GenericPicker):
     self.data = dataSet
     self.simMetric = simMetric
     self.expectPickles = expectPickles
-    self.onlyNames=onlyNames
-    
+    self.onlyNames = onlyNames
+
     self._picks = None
 
-  def MakePicks(self,force=0,silent=True):
+  def MakePicks(self, force=0, silent=True):
     if self._picks is not None and not force:
       return
 
     # start by getting the NxM score matrix
     #  (N=num probes, M=num fps)
     nProbes = len(self.probes)
-    scores = [None]*nProbes
+    scores = [None] * nProbes
     for i in range(nProbes):
       scores[i] = []
     j = 0
     fps = []
     for origFp in self.data:
       for i in range(nProbes):
-        score = DataStructs.FingerprintSimilarity(self.probes[i],origFp,
-                                                  self.simMetric)
-        bisect.insort(scores[i],(score,j))
-        if len(scores[i])>=self.numToPick:
+        score = DataStructs.FingerprintSimilarity(self.probes[i], origFp, self.simMetric)
+        bisect.insort(scores[i], (score, j))
+        if len(scores[i]) >= self.numToPick:
           del scores[self.numToPick:]
-      if self.onlyNames and hasattr(origFp,'_fieldsFromDb'):
+      if self.onlyNames and hasattr(origFp, '_fieldsFromDb'):
         fps.append(origFp._fieldsFromDb[0])
       else:
         fps.append(origFp)
-      j+=1
-      if not silent and not j%1000:
-        print('scored %d fps'%j)
+      j += 1
+      if not silent and not j % 1000:
+        print('scored %d fps' % j)
 
     # sort the rows of that matrix:
     #for i in range(nProbes):
@@ -244,29 +249,31 @@ class SpreadPicker(GenericPicker):
     # now go probe by probe and select the current top entry until we are finished:
     nPicked = 0
     self._picks = []
-    taken = [0]*len(fps)
+    taken = [0] * len(fps)
     while nPicked < self.numToPick:
-      rowIdx = nPicked%len(scores)
+      rowIdx = nPicked % len(scores)
       row = scores[rowIdx]
-      score,idx = row.pop()
+      score, idx = row.pop()
       # make sure we haven't taken this one already (from another row):
       while taken[idx] and len(row):
-        score,idx = row.pop()
+        score, idx = row.pop()
       if not taken[idx]:
         fp = fps[idx]
-        self._picks.append((fp,score))
-        taken[idx]=1
+        self._picks.append((fp, score))
+        taken[idx] = 1
         nPicked += 1
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

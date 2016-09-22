@@ -12,13 +12,15 @@
 
 """
 from rdkit import RDConfig
-import unittest,os
+import unittest, os
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
+from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
+
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
-    self.dbName =  RDConfig.RDTestDatabase
+    self.dbName = RDConfig.RDTestDatabase
     self.conn = DbConnect(self.dbName)
     self.curs = self.conn.GetCursor()
 
@@ -26,7 +28,7 @@ class TestCase(unittest.TestCase):
     """ test indexing in, ensure acceptable error conditions
     """
     cmd = 'select * from ten_elements'
-    set = RandomAccessDbResultSet(self.curs,self.conn,cmd)
+    set = RandomAccessDbResultSet(self.curs, self.conn, cmd)
     for i in range(12):
       try:
         val = set[i]
@@ -37,8 +39,8 @@ class TestCase(unittest.TestCase):
     """ 
     """
     cmd = 'select * from ten_elements'
-    set = RandomAccessDbResultSet(self.curs,self.conn,cmd)
-    assert len(set)==10
+    set = RandomAccessDbResultSet(self.curs, self.conn, cmd)
+    assert len(set) == 10
     for i in range(len(set)):
       val = set[i]
 
@@ -46,28 +48,28 @@ class TestCase(unittest.TestCase):
     """ 
     """
     cmd = 'select * from ten_elements'
-    set = DbResultSet(self.curs,self.conn,cmd)
+    set = DbResultSet(self.curs, self.conn, cmd)
     r = []
     for thing in set:
       r.append(thing)
-    assert len(r)==10
-        
+    assert len(r) == 10
+
   def test4(self):
     """ 
     """
     cmd = 'select * from ten_elements_dups'
-    set = DbResultSet(self.curs,self.conn,cmd,removeDups=0)
+    set = DbResultSet(self.curs, self.conn, cmd, removeDups=0)
     r = []
     for thing in set:
       r.append(thing)
-    assert len(r)==10
-        
+    assert len(r) == 10
+
   def test5(self):
     """ 
     """
-    cmd='select * from ten_elements_dups'
-    set = RandomAccessDbResultSet(self.curs,self.conn,cmd,removeDups=0)
-    assert len(set)==10
+    cmd = 'select * from ten_elements_dups'
+    set = RandomAccessDbResultSet(self.curs, self.conn, cmd, removeDups=0)
+    assert len(set) == 10
     for i in range(len(set)):
       val = set[i]
 
@@ -75,13 +77,12 @@ class TestCase(unittest.TestCase):
     """ 
     """
     cmd = 'select * from ten_elements_dups'
-    set = DbResultSet(self.curs,self.conn,cmd,removeDups=0)
+    set = DbResultSet(self.curs, self.conn, cmd, removeDups=0)
     r = []
     for thing in set:
       r.append(thing)
-    assert len(r)==10
+    assert len(r) == 10
 
 
 if __name__ == '__main__':
   unittest.main()
-

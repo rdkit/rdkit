@@ -9,18 +9,21 @@
   _QuantTreeNode_ is derived from _DecTree.DecTreeNode_
 
 """
-from rdkit.ML.DecTree import DecTree,Tree
+from rdkit.ML.DecTree import DecTree, Tree
 from rdkit.six import cmp
+
 
 class QuantTreeNode(DecTree.DecTreeNode):
   """ 
    
   """
-  def __init__(self,*args,**kwargs):
-    DecTree.DecTreeNode.__init__(self,*args,**kwargs)
+
+  def __init__(self, *args, **kwargs):
+    DecTree.DecTreeNode.__init__(self, *args, **kwargs)
     self.qBounds = []
     self.nBounds = 0
-  def ClassifyExample(self,example,appendExamples=0):
+
+  def ClassifyExample(self, example, appendExamples=0):
     """ Recursively classify an example by running it through the tree
     
       **Arguments**
@@ -47,34 +50,40 @@ class QuantTreeNode(DecTree.DecTreeNode):
       return self.label
     else:
       val = example[self.label]
-      if not hasattr(self,'nBounds'): self.nBounds = len(self.qBounds)
+      if not hasattr(self, 'nBounds'):
+        self.nBounds = len(self.qBounds)
       if self.nBounds:
-        for i,bound in enumerate(self.qBounds):
+        for i, bound in enumerate(self.qBounds):
           if val < bound:
             val = i
             break
         else:
-          val = i+1
+          val = i + 1
       else:
         val = int(val)
-      return self.children[val].ClassifyExample(example,appendExamples=appendExamples)
+      return self.children[val].ClassifyExample(example, appendExamples=appendExamples)
 
-  def SetQuantBounds(self,qBounds):
+  def SetQuantBounds(self, qBounds):
     self.qBounds = qBounds[:]
     self.nBounds = len(self.qBounds)
+
   def GetQuantBounds(self):
     return self.qBounds
-  
-  def __cmp__(self,other):
-    return (self<other)*-1 or (other<self)*1
-    
-  def __lt__(self,other):
-    if str(type(self)) < str(type(other)): return True
-    if self.qBounds<other.qBounds: return True
-    if Tree.TreeNode.__lt__(self,other): return True
+
+  def __cmp__(self, other):
+    return (self < other) * -1 or (other < self) * 1
+
+  def __lt__(self, other):
+    if str(type(self)) < str(type(other)):
+      return True
+    if self.qBounds < other.qBounds:
+      return True
+    if Tree.TreeNode.__lt__(self, other):
+      return True
     return False
-  def __eq__(self,other):
-    return not self<other and not other<self
+
+  def __eq__(self, other):
+    return not self < other and not other < self
 
   def __str__(self):
     """ returns a string representation of the tree
@@ -84,7 +93,7 @@ class QuantTreeNode(DecTree.DecTreeNode):
         this works recursively
     
     """
-    here = '%s%s %s\n'%('  '*self.level,self.name,str(self.qBounds))
+    here = '%s%s %s\n' % ('  ' * self.level, self.name, str(self.qBounds))
     for child in self.children:
       here = here + str(child)
     return here

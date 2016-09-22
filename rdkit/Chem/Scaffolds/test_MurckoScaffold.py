@@ -14,7 +14,6 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import (GetScaffoldForMol, _pyGetScaffo
                                                  MurckoScaffoldSmilesFromSmiles,
                                                  MurckoScaffoldSmiles, MakeScaffoldGeneric)
 
-
 TestMolecule = namedtuple('TestMolecule', 'smiles,scaffold')
 
 
@@ -34,7 +33,6 @@ class TestCase(unittest.TestCase):
       actualScaffold = Chem.MolToSmiles(Chem.MolFromSmiles(testMol.scaffold))
       self.assertEqual(calcScaffold, actualScaffold)
 
-
   def test2MurckoScaffold(self):
     # Test the functionality on a larger test set
     for testMol in self.testMolecules2:
@@ -42,7 +40,6 @@ class TestCase(unittest.TestCase):
       calcScaffold = Chem.MolToSmiles(GetScaffoldForMol(mol))
       actualScaffold = Chem.MolToSmiles(Chem.MolFromSmiles(testMol.scaffold))
       self.assertEqual(calcScaffold, actualScaffold)
-
 
   def test_ReferenceImplementation(self):
     # Check that the C++ implementation is equivalent to the Python reference implementation
@@ -52,22 +49,20 @@ class TestCase(unittest.TestCase):
       calcScaffold2 = Chem.MolToSmiles(_pyGetScaffoldForMol(mol))
       self.assertEqual(calcScaffold1, calcScaffold2)
 
-
   def test_MurckScaffoldSmilesFromSmiles(self):
-    self.assertEqual(MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'),
-                     'c1ccc(Oc2ccccn2)cc1')
+    self.assertEqual(
+      MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'), 'c1ccc(Oc2ccccn2)cc1')
     self.assertEqual(MurckoScaffoldSmilesFromSmiles('CCCC'), '')
 
-
   def test_MurckoScaffoldSmiles(self):
-    self.assertEqual(MurckoScaffoldSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'),
-                     'c1ccc(Oc2ccccn2)cc1')
-    self.assertEqual(MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')),
-                     'c1ccc(Oc2ccccn2)cc1')
+    self.assertEqual(MurckoScaffoldSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'), 'c1ccc(Oc2ccccn2)cc1')
+    self.assertEqual(
+      MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')),
+      'c1ccc(Oc2ccccn2)cc1')
     self.assertRaises(ValueError, MurckoScaffoldSmiles, smiles=None, mol=None)
 
-
   def test_MakeScaffoldGeneric(self):
+
     def testSmiles(smiles):
       return Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles(smiles)))
 
@@ -78,8 +73,6 @@ class TestCase(unittest.TestCase):
     self.assertEqual(testSmiles('c1[nH]ccc1'), 'C1CCCC1')
     self.assertEqual(testSmiles('C1[NH2+]C1'), 'C1CC1')
     self.assertEqual(testSmiles('C1[C@](Cl)(F)O1'), 'CC1(C)CC1')
-
-
 
   testMolecules = [
     TestMolecule('CC1CCC1', 'C1CCC1'),
@@ -115,7 +108,7 @@ class TestCase(unittest.TestCase):
     TestMolecule('Cn1cccc1', 'c1ccc[nH]1'),
     # Explicit hydrogens are removed
     TestMolecule('C1CC1[CH](C)C1CC1', 'C1CC1CC1CC1'),
- ]
+  ]
 
   testMolecules2 = [
     TestMolecule('CCOc1ccccc1N(S(C)(=O)=O)CC(NC1CCCCC1)=O', 'O=C(NC1CCCCC1)CNc1ccccc1'),
@@ -138,20 +131,16 @@ class TestCase(unittest.TestCase):
     TestMolecule('COC(c1n(CC(N(C)c2ccccc2)=O)c2ccsc2c1)=O', 'O=C(Cn1c2ccsc2cc1)Nc1ccccc1'),
     TestMolecule('N=C1C(=Cc2coc3ccccc3c2=O)C(=O)N=C2SC(c3ccncc3)=NN12',
                  'N=C1C(=Cc2coc3ccccc3c2=O)C(=O)N=C2SC(c3ccncc3)=NN12'),
-    TestMolecule('CCOC(c1ccc(NC(CCc2c(C)nc3ncnn3c2C)=O)cc1)=O',
-                 'O=C(Nc1ccccc1)CCc1cnc2n(ncn2)c1'),
+    TestMolecule('CCOC(c1ccc(NC(CCc2c(C)nc3ncnn3c2C)=O)cc1)=O', 'O=C(Nc1ccccc1)CCc1cnc2n(ncn2)c1'),
     TestMolecule('COC(=O)C1=C(C)NC(C)=C(C(OC)=O)C1c1oc(-c2c(Cl)c(Cl)ccc2)cc1',
                  'c1ccc(-c2oc(C3C=CNC=C3)cc2)cc1'),
     TestMolecule('CCN(S(c1cc(NC(COC(CCc2nc3ccccc3s2)=O)=O)ccc1)(=O)=O)CC',
                  'c1cc(NC(COC(=O)CCc2nc3c(s2)cccc3)=O)ccc1'),
-    TestMolecule('CCOC(c1cc(OC(c2ccccc2)=O)n(-c2ccccc2)n1)=O',
-                 'O=C(Oc1n(ncc1)-c1ccccc1)c1ccccc1'),
-    TestMolecule('CCOC(=O)c1nc2c(c(NCc3ccccc3F)n1)cccc2',
-                 'c1ccc(CNc2ncnc3c2cccc3)cc1'),
+    TestMolecule('CCOC(c1cc(OC(c2ccccc2)=O)n(-c2ccccc2)n1)=O', 'O=C(Oc1n(ncc1)-c1ccccc1)c1ccccc1'),
+    TestMolecule('CCOC(=O)c1nc2c(c(NCc3ccccc3F)n1)cccc2', 'c1ccc(CNc2ncnc3c2cccc3)cc1'),
     TestMolecule('Cc1nc(C)n(CC(N2CCCC(C(c3c(C)cc(Cl)cc3)=O)C2)=O)n1',
                  'c1ccc(cc1)C(=O)C1CCCN(C(=O)Cn2cncn2)C1'),
-    TestMolecule('COc1cc(NC(=O)c2nnn(CCc3ccccc3)c2N)c(OC)cc1',
-                 'O=C(c1nnn(c1)CCc1ccccc1)Nc1ccccc1'),
+    TestMolecule('COc1cc(NC(=O)c2nnn(CCc3ccccc3)c2N)c(OC)cc1', 'O=C(c1nnn(c1)CCc1ccccc1)Nc1ccccc1'),
     TestMolecule('Cc1cc(C(=O)CN2C(=O)c3ccccc3C2=O)c(C)n1Cc1cccs1',
                  'O=C(CN1C(c2c(cccc2)C1=O)=O)c1cn(Cc2cccs2)cc1'),
     TestMolecule('c1cnc2c(c1)cccc2S(N1CCC(C(=O)N2CCN(c3ccc(Cl)cc3)CC2)CC1)(=O)=O',
@@ -162,10 +151,8 @@ class TestCase(unittest.TestCase):
                  'c1ccc(S(CCC(=O)OCC(Nc2cccs2)=O)(=O)=O)cc1'),
     TestMolecule('CCC1CCCCN1CCCNC(=O)Cn1nc(-c2ccccc2)ccc1=O',
                  'O=C(NCCCN1CCCCC1)Cn1nc(ccc1=O)-c1ccccc1'),
-    TestMolecule('CCc1cc(OCCn2nc(C(O)=O)c3ccccc3c2=O)ccc1',
-                 'O=c1n(CCOc2ccccc2)ncc2ccccc21'),
-    TestMolecule('Fc1ccc(CN2CCN3C(CCC3)C2C2CCCCC2)cc1F',
-                 'c1ccc(cc1)CN1CCN2CCCC2C1C1CCCCC1'),
+    TestMolecule('CCc1cc(OCCn2nc(C(O)=O)c3ccccc3c2=O)ccc1', 'O=c1n(CCOc2ccccc2)ncc2ccccc21'),
+    TestMolecule('Fc1ccc(CN2CCN3C(CCC3)C2C2CCCCC2)cc1F', 'c1ccc(cc1)CN1CCN2CCCC2C1C1CCCCC1'),
     TestMolecule('O=[N+]([O-])c1cc(-c2nnc(N3CCOCC3)c3ccccc23)ccc1N1CCOCC1',
                  'c1cc2c(nnc(c2cc1)N1CCOCC1)-c1ccc(cc1)N1CCOCC1'),
     TestMolecule('Cc1ccnc(NC(=O)COc2ccc3oc4c(c3c2)CCCC4)c1',
@@ -174,13 +161,11 @@ class TestCase(unittest.TestCase):
                  'c1ccc(N2CCN(CCCNC(c3ccc(oc3)=O)=O)CC2)cc1'),
     TestMolecule('Cc1cc(C(=O)CSc2nc(=O)cc(N)[nH]2)c(C)n1-c1cccc(F)c1',
                  'O=C(CSc1nc(cc[nH]1)=O)c1cn(cc1)-c1ccccc1'),
-    TestMolecule('CCN(S(c1cccc(C(=O)N2CCCCC2)c1)(=O)=O)CC',
-                 'O=C(N1CCCCC1)c1ccccc1'),
+    TestMolecule('CCN(S(c1cccc(C(=O)N2CCCCC2)c1)(=O)=O)CC', 'O=C(N1CCCCC1)c1ccccc1'),
     TestMolecule('CNC(=S)N1CCC(NC(=O)C23CC4CC(C2)CC(C3)C4)CC1',
                  'O=C(NC1CCNCC1)C12CC3CC(C1)CC(C3)C2'),
     TestMolecule('Cc1cc2c(cc1)N=C(C)C(N=O)=C(C)N2', 'c1cc2NC=CC=Nc2cc1'),
-    TestMolecule('COc1ccc(Sc2cc(C(F)(F)F)nc(-c3ncccc3)n2)cc1',
-                 'c1ccc(cc1)Sc1nc(ncc1)-c1ncccc1'),
+    TestMolecule('COc1ccc(Sc2cc(C(F)(F)F)nc(-c3ncccc3)n2)cc1', 'c1ccc(cc1)Sc1nc(ncc1)-c1ncccc1'),
     TestMolecule('c1coc(CNC(Cn2cc(C(c3ccccc3)=O)c3c2cccc3)=O)c1',
                  'c1coc(CNC(Cn2cc(C(c3ccccc3)=O)c3c2cccc3)=O)c1'),
     TestMolecule('O=C(NCc1ccc(Cl)cc1)c1noc(-c2ccco2)c1', 'O=C(c1noc(c1)-c1ccco1)NCc1ccccc1'),
@@ -257,10 +242,8 @@ class TestCase(unittest.TestCase):
                  'c1cc(no1)NC(=O)c1ccc(S(=O)(=O)Nc2ccccc2)cc1'),
     TestMolecule('Nn1c(Cc2c3c(cccc3)ccc2)nnc1SCc1ccccc1',
                  'c1ccc(CSc2nnc([nH]2)Cc2c3c(cccc3)ccc2)cc1'),
-    TestMolecule('Cc1[nH]nc(Nc2cc(C)ccc2)c1[N+](=O)[O-]',
-                 'c1ccc(cc1)Nc1n[nH]cc1'),
-    TestMolecule('CC1Cn2c(nc3n(C)c(=O)[nH]c(=O)c23)O1',
-                 'O=c1[nH]c2nc3n(c2c([nH]1)=O)CCO3'),
+    TestMolecule('Cc1[nH]nc(Nc2cc(C)ccc2)c1[N+](=O)[O-]', 'c1ccc(cc1)Nc1n[nH]cc1'),
+    TestMolecule('CC1Cn2c(nc3n(C)c(=O)[nH]c(=O)c23)O1', 'O=c1[nH]c2nc3n(c2c([nH]1)=O)CCO3'),
     TestMolecule('c1csc(C(OCC(NC23CC4CC(C2)CC(C3)C4)=O)=O)c1',
                  'c1csc(C(OCC(NC23CC4CC(C2)CC(C3)C4)=O)=O)c1'),
     TestMolecule('c1ccc(S(NC2=NC(=O)C(=Cc3cnccc3)S2)(=O)=O)cc1',
@@ -271,24 +254,19 @@ class TestCase(unittest.TestCase):
                  'c1cc(S(=O)(=O)N2CCOCC2)cc(NC(=O)CSc2nnc(-c3ccncc3)[nH]2)c1'),
     TestMolecule('C#CCNC(=O)C1=CC(c2ccc(Br)cc2)CC(OCc2ccc(CO)cc2)O1',
                  'c1cccc(c1)C1C=COC(OCc2ccccc2)C1'),
-    TestMolecule('CCc1c(SCC(=O)Nc2cc(C)on2)nc2ccc(C)cc2c1',
-                 'O=C(Nc1ccon1)CSc1ccc2c(cccc2)n1'),
+    TestMolecule('CCc1c(SCC(=O)Nc2cc(C)on2)nc2ccc(C)cc2c1', 'O=C(Nc1ccon1)CSc1ccc2c(cccc2)n1'),
     TestMolecule('CCOCCCN(C(C(NC1CCCC1)=O)c1cccc(OC)c1OC)C(c1ccco1)=O',
                  'c1cc(ccc1)C(NC(c1occc1)=O)C(=O)NC1CCCC1'),
     TestMolecule('Cc1ccc(C(=O)NC(=S)NNS(c2ccccc2)(=O)=O)cc1',
                  'c1cccc(c1)C(NC(=S)NNS(=O)(=O)c1ccccc1)=O'),
-    TestMolecule('COc1ccc(CC(N)=NOC(=O)c2sccc2)cc1',
-                 'O=C(ON=CCc1ccccc1)c1sccc1'),
+    TestMolecule('COc1ccc(CC(N)=NOC(=O)c2sccc2)cc1', 'O=C(ON=CCc1ccccc1)c1sccc1'),
     TestMolecule('c1ccc(C(O)=C2C(c3ncccc3)N(CC(OC)OC)C(=O)C2=O)cc1',
                  'c1cc(C=C2C(=O)C(=O)NC2c2ncccc2)ccc1'),
-    TestMolecule('COC(=O)CSc1nc(C)cc(Oc2ccccc2)n1',
-                 'c1ccc(Oc2ccncn2)cc1'),
-    TestMolecule('COc1ccc(Cn2c(C)ccc2C)cc1',
-                 'c1ccc(cc1)Cn1cccc1'),
+    TestMolecule('COC(=O)CSc1nc(C)cc(Oc2ccccc2)n1', 'c1ccc(Oc2ccncn2)cc1'),
+    TestMolecule('COc1ccc(Cn2c(C)ccc2C)cc1', 'c1ccc(cc1)Cn1cccc1'),
     TestMolecule('COc1cccc(N2CCN(C3CC(=O)N(c4ccc(C)c(Cl)c4)C3=O)CC2)c1',
                  'O=C1N(c2ccccc2)C(=O)C(C1)N1CCN(c2ccccc2)CC1'),
-    TestMolecule('COc1cccc(OC)c1OCCN(C)C.OC(=O)C(O)=O',
-                 'c1ccccc1'),
+    TestMolecule('COc1cccc(OC)c1OCCN(C)C.OC(=O)C(O)=O', 'c1ccccc1'),
     TestMolecule('C1CCC(NC(=O)c2ccc(S(N3CCCC3)(=O)=O)cc2)C1',
                  'C1CCC(NC(=O)c2ccc(S(N3CCCC3)(=O)=O)cc2)C1'),
     TestMolecule('CCCN(C(=O)Cn1ncc2c(=O)oc3c(c12)cccc3)c1cc(C)ccc1',
@@ -309,8 +287,7 @@ class TestCase(unittest.TestCase):
     TestMolecule('Cc1ccc(NC(CSc2sc(NC(CN3CCOCC3)=O)nn2)=O)cc1',
                  'O=C(Nc1ccccc1)CSc1sc(nn1)NC(=O)CN1CCOCC1'),
     TestMolecule('COCCNC(=S)NNc1cccc(C(=O)O)c1', 'c1ccccc1'),
-    TestMolecule('O=C(CNc1ccccc1)NN=Cc1ccc2c(c1)OCCO2',
-                 'O=C(CNc1ccccc1)NN=Cc1ccc2c(c1)OCCO2'),
+    TestMolecule('O=C(CNc1ccccc1)NN=Cc1ccc2c(c1)OCCO2', 'O=C(CNc1ccccc1)NN=Cc1ccc2c(c1)OCCO2'),
     TestMolecule('COc1cc2ccccc2cc1C(=O)NCC(c1sccc1)N(C)C', 'O=C(NCCc1sccc1)c1cc2c(cc1)cccc2'),
     TestMolecule('COc1ccc(C(N(C)C)CNC(=O)CCOc2ccccc2)cc1', 'O=C(NCCc1ccccc1)CCOc1ccccc1'),
     TestMolecule('Cl.CCN(CC)CCCN1C(=O)CSC1c1ccc([N+]([O-])=O)cc1', 'O=C1CSC(c2ccccc2)N1'),
@@ -494,8 +471,7 @@ class TestCase(unittest.TestCase):
                  'O=C(Cc1nc2ccccc2[nH]1)c1ccccc1'),
     TestMolecule('c1cc2cc(C(=O)N3CCN(c4ccc(N5CCOCC5)nn4)CC3)c(=O)oc2cc1',
                  'c1cc2cc(C(=O)N3CCN(c4ccc(N5CCOCC5)nn4)CC3)c(=O)oc2cc1'),
-    TestMolecule('COc1ccccc1-n1c(=S)[nH]nc1CCn1nc(C)c(Br)c1C',
-                 'S=c1[nH]nc(n1-c1ccccc1)CCn1cccn1'),
+    TestMolecule('COc1ccccc1-n1c(=S)[nH]nc1CCn1nc(C)c(Br)c1C', 'S=c1[nH]nc(n1-c1ccccc1)CCn1cccn1'),
     TestMolecule('CCC(=O)NC(=S)Nc1ccc(N2CCOCC2)cc1', 'c1cccc(c1)N1CCOCC1'),
     TestMolecule('CCCCCC(=O)N1CCN(CCNC=C2C(=O)CC(c3ccc(OC)c(OC)c3)CC2=O)CC1',
                  'c1ccc(cc1)C1CC(=O)C(C(=O)C1)=CNCCN1CCNCC1'),
@@ -590,4 +566,3 @@ class TestCase(unittest.TestCase):
 
 if __name__ == '__main__':  # pragma: no cover
   unittest.main()
-

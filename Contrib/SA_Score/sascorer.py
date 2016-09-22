@@ -138,8 +138,8 @@ if __name__ == '__main__':
   processMols(suppl)
   t4 = time.time()
 
-  print('Reading took %.2f seconds. Calculating took %.2f seconds' % ((t2 - t1),
-                                                                      (t4 - t3)), file=sys.stderr)
+  print('Reading took %.2f seconds. Calculating took %.2f seconds' % ((t2 - t1), (t4 - t3)),
+        file=sys.stderr)
 
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.

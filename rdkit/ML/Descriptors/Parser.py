@@ -2,7 +2,6 @@
 #  Copyright (C) 2001-2004  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
-
 """ The "parser" for compound descriptors.
 
 I almost hesitate to document this, because it's not the prettiest
@@ -45,7 +44,7 @@ Here's the general flow of things:
 
 """
 from __future__ import print_function
-__DEBUG=0
+__DEBUG = 0
 from rdkit import RDConfig
 
 # we do this to allow the use of stuff in the math module
@@ -55,9 +54,10 @@ from math import *
 # atomic descriptor section
 #----------------------
 # these are the methods which can be applied to ATOMIC descriptors.
-knownMethods = ['SUM','MIN','MAX','MEAN','AVG','DEV','HAS']
+knownMethods = ['SUM', 'MIN', 'MAX', 'MEAN', 'AVG', 'DEV', 'HAS']
 
-def HAS(strArg,composList,atomDict):
+
+def HAS(strArg, composList, atomDict):
   """ *Calculator Method*
 
     does a string search
@@ -75,19 +75,20 @@ def HAS(strArg,composList,atomDict):
       1 or 0
 
   """
-  splitArgs = string.split(strArg,',')
-  if len(splitArgs)>1:
-    for atom,num in composList:
-      tStr = splitArgs[0].replace('DEADBEEF',atom)
+  splitArgs = string.split(strArg, ',')
+  if len(splitArgs) > 1:
+    for atom, num in composList:
+      tStr = splitArgs[0].replace('DEADBEEF', atom)
       where = eval(tStr)
       what = eval(splitArgs[1])
-      if where.find(what)!= -1:
+      if where.find(what) != -1:
         return 1
     return 0
   else:
     return -666
-    
-def SUM(strArg,composList,atomDict):
+
+
+def SUM(strArg, composList, atomDict):
   """ *Calculator Method*
 
     calculates the sum of a descriptor across a composition
@@ -106,12 +107,13 @@ def SUM(strArg,composList,atomDict):
 
   """
   accum = 0.0
-  for atom,num in composList:
-    tStr = strArg.replace('DEADBEEF',atom)
-    accum = accum + eval(tStr)*num
+  for atom, num in composList:
+    tStr = strArg.replace('DEADBEEF', atom)
+    accum = accum + eval(tStr) * num
   return accum
 
-def MEAN(strArg,composList,atomDict):
+
+def MEAN(strArg, composList, atomDict):
   """ *Calculator Method*
 
     calculates the average of a descriptor across a composition
@@ -131,14 +133,17 @@ def MEAN(strArg,composList,atomDict):
   """
   accum = 0.0
   nSoFar = 0
-  for atom,num in composList:
-    tStr = strArg.replace('DEADBEEF',atom)
-    accum = accum + eval(tStr)*num
+  for atom, num in composList:
+    tStr = strArg.replace('DEADBEEF', atom)
+    accum = accum + eval(tStr) * num
     nSoFar = nSoFar + num
-  return accum/nSoFar
+  return accum / nSoFar
+
+
 AVG = MEAN
 
-def DEV(strArg,composList,atomDict):
+
+def DEV(strArg, composList, atomDict):
   """ *Calculator Method*
 
     calculates the average deviation of a descriptor across a composition
@@ -156,16 +161,17 @@ def DEV(strArg,composList,atomDict):
       a float
 
   """
-  avg = MEAN(strArg,composList,atomDict)
+  avg = MEAN(strArg, composList, atomDict)
   accum = 0.0
   nSoFar = 0.0
-  for atom,num in composList:
-    tStr = strArg.replace('DEADBEEF',atom)
-    accum = accum + abs(eval(tStr)-avg)*num
+  for atom, num in composList:
+    tStr = strArg.replace('DEADBEEF', atom)
+    accum = accum + abs(eval(tStr) - avg) * num
     nSoFar = nSoFar + num
-  return accum/nSoFar
+  return accum / nSoFar
 
-def MIN(strArg,composList,atomDict):
+
+def MIN(strArg, composList, atomDict):
   """ *Calculator Method*
 
     calculates the minimum value of a descriptor across a composition
@@ -184,12 +190,13 @@ def MIN(strArg,composList,atomDict):
 
   """
   accum = []
-  for atom,num in composList:
-    tStr = strArg.replace('DEADBEEF',atom)
+  for atom, num in composList:
+    tStr = strArg.replace('DEADBEEF', atom)
     accum.append(eval(tStr))
   return min(accum)
 
-def MAX(strArg,composList,atomDict):
+
+def MAX(strArg, composList, atomDict):
   """ *Calculator Method*
 
     calculates the maximum value of a descriptor across a composition
@@ -208,40 +215,40 @@ def MAX(strArg,composList,atomDict):
 
   """
   accum = []
-  for atom,num in composList:
-    tStr = strArg.replace('DEADBEEF',atom)
+  for atom, num in composList:
+    tStr = strArg.replace('DEADBEEF', atom)
     accum.append(eval(tStr))
   return max(accum)
-
 
 #------------------
 #  string replacement routines
 #    these are not intended to be called by clients
 #------------------
 
-def _SubForAtomicVars(cExpr,varList,dictName):
+
+def _SubForAtomicVars(cExpr, varList, dictName):
   """ replace atomic variables with the appropriate dictionary lookup
 
    *Not intended for client use*
 
   """
   for i in range(len(varList)):
-    cExpr = cExpr.replace('$%d'%(i+1),
-                       '%s["DEADBEEF"]["%s"]'%(dictName,varList[i]))
+    cExpr = cExpr.replace('$%d' % (i + 1), '%s["DEADBEEF"]["%s"]' % (dictName, varList[i]))
   return cExpr
 
-def _SubForCompoundDescriptors(cExpr,varList,dictName):
+
+def _SubForCompoundDescriptors(cExpr, varList, dictName):
   """ replace compound variables with the appropriate list index
 
    *Not intended for client use*
 
   """
   for i in range(len(varList)):
-    cExpr = cExpr.replace('$%s'%chr(ord('a')+i),
-                           '%s["%s"]'%(dictName,varList[i]))
+    cExpr = cExpr.replace('$%s' % chr(ord('a') + i), '%s["%s"]' % (dictName, varList[i]))
   return cExpr
-  
-def _SubMethodArgs(cExpr,knownMethods):
+
+
+def _SubMethodArgs(cExpr, knownMethods):
   """ alters the arguments of calls to calculator methods
 
   *Not intended for client use*
@@ -257,7 +264,7 @@ def _SubMethodArgs(cExpr,knownMethods):
   for method in knownMethods:
     p = 0
     while p != -1 and p < len(res):
-      p = res.find(method,p)
+      p = res.find(method, p)
       if p != -1:
         p = p + len(method) + 1
         start = p
@@ -266,13 +273,14 @@ def _SubMethodArgs(cExpr,knownMethods):
           if res[p] == ')':
             parenCount = parenCount - 1
           elif res[p] == '(':
-            parenCount = parenCount + 1          
+            parenCount = parenCount + 1
           p = p + 1
         if p <= len(res):
-          res = res[0:start]+"'%s',compos,atomDict"%(res[start:p-1])+res[p-1:]
+          res = res[0:start] + "'%s',compos,atomDict" % (res[start:p - 1]) + res[p - 1:]
   return res
 
-def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
+
+def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
   """ calculates the value of the descriptor for a single compound
 
     **ARGUMENTS:**
@@ -318,12 +326,12 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
     atomVarNames = argVect[0]
     compositionVarNames = argVect[1]
     formula = argVect[2]
-    formula = _SubForCompoundDescriptors(formula,compositionVarNames,'propDict')
-    formula = _SubForAtomicVars(formula,atomVarNames,'atomDict')
-    evalTarget = _SubMethodArgs(formula,knownMethods)
+    formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
+    formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
+    evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:
     if __DEBUG:
-      import sys,traceback
+      import sys, traceback
       print('Sub Failure!')
       traceback.print_exc()
       print(evalTarget)
@@ -336,27 +344,28 @@ def CalcSingleCompoundDescriptor(compos,argVect,atomDict,propDict):
     v = eval(evalTarget)
   except Exception:
     if __DEBUG:
-      import sys,traceback
-      outF = open(RDConfig.RDCodeDir+'/ml/descriptors/log.txt','a+')
+      import sys, traceback
+      outF = open(RDConfig.RDCodeDir + '/ml/descriptors/log.txt', 'a+')
       outF.write('#------------------------------\n')
-      outF.write('formula: %s\n'%repr(formula))
-      outF.write('target: %s\n'%repr(evalTarget))
-      outF.write('propDict: %s\n'%(repr(propDict)))
-      
-      outF.write('keys: %s\n'%(repr(sorted(atomDict))))
+      outF.write('formula: %s\n' % repr(formula))
+      outF.write('target: %s\n' % repr(evalTarget))
+      outF.write('propDict: %s\n' % (repr(propDict)))
+
+      outF.write('keys: %s\n' % (repr(sorted(atomDict))))
       outF.close()
       print('ick!')
-      print('formula:',formula)
-      print('target:',evalTarget)
-      print('propDict:',propDict)
-      print('keys:',atomDict.keys())
+      print('formula:', formula)
+      print('target:', evalTarget)
+      print('propDict:', propDict)
+      print('keys:', atomDict.keys())
       traceback.print_exc()
       raise RuntimeError('Failure 2')
     else:
       v = -666
   return v
 
-def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
+
+def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList):
   """ calculates the value of the descriptor for a list of compounds
 
     **ARGUMENTS:**
@@ -393,14 +402,14 @@ def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
       encountered
       
   """
-  res = [-666]*len(composVect)
+  res = [-666] * len(composVect)
   try:
     atomVarNames = argVect[0]
     compositionVarNames = argVect[1]
     formula = argVect[2]
-    formula = _SubForCompoundDescriptors(formula,compositionVarNames,'propDict')
-    formula = _SubForAtomicVars(formula,atomVarNames,'atomDict')
-    evalTarget = _SubMethodArgs(formula,knownMethods)
+    formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
+    formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
+    evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:
     return res
   for i in range(len(composVect)):
@@ -417,17 +426,16 @@ def CalcMultipleCompoundsDescriptor(composVect,argVect,atomDict,propDictList):
 #  Demo/testing code
 #------------
 if __name__ == '__main__':
-  piece1 = [['d1','d2'],['d1','d2']]
-  aDict = {'Fe':{'d1':1.,'d2':2.},'Pt':{'d1':10.,'d2':20.}}
-  pDict = {'d1':100.,'d2':200.}
-  compos = [('Fe',1),('Pt',1)]
+  piece1 = [['d1', 'd2'], ['d1', 'd2']]
+  aDict = {'Fe': {'d1': 1., 'd2': 2.}, 'Pt': {'d1': 10., 'd2': 20.}}
+  pDict = {'d1': 100., 'd2': 200.}
+  compos = [('Fe', 1), ('Pt', 1)]
 
-  cExprs = ["SUM($1)","SUM($1)+SUM($2)","SUM($1)+SUM($1)","MEAN($1)","DEV($2)","MAX($1)","MIN($1)/MAX($1)",
-            "MIN($2)","SUM($1)/$a","sqrt($a+$b)","SUM((3.*$1)/($2))","foo"]
+  cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)", "MEAN($1)", "DEV($2)", "MAX($1)",
+            "MIN($1)/MAX($1)", "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))", "foo"]
 
   for cExpr in cExprs:
     argVect = piece1 + [cExpr]
     print(cExpr)
-    print(CalcSingleCompoundDescriptor(compos,argVect,aDict,pDict))
-    print(CalcMultipleCompoundsDescriptor([compos,compos],argVect,aDict,[pDict,pDict]))
-
+    print(CalcSingleCompoundDescriptor(compos, argVect, aDict, pDict))
+    print(CalcMultipleCompoundsDescriptor([compos, compos], argVect, aDict, [pDict, pDict]))

@@ -22,15 +22,16 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
 from rdkit import DataStructs
 
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint,GetHashedAtomPairFingerprint
-GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint
+from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetHashedAtomPairFingerprint
+GetAtomPairFingerprintAsIntVect = rdMolDescriptors.GetAtomPairFingerprint
 
-numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
-_maxPathLen=(1<<numPathBits)-1
-numFpBits=numPathBits+2*rdMolDescriptors.AtomPairsParameters.codeSize
-fpLen=1<<numFpBits
+numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
+_maxPathLen = (1 << numPathBits) - 1
+numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
+fpLen = 1 << numFpBits
 
-def pyScorePair(at1,at2,dist,atomCodes=None):
+
+def pyScorePair(at1, at2, dist, atomCodes=None):
   """ Returns a score for an individual atom pair.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
@@ -54,11 +55,12 @@ def pyScorePair(at1,at2,dist,atomCodes=None):
     code1 = Utils.GetAtomCode(at1)
     code2 = Utils.GetAtomCode(at2)
   else:
-    code1,code2=atomCodes
+    code1, code2 = atomCodes
   accum = int(dist) % _maxPathLen
-  accum |= min(code1,code2) << numPathBits
-  accum |= max(code1,code2) << (rdMolDescriptors.AtomPairsParameters.codeSize+numPathBits)
+  accum |= min(code1, code2) << numPathBits
+  accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits)
   return accum
+
 
 def ExplainPairScore(score):
   """ 
@@ -77,17 +79,18 @@ def ExplainPairScore(score):
   (('C', 1, 0), 1, ('C', 2, 1))
 
   """
-  codeMask = (1<<rdMolDescriptors.AtomPairsParameters.codeSize)-1
-  pathMask = (1<<numPathBits)-1
-  dist = score&pathMask
+  codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
+  pathMask = (1 << numPathBits) - 1
+  dist = score & pathMask
 
-  score = score>>numPathBits
-  code1 = score&codeMask
-  score = score>>rdMolDescriptors.AtomPairsParameters.codeSize
-  code2 = score&codeMask
+  score = score >> numPathBits
+  code1 = score & codeMask
+  score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
+  code2 = score & codeMask
 
-  res = Utils.ExplainAtomCode(code1),dist,Utils.ExplainAtomCode(code2)
+  res = Utils.ExplainAtomCode(code1), dist, Utils.ExplainAtomCode(code2)
   return res
+
 
 def GetAtomPairFingerprintAsBitVect(mol):
   """ Returns the Atom-pair fingerprint for a molecule as
@@ -117,19 +120,17 @@ def GetAtomPairFingerprintAsBitVect(mol):
     res.SetBit(val)
   return res
 
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-  
-  
-

@@ -22,6 +22,7 @@
 import numpy
 import ActFuncs
 
+
 # FIX: this class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled
 # data. Until a solution is found for this breakage, an update is
@@ -30,7 +31,8 @@ class NetNode:
   """ a node in a neural network
 
   """
-  def Eval(self,valVect):
+
+  def Eval(self, valVect):
     """Given a set of inputs (valVect), returns the output of this node
 
      **Arguments**
@@ -44,7 +46,7 @@ class NetNode:
     """
     if len(self.inputNodes) != 0:
       # grab our list of weighted inputs
-      inputs = numpy.take(valVect,self.inputNodes)
+      inputs = numpy.take(valVect, self.inputNodes)
       # weight them
       inputs = self.weights * inputs
       # run that through the activation function
@@ -55,7 +57,7 @@ class NetNode:
     valVect[self.nodeIndex] = val
     return val
 
-  def SetInputs(self,inputNodes):
+  def SetInputs(self, inputNodes):
     """ Sets the input list
 
       **Arguments**
@@ -72,13 +74,14 @@ class NetNode:
     if self.weights:
       assert (len(self.weights) == len(self.inputNodes)),\
              'lengths of weights and nodes do not match'
+
   def GetInputs(self):
     """ returns the input list
 
     """
     return self.inputNodes
-  
-  def SetWeights(self,weights):
+
+  def SetWeights(self, weights):
     """ Sets the weight list
 
       **Arguments**
@@ -102,8 +105,8 @@ class NetNode:
     """
     return self.weights
 
-  def __init__(self,nodeIndex,nodeList,inputNodes=None,weights=None,
-               actFunc=ActFuncs.Sigmoid,actFuncParms=()):
+  def __init__(self, nodeIndex, nodeList, inputNodes=None, weights=None, actFunc=ActFuncs.Sigmoid,
+               actFuncParms=()):
     """ Constructor
 
       **Arguments**
@@ -140,10 +143,6 @@ class NetNode:
 
     self.nodeIndex = nodeIndex
     # there's only one of these, everybody has a pointer to it.
-    self.nodeList = nodeList 
+    self.nodeList = nodeList
 
     self.actFunc = actFunc(*actFuncParms)
-    
-    
-    
-

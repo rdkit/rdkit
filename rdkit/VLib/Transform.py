@@ -8,6 +8,7 @@ from rdkit import six
 
 from rdkit.VLib.Node import VLibNode
 
+
 class TransformNode(VLibNode):
   """ base class for nodes which filter their input
 
@@ -46,8 +47,9 @@ class TransformNode(VLibNode):
     [(1, 1), (2, 2), (3, 3), (3, 1)]
 
   """
-  def __init__(self,func=None,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, func=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._func = func
 
   def next(self):
@@ -64,23 +66,23 @@ class TransformNode(VLibNode):
       res = self._func(*args)
     else:
       res = args
-    return res  
+    return res
+
 
 if six.PY3:
-    TransformNode.__next__ = TransformNode.next
+  TransformNode.__next__ = TransformNode.next
 
-  
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

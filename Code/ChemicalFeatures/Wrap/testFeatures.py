@@ -57,8 +57,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(ffeat.GetFamily() == "HBondDonor")
     self.assertTrue(ffeat.GetType() == "HBondDonor1")
 
-    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(
-      1.0, 2.0, 3.0), id=123)
+    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                 geom.Point3D(1.0, 2.0, 3.0), id=123)
     self.assertTrue(ffeat.GetId() == 123)
     self.assertTrue(ffeat.GetFamily() == "HBondDonor")
     self.assertTrue(ffeat.GetType() == "HBondDonor1")
@@ -75,8 +75,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
 
   def testPickle(self):
-    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(
-      1.0, 2.0, 3.0), 123)
+    ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1",
+                                                 geom.Point3D(1.0, 2.0, 3.0), 123)
     pkl = cPickle.dumps(ffeat)
     ffeat2 = cPickle.loads(pkl, encoding='bytes')
     self.assertTrue(ffeat2.GetId() == ffeat.GetId())

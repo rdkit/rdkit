@@ -12,14 +12,18 @@
 
 """
 
+
 class MolSupplier(object):
   """ we must, at minimum, support forward iteration
 
   """
+
   def __init__(self):
     raise ValueError('cannot instantiate MolSuppliers')
+
   def Reset(self):
     pass
+
   def __iter__(self):
     self.Reset()
     return self
@@ -30,7 +34,7 @@ class MolSupplier(object):
       return res
     else:
       raise StopIteration
-  
+
   def NextMol(self):
     """   Must be implemented in child class
  

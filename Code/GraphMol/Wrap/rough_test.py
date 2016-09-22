@@ -543,14 +543,14 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 4)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
     self.assertTrue(
-      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3, Chem.FindAllPathsOfLengthN(
-        m, 3, useBonds=1))
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
     self.assertTrue(
-      len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=1)) == 1, Chem.FindAllPathsOfLengthN(
-        m, 4, useBonds=1))
+      len(Chem.FindAllPathsOfLengthN(m, 4, useBonds=1)) == 1,
+      Chem.FindAllPathsOfLengthN(m, 4, useBonds=1))
     self.assertTrue(
-      len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=1)) == 0, Chem.FindAllPathsOfLengthN(
-        m, 5, useBonds=1))
+      len(Chem.FindAllPathsOfLengthN(m, 5, useBonds=1)) == 0,
+      Chem.FindAllPathsOfLengthN(m, 5, useBonds=1))
 
     #
     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
@@ -565,8 +565,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 5)
     self.assertTrue(
-      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4, Chem.FindAllPathsOfLengthN(
-        m, 3, useBonds=1))
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 4,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
 
     m = Chem.MolFromSmiles("CCCC(C)C")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
@@ -582,8 +582,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 5)
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 2, useBonds=1)) == 7)
     self.assertTrue(
-      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3, Chem.FindAllPathsOfLengthN(
-        m, 3, useBonds=1))
+      len(Chem.FindAllPathsOfLengthN(m, 3, useBonds=1)) == 3,
+      Chem.FindAllPathsOfLengthN(m, 3, useBonds=1))
 
     m = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(len(Chem.FindAllPathsOfLengthN(m, 1, useBonds=1)) == 6)
@@ -1836,8 +1836,8 @@ CAS<~>
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, replaceDummies=%r, labelByIndex=%r, useChirality=%r" %
               (smiles, smarts, replaceDummies, labelByIndex, useChirality), file=sys.stderr)
-        print("expected: %s\ngot: %s" %
-              (expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)),
+              file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
 
       matchVect = mol.GetSubstructMatch(core, useChirality=useChirality)
@@ -1846,8 +1846,8 @@ CAS<~>
       if Chem.MolToSmiles(nm, True) != expected_smiles:
         print("ReplaceCore(%r, %r, %r, replaceDummies=%r, labelByIndex=%rr" %
               (smiles, smarts, matchVect, replaceDummies, labelByIndex), file=sys.stderr)
-        print("expected: %s\ngot: %s" %
-              (expected_smiles, Chem.MolToSmiles(nm, True)), file=sys.stderr)
+        print("expected: %s\ngot: %s" % (expected_smiles, Chem.MolToSmiles(nm, True)),
+              file=sys.stderr)
         self.assertEquals(expected_smiles, Chem.MolToSmiles(nm, True))
 
     mol = Chem.MolFromSmiles("C")
@@ -3002,14 +3002,14 @@ CAS<~>
     atoms[9].SetDoubleProp("number", 4.0)
     atoms[10].SetIntProp("number", 4)
 
-    tests = ((rdqueries.HasIntPropWithValueQueryAtom, "bar", {1: [1],
-                                                              2: [2]}),
-             (rdqueries.HasBoolPropWithValueQueryAtom, "baz", {True: [3],
-                                                               False: [4]}),
-             (rdqueries.HasStringPropWithValueQueryAtom, "boo", {"hoo": [5],
-                                                                 "-urns": [6]}),
-             (rdqueries.HasDoublePropWithValueQueryAtom, "boot", {1.0: [7],
-                                                                  4.0: [8]}))
+    tests = ((rdqueries.HasIntPropWithValueQueryAtom, "bar",
+              {1: [1],
+               2: [2]}), (rdqueries.HasBoolPropWithValueQueryAtom, "baz", {True: [3],
+                                                                           False: [4]}),
+             (rdqueries.HasStringPropWithValueQueryAtom, "boo",
+              {"hoo": [5],
+               "-urns": [6]}), (rdqueries.HasDoublePropWithValueQueryAtom, "boot", {1.0: [7],
+                                                                                    4.0: [8]}))
 
     for query, name, lookups in tests:
       for t, v in lookups.items():
@@ -3049,14 +3049,14 @@ CAS<~>
     bonds[9].SetDoubleProp("number", 4.0)
     bonds[10].SetIntProp("number", 4)
 
-    tests = ((rdqueries.HasIntPropWithValueQueryBond, "bar", {1: [1],
-                                                              2: [2]}),
-             (rdqueries.HasBoolPropWithValueQueryBond, "baz", {True: [3],
-                                                               False: [4]}),
-             (rdqueries.HasStringPropWithValueQueryBond, "boo", {"hoo": [5],
-                                                                 "-urns": [6]}),
-             (rdqueries.HasDoublePropWithValueQueryBond, "boot", {1.0: [7],
-                                                                  4.0: [8]}))
+    tests = ((rdqueries.HasIntPropWithValueQueryBond, "bar",
+              {1: [1],
+               2: [2]}), (rdqueries.HasBoolPropWithValueQueryBond, "baz", {True: [3],
+                                                                           False: [4]}),
+             (rdqueries.HasStringPropWithValueQueryBond, "boo",
+              {"hoo": [5],
+               "-urns": [6]}), (rdqueries.HasDoublePropWithValueQueryBond, "boot", {1.0: [7],
+                                                                                    4.0: [8]}))
 
     for query, name, lookups in tests:
       for t, v in lookups.items():

@@ -111,8 +111,7 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #symmetric lhs and symmetric rhs
-    ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
-    elif
+    elif ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
       #the points are all equivalent so change labels on lhs and rhs based on position
       #labels on context don't need to change
       lhs = switch_labels_on_position(lhs)
@@ -120,8 +119,7 @@ def cansmirk(lhs, rhs, context):
 
     #more difficult cases..
     #symmetric lhs and unsymmetric rhs
-    ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] != rhs_sym[1])):
-    elif
+    elif ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] != rhs_sym[1])):
       #switch labels lhs based on position
       lhs = switch_labels_on_position(lhs)
       #change labels on rhs based on position but need to record
@@ -131,8 +129,7 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #unsymmetric lhs and symmetric rhs
-    ((lhs_sym[0] != lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
-    elif
+    elif ((lhs_sym[0] != lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
       #change labels on lhs based on position but need to record
       #the changes as need to appy them to the context
       isotope_track = build_track_dictionary(lhs, stars)
@@ -155,9 +152,9 @@ def cansmirk(lhs, rhs, context):
       rhs = switch_labels_on_position(rhs)
 
     #completely symmetric lhs and completely unsymmetric rhs
-    (((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2])) and
-     ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
-    elif
+    elif (
+      ((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2])) and
+      ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
 
       #alter lhs in usual way
       lhs = switch_labels_on_position(lhs)
@@ -168,9 +165,9 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #completely unsymmetric lhs and completely unsymmetric rhs
-    (((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
-     ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
-    elif
+    elif (
+      ((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
+      ((rhs_sym[0] != rhs_sym[1]) and (rhs_sym[1] != rhs_sym[2]) and (rhs_sym[0] != rhs_sym[2]))):
 
       #build the isotope track
       isotope_track = build_track_dictionary(lhs, stars)
@@ -181,9 +178,9 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #completely unsymmetric lhs and completely symmetric rhs
-    (((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
-     ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and (rhs_sym[0] == rhs_sym[2]))):
-    elif
+    elif (
+      ((lhs_sym[0] != lhs_sym[1]) and (lhs_sym[1] != lhs_sym[2]) and (lhs_sym[0] != lhs_sym[2])) and
+      ((rhs_sym[0] == rhs_sym[1]) and (rhs_sym[1] == rhs_sym[2]) and (rhs_sym[0] == rhs_sym[2]))):
 
       #build isotope trach on lhs
       isotope_track = build_track_dictionary(lhs, stars)
@@ -217,8 +214,7 @@ def cansmirk(lhs, rhs, context):
         rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 2, 3)
 
       #rhs 1,3 equivalent - try for larger set in future
-      (rhs_sym[0] == rhs_sym[2]):
-      elif
+      elif (rhs_sym[0] == rhs_sym[2]):
         #tweak rhs position 1 and 2 as they are symmetric
         rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 3)
 
@@ -240,8 +236,7 @@ def cansmirk(lhs, rhs, context):
       #lhs 1,2 equivalent
       #lhs 2,3 equivalent
       #lhs 1,3 equivalent
-      :
-      else
+      else:
         #build isotope track on lhs
         isotope_track = build_track_dictionary(lhs, stars)
         #alter lhs in usual way
@@ -263,8 +258,7 @@ def cansmirk(lhs, rhs, context):
           rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 2, 3)
 
         #lhs 1,3 equivalent - try for larger set in future
-        (lhs_sym[0] == lhs_sym[2]):
-        elif
+        elif (lhs_sym[0] == lhs_sym[2]):
           #tweak rhs position 1 and 2 as they are symmetric on lhs
           rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 3)
 
