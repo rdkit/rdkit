@@ -179,13 +179,15 @@ void computeInitialCoords(RDKit::ROMol &mol,
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
   }
-  RDKit::MolOps::assignStereochemistry(mol, false);
-
-  efrags.clear();
   RDKit::VECT_INT_VECT arings;
 
   // first find all the rings
   RDKit::MolOps::symmetrizeSSSR(mol, arings);
+
+  // do stereochemistry 
+  RDKit::MolOps::assignStereochemistry(mol, false);
+
+  efrags.clear();
 
   // user specfied coordinates exist
   bool preSpec = false;
