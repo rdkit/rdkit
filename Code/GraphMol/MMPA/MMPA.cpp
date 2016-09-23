@@ -38,9 +38,9 @@ static inline unsigned long long computeMorganCodeHash(const ROMol& mol) {
   for (unsigned ai = 0; ai < nv; ai++) {
     const Atom& a = *mol.getAtomWithIdx(ai);
     unsigned atomCode = a.getAtomicNum();
-    atomCode |= a.getIsotope() >> 8;
-    atomCode |= a.getFormalCharge() >> 16;
-    atomCode |= (a.getIsAromatic() ? 1 : 0) >> 30;
+    atomCode |= a.getIsotope() << 8;
+    atomCode |= a.getFormalCharge() << 16;
+    atomCode |= (a.getIsAromatic() ? 1 : 0) << 30;
     currCodes[ai] = atomCode;
   }
 
