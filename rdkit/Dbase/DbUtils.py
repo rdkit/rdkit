@@ -15,9 +15,12 @@
 """
 from __future__ import print_function
 from rdkit import RDConfig
-from rdkit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
-def _take(fromL,what):
-  return map(lambda x,y=fromL:y[x],what)
+from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
+
+
+def _take(fromL, what):
+  return map(lambda x, y=fromL: y[x], what)
+
 
 from rdkit.Dbase import DbModule
 import sys
@@ -25,8 +28,8 @@ from rdkit.Dbase import DbInfo
 from rdkit.six.moves import xrange  #@UnresolvedImport #pylint: disable=F0401
 from rdkit.six import string_types
 
-def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
-               join='',cn=None):
+
+def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', join='', cn=None):
   """ gets a set of data from a table
 
     **Arguments**
@@ -49,18 +52,20 @@ def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
 
   """
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
-  cmd = 'select %s from %s'%(fieldString,table)
+  cmd = 'select %s from %s' % (fieldString, table)
   if join:
     if join.strip().find('join') != 0:
-      join = 'join %s'%(join)
-    cmd +=' ' + join
+      join = 'join %s' % (join)
+    cmd += ' ' + join
   c.execute(cmd)
   return c.fetchall()
 
-def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='masterkey',
-            removeDups=-1,join='',forceList=0,transform=None,randomAccess=1,extras=None,cn=None):
+
+def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', password='masterkey',
+            removeDups=-1, join='', forceList=0, transform=None, randomAccess=1, extras=None,
+            cn=None):
   """ a more flexible method to get a set of data from a table
 
     **Arguments**
@@ -85,16 +90,16 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
 
   """
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
-  cmd = 'select %s from %s'%(fieldString,table)
+  cmd = 'select %s from %s' % (fieldString, table)
   if join:
     if join.strip().find('join') != 0:
-      join = 'join %s'%(join)
+      join = 'join %s' % (join)
     cmd += ' ' + join
   if whereString:
-    if whereString.strip().find('where')!=0:
-      whereString = 'where %s'%(whereString)
+    if whereString.strip().find('where') != 0:
+      whereString = 'where %s' % (whereString)
     cmd += ' ' + whereString
 
   if forceList:
@@ -102,9 +107,9 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
       if not extras:
         c.execute(cmd)
       else:
-        c.execute(cmd,extras)
+        c.execute(cmd, extras)
     except Exception:
-      sys.stderr.write('the command "%s" generated errors:\n'%(cmd))
+      sys.stderr.write('the command "%s" generated errors:\n' % (cmd))
       import traceback
       traceback.print_exc()
       return None
@@ -113,7 +118,7 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
     if not randomAccess:
       raise ValueError('when forceList is set, randomAccess must also be used')
     data = c.fetchall()
-    if removeDups>0:
+    if removeDups > 0:
       seen = []
       for entry in data[:]:
         if entry[removeDups] in seen:
@@ -122,16 +127,17 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
           seen.append(entry[removeDups])
   else:
     if randomAccess:
-      klass = RandomAccessDbResultSet 
+      klass = RandomAccessDbResultSet
     else:
-      klass = DbResultSet 
+      klass = DbResultSet
 
-    data = klass(c,cn,cmd,removeDups=removeDups,transform=transform,extras=extras)
+    data = klass(c, cn, cmd, removeDups=removeDups, transform=transform, extras=extras)
 
   return data
 
-def DatabaseToText(dBase,table,fields='*',join='',where='',
-                  user='sysdba',password='masterkey',delim=',',cn=None):
+
+def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', password='masterkey',
+                   delim=',', cn=None):
   """ Pulls the contents of a database and makes a deliminted text file from them
 
     **Arguments**
@@ -156,13 +162,13 @@ def DatabaseToText(dBase,table,fields='*',join='',where='',
       - the CSV data (as text) 
 
   """
-  if len(where) and where.strip().find('where')==-1:
-    where = 'where %s'%(where)
+  if len(where) and where.strip().find('where') == -1:
+    where = 'where %s' % (where)
   if len(join) and join.strip().find('join') == -1:
-    join = 'join %s'%(join)
-  sqlCommand = 'select %s from %s %s %s'%(fields,table,join,where)
+    join = 'join %s' % (join)
+  sqlCommand = 'select %s from %s %s %s' % (fields, table, join, where)
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
   c.execute(sqlCommand)
   headers = []
@@ -181,13 +187,13 @@ def DatabaseToText(dBase,table,fields='*',join='',where='',
   # grab the data
   results = c.fetchall()
   for res in results:
-    d = _take(res,colsToTake)
-    lines.append(delim.join(map(str,d)))
+    d = _take(res, colsToTake)
+    lines.append(delim.join(map(str, d)))
 
   return '\n'.join(lines)
 
 
-def TypeFinder(data,nRows,nCols,nullMarker=None):
+def TypeFinder(data, nRows, nCols, nullMarker=None):
   """ 
 
     finds the types of the columns in _data_
@@ -197,10 +203,10 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
       their columns.
 
   """
-  priorities={float:3,int:2,str:1,-1:-1}
-  res = [None]*nCols
+  priorities = {float: 3, int: 2, str: 1, -1: -1}
+  res = [None] * nCols
   for col in xrange(nCols):
-    typeHere = [-1,1]
+    typeHere = [-1, 1]
     for row in xrange(nRows):
       d = data[row][col]
       if d is not None:
@@ -210,15 +216,15 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
           try:
             d = str(d)
           except UnicodeError as msg:
-            print('cannot convert text from row %d col %d to a string'%(row+2,col))
-            print('\t>%s'%(repr(d)))
+            print('cannot convert text from row %d col %d to a string' % (row + 2, col))
+            print('\t>%s' % (repr(d)))
             raise UnicodeError(msg)
         else:
-          typeHere[1] = max(typeHere[1],len(str(d)))
+          typeHere[1] = max(typeHere[1], len(str(d)))
         if isinstance(d, string_types):
           if nullMarker is None or d != nullMarker:
-            l = max(len(d),typeHere[1])
-            typeHere = [str,l]
+            l = max(len(d), typeHere[1])
+            typeHere = [str, l]
         else:
           try:
             fD = float(int(d))
@@ -233,7 +239,8 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
     res[col] = typeHere
   return res
 
-def _AdjustColHeadings(colHeadings,maxColLabelLen):
+
+def _AdjustColHeadings(colHeadings, maxColLabelLen):
   """ *For Internal Use*
 
     removes illegal characters from column headings
@@ -243,72 +250,75 @@ def _AdjustColHeadings(colHeadings,maxColLabelLen):
   for i in xrange(len(colHeadings)):
     # replace unallowed characters and strip extra white space
     colHeadings[i] = colHeadings[i].strip()
-    colHeadings[i] = colHeadings[i].replace(' ','_')
-    colHeadings[i] = colHeadings[i].replace('-','_')
-    colHeadings[i] = colHeadings[i].replace('.','_')
+    colHeadings[i] = colHeadings[i].replace(' ', '_')
+    colHeadings[i] = colHeadings[i].replace('-', '_')
+    colHeadings[i] = colHeadings[i].replace('.', '_')
 
     if len(colHeadings[i]) > maxColLabelLen:
       # interbase (at least) has a limit on the maximum length of a column name
-      newHead = colHeadings[i].replace('_','')
+      newHead = colHeadings[i].replace('_', '')
       newHead = newHead[:maxColLabelLen]
-      print('\tHeading %s too long, changed to %s'%(colHeadings[i],newHead))
+      print('\tHeading %s too long, changed to %s' % (colHeadings[i], newHead))
       colHeadings[i] = newHead
   return colHeadings
 
-def GetTypeStrings(colHeadings,colTypes,keyCol=None):
+
+def GetTypeStrings(colHeadings, colTypes, keyCol=None):
   """  returns a list of SQL type strings
   """
-  typeStrs=[]
+  typeStrs = []
   for i in xrange(len(colTypes)):
     typ = colTypes[i]
     if typ[0] == float:
-      typeStrs.append('%s double precision'%colHeadings[i])
+      typeStrs.append('%s double precision' % colHeadings[i])
     elif typ[0] == int:
-      typeStrs.append('%s integer'%colHeadings[i])
+      typeStrs.append('%s integer' % colHeadings[i])
     else:
-      typeStrs.append('%s varchar(%d)'%(colHeadings[i],typ[1]))
+      typeStrs.append('%s varchar(%d)' % (colHeadings[i], typ[1]))
     if colHeadings[i] == keyCol:
-      typeStrs[-1] = '%s not null primary key'%(typeStrs[-1])
-  return typeStrs 
+      typeStrs[-1] = '%s not null primary key' % (typeStrs[-1])
+  return typeStrs
 
-def _insertBlock(conn,sqlStr,block,silent=False):
+
+def _insertBlock(conn, sqlStr, block, silent=False):
   try:
-    conn.cursor().executemany(sqlStr,block)
+    conn.cursor().executemany(sqlStr, block)
   except Exception:
     res = 0
     conn.commit()
     for row in block:
       try:
-        conn.cursor().execute(sqlStr,tuple(row))
+        conn.cursor().execute(sqlStr, tuple(row))
         res += 1
       except Exception:
         if not silent:
           import traceback
           traceback.print_exc()
-          print('insert failed:',sqlStr)
-          print('\t',repr(row))
+          print('insert failed:', sqlStr)
+          print('\t', repr(row))
       else:
         conn.commit()
   else:
     res = len(block)
   return res
 
-def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
-                 nullMarker=None,blockSize=100,cn=None):
+
+def _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMarker=None,
+                 blockSize=100, cn=None):
   """ *For Internal Use*
 
     (drops and) creates a table and then inserts the values
 
   """
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
   try:
-    c.execute('drop table %s'%(table))
+    c.execute('drop table %s' % (table))
   except Exception:
-    print('cannot drop table %s'%(table))
+    print('cannot drop table %s' % (table))
   try:
-    sqlStr = 'create table %s (%s)'%(table,colDefs)
+    sqlStr = 'create table %s (%s)' % (table, colDefs)
     c.execute(sqlStr)
   except Exception:
     print('create table failed: ', sqlStr)
@@ -318,14 +328,14 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
     return
   cn.commit()
   c = None
-  
+
   block = []
-  entryTxt = [DbModule.placeHolder]*len(data[0])
+  entryTxt = [DbModule.placeHolder] * len(data[0])
   dStr = ','.join(entryTxt)
-  sqlStr = 'insert into %s values (%s)'%(table,dStr)
+  sqlStr = 'insert into %s values (%s)' % (table, dStr)
   nDone = 0
   for row in data:
-    entries = [None]*len(row)
+    entries = [None] * len(row)
     for col in xrange(len(row)):
       if row[col] is not None and \
          (nullMarker is None or row[col] != nullMarker):
@@ -338,19 +348,19 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
       else:
         entries[col] = None
     block.append(tuple(entries))
-    if len(block)>=blockSize:
-      nDone += _insertBlock(cn,sqlStr,block)
-      if not hasattr(cn,'autocommit') or not cn.autocommit:
+    if len(block) >= blockSize:
+      nDone += _insertBlock(cn, sqlStr, block)
+      if not hasattr(cn, 'autocommit') or not cn.autocommit:
         cn.commit()
       block = []
   if len(block):
-    nDone += _insertBlock(cn,sqlStr,block)
-  if not hasattr(cn,'autocommit') or not cn.autocommit:
+    nDone += _insertBlock(cn, sqlStr, block)
+  if not hasattr(cn, 'autocommit') or not cn.autocommit:
     cn.commit()
- 
-def TextFileToDatabase(dBase,table,inF,delim=',',
-                       user='sysdba',password='masterkey',
-                       maxColLabelLen=31,keyCol=None,nullMarker=None):
+
+
+def TextFileToDatabase(dBase, table, inF, delim=',', user='sysdba', password='masterkey',
+                       maxColLabelLen=31, keyCol=None, nullMarker=None):
   """loads the contents of the text file into a database.
 
     **Arguments**
@@ -381,21 +391,21 @@ def TextFileToDatabase(dBase,table,inF,delim=',',
       - we assume that the first row of the file contains the column names
 
   """
-  table.replace('-','_')
-  table.replace(' ','_')
+  table.replace('-', '_')
+  table.replace(' ', '_')
 
   colHeadings = inF.readline().split(delim)
-  _AdjustColHeadings(colHeadings,maxColLabelLen)
+  _AdjustColHeadings(colHeadings, maxColLabelLen)
   nCols = len(colHeadings)
   data = []
   inL = inF.readline()
   while inL:
-    inL = inL.replace('\r','')
-    inL = inL.replace('\n','')
+    inL = inL.replace('\r', '')
+    inL = inL.replace('\n', '')
     splitL = inL.split(delim)
-    if len(splitL)!=nCols:
-      print('>>>',repr(inL))
-      assert len(splitL)==nCols,'unequal length'
+    if len(splitL) != nCols:
+      print('>>>', repr(inL))
+      assert len(splitL) == nCols, 'unequal length'
     tmpVect = []
     for entry in splitL:
       try:
@@ -406,22 +416,20 @@ def TextFileToDatabase(dBase,table,inF,delim=',',
         except ValueError:
           val = entry
       tmpVect.append(val)
-    data.append(tmpVect)   
+    data.append(tmpVect)
     inL = inF.readline()
   nRows = len(data)
 
   # determine the types of each column
-  colTypes = TypeFinder(data,nRows,nCols,nullMarker=nullMarker)
-  typeStrs = GetTypeStrings(colHeadings,colTypes,keyCol=keyCol)
-  colDefs=','.join(typeStrs)
+  colTypes = TypeFinder(data, nRows, nCols, nullMarker=nullMarker)
+  typeStrs = GetTypeStrings(colHeadings, colTypes, keyCol=keyCol)
+  colDefs = ','.join(typeStrs)
 
-  _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
-               nullMarker=nullMarker)
- 
+  _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMarker=nullMarker)
 
-def DatabaseToDatabase(fromDb,fromTbl,toDb,toTbl,
-                       fields='*',join='',where='',
-                       user='sysdba',password='masterkey',keyCol=None,nullMarker='None'):
+
+def DatabaseToDatabase(fromDb, fromTbl, toDb, toTbl, fields='*', join='', where='', user='sysdba',
+                       password='masterkey', keyCol=None, nullMarker='None'):
   """
 
    FIX: at the moment this is a hack
@@ -429,14 +437,15 @@ def DatabaseToDatabase(fromDb,fromTbl,toDb,toTbl,
   """
   from io import StringIO
   sio = StringIO()
-  sio.write(DatabaseToText(fromDb,fromTbl,fields=fields,join=join,where=where,
-                          user=user,password=password))
+  sio.write(
+    DatabaseToText(fromDb, fromTbl, fields=fields, join=join, where=where, user=user,
+                   password=password))
   sio.seek(-1)
-  TextFileToDatabase(toDb,toTbl,sio,user=user,password=password,keyCol=keyCol,
+  TextFileToDatabase(toDb, toTbl, sio, user=user, password=password, keyCol=keyCol,
                      nullMarker=nullMarker)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
   from io import StringIO
 
   sio = StringIO()
@@ -447,6 +456,6 @@ if __name__=='__main__':
   sio.seek(0)
   from rdkit import RDConfig
   import os
-  dirLoc = os.path.join(RDConfig.RDCodeDir,'Dbase','TEST.GDB')
+  dirLoc = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'TEST.GDB')
 
-  TextFileToDatabase(dirLoc,'fromtext',sio)
+  TextFileToDatabase(dirLoc, 'fromtext', sio)

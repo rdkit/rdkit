@@ -5,10 +5,9 @@
 tests = [
   ("python", "test_MurckoScaffold.py", {}),
   ("python", "MurckoScaffold.py", {}),
-  ]
+]
 
-longTests = [
-  ]
+longTests = []
 
 if __name__ == '__main__':
   import sys

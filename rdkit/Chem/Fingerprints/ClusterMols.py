@@ -19,24 +19,25 @@ Sample Usage:
 
 """
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbInfo,DbUtils
+from rdkit.Dbase import DbInfo, DbUtils
 from rdkit.ML.Data import DataUtils
 from rdkit.ML.Cluster import Clusters
 from rdkit.ML.Cluster import Murtagh
 import sys
 from rdkit.six.moves import cPickle
-from rdkit.Chem.Fingerprints import FingerprintMols,MolSimilarity
+from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
 from rdkit import DataStructs
 import numpy
-_cvsVersion="$Id$"
-idx1 = _cvsVersion.find(':')+1
+_cvsVersion = "$Id$"
+idx1 = _cvsVersion.find(':') + 1
 idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])
+__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
 
-message=FingerprintMols.message
-error=FingerprintMols.error
+message = FingerprintMols.message
+error = FingerprintMols.error
 
-def GetDistanceMatrix(data,metric,isSimilarity=1):
+
+def GetDistanceMatrix(data, metric, isSimilarity=1):
   """ data should be a list of tuples with fingerprints in position 1
    (the rest of the elements of the tuple are not important)
    
@@ -45,43 +46,44 @@ def GetDistanceMatrix(data,metric,isSimilarity=1):
     
   """
   nPts = len(data)
-  res = numpy.zeros((nPts*(nPts-1)/2),numpy.float)
-  nSoFar=0
-  for col in xrange(1,nPts):
+  res = numpy.zeros((nPts * (nPts - 1) / 2), numpy.float)
+  nSoFar = 0
+  for col in xrange(1, nPts):
     for row in xrange(col):
       fp1 = data[col][1]
       fp2 = data[row][1]
-      if fp1.GetNumBits()>fp2.GetNumBits():
-        fp1 = DataStructs.FoldFingerprint(fp1,fp1.GetNumBits()/fp2.GetNumBits())
-      elif fp2.GetNumBits()>fp1.GetNumBits():
-        fp2 = DataStructs.FoldFingerprint(fp2,fp2.GetNumBits()/fp1.GetNumBits())
-      sim = metric(fp1,fp2)
+      if fp1.GetNumBits() > fp2.GetNumBits():
+        fp1 = DataStructs.FoldFingerprint(fp1, fp1.GetNumBits() / fp2.GetNumBits())
+      elif fp2.GetNumBits() > fp1.GetNumBits():
+        fp2 = DataStructs.FoldFingerprint(fp2, fp2.GetNumBits() / fp1.GetNumBits())
+      sim = metric(fp1, fp2)
       if isSimilarity:
-        sim = 1.-sim
+        sim = 1. - sim
       res[nSoFar] = sim
       nSoFar += 1
-  return res    
-  
-def ClusterPoints(data,metric,algorithmId,haveLabels=False,haveActs=True,returnDistances=False):
+  return res
+
+
+def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
+                  returnDistances=False):
   message('Generating distance matrix.\n')
-  dMat = GetDistanceMatrix(data,metric)
+  dMat = GetDistanceMatrix(data, metric)
   message('Clustering\n')
-  clustTree = Murtagh.ClusterData(dMat,len(data),algorithmId,
-                                  isDistData=1)[0]
+  clustTree = Murtagh.ClusterData(dMat, len(data), algorithmId, isDistData=1)[0]
   acts = []
-  if haveActs and len(data[0])>2:
+  if haveActs and len(data[0]) > 2:
     # we've got activities... use them:
     acts = [int(x[2]) for x in data]
-  
+
   if not haveLabels:
-    labels = ['Mol: %s'%str(x[0]) for x in data]
+    labels = ['Mol: %s' % str(x[0]) for x in data]
   else:
     labels = [x[0] for x in data]
   clustTree._ptLabels = labels
   if acts:
     clustTree._ptValues = acts
   for pt in clustTree.GetPoints():
-    idx = pt.GetIndex()-1
+    idx = pt.GetIndex() - 1
     pt.SetName(labels[idx])
     if acts:
       try:
@@ -91,7 +93,8 @@ def ClusterPoints(data,metric,algorithmId,haveLabels=False,haveActs=True,returnD
   if not returnDistances:
     return clustTree
   else:
-    return clustTree,dMat
+    return clustTree, dMat
+
 
 def ClusterFromDetails(details):
   """ Returns the cluster tree
@@ -102,9 +105,9 @@ def ClusterFromDetails(details):
     data = data[:details.maxMols]
   if details.outFileName:
     try:
-      outF = open(details.outFileName,'wb+')
+      outF = open(details.outFileName, 'wb+')
     except IOError:
-      error("Error: could not open output file %s for writing\n"%(details.outFileName))
+      error("Error: could not open output file %s for writing\n" % (details.outFileName))
       return None
   else:
     outF = None
@@ -112,13 +115,13 @@ def ClusterFromDetails(details):
   if not data:
     return None
 
-  clustTree = ClusterPoints(data,details.metric,details.clusterAlgo,
-                            haveLabels=0,haveActs=1)
+  clustTree = ClusterPoints(data, details.metric, details.clusterAlgo, haveLabels=0, haveActs=1)
   if outF:
-    cPickle.dump(clustTree,outF)
+    cPickle.dump(clustTree, outF)
   return clustTree
 
-_usageDoc="""
+
+_usageDoc = """
 Usage: ClusterMols.py [args] <fName>
 
   If <fName> is provided and no tableName is specified (see below),
@@ -188,7 +191,7 @@ Usage: ClusterMols.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  message("This is ClusterMols version %s\n\n"%(__VERSION_STRING))
-  FingerprintMols._usageDoc=_usageDoc
+  message("This is ClusterMols version %s\n\n" % (__VERSION_STRING))
+  FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ClusterFromDetails(details)

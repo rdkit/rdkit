@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-def ConstructEnsembleBV(bv,bitsToKeep):
+def ConstructEnsembleBV(bv, bitsToKeep):
   """
 
   >>> from rdkit import DataStructs
@@ -29,25 +29,25 @@ def ConstructEnsembleBV(bv,bitsToKeep):
   
 
   """
-  finalSize=len(bitsToKeep)
+  finalSize = len(bitsToKeep)
   res = bv.__class__(finalSize)
 
-
-  for i,bit in enumerate(bitsToKeep):
+  for i, bit in enumerate(bitsToKeep):
     if bv.GetBit(bit):
       res.SetBit(i)
   return res
-  
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

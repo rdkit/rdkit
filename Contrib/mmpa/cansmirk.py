@@ -35,51 +35,52 @@ import re
 from rdkit import Chem
 from indexing import cansmirk
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
-    if (len(sys.argv) >= 2):
-        print("Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n")
-        print("USAGE: ./cansmirks.py <file_of_smirks\n")
-        sys.exit(1)
+  if (len(sys.argv) >= 2):
+    print(
+      "Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n")
+    print("USAGE: ./cansmirks.py <file_of_smirks\n")
+    sys.exit(1)
 
-    #read the STDIN
-    for line in sys.stdin:
+  #read the STDIN
+  for line in sys.stdin:
 
-        line = line.rstrip()
+    line = line.rstrip()
 
-        line_fields = re.split('\s|,',line)
-        smirks = line_fields[0]
-        
-        if(len(line_fields) == 1):
-            id=""
-        else:
-            id=line_fields[1]
+    line_fields = re.split('\s|,', line)
+    smirks = line_fields[0]
 
-        lhs,rhs = smirks.split(">>")
+    if (len(line_fields) == 1):
+      id = ""
+    else:
+      id = line_fields[1]
 
-        l = Chem.MolFromSmiles( lhs )
-        if(l == None):
-            sys.stderr.write("Can't generate mol for: %s\n" % (lhs) )
-            continue
+    lhs, rhs = smirks.split(">>")
 
-        r = Chem.MolFromSmiles( rhs )
-        if(r == None):
-            sys.stderr.write("Can't generate mol for: %s\n" % (rhs) )
-            continue
+    l = Chem.MolFromSmiles(lhs)
+    if (l == None):
+      sys.stderr.write("Can't generate mol for: %s\n" % (lhs))
+      continue
 
-        clhs = Chem.MolToSmiles( l, isomericSmiles=True )
-        crhs = Chem.MolToSmiles( r, isomericSmiles=True )
+    r = Chem.MolFromSmiles(rhs)
+    if (r == None):
+      sys.stderr.write("Can't generate mol for: %s\n" % (rhs))
+      continue
 
-        #just need to take care of [*H:1]
-        if(clhs == '[*H:1]'):
-            clhs = '[*:1][H]'
+    clhs = Chem.MolToSmiles(l, isomericSmiles=True)
+    crhs = Chem.MolToSmiles(r, isomericSmiles=True)
 
-        if(crhs == '[*H:1]'):
-            crhs = '[*:1][H]'
+    #just need to take care of [*H:1]
+    if (clhs == '[*H:1]'):
+      clhs = '[*:1][H]'
 
-        #print clhs
-        #print crhs
+    if (crhs == '[*H:1]'):
+      crhs = '[*:1][H]'
 
-        csmirk,context = cansmirk(clhs,crhs,"")
+    #print clhs
+    #print crhs
 
-        print("%s %s" % (csmirk,id))
+    csmirk, context = cansmirk(clhs, crhs, "")
+
+    print("%s %s" % (csmirk, id))

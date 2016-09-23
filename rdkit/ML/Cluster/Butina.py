@@ -9,14 +9,15 @@
 """
 import numpy
 from rdkit import RDLogger
-logger=RDLogger.logger()
+logger = RDLogger.logger()
 
-def EuclideanDist(pi,pj):
-  dv = numpy.array(pi)- numpy.array(pj)
-  return numpy.sqrt(dv*dv)
-  
-  
-def ClusterData(data,nPts,distThresh,isDistData=False,distFunc=EuclideanDist,reordering=False):
+
+def EuclideanDist(pi, pj):
+  dv = numpy.array(pi) - numpy.array(pj)
+  return numpy.sqrt(dv * dv)
+
+
+def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist, reordering=False):
   """  clusters the data points passed in and returns the list of clusters
 
     **Arguments**
@@ -56,38 +57,39 @@ def ClusterData(data,nPts,distThresh,isDistData=False,distFunc=EuclideanDist,reo
          The first element for each cluster is its centroid.
 
   """
-  if isDistData and len(data)>(nPts*(nPts-1)/2):
+  if isDistData and len(data) > (nPts * (nPts - 1) / 2):
     logger.warning("Distance matrix is too long")
-  nbrLists = [None]*nPts
-  for i in range(nPts): nbrLists[i] = []
+  nbrLists = [None] * nPts
+  for i in range(nPts):
+    nbrLists[i] = []
 
-  dmIdx=0
+  dmIdx = 0
   for i in range(nPts):
     for j in range(i):
       if not isDistData:
-        dij = distFunc(data[i],data[j])
+        dij = distFunc(data[i], data[j])
       else:
         dij = data[dmIdx]
-        dmIdx+=1
-      if dij<=distThresh:
+        dmIdx += 1
+      if dij <= distThresh:
         nbrLists[i].append(j)
         nbrLists[j].append(i)
   #print nbrLists
   # sort by the number of neighbors:
-  tLists = [(len(y),x) for x,y in enumerate(nbrLists)]
+  tLists = [(len(y), x) for x, y in enumerate(nbrLists)]
   tLists.sort(reverse=True)
 
   res = []
-  seen = [0]*nPts
+  seen = [0] * nPts
   while tLists:
-    nNbrs,idx = tLists.pop(0)
+    nNbrs, idx = tLists.pop(0)
     if seen[idx]:
       continue
     tRes = [idx]
     for nbr in nbrLists[idx]:
       if not seen[nbr]:
         tRes.append(nbr)
-        seen[nbr]=1
+        seen[nbr] = 1
     # update the number of neighbors:
     # remove all members of the new cluster from the list of
     # neighbors and reorder the tLists
@@ -99,9 +101,10 @@ def ClusterData(data,nPts,distThresh,isDistData=False,distFunc=EuclideanDist,reo
       nbrNbr = frozenset().union(*nbrNbr)
       # loop over all remaining molecules in tLists but only
       # consider unassigned and affected compounds
-      for x,y in enumerate(tLists):
+      for x, y in enumerate(tLists):
         y1 = y[1]
-        if seen[y1] or (y1 not in nbrNbr): continue
+        if seen[y1] or (y1 not in nbrNbr):
+          continue
         # update the number of neighbors
         nbrLists[y1] = set(nbrLists[y1]).difference(tRes)
         tLists[x] = (len(nbrLists[y1]), y1)
@@ -109,4 +112,3 @@ def ClusterData(data,nPts,distThresh,isDistData=False,distFunc=EuclideanDist,reo
       tLists.sort(reverse=True)
     res.append(tuple(tRes))
   return tuple(res)
-    

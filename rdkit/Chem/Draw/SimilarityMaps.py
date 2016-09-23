@@ -31,7 +31,6 @@
 #
 # Created by Sereina Riniker, Aug 2013
 
-
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit import DataStructs
@@ -59,8 +58,10 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
   Note:
     If fpFunction needs additional parameters, use a lambda construct
   """
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'): delattr(refMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
+  if hasattr(refMol, '_fpInfo'):
+    delattr(refMol, '_fpInfo')
   refFP = fpFunction(refMol, -1)
   probeFP = fpFunction(probeMol, -1)
   baseSimilarity = metric(refFP, probeFP)
@@ -70,8 +71,10 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
     newFP = fpFunction(probeMol, atomId)
     newSimilarity = metric(refFP, newFP)
     weights.append(baseSimilarity - newSimilarity)
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'): delattr(refMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
+  if hasattr(refMol, '_fpInfo'):
+    delattr(refMol, '_fpInfo')
   return weights
 
 
@@ -85,7 +88,8 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
     fpFunction -- the fingerprint function
     predictionFunction -- the prediction function of the ML model
   """
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
   probeFP = fpFunction(probeMol, -1)
   baseProba = predictionFunction(probeFP)
   # loop over atoms
@@ -94,7 +98,8 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
     newFP = fpFunction(probeMol, atomId)
     newProba = predictionFunction(newFP)
     weights.append(baseProba - newProba)
-  if hasattr(probeMol, '_fpInfo'): delattr(probeMol, '_fpInfo')
+  if hasattr(probeMol, '_fpInfo'):
+    delattr(probeMol, '_fpInfo')
   return weights
 
 
@@ -109,13 +114,23 @@ def GetStandardizedWeights(weights):
   tmp = [math.fabs(w) for w in weights]
   currentMax = max(tmp)
   if currentMax > 0:
-    return [w/currentMax for w in weights], currentMax
+    return [w / currentMax for w in weights], currentMax
   else:
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None,  #@UndefinedVariable  #pylint: disable=E1101
-                                coordScale=1.5, step=0.01, colors='k', contourLines=10, alpha=0.5, **kwargs):
+def GetSimilarityMapFromWeights(mol,
+                                weights,
+                                colorMap=cm.PiYG,
+                                scale=-1,
+                                size=(250, 250),
+                                sigma=None,  #@UndefinedVariable  #pylint: disable=E1101
+                                coordScale=1.5,
+                                step=0.01,
+                                colors='k',
+                                contourLines=10,
+                                alpha=0.5,
+                                **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.
 
@@ -134,31 +149,37 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
     alpha -- the alpha blending value for the contour lines
     kwargs -- additional arguments for drawing
   """
-  if mol.GetNumAtoms() < 2: raise ValueError("too few atoms")
+  if mol.GetNumAtoms() < 2:
+    raise ValueError("too few atoms")
   fig = Draw.MolToMPL(mol, coordScale=coordScale, size=size, **kwargs)
   if sigma is None:
     if mol.GetNumBonds() > 0:
       bond = mol.GetBondWithIdx(0)
       idx1 = bond.GetBeginAtomIdx()
       idx2 = bond.GetEndAtomIdx()
-      sigma = 0.3 * math.sqrt(sum([(mol._atomPs[idx1][i]-mol._atomPs[idx2][i])**2 for i in range(2)]))
+      sigma = 0.3 * math.sqrt(
+        sum([(mol._atomPs[idx1][i] - mol._atomPs[idx2][i])**2 for i in range(2)]))
     else:
-      sigma = 0.3 * math.sqrt(sum([(mol._atomPs[0][i]-mol._atomPs[1][i])**2 for i in range(2)]))
+      sigma = 0.3 * math.sqrt(sum([(mol._atomPs[0][i] - mol._atomPs[1][i])**2 for i in range(2)]))
     sigma = round(sigma, 2)
   x, y, z = Draw.calcAtomGaussians(mol, sigma, weights=weights, step=step)
   # scaling
-  if scale <= 0.0: maxScale = max(math.fabs(numpy.min(z)), math.fabs(numpy.max(z)))
-  else: maxScale = scale
+  if scale <= 0.0:
+    maxScale = max(math.fabs(numpy.min(z)), math.fabs(numpy.max(z)))
+  else:
+    maxScale = scale
   # coloring
-  fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower', extent=(0,1,0,1), vmin=-maxScale, vmax=maxScale)
+  fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower',
+                     extent=(0, 1, 0, 1), vmin=-maxScale, vmax=maxScale)
   # contour lines
   # only draw them when at least one weight is not zero
   if len([w for w in weights if w != 0.0]):
-      fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
+    fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
   return fig
 
 
-def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity, **kwargs):
+def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity,
+                                   **kwargs):
   """
   Generates the similarity map for a given reference and probe molecule,
   fingerprint function and similarity metric.
@@ -194,12 +215,17 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs)
 
 
 apDict = {}
-apDict['normal'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
-apDict['hashed'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
-apDict['bv'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprintAsBitVect(m, nBits=bits, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+apDict[
+  'normal'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
+apDict[
+  'hashed'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
+apDict[
+  'bv'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprintAsBitVect(m, nBits=bits, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+
 
 # usage:   lambda m,i: GetAPFingerprint(m, i, fpType, nBits, minLength, maxLength, nBitsPerEntry)
-def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1, maxLength=30, nBitsPerEntry=4, **kwargs):
+def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1, maxLength=30,
+                     nBitsPerEntry=4, **kwargs):
   """
   Calculates the atom pairs fingerprint with the torsions of atomId removed.
 
@@ -212,20 +238,27 @@ def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1, m
     maxLength -- the maxmimum path length for an atom pair
     nBitsPerEntry -- the number of bits available for each pair
   """
-  if fpType not in ['normal', 'hashed', 'bv']: raise ValueError("Unknown Atom pairs fingerprint type")
+  if fpType not in ['normal', 'hashed', 'bv']:
+    raise ValueError("Unknown Atom pairs fingerprint type")
   if atomId < 0:
     return apDict[fpType](mol, nBits, minLength, maxLength, nBitsPerEntry, 0, **kwargs)
-  if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
+  if atomId >= mol.GetNumAtoms():
+    raise ValueError("atom index greater than number of atoms")
   return apDict[fpType](mol, nBits, minLength, maxLength, nBitsPerEntry, [atomId], **kwargs)
 
 
 ttDict = {}
-ttDict['normal'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetTopologicalTorsionFingerprint(m, targetSize=ts, ignoreAtoms=ia, **kwargs)
-ttDict['hashed'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, ignoreAtoms=ia, **kwargs)
-ttDict['bv'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+ttDict[
+  'normal'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetTopologicalTorsionFingerprint(m, targetSize=ts, ignoreAtoms=ia, **kwargs)
+ttDict[
+  'hashed'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, ignoreAtoms=ia, **kwargs)
+ttDict[
+  'bv'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+
 
 # usage:   lambda m,i: GetTTFingerprint(m, i, fpType, nBits, targetSize)
-def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, nBitsPerEntry=4, **kwargs):
+def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, nBitsPerEntry=4,
+                     **kwargs):
   """
   Calculates the topological torsion fingerprint with the pairs of atomId removed.
 
@@ -241,15 +274,18 @@ def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, 
   any additional keyword arguments will be passed to the fingerprinting function.
 
   """
-  if fpType not in ['normal', 'hashed', 'bv']: raise ValueError("Unknown Topological torsion fingerprint type")
+  if fpType not in ['normal', 'hashed', 'bv']:
+    raise ValueError("Unknown Topological torsion fingerprint type")
   if atomId < 0:
     return ttDict[fpType](mol, nBits, targetSize, nBitsPerEntry, 0, **kwargs)
-  if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
+  if atomId >= mol.GetNumAtoms():
+    raise ValueError("atom index greater than number of atoms")
   return ttDict[fpType](mol, nBits, targetSize, nBitsPerEntry, [atomId], **kwargs)
 
 
 # usage:   lambda m,i: GetMorganFingerprint(m, i, radius, fpType, nBits, useFeatures)
-def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useFeatures=False, **kwargs):
+def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useFeatures=False,
+                         **kwargs):
   """
   Calculates the Morgan fingerprint with the environments of atomId removed.
 
@@ -263,48 +299,60 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
 
   any additional keyword arguments will be passed to the fingerprinting function.
   """
-  if fpType not in ['bv', 'count']: raise ValueError("Unknown Morgan fingerprint type")
+  if fpType not in ['bv', 'count']:
+    raise ValueError("Unknown Morgan fingerprint type")
   if not hasattr(mol, '_fpInfo'):
     info = {}
     # get the fingerprint
-    if fpType == 'bv': molFp = rdMD.GetMorganFingerprintAsBitVect(mol, radius, nBits=nBits,
-                                                                  useFeatures=useFeatures, bitInfo=info,
-                                                                  **kwargs)
-    else: molFp = rdMD.GetMorganFingerprint(mol, radius, useFeatures=useFeatures, bitInfo=info,
-                                            **kwargs)
+    if fpType == 'bv':
+      molFp = rdMD.GetMorganFingerprintAsBitVect(mol, radius, nBits=nBits, useFeatures=useFeatures,
+                                                 bitInfo=info, **kwargs)
+    else:
+      molFp = rdMD.GetMorganFingerprint(mol, radius, useFeatures=useFeatures, bitInfo=info,
+                                        **kwargs)
     # construct the bit map
-    if fpType == 'bv': bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
-    else: bitmap = [[] for x in range(mol.GetNumAtoms())]
+    if fpType == 'bv':
+      bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
+    else:
+      bitmap = [[] for x in range(mol.GetNumAtoms())]
     for bit, es in iteritems(info):
       for at1, rad in es:
-        if rad == 0: # for radius 0
-          if fpType == 'bv': bitmap[at1][bit] = 1
-          else: bitmap[at1].append(bit)
-        else: # for radii > 0
+        if rad == 0:  # for radius 0
+          if fpType == 'bv':
+            bitmap[at1][bit] = 1
+          else:
+            bitmap[at1].append(bit)
+        else:  # for radii > 0
           env = Chem.FindAtomEnvironmentOfRadiusN(mol, rad, at1)
           amap = {}
           submol = Chem.PathToSubmol(mol, env, atomMap=amap)
           for at2 in amap.keys():
-            if fpType == 'bv': bitmap[at2][bit] = 1
-            else: bitmap[at2].append(bit)
+            if fpType == 'bv':
+              bitmap[at2][bit] = 1
+            else:
+              bitmap[at2].append(bit)
     mol._fpInfo = (molFp, bitmap)
 
   if atomId < 0:
     return mol._fpInfo[0]
-  else: # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+  else:  # remove the bits of atomId
+    if atomId >= mol.GetNumAtoms():
+      raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2:
+      raise ValueError("_fpInfo not set")
     if fpType == 'bv':
-      molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId] # xor
-    else: # count
+      molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId]  # xor
+    else:  # count
       molFp = copy.deepcopy(mol._fpInfo[0])
       # delete the bits with atomId
       for bit in mol._fpInfo[1][atomId]:
         molFp[bit] -= 1
     return molFp
 
+
 # usage:   lambda m,i: GetRDKFingerprint(m, i, fpType, nBits, minPath, maxPath, nBitsPerHash)
-def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2, **kwargs):
+def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2,
+                      **kwargs):
   """
   Calculates the RDKit fingerprint with the paths of atomId removed.
 
@@ -317,19 +365,23 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
     maxPath -- maximum path length
     nBitsPerHash -- number of to set per path
   """
-  if fpType not in ['bv', '']: raise ValueError("Unknown RDKit fingerprint type")
+  if fpType not in ['bv', '']:
+    raise ValueError("Unknown RDKit fingerprint type")
   fpType = 'bv'
   if not hasattr(mol, '_fpInfo'):
-    info = [] # list with bits for each atom
+    info = []  # list with bits for each atom
     # get the fingerprint
-    molFp = Chem.RDKFingerprint(mol, fpSize=nBits, minPath=minPath, maxPath=maxPath, nBitsPerHash=nBitsPerHash, atomBits=info, **kwargs)
+    molFp = Chem.RDKFingerprint(mol, fpSize=nBits, minPath=minPath, maxPath=maxPath,
+                                nBitsPerHash=nBitsPerHash, atomBits=info, **kwargs)
     mol._fpInfo = (molFp, info)
 
   if atomId < 0:
     return mol._fpInfo[0]
-  else: # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms(): raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2: raise ValueError("_fpInfo not set")
+  else:  # remove the bits of atomId
+    if atomId >= mol.GetNumAtoms():
+      raise ValueError("atom index greater than number of atoms")
+    if len(mol._fpInfo) != 2:
+      raise ValueError("_fpInfo not set")
     molFp = copy.deepcopy(mol._fpInfo[0])
     molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
     return molFp

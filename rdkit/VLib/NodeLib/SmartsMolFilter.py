@@ -5,9 +5,10 @@
 #
 from rdkit import RDConfig
 from rdkit import six
-import sys,os,types
+import sys, os, types
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
+
 
 class SmartsFilter(FilterNode):
   """ filter out molecules matching one or more SMARTS patterns
@@ -56,33 +57,34 @@ class SmartsFilter(FilterNode):
 
 
   """
-  def __init__(self,patterns=[],counts=[],**kwargs):
-    FilterNode.__init__(self,func=self.filter,**kwargs)
-    self._initPatterns(patterns,counts)
 
-  def _initPatterns(self,patterns,counts):
+  def __init__(self, patterns=[], counts=[], **kwargs):
+    FilterNode.__init__(self, func=self.filter, **kwargs)
+    self._initPatterns(patterns, counts)
+
+  def _initPatterns(self, patterns, counts):
     nPatts = len(patterns)
-    if len(counts) and len(counts)!=nPatts:
+    if len(counts) and len(counts) != nPatts:
       raise ValueError('if counts is specified, it must match patterns in length')
     if not len(counts):
-      counts = [1]*nPatts
-    targets = [None]*nPatts
+      counts = [1] * nPatts
+    targets = [None] * nPatts
     for i in range(nPatts):
       p = patterns[i]
       c = counts[i]
-      if type(p) in (str,bytes):
+      if type(p) in (str, bytes):
         m = Chem.MolFromSmarts(p)
         if not m:
-          raise ValueError('bad smarts: %s'%(p))
+          raise ValueError('bad smarts: %s' % (p))
         p = m
-      targets[i] = p,c
-    self._patterns = tuple(targets)  
-      
-  def filter(self,cmpd):
+      targets[i] = p, c
+    self._patterns = tuple(targets)
+
+  def filter(self, cmpd):
     neg = self.Negate()
     res = 0
     #sys.stderr.write('\tFILTER: %s\n'%(Chem.MolToSmiles(cmpd)))
-    for patt,count in self._patterns:
+    for patt, count in self._patterns:
       ms = cmpd.GetSubstructMatches(patt)
       nMatches = len(ms)
       if nMatches >= count:
@@ -90,19 +92,18 @@ class SmartsFilter(FilterNode):
         res = 1
         break
     return res
-      
-#------------------------------------
-#
-#  doctest boilerplate
-#
+
+
+  #------------------------------------
+  #
+  #  doctest boilerplate
+  #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

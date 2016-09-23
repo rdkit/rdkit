@@ -8,6 +8,7 @@ import sys
 from rdkit.VLib.Node import VLibNode
 from rdkit import six
 
+
 class FilterNode(VLibNode):
   """ base class for nodes which filter their input
 
@@ -61,12 +62,15 @@ class FilterNode(VLibNode):
 
 
   """
-  def __init__(self,func=None,negate=0,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, func=None, negate=0, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._func = func
     self._negate = negate
-  def SetNegate(self,state):
+
+  def SetNegate(self, state):
     self._negate = state
+
   def Negate(self):
     return self._negate
 
@@ -92,25 +96,25 @@ class FilterNode(VLibNode):
       else:
         res = args
         break
-    if len(parents)==1:
+    if len(parents) == 1:
       res = res[0]
     return res
-  
-if six.PY3:
-    FilterNode.__next__ = FilterNode.next
 
-  
+
+if six.PY3:
+  FilterNode.__next__ = FilterNode.next
+
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

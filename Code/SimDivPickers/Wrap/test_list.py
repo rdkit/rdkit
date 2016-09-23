@@ -1,13 +1,9 @@
+tests = [("python", "testPickers.py", {}), ("python", "testMaxMin.py", {})]
 
-tests=[
-    ("python","testPickers.py",{}),
-    ("python","testMaxMin.py",{})
-    ]
+longTests = []
 
-longTests=[]
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import sys
   from rdkit import TestRunner
-  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  failed, tests = TestRunner.RunScript('test_list.py', 0, 1)
   sys.exit(len(failed))

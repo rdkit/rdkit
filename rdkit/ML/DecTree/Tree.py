@@ -9,6 +9,7 @@ import numpy
 from rdkit.six.moves import cPickle
 from rdkit.six import cmp
 
+
 # FIX: the TreeNode class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled
 # data. Until a solution is found for this breakage, an update is
@@ -18,7 +19,8 @@ class TreeNode:
 
    the root of the tree is just a TreeNode like all other members.
   """
-  def __init__(self,parent,name,label=None,data=None,level=0,isTerminal=0):
+
+  def __init__(self, parent, name, label=None, data=None, level=0, isTerminal=0):
     """ constructor
     
      **Arguments**
@@ -46,7 +48,8 @@ class TreeNode:
     self.label = label
     self.level = level
     self.examples = []
-  def NameTree(self,varNames):
+
+  def NameTree(self, varNames):
     """ Set the names of each node in the tree from a list of variable names.
 
      **Arguments**
@@ -67,9 +70,10 @@ class TreeNode:
       for child in self.GetChildren():
         child.NameTree(varNames)
       self.SetName(varNames[self.GetLabel()])
-  NameModel=NameTree
 
-  def AddChildNode(self,node):
+  NameModel = NameTree
+
+  def AddChildNode(self, node):
     """ Adds a TreeNode to the local list of children
 
      **Arguments**
@@ -80,11 +84,11 @@ class TreeNode:
 
        the level of the node (used in printing) is set as well
 
-    """    
+    """
     node.SetLevel(self.level + 1)
     self.children.append(node)
 
-  def AddChild(self,name,label=None,data=None,isTerminal=0):
+  def AddChild(self, name, label=None, data=None, isTerminal=0):
     """ Creates a new TreeNode and adds a child to the tree
 
       **Arguments**
@@ -103,11 +107,11 @@ class TreeNode:
         the _TreeNode_ which is constructed
         
     """
-    child = TreeNode(self,name,label,data,level=self.level+1,isTerminal=isTerminal)
+    child = TreeNode(self, name, label, data, level=self.level + 1, isTerminal=isTerminal)
     self.children.append(child)
     return child
 
-  def PruneChild(self,child):
+  def PruneChild(self, child):
     """ Removes the child node
 
       **Arguments**
@@ -117,7 +121,7 @@ class TreeNode:
     """
     self.children.remove(child)
 
-  def ReplaceChildIndex(self,index,newChild):
+  def ReplaceChildIndex(self, index, newChild):
     """ Replaces a given child with a new one
 
       **Arguments**
@@ -134,7 +138,7 @@ class TreeNode:
 
     """
     return self.children
-  
+
   def Destroy(self):
     """ Destroys this node and all of its children
 
@@ -144,13 +148,14 @@ class TreeNode:
     self.children = None
     # clean up circular references
     self.parent = None
-    
+
   def GetName(self):
     """ Returns the name of this node
 
     """
     return self.name
-  def SetName(self,name):
+
+  def SetName(self, name):
     """ Sets the name of this node
 
     """
@@ -161,18 +166,20 @@ class TreeNode:
 
     """
     return self.data
-  def SetData(self,data):
+
+  def SetData(self, data):
     """ Sets the data stored at this node
 
     """
-    self.data=data
+    self.data = data
 
   def GetTerminal(self):
     """ Returns whether or not this node is terminal 
 
     """
     return self.terminalNode
-  def SetTerminal(self,isTerminal):
+
+  def SetTerminal(self, isTerminal):
     """ Sets whether or not this node is terminal 
 
     """
@@ -183,36 +190,38 @@ class TreeNode:
 
     """
     return self.label
-  def SetLabel(self,label):
+
+  def SetLabel(self, label):
     """ Sets the label of this node (should be an integer)
 
     """
-    self.label=label
+    self.label = label
 
   def GetLevel(self):
     """ Returns the level of this node
 
     """
     return self.level
-  def SetLevel(self,level):
+
+  def SetLevel(self, level):
     """ Sets the level of this node
 
     """
-    self.level=level
+    self.level = level
 
   def GetParent(self):
     """ Returns the parent of this node
 
     """
     return self.parent
-  def SetParent(self,parent):
+
+  def SetParent(self, parent):
     """ Sets the parent of this node
 
     """
     self.parent = parent
 
-
-  def Print(self,level=0,showData=0):
+  def Print(self, level=0, showData=0):
     """ Pretty prints the tree
 
       **Arguments**
@@ -227,20 +236,20 @@ class TreeNode:
       
     """
     if showData:
-      print('%s%s: %s'%('  '*level,self.name,str(self.data)))
+      print('%s%s: %s' % ('  ' * level, self.name, str(self.data)))
     else:
-      print('%s%s'%('  '*level,self.name))
-    
-    for child in self.children:
-      child.Print(level+1,showData=showData)
+      print('%s%s' % ('  ' * level, self.name))
 
-  def Pickle(self,fileName='foo.pkl'):
+    for child in self.children:
+      child.Print(level + 1, showData=showData)
+
+  def Pickle(self, fileName='foo.pkl'):
     """ Pickles the tree and writes it to disk
 
     """
-    with open(fileName,'wb+') as pFile:
-      cPickle.dump(self,pFile)
-    
+    with open(fileName, 'wb+') as pFile:
+      cPickle.dump(self, pFile)
+
   def __str__(self):
     """ returns a string representation of the tree
 
@@ -249,21 +258,21 @@ class TreeNode:
         this works recursively
     
     """
-    here = '%s%s\n'%('  '*self.level,self.name)
+    here = '%s%s\n' % ('  ' * self.level, self.name)
     for child in self.children:
       here = here + str(child)
     return here
-    
-  def __cmp__(self,other):
+
+  def __cmp__(self, other):
     """ allows tree1 == tree2
 
       **Note**
 
         This works recursively
     """
-    return (self<other)*-1 or (other<self)*1
+    return (self < other) * -1 or (other < self) * 1
 
-  def __lt__(self,other):
+  def __lt__(self, other):
     """ allows tree1 < tree2
 
       **Note**
@@ -272,30 +281,38 @@ class TreeNode:
     """
     try:
       nChildren = len(self.children)
-      oChildren=len(other.children)
-      if str(type(self))<str(type(other)): return True
-      if self.name<other.name: return True
+      oChildren = len(other.children)
+      if str(type(self)) < str(type(other)):
+        return True
+      if self.name < other.name:
+        return True
       if self.label is not None:
         if other.label is not None:
-          if self.label<other.label: return True
+          if self.label < other.label:
+            return True
         else:
           return False
       elif other.label is not None:
         return True
-      if nChildren<oChildren: return True
-      if nChildren>oChildren: return False
+      if nChildren < oChildren:
+        return True
+      if nChildren > oChildren:
+        return False
       for i in range(nChildren):
-        if self.children[i]<other.children[i]: return True
+        if self.children[i] < other.children[i]:
+          return True
     except AttributeError:
       return True
     return False
-  def __eq__(self,other):
-    return not self<other and not other<self
-  
+
+  def __eq__(self, other):
+    return not self < other and not other < self
+
+
 if __name__ == '__main__':
-  tree = TreeNode(None,'root')
+  tree = TreeNode(None, 'root')
   for i in range(3):
-    child = tree.AddChild('child %d'%i)
+    child = tree.AddChild('child %d' % i)
   print(tree)
   tree.GetChildren()[1].AddChild('grandchild')
   tree.GetChildren()[1].AddChild('grandchild2')
@@ -309,16 +326,12 @@ if __name__ == '__main__':
 
   import copy
   tree2 = copy.deepcopy(tree)
-  print('tree==tree2', tree==tree2)
+  print('tree==tree2', tree == tree2)
 
   foo = [tree]
-  print('tree in [tree]:', tree in foo,foo.index(tree))
+  print('tree in [tree]:', tree in foo, foo.index(tree))
   print('tree2 in [tree]:', tree2 in foo, foo.index(tree2))
 
   tree2.GetChildren()[1].AddChild('grandchild4')
-  print('tree==tree2', tree==tree2)
+  print('tree==tree2', tree == tree2)
   tree.Destroy()
-  
-
-
-

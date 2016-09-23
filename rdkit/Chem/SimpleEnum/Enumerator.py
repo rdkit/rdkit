@@ -36,10 +36,10 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import FunctionalGroups
 from rdkit.Chem import rdChemReactions
 
-
 import os
 
-def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
+
+def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'):
   """
   >>> from rdkit.Chem import AllChem
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
@@ -151,12 +151,14 @@ def PreprocessReaction(reaction,funcGroupFilename=None,propName='molFileValue'):
     except Exception:
       raise IOError('cannot open', funcGroupFilename)
 
-    return rdChemReactions.PreprocessReaction(reaction,
-                                              queryDict,
-                                              propName)
-  return rdChemReactions.PreprocessReaction(reaction, propName=propName)  
+    return rdChemReactions.PreprocessReaction(reaction, queryDict, propName)
+  return rdChemReactions.PreprocessReaction(reaction, propName=propName)
 
-def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilename=os.path.join(RDConfig.RDDataDir,'Functional_Group_Hierarchy.txt'),propName='molFileValue'):
+
+def EnumerateReaction(
+    reaction, bbLists, uniqueProductsOnly=False,
+    funcGroupFilename=os.path.join(RDConfig.RDDataDir, 'Functional_Group_Hierarchy.txt'),
+    propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
@@ -190,25 +192,26 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
 
   
   """
-  nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(reaction)
-  if nError: raise ValueError('bad reaction')
-  if len(bbLists) != nReacts: raise ValueError('%d reactants in reaction, %d bb lists supplied'%(nReacts,len(bbLists)))
+  nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
+  if nError:
+    raise ValueError('bad reaction')
+  if len(bbLists) != nReacts:
+    raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
+
   def _uniqueOnly(lst):
-    seen=[]
+    seen = []
     for entry in lst:
       if entry:
-        smi = '.'.join(sorted([Chem.MolToSmiles(x,True) for x in entry]))
+        smi = '.'.join(sorted([Chem.MolToSmiles(x, True) for x in entry]))
         if smi not in seen:
           seen.append(smi)
           yield entry
-  
-  ps = AllChem.EnumerateLibraryFromReaction(reaction,bbLists)
+
+  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
   if not uniqueProductsOnly:
     return ps
   else:
     return _uniqueOnly(ps)
-
-
 
 
 #------------------------------------
@@ -216,12 +219,11 @@ def EnumerateReaction(reaction,bbLists,uniqueProductsOnly=False,funcGroupFilenam
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-

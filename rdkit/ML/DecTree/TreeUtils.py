@@ -6,30 +6,33 @@
 
 """
 
-def CollectLabelLevels(tree,levels,level=0,maxDepth=1e8):
+
+def CollectLabelLevels(tree, levels, level=0, maxDepth=1e8):
   if level < maxDepth:
     if not tree.GetTerminal():
       l = tree.GetLabel()
-      currLevel = levels.get(l,1e8)
+      currLevel = levels.get(l, 1e8)
       if level < currLevel:
         levels[l] = level
       for child in tree.GetChildren():
-        CollectLabelLevels(child,levels,level+1,maxDepth)
+        CollectLabelLevels(child, levels, level + 1, maxDepth)
   return levels
-  
-def CollectDescriptorNames(tree,names,level=0,maxDepth=1e8):
+
+
+def CollectDescriptorNames(tree, names, level=0, maxDepth=1e8):
   if level < maxDepth:
     if not tree.GetTerminal():
       names[tree.GetLabel()] = tree.GetName()
       for child in tree.GetChildren():
-        CollectDescriptorNames(child,names,level+1,maxDepth)
-  return names    
-    
+        CollectDescriptorNames(child, names, level + 1, maxDepth)
+  return names
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
-_test1="""
+
+_test1 = """
 >>> from DecTree import DecTreeNode as Node
 >>> t1 = Node(None,'d1',1)
 >>> t2 = Node(None,'d2',2)
@@ -103,13 +106,15 @@ Check that we can handle subtrees:
 
 """
 
-__test__={'_test1':_test1}
+__test__ = {'_test1': _test1}
+
+
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-

@@ -11,20 +11,18 @@
 from rdkit import RDConfig
 
 # change this to use another viewer:
-if RDConfig.molViewer in ('WEBLAB','DSVIEWER'):
+if RDConfig.molViewer in ('WEBLAB', 'DSVIEWER'):
   from rdkit.Chem.DSViewer import *
-elif RDConfig.molViewer=='PYMOL':
+elif RDConfig.molViewer == 'PYMOL':
   from rdkit.Chem.PyMol import *
 else:
   raise ValueError('invalid RD_MOLVIEWER specified')
 
-  
-  
-if __name__=='__main__':
+if __name__ == '__main__':
   import AllChem
   import sys
-  if len(sys.argv)<2:
-    smi ='c1cccc2c1cccc2CC(=O)N'
+  if len(sys.argv) < 2:
+    smi = 'c1cccc2c1cccc2CC(=O)N'
   else:
     smi = sys.argv[1]
 
@@ -32,8 +30,6 @@ if __name__=='__main__':
   m = Chem.AddHs(m)
   AllChem.EmbedMolecule(m)
   v = MolViewer()
-  v.ShowMol(m,'raw')
+  v.ShowMol(m, 'raw')
   AllChem.UFFOptimizeMolecule(m)
-  v.ShowMol(m,'opt',showOnly=0,highlightFeatures=[(0,),(2,),(3,4)])
-  
-  
+  v.ShowMol(m, 'opt', showOnly=0, highlightFeatures=[(0, ), (2, ), (3, 4)])

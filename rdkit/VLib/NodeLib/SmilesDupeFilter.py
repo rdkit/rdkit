@@ -5,9 +5,10 @@
 #
 from rdkit import RDConfig
 from rdkit import six
-import sys,os
+import sys, os
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
+
 
 class DupeFilter(FilterNode):
   """ canonical-smiles based duplicate filter
@@ -37,33 +38,34 @@ class DupeFilter(FilterNode):
 
 
   """
-  def __init__(self,**kwargs):
-    FilterNode.__init__(self,func=self.filter,**kwargs)
+
+  def __init__(self, **kwargs):
+    FilterNode.__init__(self, func=self.filter, **kwargs)
     self._smisSeen = []
-    
+
   def reset(self):
     FilterNode.reset(self)
     self._smisSeen = []
 
-  def filter(self,cmpd):
+  def filter(self, cmpd):
     smi = Chem.MolToSmiles(cmpd)
     if smi not in self._smisSeen:
       self._smisSeen.append(smi)
       return 1
     else:
       return 0
-  
-#------------------------------------
-#
-#  doctest boilerplate
-#
+
+
+  #------------------------------------
+  #
+  #  doctest boilerplate
+  #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

@@ -20,7 +20,8 @@ from rdkit import DataStructs
 from rdkit.six.moves import xrange
 import types
 
-def CharacteristicPolynomial(mol,mat=None):
+
+def CharacteristicPolynomial(mol, mat=None):
   """ calculates the characteristic polynomial for a molecular graph
 
     if mat is not passed in, the molecule's Weighted Adjacency Matrix will
@@ -38,16 +39,14 @@ def CharacteristicPolynomial(mol,mat=None):
     pass
   else:
     A = mat
-  I = 1.*numpy.identity(nAtoms)
+  I = 1. * numpy.identity(nAtoms)
   An = A
-  res = numpy.zeros(nAtoms+1,numpy.float)
+  res = numpy.zeros(nAtoms + 1, numpy.float)
   res[0] = 1.0
-  for n in xrange(1,nAtoms+1):
-    res[n] = 1./n*numpy.trace(An)
-    Bn = An - res[n]*I
-    An = numpy.dot(A,Bn)
+  for n in xrange(1, nAtoms + 1):
+    res[n] = 1. / n * numpy.trace(An)
+    Bn = An - res[n] * I
+    An = numpy.dot(A, Bn)
 
   res[1:] *= -1
-  return res  
-      
-
+  return res

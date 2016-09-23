@@ -4,6 +4,7 @@ import os, sys, re
 
 from roundup import instance, date, hyperdb
 
+
 def create(db, **issue):
   # first we need to create a 'msg' node containing the message
   msg = {}
@@ -14,10 +15,10 @@ def create(db, **issue):
   else:
     msg['content'] = ' No Message Provided '
   msg['author'] = db.getuid()
-  msg['date']   = date.Date('.')
+  msg['date'] = date.Date('.')
 
   # create the 'msg' node
-  issue['messages'] = db.msg.create(**msg) # will be put in list in next part
+  issue['messages'] = db.msg.create(**msg)  # will be put in list in next part
 
   # resolve linked and multilinked properties
   properties = db.issue.getprops()
@@ -46,21 +47,21 @@ def create(db, **issue):
   # next we create the issue itself
   issue_id = db.issue.create(**issue)
 
-  print("Created issue%s"%issue_id)
+  print("Created issue%s" % issue_id)
 
 
 if __name__ == '__main__':
   if len(sys.argv) > 1:
     sys.argv.pop(0)
     fname = sys.argv.pop(0)
-    failureInfo = file(fname,'r').read()
+    failureInfo = file(fname, 'r').read()
     if not failureInfo:
       sys.exit(0)
     # convert script arguments to issue properties
     issue = {}
     tracker_home = None
     user = None
-    issue['messages']=failureInfo
+    issue['messages'] = failureInfo
     for arg in sys.argv:
       arg = arg.split('=')
 
@@ -89,8 +90,8 @@ if __name__ == '__main__':
         user = 'anonymous'
 
     # chevck if we have a valid tracker home
-    if not os.path.exists(os.path.normpath('%s/config.ini'%tracker_home)):
-      sys.stderr.write('ERROR: TRACKER_HOME (%s) is not a valid path\n'%tracker_home)
+    if not os.path.exists(os.path.normpath('%s/config.ini' % tracker_home)):
+      sys.stderr.write('ERROR: TRACKER_HOME (%s) is not a valid path\n' % tracker_home)
       sys.exit(-1)
 
     # open a tracker instance

@@ -11,76 +11,82 @@ ref_mol = Chem.MolFromMolBlock(ref_sdf)
 
 core_smarts = '[#6]-!@[#6]-!@[#8]-!@[#6]:1:[#6](-!@[#6]#!@[#7]):[#6](-!@[#7]):[#6]:[#6](-!@[#7]-!@[#6](-!@[#6]-!@[#6]:2:[#6]:[#6]:[#6]:[#6]:[#6]:2)=!@[#8]):[#7]:1'
 if ref_mol is None:
-    raise ValueError('Bad ref structure')
+  raise ValueError('Bad ref structure')
 core_mol = Chem.MolFromSmarts(core_smarts)
 if core_mol is None:
-    raise ValueError('Bad core structure')
+  raise ValueError('Bad core structure')
 
 expected = {}
-def runner(func, args):
-    if args:
-        res = getattr(ref_mol, func)(args)
-    else:
-        res = getattr(ref_mol, func)()
-    if func in expected:
-        assert res == expected[func], "Got %r expected %r"%(ers, expected[func])
-    return res
 
-funcs = ["GetSubstructMatch",
-         "GetSubstructMatches",
-         "HasSubstructMatch"]
+
+def runner(func, args):
+  if args:
+    res = getattr(ref_mol, func)(args)
+  else:
+    res = getattr(ref_mol, func)()
+  if func in expected:
+    assert res == expected[func], "Got %r expected %r" % (ers, expected[func])
+  return res
+
+
+funcs = ["GetSubstructMatch", "GetSubstructMatches", "HasSubstructMatch"]
 
 # get the expected results from the non-thread version
 for func in funcs:
-    expected[func] = runner(func, core_mol)
-    
+  expected[func] = runner(func, core_mol)
 
-nthreads = int(multiprocessing.cpu_count() * 100 / 4) # 100 threads per cpu
+nthreads = int(multiprocessing.cpu_count() * 100 / 4)  # 100 threads per cpu
 threads = []
 for i in range(0, nthreads):
-    for func in funcs:
-        t = threading.Thread(target=runner, args=(func,core_mol))
-        t.start()
-        threads.append(t)
-    t = threading.Thread(target=runner, args=("ToBinary",None))        
+  for func in funcs:
+    t = threading.Thread(target=runner, args=(func, core_mol))
     t.start()
     threads.append(t)
+  t = threading.Thread(target=runner, args=("ToBinary", None))
+  t.start()
+  threads.append(t)
 for t in threads:
-    t.join()
+  t.join()
+
 
 def LogError():
-    i=0
-    while 1:
-        if i==10: break
-        i+=1
-        Chem.LogErrorMsg(str(i) + ":: My dog has fleas")
+  i = 0
+  while 1:
+    if i == 10:
+      break
+    i += 1
+    Chem.LogErrorMsg(str(i) + ":: My dog has fleas")
+
 
 def LogWarning():
-    i=0
-    while 1:
-        if i==10: break
-        i+=1
-        Chem.LogWarningMsg(str(i) + ":: All good boys to fine")
-    
-# this spews a ton of logging info...
-#  that is all intermingled...
-if 0:
-    nthreads = int(multiprocessing.cpu_count())
-    threads = []
-    for i in range(0, nthreads):
-        for func in funcs:
-            if i%2 == 0:
-                t = threading.Thread(target=LogError)
-            else:
-                t = threading.Thread(target=LogWarning)
-            t.start()
-            threads.append(t)
-        t = threading.Thread(target=LogWarning)
-        t.start()
-        threads.append(t)
+  i = 0
+  while 1:
+    if i == 10:
+      break
+    i += 1
+    Chem.LogWarningMsg(str(i) + ":: All good boys to fine")
 
-    for t in threads:
-        t.join()
+  # this spews a ton of logging info...
+  #  that is all intermingled...
+
+
+if 0:
+  nthreads = int(multiprocessing.cpu_count())
+  threads = []
+  for i in range(0, nthreads):
+    for func in funcs:
+      if i % 2 == 0:
+        t = threading.Thread(target=LogError)
+      else:
+        t = threading.Thread(target=LogWarning)
+      t.start()
+      threads.append(t)
+    t = threading.Thread(target=LogWarning)
+    t.start()
+    threads.append(t)
+
+  for t in threads:
+    t.join()
 
 Chem.WrapLogs()
 
@@ -91,19 +97,19 @@ stringio = sys.stderr = six.StringIO()
 nthreads = int(multiprocessing.cpu_count())
 threads = []
 for i in range(0, nthreads):
-    for func in funcs:
-        if i%2 == 0:
-            t = threading.Thread(target=LogError)
-        else:
-            t = threading.Thread(target=LogWarning)
-        t.start()
-        threads.append(t)
-    t = threading.Thread(target=LogWarning)
+  for func in funcs:
+    if i % 2 == 0:
+      t = threading.Thread(target=LogError)
+    else:
+      t = threading.Thread(target=LogWarning)
     t.start()
     threads.append(t)
-    
+  t = threading.Thread(target=LogWarning)
+  t.start()
+  threads.append(t)
+
 for t in threads:
-    t.join()
+  t.join()
 sys.stderr = err
 
 stringio = sys.stderr = six.StringIO()

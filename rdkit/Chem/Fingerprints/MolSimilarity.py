@@ -25,49 +25,45 @@ from rdkit import Chem
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
 from rdkit.DataStructs.TopNContainer import TopNContainer
-import sys,types
+import sys, types
 from rdkit.six.moves import cPickle
-from rdkit.Chem.Fingerprints import FingerprintMols,DbFpSupplier
-try:  
+from rdkit.Chem.Fingerprints import FingerprintMols, DbFpSupplier
+try:
   from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
 except ImportError:
-  _dataSeq=None
-  
+  _dataSeq = None
 
 from rdkit import DataStructs
 
-_cvsVersion="$Id$"
-idx1 = _cvsVersion.find(':')+1
+_cvsVersion = "$Id$"
+idx1 = _cvsVersion.find(':') + 1
 idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])
+__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
 
 
-def _ConstructSQL(details,extraFields=''):
-  fields = '%s.%s'%(details.tableName,details.idName)
+def _ConstructSQL(details, extraFields=''):
+  fields = '%s.%s' % (details.tableName, details.idName)
   join = ''
   if details.smilesTableName:
     if details.smilesName:
-      fields = fields + ',%s'%(details.smilesName)
-    join='join %s smi on smi.%s=%s.%s'%(details.smilesTableName,
-                                        details.idName,
-                                        details.tableName,
-                                        details.idName)
+      fields = fields + ',%s' % (details.smilesName)
+    join = 'join %s smi on smi.%s=%s.%s' % (details.smilesTableName, details.idName,
+                                            details.tableName, details.idName)
   if details.actTableName:
     if details.actName:
-      fields = fields + ',%s'%(details.actName)
-    join = join + 'join %s act on act.%s=%s.%s'%(details.actTableName,
-                                                 details.idName,
-                                                 details.tableName,
-                                                 details.idName)
+      fields = fields + ',%s' % (details.actName)
+    join = join + 'join %s act on act.%s=%s.%s' % (details.actTableName, details.idName,
+                                                   details.tableName, details.idName)
   #data = conn.GetData(fields=fields,join=join)
   if extraFields:
-    fields += ','+extraFields
-  cmd = 'select %s from %s %s'%(fields,details.tableName,join)
+    fields += ',' + extraFields
+  cmd = 'select %s from %s %s' % (fields, details.tableName, join)
   return cmd
 
-def ScreenInDb(details,mol):
+
+def ScreenInDb(details, mol):
   try:
-    probeFp = apply(FingerprintMols.FingerprintMol,(mol,),details.__dict__)
+    probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
   except Exception:
     import traceback
     FingerprintMols.error('Error: problems fingerprinting molecule.\n')
@@ -75,47 +71,47 @@ def ScreenInDb(details,mol):
     return []
   if details.dbName and details.tableName:
     try:
-      conn = DbConnect(details.dbName,details.tableName)
-      if hasattr(details,'dbUser'):
+      conn = DbConnect(details.dbName, details.tableName)
+      if hasattr(details, 'dbUser'):
         conn.user = details.dbUser
-      if hasattr(details,'dbPassword'):
+      if hasattr(details, 'dbPassword'):
         conn.password = details.dbPassword
     except Exception:
       import traceback
-      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n'%(details.dbName,
-                                                                     details.tableName))
+      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n' %
+                            (details.dbName, details.tableName))
       traceback.print_exc()
 
-  if details.metric not in (DataStructs.TanimotoSimilarity,
-                            DataStructs.DiceSimilarity,
+  if details.metric not in (DataStructs.TanimotoSimilarity, DataStructs.DiceSimilarity,
                             DataStructs.CosineSimilarity):
     data = GetFingerprints(details)
-    res = ScreenFingerprints(details,data,mol)
+    res = ScreenFingerprints(details, data, mol)
   else:
     res = []
     if details.metric == DataStructs.TanimotoSimilarity:
       func = 'rd_tanimoto'
-      pkl=probeFp.ToBitString()
+      pkl = probeFp.ToBitString()
     elif details.metric == DataStructs.DiceSimilarity:
       func = 'rd_dice'
-      pkl=probeFp.ToBitString()
+      pkl = probeFp.ToBitString()
     elif details.metric == DataStructs.CosineSimilarity:
       func = 'rd_cosine'
-      pkl=probeFp.ToBitString()
-    extraFields="%s(%s,%s) as tani"%(func,DbModule.placeHolder,details.fpColName)
-    cmd = _ConstructSQL(details,extraFields=extraFields)
+      pkl = probeFp.ToBitString()
+    extraFields = "%s(%s,%s) as tani" % (func, DbModule.placeHolder, details.fpColName)
+    cmd = _ConstructSQL(details, extraFields=extraFields)
 
     if details.doThreshold:
       # we need to do a subquery here:
-      cmd = "select * from (%s) tmp where tani>%f"%(cmd,details.screenThresh)
+      cmd = "select * from (%s) tmp where tani>%f" % (cmd, details.screenThresh)
     cmd += " order by tani desc"
-    if not details.doThreshold and details.topN>0:
-      cmd += " limit %d"%details.topN
+    if not details.doThreshold and details.topN > 0:
+      cmd += " limit %d" % details.topN
     curs = conn.GetCursor()
-    curs.execute(cmd,(pkl,))
+    curs.execute(cmd, (pkl, ))
     res = curs.fetchall()
-    
+
   return res
+
 
 def GetFingerprints(details):
   """ returns an iterable sequence of fingerprints
@@ -125,56 +121,57 @@ def GetFingerprints(details):
   """
   if details.dbName and details.tableName:
     try:
-      conn = DbConnect(details.dbName,details.tableName)
-      if hasattr(details,'dbUser'):
+      conn = DbConnect(details.dbName, details.tableName)
+      if hasattr(details, 'dbUser'):
         conn.user = details.dbUser
-      if hasattr(details,'dbPassword'):
+      if hasattr(details, 'dbPassword'):
         conn.password = details.dbPassword
     except Exception:
       import traceback
-      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n'%(details.dbName,
-                                                                     details.tableName))
+      FingerprintMols.error('Error: Problems establishing connection to database: %s|%s\n' %
+                            (details.dbName, details.tableName))
       traceback.print_exc()
-    cmd = _ConstructSQL(details,extraFields=details.fpColName)
+    cmd = _ConstructSQL(details, extraFields=details.fpColName)
     curs = conn.GetCursor()
     #curs.execute(cmd)
     #print 'CURSOR:',curs,curs.closed
     if _dataSeq:
-      suppl = _dataSeq(curs,cmd,depickle=not details.noPickle,klass=DataStructs.ExplicitBitVect)
+      suppl = _dataSeq(curs, cmd, depickle=not details.noPickle, klass=DataStructs.ExplicitBitVect)
       _dataSeq._conn = conn
     else:
-      suppl = DbFpSupplier.ForwardDbFpSupplier(data,fpColName=details.fpColName)
+      suppl = DbFpSupplier.ForwardDbFpSupplier(data, fpColName=details.fpColName)
   elif details.inFileName:
     conn = None
     try:
-      inF = open(details.inFileName,'r')
+      inF = open(details.inFileName, 'r')
     except IOError:
       import traceback
-      FingerprintMols.error('Error: Problems reading from file %s\n'%(details.inFileName))
+      FingerprintMols.error('Error: Problems reading from file %s\n' % (details.inFileName))
       traceback.print_exc()
 
     suppl = []
     done = 0
     while not done:
       try:
-        id,fp = cPickle.load(inF)
+        id, fp = cPickle.load(inF)
       except Exception:
         done = 1
       else:
         fp._fieldsFromDb = [id]
         suppl.append(fp)
   else:
-     suppl = None
+    suppl = None
 
   return suppl
 
-def ScreenFingerprints(details,data,mol=None,probeFp=None):
+
+def ScreenFingerprints(details, data, mol=None, probeFp=None):
   """ Returns a list of results
 
   """
   if probeFp is None:
     try:
-      probeFp = apply(FingerprintMols.FingerprintMol,(mol,),details.__dict__)
+      probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
     except Exception:
       import traceback
       FingerprintMols.error('Error: problems fingerprinting molecule.\n')
@@ -184,7 +181,7 @@ def ScreenFingerprints(details,data,mol=None,probeFp=None):
     return []
 
   res = []
-  if not details.doThreshold and details.topN>0:
+  if not details.doThreshold and details.topN > 0:
     topN = TopNContainer(details.topN)
   else:
     topN = []
@@ -193,29 +190,30 @@ def ScreenFingerprints(details,data,mol=None,probeFp=None):
   for pt in data:
     fp1 = probeFp
     if not details.noPickle:
-      if type(pt) in (types.TupleType,types.ListType):
-        id,fp = pt
+      if type(pt) in (types.TupleType, types.ListType):
+        id, fp = pt
       else:
         fp = pt
         id = pt._fieldsFromDb[0]
-      score = DataStructs.FingerprintSimilarity(fp1,fp,details.metric)
+      score = DataStructs.FingerprintSimilarity(fp1, fp, details.metric)
     else:
-      id,pkl = pt
-      score = details.metric(fp1,str(pkl))
+      id, pkl = pt
+      score = details.metric(fp1, str(pkl))
     if topN:
-      topN.Insert(score,id)
+      topN.Insert(score, id)
     elif not details.doThreshold or \
              (details.doThreshold and score>=details.screenThresh):
-      res.append((id,score))
+      res.append((id, score))
     count += 1
-    if hasattr(details,'stopAfter') and count >= details.stopAfter:
+    if hasattr(details, 'stopAfter') and count >= details.stopAfter:
       break
-  for score,id in topN:
-    res.append((id,score))
+  for score, id in topN:
+    res.append((id, score))
 
   return res
 
-def ScreenFromDetails(details,mol=None):
+
+def ScreenFromDetails(details, mol=None):
   """ Returns a list of results
 
   """
@@ -226,7 +224,7 @@ def ScreenFromDetails(details,mol=None):
         mol = Chem.MolFromSmiles(smi)
       except Exception:
         import traceback
-        FingerprintMols.error('Error: problems generating molecule for smiles: %s\n'%(smi))
+        FingerprintMols.error('Error: problems generating molecule for smiles: %s\n' % (smi))
         traceback.print_exc()
         return
     else:
@@ -236,25 +234,27 @@ def ScreenFromDetails(details,mol=None):
 
   if details.outFileName:
     try:
-      outF = open(details.outFileName,'w+')
+      outF = open(details.outFileName, 'w+')
     except IOError:
-      FingerprintMols.error("Error: could not open output file %s for writing\n"%(details.outFileName))
+      FingerprintMols.error("Error: could not open output file %s for writing\n" %
+                            (details.outFileName))
       return None
   else:
     outF = None
 
-  if not hasattr(details,'useDbSimilarity') or not details.useDbSimilarity:
+  if not hasattr(details, 'useDbSimilarity') or not details.useDbSimilarity:
     data = GetFingerprints(details)
-    res = ScreenFingerprints(details,data,mol)
+    res = ScreenFingerprints(details, data, mol)
   else:
-    res = ScreenInDb(details,mol)
+    res = ScreenInDb(details, mol)
   if outF:
     for pt in res:
       outF.write(','.join([str(x) for x in pt]))
       outF.write('\n')
-  return res   
+  return res
 
-_usageDoc="""
+
+_usageDoc = """
 Usage: MolSimilarity.py [args] <fName>
 
   If <fName> is provided and no tableName is specified (see below),
@@ -326,7 +326,7 @@ Usage: MolSimilarity.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  FingerprintMols.message("This is MolSimilarity version %s\n\n"%(__VERSION_STRING))
-  FingerprintMols._usageDoc=_usageDoc
+  FingerprintMols.message("This is MolSimilarity version %s\n\n" % (__VERSION_STRING))
+  FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ScreenFromDetails(details)

@@ -8,7 +8,8 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 
-def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
+
+def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
   """
 
   Arguments:
@@ -21,8 +22,9 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
                     and the core.
   """
   if core and corePattern:
-    if not core.GetNumAtoms(onlyExplicit=True)==corePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError('When a pattern is provided, it must have the same number of atoms as the core')
+    if not core.GetNumAtoms(onlyExplicit=True) == corePattern.GetNumAtoms(onlyExplicit=True):
+      raise ValueError(
+        'When a pattern is provided, it must have the same number of atoms as the core')
     coreMatch = core.GetSubstructMatch(corePattern)
     if not coreMatch:
       raise ValueError("Core does not map to itself")
@@ -37,41 +39,42 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')
     else:
-      coordMap={}
+      coordMap = {}
   else:
     conf = core.GetConformer()
-    coordMap={}
-    for i,idx in enumerate(match):
+    coordMap = {}
+    for i, idx in enumerate(match):
       pt3 = conf.GetAtomPosition(coreMatch[i])
-      pt2 = Geometry.Point2D(pt3.x,pt3.y)
+      pt2 = Geometry.Point2D(pt3.x, pt3.y)
       coordMap[idx] = pt2
-  rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap,canonOrient=False)
+  rdDepictor.Compute2DCoords(mol, clearConfs=True, coordMap=coordMap, canonOrient=False)
 
-if __name__=='__main__':
-  import sys,getopt
+
+if __name__ == '__main__':
+  import sys, getopt
 
   def Usage():
     pass
-  
-  args,extras = getopt.getopt(sys.argv[1:],'p:ho:',['smiles','pattern='])
-  if len(extras)!=2:
+
+  args, extras = getopt.getopt(sys.argv[1:], 'p:ho:', ['smiles', 'pattern='])
+  if len(extras) != 2:
     print('ERROR: Not enough arguments', file=sys.stderr)
     Usage()
     sys.exit(1)
   patt = None
   useSmiles = False
-  outF=None
-  for arg,val in args:
-    if arg=='-h':
+  outF = None
+  for arg, val in args:
+    if arg == '-h':
       Usage()
       sys.exit(0)
-    elif arg=='-p' or arg=='--pattern':
+    elif arg == '-p' or arg == '--pattern':
       patt = Chem.MolFromSmarts(val)
-    elif arg=='--smiles':
+    elif arg == '--smiles':
       useSmiles = True
-    elif arg=='-o':
+    elif arg == '-o':
       outF = val
-  
+
   if not useSmiles:
     core = Chem.MolFromMolFile(extras[0])
   else:
@@ -83,14 +86,11 @@ if __name__=='__main__':
   else:
     mol = Chem.MolFromSmiles(extras[1])
 
-  AlignDepict(mol,core,patt)
-  
+  AlignDepict(mol, core, patt)
+
   if outF:
-    outF = open(outF,'w+')
+    outF = open(outF, 'w+')
   else:
     outF = sys.stdout
 
   print(Chem.MolToMolBlock(mol), file=outF)
-  
-  
-  

@@ -8,6 +8,7 @@ from rdkit import six
 
 from rdkit.VLib.Node import VLibNode
 
+
 class OutputNode(VLibNode):
   """ base class for nodes which dump output
 
@@ -38,10 +39,12 @@ class OutputNode(VLibNode):
     '1 2 '
 
   """
-  def __init__(self,dest=None,strFunc=None,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, dest=None, strFunc=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._dest = dest
-    self._func=strFunc
+    self._func = strFunc
+
   def next(self):
     parents = self.GetParents()
     args = []
@@ -50,7 +53,7 @@ class OutputNode(VLibNode):
         args.append(parent.next())
       except StopIteration:
         raise StopIteration
-    if len(args)>1:
+    if len(args) > 1:
       args = tuple(args)
     else:
       args = args[0]
@@ -62,21 +65,21 @@ class OutputNode(VLibNode):
       self._dest.write(outp)
     return args
 
+
 if six.PY3:
-    OutputNode.__next__ = OutputNode.next
+  OutputNode.__next__ = OutputNode.next
+
 
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
+
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-
-  

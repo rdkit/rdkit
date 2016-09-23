@@ -13,7 +13,7 @@
 
 """
 from __future__ import print_function, division
-from rdkit.DataStructs import SparseBitVect,IntSparseIntVect,LongSparseIntVect
+from rdkit.DataStructs import SparseBitVect, IntSparseIntVect, LongSparseIntVect
 from rdkit.Chem.Pharm2D import Utils
 import copy
 import numpy
@@ -29,51 +29,52 @@ class SigFactory(object):
     signature is required.
 
   """
-  def __init__(self,featFactory,useCounts=False,minPointCount=2,maxPointCount=3,
-               shortestPathsOnly=True,includeBondOrder=False,skipFeats=None,
+
+  def __init__(self, featFactory, useCounts=False, minPointCount=2, maxPointCount=3,
+               shortestPathsOnly=True, includeBondOrder=False, skipFeats=None,
                trianglePruneBins=True):
     self.featFactory = featFactory
-    self.useCounts=useCounts
-    self.minPointCount=minPointCount
-    self.maxPointCount=maxPointCount
-    self.shortestPathsOnly=shortestPathsOnly
-    self.includeBondOrder=includeBondOrder
-    self.trianglePruneBins=trianglePruneBins
+    self.useCounts = useCounts
+    self.minPointCount = minPointCount
+    self.maxPointCount = maxPointCount
+    self.shortestPathsOnly = shortestPathsOnly
+    self.includeBondOrder = includeBondOrder
+    self.trianglePruneBins = trianglePruneBins
     if skipFeats is None:
-      self.skipFeats=[]
+      self.skipFeats = []
     else:
-      self.skipFeats=skipFeats
+      self.skipFeats = skipFeats
     self._bins = None
-    self.sigKlass=None
+    self.sigKlass = None
 
-    
-  def SetBins(self,bins):
+  def SetBins(self, bins):
     """ bins should be a list of 2-tuples """
     self._bins = copy.copy(bins)
     self.Init()
 
   def GetBins(self):
     return self._bins
+
   def GetNumBins(self):
     return len(self._bins)
 
   def GetSignature(self):
     return self.sigKlass(self._sigSize)
 
-  def _GetBitSummaryData(self,bitIdx):
-    nPts,combo,scaffold = self.GetBitInfo(bitIdx)
-    fams=self.GetFeatFamilies()
+  def _GetBitSummaryData(self, bitIdx):
+    nPts, combo, scaffold = self.GetBitInfo(bitIdx)
+    fams = self.GetFeatFamilies()
     labels = [fams[x] for x in combo]
-    dMat = numpy.zeros((nPts,nPts),numpy.int)
+    dMat = numpy.zeros((nPts, nPts), numpy.int)
     dVect = Utils.nPointDistDict[nPts]
     for idx in range(len(dVect)):
-      i,j = dVect[idx]
-      dMat[i,j] = scaffold[idx]
-      dMat[j,i] = scaffold[idx]
-    
-    return nPts,combo,scaffold,labels,dMat
+      i, j = dVect[idx]
+      dMat[i, j] = scaffold[idx]
+      dMat[j, i] = scaffold[idx]
 
-  def GetBitDescriptionAsText(self,bitIdx,includeBins=0,fullPage=1):
+    return nPts, combo, scaffold, labels, dMat
+
+  def GetBitDescriptionAsText(self, bitIdx, includeBins=0, fullPage=1):
     """  returns text with a description of the bit
 
     **Arguments**
@@ -91,9 +92,9 @@ class SigFactory(object):
       a string with the HTML
 
     """
-    nPts,combo,scaffold,labels,dMat=self._GetBitSummaryData(bitIdx)
+    nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)
 
-  def GetBitDescription(self,bitIdx):
+  def GetBitDescription(self, bitIdx):
     """  returns a text description of the bit
 
     **Arguments**
@@ -105,14 +106,14 @@ class SigFactory(object):
       a string
 
     """
-    nPts,combo,scaffold,labels,dMat=self._GetBitSummaryData(bitIdx)
-    res = " ".join(labels)+ " "
+    nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)
+    res = " ".join(labels) + " "
     for row in dMat:
-      res += "|"+" ".join([str(x) for x in row])
+      res += "|" + " ".join([str(x) for x in row])
     res += "|"
     return res
 
-  def _findBinIdx(self,dists,bins,scaffolds):
+  def _findBinIdx(self, dists, bins, scaffolds):
     """ OBSOLETE: this has been rewritten in C++
     Internal use only
      Returns the index of a bin defined by a set of distances.
@@ -139,7 +140,7 @@ class SigFactory(object):
     """
     nBins = len(bins)
     nDists = len(dists)
-    whichBins = [0]*nDists
+    whichBins = [0] * nDists
 
     # This would be a ton easier if we had contiguous bins
     # i.e. if we could maintain the bins as a list of bounds)
@@ -151,14 +152,14 @@ class SigFactory(object):
       where = -1
 
       # do a simple binary search:
-      startP,endP = 0,len(bins)
-      while startP<endP:
-        midP = (startP+endP) // 2
-        begBin,endBin = bins[midP]
+      startP, endP = 0, len(bins)
+      while startP < endP:
+        midP = (startP + endP) // 2
+        begBin, endBin = bins[midP]
         if dist < begBin:
           endP = midP
         elif dist >= endBin:
-          startP = midP+1
+          startP = midP + 1
         else:
           where = midP
           break
@@ -168,9 +169,9 @@ class SigFactory(object):
     res = scaffolds.index(tuple(whichBins))
     if _verbose:
       print('----- _fBI  -----------')
-      print(' scaffolds:',scaffolds)
-      print(' bins:',whichBins)
-      print(' res:',res)
+      print(' scaffolds:', scaffolds)
+      print(' bins:', whichBins)
+      print(' res:', res)
     return res
 
   def GetFeatFamilies(self):
@@ -178,17 +179,17 @@ class SigFactory(object):
     fams.sort()
     return fams
 
-  def GetMolFeats(self,mol):
-    featFamilies=self.GetFeatFamilies()
+  def GetMolFeats(self, mol):
+    featFamilies = self.GetFeatFamilies()
     featMatches = {}
     for fam in featFamilies:
-      featMatches[fam] =  []
-      feats = self.featFactory.GetFeaturesForMol(mol,includeOnly=fam)
+      featMatches[fam] = []
+      feats = self.featFactory.GetFeaturesForMol(mol, includeOnly=fam)
       for feat in feats:
         featMatches[fam].append(feat.GetAtomIds())
     return [featMatches[x] for x in featFamilies]
-  
-  def GetBitIdx(self,featIndices,dists,sortIndices=True):
+
+  def GetBitIdx(self, featIndices, dists, sortIndices=True):
     """ returns the index for a pharmacophore described using a set of
       feature indices and distances
 
@@ -208,49 +209,53 @@ class SigFactory(object):
       
     """
     nPoints = len(featIndices)
-    if nPoints>3:
+    if nPoints > 3:
       raise NotImplementedError('>3 points not supported')
-    if nPoints < self.minPointCount: raise IndexError('bad number of points')
-    if nPoints > self.maxPointCount: raise IndexError('bad number of points')
+    if nPoints < self.minPointCount:
+      raise IndexError('bad number of points')
+    if nPoints > self.maxPointCount:
+      raise IndexError('bad number of points')
 
     # this is the start of the nPoint-point pharmacophores
     startIdx = self._starts[nPoints]
 
     #
     # now we need to map the pattern indices to an offset from startIdx
-    # 
+    #
     if sortIndices:
       tmp = list(featIndices)
       tmp.sort()
       featIndices = tmp
 
-    if featIndices[0]<0: raise IndexError('bad feature index')
-    if max(featIndices)>=self._nFeats: raise IndexError('bad feature index')
+    if featIndices[0] < 0:
+      raise IndexError('bad feature index')
+    if max(featIndices) >= self._nFeats:
+      raise IndexError('bad feature index')
 
-    if nPoints==3:
-      featIndices,dists=Utils.OrderTriangle(featIndices,dists)
-            
+    if nPoints == 3:
+      featIndices, dists = Utils.OrderTriangle(featIndices, dists)
 
-    offset = Utils.CountUpTo(self._nFeats,nPoints,featIndices)
-    if _verbose: print('offset for feature %s: %d'%(str(featIndices),offset))
+    offset = Utils.CountUpTo(self._nFeats, nPoints, featIndices)
+    if _verbose:
+      print('offset for feature %s: %d' % (str(featIndices), offset))
     offset *= len(self._scaffolds[len(dists)])
 
-      
     try:
       if _verbose:
         print('>>>>>>>>>>>>>>>>>>>>>>>')
-        print('\tScaffolds:',repr(self._scaffolds[len(dists)]),type(self._scaffolds[len(dists)]))
-        print('\tDists:',repr(dists),type(dists))
-        print('\tbins:',repr(self._bins),type(self._bins))
-      bin = self._findBinIdx(dists,self._bins,self._scaffolds[len(dists)])
+        print('\tScaffolds:', repr(self._scaffolds[len(dists)]), type(self._scaffolds[len(dists)]))
+        print('\tDists:', repr(dists), type(dists))
+        print('\tbins:', repr(self._bins), type(self._bins))
+      bin = self._findBinIdx(dists, self._bins, self._scaffolds[len(dists)])
     except ValueError:
       fams = self.GetFeatFamilies()
       fams = [fams[x] for x in featIndices]
-      raise IndexError('distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s'%(fams,dists,self._bins,self._scaffolds))
+      raise IndexError('distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s' %
+                       (fams, dists, self._bins, self._scaffolds))
 
     return startIdx + offset + bin
 
-  def GetBitInfo(self,idx):
+  def GetBitInfo(self, idx):
     """ returns information about the given bit
 
      **Arguments**
@@ -269,36 +274,36 @@ class SigFactory(object):
      
     """
     if idx >= self._sigSize:
-      raise IndexError('bad index (%d) queried. %d is the max'%(idx,self._sigSize))
+      raise IndexError('bad index (%d) queried. %d is the max' % (idx, self._sigSize))
     # first figure out how many points are in the p'cophore
     nPts = self.minPointCount
-    while nPts < self.maxPointCount and self._starts[nPts+1]<=idx:
-      nPts+=1
+    while nPts < self.maxPointCount and self._starts[nPts + 1] <= idx:
+      nPts += 1
 
     # how far are we in from the start point?
     offsetFromStart = idx - self._starts[nPts]
     if _verbose:
-      print('\t %d Points, %d offset'%(nPts,offsetFromStart))
+      print('\t %d Points, %d offset' % (nPts, offsetFromStart))
 
     # lookup the number of scaffolds
     nDists = len(Utils.nPointDistDict[nPts])
     scaffolds = self._scaffolds[nDists]
-      
+
     nScaffolds = len(scaffolds)
 
     # figure out to which proto-pharmacophore we belong:
     protoIdx = offsetFromStart // nScaffolds
-    indexCombos = Utils.GetIndexCombinations(self._nFeats,nPts)
+    indexCombos = Utils.GetIndexCombinations(self._nFeats, nPts)
     combo = tuple(indexCombos[protoIdx])
     if _verbose:
-      print('\t combo: %s'%(str(combo)))
+      print('\t combo: %s' % (str(combo)))
 
     # and which scaffold:
     scaffoldIdx = offsetFromStart % nScaffolds
     scaffold = scaffolds[scaffoldIdx]
     if _verbose:
-      print('\t scaffold: %s'%(str(scaffold)))
-    return nPts,combo,scaffold
+      print('\t scaffold: %s' % (str(scaffold)))
+    return nPts, combo, scaffold
 
   def Init(self):
     """ Initializes internal parameters.  This **must** be called after
@@ -306,7 +311,7 @@ class SigFactory(object):
 
     """
     accum = 0
-    self._scaffolds = [0]*(len(Utils.nPointDistDict[self.maxPointCount+1]))
+    self._scaffolds = [0] * (len(Utils.nPointDistDict[self.maxPointCount + 1]))
     self._starts = {}
     if not self.skipFeats:
       self._nFeats = len(self.featFactory.GetFeatureFamilies())
@@ -314,31 +319,31 @@ class SigFactory(object):
       self._nFeats = 0
       for fam in self.featFactory.GetFeatureFamilies():
         if fam not in self.skipFeats:
-          self._nFeats+=1
-    for i in range(self.minPointCount,self.maxPointCount+1):
+          self._nFeats += 1
+    for i in range(self.minPointCount, self.maxPointCount + 1):
       self._starts[i] = accum
       nDistsHere = len(Utils.nPointDistDict[i])
-      scaffoldsHere = Utils.GetPossibleScaffolds(i,self._bins,
+      scaffoldsHere = Utils.GetPossibleScaffolds(i, self._bins,
                                                  useTriangleInequality=self.trianglePruneBins)
       nBitsHere = len(scaffoldsHere)
       self._scaffolds[nDistsHere] = scaffoldsHere
-      pointsHere = Utils.NumCombinations(self._nFeats,i) * nBitsHere
+      pointsHere = Utils.NumCombinations(self._nFeats, i) * nBitsHere
       accum += pointsHere
     self._sigSize = accum
     if not self.useCounts:
       self.sigKlass = SparseBitVect
-    elif self._sigSize<2**31:
+    elif self._sigSize < 2**31:
       self.sigKlass = IntSparseIntVect
     else:
       self.sigKlass = LongSparseIntVect
 
   def GetSigSize(self):
     return self._sigSize
+
+
 try:
   from rdkit.Chem.Pharmacophores import cUtils
 except ImportError:
   pass
 else:
   SigFactory._findBinIdx = cUtils.FindBinIdx
-
-  

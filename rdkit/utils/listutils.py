@@ -6,6 +6,7 @@
 
 """
 
+
 def CompactListRepr(lst):
   """
 
@@ -24,31 +25,29 @@ def CompactListRepr(lst):
   """
   if not len(lst):
     return '[]'
-  
+
   components = []
   last = lst[0]
   count = 1
   i = 1
-  while(i < len(lst)):
+  while (i < len(lst)):
     if lst[i] != last:
-      label = '[%s]'%repr(last)
+      label = '[%s]' % repr(last)
       if count > 1:
-        label += '*%d'%count
+        label += '*%d' % count
       components.append(label)
       count = 1
       last = lst[i]
     else:
       count += 1
-    i+=1
+    i += 1
   if count != 0:
-    label = '[%s]'%repr(last)
+    label = '[%s]' % repr(last)
     if count > 1:
-      label += '*%d'%count
+      label += '*%d' % count
     components.append(label)
 
-  return '+'.join(components)  
-
-    
+  return '+'.join(components)
 
 
 #------------------------------------
@@ -56,14 +55,11 @@ def CompactListRepr(lst):
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  
-

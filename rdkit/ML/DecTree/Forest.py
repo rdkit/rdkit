@@ -9,7 +9,8 @@
 from __future__ import print_function
 from rdkit.six.moves import cPickle
 import numpy
-from rdkit.ML.DecTree import CrossValidate,PruneTree
+from rdkit.ML.DecTree import CrossValidate, PruneTree
+
 
 class Forest(object):
   """a forest of unique decision trees.
@@ -26,6 +27,7 @@ class Forest(object):
       3) call SortTrees to put things in order by either error or count
 
   """
+
   def MakeHistogram(self):
     """ creates a histogram of error/count pairs
 
@@ -37,17 +39,17 @@ class Forest(object):
     countHere = self.countList[0]
     eps = 0.001
     while i < nExamples:
-      if self.errList[i]-lastErr > eps:
-        histo.append((lastErr,countHere))
+      if self.errList[i] - lastErr > eps:
+        histo.append((lastErr, countHere))
         lastErr = self.errList[i]
         countHere = self.countList[i]
       else:
-        countHere = countHere + self.countList[i]        
+        countHere = countHere + self.countList[i]
       i = i + 1
 
     return histo
 
-  def CollectVotes(self,example):
+  def CollectVotes(self, example):
     """ collects votes across every member of the forest for the given example
 
       **Returns**
@@ -56,12 +58,12 @@ class Forest(object):
       
     """
     nTrees = len(self.treeList)
-    votes = [0]*nTrees
+    votes = [0] * nTrees
     for i in range(nTrees):
       votes[i] = self.treeList[i].ClassifyExample(example)
     return votes
 
-  def ClassifyExample(self,example):
+  def ClassifyExample(self, example):
     """ classifies the given example using the entire forest
 
       **returns** a result and a measure of confidence in it.
@@ -74,7 +76,7 @@ class Forest(object):
            measure being the percent of trees which voted for the winning result.
     """
     self.treeVotes = self.CollectVotes(example)
-    votes = [0]*len(self._nPossible)
+    votes = [0] * len(self._nPossible)
     for i in range(len(self.treeList)):
       res = self.treeVotes[i]
       votes[res] = votes[res] + self.countList[i]
@@ -82,7 +84,7 @@ class Forest(object):
     totVotes = sum(votes)
     res = argmax(votes)
     #print 'v:',res,votes,totVotes
-    return res,float(votes[res])/float(totVotes)
+    return res, float(votes[res]) / float(totVotes)
 
   def GetVoteDetails(self):
     """ Returns the details of the last vote the forest conducted
@@ -91,9 +93,8 @@ class Forest(object):
       
     """
     return self.treeVotes
-  
-  def Grow(self,examples,attrs,nPossibleVals,nTries=10,pruneIt=0,
-           lessGreedy=0):
+
+  def Grow(self, examples, attrs, nPossibleVals, nTries=10, pruneIt=0, lessGreedy=0):
     """ Grows the forest by adding trees
 
      **Arguments**
@@ -116,20 +117,18 @@ class Forest(object):
     """
     self._nPossible = nPossibleVals
     for i in range(nTries):
-      tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,nPossibleVals,
-                                                      silent=1,calcTotalError=1,
-                                                      lessGreedy=lessGreedy)
+      tree, frac = CrossValidate.CrossValidationDriver(examples, attrs, nPossibleVals, silent=1,
+                                                       calcTotalError=1, lessGreedy=lessGreedy)
       if pruneIt:
-        tree,frac2 = PruneTree.PruneTree(tree,tree.GetTrainingExamples(),
-                                        tree.GetTestExamples(),
-                                        minimizeTestErrorOnly=0)
-        print('prune: ', frac,frac2)
+        tree, frac2 = PruneTree.PruneTree(tree, tree.GetTrainingExamples(), tree.GetTestExamples(),
+                                          minimizeTestErrorOnly=0)
+        print('prune: ', frac, frac2)
         frac = frac2
-      self.AddTree(tree,frac)
-      if i % (nTries/10) == 0:
-        print('Cycle: % 4d'%(i))
+      self.AddTree(tree, frac)
+      if i % (nTries / 10) == 0:
+        print('Cycle: % 4d' % (i))
 
-  def Pickle(self,fileName='foo.pkl'):
+  def Pickle(self, fileName='foo.pkl'):
     """ Writes this forest off to a file so that it can be easily loaded later
 
      **Arguments**
@@ -137,11 +136,11 @@ class Forest(object):
        fileName is the name of the file to be written
        
     """
-    pFile = open(fileName,'wb+')
-    cPickle.dump(self,pFile,1)
+    pFile = open(fileName, 'wb+')
+    cPickle.dump(self, pFile, 1)
     pFile.close()
-    
-  def AddTree(self,tree,error):
+
+  def AddTree(self, tree, error):
     """ Adds a tree to the forest
 
     If an identical tree is already present, its count is incremented
@@ -158,7 +157,7 @@ class Forest(object):
     """
     if tree in self.treeList:
       idx = self.treeList.index(tree)
-      self.errList[idx] = self.errList[idx]+error
+      self.errList[idx] = self.errList[idx] + error
       self.countList[idx] = self.countList[idx] + 1
     else:
       self.treeList.append(tree)
@@ -170,9 +169,9 @@ class Forest(object):
 
       This does the conversion in place
     """
-    self.errList = [x/y for x,y in zip(self.errList,self.countList)]
+    self.errList = [x / y for x, y in zip(self.errList, self.countList)]
 
-  def SortTrees(self,sortOnError=1):
+  def SortTrees(self, sortOnError=1):
     """ sorts the list of trees
 
       **Arguments**
@@ -183,30 +182,33 @@ class Forest(object):
     if sortOnError:
       order = numpy.argsort(self.errList)
     else:
-      order = numpy.argsort(self.countList)      
+      order = numpy.argsort(self.countList)
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
     self.treeList = [self.treeList[x] for x in order]
     self.countList = [self.countList[x] for x in order]
     self.errList = [self.errList[x] for x in order]
-    
-  def GetTree(self,i):
+
+  def GetTree(self, i):
     return self.treeList[i]
-  def SetTree(self,i,val):
+
+  def SetTree(self, i, val):
     self.treeList[i] = val
-    
-  def GetCount(self,i):
-    return self.countList[i]    
-  def SetCount(self,i,val):
+
+  def GetCount(self, i):
+    return self.countList[i]
+
+  def SetCount(self, i, val):
     self.countList[i] = val
 
-  def GetError(self,i):
-    return self.errList[i]    
-  def SetError(self,i,val):
+  def GetError(self, i):
+    return self.errList[i]
+
+  def SetError(self, i, val):
     self.errList[i] = val
 
-  def GetDataTuple(self,i):
+  def GetDataTuple(self, i):
     """ returns all relevant data about a particular tree in the forest
 
       **Arguments**
@@ -223,9 +225,9 @@ class Forest(object):
 
           3) its error
     """
-    return (self.treeList[i],self.countList[i],self.errList[i])
+    return (self.treeList[i], self.countList[i], self.errList[i])
 
-  def SetDataTuple(self,i,tup):
+  def SetDataTuple(self, i, tup):
     """ sets all relevant data for a particular tree in the forest
 
       **Arguments**
@@ -240,8 +242,8 @@ class Forest(object):
 
           3) its error
     """
-    self.treeList[i],self.countList[i],self.errList[i] = tup
-    
+    self.treeList[i], self.countList[i], self.errList[i] = tup
+
   def GetAllData(self):
     """ Returns everything we know
 
@@ -256,43 +258,44 @@ class Forest(object):
         3) our list of tree errors
 
     """
-    return (self.treeList,self.countList,self.errList)
-  
+    return (self.treeList, self.countList, self.errList)
+
   def __len__(self):
     """ allows len(forest) to work
 
     """
     return len(self.treeList)
-  
-  def __getitem__(self,which):
+
+  def __getitem__(self, which):
     """ allows forest[i] to work.  return the data tuple
 
     """
     return self.GetDataTuple(which)
-  
+
   def __str__(self):
     """ allows the forest to show itself as a string
 
     """
-    outStr= 'Forest\n'
+    outStr = 'Forest\n'
     for i in range(len(self.treeList)):
       outStr = outStr + \
          '  Tree % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
                                                                   100.*self.errList[i])
-    return outStr    
-    
+    return outStr
+
   def __init__(self):
-    self.treeList=[]
-    self.errList=[]
-    self.countList=[]
-    self.treeVotes=[]
+    self.treeList = []
+    self.errList = []
+    self.countList = []
+    self.treeVotes = []
+
 
 if __name__ == '__main__':
   from rdkit.ML.DecTree import DecTree
   f = Forest()
-  n = DecTree.DecTreeNode(None,'foo')
-  f.AddTree(n,0.5)
-  f.AddTree(n,0.5)
+  n = DecTree.DecTreeNode(None, 'foo')
+  f.AddTree(n, 0.5)
+  f.AddTree(n, 0.5)
   f.AverageErrors()
   f.SortTrees()
   print(f)

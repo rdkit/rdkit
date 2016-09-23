@@ -127,7 +127,7 @@ nameTable = {}
 numTable = {}
 for line in periodicData.split('\n'):
   splitLine = line.split()
-  if len(splitLine)>1:
+  if len(splitLine) > 1:
     nameTable[splitLine[1]] = (int(splitLine[0]),float(splitLine[6]),int(splitLine[7]),\
                                int(splitLine[5]),float(splitLine[2]),float(splitLine[3]),
                                float(splitLine[4]))
@@ -136,32 +136,32 @@ for line in periodicData.split('\n'):
                                    float(splitLine[4]))
 
 # a list of metals (transition metals, semi-metals, lanthanides and actinides)
-metalRanges = ["13","21-32","39-51","57-84","89-103"]
+metalRanges = ["13", "21-32", "39-51", "57-84", "89-103"]
 metalNumList = []
 for entry in metalRanges:
   t = entry.split('-')
   start = int(t[0])
-  if len(t)>1:
+  if len(t) > 1:
     end = int(t[1])
   else:
     end = start
   if start > end:
-    start,end = end,start
-  metalNumList += range(start,end+1)  
-metalNames = map(lambda x:numTable[x][0],metalNumList)
+    start, end = end, start
+  metalNumList += range(start, end + 1)
+metalNames = map(lambda x: numTable[x][0], metalNumList)
 
 # these are from table 4 of Rev. Comp. Chem. vol 2, 367-422, (1991)
 #  the order is [alpha(SP),alpha(SP2),alpha(SP3)]
 # where values are not known, None has been inserted
 hallKierAlphas = {
-  'H':[0.0,0.0,0.0], # removes explicit H's from consideration in the shape
-  'C':[-0.22,-0.13,0.0],
-  'N':[-0.29,-0.20,-0.04],
-  'O':[None,-0.20,-0.04],
-  'F':[None,None,-0.07],
-  'P':[None,0.30,0.43],
-  'S':[None,0.22,0.35],
-  'Cl':[None,None,0.29],
-  'Br':[None,None,0.48],
-  'I':[None,None,0.73]}
-
+  'H': [0.0, 0.0, 0.0],  # removes explicit H's from consideration in the shape
+  'C': [-0.22, -0.13, 0.0],
+  'N': [-0.29, -0.20, -0.04],
+  'O': [None, -0.20, -0.04],
+  'F': [None, None, -0.07],
+  'P': [None, 0.30, 0.43],
+  'S': [None, 0.22, 0.35],
+  'Cl': [None, None, 0.29],
+  'Br': [None, None, 0.48],
+  'I': [None, None, 0.73]
+}

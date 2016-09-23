@@ -6,7 +6,6 @@
   Generation of Murcko scaffolds from a molecule
 """
 
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
@@ -48,13 +47,13 @@ def MakeScaffoldGeneric(mol):
   return Chem.RemoveHs(res)
 
 
-murckoPatts = ['[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]',
-               '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
+murckoPatts = ['[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]', '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
                '[!#1;D1;$([D1]-[!#1;!n])]']
 murckoQ = '[' + ','.join(['$(%s)' % x for x in murckoPatts]) + ']'
 murckoQ = Chem.MolFromSmarts(murckoQ)
 murckoPatts = [Chem.MolFromSmarts(x) for x in murckoPatts]
 aromaticNTransform = AllChem.ReactionFromSmarts('[n:1]-[D1]>>[nH:1]')
+
 
 def GetScaffoldForMol(mol):
   """ Return molecule object containing scaffold of mol
@@ -136,4 +135,3 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 if __name__ == '__main__':  # pragma: nocover
   _runDoctests()
-
