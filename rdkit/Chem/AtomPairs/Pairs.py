@@ -16,14 +16,13 @@ R.E. Carhart, D.H. Smith, R. Venkataraghavan;
 Definition and Applications" JCICS 25, 64-73 (1985).
 
 """
-from rdkit.DataStructs import IntSparseIntVect
-from rdkit import Chem
+from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
-from rdkit import DataStructs
 
-from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetHashedAtomPairFingerprint
+GetAtomPairFingerprint = rdMolDescriptors.GetAtomPairFingerprint
 GetAtomPairFingerprintAsIntVect = rdMolDescriptors.GetAtomPairFingerprint
+GetHashedAtomPairFingerprint = rdMolDescriptors.GetHashedAtomPairFingerprint
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen = (1 << numPathBits) - 1
@@ -34,6 +33,7 @@ fpLen = 1 << numFpBits
 def pyScorePair(at1, at2, dist, atomCodes=None):
   """ Returns a score for an individual atom pair.
 
+  >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('CCCCC')
   >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0))
   >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1))
@@ -63,7 +63,8 @@ def pyScorePair(at1, at2, dist, atomCodes=None):
 
 
 def ExplainPairScore(score):
-  """ 
+  """
+  >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('C=CC')
   >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
   >>> ExplainPairScore(score)
@@ -104,6 +105,7 @@ def GetAtomPairFingerprintAsBitVect(mol):
 
   **Returns**: a SparseBitVect
 
+  >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('CCC')
   >>> v = [ pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
   ...       pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
@@ -112,25 +114,25 @@ def GetAtomPairFingerprintAsBitVect(mol):
   >>> fp = GetAtomPairFingerprintAsBitVect(m)
   >>> list(fp.GetOnBits())==v
   True
-  
+
   """
   res = DataStructs.SparseBitVect(fpLen)
   fp = rdMolDescriptors.GetAtomPairFingerprint(mol)
-  for val in fp.GetNonzeroElements().keys():
+  for val in fp.GetNonzeroElements():
     res.SetBit(val)
   return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
