@@ -1,4 +1,4 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
 # $Id$
 #
@@ -38,7 +38,7 @@ def FingerprintMol(mol):
   counts = numpy.zeros(nPatts, numpy.int)
   sums = numpy.zeros(nPatts, numpy.float)
 
-  for i, (name, pattern) in enumerate(AtomTypes.esPatterns):
+  for i, (_, pattern) in enumerate(AtomTypes.esPatterns):
     matches = mol.GetSubstructMatches(pattern, uniquify=1)
     counts[i] = len(matches)
     for match in matches:
@@ -46,7 +46,8 @@ def FingerprintMol(mol):
   return counts, sums
 
 
-if __name__ == '__main__':
+def _exampleCode():
+  """ Example code for calculating E-state fingerprints """
   from rdkit import Chem
   smis = ['CC', 'CCC', 'c1[nH]cnc1CC(N)C(O)=O', 'NCCc1ccc(O)c(O)c1']
   for smi in smis:
@@ -59,8 +60,12 @@ if __name__ == '__main__':
     counts, sums = FingerprintMol(m)
     for i in range(len(AtomTypes.esPatterns)):
       if counts[i]:
-        name, patt = AtomTypes.esPatterns[i]
+        name, _ = AtomTypes.esPatterns[i]
         print('%6s, % 2d, % 5.4f' % (name, counts[i], sums[i]))
     for i in range(len(es)):
       print('% 2d, % 5.4f' % (i + 1, es[i]))
     print('--------')
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

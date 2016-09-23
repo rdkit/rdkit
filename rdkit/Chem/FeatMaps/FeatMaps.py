@@ -8,9 +8,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Geometry
-from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math
 
@@ -247,18 +244,3 @@ class FeatMap(object):
       res += '% 3d % 12s % 6.4f % 6.4f % 6.4f % 6.4f\n' % (i + 1, feat.GetFamily(), pos.x, pos.y,
                                                            pos.z, weight)
     return res
-
-
-#------------------------------------
-#
-#  doctest boilerplate
-#
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
-  import sys
-  failed, tried = _test()
-  sys.exit(failed)

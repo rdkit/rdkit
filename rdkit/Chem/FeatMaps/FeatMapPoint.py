@@ -8,8 +8,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Geometry
-from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures
 
 
@@ -23,7 +21,7 @@ class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
 
   def initFromFeat(self, feat):
     """
-
+    >>> from rdkit import Geometry
     >>> sfeat = ChemicalFeatures.FreeChemicalFeature('Aromatic','Foo',Geometry.Point3D(0,0,0))
     >>> fmp = FeatMapPoint()
     >>> fmp.initFromFeat(sfeat)
@@ -50,7 +48,7 @@ class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
 
   def GetDist2(self, other):
     """
-
+    >>> from rdkit import Geometry
     >>> sfeat = ChemicalFeatures.FreeChemicalFeature('Aromatic','Foo',Geometry.Point3D(0,0,0))
     >>> fmp = FeatMapPoint()
     >>> fmp.initFromFeat(sfeat)
@@ -64,7 +62,7 @@ class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
 
   def GetDirMatch(self, other, useBest=True):
     """
-
+    >>> from rdkit import Geometry
     >>> sfeat = ChemicalFeatures.FreeChemicalFeature('Aromatic','Foo',Geometry.Point3D(0,0,0))
     >>> fmp = FeatMapPoint()
     >>> fmp.initFromFeat(sfeat)
@@ -115,16 +113,16 @@ class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
     return accum
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

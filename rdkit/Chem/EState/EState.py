@@ -17,6 +17,7 @@ from rdkit import Chem
 
 
 def GetPrincipleQuantumNumber(atNum):
+  """ Get principal quantum number for atom number """
   if atNum <= 2:
     return 1
   elif atNum <= 10:
@@ -33,7 +34,7 @@ def GetPrincipleQuantumNumber(atNum):
     return 7
 
 
-def EStateIndices(mol, force=1):
+def EStateIndices(mol, force=True):
   """ returns a tuple of EState indices for the molecule
 
     Reference: Hall, Mohney and Kier. JCICS _31_ 76-81 (1991)
@@ -100,10 +101,16 @@ def MinAbsEStateIndex(mol, force=1):
 
 MinAbsEStateIndex.version = "1.0.0"
 
-if __name__ == '__main__':
+
+def _exampleCode():
+  """ Example code for calculating E-state indices """
   smis = ['CCCC', 'CCCCC', 'CCCCCC', 'CC(N)C(=O)O', 'CC(N)C(=O)[O-].[Na+]']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
     print(smi)
     inds = EStateIndices(m)
     print('\t', inds)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()
