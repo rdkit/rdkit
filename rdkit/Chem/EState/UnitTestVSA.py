@@ -24,7 +24,8 @@ class TestCase(unittest.TestCase):
 
   @staticmethod
   def referenceData():
-    filename = os.sep.join([os.path.dirname(__file__), 'test_data', 'EState_VSA.csv'])
+    filename = os.sep.join(
+      [os.path.dirname(os.path.abspath(__file__)), 'test_data', 'EState_VSA.csv'])
     with open(filename) as fin:
       header = fin.readline()
       header = [s.strip() for s in header.split(',')][1:]
