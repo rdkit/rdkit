@@ -81,7 +81,7 @@ def EState_VSA_(mol, bins=None, force=1):
   return ans
 
 
-def descriptorDocstring(name, nbin, bins):
+def _descriptorDocstring(name, nbin, bins):
   """ Create a docstring for the descriptor name """
   if nbin == 0:
     interval = "-inf < x <  {0:.2f}".format(bins[nbin])
@@ -92,19 +92,19 @@ def descriptorDocstring(name, nbin, bins):
   return '{0} Descriptor {1} ({2})'.format(name, nbin + 1, interval)
 
 
-def descriptor_VSA_EState(nbin):
+def _descriptor_VSA_EState(nbin):
 
   def VSA_EState_bin(mol):
     return VSA_EState_(mol, force=False)[nbin]
 
   name = "VSA_EState{0}".format(nbin + 1)
   fn = VSA_EState_bin
-  fn.__doc__ = descriptorDocstring('VSA EState', nbin, vsaBins)
+  fn.__doc__ = _descriptorDocstring('VSA EState', nbin, vsaBins)
   fn.version = '1.0.0'
   return name, fn
 
 
-def descriptor_EState_VSA(nbin):
+def _descriptor_EState_VSA(nbin):
 
   def EState_VSA_bin(mol):
     return EState_VSA_(mol, force=False)[nbin]
@@ -114,18 +114,18 @@ def descriptor_EState_VSA(nbin):
   fn.__name__ = name
   if hasattr(fn, '__qualname__'):
     fn.__qualname__ = name
-  fn.__doc__ = descriptorDocstring('EState VSA', nbin, estateBins)
+  fn.__doc__ = _descriptorDocstring('EState VSA', nbin, estateBins)
   fn.version = '1.0.1'
   return name, fn
 
 
 def _InstallDescriptors():
   for nbin in range(len(vsaBins) + 1):
-    name, fn = descriptor_VSA_EState(nbin)
+    name, fn = _descriptor_VSA_EState(nbin)
     globals()[name] = fn
 
   for nbin in range(len(estateBins) + 1):
-    name, fn = descriptor_EState_VSA(nbin)
+    name, fn = _descriptor_EState_VSA(nbin)
     globals()[name] = fn
 
 # Change log for EState_VSA descriptors:
