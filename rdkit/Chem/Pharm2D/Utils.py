@@ -278,31 +278,90 @@ def GetAllCombinations(choices, noDups=1, which=0):
   return res
 
 
-def GetUniqueCombinations(choices, classes, which=0):
-  """  Does the combinatorial explosion of the possible combinations
-  of the elements of _choices_.
+def GetUniqueCombinations(choices, classes):
+  """
+      Returns list of all possible selections from choices, i-th element of selection is
+      a tuple (classes[i],elem), where _elem_ is element of choices[i]. Selection doesn't containt
+      two identical elements (even if they are from different classes).
+      Example:
+          >>> GetUniqueCombinations([[2,3],[2,3],[3,4]], [0,0,1])
+          [[(0, 2), (0, 3), (1, 4)]]
+
+      **Arguments**
+
+       - choices: list of lists, inner lists are called classes.
+         expects that in _classes_ same classes numbers are together, ie. [0,0,1] is OK, [0,1,0] is not OK
+       - classes: list of class ids, classes[i] == classes[j], then choices[i] and choices[j] are the same
 
   """
   assert len(choices) == len(classes)
-  if which >= len(choices):
-    res = []
-  elif which == len(choices) - 1:
-    res = [[(classes[which], x)] for x in choices[which]]
-  else:
-    res = []
-    tmp = GetUniqueCombinations(choices, classes, which=which + 1)
-    for thing in choices[which]:
-      for other in tmp:
-        idxThere = 0
-        for x in other:
-          if x[1] == thing:
-            idxThere += 1
-        if not idxThere:
-          newL = [(classes[which], thing)] + other
-          newL.sort()
-          if newL not in res:
-            res.append(newL)
+
+  res = [[]]
+  idx = 0
+  while idx < len(classes):
+    #currently processed class
+    currentClassNum = classes[idx]
+    currentClass = choices[idx]
+    
+    #count number of elems in choices with this class and moves idx to next elem
+    nElem = 0
+    while idx < len(classes) and classes[idx] == currentClassNum:
+      nElem += 1
+      idx += 1
+    
+    #make all possible combinations of elements of this class
+    newCombos = _CombinationsOfClass(currentClass, currentClassNum, nElem, len(currentClass))
+    
+    #make all combos of previous combos and combos of this class elems
+    tmp = []
+    for x in res:
+      for y in newCombos:
+        tmp.append(x + y)
+    res = tmp
+
+  #check, whether one atom group (element of choices[i]) isn't used twice in one combination
+  #we cannot use _for_ since we are deleting from the list
+  i = len(res) - 1
+  while i >= 0:
+    comb = res[i]
+    usedGroups = []
+    for x in comb:
+      group = x[1]
+      if group in usedGroups:
+        del res[i]
+        break
+      else: 
+        usedGroups.append(group)
+    i -= 1
+
   return res
+
+def _CombinationsOfClass(choices, classId, n, last):
+  """
+    Helper function for GetUniqueCombinations
+    recursively generates all combinations of _n_ elements from _choices_[:last].
+    (last is also number of elements from the beginning we can use)
+    To every element of _choices_ a _classId_ is added, ie. elem -> (classId, elem)
+  """
+  #make copy of choices so we won't sort argument directly
+  choices = [x for x in choices]
+  choices.sort()
+
+
+  if n > last or n <= 0 or last <= 0:
+    #no such combinations exist
+    return []
+  elif n == last:
+    #only one such combination - _choices_[:last]
+    return [[(classId, x) for x in choices[:last]]]
+  elif n == 1:
+    #every single element is combination
+    return [[(classId, x)] for x in choices[:last]]
+  else:
+    #recursion, either use last element in combination or not
+    withLast = [ x + [(classId,choices[last-1])] for x in _CombinationsOfClass(choices, classId, n-1, last-1)]
+    withoutLast = _CombinationsOfClass(choices, classId, n, last-1)
+    return withLast + withoutLast
 
 
 def UniquifyCombinations(combos):
