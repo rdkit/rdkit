@@ -8,8 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from contextlib import closing
 import unittest
+
 from six import StringIO
+
 from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser
 
 
@@ -73,7 +76,7 @@ EndPoints
                      ['Acceptor', 'Aromatic', 'Acceptor'])
 
     # and a stream
-    with StringIO(self.data) as file:
+    with closing(StringIO(self.data)) as file:
       p = FeatMapParser.FeatMapParser(file=file)
     fm = p.Parse()
     self.assertEqual(fm.GetNumFeatures(), 3)
