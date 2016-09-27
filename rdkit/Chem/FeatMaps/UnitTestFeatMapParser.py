@@ -9,7 +9,7 @@
 #  of the RDKit source tree.
 #
 import unittest
-import io
+from six import StringIO
 from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser
 
 
@@ -73,7 +73,7 @@ EndPoints
                      ['Acceptor', 'Aromatic', 'Acceptor'])
 
     # and a stream
-    with io.StringIO(self.data) as file:
+    with StringIO(self.data) as file:
       p = FeatMapParser.FeatMapParser(file=file)
     fm = p.Parse()
     self.assertEqual(fm.GetNumFeatures(), 3)

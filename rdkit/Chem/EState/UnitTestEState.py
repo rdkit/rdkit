@@ -14,8 +14,11 @@ validation values are from the paper (JCICS _31_ 76-81 (1991))
 
 """
 from __future__ import print_function
+
 import unittest
-import io
+
+from six import StringIO
+
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import EState
@@ -127,7 +130,7 @@ class TestCase(unittest.TestCase):
   def test_exampleCode(self):
     # We make sure that the example code runs
     from rdkit.TestRunner import redirect_stdout
-    f = io.StringIO()
+    f = StringIO()
     with redirect_stdout(f):
       EState.EState._exampleCode()
     s = f.getvalue()
