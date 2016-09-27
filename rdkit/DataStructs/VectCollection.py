@@ -9,8 +9,8 @@
 #  of the RDKit source tree.
 #
 from __future__ import print_function
-import copy, struct, sys
-from rdkit.six.moves import cPickle
+import copy
+import struct
 from rdkit.six import iterkeys
 from rdkit import six
 from rdkit import DataStructs
@@ -42,7 +42,7 @@ class VectCollection(object):
   1
   >>> list(vc.GetOnBits())
   [1, 3, 5, 6, 8]
-  
+
   keys must be unique, so adding a duplicate replaces the
   previous values:
   >>> bv1 = DataStructs.ExplicitBitVect(10)
@@ -85,7 +85,7 @@ class VectCollection(object):
   2
   >>> list(vc.GetOnBits())
   [5, 6, 8]
-  
+
 
   >>> bv1 = DataStructs.ExplicitBitVect(10)
   >>> bv1.SetBitsFromList((7,9))
@@ -113,7 +113,7 @@ class VectCollection(object):
   [5, 6]
   >>> list(vc2.GetOnBits())
   [5, 6, 7, 9]
-  
+
   The Uniquify() method can be used to remove duplicate vectors:
   >>> vc = VectCollection()
   >>> bv1 = DataStructs.ExplicitBitVect(10)
@@ -128,9 +128,8 @@ class VectCollection(object):
   >>> vc.Uniquify()
   >>> vc.NumChildren()
   2
-  
 
-  
+
   """
 
   def __init__(self):
@@ -146,8 +145,8 @@ class VectCollection(object):
 
   orVect = property(GetOrVect)
 
-  def AddVect(self, id, vect):
-    self.__vects[id] = vect
+  def AddVect(self, idx, vect):
+    self.__vects[idx] = vect
     self.__needReset = True
 
   def Reset(self):
@@ -169,13 +168,19 @@ class VectCollection(object):
   def GetChildren(self):
     return tuple(self.__vects.items())
 
-  def GetBit(self, id):
+  def __getitem__(self, idx):
     if self.__needReset:
       self.Reset()
-    return self[id]
+    return self.__orVect.GetBit(idx)
 
-  def GetNumBits(self):
-    return len(self)
+  GetBit = __getitem__
+
+  def __len__(self):
+    if self.__needReset:
+      self.Reset()
+    return self.__numBits
+
+  GetNumBits = __len__
 
   def GetOnBits(self):
     if self.__needReset:
@@ -220,21 +225,11 @@ class VectCollection(object):
     tmp = {}
     for k in keep:
       tmp[k] = self.__vects[k]
-    if verbose:
+    if verbose:  # pragma: nocover
       print('uniquify:', len(self.__vects), '->', len(tmp))
     self.__vects = tmp
 
-  def __len__(self):
-    if self.__needReset:
-      self.Reset()
-    return self.__numBits
-
-  def __getitem__(self, id):
-    if self.__needReset:
-      self.Reset()
-    return self.__orVect.GetBit(id)
-
-  # 
+  #
   # set up our support for pickling:
   #
   def __getstate__(self):
@@ -259,7 +254,7 @@ class VectCollection(object):
     offset = 0
     nToRead = struct.unpack('<I', pkl[offset:offset + szI])[0]
     offset += szI
-    for i in range(nToRead):
+    for _ in range(nToRead):
       k = struct.unpack('<I', pkl[offset:offset + szI])[0]
       offset += szI
       l = struct.unpack('<I', pkl[offset:offset + szI])[0]
@@ -270,16 +265,16 @@ class VectCollection(object):
       self.AddVect(k, bv)
 
 
-    #------------------------------------
-    #
-    #  doctest boilerplate
-    #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

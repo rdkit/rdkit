@@ -11,9 +11,13 @@
 """ unit testing code for the C++ BitVects
 """
 from __future__ import print_function
-import unittest, os, sys
-from rdkit.six.moves import cPickle
+
+import os
+import unittest
+
 from rdkit.DataStructs import cDataStructs
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+
 klass = cDataStructs.SparseBitVect
 
 
@@ -46,7 +50,7 @@ class VectTests(object):
     assert v[-2] == 0, 'bad bit'
 
     with self.assertRaisesRegexp(IndexError, ""):
-      foo = v[10]
+      _ = v[10]
 
   def testSparseBitGet(self):
     """ test operations to get sparse bits
@@ -237,8 +241,7 @@ class VectTests(object):
     assert feq(res[0], 0.875), 'bad 2nd OffBitsProjSimilarity'
 
   def testPkl(self):
-    """ test pickling 
-    """
+    # Test pickling
     v1 = self.klass(10)
     v1[1] = 1
     v1[2] = 1
@@ -254,8 +257,8 @@ class VectTests(object):
     assert tuple(v1.GetOnBits()) == tuple(v2.GetOnBits()), 'pkl failed'
 
   def testFingerprints(self):
-    " test the parsing of daylight fingerprints "
-    #actual daylight output:
+    # Test parsing Daylight fingerprints
+    # actual daylight output:
     rawD = """
 0,Cc1n[nH]c(=O)nc1N,.b+HHa.EgU6+ibEIr89.CpX0g8FZiXH+R0+Ps.mr6tg.2
 1,Cc1n[nH]c(=O)[nH]c1=O,.b7HEa..ccc+gWEIr89.8lV8gOF3aXFFR.+Ps.mZ6lg.2
@@ -278,7 +281,7 @@ class VectTests(object):
     for line in rawD.split('\n'):
       if line:
         sbv = self.klass(256)
-        id, smi, fp = line.split(',')
+        _, _, fp = line.split(',')
         cDataStructs.InitFromDaylightString(sbv, fp)
         fps.append(sbv)
 
@@ -361,5 +364,5 @@ class ExplicitTestCase(VectTests, unittest.TestCase):
   klass = cDataStructs.ExplicitBitVect
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
