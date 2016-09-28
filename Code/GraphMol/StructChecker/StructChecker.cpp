@@ -44,7 +44,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
               ;//new_data_list = ConvertSTEXTToData(mol, new_data_list);
   */
   if (!Options.AugmentedAtomPairs.empty()) {
-    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs))
+    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs, Options.Verbose))
       flags |= TRANSFORMED;
   }
 

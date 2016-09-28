@@ -128,7 +128,7 @@ void doLoadOptionsFromFiles(StructCheckerOptions& options,
   ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
   TEST_ASSERT(!strict || ok);
 
-  options.Verbose = true;
+  //options.Verbose = true;
 }
 
 void testLoadOptionsFromFiles() {
@@ -137,7 +137,7 @@ void testLoadOptionsFromFiles() {
       << "testLoadOptionsFromFiles FROM CURRENT (.../test) DIRECTORY\n";
   bool ok;
   StructCheckerOptions options;
-  options.Verbose = true;
+  //options.Verbose = true;
   doLoadOptionsFromFiles(options);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -153,7 +153,7 @@ void test1() {
   };
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
-  options.Verbose = true;
+  //options.Verbose = true;
   /*
       bool ok = loadOptionsFromFiles(options,
           "", // augmentedAtomTranslationsFile = "",
@@ -188,7 +188,7 @@ void test2() {
 
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
-  options.Verbose = true;
+  //options.Verbose = true;
 
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
@@ -318,7 +318,7 @@ void testStereo()  // stereochemistry
   const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
   TEST_ASSERT(options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk"));
   TEST_ASSERT(options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci"));
-  options.Verbose = true;
+//  options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
@@ -395,7 +395,7 @@ void testOptionsDefault() {
 
   StructCheckerOptions
       options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
-  options.Verbose = true;
+//  options.Verbose = false;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
@@ -405,7 +405,7 @@ void testOptionsDefault() {
     delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
-    TEST_ASSERT(0 != flags);
+    TEST_ASSERT(0 == flags);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -419,7 +419,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
 
   StructCheckerOptions
       options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
-  options.Verbose = true;
+//  options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
@@ -443,7 +443,7 @@ void testCheckAtom() {
 
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
-  options.Verbose = true;
+//  options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
@@ -470,7 +470,7 @@ void testCheckAtomFiles() {
 
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
-  options.Verbose = true;
+//  options.Verbose = true;
   StructChecker chk(options);
 
   const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
@@ -529,7 +529,7 @@ void testCheckMatch() {
   //    TEST_ASSERT(res);
 
   StructCheckerOptions options;
-  options.Verbose = true;
+//  options.Verbose = true;
   options.setGoodAugmentedAtoms(aa);
 
   if (!options.GoodAtoms.empty())
@@ -564,7 +564,7 @@ void testNitro() {
 
   StructCheckerOptions options;
   TEST_ASSERT(options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk"));
-  options.Verbose = true;
+  //options.Verbose = true;
   StructChecker chk(options);
 
   ROMOL_SPTR mol(MolBlockToMol(nitro));
@@ -589,7 +589,7 @@ void testSpecificExamples() {
   options.CollisionLimitPercent = 3;
   options.CheckStereo = true;
   options.MaxMolSize = 999;
-  options.Verbose = true;
+  //options.Verbose = true;
   StructChecker chk(options);
   {
     const char* smols[] = {
@@ -603,9 +603,10 @@ void testSpecificExamples() {
       TEST_ASSERT(mol);
       unsigned flags = chk.checkMolStructure(*mol);
       delete mol;
-      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
-                           << "\n";
-      TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
+      TEST_ASSERT(flags == 0);
+//      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
+//                           << "\n";
+//      TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
       //        TEST_ASSERT(!(flags & StructChecker::ATOM_CHECK_FAILED));
     }
   }
@@ -645,12 +646,119 @@ void testSpecificExamples() {
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
-    BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
-                         << "\n";
-    TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
+    TEST_ASSERT(flags == 0);
+//    BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
+//                         << "\n";
+//    TEST_ASSERT(!flags || flags == StructChecker::TRANSFORMED);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+void testSpecificOrder() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "testSpecificOrder\n";
+  StructCheckerOptions options;
+
+  options.RemoveMinorFragments = true;
+  options.CheckCollisions = true;
+  options.CollisionLimitPercent = 3;
+  options.CheckStereo = true;
+  options.MaxMolSize = 999;
+  //options.Verbose = true;
+//  doLoadOptionsFromFiles(options);
+  StructChecker chk(options);
+    const char* smols[] = {
+        "FC(F)O",
+        "OC(F)F"
+    };
+
+    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+      BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
+      RWMol* mol = SmilesToMol(smols[i]);
+      TEST_ASSERT(mol);
+      unsigned flags = chk.checkMolStructure(*mol);
+      delete mol;
+      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)<< "\n";
+//      TEST_ASSERT(flags == 0);
+    }
+}
+void testTransformTau() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "testTransformAtoms\n";
+  StructCheckerOptions options;
+
+  options.RemoveMinorFragments = true;
+  options.CheckCollisions = true;
+  options.CollisionLimitPercent = 3;
+  options.CheckStereo = true;
+  options.MaxMolSize = 999;
+  //options.Verbose = true;
+  options.FromTautomer.push_back(ROMOL_SPTR(SmilesToMol("C=C")));
+  options.ToTautomer.push_back(ROMOL_SPTR(SmilesToMol("C-C")));
+  
+//  doLoadOptionsFromFiles(options);
+  StructChecker chk(options);
+    const char* smols[] = {
+        "FC=C(F)O"
+    };
+
+    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+      BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
+      RWMol* mol = SmilesToMol(smols[i]);
+//      TEST_ASSERT(mol);
+      unsigned flags = chk.checkMolStructure(*mol);
+      BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
+      TEST_ASSERT(MolToSmiles(*mol) == "OC(F)CF");
+      delete mol;
+      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)<< "\n";
+      TEST_ASSERT(flags == StructChecker::TAUTOMER_TRANSFORMED);
+    }
+}
+
+void testTransformAtoms() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "testTransformAtoms\n";
+  StructCheckerOptions options;
+
+  options.RemoveMinorFragments = false;
+  options.CheckCollisions = false;
+  options.CollisionLimitPercent = 3;
+  options.CheckStereo = false;
+  options.MaxMolSize = 999;
+  //options.Verbose = true;
+  std::pair<AugmentedAtom, AugmentedAtom> tr1 = std::make_pair(AugmentedAtom(), AugmentedAtom());
+  std::pair<AugmentedAtom, AugmentedAtom> tr2 = std::make_pair(AugmentedAtom(), AugmentedAtom());
+  
+  StringToAugmentedAtom("C(=O)(-C)", tr1.first);
+  StringToAugmentedAtom("C(-O)(-C)", tr1.second);
+  
+  
+  StringToAugmentedAtom("C(=C)(-F)", tr2.first);
+  StringToAugmentedAtom("C(-C)(=F)", tr2.second);
+  
+  options.AugmentedAtomPairs.push_back(tr1);
+  options.AugmentedAtomPairs.push_back(tr2);
+  
+//  doLoadOptionsFromFiles(options);
+  StructChecker chk(options);
+    const char* smols[] = {
+        "C(=O)C",
+        "FC=CO"
+    };
+
+    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+      BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
+      RWMol* mol = SmilesToMol(smols[i]);
+      TEST_ASSERT(mol);
+      unsigned flags = chk.checkMolStructure(*mol);
+      BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
+      delete mol;
+      BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)<< "\n";
+      TEST_ASSERT(flags && StructChecker::TRANSFORMED);
+    }
+}
+
+
 //==============================================================================
 
 int main(int argc, const char* argv[]) {
@@ -681,8 +789,10 @@ int main(int argc, const char* argv[]) {
   testStereo();
   testNitro();
 #endif
-  testSpecificExamples();
-
+//  testSpecificExamples();
+  testSpecificOrder();
+  testTransformTau();
+   testTransformAtoms();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return 0;

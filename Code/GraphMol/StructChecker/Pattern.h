@@ -30,7 +30,7 @@ bool AAMatch(const ROMol &mol, unsigned i, const AugmentedAtom &aa,
 
 bool TransformAugmentedAtoms(
     RWMol &mol,
-    const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair);
+    const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair, bool verbose);
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
                 bool verbose);
 }
