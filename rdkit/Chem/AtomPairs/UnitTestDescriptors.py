@@ -41,21 +41,7 @@ class TestCase(unittest.TestCase):
     for i, m in enumerate(self.mols):
       ap = Pairs.GetAtomPairFingerprint(m)
       if ap != atomPairs[i]:  # pragma: nocover
-        print(Chem.MolToSmiles(m))
-        pd = ap.GetNonzeroElements()
-        rd = atomPairs[i].GetNonzeroElements()
-        for k, v in pd.items():
-          if k in rd:
-            if rd[k] != v:
-              print('>>>1', k, v, rd[k])
-          else:
-            print('>>>2', k, v)
-        for k, v in rd.items():
-          if k in pd:
-            if pd[k] != v:
-              print('>>>3', k, v, pd[k])
-          else:
-            print('>>>4', k, v)
+        debugFingerprint(m, ap, atomPairs[i])
       self.assertEqual(ap, atomPairs[i])
       self.assertNotEqual(ap, atomPairs[i - 1])
 
@@ -65,22 +51,7 @@ class TestCase(unittest.TestCase):
     for i, m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
       if tt != torsions[i]:  # pragma: nocover
-        print(Chem.MolToSmiles(m))
-        pd = tt.GetNonzeroElements()
-        rd = torsions[i].GetNonzeroElements()
-        for k, v in pd.items():
-          if k in rd:
-            if rd[k] != v:
-              print('>>>1', k, v, rd[k])
-          else:
-            print('>>>2', k, v)
-        for k, v in rd.items():
-          if k in pd:
-            if pd[k] != v:
-              print('>>>3', k, v, pd[k])
-          else:
-            print('>>>4', k, v)
-
+        debugFingerprint(m, tt, torsions[i])
       self.assertEqual(tt, torsions[i])
       self.assertNotEqual(tt, torsions[i - 1])
 
@@ -102,6 +73,24 @@ class TestCase(unittest.TestCase):
     m1 = Chem.MolFromSmiles('N#[CH]')
     self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(0)), 2)
     self.assertEqual(Utils.NumPiElectrons(m1.GetAtomWithIdx(1)), 2)
+
+
+def debugFingerprint(mol, fpCalc, fpExpected):  # pragma: nocover
+  print(Chem.MolToSmiles(mol))
+  pd = fpCalc.GetNonzeroElements()
+  rd = fpExpected.GetNonzeroElements()
+  for k, v in pd.items():
+    if k in rd:
+      if rd[k] != v:
+        print('>>>1', k, v, rd[k])
+    else:
+      print('>>>2', k, v)
+  for k, v in rd.items():
+    if k in pd:
+      if pd[k] != v:
+        print('>>>3', k, v, pd[k])
+    else:
+      print('>>>4', k, v)
 
 
 if __name__ == '__main__':
