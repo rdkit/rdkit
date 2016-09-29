@@ -12,6 +12,11 @@ described in:
 Kearsley, S. K. et al.
 "Chemical Similarity Using Physiochemical Property Descriptors."
 J. Chem.Inf. Model. 36, 118-127 (1996)
+
+The fingerprints can be accessed through the following functions:
+- GetBPFingerprint
+- GetBTFingerprint
+
 """
 import os.path
 import re

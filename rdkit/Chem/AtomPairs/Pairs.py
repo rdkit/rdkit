@@ -15,14 +15,19 @@ R.E. Carhart, D.H. Smith, R. Venkataraghavan;
 "Atom Pairs as Molecular Features in Structure-Activity Studies:
 Definition and Applications" JCICS 25, 64-73 (1985).
 
+The fingerprints can be accessed through the following functions:
+- GetAtomPairFingerprint
+- GetHashedAtomPairFingerprint (identical to GetAtomPairFingerprint)
+- GetAtomPairFingerprintAsIntVect
+- GetAtomPairFingerprintAsBitVect
+
 """
 from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
 
-GetAtomPairFingerprint = rdMolDescriptors.GetAtomPairFingerprint
+from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetHashedAtomPairFingerprint
 GetAtomPairFingerprintAsIntVect = rdMolDescriptors.GetAtomPairFingerprint
-GetHashedAtomPairFingerprint = rdMolDescriptors.GetHashedAtomPairFingerprint
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen = (1 << numPathBits) - 1

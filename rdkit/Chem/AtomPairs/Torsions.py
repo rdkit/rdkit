@@ -16,13 +16,18 @@ R. Nilakantan, N. Bauman, J. S. Dixon, R. Venkataraghavan;
 "Topological Torsion: A New Molecular Descriptor for SAR Applications.
 Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 
+The fingerprints can be accessed through the following functions:
+- GetTopologicalTorsionFingerprint
+- GetHashedTopologicalTorsionFingerprint
+- GetTopologicalTorsionFingerprintAsIntVect (identical to GetTopologicalTorsionFingerprint)
+- GetTopologicalTorsionFingerprintAsIds
+
 """
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
-
-GetTopologicalTorsionFingerprint = rdMolDescriptors.GetTopologicalTorsionFingerprint
+from rdkit.Chem.rdMolDescriptors import (GetTopologicalTorsionFingerprint,
+                                         GetHashedTopologicalTorsionFingerprint)
 GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
-GetHashedTopologicalTorsionFingerprint = rdMolDescriptors.GetHashedTopologicalTorsionFingerprint
 
 
 def pyScorePath(mol, path, size, atomCodes=None):
