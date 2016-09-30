@@ -1,9 +1,17 @@
+if(RDK_BUILD_DESCRIPTORS3D)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h)
+  set(DESC3D_SOURCES PBF.cpp)
+endif(RDK_BUILD_DESCRIPTORS3D)
+
 rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
               MQN.cpp
               Property.cpp
-              LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch 
+              ${DESC3D_SOURCES}
+              LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch
                 ${RDKit_THREAD_LIBS})
+
+
 
 rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
@@ -11,13 +19,17 @@ rdkit_headers(Crippen.h Lipinski.h
               ConnectivityDescriptors.h MQN.h
               RegisterDescriptor.h
               Property.h
+              ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
-rdkit_test(testDescriptors test.cpp 
+rdkit_test(testDescriptors test.cpp
 LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+
+if(RDK_BUILD_DESCRIPTORS3D)
+  rdkit_test(testPBF testPBF.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse GraphMol DataStructs RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+endif(RDK_BUILD_DESCRIPTORS3D)
+
 
 
 add_subdirectory(Wrap)
-
-
-

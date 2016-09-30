@@ -39,7 +39,7 @@ option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if avail
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
-
+option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
@@ -231,6 +231,18 @@ include_directories(${RDKit_CodeDir})
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+
+if(RDK_BUILD_DESCRIPTORS3D)
+  find_package(Eigen3)
+  if(EIGEN3_FOUND)
+    ADD_DEFINITIONS("-DRDK_HAS_EIGEN3")
+    include_directories(${EIGEN3_INCLUDE_DIR})
+  else(EIGEN3_FOUND)
+    message("Eigen3 not found, disabling the Descriptors3D build.")
+    set(RDK_BUILD_DESCRIPTORS3D OFF)
+  endif(EIGEN3_FOUND)
+endif(RDK_BUILD_DESCRIPTORS3D)
+
 
 find_package (Threads)
 if(RDK_BUILD_THREADSAFE_SSS)
