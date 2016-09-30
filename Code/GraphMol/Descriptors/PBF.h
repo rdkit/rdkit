@@ -43,10 +43,8 @@
 #ifndef PBFRDKIT_H_SEPT2016
 #define PBFRDKIT_H_SEPT2016
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Conformer.h>
-
 namespace RDKit {
+  class ROMol;
   namespace Descriptors {
     double PBF(const ROMol&,int confId=-1);
   }

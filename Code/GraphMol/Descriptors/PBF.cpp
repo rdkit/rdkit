@@ -42,6 +42,7 @@
 // Further modified by Greg Landrum for inclusion in the RDKit core September 2016
 //
 
+#include <GraphMol/RDKitBase.h>
 #include "PBF.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
@@ -53,9 +54,6 @@
 namespace RDKit {
 namespace Descriptors{
 namespace {
-void getSmallestEigenVector(double fSumXX,double fSumXY,double fSumXZ,
-                            double fSumYY,double fSumYZ,double fSumZZ,
-                            double &x,double &y, double &z);
 
 double distanceFromAPlane(const RDGeom::Point3D &pt,const std::vector<double> &plane, double denom){
   double numer=0.0;
@@ -111,7 +109,7 @@ bool getBestFitPlane(const std::vector<RDGeom::Point3D> &points,
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
   if(eigensolver.info()!=Eigen::Success){
     BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
-    return 0.0;
+    return false;
   }
   RDGeom::Point3D normal;
   normal.x=eigensolver.eigenvectors()(0,0);
@@ -122,14 +120,14 @@ bool getBestFitPlane(const std::vector<RDGeom::Point3D> &points,
   plane[1] = normal.y;
   plane[2] = normal.z;
   plane[3] = -1*normal.dotProduct(origin);
-
+  return true;
 }
 
 } //end of anonymous namespace
 
 double PBF(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
-  int numAtoms = mol.getNumAtoms();
+  unsigned int numAtoms = mol.getNumAtoms();
   if(numAtoms<4) return 0;
 
   const Conformer &conf = mol.getConformer(confId);
@@ -142,13 +140,16 @@ double PBF(const ROMol& mol,int confId){
   }
 
   std::vector<double> plane(4);
-  getBestFitPlane(points,plane,0);
+  if(!getBestFitPlane(points,plane,NULL)){
+    // the eigenvalue calculation failed, return 0
+    return 0.0;
+  }
 
   double denom=0.0;
   for(unsigned int i=0; i<3; ++i){
     denom += plane[i]*plane[i];
   }
-  denom = pow(denom,0.5);
+  denom = sqrt(denom);
 
   double res=0.0;
   for(unsigned int i=0; i<numAtoms; ++i){
