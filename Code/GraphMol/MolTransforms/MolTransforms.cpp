@@ -57,7 +57,7 @@ RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs) {
   res /= nAtms;
   return res;
 }
-
+namespace {
 void computeCovarianceTerms(const Conformer &conf,
   const RDGeom::Point3D &center,
   double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
@@ -99,12 +99,12 @@ void computeCovarianceTerms(const Conformer &conf,
       zz /= wSum;
     }
 }
-
+}
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
-  computeCovarianceTerms(conf,center,xx,xy,xz,yy,yz,zz,normalize,ignoreHs);
+  computeCovarianceTerms(conf,center,xx,xy,xz,yy,yz,zz,normalize,ignoreHs,NULL);
   RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);
