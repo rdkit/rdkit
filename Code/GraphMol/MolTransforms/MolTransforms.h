@@ -13,6 +13,13 @@
 #include <Geometry/point.h>
 #include <Numerics/SymmMatrix.h>
 
+#ifdef RDK_HAS_EIGEN3
+namespace Eigen {
+  Matrix3d;
+  Vect3d;
+}
+#endif
+
 namespace RDKit {
 class ROMol;
 class Atom;
@@ -37,6 +44,27 @@ void transformAtom(RDKit::Atom *atom, RDGeom::Transform3D &tform);
 */
 RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf,
                                 bool ignoreHs = true);
+//! Compute the covariance matrix for a conformer
+/*!
+  \param conf       Conformer of interest
+  \param center     Center to be used for calculation
+  \param xx         used to return the result
+  \param xy         used to return the result
+  \param xz         used to return the result
+  \param yy         used to return the result
+  \param yz         used to return the result
+  \param zz         used to return the result
+  \param normalize  If true, normalize the terms by the number of
+  atoms
+  \param ignoreHs   If true, ignore hydrogen atoms
+  \param weights    If present used to weight the atomic coordinates
+*/
+
+void computeCovarianceTerms(
+    const RDKit::Conformer &conf, const RDGeom::Point3D &center,
+    double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
+    bool normalize = false, bool ignoreHs = true,
+    const std::vector<double> *weights = NULL);
 
 //! Compute the covariance matrix for a conformer
 /*!

@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -59,36 +58,53 @@ RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs) {
   return res;
 }
 
+void computeCovarianceTerms(const Conformer &conf,
+  const RDGeom::Point3D &center,
+  double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
+  bool normalize, bool ignoreHs,
+  const std::vector<double> *weights ){
+    PRECONDITION(!weights || weights->size()>=conf.getNumAtoms(), "bad weights vector");
+
+    xx = xy = xz = yy = yz = zz = 0.0;
+    const ROMol &mol = conf.getOwningMol();
+    double wSum = 0.0;
+    for (ROMol::ConstAtomIterator cai = mol.beginAtoms();
+        cai != mol.endAtoms(); cai++) {
+      if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+        continue;
+      }
+      RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+      loc -= center;
+      if(weights) {
+        double w = (*weights)[(*cai)->getIdx()];
+        wSum += w;
+        loc *= w;
+      } else {
+        wSum+=1.0;
+      }
+      xx += loc.x * loc.x;
+      xy += loc.x * loc.y;
+      xz += loc.x * loc.z;
+      yy += loc.y * loc.y;
+      yz += loc.y * loc.z;
+      zz += loc.z * loc.z;
+
+    }
+    if (normalize) {
+      xx /= wSum;
+      xy /= wSum;
+      xz /= wSum;
+      yy /= wSum;
+      yz /= wSum;
+      zz /= wSum;
+    }
+}
+
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
-  xx = xy = xz = yy = yz = zz = 0.0;
-  const ROMol &mol = conf.getOwningMol();
-  ROMol::ConstAtomIterator cai;
-  unsigned int nAtms = 0;
-  for (cai = mol.beginAtoms(); cai != mol.endAtoms(); cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
-      continue;
-    }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
-    loc -= center;
-    xx += loc.x * loc.x;
-    xy += loc.x * loc.y;
-    xz += loc.x * loc.z;
-    yy += loc.y * loc.y;
-    yz += loc.y * loc.z;
-    zz += loc.z * loc.z;
-    nAtms++;
-  }
-  if (normalize) {
-    xx /= nAtms;
-    xy /= nAtms;
-    xz /= nAtms;
-    yy /= nAtms;
-    yz /= nAtms;
-    zz /= nAtms;
-  }
+  computeCovarianceTerms(conf,center,xx,xy,xz,yy,yz,zz,normalize,ignoreHs);
   RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);

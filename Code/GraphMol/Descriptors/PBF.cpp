@@ -43,6 +43,8 @@
 //
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+
 #include "PBF.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
@@ -62,10 +64,12 @@ double distanceFromAPlane(const RDGeom::Point3D &pt,const std::vector<double> &p
   return numer/denom;
 }
 
-bool getBestFitPlane(const std::vector<RDGeom::Point3D> &points,
+bool getBestFitPlane(const Conformer &conf,
+                    const std::vector<RDGeom::Point3D> &points,
                      std::vector<double> &plane,
                      const std::vector<double> *weights) {
   PRECONDITION((!weights || weights->size()>=points.size()),"bad weights vector");
+  PRECONDITION(plane.size()>=4,"bad plane");
   RDGeom::Point3D origin(0,0,0);
   double wSum=0.0;
 
@@ -82,25 +86,8 @@ bool getBestFitPlane(const std::vector<RDGeom::Point3D> &points,
   origin /= wSum;
 
   double sumXX=0,sumXY=0,sumXZ=0,sumYY=0,sumYZ=0,sumZZ=0;
-  for(unsigned int i=0;i<points.size();++i){
-    RDGeom::Point3D delta=points[i]-origin;
-    if(weights){
-      double w=(*weights)[i];
-      delta *= w;
-    }
-    sumXX += delta.x*delta.x;
-    sumXY += delta.x*delta.y;
-    sumXZ += delta.x*delta.z;
-    sumYY += delta.y*delta.y;
-    sumYZ += delta.y*delta.z;
-    sumZZ += delta.z*delta.z;
-  }
-  sumXX/=wSum;
-  sumXY/=wSum;
-  sumXZ/=wSum;
-  sumYY/=wSum;
-  sumYZ/=wSum;
-  sumZZ/=wSum;
+  MolTransforms::computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
+      true,false,weights);
 
   Eigen::Matrix3d mat;
   mat << sumXX, sumXY, sumXZ,
@@ -111,10 +98,12 @@ bool getBestFitPlane(const std::vector<RDGeom::Point3D> &points,
     BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
     return false;
   }
+
+  const Eigen::Matrix3d &evects=eigensolver.eigenvectors();
   RDGeom::Point3D normal;
-  normal.x=eigensolver.eigenvectors()(0,0);
-  normal.y=eigensolver.eigenvectors()(1,0);
-  normal.z=eigensolver.eigenvectors()(2,0);
+  normal.x=evects(0,0);
+  normal.y=evects(1,0);
+  normal.z=evects(2,0);
 
   plane[0] = normal.x;
   plane[1] = normal.y;
@@ -140,7 +129,7 @@ double PBF(const ROMol& mol,int confId){
   }
 
   std::vector<double> plane(4);
-  if(!getBestFitPlane(points,plane,NULL)){
+  if(!getBestFitPlane(conf,points,plane,NULL)){
     // the eigenvalue calculation failed, return 0
     return 0.0;
   }
