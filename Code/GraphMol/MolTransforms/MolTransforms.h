@@ -14,10 +14,7 @@
 #include <Numerics/SymmMatrix.h>
 
 #ifdef RDK_HAS_EIGEN3
-namespace Eigen {
-  Matrix3d;
-  Vect3d;
-}
+#include <Eigen/Dense>
 #endif
 
 namespace RDKit {
@@ -77,6 +74,28 @@ void computeCovarianceTerms(
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const RDKit::Conformer &conf, const RDGeom::Point3D &center,
     bool normalize = false, bool ignoreHs = true);
+
+#ifdef RDK_HAS_EIGEN3
+
+//! Compute principal axes and moments for a conformer
+/*!
+  \param conf       Conformer of interest
+  \param axes       used to return the principal axes
+  \param  moments    used to return the principal moments
+  \param ignoreHs   If true, ignore hydrogen atoms
+  \param weights    If present used to weight the atomic coordinates
+
+  \returns whether or not the calculation was successful
+*/
+bool computePrincipalAxesAndMoments(
+    const RDKit::Conformer &conf,
+    Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments,
+    bool ignoreHs = true,
+    const std::vector<double> *weights = NULL);
+#endif
+
+
 
 //! Compute the transformation require to orient the conformation
 //! along the principal axes about the center; i.e. center is made to coincide

@@ -115,6 +115,53 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   return res;
 }
 
+#ifdef RDK_HAS_EIGEN3
+#include <Eigen/Dense>
+
+bool computePrincipalAxesAndMoments(
+    const RDKit::Conformer &conf,
+    Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments,
+    bool ignoreHs,
+    const std::vector<double> *weights){
+  PRECONDITION((!weights || weights->size()>=conf.getNumAtoms()),"bad weights vector");
+  const ROMol &mol=conf.getOwningMol();
+  RDGeom::Point3D origin(0,0,0);
+  double wSum=0.0;
+  for(unsigned int i=0;i<conf.getNumAtoms();++i){
+    if(ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum()==1) continue;
+    double w=1.0;
+    if(weights){
+      w=(*weights)[i];
+    }
+    wSum+=w;
+    origin+=conf.getAtomPos(i)*w;
+  }
+  origin /= wSum;
+
+  double sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ;
+  computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
+      true,false,weights);
+
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ,
+    sumXY, sumYY, sumYZ,
+    sumXZ, sumYZ, sumZZ;
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+  if(eigensolver.info()!=Eigen::Success){
+    BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
+    return false;
+  }
+
+  axes = eigensolver.eigenvectors();
+  moments = eigensolver.eigenvalues();
+  return true;
+
+}
+#endif
+
+
+
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,

@@ -85,21 +85,9 @@ bool getBestFitPlane(const Conformer &conf,
   }
   origin /= wSum;
 
-  double sumXX=0,sumXY=0,sumXZ=0,sumYY=0,sumYZ=0,sumZZ=0;
-  MolTransforms::computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
-      true,false,weights);
-
-  Eigen::Matrix3d mat;
-  mat << sumXX, sumXY, sumXZ,
-    sumXY, sumYY, sumYZ,
-    sumXZ, sumYZ, sumZZ;
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
-  if(eigensolver.info()!=Eigen::Success){
-    BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
-    return false;
-  }
-
-  const Eigen::Matrix3d &evects=eigensolver.eigenvectors();
+  Eigen::Matrix3d evects;
+  Eigen::Vector3d evals;
+  MolTransforms::computePrincipalAxesAndMoments(conf,evects,evals,false,weights);
   RDGeom::Point3D normal;
   normal.x=evects(0,0);
   normal.y=evects(1,0);
