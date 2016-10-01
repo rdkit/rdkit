@@ -41,17 +41,6 @@ void transformAtom(RDKit::Atom *atom, RDGeom::Transform3D &tform);
 */
 RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf,
                                 bool ignoreHs = true);
-//! Compute the covariance matrix for a conformer
-/*!
-  \param conf       Conformer of interest
-  \param center     Center to be used for covariance matrix calculation
-  \param normalize  If true, normalize the covariance matrix by the number of
-  atoms
-  \param ignoreHs   If true, ignore hydrogen atoms
-*/
-RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
-    const RDKit::Conformer &conf, const RDGeom::Point3D &center,
-    bool normalize = false, bool ignoreHs = true);
 
 #ifdef RDK_HAS_EIGEN3
 //! Compute principal axes and moments for a conformer

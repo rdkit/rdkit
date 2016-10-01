@@ -99,7 +99,7 @@ void computeCovarianceTerms(const Conformer &conf,
       zz /= wSum;
     }
 }
-}
+
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
@@ -114,7 +114,7 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   res->setVal(2, 2, zz);
   return res;
 }
-
+}
 #ifdef RDK_HAS_EIGEN3
 #include <Eigen/Dense>
 
