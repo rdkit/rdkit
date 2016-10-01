@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2006  greg Landrum 
+#  Copyright (C) 2006  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -8,9 +8,10 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import unittest, sys, os, math
-from rdkit import Chem
+import doctest
+import math
+import unittest
+
 from rdkit.Chem.ChemicalFeatures import FreeChemicalFeature
 from rdkit.Chem.FeatMaps import FeatMaps
 from rdkit.Geometry import Point3D
@@ -20,10 +21,13 @@ def feq(n1, n2, tol=1e-5):
   return abs(n1 - n2) <= tol
 
 
-class TestCase(unittest.TestCase):
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(FeatMaps, optionflags=doctest.ELLIPSIS))
+  return tests
 
-  def setUp(self):
-    pass
+
+class TestCase(unittest.TestCase):
 
   def test1Basics(self):
     fs = [FreeChemicalFeature('Aromatic', 'Foo', Point3D(0, 0, 0)),
@@ -242,6 +246,8 @@ class TestCase(unittest.TestCase):
           FreeChemicalFeature('Acceptor', '', Point3D(1.5, 0, 0)), ]
 
     sc = fmap.ScoreFeats(fs)
+    self.assertTrue(feq(sc, 1.1))
+
     msv = [-1] * 1
     fsv = [-1] * 2
     fsfmi = [-1] * 2
@@ -302,5 +308,5 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(sc, 1.1))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

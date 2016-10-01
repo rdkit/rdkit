@@ -8,22 +8,32 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" Contains an implementation of Topological-torsion fingerprints, as
+"""
+Contains an implementation of Topological-torsion fingerprints, as
 described in:
 
 R. Nilakantan, N. Bauman, J. S. Dixon, R. Venkataraghavan;
 "Topological Torsion: A New Molecular Descriptor for SAR Applications.
 Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 
+The fingerprints can be accessed through the following functions:
+- GetTopologicalTorsionFingerprint
+- GetHashedTopologicalTorsionFingerprint
+- GetTopologicalTorsionFingerprintAsIntVect (identical to GetTopologicalTorsionFingerprint)
+- GetTopologicalTorsionFingerprintAsIds
+
 """
-from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
+from rdkit.Chem.rdMolDescriptors import (GetTopologicalTorsionFingerprint,
+                                         GetHashedTopologicalTorsionFingerprint)
+GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
 
 
 def pyScorePath(mol, path, size, atomCodes=None):
   """ Returns a score for an individual path.
 
+  >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('CCCCC')
   >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
   >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
@@ -36,7 +46,6 @@ def pyScorePath(mol, path, size, atomCodes=None):
   The scores are path direction independent:
   >>> pyScorePath(m,(3,2,1,0),4)==t
   1
-
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
   >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
@@ -79,8 +88,9 @@ def pyScorePath(mol, path, size, atomCodes=None):
 
 
 def ExplainPathScore(score, size=4):
-  """ 
+  """
 
+  >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('C=CC')
   >>> score=pyScorePath(m,(0,1,2),3)
   >>> ExplainPathScore(score,3)
@@ -90,7 +100,6 @@ def ExplainPathScore(score, size=4):
   >>> score=pyScorePath(m,(2,1,0),3)
   >>> ExplainPathScore(score,3)
   (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
-
 
   >>> m = Chem.MolFromSmiles('C=CO')
   >>> score=pyScorePath(m,(0,1,2),3)
@@ -128,14 +137,12 @@ def ExplainPathScore(score, size=4):
   """
   codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
   res = [None] * size
-  #print '>>>>>>>>>>>',score,size,codeMask
   for i in range(size):
     if i == 0 or i == (size - 1):
       sub = 1
     else:
       sub = 2
     code = score & codeMask
-    #print i,code,score
     score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
     symb, nBranch, nPi = Utils.ExplainAtomCode(code)
     expl = symb, nBranch + sub, nPi
@@ -143,29 +150,25 @@ def ExplainPathScore(score, size=4):
   return tuple(res)
 
 
-from rdkit.Chem.rdMolDescriptors import GetTopologicalTorsionFingerprint, GetHashedTopologicalTorsionFingerprint
-GetTopologicalTorsionFingerprintAsIntVect = rdMolDescriptors.GetTopologicalTorsionFingerprint
-
-
 def GetTopologicalTorsionFingerprintAsIds(mol, targetSize=4):
   iv = GetTopologicalTorsionFingerprint(mol, targetSize)
   res = []
-  for k, v in iv.GetNonzeroElements().iteritems():
+  for k, v in iv.GetNonzeroElements().items():
     res.extend([k] * v)
   res.sort()
   return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

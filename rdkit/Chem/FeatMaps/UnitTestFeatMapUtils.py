@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2006  greg Landrum 
+#  Copyright (C) 2006  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -8,12 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import unittest, sys, os, math
-from rdkit import Chem
-from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser, FeatMapUtils
-from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
+import unittest
+
+from rdkit.Chem.FeatMaps import FeatMapParser, FeatMapUtils
 from rdkit.Geometry import Point3D
+from rdkit.Chem.FeatMaps.FeatMapUtils import MergeMetric
 
 
 def feq(n1, n2, tol=1e-4):
@@ -129,7 +128,30 @@ EndPoints
     self.assertTrue(pteq(fm1.GetFeature(1).GetPos(), Point3D(1.2, 0, 0)))
     self.assertTrue(pteq(fm1.GetFeature(2).GetPos(), Point3D(4.0, 0, 0)))
 
-  def _test1BasicsRepeated(self):
+    # Order of points doesn't matter
+    txt = self.paramTxt + """
+BeginPoints
+  family=Acceptor pos=(1.0, 0.0, 0.0) weight=1.0
+  family=Acceptor pos=(1.3, 0.0, 0.0) weight=1.0
+  family=Acceptor pos=(1.2, 0.0, 0.0) weight=3.0
+  family=Acceptor pos=(4.0, 0.0, 0.0) weight=1.0
+EndPoints
+    """
+    self.p.SetData(txt)
+    fm1 = self.p.Parse()
+    self.assertTrue(fm1.GetNumFeatures() == 4)
+    self.assertTrue(
+      FeatMapUtils.MergeFeatPoints(fm1, FeatMapUtils.MergeMetric.Distance,
+                                   mergeMethod=FeatMapUtils.MergeMethod.UseLarger))
+    self.assertTrue(fm1.GetNumFeatures() == 3)
+    self.assertTrue(pteq(fm1.GetFeature(0).GetPos(), Point3D(1.00, 0, 0)))
+    self.assertTrue(pteq(fm1.GetFeature(1).GetPos(), Point3D(1.2, 0, 0)))
+    self.assertTrue(pteq(fm1.GetFeature(2).GetPos(), Point3D(4.0, 0, 0)))
+
+    self.assertRaises(ValueError, FeatMapUtils.MergeFeatPoints, fm1,
+                      FeatMapUtils.MergeMetric.Distance, mergeMethod='typo')
+
+  def test1BasicsRepeated(self):
     txt = self.paramTxt + """
 BeginPoints
   family=Acceptor pos=(0.7, 0.0, 0.0) weight=1.0
@@ -220,6 +242,29 @@ EndPoints
     self.assertTrue(pteq(fm1.GetFeature(1).GetPos(), Point3D(1.4, 0, 0)))
     self.assertTrue(pteq(fm1.GetFeature(2).GetPos(), Point3D(4.0, 0, 0)))
 
+  def test_CombineFeatMaps(self):
+    data1 = self.paramTxt + "BeginPoints\nfamily=Acceptor pos=(1.0, 0.0, 0.0) weight=1.0\nEndPoints"
+    data2 = self.paramTxt + "BeginPoints\nfamily=Acceptor pos=(0.0, 0.0, 0.0) weight=1.0\nEndPoints"
 
-if __name__ == '__main__':
+    self.p.SetData(data1)
+    fm1 = self.p.Parse()
+    self.assertEqual(fm1.GetNumFeatures(), 1)
+    self.p.SetData(data2)
+    fm2 = self.p.Parse()
+    self.assertEqual(fm2.GetNumFeatures(), 1)
+
+    # Combine without merging
+    fm12 = FeatMapUtils.CombineFeatMaps(fm1, fm2)
+    self.assertEqual(fm12.GetNumFeatures(), 2)
+
+    # Combine with distance based merging
+    fm12 = FeatMapUtils.CombineFeatMaps(fm1, fm2, mergeMetric=MergeMetric.Distance, mergeTol=1.0)
+    self.assertEqual(fm12.GetNumFeatures(), 2)
+    fm12 = FeatMapUtils.CombineFeatMaps(fm1, fm2, mergeMetric=MergeMetric.Distance, mergeTol=1.1)
+    self.assertEqual(fm12.GetNumFeatures(), 1)
+
+    self.assertRaises(ValueError, FeatMapUtils.CombineFeatMaps, fm1, fm2, mergeMetric='typo')
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

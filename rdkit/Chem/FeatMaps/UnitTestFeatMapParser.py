@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2006  greg Landrum 
+#  Copyright (C) 2006  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -8,11 +8,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import unittest, sys, os, math
-from rdkit import Chem
+from contextlib import closing
+import unittest
+
+from six import StringIO
+
 from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser
-from rdkit.Geometry import Point3D
 
 
 def feq(n1, n2, tol=1e-5):
@@ -20,12 +21,7 @@ def feq(n1, n2, tol=1e-5):
 
 
 class TestCase(unittest.TestCase):
-
-  def setUp(self):
-    pass
-
-  def test1Basics(self):
-    txt = """
+  data = """
 
 ScoreMode=Best
 DirScoreMode=DotFullRange
@@ -43,8 +39,10 @@ BeginPoints
 EndPoints
 
 """
+
+  def test1Basics(self):
     p = FeatMapParser.FeatMapParser()
-    p.SetData(txt)
+    p.SetData(self.data)
     fm = p.Parse()
     self.assertTrue(fm.scoreMode == FeatMaps.FeatMapScoreMode.Best)
     self.assertTrue(fm.dirScoreMode == FeatMaps.FeatDirScoreMode.DotFullRange)
@@ -62,6 +60,69 @@ EndPoints
     fams = [x.GetFamily() for x in feats]
     self.assertTrue(fams == ['Acceptor', 'Aromatic', 'Acceptor'])
 
+  def test_FeatMapParser(self):
+    # We can use a string
+    p = FeatMapParser.FeatMapParser(data=self.data)
+    fm = p.Parse()
+    self.assertEqual(fm.GetNumFeatures(), 3)
+    self.assertEqual([x.GetFamily() for x in fm.GetFeatures()],
+                     ['Acceptor', 'Aromatic', 'Acceptor'])
 
-if __name__ == '__main__':
+    # We can use a list of strings
+    p = FeatMapParser.FeatMapParser(data=self.data.split('\n'))
+    fm = p.Parse()
+    self.assertEqual(fm.GetNumFeatures(), 3)
+    self.assertEqual([x.GetFamily() for x in fm.GetFeatures()],
+                     ['Acceptor', 'Aromatic', 'Acceptor'])
+
+    # and a stream
+    with closing(StringIO(self.data)) as file:
+      p = FeatMapParser.FeatMapParser(file=file)
+    fm = p.Parse()
+    self.assertEqual(fm.GetNumFeatures(), 3)
+    self.assertEqual([x.GetFamily() for x in fm.GetFeatures()],
+                     ['Acceptor', 'Aromatic', 'Acceptor'])
+
+  def test_ParseErrors(self):
+    # Typos in scoreMode or dirscoreMode section
+    data = "scoreMode = typo\nbeginParams\nfamily=Acceptor radius=1.5\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    data = "dirscoremode = typo\nbeginParams\nfamily=Acceptor radius=1.5\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    data = "typo = All\nbeginParams\nfamily=Acceptor radius=1.5\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    # Typos in paramBlock
+    data = "beginTypo\nfamily=Acceptor radius=1.5\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    data = "beginParams\nfamily=Acceptor radius=1.5\nEndTypo"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    data = "beginParams\ntypo=Acceptor radius=1.5\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    data = "beginParams\nprofile=Typo\nEndParams"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+    # Typos in points block
+    data = "BeginPoints\npos=(1.0, 0.0, 5.0, 4.0)\nEndPoints"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(ValueError, p.Parse)
+
+    data = "BeginPoints\npos=(1.0, 0.0, 5.0) typo=Acceptor\nEndPoints"
+    p = FeatMapParser.FeatMapParser(data=data)
+    self.assertRaises(FeatMapParser.FeatMapParseError, p.Parse)
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
