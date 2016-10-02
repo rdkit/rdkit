@@ -49,6 +49,7 @@ RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf,
   \param axes       used to return the principal axes
   \param  moments    used to return the principal moments
   \param ignoreHs   If true, ignore hydrogen atoms
+  \param force      If true, the calculation will be carried out even if a cached value is present
   \param weights    If present used to weight the atomic coordinates
 
   \returns whether or not the calculation was successful
@@ -58,6 +59,7 @@ bool computePrincipalAxesAndMoments(
     Eigen::Matrix3d &axes,
     Eigen::Vector3d &moments,
     bool ignoreHs = true,
+    bool force = false,
     const std::vector<double> *weights = NULL);
 #endif
 

@@ -43,10 +43,13 @@
 #ifndef PBFRDKIT_H_SEPT2016
 #define PBFRDKIT_H_SEPT2016
 
+#ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
+    const std::string PBFVersion = "1.0.0";
     double PBF(const ROMol&,int confId=-1);
   }
 }
+#endif
 #endif

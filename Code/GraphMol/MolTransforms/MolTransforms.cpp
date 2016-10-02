@@ -123,8 +123,18 @@ bool computePrincipalAxesAndMoments(
     Eigen::Matrix3d &axes,
     Eigen::Vector3d &moments,
     bool ignoreHs,
+    bool force,
     const std::vector<double> *weights){
   PRECONDITION((!weights || weights->size()>=conf.getNumAtoms()),"bad weights vector");
+  const char *axesPropName = ignoreHs ? "_principalAxes_noH" : "_principalAxes";
+  const char *momentsPropName = ignoreHs ? "_principalMoments_noH" : "_principalMoments";
+  if(!weights && !force &&
+      conf.getOwningMol().hasProp(axesPropName) &&
+      conf.getOwningMol().hasProp(momentsPropName) ){
+    conf.getOwningMol().getProp(axesPropName,axes);
+    conf.getOwningMol().getProp(momentsPropName,moments);
+    return true;
+  }
   const ROMol &mol=conf.getOwningMol();
   RDGeom::Point3D origin(0,0,0);
   double wSum=0.0;
@@ -155,8 +165,11 @@ bool computePrincipalAxesAndMoments(
 
   axes = eigensolver.eigenvectors();
   moments = eigensolver.eigenvalues();
-  return true;
 
+  conf.getOwningMol().setProp(axesPropName,axes);
+  conf.getOwningMol().setProp(momentsPropName,moments);
+
+  return true;
 }
 #endif
 

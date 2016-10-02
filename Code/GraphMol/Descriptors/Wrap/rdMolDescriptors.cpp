@@ -840,9 +840,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .value("StrictLinkages", RDKit::Descriptors::StrictLinkages)
       .value("Default", RDKit::Descriptors::Default)
        ;
-  
+
 #ifdef RDK_USE_STRICT_ROTOR_DEFINITION
-    docString= 
+    docString=
         "returns the number of rotatable bonds for a molecule.\n\
    strict = NumRotatableBondsOptions.NonStrict - Simple rotatable bond definition.\n\
    strict = NumRotatableBondsOptions.Strict - (default) does not count things like\n\
@@ -879,7 +879,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       (python::arg("mol"),
        python::arg("strict")),
       docString.c_str());
-    
+
   python::def(
       "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&,
                                                  RDKit::Descriptors::NumRotatableBondsOptions))
@@ -890,7 +890,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
 
-  
+
   docString = "returns the number of rings for a molecule";
   python::def("CalcNumRings", RDKit::Descriptors::calcNumRings,
               (python::arg("mol")), docString.c_str());
@@ -1200,15 +1200,25 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                      docString.c_str(),
                      python::no_init)
       .def("Match", &Queries::RangeQuery<double, RDKit::ROMol const&, true>::Match);
-  
+
   docString = "Generates a Range property for the specified property, between min and max\n"
       "query = MakePropertyRangeQuery('exactmw', 0, 500)\n"
       "query.Match( mol )";
-  
+
   python::def("MakePropertyRangeQuery",
               RDKit::Descriptors::makePropertyRangeQuery,
               (python::arg("name"), python::arg("min"), python::arg("max")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  
+
+#ifdef RDK_BUILD_DESCRIPTORS3D
+python::scope().attr("_CalcPBF_version") =
+    RDKit::Descriptors::PBFVersion;
+docString =
+    "Returns the PBF (plane of best fit) descriptor (http://dx.doi.org/10.1021/ci300293f)";
+python::def("CalcPBF", RDKit::Descriptors::PBF,
+            (python::arg("mol"), python::arg("confId") = -1),
+            docString.c_str());
+
+#endif
 
 }
