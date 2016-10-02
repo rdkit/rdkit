@@ -65,6 +65,36 @@ void testPBFEdges(){
     TEST_ASSERT(dpbf<=1e-4);
     delete m;
   }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/linear_2atom.mol";
+
+    RDKit::ROMol *m=RDKit::MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double dpbf=RDKit::Descriptors::PBF(*m);
+    TEST_ASSERT(dpbf<=1e-4);
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/planar.mol";
+
+    RDKit::ROMol *m=RDKit::MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double dpbf=RDKit::Descriptors::PBF(*m);
+    TEST_ASSERT(dpbf<=1e-4);
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/planar_3atom.mol";
+
+    RDKit::ROMol *m=RDKit::MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double dpbf=RDKit::Descriptors::PBF(*m);
+    TEST_ASSERT(dpbf<=1e-4);
+    delete m;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
