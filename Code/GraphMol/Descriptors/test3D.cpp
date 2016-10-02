@@ -131,7 +131,6 @@ void testPMIEdges(){
     RDKit::ROMol *m=MolFileToMol(sdfName);
     TEST_ASSERT(m);
     double val;
-    TEST_ASSERT(val<1e-4);
 
     val = RDKit::Descriptors::PMI1(*m);
     TEST_ASSERT(val<1e-4);
@@ -217,12 +216,84 @@ void testNPR1(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testNPREdges(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    NPR edge cases." << std::endl;
+
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/linear.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::NPR1(*m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::NPR2(*m);
+    TEST_ASSERT(val<1e-4);
+
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/linear_2atom.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::NPR1(*m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::NPR2(*m);
+    TEST_ASSERT(val<1e-4);
+
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/planar.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::NPR1(*m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::NPR2(*m);
+    TEST_ASSERT(val>=1e-4);
+
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/planar_3atom.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::NPR1(*m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::NPR2(*m);
+    TEST_ASSERT(val>=1e-4);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
   testPMIEdges();
+  testNPREdges();
   testPMI1();
   testNPR1();
 
