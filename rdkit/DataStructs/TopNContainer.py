@@ -70,16 +70,18 @@ class TopNContainer(object):
     self.best.reverse()
     self.extras.reverse()
 
+
 def _exampleCode():
   import random
   random.seed(0)
-  pts = [int(100 * random.random()) for x in range(10)]
+  pts = [int(100 * random.random()) for _ in range(10)]
 
   c = TopNContainer(4)
   for pt in pts:
     c.Insert(pt, extra=str(pt))
   print(c.GetPts())
   print(c.GetExtras())
+
 
 if __name__ == '__main__':  # pragma: nocover
   _exampleCode()

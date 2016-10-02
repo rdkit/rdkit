@@ -94,5 +94,6 @@ class TestCase(unittest.TestCase):
     s = f.getvalue()
     self.assertIn('[58, 75, 78, 84]', s)
 
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
