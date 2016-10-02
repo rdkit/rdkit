@@ -103,6 +103,41 @@ void testPMI1(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testNPR1(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Basic NPR tests." << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+  RDKit::SDMolSupplier reader(sdfName,true,false);
+
+  int nDone=0;
+  while(!reader.atEnd()){
+    RDKit::ROMol *m=reader.next();
+    TEST_ASSERT(m);
+    RDKit::ROMol mcpy(*m);
+    std::string nm;
+    m->getProp("_Name",nm);
+
+    double val;
+    double pmi1_m,pmi2_m,pmi3_m,pmi1_nom,pmi2_nom,pmi3_nom;
+    pmi1_m = RDKit::Descriptors::PMI1(*m);
+    pmi2_m = RDKit::Descriptors::PMI2(*m);
+    pmi3_m = RDKit::Descriptors::PMI3(*m);
+    pmi1_nom = RDKit::Descriptors::PMI1(*m,-1,false);
+    pmi2_nom = RDKit::Descriptors::PMI2(*m,-1,false);
+    pmi3_nom = RDKit::Descriptors::PMI3(*m,-1,false);
+
+    val = RDKit::Descriptors::NPR1(*m);
+    compare(nm,pmi1_m/pmi3_m,val);
+    val = RDKit::Descriptors::NPR2(*m);
+    compare(nm,pmi2_m/pmi3_m,val);
+
+    delete m;
+    ++nDone;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -110,4 +145,5 @@ void testPMI1(){
 int main() {
   RDLog::InitLogs();
   testPMI1();
+  testNPR1();
 }
