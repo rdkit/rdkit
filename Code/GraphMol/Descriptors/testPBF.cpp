@@ -95,6 +95,19 @@ void testPBFEdges(){
     TEST_ASSERT(dpbf<=1e-4);
     delete m;
   }
+  {
+    RDKit::RWMol m;
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
+    double dpbf=RDKit::Descriptors::PBF(m);
+    TEST_ASSERT(dpbf<=1e-4);
+  }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

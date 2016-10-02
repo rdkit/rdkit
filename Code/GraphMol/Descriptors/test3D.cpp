@@ -176,6 +176,23 @@ void testPMIEdges(){
     delete m;
   }
 
+  {
+    RDKit::RWMol m;
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
+    double val = RDKit::Descriptors::PMI1(m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::PMI2(m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::PMI3(m);
+    TEST_ASSERT(val<1e-4);
+  }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -279,6 +296,20 @@ void testNPREdges(){
     TEST_ASSERT(val>=1e-4);
 
     delete m;
+  }
+  {
+    RDKit::RWMol m;
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
+    double val = RDKit::Descriptors::NPR1(m);
+    TEST_ASSERT(val<1e-4);
+    val = RDKit::Descriptors::NPR2(m);
+    TEST_ASSERT(val<1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
