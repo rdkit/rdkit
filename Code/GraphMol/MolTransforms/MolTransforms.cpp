@@ -166,8 +166,8 @@ bool computePrincipalAxesAndMoments(
   axes = eigensolver.eigenvectors();
   moments = eigensolver.eigenvalues();
 
-  conf.getOwningMol().setProp(axesPropName,axes);
-  conf.getOwningMol().setProp(momentsPropName,moments);
+  conf.getOwningMol().setProp(axesPropName,axes, true);
+  conf.getOwningMol().setProp(momentsPropName,moments, true);
 
   return true;
 }
