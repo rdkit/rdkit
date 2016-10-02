@@ -11,7 +11,7 @@
 from rdkit import six
 from rdkit import RDConfig
 
-if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:
+if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
   from pyPgSQL import PgSQL
   # as of this writing (March 2004), this results in a speedup in
   # getting results back from the wrapper:
@@ -41,10 +41,8 @@ if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:
 elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   try:
     import sqlite3 as sqlite
-    #from sqlite3 import *
   except ImportError:
     from pysqlite2 import dbapi2 as sqlite
-    #from pysqlite2 import *
   sqlTextTypes = []
   sqlIntTypes = []
   sqlFloatTypes = []
@@ -53,9 +51,10 @@ elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   getTablesAndViewsSql = """select name from SQLite_Master where type in ('table','view')"""
   getDbSql = None
   dbFileWildcard = '*.sqlt'
+  fileWildcard = dbFileWildcard
   placeHolder = '?'
   binaryTypeName = "blob"
-  binaryHolder = memoryview if six.PY3 else buffer
+  binaryHolder = memoryview if six.PY3 else buffer  # @UndefinedVariable
 
   connect = lambda x, *args: sqlite.connect(x)
 else:
