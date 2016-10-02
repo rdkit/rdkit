@@ -1,6 +1,6 @@
 if(RDK_BUILD_DESCRIPTORS3D)
-  set(DESC3D_HDRS MolDescriptors3D.h PBF.h)
-  set(DESC3D_SOURCES PBF.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h)
+  set(DESC3D_SOURCES PBF.cpp PMI.cpp)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_library(Descriptors
@@ -27,6 +27,8 @@ LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs Subs
 
 if(RDK_BUILD_DESCRIPTORS3D)
   rdkit_test(testPBF testPBF.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+rdkit_test(test3D test3D.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 endif(RDK_BUILD_DESCRIPTORS3D)
 

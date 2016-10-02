@@ -147,16 +147,18 @@ bool computePrincipalAxesAndMoments(
     wSum+=w;
     origin+=conf.getAtomPos(i)*w;
   }
+  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
   origin /= wSum;
 
   double sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ;
   computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
-      true,false,weights);
+      true,ignoreHs,weights);
 
   Eigen::Matrix3d mat;
   mat << sumXX, sumXY, sumXZ,
     sumXY, sumYY, sumYZ,
     sumXZ, sumYZ, sumZZ;
+  // std::cerr<<"  matrix: "<<mat<<std::endl;
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
   if(eigensolver.info()!=Eigen::Success){
     BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
@@ -165,10 +167,10 @@ bool computePrincipalAxesAndMoments(
 
   axes = eigensolver.eigenvectors();
   moments = eigensolver.eigenvalues();
-
-  conf.getOwningMol().setProp(axesPropName,axes, true);
-  conf.getOwningMol().setProp(momentsPropName,moments, true);
-
+  if(!weights) {
+    conf.getOwningMol().setProp(axesPropName,axes, true);
+    conf.getOwningMol().setProp(momentsPropName,moments, true);
+  }
   return true;
 }
 #endif

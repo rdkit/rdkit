@@ -12,5 +12,6 @@
 #define RD_MOLDESCRIPTORS3D_H_SEPT2016
 
 #include <GraphMol/Descriptors/PBF.h>
+#include <GraphMol/Descriptors/PMI.h>
 
 #endif

@@ -18,21 +18,6 @@
 
 #include <GraphMol/Descriptors/PBF.h>
 
-void calc(){
-  std::string fname = "testData/egfr.sdf";
-  RDKit::SDMolSupplier reader(fname,true,false);
-
-  while(!reader.atEnd()){
-    RDKit::ROMol *m=reader.next();
-    if(!m) continue;
-    std::string nm;
-    m->getProp("_Name",nm);
-    double dpbf=RDKit::Descriptors::PBF(*m);
-    std::cout<<nm<<" "<<dpbf<<std::endl;
-    delete m;
-  }
-}
-
 void test1(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic PBF tests." << std::endl;
