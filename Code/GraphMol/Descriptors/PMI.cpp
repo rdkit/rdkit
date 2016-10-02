@@ -9,7 +9,10 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <Geometry/point.h>
+
 #include "PMI.h"
+
 #include <Eigen/Dense>
 
 namespace RDKit {
@@ -108,6 +111,65 @@ double PMI3(const ROMol& mol, int confId, bool useAtomicMasses){
   }
   return pm3;
 }
+
+double radiusOfGyration(const ROMol& mol,int confId,
+  bool useAtomicMasses){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
+  double pm1,pm2,pm3;
+  if(!getMoments(mol,confId,useAtomicMasses,pm1,pm2,pm3)){
+    // the eigenvector calculation failed
+    return 0.0; // FIX: throw an exception here?
+  }
+  double denom;
+  if(useAtomicMasses){
+    denom = 0.0;
+    for(ROMol::ConstAtomIterator cai = mol.beginAtoms();
+        cai!=mol.endAtoms();++cai){
+      denom += (*cai)->getMass();
+    }
+  } else {
+    denom = mol.getNumAtoms();
+  }
+  if(denom<1e-8) return 0.0;
+  if(pm1<1e-4) {
+    // planar
+    return sqrt(pow(pm2*pm3,3)/denom);
+  } else {
+    return sqrt(2*M_PI*pow(pm1*pm2*pm3,3)/denom);
+  }
+}
+
+double inertialShapeFactor(const ROMol& mol,int confId,
+  bool useAtomicMasses){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
+  double pm1,pm2,pm3;
+  if(!getMoments(mol,confId,useAtomicMasses,pm1,pm2,pm3)){
+    // the eigenvector calculation failed
+    return 0.0; // FIX: throw an exception here?
+  }
+  if(pm1<1e-4 || pm3<1e-4) {
+    // planar or no coordinates
+    return 0.0;
+  } else {
+    return pm2 / (pm1*pm3);
+  }
+}
+double eccentricity(const ROMol& mol,int confId,
+  bool useAtomicMasses){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
+  double pm1,pm2,pm3;
+  if(!getMoments(mol,confId,useAtomicMasses,pm1,pm2,pm3)){
+    // the eigenvector calculation failed
+    return 0.0; // FIX: throw an exception here?
+  }
+  if(pm1<1e-4 || pm3<1e-4) {
+    // planar or no coordinates
+    return 0.0;
+  } else {
+    return sqrt(pm3*pm3-pm1*pm1) / pm3;
+  }
+}
+
 
 } // end of Descriptors namespace
 } // end of RDKit namespace

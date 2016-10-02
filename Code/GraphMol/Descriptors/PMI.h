@@ -36,6 +36,25 @@ namespace RDKit {
     //! Third (largest) principal moment of inertia
     double PMI3(const ROMol&, int confId=-1, bool useAtomicMasses=true);
 
+    //! Radius of gyration
+    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
+    //!  Handbook of Chemoinformatics
+    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    double radiusOfGyration(const ROMol&,int confId=-1,
+      bool useAtomicMasses=true);
+    //! Inertial shape Factor
+    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
+    //!  Handbook of Chemoinformatics
+    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    double inertialShapeFactor(const ROMol&,int confId=-1,
+      bool useAtomicMasses=true);
+    //! Molecular eccentricity
+    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
+    //!  Handbook of Chemoinformatics
+    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    double eccentricity(const ROMol&,int confId=-1,
+      bool useAtomicMasses=true);
+
   }
 }
 #endif
