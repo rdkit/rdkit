@@ -11,6 +11,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
 #include <algorithm>
@@ -50,9 +51,27 @@ void test1(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPBFEdges(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    PBF edge cases." << std::endl;
+
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/linear.mol";
+
+    RDKit::ROMol *m=RDKit::MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double dpbf=RDKit::Descriptors::PBF(*m);
+    TEST_ASSERT(dpbf<=1e-4);
+    delete m;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   test1();
+  testPBFEdges();
 }
