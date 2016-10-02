@@ -16,9 +16,7 @@
 #include <GraphMol/Descriptors/Lipinski.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/MQN.h>
-#ifdef RDK_BUILD_DESCRIPTORS3D
-#include <GraphMol/Descriptors/PBF.h>
-#endif
+
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
