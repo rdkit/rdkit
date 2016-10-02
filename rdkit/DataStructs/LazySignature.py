@@ -51,7 +51,7 @@ class LazySig:
      ... else:
      ...   0
      1
-     
+
     """
     if which < 0:
       # handle negative indices
@@ -68,16 +68,16 @@ class LazySig:
     return v
 
 
-  #------------------------------------
-  #
-  #  doctest boilerplate
-  #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
