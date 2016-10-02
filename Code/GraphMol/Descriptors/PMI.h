@@ -36,25 +36,61 @@ namespace RDKit {
     //! Third (largest) principal moment of inertia
     double PMI3(const ROMol&, int confId=-1, bool useAtomicMasses=true);
 
-    //! Radius of gyration
-    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
-    //!  Handbook of Chemoinformatics
-    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    /*!
+     Radius of gyration
+       from Todeschini and Consoni "Descriptors from Molecular Geometry"
+       Handbook of Chemoinformatics
+       http://dx.doi.org/10.1002/9783527618279.ch37
+
+     Definition:
+        for planar molecules: sqrt( sqrt(pm3*pm2)/MW )
+        for nonplanar molecules: sqrt( 2*pi*pow(pm3*pm2*pm1,1/3)/MW )
+    */
     double radiusOfGyration(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
-    //! Inertial shape Factor
-    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
-    //!  Handbook of Chemoinformatics
-    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    /*!
+     Inertial shape factor
+       from Todeschini and Consoni "Descriptors from Molecular Geometry"
+       Handbook of Chemoinformatics
+       http://dx.doi.org/10.1002/9783527618279.ch37
+
+     Definition:
+       pm2 / (pm1*pm3)
+    */
     double inertialShapeFactor(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
-    //! Molecular eccentricity
-    //! from Todeschini and Consoni "Descriptors from Molecular Geometry"
-    //!  Handbook of Chemoinformatics
-    //!  http://dx.doi.org/10.1002/9783527618279.ch37
+    /*!
+     Molecular eccentricity
+       from Todeschini and Consoni "Descriptors from Molecular Geometry"
+       Handbook of Chemoinformatics
+       http://dx.doi.org/10.1002/9783527618279.ch37
+
+     Definition:
+     sqrt(pm3**2 -pm1**2) / pm3**2
+    */
     double eccentricity(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
+    /*!
+     molecular asphericity
+       from Todeschini and Consoni "Descriptors from Molecular Geometry"
+       Handbook of Chemoinformatics
+       http://dx.doi.org/10.1002/9783527618279.ch37
 
+     Definition:
+     0.5 * ((pm3-pm2)**2 + (pm3-pm1)**2 + (pm2-pm1)**2)/(pm1**2+pm2**2+pm3**2)
+    */
+    double asphericity(const ROMol&,int confId=-1,
+      bool useAtomicMasses=true);
+    /*!
+     Spherocity index
+       from Todeschini and Consoni "Descriptors from Molecular Geometry"
+       Handbook of Chemoinformatics
+       http://dx.doi.org/10.1002/9783527618279.ch37
+
+     Definition:
+     3 * pm1 / (pm1+pm2+pm3) where the moments are calculated without weights
+    */
+    double spherocityIndex(const ROMol&,int confId=-1);
   }
 }
 #endif

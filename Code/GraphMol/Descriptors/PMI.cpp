@@ -133,9 +133,9 @@ double radiusOfGyration(const ROMol& mol,int confId,
   if(denom<1e-8) return 0.0;
   if(pm1<1e-4) {
     // planar
-    return sqrt(pow(pm2*pm3,3)/denom);
+    return sqrt(sqrt(pm2*pm3)/denom);
   } else {
-    return sqrt(2*M_PI*pow(pm1*pm2*pm3,3)/denom);
+    return sqrt(2*M_PI*pow(pm1*pm2*pm3,1./3)/denom);
   }
 }
 
@@ -167,6 +167,37 @@ double eccentricity(const ROMol& mol,int confId,
     return 0.0;
   } else {
     return sqrt(pm3*pm3-pm1*pm1) / pm3;
+  }
+}
+double asphericity(const ROMol& mol,int confId,
+  bool useAtomicMasses){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
+  double pm1,pm2,pm3;
+  if(!getMoments(mol,confId,useAtomicMasses,pm1,pm2,pm3)){
+    // the eigenvector calculation failed
+    return 0.0; // FIX: throw an exception here?
+  }
+  if(pm3<1e-4) {
+    // no coordinates
+    return 0.0;
+  } else {
+    return 0.5 * (pow(pm3-pm2,2) + pow(pm3-pm1,2) + pow(pm2-pm1,2))/
+      (pm1*pm1+pm2*pm2+pm3*pm3);
+  }
+}
+double spherocityIndex(const ROMol& mol,int confId){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
+  bool useAtomicMasses=false;
+  double pm1,pm2,pm3;
+  if(!getMoments(mol,confId,useAtomicMasses,pm1,pm2,pm3)){
+    // the eigenvector calculation failed
+    return 0.0; // FIX: throw an exception here?
+  }
+  if(pm3<1e-4) {
+    // no coordinates
+    return 0.0;
+  } else {
+    return 3. * pm1 / (pm1+pm2+pm3);
   }
 }
 
