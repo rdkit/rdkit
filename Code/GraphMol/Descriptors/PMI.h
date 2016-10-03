@@ -15,26 +15,26 @@
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
-    const std::string NPR1Version = "1.0.0";
     //! Normalized principal moments ratio 1 (=I1/I3)
     //!  from Sauer and Schwarz JCIM 43:987-1003 (2003)
     //!  https://dx.doi.org/10.1021/ci025599w
     double NPR1(const ROMol&, int confId=-1, bool useAtomicMasses=true);
-    const std::string NPR2Version = "1.0.0";
+    const std::string NPR1Version = "1.0.0";
     //! Normalized principal moments ratio 2 (=I2/I3)
     //!  from Sauer and Schwarz JCIM 43:987-1003 (2003)
     //!  https://dx.doi.org/10.1021/ci025599w
     double NPR2(const ROMol&, int confId=-1, bool useAtomicMasses=true);
+    const std::string NPR2Version = "1.0.0";
 
-    const std::string PMI1Version = "1.0.0";
     //! First (smallest) principal moment of inertia
     double PMI1(const ROMol&, int confId=-1, bool useAtomicMasses=true);
-    const std::string PMI2Version = "1.0.0";
+    const std::string PMI1Version = "1.0.0";
     //! second principal moment of inertia
     double PMI2(const ROMol&, int confId=-1, bool useAtomicMasses=true);
-    const std::string PMI3Version = "1.0.0";
+    const std::string PMI2Version = "1.0.0";
     //! Third (largest) principal moment of inertia
     double PMI3(const ROMol&, int confId=-1, bool useAtomicMasses=true);
+    const std::string PMI3Version = "1.0.0";
 
     /*!
      Radius of gyration
@@ -48,6 +48,7 @@ namespace RDKit {
     */
     double radiusOfGyration(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
+    const std::string radiusOfGyrationVersion = "1.0.0";
     /*!
      Inertial shape factor
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
@@ -59,6 +60,7 @@ namespace RDKit {
     */
     double inertialShapeFactor(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
+    const std::string inertialShapeFactorVersion = "1.0.0";
     /*!
      Molecular eccentricity
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
@@ -70,7 +72,8 @@ namespace RDKit {
     */
     double eccentricity(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
-    /*!
+    const std::string eccentricityVersion = "1.0.0";
+  /*!
      molecular asphericity
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
        Handbook of Chemoinformatics
@@ -81,6 +84,7 @@ namespace RDKit {
     */
     double asphericity(const ROMol&,int confId=-1,
       bool useAtomicMasses=true);
+    const std::string asphericityVersion = "1.0.0";
     /*!
      Spherocity index
        from Todeschini and Consoni "Descriptors from Molecular Geometry"
@@ -91,6 +95,7 @@ namespace RDKit {
      3 * pm1 / (pm1+pm2+pm3) where the moments are calculated without weights
     */
     double spherocityIndex(const ROMol&,int confId=-1);
+    const std::string spherocityIndexVersion = "1.0.0";
   }
 }
 #endif
