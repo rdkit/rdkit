@@ -64,7 +64,7 @@ class FragCatParams : public RDCatalog::CatalogParams {
   void setTolerance(double val) { d_tolerance = val; }
 
   //! returns our number of functional groups
-  unsigned int getNumFuncGroups() const { return d_funcGroups.size(); }
+  unsigned int getNumFuncGroups() const { return static_cast<unsigned int>(d_funcGroups.size()); }
 
   //! returns our std::vector of functional groups
   const MOL_SPTR_VECT &getFuncGroups() const;

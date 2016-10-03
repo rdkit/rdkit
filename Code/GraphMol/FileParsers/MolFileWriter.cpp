@@ -613,7 +613,7 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   // time of this writing (with boost 1.55), the snprintf version runs in 20% of
   // the time.
   char dest[128];
-#ifndef WIN32
+#ifndef _MSC_VER
   snprintf(dest, 128,
            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
            z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
@@ -624,7 +624,7 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   // the format string makes it impossible for this to overflow, I think we're
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
-  sprintf(dest, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
+  sprintf_s(dest, 128, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
           y, z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
           totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
           inversionFlag, exactChangeFlag);
@@ -998,7 +998,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 
 #if 0
     if(includeStereo){
-      // assign "any" status to any stereo bonds that are not 
+      // assign "any" status to any stereo bonds that are not
       // marked with "E" or "Z" code - these bonds need to be explictly written
       // out to the mol file
       MolOps::findPotentialStereoBonds(trwmol);
