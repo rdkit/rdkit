@@ -54,7 +54,7 @@ bool getMoments(const ROMol& mol,int confId, bool useAtomicMasses,
     pm1 = moments(0);
     pm2 = moments(1);
     pm3 = moments(2);
-    // std::cerr<<"   moments: "<<pm1<<" "<<pm2<<" "<<pm3<<std::endl;
+    //std::cerr<<"   moments: "<<pm1<<" "<<pm2<<" "<<pm3<<std::endl;
     mol.setProp(pn1,pm1,true);
     mol.setProp(pn2,pm2,true);
     mol.setProp(pn3,pm3,true);
@@ -162,8 +162,8 @@ double eccentricity(const ROMol& mol,int confId,
     // the eigenvector calculation failed
     return 0.0; // FIX: throw an exception here?
   }
-  if(pm1<1e-4 || pm3<1e-4) {
-    // planar or no coordinates
+  if(pm3<1e-4) {
+    // no coordinates
     return 0.0;
   } else {
     return sqrt(pm3*pm3-pm1*pm1) / pm3;

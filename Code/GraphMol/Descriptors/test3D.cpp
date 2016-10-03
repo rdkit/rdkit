@@ -8,6 +8,12 @@
 //  of the RDKit source tree.
 //
 
+#ifdef _MSC_VER
+// disable warnings about getenv in visual C++
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+
 #include <iostream>
 #include <fstream>
 
@@ -28,6 +34,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
+
 using namespace RDKit;
 using namespace RDKit::Descriptors;
 
@@ -116,9 +123,9 @@ void testPMIEdges(){
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI2(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI3(*m);
     TEST_ASSERT(val>=1e-4);
 
@@ -133,9 +140,9 @@ void testPMIEdges(){
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI2(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI3(*m);
     TEST_ASSERT(val>=1e-4);
 
@@ -150,7 +157,7 @@ void testPMIEdges(){
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI2(*m);
     TEST_ASSERT(val>=1e-4);
     val = RDKit::Descriptors::PMI3(*m);
@@ -167,7 +174,7 @@ void testPMIEdges(){
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI2(*m);
     TEST_ASSERT(val>=1e-4);
     val = RDKit::Descriptors::PMI3(*m);
@@ -186,11 +193,11 @@ void testPMIEdges(){
     m.addAtom(new RDKit::Atom(6));
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double val = RDKit::Descriptors::PMI1(m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI2(m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::PMI3(m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -246,9 +253,9 @@ void testNPREdges(){
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
 
     delete m;
   }
@@ -261,9 +268,9 @@ void testNPREdges(){
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
 
     delete m;
   }
@@ -276,7 +283,7 @@ void testNPREdges(){
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::NPR2(*m);
     TEST_ASSERT(val>=1e-4);
 
@@ -291,7 +298,7 @@ void testNPREdges(){
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::NPR2(*m);
     TEST_ASSERT(val>=1e-4);
 
@@ -307,14 +314,112 @@ void testNPREdges(){
     m.addAtom(new RDKit::Atom(6));
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double val = RDKit::Descriptors::NPR1(m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
     val = RDKit::Descriptors::NPR2(m);
-    TEST_ASSERT(val<1e-4);
+    TEST_ASSERT(fabs(val)<1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test3DEdges(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    3D descriptor edge cases." << std::endl;
+
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/linear.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::radiusOfGyration(*m);
+    TEST_ASSERT(fabs(val)<1e-2);
+    val = RDKit::Descriptors::inertialShapeFactor(*m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::eccentricity(*m);
+    TEST_ASSERT(fabs(1.0-val)<1e-4);
+    val = RDKit::Descriptors::asphericity(*m);
+    TEST_ASSERT(fabs(1.0-val)<1e-4);
+    val = RDKit::Descriptors::spherocityIndex(*m);
+    TEST_ASSERT(fabs(val)<1e-4);
+
+    delete m;
+  }
+  {
+    std::string pathName = getenv("RDBASE");
+    std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/planar.mol";
+
+    RDKit::ROMol *m=MolFileToMol(sdfName);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::radiusOfGyration(*m);
+    TEST_ASSERT(fabs(val)>1e-2);
+    val = RDKit::Descriptors::inertialShapeFactor(*m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::eccentricity(*m);
+    TEST_ASSERT(fabs(1.0-val)<1e-4);
+    val = RDKit::Descriptors::asphericity(*m);
+    TEST_ASSERT(fabs(0.5-val)<1e-4);
+    val = RDKit::Descriptors::spherocityIndex(*m);
+    TEST_ASSERT(fabs(val)<1e-4);
+
+    delete m;
+  }
+  { // octahedron
+    RDKit::RWMol m;
+    m.addAtom(new RDKit::Atom(1));
+    m.addAtom(new RDKit::Atom(1));
+    m.addAtom(new RDKit::Atom(1));
+    m.addAtom(new RDKit::Atom(1));
+    m.addAtom(new RDKit::Atom(1));
+    m.addAtom(new RDKit::Atom(1));
+    m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
+    m.getConformer().setAtomPos(0,RDGeom::Point3D(1,0,0));
+    m.getConformer().setAtomPos(1,RDGeom::Point3D(-1,0,0));
+    m.getConformer().setAtomPos(2,RDGeom::Point3D(0,1,0));
+    m.getConformer().setAtomPos(3,RDGeom::Point3D(0,-1,0));
+    m.getConformer().setAtomPos(4,RDGeom::Point3D(0,0,1));
+    m.getConformer().setAtomPos(5,RDGeom::Point3D(0,0,-1));
+    double val;
+    val = RDKit::Descriptors::radiusOfGyration(m);
+    TEST_ASSERT(fabs(val)>0.1);
+    val = RDKit::Descriptors::inertialShapeFactor(m);
+    TEST_ASSERT(fabs(val)>1);
+    val = RDKit::Descriptors::eccentricity(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::asphericity(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::spherocityIndex(m);
+    TEST_ASSERT(fabs(1.-val)<1e-4);
+  }
+
+  {
+    RDKit::RWMol m;
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addAtom(new RDKit::Atom(6));
+    m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
+    double val;
+    val = RDKit::Descriptors::radiusOfGyration(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::inertialShapeFactor(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::eccentricity(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::asphericity(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+    val = RDKit::Descriptors::spherocityIndex(m);
+    TEST_ASSERT(fabs(val)<1e-4);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 
@@ -323,6 +428,7 @@ void testNPREdges(){
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
+  test3DEdges();
   testPMIEdges();
   testNPREdges();
   testPMI1();
