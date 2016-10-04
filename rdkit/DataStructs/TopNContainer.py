@@ -58,7 +58,10 @@ class TopNContainer(object):
     return self.extras
 
   def __len__(self):
-    return self._size
+    if self._size >= 0:
+      return self._size
+    else:
+      return len(self.best)
 
   def __getitem__(self, which):
     return self.best[which], self.extras[which]
@@ -68,12 +71,17 @@ class TopNContainer(object):
     self.extras.reverse()
 
 
-if __name__ == '__main__':
+def _exampleCode():
   import random
-  pts = [int(100 * random.random()) for x in range(10)]
+  random.seed(0)
+  pts = [int(100 * random.random()) for _ in range(10)]
 
   c = TopNContainer(4)
   for pt in pts:
     c.Insert(pt, extra=str(pt))
   print(c.GetPts())
   print(c.GetExtras())
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()
