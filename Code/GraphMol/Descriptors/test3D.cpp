@@ -54,7 +54,7 @@ void testPMI1(){
 
   RDKit::SDMolSupplier reader(sdfName,true,false);
   std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/PMI_egfr.out";
-  std::ifstream instrm(fName);
+  std::ifstream instrm(fName.c_str());
   int nDone=0;
   while(!reader.atEnd()){
     RDKit::ROMol *m=reader.next();
