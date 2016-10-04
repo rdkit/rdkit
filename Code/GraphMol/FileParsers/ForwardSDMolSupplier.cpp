@@ -82,9 +82,9 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         hasProp = true;
         warningIssued = false;
         tempStr.erase(0, 1);         // remove the first ">" sign
-        int sl = tempStr.find("<");  // begin datalabel
-        int se = tempStr.find(">");  // end datalabel
-        if ((sl == -1) || (se == -1) || (se == (sl + 1))) {
+        size_t sl = tempStr.find("<");  // begin datalabel
+        size_t se = tempStr.find(">");  // end datalabel
+        if ((sl == std::string::npos) || (se == std::string::npos) || (se == (sl + 1))) {
           // we either do not have a data label or the label is emtpy
           // no data label ignore until next data item
           // i.e. until we hit a blank line
