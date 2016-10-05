@@ -22,9 +22,9 @@ namespace {
 bool getMoments(const ROMol& mol,int confId, bool useAtomicMasses,
                 double &pm1, double &pm2, double &pm3){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers");
-  const char *pn1 = useAtomicMasses ? "PMI1_mass" : "PMI1";
-  const char *pn2 = useAtomicMasses ? "PMI2_mass" : "PMI2";
-  const char *pn3 = useAtomicMasses ? "PMI3_mass" : "PMI3";
+  const char *pn1 = useAtomicMasses ? "_PMI1_mass" : "_PMI1";
+  const char *pn2 = useAtomicMasses ? "_PMI2_mass" : "_PMI2";
+  const char *pn3 = useAtomicMasses ? "_PMI3_mass" : "_PMI3";
 
   if(mol.hasProp(pn1) && mol.hasProp(pn2) && mol.hasProp(pn3) ) {
     mol.getProp(pn1,pm1);
