@@ -74,7 +74,7 @@ bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l,
   return (AtomSymbolMatch(a.getSymbol(), l.AtomSymbol));
 }
 
-static void applyAtomSymbolList(const std::string symbol, Atom &atom) {
+static void applyAtomSymbolList(RWMol &mol, const std::string symbol, Atom &atom) {
   // replace mol atom with Ligrad.AtomSymbol
   // single atom symbol:
   if (std::string::npos == symbol.find(',')) {
@@ -92,13 +92,14 @@ static void applyAtomSymbolList(const std::string symbol, Atom &atom) {
   strcpy(buf, symbol.c_str());
   tokp = strtok_r(buf, ",", &context);
   atom.setAtomicNum(getAtomicNumber(tokp));
-  QueryAtom a(atom);  // copy all mol's atom properties to keep its
+  QueryAtom a(atom);
+  a.setQuery(makeAtomNumQuery(getAtomicNumber(tokp)));
+  //  QueryAtom a(atom);  // copy all mol's atom properties to keep its
   for (tokp = strtok_r((char *)NULL, ",", &context); tokp;
        tokp = strtok_r((char *)NULL, ",", &context)) {
-    a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)),
-                  Queries::COMPOSITE_OR);
+      a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)), Queries::COMPOSITE_OR);
   }
-  atom = a;
+  mol.replaceAtom(atom.getIdx(), &a);
 }
 
 struct AtomNeighbor {
@@ -205,9 +206,11 @@ bool TransformAugmentedAtoms(
         // Replace Augmented Atom. TransformAA()
         // change central atom
         Atom *a = mol.getAtomWithIdx(j);
-        if (a->getSymbol() != aa2.AtomSymbol)
-          a->setAtomicNum(getAtomicNumber(aa2.AtomSymbol));
-        if (a->getFormalCharge() != aa2.Charge) a->setFormalCharge(aa2.Charge);
+//        if (a->getSymbol() != aa2.AtomSymbol)
+//          a->setAtomicNum(getAtomicNumber(aa2.AtomSymbol));
+        applyAtomSymbolList(mol, aa2.AtomSymbol, *a);
+        if (a->getFormalCharge() != aa2.Charge)
+          a->setFormalCharge(aa2.Charge);
         if (a->getNumRadicalElectrons() != aa2.Radical)
           a->setNumRadicalElectrons(aa2.Radical);
         // change ligand atoms and their bonds with central atom
@@ -215,16 +218,11 @@ bool TransformAugmentedAtoms(
           Atom *al = mol.getAtomWithIdx(match_a[l]);
           const Ligand &ligand = aa2.Ligands[l];
           {
-            // AVALON pattern.c:154
-            //                    if (al->getSymbol() != ligand.AtomSymbol) //
-            //                    pattern.c:154
-            //                        al->setAtomicNum(getAtomicNumber(ligand.AtomSymbol));
-            //                        //??? list like "C,N"
-            // TODO: compare RDKit query atom with comma separated
-            // ligand.AtomSymbol
-            if (!AtomSymbolMatch(al->getSymbol(), ligand.AtomSymbol)) {
-              applyAtomSymbolList(ligand.AtomSymbol, *al);
-            }
+// AVALON pattern.c:154
+//            if (!AtomSymbolMatch(al->getSymbol(), ligand.AtomSymbol) ||
+//                std::string::npos != ligand.AtomSymbol.find(',')) {
+              applyAtomSymbolList(mol, ligand.AtomSymbol, *al);
+//            }
           }
           if (al->getFormalCharge() != ligand.Charge)
             al->setFormalCharge(ligand.Charge);
@@ -235,11 +233,8 @@ bool TransformAugmentedAtoms(
             bondsToRemove.push_back(
                 std::pair<unsigned, unsigned>(j, neighbors[j][l].AtomIdx));
           else if (aa1.Ligands[l].BondType != ligand.BondType)
-            mol.getBondWithIdx(match_b[l])
-                ->setBondType(convertBondType(ligand.BondType));
-          
-          
-          
+            mol.getBondWithIdx(match_b[l])->setBondType(
+                                        convertBondType(ligand.BondType));
         }
         transformed = true;
       }

@@ -393,9 +393,8 @@ void testOptionsDefault() {
       "CC=C",  // Pyrethrin II (C22H28O5)
   };
 
-  StructCheckerOptions
-      options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
-//  options.Verbose = false;
+  StructCheckerOptions options;
+  //  options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
     BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
@@ -403,7 +402,7 @@ void testOptionsDefault() {
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
     delete mol;
-    BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
+    BOOST_LOG(rdInfoLog) << "RES : " << StructChecker::StructureFlagsToString(flags)
                          << "\n";
     TEST_ASSERT(0 == flags);
   }
@@ -417,8 +416,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
       "COC(=O)C",
   };
 
-  StructCheckerOptions
-      options;  // intial GoodAtoms loading is INCORRECT. There is no Ligands!
+  StructCheckerOptions options;
 //  options.Verbose = true;
   StructChecker chk(options);
   for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
@@ -429,7 +427,7 @@ void testCheckAtomWithDefaultGoodAtoms() {
     delete mol;
     BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)
                          << "\n";
-    //        TEST_ASSERT( !(flags & StructChecker::ATOM_CHECK_FAILED));
+    TEST_ASSERT( !(flags & StructChecker::ATOM_CHECK_FAILED));
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -758,6 +756,40 @@ void testTransformAtoms() {
     }
 }
 
+void testAugmentedAtomTranslationsToAtomListQuery() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "testAugmentedAtomTranslationsToAtomListQuery\n";
+    StructCheckerOptions options;
+    options.RemoveMinorFragments = false;
+    options.CheckCollisions = false;
+    options.CollisionLimitPercent = 3;
+    options.CheckStereo = false;
+    options.MaxMolSize = 999;
+    options.Verbose = true;
+    std::pair<AugmentedAtom, AugmentedAtom> tr1 = std::make_pair(AugmentedAtom(), AugmentedAtom());
+
+    StringToAugmentedAtom("C(=O)(-C)", tr1.first);
+    StringToAugmentedAtom("C(-O,N,S,Ca)(-C)", tr1.second); // =O -> -2 valency element list
+    options.AugmentedAtomPairs.push_back(tr1);
+
+    options.Verbose = true;
+    const char* smols[] = {
+        "C(=O)C",
+    };
+    StructChecker chk(options);
+    for (int i = 0; i < sizeof(smols) / sizeof(smols[0]); i++) {
+        RWMol* mol = SmilesToMol(smols[i]);
+        TEST_ASSERT(mol);
+        unsigned flags = chk.checkMolStructure(*mol);
+        BOOST_LOG(rdInfoLog) << "FLAGs: " << StructChecker::StructureFlagsToString(flags)
+            << "\n";
+        BOOST_LOG(rdInfoLog) << "RES  : " << MolToSmarts(*mol) << "\n";
+        delete mol;
+        TEST_ASSERT(flags && StructChecker::TRANSFORMED);
+    }
+    BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 //==============================================================================
 
@@ -766,7 +798,6 @@ int main(int argc, const char* argv[]) {
       << "*******************************************************\n";
   BOOST_LOG(rdInfoLog) << "StructChecker Unit Test \n";
 
-// return 0; //tmp
 #if 1
   testFlags();
   testOptionsDefault();
@@ -776,7 +807,6 @@ int main(int argc, const char* argv[]) {
   } catch (...) {
     // relative path to patern files must be correct !
   }
-  // FAILED
   testOptionsDefault();
 
   test1();
@@ -792,7 +822,8 @@ int main(int argc, const char* argv[]) {
 //  testSpecificExamples();
   testSpecificOrder();
   testTransformTau();
-   testTransformAtoms();
+  testTransformAtoms();
+  testAugmentedAtomTranslationsToAtomListQuery();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return 0;
