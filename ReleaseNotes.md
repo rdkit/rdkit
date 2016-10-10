@@ -1,3 +1,22 @@
+# Release_2016.03.5
+(Changes relative to Release_2016.03.4)
+
+## Acknowledgements:
+Piotr Dabrowski, Markus Metz, Stephen Roughley, Riccardo Vianello
+
+## Bug Fixes:
+  - GetSSSR interrupts by segmentation fault
+  (github issue #1023 from PiotrDabr)
+  - typos in MMPA hash code
+  (github issue #1044 from greglandrum)
+  - Bond::BondDir::EITHERDOUBLE not exposed to python
+  (github issue #1051 from greglandrum)
+  - Fix leak with renumberAtoms() in the SWIG wrappers
+  (github pull #1064 from greglandrum)
+  - computeInitialCoords() should call the SSSR code before it calls assignStereochemistry()
+  (github issue #1073 from greglandrum)
+
+
 # Release_2016.03.4
 (Changes relative to Release_2016.03.3)
 
