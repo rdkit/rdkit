@@ -197,7 +197,7 @@ def ShowMols(mols, **kwargs):
   if _MolsToGridImageSaved is not None:
     fn = _MolsToGridImageSaved
   else:
-    fm = Draw.MolsToGridImage
+    fn = Draw.MolsToGridImage
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
