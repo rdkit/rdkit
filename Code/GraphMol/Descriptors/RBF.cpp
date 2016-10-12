@@ -71,7 +71,7 @@ std::vector<double> getG(int n){
 double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2){
   double res=0;
   for (int i=0;i<3;i++) {
-    res+=(x1[i]-x2[i])*(x1[i]-x2[i]);
+    res+=pow(x1[i]-x2[i],2);
   }
   return sqrt(res);
 }
@@ -94,20 +94,19 @@ std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<
 
 
 
-std::vector<double> CalculateUnweightRDF(const Conformer &conf,
-                    const std::vector<RDGeom::Point3D> &points){
-  std::vector<double>  R = getG(30);
-  std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
+std::vector<double> CalculateUnweightRDF(const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
+   std::vector<double>  R = getG(30);
+   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
 
-  int numAtoms = conf.getAtomNumber();
+   int numAtoms = conf.getNumAtoms();
 
-  std::vector<RDGeom::Point3D> points;
-    points.reserve(numAtoms);
-    for(unsigned int i=0; i<numAtoms; ++i){
-      points.push_back(conf.getAtomPos(i));
-    }
+   std::vector<RDGeom::Point3D> points;
+     points.reserve(numAtoms);
+     for(unsigned int i=0; i<numAtoms; ++i){
+          points.push_back(conf.getAtomPos(i));
+     }
 
-  std::vector<std::vector<double>>  DM = GetGeometricalDistanceMatrix(&points);
+  std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(&points);
 
   for (int i=0;i<30;i++) {
       double res=0;
