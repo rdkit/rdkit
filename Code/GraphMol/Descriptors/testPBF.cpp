@@ -18,8 +18,31 @@
 #include <fstream>
 
 #include <GraphMol/Descriptors/PBF.h>
+#include <GraphMol/Descriptors/RBF.h>
 
-void test1(){
+void testRBF(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Basic RBF tests." << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+  RDKit::SDMolSupplier reader(sdfName,true,false);
+  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.out";
+  std::ifstream instrm(fName.c_str());
+  int nDone=0;
+  while(!reader.atEnd()){
+    RDKit::ROMol *m=reader.next();
+    TEST_ASSERT(m);
+    std::string nm;
+    m->getProp("_Name",nm);
+    std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
+
+    delete m;
+    ++nDone;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic PBF tests." << std::endl;
 
@@ -50,6 +73,7 @@ void test1(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
 
 void testPBFEdges(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;

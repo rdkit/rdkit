@@ -49,7 +49,7 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string RBFVersion = "1.0.0";
-    double RBF(const ROMol&,int confId=-1);
+    std::vector<double> RBF(const ROMol&,int confId=-1);
   }
 }
 #endif
