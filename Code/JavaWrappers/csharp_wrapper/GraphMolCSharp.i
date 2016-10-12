@@ -41,10 +41,13 @@
     #include <boost/shared_array.hpp>
 %}
 // The actual definition isn't in the top level hpp file!
+#define BOOST_NOEXCEPT
+#define BOOST_NO_CXX11_RVALUE_REFERENCES
+#define BOOST_NO_CXX11_NULLPTR
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
-%include "stdint.i"
+%include "msvc_stdint.i"
 %include "std_string.i"
 %include "std_list.i"
 %include "extend_std_vector.i"
