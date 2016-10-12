@@ -18,9 +18,9 @@
 #include <fstream>
 
 #include <GraphMol/Descriptors/PBF.h>
-#include <GraphMol/Descriptors/RBF.h>
+#include <GraphMol/Descriptors/RDF.h>
 
-void testRBF(){
+void testRDF(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic RBF tests." << std::endl;
 
@@ -36,7 +36,7 @@ void testRBF(){
     std::string nm;
     m->getProp("_Name",nm);
     //std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
-    double dpbf=RDKit::Descriptors::PBF(*m);
+    std::vector<double> dpbf=RDKit::Descriptors::RDF(*m);
 
     delete m;
     ++nDone;
@@ -144,6 +144,6 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   test1();
-  testRBF();
+  testRDF();
   testPBFEdges();
 }

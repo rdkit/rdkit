@@ -1,6 +1,6 @@
 if(RDK_BUILD_DESCRIPTORS3D)
-  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RBF.h)
-  set(DESC3D_SOURCES PBF.cpp PMI.cpp RBF.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RDF.h)
+  set(DESC3D_SOURCES PBF.cpp PMI.cpp RDF.cpp)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_library(Descriptors
