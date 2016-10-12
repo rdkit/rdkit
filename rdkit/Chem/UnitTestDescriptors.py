@@ -38,6 +38,9 @@ class TestCase(unittest.TestCase):
       for nm, fn in Descriptors._descList:
         try:
           v = fn(m)
+        except RuntimeError:
+          # 3D descriptors fail since the mol has no conformers
+          pass
         except Exception:
           import traceback
           traceback.print_exc()
