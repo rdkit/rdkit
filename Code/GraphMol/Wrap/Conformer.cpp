@@ -83,7 +83,7 @@ struct conformer_wrapper {
         .def("SetId", &Conformer::setId, "Set the ID of the conformer\n")
 
         .def("GetAtomPosition", GetAtomPos, "Get the posistion of an atom\n")
-
+	.def("GetPositions", GetPos, "Get positions of all the atoms\n")
         .def("SetAtomPosition", SetAtomPos,
              "Set the position of the specified atom\n")
         .def("SetAtomPosition", (void (Conformer::*)(unsigned int, const RDGeom::Point3D&)) &
