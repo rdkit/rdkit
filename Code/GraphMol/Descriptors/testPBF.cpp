@@ -35,7 +35,8 @@ void testRBF(){
     TEST_ASSERT(m);
     std::string nm;
     m->getProp("_Name",nm);
-    std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
+    //std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
+    double dpbf=RDKit::Descriptors::PBF(*m);
 
     delete m;
     ++nDone;
