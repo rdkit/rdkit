@@ -40,7 +40,7 @@
 // Created by Nicholas Firth, November 2011
 // Modified by Greg Landrum for inclusion in the RDKit distribution November 2012
 // Further modified by Greg Landrum for inclusion in the RDKit core September 2016
-//
+// Adding RBF descriptors to 3D descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -50,93 +50,96 @@
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <boost/foreach.hpp>
-
+#include <math.h>
 #include <Eigen/Dense>
 
 namespace RDKit {
 namespace Descriptors{
 namespace {
 
-double distanceFromAPlane(const RDGeom::Point3D &pt,const std::vector<double> &plane, double denom){
-  double numer=0.0;
-  numer = std::abs(pt.x*plane[0]+pt.y*plane[1]+pt.z*plane[2]+plane[3]);
 
-  return numer/denom;
+std::vector<double> getG(int n){
+  std::vector<double> res;
+  for (int i=0;i<n;i++) {
+    res[i] = 1+i*n/2;
+  }
+  return res;
 }
 
-bool getBestFitPlane(const Conformer &conf,
-                    const std::vector<RDGeom::Point3D> &points,
-                     std::vector<double> &plane,
-                     const std::vector<double> *weights) {
-  PRECONDITION((!weights || weights->size()>=points.size()),"bad weights vector");
-  PRECONDITION(plane.size()>=4,"bad plane");
-  RDGeom::Point3D origin(0,0,0);
-  double wSum=0.0;
 
-  for(unsigned int i=0;i<points.size();++i){
-    if(weights){
-      double w=(*weights)[i];
-      wSum+=w;
-      origin+=points[i]*w;
-    } else {
-      wSum+=1;
-      origin+=points[i];
-    }
+
+double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2){
+  double res=0;
+  for (int i=0;i<3;i++) {
+    res+=pow(x1[i]-x2[i],2);
   }
-  origin /= wSum;
+  return sqrt(res);
+}
 
-  Eigen::Matrix3d evects;
-  Eigen::Vector3d evals;
-  MolTransforms::computePrincipalAxesAndMoments(conf,evects,evals,false,weights);
-  RDGeom::Point3D normal;
-  normal.x=evects(0,0);
-  normal.y=evects(1,0);
-  normal.z=evects(2,0);
 
-  plane[0] = normal.x;
-  plane[1] = normal.y;
-  plane[2] = normal.z;
-  plane[3] = -1*normal.dotProduct(origin);
-  return true;
+
+std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<RDGeom::Point3D> &points){
+    int numAtoms= points.size();
+
+    std::vector<std::vector<double>> res(numAtoms,std::vector<double>(numAtoms,0));
+    for( int i=0; i<numAtoms; ++i){
+        for( int j=i+1; j<numAtoms; ++j){
+            res[i][j]=getAtomDistance(points[i], points[j]);
+            res[j][i]=res[i][j];
+          }
+    }
+
+    return res;
+
+}
+
+
+
+std::vector<double> CalculateUnweightRDF(const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
+   int numAtoms = conf.getNumAtoms();
+
+   std::vector<double>  R = getG(30);
+   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
+
+
+
+  std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
+
+  for (int i=0;i<30;i++) {
+      double res=0;
+      for (int j=0;j<numAtoms-1;j++)  {
+        for (int k=j+1;k<numAtoms;k++)  {
+          res+=exp(-100*pow(R[i]-DM[j][k],2));
+        }
+      }
+
+      RDFres.push_back(res);
+  }
+
+  return RDFres;
 }
 
 } //end of anonymous namespace
 
-double RDF(const ROMol& mol,int confId){
+
+std::vector<double> RDF(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
-  unsigned int numAtoms = mol.getNumAtoms();
-  if(numAtoms<4) return 0;
+  int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
-  if(!conf.is3D()) return 0 ;
 
   std::vector<RDGeom::Point3D> points;
   points.reserve(numAtoms);
-  for(unsigned int i=0; i<numAtoms; ++i){
+  for( int i=0; i<numAtoms; ++i){
     points.push_back(conf.getAtomPos(i));
   }
 
-  std::vector<double> plane(4);
-  if(!getBestFitPlane(conf,points,plane,NULL)){
-    // the eigenvalue calculation failed, return 0
-    // FIX: throw an exception here?
-    return 0.0;
-  }
-
-  double denom=0.0;
-  for(unsigned int i=0; i<3; ++i){
-    denom += plane[i]*plane[i];
-  }
-  denom = sqrt(denom);
-
-  double res=0.0;
-  for(unsigned int i=0; i<numAtoms; ++i){
-    res+= distanceFromAPlane(points[i], plane, denom);
-  }
-  res /= numAtoms;
+  std::vector<double> res=CalculateUnweightRDF(conf,points);
 
   return res;
 }
+
+
 
 } // end of Descriptors namespace
 } // end of RDKit namespace

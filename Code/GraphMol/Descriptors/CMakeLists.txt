@@ -11,8 +11,6 @@ rdkit_library(Descriptors
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers ${RDKit_THREAD_LIBS})
 
-
-
 rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
               MolSurf.h
@@ -27,6 +25,8 @@ LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs Subs
 
 if(RDK_BUILD_DESCRIPTORS3D)
   rdkit_test(testPBF testPBF.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+ rdkit_test(testRDF testRDF.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 rdkit_test(test3D test3D.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
