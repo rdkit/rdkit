@@ -40,8 +40,11 @@ void testRBF(){
     delete m;
     ++nDone;
   }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void test1(){
 
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic PBF tests." << std::endl;
@@ -140,5 +143,6 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   test1();
+  testRBF();
   testPBFEdges();
 }

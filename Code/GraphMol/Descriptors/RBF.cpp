@@ -59,7 +59,7 @@ namespace {
 
 
 std::vector<double> getG(int n){
-  std::vector<double> res = new std::vector<double>();
+  std::vector<double> res;
   for (int i=0;i<n;i++) {
     res[i] = 1+i*n/2;
   }  
@@ -82,10 +82,11 @@ std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<
     int numAtoms= points.size();
 
     std::vector<std::vector<double>> res(numAtoms,std::vector<double>(numAtoms,0));
-    for(unsigned int i=0; i<numAtoms; ++i){
-        for(unsigned int j=i+1; j<numAtoms; ++j){
+    for( int i=0; i<numAtoms; ++i){
+        for( int j=i+1; j<numAtoms; ++j){
             res[i][j]=getAtomDistance(points[i], points[j]);
             res[j][i]=res[i][j];
+          }
     }
 
     return res;
@@ -95,18 +96,14 @@ std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<
 
 
 std::vector<double> CalculateUnweightRDF(const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
+   int numAtoms = conf.getNumAtoms();
+
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
 
-   int numAtoms = conf.getNumAtoms();
 
-   std::vector<RDGeom::Point3D> points;
-     points.reserve(numAtoms);
-     for(unsigned int i=0; i<numAtoms; ++i){
-          points.push_back(conf.getAtomPos(i));
-     }
 
-  std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(&points);
+  std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
   for (int i=0;i<30;i++) {
       double res=0;
@@ -121,6 +118,28 @@ std::vector<double> CalculateUnweightRDF(const Conformer &conf,const std::vector
 
   return RDFres;
 }
+
+
+
+std::vector<double> RBF(const ROMol& mol,int confId){
+  PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
+  int numAtoms = mol.getNumAtoms();
+  //if(numAtoms<4) return [0];
+
+  const Conformer &conf = mol.getConformer(confId);
+  //if(!conf.is3D()) return [0] ;
+
+  std::vector<RDGeom::Point3D> points;
+  points.reserve(numAtoms);
+  for( int i=0; i<numAtoms; ++i){
+    points.push_back(conf.getAtomPos(i));
+  }
+
+  std::vector<double> res=CalculateUnweightRDF(conf,points);
+
+  return res;
+}
+
 
 
 } //end of anonymous namespace
