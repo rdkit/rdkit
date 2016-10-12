@@ -723,6 +723,7 @@ void testTransformAtoms() {
   options.CollisionLimitPercent = 3;
   options.CheckStereo = false;
   options.MaxMolSize = 999;
+  options.Verbose = true;
   //options.Verbose = true;
   std::pair<AugmentedAtom, AugmentedAtom> tr1 = std::make_pair(AugmentedAtom(), AugmentedAtom());
   std::pair<AugmentedAtom, AugmentedAtom> tr2 = std::make_pair(AugmentedAtom(), AugmentedAtom());
@@ -748,11 +749,13 @@ void testTransformAtoms() {
       BOOST_LOG(rdInfoLog) << i << " : " << smols[i] << "\n";
       RWMol* mol = SmilesToMol(smols[i]);
       TEST_ASSERT(mol);
+      BOOST_LOG(rdInfoLog) << "before: " << MolToSmiles(*mol) << "\n";
       unsigned flags = chk.checkMolStructure(*mol);
-      BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
+      BOOST_LOG(rdInfoLog) << "after:  " << MolToSmiles(*mol) << "\n";
       delete mol;
       BOOST_LOG(rdInfoLog) << StructChecker::StructureFlagsToString(flags)<< "\n";
-      TEST_ASSERT(flags && StructChecker::TRANSFORMED);
+      TEST_ASSERT(flags & StructChecker::TRANSFORMED);
+      TEST_ASSERT(!(flags & StructChecker::FRAGMENTS_FOUND));
     }
 }
 
@@ -785,7 +788,7 @@ void testAugmentedAtomTranslationsToAtomListQuery() {
             << "\n";
         BOOST_LOG(rdInfoLog) << "RES  : " << MolToSmarts(*mol) << "\n";
         delete mol;
-        TEST_ASSERT(flags && StructChecker::TRANSFORMED);
+        TEST_ASSERT(flags & StructChecker::TRANSFORMED);
     }
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
