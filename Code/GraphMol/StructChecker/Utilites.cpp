@@ -79,9 +79,9 @@ std::string LogNeighbourhood(
     const std::vector<Neighbourhood> &neighbour_array) {
   std::stringstream oss;
   // FIX ME turn into utility func?
-  std::string name;
+  std::string name("");
   mol.getPropIfPresent(common_properties::_Name, name);
-  oss << name << "    atom " << idx << "   AA : ";
+  oss << "atom '" << name << "' idx=" << idx << " AA: ";
   const Atom &atm = *mol.getAtomWithIdx(idx);
   oss << atm.getSymbol();
 

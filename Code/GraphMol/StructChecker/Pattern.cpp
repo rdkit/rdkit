@@ -112,8 +112,8 @@ bool TransformAugmentedAtoms(
     RWMol &mol,
     const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aapair, bool verbose) {
   bool transformed = false;
-  // find neighbors:
-  std::vector<std::vector<AtomNeighbor> > neighbors(mol.getNumAtoms());
+  // find neighbours:
+  std::vector<std::vector<AtomNeighbor> > neighbours(mol.getNumAtoms());
   std::vector<bool> bondInRing(mol.getNumBonds());
   std::vector<bool> atomInRing(mol.getNumAtoms());
   std::vector<std::pair<unsigned, unsigned> > bondsToRemove;
@@ -126,8 +126,8 @@ bool TransformAugmentedAtoms(
     const Bond *bond = mol.getBondWithIdx(i);
     unsigned a1 = bond->getEndAtomIdx();
     unsigned a2 = bond->getBeginAtomIdx();
-    neighbors[a1].push_back(AtomNeighbor(a2, i));
-    neighbors[a2].push_back(AtomNeighbor(a1, i));
+    neighbours[a1].push_back(AtomNeighbor(a2, i));
+    neighbours[a2].push_back(AtomNeighbor(a1, i));
     bondInRing[i] = false;  // init
     atomInRing[a1] = atomInRing[a2] = false;  // init
   }
@@ -149,13 +149,13 @@ bool TransformAugmentedAtoms(
     for (unsigned j = 0; j < mol.getNumAtoms(); j++) {
       const Atom *atom = mol.getAtomWithIdx(j);
       const AugmentedAtom &aa1 = aapair[i].first;
-      
+/* a lot of prints      
       if(verbose) {
          verboseAtom(mol, j, neighbours_d);
       }
-      
+*/      
       // check if atom match to aapair[i].first atom and topology
-      if (neighbors[j].size() == aa1.Ligands.size() &&
+      if (neighbours[j].size() == aa1.Ligands.size() &&
           (ANY_CHARGE == aa1.Charge || atom->getFormalCharge() == aa1.Charge) &&
           (ANY_RADICAL == aa1.Radical ||
            atom->getNumRadicalElectrons() == aa1.Radical) &&
@@ -163,25 +163,27 @@ bool TransformAugmentedAtoms(
            (CHAIN == aa1.Topology && !atomInRing[j])) &&
           AtomSymbolMatch(atom->getSymbol(), aa1.AtomSymbol)) {
         // RecMatch():
+//        if ( ! RecMatch(mol, j, aa1, neighbours_d, verbose))
+//          continue;  // go to next molecule's atom
         unsigned matched = 0;
         const AugmentedAtom &aa2 = aapair[i].second;
         std::vector<bool> visited(aa2.Ligands.size());
         std::vector<unsigned> match_a(aa2.Ligands.size());
         std::vector<unsigned> match_b(aa2.Ligands.size());
         for (size_t l = 0; l < aa2.Ligands.size(); l++) {
-          visited[l] = false;
-          match_a[l] = -1;
-          match_b[l] = -1;
+            visited[l] = false;
+            match_a[l] = -1;
+            match_b[l] = -1;
         }
 
-        for (size_t k = 0; k < neighbors[j].size(); k++) {
-          const Atom *nbrAtom = mol.getAtomWithIdx(neighbors[j][k].AtomIdx);
-          const Bond *nbrBond = mol.getBondWithIdx(neighbors[j][k].BondIdx);
+        for (size_t k = 0; k < neighbours[j].size(); k++) {
+          const Atom *nbrAtom = mol.getAtomWithIdx(neighbours[j][k].AtomIdx);
+          const Bond *nbrBond = mol.getBondWithIdx(neighbours[j][k].BondIdx);
           for (size_t l = 0; l < aa1.Ligands.size(); l++)
             if (!visited[l]) {
               const Ligand &ligand = aa1.Ligands[l];
               if ((0 == ligand.SubstitutionCount ||
-                   neighbors[j].size() == ligand.SubstitutionCount) &&
+                   neighbours[j].size() == ligand.SubstitutionCount) &&
                   (ANY_CHARGE == ligand.Charge ||
                    nbrAtom->getFormalCharge() == ligand.Charge) &&
                   (ANY_RADICAL == ligand.Radical ||
@@ -193,22 +195,27 @@ bool TransformAugmentedAtoms(
                      RDKit::Bond::DOUBLE == nbrBond->getBondType()))) &&
                   AtomSymbolMatch(nbrAtom->getSymbol(), ligand.AtomSymbol)) {
                 matched++;
-                match_a[l] = neighbors[j][k].AtomIdx;
-                match_b[l] = neighbors[j][k].BondIdx;
+                match_a[l] = neighbours[j][k].AtomIdx;
+                match_b[l] = neighbours[j][k].BondIdx;
                 visited[l] = true;
                 break;
               }
             }
         }
-        if (matched != neighbors[j].size())
+        if (matched != neighbours[j].size())
           continue;  // go to next molecule's atom
 
         // Replace Augmented Atom. TransformAA()
+        if(verbose)
+          BOOST_LOG(rdInfoLog) 
+            << "Replace "<< LogNeighbourhood(mol, j, neighbours_d)
+            <<" with AAPair i="<< i << " "
+            << aapair[i].first.AtomSymbol << " -> "
+            << aapair[i].second.AtomSymbol << "\n";
         // change central atom
         Atom *a = mol.getAtomWithIdx(j);
-//        if (a->getSymbol() != aa2.AtomSymbol)
-//          a->setAtomicNum(getAtomicNumber(aa2.AtomSymbol));
-        applyAtomSymbolList(mol, aa2.AtomSymbol, *a);
+        if (aa1.AtomSymbol != aa2.AtomSymbol)
+          applyAtomSymbolList(mol, aa2.AtomSymbol, *a);
         if (a->getFormalCharge() != aa2.Charge)
           a->setFormalCharge(aa2.Charge);
         if (a->getNumRadicalElectrons() != aa2.Radical)
@@ -219,9 +226,8 @@ bool TransformAugmentedAtoms(
           const Ligand &ligand = aa2.Ligands[l];
           {
 // AVALON pattern.c:154
-//            if (!AtomSymbolMatch(al->getSymbol(), ligand.AtomSymbol) ||
-//                std::string::npos != ligand.AtomSymbol.find(',')) {
-              applyAtomSymbolList(mol, ligand.AtomSymbol, *al);
+              if (aa1.Ligands[l].AtomSymbol != ligand.AtomSymbol)
+                applyAtomSymbolList(mol, ligand.AtomSymbol, *al);
 //            }
           }
           if (al->getFormalCharge() != ligand.Charge)
@@ -231,7 +237,7 @@ bool TransformAugmentedAtoms(
           
           if (BT_NONE == ligand.BondType)  // remove bond
             bondsToRemove.push_back(
-                std::pair<unsigned, unsigned>(j, neighbors[j][l].AtomIdx));
+                std::pair<unsigned, unsigned>(j, neighbours[j][l].AtomIdx));
           else if (aa1.Ligands[l].BondType != ligand.BondType)
             mol.getBondWithIdx(match_b[l])->setBondType(
                                         convertBondType(ligand.BondType));
@@ -525,12 +531,12 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
     if (verbose) {
       verboseAtom(mol, i, neighbours);
     }
-    unsigned int j = 0;
+    unsigned j = 0;
     for (; j < good_atoms.size(); j++) {
       // check for ring state of central atom. Ring matches to ring only
       if (good_atoms[j].Topology == RING && 0 == atom_status[i]) {
         // DEBUG:
-        if (verbose && j >= 12 && j <= 21 &&
+        if (verbose && //j >= 12 && j <= 21 &&
             mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
           BOOST_LOG(rdInfoLog) << "UNMATCHED ring state RING of atom idx=" << i
                                << " " << mol.getAtomWithIdx(i)->getSymbol()
@@ -539,7 +545,7 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       }
       if (good_atoms[j].Topology == CHAIN && 0 != atom_status[i]) {
         // DEBUG:
-        if (verbose && j >= 12 && j <= 21 &&
+        if (verbose && //j >= 12 && j <= 21 &&
             mol.getAtomWithIdx(i)->getAtomicNum() == 6)  // 'C'
           BOOST_LOG(rdInfoLog) << "UNMATCHED ring state CHAIN of atom idx=" << i
                                << " " << mol.getAtomWithIdx(i)->getSymbol()
@@ -573,10 +579,12 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       //                             << " ret FALSE\n";
     }
     if (verbose && nmatch == prevn)  // UNMATCHED atom
-      BOOST_LOG(rdInfoLog) << "UNMATCHED atom idx=" << i << " "
-                           << mol.getAtomWithIdx(i)->getSymbol()
-                           << " status=" << atom_status[i]
-                           << " nmatch=" << nmatch << "\n";
+      BOOST_LOG(rdInfoLog)  << "UNMATCHED atom idx=" << i << " "
+                            << mol.getAtomWithIdx(i)->getSymbol()
+                            << " status=" << atom_status[i]
+                            << " nmatch=" << nmatch << std::endl
+                            << LogNeighbourhood(mol, i, neighbours)
+                            << std::endl;
 
     if (verbose && j == good_atoms.size()) {  // failed this atom .. log it
       BOOST_LOG(rdWarningLog) << LogNeighbourhood(mol, i, neighbours)

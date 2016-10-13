@@ -15,6 +15,7 @@
 #include "../SmilesParse/SmilesWrite.h"
 #include "../SmilesParse/SmartsWrite.h"
 #include "../Substruct/SubstructMatch.h"
+#include "../../RDGeneral/BadFileException.h"
 
 #include "StructChecker.h"
 #include "Stereo.h"
@@ -465,7 +466,12 @@ void testCheckAtomFiles() {
       "Substance_310925001_310950000-021440.sdf",
       "Substance_310925001_310950000-021442.sdf",
   };
-
+  unsigned ref[] = {
+      (StructChecker::ATOM_CHECK_FAILED | StructChecker::TRANSFORMED),
+      0,
+      0,
+      0,
+  };
   StructCheckerOptions options;
   doLoadOptionsFromFiles(options);
 //  options.Verbose = true;
@@ -488,7 +494,7 @@ void testCheckAtomFiles() {
     BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
     BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(
                                            flags) << "\n";
-    //      TEST_ASSERT(0 == flags);
+    TEST_ASSERT(flags == ref[i]);
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -507,7 +513,7 @@ void testCheckMatch() {
   BOOST_LOG(rdInfoLog) << "TEST AtomSymbolMatch(): " << symbol << ", "
                        << pattern << (res ? " = TRUE" : " = FALSE")
                        << std::endl;
-  //    TEST_ASSERT(res);
+  TEST_ASSERT(res);
 
   BOOST_LOG(rdInfoLog) << "TEST AAMatch(). atom 0 in mol: CO. AugmentedAtom "
                           "with Ligands: C(-N,O,P,S,I+1)\n";
@@ -524,7 +530,7 @@ void testCheckMatch() {
   res = AAMatch(*mol, 0, aa[0], atom_ring_status, nbp, true);
   BOOST_LOG(rdInfoLog) << "AAMatch() res" << (res ? " = TRUE" : " = FALSE")
                        << std::endl;
-  //    TEST_ASSERT(res);
+  TEST_ASSERT(res);
 
   StructCheckerOptions options;
 //  options.Verbose = true;
@@ -571,7 +577,7 @@ void testNitro() {
   unsigned flags = chk.checkMolStructure(*rwmol);
   // N+1 should match N+1(=N,O)(-N,O-1)(-C,N,S) but doesn't
   std::cerr << "flags " << flags << std::endl;
-  TEST_ASSERT(!(flags & StructChecker::ATOM_CHECK_FAILED));
+  TEST_ASSERT(0==(flags & StructChecker::ATOM_CHECK_FAILED));
 }
 
 void testSpecificExamples() {
@@ -793,6 +799,45 @@ void testAugmentedAtomTranslationsToAtomListQuery() {
     BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testCarboxylicAcids() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+    BOOST_LOG(rdInfoLog) << "testCarboxylicAcids. "
+                  "Substance_310925001_310950000-000075-000075\n";
+    const std::string rdbase = getenv("RDBASE") ? getenv("RDBASE") : ".";
+    const std::string testDataDir = rdbase + "/Code/GraphMol/StructChecker/test/";
+    const std::string sdf = testDataDir +
+        "Substance_310925001_310950000-000075-000075_Transf_Acidis.sdf";
+
+    StructCheckerOptions options;
+    // > <EXPECTED>
+    // set(['transformed', 'fragments_found'])
+
+    // Enable TransformAugmentedAtoms():
+    doLoadOptionsFromFiles(options);     // for 'transformed'
+    options.RemoveMinorFragments = true; // for 'fragments_found'
+    options.Verbose = true;
+    StructChecker chk(options);
+
+    try {
+        RWMOL_SPTR mol(MolFileToMol(sdf));
+        TEST_ASSERT(mol.get()); // never
+        std::string smiles = RDKit::MolToSmiles(*mol);
+        BOOST_LOG(rdInfoLog) << smiles << "\n";
+        // C=CC(C1=CC(=O)C=CC1=O)c1ccccc1.Cc1ccc(Cl)c(Nc2ccccc2C(=O)[O-])c1Cl.[Na+]
+        unsigned flags = chk.checkMolStructure(*mol.get());
+        BOOST_LOG(rdInfoLog) << smiles << "\n";
+        BOOST_LOG(rdInfoLog) << MolToSmiles(*mol) << "\n";
+        BOOST_LOG(rdInfoLog) << "RES: " << StructChecker::StructureFlagsToString(
+            flags) << "\n";
+        TEST_ASSERT(0==(flags & StructChecker::ATOM_CHECK_FAILED));
+        BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+    }
+    catch(RDKit::BadFileException &e) {
+      BOOST_LOG(rdInfoLog) << "caught RDKit::BadFileException"<<e.message()<<"\n"
+            << strerror(errno) << "\n" << sdf <<"\n";
+    }
+}
+
 
 //==============================================================================
 
@@ -827,6 +872,7 @@ int main(int argc, const char* argv[]) {
   testTransformTau();
   testTransformAtoms();
   testAugmentedAtomTranslationsToAtomListQuery();
+  testCarboxylicAcids();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return 0;

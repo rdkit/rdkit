@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "../SmilesParse/SmilesWrite.h"
+#include "../SmilesParse/SmilesWrite.h"
 #include "StructChecker.h"
 #include "Pattern.h"
 #include "Stereo.h"
@@ -44,20 +46,28 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
               ;//new_data_list = ConvertSTEXTToData(mol, new_data_list);
   */
   if (!Options.AugmentedAtomPairs.empty()) {
-    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs, Options.Verbose))
+    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs, Options.Verbose)) {
       flags |= TRANSFORMED;
+      if (Options.Verbose)
+          BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
+    }
   }
 
   unsigned stereo_result = DubiousStereochemistry(mol);
   if (0 != (FixDubious3DMolecule(mol) & CONVERTED_TO_2D)) {
     stereo_result = 1;
     flags |= DUBIOUS_STEREO_REMOVED;
+    if (Options.Verbose)
+      BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
   }
 
   if (Options.RemoveMinorFragments) {
     AddMWMF(mol, true);  // Add mol mass data field "MW_PRE"
     if (StripSmallFragments(mol, Options.Verbose)) {
       flags |= FRAGMENTS_FOUND;
+      if (Options.Verbose)
+        BOOST_LOG(rdInfoLog) << "Striped SmallFragments"
+          << MolToSmiles(mol) << "\n";
     }
     AddMWMF(mol, false);  // Add mol mass data field "MW_POST"
   }
@@ -74,7 +84,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
       flags |= TAUTOMER_TRANSFORMED;
       if (Options.Verbose)
         BOOST_LOG(rdInfoLog) << "molecule: has been tautomerized with rule "
-                             << i << "\n";
+                             << i << ":\n" << MolToSmiles(mol) << "\n";
       //                sprintf(msg_buffer,"%10s: has been tautomerized with
       //                rule '%s'", mp->name, from_tautomer[i]->name);
       //                AddMsgToList(msg_buffer);
@@ -107,12 +117,19 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     unsigned ndeprot;
     unsigned nrefine;
     ChargeFix ch(Options, mol);
-    if (ch.rechargeMolecule(ndeprot, nrefine)) flags |= RECHARGED;
+    if (ch.rechargeMolecule(ndeprot, nrefine)) {
+      flags |= RECHARGED;
+      if (Options.Verbose)
+        BOOST_LOG(rdInfoLog) << "Recharged Molecule:" << MolToSmiles(mol) << "\n";
+    }
   }
   //
   const double clashLimit = Options.CollisionLimitPercent/100.0;
-  if (Options.CheckCollisions && AtomClash(mol, clashLimit))
+  if (Options.CheckCollisions && AtomClash(mol, clashLimit)) {
     flags |= ATOM_CLASH;
+    if (Options.Verbose)
+      BOOST_LOG(rdInfoLog) << "AtomClash done:" << MolToSmiles(mol) << "\n";
+  }
 
   if (!Options.GoodAtoms.empty())
     if (!CheckAtoms(mol, Options.GoodAtoms, Options.Verbose))
