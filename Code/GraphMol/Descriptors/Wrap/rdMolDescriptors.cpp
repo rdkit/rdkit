@@ -112,21 +112,20 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
 python::list RDFs(const RDKit::ROMol &mol, int confId) {
-  std::vector<unsigned int> res;
+  std::vector<double> res;
   res = RDKit::Descriptors::RDF(mol, confId);
   python::list pyres;
-  BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
 
-
 python::list MORSEs(const RDKit::ROMol &mol, int confId) {
-  std::vector<unsigned int> res;
+  std::vector<double> res;
   res = RDKit::Descriptors::MORSE(mol, confId);
 
   python::list pyres;
-  BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 

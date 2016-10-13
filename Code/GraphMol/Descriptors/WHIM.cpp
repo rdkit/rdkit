@@ -45,7 +45,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
-#include "MORSE.h"
+#include "WHIM.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
@@ -65,9 +65,9 @@ void ContainerInsert(T1 t1, T2 t2)
     t1.insert(t1.end(), t2.begin(), t2.end());
 }
 
-double Pol1[]={0.67,0,24.3,5.60,3.03,1.76,1.10,0.80,0.56,0,23.6,10.6,6.80,5.38,3.63,2.90,2.18,0,43.4,22.8,0,0,0,11.60,9.40,8.40,7.50,6.80,6.10,7.10,8.12,6.07,4.31,3.73,3.05,0,47.3,27.6,0,0,0,12.80,0,0,0,0,7.20,7.20,10.20,7.70,6.60,5.50,5.35,0,0,0,0,0,0,0,0,0,0,23.50,0,0,0,0,0,0,0,0,0,0,0,0,0,6.50,5.80,5.70,7.60,6.80,7.40};
-double ElectroNeg1[]={2.59, 0, 0.89, 1.81, 2.28, 2.75, 3.19, 3.65, 4.0, 0, 0.56, 1.32, 1.71, 2.14, 2.52, 2.96, 3.48, 0, 0.45, 0.95, 0, 0, 0, 1.66, 2.2, 2.2, 2.56, 1.94, 1.95, 2.23, 2.42, 2.62, 2.82, 3.01, 3.22, 0, 0.31, 0.72, 0, 0, 0, 1.15, 0, 0, 0, 0, 1.83, 1.98, 2.14, 2.3, 2.46, 2.62, 2.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.28, 2.65, 2.2, 2.25, 2.29, 2.34};
-double VdW1[]={6.71, 0, 25.25, 0.0, 17.88, 22.45, 15.6, 11.49, 9.2, 0, 49.0, 21.69, 36.51, 31.98, 26.52, 24.43, 22.45, 0, 87.11, 0.0, 0, 0, 0, 44.6, 43.4, 41.05, 35.04, 17.16, 11.49, 11.25, 27.39, 28.73, 26.52, 28.73, 31.06, 0, 0.0, 0.0, 0, 0, 0, 33.51, 0, 0, 0, 0, 21.31, 16.52, 30.11, 45.83, 38.79, 36.62, 38.79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22.45, 19.16, 15.6, 31.54, 34.53, 38.79};
+double Pol2[]={0.67,0,24.3,5.60,3.03,1.76,1.10,0.80,0.56,0,23.6,10.6,6.80,5.38,3.63,2.90,2.18,0,43.4,22.8,0,0,0,11.60,9.40,8.40,7.50,6.80,6.10,7.10,8.12,6.07,4.31,3.73,3.05,0,47.3,27.6,0,0,0,12.80,0,0,0,0,7.20,7.20,10.20,7.70,6.60,5.50,5.35,0,0,0,0,0,0,0,0,0,0,23.50,0,0,0,0,0,0,0,0,0,0,0,0,0,6.50,5.80,5.70,7.60,6.80,7.40};
+double ElectroNeg2[]={2.59, 0, 0.89, 1.81, 2.28, 2.75, 3.19, 3.65, 4.0, 0, 0.56, 1.32, 1.71, 2.14, 2.52, 2.96, 3.48, 0, 0.45, 0.95, 0, 0, 0, 1.66, 2.2, 2.2, 2.56, 1.94, 1.95, 2.23, 2.42, 2.62, 2.82, 3.01, 3.22, 0, 0.31, 0.72, 0, 0, 0, 1.15, 0, 0, 0, 0, 1.83, 1.98, 2.14, 2.3, 2.46, 2.62, 2.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.28, 2.65, 2.2, 2.25, 2.29, 2.34};
+double VdW2[]={6.71, 0, 25.25, 0.0, 17.88, 22.45, 15.6, 11.49, 9.2, 0, 49.0, 21.69, 36.51, 31.98, 26.52, 24.43, 22.45, 0, 87.11, 0.0, 0, 0, 0, 44.6, 43.4, 41.05, 35.04, 17.16, 11.49, 11.25, 27.39, 28.73, 26.52, 28.73, 31.06, 0, 0.0, 0.0, 0, 0, 0, 33.51, 0, 0, 0, 0, 21.31, 16.52, 30.11, 45.83, 38.79, 36.62, 38.79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22.45, 19.16, 15.6, 31.54, 34.53, 38.79};
 
 
 namespace RDKit {
@@ -110,7 +110,7 @@ std::vector<double> GetRelativePol(const ROMol& mol){
   std::vector<double> pol(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    pol[i]=Pol1[mol.getAtomWithIdx(i)->getAtomicNum()]/Pol1[6];
+    pol[i]=Pol2[mol.getAtomWithIdx(i)->getAtomicNum()]/Pol2[6];
   }
 
   return pol;
@@ -123,7 +123,7 @@ std::vector<double> GetRelativeElectroNeg(const ROMol& mol){
   std::vector<double> REN(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    REN[i]=ElectroNeg1[mol.getAtomWithIdx(i)->getAtomicNum()]/ElectroNeg1[6];
+    REN[i]=ElectroNeg2[mol.getAtomWithIdx(i)->getAtomicNum()]/ElectroNeg2[6];
   }
 
   return REN;
@@ -136,7 +136,7 @@ std::vector<double> GetRelativeVdW(const ROMol& mol){
   std::vector<double> vdw(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    vdw[i]=VdW1[mol.getAtomWithIdx(i)->getAtomicNum()]/VdW1[6];
+    vdw[i]=VdW2[mol.getAtomWithIdx(i)->getAtomicNum()]/VdW2[6];
   }
 
   return vdw;
@@ -147,7 +147,7 @@ std::vector<double> GetAbsPol(const ROMol& mol){
   std::vector<double> pol(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-      pol[i]=Pol1[mol.getAtomWithIdx(i)->getAtomicNum()];
+      pol[i]=Pol2[mol.getAtomWithIdx(i)->getAtomicNum()];
   }
 
   return pol;
@@ -156,10 +156,10 @@ std::vector<double> GetAbsPol(const ROMol& mol){
 
 
 
-std::vector<std::vector<double> > GetGeometricalDistanceMatrix(const std::vector<RDGeom::Point3D> &points){
+std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<RDGeom::Point3D> &points){
     int numAtoms= points.size();
 
-    std::vector<std::vector<double> > res(numAtoms,std::vector<double>(numAtoms,0));
+    std::vector<std::vector<double>> res(numAtoms,std::vector<double>(numAtoms,0));
     for( int i=0; i<numAtoms; ++i){
         for( int j=i+1; j<numAtoms; ++j){
             res[i][j]=getAtomDistance(points[i], points[j]);
@@ -172,13 +172,67 @@ std::vector<std::vector<double> > GetGeometricalDistanceMatrix(const std::vector
 }
 
 
+std::vector<std::vector<double>> GetCenterMatrix(std::vector<std::vector<double>> Mat){
+    int matsize=Mat.size();
+    std::vector<std::vector<double>> res(matsize,std::vector<double>(matsize,0));
+
+    Eigen::MatrixXd mat(matsize,matsize);
+    Eigen::VectorXd v(matsize);
+
+  for (int i = 0; i < matsize; i++)
+      mat.row(i) = VectorXd::Map(&Mat[i][0],Mat[i].size);
+
+
+   // mat=Mat;
+/*
+   // get sum by row
+    for( int i=0; i<matsize; ++i){
+        for( int j=0; j<matsize; ++j){
+            mat(i)(j)=Mat[i][j];
+          }
+    }
+  */
+   // try using eigen 
+    v = mat.colwise().mean();
+    mat=mat.colwise() - v;
+/*
+    for( int i=0; i<matsize; ++i){
+        for( int j=0; j<matsize; ++j){
+             res[i][j]=mat(i)(j);
+          }
+    }*/
+
+    res=mat;
+
+/*
+    // convert sum to average
+    for( int i=0; i<matsize; ++i){
+            average[i]=average[i]/matsize;
+    }
+
+    // center the matrix
+    for( int i=0; i<matsize; ++i){
+        for( int j=0; j<matsize; ++j){
+             res[i][j]=Mat[i][j]-average[i];
+          }
+    }
+*/
+
+
+    return res;
+
+}
+
+
+
+
 
 std::vector<double> CalcUnweightedMORSE(const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
    int numAtoms = conf.getNumAtoms();
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-    std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+    std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
     for (int i=0;i<30;i++) {
         double res=0;
@@ -201,7 +255,7 @@ std::vector<double> CalcChargeMORSE(const ROMol& mol,const Conformer &conf,const
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
    std::vector<double>  charges = GetCharges(mol);
 
     for (int i=0;i<30;i++) {
@@ -223,7 +277,7 @@ std::vector<double> CalcMassMORSE(const ROMol& mol,const Conformer &conf,const s
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
    std::vector<double>  Mass;
     for (int p=0; p<numAtoms;p++) {
       Mass[p]=mol.getAtomWithIdx(p)->getMass();
@@ -249,7 +303,7 @@ std::vector<double> CalcAtomNumMORSE(const ROMol& mol,const Conformer &conf,cons
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
    std::vector<double>  AN;
     for (int p=0; p<numAtoms;p++) {
       AN[p]=mol.getAtomWithIdx(p)->getAtomicNum();
@@ -276,7 +330,7 @@ std::vector<double> CalcPolMORSE(const ROMol& mol,const Conformer &conf,const st
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
    std::vector<double> RelativePol = GetRelativePol(mol);
 
@@ -302,7 +356,7 @@ std::vector<double> CalcElectroNegMORSE(const ROMol& mol,const Conformer &conf,c
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
    std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
 
@@ -327,7 +381,7 @@ std::vector<double> CalcVdWvolMORSE(const ROMol& mol,const Conformer &conf,const
 
    std::vector<double>  R = getG(30);
    std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
    std::vector<double> RelativeVdW = GetRelativeVdW(mol);
 
@@ -351,7 +405,7 @@ std::vector<double> CalcVdWvolMORSE(const ROMol& mol,const Conformer &conf,const
 } //end of anonymous namespace
 
 
-std::vector<double> MORSE(const ROMol& mol,int confId){
+std::vector<double> WHIM(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 

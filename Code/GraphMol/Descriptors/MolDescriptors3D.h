@@ -14,5 +14,7 @@
 #include <GraphMol/Descriptors/PBF.h>
 #include <GraphMol/Descriptors/RDF.h>
 #include <GraphMol/Descriptors/MORSE.h>
+#include <GraphMol/Descriptors/WHIM.h>
+
 #include <GraphMol/Descriptors/PMI.h>
 #endif

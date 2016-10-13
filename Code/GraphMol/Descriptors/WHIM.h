@@ -41,15 +41,15 @@
 // Modifications by Greg Landrum for inclusion in the RDKit core, September 2016
 // Adding RBF by Guillaume Godin
 
-#ifndef MORSERDKIT_H_SEPT2016
-#define MORSERDKIT_H_SEPT2016
+#ifndef PBFRDKIT_H_SEPT2016
+#define PBFRDKIT_H_SEPT2016
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
-    const std::string MORSEVersion = "1.0.0";
-    std::vector<double> MORSE(const ROMol&,int confId=-1);
+    const std::string WHIMVersion = "1.0.0";
+    std::vector<double> WHIM(const ROMol&,int confId=-1);
   }
 }
 #endif
