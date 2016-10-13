@@ -69,12 +69,9 @@ double Pol[]={0.67,0,24.3,5.60,3.03,1.76,1.10,0.80,0.56,0,23.6,10.6,6.80,5.38,3.
 double ElectroNeg[]={2.59, 0, 0.89, 1.81, 2.28, 2.75, 3.19, 3.65, 4.0, 0, 0.56, 1.32, 1.71, 2.14, 2.52, 2.96, 3.48, 0, 0.45, 0.95, 0, 0, 0, 1.66, 2.2, 2.2, 2.56, 1.94, 1.95, 2.23, 2.42, 2.62, 2.82, 3.01, 3.22, 0, 0.31, 0.72, 0, 0, 0, 1.15, 0, 0, 0, 0, 1.83, 1.98, 2.14, 2.3, 2.46, 2.62, 2.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.28, 2.65, 2.2, 2.25, 2.29, 2.34};
 double VdW[]={6.71, 0, 25.25, 0.0, 17.88, 22.45, 15.6, 11.49, 9.2, 0, 49.0, 21.69, 36.51, 31.98, 26.52, 24.43, 22.45, 0, 87.11, 0.0, 0, 0, 0, 44.6, 43.4, 41.05, 35.04, 17.16, 11.49, 11.25, 27.39, 28.73, 26.52, 28.73, 31.06, 0, 0.0, 0.0, 0, 0, 0, 33.51, 0, 0, 0, 0, 21.31, 16.52, 30.11, 45.83, 38.79, 36.62, 38.79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22.45, 19.16, 15.6, 31.54, 34.53, 38.79};
 
-
 namespace RDKit {
 namespace Descriptors{
-
 namespace {
-
 
 
 std::vector<double> getG(int n){
@@ -84,8 +81,6 @@ std::vector<double> getG(int n){
   }
   return res;
 }
-
-
 
 double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2){
   double res=0;
@@ -336,9 +331,10 @@ std::vector<double> RDF(const ROMol& mol,int confId){
     points.push_back(conf.getAtomPos(i));
   }
 
-  std::vector<double> res;
+ // std::vector<double> res;
 
-  std::vector<double> res1=CalcUnweightedRDF(conf,points);
+  std::vector<double> res=CalcUnweightedRDF(conf,points);
+  /*
   ContainerInsert(res, res1);
 
   std::vector<double> res2=CalcMassRDF(mol,conf,points);
@@ -356,7 +352,7 @@ std::vector<double> RDF(const ROMol& mol,int confId){
   std::vector<double> res6=CalcVdWvolRDF(mol,conf,points);
   ContainerInsert(res, res6);
 
-
+  */
 
   return res;
 }

@@ -111,7 +111,7 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
-python::list RDFs(const RDKit::ROMol &mol, int confId) {
+python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   res = RDKit::Descriptors::RDF(mol, confId);
   python::list pyres;
@@ -120,7 +120,7 @@ python::list RDFs(const RDKit::ROMol &mol, int confId) {
 }
 
 
-python::list MORSEs(const RDKit::ROMol &mol, int confId) {
+python::list calcMORSEs(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   res = RDKit::Descriptors::MORSE(mol, confId);
 
@@ -1245,18 +1245,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 
 
-  python::scope().attr("_CalcRDF_version") ="0.0.1";
-  docString =
-      "Returns the RDF vector (radial distribution fonction) descriptors";
-  python::def("CalcRDF", RDFs,
+  python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
+  docString ="Returns the RDF vector (radial distribution fonction) descriptors";
+  python::def("CalcRDF", calcRDFs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
 
-  python::scope().attr("_CalcMORSE_version") ="0.0.1";
-  docString =
-      "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
-  python::def("CalcRDF", MORSEs,
+  python::scope().attr("_CalcMORSE_version") =  RDKit::Descriptors::MORSEVersion;
+
+  docString = "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
+  python::def("CalcMORSE", calcMORSEs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
