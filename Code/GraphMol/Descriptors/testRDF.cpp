@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -17,35 +18,38 @@
 #include <algorithm>
 #include <fstream>
 
+
 #include <GraphMol/Descriptors/RDF.h>
 
 void testRDF(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Basic RDF tests." << std::endl;
 
-  std::string pathName = getenv("RDBASE");
+  std::cout << "start\n";
+
+  std::string pathName = "/Users/mbp/Github/rdkit_mine";
   std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
   RDKit::SDMolSupplier reader(sdfName,true,false);
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.out";
-  std::ifstream instrm(fName.c_str());
+  std::cout << "read file\n";
+
   int nDone=0;
   while(!reader.atEnd()){
+    ++nDone;
+
     RDKit::ROMol *m=reader.next();
-    TEST_ASSERT(m);
-    std::string nm;
-    m->getProp("_Name",nm);
-    //std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
-    std::vector<double> drdf=RDKit::Descriptors::RDF(*m);
+    std::cout << "read molecule:\n"+nDone;
 
-
-    BOOST_LOG(rdErrorLog) << drdf.size() << std::endl;
-
+    
+    std::vector<double> drdf= RDKit::Descriptors::RDF(*m,-1);
+   
     delete m;
     ++nDone;
+
+
+
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
 
 
 int main(int argc, char *argv[])

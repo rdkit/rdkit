@@ -84,8 +84,13 @@ std::vector<double> getG(int n){
 
 double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2){
   double res=0;
+
+  double X1[]={x1.x,x1.y,x1.z};
+  double X2[]={x2.x,x2.y,x2.z};
+
+
   for (int i=0;i<3;i++) {
-    res+=pow(x1[i]-x2[i],2);
+    res+=pow(X1[i]-X2[i],2);
   }
   return sqrt(res);
 }
@@ -105,7 +110,7 @@ std::vector<double> GetRelativePol(const ROMol& mol){
   std::vector<double> pol(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    pol[i]=Pol[mol.getAtomWithIdx(i)->getAtomicNum()]/Pol[6];
+    pol[i]=Pol[mol.getAtomWithIdx(i)->getAtomicNum()]/Pol[5];
   }
 
   return pol;
@@ -118,7 +123,7 @@ std::vector<double> GetRelativeElectroNeg(const ROMol& mol){
   std::vector<double> REN(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    REN[i]=ElectroNeg[mol.getAtomWithIdx(i)->getAtomicNum()]/ElectroNeg[6];
+    REN[i]=ElectroNeg[mol.getAtomWithIdx(i)->getAtomicNum()]/ElectroNeg[5];
   }
 
   return REN;
@@ -131,7 +136,7 @@ std::vector<double> GetRelativeVdW(const ROMol& mol){
   std::vector<double> vdw(numAtoms, 0);
   for( int i=0; i<numAtoms; ++i){
 
-    vdw[i]=VdW[mol.getAtomWithIdx(i)->getAtomicNum()]/VdW[6];
+    vdw[i]=VdW[mol.getAtomWithIdx(i)->getAtomicNum()]/VdW[5];
   }
 
   return vdw;
@@ -320,7 +325,10 @@ std::vector<double> CalcVdWvolRDF(const ROMol& mol,const Conformer &conf,const s
 
 
 std::vector<double> RDF(const ROMol& mol,int confId){
+  std::cout << "ici";
+
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
+  std::cout << "start";
   int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
