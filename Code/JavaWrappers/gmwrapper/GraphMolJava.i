@@ -68,7 +68,11 @@
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
+#ifdef SWIGWIN
 %include "../msvc_stdint.i"
+#else
+%include "../stdint.i"
+#endif
 %include "std_string.i"
 %include "std_list.i"
 %include "extend_std_vector.i"
