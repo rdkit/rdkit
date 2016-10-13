@@ -35,7 +35,8 @@ void testRDF(){
     std::string nm;
     m->getProp("_Name",nm);
     //std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
-    std::vector<double> dpbf=RDKit::Descriptors::RDF(*m);
+    std::vector<double> drdf=RDKit::Descriptors::RDF(*m);
+
 
     delete m;
     ++nDone;
