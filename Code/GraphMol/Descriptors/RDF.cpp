@@ -77,7 +77,7 @@ namespace {
 std::vector<double> getG(int n){
   std::vector<double> res;
   for (int i=0;i<n;i++) {
-    res[i] = 1+i*n/2;
+    res[i] = 1+i*n*0.5;
   }
   return res;
 }
@@ -326,12 +326,17 @@ std::vector<double> CalcVdWvolRDF(const ROMol& mol,const Conformer &conf,const s
 
 std::vector<double> RDF(const ROMol& mol,int confId){
   std::cout << "ici";
+  std::vector<double>  reserror(std::vector<double>(30,0));
+
 
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   std::cout << "start";
   int numAtoms = mol.getNumAtoms();
+  if(numAtoms<4) return reserror;
+
 
   const Conformer &conf = mol.getConformer(confId);
+  if(!conf.is3D()) return  reserror ;
 
   std::vector<RDGeom::Point3D> points;
   points.reserve(numAtoms);

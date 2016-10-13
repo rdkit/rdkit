@@ -23,22 +23,22 @@
 
 void testRDF(){
 
-  std::cout << "start\n";
+  std::cout << "=>start test rdf\n";
 
   std::string pathName = "/Users/mbp/Github/rdkit_mine";
   std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
   RDKit::SDMolSupplier reader(sdfName,true,false);
-  std::cout << "read file\n";
+  std::cout << "=>read file\n";
 
   int nDone=0;
   while(!reader.atEnd()){
     ++nDone;
 
     RDKit::ROMol *m=reader.next();
-    std::cout << "read molecule:\n"+nDone;
+    std::cout << "=>read molecule:\n"+nDone;
 
     
-    std::vector<double> drdf= RDKit::Descriptors::RDF(*m,-1);
+    std::vector<double> drdf= RDKit::Descriptors::RDF(*m);
    
     delete m;
     ++nDone;
