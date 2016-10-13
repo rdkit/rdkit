@@ -30,7 +30,7 @@ RDGeom::Point3D GetAtomPos(const Conformer *conf, unsigned int aid) {
 }
 
 PyObject* GetPos(const Conformer *conf) {
-    RDGeom::POINT3D_VECT pos = conf->getPositions();
+    const RDGeom::POINT3D_VECT &pos = conf->getPositions();
 
     // define a 2D array with the following size
     npy_intp dims[2];

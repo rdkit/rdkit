@@ -123,5 +123,23 @@ class TestCase(unittest.TestCase):
     self.assertTrue(confs == ())
 
 
+  def test5PositionsArray(self):
+    smi = 'c1ccccc1'
+    m = Chem.MolFromSmiles(smi)
+    addConf(m)
+
+    confs = m.GetConformers()
+    self.assertTrue(len(confs) == 1)
+
+    for conf in confs:
+      pos = conf.GetPositions()
+      self.assertTrue(pos.shape, (6,3))
+
+    m.RemoveAllConformers()
+    self.assertTrue(m.GetNumConformers() == 0)
+    confs = m.GetConformers()
+    self.assertTrue(confs == ())
+
+
 if __name__ == '__main__':
   unittest.main()
