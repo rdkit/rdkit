@@ -38,6 +38,8 @@ void testRDF(){
     std::vector<double> drdf=RDKit::Descriptors::RDF(*m);
 
 
+    BOOST_LOG(rdErrorLog) << drdf.size() << std::endl;
+
     delete m;
     ++nDone;
   }

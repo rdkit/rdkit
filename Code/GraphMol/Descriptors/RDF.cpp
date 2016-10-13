@@ -59,6 +59,11 @@
 
 
 
+template <class T1, class T2>
+void ContainerInsert(T1 t1, T2 t2)
+{
+    t1.insert(t1.end(), t2.begin(), t2.end());
+}
 
 double Pol[]={0.67,0,24.3,5.60,3.03,1.76,1.10,0.80,0.56,0,
 23.6,10.6,6.80,5.38,3.63,2.90,2.18,0,43.4,
@@ -340,15 +345,29 @@ std::vector<double> RDF(const ROMol& mol,int confId){
     points.push_back(conf.getAtomPos(i));
   }
 
+  std::vector<double> res;
+
   std::vector<double> res1=CalcUnweightedRDF(conf,points);
+  ContainerInsert(res, res1);
+
   std::vector<double> res2=CalcMassRDF(mol,conf,points);
+  ContainerInsert(res, res2);
+
   std::vector<double> res3=CalcChargeRDF(mol,conf,points);
+  ContainerInsert(res, res3);
+
   std::vector<double> res4=CalcPolRDF(mol,conf,points);
+  ContainerInsert(res, res4);
+
   std::vector<double> res5=CalcElectroNegRDF(mol,conf,points);
+  ContainerInsert(res, res5);
+
   std::vector<double> res6=CalcVdWvolRDF(mol,conf,points);
+  ContainerInsert(res, res6);
 
 
-  return res1;
+
+  return res;
 }
 
 } // end of Descriptors namespace
