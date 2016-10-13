@@ -67,7 +67,7 @@ SWIG_ADD_MODULE(RDKFuncs "CSharp" GraphMolCSharp.i )
 SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       ${RDKit_THREAD_LIBS} )
 
-INSTALL(TARGETS RDKFuncs 
+INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
 
@@ -89,13 +89,4 @@ if(NOT WIN32)
      COMMENT "building mono dll"
    )
 else(NOT WIN32)
- if(CMAKE_SIZEOF_VOID_P MATCHES 4)
- else()
-  add_custom_target(myCSharpFixer
-     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fix_msvc_swig.py
-              "${swig_generated_sources}"
-     	    )
- 
-     add_dependencies(${SWIG_MODULE_RDKFuncs_REAL_NAME} myCSharpFixer)
- endif()
 endif(NOT WIN32)
