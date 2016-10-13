@@ -109,6 +109,28 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
   return python::make_tuple(logp, mr);
 }
 
+
+python::list RDFs(const RDKit::ROMol &mol, int confId) {
+  std::vector<unsigned int> res;
+  res = RDKit::Descriptors::RDF(mol, confId);
+  python::list pyres;
+  BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+
+
+python::list MORSEs(const RDKit::ROMol &mol, int confId) {
+  std::vector<unsigned int> res;
+  res = RDKit::Descriptors::MORSE(mol, confId);
+
+  python::list pyres;
+  BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+
+
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
     python::object fromAtoms, python::object ignoreAtoms,
@@ -493,6 +515,8 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
   return pyres;
 }
+
+
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
@@ -1215,6 +1239,25 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
+
+
+
+
+  python::scope().attr("_CalcRDF_version") ="0.0.1";
+  docString =
+      "Returns the RDF vector (radial distribution fonction) descriptors";
+  python::def("CalcRDF", RDFs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+
+  python::scope().attr("_CalcMORSE_version") ="0.0.1";
+  docString =
+      "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
+  python::def("CalcRDF", MORSEs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
   python::scope().attr("_CalcPBF_version") =
       RDKit::Descriptors::PBFVersion;
   docString =
