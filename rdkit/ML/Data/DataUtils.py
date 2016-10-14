@@ -38,7 +38,7 @@
  - *.dat files* contain the same information as .qdat files, but the variable
    values can be anything (floats, ints, strings).  **These files should
    still contain quant_bounds!**
-   
+
  - *.qdat.pkl file* contain a pickled (binary) representation of
    the data read in.  They stores, in order:
 
@@ -47,7 +47,7 @@
     2) A python list of lists with the quantization bounds
 
     3) A python list of the point names
-    
+
     4) A python list of lists with the data points
 
 """
@@ -61,7 +61,6 @@ from rdkit.six.moves import xrange, map
 from rdkit import RDConfig
 from rdkit.utils import fileutils
 from rdkit.ML.Data import MLData
-from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.DataStructs import BitUtils
 
 
@@ -152,7 +151,7 @@ def ReadQuantExamples(inFile):
 
       because this is reading a .qdat file, it assumed that all variable values
       are integers
-      
+
   """
   expr1 = re.compile(r'^#')
   expr2 = re.compile(r'[\ ]*|[\t]*')
@@ -224,7 +223,7 @@ def BuildQuantDataSet(fileName):
     **Returns**
 
       an _MLData.MLQuantDataSet_
-      
+
   """
   with open(fileName, 'r') as inFile:
     varNames, qBounds = ReadVars(inFile)
@@ -243,7 +242,7 @@ def BuildDataSet(fileName):
     **Returns**
 
       an _MLData.MLDataSet_
-      
+
   """
   with open(fileName, 'r') as inFile:
     varNames, qBounds = ReadVars(inFile)
@@ -343,7 +342,7 @@ def TakeEnsemble(vect, ensembleIds, isDataVect=False):
   >>> v = ['foo',10,20,30,40,50,1]
   >>> TakeEnsemble(v,(1,2,3),isDataVect=True)
   ['foo', 20, 30, 40, 1]
-  
+
 
 
   """
@@ -381,6 +380,7 @@ def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, 
       - this uses Dbase.DataUtils functionality
 
   """
+  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName, tableName, user, password)
   res = conn.GetData(fields=what, where=where, join=join, removeDups=dupCol, forceList=1)
   nPts = len(res)
@@ -541,7 +541,7 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
   if currFrac < frac:
     #
     # We're going to keep most of (all) the points with the target value,
-    #  We need to figure out how many of the other points we'll 
+    #  We need to figure out how many of the other points we'll
     #  toss out
     #
     nTgtFinal = nWithVal
@@ -652,7 +652,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
 
       - _examples_ are randomized in place
 
-      
+
   """
   nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
