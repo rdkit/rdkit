@@ -63,10 +63,7 @@
 #include <math.h>
 #include <Eigen/Dense>
 
-template <class T1, class T2>
-void ContainerInsert(T1 t1, T2 t2) {
-  t1.insert(t1.end(), t2.begin(), t2.end());
-}
+
 
 double Pol[] = {
     0.67,  0,    24.3, 5.60,  3.03, 1.76,  1.10, 0.80, 0.56, 0,    23.6, 10.6,
@@ -181,6 +178,7 @@ std::vector<std::vector<double> > GetGeometricalDistanceMatrix(
     }
   }
 
+
   return res;
 }
 
@@ -189,7 +187,7 @@ std::vector<double> CalcUnweightedRDF(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   for (int i = 0; i < 30; i++) {
@@ -211,7 +209,7 @@ std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   std::vector<double> charges = GetCharges(mol);
 
@@ -234,11 +232,11 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   std::vector<double> Mass;
   for (int p = 0; p < numAtoms; p++) {
-    Mass[p] = mol.getAtomWithIdx(p)->getMass();
+      Mass.push_back(mol.getAtomWithIdx(p)->getMass());
   }
 
   for (int i = 0; i < 30; i++) {
@@ -260,7 +258,7 @@ std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativePol = GetRelativePol(mol);
@@ -286,7 +284,7 @@ std::vector<double> CalcElectroNegRDF(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
@@ -311,7 +309,7 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
@@ -334,11 +332,11 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
 }  // end of anonymous namespace
 
 std::vector<double> RDF(const ROMol &mol, int confId) {
-  std::cout << "ici";
+  std::cout << "ici\n";
   std::vector<double> reserror(std::vector<double>(30, 0));
 
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  std::cout << "start";
+  std::cout << "start\n";
   int numAtoms = mol.getNumAtoms();
   if (numAtoms < 4) return reserror;
 
@@ -351,30 +349,30 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
     points.push_back(conf.getAtomPos(i));
   }
 
-  // std::vector<double> res;
 
-  std::vector<double> res = CalcUnweightedRDF(conf, points);
-  /*
-  ContainerInsert(res, res1);
+  std::vector<double> res1 = CalcUnweightedRDF(conf, points);
 
   std::vector<double> res2=CalcMassRDF(mol,conf,points);
-  ContainerInsert(res, res2);
+  
+  res1.insert(res1.end(),res2.begin(), res2.end());
+
 
   std::vector<double> res3=CalcChargeRDF(mol,conf,points);
-  ContainerInsert(res, res3);
+  res1.insert(res1.end(),res3.begin(), res3.end());
 
   std::vector<double> res4=CalcPolRDF(mol,conf,points);
-  ContainerInsert(res, res4);
+  res1.insert(res1.end(),res4.begin(), res4.end());
 
   std::vector<double> res5=CalcElectroNegRDF(mol,conf,points);
-  ContainerInsert(res, res5);
+  res1.insert(res1.end(),res5.begin(), res5.end());
 
   std::vector<double> res6=CalcVdWvolRDF(mol,conf,points);
-  ContainerInsert(res, res6);
+  res1.insert(res1.end(),res6.begin(), res6.end());
 
-  */
+  std::cout << "SIZE:" << res1.size();
 
-  return res;
+
+  return res1;
 }
 
 }  // end of Descriptors namespace
