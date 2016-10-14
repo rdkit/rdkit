@@ -127,7 +127,7 @@ std::vector<double> GetRelativePol(const ROMol &mol) {
 
   std::vector<double> pol(numAtoms, 0);
   for (int i = 0; i < numAtoms; ++i) {
-    pol[i] = Pol[mol.getAtomWithIdx(i)->getAtomicNum()] / Pol[5];
+    pol[i] = Pol[mol.getAtomWithIdx(i)->getAtomicNum()-1] / Pol[5];
   }
 
   return pol;
@@ -138,7 +138,7 @@ std::vector<double> GetRelativeElectroNeg(const ROMol &mol) {
 
   std::vector<double> REN(numAtoms, 0);
   for (int i = 0; i < numAtoms; ++i) {
-    REN[i] = ElectroNeg[mol.getAtomWithIdx(i)->getAtomicNum()] / ElectroNeg[5];
+    REN[i] = ElectroNeg[mol.getAtomWithIdx(i)->getAtomicNum()-1] / ElectroNeg[5];
   }
 
   return REN;
@@ -149,7 +149,7 @@ std::vector<double> GetRelativeVdW(const ROMol &mol) {
 
   std::vector<double> vdw(numAtoms, 0);
   for (int i = 0; i < numAtoms; ++i) {
-    vdw[i] = VdW[mol.getAtomWithIdx(i)->getAtomicNum()] / VdW[5];
+    vdw[i] = VdW[mol.getAtomWithIdx(i)->getAtomicNum()-1] / VdW[5];
   }
 
   return vdw;
@@ -159,7 +159,7 @@ std::vector<double> GetAbsPol(const ROMol &mol) {
   int numAtoms = mol.getNumAtoms();
   std::vector<double> pol(numAtoms, 0);
   for (int i = 0; i < numAtoms; ++i) {
-    pol[i] = Pol[mol.getAtomWithIdx(i)->getAtomicNum()];
+    pol[i] = Pol[mol.getAtomWithIdx(i)->getAtomicNum()-1];
   }
 
   return pol;
