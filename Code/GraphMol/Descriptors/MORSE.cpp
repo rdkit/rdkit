@@ -50,23 +50,15 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
-
 #include "MORSE.h"
-
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
-
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <boost/foreach.hpp>
 #include <math.h>
 #include <Eigen/Dense>
-
-template <class T1, class T2>
-void ContainerInsert(T1 t1, T2 t2) {
-  t1.insert(t1.end(), t2.begin(), t2.end());
-}
 
 double Pol1[] = {
     0.67,  0,    24.3, 5.60,  3.03, 1.76,  1.10, 0.80, 0.56, 0,    23.6, 10.6,
@@ -105,14 +97,6 @@ std::vector<double> getG(int n) {
     res[i] = 1 + i * 0.5;
   }
   return res;
-}
-
-double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2) {
-  double res = 0;
-  for (int i = 0; i < 3; i++) {
-    res += pow(x1[i] - x2[i], 2);
-  }
-  return sqrt(res);
 }
 
 std::vector<double> GetCharges(const ROMol &mol) {
@@ -166,35 +150,22 @@ std::vector<double> GetAbsPol(const ROMol &mol) {
   return pol;
 }
 
-std::vector<std::vector<double> > GetGeometricalDistanceMatrix(
-    const std::vector<RDGeom::Point3D> &points) {
-  int numAtoms = points.size();
 
-  std::vector<std::vector<double> > res(numAtoms,
-                                        std::vector<double>(numAtoms, 0));
-  for (int i = 0; i < numAtoms; ++i) {
-    for (int j = i + 1; j < numAtoms; ++j) {
-      res[i][j] = getAtomDistance(points[i], points[j]);
-      res[j][i] = res[i][j];
-    }
-  }
 
-  return res;
-}
-
-std::vector<double> CalcUnweightedMORSE(
-    const Conformer &conf, const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcUnweightedMORSE(const ROMol &mol,
+    const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   for (int i = 0; i < 30; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += sin(R[i] * DM[j][k]) / (R[i] * DM[j][k]);
+        res += sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -205,13 +176,13 @@ std::vector<double> CalcUnweightedMORSE(
 }
 
 std::vector<double> CalcChargeMORSE(
-    const ROMol &mol, const Conformer &conf,
-    const std::vector<RDGeom::Point3D> &points) {
+    const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
   std::vector<double> charges = GetCharges(mol);
 
   for (int i = 0; i < 30; i++) {
@@ -219,7 +190,7 @@ std::vector<double> CalcChargeMORSE(
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res +=
-            charges[j] * charges[k] * sin(R[i] * DM[j][k]) / (R[i] * DM[j][k]);
+            charges[j] * charges[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -229,13 +200,13 @@ std::vector<double> CalcChargeMORSE(
   return RDFres;
 }
 
-std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf,
-                                  const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
   std::vector<double> Mass(numAtoms);
   for (int p = 0; p < numAtoms; p++) {
     Mass.push_back(mol.getAtomWithIdx(p)->getMass());
@@ -245,7 +216,7 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf,
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += Mass[j] * Mass[k] * sin(R[i] * DM[j][k]) / (R[i] * DM[j][k]);
+        res += Mass[j] * Mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -256,13 +227,15 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf,
 }
 
 std::vector<double> CalcAtomNumMORSE(
-    const ROMol &mol, const Conformer &conf,
-    const std::vector<RDGeom::Point3D> &points) {
+    const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
+
   std::vector<double> AN(numAtoms);
   for (int p = 0; p < numAtoms; p++) {
     AN[p] = mol.getAtomWithIdx(p)->getAtomicNum();
@@ -272,7 +245,7 @@ std::vector<double> CalcAtomNumMORSE(
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += AN[j] * AN[k] * sin(R[i] * DM[j][k]) / (R[i] * DM[j][k]);
+        res += AN[j] * AN[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -282,13 +255,13 @@ std::vector<double> CalcAtomNumMORSE(
   return RDFres;
 }
 
-std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf,
-                                 const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativePol = GetRelativePol(mol);
 
@@ -296,8 +269,8 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf,
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativePol[j] * RelativePol[k] * sin(R[i] * DM[j][k]) /
-               (R[i] * DM[j][k]);
+        res += RelativePol[j] * RelativePol[k] * sin(R[i] * DM[j * numAtoms + k]) /
+               (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -308,13 +281,13 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf,
 }
 
 std::vector<double> CalcElectroNegMORSE(
-    const ROMol &mol, const Conformer &conf,
-    const std::vector<RDGeom::Point3D> &points) {
+    const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
 
@@ -323,7 +296,7 @@ std::vector<double> CalcElectroNegMORSE(
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res += RelativeElectroNeg[j] * RelativeElectroNeg[k] *
-               sin(R[i] * DM[j][k]) / (R[i] * DM[j][k]);
+               sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -334,13 +307,13 @@ std::vector<double> CalcElectroNegMORSE(
 }
 
 std::vector<double> CalcVdWvolMORSE(
-    const ROMol &mol, const Conformer &conf,
-    const std::vector<RDGeom::Point3D> &points) {
+    const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
 
@@ -348,8 +321,8 @@ std::vector<double> CalcVdWvolMORSE(
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativeVdW[j] * RelativeVdW[k] * sin(R[i] * DM[j][k]) /
-               (R[i] * DM[j][k]);
+        res += RelativeVdW[j] * RelativeVdW[k] * sin(R[i] * DM[j * numAtoms + k]) /
+               (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -363,32 +336,24 @@ std::vector<double> CalcVdWvolMORSE(
 
 std::vector<double> MORSE(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
 
-  std::vector<RDGeom::Point3D> points;
-  points.reserve(numAtoms);
-  for (int i = 0; i < numAtoms; ++i) {
-    points.push_back(conf.getAtomPos(i));
-  }
+  std::vector<double> res1 = CalcUnweightedMORSE(mol,conf);
 
-
-  std::vector<double> res1 = CalcUnweightedMORSE(conf, points);
-
-  std::vector<double> res2 = CalcMassMORSE(mol, conf, points);
+  std::vector<double> res2 = CalcMassMORSE(mol, conf);
   res1.insert(res1.end(),res2.begin(), res2.end());
 
-  std::vector<double> res3 = CalcChargeMORSE(mol, conf, points);
+  std::vector<double> res3 = CalcChargeMORSE(mol, conf);
   res1.insert(res1.end(),res3.begin(), res3.end());
 
-  std::vector<double> res4 = CalcPolMORSE(mol, conf, points);
+  std::vector<double> res4 = CalcPolMORSE(mol, conf);
   res1.insert(res1.end(),res4.begin(), res4.end());
 
-  std::vector<double> res5 = CalcElectroNegMORSE(mol, conf, points);
+  std::vector<double> res5 = CalcElectroNegMORSE(mol, conf);
   res1.insert(res1.end(),res5.begin(), res5.end());
 
-  std::vector<double> res6 = CalcVdWvolMORSE(mol, conf, points);
+  std::vector<double> res6 = CalcVdWvolMORSE(mol, conf);
   res1.insert(res1.end(),res6.begin(), res6.end());
 
 

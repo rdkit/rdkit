@@ -105,8 +105,6 @@ std::vector<double> getG(int n) {
   return res;
 }
 
-
-
 std::vector<double> GetCharges(const ROMol &mol) {
   std::vector<double> charges(mol.getNumAtoms(), 0);
   // use 12 iterations... can be more
@@ -158,8 +156,7 @@ std::vector<double> GetAbsPol(const ROMol &mol) {
 }
 
 
-std::vector<double> CalcUnweightedRDF(const ROMol &mol,
-    const Conformer &conf, const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcUnweightedRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -168,7 +165,6 @@ std::vector<double> CalcUnweightedRDF(const ROMol &mol,
   std::vector<double> RDFres;
   //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   double *DM = MolOps::get3DDistanceMat(mol,confId);
-
 
   for (int i = 0; i < 30; i++) {
     double res = 0;
@@ -185,8 +181,7 @@ std::vector<double> CalcUnweightedRDF(const ROMol &mol,
   return RDFres;
 }
 
-std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
-                                  const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -211,8 +206,7 @@ std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
   return RDFres;
 }
 
-std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
-                                const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -241,8 +235,7 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
   return RDFres;
 }
 
-std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
-                               const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -268,9 +261,7 @@ std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
   return RDFres;
 }
 
-std::vector<double> CalcElectroNegRDF(
-    const ROMol &mol, const Conformer &conf,
-    const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcElectroNegRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -296,8 +287,7 @@ std::vector<double> CalcElectroNegRDF(
   return RDFres;
 }
 
-std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
-                                  const std::vector<RDGeom::Point3D> &points) {
+std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
@@ -335,31 +325,23 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
   const Conformer &conf = mol.getConformer(confId);
   if (!conf.is3D()) return reserror;
 
-  std::vector<RDGeom::Point3D> points;
-  points.reserve(numAtoms);
-  for (int i = 0; i < numAtoms; ++i) {
-    points.push_back(conf.getAtomPos(i));
-  }
+  std::vector<double> res1 = CalcUnweightedRDF(mol,conf);
 
-
-  std::vector<double> res1 = CalcUnweightedRDF(mol,conf, points);
-    
-
-  std::vector<double> res2=CalcMassRDF(mol,conf,points);
+  std::vector<double> res2=CalcMassRDF(mol,conf);
   
   res1.insert(res1.end(),res2.begin(), res2.end());
 
 
-  std::vector<double> res3=CalcChargeRDF(mol,conf,points);
+  std::vector<double> res3=CalcChargeRDF(mol,conf);
   res1.insert(res1.end(),res3.begin(), res3.end());
 
-  std::vector<double> res4=CalcPolRDF(mol,conf,points);
+  std::vector<double> res4=CalcPolRDF(mol,conf);
   res1.insert(res1.end(),res4.begin(), res4.end());
 
-  std::vector<double> res5=CalcElectroNegRDF(mol,conf,points);
+  std::vector<double> res5=CalcElectroNegRDF(mol,conf);
   res1.insert(res1.end(),res5.begin(), res5.end());
 
-  std::vector<double> res6=CalcVdWvolRDF(mol,conf,points);
+  std::vector<double> res6=CalcVdWvolRDF(mol,conf);
   res1.insert(res1.end(),res6.begin(), res6.end());
 
 
