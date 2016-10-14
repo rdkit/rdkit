@@ -228,8 +228,8 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf) {
         res += Mass[j] * Mass[k] * exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
-
-      RDFres.push_back(round( 1000 * res / 144 ) / 1000);
+    // center mass to carbon =>  / 12.011 / 12.011
+      RDFres.push_back(round( 1000 * res / 12.011 / 12.011 ) / 1000);
   }
 
   return RDFres;
@@ -294,7 +294,6 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf) {
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
-  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
 

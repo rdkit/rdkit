@@ -219,9 +219,9 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
         res += Mass[j] * Mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
-    // 144 = 12*12 mass of the Carbon
+    // 144 = 12*12 mass of the Carbon in rdkit MC=12.011 caution
 
-    RDFres.push_back(round(1000 * res / 144) / 1000);
+    RDFres.push_back(round(1000 * res / 12.011 / 12.011) / 1000);
   }
 
   return RDFres;
