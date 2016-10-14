@@ -220,7 +220,7 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
       }
     }
 
-    RDFres.push_back(round( 1000 * res / 144) / 1000);
+    RDFres.push_back(round(1000 * res / 144) / 1000);
   }
 
   return RDFres;
@@ -238,7 +238,7 @@ std::vector<double> CalcAtomNumMORSE(
 
   std::vector<double> AN(numAtoms);
   for (int p = 0; p < numAtoms; p++) {
-    AN[p] = mol.getAtomWithIdx(p)->getAtomicNum();
+    AN.push_back(mol.getAtomWithIdx(p)->getAtomicNum());
   }
 
   for (int i = 0; i < 30; i++) {
