@@ -1,3 +1,4 @@
+
 /*
 * $Id: GraphMolJava.i 2141 2012-07-27 06:16:45Z glandrum $
 *
@@ -66,7 +67,11 @@
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
+#ifdef SWIGWIN
 %include "../msvc_stdint.i"
+#else
+%include "../stdint.i"
+#endif
 %include "std_string.i"
 %include "std_list.i"
 %include "extend_std_vector.i"

@@ -2,9 +2,6 @@ project (GraphMolCSharp)
 
 include_directories( ${RDKit_ExternalDir} )
 
-# requires python to fix broken swig .cxx files
-find_package(PythonInterp)
-
 # find the gmcs executables on non-windows systems:
 if(NOT WIN32)
   find_program(GMCS_EXE gmcs)
@@ -88,5 +85,4 @@ if(NOT WIN32)
      DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
      COMMENT "building mono dll"
    )
-else(NOT WIN32)
 endif(NOT WIN32)
