@@ -35,15 +35,12 @@ void testRDF(){
     ++nDone;
 
     RDKit::ROMol *m=reader.next();
-    std::cout << "=>read molecule:\n"+nDone;
-
+    std::cout << "=>read molecule:\n";
     
     std::vector<double> drdf= RDKit::Descriptors::RDF(*m);
    
     delete m;
     ++nDone;
-
-
 
   }
 
