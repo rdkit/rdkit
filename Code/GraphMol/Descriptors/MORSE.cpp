@@ -94,7 +94,7 @@ namespace {
 std::vector<double> getG(int n) {
   std::vector<double> res(n);
   for (int i = 0; i < n; i++) {
-    res[i] = 1 + i * 0.5;
+    res[i] = 1 + i;
   }
   return res;
 }
@@ -232,7 +232,7 @@ std::vector<double> CalcAtomNumMORSE(
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
 
   double *DM = MolOps::get3DDistanceMat(mol, confId);
@@ -242,7 +242,7 @@ std::vector<double> CalcAtomNumMORSE(
     AN.push_back(mol.getAtomWithIdx(p)->getAtomicNum());
   }
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -261,13 +261,13 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativePol = GetRelativePol(mol);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -287,13 +287,13 @@ std::vector<double> CalcElectroNegMORSE(
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -313,13 +313,13 @@ std::vector<double> CalcVdWvolMORSE(
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
