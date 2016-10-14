@@ -356,6 +356,8 @@ static bool ReadAAPairs(
   unsigned k = fscanf(fp, "%d", &n);
 
   char buffer[80];
+
+  // Reads the version from the first line in the file
   if (fgets(buffer, sizeof(buffer), fp)) {
     /*
                 int  vers_len;
@@ -446,8 +448,25 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
       throw "INTERNAL ERROR in default data";
     }
   }
+
+  std::vector<std::pair<AugmentedAtom, AugmentedAtom> > trans_pairs;
+  trans_pairs.resize(sizeof(DefaultAugmentedAtomTransforms)/
+                     sizeof(*DefaultAugmentedAtomTransforms));
+  for(size_t i=0; i< sizeof(DefaultAugmentedAtomTransforms)/
+                     sizeof(*DefaultAugmentedAtomTransforms); ++i) {
+    if (!StringToAugmentedAtom(DefaultAugmentedAtomTransforms[i].from,
+                               trans_pairs[i].first)) {
+      throw "INTERNAL Error in default augmented atom transforms";
+    }
+    if (!StringToAugmentedAtom(DefaultAugmentedAtomTransforms[i].to,
+                               trans_pairs[i].second)) {
+      throw "INTERNAL Error in default augmented atom transforms";
+    }
+  }
+  
   struchkOpts.setGoodAugmentedAtoms(good);
   struchkOpts.setAcidicAugmentedAtoms(acidic);
+  struchkOpts.setAugmentedAtomTranslations(trans_pairs);
 }
 //=====================================================================
 
