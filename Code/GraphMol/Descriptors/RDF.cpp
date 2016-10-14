@@ -225,7 +225,7 @@ std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res);
+      RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -251,7 +251,7 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res);
+      RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -276,7 +276,7 @@ std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res);
+      RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -302,7 +302,7 @@ std::vector<double> CalcElectroNegRDF(
       }
     }
 
-    RDFres.push_back(res);
+      RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -327,7 +327,7 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res);
+      RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
