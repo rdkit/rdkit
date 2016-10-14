@@ -102,7 +102,7 @@ namespace {
 std::vector<double> getG(int n) {
   std::vector<double> res(n);
   for (int i = 0; i < n; i++) {
-    res[i] = 1 + i * n / 2;
+    res[i] = 1 + i * 0.5;
   }
   return res;
 }
@@ -187,7 +187,7 @@ std::vector<double> CalcUnweightedMORSE(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   for (int i = 0; i < 30; i++) {
@@ -210,7 +210,7 @@ std::vector<double> CalcChargeMORSE(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   std::vector<double> charges = GetCharges(mol);
 
@@ -234,11 +234,11 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   std::vector<double> Mass(numAtoms);
   for (int p = 0; p < numAtoms; p++) {
-    Mass[p] = mol.getAtomWithIdx(p)->getMass();
+    Mass.push_back(mol.getAtomWithIdx(p)->getMass());
   }
 
   for (int i = 0; i < 30; i++) {
@@ -261,7 +261,7 @@ std::vector<double> CalcAtomNumMORSE(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
   std::vector<double> AN(numAtoms);
   for (int p = 0; p < numAtoms; p++) {
@@ -287,7 +287,7 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf,
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativePol = GetRelativePol(mol);
@@ -313,7 +313,7 @@ std::vector<double> CalcElectroNegMORSE(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
@@ -339,7 +339,7 @@ std::vector<double> CalcVdWvolMORSE(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
-  std::vector<double> RDFres(std::vector<double>(numAtoms, 0));
+  std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
@@ -373,29 +373,28 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
     points.push_back(conf.getAtomPos(i));
   }
 
-  std::vector<double> res;
 
   std::vector<double> res1 = CalcUnweightedMORSE(conf, points);
-  ContainerInsert(res, res1);
 
   std::vector<double> res2 = CalcMassMORSE(mol, conf, points);
-  ContainerInsert(res, res2);
+  res1.insert(res1.end(),res2.begin(), res2.end());
 
   std::vector<double> res3 = CalcChargeMORSE(mol, conf, points);
-  ContainerInsert(res, res3);
+  res1.insert(res1.end(),res3.begin(), res3.end());
 
   std::vector<double> res4 = CalcPolMORSE(mol, conf, points);
-  ContainerInsert(res, res4);
+  res1.insert(res1.end(),res4.begin(), res4.end());
 
   std::vector<double> res5 = CalcElectroNegMORSE(mol, conf, points);
-  ContainerInsert(res, res5);
+  res1.insert(res1.end(),res5.begin(), res5.end());
 
   std::vector<double> res6 = CalcVdWvolMORSE(mol, conf, points);
-  ContainerInsert(res, res6);
+  res1.insert(res1.end(),res6.begin(), res6.end());
+
 
   // what about AtomicNumberMorse
 
-  return res;
+  return res1;
 }
 
 }  // end of Descriptors namespace

@@ -98,7 +98,7 @@ namespace {
 std::vector<double> getG(int n) {
   std::vector<double> res(n);
   for (int i = 0; i < n; i++) {
-    res[i] = 1 + i * n * 0.5;
+    res[i] = 1 + i * 0.5;
   }
   return res;
 }
@@ -187,6 +187,9 @@ std::vector<double> CalcUnweightedRDF(
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
+    
+
+
   std::vector<double> RDFres;
   std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
@@ -195,10 +198,11 @@ std::vector<double> CalcUnweightedRDF(
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res += exp(-100 * pow(R[i] - DM[j][k], 2));
+          
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -332,11 +336,9 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
 }  // end of anonymous namespace
 
 std::vector<double> RDF(const ROMol &mol, int confId) {
-  std::cout << "ici\n";
   std::vector<double> reserror(std::vector<double>(30, 0));
 
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  std::cout << "start\n";
   int numAtoms = mol.getNumAtoms();
   if (numAtoms < 4) return reserror;
 
@@ -351,6 +353,7 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
 
 
   std::vector<double> res1 = CalcUnweightedRDF(conf, points);
+    
 
   std::vector<double> res2=CalcMassRDF(mol,conf,points);
   
@@ -368,8 +371,6 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
 
   std::vector<double> res6=CalcVdWvolRDF(mol,conf,points);
   res1.insert(res1.end(),res6.begin(), res6.end());
-
-  std::cout << "SIZE:" << res1.size();
 
 
   return res1;

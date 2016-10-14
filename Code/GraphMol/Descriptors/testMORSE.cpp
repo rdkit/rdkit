@@ -19,36 +19,39 @@
 
 #include <GraphMol/Descriptors/MORSE.h>
 
-void testRDF(){
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Basic RDF tests." << std::endl;
+void testMORSE(){
+   std::cout << "=>start test rdf\n";
 
   std::string pathName = getenv("RDBASE");
-  std::string sdfName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
-  RDKit::SDMolSupplier reader(sdfName,true,false);
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/PBF_egfr.out";
-  std::ifstream instrm(fName.c_str());
-  int nDone=0;
-  while(!reader.atEnd()){
-    RDKit::ROMol *m=reader.next();
-    TEST_ASSERT(m);
-    std::string nm;
-    m->getProp("_Name",nm);
-    //std::vector<double> drbf=RDKit::Descriptors::RBF(*m);
-    std::vector<double> dmorse=RDKit::Descriptors::MORSE(*m);
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
-    BOOST_LOG(rdErrorLog) << dmorse.size() << std::endl;
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+  std::cout << "=>read file\n";
+
+  int nDone = 0;
+  while (!reader.atEnd()) {
+    ++nDone;
+
+
+    RDKit::ROMol *m = reader.next();
+    ;
+
+    std::vector<double> drdf = RDKit::Descriptors::MORSE(*m);
+    std::cout << "=>read molecule: " << nDone  << std::endl;
+
 
     delete m;
     ++nDone;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+
 }
 
 
 int main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-  testRDF();
+  testMORSE();
 }
