@@ -9,7 +9,6 @@ from __future__ import print_function
 from rdkit import RDConfig
 from rdkit.utils import chemutils
 import os
-from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML.Descriptors import Parser, Descriptors
 from rdkit.six.moves import xrange
 
@@ -51,6 +50,7 @@ def GetAllDescriptorNames(db, tbl1, tbl2, user='sysdba', password='masterkey'):
       - it is assumed that tbl2 includes 'property' and 'notes' columns
 
   """
+  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(db, user=user, password=password)
 
   colNames = conn.GetColumnNames(table=tbl1)
@@ -67,7 +67,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
    This is the central point for descriptor calculation
 
    **Notes**
-   
+
    - There are two kinds of descriptors this cares about:
 
       1) *Simple Descriptors* can be calculated solely using atomic descriptor
@@ -78,7 +78,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
          Simple Descriptors can be marked as *nonZeroDescriptors*.  These are used
          to winnow out atom types where particular atomic descriptors are zero
          (usually indicating that the value is unknown)
-         
+
          Simple Descriptors are maintained locally in the _simpleList_
 
       2) *Compound Descriptors* may rely upon more complicated computation schemes
@@ -87,7 +87,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
          the _ML.Descriptors.Parser_ module.
 
          Compound Descriptors are maintained locally in the _compoundList_
-         
+
    - This class has a some special methods which are labelled as *Calculator Method*
      These are used internally to take atomic descriptors and reduce them to a single
      simple descriptor value for a composition.  They are primarily intended for internal use.
@@ -217,7 +217,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       This constructs the list of _nonZeroDescriptors_ and _requiredDescriptors_.
 
       There's some other magic going on that I can't decipher at the moment.
-        
+
     """
     global countOptions
 
@@ -326,7 +326,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
 
         - propDict: a dictionary containing the properties of the composition
           as a whole (e.g. structural variables, etc.)
-             
+
         The client must provide either _compos_ or _composList_.  If both are
         provided, _composList_ takes priority.
 
@@ -358,7 +358,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
         - propDict: a dictionary containing the properties of the composition
           as a whole (e.g. structural variables, etc.). These are used to
           generate Compound Descriptors
-             
+
       **Returns**
         the list of all descriptor values
 
@@ -410,10 +410,10 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       **Arguments**
 
         - simpleList: list of simple descriptors to be calculated
-              (see below for format) 
+              (see below for format)
 
         - compoundList: list of compound descriptors to be calculated
-              (see below for format) 
+              (see below for format)
 
         - dbName: name of the atomic database to be used
 
