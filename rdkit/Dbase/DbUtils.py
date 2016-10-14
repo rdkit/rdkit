@@ -37,14 +37,14 @@ def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', j
      - dBase: database name
 
      - table: table name
-     
+
      - fieldString: a string with the names of the fields to be extracted,
         this should be a comma delimited list
 
      - user and  password:
 
      - join: a join clause (omit the verb 'join')
-       
+
 
     **Returns**
 
@@ -118,13 +118,13 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
     if not randomAccess:
       raise ValueError('when forceList is set, randomAccess must also be used')
     data = c.fetchall()
-    if removeDups > 0:
-      seen = []
+    if removeDups >= 0:
+      seen = set()
       for entry in data[:]:
         if entry[removeDups] in seen:
           data.remove(entry)
         else:
-          seen.append(entry[removeDups])
+          seen.add(entry[removeDups])
   else:
     if randomAccess:
       klass = RandomAccessDbResultSet
@@ -159,7 +159,7 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
 
     **Returns**
 
-      - the CSV data (as text) 
+      - the CSV data (as text)
 
   """
   if len(where) and where.strip().find('where') == -1:
@@ -194,7 +194,7 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
 
 
 def TypeFinder(data, nRows, nCols, nullMarker=None):
-  """ 
+  """
 
     finds the types of the columns in _data_
 
@@ -245,7 +245,7 @@ def _AdjustColHeadings(colHeadings, maxColLabelLen):
 
     removes illegal characters from column headings
     and truncates those which are too long.
-    
+
   """
   for i in xrange(len(colHeadings)):
     # replace unallowed characters and strip extra white space
@@ -372,12 +372,12 @@ def TextFileToDatabase(dBase, table, inF, delim=',', user='sysdba', password='ma
       - inF: the file like object from which the data should
         be pulled (must support readline())
 
-      - delim: the delimiter used to separate fields  
+      - delim: the delimiter used to separate fields
 
       - user: the user name to use in connecting to the DB
 
       - password: the password to use in connecting to the DB
-      
+
       - maxColLabelLen: the maximum length a column label should be
         allowed to have (truncation otherwise)
 
@@ -433,7 +433,7 @@ def DatabaseToDatabase(fromDb, fromTbl, toDb, toTbl, fields='*', join='', where=
   """
 
    FIX: at the moment this is a hack
-   
+
   """
   from io import StringIO
   sio = StringIO()
