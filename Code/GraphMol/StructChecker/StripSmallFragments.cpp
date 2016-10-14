@@ -15,6 +15,13 @@
 #include "../SmilesParse/SmilesWrite.h"
 #include "../FileParsers/MolFileStereochem.h"
 
+// define snprintf for msvc
+#if _MSC_VER
+#if _MSC_VER < 1900
+#define snprintf _snprintf
+#endif
+#endif
+
 namespace RDKit {
 namespace StructureCheck {
 

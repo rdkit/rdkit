@@ -11,6 +11,13 @@
 #include "../QueryAtom.h"
 #include "Pattern.h"
 
+// define snprintf for msvc
+#if _MSC_VER
+#if _MSC_VER < 1900
+#define snprintf _snprintf
+#endif
+#endif
+
 namespace RDKit {
 namespace StructureCheck {
    
@@ -289,13 +296,13 @@ bool isBondTypeMatch(const RDKit::Bond &b, AABondType lbt) {
 
 static bool RecMatchNeigh(std::vector<Neighbourhood>& matched_pairs, 
         std::vector<bool>& visited, std::vector<bool>& used) {
-   for(int i=0; i < matched_pairs.size(); i++) {
+   for(size_t i=0; i < matched_pairs.size(); i++) {
       if(visited[i]) {
          continue;
       }
       visited[i] = true;
       std::vector<unsigned>& pairs = matched_pairs[i].Atoms;
-      for(int j = 0; j < pairs.size(); j++) {
+      for(size_t j = 0; j < pairs.size(); j++) {
          if(used[pairs[j]])
             continue;
          used[pairs[j]] = true;
