@@ -775,7 +775,7 @@ int CisTransPerception(const ROMol &mol,
                        const std::vector<unsigned> &numbering,
                        std::vector<unsigned> &bondColor) {
   int result = 0;
-  int maxnum = 0;
+  unsigned int maxnum = 0;
   std::vector<Neighbourhood> nba(mol.getNumAtoms());
   SetupNeighbourhood(mol, nba);
 
