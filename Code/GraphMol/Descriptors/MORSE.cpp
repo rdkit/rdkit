@@ -250,10 +250,12 @@ std::vector<double> CalcAtomNumMORSE(
   for (int p = 0; p < numAtoms; p++) {
     AN.push_back(mol.getAtomWithIdx(p)->getAtomicNum());
   }
- for (int p = 0; p < numAtoms; p++) {
-    std::cout << AN[p] << "/n";
-  }
-
+  /* debug
+    for (int p = 0; p < numAtoms; p++) {
+        std::cout << AN[p] << ",";
+    }
+    std::cout << "\n";
+  */
 
 
   for (int i = 0; i < 32; i++) {
@@ -374,16 +376,15 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
 
   std::vector<double> res6 = CalcVdWvolMORSE(mol, conf);
   res1.insert(res1.end(),res6.begin(), res6.end());
-
-
-  for (int p = 0; p < res1.size(); p++) {
-    std::cout << res1[p] << ",";
-    if ((p+1) % 32 == 0)     std::cout << "\n"; 
-    
-  }
-
-    std::cout << "\n"; 
-
+   
+  /* debug 
+    for (int p = 0; p < res1.size(); p++) {
+      std::cout << res1[p] << ",";
+      if ((p+1) % 32 == 0)     std::cout << "\n"; 
+      
+    }
+      std::cout << "\n"; 
+  */
   return res1;
 }
 
