@@ -251,7 +251,7 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
       }
     }
 
-      RDFres.push_back(round( 1000 * res) / 1000);
+      RDFres.push_back(round( 1000 * res / 144 ) / 1000);
   }
 
   return RDFres;

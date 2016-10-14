@@ -198,7 +198,7 @@ std::vector<double> CalcUnweightedMORSE(
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -223,7 +223,7 @@ std::vector<double> CalcChargeMORSE(
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -249,7 +249,7 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res / 144.3);
+    RDFres.push_back(round( 1000 * res / 144) / 1000);
   }
 
   return RDFres;
@@ -276,7 +276,7 @@ std::vector<double> CalcAtomNumMORSE(
       }
     }
 
-    RDFres.push_back(res / 144.3);
+    RDFres.push_back(round( 1000 * res / 144) / 1000);
   }
 
   return RDFres;
@@ -301,7 +301,7 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf,
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -327,7 +327,7 @@ std::vector<double> CalcElectroNegMORSE(
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -353,7 +353,7 @@ std::vector<double> CalcVdWvolMORSE(
       }
     }
 
-    RDFres.push_back(res);
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
