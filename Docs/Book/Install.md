@@ -1,6 +1,6 @@
 # Installation
 
-Below a number of installation recipies is presented, with varying degree of complexity.
+Below a number of installation recipes is presented, with varying degree of complexity.
 
 ## Cross-platform under anaconda python (fastest install)
 
@@ -16,7 +16,7 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
 
-  $ conda create -c https://conda.anaconda.org/rdkit -n my-rdkit-env rdkit
+  $ conda create -c rdkit -n my-rdkit-env rdkit
 
 Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell:
 
@@ -41,7 +41,7 @@ Due to the conda python distribution being a different version to the system pyt
 
 With your environment activated, this is done simply by:
 
-    conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
+    conda install -c rdkit rdkit-postgresql
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
@@ -78,7 +78,8 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 
 #### Fedora, CentOS, and RHEL
 
-Gianluca Sforna creates binary RPMs that can be found here: [http://giallu.fedorapeople.org/rdkit-20XX.XX/](http://giallu.fedorapeople.org/rdkit-20XX.XX/)
+Thanks to Gianluca Sforna's work, binary RPMs for the RDKit are now part of the official Fedora repositories:
+https://admin.fedoraproject.org/pkgdb/package/rpms/rdkit/
 
 #### OS X
 
@@ -386,8 +387,8 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 
 ## License
 
-This document is copyright (C) 2012-2015 by Greg Landrum
+This document is copyright (C) 2012-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."

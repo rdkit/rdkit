@@ -124,7 +124,7 @@ The code:
     """ contribution from Hans de Winter """
     from rdkit import Chem
     from rdkit.Chem import AllChem
-    
+
     def _InitialiseNeutralisationReactions():
         patts= (
             # Imidazoles
@@ -147,7 +147,7 @@ The code:
             ('[$([N-]C=O)]','N'),
             )
         return [(Chem.MolFromSmarts(x),Chem.MolFromSmiles(y,False)) for x,y in patts]
-    
+
     _reactions=None
     def NeutraliseCharges(smiles, reactions=None):
         global _reactions
@@ -199,31 +199,12 @@ This produces:
 
 The RDKit contains a range of 3D functionalities such as:
 
-<table>
-<colgroup>
-<col width="47%" />
-</colgroup>
-<tbody>
-<tr class="odd">
-<td align="left">Shape alignment</td>
-</tr>
-<tr class="even">
-<td align="left">RMS calculation</td>
-</tr>
-<tr class="odd">
-<td align="left">Shape Tanimoto Distance</td>
-</tr>
-<tr class="even">
-<td align="left">Shape Protrude Distance</td>
-</tr>
-<tr class="odd">
-<td align="left">3D pharmacophore fingerprint</td>
-</tr>
-<tr class="even">
-<td align="left">Torsion fingerprint (deviation)</td>
-</tr>
-</tbody>
-</table>
+  - Shape alignment
+  - RMS calculation
+  - Shape Tanimoto Distance
+  - Shape Protrude Distance
+  - 3D pharmacophore fingerprint
+  - Torsion fingerprint (deviation)
 
 There are two alignment methods currently available in the RDKit. As an example we use two crystal structures from the PDB of the same molecule.
 
@@ -316,9 +297,9 @@ This produces:
 
     0.451665312754
 
-The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). For a pair of conformations of a molecule, the torsional angles of the rotatable bonds and the ring systems are recorded in a torsion fingerprint (TF), and the deviations between the TFs calculated, normalized and summed up. For each torsion, a set of four atoms a-b-c-d are selected. 
+The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). For a pair of conformations of a molecule, the torsional angles of the rotatable bonds and the ring systems are recorded in a torsion fingerprint (TF), and the deviations between the TFs calculated, normalized and summed up. For each torsion, a set of four atoms a-b-c-d are selected.
 
-The RDKit implementation allows the user to customize the torsion fingerprints as described in the following. 
+The RDKit implementation allows the user to customize the torsion fingerprints as described in the following.
 
 -   In the original approach, the torsions are weighted based on their distance to the center of the molecule. By default, this weighting is performed, but can be turned off using the flag useWeights=False
 -   If symmetric atoms a and/or d exist, all possible torsional angles are calculated. To determine if two atoms are symmetric, the hash codes from the Morgan algorithm at a given radius are used (default: radius = 2).
@@ -433,9 +414,8 @@ The code:
 
 The output with scikit-learn version 0.13 is:
 
-> [1]
->
-> [[ 0.14 0.86]]
+    [1]
+    [[ 0.14 0.86]]
 
 Generating a similarity map for this model.
 
@@ -466,22 +446,22 @@ The code:
 
     from rdkit import Chem
     from rdkit.Chem import rdFMCS
-    
+
     # our test molecules:
     smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
           "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
     ms = [Chem.MolFromSmiles(x) for x in smis]
-    
+
     def label(a):
       " a simple hash combining atom number and hybridization "
       return 100*int(a.GetHybridization())+a.GetAtomicNum()
-    
+
     # copy the molecules, since we will be changing them
     nms = [Chem.Mol(x) for x in ms]
     for nm in nms:
       for at in nm.GetAtoms():
           at.SetIsotope(label(at))
-    
+
     mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
     print mcs.smartsString
 
@@ -502,7 +482,7 @@ This works because we know that the atom indices in the copies and the original 
         return Chem.MolFragmentToSmiles(mol,atomsToUse=match,
                                         isomericSmiles=True,
                                         canonical=False)
-    
+
     print getMCSSmiles(ms[0],nms[0],mcs)
 
     COc1ccc(C(Nc2nc3c(ncn3COC)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1
@@ -668,8 +648,8 @@ This program may be executed at the command line in the following manner (provid
 
 ## License
 
-This document is copyright (C) 2012-2015 by Greg Landrum
+This document is copyright (C) 2012-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: “Do whatever you want with it, but please give us some credit.”

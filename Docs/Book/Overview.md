@@ -13,17 +13,26 @@
 -   Cheminformatics nodes for KNIME (distributed from the KNIME community site: http://tech.knime.org/community/rdkit)
 
 ### Operational:
--   http://www.rdkit.org
--   Supports Mac/Windows/Linux
--   Releases every 6 months
--   Web presence:
-    -   Homepage: http://www.rdkit.org
-        Documentation, links
-    -   Github (https://github.com/rdkit)
-        Downloads, bug tracker, git repository
-    -   Sourceforge (http://sourceforge.net/projects/rdkit)
-        Mailing lists
--   Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
+- http://www.rdkit.org
+- Supports Mac/Windows/Linux
+- Releases every 6 months
+- Web presence:
+    - Homepage: http://www.rdkit.org
+      Documentation, links
+    - Github (https://github.com/rdkit)
+      Downloads, bug tracker, git repository
+    - Sourceforge (http://sourceforge.net/projects/rdkit)
+      Mailing lists
+    - Blog (https://rdkit.blogspot.com)
+      Tips, tricks, random stuff
+    - Tutorials (https://github.com/rdkit/rdkit-tutorials)
+      Jupyter-based tutorials for using the RDKit
+- Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
+- Social media:
+    - Twitter: @RDKit_org
+    - LinkedIn: https://www.linkedin.com/groups/8192558
+    - Google+: https://plus.google.com/u/0/116996224395614252219
+    - Slack: https://rdkit.slack.com (invite required, contact Greg)
 
 ### History:
 -   2000-2006: Developed and used at Rational Discovery for building predictive models for ADME, Tox, biological activity
@@ -67,7 +76,7 @@
 - Tight integration with the [Jupyter](http://jupyter.org) notebook (formerly the IPython notebook) and [Pandas](http://pandas.pydata.org/).
 
 ### 3D
-- 2D-\>3D conversion/conformational analysis via distance geometry, including optional use of experimental torsion angle potentials.
+- 2D-\>3D conversion/conformational analysis via distance geometry, including optional use of experimental torsion angle potentials [9](#footnote9)
 - UFF and MMFF94/MMFF94S implementations for cleaning up structures
 - Pharmacophore embedding (generate a pose of a molecule that matches a 3D pharmacophore) [1](#footnote1)
 - Feature maps
@@ -77,6 +86,7 @@
 - Unsupervised molecule-molecule alignment using the Open3DAlign algorithm [4](#footnote4)
 - Integration with PyMOL for 3D visualization
 - Molecular descriptor library:
+  - Moments-of-inertia based descriptors: PMI, NPR, PBF, etc.
   - Feature-map vectors [5](#footnote5)
 - Torsion Fingerprint Differences for comparing conformations [8](#footnote8)
 
@@ -85,6 +95,26 @@
 - [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
 - [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
+
+### Usage by other open-source projects
+- [ChEMBL Beaker](https://github.com/mnowotka/chembl_beaker) - standalone web server wrapper for RDKit and OSRA
+- [myChEMBL](https://github.com/chembl/mychembl) ([blog post](http://chembl.blogspot.de/2013/10/chembl-virtual-machine-aka-mychembl.html), [paper](http://bioinformatics.oxfordjournals.org/content/early/2013/11/20/bioinformatics.btt666)) - A virtual machine implementation of open data and cheminformatics tools
+- [ZINC](http://zinc15.docking.org) - Free database of commercially-available compounds for virtual screening
+- [sdf_viewer.py](https://github.com/apahl/sdf_viewer) - an interactive SDF viewer
+- [sdf2ppt](https://github.com/dkuhn/sdf2ppt) - Reads an SDFile and displays molecules as image grid in powerpoint/openoffice presentation.
+- [MolGears](https://github.com/admed/molgears) - A cheminformatics tool for bioactive molecules
+- [PYPL](http://www.biochemfusion.com/downloads/#OracleUtilities) - Simple cartridge that lets you call Python scripts from Oracle PL/SQL.
+- [shape-it-rdkit](https://github.com/jandom/shape-it-rdkit) - Gaussian molecular overlap code shape-it (from silicos it) ported to RDKit backend
+- [WONKA](http://wonka.sgc.ox.ac.uk/WONKA/) - Tool for analysis and interrogation of protein-ligand crystal structures
+- [OOMMPPAA](http://oommppaa.sgc.ox.ac.uk/OOMMPPAA/) - Tool for directed synthesis and data analysis based on protein-ligand crystal structures
+- [OCEAN](https://github.com/rdkit/OCEAN) - web-tool for target-prediction of chemical structures which uses ChEMBL as datasource
+- [chemfp](http://chemfp.com) - very fast fingerprint searching
+- [rdkit_ipynb_tools](https://github.com/apahl/rdkit_ipynb_tools) - RDKit Tools for the IPython Notebook
+- [chemicalite](https://github.com/rvianello/chemicalite) - SQLite integration for the RDKit
+- [Vernalis KNIME nodes](https://tech.knime.org/book/vernalis-nodes-for-knime-trusted-extension)
+- [Erlwood KNIME nodes](https://tech.knime.org/community/erlwood)
+- [AZOrange](https://github.com/AZcompTox/AZOrange)
+
 
 ## The Contrib Directory
 
@@ -107,11 +137,14 @@ Contribution from Markus Kossner
 
 ### PBF: Plane of best fit
 
+Contribution from Nicholas Firth
+
+*Note* as of the 2016.09.1 release this functionality is part of the RDKit core.
+
 Contains C++ source code and sample data from the publication:
 
 Firth, N. Brown, and J. Blagg, "Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality of Molecules" *Journal of Chemical Information and Modeling* **52** 2516-2525 (2012). http://pubs.acs.org/doi/abs/10.1021/ci300293f
 
-Contribution from Nicholas Firth
 
 ### mmpa: Matched molecular pairs
 
@@ -186,12 +219,12 @@ Contribution from Richard Hall
 
 <a name="footnote8">8</a>: Schulz-Gasch, T., Schärfer, C., Guba, W. & Rarey, M. "TFD: Torsion Fingerprints As a New Measure To Compare Small Molecule Conformations." *J. Chem. Inf. Model.* **52:1499–1512** (2012).
 
-
+<a name="footnote9">9</a>: Riniker, S. & Landrum, G. A. "Better informed distance geometry: Using what we know to improve conformation generation." *J. Chem. Inf. Model.* **55:2562–74** (2015).
 
 ## License
 
-This document is copyright (C) 2013-2015 by Greg Landrum
+This document is copyright (C) 2013-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: “Do whatever you want with it, but please give us some credit.”
