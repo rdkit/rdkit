@@ -1189,9 +1189,16 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
   double label_width, label_height;
   getStringSize(atom_syms_[activeMolIdx_][atnum].first, label_width,
                 label_height);
-
-  double lw2 = label_width / 2.0;
-  double lh2 = label_height / 2.0;
+  double additional_width = 0.0;
+  double additional_height = 0.0;
+  if (drawOptions().additionalAtomLabelPadding > 0.0) {
+    double M_width, M_height;
+    getStringSize("M", M_width, M_height);
+    additional_width = M_width * drawOptions().additionalAtomLabelPadding;
+    additional_height = M_height * drawOptions().additionalAtomLabelPadding;
+  }
+  double lw2 = label_width / 2.0 + additional_width;
+  double lh2 = label_height / 2.0 + additional_height;
 
   double x_offset = 0.0, y_offset = 0.0;
   if (fabs(nbr_cds.y - cds.y) < 1.0e-5) {
