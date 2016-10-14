@@ -250,7 +250,8 @@ class StructChecker {
   inline StructChecker(const StructCheckerOptions &options)
       : Options(options) {}
 
-  // Check structure and return a set of StructureFlags
+  // Check and fix (if need) molecule structure and return a set of StructureFlags 
+  // that describes what have been done
   unsigned checkMolStructure(RWMol &mol) const;
 
   // an instance independed helper methods:
