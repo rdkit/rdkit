@@ -49,6 +49,8 @@
 // Adding RBF descriptors to 3D descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
+
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "RDF.h"
@@ -103,17 +105,7 @@ std::vector<double> getG(int n) {
   return res;
 }
 
-double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2) {
-  double res = 0;
 
-  double X1[] = {x1.x, x1.y, x1.z};
-  double X2[] = {x2.x, x2.y, x2.z};
-
-  for (int i = 0; i < 3; i++) {
-    res += pow(X1[i] - X2[i], 2);
-  }
-  return sqrt(res);
-}
 
 std::vector<double> GetCharges(const ROMol &mol) {
   std::vector<double> charges(mol.getNumAtoms(), 0);
@@ -165,39 +157,24 @@ std::vector<double> GetAbsPol(const ROMol &mol) {
   return pol;
 }
 
-std::vector<std::vector<double> > GetGeometricalDistanceMatrix(
-    const std::vector<RDGeom::Point3D> &points) {
-  int numAtoms = points.size();
 
-  std::vector<std::vector<double> > res(numAtoms,
-                                        std::vector<double>(numAtoms, 0));
-  for (int i = 0; i < numAtoms; ++i) {
-    for (int j = i + 1; j < numAtoms; ++j) {
-      res[i][j] = getAtomDistance(points[i], points[j]);
-      res[j][i] = res[i][j];
-    }
-  }
-
-
-  return res;
-}
-
-std::vector<double> CalcUnweightedRDF(
+std::vector<double> CalcUnweightedRDF(const ROMol &mol,
     const Conformer &conf, const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
-    
-
 
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
 
   for (int i = 0; i < 30; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += exp(-100 * pow(R[i] - DM[j][k], 2));
+        res += exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
           
       }
     }
@@ -211,17 +188,20 @@ std::vector<double> CalcUnweightedRDF(
 std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
                                   const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
   std::vector<double> charges = GetCharges(mol);
 
   for (int i = 0; i < 30; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += charges[j] * charges[k] * exp(-100 * pow(R[i] - DM[j][k], 2));
+        res += charges[j] * charges[k] * exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
 
@@ -234,10 +214,14 @@ std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf,
 std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
                                 const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
+
   std::vector<double> Mass;
   for (int p = 0; p < numAtoms; p++) {
       Mass.push_back(mol.getAtomWithIdx(p)->getMass());
@@ -247,7 +231,7 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += Mass[j] * Mass[k] * exp(-100 * pow(R[i] - DM[j][k], 2));
+        res += Mass[j] * Mass[k] * exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
 
@@ -260,10 +244,12 @@ std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf,
 std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
                                const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
 
   std::vector<double> RelativePol = GetRelativePol(mol);
 
@@ -272,7 +258,7 @@ std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf,
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res += RelativePol[j] * RelativePol[k] *
-               exp(-100 * pow(R[i] - DM[j][k], 2));
+               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
 
@@ -286,10 +272,12 @@ std::vector<double> CalcElectroNegRDF(
     const ROMol &mol, const Conformer &conf,
     const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
 
   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
 
@@ -298,7 +286,7 @@ std::vector<double> CalcElectroNegRDF(
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res += RelativeElectroNeg[j] * RelativeElectroNeg[k] *
-               exp(-100 * pow(R[i] - DM[j][k], 2));
+               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
 
@@ -311,10 +299,12 @@ std::vector<double> CalcElectroNegRDF(
 std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
                                   const std::vector<RDGeom::Point3D> &points) {
   int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
-  std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
 
   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
 
@@ -323,7 +313,7 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf,
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
         res += RelativeVdW[j] * RelativeVdW[k] *
-               exp(-100 * pow(R[i] - DM[j][k], 2));
+               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
 
@@ -352,7 +342,7 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
   }
 
 
-  std::vector<double> res1 = CalcUnweightedRDF(conf, points);
+  std::vector<double> res1 = CalcUnweightedRDF(mol,conf, points);
     
 
   std::vector<double> res2=CalcMassRDF(mol,conf,points);
