@@ -219,6 +219,7 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
         res += Mass[j] * Mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
+    // 144 = 12*12 mass of the Carbon
 
     RDFres.push_back(round(1000 * res / 144) / 1000);
   }
@@ -248,8 +249,9 @@ std::vector<double> CalcAtomNumMORSE(
         res += AN[j] * AN[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
-
-    RDFres.push_back(round( 1000 * res / 144) / 1000);
+    // 36 = 6*6 Atomic number of the Carbon
+    
+    RDFres.push_back(round( 1000 * res / 36) / 1000);
   }
 
   return RDFres;
@@ -343,6 +345,9 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
 
   std::vector<double> res2 = CalcMassMORSE(mol, conf);
   res1.insert(res1.end(),res2.begin(), res2.end());
+
+  std::vector<double> res7 = CalcAtomNumMORSE(mol, conf);
+  res1.insert(res1.end(),res7.begin(), res7.end());
 
   std::vector<double> res3 = CalcChargeMORSE(mol, conf);
   res1.insert(res1.end(),res3.begin(), res3.end());
