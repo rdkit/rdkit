@@ -1,6 +1,6 @@
 # Installation
 
-Below a number of installation recipies is presented, with varying degree of complexity.
+Below a number of installation recipes is presented, with varying degree of complexity.
 
 ## Cross-platform under anaconda python (fastest install)
 
@@ -16,7 +16,7 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
 
-  $ conda create -c https://conda.anaconda.org/rdkit -n my-rdkit-env rdkit
+  $ conda create -c rdkit -n my-rdkit-env rdkit
 
 Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell:
 
@@ -41,7 +41,7 @@ Due to the conda python distribution being a different version to the system pyt
 
 With your environment activated, this is done simply by:
 
-    conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
+    conda install -c rdkit rdkit-postgresql
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
@@ -78,7 +78,8 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 
 #### Fedora, CentOS, and RHEL
 
-Gianluca Sforna creates binary RPMs that can be found here: [http://giallu.fedorapeople.org/rdkit-20XX.XX/](http://giallu.fedorapeople.org/rdkit-20XX.XX/)
+Thanks to Gianluca Sforna's work, binary RPMs for the RDKit are now part of the official Fedora repositories:
+https://admin.fedoraproject.org/pkgdb/package/rpms/rdkit/
 
 #### OS X
 
