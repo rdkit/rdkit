@@ -2435,10 +2435,10 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2015 by Greg Landrum
+This document is copyright (C) 2007-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
-To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
+To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 
 The intent of this license is similar to that of the RDKit itself.
