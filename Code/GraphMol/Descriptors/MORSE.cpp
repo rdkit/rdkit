@@ -157,11 +157,11 @@ std::vector<double> CalcUnweightedMORSE(const ROMol &mol,
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -180,12 +180,12 @@ std::vector<double> CalcChargeMORSE(
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
   std::vector<double> charges = GetCharges(mol);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
@@ -204,25 +204,34 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
+  std::vector<double> R = getG(32);
   std::vector<double> RDFres;
   double *DM = MolOps::get3DDistanceMat(mol, confId);
-  std::vector<double> Mass(numAtoms);
+  std::vector<double> mass;
   for (int p = 0; p < numAtoms; p++) {
-    Mass.push_back(mol.getAtomWithIdx(p)->getMass());
+    mass.push_back(mol.getAtomWithIdx(p)->getMass());
+
   }
 
-  for (int i = 0; i < 30; i++) {
+
+
+
+  for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += Mass[j] * Mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+        res += mass[j] * mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
+
+
+
     // 144 = 12*12 mass of the Carbon in rdkit MC=12.011 caution
 
     RDFres.push_back(round(1000 * res / 12.011 / 12.011) / 1000);
   }
+
+
 
   return RDFres;
 }
@@ -237,10 +246,15 @@ std::vector<double> CalcAtomNumMORSE(
 
   double *DM = MolOps::get3DDistanceMat(mol, confId);
 
-  std::vector<double> AN(numAtoms);
+  std::vector<int> AN;
   for (int p = 0; p < numAtoms; p++) {
     AN.push_back(mol.getAtomWithIdx(p)->getAtomicNum());
   }
+ for (int p = 0; p < numAtoms; p++) {
+    std::cout << AN[p] << "/n";
+  }
+
+
 
   for (int i = 0; i < 32; i++) {
     double res = 0;
@@ -362,7 +376,13 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
   res1.insert(res1.end(),res6.begin(), res6.end());
 
 
-  // what about AtomicNumberMorse
+  for (int p = 0; p < res1.size(); p++) {
+    std::cout << res1[p] << ",";
+    if ((p+1) % 32 == 0)     std::cout << "\n"; 
+    
+  }
+
+    std::cout << "\n"; 
 
   return res1;
 }
