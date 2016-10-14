@@ -89,6 +89,22 @@ void test1() {
     outs.flush();
     delete m;
   }
+
+  {
+    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    WedgeMolBonds(*m, &(m->getConformer()));
+    std::ofstream outs("test1_4.svg");
+    MolDraw2DSVG drawer(300, 300, outs);
+    drawer.drawOptions().additionalAtomLabelPadding = 0.25;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    outs.flush();
+    delete m;
+  }
+
   std::cout << " Done" << std::endl;
 }
 
