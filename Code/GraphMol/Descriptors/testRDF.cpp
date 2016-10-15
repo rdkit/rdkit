@@ -68,7 +68,7 @@ void testRDF() {
        {
             double ref =atof(myrow[i+1].c_str());
             if(fabs(ref-drdf[i])>0.05){
-              std::cout<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< drdf[i] <<std::endl;
+              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< drdf[i] <<std::endl;
             }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
