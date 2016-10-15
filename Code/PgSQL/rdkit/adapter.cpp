@@ -662,16 +662,12 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
   MolOps::AdjustQueryParameters p;
 
   if (params && strlen(params)) {
-    // try {
-    parseAdjustQueryParameters(p, params);
-    // } catch (...) {
-    //   ereport(
-    //       WARNING,
-    //       (errcode(ERRCODE_WARNING),
-    //        errmsg(
-    //            "adjustQueryProperties: Invalid argument \'params\'
-    //            ignored")));
-    // }
+    try {
+      parseAdjustQueryParameters(p, params);
+    } catch (...) {
+      elog(WARNING,
+           "adjustQueryProperties: Invalid argument \'params\' ignored");
+    }
   }
   ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
   return (CROMol)mol;
@@ -684,11 +680,14 @@ extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
   MolDraw2DUtils::prepareMolForDrawing(*im);
   std::string slegend(legend ? legend : "");
   MolDraw2DSVG drawer(w, h);
-
-#if 0
   if (params && strlen(params)) {
+    try {
+      MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, params);
+    } catch (...) {
+      elog(WARNING,
+           "adjustQueryProperties: Invalid argument \'params\' ignored");
+    }
   }
-#endif
   drawer.drawMolecule(*im, legend);
   drawer.finishDrawing();
   std::string txt = drawer.getDrawingText();
