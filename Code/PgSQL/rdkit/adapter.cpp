@@ -391,12 +391,12 @@ extern "C" bytea *makeMolSignature(CROMol data) {
 
     if (res) {
       std::string sres = BitVectToBinaryText(*res);
-      
+
       unsigned int varsize = VARHDRSZ + sres.size();
-      ret = (bytea *) palloc0(varsize);
+      ret = (bytea *)palloc0(varsize);
       memcpy(VARDATA(ret), sres.data(), sres.size());
       SET_VARSIZE(ret, varsize);
-      
+
       delete res;
       res = 0;
     }
@@ -710,14 +710,14 @@ extern "C" Bfp *deconstructCBfp(CBfp data) {
 extern "C" BfpSignature *makeBfpSignature(CBfp data) {
   std::string *ebv = (std::string *)data;
   int siglen = ebv->size();
-  
+
   unsigned int varsize = sizeof(BfpSignature) + siglen;
-  BfpSignature * res = (BfpSignature *)palloc0(varsize);
+  BfpSignature *res = (BfpSignature *)palloc0(varsize);
   SET_VARSIZE(res, varsize);
 
   res->weight = bitstringWeight(siglen, (uint8 *)ebv->data());
   memcpy(res->fp, ebv->data(), siglen);
-  
+
   return res;
 }
 
@@ -843,9 +843,8 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
   return res;
 }
 
-extern "C" void countOverlapValues(bytea *sign, CSfp data,
-                                   int numBits, int *sum, int *overlapSum,
-                                   int *overlapN) {
+extern "C" void countOverlapValues(bytea *sign, CSfp data, int numBits,
+                                   int *sum, int *overlapSum, int *overlapN) {
   SparseFP *v = (SparseFP *)data;
   SparseFP::StorageType::const_iterator iter;
 
@@ -875,8 +874,8 @@ extern "C" void countOverlapValues(bytea *sign, CSfp data,
   }
 }
 
-extern "C" void countLowOverlapValues(bytea *sign, CSfp data,
-                                      int numInts, int *querySum, int *keySum,
+extern "C" void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
+                                      int *querySum, int *keySum,
                                       int *overlapUp, int *overlapDown) {
   SparseFP *v = (SparseFP *)data;
   SparseFP::StorageType::const_iterator iter;
@@ -1401,7 +1400,7 @@ extern "C" CBfp makeMACCSBFP(CROMol data) {
 }
 
 extern "C" CBfp makeAvalonBFP(CROMol data, bool isQuery,
-			      unsigned int bitFlags) {
+                              unsigned int bitFlags) {
 #ifdef BUILD_AVALON_SUPPORT
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = NULL;
@@ -1525,7 +1524,7 @@ extern "C" CChemicalReaction parseChemReactBlob(char *data, int len) {
 }
 
 extern "C" char *makeChemReactText(CChemicalReaction data, int *len,
-				   bool asSmarts) {
+                                   bool asSmarts) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
 
   try {
@@ -1635,12 +1634,12 @@ extern "C" bytea *makeReactionSign(CChemicalReaction data) {
 
     if (res) {
       std::string sres = BitVectToBinaryText(*res);
-      
+
       unsigned int varsize = VARHDRSZ + sres.size();
-      ret = (bytea *) palloc0(varsize);
+      ret = (bytea *)palloc0(varsize);
       memcpy(VARDATA(ret), sres.data(), sres.size());
       SET_VARSIZE(ret, varsize);
-      
+
       delete res;
       res = 0;
     }
@@ -1831,8 +1830,8 @@ extern "C" int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2) {
   return -1;
 }
 
-extern "C" CSfp makeReactionDifferenceSFP(
-    CChemicalReaction data, int size, int fpType) {
+extern "C" CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size,
+                                          int fpType) {
   ChemicalReaction *rxn = (ChemicalReaction *)data;
   SparseFP *res = NULL;
 
@@ -1898,22 +1897,7 @@ extern "C" char *computeMolHash(CROMol data, int *len) {
     text.clear();
   }
   *len = text.length();
-  return (char *)text.c_str();
-}
-
-extern "C" char *  // TEMP
-    Mol2Smiles(CROMol data) {
-  const ROMol &mol = *(ROMol *)data;
-  static string text;
-  text.clear();
-  try {
-    text = RDKit::MolToSmiles(mol);
-  } catch (...) {
-    ereport(WARNING,
-            (errcode(ERRCODE_WARNING), errmsg("Mol2Smiles(): failed")));
-    text.clear();
-  }
-  return (char *)text.c_str();
+  return strdup(text.c_str());
 }
 
 extern "C" char *findMCSsmiles(char *smiles, char *params) {
@@ -1944,7 +1928,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     } catch (...) {
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS: Invalid argument \'params\'")));
-      return (char *)mcs.c_str();
+      return strdup("");
     }
   }
 
@@ -1958,7 +1942,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
     mcs.clear();
   }
-  return mcs.empty() ? (char *)"" : (char *)mcs.c_str();
+  return mcs.empty() ? strdup("") : strdup(mcs.c_str());
 }
 
 extern "C" void *addMol2list(void *lst, Mol *mol) {
@@ -2000,7 +1984,7 @@ extern "C" char *findMCS(void *vmols, char *params) {
       // mcs = params; //DEBUG
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS: Invalid argument \'params\'")));
-      return (char *)mcs.c_str();
+      return strdup(mcs.c_str());
     }
   }
 
@@ -2018,5 +2002,5 @@ extern "C" char *findMCS(void *vmols, char *params) {
   // elog(WARNING, t);
   delete molecules;
   // elog(WARNING, "findMCS(): molecules deleted. FINISHED.");
-  return (char *)mcs.c_str();
+  return strdup(mcs.c_str());
 }

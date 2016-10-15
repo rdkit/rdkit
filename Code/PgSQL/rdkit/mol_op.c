@@ -270,7 +270,9 @@ Datum mol_hash(PG_FUNCTION_ARGS) {
   Assert(mol != 0);
   str = computeMolHash(mol, &len);
   Assert(str != 0 && strlen(str) != 0);
-  PG_RETURN_CSTRING(pnstrdup(str, len));
+  char *res = pnstrdup(str, len);
+  free((void *)str);
+  PG_RETURN_CSTRING(res);
 }
 
 PGDLLEXPORT Datum mol_adjust_query_properties(PG_FUNCTION_ARGS);
@@ -303,7 +305,10 @@ Datum fmcs_smiles(PG_FUNCTION_ARGS) {
   str = findMCSsmiles(str, params);
   // elog(WARNING, str);
   Assert(str != 0);
-  PG_RETURN_CSTRING(pnstrdup(str, strlen(str)));
+
+  char *res = pnstrdup(str, strlen(str));
+  free((void *)str);
+  PG_RETURN_CSTRING(res);
 }
 
 PGDLLEXPORT Datum fmcs_smiles_transition(PG_FUNCTION_ARGS);
@@ -431,6 +436,7 @@ Datum fmcs_mols(PG_FUNCTION_ARGS) {
   text *ts = (text *)palloc(ts_size);
   SET_VARSIZE(ts, ts_size);
   memcpy(VARDATA(ts), str, strlen(str));
+  free((void *)str);
   PG_RETURN_TEXT_P(ts);
 }
 
