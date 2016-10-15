@@ -163,6 +163,8 @@ const char *MolInchiKey(CROMol i, const char *opts);
 CROMol MolMurckoScaffold(CROMol i);
 
 CROMol MolAdjustQueryProperties(CROMol m, const char *params);
+char *MolGetSVG(CROMol i, unsigned int w, unsigned int h, const char *legend,
+                const char *params);
 
 /* ExplicitBitVect */
 typedef void *CBfp;

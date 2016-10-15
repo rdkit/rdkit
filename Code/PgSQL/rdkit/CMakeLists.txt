@@ -93,9 +93,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
-    "PartialCharges;SubstructMatch;GraphMol;DataStructs;Depictor;"
+    "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
 foreach(pgRDKitLib ${pgRDKitLibList})
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix};")

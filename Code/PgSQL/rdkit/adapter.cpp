@@ -50,6 +50,10 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/integer_traits.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -673,6 +677,24 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
   return (CROMol)mol;
 }
 
+extern "C" char *MolGetSVG(CROMol i, unsigned int w, unsigned int h,
+                           const char *legend, const char *params) {
+  RWMol *im = (RWMol *)i;
+
+  MolDraw2DUtils::prepareMolForDrawing(*im);
+  std::string slegend(legend ? legend : "");
+  MolDraw2DSVG drawer(w, h);
+
+#if 0
+  if (params && strlen(params)) {
+  }
+#endif
+  drawer.drawMolecule(*im, legend);
+  drawer.finishDrawing();
+  std::string txt = drawer.getDrawingText();
+  return strdup(txt.c_str());
+}
+
 /*******************************************
  *     CBfp transformation                 *
  *******************************************/
@@ -902,8 +924,8 @@ extern "C" void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
   for (n = 0; n < numInts; n++) {
     *keySum += s[n].low;
     if (s[n].low != s[n].high)
-      *keySum +=
-          s[n].high; /* there is at least two key mapped into current backet */
+      *keySum += s[n].high; /* there is at least two key mapped into current
+                               backet */
   }
 
   Assert(*overlapUp <= *keySum);
@@ -1073,7 +1095,8 @@ extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
   t1 += sizeof(boost::uint32_t);
   if (tmp != sizeof(boost::uint32_t)) {
     elog(ERROR,
-         "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
+         "calcSparseStringAllValsGT: could not convert argument 1 -> "
+         "uint32_t");
   }
 
   // boost::uint32_t len1;
@@ -1110,7 +1133,8 @@ extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
   t1 += sizeof(boost::uint32_t);
   if (tmp != sizeof(boost::uint32_t)) {
     elog(ERROR,
-         "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
+         "calcSparseStringAllValsGT: could not convert argument 1 -> "
+         "uint32_t");
   }
 
   // boost::uint32_t len1;

@@ -293,6 +293,26 @@ Datum mol_adjust_query_properties(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);
 }
 
+PGDLLEXPORT Datum mol_to_svg(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_svg);
+Datum mol_to_svg(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  Assert(mol != 0);
+
+  char *legend = PG_GETARG_CSTRING(1);
+  unsigned int w = PG_GETARG_UINT32(2);
+  unsigned int h = PG_GETARG_UINT32(3);
+  char *params = PG_GETARG_CSTRING(4);
+
+  char *str = MolGetSVG(mol, w, h, legend, params);
+  char *res = pnstrdup(str, strlen(str));
+  free((void *)str);
+  PG_RETURN_CSTRING(res);
+}
+
 /*** fmcs ***/
 
 PGDLLEXPORT Datum fmcs_smiles(PG_FUNCTION_ARGS);
@@ -362,7 +382,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     int len, ts_size;
     char *smiles;
     elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-	 fcinfo->flinfo->fn_mcxt);
+         fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -389,7 +409,7 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     CROMol mol = PG_GETARG_DATUM(1);
     int len;
     elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-            fcinfo->flinfo->fn_mcxt);
+         fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
