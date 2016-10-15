@@ -8,10 +8,17 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
+
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace MolDraw2DUtils {
@@ -59,5 +66,27 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     WedgeMolBonds(mol, &mol.getConformer());
   }
 }
+
+void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
+  PRECONDITION(json, "no parameter string");
+  updateDrawerParamsFromJSON(drawer, std::string(json));
+};
+#define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
+
+void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
+  if (json == "") return;
+  std::istringstream ss;
+  ss.str(json);
+  MolDrawOptions &opts = drawer.drawOptions();
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+  PT_OPT_GET(atomLabelDeuteriumTritium);
+  PT_OPT_GET(dummiesAreAttachments);
+  //
+  //
+  // opts.atomLabelDeuteriumTritium =
+  //     pt.get("atomLabelDeuteriumTritium", opts.atomLabelDeuteriumTritium);
 }
-}
+
+}  // end of MolDraw2DUtils namespace
+}  // end of RDKit namespace

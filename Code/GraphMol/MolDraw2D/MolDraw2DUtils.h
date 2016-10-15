@@ -15,6 +15,7 @@
 // ****************************************************************************
 
 namespace RDKit {
+class MolDraw2D;
 namespace MolDraw2DUtils {
 //! Does some cleanup operations on the molecule to prepare it to draw nicely
 /*
@@ -36,6 +37,9 @@ problematic if the molecules have been modified post santitization.
 void prepareMolForDrawing(RWMol &mol, bool kekulize = true,
                           bool addChiralHs = true, bool wedgeBonds = true,
                           bool forceCoords = false);
+
+void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json);
+void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json);
 }
 }
 #endif  // MOLDRAW2DUTILS_H
