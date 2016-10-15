@@ -93,6 +93,15 @@ double VdW[] = {
     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
     22.45, 19.16, 15.6,  31.54, 34.53, 38.79};
 
+double  IonPolarizability[] = {
+  13.598, 0, 5.392, 9.323, 8.298, 11.26, 14.534, 13.618, 17.423, 0, 5.139, 7.646,
+  5.986, 8.152, 10.487, 10.36, 12.968, 0, 4.341, 6.113, 0, 0, 0, 6.767, 7.434,
+  7.902, 7.881, 7.64, 7.723, 9.394, 5.999, 7.9, 9.815, 9.752, 11.814, 0, 4.177,
+  5.695, 0, 0, 0, 7.092, 0, 0, 0, 0, 7.576, 8.994, 5.786, 7.344, 8.64, 9.01,
+  10.451, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6.15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 9.0, 9.226, 10.438, 6.108, 7.417, 7.289};
+
+
 namespace RDKit {
 namespace Descriptors {
 namespace {
@@ -122,6 +131,19 @@ std::vector<double> GetRelativePol(const ROMol &mol) {
 
   return pol;
 }
+
+std::vector<double> GetRelativeIonPol(const ROMol &mol) {
+  int numAtoms = mol.getNumAtoms();
+
+  std::vector<double> ionpol(numAtoms, 0);
+  for (int i = 0; i < numAtoms; ++i) {
+    ionpol[i] = IonPolarizability[mol.getAtomWithIdx(i)->getAtomicNum()-1] / IonPolarizability[5];
+  }
+
+  return ionpol;
+}
+
+
 
 std::vector<double> GetRelativeElectroNeg(const ROMol &mol) {
   int numAtoms = mol.getNumAtoms();
@@ -261,6 +283,34 @@ std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf) {
   return RDFres;
 }
 
+std::vector<double> CalcIonPolRDF(const ROMol &mol, const Conformer &conf) {
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
+
+  std::vector<double> R = getG(30);
+  std::vector<double> RDFres;
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
+  std::vector<double> IonPol = GetRelativeIonPol(mol);
+
+  for (int i = 0; i < 30; i++) {
+    double res = 0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+        res += IonPol[j] * IonPol[k] *
+               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+      }
+    }
+
+      RDFres.push_back(round( 1000 * res) / 1000);
+  }
+
+  return RDFres;
+}
+
+
+
 std::vector<double> CalcElectroNegRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
@@ -327,22 +377,32 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
   std::vector<double> res1 = CalcUnweightedRDF(mol,conf);
 
   std::vector<double> res2=CalcMassRDF(mol,conf);
-  
   res1.insert(res1.end(),res2.begin(), res2.end());
 
-
-  std::vector<double> res3=CalcChargeRDF(mol,conf);
-  res1.insert(res1.end(),res3.begin(), res3.end());
-
-  std::vector<double> res4=CalcPolRDF(mol,conf);
-  res1.insert(res1.end(),res4.begin(), res4.end());
-
-  std::vector<double> res5=CalcElectroNegRDF(mol,conf);
-  res1.insert(res1.end(),res5.begin(), res5.end());
 
   std::vector<double> res6=CalcVdWvolRDF(mol,conf);
   res1.insert(res1.end(),res6.begin(), res6.end());
 
+  std::vector<double> res5=CalcElectroNegRDF(mol,conf);
+  res1.insert(res1.end(),res5.begin(), res5.end());
+
+  std::vector<double> res4=CalcPolRDF(mol,conf);
+  res1.insert(res1.end(),res4.begin(), res4.end());
+
+
+  std::vector<double> res7=CalcIonPolRDF(mol,conf);
+  res1.insert(res1.end(),res7.begin(), res7.end());
+
+ // std::vector<double> res3=CalcChargeRDF(mol,conf);
+ // res1.insert(res1.end(),res3.begin(), res3.end());
+
+
+    for (int p = 0; p < res1.size(); p++) {
+      std::cout << res1[p] << ",";
+      if ((p+1) % 30 == 0)     std::cout << "\n"; 
+      
+    }
+      std::cout << "\n"; 
 
   return res1;
 }

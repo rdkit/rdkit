@@ -86,6 +86,16 @@ double VdW1[] = {
     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
     22.45, 19.16, 15.6,  31.54, 34.53, 38.79};
 
+
+double  IonPolarizability1[] = {
+  13.598, 0, 5.392, 9.323, 8.298, 11.26, 14.534, 13.618, 17.423, 0, 5.139, 7.646,
+  5.986, 8.152, 10.487, 10.36, 12.968, 0, 4.341, 6.113, 0, 0, 0, 6.767, 7.434,
+  7.902, 7.881, 7.64, 7.723, 9.394, 5.999, 7.9, 9.815, 9.752, 11.814, 0, 4.177,
+  5.695, 0, 0, 0, 7.092, 0, 0, 0, 0, 7.576, 8.994, 5.786, 7.344, 8.64, 9.01,
+  10.451, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6.15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 9.0, 9.226, 10.438, 6.108, 7.417, 7.289};
+
+
 namespace RDKit {
 namespace Descriptors {
 
@@ -94,7 +104,7 @@ namespace {
 std::vector<double> getG(int n) {
   std::vector<double> res(n);
   for (int i = 0; i < n; i++) {
-    res[i] = 1 + i;
+    res[i] = i;
   }
   return res;
 }
@@ -128,6 +138,18 @@ std::vector<double> GetRelativeElectroNeg(const ROMol &mol) {
 
   return REN;
 }
+
+std::vector<double> GetRelativeIonPol(const ROMol &mol) {
+  int numAtoms = mol.getNumAtoms();
+
+  std::vector<double> ionpol(numAtoms, 0);
+  for (int i = 0; i < numAtoms; ++i) {
+    ionpol[i] = IonPolarizability1[mol.getAtomWithIdx(i)->getAtomicNum()-1] / IonPolarizability1[5];
+  }
+
+  return ionpol;
+}
+
 
 std::vector<double> GetRelativeVdW(const ROMol &mol) {
   int numAtoms = mol.getNumAtoms();
@@ -165,7 +187,12 @@ std::vector<double> CalcUnweightedMORSE(const ROMol &mol,
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+
+        if (i==0) { res += 1;}
+
+        else
+
+          res += sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -189,8 +216,12 @@ std::vector<double> CalcChargeMORSE(
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res +=
-            charges[j] * charges[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+       
+        if (i==0) { res += charges[j] * charges[k];}
+
+        else
+
+        res += charges[j] * charges[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -213,17 +244,19 @@ std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
 
   }
 
-
-
-
   for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
+
+       
+        if (i==0) { res += mass[j] * mass[k];}
+
+        else
+
         res += mass[j] * mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
-
 
 
     // 144 = 12*12 mass of the Carbon in rdkit MC=12.011 caution
@@ -257,17 +290,50 @@ std::vector<double> CalcAtomNumMORSE(
     std::cout << "\n";
   */
 
-
   for (int i = 0; i < 32; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
+       
+        if (i==0) { res += AN[j] * AN[k];}
+
+        else
+
         res += AN[j] * AN[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
     }
     // 36 = 6*6 Atomic number of the Carbon
     
     RDFres.push_back(round( 1000 * res / 36) / 1000);
+  }
+
+  return RDFres;
+}
+
+std::vector<double> CalcIonPolMORSE(const ROMol &mol, const Conformer &conf) {
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
+
+  std::vector<double> R = getG(32);
+  std::vector<double> RDFres;
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
+
+  std::vector<double> RelativeIonPol = GetRelativeIonPol(mol);
+
+  for (int i = 0; i < 32; i++) {
+    double res = 0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+     
+        if (i==0) { res += RelativeIonPol[j] * RelativeIonPol[k];}
+
+        else
+        res += RelativeIonPol[j] * RelativeIonPol[k] * sin(R[i] * DM[j * numAtoms + k]) /
+               (R[i] * DM[j * numAtoms + k]);
+      }
+    }
+
+    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
   return RDFres;
@@ -287,6 +353,10 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
+     
+        if (i==0) { res += RelativePol[j] * RelativePol[k];}
+
+        else
         res += RelativePol[j] * RelativePol[k] * sin(R[i] * DM[j * numAtoms + k]) /
                (R[i] * DM[j * numAtoms + k]);
       }
@@ -297,6 +367,7 @@ std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf) {
 
   return RDFres;
 }
+
 
 std::vector<double> CalcElectroNegMORSE(
     const ROMol &mol, const Conformer &conf) {
@@ -313,6 +384,10 @@ std::vector<double> CalcElectroNegMORSE(
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
+   
+        if (i==0) { res += RelativeElectroNeg[j] * RelativeElectroNeg[k];}
+
+        else
         res += RelativeElectroNeg[j] * RelativeElectroNeg[k] *
                sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
       }
@@ -339,8 +414,12 @@ std::vector<double> CalcVdWvolMORSE(
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativeVdW[j] * RelativeVdW[k] * sin(R[i] * DM[j * numAtoms + k]) /
-               (R[i] * DM[j * numAtoms + k]);
+
+        if (i==0) { res += RelativeVdW[j] * RelativeVdW[k];}
+
+        else
+
+        res += RelativeVdW[j] * RelativeVdW[k] * sin(R[i] * DM[j * numAtoms + k]) /(R[i] * DM[j * numAtoms + k]);
       }
     }
 
@@ -362,29 +441,33 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
   std::vector<double> res2 = CalcMassMORSE(mol, conf);
   res1.insert(res1.end(),res2.begin(), res2.end());
 
-  std::vector<double> res7 = CalcAtomNumMORSE(mol, conf);
-  res1.insert(res1.end(),res7.begin(), res7.end());
-
-  std::vector<double> res3 = CalcChargeMORSE(mol, conf);
-  res1.insert(res1.end(),res3.begin(), res3.end());
-
-  std::vector<double> res4 = CalcPolMORSE(mol, conf);
-  res1.insert(res1.end(),res4.begin(), res4.end());
+  std::vector<double> res6 = CalcVdWvolMORSE(mol, conf);
+  res1.insert(res1.end(),res6.begin(), res6.end());
 
   std::vector<double> res5 = CalcElectroNegMORSE(mol, conf);
   res1.insert(res1.end(),res5.begin(), res5.end());
 
-  std::vector<double> res6 = CalcVdWvolMORSE(mol, conf);
-  res1.insert(res1.end(),res6.begin(), res6.end());
+  std::vector<double> res4 = CalcPolMORSE(mol, conf);
+  res1.insert(res1.end(),res4.begin(), res4.end());
+
+  std::vector<double> res7 = CalcIonPolMORSE(mol, conf);
+  res1.insert(res1.end(),res7.begin(), res7.end());
+
+ // std::vector<double> res3 = CalcChargeMORSE(mol, conf);
+ // res1.insert(res1.end(),res3.begin(), res3.end());
+
+ // std::vector<double> res7 = CalcAtomNumMORSE(mol, conf);
+ // res1.insert(res1.end(),res7.begin(), res7.end());
+
    
-  /* debug 
+  /* debug  */
     for (int p = 0; p < res1.size(); p++) {
       std::cout << res1[p] << ",";
       if ((p+1) % 32 == 0)     std::cout << "\n"; 
       
     }
       std::cout << "\n"; 
-  */
+  /**/
   return res1;
 }
 
