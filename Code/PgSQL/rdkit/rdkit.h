@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -30,8 +29,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef _RDKIT_H_
-#define _RDKIT_H_
+#ifndef RDKIT_H_PSQL
+#define RDKIT_H_PSQL
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,7 +65,7 @@ typedef struct {
 #define PG_RETURN_BFP_P(x) PG_RETURN_DATUM(BfpPGetDatum(x))
 
 #define BFP_SIGLEN(x) (VARSIZE(x) - VARHDRSZ)
-  
+
 typedef bytea Sfp;
 
 #define DatumGetSfpP(x) ((Sfp *)PG_DETOAST_DATUM(x))
@@ -197,11 +196,10 @@ bool calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt);
 CSfp addSFP(CSfp a, CSfp b);
 CSfp subtractSFP(CSfp a, CSfp b);
 
-void countOverlapValues(bytea *sign, CSfp data, int numBits,
-                        int *sum, int *overlapSum, int *overlapN);
-void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
-                           int *querySum, int *keySum, int *overlapUp,
-                           int *overlapDown);
+void countOverlapValues(bytea *sign, CSfp data, int numBits, int *sum,
+                        int *overlapSum, int *overlapN);
+void countLowOverlapValues(bytea *sign, CSfp data, int numInts, int *querySum,
+                           int *keySum, int *overlapUp, int *overlapDown);
 /*
  * Various mol -> fp transformation
  */
