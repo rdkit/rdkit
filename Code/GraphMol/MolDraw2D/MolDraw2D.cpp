@@ -328,7 +328,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     // the 0.94 is completely empirical and was brought over from Python
     Point2D loc =
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
-
     double o_font_size = fontSize();
     setFontSize(options_.legendFontSize /
                 scale_);  // set the font size to about 12 pixels high
