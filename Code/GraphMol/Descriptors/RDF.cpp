@@ -50,6 +50,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/PeriodicTable.h>
 
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
@@ -113,6 +114,45 @@ std::vector<double> getG(int n) {
     res[i] = 1 + i * 0.5;
   }
   return res;
+}
+
+
+// adaptation from EState.py 
+int GetPrincipalQuantumNumber(int AtomicNum) {
+  if (AtomicNum<=2) return 1;
+  else if (AtomicNum<=10) return 2;
+  else if (AtomicNum<=18) return 3;
+  else if (AtomicNum<=36) return 4;
+  else if (AtomicNum<=54) return 5;
+  else if (AtomicNum<=86) return 6;
+  else return 7;
+}
+
+// adaptation from EState.py 
+// we need the Is value only there
+std::vector<double> GetIState(const ROMol &mol){
+  int numAtoms = mol.getNumAtoms();
+  std::vector<double> Is;
+
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    int d = atom->getDegree();
+    if (d>0 and atNum>1) {
+      int h = atom->getTotalNumHs();
+      int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
+      int N = GetPrincipalQuantumNumber(atNum);
+      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);
+    }
+    else Is.push_back(0.0);
+ }
+ // debug mode!
+for (int i = 0; i < numAtoms; ++i) {
+
+  std::cout << Is[i] << "-" << mol.getAtomWithIdx(i)->getSymbol() << ",";
+}
+
+ return Is;
 }
 
 std::vector<double> GetCharges(const ROMol &mol) {
@@ -310,6 +350,32 @@ std::vector<double> CalcIonPolRDF(const ROMol &mol, const Conformer &conf) {
 }
 
 
+std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
+
+  std::vector<double> R = getG(30);
+  std::vector<double> RDFres;
+  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
+  std::vector<double> IState = GetIState(mol);
+
+  for (int i = 0; i < 30; i++) {
+    double res = 0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+        res += IState[j] * IState[k] *
+               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+      }
+    }
+
+      RDFres.push_back(round( 1000 * res) / 1000);
+  }
+
+  return RDFres;
+}
+
 
 std::vector<double> CalcElectroNegRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
@@ -391,6 +457,12 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
 
   std::vector<double> res7=CalcIonPolRDF(mol,conf);
   res1.insert(res1.end(),res7.begin(), res7.end());
+
+  std::vector<double> res8=CalcIStateRDF(mol,conf);
+  res1.insert(res1.end(),res8.begin(), res8.end());
+
+
+  
 
  // std::vector<double> res3=CalcChargeRDF(mol,conf);
  // res1.insert(res1.end(),res3.begin(), res3.end());
