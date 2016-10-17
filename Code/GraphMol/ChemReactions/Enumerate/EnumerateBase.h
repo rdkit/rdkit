@@ -109,12 +109,14 @@ class EnumerateLibraryBase {
   //   state that can be used to restart enumerating
   //   from this position.
   std::string getState() const;
+  
   //! Set the current state of the enumerator
   //   Restart the enumerator from this position.
   void setState(const std::string &);
 
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const = 0;
+  
   //! returns a string with a serialized (pickled) representation
   virtual std::string Serialize() const {
     std::stringstream ss;
@@ -124,6 +126,7 @@ class EnumerateLibraryBase {
 
   //! initializes from a stream pickle
   virtual void initFromStream(std::istream &ss) = 0;
+  
   //! initializes from a string pickle
   virtual void initFromString(const std::string &text) {
     std::stringstream ss(text);
