@@ -91,6 +91,7 @@ std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs)
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy), m_bbs(bbs) {
   m_enumerator->initialize(rxn, bbs);  // getSizesFromBBs(bbs));
+  m_initialState = getState();
   PRECONDITION(static_cast<bool>(*m_enumerator), "Nothing to enumerate.");
 }
 
@@ -99,6 +100,7 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
     : EnumerateLibraryBase(rxn), m_bbs(bbs) {
   m_enumerator.reset(enumerator.Clone());
   m_enumerator->initialize(rxn, bbs);
+  m_initialState = getState();
   PRECONDITION(static_cast<bool>(*m_enumerator), "dkjfdkf");
 }
 
@@ -106,7 +108,7 @@ EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
     : EnumerateLibraryBase(rhs), m_bbs(rhs.m_bbs) {}
 
 void EnumerateLibrary::reset() {
-    m_enumerator->initialize(m_rxn, m_bbs);
+  setState(m_initialState);
 }
 
 std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {

@@ -193,8 +193,16 @@ void testEnumerations() {
 
     boost::shared_ptr<EnumerateLibrary> en(
         new EnumerateLibrary(*rxn, bbs, RandomSampleStrategy()));
-    size_t i = 0;
-    for (; i < 1000; ++i) {
+
+    std::vector<std::vector<std::vector<std::string> > >smir;
+    for (size_t j = 0; j < 10; ++j) {
+      std::vector<std::vector<std::string> > smiles = en->nextSmiles();
+      smir.push_back(smiles);
+    }
+
+    en->reset();
+    
+    for (size_t i = 0; i < 1000; ++i) {
       // pickle and unpickle
       std::stringstream ss;
       {
@@ -207,18 +215,15 @@ void testEnumerations() {
         ar &copy;
       }
 
-      std::vector<std::vector<std::vector<std::string> > >smir;
       for (size_t j = 0; j < 10; ++j) {
-        std::vector<std::vector<std::string> > smiles = en->nextSmiles();
-        smir.push_back(smiles);
-        TEST_ASSERT(smiles == copy->nextSmiles());
+        TEST_ASSERT(en->nextSmiles() == copy->nextSmiles());
       }
+
       copy->reset();
       for (size_t j = 0; j < 10; ++j) {
         TEST_ASSERT(smir[j] == copy->nextSmiles());
       }      
     }
-    TEST_ASSERT(i == 1000);
   }
   delete rxn;
 }

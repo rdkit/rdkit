@@ -68,9 +68,10 @@ namespace RDKit {
  */
 class EnumerateLibrary : public EnumerateLibraryBase {
   BBS m_bbs;
-
+  std::string m_initialState;
+  
  public:
-  EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
+  EnumerateLibrary() : EnumerateLibraryBase(), m_bbs(), m_initialState() {}
   EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs);
   EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                    const EnumerationStrategyBase &enumerator);
@@ -90,10 +91,10 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   template <class Archive>
   void save(Archive &ar, const unsigned int /*version*/) const {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
-
+    ar &m_initialState;
     size_t sz = m_bbs.size();
     ar &sz;
-
+    
     std::string pickle;
     for (size_t i = 0; i < m_bbs.size(); ++i) {
       sz = m_bbs[i].size();
@@ -107,7 +108,8 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
-
+    ar &m_initialState;
+    
     size_t sz;
     ar &sz;
 
