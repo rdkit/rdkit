@@ -56,7 +56,7 @@
 #include <boost/foreach.hpp>
 #include <math.h>
 #include <Eigen/Dense>
-
+#include <Eigen/SVD>
 
 
 template <class T1, class T2>
@@ -85,15 +85,6 @@ std::vector<double> getG(int n){
   return res;
 }
 
-
-
-double getAtomDistance(const RDGeom::Point3D x1, const RDGeom::Point3D x2){
-  double res=0;
-  for (int i=0;i<3;i++) {
-    res+=pow(x1[i]-x2[i],2);
-  }
-  return sqrt(res);
-}
 
 std::vector<double> GetCharges(const ROMol& mol){
 
@@ -154,294 +145,124 @@ std::vector<double> GetAbsPol(const ROMol& mol){
 }
 
 
+double* retreiveMat(Eigen::MatrixXd matrix) {
+   double* arrayd = matrix.data();
+   // do something with the array 
+   return arrayd;
+}
 
-
-std::vector<std::vector<double>> GetGeometricalDistanceMatrix(const std::vector<RDGeom::Point3D> &points){
-    int numAtoms= points.size();
-
-    std::vector<std::vector<double>> res(numAtoms,std::vector<double>(numAtoms,0));
-    for( int i=0; i<numAtoms; ++i){
-        for( int j=i+1; j<numAtoms; ++j){
-            res[i][j]=getAtomDistance(points[i], points[j]);
-            res[j][i]=res[i][j];
-          }
-    }
-
-    return res;
+double* retreiveVect(Eigen::VectorXd matrix) {
+   double* arrayd = matrix.data();
+   // do something with the array 
+   return arrayd;
 
 }
 
-
-std::vector<std::vector<double>> GetCenterMatrix(std::vector<std::vector<double>> Mat){
-    int matsize=Mat.size();
-    std::vector<std::vector<double>> res(matsize,std::vector<double>(matsize,0));
-
-    Eigen::MatrixXd mat(matsize,matsize);
-    Eigen::VectorXd v(matsize);
-
-  for (int i = 0; i < matsize; i++)
-      mat.row(i) = VectorXd::Map(&Mat[i][0],Mat[i].size);
-
-
-   // mat=Mat;
-/*
-   // get sum by row
-    for( int i=0; i<matsize; ++i){
-        for( int j=0; j<matsize; ++j){
-            mat(i)(j)=Mat[i][j];
-          }
-    }
-  */
-   // try using eigen 
+double* GetCenterMatrix(double *Mat,int numAtoms){
+    Eigen::VectorXd v;
+    Eigen::Map<Eigen::MatrixXd> mat(Mat, numAtoms,numAtoms);
+    // center the data by column (identical as for row in symetric matrix!)
     v = mat.colwise().mean();
     mat=mat.colwise() - v;
-/*
-    for( int i=0; i<matsize; ++i){
-        for( int j=0; j<matsize; ++j){
-             res[i][j]=mat(i)(j);
-          }
-    }*/
 
-    res=mat;
-
-/*
-    // convert sum to average
-    for( int i=0; i<matsize; ++i){
-            average[i]=average[i]/matsize;
-    }
-
-    // center the matrix
-    for( int i=0; i<matsize; ++i){
-        for( int j=0; j<matsize; ++j){
-             res[i][j]=Mat[i][j]-average[i];
-          }
-    }
-*/
-
-
-    return res;
+    return retreiveMat(mat);
 
 }
 
 
 
+double* getSVDEig(double *CXMat, int numAtoms) {
+    Eigen::Map<Eigen::MatrixXd> mat(CXMat, numAtoms,numAtoms);
+
+    Eigen::MatrixXd Weigth;
+    Weigth.setIdentity(numAtoms,numAtoms);
 
 
-std::vector<double> CalcUnweightedMORSE(const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd( mat.transpose() * Weigth * mat / Weigth.diagonal().sum(), Eigen::ComputeThinU | Eigen::ComputeThinV);
 
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-    std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
 
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
+    Eigen::VectorXd singval= svd.singularValues();
 
-        RDFres.push_back(res);
-    }
+    double *SiVal = retreiveVect(singval);
 
-    return RDFres;
+    return SiVal;
+}
+
+
+double getW9(double* w, int numAtoms) {
+
+  double res=0.0;
+  double sums=0.0;
+  for (int i=0;i<numAtoms;i++) 
+  {
+      sums+=w[i];
   }
 
-
-
-std::vector<double> CalcChargeMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
-
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-   std::vector<double>  charges = GetCharges(mol);
-
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=charges[j]*charges[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
-
-        RDFres.push_back(res);
-    }
-
-    return RDFres;
+  for (int i=0;i<numAtoms;i++) 
+  {
+    res+=std::abs(i/sums-1.0/3.0);
   }
 
-std::vector<double> CalcMassMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
+  double Ku = 3.0/4.0*res;
+  return round(1000*Ku)/1000;
+}
 
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-   std::vector<double>  Mass;
-    for (int p=0; p<numAtoms;p++) {
-      Mass[p]=mol.getAtomWithIdx(p)->getMass();
-    }
+int GetWHIMU(const Conformer &conf,double *DM){
+    int numAtoms = conf.getNumAtoms();
 
+    double *DC= GetCenterMatrix(DM,numAtoms);
 
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=Mass[j]*Mass[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
+    double* SingVal = getSVDEig(DC, numAtoms);
+    double w[9];
+    w[0]=round(SingVal[0]*1000)/1000;
+    w[1]=round(SingVal[1]*1000)/1000;
+    w[2]=round(SingVal[3]*1000)/1000;
+
+    double w4=0;
+     for (int i=0;i<numAtoms;i++)  {
+            w4+=SingVal[i];
           }
-        }
+    w[3]=round(w4*1000)/1000;
 
-        RDFres.push_back(res/144.3);
-    }
+    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000)/1000;
 
-    return RDFres;
+    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000)/1000;
+
+    w[6]=round((1000*w[0]/(w[0]+w[1]+w[2]))/1000);
+
+    w[7]=round((1000*w[1]/(w[0]+w[1]+w[2]))/1000);
+
+    w[7]=round((1000*w[1]/(w[0]+w[1]+w[2]))/1000);
+
+    w[8]=getW9(SingVal,numAtoms);
+
+
+
+    for (int i=0;i<9;i++) {
+
+      std::cout << w[i] << ",";
+     }
+    std::cout << "\n";
+
+
+
+    return 1;
   }
-
-std::vector<double> CalcAtomNumMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
-
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-   std::vector<double>  AN;
-    for (int p=0; p<numAtoms;p++) {
-      AN[p]=mol.getAtomWithIdx(p)->getAtomicNum();
-    }
-
-
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=AN[j]*AN[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
-
-        RDFres.push_back(res/144.3);
-    }
-
-    return RDFres;
-  }
-
-
-std::vector<double> CalcPolMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
-
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-
-   std::vector<double> RelativePol = GetRelativePol(mol);
-
-
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=RelativePol[j]*RelativePol[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
-
-        RDFres.push_back(res);
-    }
-
-    return RDFres;
-  }
-
-
-
-std::vector<double> CalcElectroNegMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
-
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-
-   std::vector<double> RelativeElectroNeg = GetRelativeElectroNeg(mol);
-
-
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=RelativeElectroNeg[j]*RelativeElectroNeg[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
-
-        RDFres.push_back(res);
-    }
-
-    return RDFres;
-  }
-
-
-std::vector<double> CalcVdWvolMORSE(const ROMol& mol,const Conformer &conf,const std::vector<RDGeom::Point3D> &points){
-   int numAtoms = conf.getNumAtoms();
-
-   std::vector<double>  R = getG(30);
-   std::vector<double>  RDFres(std::vector<double>(numAtoms,0));
-   std::vector<std::vector<double>> DM = GetGeometricalDistanceMatrix(points);
-
-   std::vector<double> RelativeVdW = GetRelativeVdW(mol);
-
-
-    for (int i=0;i<30;i++) {
-        double res=0;
-        for (int j=0;j<numAtoms-1;j++)  {
-          for (int k=j+1;k<numAtoms;k++)  {
-            res+=RelativeVdW[j]*RelativeVdW[k]*sin(R[i]*DM[j][k])/(R[i]*DM[j][k]);
-          }
-        }
-
-        RDFres.push_back(res);
-    }
-
-    return RDFres;
-  }
-
-
 
 } //end of anonymous namespace
 
 
-std::vector<double> WHIM(const ROMol& mol,int confId){
+double WHIM(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
 
-  std::vector<RDGeom::Point3D> points;
-  points.reserve(numAtoms);
-  for( int i=0; i<numAtoms; ++i){
-    points.push_back(conf.getAtomPos(i));
-  }
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
 
-  std::vector<double> res;
+  double vxyz= GetWHIMU(conf, DM);
 
-  std::vector<double> res1=CalcUnweightedMORSE(conf,points);
-  ContainerInsert(res, res1);
-
-  std::vector<double> res2=CalcMassMORSE(mol,conf,points);
-  ContainerInsert(res, res2);
-
-  std::vector<double> res3=CalcChargeMORSE(mol,conf,points);
-  ContainerInsert(res, res3);
-
-  std::vector<double> res4=CalcPolMORSE(mol,conf,points);
-  ContainerInsert(res, res4);
-
-  std::vector<double> res5=CalcElectroNegMORSE(mol,conf,points);
-  ContainerInsert(res, res5);
-
-  std::vector<double> res6=CalcVdWvolMORSE(mol,conf,points);
-  ContainerInsert(res, res6);
-
-  // what about AtomicNumberMorse
-
-
-
-  return res;
+  return vxyz;
 }
 
 } // end of Descriptors namespace

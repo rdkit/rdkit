@@ -49,7 +49,7 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string WHIMVersion = "1.0.0";
-    std::vector<double> WHIM(const ROMol&,int confId=-1);
+    double WHIM(const ROMol&,int confId=-1);
   }
 }
 #endif

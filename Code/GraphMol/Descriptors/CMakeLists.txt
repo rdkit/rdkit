@@ -1,6 +1,6 @@
 if(RDK_BUILD_DESCRIPTORS3D)
-  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RDF.h MORSE.h)
-  set(DESC3D_SOURCES PBF.cpp PMI.cpp RDF.cpp MORSE.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RDF.h MORSE.h WHIM.h)
+  set(DESC3D_SOURCES PBF.cpp PMI.cpp RDF.cpp MORSE.cpp WHIM.cpp)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_library(Descriptors
@@ -31,6 +31,8 @@ LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataS
   rdkit_test(testMORSE testMORSE.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(test3D test3D.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+  rdkit_test(testWHIM testWHIM.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 endif(RDK_BUILD_DESCRIPTORS3D)
 
