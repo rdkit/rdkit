@@ -27,13 +27,20 @@
 // DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.n
 //
 #ifndef RDKIT_ENUMERATE_H
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"
 
 namespace RDKit {
+
+//!  Helper function, remove reagents that are incompatible
+//    with the reaction.
+//  rxn must be sanitized, initialized and preprocessed.
+//   this happens automatically in EnumerateLibrary
+BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs);
+  
 //! This is a class for running reactions on sets of reagents.
 /*!
   This class is a fully self contained reaction engine that can be
@@ -45,8 +52,8 @@ namespace RDKit {
   \verbatim
    ChemicalReaction rxn = ...
    BBS bbs(num_rgroups);
-   LoadRGroups(bbs[0]);
-   LoadRGroups(bbs[1]..);
+   ... somehow LoadRGroups(bbs[0]);
+   ... somehow LoadRGroups(bbs[1]..);
    ...
    EnumerateLibrary enumerator(en, bbs);
    for(; (bool)en; ++i) {
@@ -66,14 +73,18 @@ namespace RDKit {
    }
    \endverbatim
  */
+
+  
 class EnumerateLibrary : public EnumerateLibraryBase {
   BBS m_bbs;
   
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
-  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs);
-  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
-                   const EnumerationStrategyBase &enumerator);
+  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
+                   bool filterReagents=true);
+  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
+                   const EnumerationStrategyBase &enumerator,
+                   bool filterReagents=true);
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
   //! Return the reagents used in the library

@@ -92,20 +92,49 @@ std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
   return result;
 }
 
-EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs)
-    : EnumerateLibraryBase(rxn, new CartesianProductStrategy), m_bbs(bbs) {
-  m_enumerator->initialize(rxn, bbs);  // getSizesFromBBs(bbs));
-  m_initialState = getState();
-  PRECONDITION(static_cast<bool>(*m_enumerator), "Nothing to enumerate.");
+BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs) {
+  PRECONDITION(bbs.size() <= rxn.getNumReactantTemplates(),
+               "Number of Reagents not compatible with reaction templates");
+  BBS result;
+  result.resize(bbs.size());
+
+  for(size_t reactant_idx=0; reactant_idx < bbs.size(); ++reactant_idx) {
+    size_t removedCount = 0;
+    ROMOL_SPTR reactantTemplate = rxn.getReactants()[reactant_idx];
+    
+    for(size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size(); ++ reagent_idx) {
+      MatchVectType tvect;
+      ROMOL_SPTR mol = bbs[reactant_idx][reagent_idx];
+      if(SubstructMatch(*mol.get(), *reactantTemplate.get(), tvect))
+        result[reactant_idx].push_back(mol);
+      else
+        removedCount++;
+    }
+
+    if(removedCount) {
+      BOOST_LOG(rdInfoLog) << "Removed " << removedCount <<
+          " non matching reagents at template " << reactant_idx << std::endl;
+    }
+  }
+  return result;
 }
 
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
-                                   const EnumerationStrategyBase &enumerator)
-    : EnumerateLibraryBase(rxn), m_bbs(bbs) {
-  m_enumerator.reset(enumerator.Clone());
-  m_enumerator->initialize(rxn, bbs);
+                                   bool filterReagents)
+    : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
+      m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
+  m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
   m_initialState = getState();
-  PRECONDITION(static_cast<bool>(*m_enumerator), "dkjfdkf");
+}
+
+EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
+                                   const EnumerationStrategyBase &enumerator,
+                                   bool filterReagents)
+    : EnumerateLibraryBase(rxn),
+      m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
+  m_enumerator.reset(enumerator.Clone());
+  m_enumerator->initialize(m_rxn, m_bbs);
+  m_initialState = getState();
 }
 
 EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)

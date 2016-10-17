@@ -365,23 +365,46 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p2))
 
 
-  smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
-                'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
-                'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
-                'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
-  smiresults = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
-  enumerator.Skip(10)
-  enumerator.ResetState()
+    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
+    smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
+                  'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
+                  'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+                  'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+                  'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+                  'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
+    smiresults = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
+    enumerator.GetEnumerator().Skip(10)
+    enumerator.ResetState()
 
-  results  = []
-  for result in enumerator:
-    for prodSet in result:
-      for mol in prodSet:
-        results.append( Chem.MolToSmiles(mol) )
-  self.assertEquals(results, smiresults)
+    print ("==", enumerator.GetEnumerator().GetNumPermutations(), file=sys.stderr)
+    results  = []
+    for result in enumerator:
+      for prodSet in result:
+        for mol in prodSet:
+          results.append( Chem.MolToSmiles(mol) )
 
+    self.assertEquals(results, smiresults)
+
+  def testRemovingBadMatches(self):
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    
+    rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
+    # invert matches...
+    reagents = [
+      [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
+       Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
+       Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
+     ],
+
+      [Chem.MolFromSmiles('C=CCN=C=S'),
+       Chem.MolFromSmiles('CC=CCN=C=S'),
+       Chem.MolFromSmiles('CCC'),
+       Chem.MolFromSmiles('CCCCC'),
+     ],
+    ]
+
+    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
+    self.assertEquals([], list(enumerator))
 
 
 
