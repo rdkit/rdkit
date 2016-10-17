@@ -114,8 +114,7 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
   return m_rxn.runReactants(reactants);
 }
 
-void EnumerateLibrary::toStream(std::ostream &ss,
-                                bool enumerationStateOnly) const {
+void EnumerateLibrary::toStream(std::ostream &ss) const {
   boost::archive::binary_oarchive ar(ss);
   ar << *this;
 }

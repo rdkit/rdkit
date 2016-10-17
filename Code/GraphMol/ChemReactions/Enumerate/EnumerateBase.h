@@ -110,12 +110,11 @@ class EnumerateLibraryBase {
   void setState(const RGroupPosition &);
 
   //! serializes (pickles) to a stream
-  virtual void toStream(std::ostream &ss,
-                        bool enumerationStateOnly = false) const = 0;
+  virtual void toStream(std::ostream &ss) const = 0;
   //! returns a string with a serialized (pickled) representation
-  virtual std::string Serialize(bool enumerationStateOnly = false) const {
+  virtual std::string Serialize() const {
     std::stringstream ss;
-    toStream(ss, enumerationStateOnly);
+    toStream(ss);
     return ss.str();
   }
 

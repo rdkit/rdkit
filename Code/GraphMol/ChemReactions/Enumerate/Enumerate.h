@@ -78,7 +78,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
 
   std::vector<MOL_SPTR_VECT> next();
 
-  void toStream(std::ostream &ss, bool enumerationStateOnly = false) const;
+  void toStream(std::ostream &ss) const;
   void initFromStream(std::istream &ss);
 
  private:
