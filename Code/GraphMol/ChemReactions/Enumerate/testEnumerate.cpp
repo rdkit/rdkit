@@ -52,7 +52,7 @@
 
 using namespace RDKit;
 
-void pickleTest(EnumerationStrategyBase &en, size_t len, bool allRGroups) {
+void pickleTest(EnumerationStrategyBase &en, size_t len) {
   boost::shared_ptr<EnumerationStrategyBase> base(en.Clone());
   TEST_ASSERT(std::string(base->type()) == std::string(en.type()));
 
@@ -107,7 +107,7 @@ void testSamplers() {
 
   for (size_t i = 0; i < enumerators.size(); ++i) {
     TEST_ASSERT(enumerators[i]->getNumPermutations() == 10 * 5 * 6);
-    pickleTest(*enumerators[i], 10 * 5 * 6, i == 2);
+    pickleTest(*enumerators[i], 10 * 5 * 6);
   }
 
   // for(auto&& i: enumerators) {
@@ -172,11 +172,25 @@ void testEnumerations() {
       TEST_ASSERT(res.size() == 1);
       TEST_ASSERT(res[0].size() == 1);
       TEST_ASSERT(res[0][0] == smiresults[i]);
+      TEST_ASSERT(i<=6);
     }
     TEST_ASSERT(i == 6);
+    // tests reset
+    en.reset();
+    i = 0;
+    for (; (bool)en; ++i) {
+      std::vector<std::vector<std::string> > res = en.nextSmiles();
+      TEST_ASSERT(res.size() == 1);
+      TEST_ASSERT(res[0].size() == 1);
+      TEST_ASSERT(res[0][0] == smiresults[i]);
+      TEST_ASSERT(i<=6);
+    }
+    TEST_ASSERT(i == 6);
+    
   }
 
   {
+
     boost::shared_ptr<EnumerateLibrary> en(
         new EnumerateLibrary(*rxn, bbs, RandomSampleStrategy()));
     size_t i = 0;
@@ -193,8 +207,16 @@ void testEnumerations() {
         ar &copy;
       }
 
-      for (size_t j = 0; j < 10; ++j)
-        TEST_ASSERT(en->nextSmiles() == copy->nextSmiles());
+      std::vector<std::vector<std::vector<std::string> > >smir;
+      for (size_t j = 0; j < 10; ++j) {
+        std::vector<std::vector<std::string> > smiles = en->nextSmiles();
+        smir.push_back(smiles);
+        TEST_ASSERT(smiles == copy->nextSmiles());
+      }
+      copy->reset();
+      for (size_t j = 0; j < 10; ++j) {
+        TEST_ASSERT(smir[j] == copy->nextSmiles());
+      }      
     }
     TEST_ASSERT(i == 1000);
   }

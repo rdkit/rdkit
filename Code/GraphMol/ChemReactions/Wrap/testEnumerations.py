@@ -143,6 +143,11 @@ class TestCase(unittest.TestCase) :
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertTrue(enumerator)
+
+    # need to initialize the reaction before getting the binary serialization
+    rxn.Initialize()
+    self.assertEquals(rxn.ToBinary(), enumerator.GetReaction().ToBinary())
+    
     smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',

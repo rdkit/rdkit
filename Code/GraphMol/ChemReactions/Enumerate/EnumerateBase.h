@@ -87,6 +87,12 @@ class EnumerateLibraryBase {
     return static_cast<bool>(*m_enumerator);
   }
 
+  //! reset the enumeration to the beginning.
+  virtual void reset() = 0;
+
+  //! returns the underlying chemical reaction
+  const ChemicalReaction &getReaction() const { return m_rxn; }
+  
   //! return the current enumeration strategy
   const EnumerationStrategyBase &getEnumerator() {
     PRECONDITION(m_enumerator.get(), "Null Enumerator");
@@ -94,9 +100,16 @@ class EnumerateLibraryBase {
   }
 
   //! get the next set of products (See run_Reactants) for details
+  //  This returns a vector of a vector of molecules.
+  //  Each result vector corresponds for a product template.
+  //  i.e.
+  //    res = library.next();
+  //    res[0] are the results for library.getReaction().getProdcts()[0]
   virtual std::vector<MOL_SPTR_VECT> next() = 0;
 
   //! get the next set of products as smiles
+  //  This returns a vector of a vector strings.
+  //  Each result vector corresponds for a product template.
   virtual std::vector<std::vector<std::string> > nextSmiles();
 
   //! Get the current position into the reagent vectors

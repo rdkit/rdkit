@@ -76,6 +76,8 @@ class EnumerateLibrary : public EnumerateLibraryBase {
                    const EnumerationStrategyBase &enumerator);
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
+  void reset();
+  
   std::vector<MOL_SPTR_VECT> next();
 
   void toStream(std::ostream &ss) const;

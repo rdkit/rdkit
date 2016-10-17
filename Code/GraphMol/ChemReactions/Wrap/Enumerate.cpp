@@ -172,6 +172,10 @@ struct enumeration_wrapper {
         .def("SetState", &RDKit::EnumerateLibraryBase::setState,
              python::arg("state"),
              "Sets the enumeration state (position) of the library.")
+        .def("GetReaction", &RDKit::EnumerateLibraryBase::getReaction,
+             "Returns the chemical reaction for this library",
+             python::return_internal_reference<
+             1, python::with_custodian_and_ward_postcall<0, 1> >())
         .def("GetEnumerator", &RDKit::EnumerateLibraryBase::getEnumerator,
              "Returns the enumation strategy for the current library",
              python::return_internal_reference<
