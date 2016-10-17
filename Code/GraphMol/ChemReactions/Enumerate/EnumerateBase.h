@@ -41,11 +41,6 @@
 #include <GraphMol/MolPickler.h>
 
 namespace RDKit {
-struct RGroupPosition {
-  RGROUPS pos;
-  std::string state;
-};
-
 //! Base class for enumerating chemical reactions from collections of
 //  building blocks and reagents.
 /*!
@@ -104,10 +99,19 @@ class EnumerateLibraryBase {
   //! get the next set of products as smiles
   virtual std::vector<std::vector<std::string> > nextSmiles();
 
+  //! Get the current position into the reagent vectors
+  //   Use getState/setState to save/restart the enumeration
+  //   from this position.
+  const RGROUPS &getPosition() const;
+  
   //! Get the current state of the enumerator
-  RGroupPosition getState() const;
+  //   This is the position of the enumerator and the enumerators
+  //   state that can be used to restart enumerating
+  //   from this position.
+  std::string getState() const;
   //! Set the current state of the enumerator
-  void setState(const RGroupPosition &);
+  //   Restart the enumerator from this position.
+  void setState(const std::string &);
 
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const = 0;

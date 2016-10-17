@@ -151,7 +151,7 @@ class TestCase(unittest.TestCase) :
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
     
-    pickle = enumerator.Serialize(False)
+    pickle = enumerator.Serialize()
     enumerator2 = rdChemReactions.EnumerateLibrary()
     enumerator2.InitFromString(pickle)
     
@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase) :
 
         if en is enumerator and i == 1:
           # save the state not at the start
-          pickle_at_2 = enumerator.Serialize(False)
+          pickle_at_2 = enumerator.Serialize()
       self.assertEquals(i, 5)
 
     # see if we can restore the enumeration from the middle
@@ -216,7 +216,7 @@ class TestCase(unittest.TestCase) :
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
     
-    pickle = enumerator.Serialize(False)
+    pickle = enumerator.Serialize()
     enumerator2 = rdChemReactions.EnumerateLibrary()
     enumerator2.InitFromString(pickle)
     
@@ -237,7 +237,7 @@ class TestCase(unittest.TestCase) :
           outsmiles.append(smi1)
 
       if i == 1:
-        pickle_at_2 = enumerator.Serialize(False)
+        pickle_at_2 = enumerator.Serialize()
 
     # make sure we can pickle the state as well
     enumerator3 = rdChemReactions.EnumerateLibrary()
@@ -274,7 +274,7 @@ class TestCase(unittest.TestCase) :
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
     
-    pickle = enumerator.Serialize(False)
+    pickle = enumerator.Serialize()
     enumerator2 = rdChemReactions.EnumerateLibrary()
     enumerator2.InitFromString(pickle)
     
@@ -294,7 +294,7 @@ class TestCase(unittest.TestCase) :
           outsmiles.append(smi1)
 
       if i == 1:
-        pickle_at_2 = enumerator.Serialize(False)
+        pickle_at_2 = enumerator.Serialize()
 
     # make sure we can pickle the state as well
     enumerator3 = rdChemReactions.EnumerateLibrary()

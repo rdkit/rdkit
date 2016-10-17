@@ -59,16 +59,19 @@ BOOST_CLASS_EXPORT(RDKit::EvenSamplePairsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EnumerateLibrary);
 
 namespace RDKit {
-RGroupPosition EnumerateLibraryBase::getState() const {
-  PRECONDITION(m_enumerator.get(), "Null Enumerator");
-  RGroupPosition rgp;
-  rgp.pos = m_enumerator->currentPosition();
-  EnumerationStrategyPickler::pickle(m_enumerator, rgp.state);
-  return rgp;
+const RGROUPS &EnumerateLibraryBase::getPosition() const {
+  return m_enumerator->currentPosition();
 }
 
-void EnumerateLibraryBase::setState(const RGroupPosition &rgp) {
-  m_enumerator = EnumerationStrategyPickler::fromPickle(rgp.state);
+std::string EnumerateLibraryBase::getState() const {
+  PRECONDITION(m_enumerator.get(), "Null Enumerator");
+  std::string state;
+  EnumerationStrategyPickler::pickle(m_enumerator, state);
+  return state;
+}
+
+void EnumerateLibraryBase::setState(const std::string &state) {
+  m_enumerator = EnumerationStrategyPickler::fromPickle(state);
 }
 
 std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {

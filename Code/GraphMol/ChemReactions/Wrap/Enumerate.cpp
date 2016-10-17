@@ -149,17 +149,6 @@ struct enumeration_wrapper {
     python::class_<VectSizeT>("VectSizeT")
       .def(python::vector_indexing_suite<VectSizeT, false>() );
 
-    python::class_<RDKit::RGroupPosition, RDKit::RGroupPosition *,
-                   RDKit::RGroupPosition &>(
-        "RGroupPosition",
-        "class RGroupPosition.\n"
-        " This class holds the current group indices (pos)"
-        " and the enumeration state - which can be used to restart the "
-        "                             enumeration from this position.",
-        python::no_init)
-        .def_readonly("pos", &RDKit::RGroupPosition::pos)
-        .def_readonly("state", &RDKit::RGroupPosition::state);
-
     python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
