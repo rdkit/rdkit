@@ -25,7 +25,7 @@ void testRDF() {
 
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+      pathName + "/Code/GraphMol/Descriptors/test_data/1mol.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
  
@@ -42,7 +42,6 @@ void testRDF() {
     double drdf = RDKit::Descriptors::WHIM(*m);
 
 
-  
        
     std::cout << "=>read molecule: " << nDone  << std::endl;
 

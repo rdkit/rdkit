@@ -59,11 +59,8 @@
 #include <Eigen/SVD>
 
 
-template <class T1, class T2>
-void ContainerInsert(T1 t1, T2 t2)
-{
-    t1.insert(t1.end(), t2.begin(), t2.end());
-}
+using namespace Eigen;
+
 
 double Pol2[]={0.67,0,24.3,5.60,3.03,1.76,1.10,0.80,0.56,0,23.6,10.6,6.80,5.38,3.63,2.90,2.18,0,43.4,22.8,0,0,0,11.60,9.40,8.40,7.50,6.80,6.10,7.10,8.12,6.07,4.31,3.73,3.05,0,47.3,27.6,0,0,0,12.80,0,0,0,0,7.20,7.20,10.20,7.70,6.60,5.50,5.35,0,0,0,0,0,0,0,0,0,0,23.50,0,0,0,0,0,0,0,0,0,0,0,0,0,6.50,5.80,5.70,7.60,6.80,7.40};
 double ElectroNeg2[]={2.59, 0, 0.89, 1.81, 2.28, 2.75, 3.19, 3.65, 4.0, 0, 0.56, 1.32, 1.71, 2.14, 2.52, 2.96, 3.48, 0, 0.45, 0.95, 0, 0, 0, 1.66, 2.2, 2.2, 2.56, 1.94, 1.95, 2.23, 2.42, 2.62, 2.82, 3.01, 3.22, 0, 0.31, 0.72, 0, 0, 0, 1.15, 0, 0, 0, 0, 1.83, 1.98, 2.14, 2.3, 2.46, 2.62, 2.78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.28, 2.65, 2.2, 2.25, 2.29, 2.34};
@@ -147,49 +144,56 @@ std::vector<double> GetAbsPol(const ROMol& mol){
 
 double* retreiveMat(Eigen::MatrixXd matrix) {
    double* arrayd = matrix.data();
-   // do something with the array 
    return arrayd;
 }
 
 double* retreiveVect(Eigen::VectorXd matrix) {
    double* arrayd = matrix.data();
-   // do something with the array 
    return arrayd;
 
 }
 
-double* GetCenterMatrix(double *Mat,int numAtoms){
-    Eigen::VectorXd v;
-    Eigen::Map<Eigen::MatrixXd> mat(Mat, numAtoms,numAtoms);
-    // center the data by column (identical as for row in symetric matrix!)
+
+/*
+double* GetCenterMatrix(double* Mat,int numAtoms){
+
+    Map<MatrixXd> mat(Mat,numAtoms,3);  // row , col
+
     v = mat.colwise().mean();
-    mat=mat.colwise() - v;
 
-    return retreiveMat(mat);
+    MatrixXd X=mat.rowwise() - v.transpose();
 
+    return retreiveMat(X);
 }
+*/
 
+JacobiSVD<MatrixXd> getSVDEig(double *Mat, int numAtoms) {
 
+    std::cout << "Eig\n";
 
-double* getSVDEig(double *CXMat, int numAtoms) {
-    Eigen::Map<Eigen::MatrixXd> mat(CXMat, numAtoms,numAtoms);
+    Map<MatrixXd> mat(Mat, numAtoms,3);
+    VectorXd v;
 
-    Eigen::MatrixXd Weigth;
+    v = mat.colwise().mean();
+
+    // center matrix
+    MatrixXd X=mat.rowwise() - v.transpose();
+
+    MatrixXd Weigth;
+
     Weigth.setIdentity(numAtoms,numAtoms);
 
+    double weigth=Weigth.diagonal().sum();
+    // svd of the centered matrix product by W:
+    JacobiSVD<MatrixXd> svd(X.transpose() * Weigth * X / weigth ,  ComputeThinU | ComputeThinV);
 
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd( mat.transpose() * Weigth * mat / Weigth.diagonal().sum(), Eigen::ComputeThinU | Eigen::ComputeThinV);
 
 
-    Eigen::VectorXd singval= svd.singularValues();
-
-    double *SiVal = retreiveVect(singval);
-
-    return SiVal;
+    return svd;
 }
 
 
-double getW9(double* w, int numAtoms) {
+double getKu(double* w, int numAtoms) {
 
   double res=0.0;
   double sums=0.0;
@@ -207,44 +211,75 @@ double getW9(double* w, int numAtoms) {
   return round(1000*Ku)/1000;
 }
 
+
 int GetWHIMU(const Conformer &conf,double *DM){
     int numAtoms = conf.getNumAtoms();
 
-    double *DC= GetCenterMatrix(DM,numAtoms);
 
-    double* SingVal = getSVDEig(DC, numAtoms);
-    double w[9];
+    /*Map<MatrixXd> mat(DM, numAtoms,3);
+
+    VectorXd v;
+
+    v = mat.colwise().mean();
+
+    // center matrix
+    MatrixXd X=mat.rowwise() - v.transpose();
+    */
+    JacobiSVD<Eigen::MatrixXd> svd = getSVDEig(DM, numAtoms);
+
+
+    //MatrixXd Cp = svd.matrixU() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
+
+    VectorXd singval= svd.singularValues();
+
+
+    double *SingVal = retreiveVect(singval);
+
+    double w[14];
     w[0]=round(SingVal[0]*1000)/1000;
     w[1]=round(SingVal[1]*1000)/1000;
-    w[2]=round(SingVal[3]*1000)/1000;
+    w[2]=round(SingVal[2]*1000)/1000;
 
-    double w4=0;
-     for (int i=0;i<numAtoms;i++)  {
-            w4+=SingVal[i];
-          }
-    w[3]=round(w4*1000)/1000;
+    w[3]=round((w[0]+w[1]+w[2])*1000)/1000;  // T
 
-    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000)/1000;
+    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000)/1000; // A
 
-    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000)/1000;
+    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000)/1000; // V
 
-    w[6]=round((1000*w[0]/(w[0]+w[1]+w[2]))/1000);
+    w[6]=round((1000*w[0]/(w[0]+w[1]+w[2]))/1000); // P
 
     w[7]=round((1000*w[1]/(w[0]+w[1]+w[2]))/1000);
 
-    w[7]=round((1000*w[1]/(w[0]+w[1]+w[2]))/1000);
+    w[8]=round((1000*w[2]/(w[0]+w[1]+w[2]))/1000);
 
-    w[8]=getW9(SingVal,numAtoms);
+    // get K 
+    double res=0.0;
+    for (int i=0;i<3;i++) 
+    {
+      res+=std::abs(w[i]/w[3]-1.0/3.0);
+    }
+
+    double Ku = 3.0/4.0*res;
+   
+
+    w[9]=round(1000*Ku)/1000; // K
+
+    // need to find a way to have stable memory adress !
+    //VectorXd v2= X*svd.matrixU().col(0).transpose();
+
+    //std::cout << v2 << "\n";
+    double t = pow(2,4);
+    w[10] = numAtoms*pow(w[0],2)/t;
+    w[11] = numAtoms*pow(w[1],2)/t;
+    w[12] = numAtoms*pow(w[2],2)/t;
+    w[13] = w[10]+w[11]+w[12];
 
 
-
-    for (int i=0;i<9;i++) {
+    for (int i=0;i<14;i++) {
 
       std::cout << w[i] << ",";
      }
     std::cout << "\n";
-
-
 
     return 1;
   }
@@ -258,9 +293,16 @@ double WHIM(const ROMol& mol,int confId){
 
   const Conformer &conf = mol.getConformer(confId);
 
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
+  double points[numAtoms][3];
 
-  double vxyz= GetWHIMU(conf, DM);
+  for(unsigned int i=0; i<numAtoms; ++i){
+     points[i][0] =conf.getAtomPos(i).x;
+     points[i][1] =conf.getAtomPos(i).y;
+     points[i][2] =conf.getAtomPos(i).z;
+  }
+
+  
+  double vxyz= GetWHIMU(conf,  *points);
 
   return vxyz;
 }
