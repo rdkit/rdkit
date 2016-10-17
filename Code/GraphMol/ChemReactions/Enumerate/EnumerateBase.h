@@ -61,16 +61,19 @@ class EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
   boost::shared_ptr<EnumerationStrategyBase> m_enumerator;
+  std::string m_initialState; // subclass responsible for setting... boo!
 
  public:
   //! default constructor
-  EnumerateLibraryBase() : m_rxn(), m_enumerator() {}
+  EnumerateLibraryBase() : m_rxn(), m_enumerator(), m_initialState() {}
 
   //! construct with a chemical reaction and an enumeration strategy
   EnumerateLibraryBase(const ChemicalReaction &rxn,
                        EnumerationStrategyBase *enumerator = 0)
       : m_rxn(rxn),
-        m_enumerator(enumerator ? enumerator : new CartesianProductStrategy) {
+        m_enumerator(enumerator ? enumerator : new CartesianProductStrategy),
+        m_initialState()
+      {
     m_rxn.initReactantMatchers();
   }
 
@@ -88,7 +91,10 @@ class EnumerateLibraryBase {
   }
 
   //! reset the enumeration to the beginning.
-  virtual void reset() = 0;
+  void reset() {
+    if(m_initialState.size())
+      setState(m_initialState);
+  }
 
   //! returns the underlying chemical reaction
   const ChemicalReaction &getReaction() const { return m_rxn; }
@@ -126,6 +132,10 @@ class EnumerateLibraryBase {
   //! Set the current state of the enumerator
   //   Restart the enumerator from this position.
   void setState(const std::string &);
+  
+  //! Reset the enumerator to the beginning
+  void resetState();
+
 
   //! serializes (pickles) to a stream
   virtual void toStream(std::ostream &ss) const = 0;
@@ -154,6 +164,7 @@ class EnumerateLibraryBase {
     ReactionPickler::pickleReaction(m_rxn, pickle);
     ar &pickle;
     ar &m_enumerator;
+    ar &m_initialState;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
@@ -161,6 +172,7 @@ class EnumerateLibraryBase {
     ar &pickle;
     ReactionPickler::reactionFromPickle(pickle, m_rxn);
     ar &m_enumerator;
+    ar &m_initialState;
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();

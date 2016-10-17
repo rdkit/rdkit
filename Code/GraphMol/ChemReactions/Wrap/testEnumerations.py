@@ -339,17 +339,22 @@ class TestCase(unittest.TestCase) :
       return [[str(x) for x in v] for v in l]
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     state = enumerator.GetState()
+    p = enumerator.nextSmiles()
+    p2 = enumerator.nextSmiles()
+    enumerator.SetState(state)
+    self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p))
+    self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p2))
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                   rdChemReactions.RandomSampleStrategy())
+    
     state = enumerator.GetState()
     p = enumerator.nextSmiles()
     p2 = enumerator.nextSmiles()
     enumerator.SetState(state)
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p))
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p2))
-    state = enumerator.GetState()
-    
+
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
                                                   rdChemReactions.RandomSampleAllBBsStrategy())
     state = enumerator.GetState()
@@ -358,7 +363,29 @@ class TestCase(unittest.TestCase) :
     enumerator.SetState(state)
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p))
     self.assertEquals(tostr(enumerator.nextSmiles()), tostr(p2))
-    state = enumerator.GetState()
+
+
+  smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
+                'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
+                'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+                'CC=CCNC(=S)NCCc1ncc(Cl)cc1Br',
+                'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
+                'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
+  smiresults = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
+  enumerator.Skip(10)
+  enumerator.ResetState()
+
+  results  = []
+  for result in enumerator:
+    for prodSet in result:
+      for mol in prodSet:
+        results.append( Chem.MolToSmiles(mol) )
+  self.assertEquals(results, smiresults)
+
+
+
+
+    
 
 if __name__ == '__main__':
   unittest.main()

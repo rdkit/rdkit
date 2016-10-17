@@ -176,7 +176,7 @@ void testEnumerations() {
     }
     TEST_ASSERT(i == 6);
     // tests reset
-    en.reset();
+    en.resetState();
     i = 0;
     for (; (bool)en; ++i) {
       std::vector<std::vector<std::string> > res = en.nextSmiles();
@@ -200,7 +200,7 @@ void testEnumerations() {
       smir.push_back(smiles);
     }
 
-    en->reset();
+    en->resetState();
     
     for (size_t i = 0; i < 1000; ++i) {
       // pickle and unpickle
@@ -219,7 +219,7 @@ void testEnumerations() {
         TEST_ASSERT(en->nextSmiles() == copy->nextSmiles());
       }
 
-      copy->reset();
+      copy->resetState();
       for (size_t j = 0; j < 10; ++j) {
         TEST_ASSERT(smir[j] == copy->nextSmiles());
       }      

@@ -74,6 +74,10 @@ void EnumerateLibraryBase::setState(const std::string &state) {
   m_enumerator = EnumerationStrategyPickler::fromPickle(state);
 }
 
+void EnumerateLibraryBase::resetState() {
+  setState(m_initialState);
+}
+
 std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
   std::vector<std::vector<std::string> > result;
   std::vector<MOL_SPTR_VECT> mols = next();
@@ -106,10 +110,6 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
 
 EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
     : EnumerateLibraryBase(rhs), m_bbs(rhs.m_bbs) {}
-
-void EnumerateLibrary::reset() {
-  setState(m_initialState);
-}
 
 std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
   PRECONDITION(static_cast<bool>(*this), "No more enumerations");
