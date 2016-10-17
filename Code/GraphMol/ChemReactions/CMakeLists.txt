@@ -35,7 +35,7 @@ rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
 ${Boost_SERIALIZATION_LIBRARY} ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testEnumerate Enumerate/testEnumerate.cpp LINK_LIBRARIES
+rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ${Boost_SERIALIZATION_LIBRARY} ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib )
 
