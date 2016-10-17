@@ -165,7 +165,7 @@ void MolDebug(const ROMol &mol, bool useStdout) {
     mol.debugMol(std::cout);
   } else {
     std::ostream *dest = &std::cerr;
-    if (rdWarningLog != NULL) {
+    if (rdInfoLog != NULL) {
       if (rdInfoLog->teestream) {
         dest = rdInfoLog->teestream;
       } else if (rdInfoLog->dp_dest) {
