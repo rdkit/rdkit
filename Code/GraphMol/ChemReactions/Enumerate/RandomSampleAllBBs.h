@@ -52,29 +52,16 @@ namespace RDKit {
   bbs.push_back( bbs_for_reactants_1 );
   bbs.push_back( bbs_for_reactants_2 );
 
-  std::vector<size_t> num_bbs;
-  num_bbs.push_back(bbs[0].size());
-  num_bbs.push_back(bbs[1].size());
-
-  RandomSampleAllBBsStrategy rgroups(num_bbs);
+  RandomSampleAllBBsStrategy rgroups;
+  rgroups.initialize(rxn, bbs);
   for(size_t i=0; i<num_samples && rgroups; ++i) {
-    MOL_SPTR_VECT rvect = GetReactantsFromRGroups(bbs, rgroups.next());
+    MOL_SPTR_VECT rvect = getReactantsFromRGroups(bbs, rgroups.next());
     std::vector<MOL_SPTR_VECT> lprops = rxn.RunReactants(rvect);
     ...
   }
   \endverbatim
-*/
 
-/* RandomSampleAllBBsStrategy(const RGROUPS &rgroupLengths) :
-EnumerationStrategyBase(rgroupLengths),
-  m_numPermutationsProcessed(0),
-  m_offset(0),
-  m_maxoffset(*std::max_element(m_permutationSizes.begin(),
-                                m_permutationSizes.end())),
-  m_rng(),
-  m_distributions() {
-  reset(rgroupLengths);
-}
+  See EnumerationStrategyBase for more details and usage.
 */
 
 class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
