@@ -147,6 +147,11 @@ class TestCase(unittest.TestCase) :
     # need to initialize the reaction before getting the binary serialization
     rxn.Initialize()
     self.assertEquals(rxn.ToBinary(), enumerator.GetReaction().ToBinary())
+
+    bbs = enumerator.GetReagents()
+    for i in range(len(bbs)):
+      for j in range(len(bbs[i])):
+        self.assertTrue(Chem.MolToSmiles(reagents[i][j]) == Chem.MolToSmiles(bbs[i][j]))
     
     smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',

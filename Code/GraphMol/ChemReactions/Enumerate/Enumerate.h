@@ -77,6 +77,8 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
   void reset();
+
+  const BBS &getReagents() const { return m_bbs; }
   
   std::vector<MOL_SPTR_VECT> next();
 

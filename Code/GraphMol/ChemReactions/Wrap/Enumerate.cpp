@@ -139,6 +139,7 @@ void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn, python::list 
   
 typedef std::vector<size_t> VectSizeT;
 typedef std::vector<std::vector<std::string> > VectStringVect;
+typedef std::vector<MOL_SPTR_VECT > VectMolVect;
 
 struct enumeration_wrapper {
   static void wrap() {
@@ -149,6 +150,9 @@ struct enumeration_wrapper {
     python::class_<VectSizeT>("VectSizeT")
       .def(python::vector_indexing_suite<VectSizeT, false>() );
 
+    python::class_<VectMolVect>("VectMolVect")
+      .def(python::vector_indexing_suite<VectMolVect, false>() );
+    
     python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
@@ -195,6 +199,10 @@ struct enumeration_wrapper {
       .def(python::init<const RDKit::ChemicalReaction &,
            python::tuple,
            const RDKit::EnumerationStrategyBase &>())
+      .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
+           "Return the reagents used in this library.",
+           python::return_internal_reference<
+           1, python::with_custodian_and_ward_postcall<0, 1> >())
       ;
 
     python::class_<RDKit::EnumerationStrategyBase,
