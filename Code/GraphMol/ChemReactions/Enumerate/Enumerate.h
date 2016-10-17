@@ -34,38 +34,38 @@
 #include "EnumerateBase.h"
 
 namespace RDKit {
-  //! This is a class for running reactions on sets of reagents.
-  /*!
-    This class is a fully self contained reaction engine that can be
-    serialized and restarted.  For example, a million products can
-    be generated, the engine can be saved for later and reloaded
-    to retrieve the next million products.
+//! This is a class for running reactions on sets of reagents.
+/*!
+  This class is a fully self contained reaction engine that can be
+  serialized and restarted.  For example, a million products can
+  be generated, the engine can be saved for later and reloaded
+  to retrieve the next million products.
 
-    basic usage will be something like:
-    \verbatim
-     ChemicalReaction rxn = ...
-     BBS bbs(num_rgroups);
-     LoadRGroups(bbs[0]);
-     LoadRGroups(bbs[1]..);
+  basic usage will be something like:
+  \verbatim
+   ChemicalReaction rxn = ...
+   BBS bbs(num_rgroups);
+   LoadRGroups(bbs[0]);
+   LoadRGroups(bbs[1]..);
+   ...
+   EnumerateLibrary enumerator(en, bbs);
+   for(; (bool)en; ++i) {
+     // This is the same as rxn.run_Reactants( reagents );
+     std::vector<MOL_SPTR_VECT> products = en.next();
      ...
-     EnumerateLibrary enumerator(en, bbs);
-     for(; (bool)en; ++i) {
-       // This is the same as rxn.run_Reactants( reagents );
-       std::vector<MOL_SPTR_VECT> products = en.next();
-       ...
-     }
-     \endverbatim
+   }
+   \endverbatim
 
-     In general, reactions will enumerate to more products than desired,
-     a standard use is:
+   In general, reactions will enumerate to more products than desired,
+   a standard use is:
 
-     \verbatim
-     for(int i=0;i<num_samples && (bool)en; ++i) {
-       std::vector<MOL_SPTR_VECT> products = en.next();
-       ...
-     }
-     \endverbatim
-   */
+   \verbatim
+   for(int i=0;i<num_samples && (bool)en; ++i) {
+     std::vector<MOL_SPTR_VECT> products = en.next();
+     ...
+   }
+   \endverbatim
+ */
 class EnumerateLibrary : public EnumerateLibraryBase {
   BBS m_bbs;
 
@@ -84,7 +84,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-      void save(Archive &ar, const unsigned int /*version*/) const {
+  void save(Archive &ar, const unsigned int /*version*/) const {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
 
     size_t sz = m_bbs.size();
@@ -101,7 +101,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
     }
   }
   template <class Archive>
-      void load(Archive &ar, const unsigned int /*version*/) {
+  void load(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
 
     size_t sz;

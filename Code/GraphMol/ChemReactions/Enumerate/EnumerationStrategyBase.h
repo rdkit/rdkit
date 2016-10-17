@@ -95,7 +95,7 @@ ssize_t computeNumProducts(const RGROUPS &sizes);
 //!  Usage:
 //!  EnumerationStrategyBase must be initialized with both a reaction
 //!   and the building block (molecule) vector to be sampled.
-//!  
+//!
 //!  \verbatim
 //!  EnumerationStrategyBase &eb = ...
 //!   if(eb) { // can we get another entry
@@ -107,10 +107,10 @@ ssize_t computeNumProducts(const RGROUPS &sizes);
 
 class EnumerationStrategyBase {
  protected:
-  RGROUPS m_permutation;        // where are we currently?
-  RGROUPS m_permutationSizes;   // m_permutationSizes num bbs per group
-  ssize_t m_numPermutations;    // total number of permutations for this group
-                                //  -1 if > ssize_t::max
+  RGROUPS m_permutation;       // where are we currently?
+  RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
+  ssize_t m_numPermutations;   // total number of permutations for this group
+                               //  -1 if > ssize_t::max
  public:
   static const ssize_t EnumerationOverflow = static_cast<ssize_t>(-1);
   EnumerationStrategyBase()
@@ -130,7 +130,8 @@ class EnumerationStrategyBase {
   //! Initialize the enumerator based on the reaction and the
   //! supplied building blocks
   //!  This is the standard API point.
-  void initialize(const ChemicalReaction &reaction, const BBS &building_blocks) {
+  void initialize(const ChemicalReaction &reaction,
+                  const BBS &building_blocks) {
     // default initialization, may be overridden (sets the # reactants
     //  and computes the default # of permutations)
     m_permutationSizes = getSizesFromBBs(building_blocks);
@@ -156,7 +157,7 @@ class EnumerationStrategyBase {
 
   //! Clone the enumeration strategy complete with current state
   virtual EnumerationStrategyBase *Clone() const = 0;
-  
+
   //! The current position in the enumeration
   const RGROUPS &currentPosition() const { return m_permutation; }
 
@@ -164,7 +165,7 @@ class EnumerationStrategyBase {
   //!  permutations is not computable with the current
   //!  rdlonglong size.
   ssize_t getNumPermutations() const { return m_numPermutations; }
-  
+
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
   bool skip(size_t skipCount) {

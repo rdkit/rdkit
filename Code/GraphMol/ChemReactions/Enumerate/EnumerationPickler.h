@@ -48,7 +48,8 @@ void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
 boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle);
 
 //!  a pointer to the EnumerationStrategyBase
-boost::shared_ptr<EnumerationStrategyBase> fromPickle(const std::string &pickle);
+boost::shared_ptr<EnumerationStrategyBase> fromPickle(
+    const std::string &pickle);
 }
 }
 

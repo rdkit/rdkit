@@ -153,26 +153,24 @@ struct enumeration_wrapper {
                    >("RGroupPosition", python::no_init)
       .def_readonly("pos", &RDKit::RGroupPosition::pos)
       .def_readonly("state", &RDKit::RGroupPosition::state);
-    
-    python::class_<RDKit::EnumerateLibraryBase,
-                   RDKit::EnumerateLibraryBase*,
-                   RDKit::EnumerateLibraryBase&,
-                   boost::noncopyable>(
-                                       "EnumerateLibraryBase", python::no_init)
-      .def("__nonzero__", &EnumerateLibraryBase__nonzero__)
-      .def("__iter__", &EnumerateLibraryBase__iter__,
-           python::return_internal_reference<>())
-      .def("next", &EnumerateLibraryBase__next__)
-      .def("nextSmiles", &RDKit::EnumerateLibraryBase::nextSmiles)
-      .def("Serialize", &RDKit::EnumerateLibraryBase::Serialize)
-      .def("InitFromString", &RDKit::EnumerateLibraryBase::initFromString)
-      .def("GetState", &RDKit::EnumerateLibraryBase::getState)
-      .def("SetState", &RDKit::EnumerateLibraryBase::setState)
-      .def("GetEnumerator", &RDKit::EnumerateLibraryBase::getEnumerator,
-           python::return_internal_reference<1,
-	   python::with_custodian_and_ward_postcall<0,1> >())
-      ;    
-    
+
+    python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
+                   RDKit::EnumerateLibraryBase &, boost::noncopyable>(
+        "EnumerateLibraryBase", python::no_init)
+        .def("__nonzero__", &EnumerateLibraryBase__nonzero__)
+        .def("__iter__", &EnumerateLibraryBase__iter__,
+             python::return_internal_reference<>())
+        .def("next", &EnumerateLibraryBase__next__)
+        .def("nextSmiles", &RDKit::EnumerateLibraryBase::nextSmiles)
+        .def("Serialize", &RDKit::EnumerateLibraryBase::Serialize,
+             python::arg("enumerationStateOnly") = false),
+        .def("InitFromString", &RDKit::EnumerateLibraryBase::initFromString)
+            .def("GetState", &RDKit::EnumerateLibraryBase::getState)
+            .def("SetState", &RDKit::EnumerateLibraryBase::setState)
+            .def("GetEnumerator", &RDKit::EnumerateLibraryBase::getEnumerator,
+                 python::return_internal_reference<
+                     1, python::with_custodian_and_ward_postcall<0, 1> >());
+
     python::class_<EnumerateLibraryWrap,
                    EnumerateLibraryWrap*,EnumerateLibraryWrap&,
                    python::bases<RDKit::EnumerateLibraryBase> >("EnumerateLibrary", "foo",

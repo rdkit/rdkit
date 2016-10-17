@@ -46,7 +46,8 @@ namespace RDKit {
 std::string GetClass(const EnumerationStrategyBase *en) {
   if (dynamic_cast<const CartesianProductStrategy *>(en)) return "-->cartesian";
   if (dynamic_cast<const RandomSampleStrategy *>(en)) return "-->random";
-  if (dynamic_cast<const RandomSampleAllBBsStrategy *>(en)) return "-->randombbs";
+  if (dynamic_cast<const RandomSampleAllBBsStrategy *>(en))
+    return "-->randombbs";
   return "Unknown!";
 }
 
@@ -72,7 +73,8 @@ boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle) {
   return enumerator;
 }
 
-boost::shared_ptr<EnumerationStrategyBase> fromPickle(const std::string &pickle) {
+boost::shared_ptr<EnumerationStrategyBase> fromPickle(
+    const std::string &pickle) {
   std::stringstream ss(pickle);
   return fromPickle(ss);
 }

@@ -137,7 +137,7 @@ class EnumerateLibraryBase {
     ar &m_enumerator;
   }
   template <class Archive>
-      void load(Archive &ar, const unsigned int /*version*/) {
+  void load(Archive &ar, const unsigned int /*version*/) {
     std::string pickle;
     ar &pickle;
     ReactionPickler::reactionFromPickle(pickle, m_rxn);

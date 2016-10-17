@@ -36,34 +36,34 @@
 #include "EnumerationStrategyBase.h"
 
 namespace RDKit {
-  //! This is a class for enumerating reagents using Cartesian Products of
-  //reagents.
-  /*!
-    CartesianProductStrategy produces a  standard walk through all possible
-    reagent combinations:
-    
-     (0,0,0), (1,0,0), (2,0,0) ...
+//! This is a class for enumerating reagents using Cartesian Products of
+// reagents.
+/*!
+  CartesianProductStrategy produces a  standard walk through all possible
+  reagent combinations:
 
-    basic usage:
+   (0,0,0), (1,0,0), (2,0,0) ...
 
-    \verbatim
-    std::vector<MOL_SPTR_VECT> bbs;
-    bbs.push_back( bbs_for_reactants_1 );
-    bbs.push_back( bbs_for_reactants_2 );
+  basic usage:
 
-    std::vector<size_t> num_bbs;
-    num_bbs.push_back(bbs[0].size());
-    num_bbs.push_back(bbs[1].size());
+  \verbatim
+  std::vector<MOL_SPTR_VECT> bbs;
+  bbs.push_back( bbs_for_reactants_1 );
+  bbs.push_back( bbs_for_reactants_2 );
 
-    CartesianProductStrategy rgroups(num_bbs);
-    for(size_t i=0; i<num_samples && rgroups; ++i) {
-      MOL_SPTR_VECT rvect = getReactantsFromRGroups(bbs, rgroups.next());
-      std::vector<MOL_SPTR_VECT> lprops = rxn.RunReactants(rvect);
-      ...
-    }
-    \endverbatim
+  std::vector<size_t> num_bbs;
+  num_bbs.push_back(bbs[0].size());
+  num_bbs.push_back(bbs[1].size());
 
-  See EnumerationStrategyBase for more details and usage.
+  CartesianProductStrategy rgroups(num_bbs);
+  for(size_t i=0; i<num_samples && rgroups; ++i) {
+    MOL_SPTR_VECT rvect = getReactantsFromRGroups(bbs, rgroups.next());
+    std::vector<MOL_SPTR_VECT> lprops = rxn.RunReactants(rvect);
+    ...
+  }
+  \endverbatim
+
+See EnumerationStrategyBase for more details and usage.
 */
 
 class CartesianProductStrategy : public EnumerationStrategyBase {
@@ -75,9 +75,9 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &,
-                                  const BBS &)
-  { m_numPermutationsProcessed = 0; }
+  virtual void initializeStrategy(const ChemicalReaction &, const BBS &) {
+    m_numPermutationsProcessed = 0;
+  }
 
   virtual const char *type() const { return "CartesianProductStrategy"; }
 
@@ -128,7 +128,7 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-      void serialize(Archive &ar, const unsigned int /*version*/) {
+  void serialize(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerationStrategyBase>(*this);
     ar &m_numPermutationsProcessed;
   }
