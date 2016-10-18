@@ -159,19 +159,17 @@ double* GetCenterMatrix(double* Mat,int numAtoms){
 
     Map<MatrixXd> mat(Mat,numAtoms,3);  // row , col
 
-    v = mat.colwise().mean();
+    v = Xorigin.colwise().mean();
 
-    MatrixXd X=mat.rowwise() - v.transpose();
+    MatrixXd X=Xorigin.rowwise() - v.transpose();
 
     return retreiveMat(X);
 }
 */
 
-JacobiSVD<MatrixXd> getSVDEig(double *Mat, int numAtoms) {
+JacobiSVD<MatrixXd> getSVDEig(double Mat[][3], int numAtoms) {
 
-    std::cout << "Eig\n";
-
-    Map<MatrixXd> mat(Mat, numAtoms,3);
+    Map<MatrixXd> mat(*Mat, numAtoms,3);
     VectorXd v;
 
     v = mat.colwise().mean();
@@ -187,7 +185,7 @@ JacobiSVD<MatrixXd> getSVDEig(double *Mat, int numAtoms) {
     // svd of the centered matrix product by W:
     JacobiSVD<MatrixXd> svd(X.transpose() * Weigth * X / weigth ,  ComputeThinU | ComputeThinV);
 
-
+    std::cout << "Eig done\n";
 
     return svd;
 }
@@ -212,21 +210,25 @@ double getKu(double* w, int numAtoms) {
 }
 
 
-int GetWHIMU(const Conformer &conf,double *DM){
+
+int GetWHIMU(const Conformer &conf,double DM[][3]){
     int numAtoms = conf.getNumAtoms();
 
+    // clone the DM matrix
+    double d[numAtoms][3];
+    for (int i=0; i< numAtoms;i++){
+       for (int j=0; j<3;j++){
+        d[i][j]=DM[i][j];
+        }
+    }
 
-    /*Map<MatrixXd> mat(DM, numAtoms,3);
+    Map<MatrixXd> mat(*d, numAtoms,3);
 
-    VectorXd v;
-
-    v = mat.colwise().mean();
-
+    VectorXd v = mat.colwise().mean();
     // center matrix
-    MatrixXd X=mat.rowwise() - v.transpose();
-    */
-    JacobiSVD<Eigen::MatrixXd> svd = getSVDEig(DM, numAtoms);
+    MatrixXd X = mat.rowwise() - v.transpose();
 
+    JacobiSVD<Eigen::MatrixXd> svd = getSVDEig(DM, numAtoms);
 
     //MatrixXd Cp = svd.matrixU() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
 
@@ -235,22 +237,22 @@ int GetWHIMU(const Conformer &conf,double *DM){
 
     double *SingVal = retreiveVect(singval);
 
-    double w[14];
-    w[0]=round(SingVal[0]*1000)/1000;
-    w[1]=round(SingVal[1]*1000)/1000;
-    w[2]=round(SingVal[2]*1000)/1000;
+    double w[18];
+    w[0]=round(SingVal[0]*1000.0)/1000.0;
+    w[1]=round(SingVal[1]*1000.0)/1000.0;
+    w[2]=round(SingVal[2]*1000.0)/1000.0;
 
-    w[3]=round((w[0]+w[1]+w[2])*1000)/1000;  // T
+    w[3]=round((SingVal[0]+SingVal[1]+SingVal[2])*1000.0)/1000.0;  // T
 
-    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000)/1000; // A
+    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000.0)/1000.0; // A
 
-    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000)/1000; // V
+    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000.0)/1000.0; // V
 
-    w[6]=round((1000*w[0]/(w[0]+w[1]+w[2]))/1000); // P
+    w[6]=round((1000.0*SingVal[0]/w[3])/1000.0); // P1
 
-    w[7]=round((1000*w[1]/(w[0]+w[1]+w[2]))/1000);
+    w[7]=round((1000.0*SingVal[1]/w[3])/1000.0); // p2
 
-    w[8]=round((1000*w[2]/(w[0]+w[1]+w[2]))/1000);
+    w[8]=round((1000.0*SingVal[2]/w[3])/1000.0); // P3
 
     // get K 
     double res=0.0;
@@ -260,24 +262,56 @@ int GetWHIMU(const Conformer &conf,double *DM){
     }
 
     double Ku = 3.0/4.0*res;
-   
 
-    w[9]=round(1000*Ku)/1000; // K
+    w[9]=round(1000.0*Ku)/1000.0; // K
 
-    // need to find a way to have stable memory adress !
-    //VectorXd v2= X*svd.matrixU().col(0).transpose();
+    VectorXd v1= X*svd.matrixV().col(0);
+    VectorXd v2= X*svd.matrixV().col(1);
+    VectorXd v3= X*svd.matrixV().col(2);
 
-    //std::cout << v2 << "\n";
-    double t = pow(2,4);
-    w[10] = numAtoms*pow(w[0],2)/t;
-    w[11] = numAtoms*pow(w[1],2)/t;
-    w[12] = numAtoms*pow(w[2],2)/t;
-    w[13] = w[10]+w[11]+w[12];
+    w[10] = numAtoms*pow(w[0],2)/v1.cwiseProduct(v1).cwiseProduct(v1).cwiseProduct(v1).sum(); // E1
+    w[11] = numAtoms*pow(w[1],2)/v2.cwiseProduct(v2).cwiseProduct(v2).cwiseProduct(v2).sum(); // E2
+    w[12] = numAtoms*pow(w[2],2)/v3.cwiseProduct(v3).cwiseProduct(v3).cwiseProduct(v3).sum(); // E3
+    w[13] = w[10]+w[11]+w[12]; //D
 
 
-    for (int i=0;i<14;i++) {
+    // is symetric or not !
+    MatrixXd Scores= mat*svd.matrixV(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
 
-      std::cout << w[i] << ",";
+    double gamma[3]; // G
+
+    for (int i=0;i<3; i++) {
+      double ns=0.0;
+      double na=0.0;
+
+      for (int j=0;j< numAtoms;j++) {
+        bool Found = false;
+        for (int k=0;k< numAtoms;k++){
+          if (k==j) continue;
+          if (Scores(j,i) == -Scores(k,i)) {
+            ns++;
+            Found=true;
+            break;
+          }
+        }
+        if (!Found) na++;
+      }
+        gamma[i] = -1.0* ((ns / numAtoms) * log(ns / numAtoms) / log(2.0) + (na / numAtoms) * log(1.0 / numAtoms) / log(2.0));
+        gamma[i] = 1.0 / (1.0 + gamma[i]);
+
+    }
+
+    w[14]=gamma[0]; // G1
+    w[15]=gamma[1]; // G2
+    w[16]=gamma[2]; // G3
+    w[17]=pow(gamma[0]*gamma[1]*gamma[2],1.0/3.0);
+
+    std::vector<std::string> descnames={"L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"};
+
+
+    for (int i=0;i<18;i++) {
+
+      std::cout << descnames[i] << ":"<< w[i] << ",";
      }
     std::cout << "\n";
 
@@ -302,7 +336,7 @@ double WHIM(const ROMol& mol,int confId){
   }
 
   
-  double vxyz= GetWHIMU(conf,  *points);
+  double vxyz= GetWHIMU(conf, points);
 
   return vxyz;
 }
