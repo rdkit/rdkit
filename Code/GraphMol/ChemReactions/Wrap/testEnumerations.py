@@ -62,7 +62,8 @@ class TestCase(unittest.TestCase) :
     # see if we are equal to the Python implementation
     g = list(itertools.product( list(range(10)), list(range(5)), list(range(6)) ))
     self.assertEquals(set(g), set(groups))
-
+    cartProd.Clone()
+    
   def testRandomSample(self):
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
@@ -86,7 +87,8 @@ class TestCase(unittest.TestCase) :
 
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
-
+    randProd.Clone()
+    
   def testRandomSampleAllBBs(self):
     rxn = rdChemReactions.ChemicalReaction();
     rgroups = [[Chem.MolFromSmiles("C")]*10,
@@ -112,6 +114,7 @@ class TestCase(unittest.TestCase) :
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
       self.assertEquals(len(set([g[i] for g in groups])), [10,5,6][i])
+    randProd.Clone()
     
   def testTimings(self):
     rxn = rdChemReactions.ChemicalReaction();

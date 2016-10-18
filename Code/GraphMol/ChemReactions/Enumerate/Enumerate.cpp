@@ -60,7 +60,7 @@ BOOST_CLASS_EXPORT(RDKit::EnumerateLibrary);
 
 namespace RDKit {
 const RGROUPS &EnumerateLibraryBase::getPosition() const {
-  return m_enumerator->currentPosition();
+  return m_enumerator->getPosition();
 }
 
 std::string EnumerateLibraryBase::getState() const {

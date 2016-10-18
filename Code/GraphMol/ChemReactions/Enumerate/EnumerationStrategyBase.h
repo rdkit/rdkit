@@ -159,7 +159,7 @@ class EnumerationStrategyBase {
   virtual EnumerationStrategyBase *Clone() const = 0;
 
   //! The current position in the enumeration
-  const RGROUPS &currentPosition() const { return m_permutation; }
+  const RGROUPS &getPosition() const { return m_permutation; }
 
   //! a result of EnumerationOverflow indicates that the number of
   //!  permutations is not computable with the current

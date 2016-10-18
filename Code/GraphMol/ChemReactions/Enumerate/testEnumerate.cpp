@@ -69,7 +69,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
     }
     TEST_ASSERT(std::string(base->type()) == std::string(copy->type()));
     TEST_ASSERT(base->next() == copy->next());
-    TEST_ASSERT(base->currentPosition() == en.next());
+    TEST_ASSERT(base->getPosition() == en.next());
   }
 }
 

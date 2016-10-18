@@ -102,24 +102,27 @@ class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
 public:
   EnumerateLibraryWrap() : RDKit::EnumerateLibrary() {}
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::list ob) :
-    RDKit::EnumerateLibrary(rxn, ConvertToVect(ob)) {
-  }
-  
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::tuple ob) :
-    RDKit::EnumerateLibrary(rxn, ConvertToVect(ob)) {
-  }
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::list ob,
-                       const EnumerationStrategyBase &enumerator) :
-    RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator) {
+                       python::list ob, bool removeUnmatched=true) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), removeUnmatched) {
   }
   
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
                        python::tuple ob,
-                       const EnumerationStrategyBase &enumerator) :
-    RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator) {
+                       bool removeUnmatched=true) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), removeUnmatched) {
+  }
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
+                       python::list ob,
+                       const EnumerationStrategyBase &enumerator,
+                       bool removeUnmatched = true) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, removeUnmatched) {
+  }
+  
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
+                       python::tuple ob,
+                       const EnumerationStrategyBase &enumerator,
+                       bool removeUnmatched=true) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, removeUnmatched) {
   }
 };
 
@@ -170,6 +173,10 @@ struct enumeration_wrapper {
         .def("InitFromString", &RDKit::EnumerateLibraryBase::initFromString,
              python::arg("data"),
              "Inititialize the library from a binary string")
+        .def("GetPosition", &RDKit::EnumerateLibraryBase::getPosition,
+             "Returns the current enumeration position into the reagent vectors",
+             python::return_internal_reference<
+             1, python::with_custodian_and_ward_postcall<0, 1> >())
         .def("GetState", &RDKit::EnumerateLibraryBase::getState,
              "Returns the current enumeration state (position) of the library.\n"
              "This position can be used to restart the library from a known position")
@@ -187,20 +194,28 @@ struct enumeration_wrapper {
              python::return_internal_reference<
              1, python::with_custodian_and_ward_postcall<0, 1> >());
 
+    docString = "";
     python::class_<EnumerateLibraryWrap,
                    EnumerateLibraryWrap*,EnumerateLibraryWrap&,
-                   python::bases<RDKit::EnumerateLibraryBase> >("EnumerateLibrary", "foo",
-                                                                python::init<>())
-      .def(python::init<const RDKit::ChemicalReaction &,
-           python::list>())
-      .def(python::init<const RDKit::ChemicalReaction &,
-           python::tuple>())
+                   python::bases<RDKit::EnumerateLibraryBase> >(
+                       "EnumerateLibrary", docString.c_str(),
+                       python::init<>())
+      .def(python::init<
+           const RDKit::ChemicalReaction &,
+           python::list,
+           python::optional<bool> >(python::args("rxn", "reagents", "filterReagents")))
+      .def(python::init<
+           const RDKit::ChemicalReaction &,
+           python::tuple,
+           python::optional<bool> >(python::args("rxn", "reagents", "filterReagents")))
       .def(python::init<const RDKit::ChemicalReaction &,
            python::list,
-           const RDKit::EnumerationStrategyBase &>())
+           const RDKit::EnumerationStrategyBase &,
+           python::optional<bool> >(python::args("rxn", "reagents", "enumerator", "filterReagents")))
       .def(python::init<const RDKit::ChemicalReaction &,
            python::tuple,
-           const RDKit::EnumerationStrategyBase &>())
+           const RDKit::EnumerationStrategyBase &,
+           python::optional<bool> >(python::args("rxn", "reagents", "enumerator", "filterReagents")))
       .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
            "Return the reagents used in this library.",
            python::return_internal_reference<
@@ -226,7 +241,7 @@ struct enumeration_wrapper {
         .def("GetNumPermutations", &EnumerationStrategyBase::getNumPermutations,
              "Returns the total number of results for this enumeration strategy.\n"
              "Note that some strategies are effectively infinite.")
-        .def("CurrentPosition", &EnumerationStrategyBase::currentPosition,
+        .def("GetPosition", &EnumerationStrategyBase::getPosition,
              "Return the current indices into the arrays of reagents",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1> >())
@@ -247,6 +262,8 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("CartesianProductStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
+        .def("Clone", &RDKit::CartesianProductStrategy::Clone,
+             python::return_value_policy<python::manage_new_object>())
       ;
 
     docString = "RandomSampleStrategy simply randomly samples from the reagent sets.\n"
@@ -257,6 +274,8 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("RandomSampleStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
+        .def("Clone", &RDKit::RandomSampleStrategy::Clone,
+             python::return_value_policy<python::manage_new_object>())
       ;
 
     docString = "RandomSampleAllBBsStrategy randomly samples from the reagent sets\n"
@@ -268,6 +287,8 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("RandomSampleAllBBsStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
+        .def("Clone", &RDKit::RandomSampleAllBBsStrategy::Clone,
+             python::return_value_policy<python::manage_new_object>())
       ;
 
     docString = "Randomly sample Pairs evenly from a collection of building blocks\n"
@@ -284,6 +305,8 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("EvenSamplePairsStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
+        .def("Clone", &RDKit::EvenSamplePairsStrategy::Clone,
+             python::return_value_policy<python::manage_new_object>())
       ;
     
   }
