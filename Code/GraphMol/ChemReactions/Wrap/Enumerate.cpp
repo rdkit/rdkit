@@ -69,10 +69,8 @@ bool EnumerateLibraryBase__nonzero__(RDKit::EnumerateLibraryBase *base) {
 bool EnumerationStrategyBase__nonzero__(RDKit::EnumerationStrategyBase *base) {
   return static_cast<bool>(*base);
 }
-RDKit::EnumerateLibraryBase &EnumerateLibraryBase__iter__(
-           RDKit::EnumerateLibraryBase *base) {
-  return *base;
-}
+
+inline python::object pass_through(python::object const& o) { return o; }
 
 PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
   if (!static_cast<bool>(*base)) {
@@ -97,6 +95,12 @@ PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
   return res;
 }
 
+python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
+  std::string res = en.Serialize();
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
   
 class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
 public:
@@ -160,13 +164,15 @@ struct enumeration_wrapper {
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
         .def("__nonzero__", &EnumerateLibraryBase__nonzero__)
-        .def("__iter__", &EnumerateLibraryBase__iter__,
-             python::return_internal_reference<>())
+        .def("__bool__", &EnumerateLibraryBase__nonzero__)
+        .def("__iter__", &pass_through)
         .def("next", &EnumerateLibraryBase__next__,
+             "Return the next molecule from the enumeration.")
+        .def("__next__", &EnumerateLibraryBase__next__,
              "Return the next molecule from the enumeration.")
         .def("nextSmiles", &RDKit::EnumerateLibraryBase::nextSmiles,
              "Return the next smiles string from the enumeration.")
-        .def("Serialize", &RDKit::EnumerateLibraryBase::Serialize,
+        .def("Serialize", &EnumerateLibraryBase_Serialize,
              "Serialize the library to a binary string.\n"
              "Note that the position in the library is serialized as well.  Care should\n"
              "be taken when serializing.  See GetState/SetState for position manipulation.")
@@ -211,22 +217,27 @@ struct enumeration_wrapper {
       .def(python::init<const RDKit::ChemicalReaction &,
            python::list,
            const RDKit::EnumerationStrategyBase &,
-           python::optional<bool> >(python::args("rxn", "reagents", "enumerator", "filterReagents")))
+           python::optional<bool> >(python::args(
+               "rxn", "reagents", "enumerator", "filterReagents")))
       .def(python::init<const RDKit::ChemicalReaction &,
            python::tuple,
            const RDKit::EnumerationStrategyBase &,
-           python::optional<bool> >(python::args("rxn", "reagents", "enumerator", "filterReagents")))
+           python::optional<bool> >(python::args(
+               "rxn", "reagents", "enumerator", "filterReagents")))
       .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
            "Return the reagents used in this library.",
            python::return_internal_reference<
            1, python::with_custodian_and_ward_postcall<0, 1> >())
       ;
 
+    //iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
+    
     python::class_<RDKit::EnumerationStrategyBase,
                    RDKit::EnumerationStrategyBase *,
                    RDKit::EnumerationStrategyBase &, boost::noncopyable>(
         "EnumerationStrategyBase", python::no_init)
         .def("__nonzero__", &EnumerationStrategyBase__nonzero__)
+        .def("__bool__", &EnumerationStrategyBase__nonzero__)
         .def("Type", &EnumerationStrategyBase::type,
              "Returns the enumeration strategy type as a string.")
         .def("Skip", &EnumerationStrategyBase::skip,
@@ -245,7 +256,7 @@ struct enumeration_wrapper {
              "Return the current indices into the arrays of reagents",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1> >())
-        .def("Next", python::pure_virtual(&EnumerationStrategyBase::next),
+        .def("next", python::pure_virtual(&EnumerationStrategyBase::next),
              "Return the next indices into the arrays of reagents",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1> >())

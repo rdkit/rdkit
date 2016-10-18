@@ -42,11 +42,15 @@ from rdkit import Geometry
 from rdkit import RDConfig
 import itertools, time
 
+def log(s):
+  Chem.LogErrorMsg("== " + s)
+  
 class TestCase(unittest.TestCase) :
   def setUp(self):
     self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ChemReactions','testData')
 
   def testCartesianProduct(self):
+    log("testCartesianProduct")
     rxn = rdChemReactions.ChemicalReaction();
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
@@ -56,8 +60,12 @@ class TestCase(unittest.TestCase) :
     cartProd.Initialize(rxn, rgroups)
     self.assertEquals(cartProd.GetNumPermutations(), 10*5*6)
     groups = []
+    count = 0
+    print (cartProd.__bool__())
     while cartProd:
-      groups.append(tuple(cartProd.Next()))
+      groups.append(tuple(cartProd.next()))
+#      count += 1
+#      assert count <= cartProd.GetNumPermutations()
     self.assertEquals(len(groups), 10*5*6)
     # see if we are equal to the Python implementation
     g = list(itertools.product( list(range(10)), list(range(5)), list(range(6)) ))
@@ -65,6 +73,7 @@ class TestCase(unittest.TestCase) :
     cartProd.Clone()
     
   def testRandomSample(self):
+    log("testRandomSample")
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
                [Chem.MolFromSmiles("O")]*6]
@@ -75,7 +84,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
     groups = []
     for i in range(10*5*6):
-      groups.append(tuple(randProd.Next()))
+      groups.append(tuple(randProd.next()))
     print( len(set(groups)), "out of", 10*5*6 )
 
     randProd = rdChemReactions.RandomSampleStrategy()
@@ -83,13 +92,14 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
     groups = []
     for i in range(10):
-      groups.append(tuple(randProd.Next()))
+      groups.append(tuple(randProd.next()))
 
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
     randProd.Clone()
     
   def testRandomSampleAllBBs(self):
+    log("testRandomSampleAllBBs")
     rxn = rdChemReactions.ChemicalReaction();
     rgroups = [[Chem.MolFromSmiles("C")]*10,
                [Chem.MolFromSmiles("N")]*5,
@@ -100,7 +110,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
     groups = []
     for i in range(10*5*6):
-      groups.append(tuple(randProd.Next()))
+      groups.append(tuple(randProd.next()))
 
     print( len(set(groups)), "out of", 10*5*6 )
 
@@ -109,7 +119,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(randProd.GetNumPermutations(), 10*5*6)
     groups = []
     for i in range(10):
-      groups.append(tuple(randProd.Next()))
+      groups.append(tuple(randProd.next()))
 
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
@@ -117,6 +127,7 @@ class TestCase(unittest.TestCase) :
     randProd.Clone()
     
   def testTimings(self):
+    log("testTimings")
     rxn = rdChemReactions.ChemicalReaction();
 
     rgroups = [[Chem.MolFromSmiles("C")]*17000,
@@ -134,6 +145,7 @@ class TestCase(unittest.TestCase) :
       print("%s Skipped %s in %s seconds"%(r, num, t2-t1))
             
   def testEnumerateLibrary(self):
+    log("testEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     reagents = [
@@ -209,6 +221,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(i, 6)
       
   def testRandomEnumerateLibrary(self):
+    log("testRandomEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     reagents = [
@@ -228,7 +241,7 @@ class TestCase(unittest.TestCase) :
                   'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
-    
+
     pickle = enumerator.Serialize()
     enumerator2 = rdChemReactions.EnumerateLibrary()
     enumerator2.InitFromString(pickle)
@@ -268,6 +281,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(outsmiles2, outsmiles[2:])
     
   def testRandomEnumerateAllBBsLibrary(self):
+    log("testRandomEnumerateAllBBsLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     reagents = [
@@ -328,6 +342,7 @@ class TestCase(unittest.TestCase) :
 
             
   def testRGroupState(self):
+    log("testRGroupState")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
     reagents = [
@@ -379,7 +394,6 @@ class TestCase(unittest.TestCase) :
     enumerator.GetEnumerator().Skip(10)
     enumerator.ResetState()
 
-    print ("==", enumerator.GetEnumerator().GetNumPermutations(), file=sys.stderr)
     results  = []
     for result in enumerator:
       for prodSet in result:
@@ -389,6 +403,7 @@ class TestCase(unittest.TestCase) :
     self.assertEquals(results, smiresults)
 
   def testRemovingBadMatches(self):
+    log("testRemoveBadMatches")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
@@ -408,9 +423,6 @@ class TestCase(unittest.TestCase) :
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertEquals([], list(enumerator))
-
-
-
     
 
 if __name__ == '__main__':
