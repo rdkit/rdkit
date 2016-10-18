@@ -89,7 +89,7 @@ MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
 //!   The given numbers of building blocks for each rgroup
 //!   or -1 if the number will not fit into the machines integer
 //!   type.
-ssize_t computeNumProducts(const RGROUPS &sizes);
+size_t computeNumProducts(const RGROUPS &sizes);
 
 //! Base Class for enumeration strageties
 //!  Usage:
@@ -109,10 +109,10 @@ class EnumerationStrategyBase {
  protected:
   RGROUPS m_permutation;       // where are we currently?
   RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
-  ssize_t m_numPermutations;   // total number of permutations for this group
+  size_t m_numPermutations;   // total number of permutations for this group
                                //  -1 if > ssize_t::max
  public:
-  static const ssize_t EnumerationOverflow = static_cast<ssize_t>(-1);
+  static const size_t EnumerationOverflow = static_cast<size_t>(-1);
   EnumerationStrategyBase()
       : m_permutation(), m_permutationSizes(), m_numPermutations() {}
 
@@ -164,7 +164,7 @@ class EnumerationStrategyBase {
   //! a result of EnumerationOverflow indicates that the number of
   //!  permutations is not computable with the current
   //!  rdlonglong size.
-  ssize_t getNumPermutations() const { return m_numPermutations; }
+  size_t getNumPermutations() const { return m_numPermutations; }
 
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)

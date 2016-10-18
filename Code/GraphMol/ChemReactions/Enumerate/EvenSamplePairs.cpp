@@ -31,6 +31,7 @@
 //
 #include "EvenSamplePairs.h"
 #include <boost/format.hpp>
+#include <stdint.h>
 
 namespace RDKit {
 
@@ -136,7 +137,7 @@ bool EvenSamplePairsStrategy::try_add(size_t seed) {
       used_count[i]++;
     }
     var_used[i][digits[i]] += 1;
-    if (used_count[i] == rdcast<ssize_t>(rgroups[i])) {
+    if (used_count[i] == rdcast<int64_t>(rgroups[i])) {
       // complete variable scan => initialize
       if (nslack > min_nslack && rgroups[i] > 1)  // cleared slack on i
         nslack = min_nslack;

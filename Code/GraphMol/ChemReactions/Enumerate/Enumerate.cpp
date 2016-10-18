@@ -162,15 +162,15 @@ void EnumerateLibrary::initFromStream(std::istream &ss) {
   ar >> *this;
 }
 
-ssize_t computeNumProducts(const RGROUPS &sizes) {
+size_t computeNumProducts(const RGROUPS &sizes) {
   boost::multiprecision::cpp_int myint = 1;
 
   for (size_t i = 0; i < sizes.size(); ++i) {
     myint *= sizes[i];
   }
 
-  if (myint < std::numeric_limits<ssize_t>::max())
-    return myint.convert_to<ssize_t>();
+  if (myint < std::numeric_limits<size_t>::max())
+    return myint.convert_to<size_t>();
   else
     return EnumerationStrategyBase::EnumerationOverflow;
 }

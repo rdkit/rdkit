@@ -180,8 +180,7 @@ void fixRGroups(ChemicalReaction &rxn) {
   if (!reactantAtomsToFix.size() && !productAtomsToFix.size())
     return;
 
-  ssize_t diff = reactantAtomsToFix.size() - productAtomsToFix.size();
-  if(diff) {
+  if( reactantAtomsToFix.size() != productAtomsToFix.size() ) {
     std::ostringstream str;
     str << "Mismatched rlabels: " <<
         reactantAtomsToFix.size() << " unmapped reactant rlabels," << 

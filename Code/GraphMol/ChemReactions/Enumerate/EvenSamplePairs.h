@@ -35,6 +35,7 @@
 
 #include "EnumerationStrategyBase.h"
 #include <boost/serialization/set.hpp>
+#include <stdint.h>
 
 namespace RDKit {
 //! EvenSamplePairsStrategy
@@ -51,7 +52,7 @@ namespace RDKit {
 class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   size_t m_numPermutationsProcessed;
 
-  std::vector<ssize_t> used_count;
+  std::vector<int64_t> used_count;
   std::vector<std::vector<size_t> > var_used;
   std::vector<std::vector<size_t> > pair_used;
   std::vector<std::vector<size_t> > pair_counts;
@@ -145,7 +146,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
 
   // decode a packed integer into an RGroup selection
   const RGROUPS &decode(size_t seed) {
-    for (ssize_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
+    for (int64_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
       m_permutation[j] = seed % m_permutationSizes[j];
       seed /= m_permutationSizes[j];
     }
