@@ -74,6 +74,48 @@ namespace {
 
 
 
+void computeCovarianceTerms(const Conformer &conf,
+  const RDGeom::Point3D &center,
+  double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
+  bool normalize, bool ignoreHs,
+  const std::vector<double> *weights ){
+    PRECONDITION(!weights || weights->size()>=conf.getNumAtoms(), "bad weights vector");
+
+    xx = xy = xz = yy = yz = zz = 0.0;
+    const ROMol &mol = conf.getOwningMol();
+    double wSum = 0.0;
+    for (ROMol::ConstAtomIterator cai = mol.beginAtoms();
+        cai != mol.endAtoms(); cai++) {
+      if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+        continue;
+      }
+      RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+      loc -= center;
+      if(weights) {
+        double w = (*weights)[(*cai)->getIdx()];
+        wSum += w;
+        loc *= w;
+      } else {
+        wSum+=1.0;
+      }
+      xx += loc.x * loc.x;
+      xy += loc.x * loc.y;
+      xz += loc.x * loc.z;
+      yy += loc.y * loc.y;
+      yz += loc.y * loc.z;
+      zz += loc.z * loc.z;
+
+    }
+    if (normalize) {
+      xx /= wSum;
+      xy /= wSum;
+      xz /= wSum;
+      yy /= wSum;
+      yz /= wSum;
+      zz /= wSum;
+    }
+}
+
 std::vector<double> getG(int n){
   std::vector<double> res;
   for (int i=0;i<n;i++) {
@@ -169,6 +211,10 @@ double* GetCenterMatrix(double* Mat,int numAtoms){
 
 JacobiSVD<MatrixXd> getSVDEig(double Mat[][3], int numAtoms) {
 
+
+
+
+
     Map<MatrixXd> mat(*Mat, numAtoms,3);
     VectorXd v;
 
@@ -214,6 +260,37 @@ double getKu(double* w, int numAtoms) {
 int GetWHIMU(const Conformer &conf,double DM[][3]){
     int numAtoms = conf.getNumAtoms();
 
+    
+    bool weights=false;
+    bool ignoreHs=false;
+
+  RDGeom::Point3D origin(0,0,0);
+  double wSum=0.0;
+  for(unsigned int i=0;i<conf.getNumAtoms();++i){
+    double w=1.0;
+    wSum+=w;
+    origin+=conf.getAtomPos(i)*w;
+  }
+  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
+  origin /= wSum;
+
+  double sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ;
+  computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,true,false,NULL);
+
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ,
+         sumXY, sumYY, sumYZ,
+         sumXZ, sumYZ, sumZZ;
+
+    std::cout << mat << "\n";
+
+    JacobiSVD<MatrixXd> svd(mat,  ComputeThinU | ComputeThinV);
+
+   std::cout << "U: "<< svd.matrixU() << "\n";
+   std::cout << "V: "<< svd.matrixV() << "\n";
+   std::cout << "S: "<< svd.singularValues() << "\n";
+
+
     // clone the DM matrix
     double d[numAtoms][3];
     for (int i=0; i< numAtoms;i++){
@@ -222,20 +299,11 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
         }
     }
 
-    Map<MatrixXd> mat(*d, numAtoms,3);
+    Map<MatrixXd> matorigin(*d, numAtoms,3);
 
-    VectorXd v = mat.colwise().mean();
-    // center matrix
-    MatrixXd X = mat.rowwise() - v.transpose();
-
-    JacobiSVD<Eigen::MatrixXd> svd = getSVDEig(DM, numAtoms);
-
-    //MatrixXd Cp = svd.matrixU() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
-
-    VectorXd singval= svd.singularValues();
+    double *SingVal = retreiveVect(svd.singularValues());
 
 
-    double *SingVal = retreiveVect(singval);
 
     double w[18];
     w[0]=round(SingVal[0]*1000.0)/1000.0;
@@ -265,9 +333,12 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
 
     w[9]=round(1000.0*Ku)/1000.0; // K
 
-    VectorXd v1= X*svd.matrixV().col(0);
-    VectorXd v2= X*svd.matrixV().col(1);
-    VectorXd v3= X*svd.matrixV().col(2);
+
+    MatrixXd Scores= matorigin*svd.matrixV().transpose(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
+
+    VectorXd v1= Scores.col(0);
+    VectorXd v2= Scores.col(1);
+    VectorXd v3= Scores.col(2);
 
     w[10] = numAtoms*pow(w[0],2)/v1.cwiseProduct(v1).cwiseProduct(v1).cwiseProduct(v1).sum(); // E1
     w[11] = numAtoms*pow(w[1],2)/v2.cwiseProduct(v2).cwiseProduct(v2).cwiseProduct(v2).sum(); // E2
@@ -276,7 +347,7 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
 
 
     // is symetric or not !
-    MatrixXd Scores= mat*svd.matrixV(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
+    //MatrixXd Scores= mat*svd.matrixV(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
 
     double gamma[3]; // G
 
@@ -335,7 +406,6 @@ double WHIM(const ROMol& mol,int confId){
      points[i][2] =conf.getAtomPos(i).z;
   }
 
-  
   double vxyz= GetWHIMU(conf, points);
 
   return vxyz;
