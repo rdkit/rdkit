@@ -1746,9 +1746,7 @@ int main() {
   test10DrawSecondMol();
   test11DrawMolGrid();
   test12DrawMols();
-<<<<<<< HEAD
-  #endif test13JSONConfig();
-=======
+#endif
+  test13JSONConfig();
   testGithub1090();
->>>>>>> origin/master
 }
