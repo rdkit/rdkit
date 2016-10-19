@@ -216,9 +216,7 @@ JacobiSVD<MatrixXd> getSVDEig(double Mat[][3], int numAtoms) {
 
 
     Map<MatrixXd> mat(*Mat, numAtoms,3);
-    VectorXd v;
-
-    v = mat.colwise().mean();
+    VectorXd v = mat.colwise().mean();
 
     // center matrix
     MatrixXd X=mat.rowwise() - v.transpose();
@@ -257,7 +255,7 @@ double getKu(double* w, int numAtoms) {
 
 
 
-int GetWHIMU(const Conformer &conf,double DM[][3]){
+int GetWHIMU(const Conformer &conf, double Vpoints[]){
     int numAtoms = conf.getNumAtoms();
 
     
@@ -285,25 +283,33 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
     std::cout << mat << "\n";
 
     JacobiSVD<MatrixXd> svd(mat,  ComputeThinU | ComputeThinV);
+    std::cout << "-------------------" << "\n";
+    std::cout << "U: "<< svd.matrixU() << "\n";
+    std::cout << "V: "<< svd.matrixV() << "\n";
+    std::cout << "S: "<< svd.singularValues() << "\n";
+    std::cout << "-------------------" << "\n";
 
-   std::cout << "U: "<< svd.matrixU() << "\n";
-   std::cout << "V: "<< svd.matrixV() << "\n";
-   std::cout << "S: "<< svd.singularValues() << "\n";
+    Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
 
+    std::cout << "X original" << matorigin.transpose() << "\n";
 
-    // clone the DM matrix
-    double d[numAtoms][3];
-    for (int i=0; i< numAtoms;i++){
-       for (int j=0; j<3;j++){
-        d[i][j]=DM[i][j];
-        }
-    }
+    MatrixXd MatOrigin=matorigin.transpose();
 
-    Map<MatrixXd> matorigin(*d, numAtoms,3);
+    MatrixXd Weigth;
 
+    Weigth.setIdentity(numAtoms,numAtoms);
+
+    double weigth=Weigth.diagonal().sum();
+
+    JacobiSVD<MatrixXd> svd2(MatOrigin.transpose() * Weigth * MatOrigin / weigth ,  ComputeThinU | ComputeThinV);
+    std::cout << "-------------------" << "\n";
+    std::cout << "Cov:" << MatOrigin.transpose() * Weigth * MatOrigin / weigth << "\n";
+    std::cout << "U2: "<< svd2.matrixU() << "\n";
+    std::cout << "V2: "<< svd2.matrixV() << "\n";
+    std::cout << "S2: "<< svd2.singularValues() << "\n";
+    std::cout << "-------------------" << "\n";
+  
     double *SingVal = retreiveVect(svd.singularValues());
-
-
 
     double w[18];
     w[0]=round(SingVal[0]*1000.0)/1000.0;
@@ -312,15 +318,15 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
 
     w[3]=round((SingVal[0]+SingVal[1]+SingVal[2])*1000.0)/1000.0;  // T
 
-    w[4]=round((w[0]*w[1]+w[0]*w[2]+w[1]*w[2])*1000.0)/1000.0; // A
+    w[4]=round((SingVal[0]*SingVal[1]+SingVal[0]*SingVal[2]+SingVal[1]*SingVal[2])*1000.0)/1000.0; // A
 
-    w[5]=round((w[3]+w[4]+w[0]*w[1]*w[2])*1000.0)/1000.0; // V
+    w[5]=round((w[3]+w[4]+SingVal[0]*SingVal[1]*SingVal[2])*1000.0)/1000.0; // V
 
-    w[6]=round((1000.0*SingVal[0]/w[3])/1000.0); // P1
+    w[6]=SingVal[0]/(SingVal[0]+SingVal[1]+SingVal[2]); // P1
 
-    w[7]=round((1000.0*SingVal[1]/w[3])/1000.0); // p2
+    w[7]=SingVal[1]/(SingVal[0]+SingVal[1]+SingVal[2]); // p2
 
-    w[8]=round((1000.0*SingVal[2]/w[3])/1000.0); // P3
+    w[8]=SingVal[2]/(SingVal[0]+SingVal[1]+SingVal[2]); // P3
 
     // get K 
     double res=0.0;
@@ -334,20 +340,23 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
     w[9]=round(1000.0*Ku)/1000.0; // K
 
 
-    MatrixXd Scores= matorigin*svd.matrixV().transpose(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
+    // center original matrix
+    VectorXd v = MatOrigin.colwise().mean();
+    MatrixXd Xmean= MatOrigin.rowwise() - v.transpose();
+
+    MatrixXd Scores= Xmean*svd.matrixV(); // 
 
     VectorXd v1= Scores.col(0);
     VectorXd v2= Scores.col(1);
     VectorXd v3= Scores.col(2);
 
-    w[10] = numAtoms*pow(w[0],2)/v1.cwiseProduct(v1).cwiseProduct(v1).cwiseProduct(v1).sum(); // E1
-    w[11] = numAtoms*pow(w[1],2)/v2.cwiseProduct(v2).cwiseProduct(v2).cwiseProduct(v2).sum(); // E2
-    w[12] = numAtoms*pow(w[2],2)/v3.cwiseProduct(v3).cwiseProduct(v3).cwiseProduct(v3).sum(); // E3
+    w[10] = numAtoms*pow(w[0],2)/ v1.array().pow(4).sum(); // E1
+    w[11] = numAtoms*pow(w[1],2)/ v2.array().pow(4).sum(); // E2
+    w[12] = numAtoms*pow(w[2],2)/ v3.array().pow(4).sum(); // E3
     w[13] = w[10]+w[11]+w[12]; //D
 
 
-    // is symetric or not !
-    //MatrixXd Scores= mat*svd.matrixV(); // we have the equality X*V = UxS, S eigen values  , V principal directions/axis
+     std::cout << "Scores" << Scores << "\n";
 
     double gamma[3]; // G
 
@@ -367,6 +376,10 @@ int GetWHIMU(const Conformer &conf,double DM[][3]){
         }
         if (!Found) na++;
       }
+
+        std::cout << "Na:" << na << "\n";
+        std::cout << "Ns:" << ns << "\n";
+
         gamma[i] = -1.0* ((ns / numAtoms) * log(ns / numAtoms) / log(2.0) + (na / numAtoms) * log(1.0 / numAtoms) / log(2.0));
         gamma[i] = 1.0 / (1.0 + gamma[i]);
 
@@ -398,15 +411,15 @@ double WHIM(const ROMol& mol,int confId){
 
   const Conformer &conf = mol.getConformer(confId);
 
-  double points[numAtoms][3];
+  double Vpoints[3*numAtoms];
 
   for(unsigned int i=0; i<numAtoms; ++i){
-     points[i][0] =conf.getAtomPos(i).x;
-     points[i][1] =conf.getAtomPos(i).y;
-     points[i][2] =conf.getAtomPos(i).z;
+     Vpoints[3*i]   =conf.getAtomPos(i).x;
+     Vpoints[3*i+1] =conf.getAtomPos(i).y;
+     Vpoints[3*i+2] =conf.getAtomPos(i).z;
   }
 
-  double vxyz= GetWHIMU(conf, points);
+  double vxyz= GetWHIMU(conf, Vpoints);
 
   return vxyz;
 }
