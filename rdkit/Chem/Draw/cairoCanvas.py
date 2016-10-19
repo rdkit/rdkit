@@ -10,44 +10,131 @@
 #  of the RDKit source tree.
 #
 #pylint: disable=F0401,C0324,C0322,W0142
-import sys
+import sys, os
 
 from rdkit import six
 if not six.PY3:
   bytes = buffer
 
+have_cairocffi = False
 # for Python3, import cairocffi preferably
 if six.PY3:
   try:
     import cairocffi as cairo
   except ImportError:
     import cairo
+  else:
+    have_cairocffi = True
 else:
   try:
     import cairo
   except ImportError:
-    import cairocffi as cairo
+    try:
+      import cairocffi as cairo
+    except:
+      raise
+    else:
+      have_cairocffi = True
+have_pango = False
+if not 'RDK_NOPANGO' in os.environ:
+  if (have_cairocffi):
+    import cffi
+    import platform
+    ffi = cffi.FFI()
+    ffi.cdef('''
+        /* GLib */
+        typedef void* gpointer;
+        typedef void cairo_t;
+        typedef void PangoFontDescription;
+        void g_object_unref (gpointer object);
 
+        /* Pango and PangoCairo */
+        #define PANGO_SCALE 1024
+        typedef ... PangoLayout;
+        typedef enum {
+            PANGO_ALIGN_LEFT,
+            PANGO_ALIGN_CENTER,
+            PANGO_ALIGN_RIGHT
+        } PangoAlignment;
+        typedef struct PangoRectangle {
+          int x;
+          int y;
+          int width;
+          int height;
+        } PangoRectangle;
+        PangoLayout *pango_cairo_create_layout (cairo_t *cr);
+        void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
+        void pango_cairo_show_layout (cairo_t *cr, PangoLayout *layout);
+        void pango_layout_set_alignment (
+            PangoLayout *layout, PangoAlignment alignment);
+        void pango_layout_set_markup (
+            PangoLayout *layout, const char *text, int length);
+        void pango_layout_get_pixel_extents (PangoLayout *layout,
+            PangoRectangle *ink_rect, PangoRectangle *logical_rect);
+        PangoFontDescription *pango_font_description_new (void);
+        void pango_font_description_free (PangoFontDescription *desc);
+        void pango_font_description_set_family (PangoFontDescription *desc,
+            const char *family);
+        void pango_font_description_set_size (PangoFontDescription *desc,
+            int size);
+        void pango_layout_set_font_description (PangoLayout *layout,
+            const PangoFontDescription *desc);
+    ''')
+    if (platform.system() == 'Windows'):
+      defaultLibs = {
+        'pango_default_lib': 'libpango-1.0-0.dll',
+        'pangocairo_default_lib': 'libpangocairo-1.0-0.dll',
+        'gobject_default_lib': 'libgobject-2.0-0.dll'
+      }
+    else:
+      defaultLibs = {
+        'pango_default_lib': 'pango-1.0',
+        'pangocairo_default_lib': 'pangocairo-1.0',
+        'gobject_default_lib': 'gobject-2.0'
+      }
+    import ctypes.util
+    for libType in ['pango', 'pangocairo', 'gobject']:
+      envVar = 'RDK_' + libType.upper() + '_LIB'
+      envVarSet = False
+      if (envVar in os.environ):
+        envVarSet = True
+        libName = os.environ[envVar]
+      else:
+        libName = defaultLibs[libType + '_default_lib']
+      libPath = ctypes.util.find_library(libName)
+      exec(libType + ' = None')
+      importError = False
+      if (libPath):
+        try:
+          exec(libType + ' = ffi.dlopen("' \
+            + libPath.replace('\\', '\\\\') + '")')
+        except:
+          if (envVarSet):
+            importError = True
+          else:
+            pass
+      else:
+        importError = True
+      if (importError):
+        raise ImportError(envVar + ' set to ' + libName + ' but ' \
+          + libType.upper() + ' library cannot be loaded.')
+    have_pango = (pango and pangocairo and gobject)
+  else:
+    for libType in ['pango', 'pangocairo']:
+      try:
+        exec('import ' + libType)
+      except ImportError:
+        exec(libType + ' = None')
+    have_pango = (pango and pangocairo)
+    
 if not hasattr(cairo.ImageSurface,'get_data') and \
    not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
   raise ImportError('cairo version too old')
 
 import math
 import rdkit.RDConfig
-import os, re
+import re
 import array
-if not 'RDK_NOPANGO' in os.environ:
-  try:
-    import pangocairo
-  except ImportError:
-    pangocairo = None
-  try:
-    import pango
-  except ImportError:
-    pango = None
-else:
-  pango = None
-  pangocairo = None
 
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 from PIL import Image
@@ -203,30 +290,56 @@ class Canvas(CanvasBase):
       weight = cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face, cairo.FONT_SLANT_NORMAL, weight)
     orientation = kwargs.get('orientation', 'E')
-    cctx = pangocairo.CairoContext(self.ctx)
 
     plainText = scriptPattern.sub('', text)
-    measureLout = cctx.create_layout()
-    measureLout.set_alignment(pango.ALIGN_LEFT)
-    measureLout.set_markup(plainText)
-
-    lout = cctx.create_layout()
-    lout.set_alignment(pango.ALIGN_LEFT)
-    lout.set_markup(text)
 
     # for whatever reason, the font size using pango is larger
     # than that w/ default cairo (at least for me)
-    fnt = pango.FontDescription('%s %d' % (font.face, font.size * .8))
-    lout.set_font_description(fnt)
-    measureLout.set_font_description(fnt)
+    pangoCoeff = 0.8
+    
+    if (have_cairocffi):
+      measureLout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
+      pango.pango_layout_set_alignment(measureLout, pango.PANGO_ALIGN_LEFT)
+      pango.pango_layout_set_markup(measureLout, plainText.encode('latin1'), -1)
+      lout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
+      pango.pango_layout_set_alignment(lout, pango.PANGO_ALIGN_LEFT)
+      pango.pango_layout_set_markup(lout, text.encode('latin1'), -1)
+      fnt = pango.pango_font_description_new()
+      pango.pango_font_description_set_family(fnt, font.face.encode('latin1'))
+      pango.pango_font_description_set_size(fnt,
+        int(round(font.size * pango.PANGO_SCALE * pangoCoeff)))
+      pango.pango_layout_set_font_description(lout, fnt)
+      pango.pango_layout_set_font_description(measureLout, fnt)
+      pango.pango_font_description_free(fnt)
+    else:
+      cctx=pangocairo.CairoContext(self.ctx)
+      measureLout = cctx.create_layout()
+      measureLout.set_alignment(pango.ALIGN_LEFT)
+      measureLout.set_markup(plainText)
+      lout = cctx.create_layout()
+      lout.set_alignment(pango.ALIGN_LEFT)
+      lout.set_markup(text)
+      fnt = pango.FontDescription('%s %d'%(font.face,font.size*pangoCoeff))
+      lout.set_font_description(fnt)
+      measureLout.set_font_description(fnt)
 
     # this is a bit kludgy, but empirically we end up with too much
     # vertical padding if we use the text box with super and subscripts
-    # for the measurement.
-    iext, lext = measureLout.get_pixel_extents()
-    iext2, lext2 = lout.get_pixel_extents()
-    w = lext2[2] - lext2[0]
-    h = lext[3] - lext[1]
+    # for the measurement. 
+    if (have_cairocffi):
+      iext = ffi.new('PangoRectangle *')
+      lext = ffi.new('PangoRectangle *')
+      iext2 = ffi.new('PangoRectangle *')
+      lext2 = ffi.new('PangoRectangle *')
+      pango.pango_layout_get_pixel_extents(measureLout, iext, lext)
+      pango.pango_layout_get_pixel_extents(lout, iext2, lext2)
+      w = lext2.width - lext2.x
+      h = lext.height - lext.y
+    else:
+      iext, lext = measureLout.get_pixel_extents()
+      iext2, lext2 = lout.get_pixel_extents()
+      w = lext2[2] - lext2[0]
+      h = lext[3] - lext[1]
     pad = [h * .2, h * .3]
     # another empirical correction: labels draw at the bottom
     # of bonds have too much vertical padding
@@ -247,8 +360,14 @@ class Canvas(CanvasBase):
       self.ctx.move_to(dPos[0], dPos[1])
 
     self.ctx.set_source_rgb(*color)
-    cctx.update_layout(lout)
-    cctx.show_layout(lout)
+    if (have_cairocffi):
+      pangocairo.pango_cairo_update_layout(self.ctx._pointer, lout)
+      pangocairo.pango_cairo_show_layout(self.ctx._pointer, lout)
+      gobject.g_object_unref(lout)
+      gobject.g_object_unref(measureLout)
+    else:
+      cctx.update_layout(lout)
+      cctx.show_layout(lout)
 
     if 0:
       self.ctx.move_to(dPos[0], dPos[1])
@@ -262,7 +381,7 @@ class Canvas(CanvasBase):
     return (bw, bh, offset)
 
   def addCanvasText(self, text, pos, font, color=(0, 0, 0), **kwargs):
-    if pango is not None and pangocairo is not None:
+    if have_pango:
       textSize = self._addCanvasText2(text, pos, font, color, **kwargs)
     else:
       textSize = self._addCanvasText1(text, pos, font, color, **kwargs)

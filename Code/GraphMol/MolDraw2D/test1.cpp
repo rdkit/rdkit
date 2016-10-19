@@ -1690,6 +1690,36 @@ void test13JSONConfig() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1090() {
+  std::cout << " ----------------- Testing github 1090: escape html characters "
+               "in SVG output"
+            << std::endl;
+
+  std::string smiles = "CCOC";  // made up
+  RWMol *m1 = SmilesToMol(smiles);
+  TEST_ASSERT(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  {
+    ROMol lm(*m1);
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawOptions().atomLabels[0] = "C&1";
+    drawer.drawOptions().atomLabels[1] = "[CH2<1]";
+    drawer.drawOptions().atomLabels[3] = "[C>1H3]";
+    drawer.drawMolecule(lm, "legend&legend>1");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub1090_1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("C&1") == std::string::npos);
+    TEST_ASSERT(text.find("<1") == std::string::npos);
+    TEST_ASSERT(text.find(">1") == std::string::npos);
+    TEST_ASSERT(text.find("d&l") == std::string::npos);
+  }
+  delete m1;
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1716,6 +1746,9 @@ int main() {
   test10DrawSecondMol();
   test11DrawMolGrid();
   test12DrawMols();
-#endif
-  test13JSONConfig();
+<<<<<<< HEAD
+  #endif test13JSONConfig();
+=======
+  testGithub1090();
+>>>>>>> origin/master
 }
