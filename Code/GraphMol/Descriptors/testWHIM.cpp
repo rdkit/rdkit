@@ -25,7 +25,7 @@ void testRDF() {
 
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/1mol.sdf";
+      pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
  
@@ -39,8 +39,11 @@ void testRDF() {
     m->getProp("_Name",nm);
 
 
-    double drdf = RDKit::Descriptors::WHIM(*m);
-
+double drdf;
+for (int i=1;i<11;i++) {
+  std::cout << "i:" << 0.005*i << "\n";
+    drdf = RDKit::Descriptors::WHIM(*m, -1,0.005*i);
+}
 
        
     std::cout << "=>read molecule: " << nDone  << std::endl;
