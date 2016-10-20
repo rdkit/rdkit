@@ -87,8 +87,10 @@ MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
 //! computeNumProducts
 //!  Returns the number of possible product combination from
 //!   The given numbers of building blocks for each rgroup
-//!   or -1 if the number will not fit into the machines integer
-//!   type.
+//!   or EnumerationStrategyBase::EnumerationOverflow if the
+//!   number will not fit into the machines integer type.
+//!   n.b. An overflow simply means there are a lot of products
+//!     not that they cannot be enumerated
 size_t computeNumProducts(const RGROUPS &sizes);
 
 //! Base Class for enumeration strageties

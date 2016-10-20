@@ -118,16 +118,16 @@ void testSamplers() {
 void testEvenSamplers() {
   BBS bbs;
   bbs.resize(3);
-  long R1 = 6000;
-  long R2 = 500;
-  long R3 = 10000;
-  for (int i = 0; i < R1; ++i)
+  unsigned long R1 = 6000;
+  unsigned long R2 = 500;
+  unsigned long R3 = 10000;
+  for (unsigned long i = 0; i < R1; ++i)
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
 
-  for (int i = 0; i < R2; ++i)
+  for (unsigned long i = 0; i < R2; ++i)
     bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
 
-  for (int i = 0; i < R3; ++i)
+  for (unsigned long i = 0; i < R3; ++i)
     bbs[2].push_back(
         boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
 

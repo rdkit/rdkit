@@ -107,7 +107,7 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
 
   bool hasNext() const {
     // Fix me -> use multiprecision int here???
-    if (m_numPermutations == -1 ||
+    if (m_numPermutations == EnumerationStrategyBase::EnumerationOverflow ||
         m_numPermutationsProcessed < rdcast<size_t>(m_numPermutations)) {
       return true;
     } else {
