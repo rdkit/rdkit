@@ -510,7 +510,18 @@ class TestCase(unittest.TestCase):
                                       'e': 2,
                                       'd': -2,
                                       'prop1': 'foob'})
-
+    m = Chem.MolFromSmiles('C1=CN=CC=C1')
+    m.SetProp("int", "1000")
+    m.SetProp("double", "10000.123")
+    print(m.GetPropsAsDict())
+    self.assertEquals(m.GetPropsAsDict(),
+                      {"int":1000,
+                       "double":10000.123})
+    
+    self.assertEquals(type(m.GetPropsAsDict()['int']), int)
+    self.assertEquals(type(m.GetPropsAsDict()['double']), float)
+    
+    
   def test17Kekulize(self):
     m = Chem.MolFromSmiles('c1ccccc1')
     smi = Chem.MolToSmiles(m)
