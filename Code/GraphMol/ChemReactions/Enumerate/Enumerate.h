@@ -80,6 +80,10 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
+  EnumerateLibrary(const std::string &s) : EnumerateLibraryBase(), m_bbs() {
+    initFromString(s);
+  }
+  
   EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
                    bool filterReagents=true);
   EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
