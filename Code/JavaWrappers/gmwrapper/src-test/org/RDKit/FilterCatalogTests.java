@@ -88,6 +88,14 @@ public class FilterCatalogTests extends GraphMolTest {
                              "doi:10.1021/jm901137j.");
                 assertEquals(source, "PAINS filters (family A)");
                 assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+
+                FilterMatch_Vect fmatches = entry.getFilterMatches(mol);
+                for(int matchIdx = 0; matchIdx < fmatches.size(); ++matchIdx) {
+                  FilterMatch match = fmatches.get(matchIdx);
+                  for(int atomidx = 0; atomidx < match.getAtomMatches().size(); ++atomidx) {
+                  }
+                }
+
             }
             
             if (catalog.canSerialize()) {
@@ -119,6 +127,7 @@ public class FilterCatalogTests extends GraphMolTest {
             catalog.addEntry(entry);
             entry = catalog.getFirstMatch(mol);
             assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+            
         }
 
 	public static void main(String args[]) {

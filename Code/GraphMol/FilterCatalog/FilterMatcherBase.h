@@ -52,6 +52,7 @@ struct FilterMatch {
   boost::shared_ptr<FilterMatcherBase> filterMatch;
   MatchVectType atomPairs;
 
+  FilterMatch() : filterMatch(), atomPairs() {}
   FilterMatch(boost::shared_ptr<FilterMatcherBase> filter,
               MatchVectType atomPairs)
       : filterMatch(filter), atomPairs(atomPairs) {}
@@ -59,10 +60,16 @@ struct FilterMatch {
   FilterMatch(const FilterMatch &rhs)
       : filterMatch(rhs.filterMatch), atomPairs(rhs.atomPairs) {}
 
-  bool operator==(const FilterMatch &rhs) {
+  bool operator==(const FilterMatch &rhs) const {
     return (filterMatch.get() == rhs.filterMatch.get() &&
             atomPairs == rhs.atomPairs);
   }
+  
+  bool operator!=(const FilterMatch &rhs) const {
+    return !(filterMatch.get() == rhs.filterMatch.get() &&
+             atomPairs == rhs.atomPairs);
+  }
+
 };
 
 extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
