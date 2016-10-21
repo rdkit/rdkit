@@ -37,6 +37,12 @@ int main( int argc , char **argv ) {
   RDKit::RWMol *mol4 = new RDKit::RWMol( *mol3 );
   RDKit::MolOps::addHs( *mol4 );
 
+  RDKit::ROMOL_SPTR mol3sp( RDKit::MolOps::addHs( *mol2 ) );
+  mol3sp->setProp( "_Name" , "cyclobutaneSP" );
+  RDKit::MMFF::MMFFOptimizeMolecule( *mol3sp , 1000 , "MMFF94s" );
+  std::cout << RDKit::MolToMolBlock( *mol3sp ) << std::endl;
+
+
   RDKit::ROMol *mol5 = RDKit::MolOps::removeHs( *mol3 );
   RDKit::MolOps::removeHs( *mol4 );
 

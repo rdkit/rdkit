@@ -2,8 +2,8 @@
 // Reading molecules - example1.cpp
 
 #include <iostream>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/GraphMol.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
 int main( int argc , char **argv ) {
