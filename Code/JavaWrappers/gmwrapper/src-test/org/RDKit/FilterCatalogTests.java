@@ -93,7 +93,7 @@ public class FilterCatalogTests extends GraphMolTest {
                 assertEquals(1, fmatches.size());
                 Match_Vect mv = fmatches.get(0).getAtomMatches();
                 
-                assertEquals(10, mv.get(0).getFirst());
+                assertEquals(0, mv.get(0).getFirst());
                 assertEquals(23, mv.get(0).getSecond());
                 assertEquals(1, mv.get(1).getFirst());
                 assertEquals(22, mv.get(1).getSecond());
