@@ -144,7 +144,7 @@ void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn, python::list 
   rgroup.initialize(rxn, ConvertToVect(ob));
 }
   
-typedef std::vector<size_t> VectSizeT;
+typedef std::vector<uint64_t> VectSizeT;
 typedef std::vector<std::vector<std::string> > VectStringVect;
 typedef std::vector<MOL_SPTR_VECT > VectMolVect;
 

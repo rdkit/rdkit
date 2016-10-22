@@ -50,7 +50,7 @@ void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
     std::fill(var_used[i].begin(), var_used[i].end(), 0);
   }
 
-  size_t nmonomers = 0;
+  boost::uint64_t nmonomers = 0;
   for (size_t i = 0; i < bbs.size(); ++i) nmonomers += m_permutationSizes[i];
 
   pair_used.resize(nmonomers);

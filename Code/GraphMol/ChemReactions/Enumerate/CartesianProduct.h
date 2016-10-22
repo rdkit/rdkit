@@ -51,7 +51,7 @@ namespace RDKit {
   bbs.push_back( bbs_for_reactants_1 );
   bbs.push_back( bbs_for_reactants_2 );
 
-  std::vector<size_t> num_bbs;
+  RGRUOPS num_bbs;
   num_bbs.push_back(bbs[0].size());
   num_bbs.push_back(bbs[1].size());
 

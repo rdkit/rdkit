@@ -62,7 +62,7 @@ namespace RDKit {
   See EnumerationStrategyBase for more details and usage.
 */
 class RandomSampleStrategy : public EnumerationStrategyBase {
-  size_t m_numPermutationsProcessed;
+  boost::uint64_t m_numPermutationsProcessed;
   boost::minstd_rand m_rng;
   std::vector<boost::random::uniform_int_distribution<> > m_distributions;
 
@@ -103,7 +103,7 @@ class RandomSampleStrategy : public EnumerationStrategyBase {
     return m_permutation;
   }
 
-  size_t getPermutationIdx() const { return m_numPermutationsProcessed; }
+  boost::uint64_t getPermutationIdx() const { return m_numPermutationsProcessed; }
 
   operator bool() const { return true; }
 

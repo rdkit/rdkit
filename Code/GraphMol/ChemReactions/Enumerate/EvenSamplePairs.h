@@ -50,7 +50,7 @@ namespace RDKit {
 */
 
 class EvenSamplePairsStrategy : public EnumerationStrategyBase {
-  size_t m_numPermutationsProcessed;
+  boost::uint64_t m_numPermutationsProcessed;
 
   std::vector<int64_t> used_count;
   std::vector<std::vector<size_t> > var_used;

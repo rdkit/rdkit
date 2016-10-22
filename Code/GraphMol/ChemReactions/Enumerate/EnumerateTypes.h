@@ -52,7 +52,7 @@ typedef std::vector<MOL_SPTR_VECT> BBS;
 //!   building_blocks.push_back( BBS[0][groups[0] );
 //!   building_blocks.push_back( BBS[1][groups[1] );
 //!    rxn.runReactants( building_blocks );
-typedef std::vector<size_t> RGROUPS;
+typedef std::vector<boost::uint64_t> RGROUPS;
 }
 }
 #endif

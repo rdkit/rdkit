@@ -65,7 +65,7 @@ namespace RDKit {
 */
 
 class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
-  size_t m_numPermutationsProcessed;
+  boost::uint64_t m_numPermutationsProcessed;
   size_t m_offset;
   size_t m_maxoffset;
 
@@ -122,7 +122,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
     return m_permutation;
   }
 
-  size_t getPermutationIdx() const { return m_numPermutationsProcessed; }
+  boost::uint64_t getPermutationIdx() const { return m_numPermutationsProcessed; }
 
   operator bool() const { return true; }
 

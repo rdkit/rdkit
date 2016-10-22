@@ -62,11 +62,11 @@ class EnumerationStrategyException : public std::exception {
 //! Return the number of elements per input vector
 /*!  \param bbs vector<vector<T> >
 
-  \result vector<size_t> number of elements in each vector
+  \result vector<unint64_t> number of elements in each vector
  */
 template <class T>
-std::vector<size_t> getSizesFromBBs(const std::vector<std::vector<T> > &bbs) {
-  std::vector<size_t> sizes;
+EnumerationTypes::RGROUPS getSizesFromBBs(const std::vector<std::vector<T> > &bbs) {
+  EnumerationTypes::RGROUPS sizes;
   for (size_t i = 0; i < bbs.size(); ++i) sizes.push_back(bbs[i].size());
   return sizes;
 }
@@ -91,7 +91,7 @@ MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
 //!   number will not fit into the machines integer type.
 //!   n.b. An overflow simply means there are a lot of products
 //!     not that they cannot be enumerated
-size_t computeNumProducts(const EnumerationTypes::RGROUPS &sizes);
+boost::uint64_t computeNumProducts(const EnumerationTypes::RGROUPS &sizes);
 
 //! Base Class for enumeration strageties
 //!  Usage:
@@ -111,10 +111,10 @@ class EnumerationStrategyBase {
  protected:
   EnumerationTypes::RGROUPS m_permutation;       // where are we currently?
   EnumerationTypes::RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
-  size_t m_numPermutations;   // total number of permutations for this group
+  boost::uint64_t m_numPermutations;   // total number of permutations for this group
                                //  -1 if > ssize_t::max
  public:
-  static const size_t EnumerationOverflow = static_cast<size_t>(-1);
+  static const boost::uint64_t EnumerationOverflow = static_cast<boost::uint64_t>(-1);
   EnumerationStrategyBase()
       : m_permutation(), m_permutationSizes(), m_numPermutations() {}
 
@@ -159,12 +159,12 @@ class EnumerationStrategyBase {
   //! a result of EnumerationOverflow indicates that the number of
   //!  permutations is not computable with the current
   //!  rdlonglong size.
-  size_t getNumPermutations() const { return m_numPermutations; }
+  boost::uint64_t getNumPermutations() const { return m_numPermutations; }
 
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
-  bool skip(size_t skipCount) {
-    for (size_t i = 0; i < skipCount; ++i) next();
+  bool skip(boost::uint64_t skipCount) {
+    for (boost::uint64_t i = 0; i < skipCount; ++i) next();
     return true;
   }
 
