@@ -179,12 +179,16 @@ class TestCase(unittest.TestCase) :
     pickle = enumerator.Serialize()
     enumerator2 = rdChemReactions.EnumerateLibrary()
     enumerator2.InitFromString(pickle)
+
+    # make sure old pickles work
+    enumerator3 = rdChemReactions.EnumerateLibrary()
+    enumerator3.InitFromString(open(os.path.join(self.dataDir, "enumeration.pickle"), 'rb').read())
     
     print("==", enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
     self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
 
     out = []
-    for en in [enumerator, enumerator2]:
+    for en in [enumerator, enumerator2, enumerator3]:
       i = 0
       for i, prods in enumerate(en):
         for mols in prods:
