@@ -31,7 +31,7 @@
 from __future__ import print_function
 
 import unittest
-import os,sys
+import os,sys, copy
 
 from rdkit.six.moves import cPickle
 
@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase) :
     # see if we are equal to the Python implementation
     g = list(itertools.product( list(range(10)), list(range(5)), list(range(6)) ))
     self.assertEquals(set(g), set(groups))
-    cartProd.Clone()
+    copy.copy(cartProd)
     
   def testRandomSample(self):
     log("testRandomSample")
@@ -96,7 +96,7 @@ class TestCase(unittest.TestCase) :
 
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
-    randProd.Clone()
+    copy.copy(randProd)
     
   def testRandomSampleAllBBs(self):
     log("testRandomSampleAllBBs")
@@ -124,7 +124,7 @@ class TestCase(unittest.TestCase) :
     for i in range(3):
       print( i, len(set([g[i] for g in groups])), "out of", [10,5,6][i] )
       self.assertEquals(len(set([g[i] for g in groups])), [10,5,6][i])
-    randProd.Clone()
+    copy.copy(randProd)
     
   def testTimings(self):
     log("testTimings")
