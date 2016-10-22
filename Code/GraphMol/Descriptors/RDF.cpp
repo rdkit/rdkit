@@ -143,7 +143,7 @@ std::vector<double> GetIState(const ROMol &mol){
       int h = atom->getTotalNumHs();
       int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
       int N = GetPrincipalQuantumNumber(atNum);
-      Is.push_back(7.0+round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
     }
     else Is.push_back(0.0);
  }

@@ -39,17 +39,16 @@ void testWHIM1() {
     m->getProp("_Name",nm);
 
 
-double* drdf;
-for (int i=1;i<11;i++) {
-  std::cout << "i:" << 0.005*i << "\n";
-    drdf = RDKit::Descriptors::WHIM(*m, -1,0.005*i);
-    for (int j=0;j<90;j++) {
-      std::cout << drdf[j] << ",";
-
+    double* dwhim;
+//for (int i=1;i<11;i++) {
+ // std::cout << "i:" << 0.005*i << "\n";
+    dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
+    for (int j=0;j<114;j++) {
+      std::cout << dwhim[j] << ",";
      }
     std::cout << "\n";
 
-}
+//}
 
        
     std::cout << "=>read molecule: " << nDone  << std::endl;
@@ -69,7 +68,7 @@ void testWHIM() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/RDF.out";
+  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/whim.out";
 
   std::ifstream instrm(fName.c_str());
 
@@ -98,32 +97,23 @@ void testWHIM() {
     std::string nm;
     m->getProp("_Name",nm);
 
+    double* dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
 
-    double* drdf = RDKit::Descriptors::WHIM(*m, -1,0.01);
-  
-    for (int j=0;j<90;j++) {
-      std::cout << drdf[j] << ",";
-
-     }
-    std::cout << "\n";
-
-/*
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);
 
-    for (int i=0;i<drdf.size();i++)
+    for (int i=0;i<114;i++)
        {
             double ref =atof(myrow[i+1].c_str());
-            if(fabs(ref-drdf[i])>0.05){
-              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< drdf[i] <<std::endl;
+            if(fabs(ref-dwhim[i])>0.05){
+              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
             }
 
-           //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
+           //TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
         
        }
     std::cout << "=>read molecule: " << nDone  << std::endl;
-*/
 
     delete m;
     ++nDone;
@@ -139,6 +129,6 @@ void testWHIM() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testWHIM1();
-  testWHIM();
+ // testWHIM();
 
 }

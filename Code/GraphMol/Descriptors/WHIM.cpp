@@ -71,7 +71,7 @@ double relativeMw[]={0.084,0,0,0,0.900,1.000,1.166,1.332,1.582,0,0,0, 2.246, 2.3
 double relativeVdW[]={0.299,0,0,0,0.796,1.000,0.695,0.512,0.410,0,0,0, 1.626, 1.424, 1.181,1.088, 1.035,0,0,0,0,0,0,0,0, 1.829, 1.561, 0.764, 0.512, 1.708,0,0,0,0, 1.384,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 2.042,0,0, 1.728};
 double relativeNeg[]={0.944,0,0,0,0.828,1.000,1.163,1.331,1.457,0,0,0, 0.624, 0.779, 0.916,1.077, 1.265,0,0,0,0,0,0,0,0, 0.728, 0.728, 0.728, 0.740, 0.810,0,0,0,0, 1.172,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0.837,0,0, 1.012};
 double relativePol[]={0.379,0,0,0,1722,1.000,0.625,0.456,0.316,0,0,0, 3.864, 3.057, 2.063,1.648, 1.239,0,0,0,0,0,0,0,0, 4.773, 4.261, 3.864, 3.466, 4.034,0,0,0,0, 1.733,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 4.375,0,0, 3.040};
-
+double relativeIonPol[]={1.208,0,0.479,0.828,0.737,1,1.291,1.209,1.547,0,0.456,0.679,0.532,0.724,0.931,0.92,1.152,0,0.386,0.543,0,0,0,0.601,0.66,0.702,0.7,0.679,0.686,0.834,0.533,0.702,0.872,0.866,1.049,0,0.371,0.506,0,0,0,0.63,0,0,0,0,0.673,0.799,0.514,0.652,0.767,0.8,0.928,0,0,0,0,0,0,0,0,0,0,0.546,0,0,0,0,0,0,0,0,0,0,0,0,0,0.799,0.819,0.927,0.542,0.659,0.647};
 
 
 namespace RDKit {
@@ -82,6 +82,38 @@ namespace {
 double roundn(double in,int factor) {
 
   return round(in*pow(10,factor))/pow(10,factor);
+}
+
+int GetPrincipalQuantumNumber(int AtomicNum) {
+  if (AtomicNum<=2) return 1;
+  else if (AtomicNum<=10) return 2;
+  else if (AtomicNum<=18) return 3;
+  else if (AtomicNum<=36) return 4;
+  else if (AtomicNum<=54) return 5;
+  else if (AtomicNum<=86) return 6;
+  else return 7;
+}
+
+// adaptation from EState.py 
+// we need the Is value only there
+std::vector<double> GetIState(const ROMol &mol){
+  int numAtoms = mol.getNumAtoms();
+  std::vector<double> Is;
+
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    int d = atom->getDegree();
+    if (d>0 and atNum>1) {
+      int h = atom->getTotalNumHs();
+      int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
+      int N = GetPrincipalQuantumNumber(atNum);
+      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+    }
+    else Is.push_back(0.0);
+ }
+
+ return Is;
 }
 
 
@@ -146,6 +178,21 @@ std::vector<double> GetRelativePol(const ROMol& mol){
 
   return pol;
 }
+
+std::vector<double> GetRelativeIonPol(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> pol(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    pol[i]=relativeIonPol[mol.getAtomWithIdx(i)->getAtomicNum()-1];
+
+  }
+
+  return pol;
+}
+
+
 
 
 double* retreiveMat(Eigen::MatrixXd matrix) {
@@ -264,10 +311,13 @@ if (printscore and th ==0.03) {
 
     for (int i=0;i<3; i++) {
       double ns=0.0;
-      for (int j=0;j< numAtoms-1;j++) {
-        for (int k=j+1;k< numAtoms;k++){
-          if (std::abs(Scores(j,i) + Scores(k,i))< th and (std::abs(Scores(j,i))>0 or std::abs(Scores(k,i))>0 )) {  // those that are close opposite but close to the axis!
-            ns+=2; // check only once the symetric none null we need to add +2!
+      for (int j=0;j< numAtoms;j++) {
+        for (int k=0;k< numAtoms;k++){
+
+          if (j==k) continue;
+
+          if (std::abs(Scores(j,i) + Scores(k,i))< th and (std::abs(Scores(j,i))>0 or std::abs(Scores(k,i))>0 )) {  // those that are close opposite & not close to the axis!
+            ns++; // check only once the symetric none null we need to add +2!
             break;
           }
         }
@@ -282,14 +332,14 @@ if (printscore and th ==0.03) {
 
       double na=0.0;
       na = nAT-ns;
-      std::cout << "ns:" << ns << ",";
+    //  std::cout << "ns:" << ns << ",";
       gamma[i] =0.0;
       if (ns>0) {
            gamma[i] = ((ns / nAT) * log(ns / nAT) / log(2.0) + (na / nAT) * log(1.0 / nAT) / log(2.0));
            gamma[i] = 1.0 / (1.0 - gamma[i]);
       }
     }
-    std::cout  << "\n";
+  //  std::cout  << "\n";
     w[14]=gamma[0]; // G1
     w[15]=gamma[1]; // G2
     w[16]=gamma[2]; // G3
@@ -496,6 +546,80 @@ double*  GetWHIMpol(const Conformer &conf, double Vpoints[], double th){
 
 
 
+double*  GetWHIMIonPol(const Conformer &conf, double Vpoints[], double th){
+      double *w = new double[18];
+
+    int numAtoms = conf.getNumAtoms();
+
+    Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
+
+    MatrixXd MatOrigin=matorigin.transpose();
+
+    std::vector<double> weigthvector = GetRelativeIonPol(conf.getOwningMol());
+
+    double* weigtharray = &weigthvector[0];
+
+    Map<VectorXd> Weigth(weigtharray,numAtoms);
+
+    MatrixXd WeigthMat = Weigth.asDiagonal();
+
+
+    double weigth=WeigthMat.diagonal().sum();
+
+
+    MatrixXd Xmean = GetCenterMatrix(MatOrigin);
+
+    MatrixXd covmat = GetCovMatrix(Xmean,WeigthMat,weigth);
+
+    JacobiSVD<MatrixXd> svd = getSVD(covmat);
+
+    w= getWhimDesc(svd, Xmean, numAtoms, th,false);
+
+
+
+    return w;
+  }
+
+
+double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
+    double *w = new double[18];
+
+    ROMol& mol = conf.getOwningMol();
+
+    MolOps::removeHs(mol, false, false);
+
+    int numAtoms = mol.getNumAtoms();
+
+    Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
+
+    MatrixXd MatOrigin=matorigin.transpose();
+
+    std::vector<double> weigthvector = GetIState(mol);
+
+    double* weigtharray = &weigthvector[0];
+
+    Map<VectorXd> Weigth(weigtharray,numAtoms);
+
+    MatrixXd WeigthMat = Weigth.asDiagonal();
+
+
+    double weigth=WeigthMat.diagonal().sum();
+
+
+    MatrixXd Xmean = GetCenterMatrix(MatOrigin);
+
+    MatrixXd covmat = GetCovMatrix(Xmean,WeigthMat,weigth);
+
+    JacobiSVD<MatrixXd> svd = getSVD(covmat);
+
+    w= getWhimDesc(svd, Xmean, numAtoms, th,false);
+
+
+
+    return w;
+  }
+
+
 
 } //end of anonymous namespace
 
@@ -518,7 +642,6 @@ double* WHIM(const ROMol& mol,int confId, double th){
      Vpoints[3*i+2] =conf.getAtomPos(i).z;
   }
 
-  // th=0.01;
   double *res= new double[114];
 
   double* wu= GetWHIMU(conf, Vpoints, th);
@@ -526,48 +649,112 @@ double* WHIM(const ROMol& mol,int confId, double th){
   double* wv= GetWHIMvdw(conf, Vpoints, th);
   double* we= GetWHIMneg(conf, Vpoints, th);
   double* wp= GetWHIMpol(conf, Vpoints, th);
-
+  double* wi= GetWHIMIonPol(conf, Vpoints, th);
+  double* ws= GetWHIMIState(conf, Vpoints, th);
+ 
+  // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
+  int map1[11] = {0,1,2,6,7,14,15,16,10,11,12};
   std::vector<std::string> descnames={"L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"};
-    for (int i=0;i<18;i++) {
-     // std::cout << descnames[i] << ":"<< roundn(wu[i],3) << ",";
-      res[i]=roundn(wu[i],3);
+    for (int i=0;i<11;i++) {
+        res[i]=roundn(wu[map1[i]],3);
 
      }
-   // std::cout << "\n";
 
- descnames={"L1m","L2m","L3m","Tm","Am","Vm","P1m","P2m","P3m","Km","E1m","E2m","E3m","Dm","G1m","G2m","G3m","Gm"};
+    descnames={"L1m","L2m","L3m","Tm","Am","Vm","P1m","P2m","P3m","Km","E1m","E2m","E3m","Dm","G1m","G2m","G3m","Gm"};
 
-    for (int i=0;i<18;i++) {
-      res[i+18]=roundn(wm[i],3);
+    for (int i=0;i<11;i++) {
+        res[i+11]=roundn(wm[map1[i]],3);
 
-     // std::cout << descnames[i] << ":"<< roundn(wm[i],3) << ",";
      }
-    //std::cout << "\n";
 
    descnames={"L1v","L2v","L3v","Tv","Av","Vv","P1v","P2v","P3v","Kv","E1v","E2v","E3v","Dv","G1v","G2v","G3v","Gv"};
 
-    for (int i=0;i<18;i++) {
-      res[i+18*2]=roundn(wv[i],3);
-      //std::cout << descnames[i] << ":"<< roundn(wv[i],3) << ",";
+    for (int i=0;i<11;i++) {
+        res[i+11*2] = roundn(wv[map1[i]],3);
      }
-    //std::cout << "\n";
 
     descnames={"L1e","L2e","L3e","Te","Ae","Ve","P1e","P2e","P3e","Ke","E1e","E2e","E3e","De","G1e","G2e","G3e","Ge"};
 
-    for (int i=0;i<18;i++) {
-      res[i+18*3]= roundn(we[i],3);
-      //std::cout << descnames[i] << ":"<< roundn(we[i],3) << ",";
+    for (int i=0;i<11;i++) {
+        res[i+11*3] = roundn(we[map1[i]],3);
      }
-    //std::cout << "\n";
 
 
     descnames={"L1p","L2p","L3p","Tp","Ap","Vp","P1p","P2p","P3p","Kp","E1p","E2p","E3p","Dp","G1p","G2p","G3p","Gp"};
 
-    for (int i=0;i<18;i++) {
-        res[i+18*3]= roundn(wp[i],3);
-      //std::cout << descnames[i] << ":"<< roundn(wp[i],3) << ",";
+    for (int i=0;i<11;i++) {
+        res[i+11*4] = roundn(wp[map1[i]],3);
+
      }
-    //std::cout << "\n";
+    
+
+    for (int i=0;i<11;i++) {
+        res[i+11*5] = roundn(wi[map1[i]],3);
+
+     }
+
+
+    for (int i=0;i<11;i++) {
+        res[i+11*6] = roundn(ws[map1[i]],3);
+
+     }
+
+       //78  79  80  81  82  83  84
+       //Tu  Tm  Tv  Te  Tp  Ti  Ts
+      res[77]=roundn(wu[3],3);
+      res[78]=roundn(wm[3],3);
+      res[79]=roundn(wv[3],3);
+      res[80]=roundn(we[3],3);
+      res[81]=roundn(wp[3],3);
+      res[82]=roundn(wi[3],3);
+      res[83]=roundn(ws[3],3);
+
+      //85  86  87  88  89  90  91
+      //Au  Am  Av  Ae  Ap  Ai  As
+      res[84]=roundn(wu[4],3);
+      res[85]=roundn(wm[4],3);
+      res[86]=roundn(wv[4],3);
+      res[87]=roundn(we[4],3);
+      res[88]=roundn(wp[4],3);
+      res[89]=roundn(wi[4],3);
+      res[90]=roundn(ws[4],3);
+
+      //92  93
+      //Gu  Gm
+      res[91]=roundn(wu[17],3);
+      res[92]=roundn(wm[17],3);
+
+      //94  95  96  97  98  99  100
+      //Ku  Km  Kv  Ke  Kp  Ki  Ks
+      res[93]=roundn(wu[9],3);
+      res[94]=roundn(wm[9],3);
+      res[95]=roundn(wv[9],3);
+      res[96]=roundn(we[9],3);
+      res[97]=roundn(wp[9],3);
+      res[98]=roundn(wi[9],3);
+      res[99]=roundn(ws[9],3);
+
+      //101 102 103 104 105 106 107
+       //Du  Dm  Dv  De  Dp  Di  Ds
+      res[100]=roundn(wu[13],3);
+      res[101]=roundn(wm[13],3);
+      res[102]=roundn(wv[13],3);
+      res[103]=roundn(we[13],3);
+      res[104]=roundn(wp[13],3);
+      res[105]=roundn(wi[13],3);
+      res[106]=roundn(ws[13],3);
+
+
+      //108 109 110 111 112 113 114
+       //Vu  Vm  Vv  Ve  Vp  Vi  Vs
+      res[107]=roundn(wu[5],3);
+      res[108]=roundn(wm[5],3);
+      res[109]=roundn(wv[5],3);
+      res[110]=roundn(we[5],3);
+      res[111]=roundn(wp[5],3);
+      res[112]=roundn(wi[5],3);
+      res[113]=roundn(wi[5],3);
+
 
 //1 2 3 4 5 6 7 8 9 10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77 
 //L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
@@ -577,18 +764,7 @@ double* WHIM(const ROMol& mol,int confId, double th){
 //L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p
 //L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i
 //L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s
-//Tu  Tm  Tv  Te  Tp  Ti  Ts
-//Au  Am  Av  Ae  Ap  Ai  As
-//Gu  Gm
-//Ku  Km  Kv  Ke  Kp  Ki  Ks
-//Du  Dm  Dv  De  Dp  Di  Ds
-//Vu  Vm  Vv  Ve  Vp  Vi  Vs
-//78  79  80  81  82  83  84
-//85  86  87  88  89  90  91
-//92  93
-//94  95  96  97  98  99  100
-//101 102 103 104 105 106 107
-//108 109 110 111 112 113 114
+
 
   return res;
 }
