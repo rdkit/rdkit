@@ -43,8 +43,6 @@
 // Since we are exporting the classes for serialization,
 //  we should declare the archives types used here
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
@@ -156,12 +154,12 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {
-  boost::archive::binary_oarchive ar(ss);
+  boost::archive::text_oarchive ar(ss);
   ar << *this;
 }
 
 void EnumerateLibrary::initFromStream(std::istream &ss) {
-  boost::archive::binary_iarchive ar(ss);
+  boost::archive::text_iarchive ar(ss);
   ar >> *this;
 }
 

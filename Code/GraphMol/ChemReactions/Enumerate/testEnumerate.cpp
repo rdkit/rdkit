@@ -46,8 +46,8 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 using namespace RDKit;
@@ -59,12 +59,12 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
   for (size_t i = 0; i < len; ++i) {
     std::stringstream ss;
     {
-      boost::archive::binary_oarchive ar(ss);
+      boost::archive::text_oarchive ar(ss);
       ar &base;
     }
     boost::shared_ptr<EnumerationStrategyBase> copy;
     {
-      boost::archive::binary_iarchive ar(ss);
+      boost::archive::text_iarchive ar(ss);
       ar &copy;
     }
     TEST_ASSERT(std::string(base->type()) == std::string(copy->type()));
@@ -206,12 +206,12 @@ void testEnumerations() {
       // pickle and unpickle
       std::stringstream ss;
       {
-        boost::archive::binary_oarchive ar(ss);
+        boost::archive::text_oarchive ar(ss);
         ar &en;
       }
       boost::shared_ptr<EnumerateLibrary> copy;
       {
-        boost::archive::binary_iarchive ar(ss);
+        boost::archive::text_iarchive ar(ss);
         ar &copy;
       }
 
