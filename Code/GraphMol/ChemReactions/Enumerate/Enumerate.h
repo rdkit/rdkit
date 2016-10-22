@@ -39,7 +39,7 @@ namespace RDKit {
 //    with the reaction.
 //  rxn must be sanitized, initialized and preprocessed.
 //   this happens automatically in EnumerateLibrary
-BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs);
+EnumerationTypes::BBS removeNonmatchingReagents(const ChemicalReaction &rxn, EnumerationTypes::BBS bbs);
   
 //! This is a class for running reactions on sets of reagents.
 /*!
@@ -76,7 +76,7 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs);
 
   
 class EnumerateLibrary : public EnumerateLibraryBase {
-  BBS m_bbs;
+  EnumerationTypes::BBS m_bbs;
   
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
@@ -84,15 +84,15 @@ class EnumerateLibrary : public EnumerateLibraryBase {
     initFromString(s);
   }
   
-  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
+  EnumerateLibrary(const ChemicalReaction &rxn, const EnumerationTypes::BBS &reagents,
                    bool filterReagents=true);
-  EnumerateLibrary(const ChemicalReaction &rxn, const BBS &reagents,
+  EnumerateLibrary(const ChemicalReaction &rxn, const EnumerationTypes::BBS &reagents,
                    const EnumerationStrategyBase &enumerator,
                    bool filterReagents=true);
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
   //! Return the reagents used in the library
-  const BBS &getReagents() const { return m_bbs; }
+  const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
 
   //! Get the next product set
   std::vector<MOL_SPTR_VECT> next();

@@ -80,7 +80,7 @@ class RandomSampleStrategy : public EnumerationStrategyBase {
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const BBS &) {
+  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
       m_distributions.push_back(boost::random::uniform_int_distribution<>(
@@ -93,7 +93,7 @@ class RandomSampleStrategy : public EnumerationStrategyBase {
   virtual const char *type() const { return "RandomSampleStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  const RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() {
     for (size_t i = 0; i < m_permutation.size(); ++i) {
       m_permutation[i] = m_distributions[i](m_rng);
     }

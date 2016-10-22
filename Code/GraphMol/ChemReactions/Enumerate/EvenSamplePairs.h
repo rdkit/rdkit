@@ -126,10 +126,10 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   */
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const BBS &);
+  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &);
 
   //! The current permutation {r1, r2, ...}
-  const RGROUPS &next();
+  const EnumerationTypes::RGROUPS &next();
 
   size_t getPermutationIdx() const { return m_numPermutationsProcessed; }
 
@@ -145,7 +145,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   friend class boost::serialization::access;
 
   // decode a packed integer into an RGroup selection
-  const RGROUPS &decode(size_t seed) {
+  const EnumerationTypes::RGROUPS &decode(size_t seed) {
     for (int64_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
       m_permutation[j] = seed % m_permutationSizes[j];
       seed /= m_permutationSizes[j];

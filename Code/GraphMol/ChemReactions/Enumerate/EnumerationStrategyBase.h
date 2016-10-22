@@ -75,14 +75,14 @@ std::vector<size_t> getSizesFromBBs(const std::vector<std::vector<T> > &bbs) {
 //!  Helper function for enumeration, bbs are stored in a
 //!   std::vector< std::vector<boost:shared_ptr<ROMol> >
 //
-RGROUPS getSizesFromReactants(const std::vector<MOL_SPTR_VECT> &bbs);
+EnumerationTypes::RGROUPS getSizesFromReactants(const std::vector<MOL_SPTR_VECT> &bbs);
 
 //! getReactantsFromRGroups
 //!  Helper function for enumeration, bbs are stored in a
 //!   std::vector< std::vector<boost:shared_ptr<ROMol> >
 //
 MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
-                                      const RGROUPS &rgroups);
+                                      const EnumerationTypes::RGROUPS &rgroups);
 
 //! computeNumProducts
 //!  Returns the number of possible product combination from
@@ -91,7 +91,7 @@ MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
 //!   number will not fit into the machines integer type.
 //!   n.b. An overflow simply means there are a lot of products
 //!     not that they cannot be enumerated
-size_t computeNumProducts(const RGROUPS &sizes);
+size_t computeNumProducts(const EnumerationTypes::RGROUPS &sizes);
 
 //! Base Class for enumeration strageties
 //!  Usage:
@@ -109,8 +109,8 @@ size_t computeNumProducts(const RGROUPS &sizes);
 
 class EnumerationStrategyBase {
  protected:
-  RGROUPS m_permutation;       // where are we currently?
-  RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
+  EnumerationTypes::RGROUPS m_permutation;       // where are we currently?
+  EnumerationTypes::RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
   size_t m_numPermutations;   // total number of permutations for this group
                                //  -1 if > ssize_t::max
  public:
@@ -122,18 +122,11 @@ class EnumerationStrategyBase {
 
   virtual const char *type() const { return "EnumerationStrategyBase"; }
 
-  //! Initialize the enumerator based on the rgroup sizes
-  //!  This is the standard API point.
-  // void initialize(const RGROUPS &rgrps) {
-  //  internalInitialize(rgrps);
-  //  initialize();
-  //}
-
   //! Initialize the enumerator based on the reaction and the
   //! supplied building blocks
   //!  This is the standard API point.
   void initialize(const ChemicalReaction &reaction,
-                  const BBS &building_blocks) {
+                  const EnumerationTypes::BBS &building_blocks) {
     // default initialization, may be overridden (sets the # reactants
     //  and computes the default # of permutations)
     m_permutationSizes = getSizesFromBBs(building_blocks);
@@ -148,20 +141,20 @@ class EnumerationStrategyBase {
   // ! Initialize derived class
   // ! must exist, EnumerationStrategyBase structures are already initialized
   virtual void initializeStrategy(const ChemicalReaction &reaction,
-                                  const BBS &building_blocks) = 0;
+                                  const EnumerationTypes::BBS &building_blocks) = 0;
 
   //! returns true if there are more permutations left
   //!  random enumerators may always return true...
   virtual operator bool() const = 0;
 
   //! The current permutation {r1, r2, ...}
-  virtual const RGROUPS &next() = 0;
+  virtual const EnumerationTypes::RGROUPS &next() = 0;
 
   //! copy the enumeration strategy complete with current state
   virtual EnumerationStrategyBase *copy() const = 0;
 
   //! The current position in the enumeration
-  const RGROUPS &getPosition() const { return m_permutation; }
+  const EnumerationTypes::RGROUPS &getPosition() const { return m_permutation; }
 
   //! a result of EnumerationOverflow indicates that the number of
   //!  permutations is not computable with the current
@@ -178,7 +171,7 @@ class EnumerationStrategyBase {
  protected:
   //! Initialize the internal data structures
   //!  i.e. RGROUPS = {10,40,50};
-  void internalInitialize(const RGROUPS &rgroups) {
+  void internalInitialize(const EnumerationTypes::RGROUPS &rgroups) {
     m_permutation.resize(rgroups.size());
     m_permutationSizes = rgroups;
     m_numPermutations = computeNumProducts(m_permutationSizes);

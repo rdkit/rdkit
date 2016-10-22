@@ -87,7 +87,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   }
   using EnumerationStrategyBase::initialize;
 
-  void initializeStrategy(const ChemicalReaction &, const BBS &) {
+  void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
     m_distributions.clear();
     m_permutation.resize(m_permutationSizes.size());
     m_permutationSizes = m_permutationSizes;
@@ -105,7 +105,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   virtual const char *type() const { return "RandomSampleAllBBsStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  const RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() {
     if (m_offset >= m_maxoffset) {
       for (size_t i = 0; i < m_permutation.size(); ++i) {
         m_permutation[i] = m_distributions[i](m_rng);

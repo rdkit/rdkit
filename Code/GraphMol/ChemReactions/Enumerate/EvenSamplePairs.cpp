@@ -33,8 +33,10 @@
 #include <boost/format.hpp>
 #include <stdint.h>
 
+
 namespace RDKit {
 
+using namespace EnumerationTypes;
 // Based on an implementation from a correspondance with Bernd Rohde.
 void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
                                                  const BBS &bbs) {

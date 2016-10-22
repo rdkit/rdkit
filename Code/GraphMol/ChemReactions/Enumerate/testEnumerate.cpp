@@ -74,7 +74,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
 }
 
 void testSamplers() {
-  BBS bbs;
+  EnumerationTypes::BBS bbs;
   bbs.resize(3);
   for (int i = 0; i < 10; ++i)
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
@@ -116,7 +116,7 @@ void testSamplers() {
 }
 
 void testEvenSamplers() {
-  BBS bbs;
+  EnumerationTypes::BBS bbs;
   bbs.resize(3);
   unsigned long R1 = 6000;
   unsigned long R2 = 500;
@@ -149,7 +149,7 @@ const char *smiresults[] = {
     "C=CCNC(=S)NCCCc1ncc(Cl)cc1Br", "CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br"};
 
 void testEnumerations() {
-  BBS bbs;
+  EnumerationTypes::BBS bbs;
   bbs.resize(2);
 
   bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));

@@ -75,14 +75,14 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
 
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const BBS &) {
+  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &) {
     m_numPermutationsProcessed = 0;
   }
 
   virtual const char *type() const { return "CartesianProductStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  const RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() {
     if (m_numPermutationsProcessed) {
       increment();
     } else

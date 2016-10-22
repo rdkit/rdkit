@@ -35,6 +35,7 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
+namespace EnumerationTypes {
 //! BBS - Helper typedef for holding buliding blocks for reactions
 //!   holds vectors of reagents for each reactant in a Reaction
 typedef std::vector<MOL_SPTR_VECT> BBS;
@@ -53,5 +54,5 @@ typedef std::vector<MOL_SPTR_VECT> BBS;
 //!    rxn.runReactants( building_blocks );
 typedef std::vector<size_t> RGROUPS;
 }
-
+}
 #endif

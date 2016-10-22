@@ -58,7 +58,10 @@ BOOST_CLASS_EXPORT(RDKit::RandomSampleAllBBsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EvenSamplePairsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EnumerateLibrary);
 
+
 namespace RDKit {
+using namespace EnumerationTypes;
+
 const RGROUPS &EnumerateLibraryBase::getPosition() const {
   return m_enumerator->getPosition();
 }

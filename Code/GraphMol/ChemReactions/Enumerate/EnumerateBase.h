@@ -121,7 +121,7 @@ class EnumerateLibraryBase {
   //! Get the current position into the reagent vectors
   //   Use getState/setState to save/restart the enumeration
   //   from this position.
-  const RGROUPS &getPosition() const;
+  const EnumerationTypes::RGROUPS &getPosition() const;
   
   //! Get the current state of the enumerator
   //   This is the position of the enumerator and the enumerators
