@@ -46,13 +46,12 @@
   typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams>::paramType_t paramType_t;
   typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams>::entryType_t entryType_t;
   typedef std::vector<std::string> STR_VECT;
-
 %}
 
 %template(FilterCatalogEntry_Vect) std::vector< boost::shared_ptr<RDKit::FilterCatalogEntry> >;
 %template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
 %template(UChar_Vect) std::vector<unsigned char>;
-
+%template(FilterMatch_Vect) std::vector<RDKit::FilterMatch>;
 %include "enums.swg"
 
 %include <../RDGeneral/Dict.h>
@@ -72,12 +71,24 @@
    }
 %}
 
+%extend RDKit::FilterMatch {
+  MatchVectType getAtomMatches() {
+    return ($self)->atomPairs;
+  }
+ }
+
 %newobject RDKit::FilterCatalogEntry::getProp;
 %extend RDKit::FilterCatalogEntry {
   std::string getProp(const std::string key){
     std::string res;
     ($self)->getProp(key, res);
     return res;
+  }
+
+  std::vector<RDKit::FilterMatch> getFilterMatches(const ROMol &mol) {
+    std::vector<RDKit::FilterMatch> matches;
+    ($self)->getFilterMatches(mol, matches);
+    return matches;
   }
  }
 
@@ -139,6 +150,8 @@
 %ignore RDKit::FilterCatalog::getIdxForEntry;
 %ignore RDKit::FilterCatalog::getEntryWithIdx;
 
+%ignore RDKit::FilterMatch::operator==;
+%ignore std::vector<RDKit::FilterMatch>::operator==;
 
 //%ignore RDKit::FilterCatalogEntry::getPropList;
 %ignore RDKit::Dict::getPropList;
