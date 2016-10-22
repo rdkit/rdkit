@@ -7,8 +7,9 @@ rdkit_library(ChemReactions
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
                     
-              LINK_LIBRARIES ${Boost_SERIALIZATION_LIBRARY}
-                             FilterCatalog Descriptors Fingerprints DataStructs Depictor FileParsers SubstructMatch ChemTransforms)
+              LINK_LIBRARIES
+              FilterCatalog Descriptors Fingerprints DataStructs Depictor
+              FileParsers SubstructMatch ChemTransforms ${Boost_SERIALIZATION_LIBRARY})
 
 rdkit_headers(Reaction.h
               ReactionParser.h
@@ -28,15 +29,15 @@ rdkit_headers(Reaction.h
               DEST GraphMol/ChemReactions)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
-${Boost_SERIALIZATION_LIBRARY} ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
-${Boost_SERIALIZATION_LIBRARY} ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY}  )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
-${Boost_SERIALIZATION_LIBRARY} ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
 
 add_subdirectory(Wrap)
