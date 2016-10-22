@@ -126,7 +126,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
 
   operator bool() const { return true; }
 
-  EnumerationStrategyBase *Clone() const {
+  EnumerationStrategyBase *copy() const {
     return new RandomSampleAllBBsStrategy(*this);
   }
 

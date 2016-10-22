@@ -109,10 +109,19 @@ class FilterMatcherBase
   virtual bool hasMatch(const ROMol &mol) const = 0;
 
   //------------------------------------
-  //! Clone
+  //! Clone - deprecated
   //  Clones the current FilterMatcherBase into one that
   //   can be passed around safely.
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const = 0;
+  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+    BOOST_LOG(rdWarningLog) << "FilterMatcherBase::Clone is deprecated, use copy instead" << std::endl;
+    return copy();
+  }
+  
+  //------------------------------------
+  //! copy
+  //  copies the current FilterMatcherBase into one that
+  //   can be passed around safely.
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const = 0;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION

@@ -247,7 +247,7 @@ struct enumeration_wrapper {
              "depending on the enumeration strategy used. It is recommended to "
              "use\n"
              "the enumerator state to advance to a known position")
-        .def("Clone", python::pure_virtual(&EnumerationStrategyBase::Clone),
+        .def("__copy__", python::pure_virtual(&EnumerationStrategyBase::copy),
              python::return_value_policy<python::manage_new_object>())
         .def("GetNumPermutations", &EnumerationStrategyBase::getNumPermutations,
              "Returns the total number of results for this enumeration strategy.\n"
@@ -273,7 +273,7 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("CartesianProductStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
-        .def("Clone", &RDKit::CartesianProductStrategy::Clone,
+        .def("__copy__", &RDKit::CartesianProductStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
       ;
 
@@ -285,7 +285,7 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("RandomSampleStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
-        .def("Clone", &RDKit::RandomSampleStrategy::Clone,
+        .def("__copy__", &RDKit::RandomSampleStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
       ;
 
@@ -298,7 +298,7 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("RandomSampleAllBBsStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
-        .def("Clone", &RDKit::RandomSampleAllBBsStrategy::Clone,
+        .def("__copy__", &RDKit::RandomSampleAllBBsStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
       ;
 
@@ -316,7 +316,7 @@ struct enumeration_wrapper {
                    python::bases<EnumerationStrategyBase> >("EvenSamplePairsStrategy",
                                                             docString.c_str(),
                                                             python::init<>())
-        .def("Clone", &RDKit::EvenSamplePairsStrategy::Clone,
+        .def("__copy__", &RDKit::EvenSamplePairsStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
       ;
     

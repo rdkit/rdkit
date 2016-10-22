@@ -132,7 +132,7 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    bool filterReagents)
     : EnumerateLibraryBase(rxn),
       m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
-  m_enumerator.reset(enumerator.Clone());
+  m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
   m_initialState = getState();
 }

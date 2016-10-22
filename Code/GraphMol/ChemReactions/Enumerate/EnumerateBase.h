@@ -80,7 +80,7 @@ class EnumerateLibraryBase {
   //! Copy constructor
   EnumerateLibraryBase(const EnumerateLibraryBase &rhs)
       : m_rxn(rhs.m_rxn),
-        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->Clone() : 0) {}
+        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : 0) {}
 
   virtual ~EnumerateLibraryBase() {}
 

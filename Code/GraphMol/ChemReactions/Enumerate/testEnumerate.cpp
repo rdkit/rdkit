@@ -53,7 +53,7 @@
 using namespace RDKit;
 
 void pickleTest(EnumerationStrategyBase &en, size_t len) {
-  boost::shared_ptr<EnumerationStrategyBase> base(en.Clone());
+  boost::shared_ptr<EnumerationStrategyBase> base(en.copy());
   TEST_ASSERT(std::string(base->type()) == std::string(en.type()));
 
   for (size_t i = 0; i < len; ++i) {
@@ -97,13 +97,13 @@ void testSamplers() {
   even.initialize(rxn, bbs);
   std::vector<boost::shared_ptr<EnumerationStrategyBase> > enumerators;
   enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(cart.Clone()));
+      boost::shared_ptr<EnumerationStrategyBase>(cart.copy()));
   enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(rand.Clone()));
+      boost::shared_ptr<EnumerationStrategyBase>(rand.copy()));
   enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(randBBs.Clone()));
+      boost::shared_ptr<EnumerationStrategyBase>(randBBs.copy()));
   enumerators.push_back(
-      boost::shared_ptr<EnumerationStrategyBase>(even.Clone()));
+      boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
 
   for (size_t i = 0; i < enumerators.size(); ++i) {
     TEST_ASSERT(enumerators[i]->getNumPermutations() == 10 * 5 * 6);

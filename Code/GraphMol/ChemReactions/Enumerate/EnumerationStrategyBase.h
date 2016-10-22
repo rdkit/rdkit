@@ -157,8 +157,8 @@ class EnumerationStrategyBase {
   //! The current permutation {r1, r2, ...}
   virtual const RGROUPS &next() = 0;
 
-  //! Clone the enumeration strategy complete with current state
-  virtual EnumerationStrategyBase *Clone() const = 0;
+  //! copy the enumeration strategy complete with current state
+  virtual EnumerationStrategyBase *copy() const = 0;
 
   //! The current position in the enumeration
   const RGROUPS &getPosition() const { return m_permutation; }

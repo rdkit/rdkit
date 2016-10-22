@@ -95,7 +95,7 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
 
   operator bool() const { return hasNext(); }
 
-  EnumerationStrategyBase *Clone() const {
+  EnumerationStrategyBase *copy() const {
     return new CartesianProductStrategy(*this);
   }
 
