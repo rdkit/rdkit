@@ -7,36 +7,23 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+/*! \file StructChecker.h
+
+\brief Contains the public API of the StructChecker
+
+\b Note that this should be considered beta and that the API may change in
+future
+releases.
+
+*/
 #pragma once
-#ifndef _RD_STRUCTCHECKER_H__
-#define _RD_STRUCTCHECKER_H__
+#ifndef RD_STRUCTCHECKER_H_Oct2016
+#define RD_STRUCTCHECKER_H_Oct2016
 
 #include <string>
 #include <vector>
 #include "../RDKitBase.h"
-
-/* Example of Usage
-1)  StructChecker chk;
-    int flags = StructureCheck::checkMolStructure( mol ); // use defaults
- or
-2)
-    StructureCheck::StructCheckerOptions options;   // use defaults
-    // To use external data
-    StructureCheck::loadOptionsFromFiles(options, file1, file2, …);
-    StructChecker chk(options);
-
-    for( mol in mols ) {
-        int flags = StructureCheck::checkMolStructure( mol, &options);
-        if (0!=(flags & StructureCheck::StructureFlags::BAD_SET)) {
-        // write to error file
-        } else if (0!=(flags & StructureCheck::StructureFlags::TRANSFORMED_SET))
-{
-        // input molecule was transformed
-        } else { // flag == NO_CHANGE
-        // no change
-        }
-    }
-*/
 
 namespace RDKit {
 namespace StructureCheck {
@@ -46,30 +33,30 @@ namespace StructureCheck {
 // TypeDefs for translating augmented atom pairs
 static const int ANY_CHARGE = 8;
 enum RadicalType {
-  RT_NONE     = 0,
-  SINGLET     = 1,
-  DOUBLET     = 2,
-  TRIPLET     = 3,
+  RT_NONE = 0,
+  SINGLET = 1,
+  DOUBLET = 2,
+  TRIPLET = 3,
   ANY_RADICAL = 0xFF
 };
 
-enum AABondType { // MDL CTFile bond types plus extensions 
-  BT_NONE         = 0,      // means REMOVE Bond
-  SINGLE          = 1,
-  DOUBLE          = 2,
-  TRIPLE          = 3,
-  AROMATIC        = 4,
-  SINGLE_DOUBLE   = 5,
+enum AABondType {  // MDL CTFile bond types plus extensions
+  BT_NONE = 0,     // means REMOVE Bond
+  SINGLE = 1,
+  DOUBLE = 2,
+  TRIPLE = 3,
+  AROMATIC = 4,
+  SINGLE_DOUBLE = 5,
   SINGLE_AROMATIC = 6,
   DOUBLE_AROMATIC = 7,
-  ANY_BOND        = 8,
-  ALL_BOND_TYPES  = 0xF
+  ANY_BOND = 8,
+  ALL_BOND_TYPES = 0xF
 };
 
 enum AATopology {
-  TP_NONE = 0, // Don't care
-  RING    = 1, // Ring
-  CHAIN   = 2  // Chain
+  TP_NONE = 0,  // Don't care
+  RING = 1,     // Ring
+  CHAIN = 2     // Chain
 };
 
 struct Ligand {
@@ -92,10 +79,10 @@ struct AugmentedAtom {
   RadicalType Radical;
   AATopology Topology;
   std::vector<Ligand> Ligands;
-  
+
   AugmentedAtom()
       : Charge(ANY_CHARGE), Radical(ANY_RADICAL), Topology(TP_NONE) {}
-  
+
   AugmentedAtom(const std::string &symbol, const std::string &name, int charge,
                 RadicalType radical, AATopology topology)
       : AtomSymbol(symbol),
@@ -111,11 +98,11 @@ struct IncEntry {
   double AlphaInc;
   double BetaInc;
   double MultInc;
-  
+
   // Used for logging
   int local_inc_used;
   int alpha_inc_used;
-  int beta_inc_used; 
+  int beta_inc_used;
   int mult_inc_used;
 };
 
@@ -123,52 +110,50 @@ struct PathEntry {
   AugmentedAtom Path;
   double Cond;
   // Used for logging
-  int cond_used; 
+  int cond_used;
 };
 //-------------
 
-////////////////////////////////////////////////////////////////////////////
-// Structure Check Options
-// Holds all the user options for the StructureChecking.
-// Can be initialized from factory functions, perhaps serialized
-
+//! Structure Check Options
+//    Holds all the user options for the StructureChecking.
+//    Can be initialized from factory functions, perhaps serialized
 struct StructCheckerOptions {
-  double                     AcidityLimit;
-  bool                       RemoveMinorFragments;
-  int                        DesiredCharge;
-  bool                       CheckCollisions;
-  int                        CollisionLimitPercent;
-  unsigned                   MaxMolSize;
-  bool                       ConvertSText;
-  bool                       SqueezeIdentifiers;
-  bool                       StripZeros;
-  bool                       CheckStereo;
-  bool                       ConvertAtomTexts;
-  bool                       GroupsToSGroups;
-  bool                       Verbose;
-  
+  double AcidityLimit;
+  bool RemoveMinorFragments;
+  int DesiredCharge;
+  bool CheckCollisions;
+  int CollisionLimitPercent;
+  unsigned MaxMolSize;
+  bool ConvertSText;
+  bool SqueezeIdentifiers;
+  bool StripZeros;
+  bool CheckStereo;
+  bool ConvertAtomTexts;
+  bool GroupsToSGroups;
+  bool Verbose;
+
   // Internal data for struchk
   std::vector<std::pair<AugmentedAtom, AugmentedAtom> > AugmentedAtomPairs;
   std::vector<AugmentedAtom> AcidicAtoms;
   std::vector<AugmentedAtom> GoodAtoms;
-  std::vector<ROMOL_SPTR>    Patterns;
-  std::vector<ROMOL_SPTR>    RotatePatterns;
-  std::vector<ROMOL_SPTR>    StereoPatterns;
-  std::vector<ROMOL_SPTR>    FromTautomer;
-  std::vector<ROMOL_SPTR>    ToTautomer;
+  std::vector<ROMOL_SPTR> Patterns;
+  std::vector<ROMOL_SPTR> RotatePatterns;
+  std::vector<ROMOL_SPTR> StereoPatterns;
+  std::vector<ROMOL_SPTR> FromTautomer;
+  std::vector<ROMOL_SPTR> ToTautomer;
 
-  double                     Elneg0;      // elneg_table[0].value;
+  double Elneg0;                          // elneg_table[0].value;
   std::map<unsigned, double> ElnegTable;  // AtomicNumber -> eleng
-  std::vector<IncEntry>      AtomAcidity; // atom_acidity_table[]
-  std::vector<IncEntry>      ChargeIncTable;
+  std::vector<IncEntry> AtomAcidity;      // atom_acidity_table[]
+  std::vector<IncEntry> ChargeIncTable;
   // std::map AtomSymbol(or AtomicNumber) -> IncEntry
-                       /* [ReadTransformation() ]
-                       * The alpha, beta coefficients of the transfomation function used
-                       * to stretch the preliminary pKa values to the actual predictions.
-                       * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
-                       */
-  
-  double                 Alpha, Beta;
+  /* [ReadTransformation() ]
+  * The alpha, beta coefficients of the transfomation function used
+  * to stretch the preliminary pKa values to the actual predictions.
+  * The function is pKa = 7 + (pKa'-7)*beta + ((pKa'-7)*alpha)^3.
+  */
+
+  double Alpha, Beta;
   std::vector<PathEntry> AlphaPathTable, BetaPathTable;
 
  public:
@@ -191,7 +176,8 @@ struct StructCheckerOptions {
       const std::vector<std::string> &smarts);  // can throw RDKit exeptions
   void setPatterns(const std::vector<ROMOL_SPTR> &p);
 
-  bool loadRotatePatterns(const std::string &path);  // file with rotate patterns
+  bool loadRotatePatterns(
+      const std::string &path);  // file with rotate patterns
   void parseRotatePatterns(
       const std::vector<std::string> &smarts);  // can throw RDKit exeptions
   void setRotatePatterns(const std::vector<ROMOL_SPTR> &p);
@@ -222,6 +208,38 @@ bool loadOptionsFromFiles(
     const std::string &stereoPatternFile = "",  // file with stereo patterns
     const std::string &tautomerFile = "");
 
+//! \brief Class for performing structure validation and cleanup
+/*! \b NOTE: This class should be considered beta. The API may change in future
+releases.
+
+Examples of Usage
+
+\code
+  StructChecker chk;
+  int flags = StructureCheck::checkMolStructure( mol ); // use defaults
+\endcode
+
+or
+
+\code
+    StructureCheck::StructCheckerOptions options;   // use defaults
+    // To use external data
+    StructureCheck::loadOptionsFromFiles(options, file1, file2);
+    StructChecker chk(options);
+
+    for( mol in mols ) {
+        int flags = StructureCheck::checkMolStructure( mol, &options);
+        if (0!=(flags & StructureCheck::StructureFlags::BAD_SET)) {
+        // write to error file
+        } else if (0!=(flags & StructureCheck::StructureFlags::TRANSFORMED_SET))
+{
+        // input molecule was transformed
+        } else { // flag == NO_CHANGE
+        // no change
+        }
+    }
+\endcode
+*/
 class StructChecker {
  public:
   typedef enum StructureFlags {
@@ -260,10 +278,11 @@ class StructChecker {
   inline StructChecker(const StructCheckerOptions &options)
       : Options(options) {}
 
-  const StructCheckerOptions & GetOptions() const { return Options; }
-  void  SetOptions(const StructCheckerOptions &options) { Options = options; }
-  
-  // Check and fix (if need) molecule structure and return a set of StructureFlags 
+  const StructCheckerOptions &GetOptions() const { return Options; }
+  void SetOptions(const StructCheckerOptions &options) { Options = options; }
+
+  // Check and fix (if need) molecule structure and return a set of
+  // StructureFlags
   // that describes what have been done
   unsigned checkMolStructure(RWMol &mol) const;
 
