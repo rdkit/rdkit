@@ -7,20 +7,21 @@
   as described in Tom Mitchell's book "Machine Learning"
 
   It relies upon the _Tree.TreeNode_ data structure (or something
-    with the same API) defined locally to represent the trees 
+    with the same API) defined locally to represent the trees
 
 """
 
 import numpy
+
 from rdkit.ML.DecTree import DecTree
 from rdkit.ML.InfoTheory import entropy
-from rdkit.six.moves import range, xrange
+from rdkit.six.moves import xrange  # @UnresolvedImport
 
 
 def CalcTotalEntropy(examples, nPossibleVals):
   """ Calculates the total entropy of the data set (w.r.t. the results)
 
-   **Arguments** 
+   **Arguments**
 
     - examples: a list (nInstances long) of lists of variable values + instance
               values
@@ -30,7 +31,7 @@ def CalcTotalEntropy(examples, nPossibleVals):
    **Returns**
 
      a float containing the informational entropy of the data set.
-    
+
   """
   nRes = nPossibleVals[-1]
   resList = numpy.zeros(nRes, 'i')
@@ -40,14 +41,14 @@ def CalcTotalEntropy(examples, nPossibleVals):
   return entropy.InfoEntropy(resList)
 
 
-def GenVarTable(examples, nPossibleVals, vars):
+def GenVarTable(examples, nPossibleVals, vars):  # @ReservedAssignment
   """Generates a list of variable tables for the examples passed in.
 
     The table for a given variable records the number of times each possible value
     of that variable appears for each possible result of the function.
 
   **Arguments**
-  
+
     - examples: a list (nInstances long) of lists of variable values + instance
               values
 
@@ -85,7 +86,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
       multivalued (non-binary) results.
 
     **Arguments**
-    
+
       - examples: a list (nInstances long) of lists of variable values + instance
               values
 
@@ -102,7 +103,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
                    will be grown
 
     **Returns**
-    
+
      a DecTree.DecTreeNode with the decision tree
 
     **NOTE:** This code cannot bootstrap (start from nothing...)
@@ -114,7 +115,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
   # store the total entropy... in case that is interesting
   totEntropy = CalcTotalEntropy(examples, nPossibleVals)
   tree.SetData(totEntropy)
-  #tree.SetExamples(examples)
+  # tree.SetExamples(examples)
 
   # the matrix of results for this target:
   tMat = GenVarTable(examples, nPossibleVals, [target])[0]
@@ -153,7 +154,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
     # set some info at this node
     tree.SetName('Var: %d' % best)
     tree.SetLabel(best)
-    #tree.SetExamples(examples)
+    # tree.SetExamples(examples)
     tree.SetTerminal(0)
 
     # loop over possible values of the new variable and
@@ -185,13 +186,13 @@ def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-
      choose the first variable in the tree (the standard greedy
      approach).  Otherwise, _initialVar_ will be used as the first
      split.
-     
+
   """
   totEntropy = CalcTotalEntropy(examples, nPossibleVals)
   varTable = GenVarTable(examples, nPossibleVals, attrs)
 
   tree = DecTree.DecTreeNode(None, 'node')
-  #tree.SetExamples(examples)
+  # tree.SetExamples(examples)
   tree._nResultCodes = nPossibleVals[-1]
 
   # <perl>you've got to love any language which will let you

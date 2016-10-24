@@ -26,11 +26,11 @@ class DecTreeNode(Tree.TreeNode):
      3) _TrainingExamples_: the list of examples used to train the tree
 
      4) _TestExamples_: the list of examples used to test the tree
-   
+
   """
 
   def __init__(self, *args, **kwargs):
-    #apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
+    # apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
     Tree.TreeNode.__init__(self, *args, **kwargs)
     self.examples = []
     self.badExamples = []
@@ -39,7 +39,7 @@ class DecTreeNode(Tree.TreeNode):
 
   def ClassifyExample(self, example, appendExamples=0):
     """ Recursively classify an example by running it through the tree
-    
+
       **Arguments**
 
         - example: the example to be classified
@@ -56,7 +56,7 @@ class DecTreeNode(Tree.TreeNode):
         here.  So if you subclass DecTreeNode for your own trees, you'll
         have to either include ClassifyExample or avoid changing the names
         of the instance variables this needs.
-        
+
     """
     if appendExamples:
       self.examples.append(example)
@@ -83,7 +83,7 @@ class DecTreeNode(Tree.TreeNode):
       **Returns*
 
         the _DecTreeNode_ which is constructed
-        
+
     """
     child = DecTreeNode(self, name, label, data, level=self.level + 1, isTerminal=isTerminal)
     self.children.append(child)

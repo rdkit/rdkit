@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 #  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
@@ -9,6 +7,7 @@
 
 """
 import numpy
+import math
 
 
 def StandardizeMatrix(mat):
@@ -29,7 +28,7 @@ def StandardizeMatrix(mat):
   nObjs = len(mat)
   avgs = sum(mat, 0) / float(nObjs)
   mat -= avgs
-  devs = sqrt(sum(mat * mat, 0) / (float(nObjs - 1)))
+  devs = math.sqrt(sum(mat * mat, 0) / (float(nObjs - 1)))
   try:
     newMat = mat / devs
   except OverflowError:
@@ -110,7 +109,7 @@ def TransformPoints(tFormMat, pts):
 
     **Returns**
 
-      a list of numpy arrays 
+      a list of numpy arrays
 
   """
   pts = numpy.array(pts)
@@ -146,7 +145,7 @@ def MeanAndDev(vect, sampleSD=1):
 def R2(orig, residSum):
   """ returns the R2 value for a set of predictions """
 
-  # FIX: this just is not right 
+  # FIX: this just is not right
   #
   #  A correct formulation of this (from Excel) for 2 variables is:
   #   r2 = [n*(Sxy) - (Sx)(Sy)]^2 / ([n*(Sx2) - (Sx)^2]*[n*(Sy2) - (Sy)^2])

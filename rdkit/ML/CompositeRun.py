@@ -14,10 +14,7 @@ Composite building
 """
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit import DataStructs
 from rdkit.Dbase import DbModule
-
-##from rdkit.ML.SVM import SVMClassificationModel as SVM
 
 
 def SetDefaults(runDetails):
@@ -76,23 +73,23 @@ def SetDefaults(runDetails):
   runDetails.mEstimateVal = -1.0
   runDetails.useSigBayes = 0
 
-  ##   #
-  ##   # SVM Parameters
-  ##   #
-  ##   runDetails.useSVM = 0
-  ##   runDetails.svmKernel = SVM.radialKernel
-  ##   runDetails.svmType = SVM.cSVCType
-  ##   runDetails.svmGamma = None
-  ##   runDetails.svmCost = None
-  ##   runDetails.svmWeights = None
-  ##   runDetails.svmDataType = 'float'
-  ##   runDetails.svmDegree = 3
-  ##   runDetails.svmCoeff = 0.0
-  ##   runDetails.svmEps = 0.001
-  ##   runDetails.svmNu = 0.5
-  ##   runDetails.svmCache = 40
-  ##   runDetails.svmShrink = 1
-  ##   runDetails.svmDataType='float'
+  #   #
+  #   # SVM Parameters
+  #   #
+  #   runDetails.useSVM = 0
+  #   runDetails.svmKernel = SVM.radialKernel
+  #   runDetails.svmType = SVM.cSVCType
+  #   runDetails.svmGamma = None
+  #   runDetails.svmCost = None
+  #   runDetails.svmWeights = None
+  #   runDetails.svmDataType = 'float'
+  #   runDetails.svmDegree = 3
+  #   runDetails.svmCoeff = 0.0
+  #   runDetails.svmEps = 0.001
+  #   runDetails.svmNu = 0.5
+  #   runDetails.svmCache = 40
+  #   runDetails.svmShrink = 1
+  #   runDetails.svmDataType='float'
 
   runDetails.bayesModel = 0
   runDetails.dbName = ''
@@ -130,43 +127,41 @@ class CompositeRun:
 
    By default these fields are stored in a tuple, so they are immutable.  This
      is probably what you want.
-   
+
 
   """
-  fields = (\
-    ("rundate","varchar(32)"),
-    ("dbName","varchar(200)"),
-    ("dbWhat","varchar(200)"),
-    ("dbWhere","varchar(200)"),
-    ("dbJoin","varchar(200)"),
-    ("tableName","varchar(80)"),
-    ("note","varchar(120)"),
-    ("shuffled","smallint"),
-    ("randomized","smallint"),
-    ("overall_error","float"),
-    ("holdout_error","float"),
-    ("overall_fraction_dropped","float"),
-    ("holdout_fraction_dropped","float"),
-    ("overall_correct_conf","float"),
-    ("overall_incorrect_conf","float"),
-    ("holdout_correct_conf","float"),
-    ("holdout_incorrect_conf","float"),
-    ("overall_result_matrix","varchar(256)"),
-    ("holdout_result_matrix","varchar(256)"),
-    ("threshold","float"),
-    ("splitFrac","float"),
-    ("filterFrac","float"),
-    ("filterVal","float"),
-    ("modelFilterVal", "float"),
-    ("modelFilterFrac", "float"),
-    ("nModels","int"),
-    ("limitDepth","int"),
-    ("bayesModels","int"),
-    ("qBoundCount","varchar(3000)"),
-    ("activityBoundsVals","varchar(200)"),
-    ("cmd","varchar(500)"),
-    ("model",DbModule.binaryTypeName),
-    )
+  fields = (("rundate", "varchar(32)"),
+            ("dbName", "varchar(200)"),
+            ("dbWhat", "varchar(200)"),
+            ("dbWhere", "varchar(200)"),
+            ("dbJoin", "varchar(200)"),
+            ("tableName", "varchar(80)"),
+            ("note", "varchar(120)"),
+            ("shuffled", "smallint"),
+            ("randomized", "smallint"),
+            ("overall_error", "float"),
+            ("holdout_error", "float"),
+            ("overall_fraction_dropped", "float"),
+            ("holdout_fraction_dropped", "float"),
+            ("overall_correct_conf", "float"),
+            ("overall_incorrect_conf", "float"),
+            ("holdout_correct_conf", "float"),
+            ("holdout_incorrect_conf", "float"),
+            ("overall_result_matrix", "varchar(256)"),
+            ("holdout_result_matrix", "varchar(256)"),
+            ("threshold", "float"),
+            ("splitFrac", "float"),
+            ("filterFrac", "float"),
+            ("filterVal", "float"),
+            ("modelFilterVal", "float"),
+            ("modelFilterFrac", "float"),
+            ("nModels", "int"),
+            ("limitDepth", "int"),
+            ("bayesModels", "int"),
+            ("qBoundCount", "varchar(3000)"),
+            ("activityBoundsVals", "varchar(200)"),
+            ("cmd", "varchar(500)"),
+            ("model", DbModule.binaryTypeName), )
 
   def _CreateTable(self, cn, tblName):
     """ *Internal Use only*
@@ -207,7 +202,7 @@ class CompositeRun:
 
     cols = []
     vals = []
-    for name, typ in self.fields:
+    for name, _ in self.fields:
       try:
         v = getattr(self, name)
       except AttributeError:
@@ -241,7 +236,6 @@ class CompositeRun:
     values.
 
     """
-    from rdkit.Dbase.DbConnection import DbConnect
     conn = DbConnect(self.dbName, self.tableName)
     res = conn.GetColumnNamesAndTypes(join=self.dbJoin, what=self.dbWhat, where=self.dbWhere)
     return res

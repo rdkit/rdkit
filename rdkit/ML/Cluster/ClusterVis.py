@@ -17,9 +17,11 @@ try:
   piddle = pid
 except ImportError:
   from rdkit.piddle import piddle
-import ClusterUtils
-
 import numpy
+
+from six.moves import xrange  # @UnresolvedImport
+
+from . import ClusterUtils
 
 
 class VisOpts(object):
@@ -32,7 +34,7 @@ class VisOpts(object):
       - lineColor: default color for drawing the cluster tree
 
       - lineWidth: the width of the lines used to draw the tree
-      
+
   """
   xOffset = 20
   yOffset = 20
@@ -50,7 +52,7 @@ class VisOpts(object):
   highlightRad = 10
 
 
-def _scaleMetric(val, power=2, min=1e-4):
+def _scaleMetric(val, power=2, min=1e-4):  # @ReservedAssignment
   val = float(val)
   nval = pow(val, power)
   if nval < min:
@@ -198,7 +200,7 @@ def DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showIndi
        node types, this will throw an IndexError
 
      - terminal node types are determined using their _GetData()_ methods
-       
+
   """
   renderer = ClusterRenderer(canvas, size, ptColors, lineWidth, showIndices, showNodes,
                              stopAtCentroids, logScale, tooClose)
@@ -231,7 +233,7 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
        node types, this will throw an IndexError
 
      - terminal node types are determined using their _GetData()_ methods
-       
+
   """
   if lineWidth is None:
     lineWidth = VisOpts.lineWidth
@@ -253,8 +255,8 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
     else:
       v = float(pt.GetMetric())
     pt._drawPos = (VisOpts.xOffset + i * xSpace, size[1] - (v * ySpace + VisOpts.yOffset))
-    if not stopAtCentroids or not hasattr(pt, '_isCentroid'):
-      allNodes.remove(pt)
+#     if not stopAtCentroids or not hasattr(pt, '_isCentroid'):
+#       allNodes.remove(pt)  # allNodes not defined
 
   if not stopAtCentroids:
     allNodes = ClusterUtils.GetNodeList(cluster)
@@ -345,7 +347,7 @@ def ClusterToPDF(cluster, fileName, size=(300, 300), ptColors=[], lineWidth=None
        node types, this will throw an IndexError
 
      - terminal node types are determined using their _GetData()_ methods
-       
+
   """
   try:
     from rdkit.sping.PDF import pidPDF
@@ -387,7 +389,7 @@ def ClusterToSVG(cluster, fileName, size=(300, 300), ptColors=[], lineWidth=None
        node types, this will throw an IndexError
 
      - terminal node types are determined using their _GetData()_ methods
-       
+
   """
   try:
     from rdkit.sping.SVG import pidSVG
@@ -428,12 +430,12 @@ def ClusterToImg(cluster, fileName, size=(300, 300), ptColors=[], lineWidth=None
 
      - The extension on  _fileName_ determines the type of image file created.
        All formats supported by PIL can be used.
-       
+
      - if _ptColors_ is the wrong length for the number of possible terminal
        node types, this will throw an IndexError
 
      - terminal node types are determined using their _GetData()_ methods
-       
+
   """
   try:
     from rdkit.sping.PIL import pidPIL

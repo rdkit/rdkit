@@ -7,10 +7,11 @@ and evaluation of individual models
 
 """
 from __future__ import print_function
+
+from rdkit.ML.Data import SplitData
+from rdkit.ML.KNN import DistFunctions
 from rdkit.ML.KNN.KNNClassificationModel import KNNClassificationModel
 from rdkit.ML.KNN.KNNRegressionModel import KNNRegressionModel
-from rdkit.ML.KNN import DistFunctions
-from rdkit.ML.Data import SplitData
 
 
 def makeClassificationModel(numNeigh, attrs, distFunc):
@@ -63,9 +64,10 @@ def CrossValidate(knnMod, testExamples, appendExamples=0):
   raise ValueError("Unrecognized Model Type")
 
 
-def CrossValidationDriver(
-    examples, attrs, nPossibleValues, numNeigh, modelBuilder=makeClassificationModel,
-    distFunc=DistFunctions.EuclideanDist, holdOutFrac=0.3, silent=0, calcTotalError=0, **kwargs):
+def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
+                          modelBuilder=makeClassificationModel,
+                          distFunc=DistFunctions.EuclideanDist, holdOutFrac=0.3, silent=0,
+                          calcTotalError=0, **kwargs):  # @IgnorePep8
   """ Driver function for building a KNN model of a specified type
 
   **Arguments**
@@ -107,9 +109,9 @@ def CrossValidationDriver(
   knnMod.SetTestExamples(testExamples)
 
   if not calcTotalError:
-    xValError, badExamples = CrossValidate(knnMod, testExamples, appendExamples=1)
+    xValError, _ = CrossValidate(knnMod, testExamples, appendExamples=1)
   else:
-    xValError, badExamples = CrossValidate(knnMod, examples, appendExamples=0)
+    xValError, _ = CrossValidate(knnMod, examples, appendExamples=0)
 
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
