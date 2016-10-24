@@ -6,18 +6,17 @@
 from __future__ import print_function
 from rdkit import RDConfig
 import unittest
-from rdkit.ML.Composite import Composite
-from win32com.client import Dispatch
-from Numeric import *
+try:
+  from win32com.client import Dispatch
+except ImportError:
+  Dispatch = None
 
 
+@unittest.skipIf(Dispatch is None, 'Test for Windows only')
 class TestCase(unittest.TestCase):
 
-  def setUp(self):
-    print('\n%s: ' % self.shortDescription(), end='')
-
   def testConnect(self):
-    " connecting to COM server "
+    # connecting to COM server
     ok = 1
     try:
       c = Dispatch('RD.Composite')
@@ -26,7 +25,7 @@ class TestCase(unittest.TestCase):
     assert ok and c is not None, 'connection to COM server failed'
 
   def testLoad(self):
-    " loading a composite "
+    # loading a composite
     c = Dispatch('RD.Composite')
     ok = 1
     try:
@@ -36,7 +35,7 @@ class TestCase(unittest.TestCase):
     assert ok, 'LoadComposite failed'
 
   def testNames(self):
-    " testing descriptor names "
+    # testing descriptor names
     c = Dispatch('RD.Composite')
     c.LoadComposite(RDConfig.RDCodeDir + '/ml/composite/test_data/composite_base.pkl')
     names = c.GetDescriptorNames()
@@ -45,7 +44,7 @@ class TestCase(unittest.TestCase):
     assert names == expectedNames, 'GetDescriptorNames failed'
 
   def testInputOrder(self):
-    " testing input order "
+    # testing input order
     c = Dispatch('RD.Composite')
     c.LoadComposite(RDConfig.RDCodeDir + '/ml/composite/test_data/composite_base.pkl')
     names = c.GetDescriptorNames()
@@ -57,7 +56,7 @@ class TestCase(unittest.TestCase):
     assert ok, 'SetInputOrder failed'
 
   def testClassify(self):
-    " testing classification "
+    # testing classification
     argV = ['CrPt3', 'fcc', 'AuCu3', 58.09549962, 36, 4, 0.228898, 2.219, 1, 3.67481803894, 1, 0, 1,
             0.619669341609, 14.523874905]
     nameV = ['composition', 'Structure', 'Structure_Type', 'Volume', 'Electrons_Per_Unit',
@@ -72,7 +71,7 @@ class TestCase(unittest.TestCase):
     assert res[1] == expected[1], 'bad confidence'
 
 
-def TestSuite():
+def TestSuite():  # pragma: nocover
   suite = unittest.TestSuite()
   suite.addTest(TestCase('testConnect'))
   suite.addTest(TestCase('testLoad'))
@@ -82,6 +81,6 @@ def TestSuite():
   return suite
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   suite = TestSuite()
   unittest.TextTestRunner().run(suite)

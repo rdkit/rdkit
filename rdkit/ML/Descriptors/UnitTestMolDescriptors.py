@@ -4,13 +4,17 @@
 """ unit testing code for molecular descriptor calculators
 
 """
-import unittest, os.path
-import io
-from rdkit.six.moves import cPickle
-from rdkit import RDConfig
-from rdkit.ML.Descriptors import MoleculeDescriptors
+import os.path
+import unittest
+
 import numpy
+from six import BytesIO, StringIO
+
 from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.ML.Descriptors import MoleculeDescriptors, Descriptors
+from rdkit.TestRunner import redirect_stdout
+from six.moves import cPickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
@@ -42,12 +46,47 @@ class TestCase(unittest.TestCase):
     with open(fName, 'r') as inTF:
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
-    with io.BytesIO(buf) as inF:
+    with BytesIO(buf) as inF:
       calc = cPickle.load(inF)
     self.assertEqual(calc.GetDescriptorNames(), tuple(self.descs))
     self.assertEqual(calc.GetDescriptorVersions(), tuple(self.vers))
     self._testVals(calc, self.testD)
 
+    f = StringIO()
+    with redirect_stdout(f):
+      calc.ShowDescriptors()
+    s = f.getvalue()
+    for name in calc.GetDescriptorNames():
+      self.assertIn(name, s)
 
-if __name__ == '__main__':
+    self.assertIn('Wildman-Crippen LogP value', calc.GetDescriptorSummaries())
+    self.assertIn('N/A', calc.GetDescriptorSummaries())
+
+    funcs = calc.GetDescriptorFuncs()
+    self.assertEqual(len(funcs), len(self.descs))
+    for f in funcs:
+      self.assertTrue(callable(f))
+
+
+class TestDescriptors(unittest.TestCase):
+
+  def test_DescriptorCalculator(self):
+    calc = Descriptors.DescriptorCalculator()
+    self.assertRaises(NotImplementedError, calc.ShowDescriptors)
+    self.assertRaises(NotImplementedError, calc.GetDescriptorNames)
+    self.assertRaises(NotImplementedError, calc.CalcDescriptors, None)
+
+    calc.simpleList = ['simple1', 'simple2']
+    calc.compoundList = ['cmpd1', 'cmpd2']
+    f = StringIO()
+    with redirect_stdout(f):
+      calc.ShowDescriptors()
+    s = f.getvalue()
+    for name in calc.simpleList:
+      self.assertIn(name, s)
+    for name in calc.compoundList:
+      self.assertIn(name, s)
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
