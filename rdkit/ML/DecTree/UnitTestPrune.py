@@ -54,10 +54,13 @@ class TreeTestCase(unittest.TestCase):
     with redirect_stdout(f):
       try:
         PruneTree._testRandom()
+        self.assertTrue(os.path.isfile('orig.pkl'))
         self.assertTrue(os.path.isfile('prune.pkl'))
       finally:
         if os.path.isfile('prune.pkl'):
           os.remove('prune.pkl')
+        if os.path.isfile('orig.pkl'):
+          os.remove('orig.pkl')
     self.assertIn('pruned error', f.getvalue())
 
     f = StringIO()
