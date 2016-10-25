@@ -85,6 +85,7 @@ def computeDist(lst1, lst2):
 
 
 def computeChiralVol(pt1, pt2, pt3, pt4):
+<<<<<<< HEAD
   v1 = pt1 - pt4
   v2 = pt2 - pt4
   v3 = pt3 - pt4
@@ -440,7 +441,6 @@ class TestCase(unittest.TestCase):
     params.useBasicKnowledge=True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol,params),0)
     self._compareConfs(mol,ref,0,0)
-
 
 if __name__ == '__main__':
   unittest.main()
