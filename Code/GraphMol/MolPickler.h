@@ -42,6 +42,17 @@ class MolPicklerException : public std::exception {
   std::string _msg;
 };
 
+namespace PropertyPickleOptions {
+  const unsigned int Default = 0; // no data pickled
+  const unsigned int AllProps = 0xFFFF; // all data pickled
+  const unsigned int MolProps = 0x1; // only public non computed properties
+  const unsigned int AtomProps = 0x10;
+  const unsigned int BondProps = 0x100;
+  const unsigned int PrivateProps = 0x10000;
+  const unsigned int ComputedProps = 0x100000;
+}
+  
+
 //! handles pickling (serializing) molecules
 class MolPickler {
  public:
@@ -112,17 +123,23 @@ class MolPickler {
     ATOM_PDB_RESIDUE_RESIDUENUMBER,
     ATOM_PDB_RESIDUE_SEGMENTNUMBER,
     END_ATOM_MONOMER,
+    BEGINATOMPROPS,
+    BEGINBONDPROPS,
   } Tags;
 
   //! pickles a molecule and sends the results to stream \c ss
-  static void pickleMol(const ROMol *mol, std::ostream &ss);
-  static void pickleMol(const ROMol &mol, std::ostream &ss) {
-    MolPickler::pickleMol(&mol, ss);
+  static void pickleMol(const ROMol *mol, std::ostream &ss,
+                        unsigned int propertyFlags=PropertyPickleOptions::Default);
+  static void pickleMol(const ROMol &mol, std::ostream &ss,
+                        unsigned int propertyFlags=PropertyPickleOptions::Default) {
+    MolPickler::pickleMol(&mol, ss, propertyFlags);
   };
   //! pickles a molecule and adds the results to string \c res
-  static void pickleMol(const ROMol *mol, std::string &res);
-  static void pickleMol(const ROMol &mol, std::string &res) {
-    MolPickler::pickleMol(&mol, res);
+  static void pickleMol(const ROMol *mol, std::string &res,
+                        unsigned int propertyFlags=PropertyPickleOptions::Default);
+  static void pickleMol(const ROMol &mol, std::string &res,
+                        unsigned int propertyFlags=PropertyPickleOptions::Default) {
+    MolPickler::pickleMol(&mol, res, propertyFlags);
   };
 
   //! constructs a molecule from a pickle stored in a string
@@ -140,7 +157,8 @@ class MolPickler {
  private:
   //! do the actual work of pickling a molecule
   template <typename T>
-  static void _pickle(const ROMol *mol, std::ostream &ss);
+  static void _pickle(const ROMol *mol, std::ostream &ss,
+                      unsigned int propertyFlags);
 
   //! do the actual work of pickling an Atom
   template <typename T>
@@ -187,6 +205,12 @@ class MolPickler {
   template <typename T>
   static Conformer *_conformerFromPickle(std::istream &ss, int version);
 
+  //! pickle standard properties
+  static void _pickleProperties(std::ostream &ss, const RDProps &props,
+                                unsigned int pickleFlags);
+  //! unpickle standard properties
+  static void _unpickleProperties(std::istream &ss, RDProps &props);
+  
   //! backwards compatibility
   static void _pickleV1(const ROMol *mol, std::ostream &ss);
   //! backwards compatibility
