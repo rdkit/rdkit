@@ -101,6 +101,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   void initFromStream(std::istream &ss);
 
  private:
+#ifdef RDK_USE_BOOST_SERIALIZATION    
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int /*version*/) const {
@@ -141,6 +142,10 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 };
+
+bool EnumerateLibraryCanSerialize();
+
 }
 #endif

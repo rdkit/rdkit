@@ -34,7 +34,9 @@
 #define RGROUP_EVEN_SAMPLE_H
 
 #include "EnumerationStrategyBase.h"
+#ifdef RDK_USE_BOOST_SERIALIZATION  
 #include <boost/serialization/set.hpp>
+#endif
 #include <stdint.h>
 
 namespace RDKit {
@@ -156,6 +158,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   bool try_add(size_t seed);
 
  public:
+#ifdef RDK_USE_BOOST_SERIALIZATION    
   template <class Archive>
   void serialize(Archive &ar, const unsigned int /*version*/) {
     // invoke serialization of the base class
@@ -180,6 +183,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
     ar &rejected_slack_condition;
     ar &rejected_bb_sampling_condition;
   }
+#endif
 };
 }
 

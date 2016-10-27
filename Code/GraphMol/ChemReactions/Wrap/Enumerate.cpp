@@ -260,6 +260,10 @@ struct enumeration_wrapper {
              "Return the next indices into the arrays of reagents",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1> >())
+        .def("__next__", python::pure_virtual(&EnumerationStrategyBase::next),
+             "Return the next indices into the arrays of reagents",
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1> >())
         .def("Initialize", ToBBS);
 
     docString = "CartesianProductStrategy produces a standard walk through all possible\n"
@@ -319,7 +323,11 @@ struct enumeration_wrapper {
         .def("__copy__", &RDKit::EvenSamplePairsStrategy::copy,
              python::return_value_policy<python::manage_new_object>())
       ;
-    
+
+    python::def("EnumerateLibraryCanSerialize", EnumerateLibraryCanSerialize,
+                "Returns True if the EnumerateLibrary is serializable "
+                "(requires boost serialization");
+
   }
 };
 

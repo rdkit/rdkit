@@ -1,5 +1,9 @@
-find_package(Boost 1.39.0 COMPONENTS serialization REQUIRED)
-message("==> ${Boost_SERIALIZATION_LIBRARY}")
+if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
+    ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
+else()
+      message("== Making EnumerateLibrary without boost Serialization support")
+endif()
+
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
 	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp

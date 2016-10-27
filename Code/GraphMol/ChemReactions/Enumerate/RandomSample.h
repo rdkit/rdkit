@@ -112,6 +112,7 @@ class RandomSampleStrategy : public EnumerationStrategyBase {
   }
 
  private:
+#ifdef RDK_USE_BOOST_SERIALIZATION    
   friend class boost::serialization::access;
 
   template <class Archive>
@@ -149,9 +150,12 @@ class RandomSampleStrategy : public EnumerationStrategyBase {
   void serialize(Archive &ar, const unsigned int file_version) {
     boost::serialization::split_member(ar, *this, file_version);
   }
+#endif  
 };
 }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION        
 BOOST_CLASS_VERSION(RDKit::RandomSampleStrategy, 1)
+#endif
 
 #endif

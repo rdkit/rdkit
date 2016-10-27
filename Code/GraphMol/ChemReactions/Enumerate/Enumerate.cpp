@@ -38,10 +38,10 @@
 #include "../ReactionPickler.h"
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include "EnumerationPickler.h"
 
 // Since we are exporting the classes for serialization,
 //  we should declare the archives types used here
+#ifdef RDK_USE_BOOST_SERIALIZATION  
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -55,7 +55,7 @@ BOOST_CLASS_EXPORT(RDKit::RandomSampleStrategy);
 BOOST_CLASS_EXPORT(RDKit::RandomSampleAllBBsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EvenSamplePairsStrategy);
 BOOST_CLASS_EXPORT(RDKit::EnumerateLibrary);
-
+#endif
 
 namespace RDKit {
 using namespace EnumerationTypes;
@@ -76,7 +76,9 @@ void EnumerateLibraryBase::setState(const std::string &state) {
 }
 
 void EnumerateLibraryBase::resetState() {
-  setState(m_initialState);
+  PRECONDITION(m_initialEnumerator.get(),
+               "Unset initial enumerator");
+  m_enumerator.reset(m_initialEnumerator->copy());
 }
 
 std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
@@ -125,7 +127,7 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
       m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
   m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
-  m_initialState = getState();
+  m_initialEnumerator.reset(m_enumerator->copy());
 }
 
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
@@ -135,7 +137,7 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
       m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
   m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
-  m_initialState = getState();
+  m_initialEnumerator.reset(m_enumerator->copy());
 }
 
 EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
@@ -154,13 +156,21 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {
+#ifdef RDK_USE_BOOST_SERIALIZATION      
   boost::archive::text_oarchive ar(ss);
   ar << *this;
+#else
+  PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
+#endif
 }
 
 void EnumerateLibrary::initFromStream(std::istream &ss) {
+#ifdef RDK_USE_BOOST_SERIALIZATION      
   boost::archive::text_iarchive ar(ss);
   ar >> *this;
+#else
+  PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
+#endif
 }
 
 boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
@@ -187,4 +197,13 @@ MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
   }
   return result;
 }
+
+bool EnumerateLibraryCanSerialize() {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  return true;
+#else
+  return false;
+#endif
+}
+
 }

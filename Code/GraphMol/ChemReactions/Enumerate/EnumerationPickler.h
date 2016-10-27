@@ -32,7 +32,7 @@
 #ifndef ENUMERATIONPICKLER_H
 #define ENUMERATIONPICKLER_H
 
-#include "Enumerate.h"
+#include "EnumerationStrategyBase.h"
 
 namespace RDKit {
 namespace EnumerationStrategyPickler {

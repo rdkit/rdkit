@@ -35,6 +35,8 @@
 #include <vector>
 #include "EnumerateTypes.h"
 #include "../Reaction.h"
+#include "EnumerationPickler.h"
+
 #include "EnumerationStrategyBase.h"
 #include "CartesianProduct.h"
 #include "../ReactionPickler.h"
@@ -61,18 +63,19 @@ class EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
   boost::shared_ptr<EnumerationStrategyBase> m_enumerator;
-  std::string m_initialState; // subclass responsible for setting... boo!
-
+  boost::shared_ptr<EnumerationStrategyBase> m_initialEnumerator;
  public:
   //! default constructor
-  EnumerateLibraryBase() : m_rxn(), m_enumerator(), m_initialState() {}
+EnumerateLibraryBase() : m_rxn(),
+      m_enumerator(),
+      m_initialEnumerator() {}
 
   //! construct with a chemical reaction and an enumeration strategy
   EnumerateLibraryBase(const ChemicalReaction &rxn,
                        EnumerationStrategyBase *enumerator = 0)
       : m_rxn(rxn),
         m_enumerator(enumerator ? enumerator : new CartesianProductStrategy),
-        m_initialState()
+        m_initialEnumerator( m_enumerator->copy() )
       {
     m_rxn.initReactantMatchers();
   }
@@ -80,7 +83,8 @@ class EnumerateLibraryBase {
   //! Copy constructor
   EnumerateLibraryBase(const EnumerateLibraryBase &rhs)
       : m_rxn(rhs.m_rxn),
-        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : 0) {}
+        m_enumerator(rhs.m_enumerator ? rhs.m_enumerator->copy() : 0),
+        m_initialEnumerator( m_enumerator->copy() ) {}
 
   virtual ~EnumerateLibraryBase() {}
 
@@ -92,8 +96,9 @@ class EnumerateLibraryBase {
 
   //! reset the enumeration to the beginning.
   void reset() {
-    if(m_initialState.size())
-      setState(m_initialState);
+    if(m_initialEnumerator.get()) {
+      m_enumerator.reset(m_initialEnumerator->copy());
+    }
   }
 
   //! returns the underlying chemical reaction
@@ -157,6 +162,7 @@ class EnumerateLibraryBase {
   }
 
  private:
+#ifdef RDK_USE_BOOST_SERIALIZATION  
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int) const {
@@ -164,7 +170,12 @@ class EnumerateLibraryBase {
     ReactionPickler::pickleReaction(m_rxn, pickle);
     ar &pickle;
     ar &m_enumerator;
-    ar &m_initialState;
+    // we handle the m_initialEnumerator from a string
+    //  for backwards compatibility with a unreleased
+    //  version
+    EnumerationStrategyPickler::pickle(m_initialEnumerator,
+                                       pickle);
+    ar &pickle;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
@@ -172,11 +183,18 @@ class EnumerateLibraryBase {
     ar &pickle;
     ReactionPickler::reactionFromPickle(pickle, m_rxn);
     ar &m_enumerator;
-    ar &m_initialState;
+    ar &pickle;
+    m_initialEnumerator = \
+        EnumerationStrategyPickler::fromPickle(pickle);
+
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
 };
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerateLibraryBase)
+#endif
 }
 #endif
