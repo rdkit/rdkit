@@ -175,22 +175,33 @@ class TestCase(unittest.TestCase) :
                   'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
-    
-    pickle = enumerator.Serialize()
-    enumerator2 = rdChemReactions.EnumerateLibrary()
-    enumerator2.InitFromString(pickle)
 
-    # make sure old pickles work
-    enumerator3 = rdChemReactions.EnumerateLibrary()
-    enumerator3.InitFromString(open(os.path.join(self.dataDir, "enumeration.pickle"), 'rb').read())
-    
-    print("==", enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
-    self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
+    enumerators = [enumerator]
 
+    # add serialized enumerators as well for testing if possible
+    if rdChemReactions.EnumerateLibraryCanSerialize():
+      pickle = enumerator.Serialize()
+      enumerator2 = rdChemReactions.EnumerateLibrary()
+      enumerator2.InitFromString(pickle)
+      
+      # make sure old pickles work
+      enumerator3 = rdChemReactions.EnumerateLibrary()
+      enumerator3.InitFromString(open(os.path.join(self.dataDir, "enumeration.pickle"), 'rb').read())
+    
+      print("==", enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
+      self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
+      enumerators.append(enumerator2)
+      enumerators.append(enumerator3)
+
+    # check for fully sampled and deterministic ordering in final index values
+    expected_positions = [[0L, 0L],[1L, 0L],[0L, 1L],[1L, 1L],[0L, 2L],[1L, 2L]]
+    
     out = []
-    for en in [enumerator, enumerator2, enumerator3]:
+    for en in enumerators:
       i = 0
+      positions = []
       for i, prods in enumerate(en):
+        positions.append( list(en.GetPosition()) )
         for mols in prods:
           self.assertEquals(len(mols), 1)
           smi = Chem.MolToSmiles(mols[0])
@@ -198,22 +209,24 @@ class TestCase(unittest.TestCase) :
             out.append(smi)
           self.assertEquals(smi, results[i])
 
-        if en is enumerator and i == 1:
+        if en is enumerator and i == 1 and rdChemReactions.EnumerateLibraryCanSerialize():
           # save the state not at the start
           pickle_at_2 = enumerator.Serialize()
       self.assertEquals(i, 5)
+      self.assertEquals(positions, expected_positions)
+      
+    if rdChemReactions.EnumerateLibraryCanSerialize():      
+      # see if we can restore the enumeration from the middle
+      out3 = []
+      enumerator3 = rdChemReactions.EnumerateLibrary()
+      enumerator3.InitFromString(pickle_at_2)
+      for prods in enumerator3:
+        for mols in prods:
+          self.assertEquals(len(mols), 1)
+          smi = Chem.MolToSmiles(mols[0])
+          out3.append(smi)
 
-    # see if we can restore the enumeration from the middle
-    out3 = []
-    enumerator3 = rdChemReactions.EnumerateLibrary()
-    enumerator3.InitFromString(pickle_at_2)
-    for prods in enumerator3:
-      for mols in prods:
-        self.assertEquals(len(mols), 1)
-        smi = Chem.MolToSmiles(mols[0])
-        out3.append(smi)
-
-    self.assertEquals(out[2:], out3)
+      self.assertEquals(out[2:], out3)
     # test smiles interface
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     i = 0
@@ -236,7 +249,8 @@ class TestCase(unittest.TestCase) :
      ]
     ]
 
-    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents, rdChemReactions.RandomSampleStrategy())
+    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
+                                                  rdChemReactions.RandomSampleStrategy())
     self.assertTrue(enumerator)
     smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
@@ -246,43 +260,62 @@ class TestCase(unittest.TestCase) :
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
 
-    pickle = enumerator.Serialize()
-    enumerator2 = rdChemReactions.EnumerateLibrary()
-    enumerator2.InitFromString(pickle)
-    
-    self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
-
+    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
+                                                  rdChemReactions.RandomSampleStrategy())
     iteren = iter(enumerator)
-    iteren2 = iter(enumerator2)
+    res = set()
+    count = 0
+    while res != set(results):
+      count += 1
+      if count > 100000:
+        print("Unable to find enumerate set with 100,000 random samples!", file=sys.stderr)
+        self.assertEquals(res,set(results))
 
-    outsmiles = []
-    for i in range(10):
-      prods1 = iteren.next()
-      prods2 = iteren2.next()
-      self.assertEquals(len(prods1), len(prods2))
-      for mols1, mols2 in zip(prods1, prods2):
-          self.assertEquals(len(mols1), 1)
-          smi1 = Chem.MolToSmiles(mols1[0])
-          self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
-          outsmiles.append(smi1)
+      prod = iteren.next()
+      for mols in prod:
+        smi1 = Chem.MolToSmiles(mols[0])
+        res.add(smi1)
+        
+    if rdChemReactions.EnumerateLibraryCanSerialize():
+      enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
+                                                    rdChemReactions.RandomSampleStrategy())
+      pickle = enumerator.Serialize()
+      enumerator2 = rdChemReactions.EnumerateLibrary()
+      enumerator2.InitFromString(pickle)
 
-      if i == 1:
-        pickle_at_2 = enumerator.Serialize()
+      self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
 
-    # make sure we can pickle the state as well
-    enumerator3 = rdChemReactions.EnumerateLibrary()
-    enumerator3.InitFromString(pickle_at_2)
-    iteren3 = iter(enumerator3)
-    outsmiles2 = []
-    for i in range(8):
-      prods3 = iteren3.next()
-      for mols3 in prods3:
-          self.assertEquals(len(mols3), 1)
-          smi1 = Chem.MolToSmiles(mols3[0])
-          self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
-          outsmiles2.append(smi1)
+      iteren = iter(enumerator)
+      iteren2 = iter(enumerator2)
 
-    self.assertEquals(outsmiles2, outsmiles[2:])
+      outsmiles = []
+      for i in range(10):
+        prods1 = iteren.next()
+        prods2 = iteren2.next()
+        self.assertEquals(len(prods1), len(prods2))
+        for mols1, mols2 in zip(prods1, prods2):
+            self.assertEquals(len(mols1), 1)
+            smi1 = Chem.MolToSmiles(mols1[0])
+            self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
+            outsmiles.append(smi1)
+
+        if i == 1:
+          pickle_at_2 = enumerator.Serialize()
+
+      # make sure we can pickle the state as well
+      enumerator3 = rdChemReactions.EnumerateLibrary()
+      enumerator3.InitFromString(pickle_at_2)
+      iteren3 = iter(enumerator3)
+      outsmiles2 = []
+      for i in range(8):
+        prods3 = iteren3.next()
+        for mols3 in prods3:
+            self.assertEquals(len(mols3), 1)
+            smi1 = Chem.MolToSmiles(mols3[0])
+            self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
+            outsmiles2.append(smi1)
+
+      self.assertEquals(outsmiles2, outsmiles[2:])
     
   def testRandomEnumerateAllBBsLibrary(self):
     log("testRandomEnumerateAllBBsLibrary")
@@ -295,8 +328,32 @@ class TestCase(unittest.TestCase) :
        Chem.MolFromSmiles('NCCCc1ncc(Cl)cc1Br'),
      ]
     ]
-    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents, rdChemReactions.RandomSampleAllBBsStrategy())
+    enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
+                                                  rdChemReactions.RandomSampleAllBBsStrategy())
     self.assertTrue(enumerator)
+
+    # test the BB sampling here
+    strategy = iter(enumerator)
+    r1 = set()
+    r2 = set()
+    strategy.next()    
+    groups = strategy.GetPosition()
+    print("**", list(groups), file=sys.stderr)
+    r1.add(groups[0])
+    r2.add(groups[1])
+    strategy.next()
+    groups = strategy.GetPosition()
+    print("**", list(groups),file=sys.stderr)
+    r1.add(groups[0])
+    r2.add(groups[1])
+    self.assertEquals(r1, set([0,1])) # two bbs at reagent one all sampled at one iteration
+    strategy.next()
+    groups = strategy.GetPosition()
+    print("**", list(groups),file=sys.stderr)
+    r1.add(groups[0])
+    r2.add(groups[1])
+    self.assertEquals(r2, set([0,1,2])) # three bbs at reagent one all sampled in three iterations
+    
     smiresults = ['C=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCc1ncc(Cl)cc1Br',
                   'C=CCNC(=S)NCCc1ncc(Cl)cc1Br',
@@ -304,48 +361,58 @@ class TestCase(unittest.TestCase) :
                   'C=CCNC(=S)NCCCc1ncc(Cl)cc1Br',
                   'CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br']
     results = [Chem.MolToSmiles(Chem.MolFromSmiles(smi)) for smi in smiresults]
-    
-    pickle = enumerator.Serialize()
-    enumerator2 = rdChemReactions.EnumerateLibrary()
-    enumerator2.InitFromString(pickle)
-    
-    self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
-    iteren = iter(enumerator)
-    iteren2 = iter(enumerator2)
 
-    outsmiles = []
-    for i in range(10):
-      prods1 = iteren.next()
-      prods2 = iteren2.next()
-      self.assertEquals(len(prods1), len(prods2))
-      for mols1, mols2 in zip(prods1, prods2):
-          self.assertEquals(len(mols1), 1)
-          smi1 = Chem.MolToSmiles(mols1[0])
-          self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
-          outsmiles.append(smi1)
 
-      if i == 1:
-        pickle_at_2 = enumerator.Serialize()
+    if rdChemReactions.EnumerateLibraryCanSerialize():
+      enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents,
+                                                    rdChemReactions.RandomSampleAllBBsStrategy())
+      self.assertTrue(enumerator)
+      
+      pickle = enumerator.Serialize()
+      enumerator2 = rdChemReactions.EnumerateLibrary()
+      enumerator2.InitFromString(pickle)
 
-    # make sure we can pickle the state as well
-    enumerator3 = rdChemReactions.EnumerateLibrary()
-    enumerator3.InitFromString(pickle_at_2)
-    self.assertEquals(enumerator.GetEnumerator().Type(), enumerator3.GetEnumerator().Type())
+      self.assertEquals(enumerator.GetEnumerator().Type(), enumerator2.GetEnumerator().Type())
+      iteren = iter(enumerator)
+      iteren2 = iter(enumerator2)
 
-    iteren3 = iter(enumerator3)
-    outsmiles2 = []
-    for i in range(8):
-      prods3 = iteren3.next()
-      for mols3 in prods3:
-          self.assertEquals(len(mols3), 1)
-          smi1 = Chem.MolToSmiles(mols3[0])
-          self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
-          outsmiles2.append(smi1)
+      outsmiles = []
+      for i in range(10):
+        prods1 = iteren.next()
+        prods2 = iteren2.next()
+        self.assertEquals(len(prods1), len(prods2))
+        for mols1, mols2 in zip(prods1, prods2):
+            self.assertEquals(len(mols1), 1)
+            smi1 = Chem.MolToSmiles(mols1[0])
+            self.assertEquals(smi1, Chem.MolToSmiles(mols2[0]))
+            outsmiles.append(smi1)
 
-    self.assertEquals(outsmiles2, outsmiles[2:])
+        if i == 1:
+          pickle_at_2 = enumerator.Serialize()
+
+      # make sure we can pickle the state as well
+      enumerator3 = rdChemReactions.EnumerateLibrary()
+      enumerator3.InitFromString(pickle_at_2)
+      self.assertEquals(enumerator.GetEnumerator().Type(), enumerator3.GetEnumerator().Type())
+
+      iteren3 = iter(enumerator3)
+      outsmiles2 = []
+      for i in range(8):
+        prods3 = iteren3.next()
+        for mols3 in prods3:
+            self.assertEquals(len(mols3), 1)
+            smi1 = Chem.MolToSmiles(mols3[0])
+            self.assertEquals(smi1, Chem.MolToSmiles(mols3[0]))
+            outsmiles2.append(smi1)
+
+      self.assertEquals(outsmiles2, outsmiles[2:])
 
             
   def testRGroupState(self):
+    if not rdChemReactions.EnumerateLibraryCanSerialize():
+      print("-- Skipping testRGroupState, serialization of EnumerateLibrary not enabled", file=sys.stderr)
+      return
+    
     log("testRGroupState")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)

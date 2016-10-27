@@ -45,13 +45,18 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION    
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#endif
 
 using namespace RDKit;
 
+#ifdef RDK_USE_BOOST_SERIALIZATION      
+// for each starting point check to see that the archive
+//  starts at the same point
 void pickleTest(EnumerationStrategyBase &en, size_t len) {
   boost::shared_ptr<EnumerationStrategyBase> base(en.copy());
   TEST_ASSERT(std::string(base->type()) == std::string(en.type()));
@@ -72,6 +77,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
     TEST_ASSERT(base->getPosition() == en.next());
   }
 }
+#endif
 
 void testSamplers() {
   EnumerationTypes::BBS bbs;
@@ -104,12 +110,12 @@ void testSamplers() {
       boost::shared_ptr<EnumerationStrategyBase>(randBBs.copy()));
   enumerators.push_back(
       boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
-
+#ifdef RDK_USE_BOOST_SERIALIZATION    
   for (size_t i = 0; i < enumerators.size(); ++i) {
     TEST_ASSERT(enumerators[i]->getNumPermutations() == 10 * 5 * 6);
     pickleTest(*enumerators[i], 10 * 5 * 6);
   }
-
+#endif
   // for(auto&& i: enumerators) {
   //  TEST_ASSERT(i->getNumPermutations() == 10*5*6);
   //}
@@ -189,6 +195,7 @@ void testEnumerations() {
     
   }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION    
   {
 
     boost::shared_ptr<EnumerateLibrary> en(
@@ -225,6 +232,7 @@ void testEnumerations() {
       }      
     }
   }
+#endif
   delete rxn;
 }
 
