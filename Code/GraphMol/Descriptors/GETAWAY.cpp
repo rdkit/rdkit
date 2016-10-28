@@ -337,18 +337,16 @@ std::vector<double> GetRelativeIonPol(const ROMol& mol){
 }
 
 
-std::vector<int>  GetHeavyList(const ROMol& mol){
+int*  GetHeavyList(const ROMol& mol){
   int numAtoms= mol.getNumAtoms();
 
-  std::vector<int> HeavyList;
+  int* HeavyList = new int[numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
-    if (atNum>1)
-      HeavyList.push_back(1);
-    else 
-      HeavyList.push_back(0);
+    if ( atNum>1)  HeavyList[i]=1;
+    else  HeavyList[i]=0;
        
   }
 }
@@ -427,20 +425,20 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 
 
 
-double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   std::vector<int> Heavylist) {
+double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist) {
 
     double *w = new double[1];
     // prepare data for Whim parameter computation
     // compute parameters
     
-    double* Lev=retreiveVect(H.diagonal());
+    VectorXd Lev=H.diagonal();
     std::vector<double> heavyLev;
     for (int i=0;i<numAtoms;i++){
       if (Heavylist[i]>0)
-        heavyLev.push_back(Lev[i]);
+        heavyLev.push_back(Lev(i));
     }
 
-    double i = clusterArray(heavyLev);
+    double i= clusterArray(heavyLev);
 
     w[0]=1.0;
     double HGM=1.0;
@@ -473,7 +471,7 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   std
 }
 
 
-double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  std::vector<int> Heavylist){
+double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
 
     double *w = new double[18];
 
@@ -486,10 +484,6 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
     MatrixXd Xmean = GetCenterMatrix(MatOrigin);
 
     MatrixXd H = GetHmatrix(Xmean);
-
-   /* for (int i=0;i<numAtoms;i++){
-
-    }*/
 
     MatrixXd R = GetRmatrix(H, DM, numAtoms);
     std::cout << "H:" << H << "\n";
@@ -523,7 +517,7 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   std::cout << adj << "\n";
   
-  std::vector<int> Heavylist= GetHeavyList(mol);
+  int* Heavylist= GetHeavyList(mol);
   int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
 
   
