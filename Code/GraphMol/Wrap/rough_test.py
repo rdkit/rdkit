@@ -517,11 +517,11 @@ class TestCase(unittest.TestCase):
     self.assertEquals(m.GetPropsAsDict(),
                       {"int":1000,
                        "double":10000.123})
-    
+
     self.assertEquals(type(m.GetPropsAsDict()['int']), int)
     self.assertEquals(type(m.GetPropsAsDict()['double']), float)
-    
-    
+
+
   def test17Kekulize(self):
     m = Chem.MolFromSmiles('c1ccccc1')
     smi = Chem.MolToSmiles(m)
@@ -1933,6 +1933,9 @@ CAS<~>
       m = Chem.MolFromSmiles('c1ccccc1')
       em = Chem.EditableMol(m)
       self.assertRaises(RuntimeError, lambda: em.RemoveAtom(12))
+
+      # confirm that an RWMol can be constructed without arguments
+      m = Chem.RWMol()
 
   def test47SmartsPieces(self):
     """ test the GetAtomSmarts and GetBondSmarts functions
