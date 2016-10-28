@@ -281,8 +281,8 @@ std::cout << RDKit::MolToSmiles( *mol3 ) << std::endl;
 
 all produce `c1ccncc1` as output.
 
-If you'd like to have the Kekule form of the SMILES, you need to Kekulise
-a RWMol copy the molecule, using the Kekulize function declared in
+If you'd like to have the Kekule form of the SMILES, you need to Kekulize
+a RWMol copy of the molecule, using the Kekulize function declared in
 MolOps.h (example3.cpp):
 
 ```c++
@@ -512,3 +512,204 @@ std::cout << oss.str() << std::endl;
 
 Other available writers include SmilesWriter and TDTWriter (for those
 of you with an interest in historical Cheminformatics!)
+
+## Working with Molecules
+
+### Looping over Atoms and Bonds
+
+Once you have a molecule, it's relatively easy to loop over its atoms
+and bonds so long as you remember that an atom is a Vertex and a bond
+is an Edge and accept the odd syntax (example6.cpp):
+
+```c++
+RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "C1OC1" ) );
+RDKit::ROMol::VERTEX_ITER it , end;
+boost::tie( it , end ) = mol->getVertices();
+while( it != end ) {
+    const RDKit::Atom *atom = (*mol)[*it].get();
+    std::cout << atom->getAtomicNum() << std::endl;
+    ++it;
+}
+```
+gives
+```
+6 8 6
+```
+An alternative method uses the fact that atoms and bonds can be
+selected by index number (example6.cpp):
+```c++
+for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
+    const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
+    std::cout << atom->getAtomicNum() << std::endl;
+}
+```
+Likewise with bonds (example6.cpp):
+```c++
+RDKit::ROMol::EDGE_ITER bond_it , bond_end;
+boost::tie( bond_it , bond_end ) = mol->getEdges();
+while( bond_it != bond_end ) {
+	const RDKit::Bond *bond = (*mol)[*bond_it].get();
+	std::cout << bond->getBondType() << std::endl;
+    ++bond_it;
+}
+
+for( unsigned int i = 0 , is = mol->getNumBonds() ; i < is ; ++i ) {
+	const RDKit::Bond *bond = mol->getBondWithIdx( i ); 
+    std::cout << bond->getIsAromatic() << std::endl;   
+}
+```
+gives
+```
+1 1 1
+0 0 0
+```
+
+A bond can be specified by the atoms at its ends, with
+a zero pointer being returned if there isn't one (example6.cpp):
+```c++
+RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "C1OC1Cl" ) );
+const RDKit::Bond *bond = mol2->getBondBetweenAtoms( 0 , 1 );
+std::cout << bond->getBeginAtomIdx() << " to "
+          << bond->getBeginAtomIdx() << " is "
+		  << bond->getBondType() << std::endl;
+if( !mol2->getBondBetweenAtoms( 0 , 3 ) ) {
+    std::cout << "No bond between 0 and 3" << std::endl;
+}
+```
+
+The neighbours of an atom can also be extracted, but note that you
+need an ADJ\_ITER rather than a VERTEX\_ITER (example6.cpp):
+```c++
+const RDKit::Atom *atom = mol2->getAtomWithIdx( 2 );
+RDKit::ROMol::ADJ_ITER nbr , end_nbr;
+boost::tie( nbr , end_nbr ) = mol2->getAtomNeighbors( atom );
+while( nbr != end_nbr ) {
+    const RDKit::Atom *nbr_atom = (*mol2)[*nbr].get();
+    std::cout << nbr_atom->getIdx() << " : " << nbr_atom->getAtomicNum() << std::endl;
+    ++nbr;
+}
+```
+gives
+```
+1 : 8
+3 : 17
+0 : 6
+```
+
+### Ring Information
+
+It is relatively easy to obtain ring information for atoms and bonds
+(example7.cpp):
+```c++
+#include <GraphMol/MolOps.h>
+.
+.
+RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "OC1C2C1CC2" ) );
+
+if( !mol->getRingInfo()->isInitialized() ) {
+    RDKit::MolOps::findSSSR( *mol );
+}
+for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
+	const RDKit::Atom *atom = mol->getAtomWithIdx( i );
+    std::cout << mol->getRingInfo()->numAtomRings( atom->getIdx() ) << " ";
+}
+std::cout << std::endl;
+
+for( unsigned int i = 0 , is = mol->getNumBonds() ; i < is ; ++i ) {
+    const RDKit::Bond *bond = mol->getBondWithIdx( i );
+	std::cout << mol->getRingInfo()->numBondRings( bond->getIdx() ) << " ";
+}
+std::cout << std::endl;
+```
+gives
+```
+0 1 2 1 1 1
+0 1 2 1 1 1 1
+```
+Obviously, findSSSR only needs to be called once for the molecule. If
+you only need to know whether the atom or bond is in a ring, just test
+whether or not the return value is zero (example7.cpp):
+```c++
+const RDKit::Bond *bond = mol->getBondWithIdx( 1 );
+if( mol->getRingInfo()->numBondRings( bond->getIdx() )) {
+    std::cout <<  "Bond " << bond->getIdx() << " is in a ring" << std::endl;;
+}
+
+```
+gives
+```
+Bond 1 is in a ring
+```
+Other information about presence in smallest rings can also be
+obtained from the RingInfo object of the molecule (example7.cpp):
+```c++
+std::cout << "Atom 2 is in ring of size 3 : "
+          << mol->getRingInfo()->isAtomInRingOfSize( 2 , 3 ) << std::endl;
+std::cout << "Atom 2 is in ring of size 4 : "
+	      << mol->getRingInfo()->isAtomInRingOfSize( 2 , 4 ) << std::endl;
+std::cout << "Atom 2 is in ring of size 5 : "
+	      << mol->getRingInfo()->isAtomInRingOfSize( 2 , 5 ) << std::endl;
+std::cout << "Bond 1 is in ring of size 3 : "
+	      << mol->getRingInfo()->isBondInRingOfSize( 1 , 3 ) << std::endl;
+
+```
+gives
+```
+Atom 2 is in ring of size 3 : 1
+Atom 2 is in ring of size 4 : 1
+Atom 2 is in ring of size 5 : 0
+Bond 1 is in ring of size 3 : 1
+```
+More detail about the smallest set of smallest rings (SSSR) is
+available (example7.cpp):
+```c++
+RDKit::VECT_INT_VECT rings;
+RDKit::MolOps::symmetrizeSSSR( *mol , rings );
+std::cout << "Number of symmetric SSSR rings : " << rings.size() << std::endl;
+for( auto it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 ) {
+	for( auto it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
+      std::cout << *it2 << " ";
+    }
+    std::cout << std::endl;
+}
+```
+gives
+```
+Number of symmetric SSSR rings : 2
+1 2 3 
+4 5 2 3
+```
+As the name suggests, this is a symmetrized SSSR; if you are
+interested in the number of "true" SSSR, use the `findSSSR` function
+(example7.cpp):
+```c++
+std::cout << "Number of SSSR rings : " << RDKit::MolOps::findSSSR( *mol ) << std::endl;
+
+```
+gives
+```
+2
+```
+The distinction between symmetrized and non-symmetrized SSSR is
+discussed in more detail below in the section `The SSSR Problem`_. 
+
+
+
+
+## The SSSR Problem
+
+As others have ranted about with more energy and eloquence than I
+intend to, the definition of a molecule's smallest set of smallest
+rings is not unique.  In some high symmetry molecules, a “true” SSSR
+will give results that are unappealing.  For example, the SSSR for
+cubane only contains 5 rings, even though there are
+“obviously” 6. This problem can be fixed by implementing a *small*
+(instead of *smallest*) set of smallest rings algorithm that returns
+symmetric results.  This is the approach that we took with the RDKit.
+
+Because it is sometimes useful to be able to count how many SSSR rings
+are present in the molecule, there is a
+`rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
+SSSR count, not the potentially non-unique set of rings.
+
+

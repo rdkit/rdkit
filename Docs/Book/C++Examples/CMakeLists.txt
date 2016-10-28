@@ -36,3 +36,9 @@ target_link_libraries( example4 ${LIBS} )
 
 add_executable( example5 example5.cpp )
 target_link_libraries( example5 ${LIBS} )
+
+add_executable( example6 example6.cpp )
+target_link_libraries( example6 ${LIBS} )
+
+add_executable( example7 example7.cpp )
+target_link_libraries( example7 ${LIBS} )
