@@ -123,7 +123,7 @@ def rpcResetCGO(id):
   if id == "*":
     cgoDict = {}
     res = 1
-  elif cgoDict.has_key(id):
+  elif id in cgoDict:
     del (cgoDict[id])
     res = 1
   else:
@@ -549,7 +549,7 @@ def rpcHelp(what=''):
     res = serv.funcs.keys()
   else:
     funcs = serv.funcs
-    if funcs.has_key(what):
+    if what in funcs:
       fn = funcs[what]
       res = "Function: %s(" % what
       defs = fn.func_defaults
