@@ -40,7 +40,8 @@
 // Created by Nicholas Firth, November 2011
 // Modified by Greg Landrum for inclusion in the RDKit distribution November 2012
 // Further modified by Greg Landrum for inclusion in the RDKit core September 2016
-// Adding RBF descriptors to 3D descriptors by Guillaume Godin
+// Adding WHIM descriptors to 3D descriptors by Guillaume Godin
+// for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -109,6 +110,26 @@ std::vector<double> GetIState(const ROMol &mol){
     }
     else Is.push_back(0.0);
  }
+
+  double tmp,p;
+  double *dist = MolOps::getDistanceMat(mol,false,false); 
+  double accum[numAtoms];
+  for (int i=0;i<numAtoms;i++) {
+    for (int j=i+1;j<numAtoms;j++) {
+       p = dist[i * numAtoms + j]+1;
+
+      if (p < 1e6) {
+        tmp = (Is[i] - Is[j]) / (p * p);
+        accum[i] += tmp;
+        accum[j] -= tmp;
+      }
+    }
+  }
+
+ for (int i=0;i<numAtoms;i++) {
+    Is[i]+=accum[i];
+ }
+
 
  return Is;
 }
@@ -611,17 +632,12 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
     w= getWhimDesc(svd, Xmean, numAtoms, th,false);
 
-
-
     return w;
   }
 
 
 
 } //end of anonymous namespace
-
-
-
 
 
 
@@ -651,33 +667,33 @@ double* WHIM(const ROMol& mol,int confId, double th){
  
   // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
   int map1[11] = {0,1,2,6,7,14,15,16,10,11,12};
-  std::vector<std::string> descnames={"L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"};
+  // std::vector<std::string> descnames={"L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"};
     for (int i=0;i<11;i++) {
         res[i]=roundn(wu[map1[i]],3);
 
      }
 
-    descnames={"L1m","L2m","L3m","Tm","Am","Vm","P1m","P2m","P3m","Km","E1m","E2m","E3m","Dm","G1m","G2m","G3m","Gm"};
+   // descnames={"L1m","L2m","L3m","Tm","Am","Vm","P1m","P2m","P3m","Km","E1m","E2m","E3m","Dm","G1m","G2m","G3m","Gm"};
 
     for (int i=0;i<11;i++) {
         res[i+11]=roundn(wm[map1[i]],3);
 
      }
 
-   descnames={"L1v","L2v","L3v","Tv","Av","Vv","P1v","P2v","P3v","Kv","E1v","E2v","E3v","Dv","G1v","G2v","G3v","Gv"};
+  //   descnames={"L1v","L2v","L3v","Tv","Av","Vv","P1v","P2v","P3v","Kv","E1v","E2v","E3v","Dv","G1v","G2v","G3v","Gv"};
 
     for (int i=0;i<11;i++) {
         res[i+11*2] = roundn(wv[map1[i]],3);
      }
 
-    descnames={"L1e","L2e","L3e","Te","Ae","Ve","P1e","P2e","P3e","Ke","E1e","E2e","E3e","De","G1e","G2e","G3e","Ge"};
+   // descnames={"L1e","L2e","L3e","Te","Ae","Ve","P1e","P2e","P3e","Ke","E1e","E2e","E3e","De","G1e","G2e","G3e","Ge"};
 
     for (int i=0;i<11;i++) {
         res[i+11*3] = roundn(we[map1[i]],3);
      }
 
 
-    descnames={"L1p","L2p","L3p","Tp","Ap","Vp","P1p","P2p","P3p","Kp","E1p","E2p","E3p","Dp","G1p","G2p","G3p","Gp"};
+   // descnames={"L1p","L2p","L3p","Tp","Ap","Vp","P1p","P2p","P3p","Kp","E1p","E2p","E3p","Dp","G1p","G2p","G3p","Gp"};
 
     for (int i=0;i<11;i++) {
         res[i+11*4] = roundn(wp[map1[i]],3);
@@ -752,15 +768,6 @@ double* WHIM(const ROMol& mol,int confId, double th){
       res[112]=roundn(wi[5],3);
       res[113]=roundn(wi[5],3);
 
-
-//1 2 3 4 5 6 7 8 9 10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77 
-//L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
-//L1m L2m L3m P1m P2m G1m G2m G3m E1m E2m E3m
-//L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v E3v
-//L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e
-//L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p
-//L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i
-//L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s
 
 
   return res;

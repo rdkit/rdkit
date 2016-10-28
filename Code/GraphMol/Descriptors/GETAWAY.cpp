@@ -97,6 +97,41 @@ VectorXd getEigenVect(std::vector<double> v){
     return V;
 }
 
+int GetPrincipalQuantumNumber(int AtomicNum) {
+  if (AtomicNum<=2) return 1;
+  else if (AtomicNum<=10) return 2;
+  else if (AtomicNum<=18) return 3;
+  else if (AtomicNum<=36) return 4;
+  else if (AtomicNum<=54) return 5;
+  else if (AtomicNum<=86) return 6;
+  else return 7;
+}
+
+// adaptation from EState.py 
+// we need the Is value only there
+std::vector<double> GetIState(const ROMol &mol){
+  int numAtoms = mol.getNumAtoms();
+  std::vector<double> Is;
+
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    int degree = atom->getDegree();
+    if (degree>0 and atNum>1) {
+      int h = atom->getTotalNumHs();
+      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
+      double dv =(double) Zv-h;
+      dv = dv / (double) (atNum-Zv-1);
+      int N = GetPrincipalQuantumNumber(atNum);
+      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/degree)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+    }
+    else Is.push_back(3);
+ }
+
+
+ return Is;
+}
+
 
 /*
 VectorXd clusterArray(VectorXd Data, double diff) {
@@ -179,6 +214,9 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
 
     return R;
 }
+
+
+
 
 /* for 3Dautocorrelation staff */
 double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
@@ -285,6 +323,7 @@ std::vector<double> GetRelativeIonPol(const ROMol& mol){
 
 
 
+
 /*
 double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
 
@@ -303,7 +342,7 @@ double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
 
 double getTDB(int k,int numAtoms,std::vector<double>  w, double* distTopo, double* dist3D){
 // similar implementation of J. Chem. Inf. Comput. Sci. 2004, 44, 200-209 equation 1 or 2 page 201
-// we use instead of absolute values the relative ones as in Dragon
+// we use instead of atomic absolute values the atomic relative ones as in Dragon
         double tbd=0.0;
 
         int numtopoatoms = 0;
@@ -460,6 +499,12 @@ double* GETAWAY(const ROMol& mol,int confId){
 
    VectorXd Wu = getEigenVect(wu);
 
+
+   std::vector<double>  ws = GetIState(mol);
+
+   VectorXd Ws = getEigenVect(ws);
+
+
    std::vector<double>  wr = GetRelativeRcov(mol);
 
    VectorXd Wr = getEigenVect(wr);
@@ -497,6 +542,10 @@ double* GETAWAY(const ROMol& mol,int confId){
     tmp=Wi.transpose() * RBi * Wi / Bicount;
 
     std::cout << "TDBi" << i << ":"<<  tmp << "\n";
+
+    tmp=Ws.transpose() * RBi * Ws / Bicount;
+
+    std::cout << "TDBs" << i << ":"<<  tmp << "\n";
 
     tmp=Wr.transpose() * RBi * Wr / Bicount;
 

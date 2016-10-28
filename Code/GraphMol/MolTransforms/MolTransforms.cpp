@@ -158,7 +158,7 @@ bool computePrincipalAxesAndMoments(
   mat << sumXX, sumXY, sumXZ,
     sumXY, sumYY, sumYZ,
     sumXZ, sumYZ, sumZZ;
-  std::cerr<<"  matrix: "<<mat<<std::endl;
+  //std::cerr<<"  matrix: "<<mat<<std::endl;
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
   if(eigensolver.info()!=Eigen::Success){
     BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;

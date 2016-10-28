@@ -20,6 +20,37 @@
 
 #include <GraphMol/Descriptors/RDF.h>
 
+
+void testRDF1() {
+  std::cout << "=>start test rdf\n";
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
+
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+ 
+  int nDone = 0;
+  while (!reader.atEnd()) {
+    ++nDone;
+
+    RDKit::ROMol *m = reader.next();
+    TEST_ASSERT(m);
+    std::string nm;
+    m->getProp("_Name",nm);
+
+
+    std::vector<double> drdf = RDKit::Descriptors::RDF(*m);
+  
+       
+    std::cout << "=>read molecule: " << nDone  << std::endl;
+
+    delete m;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testRDF() {
   std::cout << "=>start test rdf\n";
 
@@ -68,7 +99,7 @@ void testRDF() {
        {
             double ref =atof(myrow[i+1].c_str());
             if(fabs(ref-drdf[i])>0.05){
-              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< drdf[i] <<std::endl;
+              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< drdf[i] <<std::endl;
             }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
@@ -87,4 +118,7 @@ void testRDF() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testRDF();
+  testRDF1();
+
+
 }

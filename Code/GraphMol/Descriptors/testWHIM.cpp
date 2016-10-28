@@ -129,6 +129,6 @@ void testWHIM() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testWHIM1();
- // testWHIM();
+  testWHIM();
 
 }

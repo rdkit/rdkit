@@ -41,8 +41,8 @@
 // Modifications by Greg Landrum for inclusion in the RDKit core, September 2016
 // Adding RBF by Guillaume Godin
 
-#ifndef PBFRDKIT_H_SEPT2016
-#define PBFRDKIT_H_SEPT2016
+#ifndef WHIMRDKIT_H_SEPT2016
+#define WHIMRDKIT_H_SEPT2016
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {

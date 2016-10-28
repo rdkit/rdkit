@@ -46,7 +46,7 @@
 // 2012
 // Further modified by Greg Landrum for inclusion in the RDKit core September
 // 2016
-// Adding RBF descriptors to 3D descriptors by Guillaume Godin
+// Adding MORSE descriptors to 3D descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>

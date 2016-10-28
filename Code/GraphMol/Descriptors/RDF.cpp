@@ -136,6 +136,45 @@ int GetPrincipalQuantumNumber(int AtomicNum) {
 std::vector<double> GetIState(const ROMol &mol){
   int numAtoms = mol.getNumAtoms();
   std::vector<double> Is;
+  double Cistate=0.0;
+  int numC=0;
+  double tmp;
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    int d = atom->getDegree();
+
+    if (d>0 and atNum>1) {
+      int h = atom->getTotalNumHs();
+      int Zv= RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
+      double deltaval = (double) (Zv-h);
+      //deltaval = deltaval / (double) (atNum-Zv-1);
+      int N = GetPrincipalQuantumNumber(atNum); // period value
+      tmp=round(1000.0*(4.0/(N*N)*deltaval+1.0)/d)/1000.0;
+      Is.push_back(tmp);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+      // normalize factore determination
+       if (atNum==6) {
+        Cistate+=tmp;
+        numC++;
+       }
+    }
+    else Is.push_back(1.0);
+ }
+
+
+double meanCistate= Cistate/numC;
+ for (int i=0;i<numAtoms;i++) {
+    Is[i]=Is[i];
+ }
+
+ return Is;
+}
+
+// adaptation from EState.py 
+// we need the Is value only there
+std::vector<double> GetIStateRDKit(const ROMol &mol){
+  int numAtoms = mol.getNumAtoms();
+  std::vector<double> Is;
 
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
@@ -144,10 +183,10 @@ std::vector<double> GetIState(const ROMol &mol){
     if (d>0 and atNum>1) {
       int h = atom->getTotalNumHs();
       int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
-      int N = GetPrincipalQuantumNumber(atNum);
+      int N = GetPrincipalQuantumNumber(atNum); // period value
       Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
     }
-    else Is.push_back(0.0);
+    else Is.push_back(1.0);
  }
  // debug mode!
  /*
@@ -155,6 +194,23 @@ for (int i = 0; i < numAtoms; ++i) {
 
   std::cout << Is[i] << "-" << mol.getAtomWithIdx(i)->getSymbol() << ",";
 }*/
+  double tmp,p;
+  double *dist = MolOps::getDistanceMat(mol,false,false);
+  double accum[numAtoms];
+  for (int i=0;i<numAtoms;i++) {
+    for (int j=i+1;j<numAtoms;j++) {
+       p = dist[i * numAtoms + j]+1;
+       if (p < 1e6) {
+        tmp = (Is[i] - Is[j]) / (p * p);
+        accum[i] += tmp;
+        accum[j] -= tmp;
+      }
+    }
+  }
+
+ for (int i=0;i<numAtoms;i++) {
+    Is[i]+=accum[i];
+ }
 
  return Is;
 }
@@ -361,10 +417,18 @@ std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
   std::vector<double> R = getG(30);
   std::vector<double> RDFres;
   //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
+
+  MolOps::removeHs(mol, false, false);
+
   double *DM = MolOps::get3DDistanceMat(mol,confId);
 
   std::vector<double> IState = GetIState(mol);
+  std::cout << "IStates:";
 
+  for (int j=0;j<numAtoms;j++) {
+    std::cout << IState[j] << ",";
+  }  
+  std::cout << "\n";
   for (int i = 0; i < 30; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
