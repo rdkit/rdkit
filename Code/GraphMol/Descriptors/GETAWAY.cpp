@@ -46,7 +46,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
-#include "WHIM.h"
+#include "GETAWAY.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
@@ -66,6 +66,14 @@
 using namespace Eigen;
 
 
+double relativeMw1[]={0.084,0,0,0,0.900,1.000,1.166,1.332,1.582,0,0,0, 2.246, 2.339, 2.579,2.670, 2.952,0,0,0,0,0,0,0,0, 4.650, 4.907, 4.887, 5.291, 5.445,0,0,0,0, 6.653,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 9.884,0,0, 10.56};
+double relativeVdW1[]={0.299,0,0,0,0.796,1.000,0.695,0.512,0.410,0,0,0, 1.626, 1.424, 1.181,1.088, 1.035,0,0,0,0,0,0,0,0, 1.829, 1.561, 0.764, 0.512, 1.708,0,0,0,0, 1.384,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 2.042,0,0, 1.728};
+double relativeNeg1[]={0.944,0,0,0,0.828,1.000,1.163,1.331,1.457,0,0,0, 0.624, 0.779, 0.916,1.077, 1.265,0,0,0,0,0,0,0,0, 0.728, 0.728, 0.728, 0.740, 0.810,0,0,0,0, 1.172,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0.837,0,0, 1.012};
+double relativePol1[]={0.379,0,0,0,1722,1.000,0.625,0.456,0.316,0,0,0, 3.864, 3.057, 2.063,1.648, 1.239,0,0,0,0,0,0,0,0, 4.773, 4.261, 3.864, 3.466, 4.034,0,0,0,0, 1.733,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 4.375,0,0, 3.040};
+double ionpol[]={1.208,0,0.479,0.828,0.737,1,1.291,1.209,1.547,0,0.456,0.679,0.532,0.724,0.931,0.92,1.152,0,0.386,0.543,0,0,0,0.601,0.66,0.702,0.7,0.679,0.686,0.834,0.533,0.702,0.872,0.866,1.049,0,0.371,0.506,0,0,0,0.63,0,0,0,0,0.673,0.799,0.514,0.652,0.767,0.8,0.928,0,0,0,0,0,0,0,0,0,0,0.546,0,0,0,0,0,0,0,0,0,0,0,0,0,0.799,0.819,0.927,0.542,0.659,0.647};
+double rcov[]={0.37,0,1.34,0.90,0.82,0.77,0.73,0.71,0,1.54,1.30,1.18,1.11,1.06,1.02,0.99,0,1.96,1.74,0,0,0,1.27,1.39,1.25,1.26,1.21,1.38,1.31,1.26,1.22,1.19,1.16,1.14,0,2.11,1.92,0,0,0,1.45,0,0,0,0,1.53,1.48,1.44,1.41,1.38,1.35,1.33,0,0,0,0,0,0,0,0,0,0,1.79,0,0,0,0,0,0,0,0,0,0,0,0,0,1.28,1.44,1.49,1.48,1.47, 1.46};
+
+
 namespace RDKit {
 namespace Descriptors{
 
@@ -81,6 +89,14 @@ double* retreiveVect(VectorXd matrix) {
    return arrayd;
 
 }
+
+VectorXd getEigenVect(std::vector<double> v){
+    
+    double* varray_ptr = &v[0];
+    Map<VectorXd> V(varray_ptr,v.size());
+    return V;
+}
+
 
 /*
 VectorXd clusterArray(VectorXd Data, double diff) {
@@ -164,6 +180,111 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
     return R;
 }
 
+/* for 3Dautocorrelation staff */
+double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
+    int sizeArray=numAtoms*numAtoms;
+    double *Geodesic = new double[sizeArray];
+    for (int i=0; i<sizeArray;i++) {
+      if (dist[i]==lag) Geodesic[i]=1;
+      else  Geodesic[i]=0;
+    }
+
+    return Geodesic;
+}
+
+/* for 3Dautocorrelation staff */
+
+std::vector<double> GetRelativeMW(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> pol(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    pol[i]=relativeMw1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
+  }
+
+
+  return pol;
+}
+
+std::vector<double> GetRelativeRcov(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> wroc(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    wroc[i]=rcov[mol.getAtomWithIdx(i)->getAtomicNum()-1]/rcov[5];
+  }
+
+
+  return wroc;
+}
+
+
+
+std::vector<double> GetRelativeENeg(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> neg(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    neg[i]=relativeNeg1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
+}
+
+  return neg;
+}
+
+
+
+std::vector<double> GetUn(int numAtoms){
+
+  std::vector<double> u(numAtoms, 1.0);
+
+  return u;
+}
+
+
+std::vector<double> GetRelativeVdW(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> vdw(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    vdw[i]=relativeVdW1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
+
+  }
+
+  return vdw;
+}
+
+std::vector<double> GetRelativePol(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> pol(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    pol[i]=relativePol1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
+
+  }
+
+  return pol;
+}
+
+std::vector<double> GetRelativeIonPol(const ROMol& mol){
+   int numAtoms= mol.getNumAtoms();
+
+  std::vector<double> pol(numAtoms, 0.0);
+  for( int i=0; i<numAtoms; ++i){
+
+    pol[i]=ionpol[mol.getAtomWithIdx(i)->getAtomicNum()-1]/ionpol[5];
+
+  }
+
+  return pol;
+}
+
+
+
 /*
 double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
 
@@ -177,6 +298,35 @@ double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
     return R;
 }
 */
+
+
+
+double getTDB(int k,int numAtoms,std::vector<double>  w, double* distTopo, double* dist3D){
+// similar implementation of J. Chem. Inf. Comput. Sci. 2004, 44, 200-209 equation 1 or 2 page 201
+// we use instead of absolute values the relative ones as in Dragon
+        double tbd=0.0;
+
+        int numtopoatoms = 0;
+            for (int i=0; i<numAtoms-1; ++i)
+            {
+                for (int j=i+1; j<numAtoms; ++j)
+                {
+                    if (distTopo[i*numAtoms+j]==k)
+                    {
+                        tbd += w[i] * dist3D[i*numAtoms+j] * w[j];
+                        numtopoatoms++;
+                    }
+                }
+            }
+
+            if (numtopoatoms>0)
+                tbd = tbd / numtopoatoms;
+
+  return tbd;
+}
+
+
+
 
 
 
@@ -265,12 +415,17 @@ double* GETAWAY(const ROMol& mol,int confId){
   double Vpoints[3*numAtoms];
 
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
+  double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
   
   double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
   Map<MatrixXd> am(AdjMat, numAtoms,numAtoms);
 
   Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
+
+  Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
+
+
 
   for(int i=0; i<numAtoms; ++i){
      Vpoints[3*i]   =conf.getAtomPos(i).x;
@@ -280,7 +435,85 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   double *res= new double[1];
 
-  double* wu= GetGETAWAY(conf, Vpoints, dm,am);
+
+   std::vector<double>  wp = GetRelativePol(mol);
+
+   VectorXd Wp = getEigenVect(wp);
+
+   std::vector<double>  wm = GetRelativeMW(mol);
+
+   VectorXd Wm = getEigenVect(wm);
+
+   std::vector<double>  wi = GetRelativeIonPol(mol);
+
+   VectorXd Wi = getEigenVect(wi);
+
+   std::vector<double>  wv = GetRelativeVdW(mol);
+
+   VectorXd Wv = getEigenVect(wv);
+
+   std::vector<double>  we = GetRelativeENeg(mol);
+
+   VectorXd We = getEigenVect(we);
+
+   std::vector<double>  wu = GetUn(numAtoms);
+
+   VectorXd Wu = getEigenVect(wu);
+
+   std::vector<double>  wr = GetRelativeRcov(mol);
+
+   VectorXd Wr = getEigenVect(wr);
+
+
+   MatrixXd Bi;
+   VectorXd tmp;
+  for (int i=1;i<11;i++){
+    double * Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+    Map<MatrixXd> Bi(Bimat, numAtoms,numAtoms);
+    MatrixXd RBi=Bi.cwiseProduct(dm);
+    double Bicount=(double) Bi.sum();
+
+
+    tmp=Wu.transpose() * RBi * Wu / Bicount;
+
+    std::cout << "TDBu" << i << ":"<<  tmp << "\n";
+
+    tmp=Wm.transpose() * RBi * Wm / Bicount;
+
+    std::cout << "TDBm" << i << ":"<<  tmp << "\n";
+
+    tmp=Wv.transpose() * RBi * Wv / Bicount;
+
+    std::cout << "TDBv" << i << ":"<<  tmp << "\n";
+    
+    tmp=We.transpose() * RBi * We / Bicount;
+
+    std::cout << "TDBe" << i << ":"<<  tmp << "\n";
+
+    tmp=Wp.transpose() * RBi * Wp / Bicount;
+
+    std::cout << "TDBp" << i << ":"<<  tmp << "\n";
+
+    tmp=Wi.transpose() * RBi * Wi / Bicount;
+
+    std::cout << "TDBi" << i << ":"<<  tmp << "\n";
+
+    tmp=Wr.transpose() * RBi * Wr / Bicount;
+
+    std::cout << "TDBr" << i << ":"<<  tmp << "\n";
+
+
+    //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
+    //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
+
+    
+
+
+
+  }
+
+
+  double* wus= GetGETAWAY(conf, Vpoints, dm,am);
 
   return res;
 }
