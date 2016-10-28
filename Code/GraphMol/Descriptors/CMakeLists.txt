@@ -1,6 +1,6 @@
 if(RDK_BUILD_DESCRIPTORS3D)
-  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RDF.h MORSE.h WHIM.h GETAWAY.h) # D3autocorrelation.cpp)
-  set(DESC3D_SOURCES PBF.cpp PMI.cpp RDF.cpp MORSE.cpp WHIM.cpp GETAWAY.cpp) #D3autocorrelation.h)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h RDF.h MORSE.h WHIM.h GETAWAY.h) # auto3Dcorr.cpp)
+  set(DESC3D_SOURCES PBF.cpp PMI.cpp RDF.cpp MORSE.cpp WHIM.cpp GETAWAY.cpp) # auto3Dcorr.h)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_library(Descriptors

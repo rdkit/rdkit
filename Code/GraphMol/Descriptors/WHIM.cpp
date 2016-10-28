@@ -112,7 +112,7 @@ std::vector<double> GetIState(const ROMol &mol){
  }
 
   double tmp,p;
-  double *dist = MolOps::getDistanceMat(mol,false,false); 
+  double *dist = MolOps::getDistanceMat(mol,false,false); // topological distance not 3D distance!!!
   double accum[numAtoms];
   for (int i=0;i<numAtoms;i++) {
     for (int j=i+1;j<numAtoms;j++) {

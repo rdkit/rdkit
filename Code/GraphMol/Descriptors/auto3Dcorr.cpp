@@ -46,7 +46,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
-#include "D3autocorrelation.h"
+#include "auto3Dcorr.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"

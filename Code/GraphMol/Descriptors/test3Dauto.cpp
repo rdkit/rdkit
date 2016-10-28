@@ -18,7 +18,7 @@
 #include <sstream>
 
 
-#include <GraphMol/Descriptors/D3autocorrelation.h>
+#include <GraphMol/Descriptors/auto3Dcorr.h>
 
 void test3Dautocorrelation() {
   std::cout << "=>start test rdf\n";

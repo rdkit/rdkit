@@ -125,7 +125,7 @@ std::vector<double> GetIState(const ROMol &mol){
       int N = GetPrincipalQuantumNumber(atNum);
       Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/degree)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
     }
-    else Is.push_back(3);
+    else Is.push_back(0);
  }
 
 
@@ -133,37 +133,52 @@ std::vector<double> GetIState(const ROMol &mol){
 }
 
 
-/*
-VectorXd clusterArray(VectorXd Data, double diff) {
 
-    std::vector<double> data(Data.data(), Data.data()+Data.size());
+double clusterArray(std::vector<double> data) {
+    double Res=0.0;
 
     // sort the input data
     std::sort(data.begin(), data.end());
 
     // find the difference between each number and its predecessor
     std::vector<double> diffs;
+
     std::adjacent_difference(data.begin(), data.end(), std::back_inserter(diffs));
 
     // convert differences to percentage changes
-    std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
-        std::divides<double>());
+    //std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
+    //    std::divides<double>());
 
     // print out the results
     for (int i = 0; i < data.size(); i++) {
 
         // if a difference exceeds 40%, start a new group:
-        if (diffs[i] > diff)  // diff=0.4 <=> 40%
+        if (diffs[i] > 0.01)  // diff=0.4 <=> 40%
             std::cout << "\n";
 
         // print out an item:
         std::cout << data[i] << "\t";
     }
-    Map<VectorXd> Res(&data, Data.size());
+
 
     return Res;
 }
-*/
+
+
+double GetLevClassNumber(VectorXd LevHeavy, int numHeavyAtoms, std::vector<int> HeavyList){
+
+  int ClassNum=numHeavyAtoms;
+  for (int i=0;i<numHeavyAtoms-1;i++){
+    for (int j=i+1;j<numHeavyAtoms;j++){
+        if (abs(LevHeavy[i]-LevHeavy[j])<0.01) {
+          ClassNum--;
+          break;  // found one pair so move to next i!
+        }
+    }
+  }
+  return ClassNum;
+}
+
 
 
 MatrixXd GetPinv(MatrixXd A){
@@ -322,7 +337,21 @@ std::vector<double> GetRelativeIonPol(const ROMol& mol){
 }
 
 
+std::vector<int>  GetHeavyList(const ROMol& mol){
+  int numAtoms= mol.getNumAtoms();
 
+  std::vector<int> HeavyList;
+
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    if (atNum>1)
+      HeavyList.push_back(1);
+    else 
+      HeavyList.push_back(0);
+       
+  }
+}
 
 /*
 double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
@@ -366,6 +395,25 @@ double getTDB(int k,int numAtoms,std::vector<double>  w, double* distTopo, doubl
 
 
 
+double getRCON(MatrixXd R, MatrixXd Adj,int numAtoms){
+// similar implementation of J. Chem. Inf. Comput. Sci. 2004, 44, 200-209 equation 1 or 2 page 201
+// we use instead of atomic absolute values the atomic relative ones as in Dragon
+        double RCON=0.0;
+        VectorXd VSR = R.rowwise().sum();
+        std::cout << "VSR:" << VSR << "\n";
+        for (int i=0; i<numAtoms; ++i)
+            {
+                for (int j=0; j<numAtoms; ++j)
+                {
+                    if (Adj(i,j)>0)
+                    {
+                        RCON += VSR(i)*VSR(j);
+                    }
+                }
+            }
+  return sqrt(RCON);
+}
+
 
 
 
@@ -379,13 +427,20 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 
 
 
-double* getGetawayDesc(MatrixXd H, MatrixXd R, int numAtoms) {
+double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   std::vector<int> Heavylist) {
 
     double *w = new double[1];
     // prepare data for Whim parameter computation
     // compute parameters
     
-std::cout << H.diagonal() << "\n";
+    double* Lev=retreiveVect(H.diagonal());
+    std::vector<double> heavyLev;
+    for (int i=0;i<numAtoms;i++){
+      if (Heavylist[i]>0)
+        heavyLev.push_back(Lev[i]);
+    }
+
+    double i = clusterArray(heavyLev);
 
     w[0]=1.0;
     double HGM=1.0;
@@ -407,17 +462,18 @@ std::cout << H.diagonal() << "\n";
 
     VectorXd EIG = svd.singularValues();
 
+    double rcon= getRCON(R,  Adj, numAtoms);
 
-    std::cout << "HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "\n";
+    std::cout << "HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "| RCON:"<< rcon <<"\n";
 
     return w;
 
-
+ 
 
 }
 
 
-double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd AM){
+double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  std::vector<int> Heavylist){
 
     double *w = new double[18];
 
@@ -431,12 +487,16 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
 
     MatrixXd H = GetHmatrix(Xmean);
 
+   /* for (int i=0;i<numAtoms;i++){
+
+    }*/
+
     MatrixXd R = GetRmatrix(H, DM, numAtoms);
     std::cout << "H:" << H << "\n";
     std::cout << "R" << R << "\n";
     std::cout <<  "\n";
 
-    w= getGetawayDesc(H,R, numAtoms);
+    w= getGetawayDesc(H,R, ADJ, numAtoms, Heavylist);
 
     return w;
 }
@@ -449,6 +509,7 @@ double* GETAWAY(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
+
   const Conformer &conf = mol.getConformer(confId);
 
   double Vpoints[3*numAtoms];
@@ -458,8 +519,14 @@ double* GETAWAY(const ROMol& mol,int confId){
   
   double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
-  Map<MatrixXd> am(AdjMat, numAtoms,numAtoms);
+  Map<MatrixXd> adj(AdjMat, numAtoms,numAtoms);
 
+  std::cout << adj << "\n";
+  
+  std::vector<int> Heavylist= GetHeavyList(mol);
+  int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
+
+  
   Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
 
   Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
@@ -562,7 +629,7 @@ double* GETAWAY(const ROMol& mol,int confId){
   }
 
 
-  double* wus= GetGETAWAY(conf, Vpoints, dm,am);
+  double* wus= GetGETAWAY(conf, Vpoints, dm,adj, Heavylist);
 
   return res;
 }
