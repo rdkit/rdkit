@@ -1745,6 +1745,62 @@ void testEmbedParameters() {
     delete ref;
     delete mol;
   }
+  //------------
+  // using the pre-defined parameter sets
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
 }
 
 int main() {
@@ -1902,11 +1958,11 @@ int main() {
       << "\t More ChEMBL molecules failing bounds smoothing.\n";
   testGithub697();
 
-#endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
                           "constrained ring systems.\n";
   testGithub971();
+#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
