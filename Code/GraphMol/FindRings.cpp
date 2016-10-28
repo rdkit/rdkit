@@ -860,9 +860,12 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   boost::dynamic_bitset<> ringAtoms(nats);
 
   INT_VECT atomDegrees(nats);
+  INT_VECT atomDegreesWithZeroOrderBonds(nats);
   for (unsigned int i = 0; i < nats; ++i) {
     const Atom *atom = mol.getAtomWithIdx(i);
-    atomDegrees[i] = atom->getDegree();
+    int deg = atom->getDegree();
+    atomDegrees[i] = deg;
+    atomDegreesWithZeroOrderBonds[i] = deg;
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
@@ -881,17 +884,31 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
+    if (curFrag.size() < 3)
+      continue;
+
     // the following is the list of atoms that are useful in the next round of
     // trimming
     // basically atoms that become degree 0 or 1 because of bond removals
     // initialized with atoms of degrees 0 and 1
     INT_SET changed;
+    int bndcnt_from_deg = 0;
     for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
-      unsigned int deg = atomDegrees[*aidi];
+      int atom_idx = *aidi;
+      bndcnt_from_deg += atomDegreesWithZeroOrderBonds[atom_idx];
+
+      int deg = atomDegrees[atom_idx];
       if (deg < 2) {
         changed.insert((*aidi));
       }
     }
+
+    // check to see if this fragment can even have a possible ring
+    CHECK_INVARIANT(bndcnt_from_deg % 2 == 0, "fragment graph has a dangling degree");
+    bndcnt_from_deg = bndcnt_from_deg / 2;
+    int num_possible_rings = bndcnt_from_deg - curFrag.size() + 1;
+    if (num_possible_rings < 1)
+      continue;
 
     boost::dynamic_bitset<> doneAts(nats);
     unsigned int nAtomsDone = 0;
