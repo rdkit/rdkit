@@ -134,8 +134,8 @@ std::vector<double> GetIState(const ROMol &mol){
 
 
 
-double clusterArray(std::vector<double> data) {
-    double Res=0.0;
+std::vector<double>  clusterArray(std::vector<double> data) {
+    std::vector<double> Store;
 
     // sort the input data
     std::sort(data.begin(), data.end());
@@ -146,22 +146,31 @@ double clusterArray(std::vector<double> data) {
     std::adjacent_difference(data.begin(), data.end(), std::back_inserter(diffs));
 
     // convert differences to percentage changes
-    //std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
-    //    std::divides<double>());
+    std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
+        std::divides<double>());
 
     // print out the results
+    int j=0;
+    int count=0;
     for (int i = 0; i < data.size(); i++) {
-
+        count++;
         // if a difference exceeds 40%, start a new group:
-        if (diffs[i] > 0.01)  // diff=0.4 <=> 40%
-            std::cout << "\n";
-
+        if (diffs[i] > 0.001)  {// diff=0.4 <=> 40%
+            Store.push_back(count);
+            //std::cout << "\n" << Store[j];
+            count=0;
+            j++;
+            //std::cout << "\n";
+        }
         // print out an item:
-        std::cout << data[i] << "\t";
+        
+       //std::cout << data[i] << "\t";
     }
+    
+    //std::cout << "\n";
 
 
-    return Res;
+    return Store;
 }
 
 
@@ -170,7 +179,7 @@ double GetLevClassNumber(VectorXd LevHeavy, int numHeavyAtoms, std::vector<int> 
   int ClassNum=numHeavyAtoms;
   for (int i=0;i<numHeavyAtoms-1;i++){
     for (int j=i+1;j<numHeavyAtoms;j++){
-        if (abs(LevHeavy[i]-LevHeavy[j])<0.01) {
+        if (std::abs(LevHeavy[i]-LevHeavy[j])<0.01) {
           ClassNum--;
           break;  // found one pair so move to next i!
         }
@@ -438,7 +447,17 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
         heavyLev.push_back(Lev(i));
     }
 
-    double i= clusterArray(heavyLev);
+    std::vector<double> Clus= clusterArray(heavyLev);
+    double numHeavy=heavyLev.size();
+std::cout << "HeavyAtoms:" << numHeavy << "\n";
+
+    double ITH0 = numHeavy*log(numHeavy)/log(2);
+    double ITH=ITH0;
+    for (int j=0;j<Clus.size();j++){
+      ITH -= Clus[j]*log(Clus[j])/log(2);
+    }
+
+    double ISH=ITH/ITH0;
 
     w[0]=1.0;
     double HGM=1.0;
@@ -462,7 +481,7 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
     double rcon= getRCON(R,  Adj, numAtoms);
 
-    std::cout << "HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "| RCON:"<< rcon <<"\n";
+    std::cout <<  "ISH:"<< ISH << "| ITH:"<< ITH <<  " |HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "| RCON:"<< rcon <<"\n";
 
     return w;
 
