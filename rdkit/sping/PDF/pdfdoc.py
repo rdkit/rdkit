@@ -226,7 +226,7 @@ class PDFDocument:
     #self.objects.append(page.stream)
 
   def hasFont(self, psfontname):
-    return self.fontMapping.has_key(psfontname)
+    return psfontname in self.fontMapping
 
   def getInternalFontName(self, psfontname):
     try:
