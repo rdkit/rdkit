@@ -194,7 +194,7 @@ class TestCase(unittest.TestCase) :
       enumerators.append(enumerator3)
 
     # check for fully sampled and deterministic ordering in final index values
-    expected_positions = [[0L, 0L],[1L, 0L],[0L, 1L],[1L, 1L],[0L, 2L],[1L, 2L]]
+    expected_positions = [[0, 0],[1, 0],[0, 1],[1, 1],[0, 2],[1, 2]]
     
     out = []
     for en in enumerators:
