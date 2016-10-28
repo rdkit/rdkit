@@ -880,6 +880,8 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
        fi++) {  // loop over the fragments in a molecule
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
+    if (curFrag.size() <= 3)
+      continue;
 
     // the following is the list of atoms that are useful in the next round of
     // trimming
