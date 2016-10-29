@@ -218,6 +218,7 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 
 class ReadWriteMol : public RWMol {
  public:
+  ReadWriteMol(){};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
       : RWMol(m, quickCopy, confId){};
 
@@ -637,6 +638,7 @@ struct mol_wrapper {
     python::class_<ReadWriteMol, python::bases<ROMol> >(
         "RWMol", rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
+        .def(python::init<>())
         .def(python::init<const ROMol &, bool>())
         .def(python::init<const ROMol &, bool, int>())
         .def("__copy__", &generic__copy__<ReadWriteMol>)
