@@ -359,62 +359,11 @@ struct EmbedParameters {
 };
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
-extern const EmbedParameters KDG(0,      // maxIterations
-                                 1,      // numThreads
-                                 -1,     // randomSeed
-                                 true,   // clearConfs
-                                 false,  // useRandomCoords
-                                 2.0,    // boxSizeMult
-                                 true,   // randNegEig
-                                 1,      // numZeroFail
-                                 NULL,   // coordMap
-                                 1e-3,   // optimizerForceTol
-                                 false,  // ignoreSmoothingFailures
-                                 true,   // enforceChirality
-                                 false,  // useExpTorsionAnglePrefs
-                                 true,   // useBasicKnowledge
-                                 false,  // verbose
-                                 5.0,    // basinThresh
-                                 -1.0    // pruneRmsThresh
-                                 );
+extern const EmbedParameters KDG;
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-extern const EmbedParameters ETDG(0,      // maxIterations
-                                  1,      // numThreads
-                                  -1,     // randomSeed
-                                  true,   // clearConfs
-                                  false,  // useRandomCoords
-                                  2.0,    // boxSizeMult
-                                  true,   // randNegEig
-                                  1,      // numZeroFail
-                                  NULL,   // coordMap
-                                  1e-3,   // optimizerForceTol
-                                  false,  // ignoreSmoothingFailures
-                                  false,  // enforceChirality
-                                  true,   // useExpTorsionAnglePrefs
-                                  false,  // useBasicKnowledge
-                                  false,  // verbose
-                                  5.0,    // basinThresh
-                                  -1.0    // pruneRmsThresh
-                                  );
+extern const EmbedParameters ETDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
-extern const EmbedParameters ETKDG(0,      // maxIterations
-                                   1,      // numThreads
-                                   -1,     // randomSeed
-                                   true,   // clearConfs
-                                   false,  // useRandomCoords
-                                   2.0,    // boxSizeMult
-                                   true,   // randNegEig
-                                   1,      // numZeroFail
-                                   NULL,   // coordMap
-                                   1e-3,   // optimizerForceTol
-                                   false,  // ignoreSmoothingFailures
-                                   true,   // enforceChirality
-                                   true,   // useExpTorsionAnglePrefs
-                                   true,   // useBasicKnowledge
-                                   false,  // verbose
-                                   5.0,    // basinThresh
-                                   -1.0    // pruneRmsThresh
-                                   );
+extern const EmbedParameters ETKDG;
 
 inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
   return EmbedMolecule(
