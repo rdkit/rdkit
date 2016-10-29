@@ -89,7 +89,7 @@ class Generator(object):
     """
     if idx < 0 or idx >= self.sig.GetSize():
       raise IndexError('Index %d invalid' % (idx))
-    if self.bits is not None and self.bits.has_key(idx):
+    if self.bits is not None and idx in self.bits:
       return self.bits[idx]
 
     tmp = Matcher.GetAtomsMatchingBit(self.sig, idx, self.mol, dMat=self.dMat, justOne=1,

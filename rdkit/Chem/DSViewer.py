@@ -167,7 +167,7 @@ class MolViewer(object):
     return obj
 
   def GetSelectedAtoms(self, whichSelection=''):
-    #print 'WHICH',repr(whichSelection),self.displayables.has_key(whichSelection.lower())
+    #print 'WHICH',repr(whichSelection), whichSelection.lower() in self.displayables
     if not whichSelection:
       d = str(self.doc.DoCommand('GetPropertyValue atom select=true: id=?'))
       d2 = str(self.doc.DoCommand('GetPropertyValue atom select=true: molecule=?'))
@@ -176,7 +176,7 @@ class MolViewer(object):
         tmpD = {}
         for id in d2.split(','):
           id = int(id.split('/')[1]) + 1
-          if tmpD.has_key(id):
+          if id in tmpD:
             molIds.append(tmpD[id])
           else:
             for k, v in self.displayables.iteritems():
@@ -185,7 +185,7 @@ class MolViewer(object):
                 molIds.append(k)
       else:
         molIds = [''] * (d.count(',') + 1)
-    elif self.displayables.has_key(whichSelection.lower()):
+    elif whichSelection.lower() in self.displayables:
       whichSelection = whichSelection.lower()
       whichSelection = self.displayables[whichSelection].id
       d = str(

@@ -75,7 +75,7 @@ def getPyartName(pidfont):
   # print "pidfont.face = %s" % pidfont.face
 
   face = string.lower(face)
-  if PidLegalFonts.has_key(face):
+  if face in PidLegalFonts:
     return MapPid2PyartFontName[(PidLegalFonts[face], shape)]
   else:
     raise ValueError("Illegal Font")
@@ -94,7 +94,7 @@ getPdfName = getPyartName
 #      # print "pidfont.face = %s" % pidfont.face
 
 #      face = string.lower(face)
-#      if PidLegalFonts.has_key(face):
+#      if face in PidLegalFonts:
 #          return PDFFontMapping[ ( PidLegalFonts[face], shape) ]
 #      else:
 #          raise "Illegal Font"

@@ -302,7 +302,7 @@ class SVGCanvas(Canvas):
       styleStr += ' '.join([str(x) for x in dash])
       styleStr += '"'
     outStr = '<svg:line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" %s>' % (x1, y1, x2, y2, styleStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:line>\n'
     self._txt = self._txt + outStr
@@ -344,7 +344,7 @@ class SVGCanvas(Canvas):
 
     # draw it
     outStr = '<svg:polygon %s %s points="%s">' % (fillStr, edgeStr, pointStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:polygon>\n'
     self._txt = self._txt + outStr
@@ -386,10 +386,10 @@ class SVGCanvas(Canvas):
 
     # draw it
     mods = [fillStr, edgeStr, ellipseStr]
-    if kwargs.has_key('extraAttribs'):
+    if 'extraAttribs' in kwargs:
       mods.append(kwargs['extraAttribs'])
     outStr = '<svg:ellipse %s>' % (' '.join(mods))
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:ellipse>\n'
     self._txt = self._txt + outStr
@@ -440,14 +440,14 @@ class SVGCanvas(Canvas):
     # draw it
     if not filling:
       outStr = '<svg:path %s %s d="%s">' % (fillStr, edgeStr, pathStr)
-      if kwargs.has_key('bodyText'):
+      if 'bodyText' in kwargs:
         outStr += kwargs['bodyText']
       outStr += '</svg:path>\n'
     else:
       outStr = '<svg:path %s d="%s">' % (fillStr, fillPathStr)
       outStr += '</svg:path>\n'
       outStr = outStr + '<svg:path fill="none" %s d="%s">' % (edgeStr, strokePathStr)
-      if kwargs.has_key('bodyText'):
+      if 'bodyText' in kwargs:
         outStr += kwargs['bodyText']
       outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -489,7 +489,7 @@ class SVGCanvas(Canvas):
 
     # draw it
     outStr = '<svg:path %s %s d="%s">' % (fillStr, edgeStr, curveStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -533,7 +533,7 @@ class SVGCanvas(Canvas):
       outStr += self._drawStringOneLine(line, xLoc, yP, fontStr, svgColor, **kwargs)
       yP = yP + lineHeight
 
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:g>'
 
@@ -598,7 +598,7 @@ class SVGCanvas(Canvas):
     if closed == 1:
       pathStr = pathStr + 'Z'
     outStr = '<svg:path %s %s d="%s">' % (edgeStr, fillStr, pathStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -620,7 +620,7 @@ class SVGCanvas(Canvas):
       im_height = abs(y2 - y1)
     outStr = '<svg:image x="%.2f" y="%.2f" width="%.2f" height="%.2f" xlink:href="%s">'%\
              (x1,y1,im_width,im_height,imageFileName)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:image>\n'
     self._txt = self._txt + outStr
