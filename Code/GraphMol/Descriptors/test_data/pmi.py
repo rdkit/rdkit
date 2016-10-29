@@ -51,5 +51,5 @@ if __name__ == '__main__':
   for m in suppl:
     i1, i2, i3 = GetMoments(m, True)
     mi1, mi2, mi3 = GetMoments(m, False)
-    print("%s %.4f %.4f %.4f %.4f %.4f %.4f" %
-          (m.GetProp("_Name"), i1, i2, i3, mi1, mi2, mi3), file=output)
+    print("%s %.4f %.4f %.4f %.4f %.4f %.4f" % (m.GetProp("_Name"), i1, i2, i3, mi1, mi2, mi3),
+          file=output)
