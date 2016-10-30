@@ -159,20 +159,21 @@ M  CHG  1  11   1
 M  END
 """
 
-class TestCase(unittest.TestCase):
-    def testStructOptions(self):
-        rdStructChecker.StructCheckerOptions()
 
-    def testStructChecker(self):
-        checker = rdStructChecker.StructChecker()
-        
-        
-        m = Chem.MolFromMolBlock(data)
-        self.assertTrue(m)
-        
-        res = checker.CheckMolStructure(m)
-        self.assertEquals(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
+class TestCase(unittest.TestCase):
+
+  def testStructOptions(self):
+    rdStructChecker.StructCheckerOptions()
+
+  def testStructChecker(self):
+    checker = rdStructChecker.StructChecker()
+
+    m = Chem.MolFromMolBlock(data)
+    self.assertTrue(m)
+
+    res = checker.CheckMolStructure(m)
+    self.assertEquals(res, rdStructChecker.StructureFlags.ATOM_CHECK_FAILED)
+
 
 if __name__ == '__main__':
-    unittest.main()
-        
+  unittest.main()

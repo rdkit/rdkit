@@ -122,7 +122,6 @@ class TestCase(unittest.TestCase):
     confs = m.GetConformers()
     self.assertTrue(confs == ())
 
-
   def test5PositionsArray(self):
     smi = 'c1ccccc1'
     m = Chem.MolFromSmiles(smi)
@@ -133,7 +132,7 @@ class TestCase(unittest.TestCase):
 
     for conf in confs:
       pos = conf.GetPositions()
-      self.assertTrue(pos.shape, (6,3))
+      self.assertTrue(pos.shape, (6, 3))
 
     m.RemoveAllConformers()
     self.assertTrue(m.GetNumConformers() == 0)
