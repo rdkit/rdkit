@@ -126,7 +126,7 @@ if not 'RDK_NOPANGO' in os.environ:
       except ImportError:
         exec(libType + ' = None')
     have_pango = (pango and pangocairo)
-    
+
 if not hasattr(cairo.ImageSurface,'get_data') and \
    not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
   raise ImportError('cairo version too old')
@@ -296,7 +296,7 @@ class Canvas(CanvasBase):
     # for whatever reason, the font size using pango is larger
     # than that w/ default cairo (at least for me)
     pangoCoeff = 0.8
-    
+
     if (have_cairocffi):
       measureLout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
       pango.pango_layout_set_alignment(measureLout, pango.PANGO_ALIGN_LEFT)
@@ -307,25 +307,25 @@ class Canvas(CanvasBase):
       fnt = pango.pango_font_description_new()
       pango.pango_font_description_set_family(fnt, font.face.encode('latin1'))
       pango.pango_font_description_set_size(fnt,
-        int(round(font.size * pango.PANGO_SCALE * pangoCoeff)))
+                                            int(round(font.size * pango.PANGO_SCALE * pangoCoeff)))
       pango.pango_layout_set_font_description(lout, fnt)
       pango.pango_layout_set_font_description(measureLout, fnt)
       pango.pango_font_description_free(fnt)
     else:
-      cctx=pangocairo.CairoContext(self.ctx)
+      cctx = pangocairo.CairoContext(self.ctx)
       measureLout = cctx.create_layout()
       measureLout.set_alignment(pango.ALIGN_LEFT)
       measureLout.set_markup(plainText)
       lout = cctx.create_layout()
       lout.set_alignment(pango.ALIGN_LEFT)
       lout.set_markup(text)
-      fnt = pango.FontDescription('%s %d'%(font.face,font.size*pangoCoeff))
+      fnt = pango.FontDescription('%s %d' % (font.face, font.size * pangoCoeff))
       lout.set_font_description(fnt)
       measureLout.set_font_description(fnt)
 
     # this is a bit kludgy, but empirically we end up with too much
     # vertical padding if we use the text box with super and subscripts
-    # for the measurement. 
+    # for the measurement.
     if (have_cairocffi):
       iext = ffi.new('PangoRectangle *')
       lext = ffi.new('PangoRectangle *')

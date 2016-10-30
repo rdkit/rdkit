@@ -60,6 +60,7 @@ shader_3d = "lambert"
 #  in the IPythonConsole not the server logs.
 Chem.WrapLogs()
 
+
 def _toJSON(mol):
   """For IPython notebook, renders 3D webGL objects."""
 
@@ -220,8 +221,7 @@ def InstallIPythonRenderer():
   _MolsToGridImageSaved = Draw.MolsToGridImage
   Draw.MolsToGridImage = ShowMols
   rdchem.Mol.__DebugMol = rdchem.Mol.Debug
-  rdchem.Mol.Debug = lambda self,useStdout=False:self.__DebugMol(useStdout=useStdout)
-
+  rdchem.Mol.Debug = lambda self, useStdout=False: self.__DebugMol(useStdout=useStdout)
 
 
 InstallIPythonRenderer()

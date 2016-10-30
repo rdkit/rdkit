@@ -3,10 +3,10 @@ the coverage tool mistakenly finds in the build tree.
 It replaces the paths with the ones from the source tree
 n.b. if a file with the same name (i.e. sln.yy) is found twice
  in the source tree, this will break"""
-
+from __future__ import print_function
 import os, sys
 source_dir, info_file = sys.argv[1:3]
-print source_dir, info_file
+print(source_dir, info_file)
 
 paths = {}
 for root, dir, files in os.walk(source_dir):
@@ -20,13 +20,13 @@ for line in lines:
   if "SF:" in line:
     fn = line.split("SF:")[-1].strip()
     if not os.path.exists(fn):
-      print "Does not exist:", fn.strip()
+      print("Does not exist:", fn.strip())
       head, rest = os.path.split(fn)
       potential = paths[rest]
       if len(potential) == 1:
         line = "SF:" + potential[0]
       else:
-        asdf
+        raise NotImplementedError('asdf')
   newlines.append(line)
 
 open(info_file, 'w').write("\n".join(newlines))

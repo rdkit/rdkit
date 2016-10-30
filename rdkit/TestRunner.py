@@ -107,8 +107,8 @@ def RunScript(script, doLongTests, verbose):
   nTests = len(tests) + len(longTests)
   del sys.modules[script]
   if verbose and failed:
-    for exeName,args,extras in failed:
-        print("!!! TEST FAILURE: ",exeName,args,extras,file=sys.stderr)
+    for exeName, args, extras in failed:
+      print("!!! TEST FAILURE: ", exeName, args, extras, file=sys.stderr)
   return failed, nTests
 
 
