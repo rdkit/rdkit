@@ -259,14 +259,16 @@ struct AdjustQueryParameters {
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
   bool aromatizeIfPossible;
-  
+  bool convertBondsToAny; /**< convert bonds to generic queries (any bonds) */
+
   AdjustQueryParameters()
       : adjustDegree(true),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
         makeDummiesQueries(true),
-        aromatizeIfPossible(true) {}
+        aromatizeIfPossible(true),
+        convertBondsToAny(false) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
