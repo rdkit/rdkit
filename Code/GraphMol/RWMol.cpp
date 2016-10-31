@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -136,6 +135,21 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
   atom_p->setIdx(idx);
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   d_graph[vd].reset(atom_p);
+  // FIX: do something about bookmarks
+};
+
+void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
+  PRECONDITION(bond_pin, "bad bond passed to replaceBond");
+  URANGE_CHECK(idx, getNumBonds() - 1);
+  BOND_ITER_PAIR bIter = getEdges();
+  for (unsigned int i = 0; i < idx; i++) ++bIter.first;
+  BOND_SPTR obond = d_graph[*(bIter.first)];
+  Bond *bond_p = bond_pin->copy();
+  bond_p->setOwningMol(this);
+  bond_p->setIdx(idx);
+  bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
+  bond_p->setEndAtomIdx(obond->getEndAtomIdx());
+  d_graph[*(bIter.first)].reset(bond_p);
   // FIX: do something about bookmarks
 };
 
