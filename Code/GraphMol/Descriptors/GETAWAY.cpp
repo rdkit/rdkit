@@ -47,6 +47,8 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "GETAWAY.h"
+#include "Data3Ddescriptors.h"
+#include "MolData3Ddescriptors.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
@@ -66,18 +68,27 @@
 using namespace Eigen;
 
 
-double relativeMw1[]={0.084,0,0,0,0.900,1.000,1.166,1.332,1.582,0,0,0, 2.246, 2.339, 2.579,2.670, 2.952,0,0,0,0,0,0,0,0, 4.650, 4.907, 4.887, 5.291, 5.445,0,0,0,0, 6.653,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 9.884,0,0, 10.56};
-double relativeVdW1[]={0.299,0,0,0,0.796,1.000,0.695,0.512,0.410,0,0,0, 1.626, 1.424, 1.181,1.088, 1.035,0,0,0,0,0,0,0,0, 1.829, 1.561, 0.764, 0.512, 1.708,0,0,0,0, 1.384,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 2.042,0,0, 1.728};
-double relativeNeg1[]={0.944,0,0,0,0.828,1.000,1.163,1.331,1.457,0,0,0, 0.624, 0.779, 0.916,1.077, 1.265,0,0,0,0,0,0,0,0, 0.728, 0.728, 0.728, 0.740, 0.810,0,0,0,0, 1.172,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0.837,0,0, 1.012};
-double relativePol1[]={0.379,0,0,0,1722,1.000,0.625,0.456,0.316,0,0,0, 3.864, 3.057, 2.063,1.648, 1.239,0,0,0,0,0,0,0,0, 4.773, 4.261, 3.864, 3.466, 4.034,0,0,0,0, 1.733,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 4.375,0,0, 3.040};
-double ionpol[]={1.208,0,0.479,0.828,0.737,1,1.291,1.209,1.547,0,0.456,0.679,0.532,0.724,0.931,0.92,1.152,0,0.386,0.543,0,0,0,0.601,0.66,0.702,0.7,0.679,0.686,0.834,0.533,0.702,0.872,0.866,1.049,0,0.371,0.506,0,0,0,0.63,0,0,0,0,0.673,0.799,0.514,0.652,0.767,0.8,0.928,0,0,0,0,0,0,0,0,0,0,0.546,0,0,0,0,0,0,0,0,0,0,0,0,0,0.799,0.819,0.927,0.542,0.659,0.647};
-double rcov[]={0.37,0,1.34,0.90,0.82,0.77,0.73,0.71,0,1.54,1.30,1.18,1.11,1.06,1.02,0.99,0,1.96,1.74,0,0,0,1.27,1.39,1.25,1.26,1.21,1.38,1.31,1.26,1.22,1.19,1.16,1.14,0,2.11,1.92,0,0,0,1.45,0,0,0,0,1.53,1.48,1.44,1.41,1.38,1.35,1.33,0,0,0,0,0,0,0,0,0,0,1.79,0,0,0,0,0,0,0,0,0,0,0,0,0,1.28,1.44,1.49,1.48,1.47, 1.46};
-
 
 namespace RDKit {
 namespace Descriptors{
 
 namespace {
+
+/*
+Data3Ddescriptors data3D;
+
+double* relativeMw1=data3D.getMW();
+double* relativeVdW1=data3D.getVDW();
+double* relativeNeg1=data3D.getNEG();
+double* relativePol1=data3D.getPOL();
+double* ionpol=data3D.getIonPOL();
+double* rcov=data3D.getRCOV();
+*/
+
+MolData3Ddescriptors moldata3D;
+
+
+
 
 double* retreiveMat(MatrixXd matrix) {
    double* arrayd = matrix.data();
@@ -240,7 +251,20 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
 }
 
 
+MatrixXd GetRowwiseProdMatVect(MatrixXd A, VectorXd V, int numAtoms){
 
+    std::cout << "A:" << A << "\n";
+    std::cout << "V:" << V << "\n";
+
+    MatrixXd R;
+
+    R = A.array().colwise() * V.array();
+    //R= A.cwiseProduct( V.replicate( 1, A.rows()).transpose());
+
+    std::cout << "A.*V:" << R << "\n";
+
+    return R;
+}
 
 /* for 3Dautocorrelation staff */
 double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
@@ -256,45 +280,6 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 
 /* for 3Dautocorrelation staff */
 
-std::vector<double> GetRelativeMW(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=relativeMw1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-  }
-
-
-  return pol;
-}
-
-std::vector<double> GetRelativeRcov(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> wroc(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    wroc[i]=rcov[mol.getAtomWithIdx(i)->getAtomicNum()-1]/rcov[5];
-  }
-
-
-  return wroc;
-}
-
-
-
-std::vector<double> GetRelativeENeg(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> neg(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    neg[i]=relativeNeg1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-}
-
-  return neg;
-}
 
 
 
@@ -306,44 +291,7 @@ std::vector<double> GetUn(int numAtoms){
 }
 
 
-std::vector<double> GetRelativeVdW(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
 
-  std::vector<double> vdw(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    vdw[i]=relativeVdW1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-
-  }
-
-  return vdw;
-}
-
-std::vector<double> GetRelativePol(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=relativePol1[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-
-  }
-
-  return pol;
-}
-
-std::vector<double> GetRelativeIonPol(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=ionpol[mol.getAtomWithIdx(i)->getAtomicNum()-1]/ionpol[5];
-
-  }
-
-  return pol;
-}
 
 
 int*  GetHeavyList(const ROMol& mol){
@@ -434,12 +382,12 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 
 
 
-double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist) {
+double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist,const ROMol& mol) {
 
     double *w = new double[1];
     // prepare data for Whim parameter computation
     // compute parameters
-    
+
     VectorXd Lev=H.diagonal();
     std::vector<double> heavyLev;
     for (int i=0;i<numAtoms;i++){
@@ -449,7 +397,8 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
     std::vector<double> Clus= clusterArray(heavyLev);
     double numHeavy=heavyLev.size();
-std::cout << "HeavyAtoms:" << numHeavy << "\n";
+
+    std::cout << "HeavyAtoms:" << numHeavy << "\n";
 
     double ITH0 = numHeavy*log(numHeavy)/log(2);
     double ITH=ITH0;
@@ -471,10 +420,10 @@ std::cout << "HeavyAtoms:" << numHeavy << "\n";
     double HIC=0.0;
    for (int i=0;i<numAtoms;i++) {
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
-    }    
- 
+    }
+
     double RARS=R.rowwise().sum().sum()/numAtoms;
- 
+
     JacobiSVD<MatrixXd> svd = getSVD(R);
 
     VectorXd EIG = svd.singularValues();
@@ -483,9 +432,167 @@ std::cout << "HeavyAtoms:" << numHeavy << "\n";
 
     std::cout <<  "ISH:"<< ISH << "| ITH:"<< ITH <<  " |HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "| RCON:"<< rcon <<"\n";
 
-    return w;
 
- 
+   std::vector<double> wp= moldata3D.GetRelativePol(mol);
+
+   VectorXd Wp = getEigenVect(wp);
+
+
+   std::vector<double> wm= moldata3D.GetRelativeMW(mol);
+
+   //std::vector<double>  wm = GetRelativeMW(mol);
+
+
+
+   VectorXd Wm = getEigenVect(wm);
+
+   std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
+   //std::vector<double>  wi = GetRelativeIonPol(mol);
+
+   VectorXd Wi = getEigenVect(wi);
+
+   std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
+   //std::vector<double>  wv = GetRelativeVdW(mol);
+
+   VectorXd Wv = getEigenVect(wv);
+   
+   std::vector<double> we= moldata3D.GetRelativeENeg(mol);
+
+   //std::vector<double>  we = GetRelativeENeg(mol);
+
+   VectorXd We = getEigenVect(we);
+
+   std::vector<double>  wu = GetUn(numAtoms);
+
+   VectorXd Wu = getEigenVect(wu);
+
+   std::vector<double>  ws = GetIState(mol);
+
+   VectorXd Ws = getEigenVect(ws);
+
+   std::vector<double> wr= moldata3D.GetRelativeRcov(mol);
+
+   //std::vector<double>  wr = GetRelativeRcov(mol);
+
+   VectorXd Wr = getEigenVect(wr);
+
+
+// HATS definition is  (hi*wi) * (hj*wj) using topological distance
+// H (0,k) definition is hij*wj*wi using topological distance
+// HT = H0+ 2*sum(Hk)
+// R like H
+// RT like HT
+
+   MatrixXd Bi;
+   MatrixXd tmp;
+   MatrixXd RBw ;
+  double HATS;
+  double * HATSk= new double[9];
+  double H0;
+  double * Hk= new double[9];
+  
+
+   double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
+
+
+
+  for (int i=0;i<9;i++){
+    if (i==0) {
+      Bi = H.diagonal().asDiagonal();
+    }
+    
+      double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+      Map<MatrixXd> Bj(Bimat, numAtoms,numAtoms);
+
+
+
+    MatrixXd R;
+  HATS =0.0;
+  H0=0.0;
+if (i==0) {
+    for (int j=0;j<numAtoms;j++){
+      for (int k=j;k<numAtoms;k++){
+        if (Bi(j,k)>0){
+              HATS+=(Wu(j)*Wu(j)*H(j,j)*H(j,j));
+              if (H(j,k)>0)
+              H0+=Wu(j)*Wu(k)*H(j,k);
+
+        }
+      }
+    }
+  }
+
+
+if (i>0) {
+    for (int j=0;j<numAtoms;j++){
+      for (int k=j;k<numAtoms;k++){
+        if (Bj(j,k)==1){
+            HATS+=Wu(j)*H(j,j)*Wu(k)*H(k,k);
+            if (H(j,k)>0)
+              H0+=Wu(j)*Wu(k)*H(j,k);
+
+        }
+      }
+    }
+  }
+  HATSk[i]=HATS;
+  Hk[i]=H0;
+
+
+    std::cout << "HATSu" << i << ":"<<  HATS << "\n";
+    std::cout << "Hu" << i << ":"<<  H0 << "\n";
+
+/*    RBw = GetRowwiseProdMatVect(Bi,  Wm, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSm" << i << ":"<<  tmp << "\n";
+
+    RBw = GetRowwiseProdMatVect(Bi,  Wv, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSv" << i << ":"<<  tmp << "\n";
+
+    RBw = GetRowwiseProdMatVect(Bi,  We, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSe" << i << ":"<<  tmp << "\n";
+
+    RBw = GetRowwiseProdMatVect(Bi,  We, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSp" << i << ":"<<  tmp << "\n";
+
+    RBw = GetRowwiseProdMatVect(Bi,  Wi, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSi" << i << ":"<<  tmp << "\n";
+
+
+    RBw = GetRowwiseProdMatVect(Bi,  Ws, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+    std::cout << "HATSs" << i << ":"<<  tmp << "\n";
+
+    RBw = GetRowwiseProdMatVect(Bi,  Wr, numAtoms);
+    tmp=RBw.transpose() * RBw;
+
+
+    std::cout << "HATSr" << i << ":"<<  tmp << "\n";
+    */
+  }
+    //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
+    //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
+  
+
+  double HATST = HATSk[0]+2*(HATSk[1]+HATSk[2]+HATSk[3]+HATSk[4]+HATSk[5]+HATSk[6]+HATSk[7]+HATSk[8]);
+    std::cout << "HATStotla:"<<  HATST << "\n";
+
+  double HT = Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
+    std::cout << "Htotla:"<<  HT << "\n";
+
+  return w;
+
+
 
 }
 
@@ -495,6 +602,7 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
     double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
+    const ROMol mol= conf.getOwningMol();
 
     Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
 
@@ -509,12 +617,14 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
     std::cout << "R" << R << "\n";
     std::cout <<  "\n";
 
-    w= getGetawayDesc(H,R, ADJ, numAtoms, Heavylist);
+    w= getGetawayDesc(H,R, ADJ, numAtoms, Heavylist, mol);
 
     return w;
 }
 
 } //end of anonymous namespace
+
+
 
 
 
@@ -554,24 +664,23 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   double *res= new double[1];
 
-
-   std::vector<double>  wp = GetRelativePol(mol);
+   std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
    VectorXd Wp = getEigenVect(wp);
 
-   std::vector<double>  wm = GetRelativeMW(mol);
+   std::vector<double> wm= moldata3D.GetRelativeMW(mol);
 
    VectorXd Wm = getEigenVect(wm);
 
-   std::vector<double>  wi = GetRelativeIonPol(mol);
+   std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
 
    VectorXd Wi = getEigenVect(wi);
 
-   std::vector<double>  wv = GetRelativeVdW(mol);
+   std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
 
    VectorXd Wv = getEigenVect(wv);
 
-   std::vector<double>  we = GetRelativeENeg(mol);
+   std::vector<double> we= moldata3D.GetRelativeENeg(mol);
 
    VectorXd We = getEigenVect(we);
 
@@ -579,13 +688,11 @@ double* GETAWAY(const ROMol& mol,int confId){
 
    VectorXd Wu = getEigenVect(wu);
 
-
    std::vector<double>  ws = GetIState(mol);
 
    VectorXd Ws = getEigenVect(ws);
 
-
-   std::vector<double>  wr = GetRelativeRcov(mol);
+   std::vector<double> wr= moldata3D.GetRelativeRcov(mol);
 
    VectorXd Wr = getEigenVect(wr);
 
@@ -631,16 +738,15 @@ double* GETAWAY(const ROMol& mol,int confId){
 
     std::cout << "TDBr" << i << ":"<<  tmp << "\n";
 
-
     //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
     //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
-
-    
-
-
-
   }
 
+// HATS like  0 = leverage >0  => autocorr
+// 
+ 
+
+  
 
   double* wus= GetGETAWAY(conf, Vpoints, dm,adj, Heavylist);
 

@@ -296,19 +296,15 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 
     // center original matrix
 
-
     VectorXd v1= Scores.col(0);
     VectorXd v2= Scores.col(1);
     VectorXd v3= Scores.col(2);
 
-if (printscore and th ==0.03) {
-      std::cout << v1.transpose() << "\n";
-      std::cout << v2.transpose() << "\n";
-      std::cout << v3.transpose() << "\n";
-}
-
-
-
+    if (printscore and th ==0.03) {
+          std::cout << v1.transpose() << "\n";
+          std::cout << v2.transpose() << "\n";
+          std::cout << v3.transpose() << "\n";
+    }
 
     w[10] = numAtoms*pow(w[0],2)/ v1.array().pow(4).sum(); // E1
     w[11] = numAtoms*pow(w[1],2)/ v2.array().pow(4).sum(); // E2
@@ -519,8 +515,6 @@ double*  GetWHIMneg(const Conformer &conf, double Vpoints[], double th){
     JacobiSVD<MatrixXd> svd = getSVD(covmat);
 
     w= getWhimDesc(svd, Xmean, numAtoms, th, false);
-
-
 
     return w;
   }
