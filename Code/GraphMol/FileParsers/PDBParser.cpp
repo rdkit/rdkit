@@ -209,7 +209,7 @@ static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
 
   if (len >= 20) {
     tmp = std::string(ptr + 17, 3);
-    boost::trim(tmp);
+    // boost::trim(tmp);
   } else
     tmp = "UNL";
   info->setResidueName(tmp);

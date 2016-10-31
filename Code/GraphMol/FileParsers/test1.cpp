@@ -11,6 +11,8 @@
 #include <GraphMol/Canon.h>
 #include <GraphMol/MonomerInfo.h>
 #include "FileParsers.h"
+#include "SequenceParsers.h"
+#include "SequenceWriters.h"
 #include "MolFileStereochem.h"
 #include "ProximityBonds.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -3847,10 +3849,10 @@ void testPDBFile() {
                     ->getSerialNumber() == 1);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "DC");
+                    ->getResidueName() == " DC");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(57)->getMonomerInfo())
-                    ->getResidueName() == "DG");
+                    ->getResidueName() == " DG");
     std::string mb = MolToPDBBlock(*m);
     delete m;
     m = PDBBlockToMol(mb);
@@ -3860,10 +3862,10 @@ void testPDBFile() {
                 AtomMonomerInfo::PDBRESIDUE);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "DC");
+                    ->getResidueName() == " DC");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(57)->getMonomerInfo())
-                    ->getResidueName() == "DG");
+                    ->getResidueName() == " DG");
     delete m;
   }
   {  // RNA
@@ -3880,10 +3882,10 @@ void testPDBFile() {
                     ->getSerialNumber() == 1);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "G");
+                    ->getResidueName() == "  G");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(90)->getMonomerInfo())
-                    ->getResidueName() == "A");
+                    ->getResidueName() == "  A");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(197)->getMonomerInfo())
                     ->getResidueName() == "2MG");
@@ -3894,16 +3896,23 @@ void testPDBFile() {
     std::string mb = MolToPDBBlock(*m);
     delete m;
     m = PDBBlockToMol(mb);
-    TEST_ASSERT(m->getNumHeavyAtoms() == 602);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
-    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
-                AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(m->getNumHeavyAtoms() == 1656);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getSerialNumber() == 1);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
                     m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "DC");
+                    ->getResidueName() == "  G");
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(57)->getMonomerInfo())
-                    ->getResidueName() == "DG");
+                    m->getAtomWithIdx(90)->getMonomerInfo())
+                    ->getResidueName() == "  A");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(197)->getMonomerInfo())
+                    ->getResidueName() == "2MG");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(197)->getMonomerInfo())
+                    ->getIsHeteroAtom());
+
     delete m;
   }
 
@@ -4661,7 +4670,7 @@ void testGithub1049() {
 }
 
 void RunTests() {
-#if 0
+#if 1
   test1();
   test2();
   test4();
