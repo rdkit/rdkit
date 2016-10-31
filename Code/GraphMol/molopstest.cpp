@@ -5524,7 +5524,7 @@ void testAdjustQueryProperties() {
     params.aromatizeIfPossible = false;
     params.makeDummiesQueries = true;
     params.adjustDegreeFlags =
-        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS |
          MolOps::ADJUST_IGNOREMAPPED);
 
     RWMol *m = MolBlockToMol(mb, false, false);
@@ -5578,7 +5578,7 @@ void testAdjustQueryProperties() {
     params.aromatizeIfPossible = true;
     params.makeDummiesQueries = true;
     params.adjustDegreeFlags =
-        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINATOMS |
+        (MolOps::ADJUST_IGNOREDUMMIES | MolOps::ADJUST_IGNORECHAINS |
          MolOps::ADJUST_IGNOREMAPPED);
 
     RWMol *m = MolBlockToMol(mb);
