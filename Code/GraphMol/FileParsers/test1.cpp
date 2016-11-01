@@ -3919,6 +3919,40 @@ void testPDBFile() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSequences() {
+  BOOST_LOG(rdInfoLog) << "testing reading sequences" << std::endl;
+  {
+    std::string seq = "CGCGAATTACCGCG";  // made up
+    int flavor = 6;
+    ROMol *m = SequenceToMol(seq, true, flavor);
+    TEST_ASSERT(m);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getSerialNumber() == 1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getResidueName() == " DC");
+    seq = MolToSequence(*m);
+    TEST_ASSERT(seq == "CGCGAATTACCGCG");
+    delete m;
+  }
+  {
+    std::string seq = "CGCGAATTACCGCG";  // made up
+    int flavor = 2;
+    ROMol *m = SequenceToMol(seq, true, flavor);
+    TEST_ASSERT(m);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getSerialNumber() == 1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getResidueName() == "  C");
+    seq = MolToSequence(*m);
+    TEST_ASSERT(seq == "CGCGAATTACCGCG");
+    delete m;
+  }
+}
+
 void testGithub1023() {
   BOOST_LOG(rdInfoLog) << "GetSSSR interrupted by segmentation fault"
                        << std::endl;
@@ -4670,7 +4704,7 @@ void testGithub1049() {
 }
 
 void RunTests() {
-#if 1
+#if 0
   test1();
   test2();
   test4();
@@ -4754,6 +4788,8 @@ void RunTests() {
   testGithub1049();
 #endif
   testPDBFile();
+  testSequences();
+
   // testSequenceReaders();
 }
 
