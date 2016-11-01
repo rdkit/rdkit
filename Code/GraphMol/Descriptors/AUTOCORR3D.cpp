@@ -52,12 +52,7 @@
 #include <Eigen/Core>
 #include <Eigen/QR>
 
-
-
-
 using namespace Eigen;
-
-
 namespace RDKit {
 namespace Descriptors{
 
@@ -196,6 +191,8 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, con
     TDBmat[7][i]=dtmp;
 
   }
+
+  // create the Output vector!
     w= AppendDouble(w, TDBmat[0], 10, 0);
     w= AppendDouble(w, TDBmat[1], 10, 10);
     w= AppendDouble(w, TDBmat[2], 10, 20);
@@ -212,16 +209,8 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, con
   double* Get3Dauto(double* dist3D,double* dist, int numAtoms, const ROMol& mol){
 
       std::vector<std::string> AUTOCORRNAMES={"TDB01u","TDB02u","TDB03u","TDB04u","TDB05u","TDB06u","TDB07u","TDB08u","TDB09u","TDB10u","TDB01m","TDB02m","TDB03m","TDB04m","TDB05m","TDB06m","TDB07m","TDB08m","TDB09m","TDB10m","TDB01v","TDB02v","TDB03v","TDB04v","TDB05v","TDB06v","TDB07v","TDB08v","TDB09v","TDB10v","TDB01e","TDB02e","TDB03e","TDB04e","TDB05e","TDB06e","TDB07e","TDB08e","TDB09e","TDB10e","TDB01p","TDB02p","TDB03p","TDB04p","TDB05p","TDB06p","TDB07p","TDB08p","TDB09p","TDB10p","TDB01i","TDB02i","TDB03i","TDB04i","TDB05i","TDB06i","TDB07i","TDB08i","TDB09i","TDB10i","TDB01s","TDB02s","TDB03s","TDB04s","TDB05s","TDB06s","TDB07s","TDB08s","TDB09s","TDB10s","TDB01r","TDB02r","TDB03r","TDB04r","TDB05r","TDB06r","TDB07r","TDB08r","TDB09r","TDB10r"};
-
       double *res= new double[80];
-
       res= get3DautocorrelationDesc(dist3D,dist, numAtoms, mol);
-
-      for (int i=0;i<80;i++) {
-        std::cout << AUTOCORRNAMES[i] << ":" << res[i] << ",";
-
-      }
-
       return res;
   }
 

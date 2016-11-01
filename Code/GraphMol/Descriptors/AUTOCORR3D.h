@@ -50,6 +50,7 @@ namespace RDKit {
   namespace Descriptors {
     const std::string AUTOCORR3DVersion = "1.0.0";
     double* AUTOCORR3D(const ROMol&, int confId=-1);
+    
   }
 }
 #endif

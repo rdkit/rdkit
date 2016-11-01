@@ -641,7 +641,7 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
  double RTMi=getMax(Rp[5]);
  double RTMs=getMax(Rp[6]);
 
-
+// create the output vector...
  w= AppendDouble(w, Hk[0], 9, 4);
  w[13]=HTu;
 
