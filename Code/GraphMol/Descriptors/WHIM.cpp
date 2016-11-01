@@ -211,8 +211,6 @@ std::vector<double> GetRelativeIonPol(const ROMol& mol){
 }
 
 
-
-
 double* retreiveMat(Eigen::MatrixXd matrix) {
    double* arrayd = matrix.data();
    return arrayd;
@@ -346,14 +344,12 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 
       double na=0.0;
       na = nAT-ns;
-    //  std::cout << "ns:" << ns << ",";
       gamma[i] =0.0;
       if (ns>0) {
            gamma[i] = ((ns / nAT) * log(ns / nAT) / log(2.0) + (na / nAT) * log(1.0 / nAT) / log(2.0));
            gamma[i] = 1.0 / (1.0 - gamma[i]);
       }
     }
-  //  std::cout  << "\n";
     w[14]=gamma[0]; // G1
     w[15]=gamma[1]; // G2
     w[16]=gamma[2]; // G3
@@ -658,7 +654,8 @@ double* WHIM(const ROMol& mol,int confId, double th){
   double* wp= GetWHIMpol(conf, Vpoints, th);
   double* wi= GetWHIMIonPol(conf, Vpoints, th);
   double* ws= GetWHIMIState(conf, Vpoints, th);
- 
+
+
   // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
   int map1[11] = {0,1,2,6,7,14,15,16,10,11,12};
   // std::vector<std::string> descnames={"L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"};
