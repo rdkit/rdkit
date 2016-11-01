@@ -38,17 +38,12 @@ void testGETAWAY() {
     std::string nm;
     m->getProp("_Name",nm);
 
+    double* dgetaway;
+    dgetaway = RDKit::Descriptors::GETAWAY(*m, -1);
 
-    double* dwhim;
-//for (int i=1;i<11;i++) {
- // std::cout << "i:" << 0.005*i << "\n";
-    dwhim = RDKit::Descriptors::GETAWAY(*m, -1);
-   /* for (int j=0;j<114;j++) {
-      std::cout << dwhim[j] << ",";
+    for (int j=0;j<273;j++) {
+        std::cout << dgetaway[j] << ",";
      }
-    std::cout << "\n";
-*/
-//}
 
        
     std::cout << "=>read molecule: " << nDone  << std::endl;

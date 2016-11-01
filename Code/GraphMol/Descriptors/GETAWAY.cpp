@@ -130,6 +130,19 @@ std::vector<double>  clusterArray(std::vector<double> data) {
 
 
 
+double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
+    int sizeArray=numAtoms*numAtoms;
+    double *Geodesic = new double[sizeArray];
+    for (int i=0; i<sizeArray;i++) {
+      if (dist[i]==lag) Geodesic[i]=1;
+      else  Geodesic[i]=0;
+    }
+
+    return Geodesic;
+}
+
+
+
 double GetLevClassNumber(VectorXd LevHeavy, int numHeavyAtoms, std::vector<int> HeavyList){
 
   int ClassNum=numHeavyAtoms;
@@ -198,40 +211,11 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
 
 MatrixXd GetRowwiseProdMatVect(MatrixXd A, VectorXd V, int numAtoms){
 
-    std::cout << "A:" << A << "\n";
-    std::cout << "V:" << V << "\n";
-
     MatrixXd R;
-
     R = A.array().colwise() * V.array();
-    //R= A.cwiseProduct( V.replicate( 1, A.rows()).transpose());
-
-    std::cout << "A.*V:" << R << "\n";
 
     return R;
 }
-
-/* for 3Dautocorrelation staff */
-double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
-    int sizeArray=numAtoms*numAtoms;
-    double *Geodesic = new double[sizeArray];
-    for (int i=0; i<sizeArray;i++) {
-      if (dist[i]==lag) Geodesic[i]=1;
-      else  Geodesic[i]=0;
-    }
-
-    return Geodesic;
-}
-
-/* for 3Dautocorrelation staff */
-
-
-
-
-
-
-
-
 
 
 int*  GetHeavyList(const ROMol& mol){
@@ -290,7 +274,6 @@ double getRCON(MatrixXd R, MatrixXd Adj,int numAtoms){
 // we use instead of atomic absolute values the atomic relative ones as in Dragon
         double RCON=0.0;
         VectorXd VSR = R.rowwise().sum();
-        std::cout << "VSR:" << VSR << "\n";
         for (int i=0; i<numAtoms; ++i)
             {
                 for (int j=0; j<numAtoms; ++j)
@@ -364,7 +347,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
     std::vector<double> Clus= clusterArray(heavyLev);
     double numHeavy=heavyLev.size();
 
-    std::cout << "HeavyAtoms:" << numHeavy << "\n";
 
     double ITH0 = numHeavy*log(numHeavy)/log(2);
     double ITH=ITH0;
@@ -383,7 +365,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
-      std::cout << H(i,i) << ",";
       HGM=HGM*H(i,i);
     }
     HGM=100.0*pow(HGM,1.0/numAtoms);
@@ -631,7 +612,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
   double HATSTi =   getHtotal(HATSk[5]);
   double HATSTs =   getHtotal(HATSk[6]);
 
-  //std::cout << "HATStotla:"<<  HATST << "\n";
 
   // Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
   double HTu = getHtotal(Hk[0]);
@@ -642,7 +622,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
   double HTi = getHtotal(Hk[5]);
   double HTs = getHtotal(Hk[6]);
 
-  //std::cout << "Htotla:"<<  HT << "\n";
   //
   //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
   double RTu = getRtotal(Rk[0]);
@@ -652,8 +631,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
   double RTp = getRtotal(Rk[4]);
   double RTi = getRtotal(Rk[5]);
   double RTs = getRtotal(Rk[6]);
-
-   // std::cout << "Rtotla:"<<  RT << "\n";
 
 
  double RTMu=getMax(Rp[0]);
@@ -754,9 +731,7 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
  w[272]=RTMs;// wrong vs Dragon
 
 
- for (int i=0;i<=272;i++){
-  std:cout << i << ":"<<w[i] << "\n";
- }
+
 
 
   return w;
@@ -765,7 +740,9 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
 double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
 
-    double *w = new double[18];
+    std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu","HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m","H6m","H7m","H8m","HTm","HATS0m","HATS1m","HATS2m","HATS3m","HATS4m","HATS5m","HATS6m","HATS7m","HATS8m","HATSm","H0v","H1v","H2v","H3v","H4v","H5v","H6v","H7v","H8v","HTv","HATS0v","HATS1v","HATS2v","HATS3v","HATS4v","HATS5v","HATS6v","HATS7v","HATS8v","HATSv","H0e","H1e","H2e","H3e","H4e","H5e","H6e","H7e","H8e","HTe","HATS0e","HATS1e","HATS2e","HATS3e","HATS4e","HATS5e","HATS6e","HATS7e","HATS8e","HATSe","H0p","H1p","H2p","H3p","H4p","H5p","H6p","H7p","H8p","HTp","HATS0p","HATS1p","HATS2p","HATS3p","HATS4p","HATS5p","HATS6p","HATS7p","HATS8p","HATSp","H0i","H1i","H2i","H3i","H4i","H5i","H6i","H7i","H8i","HTi","HATS0i","HATS1i","HATS2i","HATS3i","HATS4i","HATS5i","HATS6i","HATS7i","HATS8i","HATSi","H0s","H1s","H2s","H3s","H4s","H5s","H6s","H7s","H8s","HTs","HATS0s","HATS1s","HATS2s","HATS3s","HATS4s","HATS5s","HATS6s","HATS7s","HATS8s","HATSs","RCON","RARS","REIG","R1u","R2u","R3u","R4u","R5u","R6u","R7u","R8u","RTu","R1u+","R2u+","R3u+","R4u+","R5u+","R6u+","R7u+","R8u+","RTu+","R1m","R2m","R3m","R4m","R5m","R6m","R7m","R8m","RTm","R1m+","R2m+","R3m+","R4m+","R5m+","R6m+","R7m+","R8m+","RTm+","R1v","R2v","R3v","R4v","R5v","R6v","R7v","R8v","RTv","R1v+","R2v+","R3v+","R4v+","R5v+","R6v+","R7v+","R8v+","RTv+","R1e","R2e","R3e","R4e","R5e","R6e","R7e","R8e","RTe","R1e+","R2e+","R3e+","R4e+","R5e+","R6e+","R7e+","R8e+","RTe+","R1p","R2p","R3p","R4p","R5p","R6p","R7p","R8p","RTp","R1p+","R2p+","R3p+","R4p+","R5p+","R6p+","R7p+","R8p+","RTp+","R1i","R2i","R3i","R4i","R5i","R6i","R7i","R8i","RTi","R1i+","R2i+","R3i+","R4i+","R5i+","R6i+","R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
+
+    double *w = new double[273];
 
     int numAtoms = conf.getNumAtoms();
     const ROMol mol= conf.getOwningMol();
@@ -784,6 +761,7 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
 
     return w;
 }
+
 
 } //end of anonymous namespace
 
@@ -804,8 +782,6 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   Map<MatrixXd> adj(AdjMat, numAtoms,numAtoms);
 
-  std::cout << adj << "\n";
-
   int* Heavylist= GetHeavyList(mol);
   int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
 
@@ -820,12 +796,14 @@ double* GETAWAY(const ROMol& mol,int confId){
      Vpoints[3*i+2] =conf.getAtomPos(i).z;
   }
 
-  double *res= new double[1];
+  double *res= new double[273];
 
-  double* wus= GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
+  res = GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
 
   return res;
 }
+
+
 
 } // end of Descriptors namespace
 } // end of RDKit namespace
