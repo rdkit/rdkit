@@ -3923,7 +3923,7 @@ void testSequences() {
   BOOST_LOG(rdInfoLog) << "testing reading sequences" << std::endl;
   {
     std::string seq = "CGCGAATTACCGCG";  // made up
-    int flavor = 6;
+    int flavor = 6;                      // DNA
     ROMol *m = SequenceToMol(seq, true, flavor);
     TEST_ASSERT(m);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
@@ -3934,11 +3934,42 @@ void testSequences() {
                     ->getResidueName() == " DC");
     seq = MolToSequence(*m);
     TEST_ASSERT(seq == "CGCGAATTACCGCG");
+    seq = MolToHELM(*m);
+    // std::cerr << seq << std::endl;
+    TEST_ASSERT(seq ==
+                "RNA1{[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)P.[dR](A)P.[dR](A)P.["
+                "dR](T)P.[dR](T)P.[dR](A)P.[dR](C)P.[dR](C)P.[dR](G)P.[dR](C)P."
+                "[dR](G)}$$$$");
+    {
+      std::string lseq = MolToHELM(*m);
+      TEST_ASSERT(lseq == seq);
+
+      ROMol *m2 = HELMToMol(seq);
+      TEST_ASSERT(m2)
+      lseq = MolToSequence(*m2);
+      TEST_ASSERT(lseq == "CGCGAATTACCGCG");
+      lseq = MolToHELM(*m2);
+      TEST_ASSERT(lseq == seq);
+      delete m2;
+    }
+
+    {
+      ROMol *nm = MolOps::addHs(*m);
+      TEST_ASSERT(nm);
+      std::string pdb = MolToPDBBlock(*nm);
+      delete nm;
+      nm = PDBBlockToMol(pdb);
+      TEST_ASSERT(nm);
+      std::string lseq = MolToSequence(*nm);
+      TEST_ASSERT(lseq == "CGCGAATTACCGCG");
+      delete nm;
+    }
+
     delete m;
   }
   {
-    std::string seq = "CGCGAATTACCGCG";  // made up
-    int flavor = 2;
+    std::string seq = "CGCGAAUUACCGCG";  // made up
+    int flavor = 2;                      // RNA
     ROMol *m = SequenceToMol(seq, true, flavor);
     TEST_ASSERT(m);
     TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
@@ -3948,7 +3979,35 @@ void testSequences() {
                     m->getAtomWithIdx(1)->getMonomerInfo())
                     ->getResidueName() == "  C");
     seq = MolToSequence(*m);
-    TEST_ASSERT(seq == "CGCGAATTACCGCG");
+    TEST_ASSERT(seq == "CGCGAAUUACCGCG");
+    seq = MolToHELM(*m);
+    TEST_ASSERT(seq ==
+                "RNA1{R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R("
+                "C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$");
+    {
+      std::string lseq = MolToHELM(*m);
+      TEST_ASSERT(lseq == seq);
+
+      ROMol *m2 = HELMToMol(seq);
+      TEST_ASSERT(m2)
+      lseq = MolToSequence(*m2);
+      TEST_ASSERT(lseq == "CGCGAAUUACCGCG");
+      lseq = MolToHELM(*m2);
+      TEST_ASSERT(lseq == seq);
+      delete m2;
+    }
+    {
+      ROMol *nm = MolOps::addHs(*m);
+      TEST_ASSERT(nm);
+      std::string pdb = MolToPDBBlock(*nm);
+      delete nm;
+      nm = PDBBlockToMol(pdb);
+      TEST_ASSERT(nm);
+      std::string lseq = MolToSequence(*nm);
+      TEST_ASSERT(lseq == "CGCGAAUUACCGCG");
+      delete nm;
+    }
+
     delete m;
   }
 }
@@ -4704,7 +4763,7 @@ void testGithub1049() {
 }
 
 void RunTests() {
-#if 0
+#if 1
   test1();
   test2();
   test4();
