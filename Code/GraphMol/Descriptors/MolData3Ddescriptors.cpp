@@ -9,6 +9,13 @@ using namespace std;
 MolData3Ddescriptors::MolData3Ddescriptors(){}
 
 
+std::vector<double> MolData3Ddescriptors::GetUn(int numAtoms){
+
+  std::vector<double> u(numAtoms, 1.0);
+
+  return u;
+}
+
 std::vector<double> MolData3Ddescriptors::GetRelativeMW(const RDKit::ROMol& mol){
   double* relativeMw=data3D.getMW();
   int numAtoms= mol.getNumAtoms();
@@ -85,3 +92,38 @@ std::vector<double> MolData3Ddescriptors::GetRelativeIonPol(const RDKit::ROMol& 
   }
   return ionpols;
 }
+
+
+int MolData3Ddescriptors::GetPrincipalQuantumNumber(int AtomicNum) {
+  if (AtomicNum<=2) return 1;
+  else if (AtomicNum<=10) return 2;
+  else if (AtomicNum<=18) return 3;
+  else if (AtomicNum<=36) return 4;
+  else if (AtomicNum<=54) return 5;
+  else if (AtomicNum<=86) return 6;
+  else return 7;
+}
+
+
+std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
+  int numAtoms = mol.getNumAtoms();
+  std::vector<double> Is;
+
+  for (int i = 0; i < numAtoms; ++i) {
+    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+    int atNum=atom->getAtomicNum();
+    int degree = atom->getDegree();
+    if (degree>0 and atNum>1) {
+      int h = atom->getTotalNumHs();
+      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
+      double dv =(double) Zv-h;
+      dv = dv / (double) (atNum-Zv-1);
+      int N =  GetPrincipalQuantumNumber(atNum);
+      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/degree)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+    }
+    else Is.push_back(0);
+ }
+
+ return Is;
+}
+

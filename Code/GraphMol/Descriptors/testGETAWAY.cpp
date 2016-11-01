@@ -62,9 +62,6 @@ void testGETAWAY() {
 
 
 
-
-
-
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testGETAWAY();

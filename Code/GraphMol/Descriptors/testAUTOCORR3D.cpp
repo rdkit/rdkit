@@ -18,9 +18,9 @@
 #include <sstream>
 
 
-#include <GraphMol/Descriptors/auto3Dcorr.h>
+#include <GraphMol/Descriptors/AUTOCORR3D.h>
 
-void test3Dautocorrelation() {
+void testautocorrelation() {
   std::cout << "=>start test rdf\n";
 
   std::string pathName = getenv("RDBASE");
@@ -42,7 +42,7 @@ void test3Dautocorrelation() {
     double* dwhim;
 //for (int i=1;i<11;i++) {
  // std::cout << "i:" << 0.005*i << "\n";
-    dwhim = RDKit::Descriptors::AUTO3DCORR(*m, -1);
+    dwhim = RDKit::Descriptors::AUTOCORR3D(*m, -1);
    /* for (int j=0;j<114;j++) {
       std::cout << dwhim[j] << ",";
      }
@@ -60,13 +60,8 @@ void test3Dautocorrelation() {
 }
 
 
-
-
-
-
-
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-  test3Dautocorrelation();
+  testautocorrelation();
 
 }

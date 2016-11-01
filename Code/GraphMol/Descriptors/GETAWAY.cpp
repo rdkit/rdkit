@@ -47,7 +47,6 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "GETAWAY.h"
-#include "Data3Ddescriptors.h"
 #include "MolData3Ddescriptors.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
@@ -74,19 +73,8 @@ namespace Descriptors{
 
 namespace {
 
-/*
-Data3Ddescriptors data3D;
-
-double* relativeMw1=data3D.getMW();
-double* relativeVdW1=data3D.getVDW();
-double* relativeNeg1=data3D.getNEG();
-double* relativePol1=data3D.getPOL();
-double* ionpol=data3D.getIonPOL();
-double* rcov=data3D.getRCOV();
-*/
 
 MolData3Ddescriptors moldata3D;
-
 
 
 
@@ -108,43 +96,8 @@ VectorXd getEigenVect(std::vector<double> v){
     return V;
 }
 
-int GetPrincipalQuantumNumber(int AtomicNum) {
-  if (AtomicNum<=2) return 1;
-  else if (AtomicNum<=10) return 2;
-  else if (AtomicNum<=18) return 3;
-  else if (AtomicNum<=36) return 4;
-  else if (AtomicNum<=54) return 5;
-  else if (AtomicNum<=86) return 6;
-  else return 7;
-}
 
-// adaptation from EState.py 
-// we need the Is value only there
-std::vector<double> GetIState(const ROMol &mol){
-  int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is;
-
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
-    int atNum=atom->getAtomicNum();
-    int degree = atom->getDegree();
-    if (degree>0 and atNum>1) {
-      int h = atom->getTotalNumHs();
-      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
-      double dv =(double) Zv-h;
-      dv = dv / (double) (atNum-Zv-1);
-      int N = GetPrincipalQuantumNumber(atNum);
-      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/degree)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
-    }
-    else Is.push_back(0);
- }
-
-
- return Is;
-}
-
-
-
+// code from web 
 std::vector<double>  clusterArray(std::vector<double> data) {
     std::vector<double> Store;
 
@@ -160,7 +113,6 @@ std::vector<double>  clusterArray(std::vector<double> data) {
     std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
         std::divides<double>());
 
-    // print out the results
     int j=0;
     int count=0;
     for (int i = 0; i < data.size(); i++) {
@@ -168,21 +120,14 @@ std::vector<double>  clusterArray(std::vector<double> data) {
         // if a difference exceeds 40%, start a new group:
         if (diffs[i] > 0.001)  {// diff=0.4 <=> 40%
             Store.push_back(count);
-            //std::cout << "\n" << Store[j];
             count=0;
             j++;
-            //std::cout << "\n";
         }
-        // print out an item:
-        
-       //std::cout << data[i] << "\t";
     }
-    
-    //std::cout << "\n";
-
 
     return Store;
 }
+
 
 
 double GetLevClassNumber(VectorXd LevHeavy, int numHeavyAtoms, std::vector<int> HeavyList){
@@ -283,12 +228,7 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 
 
 
-std::vector<double> GetUn(int numAtoms){
 
-  std::vector<double> u(numAtoms, 1.0);
-
-  return u;
-}
 
 
 
@@ -462,11 +402,11 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
    VectorXd We = getEigenVect(we);
 
-   std::vector<double>  wu = GetUn(numAtoms);
+   std::vector<double>  wu = moldata3D.GetUn(numAtoms);
 
    VectorXd Wu = getEigenVect(wu);
 
-   std::vector<double>  ws = GetIState(mol);
+   std::vector<double>  ws =  moldata3D.GetIState(mol);
 
    VectorXd Ws = getEigenVect(ws);
 
@@ -483,13 +423,15 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 // R like H
 // RT like HT
 
-   MatrixXd Bi;
-   MatrixXd tmp;
-   MatrixXd RBw ;
-  double HATS;
+  MatrixXd Bi;
+  MatrixXd tmp;
+  MatrixXd RBw;
+  double HATS,Rkmax;
   double * HATSk= new double[9];
-  double H0;
+  double H0,R0;
   double * Hk= new double[9];
+  double * Rk= new double[8];
+  double * Rp= new double[8];
   
 
    double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
@@ -506,7 +448,6 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
 
 
-    MatrixXd R;
   HATS =0.0;
   H0=0.0;
 if (i==0) {
@@ -530,7 +471,6 @@ if (i>0) {
             HATS+=Wu(j)*H(j,j)*Wu(k)*H(k,k);
             if (H(j,k)>0)
               H0+=Wu(j)*Wu(k)*H(j,k);
-
         }
       }
     }
@@ -538,9 +478,32 @@ if (i>0) {
   HATSk[i]=HATS;
   Hk[i]=H0;
 
+  R0=0.0;
+  Rkmax=0;
+
+ if (i>0) {
+ for (int j=0;j<numAtoms-1;j++){
+      for (int k=j+1;k<numAtoms;k++){
+        if (Bj(j,k)==1){
+            //std::cout << R(j,k) << ",";
+            R0+=R(j,k)*Wu(k)*Wu(j);
+            if (R(j,k)*Wu(k)*Wu(j)>Rkmax) Rkmax=R(j,k)*Wu(k)*Wu(j);
+        }
+      }
+    }
+    Rk[i]=R0;
+    Rp[i]=Rkmax;
+  }
+
 
     std::cout << "HATSu" << i << ":"<<  HATS << "\n";
     std::cout << "Hu" << i << ":"<<  H0 << "\n";
+    if (i>0){
+
+    std::cout << "Ru" << i << ":"<<  R0 << "\n";
+    std::cout << "R+" << i << ":"<<  Rkmax << "\n";
+
+    }
 
 /*    RBw = GetRowwiseProdMatVect(Bi,  Wm, numAtoms);
     tmp=RBw.transpose() * RBw;
@@ -590,6 +553,17 @@ if (i>0) {
   double HT = Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
     std::cout << "Htotla:"<<  HT << "\n";
 
+  double RT = 2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
+    std::cout << "Rtotla:"<<  RT << "\n";
+
+ double RTp=0;
+ for (int j=1;j<9;j++){
+  if (RTp<Rp[j]) RTp=Rp[j];
+ }
+
+    std::cout << "RT+" <<  RTp << "\n";
+
+
   return w;
 
 
@@ -625,9 +599,6 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
 } //end of anonymous namespace
 
 
-
-
-
 double* GETAWAY(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
@@ -655,7 +626,6 @@ double* GETAWAY(const ROMol& mol,int confId){
   Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
 
 
-
   for(int i=0; i<numAtoms; ++i){
      Vpoints[3*i]   =conf.getAtomPos(i).x;
      Vpoints[3*i+1] =conf.getAtomPos(i).y;
@@ -664,89 +634,6 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   double *res= new double[1];
 
-   std::vector<double> wp= moldata3D.GetRelativePol(mol);
-
-   VectorXd Wp = getEigenVect(wp);
-
-   std::vector<double> wm= moldata3D.GetRelativeMW(mol);
-
-   VectorXd Wm = getEigenVect(wm);
-
-   std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
-
-   VectorXd Wi = getEigenVect(wi);
-
-   std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
-
-   VectorXd Wv = getEigenVect(wv);
-
-   std::vector<double> we= moldata3D.GetRelativeENeg(mol);
-
-   VectorXd We = getEigenVect(we);
-
-   std::vector<double>  wu = GetUn(numAtoms);
-
-   VectorXd Wu = getEigenVect(wu);
-
-   std::vector<double>  ws = GetIState(mol);
-
-   VectorXd Ws = getEigenVect(ws);
-
-   std::vector<double> wr= moldata3D.GetRelativeRcov(mol);
-
-   VectorXd Wr = getEigenVect(wr);
-
-
-   MatrixXd Bi;
-   VectorXd tmp;
-  for (int i=1;i<11;i++){
-    double * Bimat = GetGeodesicMatrix(dist, i, numAtoms);
-    Map<MatrixXd> Bi(Bimat, numAtoms,numAtoms);
-    MatrixXd RBi=Bi.cwiseProduct(dm);
-    double Bicount=(double) Bi.sum();
-
-
-    tmp=Wu.transpose() * RBi * Wu / Bicount;
-
-    std::cout << "TDBu" << i << ":"<<  tmp << "\n";
-
-    tmp=Wm.transpose() * RBi * Wm / Bicount;
-
-    std::cout << "TDBm" << i << ":"<<  tmp << "\n";
-
-    tmp=Wv.transpose() * RBi * Wv / Bicount;
-
-    std::cout << "TDBv" << i << ":"<<  tmp << "\n";
-    
-    tmp=We.transpose() * RBi * We / Bicount;
-
-    std::cout << "TDBe" << i << ":"<<  tmp << "\n";
-
-    tmp=Wp.transpose() * RBi * Wp / Bicount;
-
-    std::cout << "TDBp" << i << ":"<<  tmp << "\n";
-
-    tmp=Wi.transpose() * RBi * Wi / Bicount;
-
-    std::cout << "TDBi" << i << ":"<<  tmp << "\n";
-
-    tmp=Ws.transpose() * RBi * Ws / Bicount;
-
-    std::cout << "TDBs" << i << ":"<<  tmp << "\n";
-
-    tmp=Wr.transpose() * RBi * Wr / Bicount;
-
-    std::cout << "TDBr" << i << ":"<<  tmp << "\n";
-
-    //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
-    //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
-  }
-
-// HATS like  0 = leverage >0  => autocorr
-// 
- 
-
-  
 
   double* wus= GetGETAWAY(conf, Vpoints, dm,adj, Heavylist);
 

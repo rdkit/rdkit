@@ -41,15 +41,15 @@
 // Modifications by Greg Landrum for inclusion in the RDKit core, September 2016
 // Adding RBF by Guillaume Godin
 
-#ifndef AUTO3DCORRRDKIT_H_SEPT2016
-#define AUTO3DCORRRDKIT_H_SEPT2016
+#ifndef AUTOCORR3DRDKIT_H_SEPT2016
+#define AUTOCORR3DRDKIT_H_SEPT2016
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
-    const std::string AUTO3DCORRVersion = "1.0.0";
-    double* AUTO3DCORR(const ROMol&,int confId=-1);
+    const std::string AUTOCORR3DVersion = "1.0.0";
+    double* AUTOCORR3D(const ROMol&, int confId=-1);
   }
 }
 #endif

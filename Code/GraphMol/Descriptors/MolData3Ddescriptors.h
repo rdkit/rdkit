@@ -23,6 +23,11 @@ class MolData3Ddescriptors
 	   std::vector<double> GetRelativeENeg(const RDKit::ROMol& mol);
 	   std::vector<double> GetRelativeIonPol(const RDKit::ROMol& mol);
 	   std::vector<double> GetRelativeVdW(const RDKit::ROMol& mol);
+	   std::vector<double> GetUn(int numAtoms);
+	   int GetPrincipalQuantumNumber(int AtomicNum);
+	   std::vector<double> GetIState(const  RDKit::ROMol& mol);
+
+
 };
 #endif 
 
