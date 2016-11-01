@@ -1720,6 +1720,56 @@ void testGithub1090() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1035() {
+  std::cout << " ----------------- Testing github 1035: overflow bug in SVG "
+               "color generation"
+            << std::endl;
+
+  std::string smiles = "CCOC";  // made up
+  RWMol *m1 = SmilesToMol(smiles);
+  TEST_ASSERT(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  std::vector<int> highlights;
+  highlights.push_back(0);
+  highlights.push_back(1);
+  {
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawOptions().highlightColour = DrawColour(1.1, .5, .5);
+    bool ok = false;
+    try {
+      drawer.drawMolecule(*m1, &highlights);
+    } catch (const ValueErrorException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawOptions().highlightColour = DrawColour(.1, -.5, .5);
+    bool ok = false;
+    try {
+      drawer.drawMolecule(*m1, &highlights);
+    } catch (const ValueErrorException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    MolDraw2DSVG drawer(250, 200);
+    drawer.drawOptions().highlightColour = DrawColour(1., .5, 1.5);
+    bool ok = false;
+    try {
+      drawer.drawMolecule(*m1, &highlights);
+    } catch (const ValueErrorException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  delete m1;
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1749,4 +1799,5 @@ int main() {
 #endif
   test13JSONConfig();
   testGithub1090();
+  testGithub1035();
 }
