@@ -65,24 +65,32 @@ namespace {
 
 MolData3Ddescriptors moldata3D;
 
-  double* retreiveMat(MatrixXd matrix) {
+double* retreiveMat(MatrixXd matrix) {
      double* arrayd = matrix.data();
      return arrayd;
   }
 
-  double* retreiveVect(VectorXd matrix) {
+double* retreiveVect(VectorXd matrix) {
      double* arrayd = matrix.data();
      return arrayd;
 
   }
 
-  VectorXd getEigenVect(std::vector<double> v){
-      
+VectorXd getEigenVect(std::vector<double> v){
+
       double* varray_ptr = &v[0];
       Map<VectorXd> V(varray_ptr,v.size());
       return V;
   }
 
+
+double* AppendDouble(double *w, double* Append, int length, int pos){
+    for (int i=pos;i<pos+length;i++) {
+          w[i]=Append[i-pos];
+        }
+
+    return w;
+}
 
 
 double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
@@ -97,11 +105,11 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 }
 
 
-  double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, const ROMol& mol) {
+double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, const ROMol& mol) {
 
    Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
 
-   double *w= new double[1];
+   double *w= new double[80];
 
    std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
@@ -137,61 +145,84 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 
  
    MatrixXd Bi;
-   VectorXd tmp;
-  for (int i=1;i<11;i++){
-    double * Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+   MatrixXd tmp;
+   double TDBmat[8][10];
+   double dtmp;
+
+  for (int i=0;i<10;i++){
+    double * Bimat = GetGeodesicMatrix(dist, i+1, numAtoms);
     Map<MatrixXd> Bi(Bimat, numAtoms,numAtoms);
     MatrixXd RBi=Bi.cwiseProduct(dm);
     double Bicount=(double) Bi.sum();
 
-
     tmp=Wu.transpose() * RBi * Wu / Bicount;
-
-    std::cout << "TDBu" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[0][i]=dtmp;
 
     tmp=Wm.transpose() * RBi * Wm / Bicount;
-
-    std::cout << "TDBm" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[1][i]=dtmp;
 
     tmp=Wv.transpose() * RBi * Wv / Bicount;
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[2][i]=dtmp;
 
-    std::cout << "TDBv" << i << ":"<<  tmp << "\n";
-    
     tmp=We.transpose() * RBi * We / Bicount;
-
-    std::cout << "TDBe" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[3][i]=dtmp;
 
     tmp=Wp.transpose() * RBi * Wp / Bicount;
-
-    std::cout << "TDBp" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[4][i]=dtmp;
 
     tmp=Wi.transpose() * RBi * Wi / Bicount;
-
-    std::cout << "TDBi" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[5][i]=dtmp;
 
     tmp=Ws.transpose() * RBi * Ws / Bicount;
-
-    std::cout << "TDBs" << i << ":"<<  tmp << "\n";
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[6][i]=dtmp;
 
     tmp=Wr.transpose() * RBi * Wr / Bicount;
+    dtmp=(double)tmp(0);
+    if  (std::isnan(dtmp)) dtmp=0;
+    TDBmat[7][i]=dtmp;
 
-    std::cout << "TDBr" << i << ":"<<  tmp << "\n";
-
-    //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
-    //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
   }
+    w= AppendDouble(w, TDBmat[0], 10, 0);
+    w= AppendDouble(w, TDBmat[1], 10, 10);
+    w= AppendDouble(w, TDBmat[2], 10, 20);
+    w= AppendDouble(w, TDBmat[3], 10, 30);
+    w= AppendDouble(w, TDBmat[4], 10, 40);
+    w= AppendDouble(w, TDBmat[5], 10, 50);
+    w= AppendDouble(w, TDBmat[6], 10, 60);
+    w= AppendDouble(w, TDBmat[7], 10, 70);
 
     return w;
 
-  }
-
+}
 
   double* Get3Dauto(double* dist3D,double* dist, int numAtoms, const ROMol& mol){
 
+      std::vector<std::string> AUTOCORRNAMES={"TDB01u","TDB02u","TDB03u","TDB04u","TDB05u","TDB06u","TDB07u","TDB08u","TDB09u","TDB10u","TDB01m","TDB02m","TDB03m","TDB04m","TDB05m","TDB06m","TDB07m","TDB08m","TDB09m","TDB10m","TDB01v","TDB02v","TDB03v","TDB04v","TDB05v","TDB06v","TDB07v","TDB08v","TDB09v","TDB10v","TDB01e","TDB02e","TDB03e","TDB04e","TDB05e","TDB06e","TDB07e","TDB08e","TDB09e","TDB10e","TDB01p","TDB02p","TDB03p","TDB04p","TDB05p","TDB06p","TDB07p","TDB08p","TDB09p","TDB10p","TDB01i","TDB02i","TDB03i","TDB04i","TDB05i","TDB06i","TDB07i","TDB08i","TDB09i","TDB10i","TDB01s","TDB02s","TDB03s","TDB04s","TDB05s","TDB06s","TDB07s","TDB08s","TDB09s","TDB10s","TDB01r","TDB02r","TDB03r","TDB04r","TDB05r","TDB06r","TDB07r","TDB08r","TDB09r","TDB10r"};
 
-      double *w1= get3DautocorrelationDesc(dist3D,dist, numAtoms, mol);
+      double *res= new double[80];
 
-      return w1;
+      res= get3DautocorrelationDesc(dist3D,dist, numAtoms, mol);
+
+      for (int i=0;i<80;i++) {
+        std::cout << AUTOCORRNAMES[i] << ":" << res[i] << ",";
+
+      }
+
+      return res;
   }
 
 } //end of anonymous namespace
