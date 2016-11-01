@@ -37,6 +37,8 @@ unsigned int getHeavyDegree(const RDKit::Atom *atom) {
     if (atom->getOwningMol()[*nbrIdx]->getAtomicNum() != 1) ++res;
     ++nbrIdx;
   }
+  // special case: only explicit H attachments
+  if (res == 0 && atom->getAtomicNum() == 1) res = atom->getDegree();
   return res;
 }
 }  // end of anonymous namespace
