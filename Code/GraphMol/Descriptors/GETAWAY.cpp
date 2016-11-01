@@ -248,19 +248,14 @@ int*  GetHeavyList(const ROMol& mol){
   }
 }
 
-/*
-double GetRCON(MatrixXd H, MatrixXd DM, int numAtoms){
 
-    for (int i=0;i<numAtoms-1;i++) {
-      for (int j=i+1;j<numAtoms;j++){
-          R(i,j)=sqrt(H(i,i)*H(j,j)) / DM(i,j) ;
+double* AppendDouble(double *w, double* Append, int length, int pos){
+    for (int i=pos;i<pos+length;i++) {
+          w[i]=Append[i-pos];
+        }
 
-      }
-    }
-
-    return R;
+    return w;
 }
-*/
 
 
 
@@ -310,6 +305,37 @@ double getRCON(MatrixXd R, MatrixXd Adj,int numAtoms){
 }
 
 
+double getHATS(double W1, double W2, double H1, double H2){
+    return W1*H1*W2*H2;
+
+}
+
+double getH(double W1, double W2, double H){
+    return W1*H*W2;
+
+}
+
+double getHtotal(double * Hk){
+
+  return Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
+
+}
+
+double getRtotal(double * Rk){
+
+  return 2*(Rk[0]+Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]);
+
+}
+
+
+double getMax(double * Rk){
+ double RTp=0;
+ for (int j=0;j<8;j++){
+  if (Rk[j]>RTp) RTp=Rk[j];
+ }
+ return RTp;
+
+}
 
 
 
@@ -324,7 +350,7 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 
 double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist,const ROMol& mol) {
 
-    double *w = new double[1];
+    double *w = new double[273];
     // prepare data for Whim parameter computation
     // compute parameters
 
@@ -345,22 +371,24 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
     for (int j=0;j<Clus.size();j++){
       ITH -= Clus[j]*log(Clus[j])/log(2);
     }
-
+    w[0]=ITH;
     double ISH=ITH/ITH0;
+    w[1]=ISH;
 
-    w[0]=1.0;
+    double HIC=0.0;
+    for (int i=0;i<numAtoms;i++) {
+      HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
+    }
+    w[2]=HIC;
+
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
       std::cout << H(i,i) << ",";
       HGM=HGM*H(i,i);
     }
-
     HGM=100.0*pow(HGM,1.0/numAtoms);
+    w[3]=HGM;
 
-    double HIC=0.0;
-   for (int i=0;i<numAtoms;i++) {
-      HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
-    }
 
     double RARS=R.rowwise().sum().sum()/numAtoms;
 
@@ -370,35 +398,25 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
     double rcon= getRCON(R,  Adj, numAtoms);
 
-    std::cout <<  "ISH:"<< ISH << "| ITH:"<< ITH <<  " |HGM:"<< HGM << "| HIC:"<< HIC <<"| RARS:"<< RARS << "| REIG:"<< EIG(0) << "| RCON:"<< rcon <<"\n";
-
+ 
 
    std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
    VectorXd Wp = getEigenVect(wp);
 
-
    std::vector<double> wm= moldata3D.GetRelativeMW(mol);
-
-   //std::vector<double>  wm = GetRelativeMW(mol);
-
-
 
    VectorXd Wm = getEigenVect(wm);
 
    std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
-   //std::vector<double>  wi = GetRelativeIonPol(mol);
 
    VectorXd Wi = getEigenVect(wi);
 
    std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
-   //std::vector<double>  wv = GetRelativeVdW(mol);
 
    VectorXd Wv = getEigenVect(wv);
    
    std::vector<double> we= moldata3D.GetRelativeENeg(mol);
-
-   //std::vector<double>  we = GetRelativeENeg(mol);
 
    VectorXd We = getEigenVect(we);
 
@@ -410,164 +428,338 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
 
    VectorXd Ws = getEigenVect(ws);
 
-   std::vector<double> wr= moldata3D.GetRelativeRcov(mol);
 
-   //std::vector<double>  wr = GetRelativeRcov(mol);
-
-   VectorXd Wr = getEigenVect(wr);
-
-
-// HATS definition is  (hi*wi) * (hj*wj) using topological distance
-// H (0,k) definition is hij*wj*wi using topological distance
-// HT = H0+ 2*sum(Hk)
-// R like H
-// RT like HT
 
   MatrixXd Bi;
-  MatrixXd tmp;
   MatrixXd RBw;
-  double HATS,Rkmax;
-  double * HATSk= new double[9];
-  double H0,R0;
-  double * Hk= new double[9];
-  double * Rk= new double[8];
-  double * Rp= new double[8];
+  double HATSu,HATSm,HATSv,HATSe,HATSp,HATSi,HATSs;
+  double H0u,H0m,H0v,H0e,H0p,H0i,H0s;
+  double R0u,R0m,R0v,R0e,R0p,R0i,R0s;
+  double Rkmaxu,Rkmaxm,Rkmaxv,Rkmaxe,Rkmaxp,Rkmaxi,Rkmaxs;
+  double tmpu,tmpm,tmpv,tmpe,tmpp,tmpi,tmps;
+  double HATSk[7][9];
+  double Hk[7][9];
+  double Rk[7][8];
+  double Rp[7][8];
   
 
    double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
-
-
 
   for (int i=0;i<9;i++){
     if (i==0) {
       Bi = H.diagonal().asDiagonal();
     }
-    
       double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
       Map<MatrixXd> Bj(Bimat, numAtoms,numAtoms);
 
 
 
-  HATS =0.0;
-  H0=0.0;
-if (i==0) {
-    for (int j=0;j<numAtoms;j++){
-      for (int k=j;k<numAtoms;k++){
-        if (Bi(j,k)>0){
-              HATS+=(Wu(j)*Wu(j)*H(j,j)*H(j,j));
-              if (H(j,k)>0)
-              H0+=Wu(j)*Wu(k)*H(j,k);
+      HATSu =0.0;
+      HATSm =0.0;
+      HATSv =0.0;
+      HATSe =0.0;
+      HATSp =0.0;
+      HATSi =0.0;
+      HATSs =0.0;
+      
+      H0u=0.0;
+      H0m=0.0;
+      H0v=0.0;
+      H0e=0.0;
+      H0p=0.0;
+      H0i=0.0;
+      H0s=0.0;
+
+      if (i==0) {
+          for (int j=0;j<numAtoms;j++){
+            for (int k=j;k<numAtoms;k++){
+              if (Bi(j,k)>0){
+                    HATSu+=getHATS((double)Wu(j), (double)Wu(j), (double)H(j,j), (double)H(j,j));
+                    HATSm+=getHATS((double)Wm(j), (double)Wm(j), (double)H(j,j), (double)H(j,j));
+                    HATSv+=getHATS((double)Wv(j), (double)Wv(j), (double)H(j,j), (double)H(j,j));
+                    HATSe+=getHATS((double)We(j), (double)We(j), (double)H(j,j), (double)H(j,j));
+                    HATSp+=getHATS((double)Wp(j), (double)Wp(j), (double)H(j,j), (double)H(j,j));
+                    HATSi+=getHATS((double)Wi(j), (double)Wi(j), (double)H(j,j), (double)H(j,j));
+                    HATSs+=getHATS((double)Ws(j), (double)Ws(j), (double)H(j,j), (double)H(j,j));
+
+                    if (H(j,k)>0) { 
+                        H0u+=getH((double)Wu(j), (double)Wu(k), (double)H(j,k));
+                        H0m+=getH((double)Wm(j), (double)Wm(k), (double)H(j,k));
+                        H0v+=getH((double)Wv(j), (double)Wv(k), (double)H(j,k));
+                        H0e+=getH((double)We(j), (double)We(k), (double)H(j,k));
+                        H0p+=getH((double)Wp(j), (double)Wp(k), (double)H(j,k));
+                        H0i+=getH((double)Wi(j), (double)Wi(k), (double)H(j,k));
+                        H0s+=getH((double)Ws(j), (double)Ws(k), (double)H(j,k));
+                    }
+              }
+            }
+          }
+        }
+
+
+      if (i>0) {
+          for (int j=0;j<numAtoms;j++){
+            for (int k=j;k<numAtoms;k++){
+              if (Bj(j,k)==1){
+                    HATSu+=getHATS((double)Wu(j), (double)Wu(k), (double)H(j,j), (double)H(k,k));
+                    HATSm+=getHATS((double)Wm(j), (double)Wm(k), (double)H(j,j), (double)H(k,k));
+                    HATSv+=getHATS((double)Wv(j), (double)Wv(k), (double)H(j,j), (double)H(k,k));
+                    HATSe+=getHATS((double)We(j), (double)We(k), (double)H(j,j), (double)H(k,k));
+                    HATSp+=getHATS((double)Wp(j), (double)Wp(k), (double)H(j,j), (double)H(k,k));
+                    HATSi+=getHATS((double)Wi(j), (double)Wi(k), (double)H(j,j), (double)H(k,k));
+                    HATSs+=getHATS((double)Ws(j), (double)Ws(k), (double)H(j,j), (double)H(k,k));
+
+
+
+                  if (H(j,k)>0) {
+                        H0u+=getH((double)Wu(j), (double)Wu(k), (double)H(j,k));
+                        H0m+=getH((double)Wm(j), (double)Wm(k), (double)H(j,k));
+                        H0v+=getH((double)Wv(j), (double)Wv(k), (double)H(j,k));
+                        H0e+=getH((double)We(j), (double)We(k), (double)H(j,k));
+                        H0p+=getH((double)Wp(j), (double)Wp(k), (double)H(j,k));
+                        H0i+=getH((double)Wi(j), (double)Wi(k), (double)H(j,k));
+                        H0s+=getH((double)Ws(j), (double)Ws(k), (double)H(j,k));
+                  }
+              }
+            }
+          }
+        }
+
+
+        HATSk[0][i]=HATSu;
+        HATSk[1][i]=HATSm;
+        HATSk[2][i]=HATSv;
+        HATSk[3][i]=HATSe;
+        HATSk[4][i]=HATSp;
+        HATSk[5][i]=HATSi;
+        HATSk[6][i]=HATSs;
+
+        Hk[0][i]=H0u;
+        Hk[1][i]=H0m;
+        Hk[2][i]=H0v;
+        Hk[3][i]=H0e;
+        Hk[4][i]=H0p;
+        Hk[5][i]=H0i;
+        Hk[6][i]=H0s;
+
+        R0u=0.0;
+        R0m=0.0;
+        R0v=0.0;
+        R0e=0.0;
+        R0p=0.0;
+        R0i=0.0;
+        R0s=0.0;
+
+        Rkmaxu=0;
+        Rkmaxm=0;
+        Rkmaxv=0;
+        Rkmaxe=0;
+        Rkmaxp=0;
+        Rkmaxi=0;
+        Rkmaxs=0;
+
+       if (i>0) {
+       for (int j=0;j<numAtoms-1;j++){
+            for (int k=j+1;k<numAtoms;k++){
+              if (Bj(j,k)==1){
+                  tmpu = getH((double)Wu(j), (double)Wu(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmpm = getH((double)Wm(j), (double)Wm(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmpv = getH((double)Wv(j), (double)Wv(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmpe = getH((double)We(j), (double)We(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmpp = getH((double)Wp(j), (double)Wp(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmpi = getH((double)Wi(j), (double)Wi(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  tmps = getH((double)Ws(j), (double)Ws(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  R0u+=tmpu;
+                  R0m+=tmpm;
+                  R0v+=tmpv;
+                  R0e+=tmpe;
+                  R0p+=tmpp;
+                  R0i+=tmpi;
+                  R0s+=tmps;
+                  if (tmpu>Rkmaxu) {
+                    Rkmaxu=tmpu;
+                  }
+                  if (tmpm>Rkmaxm) {
+                    Rkmaxm=tmpm;
+                  }
+                  if (tmpv>Rkmaxv) {
+                    Rkmaxv=tmpv;
+                  }
+                  if (tmpe>Rkmaxe) {
+                    Rkmaxe=tmpe;
+                  }
+                  if (tmpp>Rkmaxp) {
+                    Rkmaxp=tmpp;
+                  }
+                  if (tmpi>Rkmaxi) {
+                    Rkmaxi=tmpi;
+                  }
+                  if (tmps>Rkmaxs) {
+                    Rkmaxs=tmps;
+                  }
+
+
+
+              }
+            }
+          }
+          Rk[0][i-1]=R0u;
+          Rk[1][i-1]=R0m;
+          Rk[2][i-1]=R0v;
+          Rk[3][i-1]=R0e;
+          Rk[4][i-1]=R0p;
+          Rk[5][i-1]=R0i;
+          Rk[6][i-1]=R0s;
+
+          Rp[0][i-1]=Rkmaxu;
+          Rp[1][i-1]=Rkmaxm;
+          Rp[2][i-1]=Rkmaxv;
+          Rp[3][i-1]=Rkmaxe;
+          Rp[4][i-1]=Rkmaxp;
+          Rp[5][i-1]=Rkmaxi;
+          Rp[6][i-1]=Rkmaxs;
 
         }
-      }
-    }
   }
 
+  //HATSk[0]+2*(HATSk[1]+HATSk[2]+HATSk[3]+HATSk[4]+HATSk[5]+HATSk[6]+HATSk[7]+HATSk[8]);
+  double HATSTu =   getHtotal(HATSk[0]);
+  double HATSTm =   getHtotal(HATSk[1]);
+  double HATSTv =   getHtotal(HATSk[2]);
+  double HATSTe =   getHtotal(HATSk[3]);
+  double HATSTp =   getHtotal(HATSk[4]);
+  double HATSTi =   getHtotal(HATSk[5]);
+  double HATSTs =   getHtotal(HATSk[6]);
 
-if (i>0) {
-    for (int j=0;j<numAtoms;j++){
-      for (int k=j;k<numAtoms;k++){
-        if (Bj(j,k)==1){
-            HATS+=Wu(j)*H(j,j)*Wu(k)*H(k,k);
-            if (H(j,k)>0)
-              H0+=Wu(j)*Wu(k)*H(j,k);
-        }
-      }
-    }
-  }
-  HATSk[i]=HATS;
-  Hk[i]=H0;
+  //std::cout << "HATStotla:"<<  HATST << "\n";
 
-  R0=0.0;
-  Rkmax=0;
+  // Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
+  double HTu = getHtotal(Hk[0]);
+  double HTm = getHtotal(Hk[1]);
+  double HTv = getHtotal(Hk[2]);
+  double HTe = getHtotal(Hk[3]);
+  double HTp = getHtotal(Hk[4]);
+  double HTi = getHtotal(Hk[5]);
+  double HTs = getHtotal(Hk[6]);
 
- if (i>0) {
- for (int j=0;j<numAtoms-1;j++){
-      for (int k=j+1;k<numAtoms;k++){
-        if (Bj(j,k)==1){
-            //std::cout << R(j,k) << ",";
-            R0+=R(j,k)*Wu(k)*Wu(j);
-            if (R(j,k)*Wu(k)*Wu(j)>Rkmax) Rkmax=R(j,k)*Wu(k)*Wu(j);
-        }
-      }
-    }
-    Rk[i]=R0;
-    Rp[i]=Rkmax;
-  }
+  //std::cout << "Htotla:"<<  HT << "\n";
+  //
+  //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
+  double RTu = getRtotal(Rk[0]);
+  double RTm = getRtotal(Rk[1]);
+  double RTv = getRtotal(Rk[2]);
+  double RTe = getRtotal(Rk[3]);
+  double RTp = getRtotal(Rk[4]);
+  double RTi = getRtotal(Rk[5]);
+  double RTs = getRtotal(Rk[6]);
 
-
-    std::cout << "HATSu" << i << ":"<<  HATS << "\n";
-    std::cout << "Hu" << i << ":"<<  H0 << "\n";
-    if (i>0){
-
-    std::cout << "Ru" << i << ":"<<  R0 << "\n";
-    std::cout << "R+" << i << ":"<<  Rkmax << "\n";
-
-    }
-
-/*    RBw = GetRowwiseProdMatVect(Bi,  Wm, numAtoms);
-    tmp=RBw.transpose() * RBw;
-
-    std::cout << "HATSm" << i << ":"<<  tmp << "\n";
-
-    RBw = GetRowwiseProdMatVect(Bi,  Wv, numAtoms);
-    tmp=RBw.transpose() * RBw;
-
-    std::cout << "HATSv" << i << ":"<<  tmp << "\n";
-
-    RBw = GetRowwiseProdMatVect(Bi,  We, numAtoms);
-    tmp=RBw.transpose() * RBw;
-
-    std::cout << "HATSe" << i << ":"<<  tmp << "\n";
-
-    RBw = GetRowwiseProdMatVect(Bi,  We, numAtoms);
-    tmp=RBw.transpose() * RBw;
-
-    std::cout << "HATSp" << i << ":"<<  tmp << "\n";
-
-    RBw = GetRowwiseProdMatVect(Bi,  Wi, numAtoms);
-    tmp=RBw.transpose() * RBw;
-
-    std::cout << "HATSi" << i << ":"<<  tmp << "\n";
+   // std::cout << "Rtotla:"<<  RT << "\n";
 
 
-    RBw = GetRowwiseProdMatVect(Bi,  Ws, numAtoms);
-    tmp=RBw.transpose() * RBw;
+ double RTMu=getMax(Rp[0]);
+ double RTMm=getMax(Rp[1]);
+ double RTMv=getMax(Rp[2]);
+ double RTMe=getMax(Rp[3]);
+ double RTMp=getMax(Rp[4]);
+ double RTMi=getMax(Rp[5]);
+ double RTMs=getMax(Rp[6]);
 
-    std::cout << "HATSs" << i << ":"<<  tmp << "\n";
 
-    RBw = GetRowwiseProdMatVect(Bi,  Wr, numAtoms);
-    tmp=RBw.transpose() * RBw;
+ w= AppendDouble(w, Hk[0], 9, 4);
+ w[13]=HTu;
+
+ w= AppendDouble(w, HATSk[0], 9, 14);
+ w[23]=HATSTu;
+
+ w= AppendDouble(w, Hk[1], 9, 24);
+ w[33]=HTm;
+
+ w= AppendDouble(w, HATSk[1], 9, 34);
+ w[43]=HATSTm;
+
+ w= AppendDouble(w, Hk[2], 9, 44);
+ w[53]=HTv;
+
+ w= AppendDouble(w, HATSk[2], 9, 54);
+ w[63]=HATSTv;
+
+ w= AppendDouble(w, Hk[3], 9, 64);
+ w[73]=HTe;
+
+ w= AppendDouble(w, HATSk[3], 9, 74);
+ w[83]=HATSTe;
+
+ w= AppendDouble(w, Hk[4], 9, 84);
+ w[93]=HTp;
+
+ w= AppendDouble(w, HATSk[4], 9, 94);
+ w[103]=HATSTp;
+
+ w= AppendDouble(w, Hk[5], 9, 104);
+ w[113]=HTi;
+
+ w= AppendDouble(w, HATSk[5], 9, 114);
+ w[123]=HATSTi;
+
+ w= AppendDouble(w, Hk[6], 9, 124); // not the same as in Dragon
+ w[133]=HTs;
+
+ w= AppendDouble(w, HATSk[6], 9, 134); // not the same as in Dragon
+ w[143]=HATSTs;
+
+ w[144]=rcon;  // this is not the same as in Dragon
+ w[145]=RARS;
+ w[146]=EIG(0);
+
+ w= AppendDouble(w, Rk[0], 8, 147);
+ w[155]=RTu;
+
+ w= AppendDouble(w, Rp[0], 8, 156);
+ w[164]=RTMu; 
+
+ w= AppendDouble(w, Rk[1], 8, 165);
+ w[173]=RTm;
+
+ w= AppendDouble(w, Rp[1], 8, 174);
+ w[182]=RTMm; 
+
+ w= AppendDouble(w, Rk[2], 8, 183);
+ w[191]=RTv;
+
+ w= AppendDouble(w, Rp[2], 8, 192);
+ w[200]=RTMv; 
+
+ w= AppendDouble(w, Rk[3], 8, 201);
+ w[209]=RTe;
+
+ w= AppendDouble(w, Rp[3], 8, 210);
+ w[218]=RTMe; 
+
+ w= AppendDouble(w, Rk[4], 8, 219);
+ w[227]=RTp;
+
+ w= AppendDouble(w, Rp[4], 8, 228);
+ w[236]=RTMp; 
+
+ w= AppendDouble(w, Rk[5], 8, 237);
+ w[245]=RTi;
+
+ w= AppendDouble(w, Rp[5], 8, 246);
+ w[254]=RTMi; 
+
+ w= AppendDouble(w, Rk[6], 8, 255); // wrong vs Dragon
+ w[263]=RTs;// wrong vs Dragon
+
+ w= AppendDouble(w, Rp[6], 8, 264);// wrong vs Dragon
+ w[272]=RTMs;// wrong vs Dragon
 
 
-    std::cout << "HATSr" << i << ":"<<  tmp << "\n";
-    */
-  }
-    //double tbd2= getTDB(i,numAtoms, wp,  dist, dist3D);
-    //std::cout << "loopTDBp" << i << ":"<< tbd2<< "\n";
-  
-
-  double HATST = HATSk[0]+2*(HATSk[1]+HATSk[2]+HATSk[3]+HATSk[4]+HATSk[5]+HATSk[6]+HATSk[7]+HATSk[8]);
-    std::cout << "HATStotla:"<<  HATST << "\n";
-
-  double HT = Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
-    std::cout << "Htotla:"<<  HT << "\n";
-
-  double RT = 2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
-    std::cout << "Rtotla:"<<  RT << "\n";
-
- double RTp=0;
- for (int j=1;j<9;j++){
-  if (RTp<Rp[j]) RTp=Rp[j];
+ for (int i=0;i<=272;i++){
+  std:cout << i << ":"<<w[i] << "\n";
  }
-
-    std::cout << "RT+" <<  RTp << "\n";
 
 
   return w;
-
-
-
 }
 
 
@@ -587,9 +779,6 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
     MatrixXd H = GetHmatrix(Xmean);
 
     MatrixXd R = GetRmatrix(H, DM, numAtoms);
-    std::cout << "H:" << H << "\n";
-    std::cout << "R" << R << "\n";
-    std::cout <<  "\n";
 
     w= getGetawayDesc(H,R, ADJ, numAtoms, Heavylist, mol);
 
@@ -603,24 +792,23 @@ double* GETAWAY(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
-
   const Conformer &conf = mol.getConformer(confId);
 
   double Vpoints[3*numAtoms];
 
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
+
   double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
-  
+
   double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
   Map<MatrixXd> adj(AdjMat, numAtoms,numAtoms);
 
   std::cout << adj << "\n";
-  
+
   int* Heavylist= GetHeavyList(mol);
   int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
 
-  
   Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
 
   Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
@@ -634,8 +822,7 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   double *res= new double[1];
 
-
-  double* wus= GetGETAWAY(conf, Vpoints, dm,adj, Heavylist);
+  double* wus= GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
 
   return res;
 }
