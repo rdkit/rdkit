@@ -54,6 +54,11 @@
 %include <DistGeom/DistGeomUtils.h>
 %include <DistGeom/TriangleSmooth.h>
 
+
+%ignore RDKit::DGeomHelpers::EmbedMolecule;
+%ignore RDKit::DGeomHelpers::EmbedMultipleConfs;
+%include <GraphMol/DistGeomHelpers/Embedder.h>
+
 // A class to hang special distance geometry methods on.
 %inline {
   namespace DistGeom {
@@ -92,6 +97,10 @@
           basinThresh);
       }
 
+      static int EmbedMolecule(RDKit::ROMol &mol,const RDKit::DGeomHelpers::EmbedParameters &params) {
+        return RDKit::DGeomHelpers::EmbedMolecule(mol,params);
+      }
+
       static RDKit::INT_VECT EmbedMultipleConfs(RDKit::ROMol &mol,
         unsigned int numConfs=10,
         unsigned int maxIterations=30,
@@ -123,6 +132,11 @@
           useBasicKnowledge,
           verbose,
           basinThresh);
+      }
+      static RDKit::INT_VECT EmbedMultipleConfs(RDKit::ROMol &mol,
+                                                unsigned int numConfs,
+                                                const RDKit::DGeomHelpers::EmbedParameters &params) {
+        return RDKit::DGeomHelpers::EmbedMultipleConfs(mol, numConfs, params);
       }
 
       static void SetTopolBounds(RDKit::ROMol &mol,
