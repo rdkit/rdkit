@@ -766,7 +766,7 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
 } //end of anonymous namespace
 
 
-double* GETAWAY(const ROMol& mol,int confId){
+std::vector<double> GETAWAY(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
@@ -800,7 +800,13 @@ double* GETAWAY(const ROMol& mol,int confId){
 
   res = GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
 
-  return res;
+  std::vector<double> dataVec;
+  for (int i=0;i<273;i++){
+    dataVec.push_back(res[i]);
+  }
+
+
+  return dataVec;
 }
 
 

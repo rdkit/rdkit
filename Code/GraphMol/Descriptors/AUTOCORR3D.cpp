@@ -52,6 +52,8 @@
 #include <Eigen/Core>
 #include <Eigen/QR>
 
+
+
 using namespace Eigen;
 namespace RDKit {
 namespace Descriptors{
@@ -152,42 +154,42 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, con
 
     tmp=Wu.transpose() * RBi * Wu / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[0][i]=dtmp;
 
     tmp=Wm.transpose() * RBi * Wm / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[1][i]=dtmp;
 
     tmp=Wv.transpose() * RBi * Wv / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[2][i]=dtmp;
 
     tmp=We.transpose() * RBi * We / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[3][i]=dtmp;
 
     tmp=Wp.transpose() * RBi * Wp / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[4][i]=dtmp;
 
     tmp=Wi.transpose() * RBi * Wi / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[5][i]=dtmp;
 
     tmp=Ws.transpose() * RBi * Ws / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[6][i]=dtmp;
 
     tmp=Wr.transpose() * RBi * Wr / Bicount;
     dtmp=(double)tmp(0);
-    if  (std::isnan(dtmp)) dtmp=0;
+    if  (std::isnan(dtmp)) dtmp=0.0;
     TDBmat[7][i]=dtmp;
 
   }
@@ -217,7 +219,7 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, con
 } //end of anonymous namespace
 
 
-double* AUTOCORR3D(const ROMol& mol,int confId){
+std::vector<double> AUTOCORR3D(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
@@ -225,10 +227,15 @@ double* AUTOCORR3D(const ROMol& mol,int confId){
 
   double *dist = MolOps::getDistanceMat(mol, false);
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
+  double *wpol= Get3Dauto(dist3D, dist, numAtoms, mol);
 
-  double* wpol= Get3Dauto(dist3D,dist, numAtoms, mol);
+  std::vector<double> dataVec;
+  for (int i=0;i<80;i++){
+    dataVec.push_back(wpol[i]);
+  }
 
-  return wpol;
+
+  return dataVec;
 }
 
 } // end of Descriptors namespace

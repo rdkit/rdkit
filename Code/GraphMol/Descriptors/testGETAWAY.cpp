@@ -38,7 +38,7 @@ void testGETAWAY() {
     std::string nm;
     m->getProp("_Name",nm);
 
-    double* dgetaway;
+    std::vector<double> dgetaway;
     dgetaway = RDKit::Descriptors::GETAWAY(*m, -1);
 
     for (int j=0;j<273;j++) {

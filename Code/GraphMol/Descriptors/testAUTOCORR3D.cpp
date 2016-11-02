@@ -39,15 +39,17 @@ void testautocorrelation() {
     m->getProp("_Name",nm);
 
 
-    double* dwhim;
+    std::vector<double> dwhim;
 //for (int i=1;i<11;i++) {
  // std::cout << "i:" << 0.005*i << "\n";
     dwhim = RDKit::Descriptors::AUTOCORR3D(*m, -1);
-   /* for (int j=0;j<114;j++) {
+
+
+    for (int j=0;j<80;j++) {
       std::cout << dwhim[j] << ",";
      }
     std::cout << "\n";
-*/
+
 //}
 
        

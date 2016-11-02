@@ -39,7 +39,7 @@ void testWHIM1() {
     m->getProp("_Name",nm);
 
 
-    double* dwhim;
+    std::vector<double> dwhim;
 //for (int i=1;i<11;i++) {
  // std::cout << "i:" << 0.005*i << "\n";
     dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
@@ -97,7 +97,7 @@ void testWHIM() {
     std::string nm;
     m->getProp("_Name",nm);
 
-    double* dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
+    std::vector<double> dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
