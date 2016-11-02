@@ -83,7 +83,7 @@ VectorXd getEigenVect(std::vector<double> v){
 }
 
 
-// code from web 
+// need to clean that code to have always the same output which is not the case
 std::vector<double>  clusterArray(std::vector<double> data) {
     std::vector<double> Store;
 
@@ -133,10 +133,10 @@ MatrixXd GetPinv(MatrixXd A){
     VectorXd vs=svd.singularValues();
     VectorXd vsinv=svd.singularValues();
 
-    for ( long i=0; i<A.cols(); ++i) {
+    for (unsigned int i=0; i<A.cols(); ++i) {
         if ( vs(i) > pinvtoler )
            vsinv(i)=1.0/vs(i);
-       else vsinv(i)=0;
+       else vsinv(i)=0.0;
     }
 
     MatrixXd S =  vsinv.asDiagonal();
@@ -146,17 +146,13 @@ MatrixXd GetPinv(MatrixXd A){
 
 
 MatrixXd GetCenterMatrix(MatrixXd Mat){
-
     VectorXd v = Mat.colwise().mean();
-
     MatrixXd X=Mat.rowwise() - v.transpose();
-
     return X;
 }
 
 
 MatrixXd GetHmatrix(MatrixXd X){
-
     MatrixXd  Weigthed = X.transpose()*X;
     return X * GetPinv(Weigthed) * X.transpose();
 }
@@ -178,9 +174,7 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
 
 int*  GetHeavyList(const ROMol& mol){
   int numAtoms= mol.getNumAtoms();
-
   int* HeavyList = new int[numAtoms];
-
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
@@ -240,7 +234,6 @@ double getRtotal(double * Rk){
 
 }
 
-
 double getMax(double * Rk){
  double RTp=0;
  for (int j=0;j<8;j++){
@@ -286,6 +279,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
       ITH -= Clus[j]*log(Clus[j])/log(2);
     }
     res.push_back(ITH);
+
     double ISH=ITH/ITH0;
     res.push_back(ISH);
 
@@ -295,6 +289,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     }
     res.push_back(HIC);
 
+    // hardcoded the number of dimension ... need to find a method to compute it in all case
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
       HGM=HGM*H(i,i);
@@ -309,10 +304,9 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     VectorXd EIG = svd.singularValues();
 
-    double rcon= getRCON(R,  Adj, numAtoms);
+   double rcon= getRCON(R,  Adj, numAtoms);
 
- 
-
+// get the Weigthed vectors
    std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
    VectorXd Wp = getEigenVect(wp);
@@ -340,7 +334,6 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
    std::vector<double>  ws =  moldata3D.GetIState(mol);
 
    VectorXd Ws = getEigenVect(ws);
-
 
 
   MatrixXd Bi;
@@ -383,7 +376,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
       H0i=0.0;
       H0s=0.0;
 
-      if (i==0) {
+      if (i==0) { // use Bi
           for (int j=0;j<numAtoms;j++){
             for (int k=j;k<numAtoms;k++){
               if (Bi(j,k)>0){
@@ -410,7 +403,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
         }
 
 
-      if (i>0) {
+      if (i>0) { // use Bj
           for (int j=0;j<numAtoms;j++){
             for (int k=j;k<numAtoms;k++){
               if (Bj(j,k)==1){
@@ -510,9 +503,6 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
                   if (tmps>Rkmaxs) {
                     Rkmaxs=tmps;
                   }
-
-
-
               }
             }
           }
@@ -536,13 +526,13 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
   }
 
   //HATSk[0]+2*(HATSk[1]+HATSk[2]+HATSk[3]+HATSk[4]+HATSk[5]+HATSk[6]+HATSk[7]+HATSk[8]);
-  double HATSTu =   getHtotal(HATSk[0]);
-  double HATSTm =   getHtotal(HATSk[1]);
-  double HATSTv =   getHtotal(HATSk[2]);
-  double HATSTe =   getHtotal(HATSk[3]);
-  double HATSTp =   getHtotal(HATSk[4]);
-  double HATSTi =   getHtotal(HATSk[5]);
-  double HATSTs =   getHtotal(HATSk[6]);
+  double HATSTu = getHtotal(HATSk[0]);
+  double HATSTm = getHtotal(HATSk[1]);
+  double HATSTv = getHtotal(HATSk[2]);
+  double HATSTe = getHtotal(HATSk[3]);
+  double HATSTp = getHtotal(HATSk[4]);
+  double HATSTi = getHtotal(HATSk[5]);
+  double HATSTs = getHtotal(HATSk[6]);
 
 
   // Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
@@ -565,163 +555,161 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
   double RTs = getRtotal(Rk[6]);
 
 
- double RTMu=getMax(Rp[0]);
- double RTMm=getMax(Rp[1]);
- double RTMv=getMax(Rp[2]);
- double RTMe=getMax(Rp[3]);
- double RTMp=getMax(Rp[4]);
- double RTMi=getMax(Rp[5]);
- double RTMs=getMax(Rp[6]);
+  double RTMu=getMax(Rp[0]);
+  double RTMm=getMax(Rp[1]);
+  double RTMv=getMax(Rp[2]);
+  double RTMe=getMax(Rp[3]);
+  double RTMp=getMax(Rp[4]);
+  double RTMi=getMax(Rp[5]);
+  double RTMs=getMax(Rp[6]);
 
-// create the output vector...
-for (int i=0;i<9;i++){
-  res.push_back(Hk[0][i]);
- }
-res.push_back(HTu);
+  // create the output vector...
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[0][i]);
+   }
+  res.push_back(HTu);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[0][i]);
- }
-res.push_back(HATSTu);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[0][i]);
+   }
+  res.push_back(HATSTu);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[1][i]);
- }
-res.push_back(HTm);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[1][i]);
+   }
+  res.push_back(HTm);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[1][i]);
- }
-res.push_back(HATSTm);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[1][i]);
+   }
+  res.push_back(HATSTm);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[2][i]);
- }
-res.push_back(HTv);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[2][i]);
+   }
+  res.push_back(HTv);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[2][i]);
- }
-res.push_back(HATSTv);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[2][i]);
+   }
+  res.push_back(HATSTv);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[3][i]);
- }
-res.push_back(HTe);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[3][i]);
+   }
+  res.push_back(HTe);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[3][i]);
- }
-res.push_back(HATSTe);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[3][i]);
+   }
+  res.push_back(HATSTe);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[4][i]);
- }
-res.push_back(HTp);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[4][i]);
+   }
+  res.push_back(HTp);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[4][i]);
- }
-res.push_back(HATSTp);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[4][i]);
+   }
+  res.push_back(HATSTp);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[5][i]);
- }
-res.push_back(HTi);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[5][i]);
+   }
+  res.push_back(HTi);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[5][i]);
- }
-res.push_back(HATSTi);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[5][i]);
+   }
+  res.push_back(HATSTi);
 
-for (int i=0;i<9;i++){
-  res.push_back(Hk[6][i]);
- }
-res.push_back(HTs);
+  for (int i=0;i<9;i++){
+    res.push_back(Hk[6][i]);
+   }
+  res.push_back(HTs);
 
-for (int i=0;i<9;i++){
-  res.push_back(HATSk[6][i]);
- }
-res.push_back(HATSTs);
+  for (int i=0;i<9;i++){
+    res.push_back(HATSk[6][i]);
+   }
+  res.push_back(HATSTs);
 
-res.push_back(rcon); // this is not the same as in Dragon
-res.push_back(RARS);
-res.push_back(EIG(0));
+  res.push_back(rcon); // this is not the same as in Dragon
+  res.push_back(RARS);
+  res.push_back(EIG(0));
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[0][i]);
- }
-res.push_back(RTu);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[0][i]);
+   }
+  res.push_back(RTu);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[0][i]);
- }
-res.push_back(RTMu);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[0][i]);
+   }
+  res.push_back(RTMu);
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[1][i]);
- }
-res.push_back(RTm);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[1][i]);
+   }
+  res.push_back(RTm);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[1][i]);
- }
-res.push_back(RTMm);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[1][i]);
+   }
+  res.push_back(RTMm);
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[2][i]);
- }
-res.push_back(RTv);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[2][i]);
+   }
+  res.push_back(RTv);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[2][i]);
- }
-res.push_back(RTMv);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[2][i]);
+   }
+  res.push_back(RTMv);
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[3][i]);
- }
-res.push_back(RTe);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[3][i]);
+   }
+  res.push_back(RTe);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[3][i]);
- }
-res.push_back(RTMe);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[3][i]);
+   }
+  res.push_back(RTMe);
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[4][i]);
- }
-res.push_back(RTp);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[4][i]);
+   }
+  res.push_back(RTp);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[4][i]);
- }
-res.push_back(RTMp);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[4][i]);
+   }
+  res.push_back(RTMp);
 
- for (int i=0;i<8;i++){
-  res.push_back(Rk[5][i]);
- }
-res.push_back(RTi);
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[5][i]);
+   }
+  res.push_back(RTi);
 
-for (int i=0;i<8;i++){
-  res.push_back(Rp[5][i]);
- }
-res.push_back(RTMi);
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[5][i]);
+   }
+  res.push_back(RTMi);
 
-// wrong vs Dragon
- for (int i=0;i<8;i++){
-  res.push_back(Rk[6][i]);
- }
- // wrong vs Dragon
-res.push_back(RTs);
-// wrong vs Dragon
-for (int i=0;i<8;i++){
-  res.push_back(Rp[6][i]);
- }
- // wrong vs Dragon
-res.push_back(RTMs);
-
-
+  // wrong vs Dragon
+   for (int i=0;i<8;i++){
+    res.push_back(Rk[6][i]);
+   }
+   // wrong vs Dragon
+  res.push_back(RTs);
+  // wrong vs Dragon
+  for (int i=0;i<8;i++){
+    res.push_back(Rp[6][i]);
+   }
+   // wrong vs Dragon
+  res.push_back(RTMs);
 
   return res;
 }
@@ -729,7 +717,21 @@ res.push_back(RTMs);
 
 std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
 
-    std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu","HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m","H6m","H7m","H8m","HTm","HATS0m","HATS1m","HATS2m","HATS3m","HATS4m","HATS5m","HATS6m","HATS7m","HATS8m","HATSm","H0v","H1v","H2v","H3v","H4v","H5v","H6v","H7v","H8v","HTv","HATS0v","HATS1v","HATS2v","HATS3v","HATS4v","HATS5v","HATS6v","HATS7v","HATS8v","HATSv","H0e","H1e","H2e","H3e","H4e","H5e","H6e","H7e","H8e","HTe","HATS0e","HATS1e","HATS2e","HATS3e","HATS4e","HATS5e","HATS6e","HATS7e","HATS8e","HATSe","H0p","H1p","H2p","H3p","H4p","H5p","H6p","H7p","H8p","HTp","HATS0p","HATS1p","HATS2p","HATS3p","HATS4p","HATS5p","HATS6p","HATS7p","HATS8p","HATSp","H0i","H1i","H2i","H3i","H4i","H5i","H6i","H7i","H8i","HTi","HATS0i","HATS1i","HATS2i","HATS3i","HATS4i","HATS5i","HATS6i","HATS7i","HATS8i","HATSi","H0s","H1s","H2s","H3s","H4s","H5s","H6s","H7s","H8s","HTs","HATS0s","HATS1s","HATS2s","HATS3s","HATS4s","HATS5s","HATS6s","HATS7s","HATS8s","HATSs","RCON","RARS","REIG","R1u","R2u","R3u","R4u","R5u","R6u","R7u","R8u","RTu","R1u+","R2u+","R3u+","R4u+","R5u+","R6u+","R7u+","R8u+","RTu+","R1m","R2m","R3m","R4m","R5m","R6m","R7m","R8m","RTm","R1m+","R2m+","R3m+","R4m+","R5m+","R6m+","R7m+","R8m+","RTm+","R1v","R2v","R3v","R4v","R5v","R6v","R7v","R8v","RTv","R1v+","R2v+","R3v+","R4v+","R5v+","R6v+","R7v+","R8v+","RTv+","R1e","R2e","R3e","R4e","R5e","R6e","R7e","R8e","RTe","R1e+","R2e+","R3e+","R4e+","R5e+","R6e+","R7e+","R8e+","RTe+","R1p","R2p","R3p","R4p","R5p","R6p","R7p","R8p","RTp","R1p+","R2p+","R3p+","R4p+","R5p+","R6p+","R7p+","R8p+","RTp+","R1i","R2i","R3i","R4i","R5i","R6i","R7i","R8i","RTi","R1i+","R2i+","R3i+","R4i+","R5i+","R6i+","R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
+    std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu",
+    "HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m",
+    "H6m","H7m","H8m","HTm","HATS0m","HATS1m","HATS2m","HATS3m","HATS4m","HATS5m","HATS6m","HATS7m","HATS8m","HATSm","H0v","H1v",
+    "H2v","H3v","H4v","H5v","H6v","H7v","H8v","HTv","HATS0v","HATS1v","HATS2v","HATS3v","HATS4v","HATS5v","HATS6v","HATS7v","HATS8v",
+    "HATSv","H0e","H1e","H2e","H3e","H4e","H5e","H6e","H7e","H8e","HTe","HATS0e","HATS1e","HATS2e","HATS3e","HATS4e","HATS5e","HATS6e",
+    "HATS7e","HATS8e","HATSe","H0p","H1p","H2p","H3p","H4p","H5p","H6p","H7p","H8p","HTp","HATS0p","HATS1p","HATS2p","HATS3p","HATS4p",
+    "HATS5p","HATS6p","HATS7p","HATS8p","HATSp","H0i","H1i","H2i","H3i","H4i","H5i","H6i","H7i","H8i","HTi","HATS0i","HATS1i","HATS2i",
+    "HATS3i","HATS4i","HATS5i","HATS6i","HATS7i","HATS8i","HATSi","H0s","H1s","H2s","H3s","H4s","H5s","H6s","H7s","H8s","HTs","HATS0s",
+    "HATS1s","HATS2s","HATS3s","HATS4s","HATS5s","HATS6s","HATS7s","HATS8s","HATSs","RCON","RARS","REIG","R1u","R2u","R3u","R4u","R5u",
+    "R6u","R7u","R8u","RTu","R1u+","R2u+","R3u+","R4u+","R5u+","R6u+","R7u+","R8u+","RTu+","R1m","R2m","R3m","R4m","R5m","R6m","R7m",
+    "R8m","RTm","R1m+","R2m+","R3m+","R4m+","R5m+","R6m+","R7m+","R8m+","RTm+","R1v","R2v","R3v","R4v","R5v","R6v","R7v","R8v","RTv",
+    "R1v+","R2v+","R3v+","R4v+","R5v+","R6v+","R7v+","R8v+","RTv+","R1e","R2e","R3e","R4e","R5e","R6e","R7e","R8e","RTe","R1e+","R2e+",
+    "R3e+","R4e+","R5e+","R6e+","R7e+","R8e+","RTe+","R1p","R2p","R3p","R4p","R5p","R6p","R7p","R8p","RTp","R1p+","R2p+","R3p+","R4p+",
+    "R5p+","R6p+","R7p+","R8p+","RTp+","R1i","R2i","R3i","R4i","R5i","R6i","R7i","R8i","RTi","R1i+","R2i+","R3i+","R4i+","R5i+","R6i+",
+    "R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
 
     std::vector<double> w;
 
@@ -775,15 +777,11 @@ std::vector<double> GETAWAY(const ROMol& mol,int confId){
 
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
 
-  double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
-
   double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
   Map<MatrixXd> adj(AdjMat, numAtoms,numAtoms);
 
   Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
-
-  Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
 
   res = GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
 
