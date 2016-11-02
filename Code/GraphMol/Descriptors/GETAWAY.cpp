@@ -264,7 +264,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     std::vector<double> res;
     // prepare data for Whim parameter computation
     // compute parameters
-/*
+
     VectorXd Lev=H.diagonal();
     std::vector<double> heavyLev;
     for (int i=0;i<numAtoms;i++){
@@ -299,7 +299,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     }
     HGM=100.0*pow(HGM,1.0/numAtoms);
     res.push_back(HGM);
-
+/*
 
     double RARS=R.rowwise().sum().sum()/numAtoms;
 
