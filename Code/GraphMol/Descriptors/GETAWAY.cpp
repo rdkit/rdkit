@@ -267,8 +267,9 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     VectorXd Lev=H.diagonal();
 
-/*
+
     std::vector<double> heavyLev;
+/*
     for (int i=0;i<numAtoms;i++){
       if (Heavylist[i]>0)
         heavyLev.push_back(Lev(i));
@@ -286,7 +287,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     double ISH=ITH/ITH0;
     res.push_back(ISH);
-
+*/
     double HIC=0.0;
     for (int i=0;i<numAtoms;i++) {
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
@@ -309,7 +310,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     VectorXd EIG = mysvd.singularValues();
 
    double rcon= getRCON(R,  Adj, numAtoms);
-*/
+
 // get the Weigthed vectors
    std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
@@ -638,9 +639,9 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
    }
   res.push_back(HATSTs);
 
-  //res.push_back(rcon); // this is not the same as in Dragon
-  //res.push_back(RARS);
-  //res.push_back(EIG(0));
+  res.push_back(rcon); // this is not the same as in Dragon
+  res.push_back(RARS);
+  res.push_back(EIG(0));
 
    for (int i=0;i<8;i++){
     res.push_back(Rk[0][i]);
