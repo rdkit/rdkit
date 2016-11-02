@@ -101,10 +101,10 @@ std::vector<double>  clusterArray(std::vector<double> data) {
 
     int j=0;
     int count=0;
-    for (int i = 0; i < data.size(); i++) {
+    for (unsigned int i = 0; i < data.size(); i++) {
         count++;
         // if a difference exceeds 1%, start a new group:
-        if (diffs[i] > 0.01)  {// diff=0.01 <=> 1%
+        if (diffs[i] > 0.001)  {// diff=0.01 <=> 1%
             Store.push_back(count);
             count=0;
             j++;
@@ -127,27 +127,9 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 }
 
 
-
-double GetLevClassNumber(VectorXd LevHeavy, int numHeavyAtoms, std::vector<int> HeavyList){
-
-  int ClassNum=numHeavyAtoms;
-  for (int i=0;i<numHeavyAtoms-1;i++){
-    for (int j=i+1;j<numHeavyAtoms;j++){
-        if (std::abs(LevHeavy[i]-LevHeavy[j])<0.01) {
-          ClassNum--;
-          break;  // found one pair so move to next i!
-        }
-    }
-  }
-  return ClassNum;
-}
-
-
-
 MatrixXd GetPinv(MatrixXd A){
     JacobiSVD<MatrixXd> svd(A, ComputeThinU | ComputeThinV);
-
-    double  pinvtoler=1.e-6; // choose your tolerance wisely!
+    double  pinvtoler=1.e-2; // choose your tolerance wisely!
     VectorXd vs=svd.singularValues();
     VectorXd vsinv=svd.singularValues();
 
@@ -189,15 +171,6 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
           R(j,i)=R(i,j);
       }
     }
-
-    return R;
-}
-
-
-MatrixXd GetRowwiseProdMatVect(MatrixXd A, VectorXd V, int numAtoms){
-
-    MatrixXd R;
-    R = A.array().colwise() * V.array();
 
     return R;
 }
@@ -309,7 +282,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     double ITH0 = numHeavy*log(numHeavy)/log(2);
     double ITH=ITH0;
-    for (int j=0;j<Clus.size();j++){
+    for (unsigned int j=0;j<Clus.size();j++){
       ITH -= Clus[j]*log(Clus[j])/log(2);
     }
     res.push_back(ITH);
