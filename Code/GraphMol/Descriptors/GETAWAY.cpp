@@ -291,7 +291,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
     }
     res.push_back(HIC);
-
+/*
     // hardcoded the number of dimension ... need to find a method to compute it in all case
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
@@ -299,7 +299,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     }
     HGM=100.0*pow(HGM,1.0/numAtoms);
     res.push_back(HGM);
-/*
+
 
     double RARS=R.rowwise().sum().sum()/numAtoms;
 
