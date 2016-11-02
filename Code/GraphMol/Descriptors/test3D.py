@@ -13,12 +13,16 @@ m = Chem.AddHs(m)
 AllChem.EmbedMolecule(m)
 AllChem.MMFFOptimizeMolecule(m)
 
+print dir(rdMD)
+
+
 print "1"
-print rdMD.CalcRadiusOfGyration(m)
+print rdMD.CalcRDF(m)
 print "2"
-print rdMD.calcRDFs(m)
+print rdMD.CalcMORSE(m)
 print "3"
-print rdMD.calcMORSEs(m)
-print rdMD.calcWHIMs(m)
-print rdMD.calcGETAWAYs(m)
-print rdMD.calcAUTOCORR3Ds(m)
+print rdMD.CalcWHIM(m)
+print "4"
+print rdMD.CalcGETAWAY(m)
+print "5"
+print rdMD.CalcAUTOCORR3D(m)

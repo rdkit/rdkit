@@ -1265,9 +1265,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
-
-
-
   python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
   docString ="Returns the RDF vector (radial distribution fonction) descriptors";
   python::def("CalcRDF", calcRDFs,

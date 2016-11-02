@@ -28,18 +28,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// For more information on the Plane of Best Fit please see http://pubs.acs.org/doi/abs/10.1021/ci300293f
-//
-//  If this code has been useful to you, please include the reference
-//  in any work which has made use of it:
-
-//  Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality of Molecules, Nicholas C. Firth, Nathan Brown, and Julian Blagg, Journal of Chemical Information and Modeling 2012 52 (10), 2516-2525
-
-//
-//
-// Created by Nicholas Firth, November 2011
-// Modified by Greg Landrum for inclusion in the RDKit distribution November 2012
-// Further modified by Greg Landrum for inclusion in the RDKit core September 2016
 // Adding WHIM descriptors to 3D descriptors by Guillaume Godin
 // for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
 

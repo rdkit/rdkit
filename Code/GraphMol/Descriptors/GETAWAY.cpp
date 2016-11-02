@@ -28,18 +28,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// For more information on the Plane of Best Fit please see http://pubs.acs.org/doi/abs/10.1021/ci300293f
-//
-//  If this code has been useful to you, please include the reference
-//  in any work which has made use of it:
-
-//  Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality of Molecules, Nicholas C. Firth, Nathan Brown, and Julian Blagg, Journal of Chemical Information and Modeling 2012 52 (10), 2516-2525
-
-//
-//
-// Created by Nicholas Firth, November 2011
-// Modified by Greg Landrum for inclusion in the RDKit distribution November 2012
-// Further modified by Greg Landrum for inclusion in the RDKit core September 2016
 // Adding WHIM descriptors to 3D descriptors by Guillaume Godin
 // for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
 
@@ -77,7 +65,6 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 
-
 double* retreiveMat(MatrixXd matrix) {
    double* arrayd = matrix.data();
    return arrayd;
@@ -86,7 +73,6 @@ double* retreiveMat(MatrixXd matrix) {
 double* retreiveVect(VectorXd matrix) {
    double* arrayd = matrix.data();
    return arrayd;
-
 }
 
 VectorXd getEigenVect(std::vector<double> v){
@@ -117,8 +103,8 @@ std::vector<double>  clusterArray(std::vector<double> data) {
     int count=0;
     for (int i = 0; i < data.size(); i++) {
         count++;
-        // if a difference exceeds 40%, start a new group:
-        if (diffs[i] > 0.001)  {// diff=0.4 <=> 40%
+        // if a difference exceeds 1%, start a new group:
+        if (diffs[i] > 0.01)  {// diff=0.01 <=> 1%
             Store.push_back(count);
             count=0;
             j++;
@@ -127,7 +113,6 @@ std::vector<double>  clusterArray(std::vector<double> data) {
 
     return Store;
 }
-
 
 
 double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
@@ -228,7 +213,6 @@ int*  GetHeavyList(const ROMol& mol){
     int atNum=atom->getAtomicNum();
     if ( atNum>1)  HeavyList[i]=1;
     else  HeavyList[i]=0;
-       
   }
 }
 
@@ -240,33 +224,6 @@ double* AppendDouble(double *w, double* Append, int length, int pos){
 
     return w;
 }
-
-
-
-double getTDB(int k,int numAtoms,std::vector<double>  w, double* distTopo, double* dist3D){
-// similar implementation of J. Chem. Inf. Comput. Sci. 2004, 44, 200-209 equation 1 or 2 page 201
-// we use instead of atomic absolute values the atomic relative ones as in Dragon
-        double tbd=0.0;
-
-        int numtopoatoms = 0;
-            for (int i=0; i<numAtoms-1; ++i)
-            {
-                for (int j=i+1; j<numAtoms; ++j)
-                {
-                    if (distTopo[i*numAtoms+j]==k)
-                    {
-                        tbd += w[i] * dist3D[i*numAtoms+j] * w[j];
-                        numtopoatoms++;
-                    }
-                }
-            }
-
-            if (numtopoatoms>0)
-                tbd = tbd / numtopoatoms;
-
-  return tbd;
-}
-
 
 
 double getRCON(MatrixXd R, MatrixXd Adj,int numAtoms){
@@ -331,9 +288,11 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 
 
 
-double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist,const ROMol& mol) {
+std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist,const ROMol& mol) {
 
-    double *w = new double[273];
+    //double *w = new double[273];
+
+    std::vector<double> res;
     // prepare data for Whim parameter computation
     // compute parameters
 
@@ -353,22 +312,22 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
     for (int j=0;j<Clus.size();j++){
       ITH -= Clus[j]*log(Clus[j])/log(2);
     }
-    w[0]=ITH;
+    res.push_back(ITH);
     double ISH=ITH/ITH0;
-    w[1]=ISH;
+    res.push_back(ISH);
 
     double HIC=0.0;
     for (int i=0;i<numAtoms;i++) {
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
     }
-    w[2]=HIC;
+    res.push_back(HIC);
 
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
       HGM=HGM*H(i,i);
     }
     HGM=100.0*pow(HGM,1.0/numAtoms);
-    w[3]=HGM;
+    res.push_back(HGM);
 
 
     double RARS=R.rowwise().sum().sum()/numAtoms;
@@ -642,107 +601,164 @@ double* getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int
  double RTMs=getMax(Rp[6]);
 
 // create the output vector...
- w= AppendDouble(w, Hk[0], 9, 4);
- w[13]=HTu;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[0][i]);
+ }
+res.push_back(HTu);
 
- w= AppendDouble(w, HATSk[0], 9, 14);
- w[23]=HATSTu;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[0][i]);
+ }
+res.push_back(HATSTu);
 
- w= AppendDouble(w, Hk[1], 9, 24);
- w[33]=HTm;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[1][i]);
+ }
+res.push_back(HTm);
 
- w= AppendDouble(w, HATSk[1], 9, 34);
- w[43]=HATSTm;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[1][i]);
+ }
+res.push_back(HATSTm);
 
- w= AppendDouble(w, Hk[2], 9, 44);
- w[53]=HTv;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[2][i]);
+ }
+res.push_back(HTv);
 
- w= AppendDouble(w, HATSk[2], 9, 54);
- w[63]=HATSTv;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[2][i]);
+ }
+res.push_back(HATSTv);
 
- w= AppendDouble(w, Hk[3], 9, 64);
- w[73]=HTe;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[3][i]);
+ }
+res.push_back(HTe);
 
- w= AppendDouble(w, HATSk[3], 9, 74);
- w[83]=HATSTe;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[3][i]);
+ }
+res.push_back(HATSTe);
 
- w= AppendDouble(w, Hk[4], 9, 84);
- w[93]=HTp;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[4][i]);
+ }
+res.push_back(HTp);
 
- w= AppendDouble(w, HATSk[4], 9, 94);
- w[103]=HATSTp;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[4][i]);
+ }
+res.push_back(HATSTp);
 
- w= AppendDouble(w, Hk[5], 9, 104);
- w[113]=HTi;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[5][i]);
+ }
+res.push_back(HTi);
 
- w= AppendDouble(w, HATSk[5], 9, 114);
- w[123]=HATSTi;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[5][i]);
+ }
+res.push_back(HATSTi);
 
- w= AppendDouble(w, Hk[6], 9, 124); // not the same as in Dragon
- w[133]=HTs;
+for (int i=0;i<9;i++){
+  res.push_back(Hk[6][i]);
+ }
+res.push_back(HTs);
 
- w= AppendDouble(w, HATSk[6], 9, 134); // not the same as in Dragon
- w[143]=HATSTs;
+for (int i=0;i<9;i++){
+  res.push_back(HATSk[6][i]);
+ }
+res.push_back(HATSTs);
 
- w[144]=rcon;  // this is not the same as in Dragon
- w[145]=RARS;
- w[146]=EIG(0);
+res.push_back(rcon); // this is not the same as in Dragon
+res.push_back(RARS);
+res.push_back(EIG(0));
 
- w= AppendDouble(w, Rk[0], 8, 147);
- w[155]=RTu;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[0][i]);
+ }
+res.push_back(RTu);
 
- w= AppendDouble(w, Rp[0], 8, 156);
- w[164]=RTMu; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[0][i]);
+ }
+res.push_back(RTMu);
 
- w= AppendDouble(w, Rk[1], 8, 165);
- w[173]=RTm;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[1][i]);
+ }
+res.push_back(RTm);
 
- w= AppendDouble(w, Rp[1], 8, 174);
- w[182]=RTMm; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[1][i]);
+ }
+res.push_back(RTMm);
 
- w= AppendDouble(w, Rk[2], 8, 183);
- w[191]=RTv;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[2][i]);
+ }
+res.push_back(RTv);
 
- w= AppendDouble(w, Rp[2], 8, 192);
- w[200]=RTMv; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[2][i]);
+ }
+res.push_back(RTMv);
 
- w= AppendDouble(w, Rk[3], 8, 201);
- w[209]=RTe;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[3][i]);
+ }
+res.push_back(RTe);
 
- w= AppendDouble(w, Rp[3], 8, 210);
- w[218]=RTMe; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[3][i]);
+ }
+res.push_back(RTMe);
 
- w= AppendDouble(w, Rk[4], 8, 219);
- w[227]=RTp;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[4][i]);
+ }
+res.push_back(RTp);
 
- w= AppendDouble(w, Rp[4], 8, 228);
- w[236]=RTMp; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[4][i]);
+ }
+res.push_back(RTMp);
 
- w= AppendDouble(w, Rk[5], 8, 237);
- w[245]=RTi;
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[5][i]);
+ }
+res.push_back(RTi);
 
- w= AppendDouble(w, Rp[5], 8, 246);
- w[254]=RTMi; 
+for (int i=0;i<8;i++){
+  res.push_back(Rp[5][i]);
+ }
+res.push_back(RTMi);
 
- w= AppendDouble(w, Rk[6], 8, 255); // wrong vs Dragon
- w[263]=RTs;// wrong vs Dragon
+// wrong vs Dragon
+ for (int i=0;i<8;i++){
+  res.push_back(Rk[6][i]);
+ }
+ // wrong vs Dragon
+res.push_back(RTs);
+// wrong vs Dragon
+for (int i=0;i<8;i++){
+  res.push_back(Rp[6][i]);
+ }
+ // wrong vs Dragon
+res.push_back(RTMs);
 
- w= AppendDouble(w, Rp[6], 8, 264);// wrong vs Dragon
- w[272]=RTMs;// wrong vs Dragon
 
 
-
-
-
-  return w;
+  return res;
 }
 
 
-double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
+std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
 
     std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu","HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m","H6m","H7m","H8m","HTm","HATS0m","HATS1m","HATS2m","HATS3m","HATS4m","HATS5m","HATS6m","HATS7m","HATS8m","HATSm","H0v","H1v","H2v","H3v","H4v","H5v","H6v","H7v","H8v","HTv","HATS0v","HATS1v","HATS2v","HATS3v","HATS4v","HATS5v","HATS6v","HATS7v","HATS8v","HATSv","H0e","H1e","H2e","H3e","H4e","H5e","H6e","H7e","H8e","HTe","HATS0e","HATS1e","HATS2e","HATS3e","HATS4e","HATS5e","HATS6e","HATS7e","HATS8e","HATSe","H0p","H1p","H2p","H3p","H4p","H5p","H6p","H7p","H8p","HTp","HATS0p","HATS1p","HATS2p","HATS3p","HATS4p","HATS5p","HATS6p","HATS7p","HATS8p","HATSp","H0i","H1i","H2i","H3i","H4i","H5i","H6i","H7i","H8i","HTi","HATS0i","HATS1i","HATS2i","HATS3i","HATS4i","HATS5i","HATS6i","HATS7i","HATS8i","HATSi","H0s","H1s","H2s","H3s","H4s","H5s","H6s","H7s","H8s","HTs","HATS0s","HATS1s","HATS2s","HATS3s","HATS4s","HATS5s","HATS6s","HATS7s","HATS8s","HATSs","RCON","RARS","REIG","R1u","R2u","R3u","R4u","R5u","R6u","R7u","R8u","RTu","R1u+","R2u+","R3u+","R4u+","R5u+","R6u+","R7u+","R8u+","RTu+","R1m","R2m","R3m","R4m","R5m","R6m","R7m","R8m","RTm","R1m+","R2m+","R3m+","R4m+","R5m+","R6m+","R7m+","R8m+","RTm+","R1v","R2v","R3v","R4v","R5v","R6v","R7v","R8v","RTv","R1v+","R2v+","R3v+","R4v+","R5v+","R6v+","R7v+","R8v+","RTv+","R1e","R2e","R3e","R4e","R5e","R6e","R7e","R8e","RTe","R1e+","R2e+","R3e+","R4e+","R5e+","R6e+","R7e+","R8e+","RTe+","R1p","R2p","R3p","R4p","R5p","R6p","R7p","R8p","RTp","R1p+","R2p+","R3p+","R4p+","R5p+","R6p+","R7p+","R8p+","RTp+","R1i","R2i","R3i","R4i","R5i","R6i","R7i","R8i","RTi","R1i+","R2i+","R3i+","R4i+","R5i+","R6i+","R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
 
-    double *w = new double[273];
+    std::vector<double> w;
 
     int numAtoms = conf.getNumAtoms();
     const ROMol mol= conf.getOwningMol();
@@ -768,11 +784,21 @@ double* GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixX
 
 std::vector<double> GETAWAY(const ROMol& mol,int confId){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
+  std::vector<double> res;
+
   int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
 
   double Vpoints[3*numAtoms];
+
+  for(int i=0; i<numAtoms; ++i){
+     Vpoints[3*i]   =conf.getAtomPos(i).x;
+     Vpoints[3*i+1] =conf.getAtomPos(i).y;
+     Vpoints[3*i+2] =conf.getAtomPos(i).z;
+  }
+
+  int* Heavylist= GetHeavyList(mol); //int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
 
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
 
@@ -782,33 +808,14 @@ std::vector<double> GETAWAY(const ROMol& mol,int confId){
 
   Map<MatrixXd> adj(AdjMat, numAtoms,numAtoms);
 
-  int* Heavylist= GetHeavyList(mol);
-  int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
-
   Map<MatrixXd> dm(dist3D, numAtoms,numAtoms);
 
   Map<MatrixXd> dmtopo(dist, numAtoms,numAtoms);
 
-
-  for(int i=0; i<numAtoms; ++i){
-     Vpoints[3*i]   =conf.getAtomPos(i).x;
-     Vpoints[3*i+1] =conf.getAtomPos(i).y;
-     Vpoints[3*i+2] =conf.getAtomPos(i).z;
-  }
-
-  double *res= new double[273];
-
   res = GetGETAWAY(conf, Vpoints, dm, adj, Heavylist);
 
-  std::vector<double> dataVec;
-  for (int i=0;i<273;i++){
-    dataVec.push_back(res[i]);
-  }
-
-
-  return dataVec;
+  return res;
 }
-
 
 
 } // end of Descriptors namespace
