@@ -266,12 +266,13 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     // compute parameters
 
     VectorXd Lev=H.diagonal();
+
+/*
     std::vector<double> heavyLev;
     for (int i=0;i<numAtoms;i++){
       if (Heavylist[i]>0)
         heavyLev.push_back(Lev(i));
     }
-/*
     std::vector<double> Clus= clusterArray(heavyLev);
     double numHeavy=heavyLev.size();
 
