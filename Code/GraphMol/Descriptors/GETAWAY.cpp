@@ -127,8 +127,14 @@ double* GetGeodesicMatrix(double* dist, int lag,int numAtoms){
 }
 
 
+JacobiSVD<MatrixXd> getSVD(MatrixXd A) {
+    JacobiSVD<MatrixXd> mysvd(A,  ComputeThinU | ComputeThinV);
+    return mysvd;
+}
+
+
 MatrixXd GetPinv(MatrixXd A){
-    JacobiSVD<MatrixXd> svd(A, ComputeThinU | ComputeThinV);
+    JacobiSVD<MatrixXd> svd = getSVD(A);
     double  pinvtoler=1.e-2; // choose your tolerance wisely!
     VectorXd vs=svd.singularValues();
     VectorXd vsinv=svd.singularValues();
@@ -224,6 +230,7 @@ double getH(double W1, double W2, double H){
 
 double getHtotal(double * Hk){
 
+
   return Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
 
 }
@@ -237,7 +244,9 @@ double getRtotal(double * Rk){
 double getMax(double * Rk){
  double RTp=0;
  for (int j=0;j<8;j++){
-  if (Rk[j]>RTp) RTp=Rk[j];
+  if (Rk[j]>RTp) {
+    RTp=Rk[j];
+  }
  }
  return RTp;
 
@@ -245,12 +254,6 @@ double getMax(double * Rk){
 
 
 
-JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
-
-    JacobiSVD<MatrixXd> svd(Mat,  ComputeThinU | ComputeThinV);
-
-    return svd;
-}
 
 
 
@@ -261,7 +264,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     std::vector<double> res;
     // prepare data for Whim parameter computation
     // compute parameters
-
+/*
     VectorXd Lev=H.diagonal();
     std::vector<double> heavyLev;
     for (int i=0;i<numAtoms;i++){
@@ -300,12 +303,12 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     double RARS=R.rowwise().sum().sum()/numAtoms;
 
-    JacobiSVD<MatrixXd> svd = getSVD(R);
+    JacobiSVD<MatrixXd> mysvd = getSVD(R);
 
-    VectorXd EIG = svd.singularValues();
+    VectorXd EIG = mysvd.singularValues();
 
    double rcon= getRCON(R,  Adj, numAtoms);
-
+*/
 // get the Weigthed vectors
    std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
@@ -634,9 +637,9 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
    }
   res.push_back(HATSTs);
 
-  res.push_back(rcon); // this is not the same as in Dragon
-  res.push_back(RARS);
-  res.push_back(EIG(0));
+  //res.push_back(rcon); // this is not the same as in Dragon
+  //res.push_back(RARS);
+  //res.push_back(EIG(0));
 
    for (int i=0;i<8;i++){
     res.push_back(Rk[0][i]);
