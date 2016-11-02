@@ -109,7 +109,7 @@ to cover most use cases:
 ```
 
 ### Reading Single Molecules
-Individual molecules can be constructed using a variety of approaches (example1.cpp):
+Individual molecules can be constructed using a variety of approaches [(example1)](./C++Examples/example1.cpp):
 
 ```c++
 RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
@@ -126,7 +126,7 @@ prevent memory leaks.
 
 If the SMILES parsing fails, an `RDKit::MolSanitizeException` (derived
 from `std::exception`) is thrown, and an attempt is made to provide
-sensible error messages (example1.cpp):
+sensible error messages [(example1)](./C++Examples/example1.cpp):
 
 ```c++
 try {
@@ -137,7 +137,7 @@ try {
 ```
 
 displays something like `[15:58:22] Explicit valence of atom # 1 O, 3,
-is greater than permitted` and (example1.cpp)
+is greater than permitted` and [(example1)](./C++Examples/example1.cpp)
 
 ```c++
 try {
@@ -153,7 +153,7 @@ displays something like: `[12:20:41] Can't kekulize mol`.
 
 Groups of molecule are read using a Supplier (for example, an
 `RDKit::SDMolSupplier` or an `RDKit::SmilesMolSupplier`)
-(example2.cpp):
+[(example2)](./C++Examples/example2.cpp):
 
 ```c++
 RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
@@ -172,7 +172,7 @@ gives
 26
 ```
 
-The supplier can be treated as a random-access object (example2.cpp):
+The supplier can be treated as a random-access object [(example2)](./C++Examples/example2.cpp):
 
 ```c++
 RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
@@ -193,7 +193,7 @@ mol-295 has 20 atoms.
 ```
 
 A good practice is to test each molecule to see if it was correctly
-read before working with it (example2.cpp):
+read before working with it [(example2)](./C++Examples/example2.cpp):
 
 ```c++
 RDKit::SDMolSupplier *mol_supplier = new RDKit::SDMolSupplier( "data/5ht3ligs.sdf" , true );
@@ -212,7 +212,7 @@ for( int i = int( mol_supplier->length() ) - 1 ; i >= 0 ; --i ) {
 An alternative type of Supplier, the `RDKit::ForwardMolSupplier`
 can be used to read from file-like objects.  This allows the reading
 of compressed files, using, for example, the `boost::iostreams`
-objects (example2.cpp):
+objects [(example2)](./C++Examples/example2.cpp):
 
 ```c++
 boost::iostreams::filtering_istream ins;
@@ -228,7 +228,7 @@ while( !forward_supplier.atEnd() ) {
 ```
 
 Note that the forward suppliers cannot be used in random-access mode,
-and a compile-time error will result if you attempt to (example2.cpp):
+and a compile-time error will result if you attempt to [(example2)](./C++Examples/example2.cpp):
 
 ```
    error: no match for ‘operator[]’ (operand types are
@@ -241,7 +241,7 @@ and a compile-time error will result if you attempt to (example2.cpp):
 Single molecules can be converted to text using several functions
 present in the `RDKit` namespace.
 
-For example, for SMILES (example3.cpp):
+For example, for SMILES [(example3)](./C++Examples/example3.cpp):
 
 ```c++
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -254,7 +254,7 @@ gives
 ```
 CC(O)c1ccccc1
 ```
-and (example3.cpp)
+and [(example3)](./C++Examples/example3.cpp)
 ```c++
 std::cout << RDKit::MolToSmiles( *mol , true ) << std::endl;
 ```
@@ -266,7 +266,7 @@ where the `true` in the second function call specifies that isomeric
 SMILES should be produced.
 Note that the SMILES produced is canonical, so the output should be
 the same no matter how a particular molecule is input.  For example
-(example3.cpp)
+[(example3)](./C++Examples/example3.cpp)
 
 ```c++
 RDKit::ROMol *mol1 = RDKit::SmilesToMol( "C1=CC=CN=C1" );
@@ -283,7 +283,7 @@ all produce `c1ccncc1` as output.
 
 If you'd like to have the Kekule form of the SMILES, you need to Kekulize
 a RWMol copy of the molecule, using the Kekulize function declared in
-MolOps.h (example3.cpp):
+MolOps.h [(example3)](./C++Examples/example3.cpp):
 
 ```c++
 #include <GraphMol/MolOps.h>
@@ -302,7 +302,7 @@ Note: as of this writing (Aug 2008), the SMILES provided when one
 requests kekuleSmiles are not canonical. The limitation is not in the
 SMILES generation, but in the kekulization itself.
 
-MDL Mol blocks are also available (example3.cpp):
+MDL Mol blocks are also available [(example3)](./C++Examples/example3.cpp):
 
 ```c++
 RDKit::ROMol *mol1 = RDKit::SmilesToMol( "C1=CC=CN=C1" );
@@ -330,7 +330,7 @@ M  END
 ```
 
 To include names in the mol blocks, set the molecule's “\_Name”
-property (example3.cpp):
+property [(example3)](./C++Examples/example3.cpp):
   
 ```c++
 mol1 = RDKit::SmilesToMol( "C1CCC1" );
@@ -362,7 +362,7 @@ It's also convenient for many reasons, such as drawing the molecules.
 
 You can either include 2D coordinates (i.e. a depiction), using the
 function in the RDDepict namespace and declared in RDDepictor.h
-(example4.cpp):
+[(example4)](./C++Examples/example4.cpp):
 
 ```c++
 #include <GraphMol/Depictor/RDDepictor.h>
@@ -389,7 +389,7 @@ gives
 M  END
 ```
 
-Or you can add 3D coordinates by embedding the molecule (example4.cpp):
+Or you can add 3D coordinates by embedding the molecule [(example4)](./C++Examples/example4.cpp):
 
 ```c++
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -423,7 +423,7 @@ The optimization step isn't necessary, but it substantially improves
 the quality of the conformation.
 
 To get good 3D conformations, it's almost always a good idea to add
-hydrogens to the molecule first (example4.cpp):
+hydrogens to the molecule first [(example4)](./C++Examples/example4.cpp):
 
 ```c++
 RDKit::ROMol *mol3 = RDKit::MolOps::addHs( *mol2 );
@@ -433,12 +433,13 @@ RDKit::RWMol *mol4 = new RDKit::RWMol( *mol3 );
 RDKit::MolOps::addHs( *mol4 );
 ```
 
-Note that there are 2 overloaded versions of addHs. The first takes an
+<a name="twoAddHs"></a>Note that there are 2 overloaded versions of
+addHs. The first takes an
 ROMol and, because that can't be edited, returns a pointer to a new
 ROMol with the result.  If you use this version be careful not to leak
 memory by not deleting mol2 when you are finished with it. The second
 takes an RWMol which it is able to modify in place.  With shared
-pointers, memory leaks can be avoided (example4.cpp):
+pointers, memory leaks can be avoided [(example4)](./C++Examples/example4.cpp):
 ```c++
 RDKit::ROMOL_SPTR mol3sp( RDKit::MolOps::addHs( *mol2 ) );
 mol3sp->setProp( "_Name" , "cyclobutaneSP" );
@@ -446,7 +447,7 @@ RDKit::MMFF::MMFFOptimizeMolecule( *mol3sp , 1000 , "MMFF94s" );
 ```
 
 Once the optimisation is complete, the hydrogens can be removed
-again (example4.cpp):
+again [(example4)](./C++Examples/example4.cpp):
 
 ```c++
 RDKit::ROMol *mol5 = RDKit::MolOps::removeHs( *mol3 );
@@ -457,7 +458,7 @@ Again, there are two versions, one of which has an opportunity for a
 memory leak.
 
 If you'd like write the molecules to file, use the normal C++
-streams (example4.cpp):
+streams [(example4)](./C++Examples/example4.cpp):
 
 ```c++
     #include <fstream>
@@ -470,7 +471,7 @@ streams (example4.cpp):
 ### Writing sets of molecules
 
 Multiple molecules can be written to a file using an object of a
-concrete subclass of the `MolWriter` class (example5.cpp):
+concrete subclass of the `MolWriter` class [(example5)](./C++Examples/example5.cpp):
 
 ```c++
 #include <GraphMol/FileParsers/MolWriters.h>
@@ -494,7 +495,7 @@ for( std::size_t i = 0 , is = mols.size() ; i < is ; ++i ) {
 
 A MolWriter can also be initialised to a file-like object, so
 compressed files can be written or molecules can be written to a
-string in memory (example5.cpp):
+string in memory [(example5)](./C++Examples/example5.cpp):
 
 ```c++
 #include <sstream>
@@ -519,7 +520,7 @@ of you with an interest in historical Cheminformatics!)
 
 Once you have a molecule, it's relatively easy to loop over its atoms
 and bonds so long as you remember that an atom is a Vertex and a bond
-is an Edge and accept the odd syntax (example6.cpp):
+is an Edge and accept the odd syntax [(example6)](./C++Examples/example6.cpp):
 
 ```c++
 RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "C1OC1" ) );
@@ -536,14 +537,14 @@ gives
 6 8 6
 ```
 An alternative method uses the fact that atoms and bonds can be
-selected by index number (example6.cpp):
+selected by index number [(example6)](./C++Examples/example6.cpp):
 ```c++
 for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
     const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
     std::cout << atom->getAtomicNum() << std::endl;
 }
 ```
-Likewise with bonds (example6.cpp):
+Likewise with bonds [(example6)](./C++Examples/example6.cpp):
 ```c++
 RDKit::ROMol::EDGE_ITER bond_it , bond_end;
 boost::tie( bond_it , bond_end ) = mol->getEdges();
@@ -565,7 +566,7 @@ gives
 ```
 
 A bond can be specified by the atoms at its ends, with
-a zero pointer being returned if there isn't one (example6.cpp):
+a zero pointer being returned if there isn't one [(example6)](./C++Examples/example6.cpp):
 ```c++
 RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "C1OC1Cl" ) );
 const RDKit::Bond *bond = mol2->getBondBetweenAtoms( 0 , 1 );
@@ -578,7 +579,7 @@ if( !mol2->getBondBetweenAtoms( 0 , 3 ) ) {
 ```
 
 The neighbours of an atom can also be extracted, but note that you
-need an ADJ\_ITER rather than a VERTEX\_ITER (example6.cpp):
+need an ADJ\_ITER rather than a VERTEX\_ITER [(example6)](./C++Examples/example6.cpp):
 ```c++
 const RDKit::Atom *atom = mol2->getAtomWithIdx( 2 );
 RDKit::ROMol::ADJ_ITER nbr , end_nbr;
@@ -599,7 +600,7 @@ gives
 ### Ring Information
 
 It is relatively easy to obtain ring information for atoms and bonds
-(example7.cpp):
+[(example7)](./C++Examples/example7.cpp):
 ```c++
 #include <GraphMol/MolOps.h>
 .
@@ -628,7 +629,7 @@ gives
 ```
 Obviously, findSSSR only needs to be called once for the molecule. If
 you only need to know whether the atom or bond is in a ring, just test
-whether or not the return value is zero (example7.cpp):
+whether or not the return value is zero [(example7)](./C++Examples/example7.cpp):
 ```c++
 const RDKit::Bond *bond = mol->getBondWithIdx( 1 );
 if( mol->getRingInfo()->numBondRings( bond->getIdx() )) {
@@ -641,7 +642,7 @@ gives
 Bond 1 is in a ring
 ```
 Other information about presence in smallest rings can also be
-obtained from the RingInfo object of the molecule (example7.cpp):
+obtained from the RingInfo object of the molecule [(example7)](./C++Examples/example7.cpp):
 ```c++
 std::cout << "Atom 2 is in ring of size 3 : "
           << mol->getRingInfo()->isAtomInRingOfSize( 2 , 3 ) << std::endl;
@@ -661,7 +662,7 @@ Atom 2 is in ring of size 5 : 0
 Bond 1 is in ring of size 3 : 1
 ```
 More detail about the smallest set of smallest rings (SSSR) is
-available (example7.cpp):
+available [(example7)](./C++Examples/example7.cpp):
 ```c++
 RDKit::VECT_INT_VECT rings;
 RDKit::MolOps::symmetrizeSSSR( *mol , rings );
@@ -681,7 +682,7 @@ Number of symmetric SSSR rings : 2
 ```
 As the name suggests, this is a symmetrized SSSR; if you are
 interested in the number of "true" SSSR, use the `findSSSR` function
-(example7.cpp):
+[(example7)](./C++Examples/example7.cpp):
 ```c++
 std::cout << "Number of SSSR rings : " << RDKit::MolOps::findSSSR( *mol ) << std::endl;
 
@@ -691,12 +692,97 @@ gives
 2
 ```
 The distinction between symmetrized and non-symmetrized SSSR is
-discussed in more detail below in the section `The SSSR Problem`_. 
+discussed in more detail below in the section
+[The SSSR Problem](#TheSSSRProblem).
 
+## Modifying molecules
 
+Normally molecules are stored in the RDKit with the hydrogen atoms
+implicit (i.e. not explicitly present in the molecular graph).  When
+it is useful to have the hydrogens explicitly persent, for example
+wehn generating or optimizing the 3D geometry, the
+`RDKit::MolOps::addHs` function can be used
+[(example8)](./C++Examples/example8.cpp). 
+```c++
+RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "CCO" ) );
+std::cout << "Number of atoms : " << mol1->getNumAtoms() << std::endl;
+RDKit::ROMOL_SPTR mol2( RDKit::MolOps::addHs( *mol1 ) );
+std::cout << "Number of atoms : " << mol2->getNumAtoms() << std::endl;
+```
+gives
+```
+Number of atoms : 3
+Number of atoms : 9
+```
+Recall that there are two versions of `RDKit::MolOps::addHs`, as
+described [above](#twoAddHs).
+The Hs can be removed again using the `RDKit::MolOps::RemoveHs`
+function, which again has two forms
+[(example8)](./C++Examples/example8.cpp):
+```c++
+RDKit::RWMOL_SPTR mol3( new RDKit::RWMol( *mol2 ) );
+RDKit::MolOps::removeHs( *mol3 );
+std::cout << "Number of atoms : " << mol3->getNumAtoms() << std::endl;
+```
+which returns the atom count to 3.
 
+RDKit molecules are usually stored with the bonds in aromatic rings
+having aromatic bond types. This can be changed with the
+`RDKit::MolOps::Kekulize` function, which must be called with an RWMol
+[(example9)](./C++Examples/example9.cpp):
+```c++
+  RDKit::RWMOL_SPTR mol( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
+  std::cout << "Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
+  std::cout << "Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
 
-## The SSSR Problem
+  RDKit::MolOps::Kekulize( *mol );
+  std::cout << "After default Kekulize : Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
+  std::cout << "After default Kekulize : Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+```
+gives
+```
+Order : 12
+Aromatic : 1
+After default Kekulize : Order : 2
+After default Kekulize : Aromatic : 0
+```
+The bond orders are defined as the enum BondType in
+[Bond.h](../../Code/GraphMol/Bond.h), and an aromatic bond
+currenly has the value 12.
+Note that by default, the Kekulize function clears the aromatic flags
+on the atoms and bonds. **This is in contrast to the Python version of
+Kekulize, which preserves the flags by default.**  The behaviour can be
+forced explicitly [(example9.cpp)](./C++Examples/example9.cpp): 
+```c++
+RDKit::RWMOL_SPTR mol1( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
+RDKit::MolOps::Kekulize( *mol1 , false );
+std::cout << "After Kekulize, markAtomsBonds false : Aromatic : " << mol1->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+
+RDKit::RWMOL_SPTR mol2( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
+RDKit::MolOps::Kekulize( *mol2 , true );
+std::cout << "After Kekulize, markAtomsBonds true : Aromatic : " << mol2->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+```
+gives
+```
+After Kekulize, markAtomsBonds false : Aromatic : 1
+After Kekulize, markAtomsBonds true : Aromatic : 0
+```
+
+Bonds can be restored to the aromatic bond type using the
+`RDKit::MolOps::sanitizeMol` function:
+```c++
+RDKit::MolOps::sanitizeMol( *mol );
+std::cout << "Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
+std::cout << "Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+```
+gives
+```
+Order : 12
+Aromatic : 1
+```
+once more.
+
+## <a name="TheSSSRProblem"></a>The SSSR Problem
 
 As others have ranted about with more energy and eloquence than I
 intend to, the definition of a molecule's smallest set of smallest
