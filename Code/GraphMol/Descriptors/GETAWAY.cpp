@@ -271,11 +271,11 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
       if (Heavylist[i]>0)
         heavyLev.push_back(Lev(i));
     }
-
+/*
     std::vector<double> Clus= clusterArray(heavyLev);
     double numHeavy=heavyLev.size();
 
-/*
+
     double ITH0 = numHeavy*log(numHeavy)/log(2);
     double ITH=ITH0;
     for (unsigned int j=0;j<Clus.size();j++){
