@@ -453,12 +453,23 @@ rdkit.Chem.rdchem.BondType.DOUBLE
 >>> m.GetBondWithIdx(1).GetBondType()
 rdkit.Chem.rdchem.BondType.SINGLE
 
-The bonds are still marked as being aromatic:
+By default, the bonds are still marked as being aromatic:
 
 >>> m.GetBondWithIdx(1).GetIsAromatic()
 True
 
-and can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
+because the flags in the original molecule are not cleared (clearAromaticFlags defaults to False).
+You can explicitly force or decline a clearing of the flags:
+
+>>> m = Chem.MolFromSmiles('c1ccccc1')
+>>> m.GetBondWithIdx(0).GetIsAromatic()
+True
+>>> m1 = Chem.MolFromSmiles('c1ccccc1')
+>>> Chem.Kekulize(m1, clearAromaticFlags=True)
+>>> m1.GetBondWithIdx(0).GetIsAromatic()
+False
+
+Bonds can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
 
 >>> Chem.SanitizeMol(m)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
