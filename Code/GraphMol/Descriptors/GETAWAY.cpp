@@ -275,7 +275,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
     std::vector<double> Clus= clusterArray(heavyLev);
     double numHeavy=heavyLev.size();
 
-
+/*
     double ITH0 = numHeavy*log(numHeavy)/log(2);
     double ITH=ITH0;
     for (unsigned int j=0;j<Clus.size();j++){
@@ -291,7 +291,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
     }
     res.push_back(HIC);
-/*
+
     // hardcoded the number of dimension ... need to find a method to compute it in all case
     double HGM=1.0;
     for (int i=0;i<numAtoms;i++) {
