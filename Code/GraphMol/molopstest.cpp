@@ -5294,7 +5294,7 @@ void testAdjustQueryProperties() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing adjustQueryProperties()"
       << std::endl;
-#if 0
+#if 1
   {  // basics from SMILES
     std::string smiles = "C1CCC1C";
     ROMol *qm = SmilesToMol(smiles);
@@ -5736,7 +5736,6 @@ void testAdjustQueryProperties() {
 
       ROMol *aqm = MolOps::adjustQueryProperties(*qm, &params);
       TEST_ASSERT(aqm);
-      std::cerr << MolToSmarts(*aqm) << std::endl;
       TEST_ASSERT(aqm->getNumAtoms() == qm->getNumAtoms());
       {
         MatchVectType match;
@@ -5749,7 +5748,6 @@ void testAdjustQueryProperties() {
         delete m;
         smiles = "N1C=C1CC#C";
         m = SmilesToMol(smiles);
-        std::cerr << MolToSmiles(*m) << std::endl;
 
         TEST_ASSERT(m);
         TEST_ASSERT(!SubstructMatch(*m, *qm, match));
@@ -6506,7 +6504,7 @@ int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();
