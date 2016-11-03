@@ -48,8 +48,8 @@ class XValTestCase(unittest.TestCase):
     with open(self.origTreeName, 'r') as inTFile:
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
-    with BytesIO(buf) as inFile:
-      oTree = cPickle.load(inFile)
+    inFile = BytesIO(buf)
+    oTree = cPickle.load(inFile)
 
     assert oTree == tree, 'Random CrossValidation test failed'
 

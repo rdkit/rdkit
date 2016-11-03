@@ -23,9 +23,8 @@ class TestCase(unittest.TestCase):
     self.descs = ['MolLogP', 'Chi1v']
     self.vers = ('1.1.0', '1.0.0')
     self.calc = MoleculeDescriptors.MolecularDescriptorCalculator(self.descs)
-    self.testD = [
-      ('CCOC', (0.6527, 1.40403)), ('CC=O', (0.2052, 0.81305)), ('CCC(=O)O', (0.481, 1.48839))
-    ]
+    self.testD = [('CCOC', (0.6527, 1.40403)), ('CC=O', (0.2052, 0.81305)), ('CCC(=O)O',
+                                                                             (0.481, 1.48839))]
 
   def testGetNames(self):
     self.assertEqual(self.calc.GetDescriptorNames(), tuple(self.descs))
@@ -46,8 +45,8 @@ class TestCase(unittest.TestCase):
     with open(fName, 'r') as inTF:
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()
-    with BytesIO(buf) as inF:
-      calc = cPickle.load(inF)
+    inF = BytesIO(buf)
+    calc = cPickle.load(inF)
     self.assertEqual(calc.GetDescriptorNames(), tuple(self.descs))
     self.assertEqual(calc.GetDescriptorVersions(), tuple(self.vers))
     self._testVals(calc, self.testD)

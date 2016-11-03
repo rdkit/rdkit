@@ -4,6 +4,7 @@
 """ unit testing code for MLData sets
 
 """
+import contextlib
 import random
 import unittest
 
@@ -111,7 +112,7 @@ class TestCase(unittest.TestCase):
 
   def test_WriteData(self):
     self.setUpQuantLoad()
-    with StringIO() as f:
+    with contextlib.closing(StringIO()) as f:
       DataUtils.WriteData(f, self.d.GetVarNames(), self.d.GetQuantBounds(), self.d.data)
       s = f.getvalue()
       self.assertIn('DataUtils', s)

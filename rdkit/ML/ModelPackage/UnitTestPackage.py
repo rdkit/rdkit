@@ -40,8 +40,8 @@ class TestCase(unittest.TestCase):
     with open(os.path.join(self.dataDir, 'Jan9_build3_pkg.pkl'), 'r') as pkgTF:
       buf = pkgTF.read().replace('\r\n', '\n').encode('utf-8')
       pkgTF.close()
-    with BytesIO(buf) as pkgF:
-      pkg = cPickle.load(pkgF)
+    io = BytesIO(buf)
+    pkg = cPickle.load(io)
     return pkg
 
   def _verify(self, pkg, testD):

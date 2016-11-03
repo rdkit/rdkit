@@ -29,16 +29,16 @@ class TestCase(unittest.TestCase):
 
   def testCherkassky(self):
     " testing Cherkassky empirical risk bound "
-    res = numpy.array([Risk.CherkasskyRiskBound(x[0], self.nPts, x[1], self.eps)
-                       for x in self.dList])
+    res = numpy.array(
+      [Risk.CherkasskyRiskBound(x[0], self.nPts, x[1], self.eps) for x in self.dList])
     target = numpy.array([.6654, .7450, .5378, .6329, .6010, .6175, .6501])
     maxDev = max(abs(res - target))
     assert maxDev < self.tol, 'maxDev too high'
 
   def testChristiani(self):
     " testing Christiani empirical risk bound "
-    res = numpy.array([Risk.CristianiRiskBound(x[0], self.nPts, x[1], self.eps)
-                       for x in self.dList])
+    res = numpy.array(
+      [Risk.CristianiRiskBound(x[0], self.nPts, x[1], self.eps) for x in self.dList])
     target = numpy.array([1.5617, 1.7438, 1.4797, 1.7394, 1.7235, 1.7653, 1.8235])
     maxDev = max(abs(res - target))
     assert maxDev < self.tol, 'maxDev too high'

@@ -13,7 +13,6 @@ from rdkit.DataStructs.VectCollection import VectCollection
 from rdkit.ML import InfoTheory
 from rdkit.ML.DecTree.BuildSigTree import BuildSigTree, _GenerateRandomEnsemble
 from rdkit.ML.DecTree.SigTree import SigTreeNode
-from six.moves import cPickle  # @UnresolvedImport
 from six import StringIO
 from rdkit.TestRunner import redirect_stdout
 
@@ -148,6 +147,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(r, 0)
 
   def test4(self):
+    from rdkit.six.moves import cPickle  # @UnresolvedImport
     gz = gzip.open(
       os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'cdk2-few.pkl.gz'), 'rb')
     examples = cPickle.load(gz, encoding='Latin1')
