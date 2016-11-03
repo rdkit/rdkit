@@ -12,16 +12,16 @@ from rdkit import six
 from rdkit import RDConfig
 
 if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
-  from pyPgSQL import PgSQL
+  from pyPgSQL import PgSQL  # @UnresolvedImport
   # as of this writing (March 2004), this results in a speedup in
   # getting results back from the wrapper:
   PgSQL.fetchReturnsList = 1
 
   from pyPgSQL.PgSQL import *
-  sqlTextTypes = [PG_CHAR, PG_BPCHAR, PG_TEXT, PG_VARCHAR, PG_NAME]
-  sqlIntTypes = [PG_INT8, PG_INT2, PG_INT4]
-  sqlFloatTypes = [PG_FLOAT4, PG_FLOAT8]
-  sqlBinTypes = [PG_OID, PG_BLOB, PG_BYTEA]
+  sqlTextTypes = [PG_CHAR, PG_BPCHAR, PG_TEXT, PG_VARCHAR, PG_NAME]  # @UndefinedVariable
+  sqlIntTypes = [PG_INT8, PG_INT2, PG_INT4]  # @UndefinedVariable
+  sqlFloatTypes = [PG_FLOAT4, PG_FLOAT8]  # @UndefinedVariable
+  sqlBinTypes = [PG_OID, PG_BLOB, PG_BYTEA]  # @UndefinedVariable
   getTablesSql = """select tablename from pg_tables where schemaname='public'"""
   getTablesAndViewsSql = """SELECT c.relname as "Name"
   FROM pg_catalog.pg_class c
@@ -30,13 +30,13 @@ if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
   WHERE c.relkind IN ('r','v','S','')
   AND n.nspname NOT IN ('pg_catalog', 'pg_toast')
   AND pg_catalog.pg_table_is_visible(c.oid)
-                              
+
   """
   getDbSql = """ select datname from pg_database where datallowconn """
   fileWildcard = None
   placeHolder = '%s'
   binaryTypeName = "bytea"
-  binaryHolder = PgBytea
+  binaryHolder = PgBytea  # @UndefinedVariable
   RDTestDatabase = "::RDTests"
 elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   try:
@@ -56,6 +56,7 @@ elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   binaryTypeName = "blob"
   binaryHolder = memoryview if six.PY3 else buffer  # @UndefinedVariable
 
-  connect = lambda x, *args: sqlite.connect(x)
+  def connect(x, *args):
+    return sqlite.connect(x)
 else:
   raise ImportError("Neither sqlite nor PgSQL support found.")

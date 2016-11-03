@@ -9,6 +9,8 @@
 #  of the RDKit source tree.
 #
 from __future__ import print_function
+
+
 try:
   from reportlab import platypus
 except ImportError:
@@ -30,7 +32,9 @@ else:
   from rdkit.Dbase.DbConnection import DbConnect
   from rdkit.Dbase import DbInfo
   from rdkit.Reports.PDFReport import PDFReport, ReportUtils
-  import os, tempfile, sys
+  from reportlab.lib import colors
+  from reportlab.lib.units import inch
+  import sys
 
   def GetReportlabTable(self, *args, **kwargs):
     """ this becomes a method of DbConnect  """
@@ -48,7 +52,7 @@ else:
         entry = list(entry)
         entry[col] = 'N/A'
       rawD.append(entry)
-      #if nRows >10: break
+      # if nRows >10: break
 
     res = platypus.Table(rawD)
     return res
@@ -199,11 +203,6 @@ else:
       return res
 
   def QuickReport(conn, fileName, *args, **kwargs):
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
-
-    styles = getSampleStyleSheet()
     title = 'Db Report'
     if 'title' in kwargs:
       title = kwargs['title']
@@ -245,7 +244,6 @@ else:
   DbConnect.GetReportlabTable = GetReportlabTable
 
 if __name__ == '__main__':
-  import sys
   dbName = sys.argv[1]
   tblName = sys.argv[2]
   fName = 'report.pdf'

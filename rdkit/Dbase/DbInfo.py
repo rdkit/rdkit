@@ -122,13 +122,13 @@ def GetColumnInfoFromCursor(cursor):
     for i, v in enumerate(r):
       cName = cursor.description[i][0]
       typ = type(v)
-      if typ == str or (PY2 and typ == unicode):
+      if typ == str or (PY2 and typ == unicode):  # @UndefinedVariable
         typeStr = 'string'
       elif typ == int:
         typeStr = 'integer'
       elif typ == float:
         typeStr = 'float'
-      elif (PY2 and typ == buffer) or (PY3 and typ in (memoryview, bytes)):
+      elif (PY2 and typ == buffer) or (PY3 and typ in (memoryview, bytes)):  # @UndefinedVariable
         typeStr = 'binary'
       else:
         sys.stderr.write('odd type in col %s: %s\n' % (cName, typ))

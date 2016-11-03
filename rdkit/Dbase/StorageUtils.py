@@ -168,8 +168,8 @@ def GetNextRDId(conn, table, idColName='Id', leadText=''):
   return IndexToRDId(ID, leadText=leadText)
 
 
-def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id',
-                 leadText='RDCmpd'):
+def RegisterItem(conn, table, value, columnName, data=None, id='',  # @ReservedAssignment
+                 idColName='Id', leadText='RDCmpd'):
   """
 
   >>> conn = DbConnect(tempDbName)
@@ -187,7 +187,8 @@ def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id
   True
 
   It's also possible to provide ids by hand:
-  >>> RegisterItem(conn,tblName,'label10','label',['label10',1],id='RDCmpd-000-010-1')==(1, 'RDCmpd-000-010-1')
+  >>> RegisterItem(conn,tblName,'label10','label',['label10',1],
+  ...              id='RDCmpd-000-010-1')==(1, 'RDCmpd-000-010-1')
   True
   >>> str(GetNextRDId(conn,tblName))
   'RDCmpd-000-011-2'

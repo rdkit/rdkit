@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
     self.colHeads = ('int_col', 'floatCol', 'strCol')
     self.colTypes = ('integer', 'float', 'string')
     if RDConfig.useSqlLite:
-      tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
+      _, tempName = tempfile.mkstemp(suffix='sqlt')
       self.tempDbName = tempName
       shutil.copyfile(self.dbName, self.tempDbName)
     else:
@@ -161,7 +161,8 @@ class TestCase(unittest.TestCase):
   def testGetData5(self):
     """ using a RandomAccessDbResultSet with a Transform
     """
-    fn = lambda x: (x[0], x[1] * 2)
+    def fn(x):
+      return (x[0], x[1] * 2)
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=1, transform=fn)
 
@@ -173,7 +174,8 @@ class TestCase(unittest.TestCase):
   def testGetData6(self):
     """ using a DbResultSet with a Transform
     """
-    fn = lambda x: (x[0], x[1] * 2)
+    def fn(x):
+      return (x[0], x[1] * 2)
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=0, transform=fn)
     self.assertRaises(TypeError, lambda: len(d))
