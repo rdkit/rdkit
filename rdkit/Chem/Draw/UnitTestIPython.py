@@ -22,7 +22,7 @@ except ImportError:
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    if IPythonConsole is not None:
+    if IPythonConsole is not None and Draw.MolsToGridImage != IPythonConsole.ShowMols:
       IPythonConsole.InstallIPythonRenderer()
     self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
