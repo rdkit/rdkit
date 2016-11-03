@@ -41,6 +41,7 @@ from rdkit.Chem import AllChem,rdChemReactions
 from rdkit import Geometry
 from rdkit import RDConfig
 import itertools, time
+import numpy as np
 
 def log(s):
   Chem.LogErrorMsg("== " + s)
@@ -143,7 +144,85 @@ class TestCase(unittest.TestCase) :
       r.Skip(num)
       t2 = time.time()
       print("%s Skipped %s in %s seconds"%(r, num, t2-t1))
-            
+
+  def testEvenPairsSampling(self):
+    rxn = rdChemReactions.ChemicalReaction();
+    
+    rgroups = [[Chem.MolFromSmiles("C")]*10,
+               [Chem.MolFromSmiles("N")]*10,
+               [Chem.MolFromSmiles("O")]*10]
+
+    rxn = rdChemReactions.ChemicalReaction();
+    count = 0
+    pairs01 = {}
+    pairs12 = {}
+    pairs02 = {}
+    
+    strategy = rdChemReactions.EvenSamplePairsStrategy()
+    strategy.Initialize(rxn, rgroups)
+    # try 100 samples
+    while count < 100:
+      v = strategy.next()
+      p01 = (v[0], v[1])
+      p12 = (v[1], v[2])
+      p02 = (v[0], v[2])
+      pairs01[p01] = pairs01.get(p01, 0) + 1
+      pairs12[p01] = pairs12.get(p12, 0) + 1
+      pairs02[p01] = pairs02.get(p02, 0) + 1
+      count += 1
+
+    # each pair should be used rougly once
+    self.assertEquals(np.median(pairs01.values()), 1.0)
+    self.assertEquals(np.median(pairs02.values()), 1.0)
+    self.assertEquals(np.median(pairs12.values()), 1.0)
+
+    # now try 1000
+    pairs01 = {}
+    pairs12 = {}
+    pairs02 = {}
+    strategy = rdChemReactions.EvenSamplePairsStrategy()
+    strategy.Initialize(rxn, rgroups)
+    count = 0
+    while count < 1000:
+      v = strategy.next()
+      p01 = (v[0], v[1])
+      p12 = (v[1], v[2])
+      p02 = (v[0], v[2])
+      pairs01[p01] = pairs01.get(p01, 0) + 1
+      pairs12[p01] = pairs12.get(p12, 0) + 1
+      pairs02[p01] = pairs02.get(p02, 0) + 1
+      count += 1
+
+    # each pair should be used roughly 10 times
+    self.assertTrue( 9 <= np.median(pairs01.values()) <= 11)
+    self.assertTrue( 9 <= np.median(pairs02.values()) <= 11)
+    self.assertTrue( 9 <= np.median(pairs12.values()) <= 11)
+
+    # now try 500
+    pairs01 = {}
+    pairs12 = {}
+    pairs02 = {}
+    strategy = rdChemReactions.EvenSamplePairsStrategy()
+    strategy.Initialize(rxn, rgroups)
+    count = 0
+    while count < 500:
+      v = strategy.next()
+      p01 = (v[0], v[1])
+      p12 = (v[1], v[2])
+      p02 = (v[0], v[2])
+      pairs01[p01] = pairs01.get(p01, 0) + 1
+      pairs12[p01] = pairs12.get(p12, 0) + 1
+      pairs02[p01] = pairs02.get(p02, 0) + 1
+      count += 1
+
+    # each pair should be used roughly 5 times      
+    self.assertTrue( 4 <= np.median(pairs01.values()) <= 6)
+    self.assertTrue( 4 <= np.median(pairs02.values()) <= 6)
+    self.assertTrue( 4 <= np.median(pairs12.values()) <= 6)
+    
+    
+    self.assertTrue("PAIRSTAT" in strategy.Stats())
+
   def testEnumerateLibrary(self):
     log("testEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
