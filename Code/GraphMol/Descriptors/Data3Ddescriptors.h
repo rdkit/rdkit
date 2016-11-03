@@ -10,7 +10,7 @@ class Data3Ddescriptors
 {
    private:
 		static double mw[53];
-		static double vdW[53];
+		static double vdW[83];
 		static double neg[53];
 		static double pol[53];
 		static double ionpol[83];
