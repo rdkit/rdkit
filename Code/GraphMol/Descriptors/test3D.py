@@ -7,23 +7,20 @@ from rdkit.Chem import AllChem
 print rdBase.rdkitVersion
 print rdBase.boostVersion
 
+
+def get3D(m):
+	m = Chem.AddHs(m)
+	AllChem.EmbedMolecule(m)
+	AllChem.MMFFOptimizeMolecule(m)
+	r= rdMD.CalcAUTOCORR3D(m)+rdMD.CalcRDF(m)+rdMD.CalcMORSE(m)+rdMD.CalcWHIM(m)+rdMD.CalcGETAWAY(m)
+	return r
+
+
 m = Chem.MolFromSmiles('Cc1ccccc1')
 
-m = Chem.AddHs(m)
 
-AllChem.EmbedMolecule(m)
-AllChem.MMFFOptimizeMolecule(m)
-
-print "1"
-print rdMD.CalcRDF(m)
-print "2"
-print rdMD.CalcMORSE(m)
-print "3"
-print rdMD.CalcWHIM(m)
-print "4"
-print rdMD.CalcGETAWAY(m)
-print "5"
-print rdMD.CalcAUTOCORR3D(m)
+r= get3D(m)
+print len(r)
 
 
 # from rdkit import Chem
