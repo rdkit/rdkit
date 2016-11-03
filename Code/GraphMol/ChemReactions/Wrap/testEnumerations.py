@@ -37,7 +37,7 @@ from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem import rdChemReactions
+from rdkit.Chem import AllChem,rdChemReactions
 from rdkit import Geometry
 from rdkit import RDConfig
 import itertools, time
@@ -478,7 +478,7 @@ class TestCase(unittest.TestCase) :
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
     
     rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
-    # invert matches...
+    # invert matches so nothing matches
     reagents = [
       [Chem.MolFromSmiles('NCc1ncc(Cl)cc1Br'),
        Chem.MolFromSmiles('NCCc1ncc(Cl)cc1Br'),
@@ -494,6 +494,81 @@ class TestCase(unittest.TestCase) :
 
     enumerator = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertEquals([], list(enumerator))
+
+  def testRemoveInsaneReagents(self):
+    rxndata = "$RXN\nUntitled Document-1\n  ChemDraw10291618492D\n\n  3  1\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n   -0.4125    0.0000    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n   -0.4125    0.0000    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n    0.4125    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n   -0.4125    0.0000    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n 14 15  0  0  0  0  0  0  0  0999 V2000\n    0.5072   -0.5166    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.5072    0.3084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2949   -0.7616    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    1.7817   -0.0880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2967    0.5794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.5558   -1.5443    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n   -0.2073    0.7208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9218    0.3083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9217   -0.5167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.2073   -0.9292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6362    0.7208    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    1.5452    1.3661    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n    2.3507    1.5443    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n   -2.3507    0.3083    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  2  0        0\n  1  3  1  0        0\n  3  4  1  0        0\n  4  5  1  0        0\n  5  2  1  0        0\n  3  6  1  0        0\n  2  7  1  0        0\n  7  8  2  0        0\n  8  9  1  0        0\n  9 10  2  0        0\n 10  1  1  0        0\n  8 11  1  0        0\n 12 13  1  0        0\n 11 14  1  0        0\n 12  5  1  0        0\nM  END\n";
+
+    rxn = AllChem.ReactionFromRxnBlock(rxndata)
+    bbs = []
+    r1 = [ Chem.MolFromSmiles("CCNCC"),
+           Chem.MolFromSmiles("NCC"),
+           ]
+    r2 = [ Chem.MolFromSmiles("ClC1CCCC1"),
+           Chem.MolFromSmiles("ClC1CCCC1Cl"),
+           ]
+    r3 = [ Chem.MolFromSmiles("CCNCC"),
+           Chem.MolFromSmiles("NCC"),
+           ]
+    bbs = [r1, r2, r3]
+
+    # nothing matches!
+    for i,reagent in enumerate(rxn.GetReactants()):
+      for bb in bbs[i]:
+        self.assertFalse(bb.HasSubstructMatch(reagent))
+
+    # everything matches - yay sanitization!
+    rdChemReactions.SanitizeRxn(rxn)
+    for i,reagent in enumerate(rxn.GetReactants()):
+      for bb in bbs[i]:
+        self.assertTrue(bb.HasSubstructMatch(reagent))
+
+    en = rdChemReactions.EnumerateLibrary(rxn, bbs)
+    self.assertTrue(len(en.GetReagents()[0]) == 2)
+    self.assertTrue(len(en.GetReagents()[1]) == 2)
+    self.assertTrue(len(en.GetReagents()[2]) == 2)
+
+    #####################################################################################
+    # Match only at rgroups (ChemDraw style)
+    rxn = AllChem.ReactionFromRxnBlock(rxndata)
+    expected_matches = [[False,True], [True,True],[False, True] ]
+    rdChemReactions.SanitizeRxn(rxn, params=rdChemReactions.GetChemDrawRxnAdjustParams())
+    for i,(reagent, expected) in enumerate(zip(rxn.GetReactants(), expected_matches)):
+      match = [bb.HasSubstructMatch(reagent) for reagent in bbs[i]]
+      self.assertTrue(match, expected)
+
+    # Now try EnumerateLibrary
+    en = rdChemReactions.EnumerateLibrary(rxn, bbs)
+    self.assertTrue(len(en.GetReagents()[0]) == 1)
+    self.assertTrue(len(en.GetReagents()[1]) == 2)
+    self.assertTrue(len(en.GetReagents()[2]) == 1)
+
+
+    #####################################################################################
+    # now set the removal options ot only make one product per reagent set
+    rxn = AllChem.ReactionFromRxnBlock(rxndata)      
+    rdChemReactions.SanitizeRxn(rxn)
+
+    opts = rdChemReactions.EnumerationParams()
+    opts.reagentMaxMatchCount = 1
+    en = rdChemReactions.EnumerateLibrary(rxn, bbs, params=opts)
+    self.assertTrue(len(en.GetReagents()[0]) == 1)
+    self.assertTrue(len(en.GetReagents()[1]) == 1)
+    self.assertTrue(len(en.GetReagents()[2]) == 1)
+
+    #####################################################################################
+    # now set the removal options ot only make one product per reagent set
+    #  but wt
+    rxn = AllChem.ReactionFromRxnBlock(rxndata)
+    rdChemReactions.SanitizeRxn(rxn,
+                                params=rdChemReactions.GetChemDrawRxnAdjustParams())      
+
+
+    opts = rdChemReactions.EnumerationParams()
+    opts.reagentMaxMatchCount = 1
+    en = rdChemReactions.EnumerateLibrary(rxn, bbs, params=opts)
+    self.assertTrue(len(en.GetReagents()[0]) == 1)
+    self.assertTrue(len(en.GetReagents()[1]) == 1)
+    self.assertTrue(len(en.GetReagents()[2]) == 1)
     
 
 if __name__ == '__main__':

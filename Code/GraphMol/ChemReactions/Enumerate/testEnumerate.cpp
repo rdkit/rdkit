@@ -44,6 +44,7 @@
 
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION    
 #include <RDGeneral/BoostStartInclude.h>
@@ -236,6 +237,50 @@ void testEnumerations() {
   delete rxn;
 }
 
+const char *rxndata = "$RXN\nUntitled Document-1\n  ChemDraw10291618492D\n\n  3  1\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n   -0.4125    0.0000    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n   -0.4125    0.0000    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n    0.4125    0.0000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.4125    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n   -0.4125    0.0000    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  1  0        0\nM  END\n$MOL\n\n\n\n 14 15  0  0  0  0  0  0  0  0999 V2000\n    0.5072   -0.5166    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.5072    0.3084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2949   -0.7616    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    1.7817   -0.0880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.2967    0.5794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.5558   -1.5443    0.0000 R1  0  0  0  0  0  0  0  0  0  1  0  0\n   -0.2073    0.7208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9218    0.3083    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.9217   -0.5167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.2073   -0.9292    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.6362    0.7208    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    1.5452    1.3661    0.0000 N   0  0  0  0  0  0  0  0  0  5  0  0\n    2.3507    1.5443    0.0000 R4  0  0  0  0  0  0  0  0  0  4  0  0\n   -2.3507    0.3083    0.0000 R2  0  0  0  0  0  0  0  0  0  2  0  0\n  1  2  2  0        0\n  1  3  1  0        0\n  3  4  1  0        0\n  4  5  1  0        0\n  5  2  1  0        0\n  3  6  1  0        0\n  2  7  1  0        0\n  7  8  2  0        0\n  8  9  1  0        0\n  9 10  2  0        0\n 10  1  1  0        0\n  8 11  1  0        0\n 12 13  1  0        0\n 11 14  1  0        0\n 12  5  1  0        0\nM  END\n";
+
+void testInsaneEnumerations() {
+  EnumerationTypes::BBS bbs;
+  bbs.resize(3);
+
+  ChemicalReaction *rxn2 = RxnBlockToChemicalReaction(rxndata);
+  //RxnOps::sanitizeRxn(*rxn2, MolOps::AdjustQueryParameters());
+  MatchVectType tvect;
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCC")));
+  std::cerr << "0,0 " << (int)SubstructMatch(*bbs[0][0].get(), *rxn2->getReactants()[0].get(), tvect) << std::endl;
+  std::cerr << "0,1 " << (int)SubstructMatch(*bbs[0][1].get(), *rxn2->getReactants()[0].get(), tvect) << std::endl;
+  
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1Cl")));
+  std::cerr << "1,0 " << (int)SubstructMatch(*bbs[1][0].get(), *rxn2->getReactants()[1].get(), tvect) << std::endl;
+  std::cerr << "1,1 " << (int)SubstructMatch(*bbs[1][1].get(), *rxn2->getReactants()[1].get(), tvect) << std::endl;
+
+  bbs[2].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
+  bbs[2].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCC")));
+  std::cerr << "2,0 " << (int)SubstructMatch(*bbs[2][0].get(), *rxn2->getReactants()[2].get(), tvect) << std::endl;
+  std::cerr << "2,1 " << (int)SubstructMatch(*bbs[2][1].get(), *rxn2->getReactants()[2].get(), tvect) << std::endl;
+
+  
+  {
+    ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxndata);
+    RxnOps::sanitizeRxn(*rxn, MolOps::AdjustQueryParameters());
+    std::cerr << ChemicalReactionToRxnBlock(*rxn) << std::endl;
+    EnumerationParams ThereCanBeOnlyOne;
+    ThereCanBeOnlyOne.reagentMaxMatchCount = 1;
+    EnumerationTypes::BBS bbs2 = removeNonmatchingReagents(
+        *rxn, bbs,
+        ThereCanBeOnlyOne);
+    TEST_ASSERT(bbs2[0].size() == 1);
+    TEST_ASSERT(bbs2[1].size() == 1);
+    TEST_ASSERT(bbs2[2].size() == 1);
+    
+    delete rxn;
+  }
+  delete rxn2;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -245,7 +290,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  testSamplers();
-  testEvenSamplers();
-  testEnumerations();
+  /*
+    testSamplers();
+    testEvenSamplers();
+    testEnumerations();
+  */
+  testInsaneEnumerations();
 }
