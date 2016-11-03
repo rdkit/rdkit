@@ -327,10 +327,52 @@ std::vector<double> CalcVdWvolMORSE(
   return RDFres;
 }
 
+std::vector<double> CalcIstateMORSE(
+    const ROMol &mol, const Conformer &conf) {
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
+
+  std::vector<double> R = getG(32);
+  std::vector<double> RDFres;
+  double *DM = MolOps::get3DDistanceMat(mol, confId);
+
+    std::vector<double> RelativeIState = moldata3D.GetIState(mol);
+
+
+  for (int i = 0; i < 32; i++) {
+    double res = 0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+
+        if (i==0) { res += RelativeIState[j] * RelativeIState[k];}
+
+        else
+
+        res += RelativeIState[j] * RelativeIState[k] * sin(R[i] * DM[j * numAtoms + k]) /(R[i] * DM[j * numAtoms + k]);
+      }
+    }
+
+    RDFres.push_back(round( 1000 * res) / 1000);
+  }
+
+  return RDFres;
+}
+
+
 }  // end of anonymous namespace
 
 std::vector<double> MORSE(const ROMol &mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
+
+// Mor01u Mor02u  Mor03u  Mor04u  Mor05u  Mor06u  Mor07u  Mor08u  Mor09u  Mor10u  Mor11u  Mor12u  Mor13u  Mor14u  Mor15u  Mor16u  Mor17u  Mor18u  Mor19u  Mor20u  Mor21u  Mor22u  Mor23u  Mor24u  Mor25u  Mor26u  Mor27u  Mor28u  Mor29u  Mor30u  Mor31u  Mor32u  
+// Mor01m  Mor02m  Mor03m  Mor04m  Mor05m  Mor06m  Mor07m  Mor08m  Mor09m  Mor10m  Mor11m  Mor12m  Mor13m  Mor14m  Mor15m  Mor16m  Mor17m  Mor18m  Mor19m  Mor20m  Mor21m  Mor22m  Mor23m  Mor24m  Mor25m  Mor26m  Mor27m  Mor28m  Mor29m  Mor30m  Mor31m  Mor32m  
+// or01v  Mor02v  Mor03v  Mor04v  Mor05v  Mor06v  Mor07v  Mor08v  Mor09v  Mor10v  Mor11v  Mor12v  Mor13v  Mor14v  Mor15v  Mor16v  Mor17v  Mor18v  Mor19v  Mor20v  Mor21v  Mor22v  Mor23v  Mor24v  Mor25v  Mor26v  Mor27v  Mor28v  Mor29v  Mor30v  Mor31v  Mor32v  
+// Mor01e  Mor02e  Mor03e  Mor04e  Mor05e  Mor06e  Mor07e  Mor08e  Mor09e  Mor10e  Mor11e  Mor12e  Mor13e  Mor14e  Mor15e  Mor16e  Mor17e  Mor18e  Mor19e  Mor20e  Mor21e  Mor22e  Mor23e  Mor24e  Mor25e  Mor26e  Mor27e  Mor28e  Mor29e  Mor30e  Mor31e  Mor32e  
+// or01p  Mor02p  Mor03p  Mor04p  Mor05p  Mor06p  Mor07p  Mor08p  Mor09p  Mor10p  Mor11p  Mor12p  Mor13p  Mor14p  Mor15p  Mor16p  Mor17p  Mor18p  Mor19p  Mor20p  Mor21p  Mor22p  Mor23p  Mor24p  Mor25p  Mor26p  Mor27p  Mor28p  Mor29p  Mor30p  Mor31p  Mor32p  
+// Mor01i  Mor02i  Mor03i  Mor04i  Mor05i  Mor06i  Mor07i  Mor08i  Mor09i  Mor10i  Mor11i  Mor12i  Mor13i  Mor14i  Mor15i  Mor16i  Mor17i  Mor18i  Mor19i  Mor20i  Mor21i  Mor22i  Mor23i  Mor24i  Mor25i  Mor26i  Mor27i  Mor28i  Mor29i  Mor30i  Mor31i  Mor32i  
+// or01s  Mor02s  Mor03s  Mor04s  Mor05s  Mor06s  Mor07s  Mor08s  Mor09s  Mor10s  Mor11s  Mor12s  Mor13s  Mor14s  Mor15s  Mor16s  Mor17s  Mor18s  Mor19s  Mor20s  Mor21s  Mor22s  Mor23s  Mor24s  Mor25s  Mor26s  Mor27s  Mor28s  Mor29s  Mor30s  Mor31s  Mor32s
+
+
 
   const Conformer &conf = mol.getConformer(confId);
 
@@ -350,6 +392,9 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
 
   std::vector<double> res7 = CalcIonPolMORSE(mol, conf);
   res1.insert(res1.end(),res7.begin(), res7.end());
+
+  std::vector<double> res8 = CalcIstateMORSE(mol, conf);
+  res1.insert(res1.end(),res8.begin(), res8.end());
 
  // std::vector<double> res3 = CalcChargeMORSE(mol, conf);
  // res1.insert(res1.end(),res3.begin(), res3.end());
