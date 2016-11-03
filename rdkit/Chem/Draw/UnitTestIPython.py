@@ -21,9 +21,17 @@ except ImportError:
 
 class TestCase(unittest.TestCase):
 
+  def setUp(self):
+    if IPythonConsole is not None:
+      IPythonConsole.InstallIPythonRenderer()
+    self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
+
+  def tearDown(self):
+    if IPythonConsole is not None:
+      IPythonConsole.UninstallIPythonRenderer()
+
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
   def testGithub1089(self):
-    if IPythonConsole is None:
-      return
     m = Chem.MolFromSmiles('CCCC')
 
     IPythonConsole.ipython_useSVG = False
