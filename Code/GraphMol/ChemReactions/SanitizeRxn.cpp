@@ -30,6 +30,7 @@
 //
 #include "SanitizeRxn.h"
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 
 namespace RDKit {
 namespace RxnOps {
@@ -121,7 +122,18 @@ struct AtomInfo {
   }
 
   void setRLabel(unsigned int rlabel) {
-    atom->setProp(common_properties::_MolFileRLabel, rlabel);    
+    PRECONDITION(atom, "Internal error in SanitizeRxn - null atom");
+    RWMol &mol = dynamic_cast<RWMol&>(atom->getOwningMol());
+
+    QueryAtom qatom(*atom);
+    qatom.setProp(common_properties::_MolFileRLabel, rlabel);
+    std::string dLabel = "R" + boost::lexical_cast<std::string>(rlabel);
+    qatom.setProp(common_properties::dummyLabel, dLabel);
+    if (rlabel > 0 && rlabel < 999) {
+      qatom.setIsotope(rlabel);
+    }
+    qatom.setQuery(makeAtomNullQuery());
+    mol.replaceAtom(atom->getIdx(), &qatom);
   }
 
   void setAtomMap(int map) {
@@ -309,9 +321,26 @@ void fixHs(ChemicalReaction &rxn) {
   }
 }
 
+void adjustTemplates(ChemicalReaction &rxn,
+                     const MolOps::AdjustQueryParameters &params) {
+  if(!params.adjustDegree && !params.adjustRingCount) {
+    return;
+  }
+  
+  for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
+      it != rxn.endReactantTemplates();
+      ++it) {
+    RWMol * rw = dynamic_cast<RWMol*>(it->get());
+    if (rw)
+      adjustQueryProperties(*rw, &params);
+    else
+      PRECONDITION(rw, "Oops, not really a RWMol?");    
+  }
+}
 void sanitizeRxn(ChemicalReaction &rxn,
                  unsigned int &operationsThatFailed,
-                 unsigned int ops)
+                 unsigned int ops,
+                 const MolOps::AdjustQueryParameters &params)
 {
   operationsThatFailed = SANITIZE_NONE;
 
@@ -325,12 +354,10 @@ void sanitizeRxn(ChemicalReaction &rxn,
     fixAtomMaps(rxn);
   }
 
-
-  if (ops & SANITIZE_REAGENT_AROMATICITY) {
-    operationsThatFailed = SANITIZE_REAGENT_AROMATICITY;
-    fixReactantTemplateAromaticity(rxn);
+  if (ops & SANITIZE_ADJUST_REACTANTS) {  
+    operationsThatFailed = SANITIZE_ADJUST_REACTANTS;
+    adjustTemplates(rxn, params);
   }
-
   if (ops & SANITIZE_MERGEHS) {
     operationsThatFailed = SANITIZE_MERGEHS;
     fixHs(rxn);
@@ -339,9 +366,9 @@ void sanitizeRxn(ChemicalReaction &rxn,
   operationsThatFailed = SANITIZE_NONE;
 }
 
-void sanitizeRxn(ChemicalReaction &rxn) {
+void sanitizeRxn(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params) {
   unsigned int ops = 0;
-  return sanitizeRxn(rxn, ops, SANITIZE_ALL);
+  return sanitizeRxn(rxn, ops, SANITIZE_ALL, params);
 }
 
 

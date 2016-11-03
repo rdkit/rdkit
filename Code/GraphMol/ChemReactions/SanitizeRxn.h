@@ -62,18 +62,41 @@ void fixRGroups(ChemicalReaction &rxn);
 void fixAtomMaps(ChemicalReaction &rxn);
 
 
-//! Set aromaticity on templates if possible
-//!  This affects RXN files mostly.
-void fixTemplateAromaticity(ChemicalReaction &rxn);
+//! Adjusts the reactant templates to properly match reagents
+void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
 
 //! merge query Hs if appropriate
 void fixHs(ChemicalReaction &rxn);
+
+// Default adjustment parameters for matching reagents
+inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
+  MolOps::AdjustQueryParameters params;
+  params.adjustDegree = false;
+  params.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREDUMMIES;
+  params.adjustRingCount = false;
+  params.adjustRingCountFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
+  params.makeDummiesQueries = false;
+  params.aromatizeIfPossible = true;
+  return params;
+}
+
+// Default adjustment parameters for ChemDraw style matching of reagents
+inline const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
+  MolOps::AdjustQueryParameters params;
+  params.adjustDegree = true;
+  params.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREDUMMIES;
+  params.adjustRingCount = false;
+  params.adjustRingCountFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
+  params.makeDummiesQueries = false;
+  params.aromatizeIfPossible = true;
+  return params;
+}
 
 typedef enum {
   SANITIZE_NONE = 0x0,
   SANITIZE_RGROUP_NAMES = 0x1,
   SANITIZE_ATOM_MAPS = 0x2,
-  SANITIZE_REAGENT_AROMATICITY = 0x4,
+  SANITIZE_ADJUST_REACTANTS = 0x4,
   SANITIZE_MERGEHS = 0x8,
   SANITIZE_ALL = 0xFFFFFFFF
 } SanitizeRxnFlags;
@@ -114,9 +137,11 @@ typedef enum {
 
 void sanitizeRxn(ChemicalReaction &rxn,
                  unsigned int &operationsThatFailed,
-                 unsigned int sanitizeOps = SANITIZE_ALL);
+                 unsigned int sanitizeOps = SANITIZE_ALL,
+                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 //! \overload
-void sanitizeRxn(ChemicalReaction &rxn);
+void sanitizeRxn(ChemicalReaction &rxn,
+                 const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 
 }
 }
