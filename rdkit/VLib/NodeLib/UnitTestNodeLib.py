@@ -29,7 +29,7 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
   tests.addTests(doctest.DocTestSuite(SmilesDupeFilter, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(SmilesOutput, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(SmilesSupply, optionflags=doctest.ELLIPSIS))
-#   tests.addTests(doctest.DocTestSuite(DbMolSupply, optionflags=doctest.ELLIPSIS))
+  #   tests.addTests(doctest.DocTestSuite(DbMolSupply, optionflags=doctest.ELLIPSIS))
   return tests
 
 
