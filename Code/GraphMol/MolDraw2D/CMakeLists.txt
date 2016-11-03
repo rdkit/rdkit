@@ -8,6 +8,7 @@ rdkit_headers(MolDraw2D.h
   MolDraw2DSVG.h
   MolDraw2Dwx.h
   MolDraw2DUtils.h
+  MolDraw2DDetails.h
   DEST GraphMol/MolDraw2D
 )
 
