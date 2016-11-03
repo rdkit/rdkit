@@ -281,7 +281,7 @@ the return tuple.";
               docString.c_str());
 
   python::def("GetCheckMolLog", AvalonTools::getCheckMolLog,
-              "Returns (and clears) the Struchk log for the last molecules processed.");
+              "Returns the Struchk log for the last molecules processed.");
   
   python::scope().attr("avalonSSSBits") = AvalonTools::avalonSSSBits;
   python::scope().attr("avalonSimilarityBits") =
