@@ -381,12 +381,14 @@ typedef int sanitize_ops;
 typedef unsigned int sanitize_ops;
 #endif
 
-RxnOps::SanitizeRxnFlags sanitizeReaction(ChemicalReaction &rxn,
-                                          sanitize_ops sanitizeOps,
-                                          bool catchErrors) {
+RxnOps::SanitizeRxnFlags sanitizeReaction(
+    ChemicalReaction &rxn,
+    sanitize_ops sanitizeOps,
+    const MolOps::AdjustQueryParameters &params,
+    bool catchErrors) {
   unsigned int operationsThatFailed = 0;
   try {
-    RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps);
+    RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps, params);
   } catch(...) {
     if (!catchErrors)
       throw;
@@ -807,16 +809,23 @@ Sample Usage:\n\
         .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
         .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
         .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
-        .value("SANITIZE_REAGENT_AROMATICITY", RDKit::RxnOps::SANITIZE_REAGENT_AROMATICITY)
+        .value("SANITIZE_ADJUST_REACTANTS", RDKit::RxnOps::SANITIZE_ADJUST_REACTANTS)
         .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
         .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
         .export_values();
     ;
 
+    python::def("GetDefaultAdjustParams", RDKit::RxnOps::DefaultRxnAdjustParams,
+                "Returns the default adjustment parameters for reactant templates");
+
+    python::def("GetChemDrawRxnAdjustParams", RDKit::RxnOps::ChemDrawRxnAdjustParams,
+                "Returns the chemdraw style adjustment parameters for reactant templates");
+    
     std::string docstring = "feed me";
     python::def(
         "SanitizeRxn", RDKit::sanitizeReaction,
         (python::arg("rxn"), python::arg("sanitizeOps") = RDKit::RxnOps::SANITIZE_ALL,
+         python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
          python::arg("catchErrors") = false),
         docString.c_str());
     
