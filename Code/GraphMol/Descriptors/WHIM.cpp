@@ -35,9 +35,8 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "WHIM.h"
+#include "MolData3Ddescriptors.h"
 
-#include "GraphMol/PartialCharges/GasteigerCharges.h"
-#include "GraphMol/PartialCharges/GasteigerParams.h"
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
 
 #include <Numerics/Matrix.h>
@@ -53,149 +52,18 @@ using namespace Eigen;
 
 #define EIGEN_TOLERANCE 1.0e-2
 
-double relativeMw[]={0.084,0,0,0,0.900,1.000,1.166,1.332,1.582,0,0,0, 2.246, 2.339, 2.579,2.670, 2.952,0,0,0,0,0,0,0,0, 4.650, 4.907, 4.887, 5.291, 5.445,0,0,0,0, 6.653,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 9.884,0,0, 10.56};
-double relativeVdW[]={0.299,0,0,0,0.796,1.000,0.695,0.512,0.410,0,0,0, 1.626, 1.424, 1.181,1.088, 1.035,0,0,0,0,0,0,0,0, 1.829, 1.561, 0.764, 0.512, 1.708,0,0,0,0, 1.384,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 2.042,0,0, 1.728};
-double relativeNeg[]={0.944,0,0,0,0.828,1.000,1.163,1.331,1.457,0,0,0, 0.624, 0.779, 0.916,1.077, 1.265,0,0,0,0,0,0,0,0, 0.728, 0.728, 0.728, 0.740, 0.810,0,0,0,0, 1.172,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0.837,0,0, 1.012};
-double relativePol[]={0.379,0,0,0,1722,1.000,0.625,0.456,0.316,0,0,0, 3.864, 3.057, 2.063,1.648, 1.239,0,0,0,0,0,0,0,0, 4.773, 4.261, 3.864, 3.466, 4.034,0,0,0,0, 1.733,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 4.375,0,0, 3.040};
-double relativeIonPol[]={1.208,0,0.479,0.828,0.737,1,1.291,1.209,1.547,0,0.456,0.679,0.532,0.724,0.931,0.92,1.152,0,0.386,0.543,0,0,0,0.601,0.66,0.702,0.7,0.679,0.686,0.834,0.533,0.702,0.872,0.866,1.049,0,0.371,0.506,0,0,0,0.63,0,0,0,0,0.673,0.799,0.514,0.652,0.767,0.8,0.928,0,0,0,0,0,0,0,0,0,0,0.546,0,0,0,0,0,0,0,0,0,0,0,0,0,0.799,0.819,0.927,0.542,0.659,0.647};
-
 
 namespace RDKit {
 namespace Descriptors{
 
 namespace {
 
+  MolData3Ddescriptors moldata3D;
+
+
 double roundn(double in,int factor) {
 
   return round(in*pow(10,factor))/pow(10,factor);
-}
-
-int GetPrincipalQuantumNumber(int AtomicNum) {
-  if (AtomicNum<=2) return 1;
-  else if (AtomicNum<=10) return 2;
-  else if (AtomicNum<=18) return 3;
-  else if (AtomicNum<=36) return 4;
-  else if (AtomicNum<=54) return 5;
-  else if (AtomicNum<=86) return 6;
-  else return 7;
-}
-
-// adaptation from EState.py 
-// we need the Is value only there
-std::vector<double> GetIState(const ROMol &mol){
-  int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is;
-
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
-    int atNum=atom->getAtomicNum();
-    int d = atom->getDegree();
-    if (d>0 and atNum>1) {
-      int h = atom->getTotalNumHs();
-      int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
-      int N = GetPrincipalQuantumNumber(atNum);
-      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
-    }
-    else Is.push_back(0.0);
- }
-
-  double tmp,p;
-  double *dist = MolOps::getDistanceMat(mol,false,false); // topological distance not 3D distance!!!
-  double accum[numAtoms];
-  for (int i=0;i<numAtoms;i++) {
-    for (int j=i+1;j<numAtoms;j++) {
-       p = dist[i * numAtoms + j]+1;
-
-      if (p < 1e6) {
-        tmp = (Is[i] - Is[j]) / (p * p);
-        accum[i] += tmp;
-        accum[j] -= tmp;
-      }
-    }
-  }
-
- for (int i=0;i<numAtoms;i++) {
-    Is[i]+=accum[i];
- }
-
-
- return Is;
-}
-
-
-std::vector<double> GetCharges(const ROMol& mol){
-
-  std::vector<double> charges(mol.getNumAtoms(), 0);
-  // use 12 iterations... can be more
-  computeGasteigerCharges(mol, charges, 12, true);
-  return charges;
-}
-
-
-std::vector<double> GetRelativeMW(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=relativeMw[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-  }
-
-
-  return pol;
-}
-
-
-std::vector<double> GetRelativeENeg(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> neg(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    neg[i]=relativeNeg[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-}
-
-  return neg;
-}
-
-
-std::vector<double> GetRelativeVdW(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> vdw(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    vdw[i]=relativeVdW[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-
-  }
-
-  return vdw;
-}
-
-std::vector<double> GetRelativePol(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=relativePol[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-
-  }
-
-  return pol;
-}
-
-std::vector<double> GetRelativeIonPol(const ROMol& mol){
-   int numAtoms= mol.getNumAtoms();
-
-  std::vector<double> pol(numAtoms, 0.0);
-  for( int i=0; i<numAtoms; ++i){
-
-    pol[i]=relativeIonPol[mol.getAtomWithIdx(i)->getAtomicNum()-1];
-
-  }
-
-  return pol;
 }
 
 
@@ -411,7 +279,7 @@ double*  GetWHIMMass(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetRelativeMW(conf.getOwningMol());
+    std::vector<double> weigthvector = moldata3D.GetRelativeMW(conf.getOwningMol());
 
     double* weigtharray = &weigthvector[0];
 
@@ -445,7 +313,7 @@ double*  GetWHIMvdw(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetRelativeVdW(conf.getOwningMol());
+    std::vector<double> weigthvector = moldata3D.GetRelativeVdW(conf.getOwningMol());
 
     double* weigtharray = &weigthvector[0];
 
@@ -480,7 +348,7 @@ double*  GetWHIMneg(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetRelativeENeg(conf.getOwningMol());
+    std::vector<double> weigthvector = moldata3D.GetRelativeENeg(conf.getOwningMol());
 
     double* weigtharray = &weigthvector[0];
 
@@ -515,7 +383,7 @@ double*  GetWHIMpol(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetRelativePol(conf.getOwningMol());
+    std::vector<double> weigthvector = moldata3D.GetRelativePol(conf.getOwningMol());
 
     double* weigtharray = &weigthvector[0];
 
@@ -551,7 +419,7 @@ double*  GetWHIMIonPol(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetRelativeIonPol(conf.getOwningMol());
+    std::vector<double> weigthvector = moldata3D.GetRelativeIonPol(conf.getOwningMol());
 
     double* weigtharray = &weigthvector[0];
 
@@ -590,7 +458,7 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = GetIState(mol);
+    std::vector<double> weigthvector = moldata3D.GetIState(mol);
 
     double* weigtharray = &weigthvector[0];
 
