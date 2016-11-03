@@ -35,7 +35,7 @@ class DbResultBase(object):
         self.cursor.execute(self.cmd)
       else:
         self.cursor.execute(self.cmd, self.extras)
-    except Exception:
+    except Exception:  # pragma: nocover
       sys.stderr.write('the command "%s" generated errors:\n' % (self.cmd))
       import traceback
       traceback.print_exc()
@@ -60,52 +60,34 @@ class DbResultBase(object):
     return self.colTypes
 
   def GetColumnNamesAndTypes(self):
-    res = [None] * len(self.colNames)
-    for i in range(len(self.colNames)):
-      res[i] = self.colNames[i], self.colTypes[i]
-    return tuple(res)
+    return tuple(nt for nt in zip(self.colNames, self.colTypes))
 
 
 class DbResultSet(DbResultBase):
-  """ Only supports forward iteration
-
-  """
+  """ Only supports forward iteration """
 
   def __init__(self, *args, **kwargs):
     DbResultBase.__init__(self, *args, **kwargs)
-    self.seen = []
-    self._stopped = 0
 
-  def Reset(self):
-    self._stopped = 0
-    DbResultBase.Reset(self)
-
-  def next(self):
-    if self._stopped:
-      raise StopIteration
-    r = None
-    while r is None:
+  def __iter__(self):
+    self.Reset()
+    seen = set()
+    while True:
       r = self.cursor.fetchone()
       if not r:
-        self._stopped = 1
-        raise StopIteration
+        break
       if self.transform is not None:
         r = self.transform(r)
       if self.removeDups >= 0:
         v = r[self.removeDups]
-        if v in self.seen:
-          r = None
-        else:
-          self.seen.append(v)
-    return r
-
-  __next__ = next  # PY3
+        if v in seen:
+          continue
+        seen.add(v)
+      yield r
 
 
 class RandomAccessDbResultSet(DbResultBase):
-  """ Supports random access
-
-  """
+  """ Supports random access """
 
   def __init__(self, *args, **kwargs):
     DbResultBase.__init__(self, *args, **kwargs)
@@ -120,7 +102,6 @@ class RandomAccessDbResultSet(DbResultBase):
 
   def _finish(self):
     if self.cursor:
-      #sys.stderr.write('_finish:\n')
       r = self.cursor.fetchone()
       while r:
         if self.transform is not None:
@@ -173,77 +154,71 @@ class RandomAccessDbResultSet(DbResultBase):
     self._finish()
     return len(self.results)
 
-  def next(self):
-    self._pos += 1
-    res = None
-    if self._pos < len(self):
-      res = self.results[self._pos]
-    else:
-      raise StopIteration
-    return res
-
-  __next__ = next  # PY3
+  def __iter__(self):
+    self._finish()
+    for res in self.results:
+      yield res
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect('TEST.GDB')
   curs = conn.GetCursor()
   print('curs:', repr(curs))
   curs.execute('select * from ten_elements')
-  set = RandomAccessDbResultSet(curs)
+  resultSet = RandomAccessDbResultSet(curs)
   for i in range(12):
     try:
-      val = set[i]
+      val = resultSet[i]
     except IndexError:
       assert i >= 10
 
   print('use len')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements')
-  set = RandomAccessDbResultSet(curs)
-  for i in range(len(set)):
-    val = set[i]
+  resultSet = RandomAccessDbResultSet(curs)
+  for i in range(len(resultSet)):
+    val = resultSet[i]
 
   print('use iter')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements')
-  set = DbResultSet(curs)
-  for thing in set:
-    id, val = thing
+  resultSet = DbResultSet(curs)
+  for thing in resultSet:
+    ID, val = thing
 
   print('dups')
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
-  set = DbResultSet(curs)
+  resultSet = DbResultSet(curs)
   r = []
-  for thing in set:
+  for thing in resultSet:
     r.append(thing)
   assert len(r) == 20
 
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
-  set = DbResultSet(curs, removeDups=0)
+  resultSet = DbResultSet(curs, removeDups=0)
   r = []
-  for thing in set:
+  for thing in resultSet:
     r.append(thing)
   assert len(r) == 10
 
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
-  set = RandomAccessDbResultSet(curs, removeDups=0)
-  assert len(set) == 10
-  assert set[0] == (0, 11)
+  resultSet = RandomAccessDbResultSet(curs, removeDups=0)
+  assert len(resultSet) == 10
+  assert resultSet[0] == (0, 11)
 
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
-  set = RandomAccessDbResultSet(curs, removeDups=0)
-  assert set[0] == (0, 11)
-  assert set[1] == (2, 21)
-  assert set[5] == (10, 61)
+  resultSet = RandomAccessDbResultSet(curs, removeDups=0)
+  assert resultSet[0] == (0, 11)
+  assert resultSet[1] == (2, 21)
+  assert resultSet[5] == (10, 61)
 
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
-  set = RandomAccessDbResultSet(curs)
-  assert set[0] == (0, 11)
-  assert set[1] == (0, 11)
+  resultSet = RandomAccessDbResultSet(curs)
+  assert resultSet[0] == (0, 11)
+  assert resultSet[1] == (0, 11)

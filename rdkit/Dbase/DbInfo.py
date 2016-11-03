@@ -49,7 +49,8 @@ def GetDbNames(user='sysdba', password='masterkey', dirName='.', dBase='::templa
       names = ['::' + str(x[0]) for x in c.fetchall()]
     names.remove(dBase)
   elif DbModule.fileWildcard:
-    import os.path, glob
+    import os.path
+    import glob
     names = glob.glob(os.path.join(dirName, DbModule.fileWildcard))
   else:
     names = []
@@ -78,9 +79,10 @@ def GetTableNames(dBase, user='sysdba', password='masterkey', includeViews=0, cn
   if not cn:
     try:
       cn = DbModule.connect(dBase, user, password)
-    except Exception:
+    except Exception:  # pragma: nocover
       print('Problems opening database: %s' % (dBase))
       return []
+
   c = cn.cursor()
   if not includeViews:
     comm = DbModule.getTablesSql

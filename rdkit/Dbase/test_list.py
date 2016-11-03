@@ -1,4 +1,5 @@
 tests = [
+  ("python", "UnitTestStorageUtils.py", {}),
   ("python", "UnitTestDbConnect.py", {}),
   ("python", "UnitTestDbUtils.py", {}),
   ("python", "UnitTestDbResultSet.py", {}),
