@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
@@ -52,16 +50,19 @@
 
 """
 from __future__ import print_function
-import re, csv
-import random
 
-from rdkit import six
-from rdkit.six.moves import cPickle
-from rdkit.six.moves import xrange, map
-from rdkit import RDConfig
-from rdkit.utils import fileutils
-from rdkit.ML.Data import MLData
+import csv
+import random
+import re
+
+import numpy
+from six import integer_types
+
 from rdkit.DataStructs import BitUtils
+from rdkit.ML.Data import MLData
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import xrange  # @UnresolvedImport
+from rdkit.utils import fileutils
 
 
 def permutation(nToDo):
@@ -92,7 +93,7 @@ def WriteData(outFile, varNames, qBounds, examples):
     outFile.write('# %s %s\n' % (varNames[i], str(qBounds[i])))
   outFile.write('# ----------\n')
   for example in examples:
-    outFile.write(' '.join(map(str, example)) + '\n')
+    outFile.write(' '.join([str(e) for e in example]) + '\n')
 
 
 def ReadVars(inFile):
@@ -154,7 +155,7 @@ def ReadQuantExamples(inFile):
 
   """
   expr1 = re.compile(r'^#')
-  expr2 = re.compile(r'[\ ]*|[\t]*')
+  expr2 = re.compile(r'[\ ]+|[\t]+')
   examples = []
   names = []
   inLine = inFile.readline()
@@ -162,7 +163,7 @@ def ReadQuantExamples(inFile):
     if expr1.search(inLine) is None:
       resArr = expr2.split(inLine)
       if len(resArr) > 1:
-        examples.append(list(map(lambda x: int(x), resArr[1:])))
+        examples.append([int(x) for x in resArr[1:]])
         names.append(resArr[0])
     inLine = inFile.readline()
   return names, examples
@@ -190,7 +191,7 @@ def ReadGeneralExamples(inFile):
 
   """
   expr1 = re.compile(r'^#')
-  expr2 = re.compile(r'[\ ]*|[\t]*')
+  expr2 = re.compile(r'[\ ]+|[\t]+')
   examples = []
   names = []
   inLine = inFile.readline()
@@ -251,7 +252,7 @@ def BuildDataSet(fileName):
   return data
 
 
-def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None):
+def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
   """ calculates the number of possible values for each variable in a data set
 
    **Arguments**
@@ -274,18 +275,17 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None):
      - _nPossible_ for other numeric variables will be calculated
 
   """
-  numericTypes = [int, float]
-  if six.PY2:
-    numericTypes.append(long)
+  numericTypes = integer_types + (float, numpy.int64, numpy.int32, numpy.int16)
 
-  print('order:', order, len(order))
-  print('qB:', qBounds)
-  #print('nQB:',nQBounds, len(nQBounds))
-  assert (qBounds and len(order)==len(qBounds)) or (nQBounds and len(order)==len(nQBounds)),\
-         'order/qBounds mismatch'
+  if not silent:  # pragma: nocover
+    print('order:', order, len(order))
+    print('qB:', qBounds)
+    # print('nQB:',nQBounds, len(nQBounds))
+  assert (qBounds and len(order) == len(qBounds)) or (nQBounds and len(order) == len(nQBounds)), \
+      'order/qBounds mismatch'
   nVars = len(order)
   nPossible = [-1] * nVars
-  cols = range(nVars)
+  cols = list(range(nVars))
   for i in xrange(nVars):
     if nQBounds and nQBounds[i] != 0:
       nPossible[i] = -1
@@ -305,11 +305,11 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None):
           nPossible[col] = -1
           cols.remove(col)
       else:
-        print('bye bye col %d: %s' % (col, repr(d)))
+        if not silent:
+          print('bye bye col %d: %s' % (col, repr(d)))
         nPossible[col] = -1
         cols.remove(col)
-
-  return list(map(lambda x: int(x) + 1, nPossible))
+  return [int(x) + 1 for x in nPossible]
 
 
 def WritePickledData(outName, data):
@@ -342,8 +342,6 @@ def TakeEnsemble(vect, ensembleIds, isDataVect=False):
   >>> v = ['foo',10,20,30,40,50,1]
   >>> TakeEnsemble(v,(1,2,3),isDataVect=True)
   ['foo', 20, 30, 40, 1]
-
-
 
   """
   if isDataVect:
@@ -492,7 +490,6 @@ def InitRandomNumbers(seed):
   """
   from rdkit import RDRandom
   RDRandom.seed(seed[0])
-  import random
   random.seed(seed[0])
 
 
@@ -514,8 +511,6 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
     tmp = list(inData)
   nOrig = len(tmp)
   sortOrder = list(xrange(nOrig))
-  #sortOrder.sort(lambda x,y,col=col,tmp=tmp:cmp(tmp[x][col],tmp[y][col]))
-  # no more cmp in python3, must use a key function
   sortOrder.sort(key=lambda x: tmp[x][col])
   tmp = [tmp[x] for x in sortOrder]
 
@@ -586,8 +581,6 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
 
   # these are all the indices we'll be keeping
   indicesToKeep = targets + others
-  nToKeep = len(indicesToKeep)
-  nRej = nOrig - nToKeep
 
   res = []
   rej = []
@@ -654,33 +647,35 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
 
 
   """
-  nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
   if shuffle:
     if runDetails:
       runDetails.shuffled = 1
     acts = dataSet.GetResults()[:]
+    # While the random argument is the default, removing it will cause the shuffle
+    # tests in UnitTestScreenComposite to fail.
     random.shuffle(acts, random=random.random)
-  else:
+  else:  # This part of the code isn't working as examples is not defined
     if runDetails:
       runDetails.randomized = 1
-    acts = [random.randint(0, nPossible) for x in len(examples)]
+    nPossible = dataSet.GetNPossibleVals()[-1]
+    acts = [random.randint(0, nPossible) for _ in len(examples)]  # @UndefinedVariable
   for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]
     dataSet[i] = tmp
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

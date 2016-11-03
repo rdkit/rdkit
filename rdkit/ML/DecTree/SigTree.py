@@ -9,22 +9,22 @@
   _SigTreeNode_ is derived from _DecTree.DecTreeNode_
 
 """
-from rdkit.ML.DecTree import DecTree, Tree
+from rdkit.ML.DecTree import DecTree
 from rdkit.DataStructs.VectCollection import VectCollection
 import copy
 
 
 class SigTreeNode(DecTree.DecTreeNode):
-  """ 
-   
   """
 
-  def NameModel(self, *args, **kwargs):
+  """
+
+  def NameModel(self, *args, **kwargs):  # pragma: nocover
     pass
 
   def ClassifyExample(self, example, appendExamples=0):
     """ Recursively classify an example by running it through the tree
-    
+
       **Arguments**
 
         - example: the example to be classified, a sequence at least
@@ -48,7 +48,7 @@ class SigTreeNode(DecTree.DecTreeNode):
     else:
       sig = example[1]
       val = sig[self.label]
-      #print 'val:',val
+      # print 'val:',val
       if val and isinstance(sig, VectCollection):
         # we need to copy and modify the example:
         sig = copy.copy(sig)
