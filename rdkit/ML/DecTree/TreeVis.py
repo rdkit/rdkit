@@ -6,8 +6,9 @@
 """ functionality for drawing trees on sping canvases
 
 """
-from rdkit.sping import pid as piddle
 import math
+
+from rdkit.sping import pid as piddle
 
 
 class VisOpts(object):
@@ -55,24 +56,24 @@ def CalcTreeNodeSizes(node):
   node.nLevelsBelow = nBelow + 1
 
 
-def _ExampleCounter(node, min, max):
+def _ExampleCounter(node, min, max):  # @ReservedAssignment
   if node.GetTerminal():
     cnt = node.nExamples
     if cnt < min:
-      min = cnt
+      min = cnt  # @ReservedAssignment
     if cnt > max:
-      max = cnt
+      max = cnt  # @ReservedAssignment
   else:
     for child in node.GetChildren():
       provMin, provMax = _ExampleCounter(child, min, max)
       if provMin < min:
-        min = provMin
+        min = provMin  # @ReservedAssignment
       if provMax > max:
-        max = provMax
+        max = provMax  # @ReservedAssignment
   return min, max
 
 
-def _ApplyNodeScales(node, min, max):
+def _ApplyNodeScales(node, min, max):  # @ReservedAssignment
   if node.GetTerminal():
     if max != min:
       loc = float(node.nExamples - min) / (max - min)
@@ -85,8 +86,8 @@ def _ApplyNodeScales(node, min, max):
 
 
 def SetNodeScales(node):
-  min, max = 1e8, -1e8
-  min, max = _ExampleCounter(node, min, max)
+  min, max = 1e8, -1e8  # @ReservedAssignment
+  min, max = _ExampleCounter(node, min, max)  # @ReservedAssignment
   node._scales = min, max
   _ApplyNodeScales(node, min, max)
 
@@ -104,7 +105,7 @@ def DrawTreeNode(node, loc, canvas, nRes=2, scaleLeaves=False, showPurity=False)
   if not scaleLeaves or not node.GetTerminal():
     rad = visOpts.circRad
   else:
-    scaleLoc = getattr(node, "_scaleLoc", 0.5)
+    scaleLoc = getattr(node, "_scaleLoc", 0.5)  # @UnusedVariable
 
     rad = visOpts.minCircRad + node._scaleLoc * (visOpts.maxCircRad - visOpts.minCircRad)
 
@@ -188,11 +189,11 @@ def DrawTree(tree, canvas, nRes=2, scaleLeaves=False, allowShrink=True, showPuri
   dims = canvas.size
   loc = (dims[0] / 2, visOpts.vertOffset)
   if scaleLeaves:
-    #try:
-    #  l = tree._scales
-    #except AttributeError:
-    #  l = None
-    #if l is None:
+    # try:
+    #   l = tree._scales
+    # except AttributeError:
+    #   l = None
+    # if l is None:
     SetNodeScales(tree)
   if allowShrink:
     treeWid = CalcTreeWidth(tree)
@@ -211,12 +212,12 @@ def ResetTree(tree):
 
 
 def _simpleTest(canv):
-  from Tree import TreeNode as Node
+  from .Tree import TreeNode as Node
   root = Node(None, 'r', label='r')
   c1 = root.AddChild('l1_1', label='l1_1')
-  c2 = root.AddChild('l1_2', isTerminal=1, label=1)
-  c3 = c1.AddChild('l2_1', isTerminal=1, label=0)
-  c4 = c1.AddChild('l2_2', isTerminal=1, label=1)
+  c2 = root.AddChild('l1_2', isTerminal=1, label=1)  # @UnusedVariable
+  c3 = c1.AddChild('l2_1', isTerminal=1, label=0)  # @UnusedVariable
+  c4 = c1.AddChild('l2_2', isTerminal=1, label=1)  # @UnusedVariable
 
   DrawTreeNode(root, (150, visOpts.vertOffset), canv)
 

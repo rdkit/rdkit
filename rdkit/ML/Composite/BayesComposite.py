@@ -23,7 +23,9 @@ Other compatibility notes:
 
 """
 from __future__ import print_function
+
 import numpy
+
 from rdkit.ML.Composite import Composite
 
 
@@ -32,9 +34,9 @@ class BayesComposite(Composite.Composite):
 
 
     **Notes**
-    
+
     - typical usage:
-    
+
        1) grow the composite with AddModel until happy with it
 
        2) call AverageErrors to calculate the average error values
@@ -76,11 +78,11 @@ class BayesComposite(Composite.Composite):
       for i in range(nModels):
         self.condProbs[i][votes[i], trueRes] += 1
 
-      #self.condProbs /= self.resultProbs
+      # self.condProbs /= self.resultProbs
     for i in range(nModels):
       for j in range(nResults):
         self.condProbs[i][j] /= sum(self.condProbs[i][j])
-      #self.condProbs[i] /= self.resultProbs
+      # self.condProbs[i] /= self.resultProbs
 
     self.resultProbs /= sum(self.resultProbs)
 
@@ -127,7 +129,7 @@ class BayesComposite(Composite.Composite):
       for j in range(nPossibleRes):
         votes[j] += self.condProbs[i][predict, j]
 
-    #totVotes = sum(votes)
+    # totVotes = sum(votes)
     res = numpy.argmax(votes)
     conf = votes[res] / len(self)
     if verbose:

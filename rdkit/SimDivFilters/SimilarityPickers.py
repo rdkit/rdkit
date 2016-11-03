@@ -4,7 +4,6 @@
 #  All Rights Reserved
 #
 from __future__ import print_function
-from rdkit import RDConfig
 from rdkit import DataStructs
 from rdkit.DataStructs.TopNContainer import TopNContainer
 import bisect
@@ -13,7 +12,7 @@ import bisect
 class GenericPicker(object):
   _picks = None
 
-  def MakePicks(self, force=0):
+  def MakePicks(self, force=False, silent=True):
     raise NotImplementedError("GenericPicker is a virtual base class")
 
   def __len__(self):
@@ -32,6 +31,7 @@ class TopNOverallPicker(GenericPicker):
 
   Connect to a database and build molecules:
   >>> from rdkit import Chem
+  >>> from rdkit import RDConfig
   >>> import os.path
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
@@ -94,7 +94,7 @@ class TopNOverallPicker(GenericPicker):
   >>> id = fp._id
   >>> str(id)
   'acid-2'
-  
+
   """
 
   def __init__(self, numToPick=10, probeFps=None, dataSet=None,
@@ -110,8 +110,10 @@ class TopNOverallPicker(GenericPicker):
     self.simMetric = simMetric
     self._picks = None
 
-  def MakePicks(self, force=0):
+  def MakePicks(self, force=False, silent=True):
     if self._picks is not None and not force:
+      if not silent:
+        print('Use force to re-make picks')
       return
     picks = TopNContainer(self.numToPick)
     for fp in self.data:
@@ -132,6 +134,7 @@ class SpreadPicker(GenericPicker):
 
   Connect to a database:
   >>> from rdkit import Chem
+  >>> from rdkit import RDConfig
   >>> import os.path
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
@@ -196,7 +199,7 @@ class SpreadPicker(GenericPicker):
   >>> id = fp._id
   >>> str(id)
   'ether-2'
-  
+
   """
 
   def __init__(self, numToPick=10, probeFps=None, dataSet=None,
@@ -216,8 +219,10 @@ class SpreadPicker(GenericPicker):
 
     self._picks = None
 
-  def MakePicks(self, force=0, silent=True):
+  def MakePicks(self, force=False, silent=True):
     if self._picks is not None and not force:
+      if not silent:
+        print('Use force to re-make picks')
       return
 
     # start by getting the NxM score matrix
@@ -239,12 +244,12 @@ class SpreadPicker(GenericPicker):
       else:
         fps.append(origFp)
       j += 1
-      if not silent and not j % 1000:
+      if not silent and not j % 1000:  # pragma: nocover
         print('scored %d fps' % j)
 
     # sort the rows of that matrix:
-    #for i in range(nProbes):
-    #  scores[i].sort()
+    # for i in range(nProbes):
+    #   scores[i].sort()
 
     # now go probe by probe and select the current top entry until we are finished:
     nPicked = 0
@@ -264,16 +269,16 @@ class SpreadPicker(GenericPicker):
         nPicked += 1
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
