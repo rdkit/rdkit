@@ -336,13 +336,6 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
  // res1.insert(res1.end(),res3.begin(), res3.end());
 
 
-    for (int p = 0; p < res1.size(); p++) {
-      std::cout << res1[p] << ",";
-      if ((p+1) % 30 == 0)     std::cout << "\n"; 
-      
-    }
-      std::cout << "\n"; 
-
   return res1;
 }
 
