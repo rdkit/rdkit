@@ -35,11 +35,41 @@
 
 namespace RDKit {
 
+//! This is a class for providing enumeration options that control
+//   how enumerations are performed.
+/*!  
+ Option
+   reagentMaxMatchCount [default INT_MAX]
+    This specifies how many times the reactant template can match a reagent.
+  
+   sanePartialProducts [default false]
+    If true, forces all products of the reagent plus the product templates\n\
+     pass chemical sanitization.  Note that if the product template itself\n\
+     does not pass sanitization, then none of the products will.
+*/     
+struct EnumerationParams
+{
+  int reagentMaxMatchCount;
+  bool sanePartialProducts;
+ EnumerationParams() :
+  reagentMaxMatchCount(INT_MAX), sanePartialProducts(false) {
+ }
+  
+ EnumerationParams(const EnumerationParams &rhs) :
+    reagentMaxMatchCount(rhs.reagentMaxMatchCount),
+    sanePartialProducts(rhs.sanePartialProducts) {
+  }
+};
+
+
 //!  Helper function, remove reagents that are incompatible
 //    with the reaction.
 //  rxn must be sanitized, initialized and preprocessed.
 //   this happens automatically in EnumerateLibrary
-EnumerationTypes::BBS removeNonmatchingReagents(const ChemicalReaction &rxn, EnumerationTypes::BBS bbs);
+EnumerationTypes::BBS removeNonmatchingReagents(
+    const ChemicalReaction &rxn,
+    EnumerationTypes::BBS bbs,
+    const EnumerationParams &params=EnumerationParams());
   
 //! This is a class for running reactions on sets of reagents.
 /*!
@@ -84,11 +114,13 @@ class EnumerateLibrary : public EnumerateLibraryBase {
     initFromString(s);
   }
   
-  EnumerateLibrary(const ChemicalReaction &rxn, const EnumerationTypes::BBS &reagents,
-                   bool filterReagents=true);
-  EnumerateLibrary(const ChemicalReaction &rxn, const EnumerationTypes::BBS &reagents,
+  EnumerateLibrary(const ChemicalReaction &rxn,
+                   const EnumerationTypes::BBS &reagents,
+                   const EnumerationParams & params = EnumerationParams());
+  EnumerateLibrary(const ChemicalReaction &rxn,
+                   const EnumerationTypes::BBS &reagents,
                    const EnumerationStrategyBase &enumerator,
-                   bool filterReagents=true);
+                   const EnumerationParams & params = EnumerationParams());
   EnumerateLibrary(const EnumerateLibrary &rhs);
 
   //! Return the reagents used in the library

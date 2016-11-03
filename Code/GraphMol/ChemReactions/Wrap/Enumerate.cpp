@@ -101,33 +101,35 @@ python::object EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
-  
+
 class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
 public:
   EnumerateLibraryWrap() : RDKit::EnumerateLibrary() {}
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::list ob, bool removeUnmatched=true) :
-      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), removeUnmatched) {
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::list ob,
+                       const EnumerationParams & params = EnumerationParams()
+                       ) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), params) {
   }
   
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::tuple ob,
-                       bool removeUnmatched=true) :
-      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), removeUnmatched) {
-  }
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::list ob,
-                       const EnumerationStrategyBase &enumerator,
-                       bool removeUnmatched = true) :
-      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, removeUnmatched) {
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::tuple ob,
+                       const EnumerationParams & params = EnumerationParams()
+                       ) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), params) {
   }
   
-  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn,
-                       python::tuple ob,
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::list ob,
                        const EnumerationStrategyBase &enumerator,
-                       bool removeUnmatched=true) :
-      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, removeUnmatched) {
+                       const EnumerationParams & params = EnumerationParams()
+                       ) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {
   }
+  
+  EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::tuple ob,
+                       const EnumerationStrategyBase &enumerator,
+                       const EnumerationParams & params = EnumerationParams()) :
+      RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {
+  }
+
 };
 
 namespace {
@@ -200,6 +202,29 @@ struct enumeration_wrapper {
              python::return_internal_reference<
              1, python::with_custodian_and_ward_postcall<0, 1> >());
 
+    docString =
+"EnumerationParams\n\
+Controls some aspects of how the enumeration is performed.\n\
+Options:\n\
+  reagentMaxMatchCount [ default Infinite ]\n\
+    This specifies how many times the reactant template can match a reagent.\n\
+\n\
+  sanePartialProducts [default false]\n\
+    If true, forces all products of the reagent plus the product templates\n\
+     pass chemical sanitization.  Note that if the product template itself\n\
+     does not pass sanitization, then none of the products will.\n\
+";
+
+    python::class_<RDKit::EnumerationParams,
+                   RDKit::EnumerationParams*,
+                   RDKit::EnumerationParams&>("EnumerationParams",
+                                              docString.c_str(),
+                                              python::init<>())
+        .def_readwrite("reagentMaxMatchCount",
+                    &RDKit::EnumerationParams::reagentMaxMatchCount)
+        .def_readwrite("sanePartialProducts",
+                    &RDKit::EnumerationParams::sanePartialProducts);
+
     docString = "";
     python::class_<EnumerateLibraryWrap,
                    EnumerateLibraryWrap*,EnumerateLibraryWrap&,
@@ -209,21 +234,27 @@ struct enumeration_wrapper {
       .def(python::init<
            const RDKit::ChemicalReaction &,
            python::list,
-           python::optional<bool> >(python::args("rxn", "reagents", "filterReagents")))
+           python::optional<const RDKit::EnumerationParams&>
+           >(python::args("rxn", "reagents", "params")))
       .def(python::init<
            const RDKit::ChemicalReaction &,
            python::tuple,
-           python::optional<bool> >(python::args("rxn", "reagents", "filterReagents")))
+           python::optional<const RDKit::EnumerationParams&>           
+           >(python::args("rxn", "reagents", "params")))
+
       .def(python::init<const RDKit::ChemicalReaction &,
            python::list,
            const RDKit::EnumerationStrategyBase &,
-           python::optional<bool> >(python::args(
-               "rxn", "reagents", "enumerator", "filterReagents")))
+           python::optional<const RDKit::EnumerationParams&>
+           >(python::args(
+               "rxn", "reagents", "enumerator", "params")))
       .def(python::init<const RDKit::ChemicalReaction &,
            python::tuple,
            const RDKit::EnumerationStrategyBase &,
-           python::optional<bool> >(python::args(
-               "rxn", "reagents", "enumerator", "filterReagents")))
+           python::optional<const RDKit::EnumerationParams&>
+           >(python::args(
+               "rxn", "reagents", "enumerator", "params")))
+        
       .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
            "Return the reagents used in this library.",
            python::return_internal_reference<

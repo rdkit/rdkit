@@ -95,7 +95,21 @@ std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
   return result;
 }
 
-BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs) {
+namespace {
+int countMatches( const ROMol& bb, const ROMol& query, int maxMatches) {
+  std::vector<MatchVectType> matches;        
+  const bool uniquify = true;
+  const bool useChirality = true;
+  const bool useQueryQueryMatches = false;
+  
+  bool match = SubstructMatch(bb, query, matches,
+                              uniquify, true, useChirality, useQueryQueryMatches,
+                              maxMatches+1);
+  return matches.size();
+}
+}
+BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
+                              const EnumerationParams &params) {
   PRECONDITION(bbs.size() <= rxn.getNumReactantTemplates(),
                "Number of Reagents not compatible with reaction templates");
   BBS result;
@@ -103,16 +117,52 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs) {
 
   for(size_t reactant_idx=0; reactant_idx < bbs.size(); ++reactant_idx) {
     size_t removedCount = 0;
-    ROMOL_SPTR reactantTemplate = rxn.getReactants()[reactant_idx];
+    const unsigned int maxMatches = (params.reagentMaxMatchCount == INT_MAX) ?
+        0 : rdcast<unsigned int>(params.reagentMaxMatchCount);
     
-    for(size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size(); ++ reagent_idx) {
-      MatchVectType tvect;
+    ROMOL_SPTR reactantTemplate = rxn.getReactants()[reactant_idx];
+    for(size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size(); ++reagent_idx) {
       ROMOL_SPTR mol = bbs[reactant_idx][reagent_idx];
-      if(SubstructMatch(*mol.get(), *reactantTemplate.get(), tvect))
-        result[reactant_idx].push_back(mol);
-      else
+      int matches = countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
+
+      bool removeReagent = false;
+      if(!matches || matches > rdcast<size_t>(params.reagentMaxMatchCount)) {
+        removeReagent = true;
+      }
+
+      if(!removeReagent && params.sanePartialProducts) {
+        // see if we have any sane products in the results
+        std::vector<MOL_SPTR_VECT> partialProducts = rxn.runReactant(mol, reactant_idx);
+        for(size_t productTemplate_idx = 0;
+            productTemplate_idx < partialProducts.size();
+            ++productTemplate_idx) {
+          int saneProducts = 0;
+          for(size_t product_idx = 0;
+              product_idx < partialProducts[productTemplate_idx].size();
+              ++product_idx) {
+            try {
+              RWMol *m = dynamic_cast<RWMol*>(
+                  partialProducts[productTemplate_idx][product_idx].get());
+              MolOps::sanitizeMol(*m);
+              saneProducts++;
+            } catch (...) {
+            }
+          }
+        
+          if (!saneProducts) {
+            // if any product template has no sane products, we bail
+            removeReagent = true;
+            break;
+          }
+        }
+      }
+
+      if(removeReagent)
         removedCount++;
+      else
+        result[reactant_idx].push_back(mol);
     }
+
 
     if(removedCount) {
       BOOST_LOG(rdInfoLog) << "Removed " << removedCount <<
@@ -123,18 +173,18 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs) {
 }
 
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
-                                   bool filterReagents)
+                                   const EnumerationParams &params)
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
-      m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
+      m_bbs(removeNonmatchingReagents(m_rxn, bbs, params)) {
   m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
   m_initialEnumerator.reset(m_enumerator->copy());
 }
 
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    const EnumerationStrategyBase &enumerator,
-                                   bool filterReagents)
+                                   const EnumerationParams &params)
     : EnumerateLibraryBase(rxn),
-      m_bbs(filterReagents ? removeNonmatchingReagents(m_rxn, bbs) : bbs) {
+      m_bbs(removeNonmatchingReagents(m_rxn, bbs, params)) {
   m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
   m_initialEnumerator.reset(m_enumerator->copy());
