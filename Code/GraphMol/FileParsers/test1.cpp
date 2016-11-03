@@ -3436,6 +3436,9 @@ void testIssue269() {
 
   std::string rdbase = getenv("RDBASE");
   {
+    // since the new elements were added, the original version of this no longer
+    // fails. The test input file has been updated to still have an atomic
+    // symbol that is not recognized. We'll be ok until Mv is an element. :-)
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/Issue269.mol";
     RWMol *m = 0;

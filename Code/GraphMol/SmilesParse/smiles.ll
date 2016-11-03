@@ -186,7 +186,19 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 <IN_ATOM_STATE>Md |
 <IN_ATOM_STATE>No |
 <IN_ATOM_STATE>Lr |
-<IN_ATOM_STATE>Rf {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
+<IN_ATOM_STATE>Rf |
+<IN_ATOM_STATE>Db |
+<IN_ATOM_STATE>Sg |
+<IN_ATOM_STATE>Bh |
+<IN_ATOM_STATE>Hs |
+<IN_ATOM_STATE>Mt |
+<IN_ATOM_STATE>Ds |
+<IN_ATOM_STATE>Rg |
+<IN_ATOM_STATE>Cn |
+<IN_ATOM_STATE>Uut |
+<IN_ATOM_STATE>Fl |
+<IN_ATOM_STATE>Uup |
+<IN_ATOM_STATE>Lv {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN;
 			}
 B  { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }

@@ -104,6 +104,7 @@ void testPass() {
     "[C:0]",           // issue 3525776
     "[si]1cccc[si]1",  // aromatic Si (github issue #5)
     "[asH]1cccc1",     // aromatic As (github issue #682)
+    "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -2452,9 +2453,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2481,9 +2483,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2510,9 +2513,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2539,9 +2543,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }

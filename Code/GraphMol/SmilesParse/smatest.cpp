@@ -82,7 +82,8 @@ void testPass() {
     "[C:0]",           // issue 3525776
     "[$([#0].[#0])]",  // sf.net issue 281
     //"CC((C)C)", // github #102
-    "c1ccccb1",  // github 220
+    "c1ccccb1",                                            // github 220
+    "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -412,6 +413,17 @@ void testMatches6() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testTransuranic() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Transuranic matching" << std::endl;
+
+  _checkMatches("[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",
+                "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]", 1, 12);
+  _checkNoMatches("[Db]", "[Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]");
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 void testProblems() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing former problems" << std::endl;
@@ -501,21 +513,63 @@ void testFrags() {
   Mol *mol;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing fragment patterns." << std::endl;
-  string smis[] = {
-      "C=O", "[C!$(C-[OH])]=O", "[C!$(C=O)]-[OH]", "c[OH]", "O(-[#6])-C",
-      "[NH2]", "[NH1,nH1]", "[NH0,nH0]", "n", "[Nv3](=C)-[#6]", "C#N",
-      "[#9,#17,#35,#53]", "[SX2](-[#6])-C", "[SH]", "C=[SX1]", "C=N-O",
-      "[N!$(N=O)](-O)-C", "[N!$(N-O)]=O", "[NX3]-[NX3]", "C=N-[NX3]",
-      "N(=O)(O)[#6]", "[#6]-N=N-[#6]", "[N+]#N", "[#6]-N=[N+]=[N-]",
-      "S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]",
-      "N-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]",
-      "[NH2]-S(=,-[OX1;+0;-1])(=,-[OX1;+0;-1])-[#6]", "C(=O)-N", "C(=O)-[NH2]",
-      "C(=N)(-N)-[!#7]", "N=C=O", "N=C=S", "S-C#N", "C(=O)O-C",
-      "C-C(=O)[O;H1,-]", "c-C(=O)[O;H1,-]", "[#6]C(=O)[O;H,-1]",
-      "C1C(=O)NC(=O)NC1=O", "C(=O)(-N)-N", "N(-C(=O))-C=O", "C#[CH]", "n1cncc1",
-      "o1cccc1", "s1cccc1", "c1scnc1", "c1ocnc1", "n1ccccc1", "N1CCCCC1",
-      "N1CCNCC1", "O1CCNCC1", "N1C(=O)CC1", "[NX4]", "[nH]", "C(=N)(N)N",
-      "c1nnnn1", "O1CC1", "EOS"};
+  string smis[] = {"C=O",
+                   "[C!$(C-[OH])]=O",
+                   "[C!$(C=O)]-[OH]",
+                   "c[OH]",
+                   "O(-[#6])-C",
+                   "[NH2]",
+                   "[NH1,nH1]",
+                   "[NH0,nH0]",
+                   "n",
+                   "[Nv3](=C)-[#6]",
+                   "C#N",
+                   "[#9,#17,#35,#53]",
+                   "[SX2](-[#6])-C",
+                   "[SH]",
+                   "C=[SX1]",
+                   "C=N-O",
+                   "[N!$(N=O)](-O)-C",
+                   "[N!$(N-O)]=O",
+                   "[NX3]-[NX3]",
+                   "C=N-[NX3]",
+                   "N(=O)(O)[#6]",
+                   "[#6]-N=N-[#6]",
+                   "[N+]#N",
+                   "[#6]-N=[N+]=[N-]",
+                   "S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]",
+                   "N-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]",
+                   "[NH2]-S(=,-[OX1;+0;-1])(=,-[OX1;+0;-1])-[#6]",
+                   "C(=O)-N",
+                   "C(=O)-[NH2]",
+                   "C(=N)(-N)-[!#7]",
+                   "N=C=O",
+                   "N=C=S",
+                   "S-C#N",
+                   "C(=O)O-C",
+                   "C-C(=O)[O;H1,-]",
+                   "c-C(=O)[O;H1,-]",
+                   "[#6]C(=O)[O;H,-1]",
+                   "C1C(=O)NC(=O)NC1=O",
+                   "C(=O)(-N)-N",
+                   "N(-C(=O))-C=O",
+                   "C#[CH]",
+                   "n1cncc1",
+                   "o1cccc1",
+                   "s1cccc1",
+                   "c1scnc1",
+                   "c1ocnc1",
+                   "n1ccccc1",
+                   "N1CCCCC1",
+                   "N1CCNCC1",
+                   "O1CCNCC1",
+                   "N1C(=O)CC1",
+                   "[NX4]",
+                   "[nH]",
+                   "C(=N)(N)N",
+                   "c1nnnn1",
+                   "O1CC1",
+                   "EOS"};
   while (smis[i] != "EOS") {
     string smi = smis[i];
     mol = SmartsToMol(smi);
@@ -575,22 +629,42 @@ void testSmartsWrite() {
   // functionally the same
 
   std::string smiles[] = {
-      "c1c(O)cccc1", "O=C(O)C[N+]#N", "CN=[N+]=[N-]", "NS(O)(=O)C",
-      "NS(=O)(=O)C", "CC1=CC(=O)C=CC1=O",
+      "c1c(O)cccc1",
+      "O=C(O)C[N+]#N",
+      "CN=[N+]=[N-]",
+      "NS(O)(=O)C",
+      "NS(=O)(=O)C",
+      "CC1=CC(=O)C=CC1=O",
       "OC1=C(Cl)C=C(C=C1[N+]([O-])=O)[N+]([O-])=O",
       "NC1=CC2=C(C=C1)C(=O)C3=C(C=CC=C3)C2=O",
       "NC1=CC2=C(C=C1)C(=O)C3=C(C=CC=C3)C2=O",
       "OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br",
-      "CN(C)C1=C(Cl)C(=O)C2=C(C=CC=C2)C1=O", "CC(=NO)C(C)=NO",
-      "CC1=NN(C(=O)C1)C2=CC=CC=C2", "NC1=CC=NC2=C1C=CC(=C2)Cl",
-      "BrN1C(=O)CCC1=O", "CCCCSCC", "CC(=O)NC1=NC2=C(C=C1)C(=CC=N2)O",
-      "CC(=O)NC1=NC2=C(C=C1)C(=CC=N2)O", "NN=C(C1=CC=CC=C1)C2=CC=CC=C2",
-      "OC(=O)[CH](CC1=CC=CC=C1)C2=CC=CC=C2", "O=S(CC1=CC=CC=C1)CC2=CC=CC=C2",
-      "O=S(=O)(CC1=CC=CC=C1)CC2=CC=CC=C2", "O=S(=O)(CC1=CC=CC=C1)CC2=CC=CC=C2",
-      "CCOC(=O)C1=CC=C(C=C1)S(=O)(=O)N(CC)CC", "CN1C2=C(SC3=C1C=CC=C3)C=CC=C2",
-      "CC1=CC=C(S)C=C1", "SC1=C2C=CC=C(S)C2=CC=C1", "CC(=S)N1CCCCC1",
-      "CC(C)CSC(C)=S", "NNP(=S)(NN)C1=CC=CC=C1", "NNC(=S)NNC1=CC=CC=C1",
-      "CCCCOC(N)=O", "CNCC(N)=O", "CC(C)(O)C#C", "CC(C)C[C](C)(O)C#C", "EOS"};
+      "CN(C)C1=C(Cl)C(=O)C2=C(C=CC=C2)C1=O",
+      "CC(=NO)C(C)=NO",
+      "CC1=NN(C(=O)C1)C2=CC=CC=C2",
+      "NC1=CC=NC2=C1C=CC(=C2)Cl",
+      "BrN1C(=O)CCC1=O",
+      "CCCCSCC",
+      "CC(=O)NC1=NC2=C(C=C1)C(=CC=N2)O",
+      "CC(=O)NC1=NC2=C(C=C1)C(=CC=N2)O",
+      "NN=C(C1=CC=CC=C1)C2=CC=CC=C2",
+      "OC(=O)[CH](CC1=CC=CC=C1)C2=CC=CC=C2",
+      "O=S(CC1=CC=CC=C1)CC2=CC=CC=C2",
+      "O=S(=O)(CC1=CC=CC=C1)CC2=CC=CC=C2",
+      "O=S(=O)(CC1=CC=CC=C1)CC2=CC=CC=C2",
+      "CCOC(=O)C1=CC=C(C=C1)S(=O)(=O)N(CC)CC",
+      "CN1C2=C(SC3=C1C=CC=C3)C=CC=C2",
+      "CC1=CC=C(S)C=C1",
+      "SC1=C2C=CC=C(S)C2=CC=C1",
+      "CC(=S)N1CCCCC1",
+      "CC(C)CSC(C)=S",
+      "NNP(=S)(NN)C1=CC=CC=C1",
+      "NNC(=S)NNC1=CC=CC=C1",
+      "CCCCOC(N)=O",
+      "CNCC(N)=O",
+      "CC(C)(O)C#C",
+      "CC(C)C[C](C)(O)C#C",
+      "EOS"};
 
   std::vector<std::string>::const_iterator dsmi;
   i = 0;
@@ -712,7 +786,8 @@ void testIssue255() {
   std::string sma;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 255: Core leaks in smarts parsing.  "
-                          "Watch memory consumption." << std::endl;
+                          "Watch memory consumption."
+                       << std::endl;
 
   for (int i = 0; i < 10000; i++) {
 #if 1
@@ -803,20 +878,20 @@ void testAtomMap() {
   sma = "[C:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
-  matcher1->getAtomWithIdx(0)
-      ->getProp(common_properties::molAtomMapNumber, mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,
+                                       mapNum);
   TEST_ASSERT(mapNum == 10);
   delete matcher1;
 
   sma = "[CH3:10]CC";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
-  matcher1->getAtomWithIdx(0)
-      ->getProp(common_properties::molAtomMapNumber, mapNum);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
+  matcher1->getAtomWithIdx(0)->getProp(common_properties::molAtomMapNumber,
+                                       mapNum);
   TEST_ASSERT(mapNum == 10);
   delete matcher1;
 
@@ -863,29 +938,29 @@ void testIssue1804420() {
   sma = "[N;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N,O;D3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[N&R;X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
   delete matcher1;
 
   sma = "[NH0&R;D3,X3:1]";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)
-                  ->hasProp(common_properties::molAtomMapNumber));
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp(
+      common_properties::molAtomMapNumber));
   delete matcher1;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -981,7 +1056,8 @@ void testIssue1914154() {
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 1914154: problems with generating "
-                          "smarts for recursive queries" << std::endl;
+                          "smarts for recursive queries"
+                       << std::endl;
 
   sma = "[$(C);$(O)]";
   mol = SmartsToMol(sma);
@@ -1075,7 +1151,8 @@ void testMiscSmartsWriting() {
 void testSmartsStereochem() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing handling (or lack thereof) of stereochem in "
-                          "smarts (sf.net issue 2738320)" << std::endl;
+                          "smarts (sf.net issue 2738320)"
+                       << std::endl;
 
   _checkMatches("C/C=C/C", "CC=CC", 1, 4);
   _checkMatches("C/C=C/C", "C/C=C/C", 1, 4);
@@ -1088,7 +1165,8 @@ void testSmartsStereochem() {
 void testIssue2884178_part1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part1: SubstructMatch not "
-                          "returning correct number of matches" << std::endl;
+                          "returning correct number of matches"
+                       << std::endl;
 
   {
     // part one of the problem: number of unique matches incorrect
@@ -1113,7 +1191,8 @@ void testIssue2884178_part1() {
 void testIssue2884178_part2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part2: SubstructMatch not "
-                          "returning correct number of matches" << std::endl;
+                          "returning correct number of matches"
+                       << std::endl;
 
   {
     RWMol *patt, *mol;
@@ -1825,6 +1904,7 @@ int main(int argc, char *argv[]) {
   testGithub544();
   testGithub766();
   testGithub893();
+  testTransuranic();
 
   return 0;
 }
