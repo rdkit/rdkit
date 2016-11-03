@@ -177,16 +177,22 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms){
     return R;
 }
 
+std::vector<int> GetHeavyList(const ROMol& mol){
 
-int*  GetHeavyList(const ROMol& mol){
-  int numAtoms= mol.getNumAtoms();
-  int* HeavyList = new int[numAtoms];
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
-    int atNum=atom->getAtomicNum();
-    if ( atNum>1)  HeavyList[i]=1;
-    else  HeavyList[i]=0;
-  }
+
+   int numAtoms= mol.getNumAtoms();
+
+    std::vector<int> HeavyList;
+   for (int i = 0; i < numAtoms; ++i) {
+
+          const RDKit::Atom * atom= mol.getAtomWithIdx(i);
+
+        if (atom->getAtomicNum() > 1) {
+            HeavyList.push_back(1);
+         }
+        else  HeavyList.push_back(0);
+    }
+  return HeavyList;
 }
 
 
@@ -257,7 +263,7 @@ double getMax(double * Rk){
 
 
 
-std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,   int* Heavylist,const ROMol& mol) {
+std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms, std::vector<int> Heavylist,const ROMol& mol) {
 
     //double *w = new double[273];
 
@@ -269,9 +275,9 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
 
     std::vector<double> heavyLev;
-/*
+
     for (int i=0;i<numAtoms;i++){
-      if (Heavylist[i]>0)
+      if (Heavylist[i]==1) 
         heavyLev.push_back(Lev(i));
     }
     std::vector<double> Clus= clusterArray(heavyLev);
@@ -287,7 +293,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
     double ISH=ITH/ITH0;
     res.push_back(ISH);
-*/
+
     double HIC=0.0;
     for (int i=0;i<numAtoms;i++) {
       HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
@@ -720,7 +726,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 }
 
 
-std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ,  int* Heavylist){
+std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ, std::vector<int> Heavylist){
 
     std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu",
     "HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m",
@@ -778,7 +784,7 @@ std::vector<double> GETAWAY(const ROMol& mol,int confId){
      Vpoints[3*i+2] =conf.getAtomPos(i).z;
   }
 
-  int* Heavylist= GetHeavyList(mol); //int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
+  std::vector<int> Heavylist= GetHeavyList(mol); //int nHeavyAt= mol.getNumHeavyAtoms(); // should be the same as the List size upper!
 
   double *dist3D = MolOps::get3DDistanceMat(mol, confId);
 
