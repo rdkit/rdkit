@@ -68,8 +68,7 @@ class TestCase(unittest.TestCase):
     with open(os.path.join(self.dataDir, 'Jan9_build3_calc.dsc'), 'r') as calcTF:
       buf = calcTF.read().replace('\r\n', '\n').encode('utf-8')
       calcTF.close()
-    with BytesIO(buf) as calcF:
-      calc = cPickle.load(calcF)
+    calc = cPickle.load(BytesIO(buf))
     with open(os.path.join(self.dataDir, 'Jan9_build3_model.pkl'), 'rb') as modelF:
       model = cPickle.load(modelF)
     pkg = Packager.ModelPackage(descCalc=calc, model=model)
