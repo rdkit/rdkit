@@ -217,31 +217,33 @@ const RGROUPS &EvenSamplePairsStrategy::next() {
   throw EnumerationStrategyException("Ran out of molecules");
 }
 
-void EvenSamplePairsStrategy::stats() const {
+std::string EvenSamplePairsStrategy::stats() const {
+  std::ostringstream ss;
+  
   size_t npos = m_permutationSizes.size();
   const RGROUPS &nvars = m_permutationSizes;
   size_t i, l, j, ii, jj, ioffset, joffset;
-  std::cerr << "#BEGIN# BBSTAT\n";
+  ss << "#BEGIN# BBSTAT\n";
   for (i = 0; i < npos; i++) {
     size_t maxcount = 0;
     if (nvars[i] == 1) continue;
     for (j = 0; j < nvars[i]; j++)
       if (maxcount < var_used[i][j]) maxcount = var_used[i][j];
 
-    std::cerr << boost::format("%lu\t%lu\t%6.2f") % (i + 1) % nvars[i] %
+    ss << boost::format("%lu\t%lu\t%6.2f") % (i + 1) % nvars[i] %
                      ((double)m_numPermutationsProcessed / nvars[i]);
 
     for (l = 0; l <= maxcount; l++) {
       size_t n = 0;
       for (j = 0; j < nvars[i]; j++)
         if (var_used[i][j] == l) n++;
-      if (n > 0) std::cerr << boost::format("\t%lu|%lu") % l % n;
+      if (n > 0) ss << boost::format("\t%lu|%lu") % l % n;
     }
-    std::cerr << std::endl;
+    ss << std::endl;
   }
-  std::cerr << "#END# BBSTAT\n";
+  ss << "#END# BBSTAT\n";
 
-  std::cerr << "#BEGIN# PAIRSTAT\n";
+  ss << "#BEGIN# PAIRSTAT\n";
   for (i = 0, ioffset = 0; i < npos; ioffset += nvars[i], i++) {
     if (nvars[i] == 1) continue;
     for (j = 0, joffset = 0; j < npos; joffset += nvars[j], j++) {
@@ -252,7 +254,7 @@ void EvenSamplePairsStrategy::stats() const {
         for (jj = 0; jj < nvars[j]; jj++)
           if (maxcount < pair_used[ii + ioffset][jj + joffset])
             maxcount = pair_used[ii + ioffset][jj + joffset];
-      std::cerr << boost::format("%lu\t%lu\t%lu\t%lu\t%6.2f") % (i + 1) %
+      ss << boost::format("%lu\t%lu\t%lu\t%lu\t%6.2f") % (i + 1) %
                        (j + 1) % nvars[i] % nvars[j] %
                        ((double)m_numPermutationsProcessed /
                         (nvars[i] * nvars[j]));
@@ -261,18 +263,19 @@ void EvenSamplePairsStrategy::stats() const {
         for (ii = 0; ii < nvars[i]; ii++)
           for (jj = 0; jj < nvars[j]; jj++)
             if (l == pair_used[ii + ioffset][jj + joffset]) n++;
-        if (n > 0) std::cerr << boost::format("\t%ld|%d") % l % n;
+        if (n > 0) ss << boost::format("\t%ld|%d") % l % n;
       }
-      std::cerr << boost::format("\n");
+      ss << boost::format("\n");
     }
   }
-  std::cout << "#END# PAIRSTAT\n";
+  ss << "#END# PAIRSTAT\n";
 
-  std::cout << "Rejected Period: " << rejected_period << std::endl;
-  std::cout << "Rejected (dupes): " << rejected_unique << std::endl;
-  std::cout << "Rejected Slack Conditions: " << rejected_slack_condition
+  ss << "Rejected Period: " << rejected_period << std::endl;
+  ss << "Rejected (dupes): " << rejected_unique << std::endl;
+  ss << "Rejected Slack Conditions: " << rejected_slack_condition
             << std::endl;
-  std::cout << "Rejected Pair Sampling: " << rejected_bb_sampling_condition
-            << std::endl;
+  ss << "Rejected Pair Sampling: " << rejected_bb_sampling_condition
+     << std::endl;
+  return ss.str();
 }
 }

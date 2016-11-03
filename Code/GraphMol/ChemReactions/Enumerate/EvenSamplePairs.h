@@ -141,7 +141,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
     return new EvenSamplePairsStrategy(*this);
   }
 
-  void stats() const;
+  std::string stats() const;
 
  private:
   friend class boost::serialization::access;
