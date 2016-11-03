@@ -134,6 +134,7 @@ struct AtomInfo {
     }
     qatom.setQuery(makeAtomNullQuery());
     mol.replaceAtom(atom->getIdx(), &qatom);
+    atom = mol.getAtomWithIdx(atom->getIdx());
   }
 
   void setAtomMap(int map) {
@@ -227,7 +228,7 @@ void fixRGroups(ChemicalReaction &rxn) {
             rat.setAtomMap(max_atom_map + rat.bestGuessRLabel());
             pat.setAtomMap(max_atom_map + rat.bestGuessRLabel());
           }
-          pat.atom = NULL;
+          pat.atom = NULL; // don't match again
           break;
         }
       }
