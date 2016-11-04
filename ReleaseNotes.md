@@ -1,10 +1,7 @@
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
-## Important
-
 ## Acknowledgements:
-
 Brian Cole, Piotr Dabrowski, Jan Domanski, Peter Gedeck, Richard Hall, Brian
 Kelley, Joos Kiener, 'maddogcz', John Mayfield, 'michalsta', Michal Nowotka,
 'philopon', Nico Pulver, Sereina Riniker, Roger Sayle, Nadine Schneider,

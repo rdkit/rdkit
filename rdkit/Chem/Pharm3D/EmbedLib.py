@@ -19,7 +19,7 @@ import numpy
 from rdkit.Chem import rdDistGeom as MolDG
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import ChemicalForceFields
-from . import Pharmacophore, ExcludedVolume
+from rdkit.Chem.Pharm3D import Pharmacophore, ExcludedVolume
 from rdkit import Geometry
 _times = {}
 
