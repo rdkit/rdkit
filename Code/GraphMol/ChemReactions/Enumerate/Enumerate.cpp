@@ -96,15 +96,15 @@ std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
 }
 
 namespace {
-int countMatches( const ROMol& bb, const ROMol& query, int maxMatches) {
+size_t countMatches( const ROMol& bb, const ROMol& query, int maxMatches) {
   std::vector<MatchVectType> matches;        
   const bool uniquify = true;
   const bool useChirality = true;
   const bool useQueryQueryMatches = false;
   
-  bool match = SubstructMatch(bb, query, matches,
-                              uniquify, true, useChirality, useQueryQueryMatches,
-                              maxMatches+1);
+  SubstructMatch(bb, query, matches,
+                 uniquify, true, useChirality, useQueryQueryMatches,
+                 maxMatches+1);
   return matches.size();
 }
 }
@@ -123,7 +123,7 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
     ROMOL_SPTR reactantTemplate = rxn.getReactants()[reactant_idx];
     for(size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size(); ++reagent_idx) {
       ROMOL_SPTR mol = bbs[reactant_idx][reagent_idx];
-      int matches = countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
+      size_t matches = countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
 
       bool removeReagent = false;
       if(!matches || matches > rdcast<size_t>(params.reagentMaxMatchCount)) {
