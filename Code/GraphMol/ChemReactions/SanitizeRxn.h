@@ -73,9 +73,9 @@ void fixHs(ChemicalReaction &rxn);
 inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
   MolOps::AdjustQueryParameters params;
   params.adjustDegree = false;
-  params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+  params.adjustDegreeFlags = MolOps::ADJUST_IGNOREALL;
   params.adjustRingCount = false;
-  params.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;
+  params.adjustRingCountFlags = MolOps::ADJUST_IGNOREALL;
   params.makeDummiesQueries = false;
   params.aromatizeIfPossible = true;
   return params;
