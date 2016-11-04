@@ -131,11 +131,12 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &);
 
   //! The current permutation {r1, r2, ...}
-  const EnumerationTypes::RGROUPS &next();
+  virtual const EnumerationTypes::RGROUPS &next();
 
-  size_t getPermutationIdx() const { return m_numPermutationsProcessed; }
+  virtual boost::uint64_t getPermutationIdx() const {
+    return m_numPermutationsProcessed; }
 
-  operator bool() const { return true; }
+  virtual operator bool() const { return true; }
 
   EnumerationStrategyBase *copy() const {
     return new EvenSamplePairsStrategy(*this);

@@ -82,7 +82,7 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
   virtual const char *type() const { return "CartesianProductStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  const EnumerationTypes::RGROUPS &next() {
+  virtual const EnumerationTypes::RGROUPS &next() {
     if (m_numPermutationsProcessed) {
       increment();
     } else
@@ -91,9 +91,10 @@ class CartesianProductStrategy : public EnumerationStrategyBase {
     return m_permutation;
   }
 
-  size_t getPermutationIdx() const { return m_numPermutationsProcessed; }
+  virtual boost::uint64_t getPermutationIdx() const {
+    return m_numPermutationsProcessed; }
 
-  operator bool() const { return hasNext(); }
+  virtual operator bool() const { return hasNext(); }
 
   EnumerationStrategyBase *copy() const {
     return new CartesianProductStrategy(*this);

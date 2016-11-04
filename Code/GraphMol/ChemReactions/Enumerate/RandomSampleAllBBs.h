@@ -105,7 +105,7 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
   virtual const char *type() const { return "RandomSampleAllBBsStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  const EnumerationTypes::RGROUPS &next() {
+  virtual const EnumerationTypes::RGROUPS &next() {
     if (m_offset >= m_maxoffset) {
       for (size_t i = 0; i < m_permutation.size(); ++i) {
         m_permutation[i] = m_distributions[i](m_rng);
@@ -122,9 +122,10 @@ class RandomSampleAllBBsStrategy : public EnumerationStrategyBase {
     return m_permutation;
   }
 
-  boost::uint64_t getPermutationIdx() const { return m_numPermutationsProcessed; }
+  virtual boost::uint64_t getPermutationIdx() const {
+    return m_numPermutationsProcessed; }
 
-  operator bool() const { return true; }
+  virtual operator bool() const { return true; }
 
   EnumerationStrategyBase *copy() const {
     return new RandomSampleAllBBsStrategy(*this);

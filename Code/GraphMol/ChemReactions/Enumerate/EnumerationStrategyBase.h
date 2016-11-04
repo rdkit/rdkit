@@ -161,6 +161,9 @@ class EnumerationStrategyBase {
   //!  rdlonglong size.
   boost::uint64_t getNumPermutations() const { return m_numPermutations; }
 
+  //! Returns how many permutations have been processed by this strategy
+  virtual boost::uint64_t getPermutationIdx() const = 0;
+
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
   bool skip(boost::uint64_t skipCount) {
