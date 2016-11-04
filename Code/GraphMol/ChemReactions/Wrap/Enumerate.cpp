@@ -202,7 +202,7 @@ struct enumeration_wrapper {
              python::return_internal_reference<
              1, python::with_custodian_and_ward_postcall<0, 1> >());
 
-    docString =
+    docString = \
 "EnumerationParams\n\
 Controls some aspects of how the enumeration is performed.\n\
 Options:\n\
@@ -225,7 +225,70 @@ Options:\n\
         .def_readwrite("sanePartialProducts",
                     &RDKit::EnumerationParams::sanePartialProducts);
 
-    docString = "";
+    docString = \
+"EnumerateLibrary\n\
+This class allows easy enumeration of reactions.  Simply provide a reaction\n\
+and a set of reagents and you are off the the races.\n\
+\n\
+EnumerateLibrary follows the python enumerator protocol, for example:\n\
+\n\
+library = EnumerateLibrary(rxn, bbs)\n\
+for products in library:\n\
+   ... do something with the product\n\
+\n\
+It is useful to sanitize reactions before hand:\n\
+\n\
+SanitizeRxn(rxn)\n\
+library = EnumerateLibrary(rxn, bbs)\n\
+\n\
+If ChemDraw style reaction semantics are prefereed, you can apply\n\
+the ChemDraw parameters:\n\
+\n\
+SanitizeRxn(rxn, params=GetChemDrawRxnAdjustParams())\n\
+\n\
+For one, this enforces only matching RGroups and assumes all atoms\n\
+have fully satisfied valences.\n\
+\n\
+Each product has the same output as applying a set of reagents to\n\
+the libraries reaction.\n\
+\n\
+This can be a bit confusing as each product can have multiple molecules\n\
+generated.  The returned data structure is as follows:\n\
+\n\
+   [ [products1], [products2],... ]\n\
+Where products1 are the molecule products for the reactions first product\n\
+template and products2 are the molecule products for the second product\n\
+template.  Since each reactant can match more than once, there may be\n\
+multiple product molecules for each template.\n\
+\n\
+for result in library:\n\
+    for results_for_product_template in products:\n\
+        for mol in results_for_product_template:\n\
+            Chem.MolToSmiles(mol) # finally have a molecule!\n\
+\n\
+For sufficiently large libraries, using this iteration strategy is not\n\
+recommended as the library may contain more products than atoms in the\n\
+universe.  To help with this, you can supply an enumeration strategy.\n\
+The default strategy is a CartesianProductStrategy which enumerates\n\
+everything.  RandomSampleStrategy randomly samples the products but\n\
+this strategy never terminates, however, python supplies itertools:\n\
+\n\
+import itertools\n\
+library = EnumerateLibrary(rxn, bbs, rdChemReactions.RandomSampleStrategy())\n\
+for result in itertools.islice(libary, 1000):\n\
+    # do something with the first 1000 samples\n\
+\n\
+for result in itertools.islice(libary, 1000):\n\
+    # do something with the next 1000 samples\n\
+\n\
+Libraries are also serializable, including their current state:\n\
+\n\
+s = library.Serialize()\n\
+library2 = EnumerateLibrary()\n\
+library2.InitFromString(s)\n\
+for result in itertools.islice(libary2, 1000):\n\
+    # do something with the next 1000 samples\n\
+";
     python::class_<EnumerateLibraryWrap,
                    EnumerateLibraryWrap*,EnumerateLibraryWrap&,
                    python::bases<RDKit::EnumerateLibraryBase> >(
