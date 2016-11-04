@@ -139,8 +139,9 @@ struct AtomInfo {
       qatom.setIsotope(rlabel);
     }
     qatom.setQuery(makeAtomNullQuery());
-    mol.replaceAtom(atom->getIdx(), &qatom);
-    atom = mol.getAtomWithIdx(atom->getIdx());
+	unsigned int idx = atom->getIdx();
+	mol.replaceAtom(idx, &qatom);
+    atom = mol.getAtomWithIdx(idx);
   }
 
   void setAtomMap(int map) {
