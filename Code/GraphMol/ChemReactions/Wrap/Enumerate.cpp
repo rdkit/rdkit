@@ -343,7 +343,7 @@ Options:\n\
         "to retrieve the next evenly sample building block grows with the\n"
         "number of samples, this method performs progressively worse as the\n"
         "number of samples gets larger.\n"
-        "See EnumeartionStrategyBase for more details.\n";
+        "See EnumerationStrategyBase for more details.\n";
     
     python::class_<RDKit::EvenSamplePairsStrategy,
                    RDKit::EvenSamplePairsStrategy*,
