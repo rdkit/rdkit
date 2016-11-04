@@ -44,8 +44,10 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
@@ -57,8 +59,10 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginAgentTemplates();
       it != rxn.endAgentTemplates();
       ++it) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
@@ -70,8 +74,10 @@ T getMaxProp(ChemicalReaction &rxn, const std::string &prop) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
       it != rxn.endProductTemplates();
       ++it) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       T map;
       if (atom->getPropIfPresent<T>(prop, map)) {
         if (map > max_atom)
@@ -170,8 +176,10 @@ void fixRGroups(ChemicalReaction &rxn) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it, ++templateIdx) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       AtomInfo at(atom, templateIdx);
       if (at.NeedsRLabel())
         reactantAtomsToFix.push_back(at);
@@ -182,8 +190,10 @@ void fixRGroups(ChemicalReaction &rxn) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
       it != rxn.endProductTemplates();
       ++it, ++templateIdx) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       AtomInfo at(atom, templateIdx);
       if (at.NeedsRLabel())
         productAtomsToFix.push_back(at);
@@ -256,8 +266,10 @@ void fixAtomMaps(ChemicalReaction &rxn) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it, ++templateIdx) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       AtomInfo at(atom, templateIdx);
       if(at.rlabel && !at.atomMap) {
         if(potential_mappings.find(at.rlabel) != potential_mappings.end()) {
@@ -277,8 +289,10 @@ void fixAtomMaps(ChemicalReaction &rxn) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
       it != rxn.endProductTemplates();
       ++it, ++templateIdx) {
-    for(unsigned int idx=0;idx<(*it)->getNumAtoms(); ++idx) {
-      Atom *atom = (*it)->getAtomWithIdx(idx);
+    for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+         atIt != (*it)->endAtoms();
+         ++atIt) {
+      Atom *atom = (*atIt);
       AtomInfo at(atom, templateIdx);
       if(at.rlabel) {
         if(!at.atomMap) {
@@ -300,7 +314,6 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it) {
-    // Cheat here, we know that this came from a RWMol
     RWMol * rw = dynamic_cast<RWMol*>(it->get());
     if (rw)
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
