@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum and NextMove Software
+//  Copyright (C) 2015,2016 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,6 +29,8 @@ static Atom *CreateAAAtom(RWMol *mol, const char *name,
     atom = new Atom(7);
   } else if (name[0] == ' ' && name[1] == 'O') {
     atom = new Atom(8);
+  } else if (name[0] == ' ' && name[1] == 'P') {
+    atom = new Atom(15);
   } else if (name[0] == ' ' && name[1] == 'S') {
     atom = new Atom(16);
   } else if (name[0] == 'S' && name[1] == 'E') {
@@ -578,18 +580,21 @@ static void CreateAminoAcid(RWMol *mol, const char *aa, Atom *&r1, Atom *&r2,
   }
 }
 
-RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
-  if (!seq) return (RWMol *)0;
-
-  Atom *prev = (Atom *)0;
+static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
   AtomPDBResidueInfo info;
+  Atom *prev = (Atom *)0;
+  char chain[2];
+
+  chain[0] = 'A';
+  chain[1] = '\0';
+
   info.setSerialNumber(1);
   info.setAltLoc(" ");
   info.setResidueNumber(0);
   info.setInsertionCode(" ");
-  info.setChainId("A");
-
+  info.setChainId(chain);
   RWMol *mol = new RWMol();
+
   while (*seq) {
     Atom *r1 = (Atom *)0;
     Atom *r2 = (Atom *)0;
@@ -604,12 +609,18 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
 
       case ' ':
       case '\t':
+      case '\0':
         break;
 
       case '.':
         if (prev) {
           Atom *oxt = CreateAAAtom(mol, " OXT", info);
           CreateAABond(mol, prev, oxt, 1);
+          if (chain[0] < 'Z') {
+            chain[0]++;
+            info.setChainId(chain);
+          }
+          info.setResidueNumber(0);
           prev = (Atom *)0;
         }
         seq++;
@@ -687,6 +698,12 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
       case 'c':
         CreateAminoAcid(mol, lowerD ? "DCY" : "CYS", r1, r2, r3, info);
         break;
+      case 'd':
+        CreateAminoAcid(mol, lowerD ? "DAS" : "ASP", r1, r2, r3, info);
+        break;
+      case 'e':
+        CreateAminoAcid(mol, lowerD ? "DGL" : "GLU", r1, r2, r3, info);
+        break;
       case 'f':
         CreateAminoAcid(mol, lowerD ? "DPN" : "PHE", r1, r2, r3, info);
         break;
@@ -696,8 +713,26 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
       case 'i':
         CreateAminoAcid(mol, lowerD ? "DIL" : "ILE", r1, r2, r3, info);
         break;
+      case 'k':
+        CreateAminoAcid(mol, lowerD ? "DLY" : "LYS", r1, r2, r3, info);
+        break;
+      case 'l':
+        CreateAminoAcid(mol, lowerD ? "DLE" : "LEU", r1, r2, r3, info);
+        break;
+      case 'm':
+        CreateAminoAcid(mol, lowerD ? "MED" : "MET", r1, r2, r3, info);
+        break;
+      case 'n':
+        CreateAminoAcid(mol, lowerD ? "DSG" : "ASN", r1, r2, r3, info);
+        break;
       case 'p':
         CreateAminoAcid(mol, lowerD ? "DPR" : "PRO", r1, r2, r3, info);
+        break;
+      case 'q':
+        CreateAminoAcid(mol, lowerD ? "DGN" : "GLN", r1, r2, r3, info);
+        break;
+      case 'r':
+        CreateAminoAcid(mol, lowerD ? "DAR" : "ARG", r1, r2, r3, info);
         break;
       case 's':
         CreateAminoAcid(mol, lowerD ? "DSN" : "SER", r1, r2, r3, info);
@@ -724,16 +759,336 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
     Atom *oxt = CreateAAAtom(mol, " OXT", info);
     CreateAABond(mol, prev, oxt, 1);
   }
-
-  if (sanitize) MolOps::sanitizeMol(*mol);
   return mol;
 }
 
-RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD) {
-  return SequenceToMol(seq.c_str(), sanitize, lowerD);
+static void CreateNucleicAcid(RWMol *mol, const char *na, Atom *&r1, Atom *&r2,
+                              AtomPDBResidueInfo &info, bool PCap5)
+{
+  Atom *atom[32];
+
+  r1 = (Atom *)0;
+  r2 = (Atom *)0;
+
+  int resno = info.getResidueNumber();
+  info.setResidueNumber(resno + 1);
+  info.setIsHeteroAtom(false);
+  info.setResidueName(na);
+
+  if (resno) {
+    atom[1] = CreateAAAtom(mol, " P  ", info);
+    atom[2] = CreateAAAtom(mol, " OP1", info);
+    atom[3] = CreateAAAtom(mol, " OP2", info);
+    atom[4] = CreateAAAtom(mol, " O5'", info);
+    CreateAABond(mol, atom[1], atom[2], 2);
+    CreateAABond(mol, atom[1], atom[3], 1);
+    CreateAABond(mol, atom[1], atom[4], 1);
+    r1 = atom[1];
+  } else if (PCap5) {
+    atom[0] = CreateAAAtom(mol, " OP3", info);
+    atom[1] = CreateAAAtom(mol, " P  ", info);
+    atom[2] = CreateAAAtom(mol, " OP1", info);
+    atom[3] = CreateAAAtom(mol, " OP2", info);
+    atom[4] = CreateAAAtom(mol, " O5'", info);
+    CreateAABond(mol, atom[0], atom[1], 1);
+    CreateAABond(mol, atom[1], atom[2], 2);
+    CreateAABond(mol, atom[1], atom[3], 1);
+    CreateAABond(mol, atom[1], atom[4], 1);
+    r1 = atom[0];
+  } else {
+    atom[4] = CreateAAAtom(mol, " O5'", info);
+    r1 = atom[4];
+  }
+
+  atom[5] = CreateAAAtom(mol, " C5'", info);
+  atom[6] = CreateAAAtom(mol, " C4'", info);
+  atom[7] = CreateAAAtom(mol, " O4'", info);
+  atom[8] = CreateAAAtom(mol, " C3'", info);
+  atom[9] = CreateAAAtom(mol, " O3'", info);
+  atom[10] = CreateAAAtom(mol, " C2'", info);
+  CreateAABond(mol, atom[4], atom[5], 1);
+  CreateAABond(mol, atom[5], atom[6], 1);
+  CreateAABond(mol, atom[6], atom[7], 1);
+  CreateAABond(mol, atom[6], atom[8], 1);
+  CreateAABond(mol, atom[8], atom[9], 1);
+  CreateAABond(mol, atom[8], atom[10], 1);
+  atom[6]->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  atom[8]->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  if (na[1]==' ') {
+    atom[11] = CreateAAAtom(mol, " O2'", info);
+    atom[12] = CreateAAAtom(mol, " C1'", info);
+    CreateAABond(mol, atom[10], atom[11], 1);
+    CreateAABond(mol, atom[7], atom[12], 1);
+    CreateAABond(mol, atom[10], atom[12], 1);
+    atom[10]->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  } else {
+    atom[12] = CreateAAAtom(mol, " C1'", info);
+    CreateAABond(mol, atom[7], atom[12], 1);
+    CreateAABond(mol, atom[10], atom[12], 1);
+  }
+  r2 = atom[9];
+
+  switch (na[2]) {
+    case 'A':
+      atom[13] = CreateAAAtom(mol, " N9 ", info);
+      atom[14] = CreateAAAtom(mol, " C8 ", info);
+      atom[15] = CreateAAAtom(mol, " N7 ", info);
+      atom[16] = CreateAAAtom(mol, " C5 ", info);
+      atom[17] = CreateAAAtom(mol, " C6 ", info);
+      atom[18] = CreateAAAtom(mol, " N6 ", info);
+      atom[19] = CreateAAAtom(mol, " N1 ", info);
+      atom[20] = CreateAAAtom(mol, " C2 ", info);
+      atom[21] = CreateAAAtom(mol, " N3 ", info);
+      atom[22] = CreateAAAtom(mol, " C4 ", info);
+      CreateAABond(mol, atom[12], atom[13], 1);
+      CreateAABond(mol, atom[13], atom[14], 1);
+      CreateAABond(mol, atom[13], atom[22], 1);
+      CreateAABond(mol, atom[14], atom[15], 2);
+      CreateAABond(mol, atom[15], atom[16], 1);
+      CreateAABond(mol, atom[16], atom[17], 1);
+      CreateAABond(mol, atom[16], atom[22], 2);
+      CreateAABond(mol, atom[17], atom[18], 1);
+      CreateAABond(mol, atom[17], atom[19], 2);
+      CreateAABond(mol, atom[19], atom[20], 1);
+      CreateAABond(mol, atom[20], atom[21], 2);
+      CreateAABond(mol, atom[21], atom[22], 1);
+      atom[12]->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      break;
+    case 'C':
+      atom[13] = CreateAAAtom(mol, " N1 ", info);
+      atom[14] = CreateAAAtom(mol, " C2 ", info);
+      atom[15] = CreateAAAtom(mol, " O2 ", info);
+      atom[16] = CreateAAAtom(mol, " N3 ", info);
+      atom[17] = CreateAAAtom(mol, " C4 ", info);
+      atom[18] = CreateAAAtom(mol, " N4 ", info);
+      atom[19] = CreateAAAtom(mol, " C5 ", info);
+      atom[20] = CreateAAAtom(mol, " C6 ", info);
+      CreateAABond(mol, atom[12], atom[13], 1);
+      CreateAABond(mol, atom[13], atom[14], 1);
+      CreateAABond(mol, atom[13], atom[20], 1);
+      CreateAABond(mol, atom[14], atom[15], 2);
+      CreateAABond(mol, atom[14], atom[16], 1);
+      CreateAABond(mol, atom[16], atom[17], 2);
+      CreateAABond(mol, atom[17], atom[18], 1);
+      CreateAABond(mol, atom[17], atom[19], 1);
+      CreateAABond(mol, atom[19], atom[20], 2);
+      atom[12]->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      break;
+    case 'G':
+      atom[13] = CreateAAAtom(mol, " N9 ", info);
+      atom[14] = CreateAAAtom(mol, " C8 ", info);
+      atom[15] = CreateAAAtom(mol, " N7 ", info);
+      atom[16] = CreateAAAtom(mol, " C5 ", info);
+      atom[17] = CreateAAAtom(mol, " C6 ", info);
+      atom[18] = CreateAAAtom(mol, " O6 ", info);
+      atom[19] = CreateAAAtom(mol, " N1 ", info);
+      atom[20] = CreateAAAtom(mol, " C2 ", info);
+      atom[21] = CreateAAAtom(mol, " N2 ", info);
+      atom[22] = CreateAAAtom(mol, " N3 ", info);
+      atom[23] = CreateAAAtom(mol, " C4 ", info);
+      CreateAABond(mol, atom[12], atom[13], 1);
+      CreateAABond(mol, atom[13], atom[14], 1);
+      CreateAABond(mol, atom[13], atom[23], 1);
+      CreateAABond(mol, atom[14], atom[15], 2);
+      CreateAABond(mol, atom[15], atom[16], 1);
+      CreateAABond(mol, atom[16], atom[17], 1);
+      CreateAABond(mol, atom[16], atom[23], 2);
+      CreateAABond(mol, atom[17], atom[18], 2);
+      CreateAABond(mol, atom[17], atom[19], 1);
+      CreateAABond(mol, atom[19], atom[20], 1);
+      CreateAABond(mol, atom[20], atom[21], 1);
+      CreateAABond(mol, atom[20], atom[22], 2);
+      CreateAABond(mol, atom[22], atom[23], 1);
+      atom[12]->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      break;
+    case 'T':
+      atom[13] = CreateAAAtom(mol, " N1 ", info);
+      atom[14] = CreateAAAtom(mol, " C2 ", info);
+      atom[15] = CreateAAAtom(mol, " O2 ", info);
+      atom[16] = CreateAAAtom(mol, " N3 ", info);
+      atom[17] = CreateAAAtom(mol, " C4 ", info);
+      atom[18] = CreateAAAtom(mol, " O4 ", info);
+      atom[19] = CreateAAAtom(mol, " C5 ", info);
+      atom[20] = CreateAAAtom(mol, " C7 ", info);
+      atom[21] = CreateAAAtom(mol, " C6 ", info);
+      CreateAABond(mol, atom[12], atom[13], 1);
+      CreateAABond(mol, atom[13], atom[14], 1);
+      CreateAABond(mol, atom[13], atom[21], 1);
+      CreateAABond(mol, atom[14], atom[15], 2);
+      CreateAABond(mol, atom[14], atom[16], 1);
+      CreateAABond(mol, atom[16], atom[17], 1);
+      CreateAABond(mol, atom[17], atom[18], 2);
+      CreateAABond(mol, atom[17], atom[19], 1);
+      CreateAABond(mol, atom[19], atom[20], 1);
+      CreateAABond(mol, atom[19], atom[21], 2);
+      atom[12]->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      break;
+    case 'U':
+      atom[13] = CreateAAAtom(mol, " N1 ", info);
+      atom[14] = CreateAAAtom(mol, " C2 ", info);
+      atom[15] = CreateAAAtom(mol, " O2 ", info);
+      atom[16] = CreateAAAtom(mol, " N3 ", info);
+      atom[17] = CreateAAAtom(mol, " C4 ", info);
+      atom[18] = CreateAAAtom(mol, " O4 ", info);
+      atom[19] = CreateAAAtom(mol, " C5 ", info);
+      atom[20] = CreateAAAtom(mol, " C6 ", info);
+      CreateAABond(mol, atom[12], atom[13], 1);
+      CreateAABond(mol, atom[13], atom[14], 1);
+      CreateAABond(mol, atom[13], atom[20], 1);
+      CreateAABond(mol, atom[14], atom[15], 2);
+      CreateAABond(mol, atom[14], atom[16], 1);
+      CreateAABond(mol, atom[16], atom[17], 1);
+      CreateAABond(mol, atom[17], atom[18], 2);
+      CreateAABond(mol, atom[17], atom[19], 1);
+      CreateAABond(mol, atom[19], atom[20], 2);
+      atom[12]->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+      break;
+  }
 }
 
-RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD) {
+
+static void CreatePCap3(RWMol *mol, Atom *prev, AtomPDBResidueInfo &info) {
+  Atom *atom[4];
+
+  int resno = info.getResidueNumber();
+  info.setResidueNumber(resno + 1);
+  info.setIsHeteroAtom(true);
+  info.setResidueName("2PO");
+
+  atom[0] = CreateAAAtom(mol, " P  ", info);
+  atom[1] = CreateAAAtom(mol, " OP1", info);
+  atom[2] = CreateAAAtom(mol, " OP2", info);
+  atom[3] = CreateAAAtom(mol, " OP3", info);
+  CreateAABond(mol, prev, atom[0], 1);
+  CreateAABond(mol, atom[0], atom[1], 2);
+  CreateAABond(mol, atom[0], atom[2], 1);
+  CreateAABond(mol, atom[0], atom[3], 1);
+}
+
+
+static RWMol *NASequenceToMol(const char *seq, bool Dna,
+                              bool PCap5, bool PCap3) {
+  char chain[2];
+  chain[0] = 'A';
+  chain[1] = '\0';
+
+  Atom *prev = (Atom *)0;
+  AtomPDBResidueInfo info;
+  info.setSerialNumber(1);
+  info.setAltLoc(" ");
+  info.setResidueNumber(0);
+  info.setInsertionCode(" ");
+  info.setChainId(chain);
+  RWMol *mol = new RWMol();
+
+  while (*seq) {
+    Atom *r1 = (Atom *)0;
+    Atom *r2 = (Atom *)0;
+
+    switch (*seq) {
+      case '\n':
+      case '\r':
+      case '-':
+        seq++;
+        continue;
+
+      case ' ':
+      case '\t':
+      case '\0':
+        break;
+
+      case '.':
+        if (prev) {
+          if (PCap3)
+            CreatePCap3(mol, prev, info);
+          if (chain[0] < 'Z') {
+            chain[0]++;
+            info.setChainId(chain);
+          }
+          info.setResidueNumber(0);
+        }
+        prev = (Atom *)0;
+        seq++;
+        continue;
+
+      default:
+        delete mol;
+        return (RWMol *)0;
+
+      case 'A':
+      case 'a':
+        CreateNucleicAcid(mol, Dna ? " DA" : "  A", r1, r2, info, PCap5);
+        break;
+      case 'C':
+      case 'c':
+        CreateNucleicAcid(mol, Dna ? " DC" : "  C", r1, r2, info, PCap5);
+        break;
+      case 'G':
+      case 'g':
+        CreateNucleicAcid(mol, Dna ? " DG" : "  G", r1, r2, info, PCap5);
+        break;
+      case 'T':
+      case 't':
+        CreateNucleicAcid(mol, Dna ? " DT" : "  T", r1, r2, info, PCap5);
+        break;
+      case 'U':
+      case 'u':
+        CreateNucleicAcid(mol, Dna ? " DU" : "  U", r1, r2, info, PCap5);
+        break;
+    }
+    if (prev && r1) CreateAABond(mol, prev, r1, 1);
+    prev = r2;
+    seq++;
+  }
+  if (prev && PCap3)
+    CreatePCap3(mol, prev, info);
+  return mol;
+}
+
+
+RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
+  if (!seq) return (RWMol *)0;
+  RWMol *mol;
+
+  switch (flavor) {
+    /* Protein */
+    case 0:  mol = AASequenceToMol(seq,false);  break;
+    case 1:  mol = AASequenceToMol(seq,true);   break;
+
+    /* RNA */
+    case 2:  mol = NASequenceToMol(seq,false,false,false);  break;
+    case 3:  mol = NASequenceToMol(seq,false,true,false);   break;
+    case 4:  mol = NASequenceToMol(seq,false,false,true);   break;
+    case 5:  mol = NASequenceToMol(seq,false,true,true);    break;
+
+    /* DNA */
+    case 6:  mol = NASequenceToMol(seq,true,false,false);  break;
+    case 7:  mol = NASequenceToMol(seq,true,true,false);   break;
+    case 8:  mol = NASequenceToMol(seq,true,false,true);   break;
+    case 9:  mol = NASequenceToMol(seq,true,true,true);    break;
+
+    default:
+      return (RWMol*)0;
+  }
+  if (sanitize && mol)
+    MolOps::sanitizeMol(*mol);
+  return mol;
+}
+
+
+RWMol *SequenceToMol(const std::string &seq, bool sanitize, int flavor) {
+  return SequenceToMol(seq.c_str(), sanitize, flavor);
+}
+
+RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD) {
+  return SequenceToMol(seq, sanitize, lowerD ? 1 : 0);
+}
+
+RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD) {
+  return SequenceToMol(seq.c_str(), sanitize, lowerD ? 1 : 0);
+}
+
+RWMol *FASTAToMol(const char *seq, bool sanitize, int flavor) {
   if (!seq) return (RWMol *)0;
 
   std::string title;
@@ -741,13 +1096,21 @@ RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD) {
     seq++;
     while (*seq && *seq != '\n' && *seq != '\r') title += *seq++;
   }
-  RWMol *mol = SequenceToMol(seq, sanitize, lowerD);
+  RWMol *mol = SequenceToMol(seq, sanitize, flavor);
   if (!title.empty()) mol->setProp(common_properties::_Name, title);
   return mol;
 }
 
+RWMol *FASTAToMol(const std::string &seq, bool sanitize, int flavor) {
+  return FASTAToMol(seq.c_str(), sanitize, flavor);
+}
+
+RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD) {
+  return FASTAToMol(seq, sanitize, lowerD ? 1 : 0);
+}
+
 RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD) {
-  return FASTAToMol(seq.c_str(), sanitize, lowerD);
+  return FASTAToMol(seq.c_str(), sanitize, lowerD ? 1 : 0);
 }
 
 struct HELMMonomer {
@@ -825,10 +1188,10 @@ static const char *LookupHELMPeptideMonomer(const char *ptr) {
     case 'D':
       if (ptr[1] == '\0') return "ASP";
     case 'E':
-      if (ptr[1] == '\0') return "L-Glu";
+      if (ptr[1] == '\0') return "GLU";
       break;
     case 'F':
-      if (ptr[1] == '\0') return "L-Phe";
+      if (ptr[1] == '\0') return "PHE";
       break;
     case 'G':
       if (ptr[1] == '\0') return "GLY";
@@ -1025,6 +1388,115 @@ static const char *ParseHELMPeptide(RWMol *mol, const char *ptr,
   }
 }
 
+static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
+                                    const char *chain) {
+  if (ptr[0] == '}')
+    return ptr;
+
+  bool PCap5 = false;
+  Atom *prev = 0;
+  Atom *r1 = 0;
+  Atom *r2 = 0;
+
+
+  AtomPDBResidueInfo info;
+  info.setSerialNumber(1);
+  info.setAltLoc(" ");
+  info.setResidueNumber(0);
+  info.setInsertionCode(" ");
+  info.setChainId(chain);
+
+  if (*ptr=='P') {
+    PCap5 = true;
+    ptr++;
+    if (*ptr=='.')
+      ptr++;
+  }
+
+  for (;;) {
+    const char *name = 0;
+    if (*ptr == 'R' && ptr[1]=='(') {
+      if (ptr[2]=='A') {
+        if (ptr[3]==')') {
+          name = "  A";
+          ptr += 4;
+        }
+      } else if (ptr[2]=='C') {
+        if (ptr[3]==')') {
+          name = "  C";
+          ptr += 4;
+        }
+      } else if (ptr[2]=='G') {
+        if (ptr[3]==')') {
+          name = "  G";
+          ptr += 4;
+        }
+      } else if (ptr[2]=='T') {
+        if (ptr[3]==')') {
+          name = "  T";
+          ptr += 4;
+        }
+      } else if (ptr[2]=='U') {
+        if (ptr[3]==')') {
+          name = "  U";
+          ptr += 4;
+        }
+      }
+    } else if (*ptr=='[' && ptr[1]=='d' && ptr[2]=='R' &&
+               ptr[3]==']' && ptr[4]=='(') {
+      if (ptr[5]=='A') {
+        if (ptr[6]==')') {
+          name = " DA";
+          ptr += 7;
+        }
+      } else if (ptr[5]=='C') {
+        if (ptr[6]==')') {
+          name = " DC";
+          ptr += 7;
+        }
+      } else if (ptr[5]=='G') {
+        if (ptr[6]==')') {
+          name = " DG";
+          ptr += 7;
+        }
+      } else if (ptr[5]=='T') {
+        if (ptr[6]==')') {
+          name = " DT";
+          ptr += 7;
+        }
+      } else if (ptr[5]=='U') {
+        if (ptr[6]==')') {
+          name = " DU";
+          ptr += 7;
+        }
+      }
+    }
+    if (!name)
+      return (const char *)0;
+
+    CreateNucleicAcid(mol,name,r1,r2,info,PCap5);
+    if (prev && r1)
+      CreateAABond(mol, prev, r1, 1);
+    prev = r2;
+
+    if (*ptr == '}')
+      return ptr;
+    if (*ptr == '.')
+      ptr++;
+    if (*ptr != 'P')
+      return (const char*)0;
+    ptr++;
+    if (*ptr == '}') {
+      CreatePCap3(mol,prev,info);
+      return ptr;
+    }
+    PCap5 = true;
+    if (*ptr == '.')
+      ptr++;
+  }
+}
+
+
 static bool ParseHELM(RWMol *mol, const char *ptr) {
   std::map<std::string, std::vector<HELMMonomer> > seqs;
   const char *orig;
@@ -1043,6 +1515,15 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
       std::string id(orig, ptr - orig);
       chain[0] = 'A' + (orig[7] - '1');
       ptr = ParseHELMPeptide(mol, ptr + 1, chain, seqs[id]);
+      if (!ptr || *ptr != '}') return false;
+      ptr++;
+    } else if (ptr[0]=='R' && ptr[1]=='N' && ptr[2]=='A' &&
+               ptr[3]>='1' && ptr[3]<='9') {
+      ptr += 4;
+      while (*ptr >= '0' && *ptr <= '9') ptr++;
+      if (*ptr != '{') return false;
+      chain[0] = 'A' + (orig[3] - '1');
+      ptr = ParseHELMNucleic(mol, ptr + 1, chain);
       if (!ptr || *ptr != '}') return false;
       ptr++;
     } else
