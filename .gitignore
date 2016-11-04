@@ -18,6 +18,7 @@ __pycache__/
 
 #- Files created during build phase
 /build*/
+/Docs/Book/_build*/
 
 /Code/RDGeneral/versions.cpp
 
