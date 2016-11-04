@@ -33,6 +33,7 @@
 #define RDKIT_SANITIZERXN_H
 
 #include "Reaction.h"
+#include <GraphMol/MolOps.h>
 #include <string>
 #include <exception>
 
