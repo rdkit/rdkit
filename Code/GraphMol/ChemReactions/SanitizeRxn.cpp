@@ -35,29 +35,6 @@
 namespace RDKit {
 namespace RxnOps {
 
-const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
-  MolOps::AdjustQueryParameters params;
-  params.adjustDegree = false;
-  params.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREDUMMIES;
-  params.adjustRingCount = false;
-  params.adjustRingCountFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
-  params.makeDummiesQueries = false;
-  params.aromatizeIfPossible = true;
-  return params;
-}
-
-// Default adjustment parameters for ChemDraw style matching of reagents
-const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
-  MolOps::AdjustQueryParameters params;
-  params.adjustDegree = true;
-  params.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREDUMMIES;
-  params.adjustRingCount = false;
-  params.adjustRingCountFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
-  params.makeDummiesQueries = false;
-  params.aromatizeIfPossible = true;
-  return params;
-}
-
 // molAtomMapNumber ==> int
 // molFileRLabel ==> unsigned int
 namespace {

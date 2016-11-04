@@ -70,10 +70,28 @@ void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters 
 void fixHs(ChemicalReaction &rxn);
 
 // Default adjustment parameters for matching reagents
-const MolOps::AdjustQueryParameters DefaultRxnAdjustParams();
+inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
+  MolOps::AdjustQueryParameters params;
+  params.adjustDegree = false;
+  params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+  params.adjustRingCount = false;
+  params.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;
+  params.makeDummiesQueries = false;
+  params.aromatizeIfPossible = true;
+  return params;
+}
 
 // Default adjustment parameters for ChemDraw style matching of reagents
-const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams();
+inline const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
+  MolOps::AdjustQueryParameters params;
+  params.adjustDegree = true;
+  params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+  params.adjustRingCount = false;
+  params.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;
+  params.makeDummiesQueries = false;
+  params.aromatizeIfPossible = true;
+  return params;
+}
 
 typedef enum {
   SANITIZE_NONE = 0x0,
