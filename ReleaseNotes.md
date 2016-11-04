@@ -144,12 +144,15 @@ Maciek Wojcikowski
  (github pull #1142 from David-Turbert)
 
 ## New Database Cartridge Features:
+  - Provide SVG output from the cartridge
+ (github pull #1109 from greglandrum)
   - Add cartridge support for adjustQueryProperties()
  (github pull #949 from greglandrum)
 
 ## New Java Wrapper Features:
   - Expose filtermatch to swig
  (github pull #1117 from bp-kelley)
+  - adjustQueryProperties()
 
 ## Bug Fixes:
   - initialization of the PeriodicTable object should be made thread-safe
