@@ -1,6 +1,10 @@
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
+## Important
+- The adjustQueryParameters structure has been rewritten. If you were using
+  this in your code, you'll need to update your code.
+
 ## Acknowledgements:
 Brian Cole, Piotr Dabrowski, Jan Domanski, Peter Gedeck, Richard Hall, Brian
 Kelley, Joos Kiener, 'maddogcz', John Mayfield, 'michalsta', Michal Nowotka,
@@ -9,6 +13,9 @@ Gianluca Sforna, Peter Shenkin, Paolo Tosco, David Turbert, Riccardo Vianello,
 Maciek Wojcikowski  
 
 ## Highlights:
+- New AdjustQueryProperties() (adjustQueryProperties() in C++) for fine-tuning substructure queries.
+- ReactionEnum functionality adds significant new capabilities for doing library enumeration
+- Similarity searches with the PostgreSQL cartridge are substantially faster
 
 ## New Features and Enhancements:
   - Trajectory/Snapshot objects
@@ -57,19 +64,11 @@ Maciek Wojcikowski
  (github pull #965 from bp-kelley)
   - Improved planarity for ETKDG
  (github pull #967 from sriniker)
-  - Java wrappers for Trajectory/Snapshot objects
- (github pull #977 from ptosco)
   - Fixes built-in popcount in PgSQL cartridge on Windows
  (github pull #978 from ptosco)
   - A variety of drawing-related changes
  (github pull #986 from greglandrum)
-  - support "OR" for adjust query flags in cartridge
- (github issue #987 from greglandrum)
-  - Expose the aromatizeIfPossible parameter to python
- (github pull #991 from greglandrum)
-  - refactoring of the postgresql cartridge
- (github pull #992 from rvianello)
-  - - Get pango 2D depiction to work with cairocffi
+  - Get pango 2D depiction to work with cairocffi
  (github pull #998 from ptosco)
   - Adds Atom atom map and rlabel apis
  (github pull #1004 from bp-kelley)
@@ -145,11 +144,15 @@ Maciek Wojcikowski
  (github pull #1109 from greglandrum)
   - Add cartridge support for adjustQueryProperties()
  (github pull #949 from greglandrum)
+ - refactoring of the postgresql cartridge
+(github pull #992 from rvianello)
 
 ## New Java Wrapper Features:
   - Expose filtermatch to swig
  (github pull #1117 from bp-kelley)
   - adjustQueryProperties()
+  - Java wrappers for Trajectory/Snapshot objects
+  (github pull #977 from ptosco)
 
 ## Bug Fixes:
   - initialization of the PeriodicTable object should be made thread-safe
@@ -308,6 +311,7 @@ Maciek Wojcikowski
  (github pull #1146 from gedeck)
 
 ## Deprecated code (to be removed in next release):
+  - rdkit.VLib python module
 
 ## Removed code:
 
