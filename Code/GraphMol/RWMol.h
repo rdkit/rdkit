@@ -206,6 +206,15 @@ class RWMol : public ROMol {
 
   //! removes a bond from the molecule
   void removeBond(unsigned int beginAtomIdx, unsigned int endAtomIdx);
+
+  //! replaces a particular Bond
+  /*!
+    \param idx          the index of the Bond to replace
+    \param bond         the new bond, which will be copied.
+
+  */
+  void replaceBond(unsigned int idx, Bond *bond);
+
   //@}
 
   //! removes all atoms, bonds, properties, bookmarks, etc.

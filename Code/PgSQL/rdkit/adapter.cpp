@@ -620,10 +620,10 @@ unsigned int parseWhichString(const std::string &txt) {
     ++token;
     if (v == "IGNORENONE") {
       res |= MolOps::ADJUST_IGNORENONE;
-    } else if (v == "IGNORERINGATOMS") {
-      res |= MolOps::ADJUST_IGNORERINGATOMS;
-    } else if (v == "IGNORECHAINATOMS") {
-      res |= MolOps::ADJUST_IGNORECHAINATOMS;
+    } else if (v == "IGNORERINGS") {
+      res |= MolOps::ADJUST_IGNORERINGS;
+    } else if (v == "IGNORECHAINS") {
+      res |= MolOps::ADJUST_IGNORECHAINS;
     } else if (v == "IGNOREDUMMIES") {
       res |= MolOps::ADJUST_IGNOREDUMMIES;
     } else if (v == "IGNORENONDUMMIES") {

@@ -71,7 +71,7 @@ void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
   std::vector<boost::shared_ptr<FilterMatcherBase> > temp;
 
   for (; begin != end; ++begin) {
-    temp.push_back((*begin)->Clone());
+    temp.push_back((*begin)->copy());
   }
   fc.setExclusionPatterns(temp);
 }
@@ -147,7 +147,7 @@ class PythonFilterMatch : public FilterMatcherBase {
         functor(self),
         incref(false){};
 
-  // ONLY CALLED FROM C++ from the Clone operation
+  // ONLY CALLED FROM C++ from the copy operation
   PythonFilterMatch(const PythonFilterMatch &rhs)
       : FilterMatcherBase(rhs), functor(rhs.functor), incref(true) {
     python::incref(functor);
@@ -174,7 +174,7 @@ class PythonFilterMatch : public FilterMatcherBase {
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
   }
 };
