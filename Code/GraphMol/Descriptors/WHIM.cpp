@@ -176,7 +176,8 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
       }
     }
 
-    //std::cout << Scores.transpose() <<"\n";
+    std::cout << "Scores\n";
+    std::cout << Scores <<"\n";
 
     for (int i=0;i<3; i++) {
       double ns=0.0;
