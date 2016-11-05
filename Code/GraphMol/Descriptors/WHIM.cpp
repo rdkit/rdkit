@@ -241,6 +241,13 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
     JacobiSVD<MatrixXd> svd = getSVD(covmat);
 
 
+    std::cout << "covmat\n";  
+    std::cout << covmat <<"\n";
+
+
+    std::cout << "Xmean\n";  
+    std::cout << Xmean <<"\n";
+    
     /* // compare both methods results identicals!
         Matrix3d covmat3 =covmat;
         std::cout << svd.matrixV() << "\n";
