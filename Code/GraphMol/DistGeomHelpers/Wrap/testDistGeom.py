@@ -424,6 +424,10 @@ class TestCase(unittest.TestCase):
     params.useExpTorsionAnglePrefs = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                       'simple_torsion.etkdg.mol')
@@ -434,6 +438,10 @@ class TestCase(unittest.TestCase):
     params.useBasicKnowledge = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETKDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                       'simple_torsion.kdg.mol')
@@ -441,6 +449,10 @@ class TestCase(unittest.TestCase):
     params = rdDistGeom.EmbedParameters()
     params.randomSeed = 42
     params.useBasicKnowledge = True
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.KDG()
+    params.randomSeed = 42
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
 
