@@ -1,0 +1,182 @@
+/*!
+@page install Installation instructions
+
+This document describes the installation procedure for
+the RingDecomposerLib library.
+
+This package uses CMake for the build process. See
+the [CMake documentation] (https://cmake.org/documentation/)
+for general configuration options.
+
+The most useful option is `-DCMAKE_INSTALL_PREFIX=<your/target/path>` for changing
+the install directory.
+
+Core library
+============
+
+Prerequisites
+-------------
+
+For the core library the build process needs
+[CMake] (https://cmake.org) (>= 3.1) and an ANSI-C compiler
+(for example gcc, clang or MSVC).
+
+Installation Unix and macOS
+---------------------------
+
+Installation on Unix using `make` and the system's default C compiler.
+
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    make && make install
+
+Test
+----
+
+Use the following command to test the build
+of the core library. Testing is strongly recommended.
+
+    make test
+
+The program will compare the relevant cycles to the cycles present
+in the input file. Furthermore the URFs will be validated, i.e. 
+calculated with an independent exponential algorithm (definition of the URFs).
+The SSSR will also be validated (it is checked if it's a cycle base).
+A number of consistency tests is executed to ensure integrity and robustness.
+See the file `test/README` for a descriptions of the test files.
+
+@warning All tests should succeed! If any test fails, check the output.
+On exceptionally slow machines the failure could result from timeouts. 
+
+Installation Windows
+--------------------
+
+Installation on Windows using the `Visual Studio` C compiler and
+`MSBuild.exe` from the command line (`cmd.exe`).
+Replace `Visual Studio 14 2015` by your Version.
+
+    mkdir build
+    cd build
+    cmake.exe -G"Visual Studio 14 2015" ..
+    MSBuild.exe ALL_BUILD.vcxproj /property:Configuration=Release
+    MSBuild.exe INSTALL.vcxproj /property:Configuration=Release
+
+Use the following command to test the build
+of the core library.
+
+    MSBuild.exe RUN_TESTS.vcxproj /property:Configuration=Release
+
+Python wrapper
+==============
+
+The Python wrapper is optional.
+
+Prerequisites
+-------------
+
+The Python wrapper needs additionally 
+[Python](https://www.python.org/) (>= 2.7 or >= 3.3),
+and [Cython] (http://cython.org/).
+
+Installation Unix and macOS
+---------------------------
+
+On Unix use the same commands as for installation of the core library
+with the CMake option -DBUILD_PYTHON_WRAPPER=ON
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_WRAPPER=ON
+
+Depending on your system configuration you may have to specify
+additional options.
+
+If your Python executable isn't in your current $PATH -- or
+you want to use another -- specify with:
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_WRAPPER=ON -DPYTHON_EXECUTABLE=<path/to/your/python/executable>
+
+Use `-DPYTHON_FLAGS` to modify the installation behaviour of
+the python wrapper 
+If you can't or don't want to install the Python wrapper into
+the default directory, specify the target with:
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_WRAPPER=ON -DPYTHON_FLAGS="--user"
+
+or
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_WRAPPER=ON -DPYTHON_FLAGS="--prefix=<python/library/install/path>"
+
+Use the following command to test the core library and the Python wrapper. Testing is strongly recommended.
+
+    make test
+
+
+@warning The Python wrapper will already be installed during `make` and not `make install`.
+If you don't want the wrapper to be installed, set `-DPYTHON_FLAGS="--prefix=/some/temp/folder"`.
+In that case the Python tests will fail.
+
+
+Installation Windows
+--------------------
+
+On Windows use
+
+    cmake.exe -G"Visual Studio 14 2015" .. -DBUILD_PYTHON_WRAPPER=ON
+
+@warning
+Before compiling with `MSBuild.exe` you may have to set one environment variable.
+This is neccessary because Python2.7 on Windows usually is built using `Visual Studio 9 2008`.
+Replace `VS140COMNTOOLS` by your version.
+
+    SET VS90COMNTOOLS=%VS140COMNTOOLS%
+
+
+
+The other options are the same as for Unix.
+
+@warning The Python wrapper will already be installed during the build step and not the install step.
+If you don't want the wrapper to be installed, set `-DPYTHON_FLAGS="--prefix=/some/temp/folder"`.
+In that case the Python tests will fail.
+
+
+C++ RDKit Benchmark
+==============
+
+The C++ RDKit Benchmark is optional. It demonstrates the usage with
+RDKit and is the tool used for benchmarking the library
+in the paper.
+
+Prerequisites
+-------------
+
+The C++ RDKit Benchmark needs [RDKit] (http://www.rdkit.org/)
+(>= 2016.03.01)
+to be installed and an C++ compiler (g++, clang++, MSCV).
+Additionally the RDKit header files
+(for example librdkit-dev package for Debian) and
+the boost header files (for example libboost-dev for Debian)
+are needed (>= 1.45).
+
+Installation (Unix and macOS)
+-----------------------------
+
+Use the same commands as for Installation of the core library
+with the CMake option -DBUILD_RDKIT_BENCHMARK=ON
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_RDKIT_BENCHMARK=ON
+
+Depending on your system configuration you may have to specify
+additional options.
+
+If the boost libraries are not in the default search path,
+change with `-DBOOST_ROOT` (see [FindBoost] (https://cmake.org/cmake/help/v3.0/module/FindBoost.html)
+for details).
+
+If the RDKit headers are not in a default search path,
+specify with:
+
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_RDKIT_BENCHMARK=ON -DRDKIT_INCLUDE_DIR=<path/to/your/rdkit/headers> -DRDKIT_LIB_DIR=<path/to/your/rdkit/libraries>
+
+@warning Because of the complex dependencies the RDKit Benchmark
+is currently untested on Windows.
+*/
