@@ -5943,6 +5943,8 @@ void testCopyConstructor() {
     removeMappingNumbersFromReactions(*rxn_new);
     std::string smi2 = ChemicalReactionToRxnSmiles(*rxn);
     std::string new_smi = ChemicalReactionToRxnSmiles(*rxn_new);
+    std::cerr << "smi1 " << smi1 << std::endl;
+    std::cerr << "smi2 " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
     TEST_ASSERT(smi2 != new_smi);
     TEST_ASSERT(new_smi == "CCC(N)(O)Cl>>CC(C)(N)O.Cl");

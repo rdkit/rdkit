@@ -89,6 +89,7 @@ bool preprocessReaction(ChemicalReaction &rxn,
                         const std::map<std::string, ROMOL_SPTR> &queries,
                         const std::string &propName) {
   rxn.setImplicitPropertiesFlag(true);
+  rxn.initReactantMatchers();
 
   if (rxn.validate(numWarnings, numErrors)) {
     addRecursiveQueriesToReaction(rxn,

@@ -36,6 +36,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/PreprocessRxn.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
@@ -328,7 +329,7 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 python::object PreprocessReaction(ChemicalReaction &reaction,
                                   python::dict queryDict,
                                   std::string propName) {
-  
+
   // transform dictionary into map
   std::map<std::string, ROMOL_SPTR> queries;
   unsigned int size = python::extract<unsigned int>(queryDict.keys().attr("__len__")());
@@ -353,11 +354,11 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
   reaction.validate(nWarn, nError);
   std::vector<
     std::vector<std::pair<unsigned int,std::string> > > labels;
-  
+
   if (!nError) {
       preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
   }
-  
+
   // transform labels into python::tuple(python::tuple(python::tuple))
   python::list reactantLabels;
   for (unsigned int i = 0; i < labels.size(); ++i) {
@@ -374,6 +375,30 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 
 }
+#ifdef RDK_32BIT_BUILD
+typedef int sanitize_ops;
+#else
+typedef unsigned int sanitize_ops;
+#endif
+
+RxnOps::SanitizeRxnFlags sanitizeReaction(
+    ChemicalReaction &rxn,
+    sanitize_ops sanitizeOps,
+    const MolOps::AdjustQueryParameters &params,
+    bool catchErrors) {
+  unsigned int operationsThatFailed = 0;
+  try {
+    RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps, params);
+  } catch(...) {
+    if (!catchErrors)
+      throw;
+  }
+  return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
+}
+}
+
+
+void wrap_enumeration();
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
   python::scope().attr("__doc__") =
@@ -661,7 +686,7 @@ of the replacements argument.",
       "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
-  
+
   python::def(
       "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
       (python::arg("product"), python::arg("addDummyAtoms") = true),
@@ -669,7 +694,7 @@ of the replacements argument.",
               The output is a molecule with attached wildcards indicating where the product was attached.\
               The dummy atom has the same reaction-map number as the product atom (if available).",
       python::return_value_policy<python::manage_new_object>());
-  
+
   python::def("RemoveMappingNumbersFromReactions",
               RDKit::removeMappingNumbersFromReactions,
               (python::arg("reaction")),
@@ -774,10 +799,36 @@ Sample Usage:\n\
   True\n\
 ";
 
-  python::def("PreprocessReaction", PreprocessReaction,
+  python::def("PreprocessReaction", RDKit::PreprocessReaction,
               (python::arg("reaction"),
                python::arg("queries")=python::dict(),
-               python::arg("propName")=common_properties::molFileValue),
+               python::arg("propName")=RDKit::common_properties::molFileValue),
               docString.c_str());
-}
+
+  python::enum_<RDKit::RxnOps::SanitizeRxnFlags>("SanitizeFlags")
+        .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
+        .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
+        .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
+        .value("SANITIZE_ADJUST_REACTANTS", RDKit::RxnOps::SANITIZE_ADJUST_REACTANTS)
+        .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
+        .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
+        .export_values();
+    ;
+
+    python::def("GetDefaultAdjustParams", RDKit::RxnOps::DefaultRxnAdjustParams,
+                "Returns the default adjustment parameters for reactant templates");
+
+    python::def("GetChemDrawRxnAdjustParams", RDKit::RxnOps::ChemDrawRxnAdjustParams,
+                "Returns the chemdraw style adjustment parameters for reactant templates");
+
+    std::string docstring = "feed me";
+    python::def(
+        "SanitizeRxn", RDKit::sanitizeReaction,
+        (python::arg("rxn"), python::arg("sanitizeOps") = rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
+         python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
+         python::arg("catchErrors") = false),
+        docString.c_str());
+
+  wrap_enumeration();
+
 }
