@@ -474,6 +474,51 @@ public class DistanceGeometryTests extends GraphMolTest {
 		ssd = test.alignMol(ref);
 		assertTrue(ssd < 0.1);
 	}
+  @Test
+	public void test9ETKDGParams2() {
+    File molFile = new File(testDataDir, "simple_torsion.etkdg.mol");
+
+		ROMol ref=RWMol.MolFromMolFile(molFile.getPath(), true, false);;
+		ROMol test = RWMol.MolFromSmiles("OCCC").addHs(false,false);
+    assertTrue(test.getNumAtoms()==ref.getNumAtoms());
+    EmbedParameters eps = RDKFuncs.getETKDG();
+    eps.setRandomSeed(42);
+		int cid = DistanceGeom.EmbedMolecule(test,eps);
+		assertTrue(cid>-1);
+    double ssd;
+		ssd = test.alignMol(ref);
+		assertTrue(ssd < 0.1);
+	}
+  @Test
+	public void test9ETDGParams2() {
+    File molFile = new File(testDataDir, "simple_torsion.etdg.mol");
+
+		ROMol ref=RWMol.MolFromMolFile(molFile.getPath(), true, false);;
+		ROMol test = RWMol.MolFromSmiles("OCCC").addHs(false,false);
+    assertTrue(test.getNumAtoms()==ref.getNumAtoms());
+    EmbedParameters eps = RDKFuncs.getETDG();
+    eps.setRandomSeed(42);
+		int cid = DistanceGeom.EmbedMolecule(test,eps);
+		assertTrue(cid>-1);
+    double ssd;
+		ssd = test.alignMol(ref);
+		assertTrue(ssd < 0.1);
+	}
+  @Test
+	public void test9KDGParams2() {
+    File molFile = new File(testDataDir, "simple_torsion.kdg.mol");
+
+		ROMol ref=RWMol.MolFromMolFile(molFile.getPath(), true, false);;
+		ROMol test = RWMol.MolFromSmiles("OCCC").addHs(false,false);
+    assertTrue(test.getNumAtoms()==ref.getNumAtoms());
+    EmbedParameters eps = RDKFuncs.getKDG();
+    eps.setRandomSeed(42);
+		int cid = DistanceGeom.EmbedMolecule(test,eps);
+		assertTrue(cid>-1);
+    double ssd;
+		ssd = test.alignMol(ref);
+		assertTrue(ssd < 0.1);
+	}
 
 
 
