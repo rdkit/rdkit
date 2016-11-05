@@ -160,10 +160,11 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
           std::cout << v3.transpose() << "\n";
     }
 
+   //  inverse of the kurtosis
     w[10] = numAtoms*pow(w[0],2)/ v1.array().pow(4).sum(); // E1
     w[11] = numAtoms*pow(w[1],2)/ v2.array().pow(4).sum(); // E2
     w[12] = numAtoms*pow(w[2],2)/ v3.array().pow(4).sum(); // E3
-    w[13] = w[10]+w[11]+w[12]; //D
+    w[13] = (w[10]+w[11]+w[12])/3; // mean total density of the atoms called D is used on Dragon 6 not just the sum!
 
 
     double gamma[3]; // Gamma values
@@ -458,7 +459,7 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = moldata3D.GetIState(mol);
+    std::vector<double> weigthvector = moldata3D.GetEState2(mol); // caution not only neighours ...
 
     double* weigtharray = &weigthvector[0];
 
@@ -616,7 +617,7 @@ std::vector<double> WHIM(const ROMol& mol,int confId, double th){
       res.push_back(roundn(wi[5],3));
       res.push_back(roundn(wi[5],3));
 
-
+//L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap  Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu  Vm  Vv  Ve  Vp  Vi  Vs
 
   return res;
 }
