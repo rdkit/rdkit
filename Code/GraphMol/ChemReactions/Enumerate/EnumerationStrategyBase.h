@@ -40,6 +40,9 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/vector.hpp>
+// the next two includes need to be there for boost 1.56
+#include <boost/serialization/singleton.hpp>
+#include <boost/serialization/extended_type_info.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -65,7 +68,8 @@ class EnumerationStrategyException : public std::exception {
   \result vector<unint64_t> number of elements in each vector
  */
 template <class T>
-EnumerationTypes::RGROUPS getSizesFromBBs(const std::vector<std::vector<T> > &bbs) {
+EnumerationTypes::RGROUPS getSizesFromBBs(
+    const std::vector<std::vector<T> > &bbs) {
   EnumerationTypes::RGROUPS sizes;
   for (size_t i = 0; i < bbs.size(); ++i) sizes.push_back(bbs[i].size());
   return sizes;
@@ -75,7 +79,8 @@ EnumerationTypes::RGROUPS getSizesFromBBs(const std::vector<std::vector<T> > &bb
 //!  Helper function for enumeration, bbs are stored in a
 //!   std::vector< std::vector<boost:shared_ptr<ROMol> >
 //
-EnumerationTypes::RGROUPS getSizesFromReactants(const std::vector<MOL_SPTR_VECT> &bbs);
+EnumerationTypes::RGROUPS getSizesFromReactants(
+    const std::vector<MOL_SPTR_VECT> &bbs);
 
 //! getReactantsFromRGroups
 //!  Helper function for enumeration, bbs are stored in a
@@ -109,12 +114,15 @@ boost::uint64_t computeNumProducts(const EnumerationTypes::RGROUPS &sizes);
 
 class EnumerationStrategyBase {
  protected:
-  EnumerationTypes::RGROUPS m_permutation;       // where are we currently?
-  EnumerationTypes::RGROUPS m_permutationSizes;  // m_permutationSizes num bbs per group
-  boost::uint64_t m_numPermutations;   // total number of permutations for this group
-                               //  -1 if > ssize_t::max
+  EnumerationTypes::RGROUPS m_permutation;  // where are we currently?
+  EnumerationTypes::RGROUPS
+      m_permutationSizes;  // m_permutationSizes num bbs per group
+  boost::uint64_t
+      m_numPermutations;  // total number of permutations for this group
+                          //  -1 if > ssize_t::max
  public:
-  static const boost::uint64_t EnumerationOverflow = static_cast<boost::uint64_t>(-1);
+  static const boost::uint64_t EnumerationOverflow =
+      static_cast<boost::uint64_t>(-1);
   EnumerationStrategyBase()
       : m_permutation(), m_permutationSizes(), m_numPermutations() {}
 
@@ -140,8 +148,9 @@ class EnumerationStrategyBase {
 
   // ! Initialize derived class
   // ! must exist, EnumerationStrategyBase structures are already initialized
-  virtual void initializeStrategy(const ChemicalReaction &reaction,
-                                  const EnumerationTypes::BBS &building_blocks) = 0;
+  virtual void initializeStrategy(
+      const ChemicalReaction &reaction,
+      const EnumerationTypes::BBS &building_blocks) = 0;
 
   //! returns true if there are more permutations left
   //!  random enumerators may always return true...
