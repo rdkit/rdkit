@@ -400,11 +400,11 @@ class TestCase(unittest.TestCase):
   def _compareConfs(self, mol, ref, molConfId, refConfId):
     self.assertEqual(mol.GetNumAtoms(), ref.GetNumAtoms())
     molConf = mol.GetConformer(molConfId)
-    refConf = mol.GetConformer(refConfId)
+    refConf = ref.GetConformer(refConfId)
     for i in range(mol.GetNumAtoms()):
       mp = molConf.GetAtomPosition(i)
       rp = refConf.GetAtomPosition(i)
-      self.assertAlmostEqual((mp - rp).Length(), 0.0, 4)
+      self.assertAlmostEqual((mp - rp).Length(), 0.0, 3)
 
   def test9EmbedParams(self):
     mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
