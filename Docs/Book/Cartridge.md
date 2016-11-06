@@ -620,6 +620,7 @@ There are additional operators defined in the cartridge, but these are used for 
 
 -   substruct(mol,mol) : returns whether or not the second mol is a substructure of the first.
 -   substruct\_count(mol,mol,bool default true) : returns the number of substructure matches between the second molecule and the first. The third argument toggles whether or not the matches are uniquified. (*available from 2013\_03 release*)
+-   mol_adjust_query_properties(mol,string default '') : returns a new molecule with additional query information attached. (*available from the 2016\_09 release*)
 
 ##### Descriptors
 
