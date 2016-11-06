@@ -3165,6 +3165,23 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m, qp)
     self.assertFalse(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
 
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'*1-*-*-*-1-*-*')
+    qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
+
+    qps = Chem.AdjustQueryParameters()
+    qps.makeBondsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1~[#6&D2]~[#6&D2]~[#6&D3]~1~[#8]~[#6]')
+    qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')

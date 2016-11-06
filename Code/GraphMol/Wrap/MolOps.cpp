@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
 //
@@ -2087,7 +2086,7 @@ A note on the flags controlling which atoms/bonds are modified: \n\
                        &MolOps::AdjustQueryParameters::makeBondsGeneric)
         .def_readwrite("makeBondsGenericFlags",
                        &MolOps::AdjustQueryParameters::makeBondsGenericFlags)
-        .def_readwrite("makeAtomGeneric",
+        .def_readwrite("makeAtomsGeneric",
                        &MolOps::AdjustQueryParameters::makeAtomsGeneric)
         .def_readwrite("makeAtomsGenericFlags",
                        &MolOps::AdjustQueryParameters::makeAtomsGenericFlags);
