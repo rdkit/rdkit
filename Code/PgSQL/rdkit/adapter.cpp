@@ -648,11 +648,20 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
   p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
   p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
   p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
+  p.makeAtomsGeneric = pt.get("makeAtomsGeneric", p.makeAtomsGeneric);
+  p.makeBondsGeneric = pt.get("makeBondsGeneric", p.makeBondsGeneric);
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
   if (which != "") p.adjustDegreeFlags = parseWhichString(which);
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
   if (which != "") p.adjustRingCountFlags = parseWhichString(which);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
+  if (which != "") p.makeBondsGenericFlags = parseWhichString(which);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
+  if (which != "") p.makeAtomsGenericFlags = parseWhichString(which);
 }
 }
 
