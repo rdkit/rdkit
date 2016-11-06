@@ -79,6 +79,13 @@ double* retreiveVect(Eigen::VectorXd matrix) {
 
 }
 
+std::vector<double> CopyVect(VectorXd v1){
+  std::vector<double> v2;
+  v2.resize(v1.size());
+  VectorXd::Map(&v2[0], v1.size()) = v1;
+  return v2;
+}
+
 
 MatrixXd GetCenterMatrix(MatrixXd Mat){
 
@@ -103,7 +110,9 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
 }
 
 
-// this method use the new Canonical Ranking Atoms to gene
+
+
+// this method use the new Canonical Ranking Atoms to gene we don't need it there but can be useful in another package 
 std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                              bool breakTies = true,
                                              bool includeChirality = true,
@@ -113,6 +122,27 @@ std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
   std::vector<unsigned int> ranks(mol.getNumAtoms());
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
   return ranks;
+}
+
+
+// center Score to the closest Atom per axis
+std::vector<double> centeringVector(std::vector<double> V){
+double D;
+double AD=1000000.0;
+for (int i=0;i<V.size();i++){
+    if (std::abs(V[i])<AD) {
+      D=V[i];
+      AD=abs(V[i]);
+    }
+}
+
+for (int i=0;i<V.size();i++){
+      V[i]=V[i]-D;
+    }
+
+
+return V;
+
 }
 
 
@@ -189,8 +219,21 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
       }
     }
 
-    std::cout << "Scores\n";
-    std::cout << Scores <<"\n";
+
+    // copy the vector to std:vector center and reinject to vector
+    std::vector<double> VS;
+
+    for (int i=0;i<3; i++) {
+        VS = centeringVector(CopyVect(Scores.col(i)));
+        for (int j=0;j<numAtoms;j++){
+          Scores(j,i)=VS[j];
+        }
+    }
+
+
+
+    //std::cout << "Scores\n";
+    //std::cout << Scores <<"\n";
 
     for (int i=0;i<3; i++) {
       double ns=0.0;
@@ -240,10 +283,10 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
     Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
 
 
-    std::cout << "X:\n";
+    //std::cout << "X:\n";
 
-    std::cout << matorigin <<"\n";
-    
+    //std::cout << matorigin <<"\n";
+
     MatrixXd MatOrigin=matorigin.transpose();
 
     MatrixXd Weigth;
@@ -259,12 +302,12 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
     JacobiSVD<MatrixXd> svd = getSVD(covmat);
 
 
-    std::cout << "covmat\n";  
-    std::cout << covmat <<"\n";
+    //std::cout << "covmat\n";  
+    //std::cout << covmat <<"\n";
 
 
-    std::cout << "Xmean\n";  
-    std::cout << Xmean <<"\n";
+    //std::cout << "Xmean\n";  
+    //std::cout << Xmean <<"\n";
 
     /* // compare both methods results identicals!
         Matrix3d covmat3 =covmat;
@@ -521,49 +564,30 @@ std::vector<double> WHIM(const ROMol& mol,int confId, double th){
 
   const Conformer &conf = mol.getConformer(confId);
 
-std::cout <<"CanonicalRankAtoms:\n";
+//std::cout <<"CanonicalRankAtoms:\n";
 
-std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // BreakTies to false
-for (int i=0;i<numAtoms;i++){
-  std::cout << CRA[i] << ",";
+//std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // BreakTies to false
+//for (int i=0;i<numAtoms;i++){
+//  std::cout << CRA[i] << ",";
 
-}
-std::cout <<"\n";
+//}
+//std::cout <<"\n";
 
 
 // uv not yet created
-std::map<unsigned int, int> freq_map;
-for (auto const & x : CRA)
-    ++freq_map[x];
-std::vector<unsigned int> uv;
-std::vector<int> freq_uv;
-for (auto const & p : freq_map)
-{
-    uv.push_back(p.first);
-    freq_uv.push_back(p.second);
-    std::cout << p.first << "," << p.second << "|";
-}
-std::cout <<"\n";
+// std::map<unsigned int, int> freq_map;
+// for (auto const & x : CRA)
+//     ++freq_map[x];
+// std::vector<unsigned int> uv;
+// std::vector<int> freq_uv;
+// for (auto const & p : freq_map)
+// {
+//     uv.push_back(p.first);
+//     freq_uv.push_back(p.second);
+//     std::cout << p.first << "," << p.second << "|";
+// }
+// std::cout <<"\n";
 
-
-
-/*
-std::vector<unsigned int> uv(CRA.begin(), CRA.end());
-std::sort(CRA.begin(), CRA.end());
-std::vector<int> freq_uv;
-freq_uv.push_back(0);
-auto prev = uv[0];        // you should ensure !uv.empty() if previous code did not already ensure it.
-for (auto const & x : uv)
-{
-    if (prev != x)
-    {
-        freq_uv.push_back(0);
-        prev = x;
-    }
-    ++freq_uv.back();
-}
-std::erase(std::unique(uv.begin, uv.end()), uv.end());
-*/
 
 
 
