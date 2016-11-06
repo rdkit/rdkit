@@ -36,6 +36,7 @@
 
 #include "WHIM.h"
 #include "MolData3Ddescriptors.h"
+#include <GraphMol/new_canon.h>
 
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
 
@@ -101,6 +102,18 @@ JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
     return svd;
 }
 
+
+// this method use the new Canonical Ranking Atoms to gene
+std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
+                                             bool breakTies = true,
+                                             bool includeChirality = true,
+                                             bool includeIsotopes = true) {
+
+  
+  std::vector<unsigned int> ranks(mol.getNumAtoms());
+  Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes);
+  return ranks;
+}
 
 
 double getKu(double* w, int numAtoms) {
@@ -247,7 +260,7 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
 
     std::cout << "Xmean\n";  
     std::cout << Xmean <<"\n";
-    
+
     /* // compare both methods results identicals!
         Matrix3d covmat3 =covmat;
         std::cout << svd.matrixV() << "\n";
@@ -502,6 +515,54 @@ std::vector<double> WHIM(const ROMol& mol,int confId, double th){
   int numAtoms = mol.getNumAtoms();
 
   const Conformer &conf = mol.getConformer(confId);
+
+std::cout <<"CanonicalRankAtoms:\n";
+
+std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // BreakTies to false
+for (int i=0;i<numAtoms;i++){
+  std::cout << CRA[i] << ",";
+
+}
+std::cout <<"\n";
+
+
+// uv not yet created
+std::map<unsigned int, int> freq_map;
+for (auto const & x : CRA)
+    ++freq_map[x];
+std::vector<unsigned int> uv;
+std::vector<int> freq_uv;
+for (auto const & p : freq_map)
+{
+    uv.push_back(p.first);
+    freq_uv.push_back(p.second);
+    std::cout << p.first << "," << p.second << "|";
+}
+std::cout <<"\n";
+
+
+
+/*
+std::vector<unsigned int> uv(CRA.begin(), CRA.end());
+std::sort(CRA.begin(), CRA.end());
+std::vector<int> freq_uv;
+freq_uv.push_back(0);
+auto prev = uv[0];        // you should ensure !uv.empty() if previous code did not already ensure it.
+for (auto const & x : uv)
+{
+    if (prev != x)
+    {
+        freq_uv.push_back(0);
+        prev = x;
+    }
+    ++freq_uv.back();
+}
+std::erase(std::unique(uv.begin, uv.end()), uv.end());
+*/
+
+
+
+
 
   double Vpoints[3*numAtoms];
 
