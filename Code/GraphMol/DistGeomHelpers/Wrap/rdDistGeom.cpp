@@ -120,6 +120,15 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   return PyArray_Return(res);
 }
+DGeomHelpers::EmbedParameters *getETKDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDG);
+}
+DGeomHelpers::EmbedParameters *getKDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
+}
+DGeomHelpers::EmbedParameters *getETDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
+}
 }
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -311,6 +320,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       docString.c_str());
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
+  python::def("ETKDG", RDKit::getETKDG,
+              "Returns an EmbedParameters object for the ETKDG method.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("ETDG", RDKit::getETDG,
+              "Returns an EmbedParameters object for the ETDG method.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("KDG", RDKit::getKDG,
+              "Returns an EmbedParameters object for the KDG method.",
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Returns the distance bounds matrix for a molecule\n\
