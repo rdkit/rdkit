@@ -217,7 +217,7 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
       na = nAT-ns;
       gamma[i] =0.0;
       if (ns>0) {
-           gamma[i] = ((ns / nAT) * log(ns / nAT) / log(2.0) + (na / nAT) * log(1.0 / nAT) / log(2.0));
+           gamma[i] = (ns / nAT) * log(ns / nAT) / log(2.0) + (na / nAT) * log(1.0 / nAT) / log(2.0);
            gamma[i] = 1.0 / (1.0 - gamma[i]);
       }
     }
@@ -239,6 +239,11 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
 
     Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
 
+
+    std::cout << "X:\n";
+
+    std::cout << matorigin <<"\n";
+    
     MatrixXd MatOrigin=matorigin.transpose();
 
     MatrixXd Weigth;
