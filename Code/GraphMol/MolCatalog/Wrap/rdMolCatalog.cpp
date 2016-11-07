@@ -10,6 +10,13 @@
 #include <GraphMol/MolCatalog/MolCatalogParams.h>
 
 namespace python = boost::python;
+
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+  template<> const volatile RDCatalog::HierarchCatalog<RDKit::MolCatalogEntry, RDKit::MolCatalogParams, int>* get_pointer(const volatile RDCatalog::HierarchCatalog<RDKit::MolCatalogEntry, RDKit::MolCatalogParams, int>* p) { return p; }
+}
+
 using namespace RDKit;
 namespace {
 struct molcatalog_pickle_suite : python::pickle_suite {

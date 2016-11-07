@@ -22,6 +22,11 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::SmilesMolSupplier* get_pointer(const volatile RDKit::SmilesMolSupplier* p) { return p; }
+}
+
 namespace RDKit {
 
 SmilesMolSupplier *SmilesSupplierFromText(

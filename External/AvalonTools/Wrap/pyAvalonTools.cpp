@@ -15,6 +15,11 @@ extern "C" {
 #include "struchk.h"
 }
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile ExplicitBitVect* get_pointer(const volatile ExplicitBitVect* p) { return p; }
+}
+
 namespace python = boost::python;
 
 namespace {

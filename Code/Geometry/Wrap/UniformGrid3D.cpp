@@ -20,6 +20,11 @@
 #include <Geometry/GridUtils.h>
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDGeom::UniformGrid3D* get_pointer(const volatile RDGeom::UniformGrid3D* p) { return p; }
+}
+
 using namespace RDKit;
 
 namespace RDGeom {

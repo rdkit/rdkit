@@ -32,6 +32,13 @@
 #include <sstream>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 namespace python = boost::python;
+
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+  template<> const volatile ExplicitBitVect* get_pointer(const volatile ExplicitBitVect* p) { return p; }
+}
+
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {

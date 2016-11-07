@@ -19,6 +19,12 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::MolChemicalFeature* get_pointer(const volatile RDKit::MolChemicalFeature* p) { return p; }
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+}
+
 namespace RDKit {
 PyObject *getFeatAtomIds(const MolChemicalFeature &feat) {
   const MolChemicalFeature::AtomPtrContainer &atoms = feat.getAtoms();

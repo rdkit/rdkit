@@ -42,6 +42,11 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+}
+
 void rdSLNParseExceptionTranslator(RDKit::SLNParseException const &x) {
   std::ostringstream ss;
   ss << "SLNParseException: " << x.message();

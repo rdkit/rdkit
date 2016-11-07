@@ -15,6 +15,12 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile ExplicitBitVect* get_pointer(const volatile ExplicitBitVect* p) { return p; }
+  template<> const volatile SparseBitVect* get_pointer(const volatile SparseBitVect* p) { return p; }
+}
+
 SBV *ff1(const SBV &bv1, int factor = 2) {
   return FoldFingerprint(bv1, factor);
 }

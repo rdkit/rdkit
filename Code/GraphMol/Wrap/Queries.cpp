@@ -17,6 +17,12 @@
 #include <RDGeneral/types.h>
 
 namespace python = boost::python;
+
+namespace boost {
+  template<> const volatile RDKit::QueryBond* get_pointer(const volatile RDKit::QueryBond* p) { return p; }
+  template<> const volatile RDKit::QueryAtom* get_pointer(const volatile RDKit::QueryAtom* p) { return p; }
+}
+
 namespace RDKit {
 
 /*

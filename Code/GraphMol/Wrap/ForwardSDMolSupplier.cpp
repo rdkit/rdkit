@@ -128,4 +128,9 @@ struct forwardsdmolsup_wrap {
 };
 }
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile LocalForwardSDMolSupplier* get_pointer(const volatile LocalForwardSDMolSupplier* p) { return p; };
+}
+
 void wrap_forwardsdsupplier() { RDKit::forwardsdmolsup_wrap::wrap(); }

@@ -666,4 +666,10 @@ struct mol_wrapper {
   };
 };
 }  // end of namespace
+
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::ReadWriteMol* get_pointer(const volatile RDKit::ReadWriteMol* p) { return p; }
+}
+
 void wrap_mol() { RDKit::mol_wrapper::wrap(); }

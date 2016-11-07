@@ -25,6 +25,14 @@
 
 #include "seqs.hpp"
 namespace python = boost::python;
+
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::Bond* get_pointer(const volatile RDKit::Bond* p) { return p; }
+  template<> const volatile RDKit::Atom* get_pointer(const volatile RDKit::Atom* p) { return p; }
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+}
+
 using namespace RDKit;
 
 namespace RDKit {

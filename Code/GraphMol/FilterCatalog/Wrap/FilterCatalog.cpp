@@ -40,6 +40,21 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+namespace boost {
+  template<> const volatile RDKit::FilterCatalogEntry* get_pointer(const volatile RDKit::FilterCatalogEntry* p) { return p; }
+  template<> const volatile RDKit::FilterMatcherBase* get_pointer(const volatile RDKit::FilterMatcherBase* p) { return p; }
+  template<> const volatile RDKit::SmartsMatcher* get_pointer(const volatile RDKit::SmartsMatcher* p) { return p; }
+  template<> const volatile RDKit::ExclusionList* get_pointer(const volatile RDKit::ExclusionList* p) { return p; }
+  template<> const volatile RDKit::FilterCatalogParams* get_pointer(const volatile RDKit::FilterCatalogParams* p) { return p; }
+  template<> const volatile RDKit::FilterMatchOps::And* get_pointer(const volatile RDKit::FilterMatchOps::And* p) { return p; }
+  template<> const volatile RDKit::FilterMatchOps::Or* get_pointer(const volatile RDKit::FilterMatchOps::Or* p) { return p; }
+  template<> const volatile RDKit::FilterMatchOps::Not* get_pointer(const volatile RDKit::FilterMatchOps::Not* p) { return p; }
+  template<> const volatile RDKit::FilterHierarchyMatcher* get_pointer(const volatile RDKit::FilterHierarchyMatcher* p) { return p; }
+  template<> const volatile RDKit::FilterCatalog* get_pointer(const volatile RDKit::FilterCatalog* p) { return p; }
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+}
+
 namespace RDKit {
 
 struct filtercatalog_pickle_suite : python::pickle_suite {
