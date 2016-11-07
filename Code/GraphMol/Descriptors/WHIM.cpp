@@ -164,7 +164,7 @@ double getKu(double* w, int numAtoms) {
   return round(1000*Ku)/1000;
 }
 
-double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, double th,bool printscore) {
+double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, double th, bool printscore) {
 
     double *w = new double[18];
     // prepare data for Whim parameter computation
@@ -210,6 +210,10 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
     w[13] = (w[10]+w[11]+w[12])/3; // mean total density of the atoms called D is used on Dragon 6 not just the sum!
 
 
+
+    // check if the molecule is fully symmetrical "like CH4" using Canonical Rank Index and/or Sphericity !
+
+
     double gamma[3]; // Gamma values
     double nAT = (double) numAtoms;
     // check if two atoms are symetric versus the new axis ie newx,newy,newz a
@@ -232,9 +236,6 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 
 
 
-    //std::cout << "Scores\n";
-    //std::cout << Scores <<"\n";
-
     for (int i=0;i<3; i++) {
       double ns=0.0;
       for (int j=0;j< numAtoms;j++) {
@@ -242,7 +243,7 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 
           if (j==k) continue;
 
-          if (std::abs(Scores(j,i) + Scores(k,i))< th and (std::abs(Scores(j,i))>0 or std::abs(Scores(k,i))>0 )) {  // those that are close opposite & not close to the axis!
+          if (std::abs(Scores(j,i) + Scores(k,i))< th and (std::abs(Scores(j,i))>th or std::abs(Scores(k,i))>th )) {  // those that are close opposite & not close to the axis!
             ns++; // check only once the symetric none null we need to add +2!
             break;
           }
@@ -251,7 +252,7 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 
       // for all atoms close to the axis we need to add +1!
       for (int j=0;j< numAtoms;j++) {
-        if (Scores(j,i)==0) {
+        if (std::abs(Scores(j,i))<th) {
         ns++; // atom close to the the axis are symetric! 
         } 
       }
@@ -264,6 +265,18 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
            gamma[i] = 1.0 / (1.0 - gamma[i]);
       }
     }
+
+    // case of complete symetry of two Components than there are set to 1!
+    if (SingVal[0]==SingVal[1]) {
+      gamma[0]=1;
+      gamma[1]=1;
+    }
+
+    if (SingVal[1]==SingVal[2]) {
+      gamma[1]=1;
+      gamma[2]=1;
+    }
+
     w[14]=gamma[0]; // G1
     w[15]=gamma[1]; // G2
     w[16]=gamma[2]; // G3
@@ -274,7 +287,7 @@ double* getWhimDesc(JacobiSVD<MatrixXd> svd, MatrixXd Xmean, int numAtoms, doubl
 }
 
 
-double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
+double* GetWHIMU(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
 
     double *w = new double[18];
 
@@ -340,7 +353,7 @@ double* GetWHIMU(const Conformer &conf, double Vpoints[], double th){
 
 
 
-double*  GetWHIMMass(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMMass(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
       double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
@@ -374,7 +387,7 @@ double*  GetWHIMMass(const Conformer &conf, double Vpoints[], double th){
     return w;
   }
 
-double*  GetWHIMvdw(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMvdw(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
     double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
@@ -409,7 +422,7 @@ double*  GetWHIMvdw(const Conformer &conf, double Vpoints[], double th){
   }
 
 
-double*  GetWHIMneg(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMneg(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
     double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
@@ -444,7 +457,7 @@ double*  GetWHIMneg(const Conformer &conf, double Vpoints[], double th){
 
 
 
-double*  GetWHIMpol(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMpol(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
     double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
@@ -480,7 +493,7 @@ double*  GetWHIMpol(const Conformer &conf, double Vpoints[], double th){
 
 
 
-double*  GetWHIMIonPol(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMIonPol(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
       double *w = new double[18];
 
     int numAtoms = conf.getNumAtoms();
@@ -515,7 +528,7 @@ double*  GetWHIMIonPol(const Conformer &conf, double Vpoints[], double th){
   }
 
 
-double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
+double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th, std::vector<unsigned int> CRA){
     double *w = new double[18];
 
     ROMol& mol = conf.getOwningMol();
@@ -528,7 +541,7 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd MatOrigin=matorigin.transpose();
 
-    std::vector<double> weigthvector = moldata3D.GetEState2(mol); // caution not only neighours ...
+    std::vector<double> weigthvector = moldata3D.GetEState2(mol); // caution not only neighours hum not sure on this based on the paper! Also this should be only on Heavy atoms
 
     double* weigtharray = &weigthvector[0];
 
@@ -536,9 +549,7 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
     MatrixXd WeigthMat = Weigth.asDiagonal();
 
-
     double weigth=WeigthMat.diagonal().sum();
-
 
     MatrixXd Xmean = GetCenterMatrix(MatOrigin);
 
@@ -558,7 +569,7 @@ double*  GetWHIMIState(const Conformer &conf, double Vpoints[], double th){
 
 
 
-std::vector<double> WHIM(const ROMol& mol,int confId, double th){
+std::vector<double> WHIM(const ROMol& mol, int confId, double th){
   PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
@@ -566,7 +577,7 @@ std::vector<double> WHIM(const ROMol& mol,int confId, double th){
 
 //std::cout <<"CanonicalRankAtoms:\n";
 
-//std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // BreakTies to false
+std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // BreakTies to false
 //for (int i=0;i<numAtoms;i++){
 //  std::cout << CRA[i] << ",";
 
@@ -603,13 +614,13 @@ std::vector<double> WHIM(const ROMol& mol,int confId, double th){
 
   std::vector<double> res;
 
-  double* wu= GetWHIMU(conf, Vpoints, th);
-  double* wm= GetWHIMMass(conf, Vpoints, th);
-  double* wv= GetWHIMvdw(conf, Vpoints, th);
-  double* we= GetWHIMneg(conf, Vpoints, th);
-  double* wp= GetWHIMpol(conf, Vpoints, th);
-  double* wi= GetWHIMIonPol(conf, Vpoints, th);
-  double* ws= GetWHIMIState(conf, Vpoints, th);
+  double* wu= GetWHIMU(conf, Vpoints, th, CRA);
+  double* wm= GetWHIMMass(conf, Vpoints, th, CRA);
+  double* wv= GetWHIMvdw(conf, Vpoints, th, CRA);
+  double* we= GetWHIMneg(conf, Vpoints, th, CRA);
+  double* wp= GetWHIMpol(conf, Vpoints, th, CRA);
+  double* wi= GetWHIMIonPol(conf, Vpoints, th, CRA);
+  double* ws= GetWHIMIState(conf, Vpoints, th, CRA);
 
 
   // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
