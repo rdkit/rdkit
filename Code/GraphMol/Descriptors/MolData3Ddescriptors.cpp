@@ -202,6 +202,7 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
     }
   }
 
+ // add the Accum to the Si
  for (int i=0;i<numAtoms;i++) {
     Si[i]+=accum[i];
  }
@@ -212,7 +213,7 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
 // and the atomic electrotopological charge of each atom depends on its atom neighbor.
 // So we should not use all the terms in the sum but only Adj matrix cases!
 
-// adding the rescaling parameter for WHIM only
+// Correct the Si adding the rescaling parameter for WHIM only
  for (int i=0;i<numAtoms;i++) {
     Si[i]+=7.0;
  }

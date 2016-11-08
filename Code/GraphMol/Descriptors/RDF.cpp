@@ -230,7 +230,7 @@ std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
 
   double *DM = MolOps::get3DDistanceMat(mol,confId);
 
-  std::vector<double> IState = moldata3D.GetEState(mol);
+  std::vector<double> IState = moldata3D.GetEState2(mol);
 
   for (int i = 0; i < 30; i++) {
     double res = 0;

@@ -728,6 +728,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
 std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd DM, MatrixXd ADJ, std::vector<int> Heavylist){
 
+    /*
     std::vector<std::string> GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u","H7u","H8u","HTu",
     "HATS0u","HATS1u","HATS2u","HATS3u","HATS4u","HATS5u","HATS6u","HATS7u","HATS8u","HATSu","H0m","H1m","H2m","H3m","H4m","H5m",
     "H6m","H7m","H8m","HTm","HATS0m","HATS1m","HATS2m","HATS3m","HATS4m","HATS5m","HATS6m","HATS7m","HATS8m","HATSm","H0v","H1v",
@@ -743,7 +744,7 @@ std::vector<double> GetGETAWAY(const Conformer &conf, double Vpoints[], MatrixXd
     "R3e+","R4e+","R5e+","R6e+","R7e+","R8e+","RTe+","R1p","R2p","R3p","R4p","R5p","R6p","R7p","R8p","RTp","R1p+","R2p+","R3p+","R4p+",
     "R5p+","R6p+","R7p+","R8p+","RTp+","R1i","R2i","R3i","R4i","R5i","R6i","R7i","R8i","RTi","R1i+","R2i+","R3i+","R4i+","R5i+","R6i+",
     "R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
-
+     */
     std::vector<double> w;
 
     int numAtoms = conf.getNumAtoms();
