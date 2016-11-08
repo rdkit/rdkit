@@ -11,9 +11,9 @@ rdkit_library(GraphMol
               new_canon.cpp SubstanceGroup.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral
-                 ${RDKit_THREAD_LIBS})
+                 ${RDKit_THREAD_LIBS} ${URF_LIBRARY} )
 
-target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS})
+target_link_libraries(GraphMol PUBLIC ${RDKit_THREAD_LIBS} ${URF_LIBRARY})
 
 rdkit_headers(Atom.h
               atomic_data.h

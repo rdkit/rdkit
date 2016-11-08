@@ -1269,6 +1269,25 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
+#ifdef RDK_USE_URF
+#include <RingDecomposerLib/RDLdataStruct.h>
+void findRingFamilies(const ROMol &mol) {
+  // FIX: probably want to do something else here
+  if (mol.getRingInfo()->isInitialized()) {
+    // return;
+  } else {
+    mol.getRingInfo()->initialize();
+  }
+
+  RDL_graph *graph = RDL_initNewGraph(mol.getNumAtoms());
+  for (ROMol::ConstBondIterator cbi = mol.beginBonds(); cbi != mol.endBonds();
+       ++cbi) {
+    RDL_addUEdge(graph, (*cbi)->getBeginAtomIdx(), (*cbi)->getEndAtomIdx());
+  }
+  RDL_data *urfdata = RDL_calculate(graph);
+  mol.getRingInfo()->dp_urfData.reset(urfdata);
+}
+#endif
 }  // namespace MolOps
 
 }  // namespace RDKit

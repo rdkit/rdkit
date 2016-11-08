@@ -6950,6 +6950,7 @@ void testGithubIssue607() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+<<<<<<< HEAD
 void testGithubIssue1204() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing github issue 1204: "
@@ -7579,6 +7580,53 @@ void testGithub1990() {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+=======
+#ifdef RDK_USE_URF
+void testRingFamilies() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing ring family calculation. "
+      << std::endl;
+  {
+    std::string smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+    MolOps::findRingFamilies(*m);
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
+    int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
+    std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
+    TEST_ASSERT(numRC == 6);
+    TEST_ASSERT(numURF == 6);
+
+    int numRings = m->getRingInfo()->numRings();
+    std::cerr << " numRings " << numRings << std::endl;
+    TEST_ASSERT(numRings == 6);
+
+    delete m;
+  }
+  {
+    std::string smiles = "C1CC2CCC1CC1CCC(CC1)CC1CCC(CC1)CC1CCC(CC1)C2";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 28);
+    MolOps::findRingFamilies(*m);
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
+    int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
+    std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
+    TEST_ASSERT(numURF == 5);
+    TEST_ASSERT(numRC == 20);
+    int numRings = m->getRingInfo()->numRings();
+    TEST_ASSERT(numRings == 20);
+
+    delete m;
+  }
+}
+#else
+void testRingFamilies() {}
+#endif
+>>>>>>> d726cfd93... very basics work
 
 int main() {
   RDLog::InitLogs();
@@ -7692,5 +7740,7 @@ int main() {
   testGithub1990();
 #endif
   testPotentialStereoBonds();
+  testRingFamilies();
+
   return 0;
 }

@@ -922,7 +922,8 @@ struct molops_wrapper {
   RETURNS: Nothing\n\
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str());
-
+    python::def("FindRingFamilies", MolOps::findRingFamilies,
+                "generate Unique Ring Families");
     // ------------------------------------------------------------------------
     docString =
         "Adds hydrogens to the graph of a molecule.\n\
