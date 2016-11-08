@@ -373,7 +373,6 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
 // or01s  Mor02s  Mor03s  Mor04s  Mor05s  Mor06s  Mor07s  Mor08s  Mor09s  Mor10s  Mor11s  Mor12s  Mor13s  Mor14s  Mor15s  Mor16s  Mor17s  Mor18s  Mor19s  Mor20s  Mor21s  Mor22s  Mor23s  Mor24s  Mor25s  Mor26s  Mor27s  Mor28s  Mor29s  Mor30s  Mor31s  Mor32s
 
 
-
   const Conformer &conf = mol.getConformer(confId);
 
   std::vector<double> res1 = CalcUnweightedMORSE(mol,conf);

@@ -658,12 +658,14 @@ std::vector<unsigned int> CRA = CanonicalRankAtoms(mol,false,true, true); // Bre
 
      }
     
+   // descnames={"L1i","L2i","L3i","Ti","Ai","Vi","P1i","P2i","P3i","Ki","E1i","E2i","E3i","Di","G1i","G2i","G3i","Gi"};
 
     for (int i=0;i<11;i++) {
        res.push_back( roundn(wi[map1[i]],3));
 
      }
 
+   //descnames={"L1s","L2s","L3s","Ts","As","Vs","P1s","P2s","P3s","Ks","E1s","E2s","E3s","Ds","G1s","G2s","G3s","Gs"};
 
     for (int i=0;i<11;i++) {
         res.push_back(roundn(ws[map1[i]],3));

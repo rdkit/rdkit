@@ -342,7 +342,7 @@ std::vector<double> getGetawayDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int num
 
    VectorXd Wu = getEigenVect(wu);
 
-   std::vector<double>  ws =  moldata3D.GetIState(mol);
+   std::vector<double>  ws =  moldata3D.GetEState(mol);
 
    VectorXd Ws = getEigenVect(ws);
 

@@ -92,7 +92,7 @@ std::vector<double> MolData3Ddescriptors::GetRelativeIonPol(const RDKit::ROMol& 
   std::vector<double> ionpols(numAtoms, 0.0);
   for( int i=0; i<numAtoms; ++i){
 
-    ionpols[i]=absionpol[mol.getAtomWithIdx(i)->getAtomicNum()-1]/absionpol[5];
+    ionpols[i]=absionpol[mol.getAtomWithIdx(i)->getAtomicNum()-1];
   }
   return ionpols;
 }
@@ -143,24 +143,17 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
 // we need the Is value only there
 std::vector<double> MolData3Ddescriptors::GetEState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is;
-
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
-    int atNum=atom->getAtomicNum();
-    int d = atom->getDegree();
-    if (d>0 and atNum>1) {
-      int h = atom->getTotalNumHs();
-      int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h;
-      int N = GetPrincipalQuantumNumber(atNum); // period value
-      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/d)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
-    }
-    else Is.push_back(1.0); // Is it zero or one for H!
- }
+ 
+  std::vector<double> Is =GetIState(mol);
 
   double tmp,p;
   double *dist =  RDKit::MolOps::getDistanceMat(mol,false,false);
   double accum[numAtoms];
+
+    for (int i=0;i<numAtoms;i++) {
+    accum[i]=0.0;
+  }
+
   for (int i=0;i<numAtoms;i++) {
     for (int j=i+1;j<numAtoms;j++) {
        p = dist[i * numAtoms + j]+1;
@@ -181,40 +174,51 @@ std::vector<double> MolData3Ddescriptors::GetEState(const  RDKit::ROMol &mol){
 
 // modification of previous code to follow documentation from Padel code
 std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
+
   int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is;
-  double Cistate=0.0;
-  int numC=0;
-  double tmp;
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atom= mol.getAtomWithIdx(i);
-    int atNum=atom->getAtomicNum();
-    int d = atom->getDegree();
+ 
+  std::vector<double> Si =GetIState(mol);
 
-    if (d>0 and atNum>1) {
-      int h = atom->getTotalNumHs();
-      int Zv= RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
-      double deltaval = (double) (Zv-h);
-      //deltaval = deltaval / (double) (atNum-Zv-1);
-      int N = GetPrincipalQuantumNumber(atNum); // period value
-      tmp=round(1000.0*(4.0/(N*N)*deltaval+1.0)/d)/1000.0;
-      Is.push_back(tmp); 
-      // normalize factore determination
-       if (atNum==6) {
-        Cistate+=tmp;
-        numC++;
-       }
+
+// in WHIM definition it's write:
+  double tmp,p,d;
+  double *dist =  RDKit::MolOps::getDistanceMat(mol,false,false);
+  double accum[numAtoms];
+
+  for (int i=0;i<numAtoms;i++) {
+    accum[i]=0.0;
+  }
+
+
+  for (int i=0;i<numAtoms;i++) {
+    for (int j=i+1;j<numAtoms;j++) {
+       d = dist[i * numAtoms + j];
+       p = dist[i * numAtoms + j]+1;
+       if (d == 1) {
+        tmp = (Si[i] - Si[j]) / (p * p);
+        accum[i] += tmp;
+        accum[j] -= tmp;
+      }
     }
-    else Is.push_back(1.0);
- }
+  }
 
-
- double meanCistate= Cistate/numC;
  for (int i=0;i<numAtoms;i++) {
-    Is[i]=Is[i]/meanCistate;
+    Si[i]+=accum[i];
  }
 
- return Is;
+//WHIM Si values
+// electrotopological indices are scaled thus: Si'=Si + 7 => Si' > 0
+// In this case, only the nonhydrogen atoms are considered,
+// and the atomic electrotopological charge of each atom depends on its atom neighbor.
+// So we should not use all the terms in the sum but only Adj matrix cases!
+
+// adding the rescaling parameter for WHIM only
+ for (int i=0;i<numAtoms;i++) {
+    Si[i]+=7.0;
+ }
+
+
+ return Si;
 }
 
 
