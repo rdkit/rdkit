@@ -29,23 +29,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// For more information on the Plane of Best Fit please see
-// http://pubs.acs.org/doi/abs/10.1021/ci300293f
-//
-//  If this code has been useful to you, please include the reference
-//  in any work which has made use of it:
-
-//  Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality
-//  of Molecules, Nicholas C. Firth, Nathan Brown, and Julian Blagg, Journal of
-//  Chemical Information and Modeling 2012 52 (10), 2516-2525
-
-//
-//
-// Created by Nicholas Firth, November 2011
-// Modified by Greg Landrum for inclusion in the RDKit distribution November
-// 2012
-// Further modified by Greg Landrum for inclusion in the RDKit core September
-// 2016
 // Adding RBF descriptors to 3D descriptors by Guillaume Godin
 
 #include <GraphMol/RDKitBase.h>
@@ -83,140 +66,6 @@ std::vector<double> getG(int n) {
   return res;
 }
 
-/*
-std::vector<double> CalcChargeRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
-
-  std::vector<double> charges = GetCharges(mol);
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += charges[j] * charges[k] * exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-
-*/
-
-
-std::vector<double> CalcUnweightedRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-
-  std::vector<double> RDFres;
-
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-          
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-
-
-std::vector<double> CalcMassRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
-
-
-  std::vector<double> Mass = moldata3D.GetRelativeMW(mol);
-
-
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += Mass[j] * Mass[k] * exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcPolRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
-
-  std::vector<double> RelativePol = moldata3D.GetRelativePol(mol);
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativePol[j] * RelativePol[k] *
-               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcIonPolRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
-
-  std::vector<double> IonPol = moldata3D.GetRelativeIonPol(mol);
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += IonPol[j] * IonPol[k] *
-               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
 
 std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
@@ -232,6 +81,30 @@ std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
 
   std::vector<double> IState = moldata3D.GetEState2(mol);
 
+  // apply a weigthing based on the 
+  /*
+  int maxC =0;
+  double Cistate=0.0;
+  for (int i=0;i< numAtoms;i++){
+    if (mol.getAtomWithIdx(i)->getAtomicNum()==6){
+      Cistate +=IState[i];
+      maxC++;
+    }
+  }
+
+  if (maxC>0) {
+  double meanCistate = Cistate / (double) maxC;
+  for (int i=0; i<numAtoms; ++i) {
+      IState[i] = IState[i] / meanCistate ;
+    }
+  }
+  */
+  
+  // weighting using 7.0 only ???
+  for (int i=0; i<numAtoms; ++i) {
+   IState[i] = IState[i] / (14.0);
+  }
+
   for (int i = 0; i < 30; i++) {
     double res = 0;
     for (int j = 0; j < numAtoms - 1; j++) {
@@ -246,56 +119,115 @@ std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
   return RDFres;
 }
 
+std::vector<double> CalcAllRDF(const ROMol &mol, const Conformer &conf){
 
-std::vector<double> CalcElectroNegRDF(const ROMol &mol, const Conformer &conf) {
+
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
+  std::vector<double> R = getG(30); 
+  std::vector<double> R1;
+  std::vector<double> R2;
+  std::vector<double> R3;
+  std::vector<double> R4;
+  std::vector<double> R5;
+  std::vector<double> R6;
+  std::vector<double> R7;
+
 
   double *DM = MolOps::get3DDistanceMat(mol,confId);
 
+  std::vector<double> Mass = moldata3D.GetRelativeMW(mol);
+  std::vector<double> RelativePol = moldata3D.GetRelativePol(mol);
+  std::vector<double> IonPol = moldata3D.GetRelativeIonPol(mol);
   std::vector<double> RelativeElectroNeg = moldata3D.GetRelativeENeg(mol);
-
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativeElectroNeg[j] * RelativeElectroNeg[k] *
-               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
   std::vector<double> RelativeVdW = moldata3D.GetRelativeVdW(mol);
 
+
+  double p;
   for (int i = 0; i < 30; i++) {
-    double res = 0;
+      double res1=0.0; 
+      double res2=0.0; 
+      double res3=0.0; 
+      double res4=0.0; 
+      double res5=0.0; 
+      double res6=0.0;
+
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          p= exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+          res1 += p;
+          res2 += Mass[j] * Mass[k] * p;
+          res3 += RelativeVdW[j] * RelativeVdW[k] * p;
+          res4 += RelativeElectroNeg[j] * RelativeElectroNeg[k] * p;
+          res5 += RelativePol[j] * RelativePol[k] * p;
+          res6 += IonPol[j] * IonPol[k] * p;
+        }
+      }
+        R1.push_back(round( 1000 * res1) / 1000);
+        R2.push_back(round( 1000 * res2) / 1000);
+        R3.push_back(round( 1000 * res3) / 1000);
+        R4.push_back(round( 1000 * res4) / 1000);
+        R5.push_back(round( 1000 * res5) / 1000);
+        R6.push_back(round( 1000 * res6) / 1000);
+
+  }
+
+
+// remove the H and change number of Atoms only takes HeavyAtoms
+//  const ROMol *molnoH = MolOps::removeHs(mol, false, false); //  return the copy of the molecule without Hs!
+
+  //int numAtomsnoH = molnoH->getNumAtoms();
+
+  //std::cout << "nA1:" << numAtoms << ",nA2;" << numAtomsnoH <<"\n";
+
+ // double *DMnoH = MolOps::get3DDistanceMat(*molnoH,confId);
+
+  std::vector<double> IState = moldata3D.GetEState2(mol);
+/*
+  int maxC =0;
+  double Cistate=0.0;
+  for (int i=0;i< numAtoms;i++){
+    if (mol.getAtomWithIdx(i)->getAtomicNum()==6){
+      Cistate +=IState[i];
+      maxC++;
+    }
+  }
+
+  if (maxC>0) {
+  double meanCistate = Cistate / (double) maxC;
+  for (int i=0; i<numAtoms; ++i) {
+      IState[i] = IState[i] / meanCistate ;
+    }
+  }
+  */
+  // weighting using 7.0 only ???
+  for (int i=0; i<numAtoms; ++i) {
+   IState[i] = IState[i] / (7.0);
+  }
+
+  for (int i = 0; i < 30; i++) {
+    double res7 = 0.0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        res += RelativeVdW[j] * RelativeVdW[k] *
+        res7 += IState[j] * IState[k] *
                exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
       }
     }
-
-      RDFres.push_back(round( 1000 * res) / 1000);
+      R7.push_back(round( 1000 * res7) / 1000);
   }
 
-  return RDFres;
+
+  R1.insert(R1.end(),R2.begin(), R2.end());
+  R1.insert(R1.end(),R3.begin(), R3.end());
+  R1.insert(R1.end(),R4.begin(), R4.end());
+  R1.insert(R1.end(),R5.begin(), R5.end());
+  R1.insert(R1.end(),R6.begin(), R6.end());
+  R1.insert(R1.end(),R7.begin(), R7.end());
+
+
+  return R1;
+
 }
 
 }  // end of anonymous namespace
@@ -303,7 +235,7 @@ std::vector<double> CalcVdWvolRDF(const ROMol &mol, const Conformer &conf) {
 std::vector<double> RDF(const ROMol &mol, int confId) {
   std::vector<double> reserror(std::vector<double>(30, 0));
 
-// RDF010u  RDF015u RDF020u RDF025u RDF030u RDF035u RDF040u RDF045u RDF050u RDF055u RDF060u RDF065u RDF070u RDF075u RDF080u RDF085u RDF090u RDF095u RDF100u RDF105u RDF110u RDF115u RDF120u RDF125u RDF130u RDF135u RDF140u RDF145u RDF150u RDF155u 
+// RDF010u RDF015u RDF020u RDF025u RDF030u RDF035u RDF040u RDF045u RDF050u RDF055u RDF060u RDF065u RDF070u RDF075u RDF080u RDF085u RDF090u RDF095u RDF100u RDF105u RDF110u RDF115u RDF120u RDF125u RDF130u RDF135u RDF140u RDF145u RDF150u RDF155u 
 // RDF010m RDF015m RDF020m RDF025m RDF030m RDF035m RDF040m RDF045m RDF050m RDF055m RDF060m RDF065m RDF070m RDF075m RDF080m RDF085m RDF090m RDF095m RDF100m RDF105m RDF110m RDF115m RDF120m RDF125m RDF130m RDF135m RDF140m RDF145m RDF150m RDF155m 
 // RDF010v RDF015v RDF020v RDF025v RDF030v RDF035v RDF040v RDF045v RDF050v RDF055v RDF060v RDF065v RDF070v RDF075v RDF080v RDF085v RDF090v RDF095v RDF100v RDF105v RDF110v RDF115v RDF120v RDF125v RDF130v RDF135v RDF140v RDF145v RDF150v RDF155v 
 // RDF010e RDF015e RDF020e RDF025e RDF030e RDF035e RDF040e RDF045e RDF050e RDF055e RDF060e RDF065e RDF070e RDF075e RDF080e RDF085e RDF090e RDF095e RDF100e RDF105e RDF110e RDF115e RDF120e RDF125e RDF130e RDF135e RDF140e RDF145e RDF150e RDF155e 
@@ -319,33 +251,9 @@ std::vector<double> RDF(const ROMol &mol, int confId) {
   const Conformer &conf = mol.getConformer(confId);
   if (!conf.is3D()) return reserror;
 
-  std::vector<double> res1 = CalcUnweightedRDF(mol,conf);
+  std::vector<double> res = CalcAllRDF(mol,conf);
 
-  std::vector<double> res2=CalcMassRDF(mol,conf);
-  res1.insert(res1.end(),res2.begin(), res2.end());
-
-  std::vector<double> res6=CalcVdWvolRDF(mol,conf);
-  res1.insert(res1.end(),res6.begin(), res6.end());
-
-  std::vector<double> res5=CalcElectroNegRDF(mol,conf);
-  res1.insert(res1.end(),res5.begin(), res5.end());
-
-  std::vector<double> res4=CalcPolRDF(mol,conf);
-  res1.insert(res1.end(),res4.begin(), res4.end());
-
-
-  std::vector<double> res7=CalcIonPolRDF(mol,conf);
-  res1.insert(res1.end(),res7.begin(), res7.end());
-
-  std::vector<double> res8=CalcIStateRDF(mol,conf);
-  res1.insert(res1.end(),res8.begin(), res8.end());
-
-
- // std::vector<double> res3=CalcChargeRDF(mol,conf);
- // res1.insert(res1.end(),res3.begin(), res3.end());
-
-
-  return res1;
+  return res;
 }
 
 }  // end of Descriptors namespace

@@ -202,12 +202,8 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
     }
   }
 
- // add the Accum to the Si
- for (int i=0;i<numAtoms;i++) {
-    Si[i]+=accum[i];
- }
-
-//WHIM Si values
+// add the Accum to the Si
+// WHIM Si values
 // electrotopological indices are scaled thus: Si'=Si + 7 => Si' > 0
 // In this case, only the nonhydrogen atoms are considered,
 // and the atomic electrotopological charge of each atom depends on its atom neighbor.
@@ -215,8 +211,9 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
 
 // Correct the Si adding the rescaling parameter for WHIM only
  for (int i=0;i<numAtoms;i++) {
-    Si[i]+=7.0;
+    Si[i]+=accum[i]+7.0;
  }
+
 
 
  return Si;
