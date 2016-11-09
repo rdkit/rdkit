@@ -83,6 +83,11 @@ unsigned int RingInfo::numRings() const {
 #endif
 }
 
+unsigned int RingInfo::numRingFamilies() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return d_atomRingFamilies.size();
+};
+
 unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
                                const INT_VECT &bondIndices) {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -102,6 +107,30 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   d_bondRings.push_back(bondIndices);
   POSTCONDITION(d_atomRings.size() == d_bondRings.size(), "length mismatch");
   return rdcast<unsigned int>(d_atomRings.size());
+}
+
+unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
+                                     const INT_VECT &bondIndices) {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  int sz = rdcast<int>(atomIndices.size());
+  for (INT_VECT::const_iterator i = atomIndices.begin(); i < atomIndices.end();
+       i++) {
+    if (*i >= static_cast<int>(d_atomMembers.size()))
+      d_atomMembers.resize((*i) + 1);
+    d_atomMembers[*i].push_back(sz);
+  }
+  for (INT_VECT::const_iterator i = bondIndices.begin(); i < bondIndices.end();
+       i++) {
+    if (*i >= static_cast<int>(d_bondMembers.size()))
+      d_bondMembers.resize((*i) + 1);
+    d_bondMembers[*i].push_back(sz);
+  }
+  d_atomRingFamilies.push_back(atomIndices);
+  d_bondRingFamilies.push_back(bondIndices);
+  POSTCONDITION(d_atomRingFamilies.size() == d_bondRingFamilies.size(),
+                "length mismatch");
+
+  return rdcast<unsigned int>(d_atomRingFamilies.size());
 }
 
 void RingInfo::initialize() {

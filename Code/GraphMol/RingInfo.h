@@ -44,6 +44,8 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
         d_bondMembers(other.d_bondMembers),
         d_atomRings(other.d_atomRings),
         d_bondRings(other.d_bondRings),
+        d_atomRingFamilies(other.d_atomRingFamilies),
+        d_bondRingFamilies(other.d_bondRingFamilies),
         dp_urfData(other.dp_urfData){};
 
   //! checks to see if we've been properly initialized
@@ -68,6 +70,23 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int addRing(const INT_VECT &atomIndices,
                        const INT_VECT &bondIndices);
+
+  //! adds a ring family to our data
+  /*!
+    \param atomIndices the integer indices of the atoms involved in the
+                       ring family
+    \param bondIndices the integer indices of the bonds involved in the
+                       ring family,
+      this must be the same size as \c atomIndices.
+
+    \return the number of ring families
+
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+
+  */
+  unsigned int addRingFamily(const INT_VECT &atomIndices,
+                             const INT_VECT &bondIndices);
 
   //! \name Atom information
   //@{
@@ -129,6 +148,13 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int numRings() const;
 
+  //! returns the total number of ring families
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  unsigned int numRingFamilies() const;
+
   //! returns our \c bond-rings vectors
   /*!
     <b>Notes:</b>
@@ -145,6 +171,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool df_init;
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
+  VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
 
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
