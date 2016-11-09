@@ -11,7 +11,7 @@
 from contextlib import closing
 import unittest
 
-from six import StringIO
+from rdkit.six import StringIO
 
 from rdkit.Chem.FeatMaps import FeatMaps, FeatMapParser
 
