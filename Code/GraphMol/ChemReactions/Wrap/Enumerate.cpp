@@ -1,19 +1,19 @@
 //
 //  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutues for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
+//     * Neither the name of Novartis Institutues for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -40,7 +40,7 @@ namespace python = boost::python;
 
 
 namespace RDKit {
-  
+
 template<class T>
 std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
   std::vector<RDKit::MOL_SPTR_VECT> vect;
@@ -83,7 +83,7 @@ PyObject *EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
     mols = base->next();
   }
   PyObject *res=PyTuple_New(mols.size());
-  
+
   for(unsigned int i=0;i<mols.size();++i){
     PyObject *lTpl =PyTuple_New(mols[i].size());
     for(unsigned int j=0;j<mols[i].size();++j){
@@ -110,20 +110,20 @@ public:
                        ) :
       RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), params) {
   }
-  
+
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::tuple ob,
                        const EnumerationParams & params = EnumerationParams()
                        ) :
       RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), params) {
   }
-  
+
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::list ob,
                        const EnumerationStrategyBase &enumerator,
                        const EnumerationParams & params = EnumerationParams()
                        ) :
       RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {
   }
-  
+
   EnumerateLibraryWrap(const RDKit::ChemicalReaction &rxn, python::tuple ob,
                        const EnumerationStrategyBase &enumerator,
                        const EnumerationParams & params = EnumerationParams()) :
@@ -145,7 +145,7 @@ namespace {
 void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn, python::list ob) {
   rgroup.initialize(rxn, ConvertToVect(ob));
 }
-  
+
 typedef std::vector<uint64_t> VectSizeT;
 typedef std::vector<std::vector<std::string> > VectStringVect;
 typedef std::vector<MOL_SPTR_VECT > VectMolVect;
@@ -161,7 +161,7 @@ struct enumeration_wrapper {
 
     python::class_<VectMolVect>("VectMolVect")
       .def(python::vector_indexing_suite<VectMolVect, false>() );
-    
+
     python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
@@ -229,6 +229,9 @@ Options:\n\
 "EnumerateLibrary\n\
 This class allows easy enumeration of reactions.  Simply provide a reaction\n\
 and a set of reagents and you are off the the races.\n\
+\n\
+Note that this functionality should be considered beta and that the API may\n\
+change in a future release.\n\
 \n\
 EnumerateLibrary follows the python enumerator protocol, for example:\n\
 \n\
@@ -302,7 +305,7 @@ for result in itertools.islice(libary2, 1000):\n\
       .def(python::init<
            const RDKit::ChemicalReaction &,
            python::tuple,
-           python::optional<const RDKit::EnumerationParams&>           
+           python::optional<const RDKit::EnumerationParams&>
            >(python::args("rxn", "reagents", "params")))
 
       .def(python::init<const RDKit::ChemicalReaction &,
@@ -317,7 +320,7 @@ for result in itertools.islice(libary2, 1000):\n\
            python::optional<const RDKit::EnumerationParams&>
            >(python::args(
                "rxn", "reagents", "enumerator", "params")))
-        
+
       .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
            "Return the reagents used in this library.",
            python::return_internal_reference<
@@ -325,7 +328,7 @@ for result in itertools.islice(libary2, 1000):\n\
       ;
 
     //iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
-    
+
     python::class_<RDKit::EnumerationStrategyBase,
                    RDKit::EnumerationStrategyBase *,
                    RDKit::EnumerationStrategyBase &, boost::noncopyable>(
@@ -364,7 +367,7 @@ for result in itertools.islice(libary2, 1000):\n\
         "reagent combinations:\n"
         "\n"
         "(0,0,0), (1,0,0), (2,0,0) ...\n";
-    
+
     python::class_<RDKit::CartesianProductStrategy,
                    RDKit::CartesianProductStrategy*,
                    RDKit::CartesianProductStrategy&,
@@ -407,7 +410,7 @@ for result in itertools.islice(libary2, 1000):\n\
         "number of samples, this method performs progressively worse as the\n"
         "number of samples gets larger.\n"
         "See EnumerationStrategyBase for more details.\n";
-    
+
     python::class_<RDKit::EvenSamplePairsStrategy,
                    RDKit::EvenSamplePairsStrategy*,
                    RDKit::EvenSamplePairsStrategy&,
@@ -432,4 +435,3 @@ for result in itertools.islice(libary2, 1000):\n\
 void wrap_enumeration() {
   RDKit::enumeration_wrapper::wrap();
 }
-

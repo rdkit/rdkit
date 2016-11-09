@@ -33,20 +33,30 @@
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"
 
+/*! \file Enumerate.h
+
+\brief Contains the public API of the for the reaction enumeration engine
+
+\b Note that this should be considered beta and that the API may change in
+future releases.
+
+*/
+
+
 namespace RDKit {
 
 //! This is a class for providing enumeration options that control
 //   how enumerations are performed.
-/*!  
+/*!
  Option
    reagentMaxMatchCount [default INT_MAX]
     This specifies how many times the reactant template can match a reagent.
-  
+
    sanePartialProducts [default false]
     If true, forces all products of the reagent plus the product templates\n\
      pass chemical sanitization.  Note that if the product template itself\n\
      does not pass sanitization, then none of the products will.
-*/     
+*/
 struct EnumerationParams
 {
   int reagentMaxMatchCount;
@@ -54,7 +64,7 @@ struct EnumerationParams
  EnumerationParams() :
   reagentMaxMatchCount(INT_MAX), sanePartialProducts(false) {
  }
-  
+
  EnumerationParams(const EnumerationParams &rhs) :
     reagentMaxMatchCount(rhs.reagentMaxMatchCount),
     sanePartialProducts(rhs.sanePartialProducts) {
@@ -70,7 +80,7 @@ EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn,
     EnumerationTypes::BBS bbs,
     const EnumerationParams &params=EnumerationParams());
-  
+
 //! This is a class for running reactions on sets of reagents.
 /*!
   This class is a fully self contained reaction engine that can be
@@ -104,16 +114,16 @@ EnumerationTypes::BBS removeNonmatchingReagents(
    \endverbatim
  */
 
-  
+
 class EnumerateLibrary : public EnumerateLibraryBase {
   EnumerationTypes::BBS m_bbs;
-  
+
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
   EnumerateLibrary(const std::string &s) : EnumerateLibraryBase(), m_bbs() {
     initFromString(s);
   }
-  
+
   EnumerateLibrary(const ChemicalReaction &rxn,
                    const EnumerationTypes::BBS &reagents,
                    const EnumerationParams & params = EnumerationParams());
@@ -133,14 +143,14 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   void initFromStream(std::istream &ss);
 
  private:
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int /*version*/) const {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
     size_t sz = m_bbs.size();
     ar &sz;
-    
+
     std::string pickle;
     for (size_t i = 0; i < m_bbs.size(); ++i) {
       sz = m_bbs[i].size();
@@ -154,7 +164,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
   template <class Archive>
   void load(Archive &ar, const unsigned int /*version*/) {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
-    
+
     size_t sz;
     ar &sz;
 
