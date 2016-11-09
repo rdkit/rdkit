@@ -11,7 +11,7 @@
 import random
 import unittest
 
-from six import StringIO
+from rdkit.six import StringIO
 
 from rdkit.DataStructs.TopNContainer import TopNContainer, _exampleCode
 from rdkit.TestRunner import redirect_stdout
