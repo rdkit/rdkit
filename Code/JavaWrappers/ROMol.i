@@ -384,7 +384,7 @@
                              int refCid = -1, const std::vector<std::pair<int,int> > *atomMap = 0,
                              const RDNumeric::DoubleVector *weights = 0,
                              bool reflect = false, unsigned int maxIters = 50){
-     return RDKit::MolAlign::getAlignmentTransform(*($self),refMol,trans,refCid,atomMap,weights,reflect,maxIters);
+     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
