@@ -5,7 +5,7 @@
 #
 import sys
 
-import six
+from rdkit import six
 
 
 class VLibNode(object):

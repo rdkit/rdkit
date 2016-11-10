@@ -14,7 +14,7 @@ import doctest
 import unittest
 
 from rdkit.VLib import Node, Filter, Output, Supply, Transform
-from six import StringIO
+from rdkit.six import StringIO
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument

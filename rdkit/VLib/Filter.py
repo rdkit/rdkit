@@ -4,8 +4,7 @@
 #     All Rights Reserved
 #
 
-import six
-
+from rdkit import six
 from rdkit.VLib.Node import VLibNode
 
 

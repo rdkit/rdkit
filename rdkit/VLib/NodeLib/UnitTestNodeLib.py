@@ -13,12 +13,11 @@ from __future__ import print_function
 import doctest
 import unittest
 
-from six import StringIO
-
-from rdkit import Chem, RDConfig
+from rdkit import Chem
 from rdkit.VLib.NodeLib import SDSupply, SmartsMolFilter, SmartsRemover
 from rdkit.VLib.NodeLib import SmilesDupeFilter, SmilesOutput, SmilesSupply
 from rdkit.VLib.Supply import SupplyNode
+from rdkit.six import StringIO
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument

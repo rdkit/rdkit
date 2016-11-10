@@ -3,8 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import six
-
+from rdkit import six
 from rdkit.VLib.Node import VLibNode
 
 

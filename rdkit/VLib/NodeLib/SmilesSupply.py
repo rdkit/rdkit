@@ -3,9 +3,8 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import six
-
 from rdkit import Chem
+from rdkit import six
 from rdkit.VLib.Supply import SupplyNode
 
 
