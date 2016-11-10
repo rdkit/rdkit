@@ -64,7 +64,7 @@ public class AlignTests extends GraphMolTest {
 		ROMol m0 = RWMol.MolFromMolFile(fname0);
 		ROMol m1 = RWMol.MolFromMolFile(fname1);
 		Transform3D trans = new Transform3D();
-		double res = m0.getAlignmentTransform(m1);
+		double res = m0.getAlignmentTransform(m1, trans);
 		assetEquals(res, 0.6578);
 		m0.delete();
 		m1.delete();
