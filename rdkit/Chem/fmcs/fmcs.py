@@ -591,10 +591,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matc
     new_atom_smarts_types = []
     for (atom, atom_smarts_type) in zip(atoms, atom_smarts_types):
       formalCharge = atom.GetFormalCharge()
-      if formalCharge >= 0:
-        charge_str = "+%d" % formalCharge
-      else:
-        charge_str = "%d" % formalCharge
+      charge_str = '%+d' % atom.GetFormalCharge()
       if "," in atom_smarts_type:
         atom_smarts_type += ";" + charge_str
       else:
