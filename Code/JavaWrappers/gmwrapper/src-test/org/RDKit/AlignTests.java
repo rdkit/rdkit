@@ -57,15 +57,15 @@ public class AlignTests extends GraphMolTest {
 	@Test
 	public void testgetAlignmentTransform(){
 		//Test alignment with Transform base on GraphMol/MolAlign/testMolAlign.cpp#test1MolAlign()
-		String fname0 = new File(getRDBase(),
+		String fname0 = new File(getRdBase(),
 					 "Code/GraphMol/MolAlign/test_data/1oir.mol").getPath();
-		String fname1 = new File(getRDBase(),
+		String fname1 = new File(getRdBase(),
 					 "Code/GraphMol/MolAlign/test_data/1oir_conf.mol").getPath();
 		ROMol m0 = RWMol.MolFromMolFile(fname0);
 		ROMol m1 = RWMol.MolFromMolFile(fname1);
 		Transform3D trans = new Transform3D();
 		double res = m0.getAlignmentTransform(m1, trans);
-		assetEquals(res, 0.6578);
+		assertEquals(res, 0.6578);
 		m0.delete();
 		m1.delete();
 	}
