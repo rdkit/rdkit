@@ -803,6 +803,21 @@ struct molops_wrapper {
         .export_values();
     ;
 
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Assign stereochemistry to bonds based on coordinates.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+    - conformer: Conformer providing the coordinates\n\
+\n";
+    python::def(
+        "DetectBondStereoChemistry", DetectBondStereoChemistry,
+        (python::arg("mol"), python::arg("conformer")),
+        docString.c_str());
+
     // ------------------------------------------------------------------------
     docString =
         "Kekulize, check valencies, set aromaticity, conjugation and hybridization\n\
