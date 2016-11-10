@@ -16,6 +16,13 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
+namespace boost {
+  template<> const volatile SparseBitVect* get_pointer(const volatile SparseBitVect* p) { return p; }
+}
+#endif
+
 // allows BitVects to be pickled
 struct sbv_pickle_suite : python::pickle_suite {
   static python::tuple getinitargs(const SparseBitVect &self) {

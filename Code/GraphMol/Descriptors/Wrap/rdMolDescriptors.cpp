@@ -31,12 +31,14 @@
 namespace python = boost::python;
 
 // Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
 namespace boost {
   template<> const volatile ExplicitBitVect* get_pointer(const volatile ExplicitBitVect* p) { return p; }
   template<> const volatile RDKit::Descriptors::PropertyFunctor* get_pointer(const volatile RDKit::Descriptors::PropertyFunctor* p) { return p; }
   template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
   template<> const volatile Queries::RangeQuery<double, RDKit::ROMol const &, 1>* get_pointer(const volatile Queries::RangeQuery<double, RDKit::ROMol const &, 1>* p) { return p; }
 }
+#endif
 
 namespace {
 std::vector<unsigned int> atomPairTypes(

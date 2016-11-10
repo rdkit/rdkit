@@ -23,9 +23,11 @@
 namespace python = boost::python;
 
 // Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
 namespace boost {
   template<> const volatile RDKit::SmilesMolSupplier* get_pointer(const volatile RDKit::SmilesMolSupplier* p) { return p; }
 }
+#endif
 
 namespace RDKit {
 
