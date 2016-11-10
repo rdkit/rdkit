@@ -67,17 +67,9 @@ std::vector<double> getG(int n) {
 }
 
 
-std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
+std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
-
-  std::vector<double> R = getG(30);
-  std::vector<double> RDFres;
-  //std::vector<std::vector<double> > DM = GetGeometricalDistanceMatrix(points);
-
-  MolOps::removeHs(mol, false, false);
-
-  double *DM = MolOps::get3DDistanceMat(mol,confId);
 
   std::vector<double> IState = moldata3D.GetEState2(mol);
 
@@ -102,21 +94,10 @@ std::vector<double> CalcIStateRDF(const ROMol &mol, const Conformer &conf) {
   
   // weighting using 7.0 only ???
   for (int i=0; i<numAtoms; ++i) {
-   IState[i] = IState[i] / (14.0);
+   IState[i] = IState[i] / (7.0);
   }
 
-  for (int i = 0; i < 30; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        res += IState[j] * IState[k] *
-               exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-      }
-    }
-      RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
+  return IState;
 }
 
 std::vector<double> CalcAllRDF(const ROMol &mol, const Conformer &conf){
@@ -145,7 +126,7 @@ std::vector<double> CalcAllRDF(const ROMol &mol, const Conformer &conf){
 
 
   double p;
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < R.size(); i++) {
       double res1=0.0; 
       double res2=0.0; 
       double res3=0.0; 
@@ -183,30 +164,9 @@ std::vector<double> CalcAllRDF(const ROMol &mol, const Conformer &conf){
 
  // double *DMnoH = MolOps::get3DDistanceMat(*molnoH,confId);
 
-  std::vector<double> IState = moldata3D.GetEState2(mol);
-/*
-  int maxC =0;
-  double Cistate=0.0;
-  for (int i=0;i< numAtoms;i++){
-    if (mol.getAtomWithIdx(i)->getAtomicNum()==6){
-      Cistate +=IState[i];
-      maxC++;
-    }
-  }
+  std::vector<double> IState = prepareIState(mol,confId); // moldata3D.GetEState2(mol);
 
-  if (maxC>0) {
-  double meanCistate = Cistate / (double) maxC;
-  for (int i=0; i<numAtoms; ++i) {
-      IState[i] = IState[i] / meanCistate ;
-    }
-  }
-  */
-  // weighting using 7.0 only ???
-  for (int i=0; i<numAtoms; ++i) {
-   IState[i] = IState[i] / (7.0);
-  }
-
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < R.size(); i++) {
     double res7 = 0.0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {

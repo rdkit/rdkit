@@ -79,99 +79,144 @@ std::vector<double> getG(int n) {
   return res;
 }
 
-/*
-std::vector<double> CalcChargeMORSE(
-    const ROMol &mol, const Conformer &conf) {
+
+std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
   int confId = conf.getId();
 
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-  std::vector<double> charges = GetCharges(mol);
+  std::vector<double> IState = moldata3D.GetEState2(mol);
 
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-       
-        if (i==0) { res += charges[j] * charges[k];}
-
-        else
-
-        res += charges[j] * charges[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
-      }
+  // apply a weigthing based on the 
+  /*
+  int maxC =0;
+  double Cistate=0.0;
+  for (int i=0;i< numAtoms;i++){
+    if (mol.getAtomWithIdx(i)->getAtomicNum()==6){
+      Cistate +=IState[i];
+      maxC++;
     }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
   }
 
-  return RDFres;
-}
-*/
-
-std::vector<double> CalcUnweightedMORSE(const ROMol &mol,
-    const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-
-        if (i==0) { res += 1;}
-
-        else
-
-          res += sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
-      }
+  if (maxC>0) {
+  double meanCistate = Cistate / (double) maxC;
+  for (int i=0; i<numAtoms; ++i) {
+      IState[i] = IState[i] / meanCistate ;
     }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
   }
-
-  return RDFres;
-}
-
-
-std::vector<double> CalcMassMORSE(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
+  */
   
-  std::vector<double> mass = moldata3D.GetRelativeMW(mol);
+  // weighting using 7.0 only ???
+  for (int i=0; i<numAtoms; ++i) {
+   IState[i] = IState[i] / (14.0);
+  }
 
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
+  return IState;
+}
 
-       
-        if (i==0) { res += mass[j] * mass[k];}
+std::vector<double> CalcAllMORSE(const ROMol &mol, const Conformer &conf){
 
-        else
 
-        res += mass[j] * mass[k] * sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
+
+  std::vector<double> R = getG(32);
+  std::vector<double> R1;
+  std::vector<double> R2;
+  std::vector<double> R3;
+  std::vector<double> R4;
+  std::vector<double> R5;
+  std::vector<double> R6;
+  std::vector<double> R7;
+
+
+  double *DM = MolOps::get3DDistanceMat(mol,confId);
+
+  std::vector<double> Mass = moldata3D.GetRelativeMW(mol);
+  std::vector<double> RelativePol = moldata3D.GetRelativePol(mol);
+  std::vector<double> IonPol = moldata3D.GetRelativeIonPol(mol);
+  std::vector<double> RelativeElectroNeg = moldata3D.GetRelativeENeg(mol);
+  std::vector<double> RelativeVdW = moldata3D.GetRelativeVdW(mol);
+
+
+  double p;
+  for (int i = 0; i < R.size(); i++) {
+      double res1=0.0; 
+      double res2=0.0; 
+      double res3=0.0; 
+      double res4=0.0; 
+      double res5=0.0; 
+      double res6=0.0;
+
+      for (int j = 0; j < numAtoms - 1; j++) {
+        for (int k = j + 1; k < numAtoms; k++) {
+          if (i==0) {  
+            p= 1;
+          }
+          else { 
+              p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+          }
+          res1 += p;
+          res2 += Mass[j] * Mass[k] * p;
+          res3 += RelativeVdW[j] * RelativeVdW[k] * p;
+          res4 += RelativeElectroNeg[j] * RelativeElectroNeg[k] * p;
+          res5 += RelativePol[j] * RelativePol[k] * p;
+          res6 += IonPol[j] * IonPol[k] * p;
+        }
       }
-    }
+        R1.push_back(round( 1000 * res1) / 1000);
+        R2.push_back(round( 1000 * res2) / 1000);
+        R3.push_back(round( 1000 * res3) / 1000);
+        R4.push_back(round( 1000 * res4) / 1000);
+        R5.push_back(round( 1000 * res5) / 1000);
+        R6.push_back(round( 1000 * res6) / 1000);
 
-    RDFres.push_back(round(1000 * res ) / 1000);
   }
 
 
+// remove the H and change number of Atoms only takes HeavyAtoms
+//  const ROMol *molnoH = MolOps::removeHs(mol, false, false); //  return the copy of the molecule without Hs!
 
-  return RDFres;
+  //int numAtomsnoH = molnoH->getNumAtoms();
+
+  //std::cout << "nA1:" << numAtoms << ",nA2;" << numAtomsnoH <<"\n";
+
+ // double *DMnoH = MolOps::get3DDistanceMat(*molnoH,confId);
+
+  std::vector<double> IState = prepareIState(mol,confId); // moldata3D.GetEState2(mol);
+
+  for (int i = 0; i < R.size(); i++) {
+    double res7 = 0.0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+         if (i==0) {  
+             p= 1;
+          }
+          else { 
+              p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+          }
+          res7 += IState[j] * IState[k] * p;
+      }
+    }
+      R7.push_back(round( 1000 * res7) / 1000);
+  }
+
+
+  R1.insert(R1.end(),R2.begin(), R2.end());
+  R1.insert(R1.end(),R3.begin(), R3.end());
+  R1.insert(R1.end(),R4.begin(), R4.end());
+  R1.insert(R1.end(),R5.begin(), R5.end());
+  R1.insert(R1.end(),R6.begin(), R6.end());
+  R1.insert(R1.end(),R7.begin(), R7.end());
+
+
+  return R1;
+
 }
 
+
+
+
+/*
 std::vector<double> CalcAtomNumMORSE(
     const ROMol &mol, const Conformer &conf) {
   int numAtoms = conf.getNumAtoms();
@@ -206,157 +251,10 @@ std::vector<double> CalcAtomNumMORSE(
 
   return RDFres;
 }
-
-std::vector<double> CalcIonPolMORSE(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-  std::vector<double> RelativeIonPol = moldata3D.GetRelativeIonPol(mol);
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-     
-        if (i==0) { res += RelativeIonPol[j] * RelativeIonPol[k];}
-
-        else
-        res += RelativeIonPol[j] * RelativeIonPol[k] * sin(R[i] * DM[j * numAtoms + k]) /
-               (R[i] * DM[j * numAtoms + k]);
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcPolMORSE(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-  std::vector<double> RelativePol = moldata3D.GetRelativePol(mol);
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-     
-        if (i==0) { res += RelativePol[j] * RelativePol[k];}
-
-        else
-        res += RelativePol[j] * RelativePol[k] * sin(R[i] * DM[j * numAtoms + k]) /
-               (R[i] * DM[j * numAtoms + k]);
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
+*/
 
 
-std::vector<double> CalcElectroNegMORSE(
-    const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
 
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-  std::vector<double> RelativeElectroNeg = moldata3D.GetRelativeENeg(mol);
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-   
-        if (i==0) { res += RelativeElectroNeg[j] * RelativeElectroNeg[k];}
-
-        else
-        res += RelativeElectroNeg[j] * RelativeElectroNeg[k] *
-               sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcVdWvolMORSE(
-    const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-  std::vector<double> RelativeVdW = moldata3D.GetRelativeVdW(mol);
-
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-
-        if (i==0) { res += RelativeVdW[j] * RelativeVdW[k];}
-
-        else
-
-        res += RelativeVdW[j] * RelativeVdW[k] * sin(R[i] * DM[j * numAtoms + k]) /(R[i] * DM[j * numAtoms + k]);
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
-
-std::vector<double> CalcIstateMORSE(
-    const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
-
-  std::vector<double> R = getG(32);
-  std::vector<double> RDFres;
-  double *DM = MolOps::get3DDistanceMat(mol, confId);
-
-    std::vector<double> RelativeIState = moldata3D.GetIState(mol);
-
-
-  for (int i = 0; i < 32; i++) {
-    double res = 0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-
-        if (i==0) { res += RelativeIState[j] * RelativeIState[k];}
-
-        else
-
-        res += RelativeIState[j] * RelativeIState[k] * sin(R[i] * DM[j * numAtoms + k]) /(R[i] * DM[j * numAtoms + k]);
-      }
-    }
-
-    RDFres.push_back(round( 1000 * res) / 1000);
-  }
-
-  return RDFres;
-}
 
 
 }  // end of anonymous namespace
@@ -375,34 +273,10 @@ std::vector<double> MORSE(const ROMol &mol, int confId) {
 
   const Conformer &conf = mol.getConformer(confId);
 
-  std::vector<double> res1 = CalcUnweightedMORSE(mol,conf);
+   std::vector<double> res = CalcAllMORSE(mol,conf);
 
-  std::vector<double> res2 = CalcMassMORSE(mol, conf);
-  res1.insert(res1.end(),res2.begin(), res2.end());
 
-  std::vector<double> res6 = CalcVdWvolMORSE(mol, conf);
-  res1.insert(res1.end(),res6.begin(), res6.end());
-
-  std::vector<double> res5 = CalcElectroNegMORSE(mol, conf);
-  res1.insert(res1.end(),res5.begin(), res5.end());
-
-  std::vector<double> res4 = CalcPolMORSE(mol, conf);
-  res1.insert(res1.end(),res4.begin(), res4.end());
-
-  std::vector<double> res7 = CalcIonPolMORSE(mol, conf);
-  res1.insert(res1.end(),res7.begin(), res7.end());
-
-  std::vector<double> res8 = CalcIstateMORSE(mol, conf);
-  res1.insert(res1.end(),res8.begin(), res8.end());
-
- // std::vector<double> res3 = CalcChargeMORSE(mol, conf);
- // res1.insert(res1.end(),res3.begin(), res3.end());
-
- // std::vector<double> res7 = CalcAtomNumMORSE(mol, conf);
- // res1.insert(res1.end(),res7.begin(), res7.end());
-
-   
-  return res1;
+  return res;
 }
 
 }  // end of Descriptors namespace
