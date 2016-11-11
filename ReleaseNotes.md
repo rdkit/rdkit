@@ -8,14 +8,15 @@
 ## Acknowledgements:
 Brian Cole, Piotr Dabrowski, Jan Domanski, Peter Gedeck, Richard Hall, Brian
 Kelley, Joos Kiener, 'maddogcz', John Mayfield, 'michalsta', Michal Nowotka,
-'philopon', Nico Pulver, Sereina Riniker, Roger Sayle, Nadine Schneider,
-Gianluca Sforna, Peter Shenkin, Paolo Tosco, David Turbert, Riccardo Vianello,
-Maciek Wojcikowski  
+'philopon', Nico Pulver, Sereina Riniker, Stephen Roughley, Roger Sayle, Nadine
+Schneider, Gianluca Sforna, Peter Shenkin, Paolo Tosco, David Turbert, Riccardo
+Vianello, Maciek Wojcikowski  
 
 ## Highlights:
-- New AdjustQueryProperties() (adjustQueryProperties() in C++) for fine-tuning substructure queries.
-- ReactionEnum functionality adds significant new capabilities for doing library enumeration
-- Similarity searches with the PostgreSQL cartridge are substantially faster
+ - New AdjustQueryProperties() (adjustQueryProperties() in C++) for fine-tuning substructure queries.
+ - ReactionEnum functionality adds significant new capabilities for doing library enumeration
+ - Similarity searches with the PostgreSQL cartridge are substantially faster
+ - New 3D descriptors (requires Eigen3 if you are building them yourself)
 
 ## New Features and Enhancements:
   - Trajectory/Snapshot objects
@@ -106,7 +107,7 @@ Maciek Wojcikowski
  (github pull #1081 from gedeck)
   - Improved test coverage of rdkit.DataStructs
  (github pull #1083 from gedeck)
-  - Add some 3D molecular descriptors
+  - Add some 3D molecular descriptors (requires Eigen3)
  (github pull #1084 from greglandrum)
   - Conformer GetPos returns a numpy array rather than a tuple of tuples
  (github pull #1087 from jandom)
@@ -118,6 +119,8 @@ Maciek Wojcikowski
  (github pull #1109 from greglandrum)
   - Allow the output of ROMol::debugMol() to show up in jupyter
  (github pull #1110 from greglandrum)
+  - Dev/reaction enumeration
+ (github pull #1111 from bp-kelley)
   - yapf formatting of recent changes to Python code in rdkit and Code
  (github pull #1120 from gedeck)
   - Add a parameters structure for controlling the embedding options.
@@ -138,6 +141,10 @@ Maciek Wojcikowski
  (github pull #1140 from greglandrum)
   - add UGM link to documentation
  (github pull #1142 from David-Turbert)
+  - Remove iPythonConsole configuration for normal Draw tests
+ (github pull #1146 from gedeck)
+  - Wrap DetectBondStereoChemistry in python
+ (github pull #1156 from coleb)
 
 ## New Database Cartridge Features:
   - Provide SVG output from the cartridge
@@ -153,6 +160,8 @@ Maciek Wojcikowski
   - adjustQueryProperties()
   - Java wrappers for Trajectory/Snapshot objects
   (github pull #977 from ptosco)
+  - Added getAlignmentTransform to ROMol.i to expose in Java SWIG wrapper
+ (github pull #1155 from sroughley)
 
 ## Bug Fixes:
   - initialization of the PeriodicTable object should be made thread-safe
@@ -309,8 +318,12 @@ Maciek Wojcikowski
  (github pull #1143 from giallu)
   - Remove iPythonConsole configuration for normal Draw tests
  (github pull #1146 from gedeck)
+  - Adds SWIGWIN definition in WIN32 if not 32bit
+ (github pull #1158 from bp-kelley)
+  - Fix/java win64 memoryleak
+ (github pull #1159 from bp-kelley)
 
-## Deprecated code (to be removed in next release):
+## Deprecated code (to be removed in a future release):
   - rdkit.VLib python module
 
 ## Removed code:
