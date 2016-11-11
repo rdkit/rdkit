@@ -30,6 +30,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION / 100000) > 1 or ((BOOST_VERSION / 100) % 1000) >= 53
+#define RDK_HAVE_MULTIPREC
+#include <boost/multiprecision/cpp_int.hpp>
+#endif
+
 #include "Enumerate.h"
 #include "CartesianProduct.h"
 #include "RandomSample.h"
@@ -41,7 +47,7 @@
 
 // Since we are exporting the classes for serialization,
 //  we should declare the archives types used here
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -76,8 +82,7 @@ void EnumerateLibraryBase::setState(const std::string &state) {
 }
 
 void EnumerateLibraryBase::resetState() {
-  PRECONDITION(m_initialEnumerator.get(),
-               "Unset initial enumerator");
+  PRECONDITION(m_initialEnumerator.get(), "Unset initial enumerator");
   m_enumerator.reset(m_initialEnumerator->copy());
 }
 
@@ -96,15 +101,14 @@ std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
 }
 
 namespace {
-size_t countMatches( const ROMol& bb, const ROMol& query, int maxMatches) {
-  std::vector<MatchVectType> matches;        
+size_t countMatches(const ROMol &bb, const ROMol &query, int maxMatches) {
+  std::vector<MatchVectType> matches;
   const bool uniquify = true;
   const bool useChirality = true;
   const bool useQueryQueryMatches = false;
-  
-  SubstructMatch(bb, query, matches,
-                 uniquify, true, useChirality, useQueryQueryMatches,
-                 maxMatches+1);
+
+  SubstructMatch(bb, query, matches, uniquify, true, useChirality,
+                 useQueryQueryMatches, maxMatches + 1);
   return matches.size();
 }
 }
@@ -115,40 +119,45 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
   BBS result;
   result.resize(bbs.size());
 
-  for(size_t reactant_idx=0; reactant_idx < bbs.size(); ++reactant_idx) {
+  for (size_t reactant_idx = 0; reactant_idx < bbs.size(); ++reactant_idx) {
     size_t removedCount = 0;
-    const unsigned int maxMatches = (params.reagentMaxMatchCount == INT_MAX) ?
-        0 : rdcast<unsigned int>(params.reagentMaxMatchCount);
-    
+    const unsigned int maxMatches =
+        (params.reagentMaxMatchCount == INT_MAX)
+            ? 0
+            : rdcast<unsigned int>(params.reagentMaxMatchCount);
+
     ROMOL_SPTR reactantTemplate = rxn.getReactants()[reactant_idx];
-    for(size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size(); ++reagent_idx) {
+    for (size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size();
+         ++reagent_idx) {
       ROMOL_SPTR mol = bbs[reactant_idx][reagent_idx];
-      size_t matches = countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
+      size_t matches =
+          countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
 
       bool removeReagent = false;
-      if(!matches || matches > rdcast<size_t>(params.reagentMaxMatchCount)) {
+      if (!matches || matches > rdcast<size_t>(params.reagentMaxMatchCount)) {
         removeReagent = true;
       }
 
-      if(!removeReagent && params.sanePartialProducts) {
+      if (!removeReagent && params.sanePartialProducts) {
         // see if we have any sane products in the results
-        std::vector<MOL_SPTR_VECT> partialProducts = rxn.runReactant(mol, reactant_idx);
-        for(size_t productTemplate_idx = 0;
-            productTemplate_idx < partialProducts.size();
-            ++productTemplate_idx) {
+        std::vector<MOL_SPTR_VECT> partialProducts =
+            rxn.runReactant(mol, reactant_idx);
+        for (size_t productTemplate_idx = 0;
+             productTemplate_idx < partialProducts.size();
+             ++productTemplate_idx) {
           int saneProducts = 0;
-          for(size_t product_idx = 0;
-              product_idx < partialProducts[productTemplate_idx].size();
-              ++product_idx) {
+          for (size_t product_idx = 0;
+               product_idx < partialProducts[productTemplate_idx].size();
+               ++product_idx) {
             try {
-              RWMol *m = dynamic_cast<RWMol*>(
+              RWMol *m = dynamic_cast<RWMol *>(
                   partialProducts[productTemplate_idx][product_idx].get());
               MolOps::sanitizeMol(*m);
               saneProducts++;
             } catch (...) {
             }
           }
-        
+
           if (!saneProducts) {
             // if any product template has no sane products, we bail
             removeReagent = true;
@@ -157,16 +166,16 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
         }
       }
 
-      if(removeReagent)
+      if (removeReagent)
         removedCount++;
       else
         result[reactant_idx].push_back(mol);
     }
 
-
-    if(removedCount) {
-      BOOST_LOG(rdInfoLog) << "Removed " << removedCount <<
-          " non matching reagents at template " << reactant_idx << std::endl;
+    if (removedCount) {
+      BOOST_LOG(rdInfoLog) << "Removed " << removedCount
+                           << " non matching reagents at template "
+                           << reactant_idx << std::endl;
     }
   }
   return result;
@@ -206,7 +215,7 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {
-#ifdef RDK_USE_BOOST_SERIALIZATION      
+#ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_oarchive ar(ss);
   ar << *this;
 #else
@@ -215,7 +224,7 @@ void EnumerateLibrary::toStream(std::ostream &ss) const {
 }
 
 void EnumerateLibrary::initFromStream(std::istream &ss) {
-#ifdef RDK_USE_BOOST_SERIALIZATION      
+#ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_iarchive ar(ss);
   ar >> *this;
 #else
@@ -224,6 +233,7 @@ void EnumerateLibrary::initFromStream(std::istream &ss) {
 }
 
 boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
+#ifdef RDK_HAVE_MULTIPREC
   boost::multiprecision::cpp_int myint = 1;
 
   for (size_t i = 0; i < sizes.size(); ++i) {
@@ -234,6 +244,18 @@ boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
     return myint.convert_to<boost::uint64_t>();
   else
     return EnumerationStrategyBase::EnumerationOverflow;
+#else
+  boost::uint64_t myint = 1;
+
+  for (size_t i = 0; i < sizes.size(); ++i) {
+    if (sizes[i] &&
+        (std::numeric_limits<boost::uint64_t>::max() / sizes[i]) < myint) {
+      return EnumerationStrategyBase::EnumerationOverflow;
+    }
+    myint *= sizes[i];
+  }
+  return myint;
+#endif
 }
 
 MOL_SPTR_VECT getReactantsFromRGroups(const std::vector<MOL_SPTR_VECT> &bbs,
@@ -255,5 +277,4 @@ bool EnumerateLibraryCanSerialize() {
   return false;
 #endif
 }
-
 }

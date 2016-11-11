@@ -37,7 +37,6 @@
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/cstdint.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/vector.hpp>
 // the next two includes need to be there for boost 1.56
