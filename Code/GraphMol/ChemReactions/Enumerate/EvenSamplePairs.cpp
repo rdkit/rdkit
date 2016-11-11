@@ -31,8 +31,7 @@
 //
 #include "EvenSamplePairs.h"
 #include <boost/format.hpp>
-#include <stdint.h>
-
+#include <boost/cstdint.hpp>
 
 namespace RDKit {
 
@@ -139,7 +138,7 @@ bool EvenSamplePairsStrategy::try_add(size_t seed) {
       used_count[i]++;
     }
     var_used[i][digits[i]] += 1;
-    if (used_count[i] == rdcast<int64_t>(rgroups[i])) {
+    if (used_count[i] == rdcast<boost::int64_t>(rgroups[i])) {
       // complete variable scan => initialize
       if (nslack > min_nslack && rgroups[i] > 1)  // cleared slack on i
         nslack = min_nslack;
@@ -219,7 +218,7 @@ const RGROUPS &EvenSamplePairsStrategy::next() {
 
 std::string EvenSamplePairsStrategy::stats() const {
   std::ostringstream ss;
-  
+
   size_t npos = m_permutationSizes.size();
   const RGROUPS &nvars = m_permutationSizes;
   size_t i, l, j, ii, jj, ioffset, joffset;
@@ -231,7 +230,7 @@ std::string EvenSamplePairsStrategy::stats() const {
       if (maxcount < var_used[i][j]) maxcount = var_used[i][j];
 
     ss << boost::format("%lu\t%lu\t%6.2f") % (i + 1) % nvars[i] %
-                     ((double)m_numPermutationsProcessed / nvars[i]);
+              ((double)m_numPermutationsProcessed / nvars[i]);
 
     for (l = 0; l <= maxcount; l++) {
       size_t n = 0;
@@ -254,10 +253,9 @@ std::string EvenSamplePairsStrategy::stats() const {
         for (jj = 0; jj < nvars[j]; jj++)
           if (maxcount < pair_used[ii + ioffset][jj + joffset])
             maxcount = pair_used[ii + ioffset][jj + joffset];
-      ss << boost::format("%lu\t%lu\t%lu\t%lu\t%6.2f") % (i + 1) %
-                       (j + 1) % nvars[i] % nvars[j] %
-                       ((double)m_numPermutationsProcessed /
-                        (nvars[i] * nvars[j]));
+      ss << boost::format("%lu\t%lu\t%lu\t%lu\t%6.2f") % (i + 1) % (j + 1) %
+                nvars[i] % nvars[j] %
+                ((double)m_numPermutationsProcessed / (nvars[i] * nvars[j]));
       for (l = 0; l <= maxcount; l++) {
         int n = 0;
         for (ii = 0; ii < nvars[i]; ii++)
@@ -272,8 +270,7 @@ std::string EvenSamplePairsStrategy::stats() const {
 
   ss << "Rejected Period: " << rejected_period << std::endl;
   ss << "Rejected (dupes): " << rejected_unique << std::endl;
-  ss << "Rejected Slack Conditions: " << rejected_slack_condition
-            << std::endl;
+  ss << "Rejected Slack Conditions: " << rejected_slack_condition << std::endl;
   ss << "Rejected Pair Sampling: " << rejected_bb_sampling_condition
      << std::endl;
   return ss.str();

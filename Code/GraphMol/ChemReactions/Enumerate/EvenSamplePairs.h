@@ -34,10 +34,10 @@
 #define RGROUP_EVEN_SAMPLE_H
 
 #include "EnumerationStrategyBase.h"
-#ifdef RDK_USE_BOOST_SERIALIZATION  
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/set.hpp>
 #endif
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 namespace RDKit {
 //! EvenSamplePairsStrategy
@@ -54,7 +54,7 @@ namespace RDKit {
 class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
 
-  std::vector<int64_t> used_count;
+  std::vector<boost::int64_t> used_count;
   std::vector<std::vector<size_t> > var_used;
   std::vector<std::vector<size_t> > pair_used;
   std::vector<std::vector<size_t> > pair_counts;
@@ -128,13 +128,15 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   */
   using EnumerationStrategyBase::initialize;
 
-  virtual void initializeStrategy(const ChemicalReaction &, const EnumerationTypes::BBS &);
+  virtual void initializeStrategy(const ChemicalReaction &,
+                                  const EnumerationTypes::BBS &);
 
   //! The current permutation {r1, r2, ...}
   virtual const EnumerationTypes::RGROUPS &next();
 
   virtual boost::uint64_t getPermutationIdx() const {
-    return m_numPermutationsProcessed; }
+    return m_numPermutationsProcessed;
+  }
 
   virtual operator bool() const { return true; }
 
@@ -149,7 +151,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
 
   // decode a packed integer into an RGroup selection
   const EnumerationTypes::RGROUPS &decode(size_t seed) {
-    for (int64_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
+    for (boost::int64_t j = m_permutationSizes.size() - 1; j >= 0; j--) {
       m_permutation[j] = seed % m_permutationSizes[j];
       seed /= m_permutationSizes[j];
     }
@@ -159,7 +161,7 @@ class EvenSamplePairsStrategy : public EnumerationStrategyBase {
   bool try_add(size_t seed);
 
  public:
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
   void serialize(Archive &ar, const unsigned int /*version*/) {
     // invoke serialization of the base class
