@@ -48,16 +48,6 @@ ROMol::ROMol(const std::string &pickle) : RDProps() {
   numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
 }
 
-std::string ROMol::GetName() const {
-  std::string result;
-  getPropIfPresent(common_properties::_Name, result);
-  return result;
-}
-
-void ROMol::SetName(const std::string &name) {
-  setProp<std::string>(common_properties::_Name, name);
-}
-
 void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
   if (this == &other) return;
   numBonds = 0;
