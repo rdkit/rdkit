@@ -83,14 +83,13 @@ void testBaseFunctionality() {
   resMolSuppl =
       new ResonanceMolSupplier((ROMol &)*mol, ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
-  std::map<Bond::BondType, bool> bondTypeMap;
+  std::set<Bond::BondType> bondTypes;
   // check that we actually have two alternate Kekule structures
-  bondTypeMap[(*resMolSuppl)[0]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  bondTypeMap[(*resMolSuppl)[1]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  TEST_ASSERT(bondTypeMap.size() == 2);
-  bondTypeMap.clear();
+  for (unsigned int i = 0; i < resMolSuppl->length(); ++i) {
+    bondTypes.insert((*resMolSuppl)[i]->getBondBetweenAtoms(3, 4)->getBondType());
+  }
+  TEST_ASSERT(bondTypes.size() == 2);
+  bondTypes.clear();
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(

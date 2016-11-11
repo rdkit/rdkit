@@ -3248,13 +3248,11 @@ CAS<~>
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
-    bondTypeDict = {}
     # check that we actually have two alternate Kekule structures
-    bondTypeDict[resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    bondTypeDict[resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    self.assertEqual(len(bondTypeDict), 2)
+    bondTypes = set(r.GetBondBetweenAtoms(3, 4).GetBondType() for r in resMolSuppl)
+    self.assertEqual(len(bondTypes), 2)
 
-    bondTypeDict = {}
+    bondTypes = set()
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
       Chem.ALLOW_INCOMPLETE_OCTETS \
       | Chem.UNCONSTRAINED_CATIONS \
