@@ -30,6 +30,7 @@ RWMol &RWMol::operator=(const RWMol &other) {
   if (this != &other) {
     this->clear();
     d_partialBonds.clear();
+    numBonds = 0;
     initFromOther(other, false, -1);
   }
   return *this;
@@ -283,8 +284,9 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   MolGraph::edge_descriptor which;
   boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which].reset(b);
-  unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
-  b->setIdx(res - 1);
+  //unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
+  ++numBonds;
+  b->setIdx(numBonds - 1);
   b->setBeginAtomIdx(atomIdx1);
   b->setEndAtomIdx(atomIdx2);
 
@@ -296,7 +298,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_ringInfo->reset();
   }
 
-  return res;
+  return numBonds;//res;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -367,6 +369,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
   MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
+  --numBonds;
 }
 
 Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {
