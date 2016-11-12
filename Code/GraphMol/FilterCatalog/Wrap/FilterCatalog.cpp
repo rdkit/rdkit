@@ -287,9 +287,9 @@ const char *FilterCatalogEntryDoc =
     "hzone_phenol_A(479)\n"
     "\n\n";
 
-python::dict GetFlattenedFunctionalGroupHierarchyHelper() {
+python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
-      GetFlattenedFunctionalGroupHierarchy();
+      GetFlattenedFunctionalGroupHierarchy(normalize);
   python::dict dict;
   for (std::map<std::string, ROMOL_SPTR>::const_iterator it = flattened.begin();
        it != flattened.end(); ++it) {
@@ -443,6 +443,7 @@ struct filtercat_wrapper {
     python::def(
         "GetFlattenedFunctionalGroupHierarchy",
         GetFlattenedFunctionalGroupHierarchyHelper,
+        (python::args("normalized")=false),
         "Returns the flattened functional group hierarchy as a dictionary "
         " of name:ROMOL_SPTR substructure items");
 
