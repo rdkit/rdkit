@@ -46,7 +46,9 @@ class CEMetrics {
   unsigned int d_fcSameSignDist;
   unsigned int d_fcOppSignDist;
   unsigned int d_nbMissing;
-  unsigned int d_wtdFormalCharges;
+  int d_wtdFormalCharges;
+  unsigned int d_sumFormalChargeIdxs;
+  unsigned int d_sumMultipleBondIdxs;
 };
 
 class ConjElectrons {
@@ -69,8 +71,6 @@ class ConjElectrons {
   void pushToBeginStack(unsigned int ai);
   bool popFromBeginStack(unsigned int &ai);
   bool isBeginStackEmpty() { return d_beginAIStack.empty(); };
-  unsigned int lowestFcIndex() const;
-  unsigned int lowestMultipleBondIndex() const;
   int allowedChgLeftOfN() const { return d_allowedChgLeftOfN; };
   void decrAllowedChgLeftOfN(int d) { d_allowedChgLeftOfN -= d; };
   int totalFormalCharge() const { return d_totalFormalCharge; };
@@ -86,8 +86,10 @@ class ConjElectrons {
   unsigned int fcSameSignDist() const { return d_ceMetrics.d_fcSameSignDist; };
   unsigned int fcOppSignDist() const { return d_ceMetrics.d_fcOppSignDist; };
   unsigned int nbMissing() const { return d_ceMetrics.d_nbMissing; }
+  unsigned int sumFormalChargeIdxs() const { return d_ceMetrics.d_sumFormalChargeIdxs; }
+  unsigned int sumMultipleBondIdxs() const { return d_ceMetrics.d_sumMultipleBondIdxs; }
   CEMetrics &metrics() { return d_ceMetrics; }
-  unsigned int wtdFormalCharges() const {
+  int wtdFormalCharges() const {
     return d_ceMetrics.d_wtdFormalCharges;
   };
   void enumerateNonBonded(CEMap &ceMap);
@@ -117,6 +119,8 @@ class ConjElectrons {
   ConjElectrons &operator=(const ConjElectrons &);
   unsigned int countTotalElectrons();
   void computeDistFormalCharges();
+  void computeSumFormalChargeIdxs();
+  void computeSumMultipleBondIdxs();
   void checkOctets();
 };
 
@@ -445,7 +449,9 @@ CEMetrics::CEMetrics()
       d_fcSameSignDist(0),
       d_fcOppSignDist(0),
       d_nbMissing(0),
-      d_wtdFormalCharges(0){};
+      d_wtdFormalCharges(0),
+      d_sumFormalChargeIdxs(0),
+      d_sumMultipleBondIdxs(0) {};
 
 bool CEMetrics::operator==(const CEMetrics &other) {
   return ((d_absFormalCharges == other.d_absFormalCharges) &&
@@ -797,6 +803,8 @@ void ConjElectrons::computeMetrics() {
     d_ceMetrics.d_nbMissing += it->second->neededNbForOctet();
   }
   computeDistFormalCharges();
+  computeSumFormalChargeIdxs();
+  computeSumMultipleBondIdxs();
 }
 
 // compute sum of shortest path distances between all pairs of
@@ -819,26 +827,20 @@ void ConjElectrons::computeDistFormalCharges() {
   }
 }
 
-// return the lowest index of atom bearing a formal charge
-unsigned int ConjElectrons::lowestFcIndex() const {
-  unsigned int na = d_parent->mol().getNumAtoms();
-  unsigned int ai = na;
+// compute the sum of indices of atoms bearing a formal charge
+void ConjElectrons::computeSumFormalChargeIdxs() {
   for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
-       (ai == na) && (it != d_conjAtomMap.end()); ++it) {
-    if (it->second->fc()) ai = it->first;
+       it != d_conjAtomMap.end(); ++it) {
+    if (it->second->fc()) d_ceMetrics.d_sumFormalChargeIdxs += it->first;
   }
-  return ai;
 }
 
-// return the lowest index of a multiple bond
-unsigned int ConjElectrons::lowestMultipleBondIndex() const {
-  unsigned int nb = d_parent->mol().getNumBonds();
-  unsigned int bi = nb;
+// compute the sum of indices of multiple bonds
+void ConjElectrons::computeSumMultipleBondIdxs() {
   for (ConjBondMap::const_iterator it = d_conjBondMap.begin();
-       (bi == nb) && (it != d_conjBondMap.end()); ++it) {
-    if (it->second->order() > 1) bi = it->first;
+       it != d_conjBondMap.end(); ++it) {
+    if (it->second->order() > 1) d_ceMetrics.d_sumMultipleBondIdxs += it->first;
   }
-  return bi;
 }
 
 // decrement the count of current electrons by d
@@ -880,8 +882,8 @@ bool ConjElectrons::popFromBeginStack(unsigned int &ai) {
 // 3) Number of formal charges weighted by atom electronegativity
 // 4) Distance between formal charges with the same sign
 // 5) Distance between formal charges with opposite signs
-// 6) Index of the first atom bearing a formal charge
-// 7) Index of the first multiple bond
+// 6) Sum of the indices of atoms bearing a formal charge
+// 7) Sum of the indices of multiple bonds
 bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                                         const ConjElectrons *b) {
   return (
@@ -895,11 +897,11 @@ bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                             ? (a->fcSameSignDist() > b->fcSameSignDist())
                             : (a->fcOppSignDist() != b->fcOppSignDist())
                                   ? (a->fcOppSignDist() > b->fcOppSignDist())
-                                  : (a->lowestFcIndex() != b->lowestFcIndex())
-                                        ? (a->lowestFcIndex() <
-                                           b->lowestFcIndex())
-                                        : (a->lowestMultipleBondIndex() <
-                                           b->lowestMultipleBondIndex()));
+                                  : (a->sumFormalChargeIdxs() != b->sumFormalChargeIdxs())
+                                        ? (a->sumFormalChargeIdxs() <
+                                           b->sumFormalChargeIdxs())
+                                        : (a->sumMultipleBondIdxs() <
+                                           b->sumMultipleBondIdxs()));
 }
 
 CEVect2::CEVect2(CEMap &ceMap) {
@@ -912,11 +914,11 @@ CEVect2::CEVect2(CEMap &ceMap) {
   for (CEVect::const_iterator it = d_ceVect.begin(); it != d_ceVect.end();
        ++it) {
     if (first || ((*it)->metrics() != metricsPrev)) {
+      first = false;
       metricsPrev = (*it)->metrics();
       d_degVect.push_back(1);
     } else
       ++d_degVect.back();
-    first = false;
   }
 }
 
