@@ -35,6 +35,7 @@
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/Enumerate.h>
 #include <boost/python/stl_iterator.hpp>
+#include <boost/cstdint.hpp>
 
 namespace python = boost::python;
 
@@ -146,7 +147,7 @@ void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn, python::list 
   rgroup.initialize(rxn, ConvertToVect(ob));
 }
 
-typedef std::vector<uint64_t> VectSizeT;
+typedef std::vector<boost::uint64_t> VectSizeT;
 typedef std::vector<std::vector<std::string> > VectStringVect;
 typedef std::vector<MOL_SPTR_VECT > VectMolVect;
 
