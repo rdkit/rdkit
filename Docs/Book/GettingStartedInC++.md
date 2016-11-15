@@ -782,6 +782,221 @@ Aromatic : 1
 ```
 once more.
 
+## Working with 2D molecules: Generating Depictions
+
+The RDKit has a library for generating depictions (sets of 2D)
+coordinates for molecules.  This library, which is part of the
+RDDepict namespace, is accessed via the `RDDepict::Compute2DCoords`
+function [(example10.cpp)](./C++Examples/example10.cpp):
+```c++
+#include <GraphMol/Depictor/RDDepictor.h>
+.
+.
+RDKit::RWMOL_SPTR mol( new RDKit::RWMol( *RDKit::SmilesToMol( "c1nccc2n1ccc2" ) ) );
+RDDepict::compute2DCoords( *mol );
+```
+
+The 2D conformation is constructed to minimize intramolecular clashes,
+i.e. to maximize the clarity of the drawing.  Unlike the Python
+equivalent, the depiction is not placed in a canonical orientation by
+default. This can be forced by passing `true` as the third parameter
+[(example10.cpp)](./C++Examples/example10.cpp):
+```c++
+#include <Geometry/point.h>
+.
+.
+RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) ,
+	                       true );
+```
+
+The `point.h` must be included for the typedef that defines
+`INT_POINT2D_MAP`, of which more later..
+By default, all existing conformations are removed when the 2D
+coordinates are created.  This can be changed by passing false as a
+4th parameter.  The 2D coordinates are added as another conformation
+of the molecule so it's a bit tricky combining them both in the same
+molecule, and probably best avoided.
+
+The Python API has a convenience function
+`GenerateDepictionMatching2DStructure` which forces the 2D coordinate
+generation to orientate molecules according to a template structure.
+There is currently no such function in C++, but it is relatively
+simple to reproduce the effects
+[(example10.cpp)](./C++Examples/example10.cpp):
+```c++
+#include <GraphMol/Substruct/SubstructMatch.h>
+.
+.
+RDKit::ROMol *templ = RDKit::SmilesToMol( "c1nccc2n1ccc2" );
+RDDepict::compute2DCoords( *templ );
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1cccc2ncn3cccc3c21" );
+
+RDKit::MatchVectType matchVect;
+if( RDKit::SubstructMatch( *mol1 , *templ , matchVect ) ) {
+  RDKit::Conformer &conf = templ->getConformer();
+  RDGeom::INT_POINT2D_MAP coordMap;
+  for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ;
+	 mv != matchVect.end() ; ++mv ) {
+    RDGeom::Point3D pt3 = conf.getAtomPos( mv->first );
+    RDGeom::Point2D pt2( pt3.x , pt3.y );
+    coordMap[mv->second] = pt2;
+  }
+  RDDepict::compute2DCoords( *mol1 , &coordMap );
+}
+```
+Here, `coordMap` maps the coordinates of atoms in the target
+molecule templ onto corresponding atoms in the reference molecule.
+
+It is also possible to produce a 2D picture that attempts to mimic as
+closely as possible a 3D conformation.  Again, an equivalent of the
+Python function
+`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure` doesn't
+exist in C++, but if you examine
+[AllChem.py](../../rdkit/Chem/AllChem.py) you will get an idea of how
+to reproduce the effect.
+
+## Working with 3D Molecules
+
+The RDKit can generate conformations for molecules using two different
+methods.  The original method used distance geometry. [#blaney]_
+The algorithm followed is:
+
+1. The molecule's distance bounds matrix is calculated based on the
+   connection table and a set of rules. 
+
+2. The bounds matrix is smoothed using a triangle-bounds smoothing
+   algorithm. 
+
+3. A random distance matrix that satisfies the bounds matrix is
+   generated. 
+
+4. This distance matrix is embedded in 3D dimensions (producing
+   coordinates for each atom). 
+
+5. The resulting coordinates are cleaned up somewhat using a crude
+   force field and the bounds matrix. 
+
+Note that the conformations that result from this procedure tend to be
+fairly ugly. They should be cleaned up using a force field.
+This can be done within the RDKit using its implementation of the
+Universal Force Field (UFF). [#rappe]_ 
+
+More recently, there is an implementation of the method of Riniker and
+Landrum [#riniker2]_ which uses torsion angle preferences from the
+Cambridge Structural Database (CSD) to correct the conformers after
+distance geometry has been used to generate them.  With this method,
+there should be no need to use a minimisation step to clean up the
+structures.
+
+The full process of embedding and optimizing a molecule is easier than
+all the above verbiage makes it sound
+[(example11.cpp)](./C++Examples/example11.cpp):
+```c++
+#include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
+.
+.
+RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "C1CCC1OC" ) );
+RDKit::ROMOL_SPTR mol1( RDKit::MolOps::addHs( *mol ) );
+// Original distance geometry embedding
+RDKit::DGeomHelpers::EmbedMolecule( *mol1 , 0 , 1234 );
+RDKit::UFF::UFFOptimizeMolecule( *mol1 );
+
+// new Riniker and Landrum CSD-based method
+RDKit::ROMOL_SPTR mol2( RDKit::MolOps::addHs( *mol ) );
+RDKit::DGeomHelpers::EmbedMolecule( *mol2 , 0 , 1234 , true , false ,
+                                    2.0 , true , 1 ,
+                                    static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
+                                    1e-3 , false , true , true , true );
+```
+In the second call to `EmbedMolecule`, it is the last two `true`
+parameters that enforce the second embedding method.  Apart from the
+random number seed (1234) the other parameters are set to default
+values.  Setting the random number seed to other than the default -1
+ensures that the same conformations are produced each time the code is
+run.  This is convenient when testing to ensure reproducibility of
+results but disguises the inherently non-deterministic nature of the
+algorithm.
+
+The RDKit also has an implementation of the MMFF94 force field
+available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]
+[(example11.cpp)](./C++Examples/example11.cpp):
+```c++
+#include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
+.
+.
+RDKit::MMFF::MMFFOptimizeMolecule( *mol2 , 1000 , "MMFF94s" );
+```
+Please note that the MMFF atom typing code uses its own aromaticity model,
+so the aromaticity flags of the molecule will be modified after calling
+MMFF-related methods.
+Note the calls to `RDKit::MolOps::addHs()` in the examples above. By
+default RDKit molecules do not have H atoms explicitly present in the
+graph, but they are important for getting realistic geometries, so
+they generally should be added.  They can always be removed afterwards
+if necessary with a call to `RDKit::MolOps::removeHs()`
+
+With the RDKit, multiple conformers can also be generated using the two
+different embedding methods. In both cases this is simply a matter of
+running the distance geometry calculation multiple times from
+different random start points. The 2nd parameter to
+`EmbedMultipleConfs` allows the user to
+set the number of conformers that should be generated.  Otherwise the
+procedures are similar to before
+[(example11.cpp)](./C++Examples/example11.cpp):
+```c++
+RDKit::INT_VECT mol1_cids = RDKit::DGeomHelpers::EmbedMultipleConfs( *mol1 , 10 );
+std::cout << "Number of conformations : " << mol1_cids.size() << std::endl;
+
+RDKit::INT_VECT mol2_cids;
+RDKit::DGeomHelpers::EmbedMultipleConfs( *mol2 , mol2_cids , 20 , 1 , 30 , 1234 ,
+                                         true , false , 2.0 , true , 1 , -1.0 , 
+                                         static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
+                                         1e-3 , false , true , true , true );
+std::cout << "Number of conformations : " << mol2_cids.size()
+          << std::endl;
+```
+The conformer ids are returned in `mol1_cids` and `mol2_cids` and
+there are two overloaded functions with different ways of supplying
+the information.  As before, the CSD-based method is invoked by that
+last two `true` parameters, and in the example above the the default
+number of conformations to be produced has been changed from 10 to 20.
+The conformers so generated can be aligned
+to each other and the RMS values calculated
+[(example11.cpp)](./C++Examples/example11.cpp):
+```c++
+#include <GraphMol/MolAlign/AlignMolecules.h>
+.
+.
+std::vector<double> rms_list;
+std::vector<unsigned int> m2cids( mol2_cids.begin() , mol2_cids.end() );
+RDKit::MolAlign::alignMolConformers( *mol2 ,
+                                     static_cast<const std::vector<unsigned int> *>( 0 ) ,
+                                     &m2cids ,
+                                     static_cast<const RDNumeric::DoubleVector *>( 0 ) ,
+                                     false , 50 , &rms_list );
+```
+The RMS values for the overlays will be fed into rms_list on return.
+Note the somewhat inconvenient issue that `EmbedMultipleConfs` returns
+a vector of `ints` for the conformer ids, but `alignMolConformers`
+requires a vector of `unsigned ints`. The first vector of `unsigned
+ints` in the `alignMolConformers` declaration is atom ids, and allowd
+the alignment to be performed on just a subset of atoms which can be
+convenient for overlaying a core and seeing how the other bits of the
+molecule varied in the different conformations.
+
+There is no C++ equivalent to the Python function
+`AllChem.GetConformerRMS()` to compute the RMS between two specific
+conformers (e.g. 1 and 9).
+
+*Disclaimer/Warning*: Conformation generation is a difficult and
+subtle task. The original, default, 2D->3D conversion provided with
+the RDKit is not intended to be a replacement for a “real”
+conformational analysis tool; it merely provides quick 3D structures
+for cases when they are required. On the other hand, the second
+method, when a sufficiently large number of conformers are generated,
+should be adequate for most purposes.
+
 ## <a name="TheSSSRProblem"></a>The SSSR Problem
 
 As others have ranted about with more energy and eloquence than I
