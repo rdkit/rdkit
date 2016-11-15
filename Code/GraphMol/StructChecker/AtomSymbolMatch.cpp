@@ -63,7 +63,7 @@ class AtomSymbolMapper {
     for (unsigned n = 0; n < 110; n++) SymbolMap[AtomSymbol[n]] = n;
   }
   inline unsigned getAtomicNumber(const std::string symbol) const {
-    return SymbolMap.at(symbol);
+    return SymbolMap.find(symbol)->second;
   }
 };
 static const AtomSymbolMapper smap;
