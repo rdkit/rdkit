@@ -3140,6 +3140,25 @@ CAS<~>
     w = None
     outf.close()
 
+  def testReplaceBond(self):
+    origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
+    bonds = list(origmol.GetBonds())
+    self.assertEqual(len(bonds), 1)
+    singlebond = bonds[0]
+    self.assertEqual(singlebond.GetBondType(), Chem.BondType.SINGLE)
+
+    # this is the only way we create a bond, is take it from another molecule
+    doublebonded = Chem.MolFromSmiles("C=C")
+    doublebond = list(doublebonded.GetBonds())[0]
+
+    # make sure replacing the bond changes the smiles
+    self.assertEquals(Chem.MolToSmiles(origmol), "CC")
+    origmol.ReplaceBond(singlebond.GetIdx(), doublebond)
+    Chem.SanitizeMol(origmol)
+
+    self.assertEquals(Chem.MolToSmiles(origmol), "C=C")
+
+
   def testAdjustQueryProperties(self):
     m = Chem.MolFromSmarts('C1CCC1*')
     am = Chem.AdjustQueryProperties(m)
