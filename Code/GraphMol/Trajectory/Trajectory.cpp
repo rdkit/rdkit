@@ -65,7 +65,7 @@ unsigned int Trajectory::addSnapshot(const Snapshot &s) {
 }
 
 const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
-  URANGE_CHECK(snapshotNum, d_snapshotVect->size() - 1);
+  URANGE_CHECK(snapshotNum + 1, d_snapshotVect->size());
   return (*d_snapshotVect)[snapshotNum];
 }
 
@@ -77,7 +77,7 @@ unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
-  URANGE_CHECK(snapshotNum, d_snapshotVect->size() - 1);
+  URANGE_CHECK(snapshotNum + 1, d_snapshotVect->size());
   return (d_snapshotVect->erase(d_snapshotVect->begin() + snapshotNum) - d_snapshotVect->begin());
 }
 
