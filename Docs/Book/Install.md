@@ -33,7 +33,46 @@ Windows users will use a slightly different command:
 
 ### How to build from source with Conda
 
-For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
+For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
+
+#### macOS 10.12 (Sierra): Python 3 environment
+
+The following commands will create a development environment for macOS Sierra and Python 3. Download
+Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
+following commands:
+   
+	bash Miniconda3-latest-MacOSX-x86_64.sh
+	conda install numpy scipy matplotlib
+	conda install cmake
+	conda install -c  https://conda.anaconda.org/rdkit  boost
+	conda install -c  https://conda.anaconda.org/rdkit  cairocffi
+	conda install pillow
+	conda install anaconda
+	conda install --channel https://conda.anaconda.org/rwest eigen3
+
+Optionally, add the following packages to your environment. 
+
+	pip install yapf==0.11.1
+	pip install coverage==3.7.1
+
+Then follow the usual build instructions. PYTHON\_INCLUDE\_DIR is incorrectly set after "cmake ..". 
+The CMakeCache.txt file needs to be manually corrected. Make sure that the path is similar to 
+PYTHON\_EXECUTABLE and PYTHON\_LIBRARY.
+
+	//Path to a program.
+	PYTHON_EXECUTABLE:FILEPATH=<path to miniconda3>/bin/python
+	//Path to a file.
+	// PYTHON_INCLUDE_DIR:PATH=/System/Library/Frameworks/Python.framework/Headers
+	PYTHON_INCLUDE_DIR:PATH=<path to miniconda3>/include/python3.5m
+	//Path to a library.
+	PYTHON_LIBRARY:FILEPATH=<path to miniconda3>/lib/libpython3.5m.dylib
+
+Once "make" and "make install" completed successfully, use the following command to run the tests:
+
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:<path to miniconda3>/lib" PYTHONPATH=$RDBASE ctest
+
+This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection) 
+introduced in more recent macOS versions.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
