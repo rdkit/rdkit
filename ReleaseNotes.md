@@ -1,3 +1,20 @@
+# Release_2016.09.2
+(Changes relative to Release_2016.09.1)
+
+## Acknowledgements:
+'gncs', Matt Swain, Riccardo Vianello  
+
+## Bug Fixes:
+- A number of problems causing builds to fail with MS Visual Studio 2008 have
+  been cleared up
+  (github #1168, #1169, #1178)
+- add missing $RDKLIBS to cartridge build
+  (github #1167 from rvianello)
+- Fix Trajectory GetSnapshot behaviour after Clear
+  (github #1172 from mcs07)
+- RDThreads.h: No such file or directory
+  (github #1177 from gncs)
+
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
