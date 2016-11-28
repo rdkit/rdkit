@@ -55,21 +55,15 @@ Optionally, add the following packages to your environment.
 	pip install yapf==0.11.1
 	pip install coverage==3.7.1
 
-Then follow the usual build instructions. PYTHON\_INCLUDE\_DIR is incorrectly set after "cmake ..". 
-The CMakeCache.txt file needs to be manually corrected. Make sure that the path is similar to 
-PYTHON\_EXECUTABLE and PYTHON\_LIBRARY.
+Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set in the
+cmake command.
 
-	//Path to a program.
-	PYTHON_EXECUTABLE:FILEPATH=<path to miniconda3>/bin/python
-	//Path to a file.
-	// PYTHON_INCLUDE_DIR:PATH=/System/Library/Frameworks/Python.framework/Headers
-	PYTHON_INCLUDE_DIR:PATH=<path to miniconda3>/include/python3.5m
-	//Path to a library.
-	PYTHON_LIBRARY:FILEPATH=<path to miniconda3>/lib/libpython3.5m.dylib
+	PYROOT=<path to miniconda3>
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m ..
 
 Once "make" and "make install" completed successfully, use the following command to run the tests:
 
-	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:<path to miniconda3>/lib" PYTHONPATH=$RDBASE ctest
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
 
 This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection) 
 introduced in more recent macOS versions.
