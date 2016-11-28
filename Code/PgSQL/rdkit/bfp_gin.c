@@ -156,7 +156,7 @@ gin_bfp_consistent(PG_FUNCTION_ARGS)
   PG_RETURN_BOOL(result);
 }
 
-
+#if PG_VERSION_NUM >= 90300
 PGDLLEXPORT Datum gin_bfp_triconsistent(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gin_bfp_triconsistent);
 Datum
@@ -213,3 +213,4 @@ gin_bfp_triconsistent(PG_FUNCTION_ARGS)
 
   PG_RETURN_GIN_TERNARY_VALUE(result);
 }
+#endif
