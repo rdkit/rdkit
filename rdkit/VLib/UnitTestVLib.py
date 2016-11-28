@@ -19,8 +19,8 @@ from rdkit.six import StringIO
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
   """ Add the Doctests from the module """
-  tests.addTests(doctest.DocTestSuite(Node, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Filter, optionflags=doctest.ELLIPSIS))
+  tests.addTests(doctest.DocTestSuite(Node, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Output, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Supply, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Transform, optionflags=doctest.ELLIPSIS))
