@@ -3248,11 +3248,11 @@ CAS<~>
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
-    bondTypeDict = {}
+    bondTypeSet = set()
     # check that we actually have two alternate Kekule structures
-    bondTypeDict[resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    bondTypeDict[resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    self.assertEqual(len(bondTypeDict), 2)
+    bondTypeSet.add(resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType())
+    bondTypeSet.add(resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType())
+    self.assertEqual(len(bondTypeSet), 2)
 
     bondTypeDict = {}
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
@@ -3413,6 +3413,30 @@ CAS<~>
       matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
       self.assertEqual(len(matches), 2)
       self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+
+  def testGitHUb1166(self):
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    # check that formal charges on odd indices are in the same position
+    # as on even indices
+    for i in range(0, len(resMolSuppl), 2):
+      self.assertEqual(resMolSuppl[i].GetNumAtoms(), resMolSuppl[i + 1].GetNumAtoms())
+      for atomIdx in range(resMolSuppl[i].GetNumAtoms()):
+        self.assertEqual(resMolSuppl[i].GetAtomWithIdx(atomIdx).GetFormalCharge(),
+          resMolSuppl[i + 1].GetAtomWithIdx(atomIdx).GetFormalCharge())
+      # check that bond orders are alternate on aromatic bonds between
+      # structures on odd indices and structures on even indices
+      self.assertEqual(resMolSuppl[i].GetNumBonds(), resMolSuppl[i + 1].GetNumBonds())
+      for bondIdx in range(resMolSuppl[i].GetNumBonds()):
+        self.assertTrue(((not resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic())
+          and (not resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic())
+          and (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType()
+          == resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondType()))
+          or (resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()
+          and resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic()
+          and (int(round(resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondTypeAsDouble()
+          + resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondTypeAsDouble())) == 3)))
 
   def testAtomBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')
