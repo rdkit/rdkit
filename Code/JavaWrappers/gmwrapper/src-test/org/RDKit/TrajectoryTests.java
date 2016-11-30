@@ -1,6 +1,6 @@
 /*
 *  Copyright (C) 2016 Sereina Riniker, Paolo Tosco
-* 
+*
 *    @@ All Rights Reserved @@
 *   This file is part of the RDKit.
 *   The contents are covered by the terms of the BSD license
@@ -539,17 +539,26 @@ public class TrajectoryTests extends GraphMolTest {
         Trajectory traj = new Trajectory(3, mol.getNumAtoms(), sv);
         mol.removeConformer(0);
         traj.addConformersToMol(mol);
-        traj.clear();
-        long n1 = mol.getNumConformers();
-        traj.addConformersToMol(mol);
-        long n2 = mol.getNumConformers();
-        assertEquals(n2, n1);
         for (int nConf = 0; nConf < mol.getNumConformers(); ++nConf) {
             String ss = String.format("%.4f", traj.getSnapshot(nConf).getEnergy());
             mol.setProp("ENERGY", ss, false);
             w.write(mol, nConf);
         }
         w.close();
+        traj.clear();
+        long n1 = mol.getNumConformers();
+        traj.addConformersToMol(mol);
+        long n2 = mol.getNumConformers();
+        assertEquals(n2, n1);
+        // getSnapshot should raise exception after Clear()
+        boolean e = false;
+        try {
+            traj.getSnapshot(0);
+        }
+        catch (GenericRDKitException ex) {
+            e = true;
+        }
+        assertEquals(true, e);
     }
 
     @Test

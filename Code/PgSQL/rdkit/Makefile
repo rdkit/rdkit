@@ -32,7 +32,7 @@ ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system
 endif
 
-RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lMolHash -lFMCS -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral
+RDKLIBS       = ${AVALONLIBS} ${INCHILIBS} -lMolDraw2D -lMolTransforms -lMolHash -lFMCS -lChemReactions -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lDescriptors -lPartialCharges -lSubstructMatch  -lGraphMol -lEigenSolvers -lDataStructs -lDepictor -lRDGeometryLib -lRDGeneral
 
 ifeq ($(STATIC_LINK),0)
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
