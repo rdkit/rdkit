@@ -47,6 +47,7 @@
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/cstdint.hpp>
 
 namespace python = boost::python;
 
@@ -375,11 +376,8 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 
 }
-#ifdef RDK_32BIT_BUILD
-typedef int sanitize_ops;
-#else
-typedef unsigned int sanitize_ops;
-#endif
+
+typedef boost::uint64_t sanitize_ops;
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
     ChemicalReaction &rxn,

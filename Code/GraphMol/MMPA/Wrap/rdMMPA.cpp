@@ -18,7 +18,8 @@
 namespace python = boost::python;
 
 namespace {
-python::tuple fragmentMolHelper(const RDKit::ROMol& mol, unsigned int maxCuts,
+python::tuple fragmentMolHelper(const RDKit::ROMol& mol,
+                                unsigned int maxCuts,
                                 unsigned int maxCutBonds,
                                 const std::string& pattern,
                                 bool resultsAsMols) {
@@ -47,6 +48,40 @@ python::tuple fragmentMolHelper(const RDKit::ROMol& mol, unsigned int maxCuts,
   }
   return python::tuple(pyres);
 }
+
+python::tuple fragmentMolHelper2(const RDKit::ROMol& mol,
+                                 unsigned int minCuts,
+                                 unsigned int maxCuts,
+                                 unsigned int maxCutBonds,
+                                 const std::string& pattern,
+                                 bool resultsAsMols) {
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
+                                     pattern);
+  python::list pyres;
+  if (ok) {
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
+                               RDKit::ROMOL_SPTR> >::const_iterator pr =
+             tres.begin();
+         pr != tres.end(); ++pr) {
+      python::list lres;
+      if (resultsAsMols) {
+        lres.append(pr->first);
+        lres.append(pr->second);
+      } else {
+        if (pr->first) {
+          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        } else {
+          lres.append("");
+        }
+        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+      }
+      pyres.append(python::tuple(lres));
+    }
+  }
+  return python::tuple(pyres);
+}
+
 }
 
 BOOST_PYTHON_MODULE(rdMMPA) {
@@ -61,4 +96,14 @@ BOOST_PYTHON_MODULE(rdMMPA) {
                python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
                python::arg("resultsAsMols") = true),
               docString.c_str());
+
+  python::def("FragmentMol", fragmentMolHelper2,
+              (python::arg("mol"),
+               python::arg("minCuts"),
+               python::arg("maxCuts"),
+               python::arg("maxCutBonds"),
+               python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
+               python::arg("resultsAsMols") = true),
+              docString.c_str());
+  
 }

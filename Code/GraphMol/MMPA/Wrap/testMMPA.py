@@ -100,6 +100,37 @@ class TestCase(unittest.TestCase):
     frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
     self.assertEqual(len(frags), 231)
 
+  def test6(self):
+    m = Chem.MolFromSmiles(
+      "CC[C@H](C)[C@@H](C(=O)N[C@H]1CSSC[C@H]2C(=O)NCC(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](CSSC[C@@H](C(=O)N[C@H](C(=O)N4CCC[C@H]4C(=O)N[C@H](C(=O)N2)C)CC(=O)N)NC1=O)C(=O)N)CO)Cc5ccc(cc5)O)CCCC[NH3+])N")  # ALPHA-CONOTOXIN SI
+    frags = rdMMPA.FragmentMol(m, resultsAsMols=False)
+    self.assertFalse(len(frags))
+    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21,
+                                resultsAsMols=False)
+    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21,
+                                resultsAsMols=False)
+
+    frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
+
+    self.assertEqual(set(frags1+frags2), set(frags))
+    self.assertEqual(set(frags1).intersection(set(frags2)), set())
+
+
+  def test7(self):
+    m = Chem.MolFromSmiles("Oc1ccccc1N")
+
+    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21,
+                                resultsAsMols=False)
+
+    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21,
+                                resultsAsMols=False)
+
+    frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
+
+    self.assertEqual(set(frags1+frags2), set(frags))
+
+      
+
 
 if __name__ == "__main__":
   unittest.main()

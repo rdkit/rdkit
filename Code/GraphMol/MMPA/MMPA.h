@@ -36,5 +36,13 @@ bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
                  unsigned int maxCuts = 3, unsigned int maxCutBonds = 20,
                  const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+
+bool fragmentMol(const ROMol& mol,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
+                 unsigned int minCuts,
+                 unsigned int maxCuts,
+                 unsigned int maxCutBonds,
+                 const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+
 }
 }  // namespace RDKit
