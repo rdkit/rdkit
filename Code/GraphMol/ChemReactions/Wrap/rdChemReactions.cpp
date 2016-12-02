@@ -375,11 +375,8 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 
 }
-#ifdef RDK_32BIT_BUILD
-typedef int sanitize_ops;
-#else
-typedef unsigned int sanitize_ops;
-#endif
+
+typedef boost::uint64_t sanitize_ops;
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
     ChemicalReaction &rxn,
