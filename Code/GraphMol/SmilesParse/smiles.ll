@@ -272,7 +272,8 @@ s		    {	yylval->atom = new Atom( 16 );
 
 \+			{ return PLUS_TOKEN; }
 
-[\=\#\:]    { yylval->bond = new Bond();
+[\<\>\=\#\:] {
+              yylval->bond = new Bond();
               Bond::BondType bt=Bond::UNSPECIFIED;
               switch(yytext[0]){
 	      case '=':
@@ -285,6 +286,12 @@ s		    {	yylval->atom = new Atom( 16 );
 		bt = Bond::AROMATIC;
                 yylval->bond->setIsAromatic(true);
 		break;
+              case '>':
+                bt = Bond::DATIVER;
+                break;
+              case '<':
+                bt = Bond::DATIVEL;
+                break;
               default:
                 CHECK_INVARIANT(0,"cannot get here");
 	      }
