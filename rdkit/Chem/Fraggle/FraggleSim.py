@@ -53,7 +53,6 @@ keep correct if >60% query mol
 """
 import sys
 from rdkit import Chem, DataStructs
-from rdkit import rdBase
 from itertools import combinations
 
 # our default rdkit fingerprinter parameters:
@@ -84,56 +83,35 @@ def delete_bonds(mol, bonds, ftype, hac):
   If none exists, returns None """
 
   # Replace the given bonds with attachment points (B1-B2 -> B1-[*].[*]-B2)
-  # print("Breaking bonds between atoms: ", bonds)
-  em = Chem.EditableMol(mol)
-  for bond in bonds:
-    em.RemoveBond(bond[0], bond[1])
-    em.AddBond(bond[0], em.AddAtom(Chem.Atom(0)), Chem.BondType.SINGLE)
-    em.AddBond(bond[1], em.AddAtom(Chem.Atom(0)), Chem.BondType.SINGLE)
-  modifiedMol = em.GetMol()
+  bondIdx = [mol.GetBondBetweenAtoms(*bond).GetIdx() for bond in bonds]
+  modifiedMol = Chem.FragmentOnBonds(mol, bondIdx, dummyLabels=[(0, 0)] * len(bondIdx))
 
   # should be able to get away without sanitising mol as the valencies should be okay
   # do not do a full sanitization, but do find rings and calculate valences:
   Chem.SanitizeMol(modifiedMol, Chem.SanitizeFlags.SANITIZE_PROPERTIES |
                    Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
 
-  fragmented_smi = Chem.MolToSmiles(modifiedMol, True)
-  return select_fragments(fragmented_smi, ftype, hac)
+  fragments = Chem.GetMolFrags(modifiedMol, asMols=True, sanitizeFrags=False)
+  return select_fragments(fragments, ftype, hac)
 
 
-def is_ring_cut_valid(smi):
-  """ to check is a fragment is a valid ring cut, it needs to match the
-  SMARTS: [$([#0][r].[r][#0]),$([#0][r][#0])] """
-  # We suppress rdApp errors temporarily to avoid the "non-ring atom marked aromatic errors"
-  # There is no way to get the current status, so we assume that to be enabled.
-  rdBase.DisableLog('rdApp.error')
-  m = Chem.MolFromSmiles(smi)
-  rdBase.EnableLog('rdApp.error')
-  if m is not None and (m.HasSubstructMatch(cSma1) or m.HasSubstructMatch(cSma2)):
-    return True, m.GetNumAtoms()
-  else:
-    return False, 0
-
-
-def select_fragments(f_smi, ftype, hac):
-  fragments = f_smi.split(".")
-
+def select_fragments(fragments, ftype, hac):
   if ftype == FTYPE_ACYCLIC:
     result = []
     result_hcount = 0
-    for f in fragments:
+    for fMol in fragments:
+      f = Chem.MolToSmiles(fMol)
       # check if terminal fragment
       if f.count("*") == 1:
-        fMol = Chem.MolFromSmiles(f)
         fhac = fMol.GetNumAtoms()
 
-        # if the fragment is 2 atoms (or less - includes attachement) it is too small
+        # if the fragment is 2 atoms (or less - includes attachment) it is too small
         # to be interesting. This check has the additional benefit
         # of pulling out the relevant single cuts as it discards
         # fragments where we only chop off a small part of the input cmpd
         if fhac > 3:
           result.append(f)
-          result_hcount = result_hcount + fhac
+          result_hcount += fhac
 
     # needs to be greater than 60% of parent mol
     if result and (result_hcount > 0.6 * hac):
@@ -147,48 +125,44 @@ def select_fragments(f_smi, ftype, hac):
     if len(fragments) != 2:
       return None
     result = None
-    for f in fragments:
+    for fMol in fragments:
+      f = Chem.MolToSmiles(fMol)
       # check if a valid cut
-      valid, result_hcount = is_ring_cut_valid(f)
-      if valid:
-        # needs to be greater 3 heavy atoms and greater than 40% of parent mol
+      # needs to be greater 3 heavy atoms and greater than 40% of parent mol
+      if isValidRingCut(fMol):
+        result_hcount = fMol.GetNumAtoms()
         if (result_hcount > 3) and (result_hcount > 0.4 * hac):
           result = f
     return result
 
   elif (ftype == FTYPE_CYCLIC_ACYCLIC):
-    result = []
-
     # need to find the fragments which are valid which means they must be:
     #  Terminal (one attachment point) or valid ring cut
-    for f in fragments:
-      attachments = f.count("*")
-
-      if attachments >= 3:
+    result = []
+    result_hcount = 0
+    for fMol in fragments:
+      f = Chem.MolToSmiles(fMol)
+      nAttachments = f.count("*")
+      # We need to have a fragment that has 1 or 2 attachment points and that has more than 3 atoms
+      if nAttachments >= 3:
+        continue
+      fhac = fMol.GetNumAtoms()
+      if fhac <= 3:
         continue
 
-      if attachments == 2:
+      if nAttachments == 2:
         # check if a valid cut
-        valid, fhac = is_ring_cut_valid(f)
-        # needs to be greater 3 heavy atoms
-        if valid and fhac > 3:
+        if isValidRingCut(fMol):
           result.append(f)
+          result_hcount += fhac
+      elif nAttachments == 1:
+        result.append(f)
+        result_hcount += fhac
 
-      elif attachments == 1:
-        fMol = Chem.MolFromSmiles(f)
-        fhac = fMol.GetNumAtoms()
-        # needs to be greater 3 heavy atoms
-        if fhac > 3:
-          result.append(f)
-
-    # appropriate fragmentations must have 2 components with more than 3 heavy atoms.
-    if len(result) == 2:
+    # appropriate fragmentation must have 2 components and needs to be greater than 60% of
+    # parent mol
+    if len(result) == 2 and result_hcount > 0.6 * hac:
       result = '.'.join(result)
-      fMol = Chem.MolFromSmiles(result)
-      result_hcount = fMol.GetNumAtoms()
-      # needs to be greater than 60% of parent mol
-      if fMol.GetNumAtoms() <= 0.6 * hac:
-        result = None
     else:
       result = None
     return result
@@ -197,8 +171,39 @@ def select_fragments(f_smi, ftype, hac):
     raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))
 
 
+def isValidRingCut(mol):
+  """ to check is a fragment is a valid ring cut, it needs to match the
+  SMARTS: [$([#0][r].[r][#0]),$([#0][r][#0])]
+
+  For valid ring cuts, the function returns the number of atoms. Otherwise 0. """
+  # At this point, the molecule requires the identification of rings, so we need to sanitize
+  Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
+  return mol.HasSubstructMatch(cSma1) or mol.HasSubstructMatch(cSma2)
+
+
 def generate_fraggle_fragmentation(mol, verbose=False):
-  """ Create all possible fragmentations for molecule """
+  """ Create all possible fragmentations for molecule
+    >>> q = Chem.MolFromSmiles('COc1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12')
+    >>> fragments = generate_fraggle_fragmentation(q)
+    >>> fragments = sorted(['.'.join(sorted(s.split('.'))) for s in fragments])
+    >>> fragments
+     ['[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '[*]C(=O)c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '[*]C(=O)c1cncc(C)c1.[*]Cc1cc(OC)c2ccccc2c1OC',
+      '[*]C(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC',
+      '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1',
+      '[*]Cc1cc(OC)c2ccccc2c1OC.[*]NC(=O)c1cncc(C)c1',
+      '[*]Cc1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1',
+      '[*]N1CCC(NC(=O)c2cncc(C)c2)CC1.[*]c1cc(OC)c2ccccc2c1OC',
+      '[*]NC(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC',
+      '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1',
+      '[*]c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12',
+      '[*]c1c(OC)cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c1[*]',
+      '[*]c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12',
+      '[*]c1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1']
+  """
   # query mol heavy atom count
   hac = mol.GetNumAtoms()
 
@@ -269,7 +274,7 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
     return DataStructs.TverskySimilarity(subsFp, modifiedFP, 0, 1)
 
   # generate mol object & fp for input mol (we are interested in the bits each atom sets)
-  pMol = Chem.Mol(mol.ToBinary())
+  pMol = Chem.Mol(mol)
   aBits = []
   _ = Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
 
@@ -309,7 +314,7 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
                        Chem.SANITIZE_SETAROMATICITY)
     except Exception:  # pragma: nocover
       sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
-      pMol = Chem.Mol(mol.ToBinary())
+      pMol = Chem.Mol(mol)
 
   return pMol
 
