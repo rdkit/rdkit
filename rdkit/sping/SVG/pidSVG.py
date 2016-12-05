@@ -74,7 +74,7 @@ def _PointListToSVG(points, dupFirst=0):
 
   """
   outStr = ''
-  for i in xrange(len(points)):
+  for i in range(len(points)):
     outStr = outStr + '%.2f,%.2f ' % (points[i][0], points[i][1])
   # add back on the first point.  This is not required in the spec,
   #  but Adobe's beta-quality viewer seems to not like it being skipped
@@ -170,7 +170,7 @@ class SVGCanvas(Canvas):
         familyStr = '\'%s\'' % (face)
       else:
         familyStr = face
-      for i in xrange(1, len(font.face)):
+      for i in range(1, len(font.face)):
         face = font.face[i]
         if len(string.split(face)) > 1:
           familyStr = ', \'%s\'' % (face)

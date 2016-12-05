@@ -18,6 +18,7 @@ try:
 except ImportError:
   from rdkit.piddle import piddle
 import ClusterUtils
+from rdkit.six.moves import xrange
 
 import numpy
 

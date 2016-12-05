@@ -19,6 +19,7 @@ from rdkit import Chem
 from rdkit.Chem.PeriodicTable import numTable
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
+from rdkit.six.moves import xrange
 import numpy
 import bisect
 radCol = 5
