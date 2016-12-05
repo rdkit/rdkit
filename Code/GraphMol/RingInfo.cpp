@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -79,13 +78,27 @@ unsigned int RingInfo::numRings() const {
   return rdcast<unsigned int>(d_atomRings.size());
 #else
   PRECONDITION(dp_urfData, "no URF data");
-  rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+  return numRingFamilies();
 #endif
 }
 
 unsigned int RingInfo::numRingFamilies() const {
+#ifndef RDK_USE_URF
+  UNDER_CONSTRUCTION("numRingFamilies not implemented without URF support");
+#else
   PRECONDITION(df_init, "RingInfo not initialized");
   return d_atomRingFamilies.size();
+#endif
+};
+
+unsigned int RingInfo::numRelevantCycles() const {
+#ifndef RDK_USE_URF
+  UNDER_CONSTRUCTION("numRelevantCycles not implemented without URF support");
+#else
+  PRECONDITION(df_init, "RingInfo not initialized");
+  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+
+#endif
 };
 
 unsigned int RingInfo::addRing(const INT_VECT &atomIndices,

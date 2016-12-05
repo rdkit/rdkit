@@ -1270,6 +1270,7 @@ void fastFindRings(const ROMol &mol) {
 }
 
 #ifdef RDK_USE_URF
+#include <RingDecomposerLib/RingDecomposerLib.h>
 #include <RingDecomposerLib/RDLdataStruct.h>
 void findRingFamilies(const ROMol &mol) {
   // FIX: probably want to do something else here
@@ -1286,6 +1287,30 @@ void findRingFamilies(const ROMol &mol) {
   }
   RDL_data *urfdata = RDL_calculate(graph);
   mol.getRingInfo()->dp_urfData.reset(urfdata);
+  // EFF: we actually only need to do this if someone asks for info about
+  //   how many rings an atom is in.
+  for (unsigned int i = 0; i < RDL_getNofURF(urfdata); ++i) {
+    RDL_node *nodes;
+    unsigned nNodes = RDL_getNodesForURF(urfdata, i, &nodes);
+    if (nNodes == RDL_INVALID_RESULT)
+      throw ValueErrorException("Cannot get URF nodes");
+    RDL_edge *edges;
+    unsigned nEdges = RDL_getEdgesForURF(urfdata, i, &edges);
+    if (nEdges == RDL_INVALID_RESULT)
+      throw ValueErrorException("Cannot get URF edges");
+    INT_VECT nvect(nNodes), evect(nEdges);
+    for (unsigned int ridx = 0; ridx < nNodes; ++ridx) {
+      nvect[ridx] = nodes[ridx];
+    }
+    for (unsigned int ridx = 0; ridx < nEdges; ++ridx) {
+      unsigned int bidx = edges[ridx][0];
+      unsigned int eidx = edges[ridx][1];
+      evect[ridx] = mol.getBondBetweenAtoms(bidx, eidx)->getIdx();
+    }
+    mol.getRingInfo()->addRingFamily(nvect, evect);
+    free(nodes);
+    free(edges);
+  }
 }
 #endif
 }  // namespace MolOps

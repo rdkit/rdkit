@@ -7595,12 +7595,10 @@ void testRingFamilies() {
     TEST_ASSERT(m->getRingInfo()->isInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
-    std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
     TEST_ASSERT(numRC == 6);
     TEST_ASSERT(numURF == 6);
 
     int numRings = m->getRingInfo()->numRings();
-    std::cerr << " numRings " << numRings << std::endl;
     TEST_ASSERT(numRings == 6);
 
     delete m;
@@ -7614,14 +7612,16 @@ void testRingFamilies() {
     TEST_ASSERT(m->getRingInfo()->isInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
     int numRC = RDL_getNofRC(m->getRingInfo()->dp_urfData.get());
-    std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
+    // std::cerr << " URF, RC " << numURF << " " << numRC << std::endl;
     TEST_ASSERT(numURF == 5);
     TEST_ASSERT(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
-    TEST_ASSERT(numRings == 20);
-
+    // std::cerr << "num rings: " << numRings << std::endl;
+    TEST_ASSERT(numRings == 5);
+    TEST_ASSERT(m->getRingInfo()->numRingFamilies() == 5);
     delete m;
   }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 #else
 void testRingFamilies() {}
