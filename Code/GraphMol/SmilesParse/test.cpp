@@ -3778,10 +3778,9 @@ void testGithub786() {
 }
 
 void testDativeBonds() {
-  BOOST_LOG(rdInfoLog) << "testing dative bond support"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing dative bond support" << std::endl;
   {
-    std::string smiles = "CCC(=O)O>[Cu]";
+    std::string smiles = "CCC(=O)O->[Cu]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
@@ -3797,7 +3796,7 @@ void testDativeBonds() {
     TEST_ASSERT(out_smiles == smiles);
   }
   {
-    std::string smiles = "CCC(=O)O>[Cu]<OC(O)CC";
+    std::string smiles = "CCC(=O)O->[Cu]<-OC(O)CC";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
