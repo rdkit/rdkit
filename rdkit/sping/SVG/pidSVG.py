@@ -130,9 +130,9 @@ class SVGCanvas(Canvas):
     }
 
     try:
-      face = piddle_font_map[string.lower(font.face)]
+      face = piddle_font_map[font.face.lower()]
     except Exception:
-      return piddle_font_map[string.lower('sansserif')]
+      return piddle_font_map['sansserif']
 
     name = face + '-'
     if font.bold and face in ['Courier', 'Helvetica', 'Times']:
@@ -609,7 +609,7 @@ class SVGCanvas(Canvas):
       into SVG is to read it from a file.  So we'll save out to a PNG
       file, then set a link to that in the SVG.
     """
-    imageFileName = '%s-%d.%s' % (self.name, self._nImages, string.lower(self._imageFormat))
+    imageFileName = '%s-%d.%s' % (self.name, self._nImages, self._imageFormat.lower())
     self._nImages = self._nImages + 1
     image.save(imageFileName, format=self._imageFormat)
 

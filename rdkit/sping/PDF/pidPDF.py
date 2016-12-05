@@ -221,7 +221,7 @@ class PDFCanvas(Canvas):
     if not font.face:
       face = 'serif'
     else:
-      face = string.lower(font.face)
+      face = font.face.lower()
     while face in font_face_map:
       face = font_face_map[face]
     #step 2, - resolve bold/italic to get the right PS font name
