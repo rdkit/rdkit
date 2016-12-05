@@ -1,5 +1,5 @@
 tests = [
-  ("python", "UnitTestVLib", {}),
+  ("python", "UnitTestVLib.py", {}),
   ("python", "test_list.py", {'dir': 'NodeLib'}),
 ]
 
