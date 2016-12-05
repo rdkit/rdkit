@@ -51,9 +51,10 @@ Check if it results in more that one component
 keep correct if >60% query mol
 
 """
-import sys
-from rdkit import Chem, DataStructs
 from itertools import combinations
+import sys
+
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdqueries
 
 
