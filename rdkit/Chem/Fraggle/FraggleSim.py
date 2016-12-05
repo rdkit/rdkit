@@ -54,6 +54,8 @@ keep correct if >60% query mol
 import sys
 from rdkit import Chem, DataStructs
 from itertools import combinations
+from rdkit.Chem import rdqueries
+
 
 # our default rdkit fingerprinter parameters:
 rdkitFpParams = {'maxPath': 5, 'fpSize': 1024, 'nBitsPerHash': 2}
@@ -76,6 +78,7 @@ CYC_SMARTS = Chem.MolFromSmarts("[R1,R2]@[r;!R1]")
 # hence split into two
 cSma1 = Chem.MolFromSmarts("[#0][r].[r][#0]")
 cSma2 = Chem.MolFromSmarts("[#0][r][#0]")
+dummyAtomQuery = rdqueries.AtomNumEqualsQueryAtom(0)
 
 
 def delete_bonds(mol, bonds, ftype, hac):
@@ -100,9 +103,9 @@ def select_fragments(fragments, ftype, hac):
     result = []
     result_hcount = 0
     for fMol in fragments:
-      f = Chem.MolToSmiles(fMol)
+      nAttachments = len(fMol.GetAtomsMatchingQuery(dummyAtomQuery))
       # check if terminal fragment
-      if f.count("*") == 1:
+      if nAttachments == 1:
         fhac = fMol.GetNumAtoms()
 
         # if the fragment is 2 atoms (or less - includes attachment) it is too small
@@ -110,7 +113,7 @@ def select_fragments(fragments, ftype, hac):
         # of pulling out the relevant single cuts as it discards
         # fragments where we only chop off a small part of the input cmpd
         if fhac > 3:
-          result.append(f)
+          result.append(Chem.MolToSmiles(fMol))
           result_hcount += fhac
 
     # needs to be greater than 60% of parent mol
@@ -141,8 +144,7 @@ def select_fragments(fragments, ftype, hac):
     result = []
     result_hcount = 0
     for fMol in fragments:
-      f = Chem.MolToSmiles(fMol)
-      nAttachments = f.count("*")
+      nAttachments = len(fMol.GetAtomsMatchingQuery(dummyAtomQuery))
       # We need to have a fragment that has 1 or 2 attachment points and that has more than 3 atoms
       if nAttachments >= 3:
         continue
@@ -153,10 +155,10 @@ def select_fragments(fragments, ftype, hac):
       if nAttachments == 2:
         # check if a valid cut
         if isValidRingCut(fMol):
-          result.append(f)
+          result.append(Chem.MolToSmiles(fMol))
           result_hcount += fhac
       elif nAttachments == 1:
-        result.append(f)
+        result.append(Chem.MolToSmiles(fMol))
         result_hcount += fhac
 
     # appropriate fragmentation must have 2 components and needs to be greater than 60% of
@@ -173,9 +175,7 @@ def select_fragments(fragments, ftype, hac):
 
 def isValidRingCut(mol):
   """ to check is a fragment is a valid ring cut, it needs to match the
-  SMARTS: [$([#0][r].[r][#0]),$([#0][r][#0])]
-
-  For valid ring cuts, the function returns the number of atoms. Otherwise 0. """
+  SMARTS: [$([#0][r].[r][#0]),$([#0][r][#0])] """
   # At this point, the molecule requires the identification of rings, so we need to sanitize
   Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_SYMMRINGS)
   return mol.HasSubstructMatch(cSma1) or mol.HasSubstructMatch(cSma2)
