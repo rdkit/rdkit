@@ -9,9 +9,8 @@
 
 """
 from __future__ import print_function
-import numpy
 
-# from rdkit.six.moves import xrange
+import numpy
 
 
 class Trainer(object):

@@ -15,7 +15,6 @@ import numpy
 
 from rdkit.ML.DecTree import DecTree
 from rdkit.ML.InfoTheory import entropy
-from rdkit.six.moves import xrange  # @UnresolvedImport
 
 
 def CalcTotalEntropy(examples, nPossibleVals):
@@ -67,11 +66,11 @@ def GenVarTable(examples, nPossibleVals, vars):  # @ReservedAssignment
   res = [None] * nVars
   nFuncVals = nPossibleVals[-1]
 
-  for i in xrange(nVars):
+  for i in range(nVars):
     res[i] = numpy.zeros((nPossibleVals[vars[i]], nFuncVals), 'i')
   for example in examples:
     val = int(example[-1])
-    for i in xrange(nVars):
+    for i in range(nVars):
       res[i][int(example[vars[i]]), val] += 1
 
   return res
@@ -159,7 +158,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
 
     # loop over possible values of the new variable and
     #  build a subtree for each one
-    for val in xrange(nPossibleVals[best]):
+    for val in range(nPossibleVals[best]):
       nextExamples = []
       for example in examples:
         if example[best] == val:
@@ -210,7 +209,7 @@ def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-
   if not kwargs.get('recycleVars', 0):
     nextAttrs.remove(best)
 
-  for val in xrange(nPossibleVals[best]):
+  for val in range(nPossibleVals[best]):
     nextExamples = []
     for example in examples:
       if example[best] == val:

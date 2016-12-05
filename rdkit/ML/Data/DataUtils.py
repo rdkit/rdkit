@@ -61,12 +61,11 @@ from six import integer_types
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
 from rdkit.six.moves import cPickle  # @UnresolvedImport
-from rdkit.six.moves import xrange  # @UnresolvedImport
 from rdkit.utils import fileutils
 
 
 def permutation(nToDo):
-  res = list(xrange(nToDo))
+  res = list(range(nToDo))
   random.shuffle(res, random=random.random)
   return res
 
@@ -89,7 +88,7 @@ def WriteData(outFile, varNames, qBounds, examples):
   outFile.write('# Quantized data from DataUtils\n')
   outFile.write('# ----------\n')
   outFile.write('# Variable Table\n')
-  for i in xrange(len(varNames)):
+  for i in range(len(varNames)):
     outFile.write('# %s %s\n' % (varNames[i], str(qBounds[i])))
   outFile.write('# ----------\n')
   for example in examples:
@@ -121,7 +120,7 @@ def ReadVars(inFile):
     varNames.append(splitLine[0].strip())
     qBounds.append(splitLine[1][:-2])
     inLine = inFile.readline()
-  for i in xrange(len(qBounds)):
+  for i in range(len(qBounds)):
 
     if qBounds[i] != '':
       l = qBounds[i].split(',')
@@ -199,7 +198,7 @@ def ReadGeneralExamples(inFile):
     if expr1.search(inLine) is None:
       resArr = expr2.split(inLine)[:-1]
       if len(resArr) > 1:
-        for i in xrange(1, len(resArr)):
+        for i in range(1, len(resArr)):
           d = resArr[i]
           try:
             resArr[i] = int(d)
@@ -286,7 +285,7 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
   nVars = len(order)
   nPossible = [-1] * nVars
   cols = list(range(nVars))
-  for i in xrange(nVars):
+  for i in range(nVars):
     if nQBounds and nQBounds[i] != 0:
       nPossible[i] = -1
       cols.remove(i)
@@ -295,7 +294,7 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
       cols.remove(i)
 
   nPts = len(data)
-  for i in xrange(nPts):
+  for i in range(nPts):
     for col in cols[:]:
       d = data[i][order[col]]
       if type(d) in numericTypes:
@@ -510,7 +509,7 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
   else:
     tmp = list(inData)
   nOrig = len(tmp)
-  sortOrder = list(xrange(nOrig))
+  sortOrder = list(range(nOrig))
   sortOrder.sort(key=lambda x: tmp[x][col])
   tmp = [tmp[x] for x in sortOrder]
 
@@ -571,11 +570,11 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
       nOthersFinal -= 1
       nFinal -= 1
 
-  others = list(xrange(start)) + list(xrange(finish, nOrig))
+  others = list(range(start)) + list(range(finish, nOrig))
   othersTake = permutation(nOthers)
   others = [others[x] for x in othersTake[:nOthersFinal]]
 
-  targets = list(xrange(start, finish))
+  targets = list(range(start, finish))
   targetsTake = permutation(nWithVal)
   targets = [targets[x] for x in targetsTake[:nTgtFinal]]
 

@@ -7,7 +7,6 @@ from __future__ import print_function
 import random
 
 from rdkit import RDRandom
-from rdkit.six.moves import xrange  # @UnresolvedImport
 
 SeqTypes = (list, tuple)
 
@@ -121,7 +120,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
       else:
         resTest.append(i)
   else:
-    perm = list(xrange(nPts))
+    perm = list(range(nPts))
     random.shuffle(perm, random=random.random)
     nTrain = int(nPts * frac)
 

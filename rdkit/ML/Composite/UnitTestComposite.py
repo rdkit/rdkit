@@ -8,7 +8,7 @@
 """
 import unittest
 import io
-from rdkit.six.moves import cPickle, xrange  # @UnresolvedImport
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
     nPoss = [0, 4]
     composite = Composite.Composite()
     composite.SetQuantBounds(qBounds, nPoss)
-    for i in xrange(len(examples)):
+    for i in range(len(examples)):
       qEx = composite.QuantizeExample(examples[i])
       self.assertEqual(qEx, answers[i])
 
@@ -71,7 +71,7 @@ class TestCase(unittest.TestCase):
 
     self.treeComposite = composite
     self.assertEqual(len(composite), len(self.refCompos))
-    for i in xrange(len(composite)):
+    for i in range(len(composite)):
       t1, c1, e1 = composite[i]  # @UnusedVariable
       t2, c2, e2 = self.refCompos[i]  # @UnusedVariable
       self.assertEqual(e1, e2)

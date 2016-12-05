@@ -7,10 +7,10 @@
   book "Machine Learning"
 
 """
-import numpy
 import math
 
-from rdkit.six.moves import xrange  # @UnresolvedImport
+import numpy
+
 
 # try to get the C versions of these routines
 try:
@@ -83,7 +83,7 @@ def PyInfoGain(varMat):
   overallRes = numpy.sum(varMat, 0)  # indexed by result, S in Mitchell's notation
 
   term2 = 0
-  for i in xrange(len(variableRes)):
+  for i in range(len(variableRes)):
     term2 = term2 + variableRes[i] * InfoEntropy(varMat[i])
   tSum = sum(overallRes)
   if tSum != 0.0:

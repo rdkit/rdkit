@@ -14,7 +14,7 @@ from rdkit.ML.DecTree import BuildQuantTree
 from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import cmp
-from rdkit.six.moves import cPickle, xrange  # @UnresolvedImport
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
@@ -91,11 +91,11 @@ class TestCase(unittest.TestCase):
     # " testing classification "
     self._setupTree1()
     self._setupTree2()
-    for i in xrange(len(self.examples1)):
+    for i in range(len(self.examples1)):
       self.assertEqual(
         self.t1.ClassifyExample(self.examples1[i]), self.examples1[i][-1],
         msg='examples1[%d] misclassified' % i)
-    for i in xrange(len(self.examples2)):
+    for i in range(len(self.examples2)):
       self.assertEqual(
         self.t2.ClassifyExample(self.examples2[i]), self.examples2[i][-1],
         msg='examples2[%d] misclassified' % i)
@@ -109,7 +109,7 @@ class TestCase(unittest.TestCase):
     with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
-    for i in xrange(len(self.examples1)):
+    for i in range(len(self.examples1)):
       self.assertEqual(
         self.t1.ClassifyExample(self.examples1[i]), self.examples1[i][-1],
         'examples1[%d] misclassified' % i)

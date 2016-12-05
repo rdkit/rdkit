@@ -19,8 +19,6 @@ except ImportError:
   from rdkit.piddle import piddle
 import numpy
 
-from six.moves import xrange  # @UnresolvedImport
-
 from . import ClusterUtils
 
 
@@ -80,7 +78,7 @@ class ClusterRenderer(object):
     self.nPts = len(self.pts)
     self.xSpace = float(self.size[0] - 2 * VisOpts.xOffset) / float(self.nPts - 1)
     ySize = self.size[1]
-    for i in xrange(self.nPts):
+    for i in range(self.nPts):
       pt = self.pts[i]
       if self.logScale > 0:
         v = _scaleMetric(pt.GetMetric(), self.logScale)
@@ -248,7 +246,7 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
     v = float(cluster.GetMetric())
   ySpace = float(size[1] - 2 * VisOpts.yOffset) / v
 
-  for i in xrange(nPts):
+  for i in range(nPts):
     pt = pts[i]
     if logScale > 0:
       v = _scaleMetric(pt.GetMetric(), logScale)
