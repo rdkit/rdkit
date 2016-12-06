@@ -151,7 +151,7 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
 
   for j in range(len(mdl)):
     tmp = mdl.GetModel(j)
-    if hasattr(tmp, '_trainIndices') and isinstance(tmp._trainIndices, dict):
+    if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
       tis = {}
       if hasattr(tmp, '_trainIndices'):
         for v in tmp._trainIndices:
