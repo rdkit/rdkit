@@ -90,11 +90,11 @@ def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   else:
     _convfunc = int
 
-  nIndVars = len(dataLines[0].strip()) - 1
+  nIndVars = len(dataLines[0].split()) - 1
   indVarMat = numpy.zeros((nPts, nIndVars), dataType)
   depVarVect = numpy.zeros(nPts, dataType)
   for i in range(nPts):
-    splitLine = dataLines[i].strip()
+    splitLine = dataLines[i].split()
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]
     indVarMat[i, :] = map(_convfunc, splitLine)
