@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0, 1, 0.1, 0], ['p2', 0, 0, 0.1, 1], ['p3', 0, 0, 1.1, 2],
                  ['p4', 0, 1, 1.1, 2], ['p5', 1, 0, 0.1, 2], ['p6', 1, 0, 1.1, 2],
                  ['p7', 1, 1, 0.1, 2], ['p8', 1, 1, 1.1, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 2, 2, 0, 3]
     boundsPerVar = [0, 0, 0, 1, 0]
 
@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0.1, 1, 0.1, 0], ['p2', 0.1, 0, 0.1, 1], ['p3', 0.1, 0, 1.1, 2],
                  ['p4', 0.1, 1, 1.1, 2], ['p5', 1.1, 0, 0.1, 2], ['p6', 1.1, 0, 1.1, 2],
                  ['p7', 1.1, 1, 0.1, 2], ['p8', 1.1, 1, 1.1, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 0, 2, 0, 3]
     boundsPerVar = [0, 1, 0, 1, 0]
 
@@ -48,7 +48,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0, 1, 0.1, 4.0, 0], ['p2', 0, 0, 0.1, 4.1, 1], ['p3', 0, 0, 1.1, 4.2, 2],
                  ['p4', 0, 1, 1.1, 4.2, 2], ['p5', 1, 0, 0.1, 4.2, 2], ['p6', 1, 0, 1.1, 4.2, 2],
                  ['p7', 1, 1, 0.1, 4.2, 2], ['p8', 1, 1, 1.1, 4.0, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 2, 2, 0, 0, 3]
     boundsPerVar = [0, 0, 0, 1, -1, 0]
 
@@ -173,7 +173,7 @@ class TestCase(unittest.TestCase):
                  [1, 0, 0],
                  [0, 0, 1],
                  [1, 1, 0], ]
-    attrs = range(2)
+    attrs = list(range(2))
     nPossibleVals = [2, 2, 2]
     boundsPerVar = [1, 0, 0]
     self.t1 = BuildQuantTree.QuantTreeBoot(examples1, attrs, nPossibleVals, boundsPerVar,

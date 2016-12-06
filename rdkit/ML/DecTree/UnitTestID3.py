@@ -25,7 +25,7 @@ class ID3TestCase(unittest.TestCase):
                 [0, 1, 1, 1, 1], [1, 1, 0, 1, 1], [1, 0, 1, 0, 1], [2, 1, 0, 1, 0]]
 
     data = MLData.MLQuantDataSet(examples)
-    attrs = range(0, data.GetNVars())
+    attrs = list(range(0, data.GetNVars()))
     t1 = ID3.ID3Boot(data.GetAllData(), attrs, data.GetNPossibleVals())
     self.t1 = t1
     self.examples = examples
@@ -45,7 +45,7 @@ class ID3TestCase(unittest.TestCase):
                 [1, 1, 0, 2], [1, 1, 1, 0]]
 
     data = MLData.MLQuantDataSet(examples)
-    attrs = range(0, data.GetNVars())
+    attrs = list(range(0, data.GetNVars()))
     t1 = ID3.ID3Boot(data.GetAllData(), attrs, data.GetNPossibleVals())
     self.t1 = t1
     self.examples = examples
@@ -94,7 +94,7 @@ class ID3TestCase(unittest.TestCase):
                 [0, 1, 1, 1, 1], [1, 1, 0, 1, 1], [1, 0, 1, 0, 1], [2, 1, 0, 1, 0]]
 
     data = MLData.MLQuantDataSet(examples)
-    attrs = range(0, data.GetNVars())
+    attrs = list(range(0, data.GetNVars()))
     t1 = ID3.ID3Boot(data.GetAllData(), attrs, data.GetNPossibleVals())
     self.t1 = t1
     self.examples = examples
@@ -118,7 +118,7 @@ class ID3TestCase(unittest.TestCase):
                 [1, 1, 0, 2], [1, 1, 1, 0]]
 
     data = MLData.MLQuantDataSet(examples)
-    attrs = range(0, data.GetNVars())
+    attrs = list(range(0, data.GetNVars()))
     t1 = ID3.ID3Boot(data.GetAllData(), attrs, data.GetNPossibleVals())
     self.t1 = t1
     self.examples = examples

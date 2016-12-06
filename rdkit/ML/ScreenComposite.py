@@ -635,10 +635,10 @@ def PrepareDataFromDetails(model, details, data, verbose=0):
                                                indicesToUse=range(data.GetNPts()), indicesOnly=1)
       testIdx.extend(trainIdx)
     else:
-      testIdx = range(data.GetNPts())
+      testIdx = list(range(data.GetNPts()))
     trainIdx = []
   else:
-    testIdx = range(data.GetNPts())
+    testIdx = list(range(data.GetNPts()))
     trainIdx = []
   if hasattr(details, 'doTraining') and details.doTraining:
     testIdx, trainIdx = trainIdx, testIdx
@@ -1353,7 +1353,7 @@ if __name__ == '__main__':
     screenResults = [None] * nModels
     dataSets = [None] * nModels
     message('-> Constructing and screening data sets')
-    testIdx = range(data.GetNPts())
+    testIdx = list(range(data.GetNPts()))
     trainIdx = testIdx
 
     for modelIdx in range(nModels):

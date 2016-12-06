@@ -59,7 +59,7 @@ class Network:
        this sets the connections, but does not assign weights
 
     """
-    nodeList = range(self.numInputNodes)
+    nodeList = list(range(self.numInputNodes))
     nConnections = 0
     for layer in range(self.numHiddenLayers):
       for i in self.layerIndices[layer + 1]:

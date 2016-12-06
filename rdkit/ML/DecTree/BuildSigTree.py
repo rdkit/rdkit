@@ -151,7 +151,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
           picks = _GenerateRandomEnsemble(random, len(ensemble))
           availBits = list(numpy.take(ensemble, picks))
         else:
-          availBits = range(len(ensemble))
+          availBits = list(range(len(ensemble)))
       else:
         availBits = _GenerateRandomEnsemble(random, nBits)
     else:

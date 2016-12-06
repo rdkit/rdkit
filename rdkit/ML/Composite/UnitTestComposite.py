@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
                      'isferro']
     self.qBounds = [[], [1.89, 3.53], [], [], [], [0.55, 0.73], [11.81, 14.52], []]
     self.nPoss = [0, 3, 2, 2, 2, 3, 3, 2]
-    self.attrs = range(1, len(self.varNames) - 1)
+    self.attrs = list(range(1, len(self.varNames) - 1))
     from rdkit.ML.Data import DataUtils
     DataUtils.InitRandomNumbers((23, 43))
 

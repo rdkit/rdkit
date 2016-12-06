@@ -165,7 +165,7 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
     needsQuant = 0
 
   if not indices:
-    indices = range(len(data))
+    indices = list(range(len(data)))
   nTrueActives = 0
   for i in indices:
     if errorEstimate:
@@ -432,7 +432,7 @@ if __name__ == '__main__':
       if details.doTraining:
         testIdx, trainIdx = trainIdx, testIdx
     else:
-      testIdx = range(tmpD.GetNPts())
+      testIdx = list(range(tmpD.GetNPts()))
 
     message('screening %d examples' % (len(testIdx)))
     nTrueActives, screenRes = ScreenModel(model, descs, tmpD, picking=details.activeTgt,

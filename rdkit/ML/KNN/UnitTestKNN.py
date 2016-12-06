@@ -34,7 +34,7 @@ class TestCase(unittest.TestCase):
     examples = data.GetNamedData()
     npvals = data.GetNPossibleVals()  # @UnusedVariable
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     numNeigh = 11
     metric = DistFunctions.EuclideanDist
     mdl = KNNModel.KNNModel(numNeigh, attrs, metric)
@@ -53,7 +53,7 @@ class TestCase(unittest.TestCase):
     examples = data.GetNamedData()
     npvals = data.GetNPossibleVals()
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     numNeigh = 11
     mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, numNeigh, silent=1)
     self.assertAlmostEqual(err, 0.01075, 4)
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
     data = DataUtils.TextFileToData(fName)
     examples = data.GetNamedData()
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     numNeigh = 4
     metric = DistFunctions.EuclideanDist
     mdl = KNNRegressionModel.KNNRegressionModel(numNeigh, attrs, metric)
@@ -114,7 +114,7 @@ class TestCase(unittest.TestCase):
     examples = data.GetNamedData()
     npvals = data.GetNPossibleVals()
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     numNeigh = 11
     _, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, numNeigh, silent=1,
                                                  modelBuilder=CrossValidate.makeRegressionModel)

@@ -247,7 +247,7 @@ class Composite(object):
 
     """
     if not onlyModels:
-      onlyModels = range(len(self))
+      onlyModels = list(range(len(self)))
 
     votes = [-1] * len(self)
     for i in onlyModels:
@@ -301,7 +301,7 @@ class Composite(object):
       quantExample = []
 
     if not onlyModels:
-      onlyModels = range(len(self))
+      onlyModels = list(range(len(self)))
     self.modelVotes = self.CollectVotes(example, quantExample, appendExample=appendExample,
                                         onlyModels=onlyModels)
 

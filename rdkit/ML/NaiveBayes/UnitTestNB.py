@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     examples = data.GetNamedData()
 
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     npvals = [0] + [3] * nvars + [2]
     qBounds = [0] + [2] * nvars + [0]
     mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds, silent=True)
@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
     examples = data.GetNamedData()
 
     nvars = data.GetNVars()
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     npvals = [0] + [3] * nvars + [2]
     qBounds = [0] + [2] * nvars + [0]
     mod, err = CrossValidate.CrossValidationDriver(examples, attrs, npvals, qBounds,
@@ -97,7 +97,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nvars = len(examples[0]) - 2
-    attrs = range(1, nvars + 1)
+    attrs = list(range(1, nvars + 1))
     npvals = [0] + [2] * nvars + [2]
     qBounds = [0] + [0] * nvars + [0]
     mdl = CrossValidate.makeNBClassificationModel(examples, attrs, npvals, qBounds)
@@ -118,7 +118,7 @@ class TestCase(unittest.TestCase):
       newEg[1] = bv
       bitEx.append(newEg)
 
-    attrs = range(nvars)
+    attrs = list(range(nvars))
     mdl2 = CrossValidate.makeNBClassificationModel(bitEx, attrs, npvals, qBounds, useSigs=True)
     nWrong = 0
     for eg in bitEx:
@@ -168,7 +168,7 @@ class TestCase(unittest.TestCase):
       newEg[1] = bv
       bitEx.append(newEg)
 
-    attrs = range(origNVars)
+    attrs = list(range(origNVars))
     mdl2 = CrossValidate.makeNBClassificationModel(bitEx, attrs, npvals, qBounds, useSigs=True)
     nWrong = 0
     for eg in bitEx:
@@ -203,7 +203,7 @@ class TestCase(unittest.TestCase):
       newEg[1] = bv
       bitEx.append(newEg)
 
-    attrs = range(nvars)
+    attrs = list(range(nvars))
     mdl2 = CrossValidate.makeNBClassificationModel(bitEx, attrs, npvals, qBounds, useSigs=True,
                                                    useCMIM=2)
     nWrong = 0

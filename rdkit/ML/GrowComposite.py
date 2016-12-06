@@ -187,7 +187,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
   message('\t%d descriptors' % (len(trainExamples[0]) - 2))
   nVars = data.GetNVars()
   nPossibleVals = composite.nPossibleVals
-  attrs = range(1, nVars + 1)
+  attrs = list(range(1, nVars + 1))
 
   if details.useTrees:
     from rdkit.ML.DecTree import CrossValidate, PruneTree

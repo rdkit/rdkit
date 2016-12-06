@@ -408,7 +408,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   else:
     testExamples = []
     testIdx = []
-    trainIdx = range(len(namedExamples))
+    trainIdx = list(range(len(namedExamples)))
     trainExamples = namedExamples
 
   if details.filterFrac != 0.0:
@@ -455,7 +455,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   message('Training with %d examples' % (nExamples))
 
   nVars = data.GetNVars()
-  attrs = range(1, nVars + 1)
+  attrs = list(range(1, nVars + 1))
   nPossibleVals = data.GetNPossibleVals()
   for i in range(1, len(nPossibleVals)):
     if nPossibleVals[i - 1] == -1:
