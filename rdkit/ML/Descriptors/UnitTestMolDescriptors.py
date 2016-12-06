@@ -8,13 +8,13 @@ import os.path
 import unittest
 
 import numpy
-from six import BytesIO, StringIO
 
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import MoleculeDescriptors, Descriptors
 from rdkit.TestRunner import redirect_stdout
-from six.moves import cPickle  # @UnresolvedImport
+from rdkit.six import BytesIO, StringIO
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):

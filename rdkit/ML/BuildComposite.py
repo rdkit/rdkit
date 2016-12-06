@@ -212,7 +212,7 @@ from rdkit.ML import ScreenComposite
 from rdkit.ML.Composite import Composite, BayesComposite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-from six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()

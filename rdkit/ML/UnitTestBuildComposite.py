@@ -18,7 +18,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import BuildComposite
-from six.moves import cPickle as pickle  # @UnresolvedImport
+from rdkit.ix.moves import cPickle as pickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):

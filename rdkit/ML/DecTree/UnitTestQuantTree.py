@@ -7,12 +7,11 @@ from __future__ import print_function
 import io
 import unittest
 
-from six import StringIO
-
 from rdkit import RDConfig
 from rdkit.ML.DecTree import BuildQuantTree
 from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 from rdkit.six import cmp
 from rdkit.six.moves import cPickle  # @UnresolvedImport
 

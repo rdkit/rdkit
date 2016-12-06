@@ -7,10 +7,9 @@
 import doctest
 import unittest
 
-from six import StringIO
-
 from rdkit.ML.Data import SplitData, DataUtils
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument

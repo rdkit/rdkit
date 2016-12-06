@@ -178,7 +178,7 @@ def Usage():
 if __name__ == '__main__':
   import sys
   import getopt
-  from six.moves import cPickle  # @UnresolvedImport
+  from rdkit.six.moves import cPickle  # @UnresolvedImport
   from rdkit.ML.Data import DataUtils
 
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')

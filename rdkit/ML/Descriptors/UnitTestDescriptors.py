@@ -6,10 +6,9 @@
 """
 import unittest
 
-from six import StringIO
-
 from rdkit.ML.Descriptors import CompoundDescriptors
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 class TestCase(unittest.TestCase):

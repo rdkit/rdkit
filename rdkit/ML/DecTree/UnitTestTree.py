@@ -8,12 +8,11 @@ import copy
 import os
 import unittest
 
-from six import StringIO
-
 from rdkit import RDConfig
 from rdkit.ML.DecTree import Tree
 from rdkit.TestRunner import redirect_stdout
-from six.moves import cPickle  # @UnresolvedImport
+from rdkit.six import StringIO
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class TreeTestCase(unittest.TestCase):

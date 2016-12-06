@@ -14,7 +14,7 @@ import unittest
 from rdkit.ML.Neural import Network, Trainers
 from rdkit.ML.Neural.CrossValidate import CrossValidate, CrossValidationDriver
 from rdkit.TestRunner import redirect_stdout
-from six import StringIO
+from rdkit.six import StringIO
 
 
 class TrainerTestCase(unittest.TestCase):

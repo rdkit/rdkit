@@ -16,7 +16,7 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.ML import AnalyzeComposite
-from six.moves import cPickle as pickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):

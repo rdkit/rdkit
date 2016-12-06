@@ -13,8 +13,8 @@ from rdkit.DataStructs.VectCollection import VectCollection
 from rdkit.ML import InfoTheory
 from rdkit.ML.DecTree.BuildSigTree import BuildSigTree, _GenerateRandomEnsemble
 from rdkit.ML.DecTree.SigTree import SigTreeNode
-from six import StringIO
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 class TestCase(unittest.TestCase):

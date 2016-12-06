@@ -8,8 +8,6 @@ import unittest
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 
-from six import BytesIO
-
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem import Descriptors
@@ -18,7 +16,8 @@ from rdkit.ML.Data import DataUtils
 from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from rdkit.ML.ModelPackage import Packager, PackageUtils
 from rdkit.ML.ModelPackage.Packager import ModelPackage
-from six.moves import cPickle  # @UnresolvedImport
+from rdkit.six import BytesIO
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 def feq(a, b, tol=1e-4):

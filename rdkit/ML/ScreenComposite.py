@@ -120,8 +120,9 @@ from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-from six.moves import cPickle  # @UnresolvedImport
-from six.moves import input  # @UnresolvedImport
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import input  # @UnresolvedImport
+
 
 try:
   from PIL import Image, ImageDraw

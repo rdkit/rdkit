@@ -8,19 +8,24 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from six import StringIO
-from rdkit.TestRunner import redirect_stdout
 """unit testing code for clustering
 
 """
+
 import unittest
+
+import numpy
+
 from rdkit.ML.Cluster import ClusterUtils
 from rdkit.ML.Cluster import Clusters
+from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
+
+
 try:
   from rdkit.ML.Cluster import Murtagh
 except ImportError:
   Murtagh = None
-import numpy
 
 
 class TestCase(unittest.TestCase):

@@ -56,10 +56,10 @@ import random
 import re
 
 import numpy
-from six import integer_types
 
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
+from rdkit.six import integer_types
 from rdkit.six.moves import cPickle  # @UnresolvedImport
 from rdkit.utils import fileutils
 

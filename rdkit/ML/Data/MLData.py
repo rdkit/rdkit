@@ -11,7 +11,9 @@ import copy
 import math
 
 import numpy
-from six import integer_types
+
+from rdkit.six import integer_types
+
 
 numericTypes = integer_types + (float, )
 

@@ -5,10 +5,9 @@
 import os
 import unittest
 
-from six import StringIO
-
 from rdkit.ML.DecTree import ID3, PruneTree, CrossValidate
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 def feq(a, b, tol=1e-4):

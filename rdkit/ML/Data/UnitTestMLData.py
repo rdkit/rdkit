@@ -8,10 +8,9 @@ import contextlib
 import random
 import unittest
 
-from six import StringIO
-
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData, DataUtils
+from rdkit.six import StringIO
 from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
