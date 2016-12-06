@@ -707,10 +707,10 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
                                 pickleClass=DataStructs.ExplicitBitVect)
     else:
       data = details.GetDataSet()
-#   if details.threshold > 0.0:
-#     partialVote = 1
-#   else:
-#     partialVote = 0
+  if details.threshold > 0.0:
+    details.partialVote = 1
+  else:
+    details.partialVote = 0
 
   if type(models) not in [list, tuple]:
     models = (models, )
