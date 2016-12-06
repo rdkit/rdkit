@@ -351,13 +351,8 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
-#ifdef RDK_32BIT_BUILD
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, int sanitizeOps,
+MolOps::SanitizeFlags sanitizeMol(ROMol &mol,  boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
-#else
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, unsigned int sanitizeOps,
-                                  bool catchErrors) {
-#endif
   RWMol &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
   if (catchErrors) {
