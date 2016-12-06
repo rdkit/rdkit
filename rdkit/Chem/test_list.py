@@ -32,6 +32,7 @@ tests = [
   ("python", "__init__.py", {}),
   ("python", "PandasTools.py", {}),
   ("python", "UnitTestPandasTools.py", {}),
+  ("python", "UnitTestPeriodicTable.py", {}),
   ("python", "test_list.py", {'dir': 'AtomPairs'}),
   ("python", "test_list.py", {'dir': 'ChemUtils'}),
   ("python", "test_list.py", {'dir': 'EState'}),
