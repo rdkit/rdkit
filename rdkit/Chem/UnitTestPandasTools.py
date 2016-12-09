@@ -318,7 +318,8 @@ class TestWriteSDF(unittest.TestCase):
     try:
       filename = os.path.join(dirname, "test.sdf.gz")
       PandasTools.WriteSDF(self.df, filename)
-      s = gzip.open(filename).read()
+      with gzip.open(filename) as f:
+        s = f.read()
       if PY3:
         s = s.decode('utf-8')
       self.assertEqual(s.count("\n$$$$\n"), 2)
