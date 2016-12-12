@@ -21,8 +21,6 @@
 from rdkit import Chem
 from rdkit.Chem.Pharm2D import Utils
 
-import types
-
 
 class MatchError(Exception):
   pass
@@ -58,7 +56,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   """
   assert sigFactory.shortestPathsOnly, 'not implemented for non-shortest path signatures'
   nPts, featCombo, scaffold = sigFactory.GetBitInfo(bitIdx)
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('info:', nPts)
     print('\t', featCombo)
     print('\t', scaffold)
@@ -67,7 +65,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     matchingAtoms = sigFactory.GetMolFeats(mol)
 
   # find the atoms that match each features
-  fams = sigFactory.GetFeatFamilies()
+  # fams = sigFactory.GetFeatFamilies()
   choices = []
   for featIdx in featCombo:
     tmp = matchingAtoms[featIdx]
@@ -76,25 +74,24 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose:
+      if _verbose:  # pragma: nocover
         print('no match found for feature:', featIdx)
       return []
 
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('choices:')
     print(choices)
 
   if dMat is None:
     dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
-  matches = []
   distsToCheck = Utils.nPointDistDict[nPts]
 
   protoPharmacophores = Utils.GetAllCombinations(choices, noDups=1)
 
   res = []
   for protoPharm in protoPharmacophores:
-    if _verbose:
+    if _verbose:  # pragma: nocover
       print('protoPharm:', protoPharm)
     for i in range(len(distsToCheck)):
       dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
@@ -106,12 +103,12 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
       #
       idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
       dist = dMat[idx1, idx2]
-      if _verbose:
+      if _verbose:  # pragma: nocover
         print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
       if dist < dLow or dist >= dHigh:
         break
     else:
-      if _verbose:
+      if _verbose:  # pragma: nocover
         print('Found one')
       # we found it
       protoPharm.sort()
@@ -123,32 +120,29 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   return res
 
 
-if __name__ == '__main__':
-  from rdkit import Chem
+def _exampleCode():
+  import os
+  from rdkit import RDConfig
+  from rdkit.Chem import ChemicalFeatures
   from rdkit.Chem.Pharm2D import SigFactory, Generate
 
-  factory = SigFactory.SigFactory()
+  fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Pharm2D', 'test_data', 'BaseFeatures.fdef')
+  featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+  factory = SigFactory.SigFactory(featFactory)
   factory.SetBins([(1, 2), (2, 5), (5, 8)])
-  factory.SetPatternsFromSmarts(['O', 'N'])
-  factory.SetMinCount(2)
-  factory.SetMaxCount(3)
-  sig = factory.GetSignature()
+  factory.Init()
 
   mol = Chem.MolFromSmiles('OCC(=O)CCCN')
-  Generate.Gen2DFingerprint(mol, sig)
+  sig = Generate.Gen2DFingerprint(mol, factory)
   print('onbits:', list(sig.GetOnBits()))
 
   _verbose = 0
   for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig, bit, mol)
+    atoms = GetAtomsMatchingBit(factory, bit, mol)
     print('\tBit %d: ' % (bit), atoms)
 
-  print('--------------------------')
-  sig = factory.GetSignature()
-  sig.SetIncludeBondOrder(1)
-  Generate.Gen2DFingerprint(mol, sig)
-  print('onbits:', list(sig.GetOnBits()))
+  print('finished')
 
-  for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig, bit, mol)
-    print('\tBit %d: ' % (bit), atoms)
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

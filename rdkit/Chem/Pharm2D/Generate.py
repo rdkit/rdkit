@@ -34,8 +34,10 @@
 
 """
 from __future__ import print_function
+
 from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 _verbose = 0
@@ -45,7 +47,7 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
   """  Internal use only
 
   """
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('match:', match)
   nPts = len(match)
   distsToCheck = Utils.nPointDistDict[nPts]
@@ -70,7 +72,7 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
     dist[i] = d
 
   idx = sigFactory.GetBitIdx(featureSet, dist, sortIndices=False)
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('\t', dist, minD, maxD, idx)
 
   if sigFactory.useCounts:
@@ -103,14 +105,14 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   if not isinstance(sigFactory, SigFactory.SigFactory):
     raise ValueError('bad factory')
   featFamilies = sigFactory.GetFeatFamilies()
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('* feat famillies:', featFamilies)
   nFeats = len(featFamilies)
   minCount = sigFactory.minPointCount
   maxCount = sigFactory.maxPointCount
-  if maxCount > 3:
-    logger.warning(
-      ' Pharmacophores with more than 3 points are not currently supported.\nSetting maxCount to 3.')
+  if maxCount > 3:  # pragma: nocover
+    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\n' +
+                   'Setting maxCount to 3.')
     maxCount = 3
 
   # generate the molecule's distance matrix, if required
@@ -127,7 +129,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
 
   # generate the matches:
   featMatches = sigFactory.GetMolFeats(mol)
-  if _verbose:
+  if _verbose:  # pragma: nocover
     print('  featMatches:', featMatches)
 
   sig = sigFactory.GetSignature()
@@ -144,7 +146,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
     matchPerms = [featMatches[x] for x in perm]
-    if _verbose:
+    if _verbose:  # pragma: nocover
       print('\n->Perm: %s' % (str(perm)))
       print('    matchPerms: %s' % (str(matchPerms)))
 
@@ -153,7 +155,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     for i, entry in enumerate(matchesToMap):
       entry = [x[1] for x in entry]
       matchesToMap[i] = entry
-    if _verbose:
+    if _verbose:  # pragma: nocover
       print('    mtM:', matchesToMap)
 
     for match in matchesToMap:
