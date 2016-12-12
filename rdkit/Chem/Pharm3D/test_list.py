@@ -1,6 +1,7 @@
 tests = [
-  ("python", "EmbedLib.py", {}),
+  #   ("python", "EmbedLib.py", {}),
   ("python", "UnitTestEmbed.py", {}),
+  ("python", "UnitTestExcludedVolume.py", {}),
   ("python", "UnitTestPharmacophore.py", {}),
 ]
 
