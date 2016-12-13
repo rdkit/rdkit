@@ -82,6 +82,84 @@ python::tuple fragmentMolHelper2(const RDKit::ROMol& mol,
   return python::tuple(pyres);
 }
 
+template<class T>
+std::vector<unsigned int> ConvertToVect(T bbs) {
+  std::vector<unsigned int> vect;
+  size_t num = python::extract<unsigned int>(bbs.attr("__len__")());
+  vect.reserve(num);
+  for(size_t i=0; i<num; ++i) {
+    vect.push_back(python::extract<unsigned int>(bbs[i]));
+  }
+  return vect;
+}
+
+python::tuple fragmentMolHelper3(const RDKit::ROMol& mol,
+                                 python::list ob,
+                                 unsigned int minCuts,
+                                 unsigned int maxCuts,
+                                 unsigned int maxCutBonds,
+                                 bool resultsAsMols) {
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
+  std::vector<unsigned int> v= ConvertToVect(ob);
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts, maxCutBonds);
+  python::list pyres;
+  if (ok) {
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
+                               RDKit::ROMOL_SPTR> >::const_iterator pr =
+             tres.begin();
+         pr != tres.end(); ++pr) {
+      python::list lres;
+      if (resultsAsMols) {
+        lres.append(pr->first);
+        lres.append(pr->second);
+      } else {
+        if (pr->first) {
+          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        } else {
+          lres.append("");
+        }
+        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+      }
+      pyres.append(python::tuple(lres));
+    }
+  }
+  return python::tuple(pyres);
+}
+
+python::tuple fragmentMolHelper4(const RDKit::ROMol& mol,
+                                 python::tuple ob,
+                                 unsigned int minCuts,
+                                 unsigned int maxCuts,
+                                 unsigned int maxCutBonds,
+                                 bool resultsAsMols) {
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
+  std::vector<unsigned int> v= ConvertToVect(ob);
+
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts, maxCutBonds);
+  python::list pyres;
+  if (ok) {
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
+                               RDKit::ROMOL_SPTR> >::const_iterator pr =
+             tres.begin();
+         pr != tres.end(); ++pr) {
+      python::list lres;
+      if (resultsAsMols) {
+        lres.append(pr->first);
+        lres.append(pr->second);
+      } else {
+        if (pr->first) {
+          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        } else {
+          lres.append("");
+        }
+        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+      }
+      pyres.append(python::tuple(lres));
+    }
+  }
+  return python::tuple(pyres);
+}
+
 }
 
 BOOST_PYTHON_MODULE(rdMMPA) {
@@ -103,6 +181,24 @@ BOOST_PYTHON_MODULE(rdMMPA) {
                python::arg("maxCuts"),
                python::arg("maxCutBonds"),
                python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
+               python::arg("resultsAsMols") = true),
+              docString.c_str());
+  
+  python::def("FragmentMol", fragmentMolHelper3,
+              (python::arg("mol"),
+               python::arg("bondsToCut"),
+               python::arg("minCuts")=1,
+               python::arg("maxCuts")=3,
+               python::arg("maxCutBonds")=20,
+               python::arg("resultsAsMols") = true),
+              docString.c_str());
+
+  python::def("FragmentMol", fragmentMolHelper4,
+              (python::arg("mol"),
+               python::arg("bondsToCut"),
+               python::arg("minCuts")=1,
+               python::arg("maxCuts")=3,
+               python::arg("maxCutBonds")=20,
                python::arg("resultsAsMols") = true),
               docString.c_str());
   

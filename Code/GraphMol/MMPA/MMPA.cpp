@@ -411,5 +411,31 @@ bool fragmentMol(const ROMol& mol,
   processCuts(0, minCuts, maxCuts, bonds_selected, matching_bonds, mol, res);
   return true;
 }
+
+bool fragmentMol(const ROMol& mol,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res,
+                 const std::vector<unsigned int>& bondsToCut,
+                 unsigned int minCuts,
+                 unsigned int maxCuts,
+                 unsigned int maxCutBonds) {
+  std::vector<BondVector_t> matching_bonds;  // List of matched query's bonds
+
+  BOOST_FOREACH(unsigned int i, bondsToCut) {
+    const Bond *bond = mol.getBondWithIdx(i);
+    if(bond) {
+      BondVector_t bonds;
+      unsigned int a1 = bond->getBeginAtomIdx();
+      unsigned int a2 = bond->getEndAtomIdx();
+      bonds.push_back( std::pair<unsigned int, unsigned int>(a1, a2) );
+      matching_bonds.push_back(bonds);
+    }
+  }
+
+  // loop to generate every cut in the molecule
+  BondVector_t bonds_selected;
+  processCuts(0, minCuts, maxCuts, bonds_selected, matching_bonds, mol, res);
+  return true;
+}
+
 }
 }  // namespace RDKit
