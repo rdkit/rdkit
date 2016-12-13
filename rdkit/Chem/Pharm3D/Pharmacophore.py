@@ -114,7 +114,7 @@ class Pharmacophore:
     self._boundsMat2D[i, j] = val
 
   def __str__(self):
-    res = '\n' + ' ' * 14
+    res = ' ' * 14
     for i, iFeat in enumerate(self._feats):
       res += '%12s ' % iFeat.GetFamily()
     res += '\n'
