@@ -27,6 +27,7 @@ extern "C" {
 
 extern int RunStruchk(struct reaccs_molecule_t **mpp,
                       struct data_line_t *data_list);
+extern void ClearParameters();
 }
 
 // already defined in struchk.c
@@ -367,7 +368,14 @@ namespace AvalonTools {
   }
 
   int initCheckMol(const std::string &optString) {
-    return InitCheckMol((char *) optString.c_str());
+    // n.b. always add a cr to the end for safety
+    char *optBuffer = new char[optString.size()+2];
+    optString.copy(optBuffer, optString.size());
+    optBuffer[optString.size()-1] = '\n';
+    optBuffer[optString.size()] = '\0';
+    int res = InitCheckMol(optBuffer);
+    delete [] optBuffer;
+    return res;
   }
 
   std::string getCheckMolLog()
@@ -432,7 +440,8 @@ namespace AvalonTools {
 
 
   void closeCheckMolFiles() {
-  	CloseOpenFiles();
+    ClearParameters();
+    CloseOpenFiles();
   }
 
 }
