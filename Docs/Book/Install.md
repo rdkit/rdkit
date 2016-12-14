@@ -59,8 +59,11 @@ Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set i
 cmake command.
 
 	PYROOT=<path to miniconda3>
-	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m ..
-
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m  \
+      -DRDK_BUILD_AVALON_SUPPORT=ON \
+      -DRDK_BUILD_CAIRO_SUPPORT=ON \
+      -DRDK_BUILD_INCHI_SUPPORT=ON \
+	  ..
 Once "make" and "make install" completed successfully, use the following command to run the tests:
 
 	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
