@@ -7,6 +7,7 @@ _share = os.path.join(r'${CMAKE_INSTALL_PREFIX}', r'${RDKit_ShareDir}')
 RDDataDir=os.path.join(_share,'Data')
 RDDocsDir=os.path.join(_share,'Docs')
 RDProjDir=os.path.join(_share,'Projects')
+RDContribDir=os.path.join(_share,'Contrib')
 ")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py 
         DESTINATION ${RDKit_PythonDir})

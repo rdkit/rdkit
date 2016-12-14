@@ -25,8 +25,9 @@ namespace {
 
 std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
                               bool negate);
-std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate);
+std::string _recurseBondSmarts(const Bond *bond,
+                               const QueryBond::QUERYBOND_QUERY *node,
+                               bool negate, int atomToLeftIdx);
 
 bool _checkForOrAndLowAnd(std::string smarts) {
   int orLoc, andLoc;
@@ -238,7 +239,11 @@ std::string getRecursiveStructureQuerySmarts(
   return res;
 }
 
-std::string getBondSmartsSimple(const BOND_EQUALS_QUERY *bquery) {
+std::string getBondSmartsSimple(const Bond *bond,
+                                const BOND_EQUALS_QUERY *bquery,
+                                int atomToLeftIdx) {
+  PRECONDITION(bond, "bad bond");
+
   PRECONDITION(bquery, "bad query");
   std::string descrip = bquery->getDescription();
   std::string res = "";
@@ -265,6 +270,12 @@ std::string getBondSmartsSimple(const BOND_EQUALS_QUERY *bquery) {
       res += "#";
     } else if (val == static_cast<int>(Bond::AROMATIC)) {
       res += ":";
+    } else if (val == static_cast<int>(Bond::DATIVE)) {
+      if (atomToLeftIdx >= 0 &&
+          bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx))
+        res = "->";
+      else
+        res = "<-";
     }
   } else {
     std::stringstream msg;
@@ -394,8 +405,9 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   return res;
 }
 
-std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
-                               bool negate) {
+std::string _recurseBondSmarts(const Bond *bond,
+                               const QueryBond::QUERYBOND_QUERY *node,
+                               bool negate, int atomToLeftIdx) {
   // the algorithm goes something like this
   // - recursively get the smarts for the child query bonds
   // - combine the child smarts using the following rules:
@@ -415,6 +427,7 @@ std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
   // rules
   //   NOT (a AND b) = ( NOT (a)) AND ( NOT (b))
   //   NOT (a OR b) = ( NOT (a)) OR ( NOT (b))
+  PRECONDITION(bond, "bad bond");
   PRECONDITION(node, "bad node");
   std::string descrip = node->getDescription();
   std::string res = "";
@@ -442,7 +455,7 @@ std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
     // child1 is  simple node get the smarts directly
     const BOND_EQUALS_QUERY *tchild =
         static_cast<const BOND_EQUALS_QUERY *>(child1);
-    csmarts1 = getBondSmartsSimple(tchild);
+    csmarts1 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -450,7 +463,7 @@ std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
   } else {
     // child1 is a composite node recurse further
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseBondSmarts(child1, nneg);
+    csmarts1 = _recurseBondSmarts(bond, child1, nneg, atomToLeftIdx);
   }
 
   // now deal with the second child
@@ -458,7 +471,7 @@ std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
     // child 2 is a simple node
     const BOND_EQUALS_QUERY *tchild =
         static_cast<const BOND_EQUALS_QUERY *>(child2);
-    csmarts2 = getBondSmartsSimple(tchild);
+    csmarts2 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
@@ -466,7 +479,7 @@ std::string _recurseBondSmarts(const QueryBond::QUERYBOND_QUERY *node,
   } else {
     // child two is a composite node - recurse
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts1 = _recurseBondSmarts(child2, nneg);
+    csmarts1 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx);
   }
 
   // ok if we have a negation and we have to change the underlying logic, since
@@ -511,7 +524,7 @@ std::string FragmentSmartsConstruct(ROMol &mol, unsigned int atomIdx,
       }
       case Canon::MOL_STACK_BOND: {
         QueryBond *qbnd = static_cast<QueryBond *>(msCI->obj.bond);
-        res << SmartsWrite::GetBondSmarts(qbnd);
+        res << SmartsWrite::GetBondSmarts(qbnd, msCI->number);
         break;
       }
       case Canon::MOL_STACK_RING: {
@@ -572,7 +585,7 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
 
 // this is the used when converting a SMILES or
 // non-query bond from a mol file into SMARTS.
-std::string getNonQueryBondSmarts(const QueryBond *qbond) {
+std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   PRECONDITION(qbond, "bad bond");
   PRECONDITION(!qbond->hasQuery(), "bond should not have query");
   std::string res;
@@ -659,7 +672,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   return res;
 }
 
-std::string GetBondSmarts(const QueryBond *bond) {
+std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
   PRECONDITION(bond, "bad bond");
   std::string res = "";
 
@@ -667,7 +680,7 @@ std::string GetBondSmarts(const QueryBond *bond) {
   // it is possible that we are regular single bond and we don't need to write
   // anything
   if (!bond->hasQuery()) {
-    res = getNonQueryBondSmarts(bond);
+    res = getNonQueryBondSmarts(bond, atomToLeftIdx);
     // BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
     return res;
   }
@@ -683,7 +696,7 @@ std::string GetBondSmarts(const QueryBond *bond) {
 
   if ((descrip == "BondAnd") || (descrip == "BondOr")) {
     // composite query
-    res = _recurseBondSmarts(query, query->getNegation());
+    res = _recurseBondSmarts(bond, query, query->getNegation(), atomToLeftIdx);
   } else {
     // simple query
     if (query->getNegation()) {
@@ -691,7 +704,7 @@ std::string GetBondSmarts(const QueryBond *bond) {
     }
     const BOND_EQUALS_QUERY *tquery =
         static_cast<const BOND_EQUALS_QUERY *>(query);
-    res += getBondSmartsSimple(tquery);
+    res += getBondSmartsSimple(bond,tquery, atomToLeftIdx);
   }
   return res;
 }

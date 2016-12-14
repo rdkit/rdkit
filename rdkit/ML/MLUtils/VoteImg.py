@@ -1,16 +1,16 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2000  greg Landrum
 #
-""" functionality for generating an image showing the results of a composite model voting on a data set
+""" functionality for generating an image showing the results of a composite model
+voting on a data set
 
   Uses *Numeric* and *PIL*
 
 """
 from __future__ import print_function
-import numpy
+
 from PIL import Image, ImageDraw
+import numpy
 
 
 def CollectVotes(composite, data, badOnly):
@@ -36,7 +36,7 @@ def CollectVotes(composite, data, badOnly):
 
         4) the number of miscounted examples
 
-    
+
     **Notes**
 
 pp      - the expanded list of vote details consists of:
@@ -46,14 +46,14 @@ pp      - the expanded list of vote details consists of:
         where _res_ is the predicted results and _trueRes_ is the actual result.
         The extra zero is included to allow a line to be drawn between the votes
         and the results.
-        
+
   """
   res = []
   values = []
   trueValues = []
   misCount = 0
   for pt in data:
-    val, err = composite.ClassifyExample(pt)
+    val, _ = composite.ClassifyExample(pt)
     predict = pt[-1]
     if not badOnly or val != predict:
       values.append(val)
@@ -92,7 +92,7 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
     **Returns**
 
       a PIL image
-      
+
   """
   nData = len(data)
   data = numpy.array(data, numpy.integer)
@@ -143,7 +143,6 @@ def VoteAndBuildImage(composite, data, badOnly=0, sortTrueVals=0, xScale=10, ySc
     **Returns**
 
       a PIL image
-      
 
   """
   nModels = len(composite) + 3
@@ -177,8 +176,9 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys, getopt
-  from rdkit.six.moves import cPickle
+  import sys
+  import getopt
+  from rdkit.six.moves import cPickle  # @UnresolvedImport
   from rdkit.ML.Data import DataUtils
 
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')
@@ -214,7 +214,7 @@ if __name__ == '__main__':
   if dbName == '':
     data = DataUtils.BuildQuantDataSet(fName)
   else:
-    data = DataUtils.DBToQuantData(dbName, fName)
+    data = DataUtils.DBToQuantData(dbName, fName)  # @UndefinedVariable function no longer defined
 
   dataSet = data.GetNamedData()
 

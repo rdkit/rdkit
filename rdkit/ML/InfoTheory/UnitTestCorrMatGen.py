@@ -1,24 +1,24 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 from __future__ import division, print_function
-from rdkit import RDConfig
-import unittest
-from rdkit.ML.InfoTheory import rdInfoTheory
-try:
-  from rdkit.ML.InfoTheory import BitClusterer
-except ImportError:
-  BitClusterer = None
-from rdkit.ML.Data import DataUtils
-from rdkit import DataStructs
 
 import random
+import unittest
+
+from rdkit import DataStructs
+from rdkit.ML.Data import DataUtils
+from rdkit.ML.InfoTheory import rdInfoTheory
+
+try:
+  from rdkit.ML.InfoTheory import BitClusterer
+except ImportError:  # pragma: nocover
+  BitClusterer = None
 
 
 def getValLTM(i, j, mat):
-  if (i > j):
-    id_ = (i * (i - 1) // 2) + j
+  if i > j:
+    id_ = i * (i - 1) // 2 + j
     return mat[id_]
-  elif (j > i):
-    id_ = (j * (j - 1) // 2) + i
+  elif j > i:
+    id_ = j * (j - 1) // 2 + i
     return mat[id_]
   else:
     return 0.0
@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
     self.blist = list(range(self.nbits))
 
     self.fps = []
-    for fi in range(self.nfp):
+    for _ in range(self.nfp):
       fp = DataStructs.ExplicitBitVect(self.nbits)
       obits = list(range(self.nbits // 2))
       random.shuffle(obits, random=random.random)
@@ -52,6 +52,27 @@ class TestCase(unittest.TestCase):
         fp.SetBit(bit)
         fp.SetBit(bit + self.nbits // 2)
       self.fps.append(fp)
+
+  def test_getValLTM(self):
+    #   - 1 2 4
+    #   1 - 3 5
+    #   2 3 - 6
+    #   4 5 6 -
+    mat = list(range(1, 7, 1))
+    for i in range(4):
+      self.assertEqual(getValLTM(i, i, mat), 0.0)
+    self.assertEqual(getValLTM(0, 1, mat), 1)
+    self.assertEqual(getValLTM(0, 2, mat), 2)
+    self.assertEqual(getValLTM(0, 3, mat), 4)
+    self.assertEqual(getValLTM(1, 0, mat), 1)
+    self.assertEqual(getValLTM(2, 0, mat), 2)
+    self.assertEqual(getValLTM(3, 0, mat), 4)
+    self.assertEqual(getValLTM(1, 2, mat), 3)
+    self.assertEqual(getValLTM(1, 3, mat), 5)
+    self.assertEqual(getValLTM(2, 1, mat), 3)
+    self.assertEqual(getValLTM(3, 1, mat), 5)
+    self.assertEqual(getValLTM(2, 3, mat), 6)
+    self.assertEqual(getValLTM(3, 2, mat), 6)
 
   def test0CorrMat(self):
     cmg = rdInfoTheory.BitCorrMatGenerator()
@@ -70,9 +91,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(2 * avr / self.nbits, 400.0)
     self.assertEqual(2 * navr / self.nbits, 158.3)
 
+  @unittest.skipIf(BitClusterer is None, 'Cannot import BitClusterer')
   def test1Cluster(self):
-    if BitClusterer is None:
-      return
     cmg = rdInfoTheory.BitCorrMatGenerator()
     cmg.SetBitList(self.blist)
     for fp in self.fps:
@@ -86,6 +106,8 @@ class TestCase(unittest.TestCase):
     for cl in cls:
       self.assertEqual(len(cl), 2)
       self.assertEqual((cl[0] + self.nbits // 2), cl[1])
+    bcl.SetClusters(cls)
+    self.assertRaises(AssertionError, bcl.SetClusters, cls[:-1])
 
     tfp = DataStructs.ExplicitBitVect(self.nbits)
     obits = list(range(0, self.nbits // 4)) + list(range(self.nbits // 2, 3 * self.nbits // 4))
@@ -107,5 +129,5 @@ class TestCase(unittest.TestCase):
         self.assertFalse(nfp[i])
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

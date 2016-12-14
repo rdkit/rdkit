@@ -20,7 +20,7 @@
 
 """
 import numpy
-import ActFuncs
+from . import ActFuncs
 
 
 # FIX: this class has not been updated to new-style classes
@@ -44,7 +44,7 @@ class NetNode:
         the result of running the values in valVect through this node
 
     """
-    if len(self.inputNodes) != 0:
+    if self.inputNodes and len(self.inputNodes) != 0:
       # grab our list of weighted inputs
       inputs = numpy.take(valVect, self.inputNodes)
       # weight them
@@ -68,12 +68,12 @@ class NetNode:
 
         If this _NetNode_ already has weights set and _inputNodes_ is a different length,
         this will bomb out with an assertion.
-        
+
     """
-    self.inputNodes = inputNodes[:]
-    if self.weights:
-      assert (len(self.weights) == len(self.inputNodes)),\
+    if self.weights is not None:
+      assert len(self.weights) == len(inputNodes), \
              'lengths of weights and nodes do not match'
+    self.inputNodes = inputNodes[:]
 
   def GetInputs(self):
     """ returns the input list
@@ -92,12 +92,12 @@ class NetNode:
 
         If this _NetNode_ already has _inputNodes_  and _weights_ is a different length,
         this will bomb out with an assertion.
-        
+
     """
-    self.weights = numpy.array(weights)
     if self.inputNodes:
-      assert (len(self.weights) == len(self.inputNodes)),\
+      assert len(weights) == len(self.inputNodes),\
              'lengths of weights and nodes do not match'
+    self.weights = numpy.array(weights)
 
   def GetWeights(self):
     """ returns the weight list

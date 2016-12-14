@@ -3,7 +3,8 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #      All Rights Reserved
 #
-""" Define the class _KNNClassificationModel_, used to represent a k-nearest neighbhors classification model
+""" Define the class _KNNClassificationModel_, used to represent a k-nearest neighbhors
+    classification model
 
     Inherits from _KNNModel_
 """
