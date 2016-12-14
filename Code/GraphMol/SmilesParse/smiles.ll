@@ -268,11 +268,8 @@ s		    {	yylval->atom = new Atom( 16 );
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
 
-\-			{ return MINUS_TOKEN; }
-
-\+			{ return PLUS_TOKEN; }
-
-[\=\#\:]    { yylval->bond = new Bond();
+[\=\#\:] {
+              yylval->bond = new Bond();
               Bond::BondType bt=Bond::UNSPECIFIED;
               switch(yytext[0]){
 	      case '=':
@@ -285,11 +282,19 @@ s		    {	yylval->atom = new Atom( 16 );
 		bt = Bond::AROMATIC;
                 yylval->bond->setIsAromatic(true);
 		break;
-              default:
-                CHECK_INVARIANT(0,"cannot get here");
+        default:
+          CHECK_INVARIANT(0,"cannot get here");
 	      }
 	      yylval->bond->setBondType(bt);
 	return BOND_TOKEN; }
+\-\> {
+    yylval->bond = new Bond(Bond::DATIVER);
+    return BOND_TOKEN;
+}
+\<\- {
+    yylval->bond = new Bond(Bond::DATIVEL);
+    return BOND_TOKEN;
+}
 
 \~	{ yylval->bond = new QueryBond();
 	yylval->bond->setQuery(makeBondNullQuery());
@@ -302,6 +307,10 @@ s		    {	yylval->atom = new Atom( 16 );
 [\/]    { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
+
+\-			{ return MINUS_TOKEN; }
+
+\+			{ return PLUS_TOKEN; }
 
 \(       	{ return GROUP_OPEN_TOKEN; }
 \)       	{ return GROUP_CLOSE_TOKEN; }
