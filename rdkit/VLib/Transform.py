@@ -3,9 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
 from rdkit import six
-
 from rdkit.VLib.Node import VLibNode
 
 
@@ -53,7 +51,6 @@ class TransformNode(VLibNode):
     self._func = func
 
   def next(self):
-    done = 0
     parent = self.GetParents()[0]
     args = []
     try:
@@ -73,16 +70,16 @@ if six.PY3:
   TransformNode.__next__ = TransformNode.next
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

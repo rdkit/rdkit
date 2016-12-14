@@ -3,12 +3,18 @@
 #  Copyright (C) 2005  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
+import gzip
+import os
+import unittest
+
 from rdkit import RDConfig
-import unittest, os, sys
-from rdkit.ML.DecTree.SigTree import SigTreeNode
-from rdkit.ML import InfoTheory
 from rdkit.DataStructs import ExplicitBitVect
 from rdkit.DataStructs.VectCollection import VectCollection
+from rdkit.ML import InfoTheory
+from rdkit.ML.DecTree.BuildSigTree import BuildSigTree, _GenerateRandomEnsemble
+from rdkit.ML.DecTree.SigTree import SigTreeNode
+from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 class TestCase(unittest.TestCase):
@@ -68,7 +74,6 @@ class TestCase(unittest.TestCase):
     self.assertFalse(t1.ClassifyExample(ex))
 
   def test3(self):
-    from BuildSigTree import BuildSigTree
     examples = []
 
     bv = ExplicitBitVect(2)
@@ -117,7 +122,10 @@ class TestCase(unittest.TestCase):
     vc.AddVect(1, bv)
     examples.append(['e', vc, 1])
 
-    t = BuildSigTree(examples, 2, metric=InfoTheory.InfoType.ENTROPY, maxDepth=2, verbose=0)
+    f = StringIO()
+    with redirect_stdout(f):
+      t = BuildSigTree(examples, 2, metric=InfoTheory.InfoType.ENTROPY, maxDepth=2, verbose=True)
+    self.assertIn('Build', f.getvalue())
 
     self.assertEqual(t.GetName(), 'Bit-0')
     self.assertEqual(t.GetLabel(), 0)
@@ -139,9 +147,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(r, 0)
 
   def test4(self):
-    import gzip
-    from rdkit.six.moves import cPickle
-    from BuildSigTree import BuildSigTree
+    from rdkit.six.moves import cPickle  # @UnresolvedImport
     gz = gzip.open(
       os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'cdk2-few.pkl.gz'), 'rb')
     examples = cPickle.load(gz, encoding='Latin1')
@@ -150,6 +156,19 @@ class TestCase(unittest.TestCase):
     self.assertEqual(t.GetChildren()[0].GetLabel(), 2861)
     self.assertEqual(t.GetChildren()[1].GetLabel(), 8182)
 
+  def test_GenerateRandomEnsemble(self):
+    ensemble = _GenerateRandomEnsemble(2, 4)
+    self.assertEqual(len(ensemble), 2)
+    self.assertTrue(all(r < 4 for r in ensemble))
 
-if __name__ == '__main__':
+    ensemble = _GenerateRandomEnsemble(4, 4)
+    self.assertEqual(len(ensemble), 4)
+    self.assertTrue(all(r < 4 for r in ensemble))
+
+    ensemble = _GenerateRandomEnsemble(4, 40)
+    self.assertEqual(len(ensemble), 4)
+    self.assertTrue(all(r < 40 for r in ensemble))
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
