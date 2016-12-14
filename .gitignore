@@ -5,6 +5,8 @@
 #- Eclipse files
 /.project
 /.pydevproject
+/.cproject
+
 
 #- Binary files
 __pycache__/

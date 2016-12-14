@@ -3,18 +3,47 @@
 """unit testing code for 3D stuff
 
 """
-from rdkit import RDConfig
-import unittest, os
+import os
+import unittest
+
 from rdkit import Chem
+from rdkit import RDConfig
 from rdkit.Chem import AllChem
 from rdkit.Chem import TorsionFingerprints
 
 
 class TestCase(unittest.TestCase):
 
+  def test_MatchFunctions(self):
+    mol = Chem.MolFromSmiles('CCCCCC')
+
+    inv = [1, 1, 1, 2, 2, 3]
+    # All different
+    atoms = [mol.GetAtomWithIdx(idx) for idx in (0, 3, 5)]
+    self.assertEqual(TorsionFingerprints._doMatch(inv, atoms), False)
+    self.assertEqual(TorsionFingerprints._doNotMatch(inv, atoms), True)
+    self.assertEqual(TorsionFingerprints._doMatchExcept1(inv, atoms), None)
+
+    # All the same
+    atoms = [mol.GetAtomWithIdx(idx) for idx in (0, 1, 2)]
+    self.assertEqual(TorsionFingerprints._doMatch(inv, atoms), True)
+    self.assertEqual(TorsionFingerprints._doNotMatch(inv, atoms), False)
+    self.assertEqual(TorsionFingerprints._doMatchExcept1(inv, atoms), None)
+
+    # One is different
+    atoms = [mol.GetAtomWithIdx(idx) for idx in (0, 1, 3)]
+    self.assertEqual(TorsionFingerprints._doMatch(inv, atoms), False)
+    self.assertEqual(TorsionFingerprints._doNotMatch(inv, atoms), False)
+    self.assertEqual(TorsionFingerprints._doMatchExcept1(inv, atoms), atoms[2])
+    atoms = [mol.GetAtomWithIdx(idx) for idx in (0, 3, 1)]
+    self.assertEqual(TorsionFingerprints._doMatchExcept1(inv, atoms), atoms[1])
+    atoms = [mol.GetAtomWithIdx(idx) for idx in (3, 0, 1)]
+    self.assertEqual(TorsionFingerprints._doMatchExcept1(inv, atoms), atoms[0])
+    self.assertRaises(ValueError, TorsionFingerprints._doMatchExcept1, inv, [1, 2, 3, 4])
+
   def testConformerRMS(self):
     m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1, 2)
+    _ = AllChem.EmbedMultipleConfs(m1, 2)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=1))
@@ -33,7 +62,7 @@ class TestCase(unittest.TestCase):
 
   def testConformerRMSMatrix(self):
     m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1, 3)
+    _ = AllChem.EmbedMultipleConfs(m1, 3)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=0))
@@ -127,15 +156,13 @@ class TestCase(unittest.TestCase):
   def testTorsionFingerprintsColinearBonds(self):
     # test that single bonds adjacent to triple bonds are ignored
     mol = Chem.MolFromSmiles('CCC#CCC')
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol,
-                                                                           ignoreColinearBonds=True)
+    tors_list, _ = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
     self.assertEqual(len(tors_list), 0)
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=True)
     self.assertEqual(len(weights), 0)
 
     # test that they are not ignored, but alternative atoms searched for
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
-      mol, ignoreColinearBonds=False)
+    tors_list, _ = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 1)
     self.assertEqual(tors_list[0][0][0], (0, 1, 4, 5))
     weights = TorsionFingerprints.CalculateTorsionWeights(mol, ignoreColinearBonds=False)
@@ -143,11 +170,9 @@ class TestCase(unittest.TestCase):
 
     # test that single bonds adjacent to terminal triple bonds are always ignored
     mol = Chem.MolFromSmiles('C#CCC')
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(mol,
-                                                                           ignoreColinearBonds=True)
+    tors_list, _ = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=True)
     self.assertEqual(len(tors_list), 0)
-    tors_list, tors_list_rings = TorsionFingerprints.CalculateTorsionLists(
-      mol, ignoreColinearBonds=False)
+    tors_list, _ = TorsionFingerprints.CalculateTorsionLists(mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 0)
 
   def assertBondStereoRoundTrips(self, fname):
@@ -157,22 +182,23 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(refSmiles) > 0)
     self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True), refSmiles)
 
-    # now test Chem.DetectBondStereoChemistry more directly by constructing the molecule from scratch
+    # now test Chem.DetectBondStereoChemistry more directly by constructing the
+    # molecule from scratch
     oldconf = mol.GetConformer(0)
     newconf = Chem.Conformer(mol.GetNumAtoms())
     newmol = Chem.RWMol()
 
     for atm in mol.GetAtoms():
-        ratm = Chem.Atom(atm.GetAtomicNum())
-        ratm.SetFormalCharge(atm.GetFormalCharge())
-        newmol.AddAtom(ratm)
+      ratm = Chem.Atom(atm.GetAtomicNum())
+      ratm.SetFormalCharge(atm.GetFormalCharge())
+      newmol.AddAtom(ratm)
 
-        atomidx = atm.GetIdx()
-        pos = oldconf.GetAtomPosition(atomidx)
-        newconf.SetAtomPosition(atomidx, pos)
+      atomidx = atm.GetIdx()
+      pos = oldconf.GetAtomPosition(atomidx)
+      newconf.SetAtomPosition(atomidx, pos)
 
     for bnd in mol.GetBonds():
-        newmol.AddBond(bnd.GetBeginAtomIdx(), bnd.GetEndAtomIdx(), Chem.BondType(bnd.GetBondType()))
+      newmol.AddBond(bnd.GetBeginAtomIdx(), bnd.GetEndAtomIdx(), Chem.BondType(bnd.GetBondType()))
     newmol.AddConformer(newconf)
 
     Chem.SanitizeMol(newmol)
@@ -191,5 +217,5 @@ class TestCase(unittest.TestCase):
     self.assertBondStereoRoundTrips('trans.sdf')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

@@ -9,56 +9,46 @@
     According to a paper from Schulz-Gasch et al., JCIM, 52, 1499-1512 (2012).
 
 """
-from rdkit import rdBase
-from rdkit import RDConfig
-from rdkit import Geometry
+import math
+import itertools
+
 from rdkit import Chem
-from rdkit.Chem import rdchem
+from rdkit import Geometry
 from rdkit.Chem import rdMolDescriptors
-import math, os
+from rdkit.Chem import rdchem
 
 
 def _doMatch(inv, atoms):
   """ Helper function to check if all atoms in the list are the same
-      
+
       Arguments:
       - inv:    atom invariants (used to define equivalence of atoms)
       - atoms:  list of atoms to check
 
       Return: boolean
   """
-  match = True
-  for i in range(len(atoms) - 1):
-    for j in range(i + 1, len(atoms)):
-      if (inv[atoms[i].GetIdx()] != inv[atoms[j].GetIdx()]):
-        match = False
-        return match
-  return match
+  return all(inv1 == inv2
+             for inv1, inv2 in itertools.combinations((inv[atom.GetIdx()] for atom in atoms), 2))
 
 
 def _doNotMatch(inv, atoms):
   """ Helper function to check if all atoms in the list are NOT the same
-      
+
       Arguments:
       - inv:    atom invariants (used to define equivalence of atoms)
       - atoms:  list of atoms to check
 
       Return: boolean
   """
-  match = True
-  for i in range(len(atoms) - 1):
-    for j in range(i + 1, len(atoms)):
-      if (inv[atoms[i].GetIdx()] == inv[atoms[j].GetIdx()]):
-        match = False
-        return match
-  return match
+  return all(inv1 != inv2
+             for inv1, inv2 in itertools.combinations((inv[atom.GetIdx()] for atom in atoms), 2))
 
 
 def _doMatchExcept1(inv, atoms):
-  """ Helper function to check if two atoms in the list are the same, 
+  """ Helper function to check if two atoms in the list are the same,
       and one not
       Note: Works only for three atoms
-      
+
       Arguments:
       - inv:    atom invariants (used to define equivalence of atoms)
       - atoms:  list of atoms to check
@@ -67,20 +57,18 @@ def _doMatchExcept1(inv, atoms):
   """
   if len(atoms) != 3:
     raise ValueError("Number of atoms must be three")
-  a1 = atoms[0].GetIdx()
-  a2 = atoms[1].GetIdx()
-  a3 = atoms[2].GetIdx()
-  if (inv[a1] == inv[a2] and inv[a1] != inv[a3] and inv[a2] != inv[a3]):
+  inv0, inv1, inv2 = (inv[atom.GetIdx()] for atom in atoms)
+  if inv0 == inv1 and inv0 != inv2 and inv1 != inv2:
     return atoms[2]
-  elif (inv[a1] != inv[a2] and inv[a1] == inv[a3] and inv[a2] != inv[a3]):
+  if inv0 != inv1 and inv0 == inv2 and inv1 != inv2:
     return atoms[1]
-  elif (inv[a1] != inv[a2] and inv[a1] != inv[a3] and inv[a2] == inv[a3]):
+  if inv0 != inv1 and inv0 != inv2 and inv1 == inv2:
     return atoms[0]
   return None
 
 
 def _getAtomInvariantsWithRadius(mol, radius):
-  """ Helper function to calculate the atom invariants for each atom 
+  """ Helper function to calculate the atom invariants for each atom
       with a given radius
 
       Arguments:
@@ -92,7 +80,7 @@ def _getAtomInvariantsWithRadius(mol, radius):
   inv = []
   for i in range(mol.GetNumAtoms()):
     info = {}
-    fp = rdMolDescriptors.GetMorganFingerprint(mol, radius, fromAtoms=[i], bitInfo=info)
+    _ = rdMolDescriptors.GetMorganFingerprint(mol, radius, fromAtoms=[i], bitInfo=info)
     for k in info.keys():
       if info[k][0][1] == radius:
         inv.append(k)
@@ -115,7 +103,7 @@ def _getHeavyAtomNeighbors(atom1, aid2=-1):
 
 
 def _getIndexforTorsion(neighbors, inv):
-  """ Helper function to calculate the index of the reference atom for 
+  """ Helper function to calculate the index of the reference atom for
       a given atom
 
       Arguments:
@@ -259,7 +247,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds
         tors_list.append((tmp, 30.0))
   # maximal possible deviation for non-cyclic bonds
   if maxDev == 'equal':
-    tors_list = [(t, 180.0) for t, d in tors_list]
+    tors_list = [(t, 180.0) for t, _ in tors_list]
   # rings
   rings = Chem.GetSymmSSSR(mol)
   tors_list_rings = []
@@ -294,7 +282,7 @@ def _getTorsionAtomPositions(atoms, conf):
 
 
 def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
-  """ Calculate the torsion angles for a list of non-ring and 
+  """ Calculate the torsion angles for a list of non-ring and
       a list of ring torsions.
 
       Arguments:
@@ -378,7 +366,7 @@ def _calculateBeta(mol, distmat, aid1):
   # get all non-terminal bonds
   bonds = []
   for b in mol.GetBonds():
-    nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
+    #     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
     if len(nb2) > 1 and len(nb2) > 1:
       bonds.append(b)
@@ -397,9 +385,9 @@ def _calculateBeta(mol, distmat, aid1):
 
 def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
   """ Calculate the weights for the torsions in a molecule.
-      By default, the highest weight is given to the bond 
+      By default, the highest weight is given to the bond
       connecting the two most central atoms.
-      If desired, two alternate atoms can be specified (must 
+      If desired, two alternate atoms can be specified (must
       be connected by a bond).
 
       Arguments:
@@ -427,9 +415,9 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
   bonds = _getBondsForTorsions(mol, ignoreColinearBonds)
   # get shortest paths and calculate weights
   weights = []
-  for bid1, bid2, nb1, nb2 in bonds:
-    if ((bid1, bid2) == (aid1, aid2) or
-        (bid2, bid1) == (aid1, aid2)):  # if it's the most central bond itself
+  for bid1, bid2, _, _ in bonds:
+    if (bid1, bid2) == (aid1, aid2) or (bid2, bid1) == (aid1, aid2):
+      # if it's the most central bond itself
       d = 0
     else:
       # get shortest distance between the 4 atoms and add 1 to get bond distance
@@ -438,7 +426,7 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
     w = math.exp(-beta * (d * d))
     weights.append(w)
 
-  ## RINGS
+  # # RINGS
   rings = mol.GetRingInfo()
   for r in rings.BondRings():
     # get shortest distances
@@ -484,7 +472,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
         diff = abs(t1 - t2)
         if (360.0 - diff) < diff:  # we do not care about direction
           diff = 360.0 - diff
-        #print t1, t2, diff
+        # print t1, t2, diff
         if diff < mindiff:
           mindiff = diff
     deviations.append(mindiff / tors1[1])
@@ -505,7 +493,7 @@ def CalculateTFD(torsions1, torsions2, weights=None):
 def _getSameAtomOrder(mol1, mol2):
   """ Generate a new molecule with the atom order of mol1 and coordinates
       from mol2.
-      
+
       Arguments:
       - mol1:     first instance of the molecule of interest
       - mol2:     second instance the molecule of interest
@@ -515,7 +503,7 @@ def _getSameAtomOrder(mol1, mol2):
   match = mol2.GetSubstructMatch(mol1)
   atomNums = tuple(range(mol1.GetNumAtoms()))
   if match != atomNums:  # atom orders are not the same!
-    #print "Atoms of second molecule reordered."
+    # print "Atoms of second molecule reordered."
     mol3 = Chem.Mol(mol1)
     mol3.RemoveAllConformers()
     for conf2 in mol2.GetConformers():
@@ -524,7 +512,7 @@ def _getSameAtomOrder(mol1, mol2):
       conf.SetId(confId)
       for i in range(mol1.GetNumAtoms()):
         conf.SetAtomPosition(i, mol2.GetConformer(confId).GetAtomPosition(match[i]))
-      cid = mol3.AddConformer(conf)
+      _ = mol3.AddConformer(conf)
     return mol3
   else:
     return Chem.Mol(mol2)
@@ -533,7 +521,7 @@ def _getSameAtomOrder(mol1, mol2):
 # some wrapper functions
 def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='equal', symmRadius=2,
                             ignoreColinearBonds=True):
-  """ Wrapper to calculate the TFD between two list of conformers 
+  """ Wrapper to calculate the TFD between two list of conformers
       of a molecule
 
       Arguments:
