@@ -63,7 +63,7 @@ cmake command.
 
 Once "make" and "make install" completed successfully, use the following command to run the tests:
 
-	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:<path to miniconda3>/lib" PYTHONPATH=$RDBASE ctest
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
 
 This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection) 
 introduced in more recent macOS versions.
