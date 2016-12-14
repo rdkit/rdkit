@@ -7,9 +7,11 @@
 
 """
 from __future__ import print_function
-from rdkit.six.moves import cPickle
+
 import numpy
+
 from rdkit.ML.DecTree import CrossValidate, PruneTree
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class Forest(object):
@@ -19,7 +21,7 @@ class Forest(object):
         and the errors being averaged.
 
     typical usage:
-    
+
       1) grow the forest with AddTree until happy with it
 
       2) call AverageErrors to calculate the average error values
@@ -55,7 +57,7 @@ class Forest(object):
       **Returns**
 
         a list of the results
-      
+
     """
     nTrees = len(self.treeList)
     votes = [0] * nTrees
@@ -67,8 +69,8 @@ class Forest(object):
     """ classifies the given example using the entire forest
 
       **returns** a result and a measure of confidence in it.
-      
-      **FIX:** statistics sucks... I'm not seeing an obvious way to get 
+
+      **FIX:** statistics sucks... I'm not seeing an obvious way to get
            the confidence intervals.  For that matter, I'm not seeing
            an unobvious way.
 
@@ -82,15 +84,15 @@ class Forest(object):
       votes[res] = votes[res] + self.countList[i]
 
     totVotes = sum(votes)
-    res = argmax(votes)
-    #print 'v:',res,votes,totVotes
+    res = numpy.argmax(votes)
+    # print 'v:',res,votes,totVotes
     return res, float(votes[res]) / float(totVotes)
 
   def GetVoteDetails(self):
     """ Returns the details of the last vote the forest conducted
 
       this will be an empty list if no voting has yet been done
-      
+
     """
     return self.treeVotes
 
@@ -134,7 +136,7 @@ class Forest(object):
      **Arguments**
 
        fileName is the name of the file to be written
-       
+
     """
     pFile = open(fileName, 'wb+')
     cPickle.dump(self, pFile, 1)
@@ -278,9 +280,8 @@ class Forest(object):
     """
     outStr = 'Forest\n'
     for i in range(len(self.treeList)):
-      outStr = outStr + \
-         '  Tree % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
-                                                                  100.*self.errList[i])
+      outStr = (outStr + '  Tree % 4d:  % 5d occurances  %%% 5.2f average error\n' %
+                (i, self.countList[i], 100. * self.errList[i]))
     return outStr
 
   def __init__(self):

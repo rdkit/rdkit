@@ -19,22 +19,22 @@ Required Arguments:
 
   <models>: file name(s) of pickled composite model(s).
      If the -p argument is also provided (see below), this argument is ignored.
-     
+
 Optional Arguments:
   - -a "list": the list of result codes to be considered active.  This will be
         eval'ed, so be sure that it evaluates as a list or sequence of
         integers. For example, -a "[1,2]" will consider activity values 1 and 2
         to be active
 
-  - --enrich "list": identical to the -a argument above.      
+  - --enrich "list": identical to the -a argument above.
 
   - --thresh: sets a threshold for the plot.  If the confidence falls below
           this value, picking will be terminated
 
-  - -H: screen only the hold out set (works only if a version of 
+  - -H: screen only the hold out set (works only if a version of
         BuildComposite more recent than 1.2.2 was used).
 
-  - -T: screen only the training set (works only if a version of 
+  - -T: screen only the training set (works only if a version of
         BuildComposite more recent than 1.2.2 was used).
 
   - -S: shuffle activity values before screening
@@ -54,7 +54,7 @@ Optional Arguments:
   - -p "tableName": provides the name of a db table containing the
       models to be screened.  If you use this argument, you should also
       use the -N argument (below) to specify a note value.
-      
+
   - -N "note": provides a note to be used to pull models from a db table.
 
   - --plotFile "filename": writes the data to an output text file (filename.dat)
@@ -64,20 +64,31 @@ Optional Arguments:
     displayed in gnuplot.
 
 """
+# from rdkit.Dbase.DbConnection import DbConnect
+
 from __future__ import print_function
-from rdkit import RDConfig
+
+import sys
+import traceback
+
 import numpy
-import copy
-from rdkit.six.moves import cPickle
-#from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.ML.Data import DataUtils, SplitData, Stats
-from rdkit.Dbase.DbConnection import DbConnect
+
 from rdkit import DataStructs
+from rdkit import RDConfig
+from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
-import sys, os, types
-from rdkit.six import cmp
+from rdkit.ML.Data import DataUtils, SplitData, Stats
+from rdkit.six import PY3
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import input  # @UnresolvedImport
+
 
 __VERSION_STRING = "2.4.0"
+
+if PY3:
+
+  def cmp(t1, t2):
+    return (t1 < t2) * -1 or (t1 > t2) * 1
 
 
 def message(msg, noRet=0, dest=sys.stderr):
@@ -127,20 +138,20 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
 
       a list of 4-tuples containing:
 
-         - the id of the point 
+         - the id of the point
 
          - the true result (from the data set)
 
          - the predicted result
 
          - the confidence value for the prediction
-       
+
   """
   mdl.SetInputOrder(descs)
 
   for j in range(len(mdl)):
     tmp = mdl.GetModel(j)
-    if hasattr(tmp, '_trainIndices') and type(tmp._trainIndices) != types.DictType:
+    if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
       tis = {}
       if hasattr(tmp, '_trainIndices'):
         for v in tmp._trainIndices:
@@ -154,7 +165,7 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
     needsQuant = 0
 
   if not indices:
-    indices = range(len(data))
+    indices = list(range(len(data)))
   nTrueActives = 0
   for i in indices:
     if errorEstimate:
@@ -195,7 +206,7 @@ def AccumulateCounts(predictions, thresh=0, sortIt=1):
       - a list of 3-tuples:
 
         - the id of the active picked here
-        
+
         - num actives found so far
 
         - number of picks made so far
@@ -207,12 +218,12 @@ def AccumulateCounts(predictions, thresh=0, sortIt=1):
   nCorrect = 0
   nPts = 0
   for i in range(len(predictions)):
-    id, real, pred, conf = predictions[i]
+    ID, real, pred, conf = predictions[i]
     if conf > thresh:
       if pred == real:
         nCorrect += 1
       nPts += 1
-      res.append((id, nCorrect, nPts))
+      res.append((ID, nCorrect, nPts))
 
   return res
 
@@ -226,7 +237,7 @@ def MakePlot(details, final, counts, pickVects, nModels, nTrueActs=-1):
   i = 0
   while i < len(final) and counts[i] != 0:
     if nModels > 1:
-      mean, sd = Stats.MeanAndDev(pickVects[i])
+      _, sd = Stats.MeanAndDev(pickVects[i])
       confInterval = Stats.GetConfidenceInterval(sd, len(pickVects[i]), level=90)
       outF.write('%d %f %f %d %f\n' % (i + 1, final[i][0] / counts[i], final[i][1] / counts[i],
                                        counts[i], confInterval))
@@ -262,14 +273,11 @@ def MakePlot(details, final, counts, pickVects, nModels, nTrueActs=-1):
 
   if hasattr(details, 'showPlot') and details.showPlot:
     try:
-      import os
-      from Gnuplot import Gnuplot
+      from Gnuplot import Gnuplot  # @UnresolvedImport
       p = Gnuplot()
-      #p('cd "%s"'%(os.getcwd()))
       p('load "%s"' % (plotFileName))
-      raw_input('press return to continue...\n')
+      input('press return to continue...\n')
     except Exception:
-      import traceback
       traceback.print_exc()
 
 
@@ -286,7 +294,6 @@ if __name__ == '__main__':
                                  ('thresh=', 'plotFile=', 'showPlot', 'pickleCol=', 'OOB', 'noSort',
                                   'pickBase=', 'doROC', 'rocThresh=', 'enrich='))
   except Exception:
-    import traceback
     traceback.print_exc()
     Usage()
 
@@ -312,7 +319,8 @@ if __name__ == '__main__':
       details.dbTableName = val
     elif arg == '-a' or arg == '--enrich':
       details.activeTgt = eval(val)
-      if (type(details.activeTgt) not in (types.TupleType, types.ListType)):
+      if not isinstance(details.activeTgt, (tuple, list)):
+        # if (type(details.activeTgt) not in (types.TupleType, types.ListType)):
         details.activeTgt = (details.activeTgt, )
 
     elif arg == '--thresh':
@@ -383,7 +391,6 @@ if __name__ == '__main__':
       try:
         models.append(cPickle.loads(str(blob)))
       except Exception:
-        import traceback
         traceback.print_exc()
         print('Model failed')
       else:
@@ -398,7 +405,6 @@ if __name__ == '__main__':
       try:
         model = cPickle.load(open(modelName, 'rb'))
       except Exception:
-        import traceback
         print('problems with model %s:' % modelName)
         traceback.print_exc()
       else:
@@ -426,7 +432,7 @@ if __name__ == '__main__':
       if details.doTraining:
         testIdx, trainIdx = trainIdx, testIdx
     else:
-      testIdx = range(tmpD.GetNPts())
+      testIdx = list(range(tmpD.GetNPts()))
 
     message('screening %d examples' % (len(testIdx)))
     nTrueActives, screenRes = ScreenModel(model, descs, tmpD, picking=details.activeTgt,

@@ -6,16 +6,14 @@ Scoring - Calculate rank statistics
 Created by Sereina Riniker, October 2012
 after a file from Peter Gedeck, Greg Landrum
 
-"""
-
-import math, exceptions
-"""
-\param scores: ordered list with descending similarity containing 
+\param scores: ordered list with descending similarity containing
                active/inactive information
 \param col: column index in scores where active/inactive information is stored
 \param fractions: list of fractions at which the value shall be calculated
 \param alpha: exponential weight
 """
+
+import math
 
 
 def CalcROC(scores, col):
@@ -92,11 +90,11 @@ def _RIEHelper(scores, col, alpha):
 
 def CalcRIE(scores, col, alpha):
   """ RIE original definded here:
-    Sheridan, R.P., Singh, S.B., Fluder, E.M. & Kearsley, S.K. 
+    Sheridan, R.P., Singh, S.B., Fluder, E.M. & Kearsley, S.K.
     Protocols for Bridging the Peptide to Nonpeptide Gap in Topological Similarity Searches.
     J. Chem. Inf. Comp. Sci. 41, 1395-1406 (2001).
     """
-  RIE, numActives = _RIEHelper(scores, col, alpha)
+  RIE, _ = _RIEHelper(scores, col, alpha)
   return RIE
 
 
@@ -158,19 +156,19 @@ def CalcEnrichment(scores, col, fractions):
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS

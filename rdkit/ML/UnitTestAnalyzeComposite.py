@@ -11,23 +11,17 @@
 """unit testing code for the AnalyzeComposite functionality
 
 """
+import os
+import unittest
+
 from rdkit import RDConfig
-import unittest, os
 from rdkit.ML import AnalyzeComposite
-from rdkit.six.moves import cPickle as pickle
-
-
-def feq(a, b, tol=1e-4):
-  if abs(a - b) > tol:
-    return 0
-  else:
-    return 1
+from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
     self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
 
   def test1_Issue163(self):
@@ -35,20 +29,20 @@ class TestCase(unittest.TestCase):
     try:
       with open(name1, 'rb') as pklF:
         c1 = pickle.load(pklF)
-    except Exception:
+    except Exception:  # pragma: nocover
       c1 = None
     self.assertTrue(c1)
     name2 = os.path.join(self.baseDir, 'humanoral.2.pkl')
     try:
       with open(name2, 'rb') as pklF:
         c2 = pickle.load(pklF)
-    except Exception:
+    except Exception:  # pragma: nocover
       c2 = None
     self.assertTrue(c2)
 
     try:
       res = AnalyzeComposite.ProcessIt([c1, c2], verbose=-1)
-    except Exception:
+    except Exception:  # pragma: nocover
       import traceback
       traceback.print_exc()
       ok = 0
@@ -63,5 +57,5 @@ class TestCase(unittest.TestCase):
       self.assertTrue(len(entry) == 5)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

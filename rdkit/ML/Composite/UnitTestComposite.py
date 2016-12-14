@@ -8,7 +8,7 @@
 """
 import unittest
 import io
-from rdkit.six.moves import cPickle, xrange
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -17,7 +17,6 @@ from rdkit import RDConfig
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
     with open(RDConfig.RDCodeDir + '/ML/Composite/test_data/ferro.pkl', 'r') as pklTF:
       buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
       pklTF.close()
@@ -27,24 +26,24 @@ class TestCase(unittest.TestCase):
                      'isferro']
     self.qBounds = [[], [1.89, 3.53], [], [], [], [0.55, 0.73], [11.81, 14.52], []]
     self.nPoss = [0, 3, 2, 2, 2, 3, 3, 2]
-    self.attrs = range(1, len(self.varNames) - 1)
+    self.attrs = list(range(1, len(self.varNames) - 1))
     from rdkit.ML.Data import DataUtils
     DataUtils.InitRandomNumbers((23, 43))
 
   def testQuantize(self):
-    " testing data quantization "
+    # testing data quantization
     qBounds = [[], [1, 2, 3]]
     examples = [['foo', 0], ['foo', 1.5], ['foo', 5.5], ['foo', 2.5]]
     answers = [['foo', 0], ['foo', 1], ['foo', 3], ['foo', 2]]
     nPoss = [0, 4]
     composite = Composite.Composite()
     composite.SetQuantBounds(qBounds, nPoss)
-    for i in xrange(len(examples)):
+    for i in range(len(examples)):
       qEx = composite.QuantizeExample(examples[i])
       self.assertEqual(qEx, answers[i])
 
   def testTreeGrow(self):
-    " testing tree-based composite "
+    # testing tree-based composite
     with open(RDConfig.RDCodeDir + '/ML/Composite/test_data/composite_base.pkl', 'r') as pklTF:
       buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
       pklTF.close()
@@ -60,24 +59,33 @@ class TestCase(unittest.TestCase):
     composite.Grow(self.examples, self.attrs, [], buildDriver=driver, pruner=pruner, nTries=100,
                    silent=1)
     composite.AverageErrors()
+    composite.SortModels(sortOnError=False)
+    self.assertEqual(composite.countList, sorted(composite.countList))
+    self.assertNotEqual(composite.errList, sorted(composite.errList))
     composite.SortModels()
+    self.assertNotEqual(composite.countList, sorted(composite.countList))
+    self.assertEqual(composite.errList, sorted(composite.errList))
 
-    #with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','wb') as pklF:
-    #  cPickle.dump(composite,pklF)
+    # with open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','wb') as pklF:
+    #   cPickle.dump(composite,pklF)
 
     self.treeComposite = composite
     self.assertEqual(len(composite), len(self.refCompos))
-    for i in xrange(len(composite)):
-      t1, c1, e1 = composite[i]
-      t2, c2, e2 = self.refCompos[i]
+    for i in range(len(composite)):
+      t1, c1, e1 = composite[i]  # @UnusedVariable
+      t2, c2, e2 = self.refCompos[i]  # @UnusedVariable
       self.assertEqual(e1, e2)
       # we used to check for equality here, but since there are redundant errors,
       #  that's non-trivial.
-      #assert t1 == t2, 'tree mismatch'
-      #assert c1 == c2, 'count mismatch'
+      # assert t1 == t2, 'tree mismatch'
+      # assert c1 == c2, 'count mismatch'
+    s = str(composite)
+    self.assertIn('Composite', s)
+    self.assertIn('Model', s)
+    self.assertIn('error', s)
 
   def testErrorEstimate(self):
-    " testing out-of-bag error estimates "
+    # testing out-of-bag error estimates
 
     compos = Composite.Composite()
     compos.SetQuantBounds([(0.5, ), (0.5, ), (0.5, ), []], [2, 2, 2, 2])
@@ -152,6 +160,9 @@ class TestCase(unittest.TestCase):
     assert pred == 1
     assert conf == 2. / 3.
 
+    self.assertEqual(compos.GetVoteDetails(), [0, 1, 1])
+    self.assertEqual(compos.GetInputOrder(), [1, 2, 3, 4])
+
     #
     #  now test the out-of-bag calculation:
     #
@@ -168,6 +179,23 @@ class TestCase(unittest.TestCase):
     assert pred == 0
     assert conf == 0.5
 
+    compos.ClearModelExamples()
 
-if __name__ == '__main__':
+  def test_exceptions(self):
+    compos = Composite.Composite()
+    compos.SetQuantBounds([(0.5, ), (0.5, ), (0.5, ), []], [2, 2, 2, 2])
+    compos.SetDescriptorNames(('ID', 'D0', 'D1', 'D2', 'Act'))
+    compos.SetInputOrder(('ID', 'D2', 'D1', 'D0', 'Act'))
+    self.assertEqual(compos._mapOrder, [0, 3, 2, 1, 4])
+    # Probes caught exception for ID
+    compos.SetInputOrder(('D2', 'D1', 'D0', 'Act'))
+    self.assertEqual(compos._mapOrder, [0, 2, 1, 0, 3])
+    # Probes caught exception for Act
+    compos.SetInputOrder(('ID', 'D2', 'D1', 'D0'))
+    self.assertEqual(compos._mapOrder, [0, 3, 2, 1, -1])
+
+    self.assertRaises(ValueError, compos.SetInputOrder, ('Unknown', 'D0'))
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

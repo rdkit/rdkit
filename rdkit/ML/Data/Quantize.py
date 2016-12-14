@@ -17,7 +17,7 @@ lie.
 from __future__ import print_function
 import numpy
 from rdkit.ML.InfoTheory import entropy
-from rdkit.six.moves import zip, map, range
+from rdkit.six.moves import zip, map, range  # @UnresolvedImport
 try:
   from rdkit.ML.Data import cQuantize
 except ImportError:
@@ -42,7 +42,7 @@ def feq(v1, v2, tol=_float_tol):
     **Returns**
 
       0 or 1
- 
+
   """
   return abs(v1 - v2) < tol
 
@@ -81,7 +81,7 @@ def _GenVarTable(vals, cuts, starts, results, nPossibleRes):
    **Notes**
 
      - _vals_ should be sorted!
-     
+
   """
   nVals = len(cuts) + 1
   varTable = numpy.zeros((nVals, nPossibleRes), 'i')
@@ -126,7 +126,7 @@ def _PyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varTabl
        1) the best information gain found so far
 
        2) a list of the quantization bound indices ( _cuts_ for the best case)
-   
+
    **Notes**
 
     - this is not even remotely efficient, which is why a C replacement
@@ -190,7 +190,7 @@ def _NewPyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varT
        1) the best information gain found so far
 
        2) a list of the quantization bound indices ( _cuts_ for the best case)
-   
+
    **Notes**
 
     - this is not even remotely efficient, which is why a C replacement
@@ -234,6 +234,7 @@ def _NewPyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varT
   return maxGain, bestCuts
 
 
+def _NewPyFindStartPoints(sortVals, sortResults, nData):
   # --------------------------------
   #
   # find all possible dividing points
@@ -246,7 +247,6 @@ def _NewPyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varT
   #    we should divide before (1,0) and (2,1)
   #
   # --------------------------------
-def _NewPyFindStartPoints(sortVals, sortResults, nData):
   startNext = []
   tol = 1e-8
   blockAct = sortResults[0]
@@ -282,7 +282,7 @@ def _NewPyFindStartPoints(sortVals, sortResults, nData):
 
 def FindVarMultQuantBounds(vals, nBounds, results, nPossibleRes):
   """ finds multiple quantization bounds for a single variable
-  
+
    **Arguments**
 
      - vals: sequence of variable values (assumed to be floats)
@@ -336,7 +336,7 @@ def FindVarMultQuantBounds(vals, nBounds, results, nPossibleRes):
 
   return quantBounds, maxGain
 
-#hascQuantize=0
+# hascQuantize=0
 if hascQuantize:
   _RecurseOnBounds = cQuantize._RecurseOnBounds
   _FindStartPoints = cQuantize._FindStartPoints
@@ -345,7 +345,6 @@ else:
   _FindStartPoints = _NewPyFindStartPoints
 
 if __name__ == '__main__':
-  import sys
   if 1:
     d = [(1., 0), (1.1, 0), (1.2, 0), (1.4, 1), (1.4, 0), (1.6, 1), (2., 1), (2.1, 0), (2.1, 0),
          (2.1, 0), (2.2, 1), (2.3, 0)]
@@ -363,7 +362,7 @@ if __name__ == '__main__':
     nPossibleRes = 2
     res = FindVarMultQuantBounds(varValues, 1, resCodes, nPossibleRes)
     print(res)
-    #sys.exit(1)
+    # sys.exit(1)
     d = [(1.4, 1), (1.4, 0)]
 
     varValues = list(map(lambda x: x[0], d))

@@ -16,16 +16,17 @@
 
      or, alternatively the matrix can be drawn, with indices as:
 
-       || - || 0 || 1 || 3 
-       || - || - || 2 || 4 
-       || - || - || - || 5 
-       || - || - || - || - 
+       || - || 0 || 1 || 3
+       || - || - || 2 || 4
+       || - || - || - || 5
+       || - || - || - || -
 
      the index of a given (row,col) pair is:
        '(col*(col-1))/2 + row'
 
 """
 from __future__ import print_function
+
 import numpy
 
 
@@ -69,8 +70,8 @@ def CalcMetricMatrix(inData, metricFunc):
       the metric matrix as a Numeric array
 
   """
-  nObjs = len(inData)
-  res = []
+  #   nObjs = len(inData)
+  #   res = []
   inData = map(lambda x: x.GetPosition(), inData)
   return metricFunc(inData)
 
@@ -120,7 +121,7 @@ def ShowMetricMat(metricMat, nObjs):
    **Arguments**
 
     - metricMat: the matrix to be displayed
-    
+
     - nObjs: the number of objects to display
 
   """

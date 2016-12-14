@@ -9,10 +9,12 @@ cross validation == evaluating the accuracy of a tree.
 
 """
 from __future__ import print_function
-from rdkit.ML.DecTree import ID3
-from rdkit.ML.Data import SplitData
+
 import numpy
-from rdkit.six.moves import xrange
+
+from rdkit.ML.Data import SplitData
+from rdkit.ML.DecTree import ID3
+from rdkit.ML.DecTree import randomtest
 
 
 def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals, treeBuilder,
@@ -39,7 +41,7 @@ def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVal
   **Returns**
 
     The best tree found
-    
+
   **Notes**
 
     1) Trees are built using _trainExamples_
@@ -61,15 +63,15 @@ def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVal
   errs = [0] * nAttrs
   errs[0] = 1e6
 
-  for i in xrange(1, nAttrs):
+  for i in range(1, nAttrs):
     argD = {'initialVar': attrs[i]}
     argD.update(kwargs)
     if nQuantBounds is None or nQuantBounds == []:
-      trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, **argd)
+      trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, **argD)
     else:
       trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, nQuantBounds, **argD)
     if trees[i]:
-      errs[i], foo = CrossValidate(trees[i], examples, appendExamples=0)
+      errs[i], _ = CrossValidate(trees[i], examples, appendExamples=0)
     else:
       errs[i] = 1e6
   best = numpy.argmin(errs)
@@ -97,12 +99,12 @@ def CrossValidate(tree, testExamples, appendExamples=0):
         1) the percent error of the tree
 
         2) a list of misclassified examples
-        
+
   """
   nTest = len(testExamples)
   nBad = 0
   badExamples = []
-  for i in xrange(nTest):
+  for i in range(nTest):
     testEx = testExamples[i]
     trueRes = testEx[-1]
     res = tree.ClassifyExample(testEx, appendExamples)
@@ -155,7 +157,7 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
          1) the tree
 
          2) the cross-validation error of the tree
-         
+
   """
   nTot = len(examples)
   if not kwargs.get('replacementSelection', 0):
@@ -199,12 +201,9 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
 
 
 def TestRun():
-  """ testing code
-
-  """
-  from rdkit.ML.DecTree import randomtest
+  """ testing code """
   examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nExamples=200)
-  tree, frac = CrossValidationDriver(examples, attrs, nPossibleVals)
+  tree, _ = CrossValidationDriver(examples, attrs, nPossibleVals)
 
   tree.Pickle('save.pkl')
 
@@ -215,5 +214,5 @@ def TestRun():
   print('t2 in [tree]', t2 in l, l.index(t2))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   TestRun()
