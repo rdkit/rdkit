@@ -1966,7 +1966,10 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         bond = new Bond(Bond::AROMATIC);
         bond->setIsAromatic(true);
         break;
-      case 0:
+      case 9:
+         bond = new Bond(Bond::DATIVE);
+         break;
+     case 0:
         bond = new Bond(Bond::UNSPECIFIED);
         BOOST_LOG(rdWarningLog)
             << "bond with order 0 found on line " << line

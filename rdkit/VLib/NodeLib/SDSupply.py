@@ -3,17 +3,17 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys, os.path
-from rdkit import six
-from rdkit import RDConfig
-from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
+from rdkit import six
+from rdkit.VLib.Supply import SupplyNode
 
 
 class SDSupplyNode(SupplyNode):
   """ SD supplier
 
   Sample Usage:
+    >>> import os
+    >>> from rdkit import RDConfig
     >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
                              'test_data','NCI_aids.10.sdf')
     >>> suppl = SDSupplyNode(fileN)
@@ -30,7 +30,6 @@ class SDSupplyNode(SupplyNode):
     >>> suppl.next().GetProp("_Name")
     '78'
 
-  
   """
 
   def __init__(self, fileName, **kwargs):
@@ -53,16 +52,16 @@ if six.PY3:
   SDSupplyNode.__next__ = SDSupplyNode.next
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

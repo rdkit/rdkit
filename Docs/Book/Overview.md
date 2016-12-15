@@ -27,6 +27,8 @@
       Tips, tricks, random stuff
     - Tutorials (https://github.com/rdkit/rdkit-tutorials)
       Jupyter-based tutorials for using the RDKit
+    - KNIME integration (https://github.com/rdkit/knime-rdkit)
+      RDKit nodes for KNIME
 - Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
 - Social media:
     - Twitter: @RDKit_org

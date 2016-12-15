@@ -150,6 +150,46 @@ class TestCase(unittest.TestCase):
       mol, ignoreColinearBonds=False)
     self.assertEqual(len(tors_list), 0)
 
+  def assertBondStereoRoundTrips(self, fname):
+    path = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', fname)
+    mol = Chem.MolFromMolFile(path)
+    refSmiles = mol.GetProp("_Name")
+    self.assertTrue(len(refSmiles) > 0)
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True), refSmiles)
+
+    # now test Chem.DetectBondStereoChemistry more directly by constructing the molecule from scratch
+    oldconf = mol.GetConformer(0)
+    newconf = Chem.Conformer(mol.GetNumAtoms())
+    newmol = Chem.RWMol()
+
+    for atm in mol.GetAtoms():
+        ratm = Chem.Atom(atm.GetAtomicNum())
+        ratm.SetFormalCharge(atm.GetFormalCharge())
+        newmol.AddAtom(ratm)
+
+        atomidx = atm.GetIdx()
+        pos = oldconf.GetAtomPosition(atomidx)
+        newconf.SetAtomPosition(atomidx, pos)
+
+    for bnd in mol.GetBonds():
+        newmol.AddBond(bnd.GetBeginAtomIdx(), bnd.GetEndAtomIdx(), Chem.BondType(bnd.GetBondType()))
+    newmol.AddConformer(newconf)
+
+    Chem.SanitizeMol(newmol)
+    Chem.DetectBondStereoChemistry(newmol, newconf)
+
+    # these aren't necessary for this specific test case, but are for
+    # a more general conversion routine, so would like to see them
+    # tested eventually
+    # Chem.AssignAtomChiralTagsFromStructure(newmol)
+    # Chem.AssignStereochemistry(newmol)
+
+    self.assertEqual(Chem.MolToSmiles(newmol, isomericSmiles=True), refSmiles)
+
+  def testDetectBondStereoChemistry(self):
+    self.assertBondStereoRoundTrips('cis.sdf')
+    self.assertBondStereoRoundTrips('trans.sdf')
+
 
 if __name__ == '__main__':
   unittest.main()

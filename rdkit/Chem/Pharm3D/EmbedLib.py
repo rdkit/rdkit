@@ -19,7 +19,7 @@ import numpy
 from rdkit.Chem import rdDistGeom as MolDG
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import ChemicalForceFields
-import Pharmacophore, ExcludedVolume
+from rdkit.Chem.Pharm3D import Pharmacophore, ExcludedVolume
 from rdkit import Geometry
 _times = {}
 
@@ -48,7 +48,7 @@ def GetAtomHeavyNeighbors(atom):
   0
   >>> l[1].GetIdx()
   2
-  
+
   """
   res = []
   for nbr in atom.GetNeighbors():
@@ -81,7 +81,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    >>> boundsMat.shape == (3, 3)
    True
 
-   
+
    We make the assumption that the points of the
    feature form a regular polygon, are listed in order
    (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
@@ -602,14 +602,14 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   Returns a 9-tuple:
       1) the mean value of E1
       2) the sample standard deviation of E1
-      3) the mean value of E2               
+      3) the mean value of E2
       4) the sample standard deviation of E2
-      5) the mean value of E3               
+      5) the mean value of E3
       6) the sample standard deviation of E3
-      7) the mean value of E4               
+      7) the mean value of E4
       8) the sample standard deviation of E4
       9) The number of embeddings that failed
-  
+
   """
   global _times
   atomMatch = [list(x.GetAtomIds()) for x in match]
@@ -741,7 +741,7 @@ def _getFeatDict(mol, featFactory, features):
     (0,)
     >>> acceptors[1].GetAtomIds()
     (3,)
-    
+
   """
   molFeats = {}
   for feat in features:
@@ -811,7 +811,7 @@ def CombiEnum(sequence):
 
   >>> [x for x in CombiEnum(((1,2),(10,20)))]
   [[1, 10], [1, 20], [2, 10], [2, 20]]
-  
+
   >>> [x for x in CombiEnum(((1,2),(10,20),(100,200)))]
   [[1, 10, 100], [1, 10, 200], [1, 20, 100], [1, 20, 200], [2, 10, 100], [2, 10, 200], [2, 20, 100], [2, 20, 200]]
 
@@ -828,7 +828,7 @@ def CombiEnum(sequence):
 
 
 def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
-  """ removes rows from a bounds matrix that are 
+  """ removes rows from a bounds matrix that are
   that are greater than a threshold value away from a set of
   other points
 
@@ -847,7 +847,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    we don't touch the input matrix:
    >>> boundsMat.shape == (3, 3)
    True
-   
+
    >>> print(', '.join(['%.3f'%x for x in bm[0]]))
    0.000, 3.000
    >>> print(', '.join(['%.3f'%x for x in bm[1]]))
@@ -865,7 +865,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
    >>> bm.shape == (3, 3)
    True
-  
+
   """
   nPts = bm.shape[0]
   k = numpy.zeros(nPts, numpy.int0)
@@ -1032,7 +1032,7 @@ def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0, 
   """ Enumerates the list of atom mappings a molecule
   has to a particular pharmacophore.
   We do check distance bounds here.
-  
+
 
   """
   nMatches = len(matches)
@@ -1150,8 +1150,8 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
 
 def ComputeChiralVolume(mol, centerIdx, confId=-1):
   """ Computes the chiral volume of an atom
-  
-  We're using the chiral volume formula from Figure 7 of 
+
+  We're using the chiral volume formula from Figure 7 of
   Blaney and Dixon, Rev. Comp. Chem. V, 299-335 (1994)
 
     >>> import os.path
@@ -1164,7 +1164,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'R'
     >>> ComputeChiralVolume(mol,1) < 0
     True
-  
+
     S configuration atoms give positive volumes:
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
     >>> Chem.AssignStereochemistry(mol)
@@ -1172,7 +1172,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'S'
     >>> ComputeChiralVolume(mol,1) > 0
     True
-    
+
     Non-chiral (or non-specified) atoms give zero volume:
     >>> ComputeChiralVolume(mol,0) == 0.0
     True
@@ -1184,16 +1184,16 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'R'
     >>> ComputeChiralVolume(mol,1)<0
     True
-  
+
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
     >>> ComputeChiralVolume(mol,1)>0
     True
-  
 
-  
+
+
   """
   conf = mol.GetConformer(confId)
   Chem.AssignStereochemistry(mol)

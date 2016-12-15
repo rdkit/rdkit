@@ -14,6 +14,7 @@
 #include <fstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
@@ -206,9 +207,10 @@ static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
   AtomPDBResidueInfo *info = new AtomPDBResidueInfo(tmp, serialno);
   atom->setMonomerInfo(info);
 
-  if (len >= 20)
+  if (len >= 20) {
     tmp = std::string(ptr + 17, 3);
-  else
+    // boost::trim(tmp);
+  } else
     tmp = "UNL";
   info->setResidueName(tmp);
   if (ptr[0] == 'H') info->setIsHeteroAtom(true);

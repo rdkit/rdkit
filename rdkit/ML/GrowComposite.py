@@ -55,7 +55,7 @@
      the filenames.
 
   - -L *limit*: provide an (integer) limit on individual model complexity
-  
+
   - -d *database name*: instead of reading the data from a QDAT file,
      pull it from a database.  In this case, the _filename_ argument
      provides the name of the database table containing the data set.
@@ -73,7 +73,7 @@
 
   - -D: show a detailed breakdown of the composite model performance
      across the training and, when appropriate, hold-out sets.
-     
+
   - -t *threshold value*: use high-confidence predictions for the final
      analysis of the hold-out data.
 
@@ -93,15 +93,18 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+
+import sys
+import time
+
 import numpy
-from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.ML import ScreenComposite, BuildComposite
-from rdkit.ML.Composite import AdjustComposite
+
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
-from rdkit.six.moves import cPickle
-import sys, time, types
+from rdkit.ML import ScreenComposite, BuildComposite
+from rdkit.ML.Composite import AdjustComposite
+from rdkit.ML.Data import DataUtils, SplitData
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -132,7 +135,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
         (options, parameters, etc.) about the run
 
       - composite: the composite model to grow
-      
+
       - progressCallback: (optional) a function which is called with a single
         argument (the number of models built so far) after each model is built.
 
@@ -147,7 +150,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
 
       - data: (optional) the data set to be used.  If this is not provided, the
         data set described in details will be used.
-        
+
     **Returns**
 
       the enlarged composite model
@@ -166,13 +169,12 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
       details.tableName = fName
       data = details.GetDataSet()
     else:
-      data = DataUtils.DBToQuantData(details.dbName, fName, quantName=details.qTableName,
-                                     user=details.dbUser, password=details.dbPassword)
+      data = DataUtils.DBToQuantData(  # @UndefinedVariable function no longer defined
+        details.dbName, fName, quantName=details.qTableName, user=details.dbUser,
+        password=details.dbPassword)
 
-  nExamples = data.GetNPts()
   seed = composite._randomSeed
   DataUtils.InitRandomNumbers(seed)
-  testExamples = []
   if details.shuffleActivities == 1:
     DataUtils.RandomizeActivities(data, shuffle=1, runDetails=details)
   elif details.randomActivities == 1:
@@ -185,7 +187,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
   message('\t%d descriptors' % (len(trainExamples[0]) - 2))
   nVars = data.GetNVars()
   nPossibleVals = composite.nPossibleVals
-  attrs = range(1, nVars + 1)
+  attrs = list(range(1, nVars + 1))
 
   if details.useTrees:
     from rdkit.ML.DecTree import CrossValidate, PruneTree
@@ -207,7 +209,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
                    progressCallback=progressCallback, silent=not _verbose)
 
   else:
-    from rdkit.ML.Neural import CrossValidate
+    from rdkit.ML.Neural import CrossValidate  # @Reimport
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
                    buildDriver=driver, needsQuantization=0)
@@ -251,7 +253,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
       message('\nEntire data set:')
     resTup = ScreenComposite.ShowVoteResults(
       range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
-    nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
+    nGood, nBad, _, avgGood, avgBad, _, voteTab = resTup
     nPts = len(namedExamples)
     nClass = nGood + nBad
     _runDetails.overall_error = float(nBad) / nClass
@@ -362,7 +364,7 @@ def BalanceComposite(details, composite, data1=None, data2=None):
   # and balance it:
   res = []
   weights = details.balWeight
-  if type(weights) not in (types.TupleType, types.ListType):
+  if not isinstance(weights, (tuple, list)):
     weights = (weights, )
   for weight in weights:
     message("\tBalancing with Weight: %.4f" % (weight))
@@ -378,7 +380,6 @@ def ShowVersion(includeArgs=0):
   """
   print('This is GrowComposite.py version %s' % (__VERSION_STRING))
   if includeArgs:
-    import sys
     print('command line was:')
     print(' '.join(sys.argv))
 
@@ -387,7 +388,6 @@ def Usage():
   """ provides a list of arguments for when this is used from the command line
 
   """
-  import sys
   print(__doc__)
   sys.exit(-1)
 
@@ -446,7 +446,7 @@ def ParseArgs(runDetails):
       runDetails.balTable = val
     elif arg == '--balWeight':
       runDetails.balWeight = eval(val)
-      if type(runDetails.balWeight) not in (types.TupleType, types.ListType):
+      if not isinstance(runDetails.balWeight, (tuple, list)):
         runDetails.balWeight = (runDetails.balWeight, )
     elif arg == '--balCnt':
       runDetails.balCnt = int(val)
@@ -488,8 +488,8 @@ def ParseArgs(runDetails):
       runDetails.limitDepth = int(val)
     elif arg == '-q':
       qBounds = eval(val)
-      assert type(qBounds) in (types.TupleType, types.ListType
-                               ), 'bad argument type for -q, specify a list as a string'
+      assert isinstance(qBounds,
+                        (tuple, list)), 'bad argument type for -q, specify a list as a string'
       runDetails.qBoundCount = val
       runDetails.qBounds = qBounds
     elif arg == '-Q':

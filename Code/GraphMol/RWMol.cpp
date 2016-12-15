@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -31,6 +30,7 @@ RWMol &RWMol::operator=(const RWMol &other) {
   if (this != &other) {
     this->clear();
     d_partialBonds.clear();
+    numBonds = 0;
     initFromOther(other, false, -1);
   }
   return *this;
@@ -136,6 +136,21 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
   atom_p->setIdx(idx);
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   d_graph[vd].reset(atom_p);
+  // FIX: do something about bookmarks
+};
+
+void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
+  PRECONDITION(bond_pin, "bad bond passed to replaceBond");
+  URANGE_CHECK(idx, getNumBonds() - 1);
+  BOND_ITER_PAIR bIter = getEdges();
+  for (unsigned int i = 0; i < idx; i++) ++bIter.first;
+  BOND_SPTR obond = d_graph[*(bIter.first)];
+  Bond *bond_p = bond_pin->copy();
+  bond_p->setOwningMol(this);
+  bond_p->setIdx(idx);
+  bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
+  bond_p->setEndAtomIdx(obond->getEndAtomIdx());
+  d_graph[*(bIter.first)].reset(bond_p);
   // FIX: do something about bookmarks
 };
 
@@ -269,8 +284,9 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   MolGraph::edge_descriptor which;
   boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which].reset(b);
-  unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
-  b->setIdx(res - 1);
+  //unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
+  ++numBonds;
+  b->setIdx(numBonds - 1);
   b->setBeginAtomIdx(atomIdx1);
   b->setEndAtomIdx(atomIdx2);
 
@@ -282,7 +298,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_ringInfo->reset();
   }
 
-  return res;
+  return numBonds;//res;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -353,6 +369,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
   MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
+  --numBonds;
 }
 
 Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {

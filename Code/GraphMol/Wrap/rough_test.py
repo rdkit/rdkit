@@ -3140,6 +3140,25 @@ CAS<~>
     w = None
     outf.close()
 
+  def testReplaceBond(self):
+    origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
+    bonds = list(origmol.GetBonds())
+    self.assertEqual(len(bonds), 1)
+    singlebond = bonds[0]
+    self.assertEqual(singlebond.GetBondType(), Chem.BondType.SINGLE)
+
+    # this is the only way we create a bond, is take it from another molecule
+    doublebonded = Chem.MolFromSmiles("C=C")
+    doublebond = list(doublebonded.GetBonds())[0]
+
+    # make sure replacing the bond changes the smiles
+    self.assertEquals(Chem.MolToSmiles(origmol), "CC")
+    origmol.ReplaceBond(singlebond.GetIdx(), doublebond)
+    Chem.SanitizeMol(origmol)
+
+    self.assertEquals(Chem.MolToSmiles(origmol), "C=C")
+
+
   def testAdjustQueryProperties(self):
     m = Chem.MolFromSmarts('C1CCC1*')
     am = Chem.AdjustQueryProperties(m)
@@ -3164,6 +3183,23 @@ CAS<~>
     qp.aromatizeIfPossible = False
     am = Chem.AdjustQueryProperties(m, qp)
     self.assertFalse(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
+
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'*1-*-*-*-1-*-*')
+    qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
+
+    qps = Chem.AdjustQueryParameters()
+    qps.makeBondsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1~[#6&D2]~[#6&D2]~[#6&D3]~1~[#8]~[#6]')
+    qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -3231,11 +3267,11 @@ CAS<~>
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
-    bondTypeDict = {}
+    bondTypeSet = set()
     # check that we actually have two alternate Kekule structures
-    bondTypeDict[resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    bondTypeDict[resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType()] = True
-    self.assertEqual(len(bondTypeDict), 2)
+    bondTypeSet.add(resMolSuppl[0].GetBondBetweenAtoms(3, 4).GetBondType())
+    bondTypeSet.add(resMolSuppl[1].GetBondBetweenAtoms(3, 4).GetBondType())
+    self.assertEqual(len(bondTypeSet), 2)
 
     bondTypeDict = {}
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
@@ -3396,6 +3432,30 @@ CAS<~>
       matches = suppl.GetSubstructMatches(guanidiniumQuery, uniquify=True, numThreads=0)
       self.assertEqual(len(matches), 2)
       self.assertEqual(matches, ((66, 67, 69, 68), (123, 124, 126, 125)))
+
+  def testGitHUb1166(self):
+    mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(cc1)C(=O)[O-]')
+    resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
+    self.assertEqual(len(resMolSuppl), 8)
+    # check that formal charges on odd indices are in the same position
+    # as on even indices
+    for i in range(0, len(resMolSuppl), 2):
+      self.assertEqual(resMolSuppl[i].GetNumAtoms(), resMolSuppl[i + 1].GetNumAtoms())
+      for atomIdx in range(resMolSuppl[i].GetNumAtoms()):
+        self.assertEqual(resMolSuppl[i].GetAtomWithIdx(atomIdx).GetFormalCharge(),
+          resMolSuppl[i + 1].GetAtomWithIdx(atomIdx).GetFormalCharge())
+      # check that bond orders are alternate on aromatic bonds between
+      # structures on odd indices and structures on even indices
+      self.assertEqual(resMolSuppl[i].GetNumBonds(), resMolSuppl[i + 1].GetNumBonds())
+      for bondIdx in range(resMolSuppl[i].GetNumBonds()):
+        self.assertTrue(((not resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic())
+          and (not resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic())
+          and (resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondType()
+          == resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondType()))
+          or (resMolSuppl[i].GetBondWithIdx(bondIdx).GetIsAromatic()
+          and resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetIsAromatic()
+          and (int(round(resMolSuppl[i].GetBondWithIdx(bondIdx).GetBondTypeAsDouble()
+          + resMolSuppl[i + 1].GetBondWithIdx(bondIdx).GetBondTypeAsDouble())) == 3)))
 
   def testAtomBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')

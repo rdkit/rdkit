@@ -243,13 +243,14 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
-  ADJUST_IGNORECHAINATOMS = 0x1,
-  ADJUST_IGNORERINGATOMS = 0x4,
+  ADJUST_IGNORECHAINS = 0x1,
+  ADJUST_IGNORERINGS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
+
 struct AdjustQueryParameters {
   bool adjustDegree; /**< add degree queries */
   boost::uint32_t adjustDegreeFlags;
@@ -259,14 +260,22 @@ struct AdjustQueryParameters {
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
   bool aromatizeIfPossible;
-  
+  bool makeBondsGeneric; /**< convert bonds to generic queries (any bonds) */
+  boost::uint32_t makeBondsGenericFlags;
+  bool makeAtomsGeneric; /**< convert atoms to generic queries (any atoms) */
+  boost::uint32_t makeAtomsGenericFlags;
+
   AdjustQueryParameters()
       : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         makeDummiesQueries(true),
-        aromatizeIfPossible(true) {}
+        aromatizeIfPossible(true),
+        makeBondsGeneric(false),
+        makeBondsGenericFlags(ADJUST_IGNORENONE),
+        makeAtomsGeneric(false),
+        makeAtomsGenericFlags(ADJUST_IGNORENONE) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!

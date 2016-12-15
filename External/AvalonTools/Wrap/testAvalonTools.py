@@ -2,8 +2,9 @@
 #
 # Created by Greg Landrum, July 2008
 #
+from __future__ import print_function
 from rdkit import RDConfig
-import os
+import os, sys
 import unittest
 from rdkit import DataStructs, Chem
 from rdkit.Avalon import pyAvalonTools
@@ -21,6 +22,162 @@ STRUCHK_INIT = '''-tm
 -cn 999
 -l %(struchk_log_path)sstruchk.log''' % locals()
 
+STRUCHK_INIT_IN_MEMORY_LOGGING = '''-tm
+-ta %(struchk_conf_path)scheckfgs.trn
+-tm
+-or
+-ca %(struchk_conf_path)scheckfgs.chk
+-cc
+-cl 3
+-cs
+-cn 999''' % locals()
+
+#
+# PubChem test molecule converted from the RCSB
+#  mondo errors here.
+atom_clash = """2FV9_002_B_2
+  RCSB PDB01151502013D
+Coordinates from PDB:2FV9:B:2 Model:1 without hydrogens
+ 32 32  0  0  0  0            999 V2000
+   46.8220   28.7360   39.6060   C 0  0  0  0  0  0  0  0  0  0  0  0
+   47.3620   28.0340   38.3430   C 0  0  0  0  0  0  0  0  0  0  0  0
+   47.5920   29.0540   37.2270   C 0  0  0  0  0  0  0  0  0  0  0  0
+   48.4130   28.4900   36.0770   C 0  0  0  0  0  0  0  0  0  0  0  0
+   47.1640   31.0380   40.1700   C 0  0  0  0  0  0  0  0  0  0  0  0
+   46.6160   27.6990   40.7140   C 0  0  0  0  0  0  0  0  0  0  0  0
+   45.0330   26.1340   41.6460   C 0  0  0  0  0  0  0  0  0  0  0  0
+   44.1100   26.4530   42.8300   C 0  0  0  0  0  0  0  0  0  0  0  0
+   49.2550   34.1450   39.3140   C 0  0  0  0  0  0  0  0  0  0  0  0
+   48.2670   33.0140   39.1740   C 0  0  0  0  0  0  0  0  0  0  0  0
+   44.3710   25.0810   40.7680   C 0  0  0  0  0  0  0  0  0  0  0  0
+   46.3620   26.9550   37.9090   C 0  0  0  0  0  0  0  0  0  0  0  0
+   47.7210   29.8260   39.9930   N 0  0  0  0  0  0  0  0  0  0  0  0
+   47.5720   27.2580   41.3530   O 0  0  0  0  0  0  0  0  0  0  0  0
+   44.7760   23.9020   40.8430   O 0  0  0  0  0  0  0  0  0  0  0  0
+   49.7640   36.2780   39.7670   O 0  0  0  0  0  0  0  0  0  0  0  0
+   44.8290   27.0700   44.0370   C 0  0  0  0  0  0  0  0  0  0  0  0
+   46.0700   26.2600   44.4160   C 0  0  0  0  0  0  0  0  0  0  0  0
+   43.8840   27.1450   45.2400   C 0  0  0  0  0  0  0  0  0  0  0  0
+   48.7580   35.3740   39.5170   N 0  0  0  0  0  0  0  0  0  0  0  0
+   50.4620   33.9280   39.2410   O 0  0  0  0  0  0  0  0  0  0  0  0
+   48.1640   32.1600   40.4390   C 0  0  0  0  0  0  0  0  0  0  0  0
+   47.7340   32.9890   41.6620   C 0  0  0  0  0  0  0  0  0  0  0  0
+   45.9630   31.2790   40.1090   O 0  0  0  0  0  0  0  0  0  0  0  0
+   45.3280   27.3570   40.9080   N 0  0  0  0  0  0  0  0  0  0  0  0
+   43.4500   25.4420   40.0020   O 0  0  0  0  0  0  0  0  0  0  0  0
+   47.8720   32.1800   42.9370   C 0  0  0  0  0  0  0  0  0  0  0  0
+   49.0780   32.2360   43.6910   C 0  0  0  0  0  0  0  0  0  0  0  0
+   49.1970   31.5090   44.9110   C 0  0  0  0  0  0  0  0  0  0  0  0
+   48.1080   30.7170   45.3760   C 0  0  0  0  0  0  0  0  0  0  0  0
+   46.9120   30.6330   44.6100   C 0  0  0  0  0  0  0  0  0  0  0  0
+   46.7920   31.3650   43.3900   C 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  6  1  0  0  0  0
+  1 13  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2 12  1  0  0  0  0
+  3  4  1  0  0  0  0
+  5 13  1  0  0  0  0
+  5 22  1  0  0  0  0
+  5 24  2  0  0  0  0
+  6 14  2  0  0  0  0
+  6 25  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7 11  1  0  0  0  0
+  7 25  1  0  0  0  0
+  8 17  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 20  1  0  0  0  0
+  9 21  2  0  0  0  0
+ 10 22  1  0  0  0  0
+ 11 15  2  0  0  0  0
+ 11 26  1  0  0  0  0
+ 16 20  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 17 19  1  0  0  0  0
+ 22 23  1  0  0  0  0
+ 23 27  1  0  0  0  0
+ 27 28  2  0  0  0  0
+ 27 32  1  0  0  0  0
+ 28 29  1  0  0  0  0
+ 29 30  2  0  0  0  0
+ 30 31  1  0  0  0  0
+ 31 32  2  0  0  0  0
+M  END
+>  <InstanceId>
+2FV9_002_B_2
+
+>  <ChemCompId>
+002
+
+>  <PdbId>
+2FV9
+
+>  <ChainId>
+B
+
+>  <ResidueNumber>
+2
+
+>  <InsertionCode>
+
+
+>  <Model>
+1
+
+>  <AltIds>
+
+
+>  <MissingHeavyAtoms>
+0
+
+>  <ObservedFormula>
+C23 N3 O6
+
+>  <Name>
+N-[(2R)-2-BENZYL-4-(HYDROXYAMINO)-4-OXOBUTANOYL]-L-ISOLEUCYL-L-LEUCINE
+
+>  <SystematicName>
+(2S)-2-[[(2S,3S)-2-[[(2R)-4-(hydroxyamino)-4-oxo-2-(phenylmethyl)butanoyl]amino]-3-methyl-pentanoyl]amino]-4-methyl-pentanoic acid
+
+>  <Synonyms>
+
+
+>  <Type>
+NON-POLYMER
+
+>  <Formula>
+C23 H35 N3 O6
+
+>  <MolecularWeight>
+449.541
+
+>  <ModifiedDate>
+2011-06-04
+
+>  <Parent>
+
+
+>  <OneLetterCode>
+
+
+>  <SubcomponentList>
+
+
+>  <AmbiguousFlag>
+
+
+>  <InChI>
+InChI=1S/C23H35N3O6/c1-5-15(4)20(22(29)24-18(23(30)31)11-14(2)3)25-21(28)17(13-19(27)26-32)12-16-9-7-6-8-10-16/h6-10,14-15,17-18,20,32H,5,11-13H2,1-4H3,(H,24,29)(H,25,28)(H,26,27)(H,30,31)/t15-,17+,18-,20-/m0/s1
+
+>  <InChIKey>
+MWZOULASPWUGJJ-NFBUACBFSA-N
+
+>  <SMILES>
+CC[C@H](C)[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@H](Cc1ccccc1)CC(=O)NO
+
+$$$$
+"""
 
 def feq(v1, v2, tol=1e-4):
   return abs(v1 - v2) < tol
@@ -137,6 +294,22 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(err, 0)
     self.assertFalse(fixed_mol)
     pyAvalonTools.CloseCheckMolFiles()
+
+  def testStruChkInMemoryLog(self):
+    r = pyAvalonTools.InitializeCheckMol(STRUCHK_INIT_IN_MEMORY_LOGGING)
+    try:
+      (err, fixed_mol) = pyAvalonTools.CheckMoleculeString(atom_clash, False)
+      log =  pyAvalonTools.GetCheckMolLog()
+      self.assertTrue("of average bond length from bond" in log)
+      
+      # make sure that the log is cleared for the next molecule
+      (err, fixed_mol) = pyAvalonTools.CheckMoleculeString("c1ccccc1", True)
+      log =  pyAvalonTools.GetCheckMolLog()
+      self.assertFalse(log)
+
+    finally:
+      pyAvalonTools.CloseCheckMolFiles()
+    
 
   #   def testIsotopeBug(self):
   #     mb="""D isotope problem.mol

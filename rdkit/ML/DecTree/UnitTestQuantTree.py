@@ -1,24 +1,24 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2001,2003  greg Landrum and Rational Discovery LLC
 #
 """ unit tests for the QuantTree implementation """
 from __future__ import print_function
-import unittest
+
 import io
+import unittest
+
 from rdkit import RDConfig
 from rdkit.ML.DecTree import BuildQuantTree
 from rdkit.ML.DecTree.QuantTree import QuantTreeNode
-from rdkit.ML.Data import MLData
-from rdkit.six.moves import cPickle, xrange
+from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 from rdkit.six import cmp
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    print('\n%s: ' % self.shortDescription(), end='')
     self.qTree1Name = RDConfig.RDCodeDir + '/ML/DecTree/test_data/QuantTree1.pkl'
     self.qTree2Name = RDConfig.RDCodeDir + '/ML/DecTree/test_data/QuantTree2.pkl'
 
@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0, 1, 0.1, 0], ['p2', 0, 0, 0.1, 1], ['p3', 0, 0, 1.1, 2],
                  ['p4', 0, 1, 1.1, 2], ['p5', 1, 0, 0.1, 2], ['p6', 1, 0, 1.1, 2],
                  ['p7', 1, 1, 0.1, 2], ['p8', 1, 1, 1.1, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 2, 2, 0, 3]
     boundsPerVar = [0, 0, 0, 1, 0]
 
@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0.1, 1, 0.1, 0], ['p2', 0.1, 0, 0.1, 1], ['p3', 0.1, 0, 1.1, 2],
                  ['p4', 0.1, 1, 1.1, 2], ['p5', 1.1, 0, 0.1, 2], ['p6', 1.1, 0, 1.1, 2],
                  ['p7', 1.1, 1, 0.1, 2], ['p8', 1.1, 1, 1.1, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 0, 2, 0, 3]
     boundsPerVar = [0, 1, 0, 1, 0]
 
@@ -48,7 +48,7 @@ class TestCase(unittest.TestCase):
     examples1 = [['p1', 0, 1, 0.1, 4.0, 0], ['p2', 0, 0, 0.1, 4.1, 1], ['p3', 0, 0, 1.1, 4.2, 2],
                  ['p4', 0, 1, 1.1, 4.2, 2], ['p5', 1, 0, 0.1, 4.2, 2], ['p6', 1, 0, 1.1, 4.2, 2],
                  ['p7', 1, 1, 0.1, 4.2, 2], ['p8', 1, 1, 1.1, 4.0, 0]]
-    attrs = range(1, len(examples1[0]) - 1)
+    attrs = list(range(1, len(examples1[0]) - 1))
     nPossibleVals = [0, 2, 2, 0, 0, 3]
     boundsPerVar = [0, 0, 0, 1, -1, 0]
 
@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
     self.examples1 = examples1
 
   def test0Cmp(self):
-    " testing tree comparisons "
+    # " testing tree comparisons "
     self._setupTree1()
     self._setupTree2()
     assert self.t1 == self.t1, 'self equals failed'
@@ -64,17 +64,20 @@ class TestCase(unittest.TestCase):
     assert self.t1 != self.t2, 'not equals failed'
 
   def test1Tree(self):
-    " testing tree1 "
+    # " testing tree1 "
     self._setupTree1()
     with open(self.qTree1Name, 'r') as inTFile:
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
       inTFile.close()
     with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
-    assert self.t1 == t2, 'Incorrect tree generated.'
+    assert self.t1 == t2, 'Incorrect tree generated. '
+
+    self.assertIn('Var: 2 []', str(self.t1))
+    self.assertEqual(self.t1.GetQuantBounds(), [])
 
   def test2Tree(self):
-    " testing tree2 "
+    # " testing tree2 "
     self._setupTree2()
     with open(self.qTree2Name, 'r') as inTFile:
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
@@ -84,18 +87,20 @@ class TestCase(unittest.TestCase):
     assert self.t2 == t2, 'Incorrect tree generated.'
 
   def test3Classify(self):
-    " testing classification "
+    # " testing classification "
     self._setupTree1()
     self._setupTree2()
-    for i in xrange(len(self.examples1)):
-      assert self.t1.ClassifyExample(self.examples1[i])==self.examples1[i][-1],\
-             'examples1[%d] misclassified'%i
-    for i in xrange(len(self.examples2)):
-      assert self.t2.ClassifyExample(self.examples2[i])==self.examples2[i][-1],\
-             'examples2[%d] misclassified'%i
+    for i in range(len(self.examples1)):
+      self.assertEqual(
+        self.t1.ClassifyExample(self.examples1[i]), self.examples1[i][-1],
+        msg='examples1[%d] misclassified' % i)
+    for i in range(len(self.examples2)):
+      self.assertEqual(
+        self.t2.ClassifyExample(self.examples2[i]), self.examples2[i][-1],
+        msg='examples2[%d] misclassified' % i)
 
   def test4UnusedVars(self):
-    " testing unused variables "
+    # " testing unused variables "
     self._setupTree1a()
     with open(self.qTree1Name, 'r') as inTFile:
       buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
@@ -103,12 +108,13 @@ class TestCase(unittest.TestCase):
     with io.BytesIO(buf) as inFile:
       t2 = cPickle.load(inFile)
     assert self.t1 == t2, 'Incorrect tree generated.'
-    for i in xrange(len(self.examples1)):
-      assert self.t1.ClassifyExample(self.examples1[i])==self.examples1[i][-1],\
-             'examples1[%d] misclassified'%i
+    for i in range(len(self.examples1)):
+      self.assertEqual(
+        self.t1.ClassifyExample(self.examples1[i]), self.examples1[i][-1],
+        'examples1[%d] misclassified' % i)
 
   def test5Bug29(self):
-    """ a more extensive test of the cmp stuff using hand-built trees """
+    # """ a more extensive test of the cmp stuff using hand-built trees """
     import copy
 
     t1 = QuantTreeNode(None, 't1')
@@ -144,7 +150,7 @@ class TestCase(unittest.TestCase):
     assert cmp(t1, t2), 'inequality failed'
 
   def test6Bug29_2(self):
-    """ a more extensive test of the cmp stuff using pickled trees"""
+    # """ a more extensive test of the cmp stuff using pickled trees"""
     import os
     with open(os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'CmpTree1.pkl'),
               'r') as t1TFile:
@@ -161,13 +167,13 @@ class TestCase(unittest.TestCase):
     assert cmp(t1, t2), 'equality failed'
 
   def test7Recycle(self):
-    """ try recycling descriptors """
+    # """ try recycling descriptors """
     examples1 = [[3, 0, 0],
                  [3, 1, 1],
                  [1, 0, 0],
                  [0, 0, 1],
                  [1, 1, 0], ]
-    attrs = range(2)
+    attrs = list(range(2))
     nPossibleVals = [2, 2, 2]
     boundsPerVar = [1, 0, 0]
     self.t1 = BuildQuantTree.QuantTreeBoot(examples1, attrs, nPossibleVals, boundsPerVar,
@@ -179,14 +185,14 @@ class TestCase(unittest.TestCase):
     assert self.t1.GetChildren()[1].GetChildren()[1].GetLabel() == 0
 
   def test8RandomForest(self):
-    """ try random forests descriptors """
+    # """ try random forests descriptors """
     import random
     random.seed(23)
     nAttrs = 100
     nPts = 10
     examples = []
-    for i in range(nPts):
-      descrs = [int(random.random() > 0.5) for x in range(nAttrs)]
+    for _ in range(nPts):
+      descrs = [int(random.random() > 0.5) for _ in range(nAttrs)]
       act = sum(descrs) > nAttrs / 2
       examples.append(descrs + [act])
     attrs = list(range(nAttrs))
@@ -198,6 +204,12 @@ class TestCase(unittest.TestCase):
     self.assertEqual(self.t1.GetChildren()[0].GetLabel(), 3)
     self.assertEqual(self.t1.GetChildren()[1].GetLabel(), 54)
 
+  def test_exampleCode(self):
+    f = StringIO()
+    with redirect_stdout(f):
+      BuildQuantTree.TestTree()
+    self.assertIn('Var: 2', f.getvalue())
 
-if __name__ == '__main__':
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

@@ -23,9 +23,8 @@ Other compatibility notes:
 
 """
 from __future__ import print_function
-import math
 import numpy
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 from rdkit.ML.Data import DataUtils
 
 
@@ -34,12 +33,12 @@ class Composite(object):
 
 
     **Notes**
-    
+
     - adding a model which is already present just results in its count
        field being incremented and the errors being averaged.
 
     - typical usage:
-    
+
        1) grow the composite with AddModel until happy with it
 
        2) call AverageErrors to calculate the average error values
@@ -104,7 +103,7 @@ class Composite(object):
       **Arguments**
 
        - qBounds:  a list of quantization bounds, each quantbound is a
-             list of boundaries 
+             list of boundaries
 
        - nPossible:  a list of integers indicating how many possible values
           each descriptor can take on.
@@ -112,10 +111,9 @@ class Composite(object):
       **NOTE**
 
          - if the two lists are of different lengths, this will assert out
-         
+
          - neither list is copied, so if you modify it later, the composite
            itself will also be modified.
-           
 
     """
     if nPossible is not None:
@@ -166,7 +164,7 @@ class Composite(object):
       **Arguments**
 
        - example: a data point (list, tuple or numpy array)
-       
+
        - quantBounds:  a list of quantization bounds, each quantbound is a
              list of boundaries.  If this argument is not provided, the composite
              will use its own quantBounds
@@ -209,7 +207,6 @@ class Composite(object):
      **Returns**
 
        the histogram as a series of (error, count) 2-tuples
-       
 
     """
     nExamples = len(self.modelList)
@@ -237,7 +234,7 @@ class Composite(object):
        - example: the example to be voted upon
 
        - quantExample: the quantized form of the example
-    
+
        - appendExample: toggles saving the example on the models
 
        - onlyModels: if provided, this should be a sequence of model
@@ -247,12 +244,11 @@ class Composite(object):
      **Returns**
 
        a list with a vote from each member
-      
+
     """
     if not onlyModels:
-      onlyModels = range(len(self))
+      onlyModels = list(range(len(self)))
 
-    nModels = len(onlyModels)
     votes = [-1] * len(self)
     for i in onlyModels:
       if self.quantizationRequirements[i]:
@@ -287,7 +283,7 @@ class Composite(object):
 
 
       **FIX:**
-        statistics sucks... I'm not seeing an obvious way to get 
+        statistics sucks... I'm not seeing an obvious way to get
            the confidence intervals.  For that matter, I'm not seeing
            an unobvious way.
 
@@ -305,7 +301,7 @@ class Composite(object):
       quantExample = []
 
     if not onlyModels:
-      onlyModels = range(len(self))
+      onlyModels = list(range(len(self)))
     self.modelVotes = self.CollectVotes(example, quantExample, appendExample=appendExample,
                                         onlyModels=onlyModels)
 
@@ -369,7 +365,7 @@ class Composite(object):
 
   def SetInputOrder(self, colNames):
     """ sets the input order
-    
+
       **Arguments**
 
         - colNames: a list of the names of the data columns that will be passed in
@@ -406,7 +402,7 @@ class Composite(object):
     except ValueError:
       # ok, there's no obvious match for the final column (activity)
       #  We'll take the last one:
-      #self._mapOrder[-1] = len(descs)-1
+      # self._mapOrder[-1] = len(descs)-1
       self._mapOrder[-1] = -1
 
   def Grow(self, examples, attrs, nPossibleVals, buildDriver, pruner=None, nTries=10, pruneIt=0,
@@ -428,7 +424,7 @@ class Composite(object):
 
        - pruner: a function used to "prune" (reduce the complexity of)
           the resulting model.
-       
+
        - nTries: the number of new models to add
 
        - pruneIt: toggles whether or not pruning is done
@@ -467,21 +463,21 @@ class Composite(object):
       trainSet = None
 
       if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0):
-        trainIdx, temp = DataUtils.FilterData(trainExamples, self._modelFilterVal,
-                                              self._modelFilterFrac, -1, indicesOnly=1)
+        trainIdx, _ = DataUtils.FilterData(trainExamples, self._modelFilterVal,
+                                           self._modelFilterFrac, -1, indicesOnly=1)
         trainSet = [trainExamples[x] for x in trainIdx]
 
       else:
         trainSet = trainExamples
 
-      #print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
+      # print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
       model, frac = buildDriver(*(trainSet, attrs, nPossibleVals), **buildArgs)
       if pruneIt:
         model, frac2 = pruner(model, model.GetTrainingExamples(), model.GetTestExamples(),
                               minimizeTestErrorOnly=0)
         frac = frac2
-      if hasattr(self, '_modelFilterFrac') and self._modelFilterFrac!=0 and \
-         hasattr(model,'_trainIndices'):
+      if (hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0 and
+          hasattr(model, '_trainIndices')):
         # correct the model's training indices:
         trainIndices = [trainIdx[x] for x in model._trainIndices]
         model._trainIndices = trainIndices
@@ -497,7 +493,7 @@ class Composite(object):
       m = self.GetModel(i)
       try:
         m.ClearExamples()
-      except AttributeError:
+      except AttributeError:  # pragma: nocover
         pass
 
   def Pickle(self, fileName='foo.pkl', saveExamples=0):
@@ -509,7 +505,7 @@ class Composite(object):
 
        - saveExamples: if this is zero, the individual models will have
          their stored examples cleared.
-       
+
     """
     if not saveExamples:
       self.ClearModelExamples()
@@ -520,7 +516,7 @@ class Composite(object):
 
   def AddModel(self, model, error, needsQuantization=1):
     """ Adds a model to the composite
-    
+
      **Arguments**
 
        - model: the model to be added
@@ -542,7 +538,7 @@ class Composite(object):
     if model in self.modelList:
       try:
         idx = self.modelList.index(model)
-      except ValueError:
+      except ValueError:  # pragma: nocover
         # FIX: we should never get here, but sometimes we do anyway
         self.modelList.append(model)
         self.errList.append(error)
@@ -563,7 +559,7 @@ class Composite(object):
     """
     self.errList = list(map(lambda x, y: x / y, self.errList, self.countList))
 
-  def SortModels(self, sortOnError=1):
+  def SortModels(self, sortOnError=True):
     """ sorts the list of models
 
       **Arguments**
@@ -579,7 +575,7 @@ class Composite(object):
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
-    #print(order,sortOnError,self.errList,self.countList)
+    # print(order,sortOnError,self.errList,self.countList)
     self.modelList = [self.modelList[x] for x in order]
     self.countList = [self.countList[x] for x in order]
     self.errList = [self.errList[x] for x in order]
@@ -701,13 +697,12 @@ class Composite(object):
     """
     outStr = 'Composite\n'
     for i in range(len(self.modelList)):
-      outStr = outStr + \
-         '  Model % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
-                                                                     100.*self.errList[i])
+      outStr = (outStr + '  Model %4d:  %5d occurances  %%%5.2f average error\n' %
+                (i, self.countList[i], 100. * self.errList[i]))
     return outStr
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   if 0:
     from rdkit.ML.DecTree import DecTree
     c = Composite()

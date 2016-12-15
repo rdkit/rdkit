@@ -179,6 +179,13 @@ if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
 else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
     set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
 endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+  set(RDKIT_RDK_GIN_BFP_TRICONSISTENT "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+  set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 set(installPgSQLBody "${installPgSQLBody}"

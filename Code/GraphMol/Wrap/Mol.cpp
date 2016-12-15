@@ -235,6 +235,7 @@ class ReadWriteMol : public RWMol {
     return addAtom(atom, true, false);
   };
   void ReplaceAtom(unsigned int idx, Atom *atom) { replaceAtom(idx, atom); };
+  void ReplaceBond(unsigned int idx, Bond *bond) { replaceBond(idx, bond); };
   ROMol *GetMol() const {
     ROMol *res = new ROMol(*this);
     return res;
@@ -660,6 +661,9 @@ struct mol_wrapper {
         .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom,
              (python::arg("mol"), python::arg("index"), python::arg("newAtom")),
              "replaces the specified atom with the provided one")
+        .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
+             (python::arg("mol"), python::arg("index"), python::arg("newBond")),
+             "replaces the specified bond with the provided one")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());
