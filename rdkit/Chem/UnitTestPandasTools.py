@@ -307,7 +307,8 @@ class TestWriteSDF(unittest.TestCase):
     try:
       filename = os.path.join(dirname, "test.sdf")
       PandasTools.WriteSDF(self.df, filename)
-      s = open(filename, "U").read()
+      with open(filename) as f:
+        s = f.read()
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
     finally:

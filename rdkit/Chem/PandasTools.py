@@ -236,11 +236,10 @@ def _molge(x, y):
     if not DataStructs.AllProbeBitsMatch(y._substructfp, x._substructfp):
       return False
   match = x.GetSubstructMatch(y)
+  x.__sssAtoms = []
   if match:
     if highlightSubstructures:
       x.__sssAtoms = list(match)
-    else:
-      x.__sssAtoms = []
     return True
   else:
     return False
