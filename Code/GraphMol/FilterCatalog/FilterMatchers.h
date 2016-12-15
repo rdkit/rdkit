@@ -58,7 +58,7 @@ class And : public FilterMatcherBase {
   //! True if arg1 and arg2 FilterMatchers are true
 
   And(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
-      : FilterMatcherBase("And"), arg1(arg1.Clone()), arg2(arg2.Clone()) {}
+      : FilterMatcherBase("And"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
   And(const boost::shared_ptr<FilterMatcherBase> &arg1,
       const boost::shared_ptr<FilterMatcherBase> &arg2)
@@ -93,7 +93,7 @@ class And : public FilterMatcherBase {
     return false;
   }
 
-  boost::shared_ptr<FilterMatcherBase> Clone() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new And(*this));
   }
 
@@ -122,7 +122,7 @@ class Or : public FilterMatcherBase {
   //! Constructs or Ander
   //! true if arg1 or arg2 are true
   Or(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
-      : FilterMatcherBase("Or"), arg1(arg1.Clone()), arg2(arg2.Clone()) {}
+      : FilterMatcherBase("Or"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
   Or(const boost::shared_ptr<FilterMatcherBase> &arg1,
      const boost::shared_ptr<FilterMatcherBase> &arg2)
@@ -154,7 +154,7 @@ class Or : public FilterMatcherBase {
     return res1 || res2;
   }
 
-  boost::shared_ptr<FilterMatcherBase> Clone() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new Or(*this));
   }
 
@@ -182,7 +182,7 @@ class Not : public FilterMatcherBase {
   //  from getMatches since a false internal match matches
   //  nothing!
   Not(const FilterMatcherBase &arg1)
-      : FilterMatcherBase("Not"), arg1(arg1.Clone()) {}
+      : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 
   Not(const boost::shared_ptr<FilterMatcherBase> &arg1)
       : FilterMatcherBase("Not"), arg1(arg1) {}
@@ -208,7 +208,7 @@ class Not : public FilterMatcherBase {
     return !arg1->getMatches(mol, matchVect);
   }
 
-  boost::shared_ptr<FilterMatcherBase> Clone() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new Not(*this));
   }
 
@@ -321,7 +321,7 @@ class SmartsMatcher : public FilterMatcherBase {
   virtual bool getMatches(const ROMol &mol,
                           std::vector<FilterMatch> &matchVect) const;
   virtual bool hasMatch(const ROMol &mol) const;
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new SmartsMatcher(*this));
   }
 
@@ -403,7 +403,7 @@ class ExclusionList : public FilterMatcherBase {
 
   void addPattern(const FilterMatcherBase &base) {
     PRECONDITION(base.isValid(), "Invalid FilterMatcherBase");
-    d_offPatterns.push_back(base.Clone());
+    d_offPatterns.push_back(base.copy());
   }
 
   void setExclusionPatterns(
@@ -433,7 +433,7 @@ class ExclusionList : public FilterMatcherBase {
     return result;
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new ExclusionList(*this));
   }
 
@@ -469,7 +469,7 @@ public:
   */
   FilterHierarchyMatcher(const FilterMatcherBase &matcher) :
     FilterMatcherBase(), 
-    d_matcher(matcher.Clone()) {
+    d_matcher(matcher.copy()) {
   }
   
   //! Return the name for this node (from the underlying FilterMatcherBase)
@@ -491,7 +491,7 @@ public:
   */
   void setPattern(const FilterMatcherBase & matcher) {
     PRECONDITION(matcher.isValid(), "Adding invalid patterns is not allowed.");
-    d_matcher = matcher.Clone();
+    d_matcher = matcher.copy();
     PRECONDITION(getName() == d_matcher->getName(), "Opps");
   }
 
@@ -527,8 +527,8 @@ public:
     return getMatches(mol, temp);
   }
 
-  //! Clones the FilterHierarchyMatcher into a FilterMatcherBase
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  //! copys the FilterHierarchyMatcher into a FilterMatcherBase
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new FilterHierarchyMatcher(*this));
   }
  private:

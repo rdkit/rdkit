@@ -247,9 +247,9 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
     case Bond::DATIVE:
       if (atomToLeftIdx >= 0 &&
           bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx))
-        res = ">";
+        res = "->";
       else
-        res = "<";
+        res = "<-";
       break;
     default:
       res = "~";

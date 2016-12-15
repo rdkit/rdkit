@@ -54,7 +54,8 @@ def GetNodesDownToCentroids(cluster, above=1):
   else:
     res = []
     children = cluster.GetChildren()
-    children.sort(lambda x, y: cmp(len(y), len(x)))
+    children.sort(key=lambda x: len(x), reverse=True)
+    #     children.sort(lambda x, y: cmp(len(y), len(x)))
     for child in children:
       res = res + GetNodesDownToCentroids(child, above)
     res = res + [cluster]
@@ -62,7 +63,7 @@ def GetNodesDownToCentroids(cluster, above=1):
 
 
 def FindClusterCentroidFromDists(cluster, dists):
-  """ find the point in a cluster which has the smallest summed 
+  """ find the point in a cluster which has the smallest summed
      Euclidean distance to all others
 
    **Arguments**
@@ -124,7 +125,7 @@ def _BreadthFirstSplit(cluster, n):
     return cluster.GetPoints()
   clusters = [cluster]
   nxtIdx = 0
-  for i in range(n - 1):
+  for _ in range(n - 1):
     while nxtIdx < len(clusters) and len(clusters[nxtIdx]) == 1:
       nxtIdx += 1
     assert nxtIdx < len(clusters)
@@ -146,7 +147,7 @@ def _HeightFirstSplit(cluster, n):
   if len(cluster) == n:
     return cluster.GetPoints()
   clusters = [cluster]
-  for i in range(n - 1):
+  for _ in range(n - 1):
     nxtIdx = 0
     while nxtIdx < len(clusters) and len(clusters[nxtIdx]) == 1:
       nxtIdx += 1
@@ -160,7 +161,7 @@ def _HeightFirstSplit(cluster, n):
   return clusters
 
 
-def SplitIntoNClusters(cluster, n, breadthFirst=1):
+def SplitIntoNClusters(cluster, n, breadthFirst=True):
   """  splits a cluster tree into a set of branches
 
     **Arguments**

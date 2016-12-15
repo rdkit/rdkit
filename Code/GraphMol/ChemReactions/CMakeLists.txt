@@ -1,21 +1,47 @@
+if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
+    ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
+else()
+      message("== Making EnumerateLibrary without boost Serialization support")
+endif()
+
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
-	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp
-              LINK_LIBRARIES FilterCatalog Descriptors Fingerprints DataStructs Depictor FileParsers SubstructMatch ChemTransforms)
+	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
+                    Enumerate/Enumerate.cpp
+                    Enumerate/EnumerationPickler.cpp
+                    Enumerate/EvenSamplePairs.cpp
+                    
+              LINK_LIBRARIES
+              FilterCatalog Descriptors Fingerprints DataStructs Depictor
+              FileParsers SubstructMatch ChemTransforms ${Boost_SERIALIZATION_LIBRARY})
 
 rdkit_headers(Reaction.h
               ReactionParser.h
               ReactionPickler.h 
               ReactionFingerprints.h 
               ReactionUtils.h 
-              ReactionRunner.h PreprocessRxn.h DEST GraphMol/ChemReactions)
+              ReactionRunner.h
+              PreprocessRxn.h
+              SanitizeRxn.h
+              Enumerate/Enumerate.h
+              Enumerate/EnumerateBase.h
+              Enumerate/EnumerationPickler.h
+              Enumerate/EnumerationStrategyBase.h
+              Enumerate/CartesianProduct.h
+              Enumerate/RandomSample.h
+              Enumerate/RandomSampleAllBBs.h
+              DEST GraphMol/ChemReactions)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
-ChemReactions FilterCatalog ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
-ChemReactions FilterCatalog Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY}  )
+
+rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
+ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
 
 add_subdirectory(Wrap)

@@ -16,7 +16,7 @@ from rdkit.six import PY3
 from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures, rdDistGeom
-import EmbedLib
+from rdkit.Chem.Pharm3D import EmbedLib
 import gzip
 from rdkit import DistanceGeometry as DG
 from rdkit import Geometry

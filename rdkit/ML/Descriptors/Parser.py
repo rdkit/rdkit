@@ -43,16 +43,21 @@ Here's the general flow of things:
   -666.  So bad descriptor values should stand out like sore thumbs.
 
 """
+
 from __future__ import print_function
-__DEBUG = 0
+
+from math import *  # @UnusedWildImport
+import traceback
+
 from rdkit import RDConfig
 
-# we do this to allow the use of stuff in the math module
-from math import *
+__DEBUG = False
 
-#----------------------
+# we do this to allow the use of stuff in the math module
+
+# ----------------------
 # atomic descriptor section
-#----------------------
+# ----------------------
 # these are the methods which can be applied to ATOMIC descriptors.
 knownMethods = ['SUM', 'MIN', 'MAX', 'MEAN', 'AVG', 'DEV', 'HAS']
 
@@ -75,13 +80,13 @@ def HAS(strArg, composList, atomDict):
       1 or 0
 
   """
-  splitArgs = string.split(strArg, ',')
+  splitArgs = strArg.split(',')
   if len(splitArgs) > 1:
-    for atom, num in composList:
+    for atom, _ in composList:
       tStr = splitArgs[0].replace('DEADBEEF', atom)
       where = eval(tStr)
       what = eval(splitArgs[1])
-      if where.find(what) != -1:
+      if what in where:
         return 1
     return 0
   else:
@@ -190,7 +195,7 @@ def MIN(strArg, composList, atomDict):
 
   """
   accum = []
-  for atom, num in composList:
+  for atom, _ in composList:
     tStr = strArg.replace('DEADBEEF', atom)
     accum.append(eval(tStr))
   return min(accum)
@@ -215,15 +220,15 @@ def MAX(strArg, composList, atomDict):
 
   """
   accum = []
-  for atom, num in composList:
+  for atom, _ in composList:
     tStr = strArg.replace('DEADBEEF', atom)
     accum.append(eval(tStr))
   return max(accum)
 
-#------------------
+# ------------------
 #  string replacement routines
 #    these are not intended to be called by clients
-#------------------
+# ------------------
 
 
 def _SubForAtomicVars(cExpr, varList, dictName):
@@ -290,7 +295,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
          '[("Fe",1.),("Pt",2.),("Rh",0.02)]'
 
       - argVect: a vector/tuple with three elements:
-      
+
            1) AtomicDescriptorNames:  a list/tuple of the names of the
              atomic descriptors being used. These determine the
              meaning of $1, $2, etc. in the expression
@@ -308,12 +313,12 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
            and their values
 
       - propVect:
-           a list of descriptors for the composition.  
+           a list of descriptors for the composition.
 
     **RETURNS:**
-    
+
       the value of the descriptor, -666 if a problem was encountered
-      
+
     **NOTE:**
 
       - because it takes rather a lot of work to get everything set
@@ -329,9 +334,8 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
-  except Exception:
+  except Exception:  # pragma: nocover
     if __DEBUG:
-      import sys, traceback
       print('Sub Failure!')
       traceback.print_exc()
       print(evalTarget)
@@ -342,9 +346,8 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
 
   try:
     v = eval(evalTarget)
-  except Exception:
+  except Exception:  # pragma: nocover
     if __DEBUG:
-      import sys, traceback
       outF = open(RDConfig.RDCodeDir + '/ml/descriptors/log.txt', 'a+')
       outF.write('#------------------------------\n')
       outF.write('formula: %s\n' % repr(formula))
@@ -369,7 +372,7 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
   """ calculates the value of the descriptor for a list of compounds
 
     **ARGUMENTS:**
-    
+
       - composVect: a vector of vector/tuple containing the composition
          information.
          See _CalcSingleCompoundDescriptor()_ for an explanation of the elements.
@@ -393,14 +396,14 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
            and their values
 
       - propVectList:
-         a vector of vectors of descriptors for the composition.  
+         a vector of vectors of descriptors for the composition.
 
     **RETURNS:**
 
       a vector containing the values of the descriptor for each
       compound.  Any given entry will be -666 if problems were
       encountered
-      
+
   """
   res = [-666] * len(composVect)
   try:
@@ -410,32 +413,38 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
-  except Exception:
+  except Exception:  # pragma: nocover
     return res
   for i in range(len(composVect)):
-    propDict = propDictList[i]
-    compos = composVect[i]
+    propDict = propDictList[i]  # @UnusedVariable
+    compos = composVect[i]  # @UnusedVariable
     try:
       v = eval(evalTarget)
-    except Exception:
+    except Exception:  # pragma: nocover
       v = -666
     res[i] = v
   return res
 
-#------------
+
+# ------------
 #  Demo/testing code
-#------------
-if __name__ == '__main__':
-  piece1 = [['d1', 'd2'], ['d1', 'd2']]
-  aDict = {'Fe': {'d1': 1., 'd2': 2.}, 'Pt': {'d1': 10., 'd2': 20.}}
+# ------------
+def _exampleCode():  # pragma: nocover
+  piece1 = [['d1', 'd2', 's1'], ['d1', 'd2', 's1']]
+  aDict = {'Fe': {'d1': 1., 'd2': 2., 's1': 'abc'}, 'Pt': {'d1': 10., 'd2': 20., 's1': 'def'}}
   pDict = {'d1': 100., 'd2': 200.}
   compos = [('Fe', 1), ('Pt', 1)]
 
   cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "SUM($1)+SUM($1)", "MEAN($1)", "DEV($2)", "MAX($1)",
-            "MIN($1)/MAX($1)", "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))", "foo"]
+            "MIN($1)/MAX($1)", "MIN($2)", "SUM($1)/$a", "sqrt($a+$b)", "SUM((3.*$1)/($2))",
+            'HAS($3,"def")', 'HAS($3,"xyz")', "foo"]
 
   for cExpr in cExprs:
     argVect = piece1 + [cExpr]
     print(cExpr)
     print(CalcSingleCompoundDescriptor(compos, argVect, aDict, pDict))
     print(CalcMultipleCompoundsDescriptor([compos, compos], argVect, aDict, [pDict, pDict]))
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

@@ -422,15 +422,22 @@ class TestCase(unittest.TestCase):
     traj = Trajectory(3, mol.GetNumAtoms(), sv)
     mol.RemoveConformer(0)
     traj.AddConformersToMol(mol)
+    for nConf in range(mol.GetNumConformers()):
+      mol.SetProp('ENERGY', '{0:.4f}'.format(traj.GetSnapshot(nConf).GetEnergy()))
+      w.write(mol, nConf)
+    w.close()
     traj.Clear()
     n1 = mol.GetNumConformers()
     traj.AddConformersToMol(mol)
     n2 = mol.GetNumConformers()
     self.assertEqual(n1, n2)
-    for nConf in range(mol.GetNumConformers()):
-      mol.SetProp('ENERGY', '{0:.4f}'.format(traj.GetSnapshot(nConf).GetEnergy()))
-      w.write(mol, nConf)
-    w.close()
+    # GetSnapshot should raise exception after Clear()
+    e = False
+    try:
+      traj.GetSnapshot(0)
+    except:
+      e = True
+    self.assertTrue(e)
 
   def testAddConformersFromAmberTrajectory(self):
     mol = Chem.MolFromSmiles('CCC')
