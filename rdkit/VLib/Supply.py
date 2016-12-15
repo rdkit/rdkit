@@ -3,9 +3,7 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
 from rdkit import six
-
 from rdkit.VLib.Node import VLibNode
 
 
@@ -14,7 +12,7 @@ class SupplyNode(VLibNode):
 
   Assumptions:
     1) no parents
-  
+
   Usage Example:
     >>> supplier = SupplyNode(contents=[1,2,3])
     >>> supplier.next()
@@ -32,7 +30,7 @@ class SupplyNode(VLibNode):
     1
     >>> [x for x in supplier]
     [1, 2, 3]
-    
+
 
   """
 
@@ -64,16 +62,16 @@ if six.PY3:
   SupplyNode.__next__ = SupplyNode.next
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

@@ -6,11 +6,10 @@
 
 """
 from __future__ import print_function
+
 from rdkit import RDConfig
-from rdkit.utils import chemutils
-import os
 from rdkit.ML.Descriptors import Parser, Descriptors
-from rdkit.six.moves import xrange
+from rdkit.utils import chemutils
 
 # the list of possible ways to count valence electrons that we know
 countOptions = [('NVAL', 'total number of valence electrons'),
@@ -99,9 +98,9 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
 
   """
 
-  #------------
+  # ------------
   #  methods used to calculate descriptors
-  #------------
+  # ------------
 
   def SUM(self, desc, compos):
     """ *Calculator Method*
@@ -207,9 +206,9 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     return max(map(lambda x, y=desc, z=self: z.atomDict[x[0]][y], compos))
 
-  #------------
+  # ------------
   #  Other methods
-  #------------
+  # ------------
 
   def ProcessSimpleList(self):
     """ Handles the list of simple descriptors
@@ -224,8 +223,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     self.nonZeroDescriptors = []
     lCopy = self.simpleList[:]
     tList = map(lambda x: x[0], countOptions)
-    for i in xrange(len(lCopy)):
-      entry = lCopy[i]
+    for entry in lCopy:
       if 'NONZERO' in entry[1]:
         if entry[0] not in tList:
           self.nonZeroDescriptors.append('%s != 0' % entry[0])
@@ -301,8 +299,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       composList = chemutils.SplitComposition(compos)
     try:
       res = []
-      for i in xrange(len(self.simpleList)):
-        descName, targets = self.simpleList[i]
+      for descName, targets in self.simpleList:
         for target in targets:
           try:
             method = getattr(self, target)
@@ -342,9 +339,8 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     if composList is None:
       composList = chemutils.SplitComposition(compos)
     res = []
-    for i in xrange(len(self.compoundList)):
-      val = Parser.CalcSingleCompoundDescriptor(composList, self.compoundList[i][1:], self.atomDict,
-                                                propDict)
+    for cl in self.compoundList:
+      val = Parser.CalcSingleCompoundDescriptor(composList, cl[1:], self.atomDict, propDict)
       res.append(val)
     return res
 
@@ -371,7 +367,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     composList = chemutils.SplitComposition(composVect[0])
     try:
       r1 = self.CalcSimpleDescriptorsForComposition(composList=composList)
-    except KeyError as msg:
+    except KeyError:
       res = []
     else:
       r2 = self.CalcCompoundDescriptorsForComposition(composList=composList, propDict=propDict)
@@ -389,15 +385,12 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       return self.descriptorNames
     else:
       res = []
-      for i in xrange(len(self.simpleList)):
-        descName, targets = self.simpleList[i]
+      for descName, targets in self.simpleList:
         for target in targets:
-          try:
-            method = getattr(self, target)
-          except AttributeError:
-            print('Method %s does not exist' % (target))
-          else:
+          if hasattr(self, target):
             res.append('%s_%s' % (target, descName))
+          else:
+            print('Method %s does not exist' % (target))
       for entry in self.compoundList:
         res.append(entry[0])
       self.descriptorNames = res[:]
@@ -450,8 +443,6 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
       dbName = RDConfig.RDDataDatabase
 
     Descriptors.DescriptorCalculator.__init__(self)
-    #self.simpleList = map(lambda x:(string.upper(x[0]),map(string.upper,x[1])),
-    #                      simpleList)
     self.simpleList = [(x[0].upper(), [y.upper() for y in x[1]]) for x in simpleList]
     self.descriptorNames = None
     self.compoundList = compoundList
@@ -463,13 +454,13 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     self.dbPassword = dbPassword
 
 
-if __name__ == '__main__':
+def _exampleCode():
   d = [('DED', ['NonZero', 'Mean', 'Dev']), ('M_B_electroneg', ['NonZero']),
        ('Cov_rad', ['Max', 'Min'])]
-  o = DescriptorCalculator(d)
+  o = CompoundDescriptorCalculator(d)
   o.BuildAtomDict()
   print('len:', len(o.atomDict.keys()))
-  for key in o.atomDict.keys()[-4:-1]:
+  for key in list(o.atomDict)[-4:-1]:
     print(key, o.atomDict[key])
 
   print('descriptors:', o.GetDescriptorNames())
@@ -477,3 +468,7 @@ if __name__ == '__main__':
   for compos in composList:
     descs = o.CalcSimpleDescriptorsForComposition(compos)
     print(compos, descs)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

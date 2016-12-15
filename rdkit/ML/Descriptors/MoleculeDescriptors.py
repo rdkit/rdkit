@@ -5,13 +5,15 @@
 """ Various bits and pieces for calculating Molecular descriptors
 
 """
-from rdkit import RDConfig
-from rdkit.ML.Descriptors import Descriptors
-from rdkit.Chem import Descriptors as DescriptorsMod
 
-from rdkit.RDLogger import logger
-logger = logger()
 import re
+
+from rdkit.Chem import Descriptors as DescriptorsMod
+from rdkit.ML.Descriptors import Descriptors
+from rdkit.RDLogger import logger
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+
+logger = logger()
 
 
 class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
@@ -25,7 +27,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       **Arguments**
 
         - simpleList: list of simple descriptors to be calculated
-              (see below for format) 
+              (see below for format)
 
       **Note**
 
@@ -58,9 +60,8 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
      **Arguments**
 
        - fileName: the name of the file to be written
-       
+
     """
-    from rdkit.six.moves import cPickle
     try:
       f = open(fileName, 'wb+')
     except Exception:
@@ -76,7 +77,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
 
         - mol: the molecule to be used
 
-      **Returns**  
+      **Returns**
         a tuple of all descriptor values
 
     """
@@ -85,7 +86,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       fn = getattr(DescriptorsMod, nm, lambda x: 777)
       try:
         res[i] = fn(mol)
-      except Exception:
+      except Exception:  # pragma: nocover
         import traceback
         traceback.print_exc()
     return tuple(res)

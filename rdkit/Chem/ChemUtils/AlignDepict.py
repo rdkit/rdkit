@@ -17,7 +17,7 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
                     with a single conformer.
     - core:         a molecule with the core atoms to align to;
                     this should have a depiction.
-    - corePattern:  (optional) an optional molecule to be used to 
+    - corePattern:  (optional) an optional molecule to be used to
                     generate the atom mapping between the molecule
                     and the core.
   """
@@ -29,7 +29,7 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
     if not coreMatch:
       raise ValueError("Core does not map to itself")
   else:
-    coreMatch = range(core.GetNumAtoms(onlyExplicit=True))
+    coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:

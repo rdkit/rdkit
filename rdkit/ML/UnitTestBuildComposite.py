@@ -11,20 +11,19 @@
 """unit testing code for the BuildComposite functionality
 
 """
-import unittest, os
 import io
-from rdkit.six.moves import cPickle as pickle
-from rdkit.six import cmp
+import os
+import unittest
+
 from rdkit import RDConfig
-from rdkit.ML import BuildComposite
-from rdkit.ML import ScreenComposite
 from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import BuildComposite
+from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
     self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
     self.dbName = RDConfig.RDTestDatabase
 
@@ -63,23 +62,17 @@ class TestCase(unittest.TestCase):
       cs.append(compos[i])
       rcs.append(refCompos[i])
 
-    def sortHelp(x, y):
-      if x[2] == y[2]:
-        return cmp(x[1], y[1])
-      else:
-        return cmp(x[2], y[2])
-
     cs.sort(key=lambda x: (x[2], x[2]))
     rcs.sort(key=lambda x: (x[2], x[2]))
 
     for i in range(len(compos)):
-      tree, count, err = cs[i]
-      refTree, refCount, refErr = rcs[i]
+      _, count, err = cs[i]
+      _, refCount, refErr = rcs[i]
       self.assertEqual(count, refCount)
       self.assertAlmostEqual(err, refErr, 4)
 
-  def test1(self):
-    """ basics """
+  def test1_basics(self):
+    # """ basics """
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10.pkl'
 
@@ -93,14 +86,14 @@ class TestCase(unittest.TestCase):
     self._init(refCompos)
     compos = BuildComposite.RunIt(self.details, saveIt=0)
 
-    #pickle.dump(compos,open(os.path.join(self.baseDir,refComposName), 'wb'))
-    #with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
-    #  refCompos = pickle.load(pklF)
+    # pickle.dump(compos,open(os.path.join(self.baseDir,refComposName), 'wb'))
+    # with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
+    #   refCompos = pickle.load(pklF)
 
     self.compare(compos, refCompos)
 
-  def test2(self):
-    """ depth limit """
+  def test2_depth_limit(self):
+    # """ depth limit """
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3.pkl'
 
@@ -117,8 +110,8 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test3(self):
-    """ depth limit + less greedy """
+  def test3_depth_limit_less_greedy(self):
+    # """ depth limit + less greedy """
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_10_3_lessgreedy.pkl'
 
@@ -136,8 +129,8 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test4(self):
-    """ more trees """
+  def test4_more_trees(self):
+    # """ more trees """
     self.details.tableName = 'ferro_quant'
     refComposName = 'ferromag_quant_50_3.pkl'
 
@@ -155,8 +148,8 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test5(self):
-    """ auto bounds """
+  def test5_auto_bounds(self):
+    # """ auto bounds """
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_auto_10_3.pkl'
 
@@ -174,8 +167,8 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test6(self):
-    """ auto bounds with a real valued activity"""
+  def test6_auto_bounds_real_activity(self):
+    # """ auto bounds with a real valued activity"""
     self.details.tableName = 'ferro_noquant_realact'
     refComposName = 'ferromag_auto_10_3.pkl'
 
@@ -194,8 +187,8 @@ class TestCase(unittest.TestCase):
 
     self.compare(compos, refCompos)
 
-  def test7(self):
-    """ Test composite of naive bayes"""
+  def test7_composite_naiveBayes(self):
+    # """ Test composite of naive bayes"""
     self.details.tableName = 'ferro_noquant'
     refComposName = 'ferromag_NaiveBayes.pkl'
     with open(os.path.join(self.baseDir, refComposName), 'r') as pklTFile:
@@ -213,5 +206,5 @@ class TestCase(unittest.TestCase):
     self.compare(compos, refCompos)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

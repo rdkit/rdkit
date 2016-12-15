@@ -12,9 +12,7 @@
 
 """
 from __future__ import print_function
-import numpy
 
-from rdkit.six.moves import reduce
 from rdkit.six import cmp
 
 CMPTOL = 1e-6
@@ -33,11 +31,11 @@ class Cluster(object):
 
        - Children: *Not Settable*, the list of children.  You can add children
          with the _AddChild()_ and _AddChildren()_ methods.
-         
+
          **Note** this can be of arbitrary length,
          but the current algorithms I have only produce trees with two children
          per cluster
-      
+
        - Metric: the metric for this cluster (i.e. how far apart its children are)
 
        - Index: the order in which this cluster was generated
@@ -56,7 +54,7 @@ class Cluster(object):
          data value (i.e. the value we're using to classify)
 
        - Name: the name of this cluster
- 
+
   """
 
   def __init__(self, metric=0.0, children=None, position=None, index=-1, name=None, data=None):
@@ -132,7 +130,7 @@ class Cluster(object):
     """ Generates the _Points_ and _PointsPositions_ lists
 
      *intended for internal use*
-     
+
     """
     if len(self) == 1:
       self._points = [self]
@@ -141,7 +139,6 @@ class Cluster(object):
     else:
       res = []
       children = self.GetChildren()
-      # children.sort(lambda x,y:cmp(len(y),len(x)))
       children.sort(key=lambda x: len(x), reverse=True)
       for child in children:
         res += child.GetPoints()
@@ -154,7 +151,7 @@ class Cluster(object):
       **Arguments**
 
         - child: a Cluster
-      
+
     """
     self.children.append(child)
     self._GenPoints()
@@ -166,7 +163,7 @@ class Cluster(object):
       **Arguments**
 
         - children: a list of Clusters
-      
+
     """
     self.children += children
     self._GenPoints()
@@ -178,13 +175,12 @@ class Cluster(object):
       **Arguments**
 
         - child: a Cluster
-      
+
     """
     self.children.remove(child)
     self._UpdateLength()
 
   def GetChildren(self):
-    #self.children.sort(lambda x,y:cmp(x.GetMetric(),y.GetMetric()))
     self.children.sort(key=lambda x: x.GetMetric())
     return self.children
 
@@ -265,9 +261,9 @@ class Cluster(object):
     """ updates our length
 
      *intended for internal use*
-     
+
     """
-    self._len = reduce(lambda x, y: len(y) + x, self.children, 1)
+    self._len = sum(len(c) for c in self.children) + 1
 
   def IsTerminal(self):
     return self._len <= 1
@@ -296,7 +292,7 @@ class Cluster(object):
     return cmp(c1, c2)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   from rdkit.ML.Cluster import ClusterUtils
   root = Cluster(index=1, metric=1000)
   c1 = Cluster(index=10, metric=100)

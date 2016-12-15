@@ -310,10 +310,6 @@ A			{
 
 \_ 			{ return UNDERSCORE_TOKEN; }
 
-\-			{ return MINUS_TOKEN; }
-
-\+			{ return PLUS_TOKEN; }
-
 \#			{ return HASH_TOKEN; }
 
 \=	{ yylval->bond = new QueryBond(Bond::DOUBLE);
@@ -332,6 +328,18 @@ A			{
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 
+\-\> {
+    yylval->bond = new QueryBond(Bond::DATIVER);
+    return BOND_TOKEN;
+}
+\<\- {
+    yylval->bond = new QueryBond(Bond::DATIVEL);
+    return BOND_TOKEN;
+}
+
+\-			{ return MINUS_TOKEN; }
+
+\+			{ return PLUS_TOKEN; }
 
 <IN_ATOM_STATE>\$\(              { yy_push_state(IN_RECURSION_STATE,yyscanner); return BEGIN_RECURSE; }
 
