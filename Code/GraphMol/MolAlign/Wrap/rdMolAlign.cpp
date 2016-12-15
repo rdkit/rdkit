@@ -16,6 +16,7 @@
 #include <boost/python/numeric.hpp>
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/MolAlign/AlignMetrics.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <ForceField/Wrap/PyForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
@@ -194,6 +195,39 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   if (wtsVec) {
     delete wtsVec;
   }
+  return rmsd;
+}
+
+double getConformerRMS(ROMol &mol, int confId1, int confId2,
+                       python::object atomIds = python::list(),
+                       bool prealigned = false) {
+  double rmsd;
+  if (atomIds) {
+    std::vector<unsigned int> *aIds = _translateIds(atomIds);
+    rmsd = MolAlign::getConformerRMS(mol, confId1, confId2, aIds, prealigned);
+    delete aIds;
+  } else {
+    rmsd = MolAlign::getConformerRMS(mol, confId1, confId2, 0, prealigned);
+  }
+  return rmsd;
+}
+
+double getBestRMS(const ROMol &ref, ROMol &probe, int refConfId,
+                  int probeConfId, python::object maps = python::list()) {
+  double rmsd;
+  if (maps) {
+    std::vector<MatchVectType> atomMaps;
+    //    BOOST_FOREACH (const python::object &map, *maps) {
+    //      MatchVectType *atomMap = _translateAtomMap(map);
+    //      atomMaps.push_back(*atomMap);
+    //    }
+    rmsd = 3.14;
+  } else {
+    std::vector<MatchVectType> atomMaps;
+    rmsd = MolAlign::getBestRMS(ref, probe, refConfId, probeConfId, &atomMaps);
+    //    delete atomMaps;
+  }
+
   return rmsd;
 }
 
@@ -658,6 +692,59 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("confIds") = python::list(),
        python::arg("weights") = python::list(), python::arg("reflect") = false,
        python::arg("maxIters") = 50, python::arg("RMSlist") = python::object()),
+      docString.c_str());
+
+  docString =
+      "Returns the RMS between two conformations.\n\
+     \n\
+     By default, the conformers will be aligned to the first conformer\n\
+     of the molecule (i.e. the reference) before RMS calculation and,\n\
+     as a side-effect, will be left in the aligned state.\n\
+     \n\
+     ARGUMENTS:\
+      - mol         the molecule\n\
+      - confId1     the id of the first conformer\n\
+      - confId2     the id of the second conformer\n\
+      - atomIds     (optional) list of atom ids to use a points for\n\
+                    alingment - defaults to all atoms\n\
+      - prealigned  (optional) by default the conformers are assumed\n\
+                    be unaligned and will therefore be aligned to the\n\
+                    first conformer\n\
+     \n\
+     RETURNS\n\
+     RMSD value\n\
+     \n";
+  python::def("GetConformerRMS", RDKit::getConformerRMS,
+              (python::arg("mol"), python::arg("confId1"),
+               python::arg("confId2"), python::arg("atomIds") = python::list(),
+               python::arg("prealigned") = false),
+              docString.c_str());
+
+  docString =
+      "GetBestRMS.\n\
+     \n\
+     By default, the conformers will be aligned to the first conformer\n\
+     of the molecule (i.e. the reference) before RMS calculation and,\n\
+     as a side-effect, will be left in the aligned state.\n\
+     \n\
+     ARGUMENTS:\
+      - mol         the molecule\n\
+      - confId1     the id of the first conformer\n\
+      - confId2     the id of the second conformer\n\
+      - atomIds     (optional) list of atom ids to use a points for\n\
+                    alingment - defaults to all atoms\n\
+      - prealigned  (optional) by default the conformers are assumed\n\
+                    be unaligned and will therefore be aligned to the\n\
+                    first conformer\n\
+     \n\
+     RETURNS\n\
+     RMSD value\n\
+     \n";
+  // def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
+  python::def(
+      "GetBestRMS", RDKit::getBestRMS,
+      (python::arg("ref"), python::arg("probe"), python::arg("refConfId"),
+       python::arg("probeConfId"), python::arg("maps") = python::list()),
       docString.c_str());
 
   docString =

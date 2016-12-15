@@ -54,6 +54,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue((rms1 > rms2))
 
     # test that RMS is the same as calculated by AlignMol()
+    AllChem.GetBestRMS(m2, m1, 1, 0)
     self.assertAlmostEqual(rms2, AllChem.GetBestRMS(m2, m1, 1, 0), 3)
 
     # the RMS with itself must be zero
