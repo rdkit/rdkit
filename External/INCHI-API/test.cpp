@@ -66,7 +66,7 @@ void testMultiThread(){
   std::cerr<<"reading molecules"<<std::endl;
   std::vector<ROMol *> mols;
   while(!suppl.atEnd()&&mols.size()<100){
-    ROMol *mol=0;
+    ROMol *mol=nullptr;
     try{
       mol=suppl.next();
     } catch(...){
@@ -95,7 +95,7 @@ void testMultiThread(){
   }
   tg.join_all();
 
-  for(unsigned int i=0;i<mols.size();++i) delete mols[i];
+  for(auto & mol : mols) delete mol;
 
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -123,7 +123,7 @@ void testGithubIssue3(){
     TEST_ASSERT(inchi=="InChI=1S/C7H17NO5/c1-8-2-4(10)6(12)7(13)5(11)3-9/h4-13H,2-3H2,1H3/t4-,5+,6+,7+/m0/s1");
 
     // blow out the stereo information with a copy:
-    RWMol *m2=new RWMol(*m);
+    auto *m2=new RWMol(*m);
     m2->clearComputedProps();
     MolOps::sanitizeMol(*m2);
 

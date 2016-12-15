@@ -319,12 +319,12 @@ void fragmentOnSomeBonds(
   boost::uint64_t state = (0x1 << maxToCut) - 1;
   boost::uint64_t stop = 0x1 << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
-  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabelsHere = NULL;
+  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabelsHere = nullptr;
   if (dummyLabels) {
     dummyLabelsHere =
         new std::vector<std::pair<unsigned int, unsigned int> >(maxToCut);
   }
-  std::vector<Bond::BondType> *bondTypesHere = NULL;
+  std::vector<Bond::BondType> *bondTypesHere = nullptr;
   if (bondTypes) {
     bondTypesHere = new std::vector<Bond::BondType>(maxToCut);
   }
@@ -338,7 +338,7 @@ void fragmentOnSomeBonds(
         ++nSeen;
       }
     }
-    std::vector<unsigned int> *lCutsPerAtom = 0;
+    std::vector<unsigned int> *lCutsPerAtom = nullptr;
     if (nCutsPerAtom) {
       nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
       lCutsPerAtom = &(nCutsPerAtom->back());
@@ -388,7 +388,7 @@ ROMol *fragmentOnBonds(
   if (nCutsPerAtom) {
     BOOST_FOREACH (unsigned int &nCuts, *nCutsPerAtom) { nCuts = 0; }
   }
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   if (!mol.getNumAtoms()) return res;
 
   std::vector<Bond *> bondsToRemove;
@@ -441,7 +441,7 @@ ROMol *fragmentOnBonds(
                                mol.getBondBetweenAtoms(bidx, eidx));
       }
 
-      for (ROMol::ConformerIterator confIt = res->beginConformers();
+      for (auto confIt = res->beginConformers();
            confIt != res->endConformers(); ++confIt) {
         Conformer *conf = (*confIt).get();
         conf->setAtomPos(idx1, conf->getAtomPos(bidx));
@@ -475,11 +475,9 @@ ROMol *fragmentOnBonds(const ROMol &mol,
 
   std::map<unsigned int, bool> environsMatch;
   if (atomEnvirons) {
-    for (std::map<unsigned int, ROMOL_SPTR>::const_iterator iter =
-             atomEnvirons->begin();
-         iter != atomEnvirons->end(); ++iter) {
+    for (const auto & atomEnviron : *atomEnvirons) {
       MatchVectType mv;
-      environsMatch[iter->first] = SubstructMatch(mol, *(iter->second), mv);
+      environsMatch[atomEnviron.first] = SubstructMatch(mol, *(atomEnviron.second), mv);
     }
   }
 

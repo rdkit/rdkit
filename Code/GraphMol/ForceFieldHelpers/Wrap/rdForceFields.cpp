@@ -42,8 +42,8 @@ python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                   ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (unsigned int i = 0; i < res.size(); ++i) {
-    pyres.append(python::make_tuple(res[i].first, res[i].second));
+  for (auto & re : res) {
+    pyres.append(python::make_tuple(re.first, re.second));
   }
   return pyres;
 }
@@ -60,8 +60,8 @@ python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                     ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (unsigned int i = 0; i < res.size(); ++i) {
-    pyres.append(python::make_tuple(res[i].first, res[i].second));
+  for (auto & re : res) {
+    pyres.append(python::make_tuple(re.first, re.second));
   }
   return pyres;
 }
@@ -71,7 +71,7 @@ ForceFields::PyForceField *UFFGetMoleculeForceField(
     bool ignoreInterfragInteractions = true) {
   ForceFields::ForceField *ff = UFF::constructForceField(
       mol, vdwThresh, confId, ignoreInterfragInteractions);
-  ForceFields::PyForceField *res = new ForceFields::PyForceField(ff);
+  auto *res = new ForceFields::PyForceField(ff);
   res->initialize();
   return res;
 }
@@ -110,9 +110,9 @@ unsigned int SanitizeMMFFMol(ROMol &mol) {
 ForceFields::PyMMFFMolProperties *GetMMFFMolProperties(
     ROMol &mol, std::string mmffVariant = "MMFF94",
     unsigned int mmffVerbosity = MMFF::MMFF_VERBOSITY_NONE) {
-  MMFF::MMFFMolProperties *mmffMolProperties =
+  auto *mmffMolProperties =
       new MMFF::MMFFMolProperties(mol, mmffVariant, mmffVerbosity);
-  ForceFields::PyMMFFMolProperties *pyMP = NULL;
+  ForceFields::PyMMFFMolProperties *pyMP = nullptr;
 
   if (mmffMolProperties && mmffMolProperties->isValid()) {
     pyMP = new ForceFields::PyMMFFMolProperties(mmffMolProperties);
@@ -125,7 +125,7 @@ ForceFields::PyForceField *MMFFGetMoleculeForceField(
     ROMol &mol, ForceFields::PyMMFFMolProperties *pyMMFFMolProperties,
     double nonBondedThresh = 100.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
-  ForceFields::PyForceField *pyFF = NULL;
+  ForceFields::PyForceField *pyFF = nullptr;
   boost::python::list res;
 
   if (pyMMFFMolProperties) {
@@ -155,7 +155,7 @@ namespace ForceFields {
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
                                   const unsigned int idx1,
                                   const unsigned int idx2) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::UFF::UFFBond uffBondStretchParams;
   if (RDKit::UFF::getUFFBondStretchParams(mol, idx1, idx2,
                                           uffBondStretchParams)) {
@@ -170,7 +170,7 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
                                 const unsigned int idx1,
                                 const unsigned int idx2,
                                 const unsigned int idx3) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::UFF::UFFAngle uffAngleBendParams;
   if (RDKit::UFF::getUFFAngleBendParams(mol, idx1, idx2, idx3,
                                         uffAngleBendParams)) {
@@ -184,7 +184,7 @@ PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
 PyObject *getUFFTorsionParams(const RDKit::ROMol &mol, const unsigned int idx1,
                               const unsigned int idx2, const unsigned int idx3,
                               const unsigned int idx4) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::UFF::UFFTor uffTorsionParams;
   if (RDKit::UFF::getUFFTorsionParams(mol, idx1, idx2, idx3, idx4,
                                       uffTorsionParams)) {
@@ -198,7 +198,7 @@ PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
                                 const unsigned int idx2,
                                 const unsigned int idx3,
                                 const unsigned int idx4) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::UFF::UFFInv uffInversionParams;
   if (RDKit::UFF::getUFFInversionParams(mol, idx1, idx2, idx3, idx4,
                                         uffInversionParams)) {
@@ -209,7 +209,7 @@ PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
 
 PyObject *getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
                           const unsigned int idx2) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::UFF::UFFVdW uffVdWParams;
   if (RDKit::UFF::getUFFVdWParams(mol, idx1, idx2, uffVdWParams)) {
     res = PyTuple_New(2);

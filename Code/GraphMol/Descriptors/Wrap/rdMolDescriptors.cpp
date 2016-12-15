@@ -55,8 +55,8 @@ python::list computeCrippenContribs(
     const RDKit::ROMol &mol, bool force = false,
     python::list atomTypes = python::list(),
     python::list atomTypeLabels = python::list()) {
-  std::vector<unsigned int> *tAtomTypes = 0;
-  std::vector<std::string> *tAtomTypeLabels = 0;
+  std::vector<unsigned int> *tAtomTypes = nullptr;
+  std::vector<std::string> *tAtomTypeLabels = nullptr;
   if (python::extract<unsigned int>(atomTypes.attr("__len__")()) != 0) {
     if (python::extract<unsigned int>(atomTypes.attr("__len__")()) !=
         mol.getNumAtoms()) {
@@ -230,7 +230,7 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
 namespace {
 double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
                    const RDKit::ROMol &mol, python::object atomContribs) {
-  std::vector<double> *lContribs = 0;
+  std::vector<double> *lContribs = nullptr;
   if (atomContribs != python::object()) {
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomContribs);
@@ -260,7 +260,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = 0;
+  std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -277,7 +277,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
-  std::vector<boost::uint32_t> *froms = 0;
+  std::vector<boost::uint32_t> *froms = nullptr;
   if (fromAtoms) {
     unsigned int nFrom =
         python::extract<unsigned int>(fromAtoms.attr("__len__")());
@@ -288,7 +288,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       }
     }
   }
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
@@ -313,11 +313,8 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
-           vIt != v.end(); ++vIt) {
-        localL.append(python::make_tuple(vIt->first, vIt->second));
+      for (const auto & vIt : v) {
+        localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
     }
@@ -349,7 +346,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
     const RDKit::ROMol &mol, int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo) {
-  std::vector<boost::uint32_t> *invars = 0;
+  std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -367,7 +364,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
 
-  std::vector<boost::uint32_t> *froms = 0;
+  std::vector<boost::uint32_t> *froms = nullptr;
   if (fromAtoms) {
     unsigned int nFrom =
         python::extract<unsigned int>(fromAtoms.attr("__len__")());
@@ -378,7 +375,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
       }
     }
   }
-  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
+  RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
@@ -396,11 +393,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
-           vIt != v.end(); ++vIt) {
-        localL.append(python::make_tuple(vIt->first, vIt->second));
+      for (const auto & vIt : v) {
+        localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
     }
@@ -430,7 +424,7 @@ python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
 
 python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
                           bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -449,7 +443,7 @@ python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
 }
 python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
                         bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -468,7 +462,7 @@ python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
 }
 python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
                          bool force) {
-  std::vector<double> *lbins = 0;
+  std::vector<double> *lbins = nullptr;
   if (bins) {
     unsigned int nBins = python::extract<unsigned int>(bins.attr("__len__")());
     if (nBins) {
@@ -496,7 +490,7 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
-      mol, pyatoms != python::object() ? &ats : NULL);
+      mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
@@ -507,7 +501,7 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
                                 python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumBridgeheadAtoms(
-      mol, pyatoms != python::object() ? &ats : NULL);
+      mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
@@ -540,7 +534,7 @@ struct iterable_converter
   /// @brief Check if PyObject is iterable.
   static void* convertible(PyObject* object)
   {
-    return PyObject_GetIter(object) ? object : NULL;
+    return PyObject_GetIter(object) ? object : nullptr;
   }
 
   /// @brief Convert iterable PyObject to C++ container type.
@@ -591,11 +585,11 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
 
   }
 
-  ~PythonPropertyFunctor() {
+  ~PythonPropertyFunctor() override {
     python::decref(self);
   }
 
-  double operator()(const RDKit::ROMol &mol) const {
+  double operator()(const RDKit::ROMol &mol) const override {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };

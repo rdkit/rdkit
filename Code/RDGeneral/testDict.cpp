@@ -36,7 +36,7 @@ void testGithub940() {
   // a couple small tests to check for memory leaks. Only useful with valgrind
   {  // tests computed props
     STR_VECT computed;
-    Dict *d = new Dict();
+    auto *d = new Dict();
     d->setVal(RDKit::detail::computedPropName, computed);
     computed.push_back("foo");
     d->setVal(RDKit::detail::computedPropName, computed);
@@ -44,7 +44,7 @@ void testGithub940() {
   }
   {  // tests computed props
     STR_VECT computed;
-    Dict *d = new Dict();
+    auto *d = new Dict();
     d->setVal(RDKit::detail::computedPropName, computed);
     computed.push_back("foo");
     d->setVal(RDKit::detail::computedPropName, computed);
@@ -197,7 +197,7 @@ void testRDAny() {
   }
   {
     std::clock_t clock1 = std::clock();
-    boost::any *v=0, *vv;
+    boost::any *v=nullptr, *vv;
     for(int i=0;i<loops;++i) {
       vv = new boost::any(v?boost::any_cast<int>(*v) + i: i);
       delete v;
@@ -222,7 +222,7 @@ void testRDAny() {
 
   {
     std::clock_t clock1 = std::clock();
-    RDAny *v=0, *vv;
+    RDAny *v=nullptr, *vv;
     for(int i=0;i<loops;++i) {
       vv = new RDAny(v ?rdany_cast<int>(*v) + i : i);
       delete v;
@@ -298,7 +298,7 @@ void testRDAny() {
 
   {
     // Check pointers -- RDAny doesn't delete these, must do them manually
-    std::vector<int> *p = new std::vector<int>();
+    auto *p = new std::vector<int>();
     p->push_back(100);
     RDAny v(p);
     RDAny vv(v);
@@ -314,7 +314,7 @@ void testRDAny() {
     TEST_ASSERT((*rdany_cast<std::vector<int> *>((const RDAny&)vv))[0] == 100);
     delete p;
 
-    std::map<int,int> *m = new std::map<int,int>();
+    auto *m = new std::map<int,int>();
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks

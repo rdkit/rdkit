@@ -29,7 +29,7 @@ std::ostream &operator<<(std::ostream &s, const Invariant &inv) {
 }
 
 std::string Invariant::toString() const {
-  std::string line = boost::lexical_cast<std::string>(this->getLine());
+  std::string line = std::to_string(this->getLine());
 
   std::string stringRep = this->prefix_d + "\n" + this->getMessage() +
                           "\nViolation occurred on line " + line + " in file " +
@@ -49,7 +49,7 @@ std::string Invariant::toString() const {
 }
 
 std::string Invariant::toUserString() const {
-  std::string line = boost::lexical_cast<std::string>(this->getLine());
+  std::string line = std::to_string(this->getLine());
 
   std::string filename = this->getFile();
   

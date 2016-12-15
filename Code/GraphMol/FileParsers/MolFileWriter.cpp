@@ -47,8 +47,8 @@ int getQueryBondTopology(const Bond *bond) {
 
   if (qry->getDescription() == "BondAnd" && !qry->getNegation() &&
       qry->endChildren() - qry->beginChildren() == 2) {
-    Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1 = qry->beginChildren();
-    Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2 = child1 + 1;
+    auto child1 = qry->beginChildren();
+    auto child2 = child1 + 1;
     if ((*child1)->getDescription() == "BondOr" &&
         (*child2)->getDescription() == "BondInRing") {
       qry = child2->get();
@@ -80,8 +80,8 @@ int getQueryBondSymbol(const Bond *bond) {
     // start by catching combined bond order + bond topology queries
     if (qry->getDescription() == "BondAnd" && !qry->getNegation() &&
         qry->endChildren() - qry->beginChildren() == 2) {
-      Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1 = qry->beginChildren();
-      Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2 = child1 + 1;
+      auto child1 = qry->beginChildren();
+      auto child2 = child1 + 1;
       if ((*child1)->getDescription() == "BondOr" &&
           (*child2)->getDescription() == "BondInRing") {
         qry = child1->get();
@@ -92,8 +92,8 @@ int getQueryBondSymbol(const Bond *bond) {
     }
     if (qry->getDescription() == "BondOr" && !qry->getNegation()) {
       if (qry->endChildren() - qry->beginChildren() == 2) {
-        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child1 = qry->beginChildren();
-        Bond::QUERYBOND_QUERY::CHILD_VECT_CI child2 = child1 + 1;
+        auto child1 = qry->beginChildren();
+        auto child2 = child1 + 1;
         if ((*child1)->getDescription() == "BondOrder" &&
             !(*child1)->getNegation() &&
             (*child2)->getDescription() == "BondOrder" &&
@@ -211,7 +211,7 @@ bool isListQuery(const Atom::QUERYATOM_QUERY *q) {
   std::string descr = q->getDescription();
   if (descr == "AtomOr") {
     res = true;
-    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = q->beginChildren();
+    for (auto cIt = q->beginChildren();
          cIt != q->endChildren() && res; ++cIt) {
       std::string descr = (*cIt)->getDescription();
       // we don't allow negation of any children of the query:
@@ -233,7 +233,7 @@ void getListQueryVals(const Atom::QUERYATOM_QUERY *q, INT_VECT &vals) {
   std::string descr = q->getDescription();
   PRECONDITION(descr == "AtomOr", "bad query");
   if (descr == "AtomOr") {
-    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = q->beginChildren();
+    for (auto cIt = q->beginChildren();
          cIt != q->endChildren(); ++cIt) {
       std::string descr = (*cIt)->getDescription();
       CHECK_INVARIANT((descr == "AtomOr" || descr == "AtomAtomicNum"),
@@ -574,7 +574,7 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
 }
 
 const std::string GetMolFileAtomLine(const Atom *atom,
-                                     const Conformer *conf = 0) {
+                                     const Conformer *conf = nullptr) {
   PRECONDITION(atom, "");
   std::string res;
   int totValence, atomMapNumber;
@@ -740,7 +740,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
     // reverse the begin and end atoms for the bond when we write
     // the mol file
     if ((dirCode == 1) || (dirCode == 6)) {
-      INT_MAP_INT_CI wbi = wedgeBonds.find(bond->getIdx());
+      auto wbi = wedgeBonds.find(bond->getIdx());
       if (wbi != wedgeBonds.end() &&
           static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
         reverse = true;
@@ -838,7 +838,7 @@ const std::string GetMolFileBondLine(const Bond *bond,
 }
 
 const std::string GetV3000MolFileAtomLine(const Atom *atom,
-                                          const Conformer *conf = 0) {
+                                          const Conformer *conf = nullptr) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -1035,7 +1035,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
   const Conformer *conf;
   if (confId < 0 && tmol.getNumConformers() == 0) {
-    conf = 0;
+    conf = nullptr;
   } else {
     conf = &(tmol.getConformer(confId));
   }
@@ -1203,7 +1203,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 void MolToMolFile(const ROMol &mol, const std::string &fName,
                   bool includeStereo, int confId, bool kekulize,
                   bool forceV3000) {
-  std::ofstream *outStream = new std::ofstream(fName.c_str());
+  auto *outStream = new std::ofstream(fName.c_str());
   if (!outStream || !(*outStream) || outStream->bad()) {
     std::ostringstream errout;
     errout << "Bad output file " << fName;

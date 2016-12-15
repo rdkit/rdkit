@@ -47,7 +47,7 @@ Atom::Atom(const std::string &what) : RDProps() {
 Atom::Atom(const Atom &other) : RDProps(other) {
   // NOTE: we do *not* copy ownership!
   d_atomicNum = other.d_atomicNum;
-  dp_mol = 0;
+  dp_mol = nullptr;
   d_index = 0;
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
@@ -63,7 +63,7 @@ Atom::Atom(const Atom &other) : RDProps(other) {
   if (other.dp_monomerInfo) {
     dp_monomerInfo = other.dp_monomerInfo->copy();
   } else {
-    dp_monomerInfo = 0;
+    dp_monomerInfo = nullptr;
   }
 }
 void Atom::initAtom() {
@@ -76,8 +76,8 @@ void Atom::initAtom() {
   d_isotope = 0;
   d_chiralTag = CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
-  dp_mol = 0;
-  dp_monomerInfo = 0;
+  dp_mol = nullptr;
+  dp_monomerInfo = nullptr;
 
   d_implicitValence = -1;
   d_explicitValence = -1;
@@ -90,7 +90,7 @@ Atom::~Atom() {
 }
 
 Atom *Atom::copy() const {
-  Atom *res = new Atom(*this);
+  auto *res = new Atom(*this);
   return res;
 }
 
@@ -205,7 +205,7 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi != -1;
+    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1;
          ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
@@ -356,7 +356,7 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi > 0;
+      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0;
            ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
@@ -377,7 +377,7 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi >= 0;
+    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0;
          ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
@@ -424,7 +424,7 @@ void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
-Atom::QUERYATOM_QUERY *Atom::getQuery() const { return NULL; };
+Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
 void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
                        Queries::CompositeQueryType how, bool maintainOrder) {
   RDUNUSED_PARAM(what);

@@ -142,16 +142,14 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
         // see if we have any sane products in the results
         std::vector<MOL_SPTR_VECT> partialProducts =
             rxn.runReactant(mol, reactant_idx);
-        for (size_t productTemplate_idx = 0;
-             productTemplate_idx < partialProducts.size();
-             ++productTemplate_idx) {
+        for (auto & partialProduct : partialProducts) {
           int saneProducts = 0;
           for (size_t product_idx = 0;
-               product_idx < partialProducts[productTemplate_idx].size();
+               product_idx < partialProduct.size();
                ++product_idx) {
             try {
               RWMol *m = dynamic_cast<RWMol *>(
-                  partialProducts[productTemplate_idx][product_idx].get());
+                  partialProduct[product_idx].get());
               MolOps::sanitizeMol(*m);
               saneProducts++;
             } catch (...) {
@@ -236,8 +234,8 @@ boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
 #ifdef RDK_HAVE_MULTIPREC
   boost::multiprecision::cpp_int myint = 1;
 
-  for (size_t i = 0; i < sizes.size(); ++i) {
-    myint *= sizes[i];
+  for (unsigned long size : sizes) {
+    myint *= size;
   }
 
   if (myint < std::numeric_limits<boost::uint64_t>::max())

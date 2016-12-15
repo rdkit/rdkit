@@ -42,7 +42,7 @@ class MolMatchFinalCheckFunctor {
     if ((unsigned)c1[0] >= boost::num_vertices(QueryTopology))
       return false;  // invalid index - match failed, see v2f implementation
     MCSFinalMatchCheckFunction compare =
-        Parameters ? Parameters->FinalMatchChecker : 0;
+        Parameters ? Parameters->FinalMatchChecker : nullptr;
     return compare ? compare(c1, c2, d_query, QueryTopology, d_mol,
                              TargetTopology, Parameters)
                    : true;
@@ -172,7 +172,7 @@ bool SubstructMatchCustom(
     const MCSAtomCompareParameters& acp, const MCSBondCompareParameters& bcp,
     void* ud, match_V_t* match) {
   RDUNUSED_PARAM(finalCompare);
-  MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, 0);
+  MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, nullptr);
   AtomLabelFunctor atomLabeler(query, target, querySrc, mol, atomCompare, acp,
                                ud);
   BondLabelFunctor bondLabeler(query, target, querySrc, mol, bondCompare, bcp,

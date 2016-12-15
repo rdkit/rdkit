@@ -62,7 +62,7 @@ MCSResult *FindMCSWrapper(python::object mols, bool maximizeBonds,
   p.BondCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;
   p.BondCompareParameters.CompleteRingsOnly = completeRingsOnly;
 
-  MCSResult *res = 0;
+  MCSResult *res = nullptr;
   {
     NOGIL gil;
     res = new MCSResult(findMCS(ms, &p));

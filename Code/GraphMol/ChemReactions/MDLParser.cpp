@@ -88,7 +88,7 @@ void ParseV2000RxnBlock(std::istream &inStream, unsigned int &line,
     }
   } catch (boost::bad_lexical_cast &) {
     delete rxn;
-    rxn = 0;
+    rxn = nullptr;
     std::ostringstream errout;
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int";
     throw ChemicalReactionParserException(errout.str());
@@ -204,7 +204,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *react;
     unsigned int natoms, nbonds;
     bool chiralityPossible;
-    Conformer *conf = 0;
+    Conformer *conf = nullptr;
     react = new RWMol();
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, react, conf,
@@ -212,7 +212,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       false);
     } catch (FileParseException &e) {
       delete react;
-      react = 0;
+      react = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse reactant " << i << ". The error was:\n\t"
              << e.message();
@@ -237,7 +237,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *prod;
     unsigned int natoms, nbonds;
     bool chiralityPossible;
-    Conformer *conf = 0;
+    Conformer *conf = nullptr;
     prod = new RWMol();
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, prod, conf,
@@ -245,7 +245,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       false);
     } catch (FileParseException &e) {
       delete prod;
-      prod = 0;
+      prod = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse product " << i << ". The error was:\n\t"
              << e.message();
@@ -273,7 +273,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
     RWMol *agent;
     unsigned int natoms, nbonds;
     bool chiralityPossible;
-    Conformer *conf = 0;
+    Conformer *conf = nullptr;
     agent = new RWMol();
     try {
       FileParserUtils::ParseV3000CTAB(&inStream, line, agent, conf,
@@ -281,7 +281,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
                                       false);
     } catch (FileParseException &e) {
       delete agent;
-      agent = 0;
+      agent = nullptr;
       std::ostringstream errout;
       errout << "Cannot parse agent " << i << ". The error was:\n\t"
              << e.message();
@@ -316,7 +316,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
   int version = 2000;
   if (tempStr.size() >= 10 && tempStr.substr(5, 5) == "V3000") version = 3000;
 
-  ChemicalReaction *res = 0;
+  ChemicalReaction *res = nullptr;
   try {
     if (version == 2000) {
       ParseV2000RxnBlock(inStream, line, res);
@@ -326,7 +326,7 @@ ChemicalReaction *RxnDataStreamToChemicalReaction(std::istream &inStream,
   } catch (ChemicalReactionParserException &e) {
     // catch our exceptions and throw them back after cleanup
     delete res;
-    res = 0;
+    res = nullptr;
     throw e;
   }
   // convert atoms to queries:
@@ -364,9 +364,9 @@ ChemicalReaction *RxnBlockToChemicalReaction(const std::string &rxnBlock) {
 ChemicalReaction *RxnFileToChemicalReaction(const std::string &fName) {
   std::ifstream inStream(fName.c_str());
   if (!inStream) {
-    return NULL;
+    return nullptr;
   }
-  ChemicalReaction *res = NULL;
+  ChemicalReaction *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
     res = RxnDataStreamToChemicalReaction(inStream, line);

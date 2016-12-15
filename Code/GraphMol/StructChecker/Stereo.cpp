@@ -110,9 +110,9 @@ int DubiousStereochemistry(RWMol &mol) {
         nmulti++;
         if (RDKit::Bond::DOUBLE == bond.getBondType()) {
           unsigned jatom = nbp.Atoms[j];
-          for (unsigned jj = 0; jj < neighbour_array[jatom].Bonds.size(); jj++)
+          for (unsigned int jj : neighbour_array[jatom].Bonds)
             if (RDKit::Bond::DOUBLE ==
-                mol.getBondWithIdx(neighbour_array[jatom].Bonds[jj])
+                mol.getBondWithIdx(jj)
                     ->getBondType())
               ndb++;
         }
@@ -779,7 +779,7 @@ int CisTransPerception(const ROMol &mol,
   std::vector<Neighbourhood> nba(mol.getNumAtoms());
   SetupNeighbourhood(mol, nba);
 
-  for (unsigned i = 0; i < bondColor.size(); i++) bondColor[i] = 0;
+  for (unsigned int & i : bondColor) i = 0;
   for (unsigned i = 0; i < nba.size(); i++)  // n_atoms
     if (numbering[i] > maxnum) maxnum = numbering[i];
 

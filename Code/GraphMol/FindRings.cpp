@@ -37,16 +37,16 @@ boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
 
 void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
                     const ROMol &mol) {
-  for (VECT_INT_VECT_CI ri = res.begin(); ri != res.end(); ++ri) {
-    unsigned int rsiz = rdcast<unsigned int>(ri->size());
+  for (const auto & re : res) {
+    unsigned int rsiz = rdcast<unsigned int>(re.size());
     INT_VECT bring(rsiz);
     for (unsigned int i = 0; i < (rsiz - 1); i++) {
-      const Bond *bnd = mol.getBondBetweenAtoms((*ri)[i], (*ri)[i + 1]);
+      const Bond *bnd = mol.getBondBetweenAtoms(re[i], re[i + 1]);
       if (!bnd) throw ValueErrorException("expected bond not found");
       bring[i] = bnd->getIdx();
     }
     // bond from last to first atom
-    const Bond *bnd = mol.getBondBetweenAtoms((*ri)[rsiz - 1], (*ri)[0]);
+    const Bond *bnd = mol.getBondBetweenAtoms(re[rsiz - 1], re[0]);
     if (!bnd) throw ValueErrorException("expected bond not found");
 
     bring[rsiz - 1] = bnd->getIdx();
@@ -60,13 +60,13 @@ namespace FindRings {
 using namespace RDKit;
 int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
                      boost::dynamic_bitset<> &activeBonds,
-                     INT_VECT *forbidden = 0);
+                     INT_VECT *forbidden = nullptr);
 void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
                INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds);
 void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
   INT_VECT bondIndices;
   INT_VECT_CI lastRai;
-  for (INT_VECT_CI rai = ring.begin(); rai != ring.end(); rai++) {
+  for (auto rai = ring.begin(); rai != ring.end(); rai++) {
     if (rai != ring.begin()) {
       const Bond *bnd = mol.getBondBetweenAtoms(*rai, *lastRai);
       if (!bnd) throw ValueErrorException("expected bond not found");
@@ -81,8 +81,8 @@ void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
 }
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
-  for (VECT_INT_VECT_CI ri = rings.begin(); ri != rings.end(); ri++) {
-    storeRingInfo(mol, *ri);
+  for (const auto & ring : rings) {
+    storeRingInfo(mol, ring);
   }
 }
 
@@ -114,11 +114,11 @@ void pickD2Nodes(const ROMol &tMol, INT_VECT &d2nodes, const INT_VECT &currFrag,
   boost::dynamic_bitset<> forb(tMol.getNumAtoms());
   while (1) {
     int root = -1;
-    for (INT_VECT_CI axci = currFrag.begin(); axci != currFrag.end(); ++axci) {
-      if (atomDegrees[*axci] == 2 && !forb[*axci]) {
-        root = (*axci);
-        d2nodes.push_back(*axci);
-        forb[*axci] = 1;
+    for (int axci : currFrag) {
+      if (atomDegrees[axci] == 2 && !forb[axci]) {
+        root = axci;
+        d2nodes.push_back(axci);
+        forb[axci] = 1;
         break;
       }
     }
@@ -145,29 +145,26 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          boost::dynamic_bitset<> activeBonds) {
-  for (RINGINVAR_INT_VECT_MAP_CI dvmi = dupD2Cands.begin();
-       dvmi != dupD2Cands.end(); ++dvmi) {
-    const INT_VECT &dupCands = dvmi->second;
+  for (const auto & dupD2Cand : dupD2Cands) {
+    const INT_VECT &dupCands = dupD2Cand.second;
     if (dupCands.size() > 1) {
       // we have duplicate candidates.
       VECT_INT_VECT nrings;
       unsigned int minSiz = static_cast<unsigned int>(MAX_INT);
-      for (INT_VECT_CI dupi = dupCands.begin(); dupi != dupCands.end();
-           ++dupi) {
+      for (int dupCand : dupCands) {
         // now break bonds for all the d2 nodes for that give the same rings as
         // with (*dupi) and recompute smallest ring with (*dupi)
         INT_VECT atomDegreesCopy = atomDegrees;
         boost::dynamic_bitset<> activeBondsCopy = activeBonds;
         INT_SET changed;
-        INT_INT_VECT_MAP_CI dmci = dupMap.find(*dupi);
-        for (INT_VECT_CI dni = dmci->second.begin(); dni != dmci->second.end();
-             ++dni) {
-          trimBonds((*dni), mol, changed, atomDegreesCopy, activeBondsCopy);
+        auto dmci = dupMap.find(dupCand);
+        for (int dni : dmci->second) {
+          trimBonds(dni, mol, changed, atomDegreesCopy, activeBondsCopy);
         }
 
         // now find the smallest ring/s around (*dupi)
         VECT_INT_VECT srings;
-        smallestRingsBfs(mol, (*dupi), srings, activeBondsCopy);
+        smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
         for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end();
              ++sri) {
           if (sri->size() < minSiz) {
@@ -220,8 +217,8 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
   bitBrings.reserve(brings.size());
   for (VECT_INT_VECT_CI vivi = brings.begin(); vivi != brings.end(); ++vivi) {
     boost::dynamic_bitset<> lring(mol.getNumBonds());
-    for (INT_VECT_CI ivi = vivi->begin(); ivi != vivi->end(); ++ivi) {
-      lring.set(*ivi);
+    for (int ivi : *vivi) {
+      lring.set(ivi);
     }
     bitBrings.push_back(lring);
   }
@@ -1197,7 +1194,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
 namespace {
 void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
           std::vector<const Atom *> &traversalOrder, VECT_INT_VECT &res,
-          const Atom *fromAtom = 0) {
+          const Atom *fromAtom = nullptr) {
   // std::cerr<<"  dfs: "<<atom->getIdx()<<" from
   // "<<(fromAtom?fromAtom->getIdx():-1)<<std::endl;
   PRECONDITION(atom, "bad atom");
@@ -1221,9 +1218,9 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
     } else if (atomColors[nbrIdx] == 1) {
       if (fromAtom && nbrIdx != fromAtom->getIdx()) {
         INT_VECT cycle;
-        std::vector<const Atom *>::reverse_iterator lastElem =
+        auto lastElem =
             std::find(traversalOrder.rbegin(), traversalOrder.rend(), atom);
-        for (std::vector<const Atom *>::reverse_iterator rIt =
+        for (auto rIt =
                  lastElem;  // traversalOrder.rbegin();
              rIt != traversalOrder.rend() && (*rIt)->getIdx() != nbrIdx;
              ++rIt) {

@@ -123,7 +123,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
   res << "PROP 7 1" << std::endl;
   res << mol.getNumAtoms() << " " << mol.getNumBonds() << std::endl;
 
-  ROMol::ConstConformerIterator confIt = mol.beginConformers();
+  auto confIt = mol.beginConformers();
   // write the atoms:
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     TPLWriter::writeAtom(mol, i, confIt, res, partialChargeProp);
@@ -162,7 +162,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 void MolToTPLFile(const ROMol &mol, const std::string &fName,
                   const std::string &partialChargeProp,
                   bool writeFirstConfTwice) {
-  std::ofstream *outStream = new std::ofstream(fName.c_str());
+  auto *outStream = new std::ofstream(fName.c_str());
   if (!outStream || !(*outStream) || outStream->bad()) {
     std::ostringstream errout;
     errout << "Bad output file " << fName;

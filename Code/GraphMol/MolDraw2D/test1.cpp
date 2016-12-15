@@ -495,7 +495,7 @@ void test5() {
     std::string nameBase = "test5_2";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m, 0, true);
+    RDDepict::compute2DCoords(*m, nullptr, true);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
@@ -524,7 +524,7 @@ void test5() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::UNKNOWN);
-    RDDepict::compute2DCoords(*m, 0, true);
+    RDDepict::compute2DCoords(*m, nullptr, true);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDrawOptions options;
     options.dummiesAreAttachments = true;
@@ -580,7 +580,7 @@ void testMultiThreaded() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -864,7 +864,7 @@ void testGithub781() {
     delete m;
   }
   {  // empty molecule
-    ROMol *m = new ROMol();
+    auto *m = new ROMol();
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
@@ -1652,8 +1652,8 @@ void test12DrawMols() {
   }
 
   {
-    mols[2] = NULL;
-    mols[4] = NULL;
+    mols[2] = nullptr;
+    mols[4] = nullptr;
     MolDraw2DSVG drawer(750, 400, 250, 200);
     drawer.drawMolecules(mols);
     drawer.finishDrawing();

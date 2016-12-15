@@ -183,7 +183,7 @@ std::vector<MatchVectType> _checkMatches(std::string smarts, std::string smiles,
   CHECK_INVARIANT(matchCount == nMatches, smarts + " " + smiles);
   CHECK_INVARIANT(mVV[0].size() == lenFirst, smarts + " " + smiles);
   delete matcher;
-  matcher = 0;
+  matcher = nullptr;
 
   matches = SubstructMatch(*mol, *matcher2, mV);
   CHECK_INVARIANT(matches, smarts + " " + smiles);
@@ -192,7 +192,7 @@ std::vector<MatchVectType> _checkMatches(std::string smarts, std::string smiles,
   CHECK_INVARIANT(matchCount == nMatches, smarts + " " + smiles);
   CHECK_INVARIANT(mVV[0].size() == lenFirst, smarts + " " + smiles);
   delete matcher2;
-  matcher2 = 0;
+  matcher2 = nullptr;
 
   delete mol;
 
@@ -696,7 +696,7 @@ void testSmartsWrite() {
 }
 
 void testIssue196() {
-  ROMol *mol1 = 0, *matcher1 = 0;
+  ROMol *mol1 = nullptr, *matcher1 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;

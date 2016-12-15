@@ -689,7 +689,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                 MMFFTor mmffTorParams;
                 if (mmffMolProperties->getMMFFTorsionParams(
                         mol, idx1, idx2, idx3, idx4, torType, mmffTorParams)) {
-                  TorsionAngleContrib *contrib = new TorsionAngleContrib(
+                  auto *contrib = new TorsionAngleContrib(
                       field, idx1, idx2, idx3, idx4, &mmffTorParams);
                   field->contribs().push_back(ForceFields::ContribPtr(contrib));
                   if (mmffMolProperties->getMMFFVerbosity()) {
@@ -809,7 +809,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         }
         MMFFVdWRijstarEps mmffVdWParams;
         if (mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWParams)) {
-          VdWContrib *contrib = new VdWContrib(field, i, j, &mmffVdWParams);
+          auto *contrib = new VdWContrib(field, i, j, &mmffVdWParams);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
           if (mmffMolProperties->getMMFFVerbosity()) {
             const Atom *iAtom = mol.getAtomWithIdx(i);
@@ -963,7 +963,7 @@ ForceFields::ForceField *constructForceField(
   PRECONDITION(mmffMolProperties->isValid(),
                "missing atom types - invalid force-field");
 
-  ForceFields::ForceField *res = new ForceFields::ForceField();
+  auto *res = new ForceFields::ForceField();
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {

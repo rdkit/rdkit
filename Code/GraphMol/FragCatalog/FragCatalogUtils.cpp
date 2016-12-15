@@ -26,7 +26,7 @@ namespace RDKit {
 // local utility namespace
 namespace {
 ROMol *getSmarts(const std::string &tmpStr) {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   if (tmpStr.length() == 0) {
     // empty line
     return mol;

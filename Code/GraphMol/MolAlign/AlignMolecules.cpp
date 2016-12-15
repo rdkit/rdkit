@@ -27,7 +27,7 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
   const Conformer &prbCnf = prbMol.getConformer(prbCid);
   const Conformer &refCnf = refMol.getConformer(refCid);
-  if (atomMap == 0) {
+  if (atomMap == nullptr) {
     // we have to figure out the mapping between the two molecule
     MatchVectType match;
     const bool recursionPossible = true;
@@ -70,10 +70,10 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
 }
 
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
-                        const std::vector<unsigned int> *atomIds = 0) {
+                        const std::vector<unsigned int> *atomIds = nullptr) {
   unsigned int na = conf.getNumAtoms();
   pts.clear();
-  if (atomIds == 0) {
+  if (atomIds == nullptr) {
     unsigned int ai;
     pts.reserve(na);
     for (ai = 0; ai < na; ++ai) {
@@ -99,7 +99,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
 
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
   int cid = -1;
-  if ((confIds != 0) && (confIds->size() > 0)) {
+  if ((confIds != nullptr) && (confIds->size() > 0)) {
     cid = confIds->front();
   }
   const Conformer &refCnf = mol.getConformer(cid);
@@ -108,7 +108,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
   // now loop throught the remaininf conformations and transform them
   RDGeom::Transform3D trans;
   double ssd;
-  if (confIds == 0) {
+  if (confIds == nullptr) {
     unsigned int i = 0;
     ROMol::ConformerIterator cnfi;
     // Conformer *conf;

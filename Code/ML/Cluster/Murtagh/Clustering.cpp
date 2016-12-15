@@ -67,7 +67,7 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
         PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
   } else {
     throw_value_error("PyArray_Type expected as input");
-    return NULL;
+    return nullptr;
   }
 
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
@@ -117,7 +117,7 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
         PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 1, 1));
   } else {
     throw_value_error("PyArray_Type expected as input");
-    return NULL;
+    return nullptr;
   }
 
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));

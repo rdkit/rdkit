@@ -154,7 +154,7 @@ void testMMFFBuilder1() {
   boost::shared_array<boost::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
-  Conformer *conf = new Conformer(mol->getNumAtoms());
+  auto *conf = new Conformer(mol->getNumAtoms());
   int cid = static_cast<int>(mol->addConformer(conf, true));
   TEST_ASSERT(mol);
   MMFF::MMFFMolProperties *mmffMolProperties =
@@ -191,7 +191,7 @@ void testMMFFBuilder1() {
   delete field;
   delete mmffMolProperties;
   mol = SmilesToMol("CCOC");
-  Conformer *conf2 = new Conformer(mol->getNumAtoms());
+  auto *conf2 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf2, true));
   TEST_ASSERT(mol);
   mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
@@ -223,7 +223,7 @@ void testMMFFBuilder1() {
   delete field;
   delete mmffMolProperties;
   mol = SmilesToMol("CO");
-  Conformer *conf3 = new Conformer(mol->getNumAtoms());
+  auto *conf3 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf3, true));
   TEST_ASSERT(mol);
   mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
@@ -381,7 +381,7 @@ void testMMFFBatch() {
     try {
       field = MMFF::constructForceField(*mol);
     } catch (...) {
-      field = 0;
+      field = nullptr;
     }
     if (field) {
       field->initialize();
@@ -442,7 +442,7 @@ void testIssue242() {
   RWMol *mol, *mol2;
   int needMore;
   (void)needMore;  // add test later
-  ForceFields::ForceField *field = 0, *field2 = 0;
+  ForceFields::ForceField *field = nullptr, *field2 = nullptr;
   std::string mb1, mb2;
   double e1, e2;
 
@@ -498,7 +498,7 @@ void testGithub308() {
   ROMol *mol = SmilesToMol("FF");
   TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol) >= 0);
   int needMore;
-  ForceFields::ForceField *field = 0;
+  ForceFields::ForceField *field = nullptr;
   TEST_ASSERT(mol);
   MMFF::MMFFMolProperties mmffMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties.isValid());
@@ -727,14 +727,14 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
-      ForceFields::ForceField *field = 0;
+      ForceFields::ForceField *field = nullptr;
       if (!(rep % 100)) {
         BOOST_LOG(rdErrorLog) << "Rep: " << rep << " Mol:" << i << std::endl;
       }
       try {
         field = MMFF::constructForceField(*mol);
       } catch (...) {
-        field = 0;
+        field = nullptr;
       }
       TEST_ASSERT(field);
       field->initialize();
@@ -759,7 +759,7 @@ void testMMFFMultiThread() {
   SDMolSupplier suppl(pathName + "/bulk.sdf");
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -773,11 +773,11 @@ void testMMFFMultiThread() {
   std::vector<double> energies(mols.size(), 0.0);
   for (unsigned int i = 0; i < mols.size(); ++i) {
     ROMol mol(*mols[i]);
-    ForceFields::ForceField *field = 0;
+    ForceFields::ForceField *field = nullptr;
     try {
       field = MMFF::constructForceField(mol);
     } catch (...) {
-      field = 0;
+      field = nullptr;
     }
     TEST_ASSERT(field);
     field->initialize();
@@ -811,7 +811,7 @@ void testMMFFMultiThread2() {
   SDMolSupplier suppl(pathName + "/bulk.sdf");
   ROMol *m = suppl[4];
   TEST_ASSERT(m);
-  ROMol *om = new ROMol(*m);
+  auto *om = new ROMol(*m);
   for (unsigned int i = 0; i < 1000; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }

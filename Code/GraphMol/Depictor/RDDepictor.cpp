@@ -91,11 +91,10 @@ RDKit::INT_LIST getNonEmbeddedAtoms(const RDKit::ROMol &mol,
                                     const std::list<EmbeddedFrag> &efrags) {
   RDKit::INT_LIST res;
   boost::dynamic_bitset<> done(mol.getNumAtoms());
-  for (std::list<EmbeddedFrag>::const_iterator efri = efrags.begin();
-       efri != efrags.end(); efri++) {
-    const INT_EATOM_MAP &oatoms = efri->GetEmbeddedAtoms();
-    for (INT_EATOM_MAP_CI ori = oatoms.begin(); ori != oatoms.end(); ori++) {
-      done[ori->first] = 1;
+  for (const auto & efrag : efrags) {
+    const INT_EATOM_MAP &oatoms = efrag.GetEmbeddedAtoms();
+    for (const auto & oatom : oatoms) {
+      done[oatom.first] = 1;
     }
   }
   for (RDKit::ROMol::ConstAtomIterator ai = mol.beginAtoms();
@@ -115,7 +114,7 @@ std::list<EmbeddedFrag>::iterator _findLargestFrag(
     std::list<EmbeddedFrag> &efrags) {
   std::list<EmbeddedFrag>::iterator mfri;
   int msiz = 0;
-  for (std::list<EmbeddedFrag>::iterator efri = efrags.begin();
+  for (auto efri = efrags.begin();
        efri != efrags.end(); efri++) {
     if ((!efri->isDone()) && (efri->Size() > msiz)) {
       msiz = efri->Size();
@@ -134,11 +133,10 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
   if (efrags.empty()) {
     return;
   }
-  for (std::list<EmbeddedFrag>::iterator efi = efrags.begin();
-       efi != efrags.end(); efi++) {
-    efi->computeBox();
+  for (auto & efrag : efrags) {
+    efrag.computeBox();
   }
-  std::list<EmbeddedFrag>::iterator eri = efrags.begin();
+  auto eri = efrags.begin();
   double xmax = eri->getBoxPx();
   double xmin = eri->getBoxNx();
   double ymax = eri->getBoxPy();
@@ -254,7 +252,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
                             bool clearConfs) {
   // create a conformation to store the coordinates and add it to the molecule
-  RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
+  auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
   for (eri = efrags.begin(); eri != efrags.end(); eri++) {
@@ -313,7 +311,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
       eri->randomSampleFlipsAndPermutations(
-          nFlipsPerSample, nSamples, sampleSeed, 0, 0.0, permuteDeg4Nodes);
+          nFlipsPerSample, nSamples, sampleSeed, nullptr, 0.0, permuteDeg4Nodes);
     } else {
       eri->removeCollisionsBondFlip();
     }
@@ -340,7 +338,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // special case for a single-atom coordMap template
   if ((coordMap) && (coordMap->size() == 1)) {
     RDKit::Conformer &conf = mol.getConformer(cid);
-    RDGeom::INT_POINT2D_MAP::const_iterator cRef = coordMap->begin();
+    auto cRef = coordMap->begin();
     RDGeom::Point3D confPos = conf.getAtomPos(cRef->first);
     RDGeom::Point2D refPos = cRef->second;
     refPos.x -= confPos.x;
@@ -404,7 +402,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, 0, efrags);
+  computeInitialCoords(mol, nullptr, efrags);
 
   // now perform random flips of rotatable bonds so taht we can sample the space
   // and try to mimic the distances in dmat

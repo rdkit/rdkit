@@ -36,7 +36,7 @@ namespace {
   boost::python::tuple MolToInchi(const RDKit::ROMol &mol, std::string options)
   {
     RDKit::ExtraInchiReturnValues rv;
-    const char* _options = NULL;
+    const char* _options = nullptr;
     if (options.size())
       _options = options.c_str();
     std::string inchi = RDKit::MolToInchi(mol, rv, _options);
@@ -49,7 +49,7 @@ namespace {
   {
     RDKit::ExtraInchiReturnValues rv;
     RDKit::ROMol* mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
-    if (mol == NULL)
+    if (mol == nullptr)
       return boost::python::make_tuple(boost::python::object(), rv.returnCode,
                                        rv.messagePtr, rv.logPtr);
     else {

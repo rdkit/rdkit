@@ -219,7 +219,7 @@ namespace AvalonTools {
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
     TEST_ASSERT(mp2->n_atoms==mol.getNumAtoms());
 
-    RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
+    auto *conf = new RDKit::Conformer(mol.getNumAtoms());
     conf->set3D(false);
     for(unsigned int i=0;i<mol.getNumAtoms();++i){
       RDGeom::Point3D loc(mp2->atom_array[i].x,mp2->atom_array[i].y,mp2->atom_array[i].z);
@@ -259,7 +259,7 @@ namespace AvalonTools {
 
   std::string getCanonSmiles(const std::string &data,bool isSmiles,int flags){
     if(flags==-1) flags=DB_STEREO | CENTER_STEREO;
-    char *smiles=0,*canSmiles=0;
+    char *smiles=nullptr,*canSmiles=nullptr;
     if(!isSmiles){
       struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
       if(mp){
@@ -332,7 +332,7 @@ namespace AvalonTools {
     if(!*mpp) return BAD_MOLECULE;
     int res;
     struct reaccs_molecule_t *tmp=*mpp;
-    res = RunStruchk(mpp,NULL);
+    res = RunStruchk(mpp,nullptr);
     if(*mpp != tmp) {
       FreeMolecule(tmp);
     }
@@ -369,7 +369,7 @@ namespace AvalonTools {
 
   int initCheckMol(const std::string &optString) {
     // n.b. always add a cr to the end for safety
-    char *optBuffer = new char[optString.size()+2];
+    auto *optBuffer = new char[optString.size()+2];
     optString.copy(optBuffer, optString.size());
     optBuffer[optString.size()-1] = '\n';
     optBuffer[optString.size()] = '\0';
@@ -392,7 +392,7 @@ namespace AvalonTools {
     FreeMsgList();
 
     struct reaccs_molecule_t *mp;
-    RDKit::ROMol *rMol = 0;
+    RDKit::ROMol *rMol = nullptr;
     mp = molToReaccs(inMol);
     errs = _checkMolWrapper(&mp);
     if(mp){

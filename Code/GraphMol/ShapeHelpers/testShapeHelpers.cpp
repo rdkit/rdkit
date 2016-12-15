@@ -88,7 +88,7 @@ void test3Methane() {
       rdbase + "/Code/GraphMol/ShapeHelpers/test_data/methane.mol";
   ROMol *m = MolFileToMol(fname);
   RDGeom::Point3D dims, offSet;
-  MolShapes::computeConfDimsAndOffset(m->getConformer(), dims, offSet, 0, 3.0);
+  MolShapes::computeConfDimsAndOffset(m->getConformer(), dims, offSet, nullptr, 3.0);
   std::cout << dims << " " << offSet << "\n";
   RDGeom::UniformGrid3D grd(6.5, 6.5, 6.5);
   // dims.x, dims.y, dims.z, 0.5, DiscreteValueVect::TWOBITVALUE, &offSet);

@@ -160,7 +160,7 @@ void testFail() {
     try {
       mol = SmilesToMol(smi);
     } catch (MolSanitizeException) {
-      mol = (Mol *)0;
+      mol = (Mol *)nullptr;
     }
     boost::logging::enable_logs("rdApp.error");
     if (!(i % 2)) {
@@ -3072,7 +3072,7 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"[A]", "[B]", "[B]", "", ""};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3085,7 +3085,7 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[B]", "[A]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3098,7 +3098,7 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[A]", "[B]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, &atomLabels);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[B][A][B]");
     delete m;
   }
@@ -3109,7 +3109,7 @@ void testFragmentSmiles() {
     TEST_ASSERT(m);
     int as[] = {0, 1, 2, 3};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, 0, 0, 0);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr);
     TEST_ASSERT(csmiles == "CC(O)=O");
     delete m;
   }
@@ -3123,7 +3123,7 @@ void testFragmentSmiles() {
     std::string labels[5] = {"-", "=", "-", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 5);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     TEST_ASSERT(csmiles == "C-C(-O)=O");
     delete m;
   }
@@ -3137,7 +3137,7 @@ void testFragmentSmiles() {
     std::string labels[5] = {"a", "b", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 5);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     TEST_ASSERT(csmiles == "CaC(aO)bO");
     delete m;
   }
@@ -3162,7 +3162,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"a", "b", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CbC(aC)aC");
     delete m;
@@ -3177,7 +3177,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"b", "a", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CaC(aC)bC");
     delete m;
@@ -3192,7 +3192,7 @@ void testFragmentSmiles() {
     std::string labels[6] = {"b", "b", "", "a", "", ""};
     std::vector<std::string> bondLabels(labels, labels + 6);
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, &bondLabels);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, &bondLabels);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "CaC(bC)bC" || csmiles == "CbC(aC)bC");
     delete m;
@@ -3205,7 +3205,7 @@ void testFragmentSmiles() {
     int as[] = {0, 4};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, 0, 0, 0, false, false, -1, false);
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr, false, false, -1, false);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "O.C");
     delete m;

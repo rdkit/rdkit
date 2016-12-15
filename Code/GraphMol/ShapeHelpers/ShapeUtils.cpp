@@ -62,7 +62,7 @@ std::vector<double> getConfDimensions(const Conformer &conf, double padding,
                                       const RDGeom::Point3D *center,
                                       bool ignoreHs) {
   RDGeom::Point3D lb, rb;
-  computeConfBox(conf, lb, rb, 0, padding);
+  computeConfBox(conf, lb, rb, nullptr, padding);
 
   if (!center) {
     RDGeom::Point3D cpt = MolTransforms::computeCentroid(conf, ignoreHs);

@@ -485,10 +485,10 @@ ConjElectrons::ConjElectrons(ResonanceMolSupplier *parent,
     d_conjBondMap[bi] = new BondElectrons(this, bond);
     // store the pointers to AtomElectrons objects in a map
     const Atom *atom[2] = {bond->getBeginAtom(), bond->getEndAtom()};
-    for (unsigned int i = 0; i < 2; ++i) {
-      unsigned int ai = atom[i]->getIdx();
+    for (auto & i : atom) {
+      unsigned int ai = i->getIdx();
       if (d_conjAtomMap.find(ai) == d_conjAtomMap.end())
-        d_conjAtomMap[ai] = new AtomElectrons(this, atom[i]);
+        d_conjAtomMap[ai] = new AtomElectrons(this, i);
     }
   }
   // count total number of valence electrons in conjugated group
@@ -507,12 +507,10 @@ ConjElectrons::ConjElectrons(const ConjElectrons &ce)
       d_ceMetrics(ce.d_ceMetrics),
       d_beginAIStack(ce.d_beginAIStack),
       d_parent(ce.d_parent) {
-  for (ConjAtomMap::const_iterator it = ce.d_conjAtomMap.begin();
-       it != ce.d_conjAtomMap.end(); ++it)
-    d_conjAtomMap[it->first] = new AtomElectrons(this, *(it->second));
-  for (ConjBondMap::const_iterator it = ce.d_conjBondMap.begin();
-       it != ce.d_conjBondMap.end(); ++it)
-    d_conjBondMap[it->first] = new BondElectrons(this, *(it->second));
+  for (const auto & it : ce.d_conjAtomMap)
+    d_conjAtomMap[it.first] = new AtomElectrons(this, *(it.second));
+  for (const auto & it : ce.d_conjBondMap)
+    d_conjBondMap[it.first] = new BondElectrons(this, *(it.second));
 }
 
 // object destructor
@@ -745,13 +743,13 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
     ResonanceUtils::getNumCombStartV(numCand, rdcast<unsigned int>(aiVec.size()), numComb, v);
     // if there are multiple permutations, make a copy of the original
     // ConjElectrons object, since the latter will be modified
-    ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : NULL);
+    ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : nullptr);
     // enumerate all permutations
     for (unsigned int c = 0; c < numComb; ++c) {
       if (c) ce = new ConjElectrons(*ceCopy);
       unsigned int vc = v;
-      for (unsigned int i = 0; i < aiVec.size(); ++i) {
-        AtomElectrons *ae = ce->getAtomElectronsWithIdx(aiVec[i]);
+      for (unsigned int i : aiVec) {
+        AtomElectrons *ae = ce->getAtomElectronsWithIdx(i);
         unsigned int e = ae->neededNbForOctet();
         // if this atom was chosen to be octet-unsatisfied in
         // this permutation, give it one electron pair less than
@@ -813,7 +811,7 @@ void ConjElectrons::computeDistFormalCharges() {
   for (ConjAtomMap::const_iterator it1 = d_conjAtomMap.begin();
        it1 != d_conjAtomMap.end(); ++it1) {
     if (!it1->second->fc()) continue;
-    for (ConjAtomMap::const_iterator it2 = it1; it2 != d_conjAtomMap.end();
+    for (auto it2 = it1; it2 != d_conjAtomMap.end();
          ++it2) {
       if ((it1 == it2) || !it2->second->fc()) continue;
       unsigned int dist = rdcast<unsigned int>(
@@ -1216,8 +1214,8 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
 // objects are collected in ceMap
 void ResonanceMolSupplier::enumerateNbArrangements(CEMap &ceMap,
                                                    CEMap &ceMapTmp) {
-  for (CEMap::iterator it = ceMapTmp.begin(); it != ceMapTmp.end(); ++it)
-    it->second->enumerateNonBonded(ceMap);
+  for (auto & it : ceMapTmp)
+    it.second->enumerateNonBonded(ceMap);
 }
 
 void ResonanceMolSupplier::pruneStructures(CEMap &ceMap) {
@@ -1292,8 +1290,8 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
   //    start from to complete the bond arrangement for each
   //    ConjElectrons object
   std::stack<ConjElectrons *> ceStack;
-  ConjElectrons *ce = new ConjElectrons(this, conjGrpIdx);
-  ConjElectrons *ceCopy = new ConjElectrons(*ce);
+  auto *ce = new ConjElectrons(this, conjGrpIdx);
+  auto *ceCopy = new ConjElectrons(*ce);
   // the first ConjElectrons object has the user-supplied bond
   // and formal charge arrangement and is stored as such
   ce->initCeFromMol();
@@ -1327,9 +1325,9 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
     while (ce && ce->popFromBeginStack(aiBegin)) {
       // aiBegin holds the atom index just popped from stack
       unsigned int ai[2] = {aiBegin, na};
-      AtomElectrons *ae[2] = {ce->getAtomElectronsWithIdx(ai[BEGIN_POS]), NULL};
+      AtomElectrons *ae[2] = {ce->getAtomElectronsWithIdx(ai[BEGIN_POS]), nullptr};
       unsigned int bi = nb;
-      BondElectrons *be = NULL;
+      BondElectrons *be = nullptr;
       // loop over neighbors of the atom popped from the
       // atom index stack
       ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -1389,7 +1387,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       // consider single, double and triple bond alternatives in turn
       for (unsigned int i = 0; i < 3; ++i) {
         unsigned int t = i * 2;
-        ConjElectrons *ceToSet = NULL;
+        ConjElectrons *ceToSet = nullptr;
         boost::uint8_t orderMask = (1 << t);
         boost::uint8_t chgMask = (1 << (t + 1));
         unsigned int bo = i + 1;
@@ -1409,7 +1407,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
             needToFork = true;
             ceToSet = ce;
           } else {
-            ConjElectrons *ceFork = new ConjElectrons(*ceCopy);
+            auto *ceFork = new ConjElectrons(*ceCopy);
             ceStack.push(ceFork);
             ceToSet = ceFork;
           }
@@ -1427,7 +1425,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       // if a dead end was hit, discard this ConjElectrons object
       if (!isAnyBondAllowed) {
         delete ce;
-        ce = NULL;
+        ce = nullptr;
       }
     }
     if (ce) {
@@ -1469,7 +1467,7 @@ int ResonanceMolSupplier::getAtomConjGrpIdx(unsigned int ai) const {
 
 // resizes d_ceVect3 vector
 inline void ResonanceMolSupplier::resizeCeVect() {
-  d_ceVect3.resize(d_nConjGrp, NULL);
+  d_ceVect3.resize(d_nConjGrp, nullptr);
 }
 
 // stores the ConjElectrons pointers currently stored in ceMap
@@ -1513,7 +1511,7 @@ bool ResonanceMolSupplier::atEnd() {
 // the pointer
 ROMol *ResonanceMolSupplier::next() {
   enumerate();
-  return (atEnd() ? NULL : (*this)[d_idx++]);
+  return (atEnd() ? nullptr : (*this)[d_idx++]);
 }
 
 // sets the ResonanceMolSupplier index to idx
@@ -1560,7 +1558,7 @@ void ResonanceMolSupplier::assignBondsFormalChargesHelper(
 // with the c vector
 ROMol *ResonanceMolSupplier::assignBondsFormalCharges(
     std::vector<unsigned int> &c) const {
-  ROMol *mol = new ROMol(this->mol());
+  auto *mol = new ROMol(this->mol());
   assignBondsFormalChargesHelper(*mol, c);
   ResonanceUtils::fixExplicitImplicitHs(*mol);
   ResonanceUtils::sanitizeMol((RWMol &)*mol);

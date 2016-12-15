@@ -2556,7 +2556,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
   PRECONDITION(mmffAtomPropParams[1],
                "property parameters for atom 2 not found");
 
-  ForceFields::MMFF::MMFFBond *mmffBondParams =
+  auto *mmffBondParams =
       new ForceFields::MMFF::MMFFBond();
   const double c = (((atomicNum1 == 1) || (atomicNum2 == 1)) ? 0.050 : 0.085);
   const double n = 1.4;
@@ -2689,7 +2689,7 @@ const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
   atomicNum[0] = mol.getAtomWithIdx(idx1)->getAtomicNum();
   atomicNum[1] = mol.getAtomWithIdx(idx2)->getAtomicNum();
   atomicNum[2] = mol.getAtomWithIdx(idx3)->getAtomicNum();
-  ForceFields::MMFF::MMFFAngle *mmffAngleParams =
+  auto *mmffAngleParams =
       new ForceFields::MMFF::MMFFAngle();
   unsigned int ringSize = isAngleInRingOfSize3or4(mol, idx1, idx2, idx3);
   if (!oldMMFFAngleParams) {
@@ -2833,7 +2833,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
 
   MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
   MMFFAromCollection *mmffArom = MMFFAromCollection::getMMFFArom();
-  ForceFields::MMFF::MMFFTor *mmffTorParams = new ForceFields::MMFF::MMFFTor();
+  auto *mmffTorParams = new ForceFields::MMFF::MMFFTor();
   unsigned int jAtomType = this->getMMFFAtomType(idx2);
   unsigned int kAtomType = this->getMMFFAtomType(idx3);
   const MMFFProp *jMMFFProp = (*mmffProp)(jAtomType);

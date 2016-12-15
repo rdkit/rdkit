@@ -114,7 +114,7 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
   } else if (descr == "AtomXor") {
     return;
   } else if (descr == "AtomAnd") {
-    Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt =
+    auto childIt =
         a->getQuery()->beginChildren();
     if ((*childIt)->getDescription() == "AtomAtomicNum" &&
         ((*(childIt + 1))->getDescription() == "AtomIsAliphatic" ||
@@ -125,14 +125,14 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
       return;
     }
   } else if (descr == "AtomOr") {
-    Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt =
+    auto childIt =
         a->getQuery()->beginChildren();
     while (childIt != a->getQuery()->endChildren()) {
       if ((*childIt)->getDescription() == "AtomAtomicNum") {
         atomNums.push_back(
             static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
       } else if ((*childIt)->getDescription() == "AtomAnd") {
-        Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt2 =
+        auto childIt2 =
             (*childIt)->beginChildren();
         if ((*childIt2)->getDescription() == "AtomAtomicNum" &&
             ((*(childIt2 + 1))->getDescription() == "AtomIsAliphatic" ||
@@ -218,7 +218,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
     ++firstB;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
   unsigned int pIdx = 0;
   BOOST_FOREACH (const ROMol *patt, patts) {
     ++pIdx;

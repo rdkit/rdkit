@@ -143,9 +143,9 @@ void testBenzylCation() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int & indice : indices) {
+    TEST_ASSERT(fcMap.find(indice) != fcMap.end());
+    TEST_ASSERT(fcMap[indice] == 1);
   }
   delete resMolSuppl;
 }
@@ -164,9 +164,9 @@ void testBenzylAnion() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == -1);
+  for (unsigned int & indice : indices) {
+    TEST_ASSERT(fcMap.find(indice) != fcMap.end());
+    TEST_ASSERT(fcMap[indice] == -1);
   }
   delete resMolSuppl;
 }
@@ -194,9 +194,9 @@ void testButadiene() {
     delete resMol;
   }
   unsigned int indices[] = {0, 3};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 0);
+  for (unsigned int & indice : indices) {
+    TEST_ASSERT(fcMap.find(indice) != fcMap.end());
+    TEST_ASSERT(fcMap[indice] == 0);
   }
   delete resMolSuppl;
 }
@@ -240,9 +240,9 @@ void testChargeMigration() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int & indice : indices) {
+    TEST_ASSERT(fcMap.find(indice) != fcMap.end());
+    TEST_ASSERT(fcMap[indice] == 1);
   }
   delete resMolSuppl;
 }
@@ -262,9 +262,9 @@ void testChargeSeparation1() {
     delete resMol;
   }
   unsigned int indices[] = {0, 8, 10};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int & indice : indices) {
+    TEST_ASSERT(fcMap.find(indice) != fcMap.end());
+    TEST_ASSERT(fcMap[indice] == 1);
   }
   delete resMolSuppl;
   resMolSuppl = new ResonanceMolSupplier(
@@ -610,7 +610,7 @@ void testCrambin() {
   for (std::vector<RWMol *>::const_iterator it = res.begin(); it != res.end();
        ++it)
     delete *it;
-  ResonanceMolSupplier *resMolSupplST =
+  auto *resMolSupplST =
       new ResonanceMolSupplier((ROMol &)*crambin);
   TEST_ASSERT(resMolSupplST);
   // crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
@@ -648,7 +648,7 @@ void testCrambin() {
 #ifdef RDK_TEST_MULTITHREADED
   std::vector<std::vector<unsigned int> > btVect2ST;
   getBtVectVect(resMolSupplST, btVect2ST);
-  ResonanceMolSupplier *resMolSupplMT =
+  auto *resMolSupplMT =
       new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
   TEST_ASSERT(resMolSupplMT);
   resMolSupplMT->setNumThreads(0);
@@ -661,18 +661,17 @@ void testCrambin() {
       TEST_ASSERT(btVect2ST[i][j] == btVect2MT[i][j]);
   }
   ResonanceMolSupplier *ptr[2] = {resMolSupplST, resMolSupplMT};
-  for (unsigned int i = 0; i < sizeof(ptr) / sizeof(ResonanceMolSupplier *);
-       ++i) {
-    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect, false, true,
+  for (auto & i : ptr) {
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, false, true,
                        false, false, 1000, 0);
     TEST_ASSERT(n == 6);
-    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect, true, true,
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, true, true,
                        false, false, 1000, 0);
     TEST_ASSERT(n == 3);
-    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect, false, true,
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, false, true,
                        false, false, 1000, 0);
     TEST_ASSERT(n == 8);
-    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect, true, true,
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, true, true,
                        false, false, 1000, 0);
     TEST_ASSERT(n == 2);
   }
@@ -688,7 +687,7 @@ void testGitHub1166() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testGitHub1166" << std::endl;
   RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
-  ResonanceMolSupplier *resMolSuppl =
+  auto *resMolSuppl =
       new ResonanceMolSupplier(static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
   // check that formal charges on odd indices are in the same position

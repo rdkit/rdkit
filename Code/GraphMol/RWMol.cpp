@@ -79,9 +79,9 @@ void RWMol::insertMol(const ROMol &other) {
 
   // add atom to any conformers as well, if we have any
   if (other.getNumConformers() && !getNumConformers()) {
-    for (ConstConformerIterator cfi = other.beginConformers();
+    for (auto cfi = other.beginConformers();
          cfi != other.endConformers(); ++cfi) {
-      Conformer *nconf = new Conformer(getNumAtoms());
+      auto *nconf = new Conformer(getNumAtoms());
       nconf->set3D((*cfi)->is3D());
       nconf->setId((*cfi)->getId());
       for (unsigned int i = 0; i < newAtomIds.size(); ++i)
@@ -99,18 +99,18 @@ void RWMol::insertMol(const ROMol &other) {
           (*cfi)->setAtomPos(newAtomIds[i], (*ocfi)->getAtomPos(i));
       }
     } else {
-      for (ConformerIterator cfi = this->beginConformers();
+      for (auto cfi = this->beginConformers();
            cfi != this->endConformers(); ++cfi) {
         (*cfi)->resize(getNumAtoms());
-        for (unsigned int i = 0; i < newAtomIds.size(); ++i)
-          (*cfi)->setAtomPos(newAtomIds[i], RDGeom::Point3D(0.0, 0.0, 0.0));
+        for (unsigned int newAtomId : newAtomIds)
+          (*cfi)->setAtomPos(newAtomId, RDGeom::Point3D(0.0, 0.0, 0.0));
       }
     }
   }
 }
 
 unsigned int RWMol::addAtom(bool updateLabel) {
-  Atom *atom_p = new Atom();
+  auto *atom_p = new Atom();
   atom_p->setOwningMol(this);
   MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
   d_graph[which].reset(atom_p);
@@ -120,7 +120,7 @@ unsigned int RWMol::addAtom(bool updateLabel) {
     setAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
   }
   // add atom to any conformers as well, if we have any
-  for (ConformerIterator cfi = this->beginConformers();
+  for (auto cfi = this->beginConformers();
        cfi != this->endConformers(); ++cfi) {
     (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
@@ -179,13 +179,13 @@ void RWMol::removeAtom(Atom *atom) {
 
   // remove any bookmarks which point to this atom:
   ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
-  ATOM_BOOKMARK_MAP::iterator markI = marks->begin();
+  auto markI = marks->begin();
   while (markI != marks->end()) {
     const ATOM_PTR_LIST &atoms = markI->second;
     // we need to copy the iterator then increment it, because the
     // deletion we're going to do in clearAtomBookmark will invalidate
     // it.
-    ATOM_BOOKMARK_MAP::iterator tmpI = markI;
+    auto tmpI = markI;
     ++markI;
     if (std::find(atoms.begin(), atoms.end(), atom) != atoms.end()) {
       clearAtomBookmark(tmpI->first, atom);
@@ -200,8 +200,8 @@ void RWMol::removeAtom(Atom *atom) {
     nbrs.push_back(std::make_pair(atom->getIdx(), rdcast<unsigned int>(*b1)));
     ++b1;
   }
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    removeBond(nbrs[i].first, nbrs[i].second);
+  for (auto & nbr : nbrs) {
+    removeBond(nbr.first, nbr.second);
   }
 
   // loop over all atoms with higher indices and update their indices
@@ -213,7 +213,7 @@ void RWMol::removeAtom(Atom *atom) {
   // do the same with the coordinates in the conformations
   BOOST_FOREACH (CONFORMER_SPTR conf, d_confs) {
     RDGeom::POINT3D_VECT &positions = conf->getPositions();
-    RDGeom::POINT3D_VECT_I pi = positions.begin();
+    auto pi = positions.begin();
     for (unsigned int i = 0; i < getNumAtoms() - 1; i++) {
       ++pi;
       if (i >= idx) {
@@ -235,7 +235,7 @@ void RWMol::removeAtom(Atom *atom) {
     tmpIdx = bond->getEndAtomIdx();
     if (tmpIdx > idx) bond->setEndAtomIdx(tmpIdx - 1);
     bond->setIdx(nBonds++);
-    for (INT_VECT::iterator bsi = bond->getStereoAtoms().begin();
+    for (auto bsi = bond->getStereoAtoms().begin();
          bsi != bond->getStereoAtoms().end(); ++bsi) {
       if ((*bsi) == rdcast<int>(idx)) {
         bond->getStereoAtoms().clear();
@@ -250,7 +250,7 @@ void RWMol::removeAtom(Atom *atom) {
   // they are pretty likely to be wrong now:
   clearComputedProps(true);
 
-  atom->setOwningMol(NULL);
+  atom->setOwningMol(nullptr);
 
   // remove all connections to the atom:
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
@@ -267,7 +267,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   PRECONDITION(!(boost::edge(atomIdx1, atomIdx2, d_graph).second),
                "bond already exists");
 
-  Bond *b = new Bond(bondType);
+  auto *b = new Bond(bondType);
   b->setOwningMol(this);
   if (bondType == Bond::AROMATIC) {
     b->setIsAromatic(1);
@@ -320,13 +320,13 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
 
   // remove any bookmarks which point to this bond:
   BOND_BOOKMARK_MAP *marks = getBondBookmarks();
-  BOND_BOOKMARK_MAP::iterator markI = marks->begin();
+  auto markI = marks->begin();
   while (markI != marks->end()) {
     BOND_PTR_LIST &bonds = markI->second;
     // we need to copy the iterator then increment it, because the
     // deletion we're going to do in clearBondBookmark will invalidate
     // it.
-    BOND_BOOKMARK_MAP::iterator tmpI = markI;
+    auto tmpI = markI;
     ++markI;
     if (std::find(bonds.begin(), bonds.end(), bnd) != bonds.end()) {
       clearBondBookmark(tmpI->first, bnd);
@@ -364,7 +364,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
     getBondWithIdx(i)->setIdx(i - 1);
   }
 
-  bnd->setOwningMol(NULL);
+  bnd->setOwningMol(nullptr);
 
   MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
   MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
@@ -375,7 +375,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
 Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {
   URANGE_CHECK(atomIdx1, getNumAtoms() - 1);
 
-  Bond *b = new Bond(bondType);
+  auto *b = new Bond(bondType);
   b->setOwningMol(this);
   b->setBeginAtomIdx(atomIdx1);
   return b;

@@ -24,7 +24,7 @@
 namespace RDKit {
 SDWriter::SDWriter(const std::string &fileName) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+    auto *tmpStream = new std::ofstream(fileName.c_str());
     df_owner = true;
     if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
       std::ostringstream errout;
@@ -55,7 +55,7 @@ SDWriter::SDWriter(std::ostream *outStream, bool takeOwnership) {
 
 SDWriter::~SDWriter() {
   // close the writer if it's still open:
-  if (dp_ostream != NULL) close();
+  if (dp_ostream != nullptr) close();
 }
 
 void SDWriter::setProps(const STR_VECT &propNames) {

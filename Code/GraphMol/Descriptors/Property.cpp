@@ -165,7 +165,7 @@ void Properties::annotateProperties(RDKit::ROMol &mol) const {
 PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name,
                                         double min,
                                         double max) {
-  PROP_RANGE_QUERY *filter = new PROP_RANGE_QUERY(min, max);
+  auto *filter = new PROP_RANGE_QUERY(min, max);
   filter->setDataFunc( Properties::getProperty(name)->d_dataFunc );
   return filter;
 }

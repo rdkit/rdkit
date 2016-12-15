@@ -228,7 +228,7 @@ void testSDWriter() {
 
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+  auto *writer = new SDWriter(ofile);
 
   STR_VECT names;
 
@@ -286,7 +286,7 @@ void testTDTWriter() {
 
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
-  TDTWriter *writer = new TDTWriter(ofile);
+  auto *writer = new TDTWriter(ofile);
 
   STR_VECT names;
 
@@ -326,7 +326,7 @@ void testSmilesWriterStrm() {
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   std::string oname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
-  std::ofstream *oStream = new std::ofstream(oname.c_str());
+  auto *oStream = new std::ofstream(oname.c_str());
 
   STR_VECT propNames;
   propNames.push_back(std::string("Column_2"));
@@ -383,9 +383,9 @@ void testSDWriterStrm() {
 
     std::string ofile =
         rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
-    std::ofstream *oStream = new std::ofstream(ofile.c_str());
+    auto *oStream = new std::ofstream(ofile.c_str());
 
-    SDWriter *writer = new SDWriter(oStream);
+    auto *writer = new SDWriter(oStream);
 
     STR_VECT names;
 
@@ -440,8 +440,8 @@ void testTDTWriterStrm() {
 
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
-  std::ofstream *oStream = new std::ofstream(ofile.c_str());
-  TDTWriter *writer = new TDTWriter(oStream);
+  auto *oStream = new std::ofstream(ofile.c_str());
+  auto *writer = new TDTWriter(oStream);
 
   STR_VECT names;
 
@@ -483,7 +483,7 @@ void testSDMemoryCorruption() {
       "/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf";
   std::ostream *os = new std::ofstream(ofile.c_str());
   // std::ostream *os=new std::stringstream();
-  SDWriter *writer = new SDWriter(os, false);
+  auto *writer = new SDWriter(os, false);
 
   STR_VECT names;
 #if 1
@@ -648,7 +648,7 @@ void testIssue265() {
   {
     ROMol *m1 = SmilesToMol("C1ON1");
     TEST_ASSERT(m1);
-    Conformer *conf = new Conformer(m1->getNumAtoms());
+    auto *conf = new Conformer(m1->getNumAtoms());
     RDGeom::Point3D p1(0, 0, 0);
     RDGeom::Point3D p2(1, 0, 0);
     RDGeom::Point3D p3(0, 1, 0);

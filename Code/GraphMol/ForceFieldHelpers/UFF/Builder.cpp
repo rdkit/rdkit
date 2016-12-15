@@ -252,8 +252,8 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
-  const Bond *ax1 = 0, *ax2 = 0;
-  const Bond *eq1 = 0, *eq2 = 0, *eq3 = 0;
+  const Bond *ax1 = nullptr, *ax2 = nullptr;
+  const Bond *eq1 = nullptr, *eq2 = nullptr, *eq3 = nullptr;
 
   const Conformer &conf = mol.getConformer(confId);
   //------------------------------------------------------------
@@ -561,7 +561,7 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
     }
     // now divide the force constant for each contribution to the torsion energy
     // about this bond by the number of contribs about this bond:
-    for (std::vector<TorsionAngleContrib *>::iterator chI =
+    for (auto chI =
              contribsHere.begin();
          chI != contribsHere.end(); ++chI) {
       (*chI)->scaleForceConstant(contribsHere.size());
@@ -661,7 +661,7 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
                                              bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
 
-  ForceFields::ForceField *res = new ForceFields::ForceField();
+  auto *res = new ForceFields::ForceField();
 
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);

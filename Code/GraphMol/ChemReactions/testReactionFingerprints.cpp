@@ -55,8 +55,8 @@ void testStructuralFingerprintsReaction() {
     reaction = "C1CCCCC1>>C1CCNCC1";
     reactionq = "C1CCCCC1>>C1CCNCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     ReactionFingerprintParams params;
@@ -95,8 +95,8 @@ void testStructuralFingerprintsReaction() {
     reaction = "C1CCCCC1>>C1CCNCC1";
     reactionq = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
 
@@ -138,9 +138,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = ">>C1CCNCC1";
     reactionq2 = ">>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -190,9 +190,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>";
     reactionq2 = "C1CCOCC1>>";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -240,9 +240,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "CCC>>CNC";
     reactionq2 = "CCCCC>>CCCCN";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -298,9 +298,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "CCC>>CNC";
     reactionq2 = "CCCCC>>CCCCN";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -335,9 +335,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -369,9 +369,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -402,9 +402,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -436,9 +436,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -470,9 +470,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCOCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -504,9 +504,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>C(=O)O.[Na]>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCNCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -536,9 +536,9 @@ void testStructuralFingerprintsReaction() {
     reactionq = "C1CCCCC1>C(=O)O.[Na]>C1CCNCC1";
     reactionq2 = "C1CCCCC1>>C1CCNCC1";
 
-    rxn = RxnSmartsToChemicalReaction(reaction, 0, true);
-    rxnq = RxnSmartsToChemicalReaction(reactionq, 0, true);
-    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, 0, true);
+    rxn = RxnSmartsToChemicalReaction(reaction, nullptr, true);
+    rxnq = RxnSmartsToChemicalReaction(reactionq, nullptr, true);
+    rxnq2 = RxnSmartsToChemicalReaction(reactionq2, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq2);
@@ -573,8 +573,8 @@ void testDifferenceFingerprintsReaction() {
     reaction1 = "C1CCCCC1>>C1CCCCC1";
     reaction2 = "C1CCCCC1>>C1CCNCC1";
 
-    rxn1 = RxnSmartsToChemicalReaction(reaction1, 0, true);
-    rxn2 = RxnSmartsToChemicalReaction(reaction2, 0, true);
+    rxn1 = RxnSmartsToChemicalReaction(reaction1, nullptr, true);
+    rxn2 = RxnSmartsToChemicalReaction(reaction2, nullptr, true);
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
@@ -598,8 +598,8 @@ void testDifferenceFingerprintsReaction() {
     reaction1 = "C1CCCCC1>>C1CCOCC1";
     reaction2 = "C1CCCCC1>>C1CCNCC1";
 
-    rxn1 = RxnSmartsToChemicalReaction(reaction1, 0, true);
-    rxn2 = RxnSmartsToChemicalReaction(reaction2, 0, true);
+    rxn1 = RxnSmartsToChemicalReaction(reaction1, nullptr, true);
+    rxn2 = RxnSmartsToChemicalReaction(reaction2, nullptr, true);
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
@@ -622,8 +622,8 @@ void testDifferenceFingerprintsReaction() {
 
     reaction1 = "c1ccccc1>>c1ccncn1";
     reaction2 = "c1ccccc1>>c1ccncc1";
-    rxn1 = RxnSmartsToChemicalReaction(reaction1, 0, true);
-    rxn2 = RxnSmartsToChemicalReaction(reaction2, 0, true);
+    rxn1 = RxnSmartsToChemicalReaction(reaction1, nullptr, true);
+    rxn2 = RxnSmartsToChemicalReaction(reaction2, nullptr, true);
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
@@ -646,8 +646,8 @@ void testDifferenceFingerprintsReaction() {
 
     reaction1 = "c1ccccc1>>c1ccncn1";
     reaction2 = "c1ccccc1>>c1ccncc1";
-    rxn1 = RxnSmartsToChemicalReaction(reaction1, 0, true);
-    rxn2 = RxnSmartsToChemicalReaction(reaction2, 0, true);
+    rxn1 = RxnSmartsToChemicalReaction(reaction1, nullptr, true);
+    rxn2 = RxnSmartsToChemicalReaction(reaction2, nullptr, true);
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 
@@ -673,8 +673,8 @@ void testDifferenceFingerprintsReaction() {
 
     reaction1 = "c1ccccc1>>c1ccncn1";
     reaction2 = "c1ccccc1>>c1ccncc1";
-    rxn1 = RxnSmartsToChemicalReaction(reaction1, 0, true);
-    rxn2 = RxnSmartsToChemicalReaction(reaction2, 0, true);
+    rxn1 = RxnSmartsToChemicalReaction(reaction1, nullptr, true);
+    rxn2 = RxnSmartsToChemicalReaction(reaction2, nullptr, true);
     TEST_ASSERT(rxn1);
     TEST_ASSERT(rxn2);
 

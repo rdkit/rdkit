@@ -23,7 +23,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 PyObject *computeCanonTrans(const Conformer &conf,
-                            const RDGeom::Point3D *center = 0,
+                            const RDGeom::Point3D *center = nullptr,
                             bool normalizeCovar = false, bool ignoreHs = true) {
   RDGeom::Transform3D *trans;
   trans = MolTransforms::computeCanonicalTransform(conf, center, normalizeCovar,
@@ -81,7 +81,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - normalizeCovar : optionally normalize the covariance matrix by the number of atoms\n";
   python::def(
       "ComputeCanonicalTransform", RDKit::computeCanonTrans,
-      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)(0),
+      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)nullptr,
        python::arg("normalizeCovar") = false, python::arg("ignoreHs") = true),
       docString.c_str());
 
@@ -99,7 +99,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - normalizeCovar : Optionally normalize the covariance matrix by the number of atoms\n";
   python::def(
       "CanonicalizeConformer", MolTransforms::canonicalizeConformer,
-      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)(0),
+      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)nullptr,
        python::arg("normalizeCovar") = false, python::arg("ignoreHs") = true),
       docString.c_str());
 

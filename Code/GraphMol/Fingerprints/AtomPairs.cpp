@@ -133,7 +133,7 @@ SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
   PRECONDITION(minLength <= maxLength, "bad lengths provided");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
-  SparseIntVect<boost::int32_t> *res = new SparseIntVect<boost::int32_t>(
+  auto *res = new SparseIntVect<boost::int32_t>(
       1 << (numAtomPairFingerprintBits + 2 * (includeChirality ? 2 : 0)));
   const double *dm;
   if (use2D) {
@@ -200,7 +200,7 @@ SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
   PRECONDITION(minLength <= maxLength, "bad lengths provided");
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
-  SparseIntVect<boost::int32_t> *res = new SparseIntVect<boost::int32_t>(nBits);
+  auto *res = new SparseIntVect<boost::int32_t>(nBits);
   const double *dm;
   if (use2D) {
     dm = MolOps::getDistanceMat(mol);
@@ -287,7 +287,7 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
   SparseIntVect<boost::int32_t> *sres = getHashedAtomPairFingerprint(
       mol, blockLength, minLength, maxLength, fromAtoms, ignoreAtoms,
       atomInvariants, includeChirality, use2D, confId);
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto *res = new ExplicitBitVect(nBits);
   if (nBitsPerEntry != 4) {
     BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
                    sres->getNonzeroElements()) {
@@ -363,8 +363,8 @@ size_t getTopologicalTorsionHash(
       gboost::hash_combine(res, pathCodes[pathCodes.size() - i - 1]);
     }
   } else {
-    for (unsigned int i = 0; i < pathCodes.size(); ++i) {
-      gboost::hash_combine(res, pathCodes[i]);
+    for (unsigned int pathCode : pathCodes) {
+      gboost::hash_combine(res, pathCode);
     }
   }
   return res;
@@ -385,7 +385,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
   //
   //  mmm, bug compatible.
   sz -= 1;
-  SparseIntVect<boost::int64_t> *res = new SparseIntVect<boost::int64_t>(sz);
+  auto *res = new SparseIntVect<boost::int64_t>(sz);
 
   std::vector<boost::uint32_t> atomCodes;
   atomCodes.reserve(mol.getNumAtoms());
@@ -401,12 +401,12 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     }
   }
 
-  boost::dynamic_bitset<> *fromAtomsBV = 0;
+  boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
     BOOST_FOREACH (boost::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
   }
-  boost::dynamic_bitset<> *ignoreAtomsBV = 0;
+  boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
     BOOST_FOREACH (boost::uint32_t fAt, *ignoreAtoms) {
@@ -439,7 +439,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     }
     if (keepIt) {
       pAtoms.reset();
-      for (PATH_TYPE::const_iterator pIt = path.begin(); pIt < path.end();
+      for (auto pIt = path.begin(); pIt < path.end();
            ++pIt) {
         // look for a cycle that doesn't start at the first atom
         // we can't effectively canonicalize these at the moment
@@ -492,12 +492,12 @@ void TorsionFpCalc(T *res, const ROMol &mol, unsigned int nBits,
     }
   }
 
-  boost::dynamic_bitset<> *fromAtomsBV = 0;
+  boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
     BOOST_FOREACH (boost::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
   }
-  boost::dynamic_bitset<> *ignoreAtomsBV = 0;
+  boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
     BOOST_FOREACH (boost::uint32_t fAt, *ignoreAtoms) {
@@ -552,7 +552,7 @@ SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
     const std::vector<boost::uint32_t> *atomInvariants, bool includeChirality) {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
-  SparseIntVect<boost::int64_t> *res = new SparseIntVect<boost::int64_t>(nBits);
+  auto *res = new SparseIntVect<boost::int64_t>(nBits);
   TorsionFpCalc(res, mol, nBits, targetSize, fromAtoms, ignoreAtoms,
                 atomInvariants, includeChirality);
   return res;
@@ -568,11 +568,11 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
                "bad atomInvariants size");
   static int bounds[4] = {1, 2, 4, 8};
   unsigned int blockLength = nBits / nBitsPerEntry;
-  SparseIntVect<boost::int64_t> *sres =
+  auto *sres =
       new SparseIntVect<boost::int64_t>(blockLength);
   TorsionFpCalc(sres, mol, blockLength, targetSize, fromAtoms, ignoreAtoms,
                 atomInvariants, includeChirality);
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto *res = new ExplicitBitVect(nBits);
 
   if (nBitsPerEntry != 4) {
     BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,

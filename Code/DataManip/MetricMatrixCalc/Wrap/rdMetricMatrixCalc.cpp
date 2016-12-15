@@ -93,7 +93,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
       // here is the 2D array trick this so that when the distance calaculator
       // asks for desc2D[i] we basically get the ith row as double*
-      double **desc2D = new double *[nrows];
+      auto **desc2D = new double *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;
@@ -111,7 +111,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num ==
              NPY_FLOAT) {
       float *desc = (float *)PyArray_DATA(copy);
-      float **desc2D = new float *[nrows];
+      auto **desc2D = new float *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;
@@ -126,7 +126,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
     // if we have an interger array
     else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
       int *desc = (int *)PyArray_DATA(copy);
-      int **desc2D = new int *[nrows];
+      auto **desc2D = new int *[nrows];
       for (i = 0; i < nrows; i++) {
         desc2D[i] = desc;
         desc += ncols;

@@ -1273,7 +1273,7 @@ void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
   INT_EATOM_MAP_I efi, efj;
   RDGeom::Point2D pti, ptj;
 
-  INT_EATOM_MAP_I tempi = d_eatoms.begin();
+  auto tempi = d_eatoms.begin();
   tempi++;
   double *dmatPtr = dmat.get();
   for (efi = tempi; efi != d_eatoms.end(); efi++) {
@@ -1298,11 +1298,11 @@ double EmbeddedFrag::mimicDistMatAndDensityCostFunc(
   if (dmat) {
     ddata = dmat->get();
   } else {
-    ddata = 0;
+    ddata = nullptr;
   }
   unsigned int na = dp_mol->getNumAtoms();
   unsigned int dsize = na * (na - 1) / 2;
-  double *ddata2D = new double[dsize];
+  auto *ddata2D = new double[dsize];
   DOUBLE_SMART_PTR dmat2D(ddata2D);
   this->computeDistMat(dmat2D);
   double res1 = 0.0;
@@ -1687,11 +1687,11 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
     endSideFlip = false;
   }
 
-  for (INT_EATOM_MAP_I efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
+  for (auto & d_eatom : d_eatoms) {
     RDKit::INT_VECT_CI fii = std::find(endSideAids.begin(), endSideAids.end(),
-                                       static_cast<int>(efi->first));
+                                       static_cast<int>(d_eatom.first));
     if (endSideFlip ^ (fii == endSideAids.end())) {
-      efi->second.Reflect(begLoc, endLoc);
+      d_eatom.second.Reflect(begLoc, endLoc);
     }
   }
 }

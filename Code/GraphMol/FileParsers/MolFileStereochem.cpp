@@ -528,7 +528,7 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   }
 
   int bid = bond->getIdx();
-  INT_MAP_INT_CI wbi = wedgeBonds.find(bid);
+  auto wbi = wedgeBonds.find(bid);
   if (wbi == wedgeBonds.end()) {
     return res;
   }
@@ -573,8 +573,8 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
       RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
       double angle = refVect.signedAngleTo(tmpVect);
       if (angle < 0.0) angle += 2. * M_PI;
-      INT_LIST::iterator nbrIt = neighborBondIndices.begin();
-      DOUBLE_LIST::iterator angleIt = neighborBondAngles.begin();
+      auto nbrIt = neighborBondIndices.begin();
+      auto angleIt = neighborBondAngles.begin();
       // find the location of this neighbor in our angle-sorted list
       // of neighbors:
       while (angleIt != neighborBondAngles.end() && angle > (*angleIt)) {
@@ -605,7 +605,7 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   // swap
   if (neighborBondAngles.size() == 3) {
     // three coordinated
-    DOUBLE_LIST::iterator angleIt = neighborBondAngles.begin();
+    auto angleIt = neighborBondAngles.begin();
     ++angleIt;  // the first is the 0 (or reference bond - we will ignoire that
     double angle1 = (*angleIt);
     ++angleIt;
@@ -759,7 +759,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   ROMol::OEDGE_ITER beg, end;
   std::vector<Bond *> followupBonds;
 
-  Bond *bond1 = 0, *obond1 = 0;
+  Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
@@ -798,7 +798,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     return;
   }
 
-  Bond *bond2 = 0, *obond2 = 0;
+  Bond *bond2 = nullptr, *obond2 = nullptr;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getEndAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg].get();
@@ -1109,8 +1109,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
 
   // order the double bonds based on the singleBondCounts of their neighbors:
   std::vector<std::pair<unsigned int, Bond *> > orderedBondsInPlay;
-  for (unsigned int i = 0; i < bondsInPlay.size(); ++i) {
-    Bond *dblBond = bondsInPlay[i];
+  for (auto dblBond : bondsInPlay) {
     unsigned int countHere =
         std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
                         dblBondNbrs[dblBond->getIdx()].end(), 0);

@@ -264,7 +264,7 @@ class BondLabelFunctor {
 void mergeMatchVect(std::vector<MatchVectType> &matches,
                     const std::vector<MatchVectType> &matchesTmp,
                     const ResSubstructMatchHelperArgs_ &args) {
-  for (std::vector<MatchVectType>::const_iterator it = matchesTmp.begin();
+  for (auto it = matchesTmp.begin();
        (matches.size() < args.maxMatches) && (it != matchesTmp.end()); ++it) {
     if ((std::find(matches.begin(), matches.end(), *it) == matches.end()) &&
         (!args.uniquify || isToBeAddedToVector(matches, *it)))
@@ -415,10 +415,9 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
          iter1 != pms.end(); ++iter1) {
       MatchVectType matchVect;
       matchVect.resize(nQueryAtoms);
-      for (detail::ssPairType::const_iterator iter2 = iter1->begin();
-           iter2 != iter1->end(); ++iter2) {
-        matchVect[iter2->first] =
-            std::pair<int, int>(iter2->first, iter2->second);
+      for (const auto & iter2 : *iter1) {
+        matchVect[iter2.first] =
+            std::pair<int, int>(iter2.first, iter2.second);
       }
       matches.push_back(matchVect);
     }
@@ -530,10 +529,9 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
         int rootIdx;
         query.getProp(common_properties::_queryRootAtom, rootIdx);
         bool found = false;
-        for (detail::ssPairType::const_iterator pairIter = iter1->begin();
-             pairIter != iter1->end(); ++pairIter) {
-          if (pairIter->first == static_cast<unsigned int>(rootIdx)) {
-            matches.push_back(pairIter->second);
+        for (const auto & pairIter : *iter1) {
+          if (pairIter.first == static_cast<unsigned int>(rootIdx)) {
+            matches.push_back(pairIter.second);
             found = true;
             break;
           }
@@ -572,7 +570,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       matchDone = true;
       const RecursiveStructureQuery *orsq =
           (const RecursiveStructureQuery *)subqueryMap[rsq->getSerialNumber()];
-      for (RecursiveStructureQuery::CONTAINER_TYPE::const_iterator setIter =
+      for (auto setIter =
                orsq->beginSet();
            setIter != orsq->endSet(); ++setIter) {
         rsq->insert(*setIter);
@@ -590,9 +588,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
             RecursiveMatcher(mol, *queryMol, matchStarts, useChirality,
                              subqueryMap, useQueryQueryMatches, locked);
         if (res) {
-          for (std::vector<int>::iterator i = matchStarts.begin();
-               i != matchStarts.end(); i++) {
-            rsq->insert(*i);
+          for (int & matchStart : matchStarts) {
+            rsq->insert(matchStart);
           }
         }
       }
@@ -634,7 +631,7 @@ bool isToBeAddedToVector(std::vector<MatchVectType> &matches,
   bool isToBeAdded = true;
   MatchVectType mCopy = m;
   std::sort(mCopy.begin(), mCopy.end(), matchCompare);
-  for (std::vector<MatchVectType>::iterator it = matches.end();
+  for (auto it = matches.end();
        isToBeAdded && it != matches.begin();) {
     --it;
     isToBeAdded = (it->size() != mCopy.size());

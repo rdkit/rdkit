@@ -82,8 +82,8 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   for (std::vector<MatchVectType>::const_iterator i = v.begin(); i != v.end();
        ++i) {
     boost::dynamic_bitset<> val(nAtoms);
-    for (MatchVectType::const_iterator ci = i->begin(); ci != i->end(); ++ci) {
-      val.set(ci->second);
+    for (const auto & ci : *i) {
+      val.set(ci.second);
     }
     if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
       // it's something new

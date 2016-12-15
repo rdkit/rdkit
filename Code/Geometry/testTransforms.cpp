@@ -344,7 +344,7 @@ void testFromQuaternion() {
 }
 
 int main() {
-  srand(time(NULL));
+  srand(time(nullptr));
 
   std::cout << "****************************************\n";
   std::cout << "testPointND\n";

@@ -98,7 +98,7 @@ char *Base64Decode(const char *inText, unsigned int *size) {
   transTable[static_cast<int>('/')] = 63;
 
   int outLen = 3 * inLen / 4;
-  char *res = new char[outLen];
+  auto *res = new char[outLen];
   res[outLen - 1] = 0;
   int pos = 0;
   i = 0;

@@ -24,7 +24,7 @@
 using namespace RDKit;
 
 void testDeleteSubstruct() {
-  ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0, *matcher2 = 0, *matcher3 = 0;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr, *matcher2 = nullptr, *matcher3 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -130,7 +130,7 @@ void testDeleteSubstruct() {
 }
 
 void testReplaceSubstructs() {
-  ROMol *mol1 = 0, *matcher1 = 0, *frag = 0;
+  ROMol *mol1 = nullptr, *matcher1 = nullptr, *frag = nullptr;
   std::string smi, sma;
   std::vector<ROMOL_SPTR> vect;
 
@@ -292,7 +292,7 @@ void testReplaceSubstructs2() {
 }
 
 void testReplaceSidechains() {
-  ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -376,7 +376,7 @@ void testReplaceSidechains() {
 }
 
 void testReplaceCore() {
-  ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -846,7 +846,7 @@ void testReplaceCoreLabels() {
 }
 
 void testReplaceCoreCrash() {
-  ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -871,7 +871,7 @@ void testReplaceCoreCrash() {
 }
 
 void testReplaceCorePositions() {
-  ROMol *mol1 = 0, *mol2 = 0, *matcher1 = 0;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -1121,7 +1121,7 @@ void testReplaceCoreRequireDummies() {
 }
 
 void testIssue3453144() {
-  ROMol *mol1 = 0, *matcher1 = 0, *replacement = 0;
+  ROMol *mol1 = nullptr, *matcher1 = nullptr, *replacement = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -1479,7 +1479,7 @@ void testFragmentOnBonds() {
     std::vector<unsigned int> bindices(
         indices, indices + (sizeof(indices) / sizeof(indices[0])));
     std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
-    ROMol *nmol = MolFragmenter::fragmentOnBonds(*mol, bindices, false, 0, 0,
+    ROMol *nmol = MolFragmenter::fragmentOnBonds(*mol, bindices, false, nullptr, nullptr,
                                                  &cutsPerAtom);
     TEST_ASSERT(nmol);
     TEST_ASSERT(nmol->getNumAtoms() == 5);
@@ -1778,8 +1778,8 @@ void testFragmentOnSomeBonds() {
         indices, indices + (sizeof(indices) / sizeof(indices[0])));
     std::vector<ROMOL_SPTR> frags;
     std::vector<std::vector<unsigned int> > cpa;
-    MolFragmenter::fragmentOnSomeBonds(*mol, bindices, frags, 2, false, NULL,
-                                       NULL, &cpa);
+    MolFragmenter::fragmentOnSomeBonds(*mol, bindices, frags, 2, false, nullptr,
+                                       nullptr, &cpa);
     TEST_ASSERT(frags.size() == 3);
     TEST_ASSERT(cpa.size() == 3);
     TEST_ASSERT(cpa[0].size() == mol->getNumAtoms());

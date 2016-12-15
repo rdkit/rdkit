@@ -25,7 +25,7 @@ void test1() {
   // test triangle smoothing
   unsigned int npt = 5;
   double x = sqrt(3.0);
-  BoundsMatrix *mmat = new BoundsMatrix(npt);
+  auto *mmat = new BoundsMatrix(npt);
 
   mmat->setUpperBound(0, 1, 1.0);
   mmat->setLowerBound(0, 1, 1.0);
@@ -102,7 +102,7 @@ void testIssue216() {
   std::cout << dmat;
   RDGeom::PointPtrVect pos;
   for (int i = 0; i < 4; i++) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D();
+    auto *pt = new RDGeom::Point3D();
     pos.push_back(pt);
   }
 

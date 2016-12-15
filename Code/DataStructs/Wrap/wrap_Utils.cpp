@@ -15,7 +15,7 @@
 namespace python = boost::python;
 
 ExplicitBitVect *createFromBitString(const std::string &bits) {
-  ExplicitBitVect *res = new ExplicitBitVect(bits.length());
+  auto *res = new ExplicitBitVect(bits.length());
   FromBitString(*res, bits);
   return res;
 }
@@ -25,13 +25,13 @@ ExplicitBitVect *createFromFPSText(const std::string &fps) {
     throw ValueErrorException(
         "input string must have an even number of characters");
   }
-  ExplicitBitVect *res = new ExplicitBitVect(fps.length() * 4);
+  auto *res = new ExplicitBitVect(fps.length() * 4);
   UpdateBitVectFromFPSText(*res, fps);
   return res;
 }
 
 ExplicitBitVect *createFromBinaryText(const std::string &fps) {
-  ExplicitBitVect *res = new ExplicitBitVect(fps.length() * 8);
+  auto *res = new ExplicitBitVect(fps.length() * 8);
   UpdateBitVectFromBinaryText(*res, fps);
   return res;
 }

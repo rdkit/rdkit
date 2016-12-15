@@ -48,7 +48,7 @@ bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
     throw_value_error("Only double arrays are currently supported");
 
   unsigned int dSize = nrows * nrows;
-  double *cData = new double[dSize];
+  auto *cData = new double[dSize];
   double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
@@ -80,7 +80,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
     throw_value_error("Only double arrays are currently supported");
 
   unsigned int dSize = nrows * nrows;
-  double *cData = new double[dSize];
+  auto *cData = new double[dSize];
   double *inData = reinterpret_cast<double *>(PyArray_DATA(boundsMat));
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          dSize * sizeof(double));
@@ -88,7 +88,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
   DistGeom::BoundsMatrix bm(nrows, sdata);
 
-  RDGeom::Point3D *positions = new RDGeom::Point3D[nrows];
+  auto *positions = new RDGeom::Point3D[nrows];
   std::vector<RDGeom::Point *> posPtrs;
   for (unsigned int i = 0; i < nrows; i++) {
     posPtrs.push_back(&positions[i]);

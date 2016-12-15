@@ -39,7 +39,7 @@ void GetPointsFromPythonSequence(python::object &points,
     data = reinterpret_cast<double *>(PyArray_DATA(ptsMat));
 
     for (unsigned int i = 0; i < nrows; i++) {
-      RDGeom::Point3D *rpt =
+      auto *rpt =
           new RDGeom::Point3D(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
       pts.push_back(rpt);
     }
@@ -52,14 +52,14 @@ void GetPointsFromPythonSequence(python::object &points,
         PySequenceHolder<double> row(points[i]);
         if (row.size() != 3)
           throw_value_error("Wrong number of entries in the list of lists");
-        RDGeom::Point3D *rpt = new RDGeom::Point3D(row[0], row[1], row[2]);
+        auto *rpt = new RDGeom::Point3D(row[0], row[1], row[2]);
         pts.push_back(rpt);
       }
     } else {
       for (unsigned int i = 0; i < nrows; i++) {
         python::extract<RDGeom::Point3D> pt(points[i]);
         if (pt.check()) {
-          RDGeom::Point3D *rpt = new RDGeom::Point3D(pt);
+          auto *rpt = new RDGeom::Point3D(pt);
           pts.push_back(rpt);
         } else {
           throw_value_error("non-Point3D found in sequence of points");
@@ -95,7 +95,7 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
 
   PyObject *weightsObj = weights.ptr();
   RDNumeric::DoubleVector *wtsVec;
-  wtsVec = 0;
+  wtsVec = nullptr;
   double *data;
   if (PyArray_Check(weightsObj)) {
     PyArrayObject *wtsMat = reinterpret_cast<PyArrayObject *>(weightsObj);

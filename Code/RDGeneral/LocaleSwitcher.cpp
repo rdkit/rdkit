@@ -117,13 +117,13 @@ class LocaleSwitcherImpl {
   locale_t loc;     // current "C" locale
   locale_t old_loc; // locale we came frome
 
-  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, NULL)) {
+  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, nullptr)) {
     // set locale for this thread
 
     if (!recurseLocale(CurrentState) && old_locale != "C") {
       recurseLocale(SwitchLocale);
-      old_loc = uselocale(0);
-      loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+      old_loc = uselocale(nullptr);
+      loc = newlocale(LC_ALL_MASK, "C", (locale_t)nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
     } else

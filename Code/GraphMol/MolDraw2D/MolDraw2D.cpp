@@ -63,9 +63,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    for (vector<int>::const_iterator ai = highlight_atoms->begin();
+    for (auto ai = highlight_atoms->begin();
          ai != highlight_atoms->end(); ++ai) {
-      for (vector<int>::const_iterator aj = ai + 1;
+      for (auto aj = ai + 1;
            aj != highlight_atoms->end(); ++aj) {
         const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
         if (bnd) highlight_bonds.push_back(bnd->getIdx());
@@ -73,7 +73,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     }
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, NULL, highlight_radii, confId);
+               highlight_atom_map, nullptr, highlight_radii, confId);
 }
 
 void MolDraw2D::doContinuousHighlighting(
@@ -224,8 +224,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              highlight_radii);
     // at this point we shouldn't be doing any more higlighting, so blow out
     // those variables:
-    highlight_bonds = NULL;
-    highlight_atoms = NULL;
+    highlight_bonds = nullptr;
+    highlight_atoms = nullptr;
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
@@ -395,11 +395,11 @@ void MolDraw2D::drawMolecules(
     int col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
-                 highlight_atoms ? &(*highlight_atoms)[i] : NULL,
-                 highlight_bonds ? &(*highlight_bonds)[i] : NULL,
-                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : NULL,
-                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : NULL,
-                 highlight_radii ? &(*highlight_radii)[i] : NULL,
+                 highlight_atoms ? &(*highlight_atoms)[i] : nullptr,
+                 highlight_bonds ? &(*highlight_bonds)[i] : nullptr,
+                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr,
+                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr,
+                 highlight_radii ? &(*highlight_radii)[i] : nullptr,
                  confIds ? (*confIds)[i] : -1);
   }
 };
@@ -534,8 +534,7 @@ void MolDraw2D::calculateScale(int width, int height) {
   x_min_ = y_min_ = numeric_limits<double>::max();
   double x_max(-numeric_limits<double>::max()),
       y_max(-numeric_limits<double>::max());
-  for (int i = 0, is = at_cds_[activeMolIdx_].size(); i < is; ++i) {
-    const Point2D &pt = at_cds_[activeMolIdx_][i];
+  for (auto & pt : at_cds_[activeMolIdx_]) {
     x_min_ = std::min(pt.x, x_min_);
     y_min_ = std::min(pt.y, y_min_);
     x_max = std::max(pt.x, x_max);
@@ -742,7 +741,7 @@ DrawColour MolDraw2D::getColour(
     }
     // over-ride with explicit colour from highlight_map if there is one
     if (highlight_map) {
-      map<int, DrawColour>::const_iterator p = highlight_map->find(atom_idx);
+      auto p = highlight_map->find(atom_idx);
       if (p != highlight_map->end()) {
         retval = p->second;
       }
@@ -1290,7 +1289,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       std::string h = "H";
       if (num_h > 1) {
         // put the number as a subscript
-        h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
+        h += string("<sub>") + std::to_string(num_h) + string("</sub>");
       }
       if (orient == MolDraw2D::W) {
         preText.push_back(h);
@@ -1301,7 +1300,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
 
     if (0 != iso) {
       // isotope always comes before the symbol
-      preText.push_back(std::string("<sup>") + lexical_cast<string>(iso) +
+      preText.push_back(std::string("<sup>") + std::to_string(iso) +
                         std::string("</sup>"));
     }
 
@@ -1311,7 +1310,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       string sgn = ichg > 0 ? string("+") : string("-");
       ichg = abs(ichg);
       if (ichg > 1) {
-        sgn += lexical_cast<string>(ichg);
+        sgn += std::to_string(ichg);
       }
       // put the charge as a superscript
       postText.push_back(string("<sup>") + sgn + string("</sup>"));
