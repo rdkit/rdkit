@@ -25,16 +25,16 @@ before_install:
 
 # additional .debs we need:
 addons:
- apt:
-  sources:
-  - ubuntu-toolchain-r-test
-  - llvm-toolchain-precise-3.8
-  packages:
-  - build-essential
-  - openjdk-7-jdk
-  - swig
-  - libjpeg-dev
-  - clang-3.8
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.8
+    packages:
+    - build-essential
+    - openjdk-7-jdk
+    - swig
+    - libjpeg-dev
+    - clang-3.8
 
 install:
  - conda install -q numpy pillow pandas # matplotlib
