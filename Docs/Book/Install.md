@@ -42,15 +42,17 @@ Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/minicond
 following commands:
    
 	bash Miniconda3-latest-MacOSX-x86_64.sh
-	conda install numpy matplotlib
-	conda install cmake
-	conda install --channel rdkit boost
-	conda install --channel rdkit cairocffi
-	conda install pillow
-	conda install anaconda
-	conda install --channel conda-forge eigen
+    conda install numpy matplotlib
+    conda install cmake
+    conda install --channel rdkit boost
+    conda install --channel rdkit nox
+    conda install --channel rdkit cairo
+    conda install pillow
+    conda install anaconda
+    conda install --channel conda-forge eigen
+    conda install --channel conda-forge pkg-config
 
-Optionally, add the following packages to your environment. 
+Optionally, add the following packages to your environment as useful development tools. 
 
 	pip install yapf==0.11.1
 	pip install coverage==3.7.1
