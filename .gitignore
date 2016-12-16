@@ -6,7 +6,6 @@
 /.project
 /.pydevproject
 
-
 #- Binary files
 __pycache__/
 *.so
