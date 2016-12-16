@@ -171,7 +171,7 @@ def GetNextRDId(conn, table, idColName='Id', leadText=''):
 def RegisterItem(conn, table, value, columnName, data=None, id='',  # @ReservedAssignment
                  idColName='Id', leadText='RDCmpd'):
   """
-
+  >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> conn = DbConnect(tempDbName)
   >>> tblName = 'StorageTest'
   >>> conn.AddTable(tblName,'id varchar(32) not null primary key,label varchar(40),val int')
@@ -281,7 +281,7 @@ __test__ = {"roundtrip": _roundtripTests}
 def _test():  # pragma: nocover
   import doctest
   import sys
-  return doctest.testmod(sys.modules["__main__"])
+  return doctest.testmod(sys.modules["__main__"], verbose=True)
 
 
 if __name__ == '__main__':  # pragma: nocover
