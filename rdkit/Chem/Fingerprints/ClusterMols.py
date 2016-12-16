@@ -48,8 +48,8 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
   nPts = len(data)
   res = numpy.zeros((nPts * (nPts - 1) / 2), numpy.float)
   nSoFar = 0
-  for col in xrange(1, nPts):
-    for row in xrange(col):
+  for col in range(1, nPts):
+    for row in range(col):
       fp1 = data[col][1]
       fp2 = data[row][1]
       if fp1.GetNumBits() > fp2.GetNumBits():

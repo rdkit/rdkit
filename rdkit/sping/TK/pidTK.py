@@ -135,7 +135,7 @@ class FontManager:
     if font.face:
       # check if the user specified a generic face type
       # like serif or monospaced. check is case-insenstive.
-      f = string.lower(font.face)
+      f = font.face.lower()
       if f in self.__alt_faces:
         family = self.__alt_faces[f]
       else:
