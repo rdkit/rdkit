@@ -22,13 +22,13 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
 
     **Arguments**
 
-      - data: a list of items with the input data 
+      - data: a list of items with the input data
         (see discussion of _isDistData_ argument for the exception)
 
       - nPts: the number of points to be used
 
       - distThresh: elements within this range of each other are considered
-        to be neighbors            
+        to be neighbors
 
       - isDistData: set this toggle when the data passed in is a
           distance matrix.  The distance matrix should be stored
@@ -43,17 +43,17 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
            Receives 2 points as arguments, should return a float
 
       - reodering: if this toggle is set, the number of neighbors is updated
-           for the unassigned molecules after a new cluster is created such 
+           for the unassigned molecules after a new cluster is created such
            that always the molecule with the largest number of unassigned
            neighbors is selected as the next cluster center.
-          
+
     **Returns**
 
       - a tuple of tuples containing information about the clusters:
          ( (cluster1_elem1, cluster1_elem2, ...),
            (cluster2_elem1, cluster2_elem2, ...),
            ...
-         )  
+         )
          The first element for each cluster is its centroid.
 
   """
@@ -74,7 +74,6 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
       if dij <= distThresh:
         nbrLists[i].append(j)
         nbrLists[j].append(i)
-  #print nbrLists
   # sort by the number of neighbors:
   tLists = [(len(y), x) for x, y in enumerate(nbrLists)]
   tLists.sort(reverse=True)
@@ -82,7 +81,7 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
   res = []
   seen = [0] * nPts
   while tLists:
-    nNbrs, idx = tLists.pop(0)
+    _, idx = tLists.pop(0)
     if seen[idx]:
       continue
     tRes = [idx]
@@ -94,7 +93,7 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
     # remove all members of the new cluster from the list of
     # neighbors and reorder the tLists
     if reordering:
-      # get the list of affected molecules, i.e. all molecules 
+      # get the list of affected molecules, i.e. all molecules
       # which have at least one of the members of the new cluster
       # as a neighbor
       nbrNbr = [nbrLists[t] for t in tRes]

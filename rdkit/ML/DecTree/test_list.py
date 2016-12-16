@@ -1,5 +1,5 @@
 tests = [
-  ("python", "TreeUtils.py", {}),
+  ("python", "UnitTestTreeUtils.py", {}),
   ("python", "UnitTestTree.py", {}),
   ("python", "UnitTestXVal.py", {}),
   ("python", "UnitTestID3.py", {}),

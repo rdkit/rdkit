@@ -1,11 +1,9 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 #  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
-""" 
+"""
 
 """
 from __future__ import print_function
@@ -14,7 +12,7 @@ import random
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
-from rdkit.six.moves import range
+from rdkit.six.moves import range  # @UnresolvedImport
 
 
 def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, attrs, exIndices=None,
@@ -41,14 +39,14 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
   for var in attrs:
     nBounds = nBoundsPerVar[var]
     if nBounds > 0:
-      #vTable = map(lambda x,z=var:x[z],examples)
+      # vTable = map(lambda x,z=var:x[z],examples)
       try:
         vTable = [examples[x][var] for x in exIndices]
-      except IndexError:
+      except IndexError:  # pragma: nocover
         print('index error retrieving variable: %d' % var)
         raise
       qBounds, gainHere = Quantize.FindVarMultQuantBounds(vTable, nBounds, resCodes, nPossibleRes)
-      #print('\tvar:',var,qBounds,gainHere)
+      # print('\tvar:',var,qBounds,gainHere)
     elif nBounds == 0:
       vTable = ID3.GenVarTable((examples[x] for x in exIndices), nPossibleVals, [var])[0]
       gainHere = entropy.InfoGain(vTable)
@@ -67,7 +65,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
   if best == -1:
     print('best unaltered')
     print('\tattrs:', attrs)
-    print('\tnBounds:', take(nBoundsPerVar, attrs))
+    print('\tnBounds:', numpy.take(nBoundsPerVar, attrs))
     print('\texamples:')
     for example in (examples[x] for x in exIndices):
       print('\t\t', example)
@@ -88,9 +86,9 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
 
 def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=0, maxDepth=-1,
                    exIndices=None, **kwargs):
-  """ 
+  """
     **Arguments**
-    
+
       - examples: a list of lists (nInstances x nVariables+1) of variable
         values + instance values
 
@@ -108,7 +106,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
       - maxDepth: (optional) the maximum depth to which the tree
                    will be grown
     **Returns**
-    
+
      a QuantTree.QuantTreeNode with the decision tree
 
     **NOTE:** This code cannot bootstrap (start from nothing...)
@@ -147,8 +145,8 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
     tree.SetTerminal(1)
   else:
     # find the variable which gives us the largest information gain
-    best, bestGain, bestBounds = FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes,
-                                          nPossibleVals, attrs, exIndices=exIndices, **kwargs)
+    best, _, bestBounds = FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals,
+                                   attrs, exIndices=exIndices, **kwargs)
     # remove that variable from the lists of possible variables
     nextAttrs = attrs[:]
     if not kwargs.get('recycleVars', 0):
@@ -218,7 +216,7 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
      choose the first variable in the tree (the standard greedy
      approach).  Otherwise, _initialVar_ will be used as the first
      split.
-     
+
   """
   attrs = list(attrs)
   for i in range(len(nBoundsPerVar)):
@@ -315,9 +313,10 @@ def TestTree():
   t1.Print()
 
 
-def TestQuantTree():
-  """ testing code for named trees
+def TestQuantTree():  # pragma: nocover
+  """ Testing code for named trees
 
+  The created pkl file is required by the unit test code.
   """
   examples1 = [['p1', 0, 1, 0.1, 0], ['p2', 0, 0, 0.1, 1], ['p3', 0, 0, 1.1, 2],
                ['p4', 0, 1, 1.1, 2], ['p5', 1, 0, 0.1, 2], ['p6', 1, 0, 1.1, 2],
@@ -337,9 +336,10 @@ def TestQuantTree():
   t1.Print()
 
 
-def TestQuantTree2():
+def TestQuantTree2():  # pragma: nocover
   """ testing code for named trees
 
+  The created pkl file is required by the unit test code.
   """
   examples1 = [['p1', 0.1, 1, 0.1, 0], ['p2', 0.1, 0, 0.1, 1], ['p3', 0.1, 0, 1.1, 2],
                ['p4', 0.1, 1, 1.1, 2], ['p5', 1.1, 0, 0.1, 2], ['p6', 1.1, 0, 1.1, 2],
@@ -356,7 +356,7 @@ def TestQuantTree2():
     print(example, t1.ClassifyExample(example))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: nocover
   TestTree()
   TestQuantTree()
-  #TestQuantTree2()
+  # TestQuantTree2()

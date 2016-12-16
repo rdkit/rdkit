@@ -27,13 +27,17 @@ Usage:  AnalyzeComposite [optional args] <models>
       -v: be verbose whilst screening
 """
 from __future__ import print_function
-import numpy
+
 import sys
-from rdkit.six.moves import cPickle
-from rdkit.ML.DecTree import TreeUtils, Tree
-from rdkit.ML.Data import Stats
+
+import numpy
+
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
+from rdkit.ML.Data import Stats
+from rdkit.ML.DecTree import TreeUtils, Tree
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+
 
 __VERSION_STRING = "2.2.0"
 
@@ -42,7 +46,7 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
   composite = composites[0]
   nComposites = len(composites)
   ns = composite.GetDescriptorNames()
-  #nDesc = len(ns)-2
+  # nDesc = len(ns)-2
   if len(ns) > 2:
     globalRes = {}
 
@@ -96,7 +100,9 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
 
 
 def ErrorStats(conn, where, enrich=1):
-  fields = 'overall_error,holdout_error,overall_result_matrix,holdout_result_matrix,overall_correct_conf,overall_incorrect_conf,holdout_correct_conf,holdout_incorrect_conf'
+  fields = ('overall_error,holdout_error,overall_result_matrix,' +
+            'holdout_result_matrix,overall_correct_conf,overall_incorrect_conf,' +
+            'holdout_correct_conf,holdout_incorrect_conf')
   try:
     data = conn.GetData(fields=fields, where=where)
   except Exception:
@@ -154,7 +160,7 @@ def ErrorStats(conn, where, enrich=1):
   oSort = numpy.argsort(overall)
   oMin = overall[oSort[0]]
   overall -= avgOverall
-  devOverall = sqrt(sum(overall**2) / (nPts - 1))
+  devOverall = numpy.sqrt(sum(overall**2) / (nPts - 1))
   res = {}
   res['oAvg'] = 100 * avgOverall
   res['oDev'] = 100 * devOverall
@@ -177,7 +183,7 @@ def ErrorStats(conn, where, enrich=1):
     hSort = numpy.argsort(holdout)
     hMin = holdout[hSort[0]]
     holdout -= avgHoldout
-    devHoldout = sqrt(sum(holdout**2) / (nPts - 1))
+    devHoldout = numpy.sqrt(sum(holdout**2) / (nPts - 1))
     res['hAvg'] = 100 * avgHoldout
     res['hDev'] = 100 * devHoldout
     res['hCorrectConf'] = 100 * hCorConf
@@ -209,7 +215,7 @@ def ShowStats(statD, enrich=1):
   print()
   print('# Results matrices:')
   print('\tOverall:')
-  tmp = transpose(statD['oResultMat'])
+  tmp = numpy.transpose(statD['oResultMat'])
   colCounts = sum(tmp)
   rowCounts = sum(tmp, 1)
   for i in range(len(tmp)):
@@ -235,7 +241,7 @@ def ShowStats(statD, enrich=1):
 
   if 'hResultMat' in statD:
     print('\tHoldout:')
-    tmp = transpose(statD['hResultMat'])
+    tmp = numpy.transpose(statD['hResultMat'])
     colCounts = sum(tmp)
     rowCounts = sum(tmp, 1)
     for i in range(len(tmp)):

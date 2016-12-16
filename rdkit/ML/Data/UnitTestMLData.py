@@ -4,17 +4,17 @@
 """ unit testing code for MLData sets
 
 """
+import contextlib
+import random
 import unittest
-from rdkit.six.moves import cPickle
-from rdkit.ML.Data import MLData, DataUtils
+
 from rdkit import RDConfig
+from rdkit.ML.Data import MLData, DataUtils
+from rdkit.six import StringIO
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class TestCase(unittest.TestCase):
-
-  def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
-    pass
 
   def setUpQuantLoad(self):
     self.d = DataUtils.BuildQuantDataSet(RDConfig.RDCodeDir + '/ML/Data/test_data/test.qdat')
@@ -23,11 +23,11 @@ class TestCase(unittest.TestCase):
     self.d = DataUtils.BuildDataSet(RDConfig.RDCodeDir + '/ML/Data/test_data/test.dat')
 
   def testQuantLoad(self):
-    " testing QuantDataSet load"
+    # " testing QuantDataSet load"
     self.d = DataUtils.BuildQuantDataSet(RDConfig.RDCodeDir + '/ML/Data/test_data/test.qdat')
 
   def testQuantProps(self):
-    " testing QuantDataSet Properties"
+    # " testing QuantDataSet Properties"
     self.setUpQuantLoad()
     assert self.d.GetNPts() == 5, 'nPts wrong'
     assert self.d.GetNVars() == 4, 'nVars wrong'
@@ -42,7 +42,7 @@ class TestCase(unittest.TestCase):
     assert self.d.GetNamedData()[2] == ['p3', 1, 0, 0, 0, 1], 'GetNamedData wrong'
 
   def testQuantPickle(self):
-    " testing QuantDataSet pickling "
+    # " testing QuantDataSet pickling "
     self.setUpQuantLoad()
     DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testquant.qdat.pkl', self.d)
     with open(RDConfig.RDCodeDir + '/ML/Data/test_data/testquant.qdat.pkl', 'rb') as f:
@@ -64,11 +64,11 @@ class TestCase(unittest.TestCase):
     assert self.d.GetNamedData()[2] == d.GetNamedData()[2], 'GetNamedData wrong'
 
   def testGeneralLoad(self):
-    " testing DataSet load"
+    # " testing DataSet load"
     self.d = DataUtils.BuildDataSet(RDConfig.RDCodeDir + '/ML/Data/test_data/test.dat')
 
   def testGeneralProps(self):
-    " testing DataSet properties"
+    # " testing DataSet properties"
     self.setUpGeneralLoad()
     assert self.d.GetNPts() == 5, 'nPts wrong'
     assert self.d.GetNVars() == 4, 'nVars wrong'
@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
     assert self.d[3] == ['p2', 'foo', 2, 1.0, 1, 2.1]
 
   def testGeneralPickle(self):
-    " testing DataSet pickling"
+    # " testing DataSet pickling"
     self.setUpGeneralLoad()
     DataUtils.WritePickledData(RDConfig.RDCodeDir + '/ML/Data/test_data/testgeneral.dat.pkl',
                                self.d)
@@ -109,6 +109,52 @@ class TestCase(unittest.TestCase):
     assert self.d.GetInputData()[3] == d.GetInputData()[3], 'GetInputData wrong'
     assert self.d.GetNamedData()[2] == d.GetNamedData()[2], 'GetNamedData wrong'
 
+  def test_WriteData(self):
+    self.setUpQuantLoad()
+    with contextlib.closing(StringIO()) as f:
+      DataUtils.WriteData(f, self.d.GetVarNames(), self.d.GetQuantBounds(), self.d.data)
+      s = f.getvalue()
+      self.assertIn('DataUtils', s)
+      self.assertIn('foo1', s)
+      self.assertIn('2 2 1 0 1', s)
 
-if __name__ == '__main__':
+  def test_CalcNPossibleUsingMap(self):
+    self.setUpQuantLoad()
+    order = list(range(5))
+    self.assertEqual(
+      DataUtils.CalcNPossibleUsingMap(self.d.data, order, self.d.GetQuantBounds()), [3, 3, 2, 2, 2])
+
+  def test_RandomizeActivities(self):
+
+    class RunDetails(object):
+      shuffled = False
+      randomized = False
+
+    random.seed(0)
+    details = RunDetails()
+    self.setUpGeneralLoad()
+    dataSet = self.d
+    orgActivities = [d[-1] for d in dataSet]
+    DataUtils.RandomizeActivities(dataSet, shuffle=True, runDetails=details)
+    self.assertNotEqual(orgActivities, [d[-1] for d in dataSet])
+    self.assertEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
+    self.assertTrue(details.shuffled)
+    self.assertFalse(details.randomized)
+
+    try:
+      details = RunDetails()
+      self.setUpGeneralLoad()
+      dataSet = self.d
+      orgActivities = [d[-1] for d in dataSet]
+      DataUtils.RandomizeActivities(dataSet, shuffle=False, runDetails=details)
+      self.assertNotEqual(orgActivities, [d[-1] for d in dataSet])
+      self.assertEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
+      self.assertFalse(details.randomized)
+      self.assertTrue(details.shuffled)
+    except NameError:
+      # This code branch is not working.
+      pass
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

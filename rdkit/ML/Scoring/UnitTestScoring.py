@@ -2,19 +2,19 @@
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -33,10 +33,10 @@
 
 """
 
-from rdkit import RDConfig
-import unittest, os
-from rdkit.ML.Scoring import Scoring
 import math
+import unittest
+
+from rdkit.ML.Scoring import Scoring
 
 
 class TestCase(unittest.TestCase):
@@ -46,13 +46,13 @@ class TestCase(unittest.TestCase):
     self.numActives = 20
     self.numDecoys = 380
     self.numMol = self.numActives + self.numDecoys
-    act = [[1] for x in range(0, self.numActives)]
-    dcy = [[0] for x in range(0, self.numDecoys)]
+    act = [[1] for _ in range(0, self.numActives)]
+    dcy = [[0] for _ in range(0, self.numDecoys)]
     self.scoreBestCase = act + dcy
     self.scoreWorstCase = dcy + act
     self.scoreEmptyList = []
-    self.scoreAllActives = [[1] for x in range(0, self.numMol)]
-    self.scoreAllDecoys = [[0] for x in range(0, self.numMol)]
+    self.scoreAllActives = [[1] for _ in range(0, self.numMol)]
+    self.scoreAllDecoys = [[0] for _ in range(0, self.numMol)]
     self.index = 0  # where the active/inactive information lies
     # test the 5% fraction
     self.fractions = [float(self.numActives) / self.numMol]
@@ -62,8 +62,8 @@ class TestCase(unittest.TestCase):
     # accuracy for float number comparison
     self.acc = 4
 
-  def test1(self):
-    """ test enrichment factor """
+  def test1_enrichment_factor(self):
+    # """ test enrichment factor """
     # best case
     enrich = Scoring.CalcEnrichment(self.scoreBestCase, self.index, self.fractions)
     self.assertAlmostEqual(enrich[0], float(self.numActives), self.acc)
@@ -92,8 +92,8 @@ class TestCase(unittest.TestCase):
     # fraction > 1
     self.assertRaises(ValueError, Scoring.CalcEnrichment, self.scoreBestCase, self.index, [1.5])
 
-  def test2(self):
-    """ test RIE """
+  def test2_RIE(self):
+    # """ test RIE """
     ratio = float(self.numActives) / self.numMol
     # best case
     RIEmax = ((1 - math.exp(-self.alpha * ratio)) / (1 - math.exp(-self.alpha))) / ratio
@@ -111,8 +111,8 @@ class TestCase(unittest.TestCase):
     rie = Scoring.CalcRIE(self.scoreAllDecoys, self.index, self.alpha)
     self.assertEqual(rie, 0.0)
 
-  def test3(self):
-    """ test area under the curve (AUC) of ROC """
+  def test3_AUC(self):
+    # """ test area under the curve (AUC) of ROC """
     # best case
     auc = Scoring.CalcAUC(self.scoreBestCase, self.index)
     self.assertAlmostEqual(auc, 1.0, self.acc)
@@ -128,8 +128,8 @@ class TestCase(unittest.TestCase):
     auc = Scoring.CalcAUC(self.scoreAllDecoys, self.index)
     self.assertAlmostEqual(auc, 0.0, self.acc)
 
-  def test4(self):
-    """ test BEDROC """
+  def test4_BEDROC(self):
+    # """ test BEDROC """
     # best case
     bedroc = Scoring.CalcBEDROC(self.scoreBestCase, self.index, self.alpha)
     self.assertAlmostEqual(bedroc, 1.0, self.acc)
@@ -148,5 +148,5 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bedroc, 0.0)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

@@ -1,12 +1,18 @@
+"""
+This test currently fails. The database is not available.
+
+"""
 from __future__ import print_function
-from rdkit import RDConfig
-RDConfig.usePgSQL = 0
-import unittest
-from rdkit.ML import InfoTheory
-from rdkit import DataStructs
-from rdkit.Dbase.DbConnection import DbConnect
+
 import os
-from rdkit.six.moves import cPickle as pickle
+import unittest
+
+from rdkit import RDConfig
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import InfoTheory
+from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
+
+RDConfig.usePgSQL = 0
 
 
 def feq(v1, v2, tol2=1e-4):
@@ -44,18 +50,19 @@ def ReadCombiInfo(fileName):
   return infos
 
 
-class TestCase(unittest.TestCase):
+_testDatabase = os.path.join(
+  os.path.dirname(os.path.dirname(__file__)), 'test_data', 'FEW_CDK2.GDB')
 
-  def setUp(self):
-    pass
+
+@unittest.skipIf(not os.path.isfile(_testDatabase), 'Test database FEW_CDK2.GDB missing')
+class TestCase(unittest.TestCase):
 
   def test0Ranker(self):
     nbits = 5000
-    dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
-    conn = DbConnect(dbName)
+    conn = DbConnect(_testDatabase)
     fps = getFingerprints(conn)
     nameAct = getNameAct(conn)
-    sl = len(fps.values()[0])
+    sl = len(list(fps.values())[0])
     rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.ENTROPY)
 
     print("Collecting Votes ....")
@@ -80,13 +87,13 @@ class TestCase(unittest.TestCase):
     ofile = os.path.join('test_data', 'rdTopBits.txt')
     rnkr.WriteTopBitsToFile(ofile)
 
+  @unittest.skipIf(not os.path.isfile(_testDatabase), 'Test database FEW_CDK2.GDB missing')
   def test1BiasRanker(self):
     nbits = 5000
-    dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
-    conn = DbConnect(dbName)
+    conn = DbConnect(_testDatabase)
     fps = getFingerprints(conn)
     nameAct = getNameAct(conn)
-    sl = len(fps.values()[0])
+    sl = len(list(fps.values())[0])
     rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.BIASENTROPY)
     rnkr.SetBiasList([0])
     print("Collecting Votes ....")
@@ -110,11 +117,11 @@ class TestCase(unittest.TestCase):
 
   def test2ChiSquare(self):
     nbits = 5000
-    dbName = os.path.join('../', 'test_data', 'FEW_CDK2.GDB')
-    conn = DbConnect(dbName)
+    conn = DbConnect(_testDatabase)
     fps = getFingerprints(conn)
     nameAct = getNameAct(conn)
-    sl = len(fps.values()[0])
+    print(fps.values())
+    sl = len(list(fps.values())[0])
     rnkr = InfoTheory.InfoBitRanker(sl, 2, InfoTheory.InfoType.BIASCHISQUARE)
     rnkr.SetBiasList([0])
     print("Collecting Votes ....")
@@ -135,8 +142,8 @@ class TestCase(unittest.TestCase):
     print("Comparing bit info contents ....")
     for i in range(nbits):
       assert feq(topN[i, 1], combiInfo[i])
-    #rnkr.WriteTopBitsToFile("chiBitsBias.txt")
+    # rnkr.WriteTopBitsToFile("chiBitsBias.txt")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

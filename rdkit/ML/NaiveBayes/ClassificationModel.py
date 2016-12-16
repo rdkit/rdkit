@@ -70,8 +70,9 @@ class NaiveBayesClassifier:
     # for the sake a of efficiency lets try to change the conditional probabities
     # to a numpy array instead of a dictionary. The three dimension array is indexed
     # on the the activity class, the discriptor ID and the descriptor binID
-    #self._condProbs = {}
-    #self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1, max(self._nPosVals)+1), 'd')
+    # self._condProbs = {}
+    # self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1,
+    #                                max(self._nPosVals)+1), 'd')
     self._condProbs = [None] * self._nClasses
     for i in range(self._nClasses):
       if not (hasattr(self, '_useSigs') and self._useSigs):
@@ -94,7 +95,7 @@ class NaiveBayesClassifier:
     self._name = name
 
   def NameModel(self, varNames):
-    self.SetName('NaiveBayesCalssifier')
+    self.SetName('NaiveBayesClassifier')
 
   def GetExamples(self):
     return self._examples
@@ -158,15 +159,15 @@ class NaiveBayesClassifier:
     """ We will assume at this point that the training examples have been set
 
     We have to estmate the conditional probabilities for each of the (binned) descriptor
-    component give a outcome (or class). Also the probabilities for each class is estimated 
+    component give a outcome (or class). Also the probabilities for each class is estimated
     """
     # first estimate the class probabilities
     n = len(self._trainingExamples)
     for i in range(self._nClasses):
       self._classProbs[i] = 0.0
 
-    #for i in range(self._nClasses):
-    #  self._classProbs[i] = float(self._classProbs[i])/n
+    # for i in range(self._nClasses):
+    #   self._classProbs[i] = float(self._classProbs[i])/n
 
     # first find the bounds for each descriptor value if necessary
     if not self._useSigs and max(self._qBounds) > 0:
@@ -194,11 +195,11 @@ class NaiveBayesClassifier:
           else:
             tmp[ai][0] += 1.0
 
-    #for key in self._condProbs:
+    # for key in self._condProbs:
     for cls in range(self._nClasses):
-      if not cls in ncls:
+      if cls not in ncls:
         continue
-      #cls = key[0]
+      # cls = key[0]
       tmp = self._condProbs[cls]
       for ai in self._attrs:
         if not self._useSigs:
@@ -211,7 +212,7 @@ class NaiveBayesClassifier:
           if self._mEstimateVal <= 0.0:
             # this is simple the fraction of of time this descriptor component assume
             # this value for the examples that belong a specific class
-            #self._condProbs[key] = (float(self._condProbs[key]))/ncls[cls]
+            # self._condProbs[key] = (float(self._condProbs[key]))/ncls[cls]
             tmp[ai][bid] /= ncls[cls]
           else:
             # this a bit more complicated form - more appropriate for unbalanced data
@@ -224,7 +225,7 @@ class NaiveBayesClassifier:
             #   npossible = 1 + len(self._QBoundVals[ai])
             # else if we did no qunatize (the descriptor came quantized)
             #   npossible = nPossibleVals[ai]
-            #ai = key[1]
+            # ai = key[1]
             pdesc = 0.0
             if self._qBounds[ai] > 0:
               pdesc = 1.0 / (1 + len(self._QBoundVals[ai]))
