@@ -30,7 +30,6 @@ tests = [
   ("python", "UnitTestFunctionalGroups.py", {}),
   ("python", "UnitTestCrippen.py", {}),
   ("python", "__init__.py", {}),
-  ("python", "PandasTools.py", {}),
   ("python", "UnitTestPandasTools.py", {}),
   ("python", "UnitTestPeriodicTable.py", {}),
   ("python", "test_list.py", {'dir': 'AtomPairs'}),
