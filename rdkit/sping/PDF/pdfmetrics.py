@@ -251,12 +251,12 @@ def parseAFMfile(filename):
   metriclines = []
   between = 0
   for line in alllines:
-    if string.find(string.lower(line), 'endcharmetrics') > -1:
+    if string.find(line.lower(), 'endcharmetrics') > -1:
       between = 0
       break
     if between:
       metriclines.append(line)
-    if string.find(string.lower(line), 'startcharmetrics') > -1:
+    if string.find(line.lower(), 'startcharmetrics') > -1:
       between = 1
 
     # break up - very shaky assumption about array size
@@ -307,7 +307,7 @@ class FontCache:
         return self.getfont('courier')
 
   def stringwidth(self, text, font):
-    widths = self.getfont(string.lower(font))
+    widths = self.getfont(font.lower())
     w = 0
     for char in text:
       w = w + widths[ord(char)]
