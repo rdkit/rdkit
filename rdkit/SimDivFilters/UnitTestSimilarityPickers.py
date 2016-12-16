@@ -13,13 +13,12 @@ from __future__ import print_function
 import doctest
 import unittest
 
-from six import StringIO
-
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.SimDivFilters import SimilarityPickers
 from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
