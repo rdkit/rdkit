@@ -205,7 +205,7 @@ class Library:
         max_subsets = max(partitions)
 
         enumeration_indices = []
-        for i in xrange(max_subsets):
+        for i in range(max_subsets):
             combinations = []
             for size in partitions:
                 combinations.append( i % size )

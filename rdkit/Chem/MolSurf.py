@@ -72,7 +72,7 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
 
   # 0 contains the H information
   rads[0] = numTable[1][radCol]
-  for i in xrange(nAts):
+  for i in range(nAts):
     rads[i + 1] = numTable[mol.GetAtomWithIdx(i).GetAtomicNum()][radCol]
 
   # start with explicit bonds
@@ -94,14 +94,14 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
   if includeHs:
     j = 0
     Rj = rads[j]
-    for i in xrange(1, nAts + 1):
+    for i in range(1, nAts + 1):
       Ri = rads[i]
       bij = Ri + Rj
       dij = min(max(abs(Ri - Rj), bij), Ri + Rj)
       Vi[i] += Rj * Rj - (Ri - dij)**2 / dij
       Vi[j] += Ri * Ri - (Rj - dij)**2 / dij
 
-  for i in xrange(nAts + 1):
+  for i in range(nAts + 1):
     Ri = rads[i]
     Vi[i] = 4 * math.pi * Ri**2 - math.pi * Ri * Vi[i]
 

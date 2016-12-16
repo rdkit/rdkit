@@ -66,7 +66,7 @@ class DbConnect(object):
     self.user = self.userEntry.GetValue()
     self.password = self.passwdEntry.GetValue()
     self.dbName = self.dbBrowseButton.GetValue()
-    for i in xrange(self.dbTableChoice.Number()):
+    for i in range(self.dbTableChoice.Number()):
       self.dbTableChoice.Delete(0)
 
     names = self.GetTableNames()
