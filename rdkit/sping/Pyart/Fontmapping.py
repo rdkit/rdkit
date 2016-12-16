@@ -74,7 +74,7 @@ def getPyartName(pidfont):
   face = pidfont.face or DefaultFace
   # print "pidfont.face = %s" % pidfont.face
 
-  face = string.lower(face)
+  face = face.lower()
   if face in PidLegalFonts:
     return MapPid2PyartFontName[(PidLegalFonts[face], shape)]
   else:
@@ -93,7 +93,7 @@ getPdfName = getPyartName
 #      face = pidfont.face or DefaultFace
 #      # print "pidfont.face = %s" % pidfont.face
 
-#      face = string.lower(face)
+#      face = face.lower()
 #      if face in PidLegalFonts:
 #          return PDFFontMapping[ ( PidLegalFonts[face], shape) ]
 #      else:

@@ -97,7 +97,7 @@ for line in sys.stdin:
   res = DataStructs.BulkTverskySimilarity(mfp, queries, 0, 1, False)
 
   #query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
-  for i in xrange(fragments):
+  for i in range(fragments):
     if (res[i] >= options.cutoff):
       print("%s,%s,%s,%s,%s,%s" %
             (query_info[i][2], query_info[i][0], query_info[i][1], smi, id, res[i]))

@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
         except Exception:
           import traceback
           traceback.print_exc()
-          raise AssertionError('SMILES: %s' % smi)
+          raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testMolFormula(self):
     for (smiles, expected) in (("[NH4+]", "H4N+"),

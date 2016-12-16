@@ -219,10 +219,10 @@ _Widths = {'StandardEncoding': _stdenc_widths, 'Latin1Encoding': latin1MetricsCa
 
 def stringwidth(text, font, encoding):
   if font in fontinfo.NonRomanFonts:
-    widths = _Widths['StandardEncoding'][string.lower(font)]
+    widths = _Widths['StandardEncoding'][font.lower()]
   else:
     try:
-      widths = _Widths[encoding][string.lower(font)]
+      widths = _Widths[encoding][font.lower()]
     except Exception:
       raise KeyError("Improper encoding {0} or font name {1}".format(encoding, font))
   w = 0

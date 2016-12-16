@@ -124,7 +124,7 @@ class PyartCanvas(Canvas):
     }
 
     try:
-      face = piddle_font_map[string.lower(font.face)]
+      face = piddle_font_map[font.face.lower()]
     except Exception:
       return 'Helvetica'
 
