@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import unittest
 
-from rdkit.six.moves import cStringIO as StringIO
+from rdkit.six import PY3, StringIO, BytesIO
 from rdkit import RDConfig
 
 from rdkit.Chem import PandasTools
@@ -66,7 +66,7 @@ class TestLoadSDF(unittest.TestCase):
     self.assertEqual(list(df.index), [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
 
   def test_load_from_sio(self):
-    sio = StringIO(methane + peroxide)
+    sio = getStreamIO(methane + peroxide)
     df = PandasTools.LoadSDF(sio)
     self.assertEqual(len(df), 2)
     self.assertEqual(list(df["ID"]), ["Methane", "Peroxide"])
@@ -74,7 +74,7 @@ class TestLoadSDF(unittest.TestCase):
     self.assertEqual(atom_counts, [1, 2])
 
   def test_load_specify_column_names(self):
-    sio = StringIO(methane + peroxide)
+    sio = getStreamIO(methane + peroxide)
     df = PandasTools.LoadSDF(sio, idName="CorpID", molColName="_rdmol")
     self.assertEqual(len(df), 2)
     self.assertEqual(list(df["CorpID"]), ["Methane", "Peroxide"])
@@ -83,19 +83,19 @@ class TestLoadSDF(unittest.TestCase):
 
   def test_empty_file(self):
     # Should return an empty data frame with no rows or columns
-    sio = StringIO()
+    sio = getStreamIO(None)
     df = PandasTools.LoadSDF(sio)
     self.assertEqual(len(df), 0)
     self.assertEqual(len(df.index), 0)
 
   def test_passed_in_file_is_not_closed(self):
-    sio = StringIO(methane)
+    sio = getStreamIO(methane)
     df = PandasTools.LoadSDF(sio)
     self.assertEqual(len(df), 1)
     self.assertFalse(sio.closed)
 
   def test_properties(self):
-    sio = StringIO(peroxide + methane)
+    sio = getStreamIO(peroxide + methane)
     df = PandasTools.LoadSDF(sio)
     self.assertEqual(set(df.columns), set("ROMol ID prop1 prop2 prop3".split()))
     prop1 = list(df["prop1"])
@@ -109,7 +109,7 @@ class TestLoadSDF(unittest.TestCase):
     self.assertTrue(numpy.isnan(prop3[1]), prop3[1])
 
   def test_ignore_mol_column(self):
-    sio = StringIO(peroxide + methane)
+    sio = getStreamIO(peroxide + methane)
     df = PandasTools.LoadSDF(sio, molColName=None)
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
@@ -122,7 +122,7 @@ class TestWriteSDF(unittest.TestCase):
       raise unittest.SkipTest("Pandas not installed, skipping...")
 
   def setUp(self):
-    sio = StringIO(methane + peroxide)
+    sio = getStreamIO(methane + peroxide)
     self.df = PandasTools.LoadSDF(sio)
 
   def test_default_write_does_not_include_tags(self):
@@ -196,17 +196,26 @@ class TestWriteSDF(unittest.TestCase):
     try:
       filename = os.path.join(dirname, "test.sdf.gz")
       PandasTools.WriteSDF(self.df, filename)
-      s = gzip.open(filename).read()
+      with gzip.open(filename) as f:
+        s = f.read()
+      if PY3:
+        s = s.decode('utf-8')
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
     finally:
       shutil.rmtree(dirname)
 
 
+def getStreamIO(sdfString):
+  """ Return a StringIO/BytesIO for the string """
+  if PY3:
+    sio = BytesIO() if sdfString is None else BytesIO(sdfString.encode('utf-8'))
+  else:  # pragma: nocover
+    sio = StringIO() if sdfString is None else StringIO(sdfString)
+  return sio
+
 if __name__ == '__main__':
   if PandasTools.pd is None:
     import sys
     sys.exit(0)
-  from rdkit.six import PY3
-  if not PY3:  # FIX: The StringIO tests fail on python3
-    unittest.main()
+  unittest.main()

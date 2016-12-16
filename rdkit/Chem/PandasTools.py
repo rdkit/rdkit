@@ -87,7 +87,7 @@ from __future__ import print_function
 from base64 import b64encode
 import types, copy
 
-from rdkit.six import BytesIO, string_types
+from rdkit.six import BytesIO, string_types, PY3
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -347,7 +347,10 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   if isinstance(out, string_types):
     if out.lower()[-3:] == ".gz":
       import gzip
-      out = gzip.open(out, "wb")
+      if PY3:
+        out = gzip.open(out, "wt")
+      else:
+        out = gzip.open(out, "wb")
       close = out.close
 
   writer = SDWriter(out)
