@@ -84,6 +84,7 @@ void testPass() {
     //"CC((C)C)", // github #102
     "c1ccccb1",                                            // github 220
     "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
+    "C->[Cu]<-C",                                          // dative bonds
     "EOS"
   };
   while (smis[i] != "EOS") {

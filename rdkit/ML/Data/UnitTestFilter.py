@@ -5,7 +5,7 @@
 
 """
 import unittest
-from rdkit import RDConfig
+
 from rdkit.ML.Data import DataUtils
 
 
@@ -14,8 +14,8 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.d1 = [[0, 0, 0], [1, 0, 1], [2, 0, 0], [3, 0, 1], [4, 0, 0], [5, 0, 0]]
 
-  def test1(self):
-    """ basics """
+  def test1_basics(self):
+    # """ basics """
     probes = [
       (.5, 4, 2),
       (.7, 3, 3),
@@ -28,8 +28,14 @@ class TestCase(unittest.TestCase):
       assert len(k) == nKeep, 'bad nKeep (%d != %d)' % (len(k), nKeep)
       assert len(r) == nRej, 'bad nRej (%d != %d)' % (len(r), nRej)
 
-  def test3(self):
-    """ indicesOnly """
+  def test2_exceptions(self):
+    # """ Exceptions """
+    self.assertRaises(ValueError, DataUtils.FilterData, self.d1, 1, -1)
+    self.assertRaises(ValueError, DataUtils.FilterData, self.d1, 1, 2)
+    self.assertRaises(ValueError, DataUtils.FilterData, self.d1, 1, 0.5, col=3)
+
+  def test3_indicesOnly(self):
+    # """ indicesOnly """
     probes = [
       (.5, 4, 2),
       (.7, 3, 3),
@@ -50,8 +56,8 @@ class TestCase(unittest.TestCase):
       assert keep == tgtKeep, '%.2f: %s!=%s' % (frac, str(keep), str(tgtKeep))
       assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
 
-  def test4(self):
-    """ indicesOnly with indicesToUse """
+  def test4_indicesOnly_indicesToUse(self):
+    # """ indicesOnly with indicesToUse """
     probes = [
       (.5, 4, 2),
       (.7, 3, 3),
@@ -73,8 +79,8 @@ class TestCase(unittest.TestCase):
       assert keep == tgtKeep, '%.2f: %s!=%s' % (frac, str(keep), str(tgtKeep))
       assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
 
-  def test5(self):
-    """ indicesToUse """
+  def test5_indicesToUse(self):
+    # """ indicesToUse """
     probes = [
       (.5, 4, 2),
       (.7, 3, 3),
@@ -96,5 +102,5 @@ class TestCase(unittest.TestCase):
       assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

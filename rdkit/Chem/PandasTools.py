@@ -104,10 +104,11 @@ from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
+from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
 from rdkit.six.moves import cStringIO as StringIO  # @UnresolvedImport
-from rdkit.Chem import rdchem
+
 
 try:
   import pandas as pd

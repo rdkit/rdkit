@@ -7,6 +7,12 @@ import tempfile
 import unittest
 import doctest
 
+from rdkit.six import PY3, StringIO, BytesIO
+from rdkit import RDConfig
+
+from rdkit.Chem import PandasTools
+gotPandas = PandasTools.pd is not None
+
 import numpy
 
 from rdkit import RDConfig, rdBase, Chem
@@ -336,7 +342,6 @@ def getStreamIO(sdfString):
   else:  # pragma: nocover
     sio = StringIO() if sdfString is None else StringIO(sdfString)
   return sio
-
 
 def getTestFrame():
   rdBase.DisableLog('rdApp.error')
