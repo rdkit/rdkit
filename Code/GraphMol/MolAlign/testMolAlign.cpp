@@ -9,9 +9,11 @@
 //  of the RDKit source tree.
 //
 #include "AlignMolecules.h"
+#include "AlignMetrics.h"
 #include "O3AAlignMolecules.h"
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/ROMol.h>
@@ -27,6 +29,20 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 using namespace RDKit;
+
+void test1AlignMetrics() {
+  // Create two conformations
+  ROMol *mol = SmilesToMol("CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4", 0, 1);
+  INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*mol, 2);
+
+  double rmsNoAlign = MolAlign::getConformerRMS(*mol, 0, 1, NULL, true);
+  double rmsReverse = MolAlign::getConformerRMS(*mol, 1, 0, NULL, true);
+  TEST_ASSERT(RDKit::feq(rmsNoAlign, rmsReverse));
+  double rmsAlign = MolAlign::getConformerRMS(*mol, 0, 1);
+  TEST_ASSERT(rmsNoAlign > rmsAlign);
+
+  POSTCONDITION(false, "Code in development - do not merge into master");
+}
 
 void test1MolAlign() {
   std::string rdbase = getenv("RDBASE");
@@ -67,7 +83,8 @@ void test1MolAlign() {
 }
 
 void test1MolWithQueryAlign() {
-  // identical to test1MolAlign except we replace one atom with a QueryAtom instead
+  // identical to test1MolAlign except we replace one atom with a QueryAtom
+  // instead
 
   std::string rdbase = getenv("RDBASE");
   std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir.mol";
@@ -88,7 +105,7 @@ void test1MolWithQueryAlign() {
 
   std::string fname3 =
       rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_trans.mol";
-  
+
   RWMol *m3 = new RWMol(*MolFileToMol(fname3));
   m3->replaceAtom(0, new QueryAtom(5));
 
@@ -114,8 +131,7 @@ void test1MolWithQueryAlign() {
   // provide an atom mapping
   delete m1;
   delete m2;
-  delete m3;  
-
+  delete m3;
 }
 
 void test2AtomMap() {
@@ -384,8 +400,9 @@ void testMMFFO3AConstraints() {
   TEST_ASSERT(o3a);
   o3a->align();
   delete o3a;
-  double d = (m2.getConformer().getAtomPos(cIdx) -
-              m1->getConformer().getAtomPos(cIdx)).length();
+  double d =
+      (m2.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
+          .length();
   TEST_ASSERT(feq(d, 0.0, 1));
   MatchVectType constraintMap;
   constraintMap.push_back(std::make_pair(cIdx, nIdx));
@@ -436,8 +453,9 @@ void testCrippenO3AConstraints() {
   TEST_ASSERT(o3a);
   o3a->align();
   delete o3a;
-  double d = (m2.getConformer().getAtomPos(cIdx) -
-              m1->getConformer().getAtomPos(cIdx)).length();
+  double d =
+      (m2.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
+          .length();
   TEST_ASSERT(feq(d, 0.0, 1));
   MatchVectType constraintMap;
   constraintMap.push_back(std::make_pair(cIdx, nIdx));
@@ -510,7 +528,8 @@ void testMMFFO3AConstraintsAndLocalOnly() {
     o3a->align();
     delete o3a;
     double d = (prbMol->getConformer().getAtomPos(prbOIdx) -
-                refMol->getConformer().getAtomPos(refSIdx)).length();
+                refMol->getConformer().getAtomPos(refSIdx))
+                   .length();
     TEST_ASSERT(feq(d, distOS[i], 0.1));
   }
 }
@@ -561,7 +580,8 @@ void testCrippenO3AConstraintsAndLocalOnly() {
     o3a->align();
     delete o3a;
     double d = (prbMol->getConformer().getAtomPos(prbOIdx) -
-                refMol->getConformer().getAtomPos(refSIdx)).length();
+                refMol->getConformer().getAtomPos(refSIdx))
+                   .length();
     TEST_ASSERT(feq(d, distOS[i], 0.1));
   }
 }
@@ -879,7 +899,10 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MolAlign\n";
 
-#if 1
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1AlignMetrics \n\n";
+  test1AlignMetrics();
+
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -953,7 +976,6 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test getO3AForProbeConfs\n\n";
   testGetO3AForProbeConfs();
-#endif
 
 #ifdef RDK_TEST_MULTITHREADED
   std::cout << "\t---------------------------------\n";

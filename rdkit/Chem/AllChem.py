@@ -55,7 +55,7 @@ def TransformMol(mol, tform, confId=-1, keepConfs=False):
     for id in allConfIds:
       if not id == confId:
         mol.RemoveConformer(id)
-    #reset the conf Id to zero since there is only one conformer left
+    # reset the conf Id to zero since there is only one conformer left
     mol.GetConformer(confId).SetId(0)
 
 
@@ -76,12 +76,12 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   conf = mol.GetConformer(confId)
   CanonicalizeConformer(conf)
   box = ComputeConfBox(conf)
-  sideLen = ( box[1].x-box[0].x + 2*boxMargin, \
-              box[1].y-box[0].y + 2*boxMargin, \
-              box[1].z-box[0].z + 2*boxMargin )
+  sideLen = (box[1].x - box[0].x + 2 * boxMargin, \
+              box[1].y - box[0].y + 2 * boxMargin, \
+              box[1].z - box[0].z + 2 * boxMargin)
   shape = rdGeometry.UniformGrid3D(sideLen[0], sideLen[1], sideLen[2], spacing=gridSpacing)
   EncodeShape(mol, shape, confId, ignoreHs=False, vdwScale=1.0)
-  voxelVol = gridSpacing**3
+  voxelVol = gridSpacing ** 3
   occVect = shape.GetOccupancyVect()
   voxels = [1 for x in occVect if x == 3]
   vol = voxelVol * len(voxels)
@@ -112,8 +112,7 @@ def GenerateDepictionMatching2DStructure(mol, reference, confId=-1, referencePat
 
   """
   if reference and referencePattern:
-    if not reference.GetNumAtoms(onlyExplicit=True) == referencePattern.GetNumAtoms(
-        onlyExplicit=True):
+    if reference.GetNumAtoms(onlyExplicit=True) != referencePattern.GetNumAtoms(onlyExplicit=True):
       raise ValueError(
         'When a pattern is provided, it must have the same number of atoms as the reference')
     referenceMatch = reference.GetSubstructMatch(referencePattern)
@@ -159,16 +158,16 @@ def GenerateDepictionMatching3DStructure(mol, reference, confId=-1, **kwargs):
   conf = reference.GetConformer(confId)
   for i in range(nAts):
     pi = conf.GetAtomPosition(i)
-    #npi.z=0
+    # npi.z=0
     for j in range(i + 1, nAts):
       pj = conf.GetAtomPosition(j)
-      #pj.z=0
+      # pj.z=0
       dm.append((pi - pj).Length())
   dm = numpy.array(dm)
   Compute2DCoordsMimicDistmat(mol, dm, **kwargs)
 
 
-def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
+def pyGetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
   """ Returns the optimal RMS for aligning two molecules, taking
   symmetry into account. As a side-effect, the probe molecule is
   left in the aligned state.
@@ -183,10 +182,10 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
       If not provided, these will be generated using a substructure
       search.
 
-  Note: 
+  Note:
   This function will attempt to align all permutations of matching atom
-  orders in both molecules, for some molecules it will lead to 'combinatorial 
-  explosion' especially if hydrogens are present.  
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
   Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
   atom order.
 
@@ -213,12 +212,12 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
   return bestRMS
 
 
-def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
+def pyGetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
   """ Returns the RMS between two conformations.
   By default, the conformers will be aligned to the first conformer
-  of the molecule (i.e. the reference) before RMS calculation and, 
+  of the molecule (i.e. the reference) before RMS calculation and,
   as a side-effect, will be left in the aligned state.
-  
+
   Arguments:
     - mol:        the molecule
     - confId1:    the id of the first conformer
@@ -253,24 +252,24 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   """ Returns the RMS matrix of the conformers of a molecule.
   As a side-effect, the conformers will be aligned to the first
   conformer (i.e. the reference) and will left in the aligned state.
-        
+
   Arguments:
     - mol:     the molecule
     - atomIds: (optional) list of atom ids to use a points for
-               alingment - defaults to all atoms
+               alignment - defaults to all atoms
     - prealigned: (optional) by default the conformers are assumed
                   be unaligned and will therefore be aligned to the
                   first conformer
-    
+
   Note that the returned RMS matrix is symmetrically, i.e. it is the
   lower half of the matrix, e.g. for 5 conformers:
   rmsmatrix = [ a,
                 b, c,
                 d, e, f,
                 g, h, i, j]
-  This way it can be directly used as distance matrix in e.g. Butina 
+  This way it can be directly used as distance matrix in e.g. Butina
   clustering.
-      
+
   """
   # if necessary, align the conformers
   # Note: the reference conformer is always the first one
@@ -450,7 +449,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     and read in the PDB structure of the molecule
     >>> from rdkit.Chem import AllChem
     >>> template = AllChem.MolFromSmiles("CN1C(=NC(C1=O)(c2ccccc2)c3ccccc3)N")
-    >>> mol = AllChem.MolFromPDBFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4DJU_lig.pdb'))
+    >>> mol = AllChem.MolFromPDBFile(os.path.join(RDConfig.RDCodeDir, 'Chem',
+    ...          'test_data', '4DJU_lig.pdb'))
     >>> len([1 for b in template.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
     8
     >>> len([1 for b in mol.GetBonds() if b.GetBondTypeAsDouble() == 1.0])
@@ -465,8 +465,10 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else the algorithm will fail.
 
     It also works if there are different formal charges (this was github issue 235):
-    >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
-    >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
+    >>> template=AllChem.MolFromSmiles(
+    ...     'CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
+    >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem',
+    ...     'test_data', '4FTR_lig.mol'))
     >>> AllChem.MolToSmiles(mol)
     'COC1CC(C2CCC3C(O)NC4CC(CC(O)N(C)C)CCC4NC3C2)CCC1N(O)O'
     >>> newMol = AllChem.AssignBondOrdersFromTemplate(template, mol)
