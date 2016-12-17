@@ -35,11 +35,13 @@ void test1AlignMetrics() {
   ROMol *mol = SmilesToMol("CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4", 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*mol, 2);
 
-  double rmsNoAlign = MolAlign::getConformerRMS(*mol, 0, 1, 0, true);
-  double rmsReverse = MolAlign::getConformerRMS(*mol, 1, 0, 0, true);
+  double rmsNoAlign = MolAlign::getConformerRMS(*mol, 0, 1, NULL, true);
+  double rmsReverse = MolAlign::getConformerRMS(*mol, 1, 0, NULL, true);
   TEST_ASSERT(RDKit::feq(rmsNoAlign, rmsReverse));
   double rmsAlign = MolAlign::getConformerRMS(*mol, 0, 1);
   TEST_ASSERT(rmsNoAlign > rmsAlign);
+
+  POSTCONDITION(false, "Code in development - do not merge into master");
 }
 
 void test1MolAlign() {
@@ -901,7 +903,6 @@ int main() {
   std::cout << "\t test1AlignMetrics \n\n";
   test1AlignMetrics();
 
-#if 0
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
@@ -980,7 +981,6 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test O3A multithreading bug\n\n";
   testO3AMultiThreadBug();
-#endif
 #endif
 
   std::cout << "***********************************************************\n";

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Peter Gedeck
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,28 +23,29 @@ namespace MolAlign {
 double getConformerRMS(ROMol &mol, unsigned int confId1, unsigned int confId2,
                        const std::vector<unsigned int> *atomIds,
                        bool prealigned) {
+  PRECONDITION(mol.getNumAtoms(), "molecule has no atoms")
   if (!prealigned) {
-    static const unsigned int confIds[] = {confId1, confId2};
-    const std::vector<unsigned int> confIds2(
-        confIds, confIds + sizeof(confIds) / sizeof(confIds[0]));
-    MolAlign::alignMolConformers(mol, atomIds, &confIds2);
+    std::vector<unsigned int> confIds(2);
+    confIds[0] = confId1;
+    confIds[1] = confId2;
+    MolAlign::alignMolConformers(mol, atomIds, &confIds);
   }
 
-  const Conformer conf1 = mol.getConformer(confId1);
-  const Conformer conf2 = mol.getConformer(confId2);
+  const Conformer &conf1 = mol.getConformer(confId1);
+  const Conformer &conf2 = mol.getConformer(confId2);
 
-  const size_t nAtoms = conf1.getNumAtoms();
+  size_t nAtoms = conf1.getNumAtoms();
   double ssr = 0.0;
   for (unsigned int i = 0; i < nAtoms; ++i) {
     RDGeom::Point3D v = conf1.getAtomPos(i) - conf2.getAtomPos(i);
-    ssr += v.dotProduct(v);
+    ssr += v.lengthSq();
   }
   ssr /= nAtoms;
   return sqrt(ssr);
 }
 
 double getBestRMS(const ROMol &refMol, ROMol &prbMol, int refCid, int prbCid,
-                  std::vector<MatchVectType> *atomMaps) {
+                  bool includeHydrogens, std::vector<MatchVectType> *atomMaps) {
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
 
   if (!atomMaps || atomMaps->size() == 0) {

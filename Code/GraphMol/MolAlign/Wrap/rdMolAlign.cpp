@@ -223,9 +223,7 @@ double getBestRMS(const ROMol &ref, ROMol &probe, int refConfId,
     //    }
     rmsd = 3.14;
   } else {
-    std::vector<MatchVectType> atomMaps;
-    rmsd = MolAlign::getBestRMS(ref, probe, refConfId, probeConfId, &atomMaps);
-    //    delete atomMaps;
+    rmsd = MolAlign::getBestRMS(ref, probe, refConfId, probeConfId);
   }
 
   return rmsd;
@@ -725,7 +723,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
      \n\
      By default, the conformers will be aligned to the first conformer\n\
      of the molecule (i.e. the reference) before RMS calculation and,\n\
-     as a side-effect, will be left in the aligned state.\n\
+     as a side-effect the conformers will be left in the aligned state.\n\
      \n\
      ARGUMENTS:\
       - mol         the molecule\n\

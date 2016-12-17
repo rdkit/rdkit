@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2016 Peter Gedeck
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -38,7 +38,7 @@ namespace MolAlign {
   RMSD value
 */
 double getConformerRMS(ROMol &mol, unsigned int confId1, unsigned int confId2,
-                       const std::vector<unsigned int> *atomIds = 0,
+                       const std::vector<unsigned int> *atomIds = NULL,
                        bool prealigned = false);
 
 //! Compute the optimal RMSE between two molecules
@@ -64,7 +64,8 @@ double getConformerRMS(ROMol &mol, unsigned int confId1, unsigned int confId2,
   """
 */
 double getBestRMS(const ROMol &refMol, ROMol &prbMol, int probeConfId = -1,
-                  int refConfId = -1, std::vector<MatchVectType> *atomMaps = 0);
+                  int refConfId = -1, bool includeHydrogens = false,
+                  std::vector<MatchVectType> *atomMaps = NULL);
 }
 }
 #endif
