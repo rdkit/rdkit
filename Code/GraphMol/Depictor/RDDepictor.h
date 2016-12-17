@@ -151,7 +151,7 @@ unsigned int compute2DCoordsMimicDistMat(
 
 */
 void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
-					   RDKit::ROMol &reference ,
+					   const RDKit::ROMol &reference ,
 					   int confId = -1 ,
 					   RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>( 0 ) ,
 					   bool acceptFailure = false );
@@ -178,7 +178,7 @@ void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
                          referencePattern; if false, throws a DepictException.
 */
 void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
-					   RDKit::ROMol &reference ,
+					   const RDKit::ROMol &reference ,
 					   int confId = -1 ,
 					   RDKit::ROMol *referencePattern = 0 ,
 					   bool acceptFailure = false );

@@ -431,31 +431,8 @@ unsigned int compute2DCoordsMimicDistMat(
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
 //   constrained to have the same coordinates as a reference.
-/*!
-  This function generates a depiction for a molecule where a piece of the
-  molecule is constrained to have the same coordinates as a reference.
-
-  This is useful for, for example, generating depictions of SAR data
-  sets so that the cores of the molecules are all oriented the same way.
-
-  ARGUMENTS:
-
-  \param mol -    the molecule to be aligned, this will come back
-                  with a single conformer.
-  \param reference -    a molecule with the reference atoms to align to;
-                        this should have a depiction.
-  \param confId -       (optional) the id of the reference conformation to use
-  \param referencePattern -  (optional) an optional molecule to be used to
-                             generate the atom mapping between the molecule
-                             and the reference.
-  \param acceptFailure - (optional) if True, standard depictions will be generated
-                         for molecules that don't have a substructure match to the
-                         reference; if false, throws a DepictException.
-
-*/
-  
 void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
-					   RDKit::ROMol &reference ,
+					   const RDKit::ROMol &reference ,
 					   int confId ,
 					   RDKit::ROMol *referencePattern ,
 					   bool acceptFailure ) {
@@ -469,33 +446,33 @@ void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
     RDKit::MatchVectType refMatchVect;
     RDKit::SubstructMatch( reference , *referencePattern , refMatchVect );
     if( refMatchVect.empty() ) {
-      throw RDDepict::DepictException( "Reference does not map to itself." );
+      throw RDDepict::DepictException( "Reference pattern does not map to reference." );
     }
     refMatch.reserve( refMatchVect.size() );
-    for( size_t i = 0 , is = refMatchVect.size() ; i < is ; ++i ) {
+    for( size_t i = 0 ; i < refMatchVect.size() ; ++i ) {
       refMatch.push_back( refMatchVect[i].second );
     }
     RDKit::SubstructMatch( mol , *referencePattern , matchVect );
   } else {
     refMatch.reserve( reference.getNumAtoms( true ) );
-    for( int i = 0 , is = reference.getNumAtoms( true ) ; i < is ; ++i ) {
+    for( unsigned int i = 0 ; i < reference.getNumAtoms( true ) ; ++i ) {
       refMatch.push_back( i );
     }
     RDKit::SubstructMatch( mol , reference , matchVect );
   }
 
   RDGeom::INT_POINT2D_MAP coordMap;
-  if( RDKit::SubstructMatch( mol , reference , matchVect ) ) {
-    RDKit::Conformer &conf = reference.getConformer( confId );
+  if( matchVect.empty() ) {
+    if( !acceptFailure ) {
+      throw RDDepict::DepictException( "Substructure match with reference not found." );
+    }
+  } else {
+    const RDKit::Conformer &conf = reference.getConformer( confId );
     for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ;
 	 mv != matchVect.end() ; ++mv ) {
       RDGeom::Point3D pt3 = conf.getAtomPos( refMatch[mv->first] );
       RDGeom::Point2D pt2( pt3.x , pt3.y );
       coordMap[mv->second] = pt2;
-    }
-  } else {
-    if( !acceptFailure ) {
-      throw RDDepict::DepictException( "Substructure match with reference not found." );
     }
   }
   RDDepict::compute2DCoords( mol , &coordMap , false /* canonOrient */ ,
@@ -505,27 +482,8 @@ void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
   
 //! \brief Generate a 2D depiction for a molecule where all or part of
 //   it mimics the coordinates of a 3D reference structure.
-/*!
-  Generates a depiction for a molecule where a piece of the molecule
-  is constrained to have coordinates similar to those of a 3D reference
-  structure.
-
-  ARGUMENTS:
-  \param mol - the molecule to be aligned, this will come back
-               with a single conformer containing 2D coordinates
-  \param reference - a molecule with the reference atoms to align to.
-                     By default this should be the same as mol, but with
-                     3D coordinates
-  \param confId - (optional) the id of the reference conformation to use
-  \param refPattern - (optional) a query molecule to map a subset of
-                      the reference onto the mol, so that only some of the
-                      atoms are aligned.
-  \param acceptFailure - (optional) if true, standard depictions will be generated
-                         for molecules that don't have a substructure match to the
-                         reference; if false, throws a DepictException.
-*/
 void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
-					   RDKit::ROMol &reference ,
+					   const RDKit::ROMol &reference ,
 					   int confId ,
 					   RDKit::ROMol *referencePattern ,
 					   bool acceptFailure ) {
@@ -553,7 +511,7 @@ void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
 	throw RDDepict::DepictException( "Reference pattern didn't match molecule or reference." );
       }
     }
-    for( size_t i = 0 , is = molMatchVect.size() ; i < is ; ++i ) {
+    for( size_t i = 0 ; i < molMatchVect.size() ; ++i ) {
       mol_to_ref[molMatchVect[i].second] = refMatchVect[i].second;
     }
     
@@ -563,7 +521,7 @@ void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
     }
   }
   
-  RDKit::Conformer &conf = reference.getConformer( confId );
+  const RDKit::Conformer &conf = reference.getConformer( confId );
   // the distance matrix is a triangular representation
   RDDepict::DOUBLE_SMART_PTR dmat( new double[num_ats * ( num_ats - 1 ) / 2] );
   // negative distances are ignored, so initialise to -1.0 so subset by

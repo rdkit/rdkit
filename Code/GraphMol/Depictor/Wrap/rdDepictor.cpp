@@ -107,7 +107,7 @@ unsigned int Compute2DCoordsMimicDistmat(
 					     bool acceptFailure ) {
 
     RDKit::ROMol *referencePattern = 0;
-    if( refPatt ) {
+    if( refPatt != python::object() ) {
       referencePattern = python::extract<RDKit::ROMol *>( refPatt );
     }
     
@@ -231,7 +231,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 	      RDDepict::GenerateDepictionMatching2DStructure,
 	      (python::arg( "mol" ) , python::arg( "reference" ) ,
 	       python::arg( "confId" ) = -1 ,
-	       python::arg( "refPatt" ) = 0 ,
+	       python::arg( "refPatt" ) = python::object() ,
 	       python::arg( "acceptFailure" ) = false ),
 	       docString.c_str() );
 
@@ -257,7 +257,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   	      RDDepict::GenerateDepictionMatching3DStructure,
   	      (python::arg( "mol" ) , python::arg( "reference" ) ,
   	       python::arg( "confId" ) = -1 ,
-  	       python::arg( "refPatt" ) = 0 ,
+  	       python::arg( "refPatt" ) = python::object() ,
   	       python::arg( "acceptFailure" ) = false ),
   	      docString.c_str() );
 }
