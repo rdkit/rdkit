@@ -1,66 +1,29 @@
 from __future__ import print_function
+
+import gzip
 import os
+import shutil
+import tempfile
 import unittest
 
+import numpy
+
 from rdkit.six import PY3, StringIO, BytesIO
-from rdkit import RDConfig
+from rdkit import RDConfig, rdBase
 
 from rdkit.Chem import PandasTools
-gotPandas = PandasTools.pd is not None
-
-import numpy
-import tempfile, shutil
-import gzip
-
-methane = """\
-Methane
-     RDKit
-
-  1  0  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-M  END
-> <prop1>
-12.34
-
-> <prop2>
-qwe
-
-$$$$
-"""
-
-peroxide = """\
-Peroxide
-     RDKit
-
-  2  1  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-M  END
-> <prop2>
-rtz
-
-> <prop3>
-yxcv
-
-$$$$
-"""
 
 
+@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
 class TestLoadSDF(unittest.TestCase):
-
-  @classmethod
-  def setUpClass(cls):
-    if not gotPandas:
-      raise unittest.SkipTest("Pandas not installed, skipping...")
-
-  def setUp(self):
-    self.gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'pandas_load.sdf.gz')
+  gz_filename = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'pandas_load.sdf.gz')
 
   # the doctest tests loading from a ".sdf" file so there's no need for that test here
 
   def test_load_gzip_file(self):
+    rdBase.DisableLog('rdApp.error')
     df = PandasTools.LoadSDF(self.gz_filename)
+    rdBase.EnableLog('rdApp.error')
     self.assertEqual(len(df), 13)
     # The molecule with index 1 is invalid, so it should be missing form the index
     self.assertEqual(list(df.index), [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
@@ -114,16 +77,11 @@ class TestLoadSDF(unittest.TestCase):
     self.assertEqual(set(df.columns), set("ID prop1 prop2 prop3".split()))
 
 
+@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
 class TestWriteSDF(unittest.TestCase):
 
-  @classmethod
-  def setUpClass(cls):
-    if not gotPandas:
-      raise unittest.SkipTest("Pandas not installed, skipping...")
-
   def setUp(self):
-    sio = getStreamIO(methane + peroxide)
-    self.df = PandasTools.LoadSDF(sio)
+    self.df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
 
   def test_default_write_does_not_include_tags(self):
     sio = StringIO()
@@ -166,7 +124,7 @@ class TestWriteSDF(unittest.TestCase):
     self.assertIn("7\n\n", s)
     self.assertIn("8\n\n", s)
 
-  def test_specify_numeric_column(self):
+  def test_specify_numeric_column_2(self):
     sio = StringIO()
     df = self.df
     df["len2"] = df["ID"].map(len)
@@ -185,7 +143,8 @@ class TestWriteSDF(unittest.TestCase):
     try:
       filename = os.path.join(dirname, "test.sdf")
       PandasTools.WriteSDF(self.df, filename)
-      s = open(filename, "U").read()
+      with open(filename) as f:
+        s = f.read()
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
     finally:
@@ -214,8 +173,48 @@ def getStreamIO(sdfString):
     sio = StringIO() if sdfString is None else StringIO(sdfString)
   return sio
 
-if __name__ == '__main__':
-  if PandasTools.pd is None:
-    import sys
-    sys.exit(0)
+
+def getTestFrame():
+  rdBase.DisableLog('rdApp.error')
+  sdfFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'pandas_load.sdf.gz')
+  df = PandasTools.LoadSDF(sdfFile, smilesName='SMILES')
+  rdBase.EnableLog('rdApp.error')
+  return df
+
+
+methane = """\
+Methane
+     RDKit
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+> <prop1>
+12.34
+
+> <prop2>
+qwe
+
+$$$$
+"""
+
+peroxide = """\
+Peroxide
+     RDKit
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+M  END
+> <prop2>
+rtz
+
+> <prop3>
+yxcv
+
+$$$$
+"""
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
