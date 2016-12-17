@@ -90,6 +90,7 @@ This can be reverted using the ChangeMoleculeRendering method
 >>> ChangeMoleculeRendering(renderer='PNG')
 >>> print(molX) # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
+
 '''
 from __future__ import print_function
 
@@ -110,14 +111,17 @@ from rdkit.six.moves import cStringIO as StringIO
 
 try:
   import pandas as pd
-  try:
-    v = pd.__version__.split('.')
-  except AttributeError:
-    # support for older versions of pandas
-    v = pd.version.version.split('.')
 
-  if v[0] == '0' and int(v[1]) < 10:
-    print("Pandas version %s not compatible with tests" % v, file=sys.stderr)
+  def _getPandasVersion():
+    """ Get the pandas version as a tuple """
+    try:
+      v = pd.__version__.split('.')
+    except AttributeError:
+      v = pd.version.version.split('.')
+    return tuple(int(vi) for vi in v)
+
+  if _getPandasVersion() < (0, 10):
+    print("Pandas version {0} not compatible with tests".format(_getPandasVersion()), file=sys.stderr)
     pd = None
   else:
     if 'display.width' in pd.core.config._registered_options:
@@ -226,11 +230,10 @@ def _molge(x, y):
     if not DataStructs.AllProbeBitsMatch(y._substructfp, x._substructfp):
       return False
   match = x.GetSubstructMatch(y)
+  x.__sssAtoms = []
   if match:
     if highlightSubstructures:
       x.__sssAtoms = list(match)
-    else:
-      x.__sssAtoms = []
     return True
   else:
     return False
@@ -436,7 +439,7 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmi
   '''
   w = Chem.SmilesWriter(outFile, isomericSmiles=isomericSmiles)
   if NamesCol != '':
-    for m, n in zip(frame[molCol], map(str, frame[NamesCol])):
+    for m, n in zip(frame[molCol], (str(c) for c in frame[NamesCol])):
       m.SetProp('_Name', n)
       w.write(m)
     w.close()
@@ -509,13 +512,10 @@ def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
   '''
   if legendsCol:
     if legendsCol == frame.index.name:
-      img = Draw.MolsToGridImage(frame[column], legends=list(map(str, list(frame.index))), **kwargs)
+      kwargs['legends'] = [str(c) for c in frame.index]
     else:
-      img = Draw.MolsToGridImage(frame[column], legends=list(map(str, list(frame[legendsCol]))),
-                                 **kwargs)
-  else:
-    img = Draw.MolsToGridImage(frame[column], **kwargs)
-  return img
+      kwargs['legends'] = [str(c) for c in frame[legendsCol]]
+  return Draw.MolsToGridImage(frame[column], **kwargs)
 
 
 def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=False):
@@ -549,25 +549,24 @@ def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
   frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol], x[scaffoldCol]), axis=1)
 
 
-if __name__ == "__main__":
-  import sys
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
+                              verbose=verbose)
+  sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
+  elif _getPandasVersion() < (0, 10):
+    print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
   else:
-    # version check
-    try:
-      v = pd.__version__.split('.')
-    except AttributeError:
-      # support for older versions of pandas
-      v = pd.version.version.split('.')
-
-    if v[0] == '0' and int(v[1]) < 10:
-      print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
-    else:
-      import doctest
-      failed, tried = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
-      if failed:
-        sys.exit(failed)
+    _runDoctests()
 
 # $Id$
 #

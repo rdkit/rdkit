@@ -5,13 +5,170 @@ import os
 import shutil
 import tempfile
 import unittest
+import doctest
 
 import numpy
 
 from rdkit.six import PY3, StringIO, BytesIO
-from rdkit import RDConfig, rdBase
+from rdkit import RDConfig, rdBase, Chem
 
 from rdkit.Chem import PandasTools
+
+
+# We make sure that we don't mess up the Mol methods for the rest of the tests
+# PandasTools.UninstallPandasTools()
+
+
+@unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
+class TestPandasTools(unittest.TestCase):
+
+  def __init__(self, methodName='runTest'):
+    self.df = getTestFrame()
+    self.df.index.name = 'IndexName'
+    super(TestPandasTools, self).__init__(methodName=methodName)
+
+  def setUp(self):
+    # PandasTools.InstallPandasTools()
+    PandasTools.ChangeMoleculeRendering(renderer='PNG')
+    self._molRepresentation = PandasTools.molRepresentation
+    self._highlightSubstructures = PandasTools.highlightSubstructures
+
+  def tearDown(self):
+    PandasTools.molRepresentation = self._molRepresentation
+    PandasTools.highlightSubstructures = self._highlightSubstructures
+    # PandasTools.UninstallPandasTools()
+
+  def test_Doctest(self):
+    # We need to do it like this to ensure that default RDkit functionality is restored
+    failed, _ = doctest.testmod(PandasTools, optionflags=doctest.ELLIPSIS +
+                                doctest.NORMALIZE_WHITESPACE)
+    self.assertFalse(failed)
+
+#   def test_RestoreMonkeyPatch(self):
+#     sio = getStreamIO(methane + peroxide)
+#     df = PandasTools.LoadSDF(sio)
+#     html = df.to_html()
+#     self.assertIn('data:image/png;base64', html)
+#     self.assertIn('table', html)
+#
+#     PandasTools.UninstallPandasTools()
+#     html = df.to_html()
+#     self.assertNotIn('data:image/png;base64', html)
+#     self.assertIn('rdkit.Chem.rdchem.Mol', html)
+#     self.assertIn('table', html)
+#
+#     PandasTools.InstallPandasTools()
+#     html = df.to_html()
+#     self.assertIn('data:image/png;base64', html)
+#     self.assertIn('table', html)
+#
+#     PandasTools.UninstallPandasTools()
+#     html = df.to_html()
+#     self.assertNotIn('data:image/png;base64', html)
+#     self.assertIn('rdkit.Chem.rdchem.Mol', html)
+#     self.assertIn('table', html)
+
+  def test_FrameToGridImage(self):
+    # This test only makes sure that we get no exception. To see the created images, set
+    # interactive to True
+    interactive = False
+    self.assertTrue(True)
+    df = self.df
+
+    result = PandasTools.FrameToGridImage(df)
+    if interactive:
+      result.show()
+
+    result = PandasTools.FrameToGridImage(df, legendsCol='PUBCHEM_IUPAC_INCHIKEY')
+    if interactive:
+      result.show()
+
+    result = PandasTools.FrameToGridImage(df, legendsCol=df.index.name)
+    if interactive:
+      result.show()
+
+  def test_AddMurckoToFrame(self):
+    df = self.df.copy()
+    self.assertIn('ROMol', df.columns)
+    self.assertNotIn('Murcko_SMILES', df.columns)
+    PandasTools.AddMurckoToFrame(df)
+    self.assertIn('ROMol', df.columns)
+    self.assertIn('Murcko_SMILES', df.columns)
+    self.assertEqual(df['Murcko_SMILES'][10], 'O=C(CCn1c(-c2ccccc2)n[nH]c1=S)Nc1ccccn1')
+
+    PandasTools.AddMurckoToFrame(df, Generic=True)
+    self.assertIn('ROMol', df.columns)
+    self.assertIn('Murcko_SMILES', df.columns)
+    self.assertEqual(df['Murcko_SMILES'][10], 'CC(CCC1C(C)CCC1C1CCCCC1)CC1CCCCC1')
+
+  def test_SaveSMILESFromFrame(self):
+    sio = StringIO()
+    PandasTools.SaveSMILESFromFrame(self.df, sio)
+    result = sio.getvalue()
+    self.assertIn(self.df['SMILES'][10], result)
+    self.assertIn(self.df['ID'][10], result)
+
+    sio = StringIO()
+    PandasTools.SaveSMILESFromFrame(self.df, sio, NamesCol='PUBCHEM_IUPAC_INCHIKEY')
+    result = sio.getvalue()
+    self.assertIn(self.df['SMILES'][10], result)
+    self.assertIn(self.df['PUBCHEM_IUPAC_INCHIKEY'][10], result)
+
+  def test_svgRendering(self):
+    df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
+    self.assertIn('image/png', str(df))
+    self.assertNotIn('svg', str(df))
+
+    PandasTools.molRepresentation = 'svg'
+    self.assertIn('svg', str(df))
+    self.assertNotIn('image/png', str(df))
+
+    # we can use upper case for the molRepresentation
+    PandasTools.molRepresentation = 'PNG'
+    self.assertNotIn('svg', str(df))
+    self.assertIn('image/png', str(df))
+
+  def test_patchHeadFrame(self):
+    df = self.df.copy()
+    result = str(df.head())
+    self.assertIn('35024984', result)
+    self.assertNotIn('35024985', result)
+
+  def test_AddMoleculeColumnToFrame(self):
+    df = PandasTools.LoadSDF(
+      getStreamIO(methane + peroxide), isomericSmiles=True, smilesName='Smiles')
+    PandasTools.ChangeMoleculeRendering(frame=df, renderer='String')
+    del df['ROMol']
+    self.assertNotIn('ROMol', str(df))
+    PandasTools.AddMoleculeColumnToFrame(df, includeFingerprints=False)
+    self.assertIn('ROMol', str(df))
+
+  def test_molge(self):
+    molge = PandasTools._molge
+    mol1 = Chem.MolFromSmiles('CCC')
+    mol2 = Chem.MolFromSmiles('CC')
+    mol3 = Chem.MolFromSmiles('CN')
+
+    self.assertFalse(molge(mol1, None))
+    self.assertFalse(molge(None, mol1))
+
+    self.assertFalse(hasattr(mol1, '_substructfp'))
+    self.assertFalse(hasattr(mol2, '_substructfp'))
+    self.assertFalse(hasattr(mol1, '__sssAtoms'))
+    self.assertFalse(hasattr(mol2, '__sssAtoms'))
+
+    self.assertTrue(molge(mol1, mol2))
+    self.assertEqual(mol1.__dict__['__sssAtoms'], [0, 1])
+    PandasTools.highlightSubstructures = False
+    self.assertTrue(molge(mol1, mol2))
+    self.assertEqual(mol1.__dict__['__sssAtoms'], [])
+
+    PandasTools.highlightSubstructures = True
+    self.assertFalse(molge(mol2, mol1))
+    self.assertEqual(mol2.__dict__['__sssAtoms'], [])
+
+    self.assertFalse(molge(mol1, mol3))
+    self.assertEqual(mol1.__dict__['__sssAtoms'], [])
 
 
 @unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
