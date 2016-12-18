@@ -87,48 +87,6 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   vol = voxelVol * len(voxels)
   return vol
 
-
-def GenerateDepictionMatching2DStructure(mol, reference, confId=-1, referencePattern=None,
-                                         acceptFailure=False, **kwargs):
-  """ Generates a depiction for a molecule where a piece of the molecule
-     is constrained to have the same coordinates as a reference.
-
-     This is useful for, for example, generating depictions of SAR data
-     sets so that the cores of the molecules are all oriented the same
-     way.
-
-  Arguments:
-    - mol:          the molecule to be aligned, this will come back
-                    with a single conformer.
-    - reference:    a molecule with the reference atoms to align to;
-                    this should have a depiction.
-    - confId:       (optional) the id of the reference conformation to use
-    - referencePattern:  (optional) an optional molecule to be used to
-                         generate the atom mapping between the molecule
-                         and the reference.
-    - acceptFailure: (optional) if True, standard depictions will be generated
-                     for molecules that don't have a substructure match to the
-                     reference; if False, a ValueError will be raised
-
-  """
-  if reference and referencePattern:
-    if not reference.GetNumAtoms(onlyExplicit=True) == referencePattern.GetNumAtoms(
-        onlyExplicit=True):
-      raise ValueError(
-        'When a pattern is provided, it must have the same number of atoms as the reference')
-    referenceMatch = reference.GetSubstructMatch(referencePattern)
-    if not referenceMatch:
-      raise ValueError("Reference does not map to itself")
-  else:
-    referenceMatch = list(range(reference.GetNumAtoms(onlyExplicit=True)))
-  if referencePattern:
-    match = mol.GetSubstructMatch(referencePattern)
-  else:
-    match = mol.GetSubstructMatch(reference)
-
-  if not match:
-    if not acceptFailure:
-
 def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
   """ Returns the optimal RMS for aligning two molecules, taking
   symmetry into account. As a side-effect, the probe molecule is
@@ -144,10 +102,10 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
       If not provided, these will be generated using a substructure
       search.
 
-  Note: 
+  Note:
   This function will attempt to align all permutations of matching atom
-  orders in both molecules, for some molecules it will lead to 'combinatorial 
-  explosion' especially if hydrogens are present.  
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
   Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
   atom order.
 
@@ -177,9 +135,9 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
 def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
   """ Returns the RMS between two conformations.
   By default, the conformers will be aligned to the first conformer
-  of the molecule (i.e. the reference) before RMS calculation and, 
+  of the molecule (i.e. the reference) before RMS calculation and,
   as a side-effect, will be left in the aligned state.
-  
+
   Arguments:
     - mol:        the molecule
     - confId1:    the id of the first conformer
@@ -214,7 +172,7 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   """ Returns the RMS matrix of the conformers of a molecule.
   As a side-effect, the conformers will be aligned to the first
   conformer (i.e. the reference) and will left in the aligned state.
-        
+
   Arguments:
     - mol:     the molecule
     - atomIds: (optional) list of atom ids to use a points for
@@ -222,16 +180,16 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
     - prealigned: (optional) by default the conformers are assumed
                   be unaligned and will therefore be aligned to the
                   first conformer
-    
+
   Note that the returned RMS matrix is symmetrically, i.e. it is the
   lower half of the matrix, e.g. for 5 conformers:
   rmsmatrix = [ a,
                 b, c,
                 d, e, f,
                 g, h, i, j]
-  This way it can be directly used as distance matrix in e.g. Butina 
+  This way it can be directly used as distance matrix in e.g. Butina
   clustering.
-      
+
   """
   # if necessary, align the conformers
   # Note: the reference conformer is always the first one
