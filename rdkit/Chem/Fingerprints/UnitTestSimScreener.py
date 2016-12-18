@@ -5,9 +5,10 @@
 
 """
 import unittest
+
 from rdkit import Chem
-from rdkit.Chem.Fingerprints import SimilarityScreener
 from rdkit import DataStructs
+from rdkit.Chem.Fingerprints import SimilarityScreener
 
 
 def feq(v1, v2, tol=1e-4):
@@ -15,10 +16,6 @@ def feq(v1, v2, tol=1e-4):
 
 
 class TestCase(unittest.TestCase):
-
-  def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
-    pass
 
   def test1(self):
     """ TopN screener

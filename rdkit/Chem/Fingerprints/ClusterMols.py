@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -18,16 +17,21 @@ Sample Usage:
     --actTable="dop_test" --actName="moa_quant"
 
 """
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbInfo, DbUtils
-from rdkit.ML.Data import DataUtils
-from rdkit.ML.Cluster import Clusters
-from rdkit.ML.Cluster import Murtagh
-import sys
-from rdkit.six.moves import cPickle
-from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
-from rdkit import DataStructs
+from __future__ import print_function
+
 import numpy
+
+from rdkit import DataStructs
+from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
+from rdkit.ML.Cluster import Murtagh
+from rdkit.six.moves import cPickle
+
+# from rdkit.Dbase.DbConnection import DbConnect
+# from rdkit.Dbase import DbInfo, DbUtils
+# from rdkit.ML.Data import DataUtils
+# from rdkit.ML.Cluster import Clusters
+# import sys
+
 _cvsVersion = "$Id$"
 idx1 = _cvsVersion.find(':') + 1
 idx2 = _cvsVersion.rfind('$')
@@ -40,10 +44,10 @@ error = FingerprintMols.error
 def GetDistanceMatrix(data, metric, isSimilarity=1):
   """ data should be a list of tuples with fingerprints in position 1
    (the rest of the elements of the tuple are not important)
-   
+
     Returns the symmetric distance matrix
     (see ML.Cluster.Resemblance for layout documentation)
-    
+
   """
   nPts = len(data)
   res = numpy.zeros((nPts * (nPts - 1) / 2), numpy.float)
@@ -127,22 +131,22 @@ Usage: ClusterMols.py [args] <fName>
   If <fName> is provided and no tableName is specified (see below),
   data will be read from the text file <fName>.  Text files delimited
   with either commas (extension .csv) or tabs (extension .txt) are
-  supported. 
+  supported.
 
   Command line arguments are:
-      
+
     - -d _dbName_: set the name of the database from which
       to pull input fingerprint information.
 
-    - -t _tableName_: set the name of the database table 
+    - -t _tableName_: set the name of the database table
       from which to pull input fingerprint information
 
     - --idName=val: sets the name of the id column in the input
       database.  Default is *ID*.
-      
+
     - -o _outFileName_:  name of the output file (output will
       be a pickle (.pkl) file with the cluster tree)
-      
+
     - --actTable=val: name of table containing activity values
      (used to color points in the cluster tree).
 
@@ -172,7 +176,7 @@ Usage: ClusterMols.py [args] <fName>
 
     - --maxPath=val:  maximum path length to be included in
       fragment-based fingerprints. Default is *7*.
-      
+
     - --nBitsPerHash: number of bits to be set in the output
       fingerprint for each fragment. Default is *4*.
 
@@ -181,8 +185,8 @@ Usage: ClusterMols.py [args] <fName>
 
     - -V: include valence information in the fingerprints
       Default is *false*.
-      
-    - -H: include Hs in the fingerprint 
+
+    - -H: include Hs in the fingerprint
       Default is *false*.
 
     - --useMACCS: use the public MACCS keys to do the fingerprinting

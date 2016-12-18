@@ -12,6 +12,7 @@
 
 """
 import unittest
+
 from rdkit import Chem
 from rdkit import DataStructs
 
@@ -23,7 +24,7 @@ def feq(v1, v2, tol=1e-4):
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
+    # print '\n%s: '%self.shortDescription(),
     pass
 
   def test1(self):
@@ -46,11 +47,11 @@ class TestCase(unittest.TestCase):
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
       fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 0)
-      obs = fp1.GetOnBits()
+      _ = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
         fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, 0)
-        v1, v2 = DataStructs.OnBitProjSimilarity(fp2, fp1)
+        v1, _ = DataStructs.OnBitProjSimilarity(fp2, fp1)
         assert feq(v1, 1.0000), 'substruct %s not properly contained in %s' % (match, smi)
 
   def test5(self):
@@ -61,11 +62,11 @@ class TestCase(unittest.TestCase):
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
       fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 1)
-      obs = fp1.GetOnBits()
+      _ = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
         fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, 1)
-        v1, v2 = DataStructs.OnBitProjSimilarity(fp2, fp1)
+        v1, _ = DataStructs.OnBitProjSimilarity(fp2, fp1)
         assert feq(v1, 1.0000), 'substruct %s not properly contained in %s' % (match, smi)
 
   def test6(self):
