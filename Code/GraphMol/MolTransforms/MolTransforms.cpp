@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -58,37 +57,54 @@ RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs) {
   res /= nAtms;
   return res;
 }
+namespace {
+void computeCovarianceTerms(const Conformer &conf,
+  const RDGeom::Point3D &center,
+  double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
+  bool normalize, bool ignoreHs,
+  const std::vector<double> *weights ){
+    PRECONDITION(!weights || weights->size()>=conf.getNumAtoms(), "bad weights vector");
+
+    xx = xy = xz = yy = yz = zz = 0.0;
+    const ROMol &mol = conf.getOwningMol();
+    double wSum = 0.0;
+    for (ROMol::ConstAtomIterator cai = mol.beginAtoms();
+        cai != mol.endAtoms(); cai++) {
+      if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+        continue;
+      }
+      RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+      loc -= center;
+      if(weights) {
+        double w = (*weights)[(*cai)->getIdx()];
+        wSum += w;
+        loc *= w;
+      } else {
+        wSum+=1.0;
+      }
+      xx += loc.x * loc.x;
+      xy += loc.x * loc.y;
+      xz += loc.x * loc.z;
+      yy += loc.y * loc.y;
+      yz += loc.y * loc.z;
+      zz += loc.z * loc.z;
+
+    }
+    if (normalize) {
+      xx /= wSum;
+      xy /= wSum;
+      xz /= wSum;
+      yy /= wSum;
+      yz /= wSum;
+      zz /= wSum;
+    }
+}
 
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
-  xx = xy = xz = yy = yz = zz = 0.0;
-  const ROMol &mol = conf.getOwningMol();
-  ROMol::ConstAtomIterator cai;
-  unsigned int nAtms = 0;
-  for (cai = mol.beginAtoms(); cai != mol.endAtoms(); cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
-      continue;
-    }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
-    loc -= center;
-    xx += loc.x * loc.x;
-    xy += loc.x * loc.y;
-    xz += loc.x * loc.z;
-    yy += loc.y * loc.y;
-    yz += loc.y * loc.z;
-    zz += loc.z * loc.z;
-    nAtms++;
-  }
-  if (normalize) {
-    xx /= nAtms;
-    xy /= nAtms;
-    xz /= nAtms;
-    yy /= nAtms;
-    yz /= nAtms;
-    zz /= nAtms;
-  }
+  computeCovarianceTerms(conf,center,xx,xy,xz,yy,yz,zz,normalize,ignoreHs,NULL);
   RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);
@@ -98,6 +114,68 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   res->setVal(2, 2, zz);
   return res;
 }
+}
+#ifdef RDK_HAS_EIGEN3
+#include <Eigen/Dense>
+
+bool computePrincipalAxesAndMoments(
+    const RDKit::Conformer &conf,
+    Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments,
+    bool ignoreHs,
+    bool force,
+    const std::vector<double> *weights){
+  PRECONDITION((!weights || weights->size()>=conf.getNumAtoms()),"bad weights vector");
+  const char *axesPropName = ignoreHs ? "_principalAxes_noH" : "_principalAxes";
+  const char *momentsPropName = ignoreHs ? "_principalMoments_noH" : "_principalMoments";
+  if(!weights && !force &&
+      conf.getOwningMol().hasProp(axesPropName) &&
+      conf.getOwningMol().hasProp(momentsPropName) ){
+    conf.getOwningMol().getProp(axesPropName,axes);
+    conf.getOwningMol().getProp(momentsPropName,moments);
+    return true;
+  }
+  const ROMol &mol=conf.getOwningMol();
+  RDGeom::Point3D origin(0,0,0);
+  double wSum=0.0;
+  for(unsigned int i=0;i<conf.getNumAtoms();++i){
+    if(ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum()==1) continue;
+    double w=1.0;
+    if(weights){
+      w=(*weights)[i];
+    }
+    wSum+=w;
+    origin+=conf.getAtomPos(i)*w;
+  }
+  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
+  origin /= wSum;
+
+  double sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ;
+  computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
+      true,ignoreHs,weights);
+
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ,
+    sumXY, sumYY, sumYZ,
+    sumXZ, sumYZ, sumZZ;
+  // std::cerr<<"  matrix: "<<mat<<std::endl;
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+  if(eigensolver.info()!=Eigen::Success){
+    BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
+    return false;
+  }
+
+  axes = eigensolver.eigenvectors();
+  moments = eigensolver.eigenvalues();
+  if(!weights) {
+    conf.getOwningMol().setProp(axesPropName,axes, true);
+    conf.getOwningMol().setProp(momentsPropName,moments, true);
+  }
+  return true;
+}
+#endif
+
+
 
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,

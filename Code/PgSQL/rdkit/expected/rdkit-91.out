@@ -789,19 +789,19 @@ select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustD
  t
 (1 row)
 
-select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINATOMS"}');
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINS"}');
  ?column? 
 ----------
  t
 (1 row)
 
-select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS"}');
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS"}');
  ?column? 
 ----------
  f
 (1 row)
 
-select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS|IGNORECHAINATOMS"}');
+select 'C1CC1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS|IGNORECHAINS"}');
  ?column? 
 ----------
  t
@@ -825,19 +825,19 @@ select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adju
  t
 (1 row)
 
-select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINATOMS"}');
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORECHAINS"}');
  ?column? 
 ----------
  f
 (1 row)
 
-select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS"}');
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS"}');
  ?column? 
 ----------
  f
 (1 row)
 
-select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGATOMS|IGNORECHAINATOMS"}');
+select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS|IGNORECHAINS"}');
  ?column? 
 ----------
  t

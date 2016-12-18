@@ -3,8 +3,9 @@
 # All rights are reserved.
 #
 from __future__ import print_function
-from elementtree.ElementTree import ElementTree, Element, SubElement
+# from elementtree.ElementTree import ElementTree, Element, SubElement
 import time
+from xml.etree.ElementTree import ElementTree, Element, SubElement
 
 
 def _ConvertModelPerformance(perf, modelPerf):
@@ -42,7 +43,7 @@ def _ConvertModelPerformance(perf, modelPerf):
 
 
 def PackageToXml(pkg, summary="N/A", trainingDataId='N/A', dataPerformance=[],
-                 recommendedThreshold=None, classDescriptions=[], modelType=None,
+                 recommendedThreshold=None, classDescriptions=None, modelType=None,
                  modelOrganism=None):
   """ generates XML for a package that follows the RD_Model.dtd
 
@@ -50,7 +51,7 @@ def PackageToXml(pkg, summary="N/A", trainingDataId='N/A', dataPerformance=[],
     ( note, performance )
   where performance is of the form:
     ( accuracy, avgCorrectConf, avgIncorrectConf, confusionMatrix, thresh, avgSkipConf, nSkipped )
-    the last four elements are optional  
+    the last four elements are optional
 
   """
   head = Element("RDModelInfo")
@@ -122,14 +123,13 @@ def PackageToXml(pkg, summary="N/A", trainingDataId='N/A', dataPerformance=[],
   elem.text = str(tm[2])
   note = SubElement(revision, "RevisionNote")
   note.text = "Created"
-
   return ElementTree(head)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   import sys
-  from rdkit.six.moves import cPickle
-  from cStringIO import StringIO
+  from rdkit.six.moves import cPickle  # @UnresolvedImport
+  from rdkit.six import StringIO
   pkg = cPickle.load(open(sys.argv[1], 'rb'))
   perf = (.80, .95, .70, [[4, 1], [1, 4]])
   tree = PackageToXml(pkg, dataPerformance=[('training data performance', perf)])

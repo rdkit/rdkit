@@ -54,6 +54,15 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
   return res;
 }
 
+int EmbedMolecule2(ROMol &mol, DGeomHelpers::EmbedParameters &params) {
+  int res;
+  {
+    NOGIL gil;
+    res = DGeomHelpers::EmbedMolecule(mol, params);
+  }
+  return res;
+}
+
 INT_VECT EmbedMultipleConfs(
     ROMol &mol, unsigned int numConfs, unsigned int maxAttempts, int seed,
     bool clearConfs, bool useRandomCoords, double boxSizeMult, bool randNegEig,
@@ -85,6 +94,16 @@ INT_VECT EmbedMultipleConfs(
   return res;
 }
 
+INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
+                             DGeomHelpers::EmbedParameters &params) {
+  INT_VECT res;
+  {
+    NOGIL gil;
+    DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
+  }
+  return res;
+}
+
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
                              bool scaleVDW = false) {
   unsigned int nats = mol.getNumAtoms();
@@ -100,6 +119,15 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
          static_cast<void *>(mat->getData()), nats * nats * sizeof(double));
 
   return PyArray_Return(res);
+}
+DGeomHelpers::EmbedParameters *getETKDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDG);
+}
+DGeomHelpers::EmbedParameters *getKDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
+}
+DGeomHelpers::EmbedParameters *getETDG() {
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETDG);
 }
 }
 
@@ -135,7 +163,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - randNegEig : If the embedding yields a negative eigenvalue, \n\
                    pick coordinates that correspond \n\
                    to this component at random \n\
-    - numZeroFail : fail embedding is we have this more zero eigenvalues \n\
+    - numZeroFail : fail embedding if we have at least this many zero eigenvalues \n\
     - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
                  require some atoms to have fixed coordinates in the resulting \n\
                  conformation.\n\
@@ -189,7 +217,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - randNegEig : If the embedding yields a negative eigenvalue, \n\
                  pick coordinates that correspond \n\
                  to this component at random \n\
-  - numZeroFail : fail embedding is we have this more zero eigenvalues \n\
+  - numZeroFail : fail embedding if we have at least this many zero eigenvalues \n\
   - pruneRmsThresh : Retain only the conformations out of 'numConfs' \n\
                     after embedding that are at least \n\
                     this far apart from each other. \n\
@@ -230,6 +258,77 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useBasicKnowledge") = false,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
+
+  python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
+      "EmbedParameters", "Parameters controlling embedding")
+      .def_readwrite("maxIterations",
+                     &RDKit::DGeomHelpers::EmbedParameters::maxIterations,
+                     "maximum number of embedding attempts to use for a "
+                     "single conformation")
+      .def_readwrite(
+          "numThreads", &RDKit::DGeomHelpers::EmbedParameters::numThreads,
+          "number of threads to use when embedding multiple conformations")
+      .def_readwrite("randomSeed",
+                     &RDKit::DGeomHelpers::EmbedParameters::randomSeed,
+                     "seed for the random number generator")
+      .def_readwrite("clearConfs",
+                     &RDKit::DGeomHelpers::EmbedParameters::clearConfs,
+                     "clear all existing conformations on the molecule")
+      .def_readwrite("useRandomCoords",
+                     &RDKit::DGeomHelpers::EmbedParameters::useRandomCoords,
+                     "start the embedding from random coordinates instead of "
+                     "using eigenvalues of the distance matrix")
+      .def_readwrite(
+          "boxSizeMult", &RDKit::DGeomHelpers::EmbedParameters::boxSizeMult,
+          "determines the size of the box used for random coordinates")
+      .def_readwrite("randNegEig",
+                     &RDKit::DGeomHelpers::EmbedParameters::randNegEig,
+                     "if the embedding yields a negative eigenvalue, pick "
+                     "coordinates that correspond to this component at random")
+      .def_readwrite(
+          "numZeroFail", &RDKit::DGeomHelpers::EmbedParameters::numZeroFail,
+          "fail embedding if we have at least this many zero eigenvalues")
+      .def_readwrite("optimizerForceTol",
+                     &RDKit::DGeomHelpers::EmbedParameters::optimizerForceTol,
+                     "the tolerance to be used during the distance-geometry "
+                     "force field minimization")
+      .def_readwrite(
+          "ignoreSmoothingFailures",
+          &RDKit::DGeomHelpers::EmbedParameters::ignoreSmoothingFailures,
+          "try and embed the molecule if if triangle smoothing of "
+          "the bounds matrix fails")
+      .def_readwrite("enforceChirality",
+                     &RDKit::DGeomHelpers::EmbedParameters::enforceChirality,
+                     "enforce correct chirilaty if chiral centers are present")
+      .def_readwrite(
+          "useExpTorsionAnglePrefs",
+          &RDKit::DGeomHelpers::EmbedParameters::useExpTorsionAnglePrefs,
+          "impose experimental torsion angle preferences")
+      .def_readwrite("useBasicKnowledge",
+                     &RDKit::DGeomHelpers::EmbedParameters::useBasicKnowledge,
+                     "impose basic-knowledge constraints such as flat rings")
+      .def_readwrite("verbose", &RDKit::DGeomHelpers::EmbedParameters::verbose,
+                     "be verbose about configuration")
+      .def_readwrite("pruneRmsThresh",
+                     &RDKit::DGeomHelpers::EmbedParameters::pruneRmsThresh,
+                     "used to filter multiple conformations: keep only "
+                     "conformations that are at least this far apart from each "
+                     "other");
+  python::def(
+      "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
+      (python::arg("mol"), python::arg("numConfs"), python::arg("params")),
+      docString.c_str());
+  python::def("EmbedMolecule", RDKit::EmbedMolecule2,
+              (python::arg("mol"), python::arg("params")), docString.c_str());
+  python::def("ETKDG", RDKit::getETKDG,
+              "Returns an EmbedParameters object for the ETKDG method.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("ETDG", RDKit::getETDG,
+              "Returns an EmbedParameters object for the ETDG method.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("KDG", RDKit::getKDG,
+              "Returns an EmbedParameters object for the KDG method.",
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Returns the distance bounds matrix for a molecule\n\

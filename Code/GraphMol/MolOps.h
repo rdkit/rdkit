@@ -243,13 +243,14 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
-  ADJUST_IGNORECHAINATOMS = 0x1,
-  ADJUST_IGNORERINGATOMS = 0x4,
+  ADJUST_IGNORECHAINS = 0x1,
+  ADJUST_IGNORERINGS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
+
 struct AdjustQueryParameters {
   bool adjustDegree; /**< add degree queries */
   boost::uint32_t adjustDegreeFlags;
@@ -259,14 +260,22 @@ struct AdjustQueryParameters {
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
   bool aromatizeIfPossible;
-  
+  bool makeBondsGeneric; /**< convert bonds to generic queries (any bonds) */
+  boost::uint32_t makeBondsGenericFlags;
+  bool makeAtomsGeneric; /**< convert atoms to generic queries (any atoms) */
+  boost::uint32_t makeAtomsGenericFlags;
+
   AdjustQueryParameters()
       : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         makeDummiesQueries(true),
-        aromatizeIfPossible(true) {}
+        aromatizeIfPossible(true),
+        makeBondsGeneric(false),
+        makeBondsGenericFlags(ADJUST_IGNORENONE),
+        makeAtomsGeneric(false),
+        makeAtomsGenericFlags(ADJUST_IGNORENONE) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
@@ -807,19 +816,26 @@ void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
 void removeStereochemistry(ROMol &mol);
 
 //! \brief finds bonds that could be cis/trans in a molecule and mark them as
-//!  Bond::STEREONONE
+//!  Bond::STEREOANY.
 /*!
   \param mol     the molecule of interest
   \param cleanIt toggles removal of stereo flags from double bonds that can
                  not have stereochemistry
 
-  This function is usefuly in two situations
+  This function finds any double bonds that can potentially be part of
+  a cis/trans system. No attempt is made here to mark them cis or
+  trans. No attempt is made to detect double bond stereo in ring systems.
+
+  This function is useful in the following situations:
     - when parsing a mol file; for the bonds marked here, coordinate
-  informations
-      on the neighbors can be used to indentify cis or trans states
+      information on the neighbors can be used to indentify cis or trans states
     - when writing a mol file; bonds that can be cis/trans but not marked as
-  either
-      need to be specially marked in the mol file
+      either need to be specially marked in the mol file
+    - finding double bonds with unspecified stereochemistry so they
+      can be enumerated for downstream 3D tools
+
+  The CIPranks on the neighboring atoms are checked in this function. The
+  _CIPCode property if set to any on the double bond.
 */
 void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false);
 //@}

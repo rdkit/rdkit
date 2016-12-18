@@ -103,7 +103,7 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
           # first do lines down to the next level:
           if levelLen != maxLevel:
             for neighbor in adjList[id]:
-              if drawLocs.has_key(neighbor):
+              if neighbor in drawLocs:
                 p2 = drawLocs[neighbor][0]
                 canvas.drawLine(pos[0], pos[1], p2[0], p2[1], visOpts.lineColor, visOpts.lineWidth)
           drawLocs[id] = tuple(pos), nodeRad

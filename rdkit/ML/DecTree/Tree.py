@@ -5,9 +5,8 @@
 
 """
 from __future__ import print_function
-import numpy
-from rdkit.six.moves import cPickle
-from rdkit.six import cmp
+
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 # FIX: the TreeNode class has not been updated to new-style classes
@@ -22,7 +21,7 @@ class TreeNode:
 
   def __init__(self, parent, name, label=None, data=None, level=0, isTerminal=0):
     """ constructor
-    
+
      **Arguments**
 
        - parent: the parent of this node in the tree
@@ -105,7 +104,7 @@ class TreeNode:
       **Returns*
 
         the _TreeNode_ which is constructed
-        
+
     """
     child = TreeNode(self, name, label, data, level=self.level + 1, isTerminal=isTerminal)
     self.children.append(child)
@@ -127,7 +126,7 @@ class TreeNode:
       **Arguments**
 
         - index: an integer
-        
+
         - child: a TreeNode
 
     """
@@ -145,7 +144,7 @@ class TreeNode:
     """
     for child in self.children:
       child.Destroy()
-    self.children = None
+    self.children = []
     # clean up circular references
     self.parent = None
 
@@ -174,13 +173,13 @@ class TreeNode:
     self.data = data
 
   def GetTerminal(self):
-    """ Returns whether or not this node is terminal 
+    """ Returns whether or not this node is terminal
 
     """
     return self.terminalNode
 
   def SetTerminal(self, isTerminal):
-    """ Sets whether or not this node is terminal 
+    """ Sets whether or not this node is terminal
 
     """
     self.terminalNode = isTerminal
@@ -233,7 +232,7 @@ class TreeNode:
       **Note**
 
         this works recursively
-      
+
     """
     if showData:
       print('%s%s: %s' % ('  ' * level, self.name, str(self.data)))
@@ -256,7 +255,7 @@ class TreeNode:
       **Note**
 
         this works recursively
-    
+
     """
     here = '%s%s\n' % ('  ' * self.level, self.name)
     for child in self.children:
@@ -309,10 +308,10 @@ class TreeNode:
     return not self < other and not other < self
 
 
-if __name__ == '__main__':
+def _exampleCode():
   tree = TreeNode(None, 'root')
   for i in range(3):
-    child = tree.AddChild('child %d' % i)
+    tree.AddChild('child %d' % i)
   print(tree)
   tree.GetChildren()[1].AddChild('grandchild')
   tree.GetChildren()[1].AddChild('grandchild2')
@@ -335,3 +334,7 @@ if __name__ == '__main__':
   tree2.GetChildren()[1].AddChild('grandchild4')
   print('tree==tree2', tree == tree2)
   tree.Destroy()
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

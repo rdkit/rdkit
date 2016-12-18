@@ -177,6 +177,11 @@ RETURNS mol
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION mol_to_svg(mol, cstring default '', integer default 250, integer default 200, cstring default '')
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 
 -- mol conversion functions
 
@@ -1530,7 +1535,6 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STABLE STRICT;
 
-
 -- Operator classes for gin
 
 CREATE OPERATOR CLASS gin_bfp_ops
@@ -1542,7 +1546,7 @@ AS
     FUNCTION    2   gin_bfp_extract_value(bfp, internal),
     FUNCTION    3   gin_bfp_extract_query(bfp, internal, int2, internal, internal, internal, internal),
     FUNCTION    4   gin_bfp_consistent(internal, int2, bfp, int4, internal, internal, internal, internal),
-    FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),
+    @RDKIT_GIN_BFP_TRICONSISTENT@
     STORAGE     int4;
 
 --

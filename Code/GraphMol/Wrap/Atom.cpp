@@ -194,7 +194,7 @@ struct atom_wrapper {
              "Returns the total number of implicit Hs on the atom.\n")
 
         .def("GetExplicitValence", &Atom::getExplicitValence,
-             "Returns the number of explicit Hs on the atom.\n")
+             "Returns the explicit valence of the atom.\n")
         .def("GetImplicitValence", &Atom::getImplicitValence,
              "Returns the number of implicit Hs on the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence,

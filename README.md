@@ -36,6 +36,8 @@
   * [2012 UGM](http://www.rdkit.org/UGM/2012/)
   * [2013 UGM](https://github.com/rdkit/UGM_2013)
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
+  * [2015 UGM](https://github.com/rdkit/UGM_2015)
+  * [2016 UGM](https://github.com/rdkit/UGM_2016)
 
 ## Documentation
 Available on the [RDKit page](http://www.rdkit.org/docs/index.html)

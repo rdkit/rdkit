@@ -14,7 +14,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-from rdkit.six.moves import cPickle
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 def feq(n1, n2, tol=1e-4):
@@ -138,33 +138,27 @@ class TestCase(unittest.TestCase):
               (15, 'CC=C<-O>C', 3, (34, )),
               (16, 'C=CC<-O>', 2, (34, )), ]
     for i in range(len(descrs)):
-      id, d, order, ids = descrs[i]
-      descr = self.fragCat.GetBitDescription(id)
-      assert descr == d, '%d: %s != %s' % (id, descr, d)
-      assert self.fragCat.GetBitOrder(id) == order
-      assert tuple(self.fragCat.GetBitFuncGroupIds(id)) == \
-             ids,'%d: %s != %s'%(id,
-                                 str(self.fragCat.GetBitFuncGroupIds(id)),
-                                 str(ids))
+      ID, d, order, ids = descrs[i]
+      descr = self.fragCat.GetBitDescription(ID)
+      assert descr == d, '%d: %s != %s' % (ID, descr, d)
+      assert self.fragCat.GetBitOrder(ID) == order
+      assert tuple(self.fragCat.GetBitFuncGroupIds(ID)) == ids, '%d: %s != %s' % (
+        ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids))
 
   def _test5MoreComplex(self):
     lastIdx = 0
     ranges = {}
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList), ',', 0, -1, 0)
-    i = 0
-    for mol in suppl:
+    for i, mol in enumerate(suppl):
       nEnt = self.fgen.AddFragsFromMol(mol, self.fragCat)
       ranges[i] = range(lastIdx, lastIdx + nEnt)
       lastIdx += nEnt
-      i += 1
     # now make sure that those bits are contained in the signatures:
     fpgen = FragmentCatalog.FragFPGenerator()
-    i = 0
-    for mol in suppl:
+    for i, mol in enumerate(suppl):
       fp = fpgen.GetFPForMol(mol, self.fragCat)
       for bit in ranges[i]:
         assert fp[bit], '%s: %s' % (Chem.MolToSmiles(mol), str(bit))
-      i += 1
 
   def test6Builder(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
@@ -197,8 +191,8 @@ class TestCase(unittest.TestCase):
     assert cat.GetFPLength() == 21
 
     # new InfoGain ranking:
-    bitInfo, fps = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
-                                                  reportFreq=20, biasList=(1, ))
+    bitInfo, _ = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
+                                                reportFreq=20, biasList=(1, ))
     entry = bitInfo[0]
     assert int(entry[0]) == 0
     assert cat.GetBitDescription(int(entry[0])) == 'C<-O>C'
@@ -216,8 +210,8 @@ class TestCase(unittest.TestCase):
     assert feq(entry[1], 0.0560)
 
     # standard InfoGain ranking:
-    bitInfo, fps = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
-                                                  reportFreq=20)
+    bitInfo, _ = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
+                                                reportFreq=20)
     entry = bitInfo[0]
     assert int(entry[0]) == 0
     assert cat.GetBitDescription(int(entry[0])) == 'C<-O>C'

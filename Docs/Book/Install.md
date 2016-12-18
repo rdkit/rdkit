@@ -1,6 +1,6 @@
 # Installation
 
-Below a number of installation recipies is presented, with varying degree of complexity.
+Below a number of installation recipes is presented, with varying degree of complexity.
 
 ## Cross-platform under anaconda python (fastest install)
 
@@ -16,7 +16,7 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
 
-  $ conda create -c https://conda.anaconda.org/rdkit -n my-rdkit-env rdkit
+  $ conda create -c rdkit -n my-rdkit-env rdkit
 
 Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell:
 
@@ -33,7 +33,45 @@ Windows users will use a slightly different command:
 
 ### How to build from source with Conda
 
-For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
+For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
+
+#### macOS 10.12 (Sierra): Python 3 environment
+
+The following commands will create a development environment for macOS Sierra and Python 3. Download
+Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
+following commands:
+   
+	bash Miniconda3-latest-MacOSX-x86_64.sh
+    conda install numpy matplotlib
+    conda install cmake
+    conda install --channel rdkit boost
+    conda install --channel rdkit nox
+    conda install --channel rdkit cairo
+    conda install pillow
+    conda install anaconda
+    conda install --channel conda-forge eigen
+    conda install --channel conda-forge pkg-config
+
+Optionally, add the following packages to your environment as useful development tools. 
+
+	pip install yapf==0.11.1
+	pip install coverage==3.7.1
+
+Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set in the
+cmake command.
+
+	PYROOT=<path to miniconda3>
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m  \
+      -DRDK_BUILD_AVALON_SUPPORT=ON \
+      -DRDK_BUILD_CAIRO_SUPPORT=ON \
+      -DRDK_BUILD_INCHI_SUPPORT=ON \
+	  ..
+Once "make" and "make install" completed successfully, use the following command to run the tests:
+
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+
+This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection) 
+introduced in more recent macOS versions.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
@@ -41,7 +79,7 @@ Due to the conda python distribution being a different version to the system pyt
 
 With your environment activated, this is done simply by:
 
-    conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
+    conda install -c rdkit rdkit-postgresql
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
@@ -78,7 +116,8 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 
 #### Fedora, CentOS, and RHEL
 
-Gianluca Sforna creates binary RPMs that can be found here: [http://giallu.fedorapeople.org/rdkit-20XX.XX/](http://giallu.fedorapeople.org/rdkit-20XX.XX/)
+Thanks to Gianluca Sforna's work, binary RPMs for the RDKit are now part of the official Fedora repositories:
+https://admin.fedoraproject.org/pkgdb/package/rpms/rdkit/
 
 #### OS X
 
@@ -386,8 +425,8 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 
 ## License
 
-This document is copyright (C) 2012-2015 by Greg Landrum
+This document is copyright (C) 2012-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."

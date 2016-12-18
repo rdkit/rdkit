@@ -89,7 +89,7 @@ class RLCanvas(Canvas):
       face = 'serif'
     else:
       face = font.face.lower()
-    while pidPDF.font_face_map.has_key(face):
+    while face in pidPDF.font_face_map:
       face = pidPDF.font_face_map[face]
     #step 2, - resolve bold/italic to get the right PS font name
     psname = pidPDF.ps_font_map[(face, font.bold, font.italic)]

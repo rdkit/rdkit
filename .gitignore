@@ -11,9 +11,14 @@ __pycache__/
 *.so
 *.pyc
 /lib/
+*.pyd
+
+#- autosaves and backups
+*~
 
 #- Files created during build phase
 /build*/
+/Docs/Book/_build*/
 
 /Code/RDGeneral/versions.cpp
 
@@ -66,4 +71,3 @@ __pycache__/
 
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
-

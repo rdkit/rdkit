@@ -1,33 +1,338 @@
-# Release_2016.03.2
+# Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
+## Important
+- The adjustQueryParameters structure has been rewritten. If you were using
+  this in your code, you'll need to update your code.
+
 ## Acknowledgements:
-Brian Kelley, John May, Roger Sayle, Paolo Tosco, Riccardo Vianello
+Brian Cole, Piotr Dabrowski, Jan Domanski, Peter Gedeck, Richard Hall, Brian
+Kelley, Joos Kiener, 'maddogcz', John Mayfield, 'michalsta', Michal Nowotka,
+'philopon', Nico Pulver, Sereina Riniker, Stephen Roughley, Roger Sayle, Nadine
+Schneider, Gianluca Sforna, Peter Shenkin, Paolo Tosco, David Turbert, Riccardo
+Vianello, Maciek Wojcikowski  
+
+## Highlights:
+ - New AdjustQueryProperties() (adjustQueryProperties() in C++) for fine-tuning substructure queries.
+ - ReactionEnum functionality adds significant new capabilities for doing library enumeration
+ - Similarity searches with the PostgreSQL cartridge are substantially faster
+ - New 3D descriptors (requires Eigen3 if you are building them yourself)
+
+## New Features and Enhancements:
+  - Trajectory/Snapshot objects
+ (github pull #863 from ptosco)
+  - Adds Avalon fingerprints to default set
+ (github pull #871 from bp-kelley)
+  - Adds the default index to the building block templates
+ (github pull #873 from bp-kelley)
+  - Pandas: Allow reading just the properties from SDF file
+ (github pull #883 from mwojcikowski)
+  - Dev/filtercatalog functional groups
+ (github pull #885 from bp-kelley)
+  - Dev/preprocessrxn cpp
+ (github pull #892 from bp-kelley)
+  - Rollup of warning squashing (with some tests diagnostics thrown in)
+ (github pull #895 from bp-kelley)
+  - Adds RDAny (smaller generic holder) Updates all used dictionaries
+ (github pull #896 from bp-kelley)
+  - expose FPS functions to SWIG
+ (github pull #897 from greglandrum)
+  - Add SaveFile method to the PyMol wrapper
+ (github pull #898 from greglandrum)
+  - Add a MultiFPBReader class
+ (github pull #909 from greglandrum)
+  - Improved Python doc strings for Trajectory/Snapshot objects
+ (github pull #912 from ptosco)
+  - Added support for building the gzip'd stream test
+ (github pull #914 from ptosco)
+  - Improved Trajectory Python doc strings
+ (github pull #915 from ptosco)
+  - improve error reporting for kekulization failures
+ (github pull #919 from greglandrum)
+  - Feat/github934
+ (github pull #939 from greglandrum)
+  - Add support for a simplified aromaticity model.
+ (github pull #942 from greglandrum)
+  - Dev/moldescriptors callables
+ (github pull #944 from bp-kelley)
+  - Dev/cleanup warnings
+ (github pull #948 from greglandrum)
+  - Modifications to enable building with MinGW compilers
+ (github pull #960 from ptosco)
+  - Made DistGeomHelpers test robust against small 3D coordinate variations
+ (github pull #961 from ptosco)
+  - Adds aromatization and reaction options to AdjustQuery
+ (github pull #965 from bp-kelley)
+  - Improved planarity for ETKDG
+ (github pull #967 from sriniker)
+  - Fixes built-in popcount in PgSQL cartridge on Windows
+ (github pull #978 from ptosco)
+  - A variety of drawing-related changes
+ (github pull #986 from greglandrum)
+  - Get pango 2D depiction to work with cairocffi
+ (github pull #998 from ptosco)
+  - Adds Atom atom map and rlabel apis
+ (github pull #1004 from bp-kelley)
+  - Dev/chemtransforms chirality
+ (github pull #1006 from bp-kelley)
+  - Added the option to label deuterium and tritium as D and T
+ (github pull #1011 from ptosco)
+  - Adds replaceCore function that takes a matchVect
+ (github pull #1013 from bp-kelley)
+  - Add an initial version of wavy bonds
+ (github pull #1014 from greglandrum)
+  - remove a compiler warning
+ (github pull #1019 from greglandrum)
+  - Make the Contrib directory available in RDConfig
+ (github pull #1024 from NadineSchneider)
+  - Adds some additional canned atom and bond query definitions
+ (github pull #1047 from greglandrum)
+  - Draw crossed bonds
+ (github pull #1052 from greglandrum)
+  - Alex/struct checker apr15
+ (github pull #1054 from bp-kelley)
+  - MolDraw2D: allow the amount of padding around atom labels to be adjusted.
+ (github issue #1056 from greglandrum)
+  - Add multiple molecule drawing to the C++ interface
+ (github pull #1059 from greglandrum)
+  - add pickle support to FilterCatalog
+ (github pull #1063 from greglandrum)
+  - Issue #1066: Improved .gitignore file
+ (github pull #1068 from gedeck)
+  - Cleanup of Scaffolds Python code
+ (github pull #1069 from gedeck)
+  - Consistent formatting of Python code
+ (github issue #1071 from gedeck)
+  - Improved test coverage of Python code
+ (github pull #1081 from gedeck)
+  - Improved test coverage of rdkit.DataStructs
+ (github pull #1083 from gedeck)
+  - Add some 3D molecular descriptors (requires Eigen3)
+ (github pull #1084 from greglandrum)
+  - Conformer GetPos returns a numpy array rather than a tuple of tuples
+ (github pull #1087 from jandom)
+  - make the 3D descriptors available in the Descriptors module
+ (github pull #1097 from greglandrum)
+  - Documentation update.
+ (github pull #1100 from greglandrum)
+  - Provide SVG output from the cartridge
+ (github pull #1109 from greglandrum)
+  - Allow the output of ROMol::debugMol() to show up in jupyter
+ (github pull #1110 from greglandrum)
+  - Dev/reaction enumeration
+ (github pull #1111 from bp-kelley)
+  - yapf formatting of recent changes to Python code in rdkit and Code
+ (github pull #1120 from gedeck)
+  - Add a parameters structure for controlling the embedding options.
+ (github pull #1121 from greglandrum)
+  - add more detailed error reporting when python tests fail in TestRunner.py
+ (github pull #1122 from greglandrum)
+  - add support for a default constructor to the python-exposed RWMol class
+ (github pull #1129 from greglandrum)
+  - The RunStruchk function is not exposed in pyAvalonTools
+ (github issue #1130 from pulveni1)
+  - SSSR performance improvements to support larger systems
+ (github pull #1131 from coleb)
+  - Script PythonFormat.py will test the RDkit python code for conformance with the agreed format using yapf
+ (github pull #1133 from gedeck)
+  - support additional trans-uranic elements
+ (github pull #1134 from greglandrum)
+  - Expanded sequence support
+ (github pull #1140 from greglandrum)
+  - add UGM link to documentation
+ (github pull #1142 from David-Turbert)
+  - Remove iPythonConsole configuration for normal Draw tests
+ (github pull #1146 from gedeck)
+  - Wrap DetectBondStereoChemistry in python
+ (github pull #1156 from coleb)
+
+## New Database Cartridge Features:
+  - Provide SVG output from the cartridge
+ (github pull #1109 from greglandrum)
+  - Add cartridge support for adjustQueryProperties()
+ (github pull #949 from greglandrum)
+ - refactoring of the postgresql cartridge
+(github pull #992 from rvianello)
+
+## New Java Wrapper Features:
+  - Expose filtermatch to swig
+ (github pull #1117 from bp-kelley)
+  - adjustQueryProperties()
+  - Java wrappers for Trajectory/Snapshot objects
+  (github pull #977 from ptosco)
+  - Added getAlignmentTransform to ROMol.i to expose in Java SWIG wrapper
+ (github pull #1155 from sroughley)
 
 ## Bug Fixes:
+  - initialization of the PeriodicTable object should be made thread-safe
+ (github issue #381 from greglandrum)
+  - AssignAtomChiralTagsFromStructure() not recognizing chiral S
+ (github issue #607 from greglandrum)
   - Fixed a few typos in Code/PgSQL/rdkit/CMakeLists.txt
  (github pull #867 from ptosco)
+  - MergeQueryHs explicit H warning when no explicit Hs were actually used
+ (github issue #868 from bp-kelley)
   - Fixes regression in python api CalcNumRotatableBonds
  (github pull #870 from bp-kelley)
   - Single atoms setting radius 1 bits in Morgan fingerprints
  (github issue #874 from greglandrum)
   - Providing subImgSize argument to MolsToGridImage() causes drawing failure
  (github issue #876 from greglandrum)
+  - javadoc failure on CentOS 7
+ (github pull #878 from ptosco)
   - adjust cartridge tests after the fix for #874
  (github pull #884 from greglandrum)
+  - bugreport: invalid handling of negation of aromaticity when parsing SMARTS
+ (github issue #893 from michalsta)
   - Fixes depictor problem with empty fragments
  (github pull #894 from greglandrum)
-  - Fix building with g++ on Mac OS X
+  - Fix building with G++ on Mac OS X
  (github pull #900 from johnmay)
+  - linked additional libs to fix a build failure on Windows
+ (github pull #901 from ptosco)
+  - Rdkit 2016_03_1 generate SVG typo in Python bindings
+ (github issue #903 from maddogcz)
   - PAINS filters update fails when old Python is installed
  (github issue #904 from greglandrum)
   - rdMolDraw2D.PrepareMolForDrawing() should not default to forceCoords=True
  (github issue #906 from greglandrum)
+  - AddHs() using 3D coordinates with 2D conformations
+ (github issue #908 from greglandrum)
   - ugly coordinates generated for peptide chains
  (github issue #910 from greglandrum)
-  - Cartridge: makefile not using -O2 for C code
- (github issue #920 from rvianello)
+  - Cartridge: makefile not using -O2 for C code.
+ (github issue #920 from greglandrum)
+  - Removes incorrect setting of hasNonPodData
+ (github pull #923 from bp-kelley)
+  - cleanups of RDLog's tee behavior
+ (github pull #926 from greglandrum)
+  - initialize boost::once_flag properly
+ (github pull #927 from greglandrum)
+  - sys not imported in IPythonConsole.py
+ (github issue #928 from greglandrum)
+  - AddTee is now SetTee
+ (github pull #930 from bp-kelley)
+  - mistake in SVG generated for wedged bonds
+ (github issue #932 from greglandrum)
+  - PandasTools AttributeError with pandas-0.18.1
+ (github issue #933 from philopon)
+  - Jupyter Notebooks: Issue with PyMol.MolViewer on Windows
+ (github issue #936 from kienerj)
+  - Subshape module: Not Python 3 compatible
+ (github issue #937 from kienerj)
+  - property dictionaries leaking memory
+ (github issue #940 from greglandrum)
+  - Bug when removing stereo info?
+ (github pull #946 from mnowotka)
+  - Distorted aromatic rings from ETKDG
+ (github issue #952 from greglandrum)
+  - MolDraw2D: default color should not be cyan
+ (github issue #953 from greglandrum)
+  - GetPropNames() no longer working on Atoms or Bonds
+ (github issue #955 from greglandrum)
+  - Kekulization issues post successful smiles parsing
+ (github issue #962 from bp-kelley)
+  - Fixes includes for older boost/gcc
+ (github pull #966 from bp-kelley)
+  - ugly conformations can be generated for highly constrained ring systems
+ (github issue #971 from greglandrum)
+  - Cleanup bad conformations
+ (github pull #973 from greglandrum)
+  - Unnecessary warnings in rxn.validate()
+ (github issue #975 from greglandrum)
+  - Minor fix to Code/GraphMol/Wrap/testTrajectory.py
+ (github pull #979 from ptosco)
+  - prepareMolForDrawing(): Do not add Hs to some three-coordinate Cs
+ (github issue #982 from greglandrum)
+  - MolDraw2D: wedged bonds between chiral centers drawn improperly
+ (github issue #983 from greglandrum)
+  - Fix format-security GCC warning
+ (github pull #984 from giallu)
+  - MolDraw2D scaling problems
+ (github issue #985 from greglandrum)
+  - RIght-justified elements in RCSB SDF files can now be parsed
+ (github pull #994 from ptosco)
+  - Right-justified elements in RCSB SDF files raise an exception
+ (github issue #995 from ptosco)
+  - ChemReactions: Bugfix in copy constructor
+ (github pull #996 from NadineSchneider)
+  - PgSQL README typos
+ (github pull #997 from ptosco)
+  - Fixes rounding errors in test
+ (github pull #1001 from bp-kelley)
+  - Fixes middle-justified symbols in sd files, adds M_CHG tests
+ (github pull #1002 from bp-kelley)
+  - fix compatibility issues with postgres < 9.5 (#1000)
+ (github pull #1005 from rvianello)
+  - Fixes MMFF94 aromaticity perception and ChemicalForceFields.MMFFHasAllMoleculeParams()
+ (github pull #1007 from ptosco)
+  - fixes typo which breaks the PostgreSQL cartridge build on Windows
+ (github pull #1008 from ptosco)
+  - Fix Inchi being hardcoded into PostgreSQL
+ (github pull #1009 from ptosco)
+  - Support ETKDG from within the SWIG wrappers
+ (github pull #1010 from greglandrum)
+  - move definition of computedPropName to namespace RDKit::detail
+ (github issue #1017 from greglandrum)
+  - fix non-inchi build
+ (github pull #1018 from greglandrum)
+  - Fixes #1018
+ (github pull #1020 from ptosco)
+  - GetSSSR interrupts by segmentation fault
+ (github issue #1023 from PiotrDabr)
+  - FMCS fix for Windows DLLs
+ (github pull #1030 from ptosco)
+  - Cause ImportError from failed dlopen of the rdBase.so shared library to propagate.
+ (github pull #1032 from coleb)
+  - typos in MMPA hash code
+ (github issue #1044 from greglandrum)
+  - MolOps::cleanUp() being called by CTAB parser even when sanitization isn't on
+ (github issue #1049 from greglandrum)
+  - Bond::BondDir::EITHERDOUBLE not exposed to python
+ (github issue #1051 from greglandrum)
+  - add python3 compatibility
+ (github pull #1057 from greglandrum)
+  - doc updates from Dave Cosgrove
+ (github pull #1060 from greglandrum)
+  - Fix leak with renumberAtoms() in the SWIG wrappers
+ (github pull #1064 from greglandrum)
+  - Timings on Windows with Python 3
+ (github pull #1067 from ptosco)
+  - computeInitialCoords() should call the SSSR code before it calls assignStereochemistry()
+ (github issue #1073 from greglandrum)
+  - Remove duplicates doesn't work on first column in rdkit.Dbase.DbUtils.GetData
+ (github issue #1082 from gedeck)
+  - clear up a bunch of windows warnings
+ (github pull #1086 from greglandrum)
+  - MolsToGridImage barfs on '&' in labels, at least with useSVG=True
+ (github issue #1090 from shenkin)
+  - Fixes csharp build for 64 bit systems
+ (github pull #1098 from bp-kelley)
+  - Cartridge: some C++ functions returning pointers to local storage
+ (github issue #1106 from greglandrum)
+  - Check for doubles after other integer types when reporting properties
+ (github pull #1115 from bp-kelley)
+  - Replace has_key use in Python (#issue1042)
+ (github pull #1132 from gedeck)
+  - fix moldraw2d headers installation path
+ (github pull #1143 from giallu)
+  - Remove iPythonConsole configuration for normal Draw tests
+ (github pull #1146 from gedeck)
+  - Adds SWIGWIN definition in WIN32 if not 32bit
+ (github pull #1158 from bp-kelley)
+  - Fix/java win64 memoryleak
+ (github pull #1159 from bp-kelley)
 
+## Deprecated code (to be removed in a future release):
+  - rdkit.VLib python module
+
+## Removed code:
+
+## Contrib updates:
+  - added an implementation of the Gobbi Atom-Atom-Path (AAP) similarity
+ (github pull #1015 from Richard-Hall)
+
+## Other:
 
 # Release_2016.03.1
 (Changes relative to Release_2015.09.2)

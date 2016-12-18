@@ -3,9 +3,6 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import RDConfig
-from rdkit import six
-import sys, os, types
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
 
@@ -15,7 +12,7 @@ class SmartsFilter(FilterNode):
 
   There is a count associated with each pattern. Molecules are
   allowed to match the pattern up to this number of times.
-  
+
   Assumptions:
 
     - inputs are molecules
@@ -81,29 +78,27 @@ class SmartsFilter(FilterNode):
     self._patterns = tuple(targets)
 
   def filter(self, cmpd):
-    neg = self.Negate()
-    res = 0
-    #sys.stderr.write('\tFILTER: %s\n'%(Chem.MolToSmiles(cmpd)))
+    res = False
     for patt, count in self._patterns:
       ms = cmpd.GetSubstructMatches(patt)
       nMatches = len(ms)
       if nMatches >= count:
         # this query is an or, so we short circuit true:
-        res = 1
+        res = True
         break
     return res
 
 
-  #------------------------------------
-  #
-  #  doctest boilerplate
-  #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

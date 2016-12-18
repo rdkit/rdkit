@@ -2,11 +2,12 @@
 #  Copyright (C) 2003  greg Landrum and Rational Discovery LLC
 #
 """ """
+import os
 import unittest
-import copy
-from rdkit import RDConfig
+
 from rdkit.ML.DecTree import ID3, PruneTree, CrossValidate
-from rdkit.six.moves import cPickle
+from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 def feq(a, b, tol=1e-4):
@@ -19,14 +20,14 @@ class TreeTestCase(unittest.TestCase):
     pass
 
   def test1(self):
-    " testing pruning with known results "
-    oPts= [ \
-      [0,0,1,0],
-      [0,1,1,1],
-      [1,0,1,1],
-      [1,1,0,0],
-      [1,1,1,1],
-      ]
+    # " testing pruning with known results "
+    oPts = [
+      [0, 0, 1, 0],
+      [0, 1, 1, 1],
+      [1, 0, 1, 1],
+      [1, 1, 0, 0],
+      [1, 1, 1, 1],
+    ]
     tPts = oPts + [[0, 1, 1, 0], [0, 1, 1, 0]]
     tree = ID3.ID3Boot(oPts, attrs=range(3), nPossibleVals=[2] * 4)
     err, badEx = CrossValidate.CrossValidate(tree, oPts)
@@ -34,7 +35,12 @@ class TreeTestCase(unittest.TestCase):
     assert len(badEx) == 0, 'bad initial error'
 
     # prune with original data, shouldn't do anything
-    newTree, err = PruneTree.PruneTree(tree, [], oPts)
+    f = StringIO()
+    with redirect_stdout(f):
+      PruneTree._verbose = True
+      newTree, err = PruneTree.PruneTree(tree, [], oPts)
+      PruneTree._verbose = False
+    self.assertIn('Pruner', f.getvalue())
     assert newTree == tree, 'improper pruning'
 
     # prune with train data
@@ -42,6 +48,29 @@ class TreeTestCase(unittest.TestCase):
     assert newTree != tree, 'bad pruning'
     assert feq(err, 0.14286), 'bad error result'
 
+  def test_exampleCode(self):
+    f = StringIO()
+    with redirect_stdout(f):
+      try:
+        PruneTree._testRandom()
+        self.assertTrue(os.path.isfile('prune.pkl'))
+      finally:
+        if os.path.isfile('orig.pkl'):
+          os.remove('orig.pkl')
+        if os.path.isfile('prune.pkl'):
+          os.remove('prune.pkl')
+    self.assertIn('pruned error', f.getvalue())
 
-if __name__ == '__main__':
+    f = StringIO()
+    with redirect_stdout(f):
+      PruneTree._testSpecific()
+    self.assertIn('pruned holdout error', f.getvalue())
+
+    f = StringIO()
+    with redirect_stdout(f):
+      PruneTree._testChain()
+    self.assertIn('pruned holdout error', f.getvalue())
+
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

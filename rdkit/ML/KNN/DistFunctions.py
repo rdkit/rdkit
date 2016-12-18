@@ -61,16 +61,16 @@ def TanimotoDist(ex1, ex2, attrs):
     return 1.0
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

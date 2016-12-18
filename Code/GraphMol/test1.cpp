@@ -866,6 +866,16 @@ void test1() {
     BOOST_LOG(rdInfoLog) << " trying a replace " << endl;
     Atom *repA = new Atom(22);
     m.replaceAtom(newIdx, repA);
+    delete repA;
+    TEST_ASSERT(m.getAtomWithIdx(newIdx)->getAtomicNum() == 22);
+    Bond *nbnd = new Bond(Bond::DOUBLE);
+    TEST_ASSERT(m.getBondWithIdx(m.getNumBonds() - 1)->getBondType() ==
+                Bond::AROMATIC);
+    m.replaceBond(m.getNumBonds() - 1, nbnd);
+    m.debugMol(std::cerr);
+    TEST_ASSERT(m.getBondWithIdx(m.getNumBonds() - 1)->getBondType() ==
+                nbnd->getBondType());
+    delete nbnd;
   }
   {
     RWMol m;

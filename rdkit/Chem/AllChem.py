@@ -88,6 +88,47 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   return vol
 
 
+def GenerateDepictionMatching2DStructure(mol, reference, confId=-1, referencePattern=None,
+                                         acceptFailure=False, **kwargs):
+  """ Generates a depiction for a molecule where a piece of the molecule
+     is constrained to have the same coordinates as a reference.
+
+     This is useful for, for example, generating depictions of SAR data
+     sets so that the cores of the molecules are all oriented the same
+     way.
+
+  Arguments:
+    - mol:          the molecule to be aligned, this will come back
+                    with a single conformer.
+    - reference:    a molecule with the reference atoms to align to;
+                    this should have a depiction.
+    - confId:       (optional) the id of the reference conformation to use
+    - referencePattern:  (optional) an optional molecule to be used to
+                         generate the atom mapping between the molecule
+                         and the reference.
+    - acceptFailure: (optional) if True, standard depictions will be generated
+                     for molecules that don't have a substructure match to the
+                     reference; if False, a ValueError will be raised
+
+  """
+  if reference and referencePattern:
+    if not reference.GetNumAtoms(onlyExplicit=True) == referencePattern.GetNumAtoms(
+        onlyExplicit=True):
+      raise ValueError(
+        'When a pattern is provided, it must have the same number of atoms as the reference')
+    referenceMatch = reference.GetSubstructMatch(referencePattern)
+    if not referenceMatch:
+      raise ValueError("Reference does not map to itself")
+  else:
+    referenceMatch = list(range(reference.GetNumAtoms(onlyExplicit=True)))
+  if referencePattern:
+    match = mol.GetSubstructMatch(referencePattern)
+  else:
+    match = mol.GetSubstructMatch(reference)
+
+  if not match:
+    if not acceptFailure:
+
 def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
   """ Returns the optimal RMS for aligning two molecules, taking
   symmetry into account. As a side-effect, the probe molecule is

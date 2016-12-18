@@ -205,7 +205,7 @@ else:
 
     styles = getSampleStyleSheet()
     title = 'Db Report'
-    if kwargs.has_key('title'):
+    if 'title' in kwargs:
       title = kwargs['title']
       del kwargs['title']
 

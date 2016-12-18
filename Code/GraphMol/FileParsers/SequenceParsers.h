@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum and NextMove Software
+//  Copyright (C) 2015,2016 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,11 +24,21 @@ class RWMol;
  *of the corresponding amino acid
  *
  */
-RWMol *SequenceToMol(const char *seq, bool sanitize = true,
-                     bool lowerD = false);
+RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD);
+//! \overload
+RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD);
+
+// \brief construct a protein, RNA or DNA molecule from a sequence string
+/*!
+ *   \param seq      - the string to be processed
+ *   \param sanitize - toggles sanitization and stereochemistry perception of
+ *the molecule
+ *   \param flavor   - 0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA
+ */
+RWMol *SequenceToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
 RWMol *SequenceToMol(const std::string &seq, bool sanitize = true,
-                     bool lowerD = false);
+                     int flavor = 0);
 
 // \brief construct a molecule from a FASTA string (currently only supports
 // peptides)
@@ -40,10 +50,22 @@ RWMol *SequenceToMol(const std::string &seq, bool sanitize = true,
  *of the corresponding amino acid
  *
  */
-RWMol *FASTAToMol(const char *seq, bool sanitize = true, bool lowerD = false);
+RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD);
+//! \overload
+RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD);
+
+// \brief construct a protein, DNA or RNA molecule from a FASTA string
+/*!
+ *   \param seq      - the string to be processed
+ *   \param sanitize - toggles sanitization and stereochemistry perception of
+ *the molecule
+ *   \param flavor   - 0 & 1 protein, 2, 3, 4, & 5 RNA, 6, 7, 8 & 9 DNA
+ *
+ */
+RWMol *FASTAToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
 RWMol *FASTAToMol(const std::string &seq, bool sanitize = true,
-                  bool lowerD = false);
+                  int flavor = 0);
 
 // \brief construct a molecule from a HELM string (currently only supports
 // peptides)

@@ -1,18 +1,18 @@
-import numpy
 import random
+
+import numpy
+
 from rdkit.ML.DecTree import ID3
-from rdkit.ML.DecTree import CrossValidate
-from rdkit.six.moves import xrange
 
 
 def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=(0, 0),
                       addResults=1):
   random.seed(seed[0])
-  varWeights = numpy.array([random.random() for x in range(nVars)]) * randScale
+  varWeights = numpy.array([random.random() for _ in range(nVars)]) * randScale
   examples = [None] * nExamples
 
-  for i in xrange(nExamples):
-    varVals = [random.random() > bitProb for x in range(nVars)]
+  for i in range(nExamples):
+    varVals = [random.random() > bitProb for _ in range(nVars)]
     temp = numpy.array(varVals) * varWeights
     res = sum(temp)
     if addResults:
@@ -25,8 +25,8 @@ def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=
   return (examples, attrs, nPossibleVals)
 
 
-if __name__ == '__main__':
-  from rdkit.six.moves import cPickle
+if __name__ == '__main__':  # pragma: nocover
+  from rdkit.six.moves import cPickle  # @UnresolvedImport
   examples, attrs, nPossibleVals = GenRandomExamples()
   outF = open('random.dat.pkl', 'wb+')
   cPickle.dump(examples, outF)

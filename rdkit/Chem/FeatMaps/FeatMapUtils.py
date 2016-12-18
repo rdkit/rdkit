@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 # Copyright (C) 2006 Greg Landrum
@@ -11,44 +9,50 @@
 #  of the RDKit source tree.
 #
 import copy
-from rdkit.six.moves import range
 from rdkit.Chem.FeatMaps import FeatMaps
 
 
 class MergeMethod(object):
+  # Put the new point at the weighted average position of the two fused points
   WeightedAverage = 0
-  """ Put the new point at the weighted average position of the two
-   fused points
-  """
-
+  # Put the new point at the un-weighted average position of the two fused points
   Average = 1
-  """ Put the new point at the un-weighted average position of the two
-   fused points
-  """
-
+  # Put the new point at the position of the larger (by weight) of the two points
   UseLarger = 2
-  """ Put the new point at the position of the larger (by weight)
-   of the two points
-  """
+
+  @classmethod
+  def valid(cls, mergeMethod):
+    """ Check that mergeMethod is valid """
+    if mergeMethod not in (cls.WeightedAverage, cls.Average, cls.UseLarger):
+      raise ValueError('unrecognized mergeMethod')
 
 
 class MergeMetric(object):
+  # Do not merge points
   NoMerge = 0
-  """ Do not merge points """
-
+  # merge two points if they come within a threshold distance
   Distance = 1
-  """ merge two points if they come within a threshold distance """
-
+  # merge two points if their percent overlap exceeds a threshold
   Overlap = 2
-  """ merge two points if their percent overlap exceeds a threshold """
+
+  @classmethod
+  def valid(cls, mergeMetric):
+    """ Check that mergeMetric is valid """
+    if mergeMetric not in (cls.NoMerge, cls.Distance, cls.Overlap):
+      raise ValueError('unrecognized mergeMetric')
 
 
 class DirMergeMode(object):
+  # Do not merge directions (i.e. keep all direction vectors)
   NoMerge = 0
-  """ Do not merge directions (i.e. keep all direction vectors) """
-
+  # Sum direction vectors
   Sum = 1
-  """ Sum direction vectors """
+
+  @classmethod
+  def valid(cls, dirMergeMode):
+    """ Check that dirMergeMode is valid """
+    if dirMergeMode not in (cls.NoMerge, cls.Sum):
+      raise ValueError('unrecognized dirMergeMode')
 
 
 def __copyAll(res, fm1, fm2):
@@ -64,9 +68,11 @@ def GetFeatFeatDistMatrix(fm, mergeMetric, mergeTol, dirMergeMode, compatFunc):
 
     NOTE that mergeTol is a max value for merging when using distance-based
     merging and a min value when using score-based merging.
-    
+
   """
-  dists = [[1e8] * fm.GetNumFeatures() for x in range(fm.GetNumFeatures())]
+  MergeMetric.valid(mergeMetric)
+
+  dists = [[1e8] * fm.GetNumFeatures() for _ in range(fm.GetNumFeatures())]
   if mergeMetric == MergeMetric.NoMerge:
     return dists
   elif mergeMetric == MergeMetric.Distance:
@@ -91,9 +97,6 @@ def GetFeatFeatDistMatrix(fm, mergeMetric, mergeTol, dirMergeMode, compatFunc):
           if score < mergeTol:
             dists[i][j] = score
             dists[j][i] = score
-  else:
-    raise ValueError('unrecognized mergeMetric')
-
   return dists
 
 
@@ -114,8 +117,12 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
     merging and a min value when using score-based merging.
 
     returns whether or not any points were actually merged
-    
+
   """
+  MergeMetric.valid(mergeMetric)
+  MergeMethod.valid(mergeMethod)
+  DirMergeMode.valid(dirMergeMode)
+
   res = False
   if mergeMetric == MergeMetric.NoMerge:
     return res
@@ -129,8 +136,8 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
         distOrders[i].append((dist, j))
     distOrders[i].sort()
 
-  #print 'distOrders:'
-  #print distOrders
+  # print('distOrders:')
+  # print(distOrders)
 
   # we now know the "distances" and have rank-ordered list of
   # each point's neighbors. Work with that.
@@ -139,13 +146,13 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
   # are no more points left to merge
   featsInPlay = list(range(fm.GetNumFeatures()))
   featsToRemove = []
-  #print '--------------------------------'
+  # print '--------------------------------'
   while featsInPlay:
     # find two features who are mutual nearest neighbors:
     fipCopy = featsInPlay[:]
     for fi in fipCopy:
-      #print '>>>',fi,fipCopy,featsInPlay
-      #print '\t',distOrders[fi]
+      # print('>>>',fi,fipCopy,featsInPlay)
+      # print('\t',distOrders[fi])
       mergeThem = False
       if not distOrders[fi]:
         featsInPlay.remove(fi)
@@ -154,7 +161,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
       if nbr not in featsInPlay:
         continue
       if distOrders[nbr][0][1] == fi:
-        #print 'direct:',fi,nbr
+        # print 'direct:',fi,nbr
         mergeThem = True
       else:
         # it may be that there are several points at about the same distance,
@@ -163,12 +170,12 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
           for distJ, nbrJ in distOrders[nbr][1:]:
             if feq(dist, distJ):
               if nbrJ == fi:
-                #print 'indirect: ',fi,nbr
+                # print 'indirect: ',fi,nbr
                 mergeThem = True
                 break
             else:
               break
-      #print '    bottom:',mergeThem
+      # print '    bottom:',mergeThem
       if mergeThem:
         break
     if mergeThem:
@@ -191,14 +198,12 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
         else:
           newPos = nbrFeat.GetPos()
           newWeight = nbrFeat.weight
-      else:
-        raise ValueError("bad mergeMethod")
 
       featI.SetPos(newPos)
       featI.weight = newWeight
 
       # nbr and fi are no longer valid targets:
-      #print 'nbr done:',nbr,featsToRemove,featsInPlay
+      # print 'nbr done:',nbr,featsToRemove,featsInPlay
       featsToRemove.append(nbr)
       featsInPlay.remove(fi)
       featsInPlay.remove(nbr)
@@ -212,7 +217,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
         except ValueError:
           pass
     else:
-      #print ">>>> Nothing found, abort"
+      # print ">>>> Nothing found, abort"
       break
   featsToRemove.sort()
   for i, fIdx in enumerate(featsToRemove):
@@ -231,18 +236,3 @@ def CombineFeatMaps(fm1, fm2, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
   if mergeMetric != MergeMetric.NoMerge:
     MergeFeatPoints(res, mergeMetric=mergeMetric, mergeTol=mergeTol)
   return res
-
-
-#------------------------------------
-#
-#  doctest boilerplate
-#
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
-  import sys
-  failed, tried = _test()
-  sys.exit(failed)

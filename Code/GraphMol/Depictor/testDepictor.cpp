@@ -860,7 +860,26 @@ void testConstrainedCoords() {
 
   delete xp0_lig;
   delete xp0_lig_2d;
-  
+}  
+void testGitHubIssue1112() {
+  // Bad coordinate generation for H2
+  {
+    std::string smiles = "[H][H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+
+    RDDepict::compute2DCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).y, -1));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).z, 0));
+
+    delete m;
+  }
 }
 
 int main() {
@@ -1038,6 +1057,14 @@ int main() {
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   testConstrainedCoords\n";
   testConstrainedCoords();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "   Test GitHub Issue 1112: Bad coordinate generation for H2\n";
+  testGitHubIssue1112();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
 

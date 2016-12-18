@@ -41,15 +41,15 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
-RSTS_FROM_MD = Overview.rst Cartridge.rst Cookbook.rst Install.rst
+#RSTS_FROM_MD = Overview.rst Cartridge.rst Cookbook.rst Install.rst
 
-$(RSTS_FROM_MD): %.rst: %.md
-	pandoc -t rst -f markdown_github -o $@ $<
+#$(RSTS_FROM_MD): %.rst: %.md
+#	pandoc -t rst -f markdown_github -o $@ $<
 
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-apidocs: 
+apidocs:
 	mkdir -p $(BUILDDIR)/html/api
 	mkdir -p $(BUILDDIR)/html/cppapi
 	cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
@@ -143,7 +143,7 @@ linkcheck:
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in $(BUILDDIR)/linkcheck/output.txt."
 
-doctest: 
+doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."

@@ -198,10 +198,11 @@ class TestCase(unittest.TestCase):
         self.assertTrue(Chem.MolToMolBlock(m, confId=ci) != Chem.MolToMolBlock(m, confId=cj))
 
   def test6RmsPruning(self):
-    smiles = ['CC(C)CC(NC(C1[N+]CCC1)=O)C([O-])=O', 'CC(NC(CO)C(O)c1ccc([N+]([O-])=O)cc1)=O',
-              'CC([N+])C(NC(C)C(N1C(C=O)CCC1)=O)=O', 'CC(NC1C(O)C=C(C([O-])=O)OC1C(O)C(O)CO)=O',
-              'CCCC=C(NC(C1CC1(C)C)=O)C([O-])=O',
-              'OCC(O)C(O)C(Cn1c2c(cc(C)c(C)c2)nc-2c(=O)[nH]c(=O)nc12)O']
+    smiles = [
+      'CC(C)CC(NC(C1[N+]CCC1)=O)C([O-])=O', 'CC(NC(CO)C(O)c1ccc([N+]([O-])=O)cc1)=O',
+      'CC([N+])C(NC(C)C(N1C(C=O)CCC1)=O)=O', 'CC(NC1C(O)C=C(C([O-])=O)OC1C(O)C(O)CO)=O',
+      'CCCC=C(NC(C1CC1(C)C)=O)C([O-])=O', 'OCC(O)C(O)C(Cn1c2c(cc(C)c(C)c2)nc-2c(=O)[nH]c(=O)nc12)O'
+    ]
 
     nconfs = []
     expected = [5, 6, 6, 6, 6, 3]
@@ -226,8 +227,8 @@ class TestCase(unittest.TestCase):
     for cid in cids:
       conf = mol.GetConformer(cid)
       vol = computeChiralVol(
-        conf.GetAtomPosition(0), conf.GetAtomPosition(2), conf.GetAtomPosition(3),
-        conf.GetAtomPosition(4))
+        conf.GetAtomPosition(0),
+        conf.GetAtomPosition(2), conf.GetAtomPosition(3), conf.GetAtomPosition(4))
       self.assertTrue(abs(vol - tgtVol) < 1)
 
     # turn of chirality and now we should see both chiral forms
@@ -240,8 +241,8 @@ class TestCase(unittest.TestCase):
     for cid in cids:
       conf = mol.GetConformer(cid)
       vol = computeChiralVol(
-        conf.GetAtomPosition(0), conf.GetAtomPosition(2), conf.GetAtomPosition(3),
-        conf.GetAtomPosition(4))
+        conf.GetAtomPosition(0),
+        conf.GetAtomPosition(2), conf.GetAtomPosition(3), conf.GetAtomPosition(4))
       self.assertTrue(abs(vol - tgtVol) < 1 or abs(vol + tgtVol) < 1)
       if vol < 0:
         nNeg += 1
@@ -257,8 +258,8 @@ class TestCase(unittest.TestCase):
       ci = rdDistGeom.EmbedMolecule(mol, 30, (i + 1) * 10)
       conf = mol.GetConformer(ci)
       vol = computeChiralVol(
-        conf.GetAtomPosition(0), conf.GetAtomPosition(1), conf.GetAtomPosition(2),
-        conf.GetAtomPosition(3))
+        conf.GetAtomPosition(0),
+        conf.GetAtomPosition(1), conf.GetAtomPosition(2), conf.GetAtomPosition(3))
       self.assertTrue(abs(vol - tgtVol) < 1, "%s %s" % (vol, tgtVol))
 
     tgtVol = 3.5
@@ -271,8 +272,8 @@ class TestCase(unittest.TestCase):
       ci = rdDistGeom.EmbedMolecule(mol, 30, (i + 1) * 10)
       conf = mol.GetConformer(ci)
       vol = computeChiralVol(
-        conf.GetAtomPosition(0), conf.GetAtomPosition(1), conf.GetAtomPosition(2),
-        conf.GetAtomPosition(3))
+        conf.GetAtomPosition(0),
+        conf.GetAtomPosition(1), conf.GetAtomPosition(2), conf.GetAtomPosition(3))
       self.assertTrue(abs(vol - tgtVol) < 1 or abs(vol + tgtVol) < 1)
       if vol < 0:
         nNeg += 1
@@ -291,8 +292,8 @@ class TestCase(unittest.TestCase):
     for cid in cids:
       conf = mol.GetConformer(cid)
       vol = computeChiralVol(
-        conf.GetAtomPosition(0), conf.GetAtomPosition(2), conf.GetAtomPosition(3),
-        conf.GetAtomPosition(4))
+        conf.GetAtomPosition(0),
+        conf.GetAtomPosition(2), conf.GetAtomPosition(3), conf.GetAtomPosition(4))
       self.assertTrue(abs(vol - tgtVol) < 2.)
 
     # let's try a little more complicated system
@@ -309,8 +310,8 @@ class TestCase(unittest.TestCase):
 
       conf = mol.GetConformer(ci)
       vol1 = computeChiralVol(
-        conf.GetAtomPosition(6), conf.GetAtomPosition(3), conf.GetAtomPosition(7),
-        conf.GetAtomPosition(13))
+        conf.GetAtomPosition(6),
+        conf.GetAtomPosition(3), conf.GetAtomPosition(7), conf.GetAtomPosition(13))
       self.assertTrue(abs(vol1 - expectedV1) < 1 or abs(vol1 + expectedV1) < 1)
       if vol1 < 0:
         nNeg += 1
@@ -318,8 +319,8 @@ class TestCase(unittest.TestCase):
         nPos += 1
 
       vol2 = computeChiralVol(
-        conf.GetAtomPosition(17), conf.GetAtomPosition(16), conf.GetAtomPosition(18),
-        conf.GetAtomPosition(19))
+        conf.GetAtomPosition(17),
+        conf.GetAtomPosition(16), conf.GetAtomPosition(18), conf.GetAtomPosition(19))
       self.assertTrue(abs(vol2 - expectedV2) < 1 or abs(vol2 + expectedV2) < 1)
 
     # remove the chiral specification and we should see other chiral
@@ -338,11 +339,11 @@ class TestCase(unittest.TestCase):
 
       conf = mol.GetConformer(ci)
       vol1 = computeChiralVol(
-        conf.GetAtomPosition(6), conf.GetAtomPosition(3), conf.GetAtomPosition(7),
-        conf.GetAtomPosition(13))
+        conf.GetAtomPosition(6),
+        conf.GetAtomPosition(3), conf.GetAtomPosition(7), conf.GetAtomPosition(13))
       vol2 = computeChiralVol(
-        conf.GetAtomPosition(17), conf.GetAtomPosition(16), conf.GetAtomPosition(18),
-        conf.GetAtomPosition(19))
+        conf.GetAtomPosition(17),
+        conf.GetAtomPosition(16), conf.GetAtomPosition(18), conf.GetAtomPosition(19))
       self.assertTrue(abs(abs(vol1) - expectedV1) < 1.0)
       self.assertTrue(abs(abs(vol2) - expectedV2) < 1.0)
 
@@ -395,6 +396,65 @@ class TestCase(unittest.TestCase):
             - mol2.GetConformer().GetAtomPosition(i)).LengthSq()
       msd /= mol.GetNumAtoms()
       self.assertTrue(msd < MSD_TOLERANCE)
+
+  def _compareConfs(self, mol, ref, molConfId, refConfId):
+    self.assertEqual(mol.GetNumAtoms(), ref.GetNumAtoms())
+    molConf = mol.GetConformer(molConfId)
+    refConf = ref.GetConformer(refConfId)
+    for i in range(mol.GetNumAtoms()):
+      mp = molConf.GetAtomPosition(i)
+      rp = refConf.GetAtomPosition(i)
+      self.assertAlmostEqual((mp - rp).Length(), 0.0, 3)
+
+  def test9EmbedParams(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'simple_torsion.dg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.EmbedParameters()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'simple_torsion.etdg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.EmbedParameters()
+    params.randomSeed = 42
+    params.useExpTorsionAnglePrefs = True
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'simple_torsion.etkdg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.EmbedParameters()
+    params.randomSeed = 42
+    params.useExpTorsionAnglePrefs = True
+    params.useBasicKnowledge = True
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETKDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'simple_torsion.kdg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.EmbedParameters()
+    params.randomSeed = 42
+    params.useBasicKnowledge = True
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.KDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
 
 if __name__ == '__main__':

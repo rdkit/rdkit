@@ -10,12 +10,11 @@
 
 """
 from rdkit.ML.DecTree import DecTree, Tree
-from rdkit.six import cmp
 
 
 class QuantTreeNode(DecTree.DecTreeNode):
-  """ 
-   
+  """
+
   """
 
   def __init__(self, *args, **kwargs):
@@ -25,7 +24,7 @@ class QuantTreeNode(DecTree.DecTreeNode):
 
   def ClassifyExample(self, example, appendExamples=0):
     """ Recursively classify an example by running it through the tree
-    
+
       **Arguments**
 
         - example: the example to be classified
@@ -42,7 +41,7 @@ class QuantTreeNode(DecTree.DecTreeNode):
         here.  So if you subclass DecTreeNode for your own trees, you'll
         have to either include ClassifyExample or avoid changing the names
         of the instance variables this needs.
-        
+
     """
     if appendExamples:
       self.examples.append(example)
@@ -91,7 +90,7 @@ class QuantTreeNode(DecTree.DecTreeNode):
       **Note**
 
         this works recursively
-    
+
     """
     here = '%s%s %s\n' % ('  ' * self.level, self.name, str(self.qBounds))
     for child in self.children:

@@ -49,6 +49,65 @@ namespace DGeomHelpers {
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 
+//! Parameters corresponding to Sereina Riniker's KDG approach
+const EmbedParameters KDG(0,      // maxIterations
+                          1,      // numThreads
+                          -1,     // randomSeed
+                          true,   // clearConfs
+                          false,  // useRandomCoords
+                          2.0,    // boxSizeMult
+                          true,   // randNegEig
+                          1,      // numZeroFail
+                          NULL,   // coordMap
+                          1e-3,   // optimizerForceTol
+                          false,  // ignoreSmoothingFailures
+                          true,   // enforceChirality
+                          false,  // useExpTorsionAnglePrefs
+                          true,   // useBasicKnowledge
+                          false,  // verbose
+                          5.0,    // basinThresh
+                          -1.0    // pruneRmsThresh
+                          );
+
+//! Parameters corresponding to Sereina Riniker's ETDG approach
+const EmbedParameters ETDG(0,      // maxIterations
+                           1,      // numThreads
+                           -1,     // randomSeed
+                           true,   // clearConfs
+                           false,  // useRandomCoords
+                           2.0,    // boxSizeMult
+                           true,   // randNegEig
+                           1,      // numZeroFail
+                           NULL,   // coordMap
+                           1e-3,   // optimizerForceTol
+                           false,  // ignoreSmoothingFailures
+                           false,  // enforceChirality
+                           true,   // useExpTorsionAnglePrefs
+                           false,  // useBasicKnowledge
+                           false,  // verbose
+                           5.0,    // basinThresh
+                           -1.0    // pruneRmsThresh
+                           );
+//! Parameters corresponding to Sereina Riniker's ETKDG approach
+const EmbedParameters ETKDG(0,      // maxIterations
+                            1,      // numThreads
+                            -1,     // randomSeed
+                            true,   // clearConfs
+                            false,  // useRandomCoords
+                            2.0,    // boxSizeMult
+                            true,   // randNegEig
+                            1,      // numZeroFail
+                            NULL,   // coordMap
+                            1e-3,   // optimizerForceTol
+                            false,  // ignoreSmoothingFailures
+                            true,   // enforceChirality
+                            true,   // useExpTorsionAnglePrefs
+                            true,   // useBasicKnowledge
+                            false,  // verbose
+                            5.0,    // basinThresh
+                            -1.0    // pruneRmsThresh
+                            );
+
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
   RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],

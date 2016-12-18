@@ -32,12 +32,12 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
   - -N *note*: use all models from the database which have this note.
                The modelfile argument should contain the name of the table
-               with the models. 
+               with the models.
 
-  - -H: screen only the hold out set (works only if a version of 
+  - -H: screen only the hold out set (works only if a version of
         BuildComposite more recent than 1.2.2 was used).
 
-  - -T: screen only the training set (works only if a version of 
+  - -T: screen only the training set (works only if a version of
         BuildComposite more recent than 1.2.2 was used).
 
   - -E: do a detailed Error analysis.  This shows each misclassified
@@ -80,7 +80,7 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
   - --predPlot=<fileName>: triggers the generation of a Hanneke plot and
       sets the name of the .txt file which will hold the output data.
       A Gnuplot control file, <fileName>.gnu, will also be generated.
-    
+
   - --predActTable=<name> (optional):  name of the database table
       containing activity values.  If this is not provided, activities
       will be read from the same table containing the screening data
@@ -91,11 +91,11 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
   - --predLogScale (optional):  If provided, the x axis of the
       prediction plot (the activity axis) will be plotted using a log
-      scale  
+      scale
 
   - --predShow: launch a gnuplot instance and display the prediction
       plot (the plot will still be written to disk).
-  
+
   *** The following options are likely obsolete ***
 
   - -P: read pickled data.  The datafile argument should contain
@@ -109,11 +109,20 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 """
 from __future__ import print_function
-import sys, copy
+
+import os
+import sys
+
 import numpy
-from rdkit.six.moves import cPickle
-from rdkit import RDConfig
+
 from rdkit import DataStructs
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import CompositeRun
+from rdkit.ML.Data import DataUtils, SplitData
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import input  # @UnresolvedImport
+
 
 try:
   from PIL import Image, ImageDraw
@@ -122,10 +131,6 @@ except ImportError:
 else:
   hasPil = 1
 
-from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.ML import CompositeRun
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
 _details = CompositeRun.CompositeRun()
 
 __VERSION_STRING = "3.3.0"
@@ -181,7 +186,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
 
     - examples: the examples to be screened (a sequence of sequences)
        it's assumed that the last element in each example is it's "value"
-    
+
     - composite:  the composite model to be used
 
     - callback: (optional)  if provided, this should be a function
@@ -209,7 +214,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
       3)  conf: the confidence of the composite
 
   """
-  #for i in range(len(composite)):
+  # for i in range(len(composite)):
   #  print('  ',i,'TRAIN:',composite[i][0]._trainIndices)
 
   for j in range(len(composite)):
@@ -234,7 +239,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
           use.append(j)
     else:
       use = None
-    #print('IDX:',idx,'use:',use  )
+    # print('IDX:',idx,'use:',use  )
     pred, conf = composite.ClassifyExample(example, appendExample=appendExamples, onlyModels=use)
     if composite.GetActivityQuantBounds():
       answer = composite.QuantizeActivity(example)[-1]
@@ -255,7 +260,7 @@ def DetailedScreen(indices, data, composite, threshold=0, screenResults=None, go
 
     - examples: the examples to be screened (a sequence of sequences)
        it's assumed that the last element in each example is its "value"
-    
+
     - composite:  the composite model to be used
 
     - threshold: (optional) the threshold to be used to decide whether
@@ -324,7 +329,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
 
     - examples: the examples to be screened (a sequence of sequences)
        it's assumed that the last element in each example is its "value"
-    
+
     - composite:  the composite model to be used
 
     - nResultCodes: the number of possible results the composite can
@@ -425,7 +430,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
   voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int)
   for res in goodRes:
     voteTab[res, res] += 1
-  for ans, res, conf, idx in badVotes:
+  for ans, res, conf, idx in badVotes:  # @UnusedVariable
     voteTab[ans, res] += 1
 
   if verbose:
@@ -461,7 +466,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
 def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, screenResults=None,
              goodVotes=None, badVotes=None, noVotes=None):
   """ screens a set of data using a composite model and prints out
-             statistics about the screen. 
+             statistics about the screen.
 #DOC
     The work of doing the screening and processing the results is
     handled by _DetailedScreen()_
@@ -525,19 +530,19 @@ def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, sc
 
   nGood = len(goodVotes)
   goodAccum = 0.
-  for res, pred, conf, idx in goodVotes:
+  for res, pred, conf, idx in goodVotes:  # @UnusedVariable
     goodAccum += conf
 
   misCount = len(badVotes)
   badAccum = 0.
-  for res, pred, conf, idx in badVotes:
+  for res, pred, conf, idx in badVotes:  # @UnusedVariable
     badAccum += conf
 
   nSkipped = len(noVotes)
   goodSkipped = 0
   badSkipped = 0
   skipAccum = 0.
-  for ans, pred, conf, idx in noVotes:
+  for ans, pred, conf, idx in noVotes:  # @UnusedVariable
     skipAccum += conf
     if ans != pred:
       badSkipped += 1
@@ -586,7 +591,7 @@ def _processVoteList(votes, data):
 
      - data: a _DataUtils.MLData.MLDataSet_
 
-   
+
    **Note**: alterations are done in place in the _votes_ list
 
   """
@@ -596,8 +601,8 @@ def _processVoteList(votes, data):
 
 
 def PrepareDataFromDetails(model, details, data, verbose=0):
-  if (hasattr(details,'doHoldout') and details.doHoldout) or \
-     (hasattr(details,'doTraining') and details.doTraining):
+  if (hasattr(details, 'doHoldout') and details.doHoldout) or \
+     (hasattr(details, 'doTraining') and details.doTraining):
     try:
       splitF = model._splitFrac
     except AttributeError:
@@ -606,8 +611,8 @@ def PrepareDataFromDetails(model, details, data, verbose=0):
       if verbose:
         message('s', noRet=1)
 
-      if hasattr(details,'errorEstimate') and details.errorEstimate and \
-         hasattr(details,'doHoldout') and details.doHoldout:
+      if hasattr(details, 'errorEstimate') and details.errorEstimate and \
+         hasattr(details, 'doHoldout') and details.doHoldout:
         message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
         message('******  WARNING: OOB screening should not be combined with doHoldout option.')
         message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
@@ -630,10 +635,10 @@ def PrepareDataFromDetails(model, details, data, verbose=0):
                                                indicesToUse=range(data.GetNPts()), indicesOnly=1)
       testIdx.extend(trainIdx)
     else:
-      testIdx = range(data.GetNPts())
+      testIdx = list(range(data.GetNPts()))
     trainIdx = []
   else:
-    testIdx = range(data.GetNPts())
+    testIdx = list(range(data.GetNPts()))
     trainIdx = []
   if hasattr(details, 'doTraining') and details.doTraining:
     testIdx, trainIdx = trainIdx, testIdx
@@ -656,7 +661,7 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
   **Arguments**
 
       - model: a composite model
-      
+
       - details:  a _CompositeRun.CompositeRun_ object containing details
         (options, parameters, etc.) about the run
 
@@ -668,7 +673,7 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       - setup: (optional) a function taking a single argument which is
         called at the start of screening with the number of points to
         be screened as the argument.
-         
+
       - appendExamples: (optional)  this value is passed on to the
         composite's _ClassifyExample()_ method.
 
@@ -703,9 +708,9 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     else:
       data = details.GetDataSet()
   if details.threshold > 0.0:
-    partialVote = 1
+    details.partialVote = 1
   else:
-    partialVote = 0
+    details.partialVote = 0
 
   if type(models) not in [list, tuple]:
     models = (models, )
@@ -747,8 +752,8 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     else:
       DataUtils.InitRandomNumbers(seed)
 
-    if (hasattr(details,'shuffleActivities') and details.shuffleActivities) or \
-       (hasattr(details,'randomActivities') and details.randomActivities ):
+    if (hasattr(details, 'shuffleActivities') and details.shuffleActivities) or \
+       (hasattr(details, 'randomActivities') and details.randomActivities):
       if hasattr(details, 'shuffleActivities') and details.shuffleActivities:
         shuffle = True
       else:
@@ -759,24 +764,24 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       randomize = False
       shuffle = False
 
-    if hasattr(model,'_shuffleActivities') and \
+    if hasattr(model, '_shuffleActivities') and \
        model._shuffleActivities and \
        not shuffle:
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
       message('******  WARNING: Shuffled model being screened with unshuffled data.')
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
-    if hasattr(model,'_randomizeActivities') and \
+    if hasattr(model, '_randomizeActivities') and \
        model._randomizeActivities and \
        not randomize:
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
       message('******  WARNING: Random model being screened with non-random data.')
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
 
-    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)
+    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)  # @UnusedVariable
 
     nPossible = model.GetQuantBounds()[1]
     if callback:
-      cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)
+      cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)  # @IgnorePep8
     else:
       cb = None
     if not hasattr(details, 'errorEstimate') or not details.errorEstimate:
@@ -790,14 +795,14 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     if voteTab is None:
       voteTab = numpy.zeros(vT.shape, numpy.float)
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
-      for a, p, c, idx in badVotes:
+      for a, p, c, idx in badVotes:  # @UnusedVariable
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
             badVoteDict[label] = badVoteDict.get(label, 0) + 1
         else:
           badVoteDict[label] = badVoteDict.get(label, 0) + 1
-      for a, p, c, idx in noVotes:
+      for a, p, c, idx in noVotes:  # @UnusedVariable
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
@@ -824,7 +829,7 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     avgNBad = sum(nBad) / nModels
     devNBad = numpy.sqrt(sum((nBad - avgNBad)**2) / (nModels - 1))
 
-    bestIdx = numpy.argsort(nBad)[0]
+    # bestIdx = numpy.argsort(nBad)[0]
 
     avgNGood = sum(nGood) / nModels
     devNGood = numpy.sqrt(sum((nGood - avgNGood)**2) / (nModels - 1))
@@ -840,9 +845,9 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
 
     avgConfSkip = sum(confSkip) / nModels
     devConfSkip = numpy.sqrt(sum((confSkip - avgConfSkip)**2) / (nModels - 1))
-    return (avgNGood,devNGood),(avgNBad,devNBad),(avgNSkip,devNSkip),\
-           (avgConfGood,devConfGood),(avgConfBad,devConfBad),(avgConfSkip,devConfSkip),\
-           voteTab
+    return ((avgNGood, devNGood), (avgNBad, devNBad), (avgNSkip, devNSkip),
+            (avgConfGood, devConfGood), (avgConfBad, devConfBad), (avgConfSkip, devConfSkip),
+            voteTab)
 
 
 def GetScreenImage(nGood, nBad, nRej, size=None):
@@ -954,7 +959,7 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
     outTxt.append('<th>%d</th>' % i)
   outTxt.append('<th>% Accurate</th>')
   outTxt.append('</tr>')
-  #outTxt.append('<th rowspan=%d>Predicted</th></tr>'%(nPoss+1))
+  # outTxt.append('<th rowspan=%d>Predicted</th></tr>'%(nPoss+1))
   for i in range(nPoss):
     outTxt.append('<tr><th>%d</th>' % (i))
     for j in range(nPoss):
@@ -1015,17 +1020,17 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
       pctErr = 0.0
       devPctErr = 0.0
 
-    outTxt.append('<p>%.2f(%.2f) of %.2f(%.2f) examples were misclassified (%%%4.2f(%4.2f))'%\
-                  (nBad[0],nBad[1],nClass,devClass,pctErr,devPctErr))
+    outTxt.append('<p>%.2f(%.2f) of %.2f(%.2f) examples were misclassified (%%%4.2f(%4.2f))' %
+                  (nBad[0], nBad[1], nClass, devClass, pctErr, devPctErr))
     if nRej > 0:
       pctErr = 100. * float(nBad[0]) / nTotal
       devPctErr = 100. * float(nBad[1]) / nTotal
-      outTxt.append('<p>                %.2f(%.2f) of %d overall: (%%%4.2f(%4.2f))'%\
-                    (nBad[0],nBad[1],nTotal,pctErr,devPctErr))
+      outTxt.append('<p>                %.2f(%.2f) of %d overall: (%%%4.2f(%4.2f))' %
+                    (nBad[0], nBad[1], nTotal, pctErr, devPctErr))
       pctRej = 100. * float(nRej[0]) / nTotal
       devPctRej = 100. * float(nRej[1]) / nTotal
-      outTxt.append('<p>%.2f(%.2f) of %d examples were rejected (%%%4.2f(%4.2f))'%\
-                    (nRej[0],nRej[1],nTotal,pctRej,devPctRej))
+      outTxt.append('<p>%.2f(%.2f) of %d examples were rejected (%%%4.2f(%4.2f))' %
+                    (nRej[0], nRej[1], nTotal, pctRej, devPctRej))
     if nGood != 0:
       outTxt.append(
         '<p>The correctly classified examples had an average confidence of %6.4f(%.4f)' % avgGood)
@@ -1086,16 +1091,15 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
                        password=details.dbPassword)
   colNames = origConn.GetColumnNames()
   idName = colNames[idCol]
-  if not hasattr(details,'predActTable') or \
+  if not hasattr(details, 'predActTable') or \
      not details.predActTable or \
-     details.predActTable==details.tableName:
+     details.predActTable == details.tableName:
     actConn = origConn
   else:
     actConn = DbConnect(details.dbName, details.predActTable, user=details.dbUser,
                         password=details.dbPassword)
   if verbose:
     message('\t-> Pulling Activity Data')
-  pts = []
 
   if type(ptIds[0]) not in [type(''), type(u'')]:
     ptIds = [str(x) for x in ptIds]
@@ -1112,18 +1116,18 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
     message('\t-> Creating Plot')
   acts = [None] * len(ptIds)
   for entry in rawD:
-    id, act = entry
-    idx = ptIds.index(id)
+    ID, act = entry
+    idx = ptIds.index(ID)
     acts[idx] = act
   outF.write('#ID Pred Conf %s\n' % (actColName))
-  for ans, pred, conf, idx in goodVotes:
+  for ans, pred, conf, idx in goodVotes:  # @UnusedVariable
     act = acts[idx]
     if act != 'None':
       act = float(act)
     else:
       act = 0
     outF.write('%s %d %.4f %f\n' % (ptIds[idx], pred, conf, act))
-  for ans, pred, conf, idx in badVotes:
+  for ans, pred, conf, idx in badVotes:  # @UnusedVariable
     act = acts[idx]
     if act != 'None':
       act = float(act)
@@ -1162,12 +1166,14 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
   gnuF.close()
   if hasattr(details, 'predShow') and details.predShow:
     try:
-      import os
-      from Gnuplot import Gnuplot
+      try:
+        from Gnuplot import Gnuplot
+      except ImportError:
+        raise ImportError('Functionality requires the Gnuplot module')
       p = Gnuplot()
       p('cd "%s"' % (os.getcwd()))
       p('load "%s.gnu"' % (details.predPlot))
-      raw_input('press return to continue...\n')
+      input('press return to continue...\n')
     except Exception:
       import traceback
       traceback.print_exc()
@@ -1207,7 +1213,6 @@ def ShowVersion(includeArgs=0):
   """
   print('This is ScreenComposite.py version %s' % (__VERSION_STRING))
   if includeArgs:
-    import sys
     print('command line was:')
     print(' '.join(sys.argv))
 
@@ -1228,7 +1233,6 @@ def ParseArgs(details):
     traceback.print_exc()
     Usage()
 
-  fName = ''
   details.predPlot = ''
   details.predActCol = ''
   details.predActTable = ''
@@ -1277,7 +1281,7 @@ def ParseArgs(details):
     elif arg == '-v':
       details.filterVal = float(val)
     elif arg == '-V':
-      verbose = 1
+      verbose = 1  # @UnusedVariable
     elif arg == '--predPlot':
       details.detailedScreen = 1
       details.predPlot = val
@@ -1349,11 +1353,11 @@ if __name__ == '__main__':
     screenResults = [None] * nModels
     dataSets = [None] * nModels
     message('-> Constructing and screening data sets')
-    testIdx = range(data.GetNPts())
+    testIdx = list(range(data.GetNPts()))
     trainIdx = testIdx
 
     for modelIdx in range(nModels):
-      #tmpD = copy.deepcopy(data)
+      # tmpD = copy.deepcopy(data)
       tmpD = data
       model = models[modelIdx]
       message('.', noRet=1)
@@ -1373,13 +1377,13 @@ if __name__ == '__main__':
         randomize = False
         shuffle = False
 
-      if hasattr(model,'_shuffleActivities') and \
+      if hasattr(model, '_shuffleActivities') and \
          model._shuffleActivities and \
          not shuffle:
         message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
         message('******  WARNING: Shuffled model being screened with unshuffled data.')
         message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
-      if hasattr(model,'_randomizeActivities') and \
+      if hasattr(model, '_randomizeActivities') and \
          model._randomizeActivities and \
          not randomize:
         message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
@@ -1421,8 +1425,8 @@ if __name__ == '__main__':
             nRes = model.GetQuantBounds()[1][-1]
           badVotes = []
           noVotes = []
-          if (hasattr(details,'showAll') and details.showAll) or \
-             (hasattr(details,'predPlot') and details.predPlot):
+          if (hasattr(details, 'showAll') and details.showAll) or \
+             (hasattr(details, 'predPlot') and details.predPlot):
             goodVotes = []
           else:
             goodVotes = None
@@ -1469,18 +1473,18 @@ if __name__ == '__main__':
           print('id, prediction, confidence, flag(-1=skipped,0=wrong,1=correct)')
           for ans, pred, conf, idx in goodVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1]==ans,\
-                   'bad point?: %s != %s'%(str(pt[-1]),str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
+              str(pt[-1]), str(ans))
             print('%s, %d, %.4f, 1' % (str(pt[0]), pred, conf))
           for ans, pred, conf, idx in badVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1]==ans,\
-                   'bad point?: %s != %s'%(str(pt[-1]),str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
+              str(pt[-1]), str(ans))
             print('%s, %d, %.4f, 0' % (str(pt[0]), pred, conf))
           for ans, pred, conf, idx in noVotes:
             pt = tmpD[testIdx[idx]]
-            assert model.GetActivityQuantBounds() or pt[-1]==ans,\
-                   'bad point?: %s != %s'%(str(pt[-1]),str(ans))
+            assert model.GetActivityQuantBounds() or pt[-1] == ans, 'bad point?: %s != %s' % (
+              str(pt[-1]), str(ans))
             print('%s, %d, %.4f, -1' % (str(pt[0]), pred, conf))
           print('-^-^-^-^-^-^-^-  -^-^-^-^-^-^-^-')
 

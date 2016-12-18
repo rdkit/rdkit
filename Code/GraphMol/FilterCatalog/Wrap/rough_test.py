@@ -482,6 +482,27 @@ class TestCase(unittest.TestCase):
                                             'Halogen.Bromine.Aliphatic',
                                             'Halogen.NotFluorine',
                                             'Halogen.NotFluorine.Aliphatic', ])]
+    
+    # test the normalized groups
+    for mol, res in matches:
+      hits = [name for name, pat in items if mol.HasSubstructMatch(pat)]
+      self.assertEquals(hits, res)
+    queryDefs = FilterCatalog.GetFlattenedFunctionalGroupHierarchy(normalized=True)
+
+    items = sorted(queryDefs.items())
+
+    matches = [(Chem.MolFromSmiles("CCl"), ['halogen', 'halogen.aliphatic', 'halogen.notfluorine',
+                                            'halogen.notfluorine.aliphatic']),
+               (Chem.MolFromSmiles("c1ccccc1Cl"),
+                ['halogen', 'halogen.aromatic', 'halogen.notfluorine',
+                 'halogen.notfluorine.aromatic']), (Chem.MolFromSmiles("c1ccccc1F"),
+                                                    ['halogen', 'halogen.aromatic']),
+               (Chem.MolFromSmiles("CBr"), ['halogen',
+                                            'halogen.aliphatic',
+                                            'halogen.bromine',
+                                            'halogen.bromine.aliphatic',
+                                            'halogen.notfluorine',
+                                            'halogen.notfluorine.aliphatic', ])]
 
     for mol, res in matches:
       hits = [name for name, pat in items if mol.HasSubstructMatch(pat)]

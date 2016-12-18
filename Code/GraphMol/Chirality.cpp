@@ -1071,26 +1071,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
 #endif
 }
 
-// Find bonds than can be cis/trans in a molecule and mark them as "any"
-// - this function finds any double bonds that can potentially be part
-//   of a cis/trans system. No attempt is made here to mark them cis or trans
-//
-// This function is useful in two situations
-//  1) when parsing a mol file; for the bonds marked here, coordinate
-//  informations
-//     on the neighbors can be used to indentify cis or trans states
-//  2) when writing a mol file; bonds that can be cis/trans but not marked as
-//  either
-//     need to be specially marked in the mol file
-//
-//  The CIPranks on the neighboring atoms are check in this function. The
-//  _CIPCode property
-//  if set to any on the double bond.
-//
-// ARGUMENTS:
-//   mol - the molecule of interest
-//   cleanIt - if this option is set to true, any previous marking of _CIPCode
-//               on the bond is cleared - otherwise it is left untouched
+// Find bonds than can be cis/trans in a molecule and mark them as Bond::STEREOANY.
 void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
   // FIX: The earlier thought was to provide an optional argument to ignore or
   // consider
@@ -1191,6 +1172,11 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
                 dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
                 dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
               }  // end of different number of neighbors on beg and end atoms
+
+              // mark this double bond as a potential stereo bond
+              if (!dblBond->getStereoAtoms().empty()) {
+                dblBond->setStereo(Bond::STEREOANY);
+              }
             }    // end of check that beg and end atoms have at least 1
                  // neighbor:
           }      // end of 2 and 3 coordinated atoms only
