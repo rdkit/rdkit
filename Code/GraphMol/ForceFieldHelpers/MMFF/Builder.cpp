@@ -134,23 +134,20 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //
 // ------------------------------------------------------------------------
 boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
+  static const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X
+    | (RELATION_1_X << 2) | (RELATION_1_X << 4) | (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    for (unsigned int j = i; j < nAtoms; ++j) {
-      setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_X);
-    }
-  }
+  std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
   for (ROMol::ConstBondIterator bondi = mol.beginBonds(); bondi != mol.endBonds(); ++bondi) {
     setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
                   (*bondi)->getEndAtomIdx()), RELATION_1_2);
-    for (ROMol::ConstBondIterator bondj = bondi; bondj != mol.endBonds(); ++bondj) {
-      if (*bondj == *bondi) continue;
+    unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
+    unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
+    for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
       int idx1 = -1;
       int idx3 = -1;
-      unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
-      unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
       unsigned int bondjBeginAtomIdx = (*bondj)->getBeginAtomIdx();
       unsigned int bondjEndAtomIdx = (*bondj)->getEndAtomIdx();
       if (bondiBeginAtomIdx == bondjBeginAtomIdx) {
