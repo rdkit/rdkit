@@ -35,7 +35,7 @@ class DbResultBase(object):
         self.cursor.execute(self.cmd)
       else:
         self.cursor.execute(self.cmd, self.extras)
-    except Exception:  # pragma: nocover
+    except Exception:
       sys.stderr.write('the command "%s" generated errors:\n' % (self.cmd))
       import traceback
       traceback.print_exc()
@@ -68,22 +68,33 @@ class DbResultSet(DbResultBase):
 
   def __init__(self, *args, **kwargs):
     DbResultBase.__init__(self, *args, **kwargs)
+    self.seen = []
+    self._stopped = 0
 
-  def __iter__(self):
-    self.Reset()
-    seen = set()
-    while True:
+  def Reset(self):
+    self._stopped = 0
+    DbResultBase.Reset(self)
+
+  def next(self):
+    if self._stopped:
+      raise StopIteration
+    r = None
+    while r is None:
       r = self.cursor.fetchone()
       if not r:
-        break
+        self._stopped = 1
+        raise StopIteration
       if self.transform is not None:
         r = self.transform(r)
       if self.removeDups >= 0:
         v = r[self.removeDups]
-        if v in seen:
-          continue
-        seen.add(v)
-      yield r
+        if v in self.seen:
+          r = None
+        else:
+          self.seen.append(v)
+    return r
+
+  __next__ = next  # PY3
 
 
 class RandomAccessDbResultSet(DbResultBase):
@@ -154,10 +165,16 @@ class RandomAccessDbResultSet(DbResultBase):
     self._finish()
     return len(self.results)
 
-  def __iter__(self):
-    self._finish()
-    for res in self.results:
-      yield res
+  def next(self):
+    self._pos += 1
+    res = None
+    if self._pos < len(self):
+      res = self.results[self._pos]
+    else:
+      raise StopIteration
+    return res
+
+  __next__ = next  # PY3
 
 
 if __name__ == '__main__':  # pragma: nocover

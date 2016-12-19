@@ -168,8 +168,8 @@ def GetNextRDId(conn, table, idColName='Id', leadText=''):
   return IndexToRDId(ID, leadText=leadText)
 
 
-def RegisterItem(conn, table, value, columnName, data=None, id='',  # @ReservedAssignment
-                 idColName='Id', leadText='RDCmpd'):
+def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id',
+                 leadText='RDCmpd'):
   """
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> conn = DbConnect(tempDbName)

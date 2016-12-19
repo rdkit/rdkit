@@ -13,6 +13,7 @@ import sys
 
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
+from rdkit import six
 
 sqlTextTypes = DbModule.sqlTextTypes
 sqlIntTypes = DbModule.sqlIntTypes
@@ -115,20 +116,19 @@ def GetColumnInfoFromCursor(cursor):
         sys.stderr.write('odd type in col %s: %s\n' % (cName, str(cType)))
       results.append((cName, typeStr))
   else:
-    from rdkit.six import PY2, PY3
     r = cursor.fetchone()
     if not r:
       return results
     for i, v in enumerate(r):
       cName = cursor.description[i][0]
       typ = type(v)
-      if typ == str or (PY2 and typ == unicode):  # @UndefinedVariable
+      if isinstance(v, six.string_types):
         typeStr = 'string'
       elif typ == int:
         typeStr = 'integer'
       elif typ == float:
         typeStr = 'float'
-      elif (PY2 and typ == buffer) or (PY3 and typ in (memoryview, bytes)):  # @UndefinedVariable
+      elif (six.PY2 and typ == buffer) or (six.PY3 and typ in (memoryview, bytes)):
         typeStr = 'binary'
       else:
         sys.stderr.write('odd type in col %s: %s\n' % (cName, typ))

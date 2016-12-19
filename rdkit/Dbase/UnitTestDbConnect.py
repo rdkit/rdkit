@@ -161,8 +161,10 @@ class TestCase(unittest.TestCase):
   def testGetData5(self):
     """ using a RandomAccessDbResultSet with a Transform
     """
+
     def fn(x):
       return (x[0], x[1] * 2)
+
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=1, transform=fn)
 
@@ -174,8 +176,10 @@ class TestCase(unittest.TestCase):
   def testGetData6(self):
     """ using a DbResultSet with a Transform
     """
+
     def fn(x):
       return (x[0], x[1] * 2)
+
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=0, transform=fn)
     self.assertRaises(TypeError, lambda: len(d))

@@ -21,7 +21,7 @@ from rdkit.Dbase import DbInfo
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
 from rdkit.six import string_types, StringIO
-from rdkit.six.moves import xrange  # @UnresolvedImport #pylint: disable=F0401
+from rdkit.six.moves import xrange
 
 
 def _take(fromL, what):

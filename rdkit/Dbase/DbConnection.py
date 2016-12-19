@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
 #
@@ -49,28 +48,6 @@ class DbConnect(object):
     self.password = password
     self.cn = None
     self.cursor = None
-
-  def UpdateTableNames(self, dlg):  # pragma: nocover
-    """ Modifies a connect dialog to reflect new table names
-
-     **Arguments**
-
-       - dlg: the dialog to be updated
-
-    """
-    self.user = self.userEntry.GetValue()
-    self.password = self.passwdEntry.GetValue()
-    self.dbName = self.dbBrowseButton.GetValue()
-    for _ in range(self.dbTableChoice.Number()):
-      self.dbTableChoice.Delete(0)
-
-    names = self.GetTableNames()
-
-    for name in names:
-      self.dbTableChoice.Append(name)
-    dlg.sizer.Fit(dlg)
-    dlg.sizer.SetSizeHints(dlg)
-    dlg.Refresh()
 
   def GetTableNames(self, includeViews=0):
     """ gets a list of tables available in a database
@@ -174,7 +151,7 @@ class DbConnect(object):
 
     """
     table = table or self.tableName
-    kwargs.setdefault('forceList', 0)
+    kwargs['forceList'] = kwargs.get('forceList', 0)
     return DbUtils.GetData(self.dbName, table, fieldString=fields, whereString=where,
                            user=self.user, password=self.password, removeDups=removeDups, join=join,
                            cn=self.cn, transform=transform, randomAccess=randomAccess, **kwargs)

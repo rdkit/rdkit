@@ -10,7 +10,6 @@
 #
 from __future__ import print_function
 
-
 try:
   from reportlab import platypus
 except ImportError:
@@ -32,6 +31,8 @@ else:
   from rdkit.Dbase.DbConnection import DbConnect
   from rdkit.Dbase import DbInfo
   from rdkit.Reports.PDFReport import PDFReport, ReportUtils
+  from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
+  from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
   from reportlab.lib import colors
   from reportlab.lib.units import inch
   import sys
@@ -52,12 +53,9 @@ else:
         entry = list(entry)
         entry[col] = 'N/A'
       rawD.append(entry)
-      # if nRows >10: break
 
     res = platypus.Table(rawD)
     return res
-
-  from reportlab.lib.units import inch
 
   class CDXImageTransformer(object):
 
@@ -124,9 +122,6 @@ else:
         # FIX: maybe include smiles here in a Paragraph?
         res[self.smiCol] = 'Failed'
       return res
-
-  from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
-  from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 
   class ReportLabImageTransformer(object):
 

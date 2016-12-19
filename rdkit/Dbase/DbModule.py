@@ -12,16 +12,16 @@ from rdkit import six
 from rdkit import RDConfig
 
 if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
-  from pyPgSQL import PgSQL  # @UnresolvedImport
+  from pyPgSQL import PgSQL
   # as of this writing (March 2004), this results in a speedup in
   # getting results back from the wrapper:
   PgSQL.fetchReturnsList = 1
 
   from pyPgSQL.PgSQL import *
-  sqlTextTypes = [PG_CHAR, PG_BPCHAR, PG_TEXT, PG_VARCHAR, PG_NAME]  # @UndefinedVariable
-  sqlIntTypes = [PG_INT8, PG_INT2, PG_INT4]  # @UndefinedVariable
-  sqlFloatTypes = [PG_FLOAT4, PG_FLOAT8]  # @UndefinedVariable
-  sqlBinTypes = [PG_OID, PG_BLOB, PG_BYTEA]  # @UndefinedVariable
+  sqlTextTypes = [PG_CHAR, PG_BPCHAR, PG_TEXT, PG_VARCHAR, PG_NAME]
+  sqlIntTypes = [PG_INT8, PG_INT2, PG_INT4]
+  sqlFloatTypes = [PG_FLOAT4, PG_FLOAT8]
+  sqlBinTypes = [PG_OID, PG_BLOB, PG_BYTEA]
   getTablesSql = """select tablename from pg_tables where schemaname='public'"""
   getTablesAndViewsSql = """SELECT c.relname as "Name"
   FROM pg_catalog.pg_class c
@@ -36,7 +36,7 @@ if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
   fileWildcard = None
   placeHolder = '%s'
   binaryTypeName = "bytea"
-  binaryHolder = PgBytea  # @UndefinedVariable
+  binaryHolder = PgBytea
   RDTestDatabase = "::RDTests"
 elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   try:
@@ -54,7 +54,7 @@ elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   fileWildcard = dbFileWildcard
   placeHolder = '?'
   binaryTypeName = "blob"
-  binaryHolder = memoryview if six.PY3 else buffer  # @UndefinedVariable
+  binaryHolder = memoryview if six.PY3 else buffer
 
   def connect(x, *args):
     return sqlite.connect(x)

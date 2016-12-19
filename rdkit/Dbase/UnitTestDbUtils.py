@@ -21,11 +21,10 @@ from rdkit import RDConfig
 from rdkit.Dbase import DbUtils
 from rdkit.Dbase.DbConnection import DbConnect
 
-
 try:
-  from contextlib import redirect_stdout  # @UnusedImport
+  from contextlib import redirect_stdout
 except:
-  from rdkit.TestRunner import redirect_stdout  # @Reimport
+  from rdkit.TestRunner import redirect_stdout
 
 
 class TestCase(unittest.TestCase):
@@ -122,8 +121,10 @@ class TestCase(unittest.TestCase):
   def testGetData4(self):
     """ using a RandomAccessDbResultSet with a Transform
     """
+
     def fn(x):
       return (x[0], x[1] * 2)
+
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=1, transform=fn)
     assert tuple(d[0]) == (0, 22)
     assert tuple(d[2]) == (4, 62)
@@ -134,8 +135,10 @@ class TestCase(unittest.TestCase):
   def testGetData5(self):
     """ using a DbResultSet with a Transform
     """
+
     def fn(x):
       return (x[0], x[1] * 2)
+
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=0, transform=fn)
     with self.assertRaisesRegexp(TypeError, ""):
       len(d)

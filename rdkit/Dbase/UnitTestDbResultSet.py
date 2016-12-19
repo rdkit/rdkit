@@ -55,6 +55,11 @@ class TestCase(unittest.TestCase):
       except IndexError:
         assert i >= 10
 
+    # Test iterator
+    resultSet = RandomAccessDbResultSet(self.curs, self.conn, cmd, removeDups=0)
+    self.assertEqual(next(resultSet), resultSet[0])
+    self.assertEqual(len(list(resultSet)), 10)
+
   def test2(self):
     cmd = 'select * from ten_elements'
     resultSet = RandomAccessDbResultSet(self.curs, self.conn, cmd)
@@ -67,6 +72,11 @@ class TestCase(unittest.TestCase):
     resultSet = DbResultSet(self.curs, self.conn, cmd)
     r = [obj for obj in resultSet]
     self.assertEqual(len(r), 10)
+
+    # Test iterator
+    resultSet = DbResultSet(self.curs, self.conn, cmd)
+    self.assertEqual(next(resultSet), (0, 11))
+    self.assertEqual(len(list(resultSet)), 10)
 
   def test4(self):
     cmd = 'select * from ten_elements_dups'
