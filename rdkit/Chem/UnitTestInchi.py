@@ -44,8 +44,10 @@ from rdkit.six.moves.cPickle import loads  # @UnresolvedImport
 from rdkit.Chem import ForwardSDMolSupplier, SanitizeMol
 from rdkit.Chem import MolFromSmiles, MolToSmiles
 from rdkit.Chem import MolFromMolBlock, MolToMolBlock
-from rdkit.Chem import INCHI_AVAILABLE, InchiReadWriteError
-from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey
+from rdkit.Chem import INCHI_AVAILABLE
+if INCHI_AVAILABLE:
+  from rdkit.Chem import InchiReadWriteError
+  from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey
 
 COLOR_RED = '\033[31m'
 COLOR_GREEN = '\033[32m'
@@ -78,23 +80,23 @@ def inchiDiff(inchi1, inchi2):
           '/'.join(inchi2[:i]) + COLOR_RED + '/' + '/'.join(inchi2[i:]) + COLOR_RESET)
 
 
+@unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class RegressionTest(unittest.TestCase):
 
   def testPrechloricAcid(self):
     examples = (
       ('OCl(=O)(=O)=O', 'InChI=1S/ClHO4/c2-1(3,4)5/h(H,2,3,4,5)'),
       ('CC1=CC2=NCC(CN2C=C1)C(=O)c3ccc4cc(C)ccc4c3.OCl(=O)(=O)=O',
-       'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19-12-22-20-10-15(2)7' +
-       '-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'),
+       'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19-12-22-20-10-15(2)7-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'),
       ('CNc1ccc2nc3ccccc3[n+](C)c2c1.[O-]Cl(=O)(=O)=O',
-       'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;' +
-       '2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'), )
+       'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'), )
     for smiles, expected in examples:
       m = MolFromSmiles(smiles)
       inchi = MolToInchi(m)
       self.assertEqual(inchi, expected)
 
 
+@unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -120,7 +122,7 @@ class TestCase(unittest.TestCase):
     for fp, f in self.dataset.items():
       inchi_db = self.dataset_inchi[fp]
       same, diff, reasonable = 0, 0, 0
-      for _, m in enumerate(f):
+      for m in f:
         if m is None:  # pragma: nocover
           continue
         ref_inchi = inchi_db[m.GetProp('PUBCHEM_COMPOUND_CID')]
