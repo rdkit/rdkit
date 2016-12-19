@@ -40,7 +40,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.Chem import rdDepictor
 from rdkit.rdBase import DisableLog, EnableLog
-from rdkit.six.moves.cPickle import loads  # @UnresolvedImport
+from rdkit.six.moves.cPickle import loads
 from rdkit.Chem import ForwardSDMolSupplier, SanitizeMol
 from rdkit.Chem import MolFromSmiles, MolToSmiles
 from rdkit.Chem import MolFromMolBlock, MolToMolBlock
@@ -87,9 +87,11 @@ class RegressionTest(unittest.TestCase):
     examples = (
       ('OCl(=O)(=O)=O', 'InChI=1S/ClHO4/c2-1(3,4)5/h(H,2,3,4,5)'),
       ('CC1=CC2=NCC(CN2C=C1)C(=O)c3ccc4cc(C)ccc4c3.OCl(=O)(=O)=O',
-       'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19-12-22-20-10-15(2)7-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'),
+       'InChI=1S/C21H20N2O.ClHO4/c1-14-3-4-17-11-18(6-5-16(17)9-14)21(24)19-12-22-20-10-15(2)7-8-23(20)13-19;2-1(3,4)5/h3-11,19H,12-13H2,1-2H3;(H,2,3,4,5)'
+       ),
       ('CNc1ccc2nc3ccccc3[n+](C)c2c1.[O-]Cl(=O)(=O)=O',
-       'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'), )
+       'InChI=1S/C14H13N3.ClHO4/c1-15-10-7-8-12-14(9-10)17(2)13-6-4-3-5-11(13)16-12;2-1(3,4)5/h3-9H,1-2H3;(H,2,3,4,5)'
+       ), )
     for smiles, expected in examples:
       m = MolFromSmiles(smiles)
       inchi = MolToInchi(m)
