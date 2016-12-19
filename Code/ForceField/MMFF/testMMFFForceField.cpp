@@ -377,7 +377,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
           mol = molVec[ii];
           if (*molTypeIt == "smi") {
             DGeomHelpers::EmbedMolecule(*mol);
-            MolOps::addHs((RWMol &)*(molVec[ii]), false, true);
+            MolOps::addHs((RWMol &)*mol, false, true);
           }
           MMFF::sanitizeMMFFMol((RWMol &)(*mol));
           if (mol->hasProp(common_properties::_Name)) {

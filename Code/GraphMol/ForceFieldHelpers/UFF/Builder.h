@@ -71,7 +71,7 @@ ForceFields::ForceField *constructForceField(
     int confId = -1, bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-static const std::string defaultTorsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+const std::string defaultTorsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);

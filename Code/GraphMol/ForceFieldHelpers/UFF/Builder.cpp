@@ -90,7 +90,7 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //
 // ------------------------------------------------------------------------
 boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
-  static const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X
+  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X
     | (RELATION_1_X << 2) | (RELATION_1_X << 4) | (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
@@ -488,7 +488,7 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
 
   // find all of the torsion bonds:
   std::vector<MatchVectType> matchVect;
-  static const ROMol *defaultQuery = SmartsToMol(defaultTorsionBondSmarts);
+  const ROMol *defaultQuery = SmartsToMol(defaultTorsionBondSmarts);
   const ROMol *query = (torsionBondSmarts == defaultTorsionBondSmarts) ? defaultQuery : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
