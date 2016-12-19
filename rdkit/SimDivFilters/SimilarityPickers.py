@@ -14,7 +14,7 @@ from rdkit.DataStructs.TopNContainer import TopNContainer
 class GenericPicker(object):
   _picks = None
 
-  def MakePicks(self, force=False, silent=True):
+  def MakePicks(self, force=False):
     raise NotImplementedError("GenericPicker is a virtual base class")
 
   def __len__(self):
@@ -112,10 +112,8 @@ class TopNOverallPicker(GenericPicker):
     self.simMetric = simMetric
     self._picks = None
 
-  def MakePicks(self, force=False, silent=True):
+  def MakePicks(self, force=False):
     if self._picks is not None and not force:
-      if not silent:
-        print('Use force to re-make picks')
       return
     picks = TopNContainer(self.numToPick)
     for fp in self.data:
@@ -221,10 +219,8 @@ class SpreadPicker(GenericPicker):
 
     self._picks = None
 
-  def MakePicks(self, force=False, silent=True):
+  def MakePicks(self, force=False, silent=False):
     if self._picks is not None and not force:
-      if not silent:
-        print('Use force to re-make picks')
       return
 
     # start by getting the NxM score matrix
@@ -248,10 +244,6 @@ class SpreadPicker(GenericPicker):
       j += 1
       if not silent and not j % 1000:  # pragma: nocover
         print('scored %d fps' % j)
-
-    # sort the rows of that matrix:
-    # for i in range(nProbes):
-    #   scores[i].sort()
 
     # now go probe by probe and select the current top entry until we are finished:
     nPicked = 0

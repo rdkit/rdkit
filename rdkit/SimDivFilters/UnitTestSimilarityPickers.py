@@ -16,8 +16,6 @@ from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.SimDivFilters import SimilarityPickers
-from rdkit.TestRunner import redirect_stdout
-from rdkit.six import StringIO
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -69,16 +67,6 @@ class TestCase(unittest.TestCase):
     self.assertEqual(score, 1.0)
     self.assertNotEqual(picker._picks, None)
 
-    f = StringIO()
-    with redirect_stdout(f):
-      picker.MakePicks(silent=False)
-    self.assertIn('force', f.getvalue())
-
-    f = StringIO()
-    with redirect_stdout(f):
-      picker.MakePicks(silent=False, force=True)
-    self.assertNotIn('force', f.getvalue())
-
   def test_SpreadPicker(self):
     probefps = self.getTestData()
 
@@ -96,16 +84,6 @@ class TestCase(unittest.TestCase):
     fp, score = picker[0]
     self.assertEqual(fp._id, 'ether-1')
     self.assertEqual(score, 1.0)
-
-    f = StringIO()
-    with redirect_stdout(f):
-      picker.MakePicks(silent=False)
-    self.assertIn('force', f.getvalue())
-
-    f = StringIO()
-    with redirect_stdout(f):
-      picker.MakePicks(silent=False, force=True)
-    self.assertNotIn('force', f.getvalue())
 
 
 if __name__ == '__main__':  # pragma: nocover
