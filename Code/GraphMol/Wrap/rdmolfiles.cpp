@@ -204,20 +204,20 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSequence(python::object seq, bool sanitize, bool lowerD) {
+ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
   RWMol *newM = 0;
   try {
-    newM = SequenceToMol(pyObjectToString(seq), sanitize, lowerD);
+    newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromFASTA(python::object seq, bool sanitize, bool lowerD) {
+ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
   RWMol *newM = 0;
   try {
-    newM = FASTAToMol(pyObjectToString(seq), sanitize, lowerD);
+    newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
@@ -898,8 +898,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to True.\n\
 \n\
-    - lowerD: (optional)\n\
-      Defaults to false.\n\
+    - flavor: (optional)\n\
+      0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -907,7 +907,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolFromSequence", RDKit::MolFromSequence,
               (python::arg("text"), python::arg("sanitize") = true,
-               python::arg("lowerD") = false),
+               python::arg("flavor") = 0),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =
@@ -934,16 +934,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to True.\n\
 \n\
-    - lowerD: (optional)\n\
-      Defaults to false.\n\
-\n\
+    - flavor: (optional)\n\
+      0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromFASTA", RDKit::MolFromFASTA,
               (python::arg("text"), python::arg("sanitize") = true,
-               python::arg("lowerD") = false),
+               python::arg("flavor") = 0),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =

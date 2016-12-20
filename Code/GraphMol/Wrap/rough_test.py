@@ -3281,6 +3281,11 @@ CAS<~>
     self.assertEqual(Chem.MolToFASTA(m), fasta)
     self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
 
+    seq = "CGCGAATTACCGCG"
+    m = Chem.MolFromSequence(seq,flavor=6) # DNA
+    self.assertEqual(Chem.MolToSequence(m),'CGCGAATTACCGCG')
+    self.assertEqual(Chem.MolToHELM(m),'RNA1{[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)P.[dR](A)P.[dR](A)P.[dR](T)P.[dR](T)P.[dR](A)P.[dR](C)P.[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)}$$$$')
+
   def testResMolSupplier(self):
     mol = Chem.MolFromSmiles('CC')
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
