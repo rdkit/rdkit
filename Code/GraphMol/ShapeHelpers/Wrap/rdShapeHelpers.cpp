@@ -54,7 +54,7 @@ python::tuple getConformerDimsAndOffset(const Conformer &conf,
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans, padding);
   } else {
-    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, 0, padding);
+    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, nullptr, padding);
   }
 
   python::tuple res = python::make_tuple(dims, offSet);
@@ -72,7 +72,7 @@ python::tuple getConfBox(const Conformer &conf,
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans, padding);
   } else {
-    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, 0, padding);
+    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, nullptr, padding);
   }
   python::tuple res = python::make_tuple(lowerCorner, upperCorner);
   return res;
@@ -116,7 +116,7 @@ void EncodeMolShape(
     MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                            maxLayers, ignoreHs);
   } else {
-    MolShapes::EncodeShape(mol, grid, confId, 0, vdwScale, stepSize, maxLayers,
+    MolShapes::EncodeShape(mol, grid, confId, nullptr, vdwScale, stepSize, maxLayers,
                            ignoreHs);
   }
 }

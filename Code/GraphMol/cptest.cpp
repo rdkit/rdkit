@@ -16,8 +16,8 @@ using namespace std;
 using namespace RDKit;
 
 void test1() {
-  Atom *a1 = new Atom(6);
-  Atom *a2 = new Atom(*a1);
+  auto *a1 = new Atom(6);
+  auto *a2 = new Atom(*a1);
   Atom *a3 = a1->copy();
   delete a1;
   delete a2;
@@ -25,7 +25,7 @@ void test1() {
 }
 
 void test2() {
-  RWMol *mol = new RWMol();
+  auto *mol = new RWMol();
 
   mol->addAtom(new Atom(6));
   mol->addAtom(new Atom(6));
@@ -39,7 +39,7 @@ void test2() {
   CHECK_INVARIANT(mol->hasBondBookmark(2), "");
   CHECK_INVARIANT(mol->getBondWithBookmark(2)->getIdx() == 0, "");
 
-  RWMol *mol2 = new RWMol(*mol);
+  auto *mol2 = new RWMol(*mol);
   CHECK_INVARIANT(mol2->hasAtomBookmark(1), "");
   CHECK_INVARIANT(mol2->getAtomWithBookmark(1)->getIdx() == 1, "");
   CHECK_INVARIANT(mol2->hasBondBookmark(2), "");
@@ -58,7 +58,7 @@ void testQueryCopying() {
     ROMol *m = static_cast<ROMol *>(SmartsToMol(smi));
     TEST_ASSERT(m);
     std::cerr << "\n\n\nCOPY" << std::endl;
-    ROMol *m2 = new ROMol(*m, true);
+    auto *m2 = new ROMol(*m, true);
 
     delete m;
     delete m2;
@@ -76,31 +76,31 @@ void testConformerCopying() {
     ROMol *m = static_cast<ROMol *>(SmilesToMol(smi));
     TEST_ASSERT(m);
 
-    Conformer *conf = new Conformer(m->getNumAtoms());
+    auto *conf = new Conformer(m->getNumAtoms());
     conf->setId(1);
     m->addConformer(conf, false);
     conf = new Conformer(m->getNumAtoms());
     conf->setId(2);
     m->addConformer(conf, false);
     {
-      ROMol *m2 = new ROMol(*m);
+      auto *m2 = new ROMol(*m);
       TEST_ASSERT(m2->getNumConformers() == 2);
       delete m2;
     }
     {
-      ROMol *m2 = new ROMol(*m, false, 1);
+      auto *m2 = new ROMol(*m, false, 1);
       TEST_ASSERT(m2->getNumConformers() == 1);
       TEST_ASSERT(m2->getConformer().getId() == 1);
       delete m2;
     }
     {
-      ROMol *m2 = new ROMol(*m, false, 2);
+      auto *m2 = new ROMol(*m, false, 2);
       TEST_ASSERT(m2->getNumConformers() == 1);
       TEST_ASSERT(m2->getConformer().getId() == 2);
       delete m2;
     }
     {
-      ROMol *m2 = new ROMol(*m, false, 3);
+      auto *m2 = new ROMol(*m, false, 3);
       TEST_ASSERT(m2->getNumConformers() == 0);
       delete m2;
     }

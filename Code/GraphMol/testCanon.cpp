@@ -48,13 +48,13 @@ void switchAtoms(RWMol *mol, int idx) {
 
   // before removing the atom keep track of the bonds and neighboring atoms
   while (nbrIdx != endNbrs) {
-    Bond *bnd = new Bond(*(mol->getBondBetweenAtoms(idx, (*nbrIdx))));
+    auto *bnd = new Bond(*(mol->getBondBetweenAtoms(idx, (*nbrIdx))));
     nbBnd[*nbrIdx] = bnd;
     nbrIdx++;
   }
 
   Atom *oatom = mol->getAtomWithIdx(idx);
-  Atom *natom = new Atom(*oatom);
+  auto *natom = new Atom(*oatom);
 
   // remove teh aroignal atom
   mol->removeAtom(idx);
@@ -73,7 +73,7 @@ void switchAtoms(RWMol *mol, int idx) {
     if (nbid > idx) {
       nbid--;
     }
-    Bond *bnd = new Bond(*(nbi->second));
+    auto *bnd = new Bond(*(nbi->second));
     bnd->setBeginAtomIdx(nid);
     bnd->setEndAtomIdx(nbid);
     mol->addBond(bnd, true);

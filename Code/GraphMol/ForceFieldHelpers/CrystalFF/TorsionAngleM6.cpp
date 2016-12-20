@@ -12,6 +12,7 @@
 //
 #include "TorsionAngleM6.h"
 #include <cmath>
+#include <utility>
 #include <vector>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
@@ -44,15 +45,15 @@ double calcTorsionEnergyM6(const std::vector<double> &V,
 
 TorsionAngleContribM6::TorsionAngleContribM6(
     ForceFields::ForceField *owner, unsigned int idx1, unsigned int idx2,
-    unsigned int idx3, unsigned int idx4, const std::vector<double> &V,
-    const std::vector<int> &signs)
+    unsigned int idx3, unsigned int idx4, std::vector<double> V,
+    std::vector<int> signs)
     : ForceFieldContrib(owner),
       d_at1Idx(idx1),
       d_at2Idx(idx2),
       d_at3Idx(idx3),
       d_at4Idx(idx4),
-      d_V(V),
-      d_sign(signs) {
+      d_V(std::move(V)),
+      d_sign(std::move(signs)) {
   PRECONDITION(owner, "bad owner");
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),

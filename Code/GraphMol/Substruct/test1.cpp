@@ -229,8 +229,8 @@ void test4() {
   int n;
 
   RWMol *m, *q1, *q2;
-  Atom *a6 = new Atom(6);
-  Atom *a8 = new Atom(8);
+  auto *a6 = new Atom(6);
+  auto *a8 = new Atom(8);
   m = new RWMol();
   m->addAtom(a6);
   m->addAtom(a6);
@@ -250,8 +250,8 @@ void test4() {
 
   // here's the main query
   q2 = new RWMol();
-  QueryAtom *qA = new QueryAtom(6);
-  RecursiveStructureQuery *rsq = new RecursiveStructureQuery(q1);
+  auto *qA = new QueryAtom(6);
+  auto *rsq = new RecursiveStructureQuery(q1);
   qA->expandQuery(rsq, Queries::COMPOSITE_AND);
   // std::cout << "post expand: " << qA->getQuery() << std::endl;
   q2->addAtom(qA, true, true);
@@ -284,8 +284,8 @@ void test5() {
   int n;
 
   RWMol *m, *q1, *q2;
-  Atom *a6 = new Atom(6);
-  Atom *a8 = new Atom(8);
+  auto *a6 = new Atom(6);
+  auto *a8 = new Atom(8);
   // CC(OC)C
   m = new RWMol();
   m->addAtom(a6);
@@ -306,8 +306,8 @@ void test5() {
 
   // here's the main query
   q2 = new RWMol();
-  QueryAtom *qA = new QueryAtom();
-  RecursiveStructureQuery *rsq = new RecursiveStructureQuery(q1);
+  auto *qA = new QueryAtom();
+  auto *rsq = new RecursiveStructureQuery(q1);
   qA->setQuery(rsq);
   q2->addAtom(qA, true, true);
   q2->addAtom(new QueryAtom(6), true, true);
@@ -329,8 +329,8 @@ void test5QueryRoot() {
   int n;
 
   RWMol *m, *q1, *q2;
-  Atom *a6 = new Atom(6);
-  Atom *a8 = new Atom(8);
+  auto *a6 = new Atom(6);
+  auto *a8 = new Atom(8);
   // CC(OC)C
   m = new RWMol();
   m->addAtom(a6);
@@ -352,8 +352,8 @@ void test5QueryRoot() {
 
   // here's the main query
   q2 = new RWMol();
-  QueryAtom *qA = new QueryAtom();
-  RecursiveStructureQuery *rsq = new RecursiveStructureQuery(q1);
+  auto *qA = new QueryAtom();
+  auto *rsq = new RecursiveStructureQuery(q1);
   qA->setQuery(rsq);
   q2->addAtom(qA, true, true);
   q2->addAtom(new QueryAtom(6), true, true);
@@ -376,7 +376,7 @@ void test6() {
   int n;
 
   RWMol *m, *q1;
-  Atom *a6 = new Atom(6);
+  auto *a6 = new Atom(6);
 
   m = new RWMol();
   m->addAtom(a6);
@@ -418,7 +418,7 @@ void test7() {
   int n;
 
   RWMol *m, *q1;
-  Atom *a6 = new Atom(6);
+  auto *a6 = new Atom(6);
 
   m = new RWMol();
   m->addAtom(a6);
@@ -493,7 +493,7 @@ void test9() {
   int n;
 
   RWMol *m, *q1;
-  Atom *a6 = new Atom(6);
+  auto *a6 = new Atom(6);
 
   m = new RWMol();
   m->addAtom(a6);
@@ -558,8 +558,8 @@ void testRecursiveSerialNumbers() {
   int n;
 
   RWMol *m, *q1, *q2;
-  Atom *a6 = new Atom(6);
-  Atom *a8 = new Atom(8);
+  auto *a6 = new Atom(6);
+  auto *a8 = new Atom(8);
   m = new RWMol();
   m->addAtom(a6);
   m->addAtom(a6);
@@ -580,8 +580,8 @@ void testRecursiveSerialNumbers() {
 
     // here's the main query
     q2 = new RWMol();
-    QueryAtom *qA = new QueryAtom(6);
-    RecursiveStructureQuery *rsq =
+    auto *qA = new QueryAtom(6);
+    auto *rsq =
         new RecursiveStructureQuery(new RWMol(*q1), 1);
     qA->expandQuery(rsq, Queries::COMPOSITE_AND);
     // std::cout << "post expand: " << qA->getQuery() << std::endl;
@@ -643,7 +643,7 @@ void testMultiThread() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -707,7 +707,7 @@ void testMultiThread() {
   std::cerr << " done" << std::endl;
   delete query;
 
-  for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
+  for (auto & mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

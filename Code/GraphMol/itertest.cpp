@@ -164,7 +164,7 @@ void test4() {
   unsigned int heteros1[] = {2, 7};
 
   Mol *m = SmilesToMol(smi);
-  QueryAtom *q = new QueryAtom();
+  auto *q = new QueryAtom();
   q->setQuery(makeAtomNumQuery(8));
   {
     unsigned int nSeen = 0;
@@ -365,7 +365,7 @@ void test8() {
   {
     string smi = "CC1CC2CC1C2";
     Mol *m = SmilesToMol(smi);
-    QueryAtom *q = new QueryAtom();
+    auto *q = new QueryAtom();
     q->setQuery(makeAtomExplicitDegreeQuery(3));
     q->expandQuery(makeAtomRingBondCountQuery(2));
     unsigned int nSeen = 0;

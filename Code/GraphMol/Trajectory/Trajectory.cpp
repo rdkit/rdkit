@@ -46,9 +46,8 @@ Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints, SnapshotV
   if (!snapshotVect)
     snapshotVect = new SnapshotVect;
   d_snapshotVect.reset(snapshotVect);
-  for (SnapshotVect::iterator vectIt = d_snapshotVect->begin();
-    vectIt != d_snapshotVect->end(); ++vectIt)
-    vectIt->d_trajectory = this;
+  for (auto & vectIt : *d_snapshotVect)
+    vectIt.d_trajectory = this;
 }
 
 Trajectory::Trajectory(const Trajectory &other) :
@@ -94,7 +93,7 @@ unsigned int Trajectory::addConformersToMol(ROMol &mol, int from, int to) {
   int n;
   unsigned int nConf;
   for (n = from, nConf = 0; size() && (n <= to); ++n, ++nConf) {
-    Conformer *conf = new Conformer(mol.getNumAtoms());
+    auto *conf = new Conformer(mol.getNumAtoms());
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i)
       conf->setAtomPos(i, getSnapshot(n).getPoint3D(i));
     mol.addConformer(conf, true);
@@ -163,8 +162,8 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
     "BOX"
   };
   std::set<std::string> ignoredKeywordSet;
-  for (unsigned int i = 0; i < (sizeof(ignoredKeywordArray) / sizeof(char *)); ++i)
-    ignoredKeywordSet.insert(std::string(ignoredKeywordArray[i]));
+  for (auto & i : ignoredKeywordArray)
+    ignoredKeywordSet.insert(std::string(i));
   while (inStream.good() && !inStream.eof()) {
     std::getline(inStream, tempStr);
     if (inStream.bad() || inStream.eof())
@@ -203,9 +202,8 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
     }
     else {
       std::string supportedBlocks("POSITIONRED, POSITION");
-      for (std::set<std::string>::const_iterator it = ignoredKeywordSet.begin();
-        it != ignoredKeywordSet.end(); ++it)
-        supportedBlocks += ", " + *it;
+      for (const auto & it : ignoredKeywordSet)
+        supportedBlocks += ", " + it;
       throw ValueErrorException("Unsupported block: "
         + tempStr + ". Supported blocks are " + supportedBlocks);
     }

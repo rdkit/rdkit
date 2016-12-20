@@ -130,10 +130,10 @@ SparseIntVect<boost::uint32_t> *generateFingerprintChemReactionAsCountVect(
     ReactionMoleculeType mt) {
   PRECONDITION(fpSize != 0, "fpSize==0");
 
-  SparseIntVect<boost::uint32_t> *result =
+  auto *result =
       new SparseIntVect<boost::uint32_t>(fpSize);
-  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, mt);
-  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, mt);
+  auto begin = getStartIterator(rxn, mt);
+  auto end = getEndIterator(rxn, mt);
   for (; begin != end; ++begin) {
     SparseIntVect<boost::uint32_t> *tmp =
         generateFingerprint(**begin, fpSize, t);
@@ -148,9 +148,9 @@ ExplicitBitVect *generateFingerprintChemReactionAsBitVect(
     ReactionMoleculeType mt) {
   PRECONDITION(fpSize != 0, "fpSize==0");
 
-  ExplicitBitVect *result = new ExplicitBitVect(fpSize);
-  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, mt);
-  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, mt);
+  auto *result = new ExplicitBitVect(fpSize);
+  auto begin = getStartIterator(rxn, mt);
+  auto end = getEndIterator(rxn, mt);
   for (; begin != end; ++begin) {
     ExplicitBitVect *tmp = generateFingerprintAsBitVect(**begin, fpSize, t);
     (*result) |= *tmp;
@@ -180,7 +180,7 @@ ExplicitBitVect *StructuralFingerprintChemReaction(
       rxn, fpSize_final, params.fpType, Reactant);
   ExplicitBitVect *productFP = generateFingerprintChemReactionAsBitVect(
       rxn, fpSize_final, params.fpType, Product);
-  ExplicitBitVect *res = new ExplicitBitVect;
+  auto *res = new ExplicitBitVect;
   /* concatenate the two bitvectors */
   (*res) = *reactantFP + *productFP;
   if (fpSize_agent > 0) {
@@ -207,7 +207,7 @@ SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
   SparseIntVect<boost::uint32_t> *productFP =
       generateFingerprintChemReactionAsCountVect(rxn, params.fpSize,
                                                  params.fpType, Product);
-  SparseIntVect<boost::uint32_t> *res = new SparseIntVect<boost::uint32_t>;
+  auto *res = new SparseIntVect<boost::uint32_t>;
   if (params.includeAgents) {
     SparseIntVect<boost::uint32_t> *agentFP =
         generateFingerprintChemReactionAsCountVect(rxn, params.fpSize,

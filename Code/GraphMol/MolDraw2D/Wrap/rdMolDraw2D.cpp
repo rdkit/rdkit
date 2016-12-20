@@ -27,7 +27,7 @@ namespace python = boost::python;
 namespace RDKit {
 namespace {
 std::map<int, DrawColour> *pyDictToColourMap(python::object pyo) {
-  std::map<int, DrawColour> *res = NULL;
+  std::map<int, DrawColour> *res = nullptr;
   if (pyo) {
     res = new std::map<int, DrawColour>;
     python::dict tDict = python::extract<python::dict>(pyo);
@@ -45,7 +45,7 @@ std::map<int, DrawColour> *pyDictToColourMap(python::object pyo) {
   return res;
 }
 std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
-  std::map<int, double> *res = NULL;
+  std::map<int, double> *res = nullptr;
   if (pyo) {
     res = new std::map<int, double>;
     python::dict tDict = python::extract<python::dict>(pyo);
@@ -120,7 +120,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   rdk_auto_ptr<std::vector<std::string> > legends =
       pythonObjectToVect<std::string>(plegends);
 
-  self.drawMolecules(*mols, legends.get(), NULL, NULL, NULL, NULL, NULL,
+  self.drawMolecules(*mols, legends.get(), nullptr, nullptr, nullptr, nullptr, nullptr,
                      confIds.get());
 }
 
@@ -135,7 +135,7 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
 ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
                          bool addChiralHs = true, bool wedgeBonds = true,
                          bool forceCoords = false) {
-  RWMol *res = new RWMol(*m);
+  auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
                                        forceCoords);
   return static_cast<ROMol *>(res);

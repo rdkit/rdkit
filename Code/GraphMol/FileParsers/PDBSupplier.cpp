@@ -27,7 +27,7 @@ PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
 
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
                                bool removeHs, unsigned int flavor) {
-  std::ifstream *ifs =
+  auto *ifs =
       new std::ifstream(fileName.c_str(), std::ios_base::binary);
   if (!ifs || !(*ifs) || ifs->bad()) {
     std::ostringstream errout;

@@ -405,7 +405,7 @@ void testInitStruChk() {
 #ifdef _WIN32
         std::getenv("TEMP") +
 #endif
-        std::string(std::tmpnam(NULL)) + std::string("\n");
+        std::string(std::tmpnam(nullptr)) + std::string("\n");
     int errs = AvalonTools::initCheckMol(struchk_init);
     TEST_ASSERT(!errs);
     RDKit::ROMOL_SPTR m = AvalonTools::checkMol(errs, "c1ccccc1", true);

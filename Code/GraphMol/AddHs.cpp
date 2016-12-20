@@ -25,7 +25,7 @@ Atom *getAtomNeighborNot(ROMol *mol, const Atom *atom, const Atom *other) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(atom->getDegree() > 1, "bad degree");
   PRECONDITION(other, "bad atom");
-  Atom *res = 0;
+  Atom *res = nullptr;
 
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
@@ -62,7 +62,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   RDGeom::Transform3D tform;
   RDGeom::Point3D heavyPos, hydPos;
 
-  const Atom *nbr1 = 0, *nbr2 = 0, *nbr3 = 0;
+  const Atom *nbr1 = nullptr, *nbr2 = nullptr, *nbr3 = nullptr;
   const Bond *nbrBond;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
 
@@ -73,7 +73,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       dirVect.z = 1;
       // loop over the conformations and set the coordinates
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
+      for (auto cfi = mol->beginConformers();
            cfi != mol->endConformers(); cfi++) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         hydPos = heavyPos + dirVect * bondLength;
@@ -86,7 +86,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       //  One other neighbor:
       // --------------------------------------------------------------------------
       nbr1 = getAtomNeighborNot(mol, heavyAtom, hydAtom);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
+      for (auto cfi = mol->beginConformers();
            cfi != mol->endConformers(); ++cfi) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
@@ -166,7 +166,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       }
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
+      for (auto cfi = mol->beginConformers();
            cfi != mol->endConformers(); ++cfi) {
         // start along the average of the two vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
@@ -255,7 +255,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
+      for (auto cfi = mol->beginConformers();
            cfi != mol->endConformers(); ++cfi) {
         // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
@@ -327,7 +327,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // FIX: figure out what to do here
       // --------------------------------------------------------------------------
       hydPos = heavyPos + dirVect * bondLength;
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
+      for (auto cfi = mol->beginConformers();
            cfi != mol->endConformers(); ++cfi) {
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
@@ -364,7 +364,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // loop over the conformations of the molecule and allocate new space
   // for the H locations (need to do this even if we aren't adding coords so
   // that the conformers have the correct number of atoms).
-  for (ROMol::ConformerIterator cfi = mol.beginConformers();
+  for (auto cfi = mol.beginConformers();
        cfi != mol.endConformers(); ++cfi) {
     (*cfi)->reserve(nSize);
   }
@@ -414,7 +414,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 }
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
              const UINT_VECT *onlyOnAtoms) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   addHs(*res, explicitOnly, addCoords, onlyOnAtoms);
   return static_cast<ROMol *>(res);
 };
@@ -533,7 +533,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
             bond->getBondDir() == Bond::ENDUPRIGHT) {
           bool foundADir = false;
-          Bond *oBond = NULL;
+          Bond *oBond = nullptr;
           boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
           while (beg != end) {
             if (mol[*beg]->getIdx() != bond->getIdx() &&
@@ -546,7 +546,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
             }
             ++beg;
           }
-          if (!foundADir && oBond != NULL) {
+          if (!foundADir && oBond != nullptr) {
             bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
                           (bond->getBeginAtom() == heavyAtom);
             if (flipIt) {
@@ -595,7 +595,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   try {
     removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
   } catch (MolSanitizeException &se) {
@@ -733,7 +733,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           // it wasn't a query atom, we need to replace it so that we can add a
           // query:
           ATOM_EQUALS_QUERY *tmp = makeAtomNumQuery(atom->getAtomicNum());
-          QueryAtom *newAt = new QueryAtom;
+          auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
           mol.replaceAtom(atom->getIdx(), newAt);
           delete newAt;
@@ -790,7 +790,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
   }
 };
 ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   mergeQueryHs(*res, mergeUnmappedOnly);
   return static_cast<ROMol *>(res);
 };

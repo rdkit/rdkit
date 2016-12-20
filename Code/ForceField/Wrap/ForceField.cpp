@@ -43,7 +43,7 @@ void ForceFieldAddFixedPoint(PyForceField *self, unsigned int idx) {
 void UFFAddDistanceConstraint(PyForceField *self, unsigned int idx1,
                               unsigned int idx2, bool relative, double minLen,
                               double maxLen, double forceConstant) {
-  UFF::DistanceConstraintContrib *constraint =
+  auto *constraint =
       new UFF::DistanceConstraintContrib(self->field.get(), idx1, idx2,
                                          relative, minLen, maxLen,
                                          forceConstant);
@@ -54,7 +54,7 @@ void UFFAddAngleConstraint(PyForceField *self, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3, bool relative,
                            double minAngleDeg, double maxAngleDeg,
                            double forceConstant) {
-  UFF::AngleConstraintContrib *constraint = new UFF::AngleConstraintContrib(
+  auto *constraint = new UFF::AngleConstraintContrib(
       self->field.get(), idx1, idx2, idx3, relative, minAngleDeg, maxAngleDeg,
       forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
@@ -65,7 +65,7 @@ void UFFAddTorsionConstraint(PyForceField *self, unsigned int idx1,
                              unsigned int idx4, bool relative,
                              double minDihedralDeg, double maxDihedralDeg,
                              double forceConstant) {
-  UFF::TorsionConstraintContrib *constraint = new UFF::TorsionConstraintContrib(
+  auto *constraint = new UFF::TorsionConstraintContrib(
       self->field.get(), idx1, idx2, idx3, idx4, relative, minDihedralDeg,
       maxDihedralDeg, forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
@@ -73,7 +73,7 @@ void UFFAddTorsionConstraint(PyForceField *self, unsigned int idx1,
 
 void UFFAddPositionConstraint(PyForceField *self, unsigned int idx,
                               double maxDispl, double forceConstant) {
-  UFF::PositionConstraintContrib *constraint =
+  auto *constraint =
       new UFF::PositionConstraintContrib(self->field.get(), idx, maxDispl,
                                          forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
@@ -82,7 +82,7 @@ void UFFAddPositionConstraint(PyForceField *self, unsigned int idx,
 void MMFFAddDistanceConstraint(PyForceField *self, unsigned int idx1,
                                unsigned int idx2, bool relative, double minLen,
                                double maxLen, double forceConstant) {
-  MMFF::DistanceConstraintContrib *constraint =
+  auto *constraint =
       new MMFF::DistanceConstraintContrib(self->field.get(), idx1, idx2,
                                           relative, minLen, maxLen,
                                           forceConstant);
@@ -93,7 +93,7 @@ void MMFFAddAngleConstraint(PyForceField *self, unsigned int idx1,
                             unsigned int idx2, unsigned int idx3, bool relative,
                             double minAngleDeg, double maxAngleDeg,
                             double forceConstant) {
-  MMFF::AngleConstraintContrib *constraint = new MMFF::AngleConstraintContrib(
+  auto *constraint = new MMFF::AngleConstraintContrib(
       self->field.get(), idx1, idx2, idx3, relative, minAngleDeg, maxAngleDeg,
       forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
@@ -104,7 +104,7 @@ void MMFFAddTorsionConstraint(PyForceField *self, unsigned int idx1,
                               unsigned int idx4, bool relative,
                               double minDihedralDeg, double maxDihedralDeg,
                               double forceConstant) {
-  MMFF::TorsionConstraintContrib *constraint =
+  auto *constraint =
       new MMFF::TorsionConstraintContrib(self->field.get(), idx1, idx2, idx3,
                                          idx4, relative, minDihedralDeg,
                                          maxDihedralDeg, forceConstant);
@@ -113,7 +113,7 @@ void MMFFAddTorsionConstraint(PyForceField *self, unsigned int idx1,
 
 void MMFFAddPositionConstraint(PyForceField *self, unsigned int idx,
                                double maxDispl, double forceConstant) {
-  MMFF::PositionConstraintContrib *constraint =
+  auto *constraint =
       new MMFF::PositionConstraintContrib(self->field.get(), idx, maxDispl,
                                           forceConstant);
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
@@ -144,7 +144,7 @@ python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int ma
 
 PyObject *PyMMFFMolProperties::getMMFFBondStretchParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   unsigned int bondType;
   ForceFields::MMFF::MMFFBond mmffBondStretchParams;
   if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
@@ -161,7 +161,7 @@ PyObject *PyMMFFMolProperties::getMMFFAngleBendParams(const RDKit::ROMol &mol,
                                                       const unsigned int idx1,
                                                       const unsigned int idx2,
                                                       const unsigned int idx3) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   unsigned int angleType;
   ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
   if (mmffMolProperties->getMMFFAngleBendParams(
@@ -177,7 +177,7 @@ PyObject *PyMMFFMolProperties::getMMFFAngleBendParams(const RDKit::ROMol &mol,
 PyObject *PyMMFFMolProperties::getMMFFStretchBendParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   unsigned int stretchBendType;
   ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
   ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
@@ -198,7 +198,7 @@ PyObject *PyMMFFMolProperties::getMMFFTorsionParams(const RDKit::ROMol &mol,
                                                     const unsigned int idx2,
                                                     const unsigned int idx3,
                                                     const unsigned int idx4) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   unsigned int torType;
   ForceFields::MMFF::MMFFTor mmffTorsionParams;
   if (mmffMolProperties->getMMFFTorsionParams(mol, idx1, idx2, idx3, idx4,
@@ -217,7 +217,7 @@ PyObject *PyMMFFMolProperties::getMMFFOopBendParams(const RDKit::ROMol &mol,
                                                     const unsigned int idx2,
                                                     const unsigned int idx3,
                                                     const unsigned int idx4) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::MMFF::MMFFOop mmffOopBendParams;
   if (mmffMolProperties->getMMFFOopBendParams(mol, idx1, idx2, idx3, idx4,
                                               mmffOopBendParams)) {
@@ -228,7 +228,7 @@ PyObject *PyMMFFMolProperties::getMMFFOopBendParams(const RDKit::ROMol &mol,
 
 PyObject *PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
                                                 const unsigned int idx2) {
-  PyObject *res = NULL;
+  PyObject *res = nullptr;
   ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
   if (mmffMolProperties->getMMFFVdWParams(idx1, idx2, mmffVdWParams)) {
     res = PyTuple_New(4);

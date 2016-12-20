@@ -59,7 +59,7 @@ class EditableMol : boost::noncopyable {
   };
   ROMol *GetMol() const {
     PRECONDITION(dp_mol, "no molecule");
-    ROMol *res = new ROMol(*dp_mol);
+    auto *res = new ROMol(*dp_mol);
     return res;
   };
 

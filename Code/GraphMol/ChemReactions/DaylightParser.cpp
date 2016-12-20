@@ -132,7 +132,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   std::vector<std::string> productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
 
-  ChemicalReaction *rxn = new ChemicalReaction();
+  auto *rxn = new ChemicalReaction();
 
   for (std::vector<std::string>::const_iterator txtIt = reactSmarts.begin();
        txtIt != reactSmarts.end(); ++txtIt) {
@@ -170,9 +170,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
     std::vector<ROMOL_SPTR> agents = MolOps::getMolFrags(*agentMol, false);
     delete agentMol;
-    for (std::vector<ROMOL_SPTR>::iterator aIt = agents.begin();
-         aIt != agents.end(); ++aIt) {
-      rxn->addAgentTemplate(*aIt);
+    for (auto & agent : agents) {
+      rxn->addAgentTemplate(agent);
     }
   }
 

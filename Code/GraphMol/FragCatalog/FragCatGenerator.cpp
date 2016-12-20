@@ -42,7 +42,7 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
   double invar;
   int vid;
   for (pi = paths.begin(); pi != paths.end(); pi++) {
-    FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
+    auto *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
     // loop over each order 1 path
     found = false;
     const INT_VECT &o1entries = fcat->getEntriesOfOrder(1);
@@ -125,7 +125,7 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
     for (pi = (*ordi).second.begin(); pi != (*ordi).second.end(); pi++) {
       found = false;
 
-      FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
+      auto *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
       nent->setDescription(fparams);
 
       unsigned int scnt = 0;

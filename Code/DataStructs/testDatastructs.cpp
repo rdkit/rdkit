@@ -553,7 +553,7 @@ void test6SparseIntVect() {
     iV1.setVal(4, 4);
     iV1.setVal(0, 2);
     iV1.setVal(3, 1);
-    SparseIntVect<int>::StorageType::const_iterator iter =
+    auto iter =
         iV1.getNonzeroElements().begin();
     TEST_ASSERT(iter->first == 0);
     TEST_ASSERT(iter->second == 2);
@@ -999,7 +999,7 @@ void test8BitVectPickles() {
     inS.open(pklName.c_str(), std::ios_base::binary);
     unsigned int length;
     inS >> length;
-    char *buff = new char[length];
+    auto *buff = new char[length];
     length = inS.readsome(buff, length);
     inS.close();
     std::string pkl(buff, length);
@@ -1092,8 +1092,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
 
     bv.setBit(0);
@@ -1103,8 +1103,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] != 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp != 0);
     }
   }
   {
@@ -1113,8 +1113,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 4);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
     UpdateBitVectFromBinaryText(bv2, fps);
     TEST_ASSERT(bv == bv2);
@@ -1136,8 +1136,8 @@ void test10BitVectBinaryText() {
 
     fps = BitVectToBinaryText(bv);
     TEST_ASSERT(fps.size() == 5);
-    for (unsigned int i = 0; i < fps.size(); ++i) {
-      TEST_ASSERT(fps[i] == 0);
+    for (char fp : fps) {
+      TEST_ASSERT(fp == 0);
     }
 
     bv.setBit(0);

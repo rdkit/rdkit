@@ -153,28 +153,28 @@ class PythonFilterMatch : public FilterMatcherBase {
     python::incref(functor);
   }
 
-  ~PythonFilterMatch() {
+  ~PythonFilterMatch() override {
     if (incref) python::decref(functor);
   }
-  virtual bool isValid() const {
+  bool isValid() const override {
     return python::call_method<bool>(functor, "IsValid");
   }
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     return python::call_method<std::string>(functor, "GetName");
   }
 
-  virtual bool getMatches(const ROMol &mol,
-                          std::vector<FilterMatch> &matchVect) const {
+  bool getMatches(const ROMol &mol,
+                          std::vector<FilterMatch> &matchVect) const override {
     return python::call_method<bool>(functor, "GetMatches", boost::ref(mol),
                                      boost::ref(matchVect));
   }
 
-  virtual bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
   }
 };
@@ -291,9 +291,8 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
       GetFlattenedFunctionalGroupHierarchy(normalize);
   python::dict dict;
-  for (std::map<std::string, ROMOL_SPTR>::const_iterator it = flattened.begin();
-       it != flattened.end(); ++it) {
-    dict[it->first] = it->second;
+  for (const auto & it : flattened) {
+    dict[it.first] = it.second;
   }
   return dict;
 }

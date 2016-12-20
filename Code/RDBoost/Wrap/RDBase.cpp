@@ -65,7 +65,7 @@ void LogMessage(std::string spec, std::string msg) {
   } else if (spec == "rdApp.debug") {
     dest = rdDebugLog;
   } else {
-    dest = 0;
+    dest = nullptr;
   }
 
   if (dest) {

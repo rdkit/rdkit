@@ -300,7 +300,7 @@ double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
   _computeCovarianceMat(refPoints, probePoints, *wts, covMat);
   if (ownWts) {
     delete wts;
-    wts = 0;
+    wts = nullptr;
   }
   if (reflect) {
     rptSum *= -1.0;

@@ -185,17 +185,17 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     //
     // for each atom, get a sorted list of its neighbors' ranks:
     //
-    for (INT_LIST_I it = allIndices.begin(); it != allIndices.end(); ++it) {
+    for (int & allIndice : allIndices) {
       CIP_ENTRY localEntry;
       localEntry.reserve(16);
 
       // start by pushing on our neighbors' ranks:
       ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(mol[*it].get());
+      boost::tie(beg, end) = mol.getAtomBonds(mol[allIndice].get());
       while (beg != end) {
         const Bond *bond = mol[*beg].get();
         ++beg;
-        unsigned int nbrIdx = bond->getOtherAtomIdx(*it);
+        unsigned int nbrIdx = bond->getOtherAtomIdx(allIndice);
         const Atom *nbr = mol[nbrIdx].get();
 
         int rank = ranks[nbrIdx] + 1;
@@ -224,33 +224,33 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
           count = static_cast<unsigned int>(
               floor(2. * bond->getBondTypeAsDouble() + .1));
         }
-        CIP_ENTRY::iterator ePos =
+        auto ePos =
             std::lower_bound(localEntry.begin(), localEntry.end(), rank);
         localEntry.insert(ePos, count, rank);
         ++nbr;
       }
       // add a zero for each coordinated H:
       // (as long as we're not a query atom)
-      if (!mol[*it]->hasQuery()) {
-        localEntry.insert(localEntry.begin(), mol[*it]->getTotalNumHs(), 0);
+      if (!mol[allIndice]->hasQuery()) {
+        localEntry.insert(localEntry.begin(), mol[allIndice]->getTotalNumHs(), 0);
       }
 
       // we now have a sorted list of our neighbors' ranks,
       // copy it on in reversed order:
-      cipEntries[*it].insert(cipEntries[*it].end(), localEntry.rbegin(),
+      cipEntries[allIndice].insert(cipEntries[allIndice].end(), localEntry.rbegin(),
                              localEntry.rend());
-      if (cipEntries[*it].size() > longestEntry) {
-        longestEntry = rdcast<unsigned int>(cipEntries[*it].size());
+      if (cipEntries[allIndice].size() > longestEntry) {
+        longestEntry = rdcast<unsigned int>(cipEntries[allIndice].size());
       }
     }
     // ----------------------------------------------------
     //
     // pad the entries so that we compare rounds to themselves:
     //
-    for (INT_LIST_I it = allIndices.begin(); it != allIndices.end(); ++it) {
-      unsigned int sz = rdcast<unsigned int>(cipEntries[*it].size());
+    for (int & allIndice : allIndices) {
+      unsigned int sz = rdcast<unsigned int>(cipEntries[allIndice].size());
       if (sz < longestEntry) {
-        cipEntries[*it].insert(cipEntries[*it].end(), longestEntry - sz, -1);
+        cipEntries[allIndice].insert(cipEntries[allIndice].end(), longestEntry - sz, -1);
       }
     }
     // ----------------------------------------------------
@@ -560,7 +560,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
         mol.getAtomWithIdx(ringAtomIdx)
             ->getPropIfPresent(common_properties::_ringStereoAtoms, lringatoms);
         CHECK_INVARIANT(lringatoms.size() > 0, "no other ring atoms found.");
-        for (INT_VECT_CI orae = rae + 1; orae != ringStereoAtoms.end();
+        for (auto orae = rae + 1; orae != ringStereoAtoms.end();
              ++orae) {
           int oringAtomEntry = *orae;
           int oringAtomIdx =

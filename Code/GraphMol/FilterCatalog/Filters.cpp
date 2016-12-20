@@ -824,7 +824,7 @@ const FilterData_t* GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
     case FilterCatalogParams::ZINC:
       return ZINC;
     default:
-      return 0;
+      return nullptr;
   }
 }
 
@@ -863,7 +863,7 @@ const FilterProperty_t* GetFilterProperties(
     case FilterCatalogParams::ZINC:
       return ZINC_PROPS;
     default:
-      return 0;
+      return nullptr;
   }
 }
 }

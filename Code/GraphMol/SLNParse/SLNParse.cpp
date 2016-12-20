@@ -146,10 +146,10 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
   try {
     sln_parse(inp, doQueries, molVect);
     if (molVect.size() <= 0) {
-      res = 0;
+      res = nullptr;
     } else {
       res = molVect[0];
-      molVect[0] = 0;
+      molVect[0] = nullptr;
       for (ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt =
                res->getBondBookmarks()->begin();
            bmIt != res->getBondBookmarks()->end(); ++bmIt) {
@@ -164,7 +164,7 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     }
   } catch (SLNParseException &e) {
     BOOST_LOG(rdErrorLog) << e.message() << std::endl;
-    res = 0;
+    res = nullptr;
   }
   if (res) {
     // cleanup:
@@ -175,9 +175,8 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     // since we'll be removing Hs later and that will break things:
     adjustAtomChiralities(res);
   }
-  for (std::vector<RDKit::RWMol *>::iterator iter = molVect.begin();
-       iter != molVect.end(); ++iter) {
-    if (*iter) delete *iter;
+  for (auto & iter : molVect) {
+    if (iter) delete iter;
   }
   return res;
 };

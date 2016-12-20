@@ -278,7 +278,7 @@ void test4() {
   // MolToMolFile(m1, "junk1.mol");
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  RDDepict::compute2DCoords(*mref, 0, false);
+  RDDepict::compute2DCoords(*mref, nullptr, false);
   _compareCoords(m1, cid1, mref, cid2);
   delete m1;
 
@@ -312,7 +312,7 @@ void test4() {
 
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  cid2 = RDDepict::compute2DCoords(*mref, 0, false);
+  cid2 = RDDepict::compute2DCoords(*mref, nullptr, false);
   crdMap.erase(crdMap.find(5));
   // MolToMolFile(mref, "junk1.mol");
   m1 = SmilesToMol(smi, 0, 1);
@@ -493,7 +493,7 @@ void testIssue2821647() {
   {
     std::string smi = "CCCCC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -507,7 +507,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccccc1CCCCCC1CC1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -521,7 +521,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccc2c(c1)oc1c3ccccc3oc21";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -535,7 +535,7 @@ void testIssue2821647() {
   {
     std::string smi = "[H]n1c2ccccc2c2n([H])c3ccccc3c12";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -552,7 +552,7 @@ void testIssue2948402() {
   {
     std::string smi = "C1C2CC3=CC=CC(C2)CC(O3)C1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     (void)cid1;
     // TEST_ASSERT(cid1>=0);
     delete m1;
@@ -564,7 +564,7 @@ void testIssue2995724() {
     // the original problem from Thomas Heller:
     std::string smi = "OC(=O)[C@@H]1CCCN1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -583,9 +583,9 @@ void testIssue2995724() {
                           "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
                           "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
                           "CC1(OC(=C(C(=O)O1)C2=NCCC2)O)C"};
-    for (unsigned int j = 0; j < 4; j++) {
-      RWMol *m1 = SmilesToMol(smis[j]);
-      unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    for (const auto & smi : smis) {
+      RWMol *m1 = SmilesToMol(smi);
+      unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
       const Conformer &conf = m1->getConformer(cid1);
       for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -604,7 +604,7 @@ void testBondLengthChange() {
   {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.75));
@@ -616,7 +616,7 @@ void testBondLengthChange() {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
     RDDepict::BOND_LEN = 1.0;
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.5));
@@ -674,7 +674,7 @@ void testIssue3487469() {
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getAtomWithIdx(1)->getHybridization() == Atom::UNSPECIFIED);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     const Conformer &conf = m1->getConformer(cid1);
     RDGeom::Point3D p0 = conf.getAtomPos(0);
     RDGeom::Point3D p1 = conf.getAtomPos(1);
@@ -738,8 +738,8 @@ void testGitHubIssue78() {
                            "C1=CC=C2C(=C1)C=C3C=CC4=C5C3=C2C6C(C5=CC=C4)O6"};
     RWMol *p = SmartsToMol("[#6]~[#6]~1-[#8]-[#6]~1~[#6]");
     TEST_ASSERT(p);
-    for (unsigned int i = 0; i < 4; ++i) {
-      RWMol *m = SmilesToMol(smis[i]);
+    for (const auto & smi : smis) {
+      RWMol *m = SmilesToMol(smi);
       TEST_ASSERT(m);
       MatchVectType mv;
       TEST_ASSERT(SubstructMatch(*m, *p, mv));
@@ -788,7 +788,7 @@ void testGitHubIssue910() {
       }
     }
     MolOps::addHs(*m, false, false, &chiralAts);
-    RDDepict::compute2DCoords(*m, NULL, true);
+    RDDepict::compute2DCoords(*m, nullptr, true);
 
     // now look for close contacts.
     const Conformer &conf = m->getConformer();

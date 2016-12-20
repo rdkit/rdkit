@@ -21,7 +21,7 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 
-class PeriodicTable *PeriodicTable::ds_instance = 0;
+class PeriodicTable *PeriodicTable::ds_instance = nullptr;
 
 PeriodicTable::PeriodicTable() {
   // it is assumed that the atomic atomData string constains atoms
@@ -94,7 +94,7 @@ PeriodicTable *PeriodicTable::getTable() {
 #endif
   boost::call_once(initInstance, pt_init_once);
 #else
-  if (ds_instance == NULL) initInstance();
+  if (ds_instance == nullptr) initInstance();
 #endif
   return ds_instance;
 }

@@ -106,7 +106,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
 static inline unsigned long long nanoClock(
     void) {  // actually returns microseconds
   struct timeval t;
-  gettimeofday(&t, (struct timezone*)0);
+  gettimeofday(&t, (struct timezone*)nullptr);
   return t.tv_usec + t.tv_sec * 1000000ULL;
 }
 
@@ -119,7 +119,7 @@ void printTime() {
 
 std::string getSmilesOnly(
     const char* smiles,
-    std::string* id = 0) {  // remove label, because RDKit parse FAILED
+    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) *id = std::string(smiles + (n--));

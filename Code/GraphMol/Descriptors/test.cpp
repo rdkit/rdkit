@@ -372,7 +372,7 @@ void testLipinski1() {
     delete test_mol;
   }
   while (!suppl.atEnd()) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     ++idx;
     try {
       mol = suppl.next();
@@ -858,7 +858,7 @@ void testMultiThread() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -878,7 +878,7 @@ void testMultiThread() {
   }
   tg.join_all();
 
-  for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
+  for (auto & mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

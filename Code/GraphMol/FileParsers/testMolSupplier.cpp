@@ -88,7 +88,7 @@ int testMolSup() {
     TEST_ASSERT(i == 16);
   }
   {
-    std::ifstream *strm = new std::ifstream(fname.c_str());
+    auto *strm = new std::ifstream(fname.c_str());
     SDMolSupplier sdsup(strm, true);
     unsigned int i = 0;
     while (!sdsup.atEnd()) {
@@ -628,7 +628,7 @@ void testSDWriter() {
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
 
-  SDWriter *writer = new SDWriter(ofile);
+  auto *writer = new SDWriter(ofile);
 
   STR_VECT names;
 
@@ -804,7 +804,7 @@ void testCisTrans() {
   try {
     reader = new SDMolSupplier("cisTrans.sdf");
   } catch (FileParseException &) {
-    reader = 0;
+    reader = nullptr;
   }
   TEST_ASSERT(reader);
   while (!reader->atEnd()) {
@@ -830,13 +830,13 @@ void testStereoRound() {
   try {
     smiSup = new SmilesMolSupplier(infile, ",", 0, 1, false, true);
   } catch (FileParseException &) {
-    smiSup = 0;
+    smiSup = nullptr;
   }
   TEST_ASSERT(smiSup)
   std::map<std::string, std::string> nameSmi;
   std::string ofile =
       rdbase + "/Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+  auto *writer = new SDWriter(ofile);
   int count = 0;
 
   while (!smiSup->atEnd()) {
@@ -873,7 +873,7 @@ void testStereoRound() {
   try {
     reader = new SDMolSupplier(ofile);
   } catch (FileParseException &) {
-    reader = 0;
+    reader = nullptr;
   }
   TEST_ASSERT(reader);
   count = 0;
@@ -1452,7 +1452,7 @@ void testSDErrorHandling() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors1.sdf";
   SDMolSupplier *sdsup;
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
 
   // entry 1: bad properties
   sdsup = new SDMolSupplier(fname);
@@ -1496,7 +1496,7 @@ void testIssue381() {
       rdbase + "/Code/GraphMol/FileParsers/test_data/Issue381.sdf";
   SDMolSupplier *sdsup;
 
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
   int count;
 
   // entry 1: bad properties
@@ -1537,7 +1537,7 @@ void testSetStreamIndices() {
   ifs.close();
   SDMolSupplier *sdsup;
 
-  ROMol *nmol = 0;
+  ROMol *nmol = nullptr;
   int count;
 
   sdsup = new SDMolSupplier(fname);
@@ -1657,7 +1657,7 @@ int testMixIterAndRandom() {
 
   nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
   TEST_ASSERT(nSup);
-  mol = 0;
+  mol = nullptr;
   try {
     mol = (*nSup)[20];
     ok = false;
@@ -1711,7 +1711,7 @@ int testMixIterAndRandom() {
 
   tSup = new TDTMolSupplier(fname);
   TEST_ASSERT(tSup);
-  mol = 0;
+  mol = nullptr;
   try {
     mol = (*tSup)[20];
     ok = false;
@@ -2159,7 +2159,7 @@ void testSkipLines() {
 void testGitHub23() {
   std::string rdbase = getenv("RDBASE");
   std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/blah.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+  auto *writer = new SDWriter(ofile);
 
   ROMol *mol = SmilesToMol("CCCC");
   INT_VECT iv;

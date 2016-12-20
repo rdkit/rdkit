@@ -128,14 +128,14 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
   //
   // -------------------
   streamWrite(ss, BEGINREACTANTS);
-  for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginReactantTemplates();
+  for (auto tmpl = rxn->beginReactantTemplates();
        tmpl != rxn->endReactantTemplates(); ++tmpl) {
     MolPickler::pickleMol(tmpl->get(), ss);
   }
   streamWrite(ss, ENDREACTANTS);
 
   streamWrite(ss, BEGINPRODUCTS);
-  for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginProductTemplates();
+  for (auto tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
     MolPickler::pickleMol(tmpl->get(), ss);
   }
@@ -143,7 +143,7 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
 
   if (rxn->getNumAgentTemplates()) {
     streamWrite(ss, BEGINAGENTS);
-    for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginAgentTemplates();
+    for (auto tmpl = rxn->beginAgentTemplates();
          tmpl != rxn->endAgentTemplates(); ++tmpl) {
       MolPickler::pickleMol(tmpl->get(), ss);
     }
@@ -181,7 +181,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINREACTANTS tag not found.");
   }
   for (unsigned int i = 0; i < numReactants; ++i) {
-    ROMol *mol = new ROMol();
+    auto *mol = new ROMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addReactantTemplate(ROMOL_SPTR(mol));
   }
@@ -196,7 +196,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINPRODUCTS tag not found.");
   }
   for (unsigned int i = 0; i < numProducts; ++i) {
-    ROMol *mol = new ROMol();
+    auto *mol = new ROMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addProductTemplate(ROMOL_SPTR(mol));
   }
@@ -212,7 +212,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
           "Bad pickle format: BEGINAGENTS tag not found.");
     }
     for (unsigned int i = 0; i < numAgents; ++i) {
-      ROMol *mol = new ROMol();
+      auto *mol = new ROMol();
       MolPickler::molFromPickle(ss, mol);
       rxn->addAgentTemplate(ROMOL_SPTR(mol));
     }

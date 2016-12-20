@@ -33,16 +33,16 @@ namespace RDKit {
 static Atom *PDBAtomFromSymbol(const char *symb) {
   PRECONDITION(symb, "bad char ptr");
   if (symb[0] == 'D' && !symb[1]) {
-    Atom *result = new Atom(1);
+    auto *result = new Atom(1);
     result->setIsotope(2);
     return result;
   } else if (symb[0] == 'T' && !symb[1]) {
-    Atom *result = new Atom(1);
+    auto *result = new Atom(1);
     result->setIsotope(3);
     return result;
   }
   int elemno = PeriodicTable::getTable()->getAtomicNumber(symb);
-  return elemno > 0 ? new Atom(elemno) : (Atom *)0;
+  return elemno > 0 ? new Atom(elemno) : (Atom *)nullptr;
 }
 
 static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
@@ -74,7 +74,7 @@ static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
     throw FileParseException(errout.str());
   }
 
-  Atom *atom = (Atom *)0;
+  Atom *atom = (Atom *)nullptr;
   char symb[3];
 
   // Attempt #1:  Atomic Symbol in columns 76 and 77
@@ -454,11 +454,11 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
   PRECONDITION(str, "bad char ptr");
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
-  RWMol *mol = 0;
+  RWMol *mol = nullptr;
   Utils::LocaleSwitcher ls;
   bool multi_conformer = false;
   int conformer_atmidx = 0;
-  Conformer *conf = 0;
+  Conformer *conf = nullptr;
 
   while (*str) {
     unsigned int len;
@@ -519,19 +519,18 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
       if (!mol) break;
       multi_conformer = true;
       conformer_atmidx = 0;
-      conf = 0;
+      conf = nullptr;
     }
     str = next;
   }
 
-  if (!mol) return (RWMol *)0;
+  if (!mol) return (RWMol *)nullptr;
 
   ConnectTheDots(mol);
   StandardPDBResidueBondOrders(mol);
 
-  for (std::map<int, Atom *>::iterator mi = amap.begin(); mi != amap.end();
-       ++mi)
-    (*mi).second->calcExplicitValence(false);
+  for (auto & mi : amap)
+    mi.second->calcExplicitValence(false);
 
   if (sanitize) {
     if (removeHs) {

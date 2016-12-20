@@ -22,6 +22,7 @@
 #endif
 
 #include <sstream>
+#include <utility>
 
 #include "seqs.hpp"
 namespace python = boost::python;
@@ -55,10 +56,10 @@ void wrap_resmolsupplier();
 struct PySysErrWrite : std::ostream, std::streambuf {
   std::string prefix;
 
-  PySysErrWrite(const std::string &prefix)
-      : std::ostream(this), prefix(prefix) {}
+  PySysErrWrite(std::string prefix)
+      : std::ostream(this), prefix(std::move(prefix)) {}
 
-  int overflow(int c) {
+  int overflow(int c) override {
     write(c);
     return 0;
   }
@@ -107,14 +108,14 @@ void WrapLogs() {
   static PySysErrWrite error("RDKit ERROR: ");
   static PySysErrWrite info("RDKit INFO: ");
   static PySysErrWrite warning("RDKit WARNING: ");
-  if (rdDebugLog == NULL || rdInfoLog == NULL || rdErrorLog == NULL ||
-      rdWarningLog == NULL) {
+  if (rdDebugLog == nullptr || rdInfoLog == nullptr || rdErrorLog == nullptr ||
+      rdWarningLog == nullptr) {
     RDLog::InitLogs();
   }
-  if (rdDebugLog != NULL) rdDebugLog->SetTee(debug);
-  if (rdInfoLog != NULL) rdInfoLog->SetTee(info);
-  if (rdErrorLog != NULL) rdErrorLog->SetTee(error);
-  if (rdWarningLog != NULL) rdWarningLog->SetTee(warning);
+  if (rdDebugLog != nullptr) rdDebugLog->SetTee(debug);
+  if (rdInfoLog != nullptr) rdInfoLog->SetTee(info);
+  if (rdErrorLog != nullptr) rdErrorLog->SetTee(error);
+  if (rdWarningLog != nullptr) rdWarningLog->SetTee(warning);
 }
 
 BOOST_PYTHON_MODULE(rdchem) {

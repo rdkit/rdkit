@@ -31,8 +31,8 @@ MolCatalogEntry::MolCatalogEntry(const ROMol *omol) {
 MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other) {
   setBitId(other.getBitId());
   d_descrip = other.d_descrip;
-  dp_props = 0;
-  dp_mol = 0;
+  dp_props = nullptr;
+  dp_mol = nullptr;
   if (other.dp_props) {
     dp_props = new Dict(*other.dp_props);
   }
@@ -44,10 +44,10 @@ MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other) {
 MolCatalogEntry::~MolCatalogEntry() {
   // std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
   delete dp_mol;
-  dp_mol = NULL;
+  dp_mol = nullptr;
 
   delete dp_props;
-  dp_props = NULL;
+  dp_props = nullptr;
 
   // std::cerr << "<< done" << std::endl;
 }
@@ -83,9 +83,9 @@ std::string MolCatalogEntry::Serialize() const {
 
 void MolCatalogEntry::initFromStream(std::istream &ss) {
   delete dp_mol;
-  dp_mol = NULL;
+  dp_mol = nullptr;
   delete dp_props;
-  dp_props = NULL;
+  dp_props = nullptr;
 
   // the molecule:
   dp_mol = new ROMol();
@@ -104,7 +104,7 @@ void MolCatalogEntry::initFromStream(std::istream &ss) {
 
   // the description:
   streamRead(ss, tmpInt);
-  char *tmpText = new char[tmpInt + 1];
+  auto *tmpText = new char[tmpInt + 1];
   ss.read(tmpText, tmpInt * sizeof(char));
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;

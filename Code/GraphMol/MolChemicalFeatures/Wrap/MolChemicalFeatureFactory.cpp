@@ -54,7 +54,7 @@ FeatSPtr getMolFeature(const MolChemicalFeatureFactory &factory,
     throw IndexErrorException(idx);
   }
 
-  FeatSPtrList_I fi = feats.begin();
+  auto fi = feats.begin();
   for (int i = 0; i < idx; ++i) {
     ++fi;
   }
