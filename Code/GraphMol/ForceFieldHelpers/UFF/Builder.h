@@ -91,7 +91,7 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
                   bool ignoreInterfragInteractions = true);
 void addTorsions(const ROMol &mol, const AtomicParamVect &params,
                  ForceFields::ForceField *field,
-                 std::string torsionBondSmarts = defaultTorsionBondSmarts);
+                 const std::string &torsionBondSmarts = defaultTorsionBondSmarts);
 void addInversions(const ROMol &mol, const AtomicParamVect &params,
                    ForceFields::ForceField *field);
 }

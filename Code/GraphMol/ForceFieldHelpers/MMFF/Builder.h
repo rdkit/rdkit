@@ -94,7 +94,7 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field);
 void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  ForceFields::ForceField *field,
-                 std::string torsionBondSmarts = defaultTorsionBondSmarts);
+                 const std::string &torsionBondSmarts = defaultTorsionBondSmarts);
 void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
             boost::shared_array<boost::uint8_t> neighborMatrix,

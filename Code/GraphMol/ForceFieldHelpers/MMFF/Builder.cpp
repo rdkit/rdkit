@@ -595,7 +595,7 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 // ------------------------------------------------------------------------
 void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  ForceFields::ForceField *field,
-                 std::string torsionBondSmarts) {
+                 const std::string &torsionBondSmarts) {
   PRECONDITION(field, "bad ForceField");
   PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
   PRECONDITION(mmffMolProperties->isValid(),

@@ -482,7 +482,7 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
 // ------------------------------------------------------------------------
 void addTorsions(const ROMol &mol, const AtomicParamVect &params,
                  ForceFields::ForceField *field,
-                 std::string torsionBondSmarts) {
+                 const std::string &torsionBondSmarts) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
