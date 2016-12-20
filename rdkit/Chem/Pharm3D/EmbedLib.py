@@ -142,8 +142,8 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
     bm[replaceIdx, idx1] = minVal
     if useDirs:
       # set the point - direction point bounds:
-      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1]**2 + maxVal**2)
-      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx]**2 + minVal**2)
+      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1] ** 2 + maxVal ** 2)
+      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx] ** 2 + minVal ** 2)
   return bm, replaceIdx
 
 
@@ -418,7 +418,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
         seed = i * 10 + randomSeed
       EmbedMol(m2, tmpM, atomMatch, randomSeed=seed, excludedVolumes=excludedVolumes)
     except ValueError:
-      if not silent:  # pragma: nocover
+      if not silent:
         logger.info('Embed failed')
       nFailed += 1
     else:
@@ -533,7 +533,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
   """
   try:
     ff = ChemicalForceFields.UFFGetMoleculeForceField(mol)
-  except Exception:  # pragma: nocover
+  except Exception:
     logger.info('Problems building molecular forcefield', exc_info=True)
     return -1.0, -1.0
 
@@ -580,7 +580,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
   if isNaN(e1):
     raise ValueError('bogus energy')
 
-  if verbose:  # pragma: nocover
+  if verbose:
     print(Chem.MolToMolBlock(mol))
     for i, _ in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
@@ -595,7 +595,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
   if isNaN(e2):
     raise ValueError('bogus energy')
 
-  if verbose:  # pragma: nocover
+  if verbose:
     print('--------')
     print(Chem.MolToMolBlock(mol))
     for i, _ in enumerate(excludedVolumes):
@@ -687,7 +687,7 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   except Exception:
     e4 = -1.0
     e4d = -1.0
-  if not silent:  # pragma: nocover
+  if not silent:
     print('%s(%d): %.2f(%.2f) -> %.2f(%.2f) : %.2f(%.2f) -> %.2f(%.2f)' %
           (name, nFailed, e1, e1d, e2, e2d, e3, e3d, e4, e4d))
   return e1, e1d, e2, e2d, e3, e3d, e4, e4d, nFailed
@@ -994,7 +994,7 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
             idx0, idx1 = idx1, idx0
           if (bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or
               bounds[idx0, idx1] <= pcophore.getLowerBound(k, l)):
-            if verbose:  # pragma: nocover
+            if verbose:
               print('\t  (%d,%d) [%d,%d] fail' % (idx1, idx0, k, l))
               print('\t    %f,%f - %f,%f' % (bounds[idx1, idx0], pcophore.getUpperBound(k, l),
                                              bounds[idx0, idx1], pcophore.getLowerBound(k, l)))
@@ -1035,7 +1035,7 @@ def Check2DBounds(atomMatch, mol, pcophore):
         for atomJ in atomMatch[j]:
           try:
             dij = min(dij, dm[atomI, atomJ])
-          except IndexError:  # pragma: nocover
+          except IndexError:
             print('bad indices:', atomI, atomJ)
             print('  shape:', dm.shape)
             print('  match:', atomMatch)

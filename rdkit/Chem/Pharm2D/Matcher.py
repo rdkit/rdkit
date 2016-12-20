@@ -56,7 +56,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   """
   assert sigFactory.shortestPathsOnly, 'not implemented for non-shortest path signatures'
   nPts, featCombo, scaffold = sigFactory.GetBitInfo(bitIdx)
-  if _verbose:  # pragma: nocover
+  if _verbose:
     print('info:', nPts)
     print('\t', featCombo)
     print('\t', scaffold)
@@ -74,11 +74,11 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose:  # pragma: nocover
+      if _verbose:
         print('no match found for feature:', featIdx)
       return []
 
-  if _verbose:  # pragma: nocover
+  if _verbose:
     print('choices:')
     print(choices)
 
@@ -91,7 +91,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
 
   res = []
   for protoPharm in protoPharmacophores:
-    if _verbose:  # pragma: nocover
+    if _verbose:
       print('protoPharm:', protoPharm)
     for i in range(len(distsToCheck)):
       dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
@@ -103,12 +103,12 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
       #
       idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
       dist = dMat[idx1, idx2]
-      if _verbose:  # pragma: nocover
+      if _verbose:
         print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
       if dist < dLow or dist >= dHigh:
         break
     else:
-      if _verbose:  # pragma: nocover
+      if _verbose:
         print('Found one')
       # we found it
       protoPharm.sort()

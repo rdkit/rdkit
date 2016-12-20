@@ -175,7 +175,7 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
 
   """
   global _countCache
-  if _verbose:  # pragma: nocover
+  if _verbose:
     print('  ' * idx, 'CountUpTo(%d)' % idx, vs[idx], startAt)
   if idx == 0 and (nItems, nSlots, tuple(vs)) in _countCache:
     return _countCache[(nItems, nSlots, tuple(vs))]
@@ -189,11 +189,11 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
     for i in range(startAt, vs[idx]):
       nLevsUnder = nSlots - idx - 1
       nValsOver = nItems - i
-      if _verbose:  # pragma: nocover
+      if _verbose:
         print('  ' * idx, ' ', i, nValsOver, nLevsUnder, NumCombinations(nValsOver, nLevsUnder))
       accum += NumCombinations(nValsOver, nLevsUnder)
     accum += CountUpTo(nItems, nSlots, vs, idx + 1, vs[idx])
-  if _verbose:  # pragma: nocover
+  if _verbose:
     print('  ' * idx, '>', accum)
   if idx == 0:
     _countCache[(nItems, nSlots, tuple(vs))] = accum

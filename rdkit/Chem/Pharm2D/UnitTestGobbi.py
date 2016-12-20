@@ -153,7 +153,7 @@ class TestCase(unittest.TestCase):
       for _ in range(10):
         m2 = Randomize.RandomizeMol(m1)
         sig2 = Generate.Gen2DFingerprint(m2, self.factory)
-        if sig2 != sig1:  # pragma: nocover
+        if sig2 != sig1:
           Generate._verbose = True
           print('----------------')
           sig1 = Generate.Gen2DFingerprint(m1, self.factory)

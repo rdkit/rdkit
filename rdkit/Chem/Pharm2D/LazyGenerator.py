@@ -11,7 +11,6 @@
 from __future__ import print_function
 
 raise NotImplementedError('not finished yet')
-# pragma: nocover
 """ lazy generator of 2D pharmacophore signature data
 
 """
