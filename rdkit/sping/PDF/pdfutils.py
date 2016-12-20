@@ -2,7 +2,6 @@
 # compression, and some constants
 from __future__ import print_function
 import os
-import string
 from io import StringIO
 from rdkit.six import string_types
 import glob
@@ -47,7 +46,7 @@ def cacheImageFile(filename):
   #save it to a file
   cachedname = os.path.splitext(filename)[0] + '.a85'
   f = open(cachedname, 'wb')
-  f.write(string.join(code, LINEEND) + LINEEND)
+  f.write(LINEEND.join(code) + LINEEND)
   f.close()
   print('cached image as %s' % cachedname)
 
@@ -96,18 +95,18 @@ def _escape(s):
     need slashes before them too. Use Python's repr function
     and chop off the quotes first"""
   s = repr(s)[1:-1]
-  s = string.replace(s, '(', '\(')
-  s = string.replace(s, ')', '\)')
+  s = s.replace('(', '\(')
+  s = s.replace(')', '\)')
   return s
 
 
 def _normalizeLineEnds(text, desired=LINEEND):
   """ensures all instances of CR, LF and CRLF end up as the specified one"""
   unlikely = '\000\001\002\003'
-  text = string.replace(text, '\015\012', unlikely)
-  text = string.replace(text, '\015', unlikely)
-  text = string.replace(text, '\012', unlikely)
-  text = string.replace(text, unlikely, desired)
+  text = text.replace('\015\012', unlikely)
+  text = text.replace('\015', unlikely)
+  text = text.replace('\012', unlikely)
+  text = text.replace(unlikely, desired)
   return text
 
 
@@ -126,7 +125,7 @@ def _AsciiHexEncode(input):
 def _AsciiHexDecode(input):
   "Not used except to provide a test of the preceding"
   #strip out all whitespace
-  stripped = string.join(string.split(input), '')
+  stripped = ''.join(input.split(), '')
   assert stripped[-1] == '>', 'Invalid terminator for Ascii Hex Stream'
   stripped = stripped[:-1]  #chop off terminator
   assert len(stripped) % 2 == 0, 'Ascii Hex stream has odd number of bytes'
@@ -226,13 +225,13 @@ def _AsciiBase85Decode(input):
     trip is essential for testing."""
   outstream = StringIO()
   #strip all whitespace
-  stripped = string.join(string.split(input), '')
+  stripped = ''.join(input.split(), '')
   #check end
   assert stripped[-2:] == '~>', 'Invalid terminator for Ascii Base 85 Stream'
   stripped = stripped[:-2]  #chop off terminator
 
   #may have 'z' in it which complicates matters - expand them
-  stripped = string.replace(stripped, 'z', '!!!!!')
+  stripped = stripped.replace('z', '!!!!!')
   # special rules apply if not a multiple of five bytes.
   whole_word_count, remainder_size = divmod(len(stripped), 5)
   #print '%d words, %d leftover' % (whole_word_count, remainder_size)
@@ -303,7 +302,7 @@ def _wrap(input, columns=60):
     i = i + 1
     pos = columns * i
 
-  return string.join(output, LINEEND)
+  return LINEEND.join(output)
 
 
 def _AsciiBase85Test(text='What is the average velocity of a sparrow?'):
