@@ -899,7 +899,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       Defaults to True.\n\
 \n\
     - flavor: (optional)\n\
-      0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA.\n\
+      0 Protein, L amino acids (default)\n\
+      1 Protein, D amino acids\n\
+      2 RNA, no cap\n\
+      3 RNA, 5' cap\n\
+      4 RNA, 3' cap\n\
+      5 RNA, both caps\n\
+      6 DNA, no cap\n\
+      7 DNA, 5' cap\n\
+      8 DNA, 3' cap\n\
+      9 DNA, both caps\n\
 \n\
   RETURNS:\n\
 \n\
@@ -934,8 +943,17 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to True.\n\
 \n\
-    - flavor: (optional)\n\
-      0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA\n\
+- flavor: (optional)\n\
+  0 Protein, L amino acids (default)\n\
+  1 Protein, D amino acids\n\
+  2 RNA, no cap\n\
+  3 RNA, 5' cap\n\
+  4 RNA, 3' cap\n\
+  5 RNA, both caps\n\
+  6 DNA, no cap\n\
+  7 DNA, 5' cap\n\
+  8 DNA, 3' cap\n\
+  9 DNA, both caps\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
