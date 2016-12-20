@@ -25,7 +25,7 @@ from rdkit.six import next
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    self.factory = Gobbi_Pharm2D.factory  # @UndefinedVariable
+    self.factory = Gobbi_Pharm2D.factory
 
   def test1Sigs(self):
     probes = [
@@ -172,7 +172,7 @@ class TestCase(unittest.TestCase):
   def testBitInfo(self):
     m = Chem.MolFromSmiles('OCC=CC(=O)O')
     bi = {}
-    sig = Generate.Gen2DFingerprint(m, Gobbi_Pharm2D.factory, bitInfo=bi)  # @UndefinedVariable
+    sig = Generate.Gen2DFingerprint(m, Gobbi_Pharm2D.factory, bitInfo=bi)
     self.assertEqual(sig.GetNumOnBits(), len(bi))
     self.assertEqual(list(sig.GetOnBits()), sorted(bi.keys()))
     self.assertEqual(sorted(bi.keys()), [23, 30, 150, 154, 157, 185, 28878, 30184])

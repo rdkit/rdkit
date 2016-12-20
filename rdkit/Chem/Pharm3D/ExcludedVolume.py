@@ -27,7 +27,7 @@ class ExcludedVolume(object):
       raise ValueError('featInfo argument must non-empty')
 
     try:
-      a, b, c = featInfo[0]  # @UnusedVariable
+      a, b, c = featInfo[0]
     except (TypeError, ValueError):
       raise ValueError('featInfo elements must be 3-sequences')
 

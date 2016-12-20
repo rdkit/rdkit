@@ -44,11 +44,11 @@ class TestCase(unittest.TestCase):
     self.assertEqual(tuple(onBits), tgt)
     self.assertEqual(len(onBits), len(tgt))
 
-    bitMatches = ([((0, ), (3, ))],  # @UnusedVariable
+    bitMatches = ([((0, ), (3, ))],
                   [((0, ), (7, )), ((3, ), (7, ))],
                   [((0, ), (3, ), (7, ))], )
-    for i, bit in enumerate(onBits):  # @UnusedVariable
-      matches = Matcher.GetAtomsMatchingBit(self.factory, bit, mol)  # @UnusedVariable
+    for i, bit in enumerate(onBits):
+      matches = Matcher.GetAtomsMatchingBit(self.factory, bit, mol)
       # print bit,matches
       # tgt = bitMatches[i]
       # self.assertEqual(matches,tgt)
@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
   def test2Bug28(self):
     smi = 'Cc([s]1)nnc1SCC(\CS2)=C(/C([O-])=O)N3C(=O)[C@H]([C@@H]23)NC(=O)C[n]4cnnn4'
     mol = Chem.MolFromSmiles(smi)
-    factory = Gobbi_Pharm2D.factory  # @UndefinedVariable
+    factory = Gobbi_Pharm2D.factory
     factory.SetBins([(2, 3), (3, 4), (4, 5), (5, 8), (8, 100)])
     sig = Generate.Gen2DFingerprint(mol, factory)
     onBits = sig.GetOnBits()
@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
     nToDo = 20
     with open(os.path.join(RDConfig.RDDataDir, 'NCI', 'first_5K.smi'), 'r') as inF:
       inD = inF.readlines()[:nToDo]
-    factory = Gobbi_Pharm2D.factory  # @UndefinedVariable
+    factory = Gobbi_Pharm2D.factory
     factory.SetBins([(2, 3), (3, 4), (4, 5), (5, 8), (8, 100)])
     for line in inD:
       smi = line.split('\t')[0]

@@ -24,7 +24,7 @@ from rdkit.Chem import ChemicalFeatures, rdDistGeom
 from rdkit.Chem.Pharm3D import EmbedLib
 from rdkit.Chem.Pharm3D import Pharmacophore
 from rdkit.six import PY3
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 def feq(n1, n2, tol=1e-5):

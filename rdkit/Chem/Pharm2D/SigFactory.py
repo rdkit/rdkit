@@ -109,7 +109,7 @@ class SigFactory(object):
       a string
 
     """
-    nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)  # @UnusedVariable
+    nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)
     res = " ".join(labels) + " "
     for row in dMat:
       res += "|" + " ".join([str(x) for x in row])

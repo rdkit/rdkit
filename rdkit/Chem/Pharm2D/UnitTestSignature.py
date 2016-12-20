@@ -227,7 +227,7 @@ class TestCase(unittest.TestCase):
                                               84,
                                               1274,
                                               4361, ))
-    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(21)  # @UnusedVariable
+    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(21)
     self.assertEqual(nPts, 2)
     self.assertEqual(labels, ['Acceptor', 'Hydrophobe'])
     self.assertEqual(list(dMat[0]), [0, 0])
@@ -239,13 +239,13 @@ class TestCase(unittest.TestCase):
     txt = factory.GetBitDescription(21)
     self.assertEqual(txt, 'Acceptor Hydrophobe |0 0|0 0|')
 
-    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(2)  # @UnusedVariable
+    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(2)
     self.assertEqual(nPts, 2)
     self.assertEqual(labels, ['Acceptor', 'Acceptor'])
     self.assertEqual(list(dMat[0]), [0, 2])
     self.assertEqual(list(dMat[1]), [2, 0])
 
-    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(4361)  # @UnusedVariable
+    nPts, combo, scaffold, labels, dMat = factory._GetBitSummaryData(4361)
     self.assertEqual(nPts, 3)
     self.assertEqual(labels, ['Acceptor', 'Donor', 'Hydrophobe'])
     self.assertEqual(list(dMat[0]), [0, 2, 0])

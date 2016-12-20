@@ -13,7 +13,7 @@ import unittest
 import doctest
 import os
 import gzip
-from rdkit.six.moves import cPickle  # @UnresolvedImport #pylint: disable=F0401
+from rdkit.six.moves import cPickle
 from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem.AtomPairs import Pairs, Torsions, Utils, Sheridan
