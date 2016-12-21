@@ -2,8 +2,29 @@
 (Changes relative to Release_2016.09.2)
 
 ## Acknowledgements:
+Peter Gedeck, Brian Kelley, Matt Swain, Paolo Tosco, Hsiao Yi
 
 ## Bug Fixes:
+  - Fixes #1162 (resMolSupplierTest failing with boost 1.62)
+ (github pull #1166 from ptosco)
+  - Add Contrib dir to RDPaths
+ (github pull #1176 from mcs07)
+  - Add information on building RDkit on macOS using conda
+ (github pull #1180 from gedeck)
+  - new sequence capabilities not available from either Python or Java
+ (github issue #1181 from greglandrum)
+  - Gets the reaction sanitization code working correctly on 32bit systems
+ (github pull #1187 from greglandrum)
+  - Adds RDProps to c# wrapper
+ (github pull #1188 from bp-kelley)
+  - fix compatibility with PostgreSQL 9.2
+ (github pull #1189 from greglandrum)
+  - Fixes memory leak in closeCheckMolFiles, fixes valgrind read issue in…
+ (github pull #1200 from bp-kelley)
+  - Support valences of 4 and 6 for Te
+ (github issue #1204 from hsiaoyi0504)
+  - Stereochemistry not output to SMILES when allHsExplicit=True
+ (github issue #1219 from greglandrum)
 
 
 # Release_2016.09.2
