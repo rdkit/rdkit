@@ -33,7 +33,18 @@ RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD);
  *   \param seq      - the string to be processed
  *   \param sanitize - toggles sanitization and stereochemistry perception of
  *the molecule
- *   \param flavor   - 0 & 1 Protein, 2, 3, 4 & 5 RNA, 6, 7, 8 & 9 DNA
+ *   \param flavor   -
+ *      0 Protein, L amino acids (default)
+ *      1 Protein, D amino acids
+ *      2 RNA, no cap
+ *      3 RNA, 5' cap
+ *      4 RNA, 3' cap
+ *      5 RNA, both caps
+ *      6 DNA, no cap
+ *      7 DNA, 5' cap
+ *      8 DNA, 3' cap
+ *      9 DNA, both caps
+ *
  */
 RWMol *SequenceToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
@@ -59,13 +70,22 @@ RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD);
  *   \param seq      - the string to be processed
  *   \param sanitize - toggles sanitization and stereochemistry perception of
  *the molecule
- *   \param flavor   - 0 & 1 protein, 2, 3, 4, & 5 RNA, 6, 7, 8 & 9 DNA
+ *   \param flavor   -
+ *      0 Protein, L amino acids (default)
+ *      1 Protein, D amino acids
+ *      2 RNA, no cap
+ *      3 RNA, 5' cap
+ *      4 RNA, 3' cap
+ *      5 RNA, both caps
+ *      6 DNA, no cap
+ *      7 DNA, 5' cap
+ *      8 DNA, 3' cap
+ *      9 DNA, both caps
  *
  */
 RWMol *FASTAToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
-RWMol *FASTAToMol(const std::string &seq, bool sanitize = true,
-                  int flavor = 0);
+RWMol *FASTAToMol(const std::string &seq, bool sanitize = true, int flavor = 0);
 
 // \brief construct a molecule from a HELM string (currently only supports
 // peptides)
