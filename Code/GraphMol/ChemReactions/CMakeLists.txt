@@ -6,7 +6,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
   if(Boost_VERSION LESS  106200)
-    set_source_files_properties(Enumerate/Enumerate.cpp PROPERTIES COMPILE_FLAGS -fpermissive)
+    set_property(SOURCE Enumerate/Enumerate.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -fpermissive ")
  endif()
 endif()
 
