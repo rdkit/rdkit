@@ -4,6 +4,12 @@ else()
       message("== Making EnumerateLibrary without boost Serialization support")
 endif()
 
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
+  if(Boost_VERSION LESS  106200)
+    set_source_files_properties(Enumerate/Enumerate.cpp PROPERTIES COMPILE_FLAGS -fpermissive)
+ endif()
+endif()
+
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
 	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
