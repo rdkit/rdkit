@@ -24,7 +24,7 @@ Postscript font names within this module, but have not yet done so.
 13th June 1999
 """
 from __future__ import print_function
-import string, os
+import os
 
 StandardEnglishFonts = [
   'Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique', 'Helvetica',
@@ -251,25 +251,25 @@ def parseAFMfile(filename):
   metriclines = []
   between = 0
   for line in alllines:
-    if string.find(line.lower(), 'endcharmetrics') > -1:
+    if 'endcharmetrics' in line.lower():
       between = 0
       break
     if between:
       metriclines.append(line)
-    if string.find(line.lower(), 'startcharmetrics') > -1:
+    if 'startcharmetrics' in line.lower():
       between = 1
 
     # break up - very shaky assumption about array size
   widths = [0] * 255
 
   for line in metriclines:
-    chunks = string.split(line, ';')
+    chunks = line.split(';')
 
-    (c, cid) = string.split(chunks[0])
-    (wx, width) = string.split(chunks[1])
+    (c, cid) = chunks[0].split()
+    (wx, width) = chunks[1].split()
     #(n, name) = string.split(chunks[2])
     #(b, x1, y1, x2, y2) = string.split(chunks[3])
-    widths[string.atoi(cid)] = string.atoi(width)
+    widths[int(cid)] = int(width)
 
   # by default, any empties should get the width of a space
   for i in range(len(widths)):
