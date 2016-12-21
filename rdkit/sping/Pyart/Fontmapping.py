@@ -3,7 +3,6 @@
 #
 DefaultFace = 'times'
 
-import string
 # these are the required fonts for piddle
 
 PidLegalFonts = {"courier": "courier",  # note: keys are lowercased 

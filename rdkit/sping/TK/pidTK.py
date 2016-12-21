@@ -19,7 +19,6 @@ You can find the latest version of this file:
 import Tkinter, tkFont
 tk = Tkinter
 import rdkit.sping.pid
-import string
 
 __version__ = "0.3"
 __date__ = "April 8, 1999"
