@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2014 Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3814,6 +3813,37 @@ void testDativeBonds() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1219() {
+  BOOST_LOG(rdInfoLog)
+      << "Stereochemistry not output to SMILES when allHsExplicit=True"
+      << std::endl;
+  {
+    std::string smiles = "C[C@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    bool doIsomericSmiles = true;
+    bool doKekule = false;
+    int rootedAtAtom = -1;
+    bool canonical = true, allBondsExplicit = false, allHsExplicit = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles, doKekule, rootedAtAtom,
+                                   canonical, allBondsExplicit, allHsExplicit);
+    TEST_ASSERT(csmi == "[CH3][C@H]([F])[Cl]");
+    delete m;
+  }
+  {  // another manifestation was that chiral flags were not output for atoms
+     // not in the organic subset
+    std::string smiles = "C[Si@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    bool doIsomericSmiles = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles);
+    TEST_ASSERT(csmi == "C[Si@H](F)Cl");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3880,4 +3910,5 @@ int main(int argc, char *argv[]) {
   testGithub786();
   testGithub760();
   testDativeBonds();
+  testGithub1219();
 }

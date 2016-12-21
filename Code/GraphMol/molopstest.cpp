@@ -6500,6 +6500,27 @@ void testGithubIssue607() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue1204() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 1204: "
+         "Support tetravalent and hexavalent Te"
+      << std::endl;
+  {
+    std::string smiles = "F[Te](F)(F)(F)(F)F";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    delete m;
+  }
+  {
+    std::string smiles = "F[Te](F)(F)(F)";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6596,6 +6617,7 @@ int main() {
   testGithubIssue607();
 #endif
   testAdjustQueryProperties();
+  testGithubIssue1204();
 
   return 0;
 }
