@@ -61,6 +61,12 @@
 #if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
+#elif (defined(__GNUC__) || defined(__GNUG__)) && __GNUC__ > 6
+#include <boost/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 62
+#pragma GCC diagnostic ignored "-fpermissive"
+#endif
+
 #elif defined(__HP_cc) || defined(__HP_aCC)
 /* Hewlett-Packard C/aC++. ---------------------------------- */
 
