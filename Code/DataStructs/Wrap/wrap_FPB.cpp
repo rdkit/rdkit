@@ -47,7 +47,7 @@ python::tuple containingNbrHelper(const FPBReader *self,
       reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   python::list result;
-  for (unsigned int &nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     result.append(nbr);
   }
   return python::tuple(result);
