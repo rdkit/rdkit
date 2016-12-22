@@ -26,17 +26,6 @@ from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
 from rdkit.ML.Cluster import Murtagh
 from rdkit.six.moves import cPickle
 
-# from rdkit.Dbase.DbConnection import DbConnect
-# from rdkit.Dbase import DbInfo, DbUtils
-# from rdkit.ML.Data import DataUtils
-# from rdkit.ML.Cluster import Clusters
-# import sys
-
-_cvsVersion = "$Id$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
-
 message = FingerprintMols.message
 error = FingerprintMols.error
 
@@ -195,7 +184,7 @@ Usage: ClusterMols.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  message("This is ClusterMols version %s\n\n" % (__VERSION_STRING))
+  message("This is ClusterMols\n\n")
   FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ClusterFromDetails(details)
