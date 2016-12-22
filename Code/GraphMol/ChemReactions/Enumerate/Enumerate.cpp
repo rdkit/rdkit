@@ -86,8 +86,8 @@ void EnumerateLibraryBase::resetState() {
   m_enumerator.reset(m_initialEnumerator->copy());
 }
 
-std::vector<std::vector<std::string> > EnumerateLibraryBase::nextSmiles() {
-  std::vector<std::vector<std::string> > result;
+std::vector<std::vector<std::string>> EnumerateLibraryBase::nextSmiles() {
+  std::vector<std::vector<std::string>> result;
   std::vector<MOL_SPTR_VECT> mols = next();
   const bool doisomeric = true;
   result.resize(mols.size());
@@ -233,7 +233,7 @@ boost::uint64_t computeNumProducts(const RGROUPS &sizes) {
 #ifdef RDK_HAVE_MULTIPREC
   boost::multiprecision::cpp_int myint = 1;
 
-  for (unsigned long size : sizes) {
+  for (boost::uint64_t size : sizes) {
     myint *= size;
   }
 
