@@ -13,6 +13,10 @@ from rdkit.six import PY3, StringIO, BytesIO
 from rdkit import RDConfig, rdBase, Chem
 
 from rdkit.Chem import PandasTools
+try:
+  import IPython
+except ImportError:
+  IPython = None
 
 
 # We make sure that we don't mess up the Mol methods for the rest of the tests
@@ -114,6 +118,7 @@ class TestPandasTools(unittest.TestCase):
     self.assertIn(self.df['SMILES'][10], result)
     self.assertIn(self.df['PUBCHEM_IUPAC_INCHIKEY'][10], result)
 
+  @unittest.skipIf(IPython is None, 'Package IPython required for testing')
   def test_svgRendering(self):
     df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
     self.assertIn('image/png', str(df))
