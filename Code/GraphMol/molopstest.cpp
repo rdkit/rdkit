@@ -6004,6 +6004,27 @@ void testPotentialStereoBonds() {
 
     delete m;
   }
+  {  // repeat the real problem, but set the cleanIt argument to false
+    std::string smiles = "CC/C=C/C(\\C=C/CC)=C(CC)CO";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 14);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREONONE);
+    MolOps::findPotentialStereoBonds(*m, false);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo() == Bond::STEREOANY);
+
+    delete m;
+  }
 
   {  // just do document that we still don't do this one, which is much harder
     std::string smiles = "CC/C=C/C(/C=C/CC)=C(CC)CO";
