@@ -37,16 +37,16 @@ boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
 
 void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
                     const ROMol &mol) {
-  for (const auto &re : res) {
-    unsigned int rsiz = rdcast<unsigned int>(re.size());
+  for (const auto &ring : res) {
+    unsigned int rsiz = rdcast<unsigned int>(ring.size());
     INT_VECT bring(rsiz);
     for (unsigned int i = 0; i < (rsiz - 1); i++) {
-      const Bond *bnd = mol.getBondBetweenAtoms(re[i], re[i + 1]);
+      const Bond *bnd = mol.getBondBetweenAtoms(ring[i], ring[i + 1]);
       if (!bnd) throw ValueErrorException("expected bond not found");
       bring[i] = bnd->getIdx();
     }
     // bond from last to first atom
-    const Bond *bnd = mol.getBondBetweenAtoms(re[rsiz - 1], re[0]);
+    const Bond *bnd = mol.getBondBetweenAtoms(ring[rsiz - 1], ring[0]);
     if (!bnd) throw ValueErrorException("expected bond not found");
 
     bring[rsiz - 1] = bnd->getIdx();
@@ -213,7 +213,7 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
   // change the rings from atom IDs to bondIds
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(res, brings, mol);
-  std::vector<boost::dynamic_bitset<> > bitBrings;
+  std::vector<boost::dynamic_bitset<>> bitBrings;
   bitBrings.reserve(brings.size());
   for (VECT_INT_VECT_CI vivi = brings.begin(); vivi != brings.end(); ++vivi) {
     boost::dynamic_bitset<> lring(mol.getNumBonds());
@@ -881,8 +881,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
-    if (curFrag.size() < 3)
-      continue;
+    if (curFrag.size() < 3) continue;
 
     // the following is the list of atoms that are useful in the next round of
     // trimming
@@ -904,13 +903,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     }
 
     // check to see if this fragment can even have a possible ring
-    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0, "fragment graph has a dangling degree");
+    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0,
+                    "fragment graph has a dangling degree");
     bndcnt_with_zero_order_bonds = bndcnt_with_zero_order_bonds / 2;
     int num_possible_rings = bndcnt_with_zero_order_bonds - curFrag.size() + 1;
-    if (num_possible_rings < 1)
-      continue;
+    if (num_possible_rings < 1) continue;
 
-    CHECK_INVARIANT(nbnds % 2 == 0, "fragment graph problem when including zero-order bonds");
+    CHECK_INVARIANT(nbnds % 2 == 0,
+                    "fragment graph problem when including zero-order bonds");
     nbnds = nbnds / 2;
 
     boost::dynamic_bitset<> doneAts(nats);

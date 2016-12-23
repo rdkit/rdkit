@@ -40,7 +40,7 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      unsigned int lineWidthMult, unsigned int fontSize,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
-  rdk_auto_ptr<std::vector<int> > highlightAtoms =
+  rdk_auto_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
@@ -57,7 +57,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
+  rdk_auto_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) throw_value_error("empty bond indices");
 
@@ -65,7 +65,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   if (pyDummyLabels) {
     unsigned int nVs =
         python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
-    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int> >(nVs);
+    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
       unsigned int v2 = python::extract<unsigned int>(pyDummyLabels[i][1]);
@@ -86,7 +86,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   }
   std::vector<std::vector<unsigned int>> *cutsPerAtom = nullptr;
   if (returnCutsPerAtom) {
-    cutsPerAtom = new std::vector<std::vector<unsigned int> >;
+    cutsPerAtom = new std::vector<std::vector<unsigned int>>;
   }
 
   std::vector<ROMOL_SPTR> frags;
@@ -101,10 +101,10 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   delete bondTypes;
   if (cutsPerAtom) {
     python::list pyCutsPerAtom;
-    for (auto &i : *cutsPerAtom) {
+    for (auto &cut : *cutsPerAtom) {
       python::list localL;
       for (unsigned int j = 0; j < mol.getNumAtoms(); ++j) {
-        localL.append(i[j]);
+        localL.append(cut[j]);
       }
       pyCutsPerAtom.append(python::tuple(localL));
     }
@@ -130,14 +130,14 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int> > bondIndices =
+  rdk_auto_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) throw_value_error("empty bond indices");
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
     unsigned int nVs =
         python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
-    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int> >(nVs);
+    dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
       unsigned int v2 = python::extract<unsigned int>(pyDummyLabels[i][1]);
@@ -186,7 +186,7 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  rdk_auto_ptr<std::vector<unsigned int> > newOrder =
+  rdk_auto_ptr<std::vector<unsigned int>> newOrder =
       pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
@@ -219,13 +219,13 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol> > res =
+  std::map<std::string, boost::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getResidue, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator iter =
+  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -243,13 +243,13 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol> > res =
+  std::map<std::string, boost::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getChainId, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator iter =
+  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -302,7 +302,7 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
              python::object onlyOnAtoms) {
-  rdk_auto_ptr<std::vector<unsigned int> > onlyOn;
+  rdk_auto_ptr<std::vector<unsigned int>> onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
@@ -491,7 +491,7 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<boost::shared_ptr<ROMol> > frags;
+    std::vector<boost::shared_ptr<ROMol>> frags;
     frags = MolOps::getMolFrags(mol, sanitizeFrags);
     for (auto &frag : frags) {
       res.append(frag);
@@ -505,7 +505,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
     unsigned int maxPath, unsigned int fpSize, python::list atomCounts,
     ExplicitBitVect *includeOnlyBits, bool branchedPaths,
     python::object fromAtoms) {
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
@@ -571,19 +571,19 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     double tgtDensity, unsigned int minSize, bool branchedPaths,
     bool useBondOrder, python::object atomInvariants, python::object fromAtoms,
     python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
+  rdk_auto_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint32_t>> *lAtomBits = nullptr;
   std::map<boost::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
-        new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
+        new std::vector<std::vector<boost::uint32_t>>(mol.getNumAtoms());
   }
   if (bitInfo != python::object()) {
-    lBitInfo = new std::map<boost::uint32_t, std::vector<std::vector<int> > >;
+    lBitInfo = new std::map<boost::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
   res = RDKit::RDKFingerprintMol(mol, minPath, maxPath, fpSize, nBitsPerHash,
@@ -602,11 +602,11 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   }
   if (lBitInfo) {
     python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint32_t, std::vector<std::vector<int> > >::iterator
+    typedef std::map<boost::uint32_t, std::vector<std::vector<int>>>::iterator
         it_type;
     for (auto &it : (*lBitInfo)) {
       python::list temp;
-      std::vector<std::vector<int> >::iterator itset;
+      std::vector<std::vector<int>>::iterator itset;
       for (itset = it.second.begin(); itset != it.second.end(); ++itset) {
         python::list temp2;
         for (int &i : *itset) {
@@ -628,9 +628,9 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder, python::object atomInvariants,
     python::object fromAtoms, python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int> > lAtomInvariants =
+  rdk_auto_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int> > lFromAtoms =
+  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
@@ -638,10 +638,10 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   // if(!(atomBits.is_none())){
   if (atomBits != python::object()) {
     lAtomBits =
-        new std::vector<std::vector<boost::uint64_t> >(mol.getNumAtoms());
+        new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
   if (bitInfo != python::object()) {
-    lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int> > >;
+    lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
 
   SparseIntVect<boost::uint64_t> *res;
@@ -660,11 +660,11 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   }
   if (lBitInfo) {
     python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint64_t, std::vector<std::vector<int> > >::iterator
+    typedef std::map<boost::uint64_t, std::vector<std::vector<int>>>::iterator
         it_type;
     for (auto &it : (*lBitInfo)) {
       python::list temp;
-      std::vector<std::vector<int> >::iterator itset;
+      std::vector<std::vector<int>>::iterator itset;
       for (itset = it.second.begin(); itset != it.second.end(); ++itset) {
         python::list temp2;
         for (int &i : *itset) {

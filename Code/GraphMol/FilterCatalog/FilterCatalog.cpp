@@ -197,8 +197,8 @@ bool FilterCatalog::hasMatch(const ROMol &mol) const {
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
     const ROMol &mol) const {
-  for (const auto &d_entrie : d_entries) {
-    if (d_entrie->hasFilterMatch(mol)) return d_entrie;
+  for (const auto &d_entry : d_entries) {
+    if (d_entry->hasFilterMatch(mol)) return d_entry;
   }
   return CONST_SENTRY();
 }
@@ -206,8 +206,8 @@ FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
 const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
     const ROMol &mol) const {
   std::vector<CONST_SENTRY> result;
-  for (const auto &d_entrie : d_entries) {
-    if (d_entrie->hasFilterMatch(mol)) result.push_back(d_entrie);
+  for (const auto &d_entry : d_entries) {
+    if (d_entry->hasFilterMatch(mol)) result.push_back(d_entry);
   }
   return result;
 }
@@ -215,8 +215,8 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
 const std::vector<FilterMatch> FilterCatalog::getFilterMatches(
     const ROMol &mol) const {
   std::vector<FilterMatch> result;
-  for (const auto &d_entrie : d_entries) {
-    d_entrie->getFilterMatches(mol, result);
+  for (const auto &d_entry : d_entries) {
+    d_entry->getFilterMatches(mol, result);
   }
   return result;
 }

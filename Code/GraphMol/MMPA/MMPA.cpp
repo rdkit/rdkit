@@ -24,7 +24,7 @@
 namespace RDKit {
 namespace MMPA {
 
-typedef std::vector<std::pair<unsigned, unsigned> >
+typedef std::vector<std::pair<unsigned, unsigned>>
     BondVector_t;  // pair of BeginAtomIdx, EndAtomIdx
 
 static inline unsigned long long computeMorganCodeHash(const ROMol& mol) {
@@ -82,7 +82,7 @@ static inline void convertMatchingToBondVect(
   }
 }
 
-static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
+static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
                           res,  // const SignatureVector& resSignature,
                       const ROMol& mol,
                       const BondVector_t& bonds_selected, size_t maxCuts) {
@@ -93,22 +93,22 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
   // loop through the bonds to delete. == deleteBonds()
   unsigned isotope = 0;
   std::map<unsigned, unsigned> isotope_track;
-  for (const auto& i : bonds_selected) {
+  for (const auto& bi : bonds_selected) {
 #ifdef _DEBUG
     {
       std::string symbol =
-          em.getAtomWithIdx(bonds_selected[i].first)->getSymbol();
+          em.getAtomWithIdx(bonds_selected[bi].first)->getSymbol();
       int label = 0;
-      em.getAtomWithIdx(bonds_selected[i].first)
+      em.getAtomWithIdx(bonds_selected[bi].first)
           ->getPropIfPresent(common_properties::molAtomMapNumber, label);
       char a1[32];
       if (0 == label)
         sprintf(a1, "\'%s\'", symbol.c_str(), label);
       else
         sprintf(a1, "\'%s:%u\'", symbol.c_str(), label);
-      symbol = em.getAtomWithIdx(bonds_selected[i].second)->getSymbol();
+      symbol = em.getAtomWithIdx(bonds_selected[bi].second)->getSymbol();
       label = 0;
-      em.getAtomWithIdx(bonds_selected[i].second)
+      em.getAtomWithIdx(bonds_selected[bi].second)
           ->getPropIfPresent(common_properties::molAtomMapNumber, label);
       char a2[32];
       if (0 == label)
@@ -116,23 +116,23 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       else
         sprintf(a2, "\'%s:%u\'", symbol.c_str(), label);
 
-      std::cout << "(" << bonds_selected[i].first << a1 << ","
-                << bonds_selected[i].second << a2 << ") ";
+      std::cout << "(" << bonds_selected[bi].first << a1 << ","
+                << bonds_selected[bi].second << a2 << ") ";
     }
 #endif
     isotope += 1;
     // remove the bond
-    em.removeBond(i.first, i.second);
+    em.removeBond(bi.first, bi.second);
 
     // now add attachement points and set attachment point lables
     auto* a = new Atom(0);
     a->setProp(common_properties::molAtomMapNumber, (int)isotope);
     unsigned newAtomA = em.addAtom(a, true, true);
-    em.addBond(i.first, newAtomA, Bond::SINGLE);
+    em.addBond(bi.first, newAtomA, Bond::SINGLE);
     a = new Atom(0);
     a->setProp(common_properties::molAtomMapNumber, (int)isotope);
     unsigned newAtomB = em.addAtom(a, true, true);
-    em.addBond(i.second, newAtomB, Bond::SINGLE);
+    em.addBond(bi.second, newAtomB, Bond::SINGLE);
 
     // keep track of where to put isotopes
     isotope_track[newAtomA] = isotope;
@@ -151,7 +151,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
 // MolToSmiles(*side_chains, true) <<"\n";
 #endif
   } else if (isotope >= 2) {
-    std::vector<std::vector<int> > frags;
+    std::vector<std::vector<int>> frags;
     unsigned int nFrags = MolOps::getMolFrags(em, frags);
 
     //#check if its a valid triple or bigger cut.  matchObj = re.search(
@@ -163,7 +163,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
         unsigned nLabels = 0;
         for (int ai : frags[i]) {
           if (isotope_track.end() != isotope_track.find(ai))  // new added atom
-            ++nLabels;                           // found connection point
+            ++nLabels;  // found connection point
         }
         if (nLabels >=
             maxCuts) {  // looks like it should be selected as core !  ??????
@@ -307,22 +307,22 @@ static inline void appendBonds(BondVector_t& bonds,
 static inline void processCuts(
     size_t i, size_t minCuts, size_t maxCuts, BondVector_t& bonds_selected,
     const std::vector<BondVector_t>& matching_bonds, const ROMol& mol,
-    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res) {
-  if(maxCuts < minCuts)
+    std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res) {
+  if (maxCuts < minCuts)
     throw ValueErrorException("supplied maxCuts is less than minCuts");
-        
-  if(minCuts==0)
-    throw ValueErrorException("minCuts must be greater than 0");
+
+  if (minCuts == 0) throw ValueErrorException("minCuts must be greater than 0");
 
   for (size_t x = i; x < matching_bonds.size(); x++) {
     appendBonds(bonds_selected, matching_bonds[x]);
-    if(bonds_selected.size() >= minCuts) {
+    if (bonds_selected.size() >= minCuts) {
       addResult(res, mol, bonds_selected, maxCuts);
     }
     if (bonds_selected.size() < maxCuts) {
-      processCuts(x + 1, minCuts, maxCuts, bonds_selected, matching_bonds, mol, res);
+      processCuts(x + 1, minCuts, maxCuts, bonds_selected, matching_bonds, mol,
+                  res);
     }
-    
+
     bonds_selected.pop_back();
   }
 }
@@ -332,18 +332,18 @@ static inline void processCuts(
 //=====================================================================
 
 bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res,
-                 unsigned int maxCuts,
-                 unsigned int maxCutBonds,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
+                 unsigned int maxCuts, unsigned int maxCutBonds,
                  const std::string& pattern) {
   return fragmentMol(mol, res, 1, maxCuts, maxCutBonds, pattern);
 }
 
 bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res,
-                 unsigned int minCuts,
-                 unsigned int maxCuts,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
+                 unsigned int minCuts, unsigned int maxCuts,
                  unsigned int maxCutBonds,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
+                 unsigned int maxCuts, unsigned int maxCutBonds,
                  const std::string& pattern) {
 #ifdef _DEBUG
   for (size_t i = 0; i < mol.getNumAtoms(); i++) {
@@ -413,18 +413,17 @@ bool fragmentMol(const ROMol& mol,
 }
 
 bool fragmentMol(const ROMol& mol,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res,
+                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
                  const std::vector<unsigned int>& bondsToCut,
-                 unsigned int minCuts,
-                 unsigned int maxCuts) {
+                 unsigned int minCuts, unsigned int maxCuts) {
   std::vector<BondVector_t> matching_bonds;  // List of matched query's bonds
 
-  BOOST_FOREACH(unsigned int i, bondsToCut) {
-    const Bond *bond = mol.getBondWithIdx(i);
+  BOOST_FOREACH (unsigned int i, bondsToCut) {
+    const Bond* bond = mol.getBondWithIdx(i);
     BondVector_t bonds;
     unsigned int a1 = bond->getBeginAtomIdx();
     unsigned int a2 = bond->getEndAtomIdx();
-    bonds.push_back( std::make_pair(a1, a2) );
+    bonds.push_back(std::make_pair(a1, a2));
     matching_bonds.push_back(bonds);
   }
 
@@ -433,6 +432,5 @@ bool fragmentMol(const ROMol& mol,
   processCuts(0, minCuts, maxCuts, bonds_selected, matching_bonds, mol, res);
   return true;
 }
-
 }
 }  // namespace RDKit

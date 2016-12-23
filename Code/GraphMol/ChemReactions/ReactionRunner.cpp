@@ -277,7 +277,7 @@ struct ReactantProductAtomMapping {
 
   boost::dynamic_bitset<> mappedAtoms;
   boost::dynamic_bitset<> skippedAtoms;
-  std::map<unsigned int, std::vector<unsigned int> > reactProdAtomMap;
+  std::map<unsigned int, std::vector<unsigned int>> reactProdAtomMap;
   std::map<unsigned int, unsigned int> prodReactAtomMap;
   std::map<unsigned int, unsigned int> prodAtomBondMap;
 
@@ -767,7 +767,7 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
   if (reactConf.is3D()) {
     productConf->set3D(true);
   }
-  for (std::map<unsigned int, std::vector<unsigned int> >::const_iterator pr =
+  for (std::map<unsigned int, std::vector<unsigned int>>::const_iterator pr =
            mapping->reactProdAtomMap.begin();
        pr != mapping->reactProdAtomMap.end(); ++pr) {
     std::vector<unsigned> prodIdxs = pr->second;
@@ -1092,9 +1092,9 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (addDummyAtoms) {
           // add dummy atom where the reaction scaffold would have been
           unsigned int idx = mol->addAtom();
-          for (auto &i : bonds_to_product) {
-            mol->addBond(idx, i.rAtom->getIdx(), i.bond_type);
-            int atommapno = i.mapno == -1 ? mapno : i.mapno;
+          for (const auto &bi : bonds_to_product) {
+            mol->addBond(idx, bi.rAtom->getIdx(), bi.bond_type);
+            int atommapno = bi.mapno == -1 ? mapno : bi.mapno;
 
             if (atommapno) {
               Atom *at = mol->getAtomWithIdx(idx);
@@ -1105,20 +1105,21 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
             }
           }
         } else {
-          for (auto &i : bonds_to_product) {
-            int atommapno = i.mapno == -1 ? mapno : i.mapno;
+          for (const auto &bi : bonds_to_product) {
+            int atommapno = bi.mapno == -1 ? mapno : bi.mapno;
             if (mapno != -1) {
               std::vector<int> rgroups;
               std::vector<int> bonds;
-              i.rAtom->getPropIfPresent(common_properties::_rgroupAtomMaps,
-                                        rgroups);
-              i.rAtom->getPropIfPresent(common_properties::_rgroupBonds, bonds);
+              bi.rAtom->getPropIfPresent(common_properties::_rgroupAtomMaps,
+                                         rgroups);
+              bi.rAtom->getPropIfPresent(common_properties::_rgroupBonds,
+                                         bonds);
 
               rgroups.push_back(atommapno);
               // XXX THIS MAY NOT BE SAFE
-              bonds.push_back(static_cast<int>(i.bond_type));
-              i.rAtom->setProp(common_properties::_rgroupAtomMaps, rgroups);
-              i.rAtom->setProp(common_properties::_rgroupBonds, bonds);
+              bonds.push_back(static_cast<int>(bi.bond_type));
+              bi.rAtom->setProp(common_properties::_rgroupAtomMaps, rgroups);
+              bi.rAtom->setProp(common_properties::_rgroupBonds, bonds);
             }
           }
         }
@@ -1126,8 +1127,8 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
     }
   }
 
-  for (unsigned int i : atomsToRemove) {
-    mol->removeAtom(i);
+  for (unsigned int ai : atomsToRemove) {
+    mol->removeAtom(ai);
   }
   return mol;
 }

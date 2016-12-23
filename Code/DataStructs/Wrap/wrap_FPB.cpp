@@ -21,7 +21,7 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
                             double threshold) {
   const boost::uint8_t *bv =
       reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<double, unsigned int> > nbrs =
+  std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTanimotoNeighbors(bv, threshold);
   python::list result;
   for (auto &nbr : nbrs) {
@@ -33,7 +33,7 @@ python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
                                double ca, double cb, double threshold) {
   const boost::uint8_t *bv =
       reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<double, unsigned int> > nbrs =
+  std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
   python::list result;
   for (auto &nbr : nbrs) {
@@ -85,7 +85,7 @@ python::tuple multiContainingNbrHelper(const MultiFPBReader *self,
                                        unsigned int numThreads) {
   const boost::uint8_t *bv =
       reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
-  std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+  std::vector<std::pair<unsigned int, unsigned int>> nbrs =
       self->getContainingNeighbors(bv, numThreads);
   python::list result;
   for (auto &nbr : nbrs) {
@@ -128,7 +128,7 @@ struct FPB_wrapper {
     change in future releases.\n";
     python::class_<FPBReader, boost::noncopyable>(
         "FPBReader", FPBReaderClassDoc.c_str(),
-        python::init<std::string, python::optional<bool> >(
+        python::init<std::string, python::optional<bool>>(
             (python::arg("filename"), python::arg("lazy") = false),
             "docstring"))
         .def("Init", &FPBReader::init,
@@ -170,7 +170,7 @@ struct FPB_wrapper {
 
     python::class_<MultiFPBReader, boost::noncopyable>(
         "MultiFPBReader", MultiFPBReaderClassDoc.c_str(),
-        python::init<python::optional<bool> >(
+        python::init<python::optional<bool>>(
             (python::arg("initOnSearch") = false), "docstring"))
         .def("Init", &MultiFPBReader::init,
              "Call Init() on each of our children. This can take a while.\n")

@@ -185,17 +185,17 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     //
     // for each atom, get a sorted list of its neighbors' ranks:
     //
-    for (int &allIndice : allIndices) {
+    for (int &index : allIndices) {
       CIP_ENTRY localEntry;
       localEntry.reserve(16);
 
       // start by pushing on our neighbors' ranks:
       ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(mol[allIndice].get());
+      boost::tie(beg, end) = mol.getAtomBonds(mol[index].get());
       while (beg != end) {
         const Bond *bond = mol[*beg].get();
         ++beg;
-        unsigned int nbrIdx = bond->getOtherAtomIdx(allIndice);
+        unsigned int nbrIdx = bond->getOtherAtomIdx(index);
         const Atom *nbr = mol[nbrIdx].get();
 
         int rank = ranks[nbrIdx] + 1;
@@ -231,28 +231,27 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
       }
       // add a zero for each coordinated H:
       // (as long as we're not a query atom)
-      if (!mol[allIndice]->hasQuery()) {
-        localEntry.insert(localEntry.begin(), mol[allIndice]->getTotalNumHs(),
-                          0);
+      if (!mol[index]->hasQuery()) {
+        localEntry.insert(localEntry.begin(), mol[index]->getTotalNumHs(), 0);
       }
 
       // we now have a sorted list of our neighbors' ranks,
       // copy it on in reversed order:
-      cipEntries[allIndice].insert(cipEntries[allIndice].end(),
-                                   localEntry.rbegin(), localEntry.rend());
-      if (cipEntries[allIndice].size() > longestEntry) {
-        longestEntry = rdcast<unsigned int>(cipEntries[allIndice].size());
+      cipEntries[index].insert(cipEntries[index].end(), localEntry.rbegin(),
+                               localEntry.rend());
+      if (cipEntries[index].size() > longestEntry) {
+        longestEntry = rdcast<unsigned int>(cipEntries[index].size());
       }
     }
     // ----------------------------------------------------
     //
     // pad the entries so that we compare rounds to themselves:
     //
-    for (int &allIndice : allIndices) {
-      unsigned int sz = rdcast<unsigned int>(cipEntries[allIndice].size());
+    for (int &index : allIndices) {
+      unsigned int sz = rdcast<unsigned int>(cipEntries[index].size());
       if (sz < longestEntry) {
-        cipEntries[allIndice].insert(cipEntries[allIndice].end(),
-                                     longestEntry - sz, -1);
+        cipEntries[index].insert(cipEntries[index].end(), longestEntry - sz,
+                                 -1);
       }
     }
     // ----------------------------------------------------

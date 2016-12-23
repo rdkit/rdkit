@@ -114,26 +114,26 @@ void FloydWarshall(int dim, T *adjMat, int *pathMat,
          dim * dim * sizeof(T));
 
   // initialize the paths
-  for (auto i = activeAtoms.begin(); i != activeAtoms.end(); i++) {
-    int itab = (*i) * dim;
+  for (auto ai : activeAtoms) {
+    int itab = ai * dim;
     for (int activeAtom : activeAtoms) {
-      if ((*i) == activeAtom || adjMat[itab + activeAtom] == LOCAL_INF) {
+      if (ai == activeAtom || adjMat[itab + activeAtom] == LOCAL_INF) {
         pathMat[itab + activeAtom] = -1;
       } else {
-        pathMat[itab + activeAtom] = (*i);
+        pathMat[itab + activeAtom] = ai;
       }
     }
   }
   memcpy(static_cast<void *>(lastP), static_cast<void *>(pathMat),
          dim * dim * sizeof(int));
 
-  for (auto k = activeAtoms.begin(); k != activeAtoms.end(); k++) {
-    int ktab = (*k) * dim;
-    for (auto i = activeAtoms.begin(); i != activeAtoms.end(); i++) {
-      int itab = (*i) * dim;
+  for (auto ak : activeAtoms) {
+    int ktab = ak * dim;
+    for (auto ai : activeAtoms) {
+      int itab = ai * dim;
       for (int activeAtom : activeAtoms) {
         T v1 = lastD[itab + activeAtom];
-        T v2 = lastD[itab + (*k)] + lastD[ktab + activeAtom];
+        T v2 = lastD[itab + ak] + lastD[ktab + activeAtom];
         if (v1 <= v2) {
           currD[itab + activeAtom] = v1;
           currP[itab + activeAtom] = lastP[itab + activeAtom];
@@ -239,11 +239,11 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
 
   for (auto bond : bonds) {
     i = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
-                  static_cast<int>(bond->getBeginAtomIdx())) -
-                                   activeAtoms.begin());
+                              static_cast<int>(bond->getBeginAtomIdx())) -
+                    activeAtoms.begin());
     j = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
-                  static_cast<int>(bond->getEndAtomIdx())) -
-                                   activeAtoms.begin());
+                              static_cast<int>(bond->getEndAtomIdx())) -
+                    activeAtoms.begin());
     double contrib;
     if (useBO) {
       if (!bond->getIsAromatic()) {
@@ -324,9 +324,9 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
   RANGE_CHECK(0, aid2, nats - 1);
   CHECK_INVARIANT(aid1 != aid2, "");
 
-  INT_VECT pred(nats, -1); // set all atoms to unprocessed state
-  pred[aid1] = -2; // marks begin
-  pred[aid2] = -3; // marks end
+  INT_VECT pred(nats, -1);  // set all atoms to unprocessed state
+  pred[aid1] = -2;          // marks begin
+  pred[aid2] = -3;          // marks end
 
   std::deque<int> bfsQ;
 
@@ -343,13 +343,13 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
           pred[*nbrIdx] = curAid;
           bfsQ.push_back(rdcast<int>(*nbrIdx));
           break;
-        case -3: // end found
+        case -3:  // end found
           pred[*nbrIdx] = curAid;
           done = true;
           break;
-        default: // already processed (or begin)
+        default:  // already processed (or begin)
           break;
-        }
+      }
       ++nbrIdx;
     }
     bfsQ.pop_front();

@@ -664,8 +664,7 @@ int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
 
     bool allAromatic = true;
     bool allDummy = true;
-    for (auto ivi = sring.begin(); ivi != sring.end(); ++ivi) {
-      unsigned int firstIdx = (*ivi);
+    for (auto firstIdx : sring) {
       Atom *at = mol.getAtomWithIdx(firstIdx);
 
       if (allDummy && at->getAtomicNum() != 0) {
@@ -676,7 +675,7 @@ int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
         if (!acands[firstIdx]) allAromatic = false;
         continue;
       }
-      aseen[*ivi] = 1;
+      aseen[firstIdx] = 1;
 
       // now that the atom is part of ring check if it can donate
       // electron or has empty orbitals. Record the donor type

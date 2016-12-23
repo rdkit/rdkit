@@ -363,7 +363,7 @@ python::tuple getMMFFO3AForConfs(
       throw_value_error("missing MMFF94 parameters for reference molecule");
     }
   }
-  std::vector<boost::shared_ptr<O3A> > res;
+  std::vector<boost::shared_ptr<O3A>> res;
   {
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, prbMolProps, refMolProps, res,
@@ -372,8 +372,8 @@ python::tuple getMMFFO3AForConfs(
   }
 
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(new PyO3A(re));
+  for (auto &i : res) {
+    pyres.append(new PyO3A(i));
   }
 
   if (!prbPyMMFFMolProperties) delete prbMolProps;
@@ -533,7 +533,7 @@ python::tuple getCrippenO3AForConfs(
                                         true, &refAtomTypes,
                                         &refAtomTypeLabels);
   }
-  std::vector<boost::shared_ptr<O3A> > res;
+  std::vector<boost::shared_ptr<O3A>> res;
   {
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, &prbLogpContribs, &refLogpContribs, res,
@@ -670,7 +670,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       docString.c_str());
 
   python::class_<RDKit::MolAlign::PyO3A,
-                 boost::shared_ptr<RDKit::MolAlign::PyO3A> >(
+                 boost::shared_ptr<RDKit::MolAlign::PyO3A>>(
       "O3A", "Open3DALIGN object", python::no_init)
       .def("Align", &RDKit::MolAlign::PyO3A::align, (python::arg("self")),
            "aligns probe molecule onto reference molecule")

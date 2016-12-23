@@ -87,8 +87,8 @@ bool loadOptionsFromFiles(
 //=====================================================================
 // File parsers helper functions:
 
-static const char *
-    bond_to_string[] =  // ordered in according with BondType values
+static const char
+    *bond_to_string[] =  // ordered in according with BondType values
     {"?", "-", "=", "#", "~", "-=", "-~", "=~", "*"};
 
 // used in unit test
@@ -333,7 +333,7 @@ static bool ReadAugmentedAtoms(const std::string &path,
 
 static bool ReadAAPairs(
     const std::string &path,
-    std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &trans_pairs) {
+    std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &trans_pairs) {
   /*
   * '*.trn' file loader
   * Reads file and constructs an array of pairs of augmented atom
@@ -447,11 +447,12 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
     }
   }
 
-  std::vector<std::pair<AugmentedAtom, AugmentedAtom> > trans_pairs;
-  trans_pairs.resize(sizeof(DefaultAugmentedAtomTransforms)/
+  std::vector<std::pair<AugmentedAtom, AugmentedAtom>> trans_pairs;
+  trans_pairs.resize(sizeof(DefaultAugmentedAtomTransforms) /
                      sizeof(*DefaultAugmentedAtomTransforms));
-  for(size_t i=0; i< sizeof(DefaultAugmentedAtomTransforms)/
-                     sizeof(*DefaultAugmentedAtomTransforms); ++i) {
+  for (size_t i = 0; i < sizeof(DefaultAugmentedAtomTransforms) /
+                             sizeof(*DefaultAugmentedAtomTransforms);
+       ++i) {
     if (!StringToAugmentedAtom(DefaultAugmentedAtomTransforms[i].from,
                                trans_pairs[i].first)) {
       throw "INTERNAL Error in default augmented atom transforms";
@@ -461,7 +462,7 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
       throw "INTERNAL Error in default augmented atom transforms";
     }
   }
-  
+
   struchkOpts.setGoodAugmentedAtoms(good);
   struchkOpts.setAcidicAugmentedAtoms(acidic);
   struchkOpts.setAugmentedAtomTranslations(trans_pairs);
@@ -476,7 +477,7 @@ bool StructCheckerOptions::loadAugmentedAtomTranslations(
 }
 
 void StructCheckerOptions::setAugmentedAtomTranslations(
-    const std::vector<std::pair<AugmentedAtom, AugmentedAtom> > &aaPairs) {
+    const std::vector<std::pair<AugmentedAtom, AugmentedAtom>> &aaPairs) {
   AugmentedAtomPairs = aaPairs;
 }
 
@@ -632,8 +633,8 @@ void StructCheckerOptions::setTautomerData(const std::vector<ROMOL_SPTR> &from,
 static void parseSMARTS(std::vector<ROMOL_SPTR> &mols,
                         const std::vector<std::string> &smarts) {
   mols.clear();
-  for (const auto &smart : smarts) {
-    ROMol *m = SmartsToMol(smart);
+  for (const auto &patt : smarts) {
+    ROMol *m = SmartsToMol(patt);
     if (m) mols.push_back(ROMOL_SPTR(m));
   }
 }

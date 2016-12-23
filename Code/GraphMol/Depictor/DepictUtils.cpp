@@ -180,8 +180,8 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   int cnt = 0;
   for (const auto &fusedRing : fusedRings) {
     subs = 0;
-    for (auto rii = fusedRing.begin(); rii != fusedRing.end(); rii++) {
-      int deg = mol.getAtomWithIdx(*rii)->getDegree();
+    for (auto rii : fusedRing) {
+      int deg = mol.getAtomWithIdx(rii)->getDegree();
       if (deg > 2) {
         subs++;
       }
@@ -246,10 +246,10 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
     }
     commonAtoms.clear();
     int numCommonAtoms = 0;
-    for (auto rii = fusedRing.begin(); rii != fusedRing.end(); rii++) {
-      if (std::find(doneAtoms.begin(), doneAtoms.end(), (*rii)) !=
+    for (auto rii : fusedRing) {
+      if (std::find(doneAtoms.begin(), doneAtoms.end(), (rii)) !=
           doneAtoms.end()) {
-        commonAtoms.push_back(*rii);
+        commonAtoms.push_back(rii);
         numCommonAtoms++;
       }
     }

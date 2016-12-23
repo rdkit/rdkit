@@ -199,42 +199,42 @@ void hierarchy_create() {
   std::vector<FilterHierarchyMatcher *> toplevel;
   FilterHierarchyMatcher *stack[MAX_DEPTH];
 
-  for (const auto &i : FuncDataArray) {
+  for (const auto &fd : FuncDataArray) {
     // Make a new node
-    ROMOL_SPTR pattern(SmartsToMol(i.smarts, 0, true));
-    pattern->setProp("Label", i.label);
-    if (i.removalReaction) {
-      pattern->setProp("RemovalReaction", i.removalReaction);
+    ROMOL_SPTR pattern(SmartsToMol(fd.smarts, 0, true));
+    pattern->setProp("Label", fd.label);
+    if (fd.removalReaction) {
+      pattern->setProp("RemovalReaction", fd.removalReaction);
     }
-    std::string key(i.name);
+    std::string key(fd.name);
     flattenedHierarchy[key] = pattern;
     boost::to_lower(key);
     flattenedHierarchyNorm[key] = pattern;
 
-    FilterHierarchyMatcher node(SmartsMatcher(i.name, pattern));
+    FilterHierarchyMatcher node(SmartsMatcher(fd.name, pattern));
 
-    if (i.level == 0) {
+    if (fd.level == 0) {
       toplevel.push_back(new FilterHierarchyMatcher(node));
       stack[0] = toplevel.back();
 
     } else {
       PRECONDITION(
-          i.level < MAX_DEPTH,
+          fd.level < MAX_DEPTH,
           std::string(
               "Invalid Depth in Built in Functional Group Hierarchy: ") +
-              i.name);
+              fd.name);
       boost::shared_ptr<FilterHierarchyMatcher> real_node =
-          stack[i.level - 1]->addChild(node);
+          stack[fd.level - 1]->addChild(node);
 
-      stack[i.level] = real_node.get();
+      stack[fd.level] = real_node.get();
     }
   }
 
   // add the top levels to the filter catalog and give them ownership
   //  to the filter catalog
-  for (auto &i : toplevel) {
+  for (auto &fd : toplevel) {
     fgroupHierarchy.addEntry(new FilterCatalogEntry(
-        i->getName(), boost::shared_ptr<FilterMatcherBase>(i)));
+        fd->getName(), boost::shared_ptr<FilterMatcherBase>(fd)));
   }
 }
 }

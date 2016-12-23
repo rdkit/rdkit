@@ -29,21 +29,22 @@ int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
               bool ignoreInterfragInteractions) {
   NOGIL gil;
   return UFF::UFFOptimizeMolecule(mol, maxIters, vdwThresh, confId,
-                                  ignoreInterfragInteractions).first;
+                                  ignoreInterfragInteractions)
+      .first;
 }
 python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                               double vdwThresh, int confId,
                               bool ignoreInterfragInteractions) {
   RDUNUSED_PARAM(confId);  // XXX FIX ME?
-  std::vector<std::pair<int, double> > res;
+  std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
     UFF::UFFOptimizeMoleculeConfs(mol, res, numThreads, maxIters, vdwThresh,
                                   ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(python::make_tuple(re.first, re.second));
+  for (auto &itm : res) {
+    pyres.append(python::make_tuple(itm.first, itm.second));
   }
   return pyres;
 }
@@ -52,7 +53,7 @@ python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                std::string mmffVariant, double nonBondedThresh,
                                int confId, bool ignoreInterfragInteractions) {
   RDUNUSED_PARAM(confId);  // Fix me?
-  std::vector<std::pair<int, double> > res;
+  std::vector<std::pair<int, double>> res;
   {
     NOGIL gil;
     MMFF::MMFFOptimizeMoleculeConfs(mol, res, numThreads, maxIters, mmffVariant,
@@ -60,8 +61,8 @@ python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                     ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(python::make_tuple(re.first, re.second));
+  for (auto &itm : res) {
+    pyres.append(python::make_tuple(itm.first, itm.second));
   }
   return pyres;
 }
