@@ -1071,26 +1071,8 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
 #endif
 }
 
-// Find bonds than can be cis/trans in a molecule and mark them as "any"
-// - this function finds any double bonds that can potentially be part
-//   of a cis/trans system. No attempt is made here to mark them cis or trans
-//
-// This function is useful in two situations
-//  1) when parsing a mol file; for the bonds marked here, coordinate
-//  informations
-//     on the neighbors can be used to indentify cis or trans states
-//  2) when writing a mol file; bonds that can be cis/trans but not marked as
-//  either
-//     need to be specially marked in the mol file
-//
-//  The CIPranks on the neighboring atoms are check in this function. The
-//  _CIPCode property
-//  if set to any on the double bond.
-//
-// ARGUMENTS:
-//   mol - the molecule of interest
-//   cleanIt - if this option is set to true, any previous marking of _CIPCode
-//               on the bond is cleared - otherwise it is left untouched
+// Find bonds than can be cis/trans in a molecule and mark them as
+// Bond::STEREOANY.
 void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
   // FIX: The earlier thought was to provide an optional argument to ignore or
   // consider
@@ -1131,7 +1113,15 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             // ------------------
             // get the CIP ranking of each atom if we need it:
             if (!cipDone) {
-              Chirality::assignAtomCIPRanks(mol, ranks);
+              if (!begAtom->hasProp(common_properties::_CIPRank)) {
+                Chirality::assignAtomCIPRanks(mol, ranks);
+              } else {
+                // no need to recompute if we don't need to recompute. :-)
+                for (unsigned int ai = 0; ai < mol.getNumAtoms(); ++ai) {
+                  ranks[ai] = mol.getAtomWithIdx(ai)->getProp<unsigned int>(
+                      common_properties::_CIPRank);
+                }
+              }
               cipDone = true;
             }
             // find the neighbors for the begin atom and the endAtom
@@ -1143,9 +1133,22 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
-                // if both of the atoms have 2 neighbors (other than the one
-                // connected
-                // by the double bond) and ....
+// if both of the atoms have 2 neighbors (other than the one
+// connected
+// by the double bond) and ....
+#if 0
+                std::cerr << "Bond: " << dblBond->getIdx() << " "
+                          << begAtom->getIdx() << "=" << endAtom->getIdx()
+                          << std::endl;
+                std::cerr << "   " << begAtomNeighbors[0] << "="
+                          << ranks[begAtomNeighbors[0]] << ":";
+                std::cerr << "   " << begAtomNeighbors[1] << "="
+                          << ranks[begAtomNeighbors[1]] << std::endl;
+                std::cerr << "   " << endAtomNeighbors[0] << "="
+                          << ranks[endAtomNeighbors[0]] << ":";
+                std::cerr << "   " << endAtomNeighbors[1] << "="
+                          << ranks[endAtomNeighbors[1]] << std::endl;
+#endif
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=
@@ -1191,12 +1194,16 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
                 dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
                 dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
               }  // end of different number of neighbors on beg and end atoms
-            }    // end of check that beg and end atoms have at least 1
-                 // neighbor:
-          }      // end of 2 and 3 coordinated atoms only
-        }        // end of we want it or CIP code is not set
-      }          // end of double bond
-    }            // end of for loop over all bonds
+              // mark this double bond as a potential stereo bond
+              if (!dblBond->getStereoAtoms().empty()) {
+                dblBond->setStereo(Bond::STEREOANY);
+              }
+            }  // end of check that beg and end atoms have at least 1
+               // neighbor:
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
