@@ -178,20 +178,19 @@ RWMol *toMol(const std::string &inp,
   return res;
 }
 
-RWMol *SmilesToMol(const std::string &smiles, int debugParse, bool sanitize,
-                   std::map<std::string, std::string> *replacements) {
-  yysmiles_debug = debugParse;
+RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) {
+  yysmiles_debug = params.debugParse;
   // strip any leading/trailing whitespace:
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
-  RWMol *res;
-  if (replacements) {
+  RWMol *res=NULL;
+  if (params.replacements) {
     std::string smi = smiles;
     bool loopAgain = true;
     while (loopAgain) {
       loopAgain = false;
       for (std::map<std::string, std::string>::const_iterator replIt =
-               replacements->begin();
-           replIt != replacements->end(); ++replIt) {
+               params.replacements->begin();
+           replIt != params.replacements->end(); ++replIt) {
         if (boost::find_first(smi, replIt->first)) {
           loopAgain = true;
           boost::replace_all(smi, replIt->first, replIt->second);
@@ -202,21 +201,23 @@ RWMol *SmilesToMol(const std::string &smiles, int debugParse, bool sanitize,
   } else {
     res = toMol(smiles, smiles_parse, smiles);
   }
-
-  if (sanitize && res) {
-    // we're going to remove explicit Hs from the graph,
-    // this triggers a sanitization, so we do not need to
-    // worry about doing one here:
+  if ( res && (params.sanitize || params.removeHs)) {
     try {
-      MolOps::removeHs(*res, false, true);
-      // figure out stereochemistry:
-      MolOps::assignStereochemistry(*res, true, true, true);
+      if(params.removeHs) {
+        bool implicitOnly=false,updateExplicitCount=true;
+        MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
+          params.sanitize);
+      } else if(params.sanitize) {
+        MolOps::sanitizeMol(*res);
+      }
     } catch (...) {
       delete res;
       throw;
     }
+    // figure out stereochemistry:
+    bool cleanIt = true, force = true, flagPossible = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
-
   return res;
 };
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
