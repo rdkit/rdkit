@@ -3893,7 +3893,54 @@ void testSmilesParseParams() {
       delete m;
     }
   }
-	BOOST_LOG(rdInfoLog) << "done" << std::endl;
+
+  { // basic name parsing
+    std::string smiles = "CCCC the_name";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(!m);
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(!m);
+    }
+    { // no removeHs, no sanitization
+       SmilesParserParams params;
+       params.parseName = true;
+       m = SmilesToMol(smiles, params);
+       TEST_ASSERT(m);
+       TEST_ASSERT(m->getNumAtoms() == 4);
+       TEST_ASSERT(m->hasProp(common_properties::_Name));
+       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name)=="the_name");
+       delete m;
+    }
+  }
+  { // name parsing2
+    std::string smiles = "CCCC\tthe_name";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  { // name parsing3
+    std::string smiles = "CCCC\t  the_name  ";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

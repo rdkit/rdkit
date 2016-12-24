@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -180,11 +179,20 @@ RWMol *toMol(const std::string &inp,
 
 RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) {
   yysmiles_debug = params.debugParse;
+
+  std::string lsmiles = smiles, name="";
+  if(params.parseName){
+    std::vector<std::string> tokens;
+    boost::split(tokens, lsmiles, boost::is_any_of(" \t"),
+                 boost::token_compress_on);
+    lsmiles = tokens[0];
+    if(tokens.size()>1) name = tokens[1];
+  };
   // strip any leading/trailing whitespace:
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res=NULL;
   if (params.replacements) {
-    std::string smi = smiles;
+    std::string smi = lsmiles;
     bool loopAgain = true;
     while (loopAgain) {
       loopAgain = false;
@@ -199,7 +207,7 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     }
     res = toMol(smi, smiles_parse, smi);
   } else {
-    res = toMol(smiles, smiles_parse, smiles);
+    res = toMol(lsmiles, smiles_parse, lsmiles);
   }
   if ( res && (params.sanitize || params.removeHs)) {
     try {
@@ -218,6 +226,7 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
+  if(res && name!="") res->setProp(common_properties::_Name,name);
   return res;
 };
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
