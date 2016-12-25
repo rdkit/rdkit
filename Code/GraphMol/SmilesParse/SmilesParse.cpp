@@ -180,14 +180,25 @@ RWMol *toMol(const std::string &inp,
 RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) {
   yysmiles_debug = params.debugParse;
 
-  std::string lsmiles = smiles, name="";
-  if(params.parseName){
+  std::string lsmiles = "", name = "", cxPart = "";
+  if(params.parseName && !params.allowCXSMILES){
     std::vector<std::string> tokens;
-    boost::split(tokens, lsmiles, boost::is_any_of(" \t"),
+    boost::split(tokens, smiles, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     lsmiles = tokens[0];
     if(tokens.size()>1) name = tokens[1];
-  };
+  } else if (params.allowCXSMILES) {
+    size_t sidx = smiles.find_first_of(" \t");
+    if (sidx != std::string::npos && sidx != 0)  {
+      lsmiles = smiles.substr(0, sidx);
+      cxPart = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx)); 
+    }
+  }
+  std::cerr << "   lsmiles " << lsmiles << std::endl;
+
+  if(lsmiles=="") {
+    lsmiles = smiles;
+  }
   // strip any leading/trailing whitespace:
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res=NULL;
@@ -227,6 +238,9 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
   if(res && name!="") res->setProp(common_properties::_Name,name);
+  if (res && params.allowCXSMILES && cxPart != "") {
+    SmilesParseOps::parseCXNExtensions(*res, cxPart);
+  }
   return res;
 };
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,

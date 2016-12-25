@@ -28,7 +28,7 @@ struct SmilesParserParams {
 		debugParse(0),
 		sanitize(true),
 		replacements(NULL),
-		allowCXSMILES(true),
+		allowCXSMILES(false),
 		parseName(false),
 		removeHs(true)
 	{};
