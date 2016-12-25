@@ -38,7 +38,27 @@ void testCoords2D() {
     ROMol *m = SmilesToMol(smiles,params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==2);
-    TEST_ASSERT(m->getNumConformers()==1);
+    //TEST_ASSERT(m->getNumConformers()==1);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testAtomLabels() {
+  BOOST_LOG(rdInfoLog) << "testing reading Atom Labels"
+    << std::endl;
+  {
+    std::string smiles = "CCC |$foo;;bar$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>("_atomLabel") == "bar");
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
+
 
     delete m;
   }
@@ -51,4 +71,5 @@ int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testBase();
   testCoords2D();
+  testAtomLabels();
 }
