@@ -38,7 +38,30 @@ void testCoords2D() {
     ROMol *m = SmilesToMol(smiles,params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==2);
-    //TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).x ) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).y - 0.75) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).z ) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).y + 0.75) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).z) < 1e-4);
+
+    delete m;
+  }
+  {
+    std::string smiles = "CC |(,,;,,-.75)|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).y) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).y) < 1e-4);
+    TEST_ASSERT(fabs(m->getConformer().getAtomPos(1).z + 0.75) < 1e-4);
 
     delete m;
   }
@@ -58,12 +81,55 @@ void testAtomLabels() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
     TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>("_atomLabel") == "bar");
     TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
+    delete m;
+  }
+  { // example from the docs:
+    std::string smiles = "C[C@H](N*)C(*)=O |$;;;_AP1;;_AP2;$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>("_atomLabel") == "_AP1");
+    TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>("_atomLabel") == "_AP2");
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
+    delete m;
+  }
 
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
+void testCXSmilesAndName() {
+  BOOST_LOG(rdInfoLog) << "testing CSXMILES and mol name"
+    << std::endl;
+  {
+    std::string smiles = "CCC |$foo;;bar$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    params.parseName = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
+    TEST_ASSERT(!m->hasProp("_Name"));
+    delete m;
+  }
+  {
+    std::string smiles = "CCC |$foo;;bar$| ourname";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    params.parseName = true;
+
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
+    TEST_ASSERT(m->getProp<std::string>("_Name")=="ourname");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
 
 int main(int argc, char *argv[]) {
   (void)argc;
@@ -72,4 +138,5 @@ int main(int argc, char *argv[]) {
   testBase();
   testCoords2D();
   testAtomLabels();
+  testCXSmilesAndName();
 }

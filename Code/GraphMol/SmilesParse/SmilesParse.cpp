@@ -194,7 +194,6 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
       cxPart = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx)); 
     }
   }
-  std::cerr << "   lsmiles " << lsmiles << std::endl;
 
   if(lsmiles=="") {
     lsmiles = smiles;
@@ -237,10 +236,15 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
-  if(res && name!="") res->setProp(common_properties::_Name,name);
   if (res && params.allowCXSMILES && cxPart != "") {
-    SmilesParseOps::parseCXNExtensions(*res, cxPart);
+    std::string::iterator pos;
+    SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    if (params.parseName && pos != cxPart.end()) {
+      std::string nmpart(pos, cxPart.end());
+      name = boost::trim_copy(nmpart);
+    }
   }
+  if (res && name != "") res->setProp(common_properties::_Name, name);
   return res;
 };
 RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,

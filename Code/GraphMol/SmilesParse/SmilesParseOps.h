@@ -29,7 +29,7 @@ RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
 void CloseMolRings(RDKit::RWMol *mol, bool toleratePartials);
 void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 void CleanupAfterParsing(RDKit::RWMol *mol);
-void parseCXNExtensions(RDKit::RWMol &mol, const std::string &extText);
+void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText, std::string::const_iterator &pos);
 };
 
 #endif
