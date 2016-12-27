@@ -17,8 +17,6 @@
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-
-
 namespace SmilesParseOps {
   using namespace RDKit;
 
@@ -64,7 +62,7 @@ namespace SmilesParseOps {
         std::string tkn = read_text_to(first, last, ';', ')');
         if (tkn != "") {
           std::vector<std::string> tokens;
-          boost::split(tokens, tkn, boost::is_any_of(","));
+          boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
           if(tokens.size()>=1 && tokens[0].size())
              pt.x = boost::lexical_cast<double>(tokens[0]);
           if (tokens.size() >= 2 && tokens[1].size())
@@ -81,6 +79,60 @@ namespace SmilesParseOps {
       return true;
 
     }
+
+    template <typename Iterator>
+    bool read_int(Iterator &first, Iterator last, unsigned int &res) {
+      std::string num = "";
+      while (first != last && *first >= '0' && *first <= '9') {
+        num += *first;
+        ++first;
+      }
+      if (num=="") {
+        return false;
+      }
+      res = boost::lexical_cast<unsigned int>(num);
+      return true;
+  }
+    template <typename Iterator>
+    bool read_int_pair(Iterator &first, Iterator last, unsigned int &n1, unsigned int &n2, char sep='.') {
+      if (!read_int(first, last, n1)) return false;
+      if (first >= last || *first != sep) return false;
+      ++first;
+      return read_int(first, last, n2);
+    }
+    
+    template <typename Iterator>
+  bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+    if (first >= last || *first != 'C') return false;
+    ++first;
+    if (first >= last || *first != ':') return false;
+    ++first;
+    while (first != last && *first >= '0' && *first<='9') {
+      unsigned int aidx;
+      unsigned int bidx;
+      if (read_int_pair(first, last, aidx,bidx)) {
+        Bond *bnd = mol.getBondWithIdx(bidx);
+        if (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx) {
+          std::cerr << "BOND NOT FOUND! " << bidx << " involving atom " << aidx <<  std::endl;
+          return false;
+        }
+        bnd->setBondType(Bond::DATIVE);
+        if (bnd->getBeginAtomIdx() != aidx) {
+          unsigned int tmp = bnd->getBeginAtomIdx();
+          bnd->setBeginAtomIdx(aidx);
+          bnd->setEndAtomIdx(tmp);
+        }
+      }
+      else {
+        return false;
+      }
+      if (first < last && *first == ',') ++first;
+    }
+    return true;
+  }
+
+
+    
     template <typename Iterator>
     bool parse_it(Iterator &first, Iterator last,RDKit::RWMol &mol) {
       if (first >= last || *first != '|') return false;
@@ -92,7 +144,10 @@ namespace SmilesParseOps {
         else if (*first == '$') {
           if (!parse_atom_labels(first, last, mol)) return false;
         }
-        ++first;
+        else if (*first == 'C') {
+          if (!parse_coordinate_bonds(first, last, mol)) return false;
+        }
+        if(first < last && *first != '|') ++first;
       }
       if (first >= last || *first != '|') return false;
       ++first; // step past the last '|'

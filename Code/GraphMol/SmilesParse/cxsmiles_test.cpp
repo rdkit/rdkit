@@ -131,6 +131,46 @@ void testCXSmilesAndName() {
 }
 
 
+void testCoordinateBonds() {
+  BOOST_LOG(rdInfoLog) << "testing coordinate" << std::endl;
+  {
+    std::string smiles = "[Fe]1C=C1 |C:1.0,2.2|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2));
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType()==Bond::DATIVE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DATIVE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBeginAtomIdx() == 2);
+    delete m;
+  }
+  {
+    std::string smiles = "C1[Fe]C=1 |C:0.0,2.1|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 0);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DATIVE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBeginAtomIdx() == 2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -139,4 +179,5 @@ int main(int argc, char *argv[]) {
   testCoords2D();
   testAtomLabels();
   testCXSmilesAndName();
+  testCoordinateBonds();
 }
