@@ -30,7 +30,7 @@ std::string _recurseBondSmarts(const Bond *bond,
                                bool negate, int atomToLeftIdx);
 
 bool _checkForOrAndLowAnd(std::string smarts) {
-  int orLoc, andLoc;
+  size_t orLoc, andLoc;
   // if we're a pure recursive smarts, we don't need to worry about this
   if (smarts[0] == '$' && smarts[smarts.size() - 1] == ')') return false;
   orLoc = smarts.find(",");
@@ -56,7 +56,7 @@ std::string _combineChildSmarts(std::string cs1, std::string cs2,
     res += cs2;
   } else if ((descrip.find("And") > 0) &&
              (descrip.find("And") < descrip.length())) {
-    int orLoc1, orLoc2;
+    size_t orLoc1, orLoc2;
     std::string symb;
     orLoc1 = cs1.find(',');
     orLoc2 = cs2.find(',');

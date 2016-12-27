@@ -31,9 +31,10 @@
 #include <limits>
 
 #include <cstring>
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 
