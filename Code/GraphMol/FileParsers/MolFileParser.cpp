@@ -7,6 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
@@ -16,12 +22,6 @@
 #include <RDGeneral/RDLog.h>
 
 #include <fstream>
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
-#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
