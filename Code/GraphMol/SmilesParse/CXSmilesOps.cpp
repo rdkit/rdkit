@@ -15,6 +15,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <iostream>
+#include "SmilesParse.h"
 #include "SmilesParseOps.h"
 
 namespace SmilesParseOps {
@@ -155,11 +156,73 @@ namespace SmilesParseOps {
     }
   } // end of namespace parser
 
+  namespace {
+    void processCXSmilesLabels(RDKit::RWMol &mol) {
+      for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms(); ++atIt) {
+        std::string symb = "";
+        if((*atIt)->getPropIfPresent("_atomLabel",symb)) {
+          if (symb == "AH_p" || symb == "QH_p" || symb == "XH_p" || symb == "X_p" ||
+            symb == "Q_e" || symb == "star_e") {
+            QueryAtom *query = new QueryAtom(0);
+            if (symb == "star_e") {
+              // according to the MDL spec, these match anything
+              query->setQuery(makeAtomNullQuery());
+            } else if (symb == "Q_e") {
+              ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+              q->setDescription("AtomOr");
+              q->setNegation(true);
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
+              query->setQuery(q);
+            } else if (symb == "QH_P") {
+              ATOM_EQUALS_QUERY *q = makeAtomNumQuery(6);
+              q->setNegation(true);
+              query->setQuery(q);
+            } else if (symb == "AH_P") { // this seems wrong...
+              ATOM_EQUALS_QUERY *q = makeAtomNumQuery(1);
+              q->setNegation(true);
+              query->setQuery(q);
+            } else if (symb == "X_p" || symb == "XH_p") { 
+              ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+              q->setDescription("AtomOr");
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(9)));
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(17)));
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(35)));
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(53)));
+              q->addChild(
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(85)));
+              if (symb == "XH_p") {
+                q->addChild(
+                  QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
+              }
+              query->setQuery(q);
+            }
+            // queries have no implicit Hs:
+            query->setNoImplicit(true);
+            mol.replaceAtom((*atIt)->getIdx(), query);
+            mol.getAtomWithIdx((*atIt)->getIdx())->setProp("_atomLabel", symb);
+          }
+        }
+      }
+    }
+
+  } // end of anonymous namespace
+
+
   void parseCXExtensions(RDKit::RWMol & mol, const std::string & extText, std::string::const_iterator &first) {
     //std::cerr << "parseCXNExtensions: " << extText << std::endl;
     if (!extText.size() || extText[0] != '|') return;
     first = extText.begin();
     bool ok = parser::parse_it(first, extText.end(),mol);
-    POSTCONDITION(ok,"parse failed");
+    if (!ok) throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
+    if (ok) {
+      processCXSmilesLabels(mol);
+    }
   }
 } // end of namespace SmilesParseOps
