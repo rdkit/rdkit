@@ -120,7 +120,7 @@ void SDMolSupplier::checkForEnd() {
   // or we reach end of file in the meantime
   if (dp_inStream->eof()) {
     df_end = true;
-    d_len = d_molpos.size();
+    d_len = rdcast<int>(d_molpos.size());
     return;
   }
   // we are not at the end of file, check for blank lines
@@ -130,7 +130,7 @@ void SDMolSupplier::checkForEnd() {
     tempStr = getLine(dp_inStream);
     if (dp_inStream->eof()) {
       df_end = true;
-      d_len = d_molpos.size();
+      d_len = rdcast<int>(d_molpos.size());
       return;
     }
     if (tempStr.find_first_not_of(" \t\r\n") == std::string::npos) {
@@ -139,7 +139,7 @@ void SDMolSupplier::checkForEnd() {
   }
   if (nempty == 4) {
     df_end = true;
-    d_len = d_molpos.size();
+    d_len = rdcast<int>(d_molpos.size());
   }
 }
 
@@ -167,7 +167,7 @@ ROMol *SDMolSupplier::next() {
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
     df_end = true;
-    d_len = d_molpos.size();
+    d_len = rdcast<int>(d_molpos.size());
     return res;
   }
 
@@ -220,7 +220,7 @@ void SDMolSupplier::moveTo(unsigned int idx) {
   } else {
     std::string tempStr;
     dp_inStream->seekg(d_molpos.back());
-    d_last = d_molpos.size() - 1;
+    d_last = rdcast<int>(d_molpos.size()) - 1;
     while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof())) {
       d_line++;
       tempStr = getLine(dp_inStream);
@@ -236,7 +236,7 @@ void SDMolSupplier::moveTo(unsigned int idx) {
     }
     // if we reached end of file without reaching "idx" we have an index error
     if (dp_inStream->eof()) {
-      d_len = d_molpos.size();
+      d_len = rdcast<int>(d_molpos.size());
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx << ") : "
              << " we do no have enough mol blocks";
@@ -259,7 +259,7 @@ unsigned int SDMolSupplier::length() {
     return d_len;
   } else {
     std::string tempStr;
-    d_len = d_molpos.size();
+    d_len = rdcast<int>(d_molpos.size());
     dp_inStream->seekg(d_molpos.back());
     while (!dp_inStream->eof()) {
       std::getline(*dp_inStream, tempStr);
@@ -291,6 +291,6 @@ void SDMolSupplier::setStreamIndices(const std::vector<std::streampos> &locs) {
   d_molpos.resize(locs.size());
   std::copy(locs.begin(), locs.end(), d_molpos.begin());
   this->reset();
-  d_len = d_molpos.size();
+  d_len = rdcast<int>(d_molpos.size());
 }
 }
