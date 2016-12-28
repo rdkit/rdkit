@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/RDKitQueries.h>
-#include <iostream>
-#include "SmilesParseOps.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
+#include <iostream>
+#include "SmilesParseOps.h"
 
 namespace SmilesParseOps {
   using namespace RDKit;

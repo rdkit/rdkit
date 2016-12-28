@@ -30,9 +30,12 @@
 //
 #ifndef RDKIT_RDANY_H
 #define RDKIT_RDANY_H
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include "LocaleSwitcher.h"
 #include "RDValue.h"
 #include <string>
@@ -165,7 +168,7 @@ struct RDAny {
     m_value = RDValue(v);
     return *this;
   }
-    
+
 };
 
 ////////////////////////////////////////////////////////////////

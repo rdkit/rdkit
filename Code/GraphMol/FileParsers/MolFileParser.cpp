@@ -852,7 +852,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
   }
   std::vector<std::string> splitToken;
   std::string resid = text.substr(1, text.size() - 2);
-  boost::split(splitToken, resid, boost::is_any_of(" "));
+  boost::split(splitToken, resid, boost::is_any_of(std::string(" ")));
   if (splitToken.size() < 1) {
     std::ostringstream errout;
     errout << "Bad RGROUPS specification " << text << " on line " << line
