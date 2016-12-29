@@ -83,17 +83,20 @@ void testAtomLabels() {
     TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
     delete m;
   }
-  { // example from the docs:
+  { // attachment points, example from the docs
     std::string smiles = "C[C@H](N*)C(*)=O |$;;;_AP1;;_AP2;$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 7);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 0);
     TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>("_atomLabel") == "_AP1");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 1);
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomicNum() == 0);
     TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>("_atomLabel") == "_AP2");
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
-    delete m;
+    TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 2);
   }
   { // query properties
     std::string smiles = "**C |$Q_e;QH_p;;$|";
@@ -148,7 +151,7 @@ void testCXSmilesAndName() {
 
 
 void testCoordinateBonds() {
-  BOOST_LOG(rdInfoLog) << "testing coordinate" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing coordinate bonds" << std::endl;
   {
     std::string smiles = "[Fe]1C=C1 |C:1.0,2.2|";
     SmilesParserParams params;
@@ -188,7 +191,7 @@ void testCoordinateBonds() {
 
 
 void testRadicals() {
-  BOOST_LOG(rdInfoLog) << "testing coordinate" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing radicals" << std::endl;
   {
     std::string smiles = "[O]C[O] |^1:0,2|";      ;
     SmilesParserParams params;

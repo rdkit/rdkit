@@ -212,7 +212,10 @@ namespace SmilesParseOps {
       for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms(); ++atIt) {
         std::string symb = "";
         if((*atIt)->getPropIfPresent("_atomLabel",symb)) {
-          if (symb == "AH_p" || symb == "QH_p" || symb == "XH_p" || symb == "X_p" ||
+          if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' && symb[2] == 'P') {
+            unsigned int mapNum = boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
+            (*atIt)->setAtomMapNum(mapNum);
+          } else if (symb == "AH_p" || symb == "QH_p" || symb == "XH_p" || symb == "X_p" ||
             symb == "Q_e" || symb == "star_e") {
             QueryAtom *query = new QueryAtom(0);
             if (symb == "star_e") {
