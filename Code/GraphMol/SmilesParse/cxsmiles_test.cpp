@@ -96,14 +96,19 @@ void testAtomLabels() {
     delete m;
   }
   { // query properties
-    std::string smiles = "** |$Q_e;QH_p;$|";
+    std::string smiles = "**C |$Q_e;QH_p;;$|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "Q_e");
     TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("_atomLabel") == "QH_p");
+    TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp("_atomLabel"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(!m->getAtomWithIdx(2)->hasQuery());
+
     delete m;
   }
 
@@ -182,6 +187,55 @@ void testCoordinateBonds() {
 }
 
 
+void testRadicals() {
+  BOOST_LOG(rdInfoLog) << "testing coordinate" << std::endl;
+  {
+    std::string smiles = "[O]C[O] |^1:0,2|";      ;
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+
+    delete m;
+  }
+  {
+    std::string smiles = "[O][C][O] |^1:0,2,^4:1|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+
+    delete m;
+  }
+  { // radicals and coordinate bonds
+    std::string smiles = "[Fe]N([O])[O] |^1:2,3,C:1.0|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::DATIVE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBeginAtomIdx() == 1);
+
+    delete m;
+  }
+
+  
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -191,4 +245,6 @@ int main(int argc, char *argv[]) {
   testAtomLabels();
   testCXSmilesAndName();
   testCoordinateBonds();
+  testRadicals();
+
 }
