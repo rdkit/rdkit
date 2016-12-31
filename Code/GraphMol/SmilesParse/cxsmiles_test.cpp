@@ -78,9 +78,9 @@ void testAtomLabels() {
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
-    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>("_atomLabel") == "bar");
-    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_atomLabel"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::atomLabel) == "foo");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(common_properties::atomLabel) == "bar");
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
     delete m;
   }
   { // attachment points, example from the docs
@@ -91,11 +91,11 @@ void testAtomLabels() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 7);
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>("_atomLabel") == "_AP1");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(common_properties::atomLabel) == "_AP1");
     TEST_ASSERT(m->getAtomWithIdx(3)->getAtomMapNum() == 1);
 
     TEST_ASSERT(m->getAtomWithIdx(5)->getAtomicNum() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>("_atomLabel") == "_AP2");
+    TEST_ASSERT(m->getAtomWithIdx(5)->getProp<std::string>(common_properties::atomLabel) == "_AP2");
     TEST_ASSERT(m->getAtomWithIdx(5)->getAtomMapNum() == 2);
   }
   { // query properties
@@ -105,9 +105,9 @@ void testAtomLabels() {
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "Q_e");
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("_atomLabel") == "QH_p");
-    TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp("_atomLabel"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::atomLabel) == "Q_e");
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::atomLabel) == "QH_p");
+    TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp(common_properties::atomLabel));
     TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
     TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
     TEST_ASSERT(!m->getAtomWithIdx(2)->hasQuery());
@@ -129,7 +129,7 @@ void testCXSmilesAndName() {
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::atomLabel) == "foo");
     TEST_ASSERT(!m->hasProp("_Name"));
     delete m;
   }
@@ -142,7 +142,7 @@ void testCXSmilesAndName() {
     ROMol *m = SmilesToMol(smiles, params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("_atomLabel") == "foo");
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::atomLabel) == "foo");
     TEST_ASSERT(m->getProp<std::string>("_Name")=="ourname");
     delete m;
   }

@@ -109,6 +109,7 @@ extern const std::string _protected; // atom int (bool)
 extern const std::string _supplementalSmilesLabel; // atom string (SmilesWrite)
 extern const std::string _unspecifiedOrder;// atom int (bool) smarts/smiles
 extern const std::string _RingClosures; // INT_VECT smarts/smiles/canon
+extern const std::string atomLabel; // atom string from CXSMILES
 
 // MDL Style Properties (MolFileParser)
 extern const std::string molAtomMapNumber; // int

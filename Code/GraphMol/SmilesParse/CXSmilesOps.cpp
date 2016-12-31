@@ -41,7 +41,7 @@ namespace SmilesParseOps {
       while (first != last && *first != '$') {
         std::string tkn = read_text_to(first, last, ';', '$');
         if (tkn != "") {
-          mol.getAtomWithIdx(atIdx)->setProp("_atomLabel", tkn);
+          mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::atomLabel, tkn);
         }
         ++atIdx;
         if(first != last && *first!='$') ++first;
@@ -211,7 +211,7 @@ namespace SmilesParseOps {
     void processCXSmilesLabels(RDKit::RWMol &mol) {
       for (RDKit::ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms(); ++atIt) {
         std::string symb = "";
-        if((*atIt)->getPropIfPresent("_atomLabel",symb)) {
+        if((*atIt)->getPropIfPresent(RDKit::common_properties::atomLabel,symb)) {
           if (symb.size() > 3 && symb[0] == '_' && symb[1] == 'A' && symb[2] == 'P') {
             unsigned int mapNum = boost::lexical_cast<unsigned int>(symb.substr(3, symb.size() - 3));
             (*atIt)->setAtomMapNum(mapNum);
@@ -265,7 +265,7 @@ namespace SmilesParseOps {
             // queries have no implicit Hs:
             query->setNoImplicit(true);
             mol.replaceAtom((*atIt)->getIdx(), query);
-            mol.getAtomWithIdx((*atIt)->getIdx())->setProp("_atomLabel", symb);
+            mol.getAtomWithIdx((*atIt)->getIdx())->setProp(RDKit::common_properties::atomLabel, symb);
           }
         }
       }
