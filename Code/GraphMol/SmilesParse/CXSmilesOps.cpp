@@ -239,10 +239,10 @@ namespace SmilesParseOps {
               /* According to the MARVIN Sketch, AH is "any atom, including H" - this would be 
               "*" in SMILES - and "A" is "any atom except H".
               The CXSMILES docs say that "A" can be represented normally in SMILES and that "AH" 
-              needs to be written out as AH_p. I'm not sure what to make of this.*/
-              ATOM_EQUALS_QUERY *q = makeAtomNumQuery(1);
-              q->setNegation(true);
-              query->setQuery(q);
+              needs to be written out as AH_p. I'm going to assume that this is a Marvin internal thing and
+              just parse it as they describe it. This means that "*" in the SMILES itself needs to be treated
+              differently, which we do below. */
+              query->setQuery(makeAtomNullQuery());
             } else if (symb == "X_p" || symb == "XH_p") { 
               ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
               q->setDescription("AtomOr");
@@ -267,6 +267,13 @@ namespace SmilesParseOps {
             mol.replaceAtom((*atIt)->getIdx(), query);
             mol.getAtomWithIdx((*atIt)->getIdx())->setProp(RDKit::common_properties::atomLabel, symb);
           }
+        } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
+          QueryAtom *query = new QueryAtom(0);
+          ATOM_EQUALS_QUERY *q = makeAtomNumQuery(1);
+          q->setNegation(true);
+          query->setQuery(q);
+          query->setNoImplicit(true);
+          mol.replaceAtom((*atIt)->getIdx(), query);          
         }
       }
     }

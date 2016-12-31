@@ -114,6 +114,20 @@ void testAtomLabels() {
 
     delete m;
   }
+  { // query properties2
+    std::string smiles = "** |$;AH_p;$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::atomLabel) == "AH_p");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+
+    delete m;
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
