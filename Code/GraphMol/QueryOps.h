@@ -413,8 +413,16 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
 //! returns a Query for matching generic A atoms (heavy atoms)
 ATOM_EQUALS_QUERY *makeAAtomQuery();
+//! returns a Query for matching generic AH atoms (any atom)
+ATOM_EQUALS_QUERY *makeAHAtomQuery();
 //! returns a Query for matching generic Q atoms (heteroatoms)
 ATOM_OR_QUERY *makeQAtomQuery();
+//! returns a Query for matching generic QH atoms (heteroatom or H)
+ATOM_EQUALS_QUERY *makeQHAtomQuery();
+//! returns a Query for matching generic X atoms (halogen)
+ATOM_OR_QUERY *makeXAtomQuery();
+//! returns a Query for matching generic XH atoms (halogen or H)
+ATOM_OR_QUERY *makeXHAtomQuery();
 
 //! returns a Query for matching atoms that have ring bonds
 template <class T>

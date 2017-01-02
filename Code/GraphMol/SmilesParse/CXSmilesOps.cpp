@@ -24,7 +24,7 @@ namespace SmilesParseOps {
   namespace parser {
     template <typename Iterator>
     std::string read_text_to(Iterator &first, Iterator last, const char sep, const char blockend) {
-      Iterator start = first; 
+      Iterator start = first;
       // EFF: there are certainly faster ways to do this
       while (first != last && *first != sep && *first != blockend) {
         ++first;
@@ -103,7 +103,7 @@ namespace SmilesParseOps {
       ++first;
       return read_int(first, last, n2);
     }
-    
+
     template <typename Iterator>
   bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (first >= last || *first != 'C') return false;
@@ -225,35 +225,19 @@ namespace SmilesParseOps {
             } else if (symb == "Q_e") {
               query->setQuery(makeQAtomQuery());
             } else if (symb == "QH_p") {
-              ATOM_EQUALS_QUERY *q = makeAtomNumQuery(6);
-              q->setNegation(true);
-              query->setQuery(q);
+              query->setQuery(makeQHAtomQuery());
             } else if (symb == "AH_p") { // this seems wrong...
-              /* According to the MARVIN Sketch, AH is "any atom, including H" - this would be 
+              /* According to the MARVIN Sketch, AH is "any atom, including H" - this would be
               "*" in SMILES - and "A" is "any atom except H".
-              The CXSMILES docs say that "A" can be represented normally in SMILES and that "AH" 
+              The CXSMILES docs say that "A" can be represented normally in SMILES and that "AH"
               needs to be written out as AH_p. I'm going to assume that this is a Marvin internal thing and
               just parse it as they describe it. This means that "*" in the SMILES itself needs to be treated
               differently, which we do below. */
-              query->setQuery(makeAtomNullQuery());
-            } else if (symb == "X_p" || symb == "XH_p") { 
-              ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
-              q->setDescription("AtomOr");
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(9)));
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(17)));
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(35)));
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(53)));
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(85)));
-              if (symb == "XH_p") {
-                q->addChild(
-                  QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-              }
-              query->setQuery(q);
+              query->setQuery(makeAHAtomQuery());
+            } else if (symb == "X_p" ) {
+              query->setQuery(makeXAtomQuery());
+            }  else if (symb == "XH_p") {
+              query->setQuery(makeXHAtomQuery());
             }
             // queries have no implicit Hs:
             query->setNoImplicit(true);
@@ -264,7 +248,7 @@ namespace SmilesParseOps {
           QueryAtom *query = new QueryAtom(0);
           query->setQuery(makeAAtomQuery());
           query->setNoImplicit(true);
-          mol.replaceAtom((*atIt)->getIdx(), query);          
+          mol.replaceAtom((*atIt)->getIdx(), query);
         }
       }
     }
