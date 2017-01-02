@@ -35,7 +35,7 @@ bool _checkForOrAndLowAnd(std::string smarts) {
   if (smarts[0] == '$' && smarts[smarts.size() - 1] == ')') return false;
   orLoc = smarts.find(",");
   andLoc = smarts.find(";");
-  if ((orLoc > 0) && (andLoc > 0)) {
+  if ((orLoc != std::string::npos) && (andLoc != std::string::npos)) {
     return true;
   } else {
     return false;
@@ -60,7 +60,7 @@ std::string _combineChildSmarts(std::string cs1, std::string cs2,
     std::string symb;
     orLoc1 = cs1.find(',');
     orLoc2 = cs2.find(',');
-    if ((orLoc1 > 0) || (orLoc2 > 0)) {
+    if ((orLoc1 != std::string::npos) || (orLoc2 != std::string::npos)) {
       symb = ";";
     } else {
       symb = "&";
