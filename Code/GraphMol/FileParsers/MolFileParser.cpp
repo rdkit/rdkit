@@ -1064,17 +1064,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
       } else if (symb == "Q") {
-        ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
-        q->setDescription("AtomOr");
-        q->setNegation(true);
-        q->addChild(
-            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
-        q->addChild(
-            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-        query->setQuery(q);
+        query->setQuery(makeQAtomQuery());
       } else if (symb == "A") {
-        query->setQuery(makeAtomNumQuery(1));
-        query->getQuery()->setNegation(true);
+        query->setQuery(makeAAtomQuery());
       }
       delete res;
       res = query;

@@ -223,14 +223,7 @@ namespace SmilesParseOps {
               "unspecified end groups" for polymers */
               query->setQuery(makeAtomNullQuery());
             } else if (symb == "Q_e") {
-              ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
-              q->setDescription("AtomOr");
-              q->setNegation(true);
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
-              q->addChild(
-                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-              query->setQuery(q);
+              query->setQuery(makeQAtomQuery());
             } else if (symb == "QH_p") {
               ATOM_EQUALS_QUERY *q = makeAtomNumQuery(6);
               q->setNegation(true);
@@ -269,9 +262,7 @@ namespace SmilesParseOps {
           }
         } else if ((*atIt)->getAtomicNum() == 0 && (*atIt)->getSymbol() == "*") {
           QueryAtom *query = new QueryAtom(0);
-          ATOM_EQUALS_QUERY *q = makeAtomNumQuery(1);
-          q->setNegation(true);
-          query->setQuery(q);
+          query->setQuery(makeAAtomQuery());
           query->setNoImplicit(true);
           mol.replaceAtom((*atIt)->getIdx(), query);          
         }

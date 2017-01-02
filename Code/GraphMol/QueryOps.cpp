@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -331,10 +330,19 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
   return res;
 }
 
-ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery() {
-  ATOM_EQUALS_QUERY *res =
-      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasRingBond);
-  res->setDescription("AtomHasRingBond");
+ATOM_OR_QUERY *makeQAtomQuery() {
+  ATOM_OR_QUERY *res = new ATOM_OR_QUERY;
+  res->setDescription("AtomOr"); // FIX: we really should label this more descriptively so that it can be output more cleanly
+  res->setNegation(true);
+  res->addChild(
+    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
+  res->addChild(
+    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+  return res;
+}
+ATOM_EQUALS_QUERY *makeAAtomQuery() {
+  ATOM_EQUALS_QUERY *res = makeAtomNumQuery(1);
+  res->setNegation(true);
   return res;
 }
 
@@ -344,6 +352,14 @@ ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what) {
   res->setDescription("AtomInNRings");
   return res;
 }
+
+ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery() {
+  ATOM_EQUALS_QUERY *res =
+    makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasRingBond);
+  res->setDescription("AtomHasRingBond");
+  return res;
+}
+
 
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
