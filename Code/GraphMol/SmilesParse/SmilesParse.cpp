@@ -191,7 +191,7 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     size_t sidx = smiles.find_first_of(" \t");
     if (sidx != std::string::npos && sidx != 0)  {
       lsmiles = smiles.substr(0, sidx);
-      cxPart = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx)); 
+      cxPart = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx));
     }
   }
 
@@ -237,10 +237,14 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
   if (res && params.allowCXSMILES && cxPart != "") {
-    std::string::iterator pos;
-    SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    if (params.parseName && pos != cxPart.end()) {
-      std::string nmpart(pos, cxPart.end());
+    // it's goofy that we have to do this, but c++0x doesn't seem to have
+    // a way to get a const_iterator from a non-const std::string. In C++11
+    // we could just use .cend()
+    const std::string &cxcopy = cxPart;
+    std::string::const_iterator pos;
+    SmilesParseOps::parseCXExtensions(*res, cxcopy, pos);
+    if (params.parseName && pos != cxcopy.end()) {
+      std::string nmpart(pos, cxcopy.end());
       name = boost::trim_copy(nmpart);
     }
   }

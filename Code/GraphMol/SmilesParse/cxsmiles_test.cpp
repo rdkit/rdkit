@@ -34,7 +34,7 @@ void testCoords2D() {
   {
     std::string smiles = "CC |(0,.75,;0,-.75,)|";
     SmilesParserParams params;
-    params.allowCXSMILES = true; 
+    params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles,params);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==2);
@@ -175,7 +175,7 @@ void testCXSmilesAndName() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::atomLabel) == "foo");
-    TEST_ASSERT(m->getProp<std::string>("_Name")=="ourname");
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name)=="ourname");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -267,7 +267,7 @@ void testRadicals() {
     delete m;
   }
 
-  
+
     BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
