@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2013  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2017  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -3888,6 +3888,19 @@ CAS<~>
     self.assertRaises(RuntimeError, lambda: a.IsInRing())
     self.assertRaises(RuntimeError, lambda: a.IsInRingSize(4))
 
+  def testSmilesParseParams(self):
+    smi = "CCC |$foo;;bar$| ourname"
+    m = Chem.MolFromSmiles(smi)
+    self.assertTrue(m is None)
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    ps.parseName = True
+    m = Chem.MolFromSmiles(smi,ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEquals(m.GetAtomWithIdx(0).GetProp('atomLabel'),"foo")
+    self.assertTrue(m.HasProp('_Name'))
+    self.assertEquals(m.GetProp('_Name'),"ourname")
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

@@ -322,6 +322,13 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
 
   return resRanks;
 }
+
+ROMol *MolFromSmilesHelper(python::object ismiles,
+                           const SmilesParserParams &params) {
+  std::string smiles = pyObjectToString(ismiles);
+
+  return SmilesToMol(smiles,params);
+}
 }
 
 // MolSupplier stuff
@@ -640,7 +647,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
    \n\
        a Mol object, None on failure.\n\
    \n";
-   python::def("MolFromSmiles", RDKit::MolFromSmiles,
+   python::def("MolFromSmiles",
+               MolFromSmilesHelper,
                (python::arg("SMILES"), python::arg("params")),
                docString.c_str(),
                python::return_value_policy<python::manage_new_object>());

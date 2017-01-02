@@ -96,7 +96,7 @@ const std::string numArom = "numArom";
 const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
-const std::string atomLabel = "atomSymbol";
+const std::string atomLabel = "atomLabel";
 
 }  // end common_properties
 
