@@ -419,10 +419,14 @@ ATOM_EQUALS_QUERY *makeAHAtomQuery();
 ATOM_OR_QUERY *makeQAtomQuery();
 //! returns a Query for matching generic QH atoms (heteroatom or H)
 ATOM_EQUALS_QUERY *makeQHAtomQuery();
-//! returns a Query for matching generic X atoms (halogen)
+//! returns a Query for matching generic X atoms (halogens)
 ATOM_OR_QUERY *makeXAtomQuery();
 //! returns a Query for matching generic XH atoms (halogen or H)
 ATOM_OR_QUERY *makeXHAtomQuery();
+//! returns a Query for matching generic M atoms (metals)
+ATOM_OR_QUERY *makeMAtomQuery();
+//! returns a Query for matching generic MH atoms (metals or H)
+ATOM_OR_QUERY *makeMHAtomQuery();
 
 //! returns a Query for matching atoms that have ring bonds
 template <class T>

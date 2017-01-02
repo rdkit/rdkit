@@ -124,11 +124,29 @@ void testAtomLabels() {
     TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::atomLabel) == "AH_p");
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
     TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getQuery()->getDescription() == "AtomAtomicNum");
     TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomNull");
 
     delete m;
   }
 
+  { // query properties3
+    std::string smiles = "** |$;XH_p;$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::atomLabel) == "XH_p");
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::atomLabel));
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAtomicNum");
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription() == "AtomOr");
+
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
