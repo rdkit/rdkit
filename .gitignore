@@ -49,6 +49,8 @@ __pycache__/
 /Code/GraphMol/Depictor/test_data/collisions.out.sdf
 /Code/GraphMol/Depictor/test_data/first_200.out.sdf
 /Code/GraphMol/Depictor/test_data/test1.out.sdf
+/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf
+
 
 /Code/GraphMol/FileParsers/test_data/blah.sdf
 /Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf
