@@ -1585,6 +1585,48 @@ M  END
     m = Chem.MolFromSmiles('F\\C=CCl')
     self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREONONE)
 
+  def checkDefaultBondProperties(self, m):
+    for bond in m.GetBonds():
+      self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+      self.assertEquals(bond.GetBondDir(), Chem.BondDir.NONE)
+      self.assertEquals(list(bond.GetStereoAtoms()), [])
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREONONE)
+
+  def assertHasDoubleBondStereo(self, smi):
+    m = Chem.MolFromSmiles(smi)
+
+    self.checkDefaultBondProperties(m)
+
+    Chem.FindPotentialStereoBonds(m)
+
+    for bond in m.GetBonds():
+      self.assertIn(bond.GetBondType(), [Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+      self.assertEquals(bond.GetBondDir(), Chem.BondDir.NONE)
+
+      if bond.GetBondType() == Chem.BondType.DOUBLE:
+        self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOANY)
+        self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+      else:
+        self.assertEquals(list(bond.GetStereoAtoms()), [])
+        self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREONONE)
+
+  def testFindPotentialStereoBonds(self):
+    self.assertHasDoubleBondStereo("FC=CF")
+    self.assertHasDoubleBondStereo("FC(Cl)=C(Br)I")
+    self.assertHasDoubleBondStereo("FC=CC=CC=CCl")
+    self.assertHasDoubleBondStereo("C1CCCCC1C=CC1CCCCC1")
+
+  def assertDoesNotHaveDoubleBondStereo(self, smi):
+    m = Chem.MolFromSmiles(smi)
+    self.checkDefaultBondProperties(m)
+    Chem.FindPotentialStereoBonds(m)
+    self.checkDefaultBondProperties(m)
+
+  def testFindPotentialStereoBondsShouldNotFindThisDoubleBondAsStereo(self):
+    self.assertDoesNotHaveDoubleBondStereo("FC(F)=CF")
+    self.assertDoesNotHaveDoubleBondStereo("C=C")
+    self.assertDoesNotHaveDoubleBondStereo("C1CCCCC1C(C1CCCCC1)=CC1CCCCC1")
+
   def test36SubstructMatchStr(self):
     """ test the _SubstructMatchStr function """
     query = Chem.MolFromSmarts('[n,p]1ccccc1')
@@ -3239,6 +3281,18 @@ CAS<~>
     self.assertEqual(Chem.MolToFASTA(m), fasta)
     self.assertEqual(Chem.MolToSmiles(m, isomericSmiles=True), smi)
 
+    seq = "CGCGAATTACCGCG"
+    m = Chem.MolFromSequence(seq,flavor=6) # DNA
+    self.assertEqual(Chem.MolToSequence(m),'CGCGAATTACCGCG')
+    self.assertEqual(Chem.MolToHELM(m),'RNA1{[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)P.[dR](A)P.[dR](A)P.[dR](T)P.[dR](T)P.[dR](A)P.[dR](C)P.[dR](C)P.[dR](G)P.[dR](C)P.[dR](G)}$$$$')
+    seq = "CGCGAAUUACCGCG"
+    m = Chem.MolFromSequence(seq,flavor=2) # RNA
+    self.assertEqual(Chem.MolToSequence(m),'CGCGAAUUACCGCG')
+    self.assertEqual(Chem.MolToHELM(m),'RNA1{R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$')
+    m = Chem.MolFromSequence(seq,flavor=3) # RNA - 5' cap
+    self.assertEqual(Chem.MolToSequence(m),'CGCGAAUUACCGCG')
+    self.assertEqual(Chem.MolToHELM(m),'RNA1{P.R(C)P.R(G)P.R(C)P.R(G)P.R(A)P.R(A)P.R(U)P.R(U)P.R(A)P.R(C)P.R(C)P.R(G)P.R(C)P.R(G)}$$$$')
+
   def testResMolSupplier(self):
     mol = Chem.MolFromSmiles('CC')
     resMolSuppl = Chem.ResonanceMolSupplier(mol)
@@ -3836,4 +3890,13 @@ CAS<~>
 
 
 if __name__ == '__main__':
-  unittest.main()
+  if "RDTESTCASE" in os.environ:
+    suite = unittest.TestSuite()
+    testcases = os.environ["RDTESTCASE"]
+    for name in testcases.split(':'):
+      suite.addTest(TestCase(name))
+
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
+  else:
+    unittest.main()

@@ -13,7 +13,7 @@
 """
 from __future__ import print_function
 
-import string, tempfile, os, time
+import tempfile, os, time
 try:
   import pythoncom
   from win32com.client import gencache, Dispatch, constants
@@ -385,7 +385,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
   while nextLine != '':
     if nextLine.find('M  END') != -1:
       lines.append(nextLine)
-      molBlock = string.join(lines, '')
+      molBlock = ''.join(lines)
 
       try:
         newMolBlock = Add3DCoordsToMol(molBlock, 'chemical/mdl-molfile', props=props)
@@ -410,7 +410,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
         for prop in props.keys():
           lines.append('> <%s>\n%f\n\n' % (prop, props[prop]))
         lines.append(nextLine)
-        outFile.write(string.join(lines, ''))
+        outFile.write(''.join(lines))
         lines = []
       else:
         skip = 0
@@ -418,7 +418,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
         if problemFile is None:
           problemFile = open(problemFileName, 'w+')
         problemFile.write(badBlock)
-        problemFile.write(string.join(lines, ''))
+        problemFile.write(''.join(lines))
         lines = []
     else:
       lines.append(nextLine)
