@@ -16,7 +16,7 @@ import os
 import unittest
 
 from rdkit.DataStructs import cDataStructs
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 klass = cDataStructs.SparseBitVect
 
