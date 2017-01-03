@@ -321,6 +321,7 @@ class TestWriteSDF(unittest.TestCase):
         s = f.read()
       if PY3:
         s = s.decode('utf-8')
+      s = s.replace(os.linesep, '\n')
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
     finally:
