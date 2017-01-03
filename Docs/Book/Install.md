@@ -33,7 +33,45 @@ Windows users will use a slightly different command:
 
 ### How to build from source with Conda
 
-For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
+For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
+
+#### macOS 10.12 (Sierra): Python 3 environment
+
+The following commands will create a development environment for macOS Sierra and Python 3. Download
+Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
+following commands:
+   
+	bash Miniconda3-latest-MacOSX-x86_64.sh
+    conda install numpy matplotlib
+    conda install cmake
+    conda install --channel rdkit boost
+    conda install --channel rdkit nox
+    conda install --channel rdkit cairo
+    conda install pillow
+    conda install anaconda
+    conda install --channel conda-forge eigen
+    conda install --channel conda-forge pkg-config
+
+Optionally, add the following packages to your environment as useful development tools. 
+
+	pip install yapf==0.11.1
+	pip install coverage==3.7.1
+
+Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set in the
+cmake command.
+
+	PYROOT=<path to miniconda3>
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m  \
+      -DRDK_BUILD_AVALON_SUPPORT=ON \
+      -DRDK_BUILD_CAIRO_SUPPORT=ON \
+      -DRDK_BUILD_INCHI_SUPPORT=ON \
+	  ..
+Once "make" and "make install" completed successfully, use the following command to run the tests:
+
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+
+This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection) 
+introduced in more recent macOS versions.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 

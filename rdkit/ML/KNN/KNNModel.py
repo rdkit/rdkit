@@ -43,7 +43,7 @@ class KNNModel(object):
     self._radius = radius
 
   def GetName(self):
-    return self_name
+    return self._name
 
   def SetName(self, name):
     self._name = name

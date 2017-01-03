@@ -4,9 +4,11 @@ This module puts the various PIDDLE backends through their paces.
 """
 from __future__ import print_function
 
-from sping import pagesizes
-from sping.pid import *
-import string
+from rdkit.sping import pagesizes
+from rdkit.sping.pid import *
+from rdkit.six.moves import input
+# The original code imported letters, a more generic lisit. This is no longer supported.
+from string import ascii_letters as LETTERS
 import math
 
 backends = ['PDF', 'PIL', 'TK', 'PS', 'SVG', 'WX']  # 'piddleAI','piddleQD','piddleGL' ]
@@ -408,18 +410,18 @@ def mainLoop():
       i = i + 1
     print()
 
-    inp = raw_input("Selection (0 to exit): ")
+    inp = input("Selection (0 to exit): ")
     print()
 
     if inp == '0':
       return
     if inp:
       testinp = ''
-      if inp[-1] in string.letters:
+      if inp[-1] in LETTERS:
         testinp = inp[-1]
-      elif inp[0] in string.letters:
+      elif inp[0] in LETTERS:
         testinp = inp[0]
-      backinp = string.join(filter(lambda x: x in '0123456789', inp))
+      backinp = ' '.join(filter(lambda x: x in '0123456789', inp))
       if backinp:
         backend = int(backinp) - 1
         if backend < len(backends):
@@ -433,7 +435,7 @@ def mainLoop():
         else:
           backend = None
       if testinp:
-        test = ord(string.upper(testinp[0])) - ord('A')
+        test = ord(testinp[0].upper()) - ord('A')
         if test >= 0 and test < len(tests):
           docstr = tests[test].__doc__
           if docstr:

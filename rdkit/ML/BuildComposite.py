@@ -58,7 +58,7 @@ a QDAT file.
 
   - -D: show a detailed breakdown of the composite model performance
      across the training and, when appropriate, hold-out sets.
-     
+
   - -P *pickle file name*: write out the pickled data set to the file
 
   - -F *filter frac*: filters the data before training to change the
@@ -70,7 +70,7 @@ a QDAT file.
      distribution of activity values in the training set. *filter
      value* is the target value to use in filtering.  **See note below
      on data filtering.**
-     
+
   - --modelFiltFrac *model filter frac*: Similar to filter frac above,
      in this case the data is filtered for each model in the composite
      rather than a single overall filter for a composite. *model
@@ -79,7 +79,7 @@ a QDAT file.
 
   - --modelFiltVal *model filter value*: target value to use for
      filtering data before training each model in the composite.
-     
+
   - -t *threshold value*: use high-confidence predictions for the
      final analysis of the hold-out data.
 
@@ -116,7 +116,7 @@ a QDAT file.
        2) If you have integer valued data that should not be quantized
           further, enter 0 for that descriptor.
 
-  - --recycle: allow descriptors to be used more than once in a tree        
+  - --recycle: allow descriptors to be used more than once in a tree
 
   - --randomDescriptors=val: toggles growing random forests with val
       randomly-selected descriptors available at each node.
@@ -129,60 +129,60 @@ a QDAT file.
   - --knnK=*value*: the value of K to use in the KNN models
 
   - --knnTanimoto: use the Tanimoto metric in KNN models
-  
+
   - --knnEuclid: use a Euclidean metric in KNN models
-  
+
   *-*-*-*-*-*-*- Naive Bayes Classifier Options -*-*-*-*-*-*-*-*
   - --doNaiveBayes : use Naive Bayes classifiers
-  
+
   - --mEstimateVal : the value to be used in the m-estimate formula
       If this is greater than 0.0, we use it to compute the conditional
       probabilities by the m-estimate
 
   *-*-*-*-*-*-*-*- SVM-Related Options -*-*-*-*-*-*-*-*
 
-  **** NOTE: THESE ARE DISABLED ****  
+  **** NOTE: THESE ARE DISABLED ****
 
-##   - --doSVM: use Support-vector machines
+# #   - --doSVM: use Support-vector machines
 
-##   - --svmKernel=*kernel*: choose the type of kernel to be used for
-##     the SVMs.  Options are:
-##     The default is:
+# #   - --svmKernel=*kernel*: choose the type of kernel to be used for
+# #     the SVMs.  Options are:
+# #     The default is:
 
-##   - --svmType=*type*: choose the type of support-vector machine
-##     to be used.  Options are:
-##     The default is:
+# #   - --svmType=*type*: choose the type of support-vector machine
+# #     to be used.  Options are:
+# #     The default is:
 
-##   - --svmGamma=*gamma*: provide the gamma value for the SVMs.  If this
-##     is not provided, a grid search will be carried out to determine an
-##     optimal *gamma* value for each SVM.
-    
-##   - --svmCost=*cost*: provide the cost value for the SVMs.  If this is
-##     not provided, a grid search will be carried out to determine an
-##     optimal *cost* value for each SVM.
+# #   - --svmGamma=*gamma*: provide the gamma value for the SVMs.  If this
+# #     is not provided, a grid search will be carried out to determine an
+# #     optimal *gamma* value for each SVM.
 
-##   - --svmWeights=*weights*: provide the weight values for the
-##     activities.  If provided this should be a sequence of (label,
-##     weight) 2-tuples *nActs* long.  If not provided, a weight of 1
-##     will be used for each activity.
+# #   - --svmCost=*cost*: provide the cost value for the SVMs.  If this is
+# #     not provided, a grid search will be carried out to determine an
+# #     optimal *cost* value for each SVM.
 
-##   - --svmEps=*epsilon*: provide the epsilon value used to determine
-##     when the SVM has converged.  Defaults to 0.001
-    
-##   - --svmDegree=*degree*: provide the degree of the kernel (when
-##     sensible) Defaults to 3
+# #   - --svmWeights=*weights*: provide the weight values for the
+# #     activities.  If provided this should be a sequence of (label,
+# #     weight) 2-tuples *nActs* long.  If not provided, a weight of 1
+# #     will be used for each activity.
 
-##   - --svmCoeff=*coeff*: provide the coefficient for the kernel (when
-##     sensible) Defaults to 0
-    
-##   - --svmNu=*nu*: provide the nu value for the kernel (when sensible)
-##     Defaults to 0.5
+# #   - --svmEps=*epsilon*: provide the epsilon value used to determine
+# #     when the SVM has converged.  Defaults to 0.001
 
-##   - --svmDataType=*float*: if the data is contains only 1 and 0 s, specify by
-##     using binary. Defaults to float
-    
-##   - --svmCache=*cache*: provide the size of the memory cache (in MB)
-##     to be used while building the SVM.  Defaults to 40
+# #   - --svmDegree=*degree*: provide the degree of the kernel (when
+# #     sensible) Defaults to 3
+
+# #   - --svmCoeff=*coeff*: provide the coefficient for the kernel (when
+# #     sensible) Defaults to 0
+
+# #   - --svmNu=*nu*: provide the nu value for the kernel (when sensible)
+# #     Defaults to 0.5
+
+# #   - --svmDataType=*float*: if the data is contains only 1 and 0 s, specify by
+# #     using binary. Defaults to float
+
+# #   - --svmCache=*cache*: provide the size of the memory cache (in MB)
+# #     to be used while building the SVM.  Defaults to 40
 
 **Notes**
 
@@ -195,25 +195,26 @@ a QDAT file.
     the original training set has activity 0 and ony 5% activity 1, we
     could filter (by randomly removing points with activity 0) so that
     30% of the data set used to build the composite has activity 1.
-     
+
 
 """
 from __future__ import print_function
-import sys, time
-import math
-import numpy
-from rdkit.six.moves import cPickle
-from rdkit import RDConfig
-from rdkit.utils import listutils
-from rdkit.ML.Composite import Composite, BayesComposite
-#from ML.SVM import SVMClassificationModel as SVM
-from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.ML import ScreenComposite
-from rdkit.Dbase import DbModule
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.ML import CompositeRun
-from rdkit import DataStructs
 
+import sys
+import time
+
+import numpy
+
+from rdkit import DataStructs
+from rdkit.Dbase import DbModule
+from rdkit.ML import CompositeRun
+from rdkit.ML import ScreenComposite
+from rdkit.ML.Composite import Composite, BayesComposite
+from rdkit.ML.Data import DataUtils, SplitData
+from rdkit.utils import listutils
+from rdkit.six.moves import cPickle  # @UnresolvedImport
+
+# # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
 
 __VERSION_STRING = "3.2.3"
@@ -230,7 +231,7 @@ def message(msg):
       - msg: the string to be displayed
 
   """
-  if _verbose:
+  if _verbose:  # pragma: nocover
     sys.stdout.write('%s\n' % (msg))
 
 
@@ -253,7 +254,7 @@ def testall(composite, examples, badExamples=[]):
 
         2) a confidence
 
-      these are the votes and confidence levels for **misclassified** examples  
+      these are the votes and confidence levels for **misclassified** examples
 
   """
   wrong = []
@@ -341,38 +342,38 @@ def GetCommandLine(details):
     if details.mEstimateVal >= 0.0:
       args.append('--mEstimateVal=%.3f' % details.mEstimateVal)
 
-  ##   if details.useSVM:
-  ##     args.append('--doSVM')
-  ##     if details.svmKernel:
-  ##       for k in SVM.kernels.keys():
-  ##         if SVM.kernels[k]==details.svmKernel:
-  ##           args.append('--svmKernel=%s'%k)
-  ##           break
-  ##     if details.svmType:
-  ##       for k in SVM.machineTypes.keys():
-  ##         if SVM.machineTypes[k]==details.svmType:
-  ##           args.append('--svmType=%s'%k)
-  ##           break
-  ##     if details.svmGamma:
-  ##       args.append('--svmGamma=%f'%details.svmGamma)
-  ##     if details.svmCost:
-  ##       args.append('--svmCost=%f'%details.svmCost)
-  ##     if details.svmWeights:
-  ##       args.append("--svmWeights='%s'"%str(details.svmWeights))
-  ##     if details.svmDegree:
-  ##       args.append('--svmDegree=%d'%details.svmDegree)
-  ##     if details.svmCoeff:
-  ##       args.append('--svmCoeff=%d'%details.svmCoeff)
-  ##     if details.svmEps:
-  ##       args.append('--svmEps=%f'%details.svmEps)
-  ##     if details.svmNu:
-  ##       args.append('--svmNu=%f'%details.svmNu)
-  ##     if details.svmCache:
-  ##       args.append('--svmCache=%d'%details.svmCache)
-  ##     if detail.svmDataType:
-  ##       args.append('--svmDataType=%s'%details.svmDataType)
-  ##     if not details.svmShrink:
-  ##       args.append('--svmShrink')
+  # #   if details.useSVM:
+  # #     args.append('--doSVM')
+  # #     if details.svmKernel:
+  # #       for k in SVM.kernels.keys():
+  # #         if SVM.kernels[k]==details.svmKernel:
+  # #           args.append('--svmKernel=%s'%k)
+  # #           break
+  # #     if details.svmType:
+  # #       for k in SVM.machineTypes.keys():
+  # #         if SVM.machineTypes[k]==details.svmType:
+  # #           args.append('--svmType=%s'%k)
+  # #           break
+  # #     if details.svmGamma:
+  # #       args.append('--svmGamma=%f'%details.svmGamma)
+  # #     if details.svmCost:
+  # #       args.append('--svmCost=%f'%details.svmCost)
+  # #     if details.svmWeights:
+  # #       args.append("--svmWeights='%s'"%str(details.svmWeights))
+  # #     if details.svmDegree:
+  # #       args.append('--svmDegree=%d'%details.svmDegree)
+  # #     if details.svmCoeff:
+  # #       args.append('--svmCoeff=%d'%details.svmCoeff)
+  # #     if details.svmEps:
+  # #       args.append('--svmEps=%f'%details.svmEps)
+  # #     if details.svmNu:
+  # #       args.append('--svmNu=%f'%details.svmNu)
+  # #     if details.svmCache:
+  # #       args.append('--svmCache=%d'%details.svmCache)
+  # #     if detail.svmDataType:
+  # #       args.append('--svmDataType=%s'%details.svmDataType)
+  # #     if not details.svmShrink:
+  # #       args.append('--svmShrink')
 
   if details.replacementSelection:
     args.append('--replacementSelection')
@@ -385,7 +386,6 @@ def GetCommandLine(details):
 
 
 def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
-  nExamples = data.GetNPts()
   if details.lockRandom:
     seed = details.randomSeed
   else:
@@ -408,7 +408,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   else:
     testExamples = []
     testIdx = []
-    trainIdx = range(len(namedExamples))
+    trainIdx = list(range(len(namedExamples)))
     trainExamples = namedExamples
 
   if details.filterFrac != 0.0:
@@ -455,7 +455,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   message('Training with %d examples' % (nExamples))
 
   nVars = data.GetNVars()
-  attrs = range(1, nVars + 1)
+  attrs = list(range(1, nVars + 1))
   nPossibleVals = data.GetNPossibleVals()
   for i in range(1, len(nPossibleVals)):
     if nPossibleVals[i - 1] == -1:
@@ -522,7 +522,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       silent=not _verbose)
 
   elif details.useSigTrees:
-    from rdkit.ML.DecTree import CrossValidate
+    from rdkit.ML.DecTree import CrossValidate  # @Reimport
     from rdkit.ML.DecTree import BuildSigTree
     builder = BuildSigTree.SigTreeBuilder
     driver = CrossValidate.CrossValidationDriver
@@ -550,7 +550,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       allowCollection=allowCollections, silent=not _verbose)
 
   elif details.useKNN:
-    from rdkit.ML.KNN import CrossValidate
+    from rdkit.ML.KNN import CrossValidate  # @Reimport
     from rdkit.ML.KNN import DistFunctions
 
     driver = CrossValidate.CrossValidationDriver
@@ -567,7 +567,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                    holdOutFrac=details.internalHoldoutFrac, distFunc=dfunc)
 
   elif details.useNaiveBayes or details.useSigBayes:
-    from rdkit.ML.NaiveBayes import CrossValidate
+    from rdkit.ML.NaiveBayes import CrossValidate  # @Reimport
     driver = CrossValidate.CrossValidationDriver
     if not (hasattr(details, 'useSigBayes') and details.useSigBayes):
       composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
@@ -587,24 +587,24 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                      holdOutFrac=details.internalHoldoutFrac,
                      replacementSelection=details.replacementSelection, silent=not _verbose)
 
-    ##   elif details.useSVM:
-    ##     from rdkit.ML.SVM import CrossValidate
-    ##     driver = CrossValidate.CrossValidationDriver
-    ##     composite.Grow(trainExamples, attrs, nPossibleVals=[0]+nPossibleVals,
-    ##                    buildDriver=driver, nTries=details.nModels,
-    ##                    needsQuantization=0,
-    ##                    cost=details.svmCost,gamma=details.svmGamma,
-    ##                    weights=details.svmWeights,degree=details.svmDegree,
-    ##                    type=details.svmType,kernelType=details.svmKernel,
-    ##                    coef0=details.svmCoeff,eps=details.svmEps,nu=details.svmNu,
-    ##                    cache_size=details.svmCache,shrinking=details.svmShrink,
-    ##                    dataType=details.svmDataType,
-    ##                    holdOutFrac=details.internalHoldoutFrac,
-    ##                    replacementSelection=details.replacementSelection,
-    ##                    silent=not _verbose)
+    # #   elif details.useSVM:
+    # #     from rdkit.ML.SVM import CrossValidate
+    # #     driver = CrossValidate.CrossValidationDriver
+    # #     composite.Grow(trainExamples, attrs, nPossibleVals=[0]+nPossibleVals,
+    # #                    buildDriver=driver, nTries=details.nModels,
+    # #                    needsQuantization=0,
+    # #                    cost=details.svmCost,gamma=details.svmGamma,
+    # #                    weights=details.svmWeights,degree=details.svmDegree,
+    # #                    type=details.svmType,kernelType=details.svmKernel,
+    # #                    coef0=details.svmCoeff,eps=details.svmEps,nu=details.svmNu,
+    # #                    cache_size=details.svmCache,shrinking=details.svmShrink,
+    # #                    dataType=details.svmDataType,
+    # #                    holdOutFrac=details.internalHoldoutFrac,
+    # #                    replacementSelection=details.replacementSelection,
+    # #                    silent=not _verbose)
 
   else:
-    from rdkit.ML.Neural import CrossValidate
+    from rdkit.ML.Neural import CrossValidate  # @Reimport
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
                    buildDriver=driver, needsQuantization=0)
@@ -657,7 +657,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     message('\nEntire data set:')
     resTup = ScreenComposite.ShowVoteResults(
       range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
-    nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
+    nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup  # @UnusedVariable
     nPts = len(namedExamples)
     nClass = nGood + nBad
     _runDetails.overall_error = float(nBad) / nClass
@@ -672,7 +672,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       message('\nHold-out data:')
       resTup = ScreenComposite.ShowVoteResults(
         range(len(testExamples)), testExamples, composite, nPossibleVals[-1], details.threshold)
-      nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
+      nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup  # @UnusedVariable
       nPts = len(testExamples)
       nClass = nGood + nBad
       _runDetails.holdout_error = float(nBad) / nClass
@@ -743,8 +743,11 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
     details.tableName = fName
     data = details.GetDataSet()
   else:
-    data = DataUtils.DBToQuantData(details.dbName, fName, quantName=details.qTableName,
-                                   user=details.dbUser, password=details.dbPassword)
+    data = DataUtils.DBToQuantData(details.dbName,  # @UndefinedVariable function no longer defined
+                                   fName,
+                                   quantName=details.qTableName,
+                                   user=details.dbUser,
+                                   password=details.dbPassword)
 
   composite = RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt,
                         setDescNames=setDescNames)
@@ -757,7 +760,6 @@ def ShowVersion(includeArgs=0):
   """
   print('This is BuildComposite.py version %s' % (__VERSION_STRING))
   if includeArgs:
-    import sys
     print('command line was:')
     print(' '.join(sys.argv))
 
@@ -766,7 +768,6 @@ def Usage():
   """ provides a list of arguments for when this is used from the command line
 
   """
-  import sys
   print(__doc__)
   sys.exit(-1)
 
@@ -821,10 +822,10 @@ def ParseArgs(runDetails):
      'mEstimateVal=',
      'doSigBayes',
 
-     ##                               'doSVM','svmKernel=','svmType=','svmGamma=',
-     ##                               'svmCost=','svmWeights=','svmDegree=',
-     ##                               'svmCoeff=','svmEps=','svmNu=','svmCache=',
-     ##                               'svmShrink','svmDataType=',
+     # #                               'doSVM','svmKernel=','svmType=','svmGamma=',
+     # #                               'svmCost=','svmWeights=','svmDegree=',
+     # #                               'svmCoeff=','svmEps=','svmNu=','svmCache=',
+     # #                               'svmShrink','svmDataType=',
      'replacementSelection', ])
   runDetails.profileIt = 0
   for arg, val in args:
@@ -904,7 +905,7 @@ def ParseArgs(runDetails):
     elif arg == '--doKnn':
       runDetails.useKNN = 1
       runDetails.useTrees = 0
-      ##      runDetails.useSVM=0
+      # #      runDetails.useSVM=0
       runDetails.useNaiveBayes = 0
     elif arg == '--knnK':
       runDetails.knnNeighs = int(val)
@@ -914,7 +915,7 @@ def ParseArgs(runDetails):
       runDetails.knnDistFunc = "Euclidean"
 
     elif arg == '--doSigTree':
-      ##      runDetails.useSVM=0
+      # #      runDetails.useSVM=0
       runDetails.useKNN = 0
       runDetails.useTrees = 0
       runDetails.useNaiveBayes = 0
@@ -924,57 +925,58 @@ def ParseArgs(runDetails):
 
     elif arg == '--doNaiveBayes':
       runDetails.useNaiveBayes = 1
-      ##      runDetails.useSVM=0
+      # #      runDetails.useSVM=0
       runDetails.useKNN = 0
       runDetails.useTrees = 0
       runDetails.useSigBayes = 0
     elif arg == '--doSigBayes':
       runDetails.useSigBayes = 1
       runDetails.useNaiveBayes = 0
-      ##      runDetails.useSVM=0
+      # #      runDetails.useSVM=0
       runDetails.useKNN = 0
       runDetails.useTrees = 0
     elif arg == '--mEstimateVal':
       runDetails.mEstimateVal = float(val)
 
-##     elif arg == '--doSVM':
-##       runDetails.useSVM=1
-##       runDetails.useKNN=0
-##       runDetails.useTrees=0
-##       runDetails.useNaiveBayes=0
-##     elif arg == '--svmKernel':
-##       if val not in SVM.kernels.keys():
-##         message('kernel %s not in list of available kernels:\n%s\n'%(val,SVM.kernels.keys()))
-##         sys.exit(-1)
-##       else:
-##         runDetails.svmKernel=SVM.kernels[val]
-##     elif arg == '--svmType':
-##       if val not in SVM.machineTypes.keys():
-##         message('type %s not in list of available machines:\n%s\n'%(val,SVM.machineTypes.keys()))
-##         sys.exit(-1)
-##       else:
-##         runDetails.svmType=SVM.machineTypes[val]
-##     elif arg == '--svmGamma':
-##       runDetails.svmGamma = float(val)
-##     elif arg == '--svmCost':
-##       runDetails.svmCost = float(val)
-##     elif arg == '--svmWeights':
-##       # FIX: this is dangerous
-##       runDetails.svmWeights = eval(val)
-##     elif arg == '--svmDegree':
-##       runDetails.svmDegree = int(val)
-##     elif arg == '--svmCoeff':
-##       runDetails.svmCoeff = float(val)
-##     elif arg == '--svmEps':
-##       runDetails.svmEps = float(val)
-##     elif arg == '--svmNu':
-##       runDetails.svmNu = float(val)
-##     elif arg == '--svmCache':
-##       runDetails.svmCache = int(val)
-##     elif arg == '--svmShrink':
-##       runDetails.svmShrink = 0
-##     elif arg == '--svmDataType':
-##       runDetails.svmDataType=val
+# #     elif arg == '--doSVM':
+# #       runDetails.useSVM=1
+# #       runDetails.useKNN=0
+# #       runDetails.useTrees=0
+# #       runDetails.useNaiveBayes=0
+# #     elif arg == '--svmKernel':
+# #       if val not in SVM.kernels.keys():
+# #         message('kernel %s not in list of available kernels:\n%s\n'%(val,SVM.kernels.keys()))
+# #         sys.exit(-1)
+# #       else:
+# #         runDetails.svmKernel=SVM.kernels[val]
+# #     elif arg == '--svmType':
+# #       if val not in SVM.machineTypes.keys():
+# #         message('type %s not in list of available machines:\n%s\n'%(val,
+# #                                                                     SVM.machineTypes.keys()))
+# #         sys.exit(-1)
+# #       else:
+# #         runDetails.svmType=SVM.machineTypes[val]
+# #     elif arg == '--svmGamma':
+# #       runDetails.svmGamma = float(val)
+# #     elif arg == '--svmCost':
+# #       runDetails.svmCost = float(val)
+# #     elif arg == '--svmWeights':
+# #       # FIX: this is dangerous
+# #       runDetails.svmWeights = eval(val)
+# #     elif arg == '--svmDegree':
+# #       runDetails.svmDegree = int(val)
+# #     elif arg == '--svmCoeff':
+# #       runDetails.svmCoeff = float(val)
+# #     elif arg == '--svmEps':
+# #       runDetails.svmEps = float(val)
+# #     elif arg == '--svmNu':
+# #       runDetails.svmNu = float(val)
+# #     elif arg == '--svmCache':
+# #       runDetails.svmCache = int(val)
+# #     elif arg == '--svmShrink':
+# #       runDetails.svmShrink = 0
+# #     elif arg == '--svmDataType':
+# #       runDetails.svmDataType=val
 
     elif arg == '--seed':
       # FIX: dangerous
@@ -1011,12 +1013,16 @@ if __name__ == '__main__':
       RunIt(_runDetails)
   else:
     if _runDetails.profileIt:
-      import hotshot, hotshot.stats
-      prof = hotshot.Profile('prof.dat')
-      prof.runcall(RunIt, _runDetails)
-      stats = hotshot.stats.load('prof.dat')
-      stats.strip_dirs()
-      stats.sort_stats('time', 'calls')
-      stats.print_stats(30)
+      try:
+        import hotshot
+        import hotshot.stats
+        prof = hotshot.Profile('prof.dat')
+        prof.runcall(RunIt, _runDetails)
+        stats = hotshot.stats.load('prof.dat')
+        stats.strip_dirs()
+        stats.sort_stats('time', 'calls')
+        stats.print_stats(30)
+      except ImportError:
+        print('Profiling requires the hotshot module')
     else:
       RunIt(_runDetails)

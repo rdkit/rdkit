@@ -1,24 +1,26 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 #  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-""" 
+"""
 
 """
 from __future__ import print_function
+
+import copy
+import random
+
 import numpy
-from rdkit.ML.DecTree import SigTree
+
+from rdkit.DataStructs.VectCollection import VectCollection
 from rdkit.ML import InfoTheory
+from rdkit.ML.DecTree import SigTree
+
 try:
   from rdkit.ML.FeatureSelect import CMIM
 except ImportError:
   CMIM = None
-from rdkit.DataStructs.VectCollection import VectCollection
-import copy
-import random
 
 
 def _GenerateRandomEnsemble(nToInclude, nBits):
@@ -37,16 +39,15 @@ def _GenerateRandomEnsemble(nToInclude, nBits):
   """
   # Before Python 2.3 added the random.sample() function, this was
   # way more complicated:
-  res = random.sample(range(nBits), nToInclude)
-  return res
+  return random.sample(range(nBits), nToInclude)
 
 
 def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
                  metric=InfoTheory.InfoType.BIASENTROPY, biasList=[1], depth=0, maxDepth=-1,
                  useCMIM=0, allowCollections=False, verbose=0, **kwargs):
-  """ 
+  """
     **Arguments**
-    
+
       - examples: the examples to be classified.  Each example
         should be a sequence at least three entries long, with
         entry 0 being a label, entry 1 a BitVector and entry -1
@@ -58,7 +59,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
         should be a sequence which is used to limit the bits
         which are actually considered as potential descriptors.
         The default is None (use all bits).
-        
+
       - random: (optional) If this argument is nonzero, it
         specifies the number of bits to be randomly selected
         for consideration at this node (i.e. this toggles the
@@ -89,13 +90,13 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
           with the random argument (to only consider random subsets
           of the top N CMIM bits)
         The default is 0 (do not use CMIM)
-        
+
       - depth: (optional) the current depth in the tree
         This is used in the recursion and should not be set
         by the client.
 
     **Returns**
-    
+
      a SigTree.SigTreeNode with the root of the decision tree
 
   """
@@ -103,16 +104,16 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
     print('  ' * depth, 'Build')
   tree = SigTree.SigTreeNode(None, 'node', level=depth)
   tree.SetData(-666)
-  #tree.SetExamples(examples)
+  # tree.SetExamples(examples)
 
   # counts of each result code:
-  #resCodes = map(lambda x:int(x[-1]),examples)
+  # resCodes = map(lambda x:int(x[-1]),examples)
   resCodes = [int(x[-1]) for x in examples]
-  #print('resCodes:',resCodes)
+  # print('resCodes:',resCodes)
   counts = [0] * nPossibleRes
   for res in resCodes:
     counts[res] += 1
-  #print('    '*depth,'counts:',counts)
+  # print('    '*depth,'counts:',counts)
 
   nzCounts = numpy.nonzero(counts)[0]
   if verbose:
@@ -148,20 +149,20 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       if ensemble:
         if len(ensemble) > random:
           picks = _GenerateRandomEnsemble(random, len(ensemble))
-          availBits = list(take(ensemble, picks))
+          availBits = list(numpy.take(ensemble, picks))
         else:
-          availBits = range(len(ensemble))
+          availBits = list(range(len(ensemble)))
       else:
         availBits = _GenerateRandomEnsemble(random, nBits)
     else:
       availBits = None
     if availBits:
       ranker.SetMaskBits(availBits)
-    #print('  2:'*depth,availBits)
+    # print('  2:'*depth,availBits)
 
     useCollections = isinstance(examples[0][1], VectCollection)
     for example in examples:
-      #print('  '*depth,example[1].ToBitString(),example[-1])
+      # print('  '*depth,example[1].ToBitString(),example[-1])
       if not useCollections:
         ranker.AccumulateVotes(example[1], example[-1])
       else:
@@ -184,13 +185,13 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       tree.SetTerminal(1)
       return tree
     best = int(bitInfo[0])
-    #print('  '*depth,'\tbest:',bitInfo)
+    # print('  '*depth,'\tbest:',bitInfo)
     if verbose:
       print('  ' * depth, '\tbest:', bitInfo)
     # set some info at this node
     tree.SetName('Bit-%d' % (best))
     tree.SetLabel(best)
-    #tree.SetExamples(examples)
+    # tree.SetExamples(examples)
     tree.SetTerminal(0)
 
     # loop over possible values of the new variable and
@@ -209,7 +210,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
         onExamples.append(example)
       else:
         offExamples.append(example)
-    #print('    '*depth,len(offExamples),len(onExamples))
+    # print('    '*depth,len(offExamples),len(onExamples))
     for ex in (offExamples, onExamples):
       if len(ex) == 0:
         v = numpy.argmax(counts)

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum and NextMove Software
+//  Copyright (C) 2015,2016 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,7 +17,7 @@
 
 namespace RDKit {
 
-static char getOneLetterCode(const AtomPDBResidueInfo *info) {
+static char getOneLetterAACode(const AtomPDBResidueInfo *info) {
   const char *ptr = info->getResidueName().c_str();
   switch (ptr[0]) {
     case 'A':
@@ -87,16 +87,45 @@ static char getOneLetterCode(const AtomPDBResidueInfo *info) {
   return 'X';
 }
 
+
+static char getOneLetterNACode(const AtomPDBResidueInfo *info) {
+  const char *ptr = info->getResidueName().c_str();
+  if (ptr[0]==' ' && (ptr[1]==' ' || ptr[1]=='D')) {
+    switch (ptr[2]) {
+      case 'A':
+      case 'C':
+      case 'G':
+      case 'T':
+      case 'U':
+        return ptr[2];
+    }
+  }
+  return 'X';
+}
+
+
 std::string MolToSequence(const ROMol &mol) {
   std::string result;
+  std::string chain;
 
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
        atomIt != mol.endAtoms(); ++atomIt) {
     const Atom *atom = *atomIt;
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
-    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
-        info->getName() == " CA ") {
-      result += getOneLetterCode(info);
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+      if (info->getName() == " CA ") {
+        if (!chain.empty() && chain != info->getChainId()) {
+          chain = info->getChainId();
+          result += '.';
+        }
+        result += getOneLetterAACode(info);
+      } else if (info->getName() == " C1'") {
+        if (!chain.empty() && chain != info->getChainId()) {
+          chain = info->getChainId();
+          result += '.';
+        }
+        result += getOneLetterNACode(info);
+      }
     }
   }
   return result;
@@ -115,7 +144,7 @@ std::string MolToFASTA(const ROMol &mol) {
   return result;
 }
 
-static const char *getHELMMonomer(const AtomPDBResidueInfo *info) {
+static const char *getHELMAAMonomer(const AtomPDBResidueInfo *info) {
   const char *ptr = info->getResidueName().c_str();
   switch (ptr[0]) {
     case 'A':
@@ -197,6 +226,7 @@ static bool IsEupeptideBond(AtomPDBResidueInfo *src, AtomPDBResidueInfo *dst) {
   int sresno = src->getResidueNumber();
   int dresno = dst->getResidueNumber();
 
+  // Peptides
   if (src->getName() == " C  " && dst->getName() == " N  ") {
     if (sresno != dresno) return dresno > sresno;
     return dst->getInsertionCode() > src->getInsertionCode();
@@ -204,6 +234,16 @@ static bool IsEupeptideBond(AtomPDBResidueInfo *src, AtomPDBResidueInfo *dst) {
   if (src->getName() == " N  " && dst->getName() == " C  ") {
     if (sresno != dresno) return dresno < sresno;
     return dst->getInsertionCode() < src->getInsertionCode();
+  }
+
+  // Nucleic acids
+  if (src->getName() == " O3'" && dst->getName() == " P  ") {
+    if (sresno != dresno) return dresno > sresno;
+    return dst->getInsertionCode() > src->getInsertionCode();
+  }
+  if (src->getName() == " P  " && dst->getName() == " O3'") {
+    if (sresno != dresno) return dresno > sresno;
+    return dst->getInsertionCode() > src->getInsertionCode();
   }
   return false;
 }
@@ -282,9 +322,44 @@ static std::string NameHELMBond(std::vector<AtomPDBResidueInfo *> *seq,
   return result;
 }
 
+static const char *getHELMNAMonomer(const AtomPDBResidueInfo *info) {
+  const char *ptr = info->getResidueName().c_str();
+  if (ptr[0] == ' ') {
+    if (ptr[1] == ' ') {
+      switch (ptr[2]) {
+        case 'A':  return "R(A)";
+        case 'C':  return "R(C)";
+        case 'G':  return "R(G)";
+        case 'T':  return "R(T)";
+        case 'U':  return "R(U)";
+      }
+    } else if (ptr[1] == 'D') {
+      switch (ptr[2]) {
+        case 'A':  return "[dR](A)";
+        case 'C':  return "[dR](C)";
+        case 'G':  return "[dR](G)";
+        case 'T':  return "[dR](T)";
+        case 'U':  return "[dR](U)";
+      }
+    }
+  }
+  return (const char*)0;
+}
+
+
+// Pstate finite state machine
+// 0 start of string	P -> 1     B -> 2	T -> fail
+// 1 after 5'-P		P -> fail  B -> 3	T -> fail
+// 2 after base		P -> 4     B -> fail	T -> 5
+// 3 after 5'-base	P -> 1	   B -> fail	T -> 5
+// 4 after base-3'	P -> fail  B -> 2	T -> fail
+// 5 after terminal-3'	P -> fail  B -> fail	T -> fail
+
 std::string MolToHELM(const ROMol &mol) {
   std::vector<AtomPDBResidueInfo *> seq[10];
   std::string result;
+  unsigned int Pstate = 0;
+  bool peptide = true;
   bool first = true;
   std::string chain;
   int id = 1;
@@ -299,13 +374,14 @@ std::string MolToHELM(const ROMol &mol) {
       return "";
 
     if (info->getName() == " CA ") {
-      const char *mono = getHELMMonomer(info);
+      const char *mono = getHELMAAMonomer(info);
       if (!mono) return "";
       if (first) {
         chain = info->getChainId();
         result = "PEPTIDE1{";
+        peptide = true;
         first = false;
-      } else if (info->getChainId() != chain) {
+      } else if (!peptide || info->getChainId() != chain) {
         // Nine chains should be enough?
         if (id == 9) return "";
         id++;
@@ -313,17 +389,19 @@ std::string MolToHELM(const ROMol &mol) {
         result += "}|PEPTIDE";
         result += (char)(id + '0');
         result += "{";
+        peptide = true;
       } else
         result += ".";
       result += mono;
       seq[id].push_back(info);
     } else if (info->getResidueName() == "NH2" && info->getName() == " N  ") {
-      if (first) return "";
+      if (first || !peptide) return "";
       result += ".[am]";
     } else if (info->getResidueName() == "ACE" && info->getName() == " C  ") {
       if (first) {
         chain = info->getChainId();
         result = "PEPTIDE1{[ac]";
+        peptide = true;
         first = false;
       } else if (info->getChainId() != chain) {
         // Nine chains should be enough?
@@ -333,9 +411,88 @@ std::string MolToHELM(const ROMol &mol) {
         result += "}|PEPTIDE";
         result += (char)(id + '0');
         result += "{[ac]";
+        peptide = true;
       } else
         return "";
       seq[id].push_back(info);
+    } else if (info->getName() == " C1'") {
+      const char *mono = getHELMNAMonomer(info);
+      if (!mono) return "";
+      if (first) {
+        chain = info->getChainId();
+        result = "RNA1{";
+        peptide = false;
+        first = false;
+        Pstate = 2;
+      } else if (peptide || info->getChainId() != chain) {
+        // Nine chains should be enough?
+        if (id == 9) return "";
+        id++;
+        chain = info->getChainId();
+        result += "}|RNA";
+        result += (char)(id + '0');
+        result += "{";
+        peptide = false;
+        Pstate = 2;
+      } else switch (Pstate) {
+        case 1:
+#if 0     // Do the same as state 4 for Biovia friendly HELM
+          Pstate = 3;
+          break;
+#endif
+        case 4:
+          result += '.';
+          Pstate = 2;
+          break;
+        default:
+          return "";
+      }
+      result += mono;
+    } else if (info->getName() == " P  ") {
+      if (getHELMNAMonomer(info)) {
+        if (first) {
+          chain = info->getChainId();
+          result = "RNA1{P";
+          peptide = false;
+          first = false;
+          Pstate = 1;
+        } else if (peptide || info->getChainId() != chain) {
+          // Nine chains should be enough?
+          if (id == 9) return "";
+          id++;
+          chain = info->getChainId();
+          result += "}|RNA";
+          result += (char)(id + '0');
+          result += "{P";
+          peptide = false;
+          Pstate = 1;
+        } else switch (Pstate) {
+          case 2:
+            result += 'P';
+            Pstate = 4;
+            break;
+          case 3:
+            result += ".P";
+            Pstate = 1;
+            break;
+          default:
+            return "";
+        }
+      } else if (info->getResidueName() == "2PO") {
+        if (first || peptide || info->getChainId() != chain)
+          return "";
+        switch (Pstate) {
+          case 2:
+            result += 'P';
+            break;
+          case 3:
+            result += ".P";
+            break;
+          default:
+            return "";
+        }
+        Pstate = 5;
+      }
     }
   }
 

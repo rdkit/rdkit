@@ -17,7 +17,7 @@ from __future__ import print_function
 
 import unittest
 
-from six import StringIO
+from rdkit.six import StringIO
 
 import numpy as np
 from rdkit import Chem

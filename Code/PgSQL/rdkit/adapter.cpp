@@ -620,10 +620,10 @@ unsigned int parseWhichString(const std::string &txt) {
     ++token;
     if (v == "IGNORENONE") {
       res |= MolOps::ADJUST_IGNORENONE;
-    } else if (v == "IGNORERINGATOMS") {
-      res |= MolOps::ADJUST_IGNORERINGATOMS;
-    } else if (v == "IGNORECHAINATOMS") {
-      res |= MolOps::ADJUST_IGNORECHAINATOMS;
+    } else if (v == "IGNORERINGS") {
+      res |= MolOps::ADJUST_IGNORERINGS;
+    } else if (v == "IGNORECHAINS") {
+      res |= MolOps::ADJUST_IGNORECHAINS;
     } else if (v == "IGNOREDUMMIES") {
       res |= MolOps::ADJUST_IGNOREDUMMIES;
     } else if (v == "IGNORENONDUMMIES") {
@@ -648,11 +648,20 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
   p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
   p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
   p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
+  p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
+  p.makeAtomsGeneric = pt.get("makeAtomsGeneric", p.makeAtomsGeneric);
+  p.makeBondsGeneric = pt.get("makeBondsGeneric", p.makeBondsGeneric);
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
   if (which != "") p.adjustDegreeFlags = parseWhichString(which);
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
   if (which != "") p.adjustRingCountFlags = parseWhichString(which);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeBondsGenericFlags", ""));
+  if (which != "") p.makeBondsGenericFlags = parseWhichString(which);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("makeAtomsGenericFlags", ""));
+  if (which != "") p.makeAtomsGenericFlags = parseWhichString(which);
 }
 }
 

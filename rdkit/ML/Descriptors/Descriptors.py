@@ -5,7 +5,7 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+from rdkit.six.moves import cPickle  # @UnresolvedImport
 
 
 class DescriptorCalculator:
@@ -13,14 +13,24 @@ class DescriptorCalculator:
 
   """
 
-  #------------
+  def __init__(self, *args, **kwargs):
+    """ Constructor
+
+    """
+    self.simpleList = None
+    self.descriptorNames = None
+    self.compoundList = None
+
+  # ------------
   #  methods used to calculate descriptors
-  #------------
+  # ------------
 
   def ShowDescriptors(self):
     """ prints out a list of the descriptors
 
     """
+    if self.simpleList is None:
+      raise NotImplementedError('Need to have a simpleList defined')
     print('#---------')
     print('Simple:')
     for desc in self.simpleList:
@@ -35,7 +45,7 @@ class DescriptorCalculator:
     """ returns a list of the names of the descriptors this calculator generates
 
     """
-    pass
+    raise NotImplementedError('abstract base class')
 
   def SaveState(self, fileName):
     """ Writes this calculator off to a file so that it can be easily loaded later
@@ -43,9 +53,8 @@ class DescriptorCalculator:
      **Arguments**
 
        - fileName: the name of the file to be written
-       
+
     """
-    from rdkit.six.moves import cPickle
     try:
       f = open(fileName, 'wb+')
     except Exception:
@@ -55,12 +64,4 @@ class DescriptorCalculator:
     f.close()
 
   def CalcDescriptors(self, what, *args, **kwargs):
-    pass
-
-  def __init__(self, *args, **kwargs):
-    """ Constructor
-
-    """
-    self.simpleList = None
-    self.descriptorNames = None
-    self.compoundList = None
+    raise NotImplementedError('abstract base class')

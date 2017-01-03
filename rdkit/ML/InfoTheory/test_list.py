@@ -1,6 +1,6 @@
-tests = [("python", "testCorrMatGen.py", {}), ]
+tests = [("python", "UnitTestCorrMatGen.py", {}), ]
 
-longTests = [("python", "testBitRanker.py", {}), ]
+longTests = [("python", "UnitTestBitRanker.py", {}), ]
 if __name__ == '__main__':
   import sys
   from rdkit import TestRunner

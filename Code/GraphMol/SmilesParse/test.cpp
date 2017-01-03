@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2014 Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,6 +103,7 @@ void testPass() {
     "[C:0]",           // issue 3525776
     "[si]1cccc[si]1",  // aromatic Si (github issue #5)
     "[asH]1cccc1",     // aromatic As (github issue #682)
+    "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -2452,9 +2452,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2481,9 +2482,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2510,9 +2512,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -2539,9 +2542,10 @@ void testBug3139534() {
       TEST_ASSERT(m2);
       std::string ncsmiles = MolToSmiles(*m2, true);
       if (ncsmiles != csmiles) {
-        std::cerr << " failed in iteration: " << i << "\n" << csmiles
-                  << "\n != \n" << ncsmiles << "\n starting from:\n" << nsmiles
-                  << "\n";
+        std::cerr << " failed in iteration: " << i << "\n"
+                  << csmiles << "\n != \n"
+                  << ncsmiles << "\n starting from:\n"
+                  << nsmiles << "\n";
         m2->debugMol(std::cerr);
         TEST_ASSERT(ncsmiles == csmiles);
       }
@@ -3772,6 +3776,74 @@ void testGithub786() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testDativeBonds() {
+  BOOST_LOG(rdInfoLog) << "testing dative bond support" << std::endl;
+  {
+    std::string smiles = "CCC(=O)O->[Cu]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    int dative_bond_count = 0;
+    for (size_t i = 0; i < m->getNumBonds(); i++) {
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+        dative_bond_count++;
+    }
+    TEST_ASSERT(dative_bond_count == 1);
+
+    std::string out_smiles = MolToSmiles(*m, true);
+    delete m;
+    TEST_ASSERT(out_smiles == smiles);
+  }
+  {
+    std::string smiles = "CCC(=O)O->[Cu]<-OC(O)CC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    int dative_bond_count = 0;
+    for (size_t i = 0; i < m->getNumBonds(); i++) {
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+        dative_bond_count++;
+    }
+    TEST_ASSERT(dative_bond_count == 2);
+
+    std::string out_smiles = MolToSmiles(*m, true);
+    delete m;
+    TEST_ASSERT(out_smiles == smiles);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1219() {
+  BOOST_LOG(rdInfoLog)
+      << "Stereochemistry not output to SMILES when allHsExplicit=True"
+      << std::endl;
+  {
+    std::string smiles = "C[C@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    bool doIsomericSmiles = true;
+    bool doKekule = false;
+    int rootedAtAtom = -1;
+    bool canonical = true, allBondsExplicit = false, allHsExplicit = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles, doKekule, rootedAtAtom,
+                                   canonical, allBondsExplicit, allHsExplicit);
+    TEST_ASSERT(csmi == "[CH3][C@H]([F])[Cl]");
+    delete m;
+  }
+  {  // another manifestation was that chiral flags were not output for atoms
+     // not in the organic subset
+    std::string smiles = "C[Si@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    bool doIsomericSmiles = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles);
+    TEST_ASSERT(csmi == "C[Si@H](F)Cl");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3837,4 +3909,6 @@ int main(int argc, char *argv[]) {
   testGithub532();
   testGithub786();
   testGithub760();
+  testDativeBonds();
+  testGithub1219();
 }

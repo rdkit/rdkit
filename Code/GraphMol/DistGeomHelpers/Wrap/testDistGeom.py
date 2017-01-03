@@ -400,11 +400,11 @@ class TestCase(unittest.TestCase):
   def _compareConfs(self, mol, ref, molConfId, refConfId):
     self.assertEqual(mol.GetNumAtoms(), ref.GetNumAtoms())
     molConf = mol.GetConformer(molConfId)
-    refConf = mol.GetConformer(refConfId)
+    refConf = ref.GetConformer(refConfId)
     for i in range(mol.GetNumAtoms()):
       mp = molConf.GetAtomPosition(i)
       rp = refConf.GetAtomPosition(i)
-      self.assertAlmostEqual((mp - rp).Length(), 0.0, 4)
+      self.assertAlmostEqual((mp - rp).Length(), 0.0, 3)
 
   def test9EmbedParams(self):
     mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
@@ -424,6 +424,10 @@ class TestCase(unittest.TestCase):
     params.useExpTorsionAnglePrefs = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                       'simple_torsion.etkdg.mol')
@@ -434,6 +438,10 @@ class TestCase(unittest.TestCase):
     params.useBasicKnowledge = True
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.ETKDG()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
 
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                       'simple_torsion.kdg.mol')
@@ -441,6 +449,10 @@ class TestCase(unittest.TestCase):
     params = rdDistGeom.EmbedParameters()
     params.randomSeed = 42
     params.useBasicKnowledge = True
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+    params = rdDistGeom.KDG()
+    params.randomSeed = 42
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
 

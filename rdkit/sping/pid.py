@@ -393,14 +393,13 @@ class Canvas:
   def drawMultiLineString(self, s, x, y, font=None, color=None, angle=0, **kwargs):
     "Breaks string into lines (on \n, \r, \n\r, or \r\n), and calls drawString on each."
     import math
-    import string
     h = self.fontHeight(font)
     dy = h * math.cos(angle * math.pi / 180.0)
     dx = h * math.sin(angle * math.pi / 180.0)
-    s = string.replace(s, '\r\n', '\n')
-    s = string.replace(s, '\n\r', '\n')
-    s = string.replace(s, '\r', '\n')
-    lines = string.split(s, '\n')
+    s = s.replace('\r\n', '\n')
+    s = s.replace('\n\r', '\n')
+    s = s.replace('\r', '\n')
+    lines = s.split('\n')
     for line in lines:
       self.drawString(line, x, y, font, color, angle)
       x = x + dx

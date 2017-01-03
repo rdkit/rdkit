@@ -227,21 +227,20 @@ cyclobutane
 M  END
 <BLANKLINE>
 
-Or you can add 3D coordinates by embedding the molecule:
+Or you can add 3D coordinates by embedding the molecule (we're using the ETKDG
+method here, which is described in more detail below):
 
->>> AllChem.EmbedMolecule(m2)
-0
->>> AllChem.UFFOptimizeMolecule(m2)
+>>> AllChem.EmbedMolecule(m2,AllChem.ETKDG())
 0
 >>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
 cyclobutane
      RDKit          3D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-   -0.7883    0.5560   -0.2718 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.4153   -0.9091   -0.1911 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7883   -0.5560    0.6568 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.4153    0.9091    0.5762 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8321    0.5405   -0.1981 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3467   -0.8825   -0.2651 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7190   -0.5613    0.7314 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4599    0.9032    0.5020 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -249,14 +248,11 @@ cyclobutane
 M  END
 <BLANKLINE>
 
-The optimization step isn't necessary, but it substantially improves the quality of the conformation.
-
-To get good 3D conformations, it's almost always a good idea to add hydrogens to the molecule first:
+To get good 3D conformations, it's almost always a good idea to add
+hydrogens to the molecule first:
 
 >>> m3 = Chem.AddHs(m2)
->>> AllChem.EmbedMolecule(m3)
-0
->>> AllChem.UFFOptimizeMolecule(m3)
+>>> AllChem.EmbedMolecule(m3,AllChem.ETKDG())
 0
 
 These can then be removed:
@@ -267,10 +263,10 @@ cyclobutane
      RDKit          3D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-    0.2851    1.0372   -0.0171 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.0352   -0.2833    0.0743 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.2851   -1.0372    0.0171 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.0352    0.2833   -0.0743 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3497    0.9755   -0.2202 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9814   -0.3380    0.2534 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3384   -1.0009   -0.1474 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9992    0.3532    0.1458 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -551,7 +547,7 @@ The full process of embedding and optimizing a molecule is easier than all the a
 0
 >>> m3=Chem.AddHs(m)
 >>> # use the new method
->>> AllChem.EmbedMolecule(m3, useExpTorsionAnglePrefs=True, useBasicKnowledge=True)
+>>> AllChem.EmbedMolecule(m3, AllChem.ETKDG())
 0
 
 The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
@@ -588,17 +584,22 @@ to each other and the RMS values calculated.
 >>> AllChem.AlignMolConformers(m2, RMSlist=rmslist)
 >>> print(len(rmslist))
 9
->>> m = Chem.MolFromSmiles('C1CCC1OC')
->>> m3=Chem.AddHs(m)
->>> # run CSD-based method
->>> cids = AllChem.EmbedMultipleConfs(m3, useExpTorsionAnglePrefs=True, useBasicKnowledge=True, numConfs=10)
->>> print(len(cids))
-10
 
 rmslist contains the RMS values between the first conformer and all others.
-The RMS between two specific conformers (e.g. 1 and 9) can also be calculated. The flag prealigned lets the user specify if the conformers are already aligned (by default, the function aligns them).
+The RMS between two specific conformers (e.g. 1 and 9) can also be calculated.
+The flag prealigned lets the user specify if the conformers are already aligned
+(by default, the function aligns them).
 
 >>> rms = AllChem.GetConformerRMS(m2, 1, 9, prealigned=True)
+
+We can also generate multiple conformers using the new CSD-based method:
+
+>>> m = Chem.MolFromSmiles('C1CCC1OC')
+>>> m3=Chem.AddHs(m)
+>>> # run the new CSD-based method
+>>> cids = AllChem.EmbedMultipleConfs(m3, 10, AllChem.ETKDG())
+>>> print(len(cids))
+10
 
 More 3D functionality of the RDKit is described in the Cookbook.
 
@@ -607,9 +608,8 @@ More 3D functionality of the RDKit is described in the Cookbook.
 The original, default, 2D->3D conversion provided with the RDKit is not intended
 to be a replacement for a “real” conformational analysis tool; it
 merely provides quick 3D structures for cases when they are
-required. On the other hand, the second method, when a sufficiently
-large number of conformers are generated, should be adequate for most
-purposes.
+required. We believe, however, that the newer ETKDG method[#riniker2]_ should be
+adequate for most purposes.
 
 
 Preserving Molecules

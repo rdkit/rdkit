@@ -3,9 +3,9 @@
 #
 
 from __future__ import print_function
-from rdkit.ML.Data import Quantize
+
 from rdkit.Dbase import DbConnection
-from rdkit import RDConfig
+from rdkit.ML.Data import Quantize
 
 
 def runIt(namesAndTypes, dbConnect, nBounds, resCol, typesToDo=['float']):
@@ -32,7 +32,8 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys, getopt
+  import sys
+  import getopt
 
   try:
     args, extras = getopt.getopt(sys.argv[1:], 'n:r:i')

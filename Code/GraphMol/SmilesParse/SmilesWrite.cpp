@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -54,12 +53,27 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
   if (!atom->getPropIfPresent(common_properties::smilesSymbol, symb)) {
     symb = PeriodicTable::getTable()->getElementSymbol(num);
   }
-  // symb = atom->getSymbol();
+
+  // check for atomic stereochemistry
   std::string atString = "";
+  if (atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+        !atom->hasProp(common_properties::_brokenChirality)) {
+      switch (atom->getChiralTag()) {
+        case Atom::CHI_TETRAHEDRAL_CW:
+          atString = "@@";
+          break;
+        case Atom::CHI_TETRAHEDRAL_CCW:
+          atString = "@";
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   if (!allHsExplicit && inOrganicSubset(num)) {
     // it's a member of the organic subset
-    // if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -=
-    // ('A'-'a');
 
     // -----
     // figure out if we need to put a bracket around the atom,
@@ -85,28 +99,11 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
           (totalValence != defaultVs.front() && atom->getTotalNumHs());
     }
 
-    if (fc || nonStandard) {
+    if (fc || nonStandard ||
+        atom->hasProp(common_properties::molAtomMapNumber)) {
       needsBracket = true;
-    }
-    if (atom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
-      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-          !atom->hasProp(common_properties::_brokenChirality)) {
-        switch (atom->getChiralTag()) {
-          case Atom::CHI_TETRAHEDRAL_CW:
-            atString = "@@";
-            break;
-          case Atom::CHI_TETRAHEDRAL_CCW:
-            atString = "@";
-            break;
-          default:
-            break;
-        }
-        needsBracket = true;
-      } else if (isotope) {
-        needsBracket = true;
-      }
-    }
-    if (atom->hasProp(common_properties::molAtomMapNumber)) {
+    } else if (atom->getOwningMol().hasProp(common_properties::_doIsoSmiles) &&
+               (isotope || atString != "")) {
       needsBracket = true;
     }
   } else {
@@ -247,9 +244,9 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
     case Bond::DATIVE:
       if (atomToLeftIdx >= 0 &&
           bond->getBeginAtomIdx() == static_cast<unsigned int>(atomToLeftIdx))
-        res = ">";
+        res = "->";
       else
-        res = "<";
+        res = "<-";
       break;
     default:
       res = "~";

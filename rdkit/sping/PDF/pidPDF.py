@@ -16,7 +16,6 @@ self.pdf which offers numerous lower-level drawing routines.
 #pylint: disable=E1103,W0311,E1101
 from __future__ import print_function
 #standard python library modules
-import string
 from . import pdfmetrics
 import glob
 import os
@@ -24,6 +23,7 @@ import types
 from math import sin, cos, pi, ceil
 
 # app specific
+from rdkit.six import string_types
 from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
 from . import pdfgen
@@ -174,7 +174,7 @@ class PDFCanvas(Canvas):
 
     if hasattr(file, 'write'):
       self.pdf.save(fileobj=file)
-    elif isinstance(file, types.StringType):
+    elif isinstance(file, string_types):
       self.pdf.save(filename=file)
     else:
       self.pdf.save()
@@ -221,7 +221,7 @@ class PDFCanvas(Canvas):
     if not font.face:
       face = 'serif'
     else:
-      face = string.lower(font.face)
+      face = font.face.lower()
     while face in font_face_map:
       face = font_face_map[face]
     #step 2, - resolve bold/italic to get the right PS font name
@@ -232,8 +232,8 @@ class PDFCanvas(Canvas):
     """PDF escapes are like Python ones, but brackets need slashes before them too.
         Use Python's repr function and chop off the quotes first"""
     s = repr(s)[1:-1]
-    s = string.replace(s, '(', '\(')
-    s = string.replace(s, ')', '\)')
+    s = s.replace('(', '\(')
+    s = s.replace(')', '\)')
     return s
 
   def resetDefaults(self):
@@ -338,9 +338,9 @@ class PDFCanvas(Canvas):
     if col != transparent:
       if '\n' in s or '\r' in s:
         #normalize line ends
-        s = string.replace(s, '\r\n', '\n')
-        s = string.replace(s, '\n\r', '\n')
-        lines = string.split(s, '\n')
+        s = s.replace('\r\n', '\n')
+        s = s.replace('\n\r', '\n')
+        lines = s.split('\n')
       else:
         lines = [s]
       fnt = font or self.defaultFont

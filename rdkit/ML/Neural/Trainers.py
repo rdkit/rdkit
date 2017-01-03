@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2000-2008  greg Landrum
 #
@@ -8,12 +6,11 @@
   Unless noted otherwise, algorithms and notation are taken from:
   "Artificial Neural Networks: Theory and Applications",
     Dan W. Patterson, Prentice Hall, 1996
-  
+
 """
 from __future__ import print_function
-import numpy
 
-from rdkit.six.moves import xrange
+import numpy
 
 
 class Trainer(object):
@@ -33,7 +30,7 @@ class BackProp(Trainer):
      functions on the nodes in the network are capable of calculating their
      derivatives using only their values (i.e. a DerivFromVal method should
      exist).  This shouldn't be too hard to change.
-   
+
   """
 
   def StepUpdate(self, example, net, resVect=None):
@@ -58,7 +55,7 @@ class BackProp(Trainer):
 
         In case it wasn't blindingly obvious, the weights in _network_ are modified
         in the course of taking a backprop step.
-        
+
     """
     totNumNodes = net.GetNumNodes()
     if self.oldDeltaW is None:
@@ -76,7 +73,7 @@ class BackProp(Trainer):
 
     delta = numpy.zeros(totNumNodes, numpy.float64)
     # start with the output layer
-    for i in xrange(len(outputNodeList)):
+    for i in range(len(outputNodeList)):
       idx = outputNodeList[i]
       node = net.GetNode(idx)
       # the deltas here are easy
@@ -84,12 +81,12 @@ class BackProp(Trainer):
       # use these results to start working on the deltas of the preceding layer
       inputs = node.GetInputs()
       weights = delta[idx] * node.GetWeights()
-      for j in xrange(len(inputs)):
+      for j in range(len(inputs)):
         idx2 = inputs[j]
         delta[idx2] = delta[idx2] + weights[j]
 
     # now propagate the deltas backwards
-    for layer in xrange(net.GetNumHidden() - 1, -1, -1):
+    for layer in range(net.GetNumHidden() - 1, -1, -1):
       nodesInLayer = net.GetHiddenLayerNodeList(layer)
       for idx in nodesInLayer:
         node = net.GetNode(idx)
@@ -100,14 +97,14 @@ class BackProp(Trainer):
         if layer != 0:
           inputs = node.GetInputs()
           weights = delta[idx] * node.GetWeights()
-          for i in xrange(len(inputs)):
+          for i in range(len(inputs)):
             idx2 = inputs[i]
             delta[idx2] = delta[idx2] + weights[i]
 
         # okey dokey... we've now got the deltas for each node, use those
         #  to update the weights (whew!)
     nHidden = net.GetNumHidden()
-    for layer in xrange(0, nHidden + 1):
+    for layer in range(0, nHidden + 1):
       if layer == nHidden:
         idxList = net.GetOutputNodeList()
       else:
@@ -159,7 +156,7 @@ class BackProp(Trainer):
     while (not converged) and (cycle < maxIts):
       maxErr = 0
       newErr = 0
-      #print('bp: ',cycle)
+      # print('bp: ',cycle)
       for example in examples:
         localErr = self.StepUpdate(example, net)
         newErr += localErr
@@ -169,17 +166,17 @@ class BackProp(Trainer):
         newErr = newErr / nExamples
       else:
         newErr = maxErr
-      #print('\t',newErr,errTol)
+      # print('\t',newErr,errTol)
 
       if newErr <= errTol:
         converged = 1
 
 #      if cycle % 10 == 0 and not silent:
-      if not silent:
+      if not silent:  # pragma: nocover
         print('epoch %d, error: % 6.4f' % (cycle, newErr))
 
       cycle = cycle + 1
-    if not silent:
+    if not silent:  # pragma: nocover
       if converged:
         print('Converged after %d epochs.' % cycle)
       else:
@@ -190,7 +187,7 @@ class BackProp(Trainer):
     """ Constructor
 
       **Arguments**
-      
+
         - speed: the speed parameter for back prop training
 
         - momentum: the momentum term for back prop training
@@ -201,7 +198,7 @@ class BackProp(Trainer):
     self.momentum = momentum
     self.oldDeltaW = None
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   from rdkit.ML.Neural import Network
 
   def testAnd():
@@ -252,7 +249,8 @@ if __name__ == '__main__':
   def runProfile(command):
     import random
     random.seed(23)
-    import profile, pstats
+    import profile
+    import pstats
     datFile = '%s.prof.dat' % (command)
     profile.run('%s()' % command, datFile)
     stats = pstats.Stats(datFile)
@@ -262,11 +260,11 @@ if __name__ == '__main__':
   if 0:
     net = testXor()
     print('Xor:', net)
-    from rdkit.six.moves import cPickle
+    from rdkit.six.moves import cPickle  # @UnresolvedImport
     outF = open('xornet.pkl', 'wb+')
     cPickle.dump(net, outF)
     outF.close()
   else:
-    #runProfile('testLinear')
+    # runProfile('testLinear')
     net = testLinear()
-    #net = testOr()
+    # net = testOr()

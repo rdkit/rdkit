@@ -18,6 +18,7 @@
 #define RD_RANKING_H
 
 #include <vector>
+#include <functional> 
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/cstdint.hpp>
