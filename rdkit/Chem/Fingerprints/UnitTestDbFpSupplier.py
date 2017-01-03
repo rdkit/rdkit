@@ -11,10 +11,10 @@
 from __future__ import print_function
 
 import doctest
-
-from rdkit.Chem.Fingerprints import DbFpSupplier
 import unittest
+
 from rdkit import RDConfig
+from rdkit.Chem.Fingerprints import DbFpSupplier
 from rdkit.Dbase.DbConnection import DbConnect
 
 

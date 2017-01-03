@@ -195,7 +195,7 @@ Usage: ClusterMols.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  message("This is ClusterMols version %s\n\n" % (__VERSION_STRING))
+  message("This is ClusterMols\n\n")
   FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ClusterFromDetails(details)

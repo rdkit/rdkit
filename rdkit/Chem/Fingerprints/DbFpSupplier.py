@@ -81,6 +81,10 @@ class DbFpSupplier(VLibNode):
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
+<<<<<<< HEAD
+=======
+  >>> import os.path
+>>>>>>> refs/heads/master
   >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
@@ -111,7 +115,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
 
     """
     try:
-      d = self._dataIter.next()
+      d = next(self._dataIter)
     except StopIteration:
       d = None
     if d is not None:

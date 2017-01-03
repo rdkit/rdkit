@@ -33,11 +33,6 @@ try:
 except ImportError:
   _dataSeq = None
 
-_cvsVersion = "$Id$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
-
 
 def _ConstructSQL(details, extraFields=''):
   fields = '%s.%s' % (details.tableName, details.idName)
@@ -324,7 +319,7 @@ Usage: MolSimilarity.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  FingerprintMols.message("This is MolSimilarity version %s\n\n" % (__VERSION_STRING))
+  FingerprintMols.message("This is MolSimilarity\n\n")
   FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ScreenFromDetails(details)

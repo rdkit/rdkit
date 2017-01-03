@@ -20,6 +20,7 @@ Sample Usage:
 
 
 """
+
 from __future__ import print_function
 
 import getopt
@@ -30,11 +31,6 @@ from rdkit import DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
 from rdkit.six.moves import cPickle
-
-_cvsVersion = "$Id$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
 
 
 def error(msg):
@@ -578,6 +574,6 @@ def ParseArgs(details=None):
 
 
 if __name__ == '__main__':
-  message("This is FingerprintMols version %s\n\n" % (__VERSION_STRING))
+  message("This is FingerprintMols\n\n")
   details = ParseArgs()
   FingerprintsFromDetails(details)
