@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1803,13 +1803,28 @@ void testEmbedParameters() {
   }
 }
 
+void testGithub1240() {
+  {
+    RWMol *mol = SmilesToMol("c1ccccccccc1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 20);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.ignoreSmoothingFailures = true;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    delete mol;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 1
+#if 0
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -1962,11 +1977,16 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
                           "constrained ring systems.\n";
   testGithub971();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
   testEmbedParameters();
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings.\n";
+  testGithub1240();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
