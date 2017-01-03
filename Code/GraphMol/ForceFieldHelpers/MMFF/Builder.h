@@ -15,6 +15,9 @@
 #include <vector>
 #include <string>
 #include <boost/shared_array.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/thread/once.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/cstdint.hpp>
 
@@ -75,7 +78,21 @@ ForceFields::ForceField *constructForceField(
     bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-const std::string defaultTorsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+class DefaultTorsionBondSmarts : private boost::noncopyable
+{
+public:
+  static const std::string &string() {
+    return ds_string;
+  }
+  static const ROMol *query();
+private:
+  DefaultTorsionBondSmarts() {}
+  static void create();
+  static const std::string ds_string;
+  static boost::scoped_ptr<const ROMol> ds_instance;
+  static boost::once_flag ds_flag;
+};
+
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
 unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
@@ -94,7 +111,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field);
 void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  ForceFields::ForceField *field,
-                 const std::string &torsionBondSmarts = defaultTorsionBondSmarts);
+                 const std::string &torsionBondSmarts =
+                 DefaultTorsionBondSmarts::string());
 void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
             boost::shared_array<boost::uint8_t> neighborMatrix,

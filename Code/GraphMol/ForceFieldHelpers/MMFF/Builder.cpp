@@ -593,6 +593,31 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 //
 //
 // ------------------------------------------------------------------------
+const std::string DefaultTorsionBondSmarts::ds_string = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+boost::scoped_ptr<const ROMol> DefaultTorsionBondSmarts::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag DefaultTorsionBondSmarts::ds_flag;
+#else
+boost::once_flag DefaultTorsionBondSmarts::ds_flag = BOOST_ONCE_INIT;
+#endif
+
+void DefaultTorsionBondSmarts::create() {
+  ds_instance.reset(SmartsToMol(ds_string));
+}
+
+const ROMol *DefaultTorsionBondSmarts::query() {
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(&create, ds_flag);
+#else
+  static bool created = false;
+  if (!created) {
+    created = true;
+    create();
+  }
+#endif
+  return ds_instance.get();
+}
+
 void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                  ForceFields::ForceField *field,
                  const std::string &torsionBondSmarts) {
@@ -623,8 +648,9 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     points = field->positions();
   }
   std::vector<MatchVectType> matchVect;
-  const ROMol *defaultQuery = SmartsToMol(defaultTorsionBondSmarts);
-  const ROMol *query = (torsionBondSmarts == defaultTorsionBondSmarts) ? defaultQuery : SmartsToMol(torsionBondSmarts);
+  const ROMol *defaultQuery = DefaultTorsionBondSmarts::query();
+  const ROMol *query = (torsionBondSmarts == DefaultTorsionBondSmarts::string())
+                       ? defaultQuery : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
   if (query != defaultQuery) delete query;
