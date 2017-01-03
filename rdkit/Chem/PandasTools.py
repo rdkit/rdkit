@@ -114,10 +114,12 @@ try:
 
   def _getPandasVersion():
     """ Get the pandas version as a tuple """
+    import re
     try:
-      v = pd.__version__.split('.')
+      v = pd.__version__
     except AttributeError:
-      v = pd.version.version.split('.')
+      v = pd.version.version
+    v = re.split(r'[^0-9,.]',v)[0].split('.')
     return tuple(int(vi) for vi in v)
 
   if _getPandasVersion() < (0, 10):
@@ -132,7 +134,7 @@ try:
       pd.set_option('display.height', 1000000000)
     if 'display.max_colwidth' in pd.core.config._registered_options:
       pd.set_option('display.max_colwidth', 1000000000)
-    # saves the default pandas rendering to allow restauration
+    # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
   import traceback
