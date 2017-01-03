@@ -22,6 +22,12 @@ using namespace RDDepict;
 
 namespace python = boost::python;
 
+void rdDepictExceptionTranslator( DepictException const &e ) {
+  std::ostringstream oss;
+  oss << "Depict error: " << e.message();
+  PyErr_SetString( PyExc_ValueError, oss.str().c_str() );
+}
+
 namespace RDDepict {
 
 unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
@@ -93,12 +99,46 @@ unsigned int Compute2DCoordsMimicDistmat(
   }
   return res;
 }
+
+  void GenerateDepictionMatching2DStructure( RDKit::ROMol &mol ,
+					     RDKit::ROMol &reference ,
+					     int confId ,
+					     python::object refPatt ,
+					     bool acceptFailure ) {
+
+    RDKit::ROMol *referencePattern = 0;
+    if( refPatt != python::object() ) {
+      referencePattern = python::extract<RDKit::ROMol *>( refPatt );
+    }
+    
+    RDDepict::generateDepictionMatching2DStructure( mol , reference ,
+						    confId , referencePattern ,
+						    acceptFailure );
+  }
+
+  void GenerateDepictionMatching3DStructure( RDKit::ROMol &mol ,
+					     RDKit::ROMol &reference ,
+					     int confId ,
+					     python::object refPatt ,
+					     bool acceptFailure ) {
+
+    RDKit::ROMol *referencePattern = 0;
+    if( refPatt ) {
+      referencePattern = python::extract<RDKit::ROMol *>( refPatt );
+    }
+    
+    RDDepict::generateDepictionMatching3DStructure( mol , reference ,
+						    confId , referencePattern ,
+						    acceptFailure );
+  }
 }
 
 BOOST_PYTHON_MODULE(rdDepictor) {
   python::scope().attr("__doc__") =
       "Module containing the functionality to compute 2D coordinates for a "
       "molecule";
+  python::register_exception_translator<RDDepict::DepictException>(
+      &rdDepictExceptionTranslator);
 
   rdkit_import_array();
 
@@ -169,4 +209,55 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("permuteDeg4Nodes") = true,
        python::arg("bondLength") = -1.0),
       docString.c_str());
+
+  docString =
+    "Generate a depiction for a molecule where a piece of the \n\
+  molecule is constrained to have the same coordinates as a reference. \n\n\
+  This is useful for, for example, generating depictions of SAR data \n\
+  sets so that the cores of the molecules are all oriented the same way. \n\
+  ARGUMENTS: \n\n\
+  mol -    the molecule to be aligned, this will come back \n\
+           with a single conformer. \n\
+  reference -    a molecule with the reference atoms to align to; \n\
+                 this should have a depiction. \n\
+  confId -       (optional) the id of the reference conformation to use \n\
+  referencePattern -  (optional) a query molecule to be used to \n\
+                      generate the atom mapping between the molecule \n\
+                      and the reference. \n\
+  acceptFailure - (optional) if True, standard depictions will be generated \n\
+                  for molecules that don't have a substructure match to the \n\
+                  reference; if False, throws a DepictException.\n";
+  python::def("GenerateDepictionMatching2DStructure" ,
+	      RDDepict::GenerateDepictionMatching2DStructure,
+	      (python::arg( "mol" ) , python::arg( "reference" ) ,
+	       python::arg( "confId" ) = -1 ,
+	       python::arg( "refPatt" ) = python::object() ,
+	       python::arg( "acceptFailure" ) = false ),
+	       docString.c_str() );
+
+  docString =
+    "Generate a depiction for a molecule where a piece of the molecule \n\
+  is constrained to have coordinates similar to those of a 3D reference \n\
+  structure.\n\
+  ARGUMENTS: \n\n\
+  mol -    the molecule to be aligned, this will come back \n\
+           with a single conformer containing the 2D coordinates. \n\
+  reference -    a molecule with the reference atoms to align to. \n\
+                 By default this should be the same as mol, but with \n\
+                 3D coordinates \n\
+  confId -       (optional) the id of the reference conformation to use \n\
+  referencePattern -  (optional) a query molecule to map a subset of \n\
+                      the reference onto the mol, so that only some of the \n\
+                      atoms are aligned. \n\
+  acceptFailure - (optional) if True, standard depictions will be generated \n\
+                  for molecules that don't match the reference or the\n\
+                  referencePattern; if False, throws a DepictException.\n";
+
+  python::def("GenerateDepictionMatching3DStructure" ,
+  	      RDDepict::GenerateDepictionMatching3DStructure,
+  	      (python::arg( "mol" ) , python::arg( "reference" ) ,
+  	       python::arg( "confId" ) = -1 ,
+  	       python::arg( "refPatt" ) = python::object() ,
+  	       python::arg( "acceptFailure" ) = false ),
+  	      docString.c_str() );
 }

@@ -1,8 +1,9 @@
 tests = [
+  ("python", "UnitTestStorageUtils.py", {}),
   ("python", "UnitTestDbConnect.py", {}),
+  ("python", "UnitTestDbInfo.py", {}),
   ("python", "UnitTestDbUtils.py", {}),
   ("python", "UnitTestDbResultSet.py", {}),
-  ("python", "StorageUtils.py", {}),
 ]
 
 longTests = []

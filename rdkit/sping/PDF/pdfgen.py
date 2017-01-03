@@ -53,7 +53,6 @@ Progress Reports:
 from __future__ import print_function
 import os
 import sys
-import string
 import time
 import tempfile
 from io import StringIO
@@ -64,6 +63,7 @@ from . import pdfutils
 from . import pdfdoc
 from . import pdfmetrics
 from . import pdfgeom
+from rdkit.six import string_types
 
 
 class PDFError(ValueError):
@@ -172,8 +172,8 @@ class Canvas:
     """PDF escapes are like Python ones, but brackets need slashes before them too.
         Use Python's repr function and chop off the quotes first"""
     s = repr(s)[1:-1]
-    s = string.replace(s, '(', '\(')
-    s = string.replace(s, ')', '\)')
+    s = s.replace('(', '\(')
+    s = s.replace(')', '\)')
     return s
 
   #info functions - non-standard
@@ -515,11 +515,11 @@ class Canvas:
 
   def setDash(self, array=[], phase=0):
     """Two notations.  pass two numbers, or an array and phase"""
-    if type(array) == IntType or type(array) == FloatType:
+    if isinstance(array, (int, float)):
       self._code.append('[%s %s] 0 d' % (array, phase))
-    elif type(array) == ListType or type(array) == TupleType:
+    elif isinstance(array, (list, tuple)):
       assert phase <= len(array), "setDash phase must be l.t.e. length of array"
-      textarray = string.join(map(str, array))
+      textarray = ' '.join(map(str, array))
       self._code.append('[%s] %s d' % (textarray, phase))
 
   def setFillColorRGB(self, r, g, b):
@@ -576,8 +576,7 @@ class Canvas:
       return
 
     self._currentPageHasImages = 1
-
-    if type(image) == StringType:
+    if isinstance(image, string_types):
       if os.path.splitext(image)[1] in ['.jpg', '.JPG']:
         #directly process JPEG files
         #open file, needs some error handling!!
@@ -615,12 +614,12 @@ class Canvas:
         cachedname = os.path.splitext(image)[0] + '.a85'
         imagedata = open(cachedname, 'rb').readlines()
         #trim off newlines...
-        imagedata = map(string.strip, imagedata)
+        imagedata = [s.strip() for s in imagedata]
 
         #parse line two for width, height
-        words = string.split(imagedata[1])
-        imgwidth = string.atoi(words[1])
-        imgheight = string.atoi(words[3])
+        words = imagedata[1].split()
+        imgwidth = int(words[1])
+        imgheight = int(words[3])
     else:
       #PIL Image
       #work out all dimensions
@@ -789,7 +788,7 @@ class Canvas:
       return
 
     self._pageTransitionString = (
-      ('/Trans <</D %d /S /%s ' % (duration, effectname)) + string.join(args, ' ') + ' >>')
+      ('/Trans <</D %d /S /%s ' % (duration, effectname)) + ' '.join(args) + ' >>')
 
 
 class PDFPathObject:
@@ -808,7 +807,7 @@ class PDFPathObject:
 
   def getCode(self):
     "pack onto one line; used internally"
-    return string.join(self._code, ' ')
+    return ' '.join(self._code)
 
   def moveTo(self, x, y):
     self._code.append('%0.4f %0.4f m' % (x, y))
@@ -892,7 +891,7 @@ class PDFTextObject:
   def getCode(self):
     "pack onto one line; used internally"
     self._code.append('ET')
-    return string.join(self._code, ' ')
+    return ' '.join(self._code)
 
   def setTextOrigin(self, x, y):
     if self._canvas.bottomup:
@@ -1021,13 +1020,11 @@ class PDFTextObject:
         since this may be indented, by default it trims whitespace
         off each line and from the beginning; set trim=0 to preserve
         whitespace."""
-    if type(stuff) == StringType:
-      lines = string.split(string.strip(stuff), '\n')
+    if isinstance(stuff, string_types):
+      lines = stuff.strip().split('\n')
       if trim == 1:
-        lines = map(string.strip, lines)
-    elif type(stuff) == ListType:
-      lines = stuff
-    elif type(stuff) == TupleType:
+        lines = [s.strip() for s in lines]
+    elif isinstance(stuff, (tuple, list)):
       lines = stuff
     else:
       raise ValueError("argument to textlines must be string, list or tuple")

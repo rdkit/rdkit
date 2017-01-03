@@ -182,9 +182,9 @@ class PiddleWxDc(sping_pid.Canvas):
 
     if '\n' in s or '\r' in s:
       #normalize line ends
-      s = string.replace(s, '\r\n', '\n')
-      s = string.replace(s, '\n\r', '\n')
-      lines = string.split(s, '\n')
+      s = s.replace('\r\n', '\n')
+      s = s.replace('\n\r', '\n')
+      lines = s.split('\n')
     else:
       lines = [s]
 
