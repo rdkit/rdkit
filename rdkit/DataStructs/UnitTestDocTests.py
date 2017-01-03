@@ -16,7 +16,7 @@ from rdkit import DataStructs, Chem
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprinterDetails
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(BitUtils, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(LazySignature, optionflags=doctest.ELLIPSIS))
