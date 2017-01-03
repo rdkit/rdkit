@@ -54,7 +54,6 @@ class TestCase(unittest.TestCase):
     self.assertEqual(matches1, matches2)
 
     self.assertEqual(probe, screener.GetSingleFingerprint(mol))
-    self.assertEqual(probe, screener.GetSingleFingerprint(mol))
 
     # Getting the length also triggers the execution of the screen
     screener = SimilarityScreener.TopNScreener(3, probe=probe, metric=metric,

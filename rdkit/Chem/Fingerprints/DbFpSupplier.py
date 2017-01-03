@@ -17,8 +17,6 @@ from rdkit.VLib.Node import VLibNode
 from rdkit.six.moves import cPickle
 
 
-# def warning(msg, dest=sys.stderr):
-#   dest.write(msg)
 class DbFpSupplier(VLibNode):
   """
     new fps come back with all additional fields from the
@@ -81,10 +79,6 @@ class DbFpSupplier(VLibNode):
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
-<<<<<<< HEAD
-=======
-  >>> import os.path
->>>>>>> refs/heads/master
   >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
