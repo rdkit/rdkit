@@ -412,9 +412,8 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   try:
     err, inchi, fixed_mol = GetInchiForCTAB(ctab)
   except BadMoleculeException:
-    print('Corrupt molecule substituting no-struct: ---\n{0}\n----'.format(ctab))
-    print('Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
-    logger.warn(str('Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab)))
+    msg = u'Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab)
+    logger.warn(msg)
     err = NULL_MOL
     key = _identify(err, '', '', None, None)
     return MolKeyResult(key, err, '', '', None, None)
