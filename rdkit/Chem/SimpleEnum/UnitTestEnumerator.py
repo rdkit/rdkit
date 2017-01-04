@@ -19,18 +19,13 @@ def load_tests(loader, tests, ignore):
 
 class TestCase(unittest.TestCase):
 
-  def test_EnumerateReaction(self):
+  def test_EnumerateReactionException(self):
     testFile = os.sep.join(
       [os.path.dirname(os.path.abspath(__file__)), 'test_data', 'boronic1.rxn'])
     rxn = AllChem.ReactionFromRxnFile(testFile)
     rxn.Initialize()
     reacts1 = ['Brc1ccccc1', 'Brc1ncccc1', 'Brc1cnccc1']
     reacts1 = [Chem.MolFromSmiles(x) for x in reacts1]
-    reacts2 = ['CCB(O)O', 'CCCB(O)O']
-    reacts2 = [Chem.MolFromSmiles(x) for x in reacts2]
-
-    prods = Enumerator.EnumerateReaction(rxn, (reacts1, reacts2))
-    self.assertEqual(len(list(prods)), 12)
 
     self.assertRaises(ValueError, Enumerator.EnumerateReaction, rxn, (reacts1, ))
 
