@@ -4,18 +4,25 @@ Created on 26 Oct 2016
 @author: peter
 '''
 import unittest
-from rdkit.utils.listutils import CompactListRepr
-from rdkit.utils import fileutils, chemutils
+import doctest
+# from rdkit.utils.listutils import CompactListRepr
+from rdkit.utils import fileutils, chemutils, listutils
+
+
+def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(listutils, optionflags=doctest.ELLIPSIS))
+  return tests
 
 
 class TestCase(unittest.TestCase):
 
-  def test_CompactListRepr(self):
-    self.assertEqual(CompactListRepr([0, 1, 1, 1, 1, 0]), '[0]+[1]*4+[0]')
-    self.assertEqual(CompactListRepr([0, 1, 1, 2, 1, 1]), '[0]+[1]*2+[2]+[1]*2')
-    self.assertEqual(CompactListRepr([]), '[]')
-    self.assertEqual(CompactListRepr((0, 1, 1, 1, 1)), '[0]+[1]*4')
-    self.assertEqual(CompactListRepr('foo'), "['f']+['o']*2")
+#   def test_CompactListRepr(self):
+#     self.assertEqual(CompactListRepr([0, 1, 1, 1, 1, 0]), '[0]+[1]*4+[0]')
+#     self.assertEqual(CompactListRepr([0, 1, 1, 2, 1, 1]), '[0]+[1]*2+[2]+[1]*2')
+#     self.assertEqual(CompactListRepr([]), '[]')
+#     self.assertEqual(CompactListRepr((0, 1, 1, 1, 1)), '[0]+[1]*4')
+#     self.assertEqual(CompactListRepr('foo'), "['f']+['o']*2")
 
   def test_fileutils(self):
     filename = fileutils.__file__
