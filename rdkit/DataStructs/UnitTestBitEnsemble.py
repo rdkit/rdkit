@@ -17,7 +17,8 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.DataStructs import SparseBitVect
-from rdkit.DataStructs import BitEnsembleDb
+# This import is important to initialize the BitEnsemble module
+from rdkit.DataStructs import BitEnsembleDb  # @UnusedImport
 from rdkit.DataStructs.BitEnsemble import BitEnsemble
 
 

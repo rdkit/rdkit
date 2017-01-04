@@ -109,20 +109,22 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
 from rdkit.six.moves import cStringIO as StringIO  # @UnresolvedImport
 
-
 try:
   import pandas as pd
 
   def _getPandasVersion():
     """ Get the pandas version as a tuple """
+    import re
     try:
-      v = pd.__version__.split('.')  # @UndefinedVariable
-    except AttributeError:  # pragma: nocover
-      v = pd.version.version.split('.')  # @UndefinedVariable
+      v = pd.__version__
+    except AttributeError:
+      v = pd.version.version
+    v = re.split(r'[^0-9,.]', v)[0].split('.')
     return tuple(int(vi) for vi in v)
 
-  if _getPandasVersion() < (0, 10):  # pragma: nocover
-    print("Pandas version %s not compatible with tests" % _getPandasVersion(), file=sys.stderr)
+  if _getPandasVersion() < (0, 10):
+    print("Pandas version {0} not compatible with tests".format(_getPandasVersion()),
+          file=sys.stderr)
     pd = None
   else:
     if 'display.width' in pd.core.config._registered_options:
@@ -133,14 +135,14 @@ try:
       pd.set_option('display.height', 1000000000)
     if 'display.max_colwidth' in pd.core.config._registered_options:
       pd.set_option('display.max_colwidth', 1000000000)
-    # saves the default pandas rendering to allow restauration
+    # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
-except ImportError:  # pragma: nocover
+except ImportError:
   import traceback
   traceback.print_exc()
   pd = None
 
-except Exception as e:  # pragma: nocover
+except Exception as e:
   import traceback
   traceback.print_exc()
   pd = None
@@ -148,9 +150,9 @@ except Exception as e:  # pragma: nocover
 if pd:
   try:
     from pandas.formats import format as fmt
-  except ImportError:  # pragma: nocover
+  except ImportError:
     from pandas.core import format as fmt  # older versions
-else:  # pragma: nocover
+else:
   fmt = 'Pandas not available'
 
 highlightSubstructures = True
@@ -211,16 +213,11 @@ def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
 
 try:
   from rdkit.Avalon import pyAvalonTools as pyAvalonTools
-
-  def _fingerprinter(mol, isQuery):
-    """ Calculate the Avalon fingerprint """
-    return pyAvalonTools.GetAvalonFP(mol, isQuery=isQuery, bitFlags=pyAvalonTools.avalonSSSBits)
-
-except ImportError:  # pragma: nocover
-
-  def _fingerprinter(mol, isQuery):
-    """ Calculate fingerprint using SMARTS patterns """
-    return Chem.PatternFingerprint(mol, fpSize=2048)
+  # Calculate the Avalon fingerprint
+  _fingerprinter = lambda mol, isQuery: pyAvalonTools.GetAvalonFP(mol, isQuery=isQuery, bitFlags=pyAvalonTools.avalonSSSBits)
+except ImportError:
+  # Calculate fingerprint using SMARTS patterns
+  _fingerprinter = lambda mol, isQuery: Chem.PatternFingerprint(mol, fpSize=2048)
 
 
 def _molge(x, y):

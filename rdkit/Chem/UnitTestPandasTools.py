@@ -1,24 +1,22 @@
 from __future__ import print_function
 
+import doctest
 import gzip
 import os
 import shutil
 import tempfile
 import unittest
-import doctest
-
-from rdkit.six import PY3, StringIO, BytesIO
-from rdkit import RDConfig
-
-from rdkit.Chem import PandasTools
-gotPandas = PandasTools.pd is not None
 
 import numpy
 
 from rdkit import RDConfig, rdBase, Chem
 from rdkit.Chem import PandasTools
-from rdkit.six import PY3
-from rdkit.six import StringIO, BytesIO
+from rdkit.six import PY3, StringIO, BytesIO
+
+try:
+  import IPython
+except ImportError:
+  IPython = None
 
 # We make sure that we don't mess up the Mol methods for the rest of the tests
 PandasTools.UninstallPandasTools()
@@ -125,6 +123,7 @@ class TestPandasTools(unittest.TestCase):
     self.assertIn(self.df['SMILES'][10], result)
     self.assertIn(self.df['PUBCHEM_IUPAC_INCHIKEY'][10], result)
 
+  @unittest.skipIf(IPython is None, 'Package IPython required for testing')
   def test_svgRendering(self):
     df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))
     self.assertIn('image/png', str(df))
@@ -329,6 +328,7 @@ class TestWriteSDF(unittest.TestCase):
         s = f.read()
       if PY3:
         s = s.decode('utf-8')
+      s = s.replace(os.linesep, '\n')
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
     finally:
@@ -342,6 +342,7 @@ def getStreamIO(sdfString):
   else:  # pragma: nocover
     sio = StringIO() if sdfString is None else StringIO(sdfString)
   return sio
+
 
 def getTestFrame():
   rdBase.DisableLog('rdApp.error')

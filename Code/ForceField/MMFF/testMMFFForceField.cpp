@@ -374,11 +374,10 @@ int mmffValidationSuite(int argc, char *argv[]) {
         }
         rdkFStream << std::endl << std::endl;
         for (size_t ii = 0; ii < molVec.size(); ii += inc) {
-          if (*molTypeIt == "sdf") {
-            mol = molVec[ii];
-          } else {
-            mol = MolOps::addHs(*(molVec[ii]));
+          mol = molVec[ii];
+          if (*molTypeIt == "smi") {
             DGeomHelpers::EmbedMolecule(*mol);
+            MolOps::addHs((RWMol &)*mol, false, true);
           }
           MMFF::sanitizeMMFFMol((RWMol &)(*mol));
           if (mol->hasProp(common_properties::_Name)) {
@@ -402,6 +401,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
             rdkFStream << "\nTOTAL MMFF ENERGY              =" << std::right
                        << std::setw(16) << std::fixed << std::setprecision(4)
                        << field->calcEnergy() << "\n\n" << std::endl;
+            delete field;
           }
         }
         sdfWriter->close();

@@ -167,6 +167,15 @@ void testMMFFBuilder1() {
   TEST_ASSERT(field->contribs().size() == 3);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
+  // the neighbor matrix is an upper triangular matrix
+  // position indices are as follows:
+  //  0  1  2  3
+  //     4  5  6
+  //        7  8
+  //           9
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 1) == 4);
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 2, 1) == 5);
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 2) == 5);
   TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
               MMFF::Tools::RELATION_1_X);
   TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
