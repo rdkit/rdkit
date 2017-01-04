@@ -18,8 +18,7 @@ def fingerprinter(mol):
 class TestCase(unittest.TestCase):
 
   def test_SimilarityScreener(self):
-    mol = Chem.MolFromSmiles('C1OCCCC1')
-    probe = fingerprinter(mol)
+    probe = fingerprinter(Chem.MolFromSmiles('C1OCCCC1'))
 
     screener = SimilarityScreener.SimilarityScreener()
     self.assertEqual(screener.probe, None)
@@ -44,9 +43,9 @@ class TestCase(unittest.TestCase):
 
     screener = SimilarityScreener.TopNScreener(3, probe=probe, metric=metric,
                                                fingerprinter=fingerprinter, dataSource=suppl)
-    self.assertEqual(screener.topN, None)
+    self.assertIsNone(screener.topN)
     matches1 = [x for x in screener]
-    self.assertNotEqual(screener.topN, None)
+    self.assertIsNotNone(screener.topN)
 
     self.assertEqual(len(matches1), 3)
     matches2 = [x for x in screener]
@@ -58,16 +57,16 @@ class TestCase(unittest.TestCase):
     # Getting the length also triggers the execution of the screen
     screener = SimilarityScreener.TopNScreener(3, probe=probe, metric=metric,
                                                fingerprinter=fingerprinter, dataSource=suppl)
-    self.assertEqual(screener.topN, None)
+    self.assertIsNone(screener.topN)
     self.assertEqual(len(screener), 3)
-    self.assertNotEqual(screener.topN, None)
+    self.assertIsNotNone(screener.topN)
 
     # as does accessing elements by index
     screener = SimilarityScreener.TopNScreener(3, probe=probe, metric=metric,
                                                fingerprinter=fingerprinter, dataSource=suppl)
-    self.assertEqual(screener.topN, None)
+    self.assertIsNone(screener.topN)
     screener[1]
-    self.assertNotEqual(screener.topN, None)
+    self.assertIsNotNone(screener.topN)
 
   def test2_ThresholdScreener(self):
     smis = ['C1CCCCC1', 'C1OCCCC1', 'C1NCCCC1', 'c1ccccc1', 'C1C(C)CCCC1', 'C1C(C)C(C)CCC1']
