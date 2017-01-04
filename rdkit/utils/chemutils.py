@@ -10,7 +10,7 @@ import os
 import re
 
 from rdkit import RDConfig
-from six.moves import xrange
+from rdkit.six.moves import xrange
 
 if not RDConfig.usePgSQL:
   _atomDbName = os.path.join(RDConfig.RDDataDir, 'atomdb.gdb')
