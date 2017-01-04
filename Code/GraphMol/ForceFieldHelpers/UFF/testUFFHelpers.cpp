@@ -225,6 +225,15 @@ void testUFFBuilder1() {
   TEST_ASSERT(field->contribs().size() == 3);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
+  // the neighbor matrix is an upper triangular matrix
+  // position indices are as follows:
+  //  0  1  2  3
+  //     4  5  6
+  //        7  8
+  //           9
+  TEST_ASSERT(UFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 1) == 4);
+  TEST_ASSERT(UFF::Tools::twoBitCellPos(mol->getNumAtoms(), 2, 1) == 5);
+  TEST_ASSERT(UFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 2) == 5);
   TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat, 0) == UFF::Tools::RELATION_1_X);
   TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat, 1) == UFF::Tools::RELATION_1_2);
   TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat, 2) == UFF::Tools::RELATION_1_3);
