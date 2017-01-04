@@ -32,19 +32,10 @@ def load_tests(loader, tests, ignore):
   return tests
 
 
+@unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
 class TestMolKey(unittest.TestCase):
 
-  @unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
   def test_GetKeyForCTAB(self):
-    res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl', True))
-    self.assertEqual(res.mol_key, '1|L7676nfGsSIU33wkx//NCg==')
-    self.assertEqual(res.stereo_code, 'R_ONE')
-
-    res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl', True))
-    self.assertEqual(res.mol_key, '1|Aj38EIxf13RuPDQG2A0UMw==')
-    self.assertEqual(res.stereo_code, 'S_ABS')
-    self.assertEqual(res.error, 0)
-
     f = io.StringIO()
     with redirect_stderr(f):
       res = MolKey.GetKeyForCTAB('IncorrectCTAB')
@@ -52,7 +43,6 @@ class TestMolKey(unittest.TestCase):
     s = f.getvalue()
     self.assertIn('WARNING:', s)
 
-  @unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
   def test_CheckCTAB(self):
     self.assertRaises(MolKey.BadMoleculeException, MolKey.CheckCTAB, None)
     self.assertRaises(MolKey.BadMoleculeException, MolKey.CheckCTAB, '')
@@ -60,7 +50,7 @@ class TestMolKey(unittest.TestCase):
     ok, _ = MolKey.CheckCTAB('CCincorrect', isSmiles=True)
     self.assertEqual(ok, 1)
 
-    ok, ctab = MolKey.CheckCTAB('NO_STRUCTURE', isSmiles=True)
+    ok, _ = MolKey.CheckCTAB('NO_STRUCTURE', isSmiles=True)
     self.assertEqual(ok, MolKey.ERROR_DICT['NULL_MOL'])
 
     ok, ctab = MolKey.CheckCTAB('CC', isSmiles=True)
@@ -69,11 +59,9 @@ class TestMolKey(unittest.TestCase):
     self.assertEqual(ok, 0)
     self.assertEqual(ctab, ctab2)
 
-  @unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
   def test_GetInchiForCTAB(self):
     self.assertRaises(MolKey.BadMoleculeException, MolKey.GetInchiForCTAB, 'IncorrectCTAB')
 
-  @unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
   def test_ErrorBitsToText(self):
     errors = MolKey.ErrorBitsToText(3)
     self.assertIn('BAD_MOLECULE', errors)
@@ -83,7 +71,6 @@ class TestMolKey(unittest.TestCase):
       self.assertEqual(len(errors), 1)
       self.assertIn(k, errors)
 
-  @unittest.skipUnless(_testMolKey, 'Avalon tools and Inchi required')
   def test_get_chiral_identification_string(self):
     cases = [((0, 0), 'S_ACHIR'),  # No stereo centers
              ((0, 1), 'R_ONE'),  # One undefined stereo centers
