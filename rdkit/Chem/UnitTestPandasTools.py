@@ -9,9 +9,9 @@ import unittest
 
 import numpy
 
-from rdkit import RDConfig, rdBase, Chem
 from rdkit.Chem import PandasTools
 from rdkit.six import PY3, StringIO, BytesIO
+from rdkit import RDConfig, rdBase, Chem
 
 try:
   import IPython
