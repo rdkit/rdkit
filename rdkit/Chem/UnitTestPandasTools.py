@@ -43,15 +43,9 @@ class TestPandasTools(unittest.TestCase):
 
   def testDoctest(self):
     # We need to do it like this to ensure that default RDkit functionality is restored
-    suite = unittest.TestSuite()
-    suite.addTests(
-      doctest.DocTestSuite(PandasTools, optionflags=doctest.ELLIPSIS +
-                           doctest.NORMALIZE_WHITESPACE))
-    result = unittest.TestResult()
-    result = suite.run(result)
-    self.assertEqual(result.testsRun, 1)
-    self.assertEqual(len(result.errors), 0)
-    self.assertEqual(len(result.failures), 0)
+    failed, _ = doctest.testmod(PandasTools,
+                                optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
+    self.assertFalse(failed)
 
   def test_RestoreMonkeyPatch(self):
     sio = getStreamIO(methane + peroxide)

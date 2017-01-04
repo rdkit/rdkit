@@ -107,7 +107,7 @@ from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
-from rdkit.six.moves import cStringIO as StringIO  # @UnresolvedImport
+from rdkit.six.moves import cStringIO as StringIO
 
 try:
   import pandas as pd
@@ -214,10 +214,10 @@ def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
 try:
   from rdkit.Avalon import pyAvalonTools as pyAvalonTools
   # Calculate the Avalon fingerprint
-  _fingerprinter = lambda mol, isQuery: pyAvalonTools.GetAvalonFP(mol, isQuery=isQuery, bitFlags=pyAvalonTools.avalonSSSBits)
+  _fingerprinter = lambda x, y: pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
 except ImportError:
   # Calculate fingerprint using SMARTS patterns
-  _fingerprinter = lambda mol, isQuery: Chem.PatternFingerprint(mol, fpSize=2048)
+  _fingerprinter = lambda x, y: Chem.PatternFingerprint(x, fpSize=2048)
 
 
 def _molge(x, y):
@@ -373,7 +373,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
       import gzip
       if PY3:
         out = gzip.open(out, "wt")
-      else:  # pragma: nocover
+      else:
         out = gzip.open(out, "wb")
       close = out.close
 
@@ -523,15 +523,12 @@ def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=F
 
   Generic set to true results in SMILES of generic framework.
   '''
-
-  def genericScaffold(mol):
-    return MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(mol))
-
   if Generic:
-    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(genericScaffold(x[molCol])), axis=1)
+    func = lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
+      MurckoScaffold.GetScaffoldForMol(x[molCol])))
   else:
-    frame[MurckoCol] = frame.apply(
-      lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+    func = lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
+  frame[MurckoCol] = frame.apply(func, axis=1)
 
 
 def AlignMol(mol, scaffold):
