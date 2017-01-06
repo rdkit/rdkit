@@ -19,6 +19,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/bind.hpp>
 #include <Geometry/point.h>
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -26,24 +27,34 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
 namespace UFF {
 
-class ParamCollection *ParamCollection::ds_instance = 0;
+boost::scoped_ptr<ParamCollection> ParamCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag ParamCollection::ds_flag;
+#else
+boost::once_flag ParamCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultParamData;
 
 ParamCollection *ParamCollection::getParams(const std::string &paramData) {
-  if (ds_instance == 0) {
-    ds_instance = new ParamCollection(paramData);
-  } else if (paramData != "") {
-    delete ds_instance;
-    ds_instance = 0;
-    ds_instance = new ParamCollection(paramData);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, paramData));
+#else
+  static bool created = false;
+  if (!created || !paramData.empty()) {
+    created = true;
+    create(paramData);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-ParamCollection::ParamCollection(std::string paramData) {
-  if (paramData == "") paramData = defaultParamData;
-  std::istringstream inStream(paramData);
+void ParamCollection::create(const std::string &paramData) {
+  ds_instance.reset(new ParamCollection(paramData));
+}
+
+ParamCollection::ParamCollection(const std::string &paramData) {
+  std::istringstream inStream(paramData.empty() ? defaultParamData : paramData);
 
   std::string inLine = RDKit::getLine(inStream);
   while (!inStream.eof()) {

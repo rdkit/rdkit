@@ -21,6 +21,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/bind.hpp>
 #include <Geometry/point.h>
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -28,25 +29,36 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
 namespace MMFF {
 
-class MMFFAromCollection *MMFFAromCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFAromCollection> MMFFAromCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFAromCollection::ds_flag;
+#else
+boost::once_flag MMFFAromCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const boost::uint8_t defaultMMFFArom[];
 
 MMFFAromCollection *MMFFAromCollection::getMMFFArom(
     const boost::uint8_t *mmffArom) {
-  if (!ds_instance) {
-    ds_instance = new MMFFAromCollection(mmffArom);
-  } else if (mmffArom) {
-    delete ds_instance;
-    ds_instance = new MMFFAromCollection(mmffArom);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffArom));
+#else
+  static bool created = false;
+  if (!created || mmffArom) {
+    created = true;
+    create(mmffArom);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
+}
+
+void MMFFAromCollection::create(const boost::uint8_t *mmffArom) {
+  ds_instance.reset(new MMFFAromCollection(mmffArom));
 }
 
 MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
-  if (!mmffArom) {
+  if (!mmffArom)
     mmffArom = defaultMMFFArom;
-  }
   for (unsigned int i = 0; i < sizeof(mmffArom) / sizeof(mmffArom[0]); ++i) {
     d_params.push_back(mmffArom[i]);
   }
@@ -55,25 +67,34 @@ MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
 const boost::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
                                           66, 69, 76, 78, 79, 80, 81, 82};
 
-class MMFFDefCollection *MMFFDefCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFDefCollection> MMFFDefCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFDefCollection::ds_flag;
+#else
+boost::once_flag MMFFDefCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFDef;
 
 MMFFDefCollection *MMFFDefCollection::getMMFFDef(const std::string &mmffDef) {
-  if (!ds_instance) {
-    ds_instance = new MMFFDefCollection(mmffDef);
-  } else if (mmffDef != "") {
-    delete ds_instance;
-    ds_instance = new MMFFDefCollection(mmffDef);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffDef));
+#else
+  static bool created = false;
+  if (!created || !mmffDef.empty()) {
+    created = true;
+    create(mmffDef);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFDefCollection::MMFFDefCollection(std::string mmffDef) {
-  if (mmffDef == "") {
-    mmffDef = defaultMMFFDef;
-  }
-  std::istringstream inStream(mmffDef);
+void MMFFDefCollection::create(const std::string &mmffDef) {
+  ds_instance.reset(new MMFFDefCollection(mmffDef));
+}
+
+MMFFDefCollection::MMFFDefCollection(const std::string &mmffDef) {
+  std::istringstream inStream((mmffDef.empty() ? defaultMMFFDef : mmffDef));
   std::string inLine = RDKit::getLine(inStream);
   unsigned int oldAtomType = 0;
   unsigned int atomType;
@@ -449,26 +470,35 @@ const std::string defaultMMFFDef =
     "MG+2	99	99	99	99	99	DIPOSITIVE	"
     "MAGNESIUM	CATION\n";
 
-class MMFFPropCollection *MMFFPropCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFPropCollection> MMFFPropCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFPropCollection::ds_flag;
+#else
+boost::once_flag MMFFPropCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFProp;
 
 MMFFPropCollection *MMFFPropCollection::getMMFFProp(
     const std::string &mmffProp) {
-  if (!ds_instance) {
-    ds_instance = new MMFFPropCollection(mmffProp);
-  } else if (mmffProp != "") {
-    delete ds_instance;
-    ds_instance = new MMFFPropCollection(mmffProp);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffProp));
+#else
+  static bool created = false;
+  if (!created || !mmffProp.empty()) {
+    created = true;
+    create(mmffProp);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFPropCollection::MMFFPropCollection(std::string mmffProp) {
-  if (mmffProp == "") {
-    mmffProp = defaultMMFFProp;
-  }
-  std::istringstream inStream(mmffProp);
+void MMFFPropCollection::create(const std::string &mmffProp) {
+  ds_instance.reset(new MMFFPropCollection(mmffProp));
+}
+
+MMFFPropCollection::MMFFPropCollection(const std::string &mmffProp) {
+  std::istringstream inStream(mmffProp.empty() ? defaultMMFFProp : mmffProp);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -621,26 +651,35 @@ const std::string defaultMMFFProp =
     "98	29	0	0	0	0	0	0	0\n"
     "99	12	0	0	0	0	0	0	0\n";
 
-class MMFFPBCICollection *MMFFPBCICollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFPBCICollection> MMFFPBCICollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFPBCICollection::ds_flag;
+#else
+boost::once_flag MMFFPBCICollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFPBCI;
 
 MMFFPBCICollection *MMFFPBCICollection::getMMFFPBCI(
     const std::string &mmffPBCI) {
-  if (!ds_instance) {
-    ds_instance = new MMFFPBCICollection(mmffPBCI);
-  } else if (mmffPBCI != "") {
-    delete ds_instance;
-    ds_instance = new MMFFPBCICollection(mmffPBCI);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffPBCI));
+#else
+  static bool created = false;
+  if (!created || !mmffPBCI.empty()) {
+    created = true;
+    create(mmffPBCI);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFPBCICollection::MMFFPBCICollection(std::string mmffPBCI) {
-  if (mmffPBCI == "") {
-    mmffPBCI = defaultMMFFPBCI;
-  }
-  std::istringstream inStream(mmffPBCI);
+void MMFFPBCICollection::create(const std::string &mmffPBCI) {
+  ds_instance.reset(new MMFFPBCICollection(mmffPBCI));
+}
+
+MMFFPBCICollection::MMFFPBCICollection(const std::string &mmffPBCI) {
+  std::istringstream inStream(mmffPBCI.empty() ? defaultMMFFPBCI : mmffPBCI);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -780,25 +819,34 @@ const std::string defaultMMFFPBCI =
     "0	98	2.000	0.000	Ionic	charge\n"
     "0	99	2.000	0.000	Ionic	charge\n";
 
-class MMFFChgCollection *MMFFChgCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFChgCollection> MMFFChgCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFChgCollection::ds_flag;
+#else
+boost::once_flag MMFFChgCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFChg;
 
 MMFFChgCollection *MMFFChgCollection::getMMFFChg(const std::string &mmffChg) {
-  if (!ds_instance) {
-    ds_instance = new MMFFChgCollection(mmffChg);
-  } else if (mmffChg != "") {
-    delete ds_instance;
-    ds_instance = new MMFFChgCollection(mmffChg);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffChg));
+#else
+  static bool created = false;
+  if (!created || !mmffChg.empty()) {
+    created = true;
+    create(mmffChg);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFChgCollection::MMFFChgCollection(std::string mmffChg) {
-  if (mmffChg == "") {
-    mmffChg = defaultMMFFChg;
-  }
-  std::istringstream inStream(mmffChg);
+void MMFFChgCollection::create(const std::string &mmffChg) {
+  ds_instance.reset(new MMFFChgCollection(mmffChg));
+}
+
+MMFFChgCollection::MMFFChgCollection(const std::string &mmffChg) {
+  std::istringstream inStream(mmffChg.empty() ? defaultMMFFChg : mmffChg);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -1352,26 +1400,35 @@ const std::string defaultMMFFChg =
     "0	79	81	-0.0430	E94\n"
     "0	80	81	-0.4000	#C94\n";
 
-class MMFFBondCollection *MMFFBondCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFBondCollection> MMFFBondCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFBondCollection::ds_flag;
+#else
+boost::once_flag MMFFBondCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFBond;
 
 MMFFBondCollection *MMFFBondCollection::getMMFFBond(
     const std::string &mmffBond) {
-  if (!ds_instance) {
-    ds_instance = new MMFFBondCollection(mmffBond);
-  } else if (mmffBond != "") {
-    delete ds_instance;
-    ds_instance = new MMFFBondCollection(mmffBond);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffBond));
+#else
+  static bool created = false;
+  if (!created || !mmffBond.empty()) {
+    created = true;
+    create(mmffBond);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFBondCollection::MMFFBondCollection(std::string mmffBond) {
-  if (mmffBond == "") {
-    mmffBond = defaultMMFFBond;
-  }
-  std::istringstream inStream(mmffBond);
+void MMFFBondCollection::create(const std::string &mmffBond) {
+  ds_instance.reset(new MMFFBondCollection(mmffBond));
+}
+
+MMFFBondCollection::MMFFBondCollection(const std::string &mmffBond) {
+  std::istringstream inStream(mmffBond.empty() ? defaultMMFFBond : mmffBond);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -1923,26 +1980,35 @@ const std::string defaultMMFFBond =
     "0	79	81	4.305	1.356	E94\n"
     "0	80	81	8.237	1.335	C94\n";
 
-class MMFFBndkCollection *MMFFBndkCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFBndkCollection> MMFFBndkCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFBndkCollection::ds_flag;
+#else
+boost::once_flag MMFFBndkCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFBndk;
 
 MMFFBndkCollection *MMFFBndkCollection::getMMFFBndk(
     const std::string &mmffBndk) {
-  if (!ds_instance) {
-    ds_instance = new MMFFBndkCollection(mmffBndk);
-  } else if (mmffBndk != "") {
-    delete ds_instance;
-    ds_instance = new MMFFBndkCollection(mmffBndk);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffBndk));
+#else
+  static bool created = false;
+  if (!created || !mmffBndk.empty()) {
+    created = true;
+    create(mmffBndk);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFBndkCollection::MMFFBndkCollection(std::string mmffBndk) {
-  if (mmffBndk == "") {
-    mmffBndk = defaultMMFFBndk;
-  }
-  std::istringstream inStream(mmffBndk);
+void MMFFBndkCollection::create(const std::string &mmffBndk) {
+  ds_instance.reset(new MMFFBndkCollection(mmffBndk));
+}
+
+MMFFBndkCollection::MMFFBndkCollection(const std::string &mmffBndk) {
+  std::istringstream inStream(mmffBndk.empty() ? defaultMMFFBndk : mmffBndk);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -2048,29 +2114,41 @@ const std::string defaultMMFFBndk =
     "35	35	2.28	2.4	E94\n"
     "53	53	2.67	1.6	E94\n";
 
-class MMFFHerschbachLaurieCollection *
-    MMFFHerschbachLaurieCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFHerschbachLaurieCollection>
+    MMFFHerschbachLaurieCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFHerschbachLaurieCollection::ds_flag;
+#else
+boost::once_flag MMFFHerschbachLaurieCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFHerschbachLaurie;
 
 MMFFHerschbachLaurieCollection *
 MMFFHerschbachLaurieCollection::getMMFFHerschbachLaurie(
     const std::string &mmffHerschbachLaurie) {
-  if (!ds_instance) {
-    ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
-  } else if (mmffHerschbachLaurie != "") {
-    delete ds_instance;
-    ds_instance = new MMFFHerschbachLaurieCollection(mmffHerschbachLaurie);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffHerschbachLaurie));
+#else
+  static bool created = false;
+  if (!created || !mmffHerschbachLaurie.empty()) {
+    created = true;
+    create(mmffHerschbachLaurie);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
+}
+
+void MMFFHerschbachLaurieCollection::create(
+    const std::string &mmffHerschbachLaurie) {
+  ds_instance.reset(new MMFFHerschbachLaurieCollection(
+                    mmffHerschbachLaurie));
 }
 
 MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
-    std::string mmffHerschbachLaurie) {
-  if (mmffHerschbachLaurie == "") {
-    mmffHerschbachLaurie = defaultMMFFHerschbachLaurie;
-  }
-  std::istringstream inStream(mmffHerschbachLaurie);
+    const std::string &mmffHerschbachLaurie) {
+  std::istringstream inStream(mmffHerschbachLaurie.empty()
+    ? defaultMMFFHerschbachLaurie : mmffHerschbachLaurie);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -2139,28 +2217,40 @@ const std::string defaultMMFFHerschbachLaurie =
     "4	4	2.85	1.62	1.62\n"
     "4	5	2.76	1.25	1.51\n";
 
-class MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::ds_instance =
-    NULL;
+boost::scoped_ptr<MMFFCovRadPauEleCollection>
+    MMFFCovRadPauEleCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFCovRadPauEleCollection::ds_flag;
+#else
+boost::once_flag MMFFCovRadPauEleCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFCovRadPauEle;
 
 MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::getMMFFCovRadPauEle(
     const std::string &mmffCovRadPauEle) {
-  if (!ds_instance) {
-    ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
-  } else if (mmffCovRadPauEle != "") {
-    delete ds_instance;
-    ds_instance = new MMFFCovRadPauEleCollection(mmffCovRadPauEle);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffCovRadPauEle));
+#else
+  static bool created = false;
+  if (!created || !mmffCovRadPauEle.empty()) {
+    created = true;
+    create(mmffCovRadPauEle);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
+}
+
+void MMFFCovRadPauEleCollection::create(
+    const std::string &mmffCovRadPauEle) {
+  ds_instance.reset(new MMFFCovRadPauEleCollection(
+                    mmffCovRadPauEle));
 }
 
 MMFFCovRadPauEleCollection::MMFFCovRadPauEleCollection(
-    std::string mmffCovRadPauEle) {
-  if (mmffCovRadPauEle == "") {
-    mmffCovRadPauEle = defaultMMFFCovRadPauEle;
-  }
-  std::istringstream inStream(mmffCovRadPauEle);
+    const std::string &mmffCovRadPauEle) {
+  std::istringstream inStream(mmffCovRadPauEle.empty()
+      ? defaultMMFFCovRadPauEle : mmffCovRadPauEle);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -2211,30 +2301,43 @@ const std::string defaultMMFFCovRadPauEle =
     "35	1.15	2.74\n"
     "53	1.33	2.21\n";
 
-class MMFFAngleCollection *MMFFAngleCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFAngleCollection> MMFFAngleCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFAngleCollection::ds_flag;
+#else
+boost::once_flag MMFFAngleCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFAngleData[];
 
 MMFFAngleCollection *MMFFAngleCollection::getMMFFAngle(
     const std::string &mmffAngle) {
-  if (!ds_instance) {
-    ds_instance = new MMFFAngleCollection(mmffAngle);
-  } else if (mmffAngle != "") {
-    delete ds_instance;
-    ds_instance = new MMFFAngleCollection(mmffAngle);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffAngle));
+#else
+  static bool created = false;
+  if (!created || !mmffAngle.empty()) {
+    created = true;
+    create(mmffAngle);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle) {
-  if (mmffAngle == "") {
+void MMFFAngleCollection::create(const std::string &mmffAngle) {
+  ds_instance.reset(new MMFFAngleCollection(mmffAngle));
+}
+
+MMFFAngleCollection::MMFFAngleCollection(const std::string &mmffAngle) {
+  std::string mmffAngleRebuilt;
+  if (mmffAngle.empty()) {
     unsigned int i = 0;
     while (defaultMMFFAngleData[i] != "EOS") {
-      mmffAngle += defaultMMFFAngleData[i];
+      mmffAngleRebuilt += defaultMMFFAngleData[i];
       ++i;
     }
   }
-  std::istringstream inStream(mmffAngle);
+  std::istringstream inStream(mmffAngle.empty() ? mmffAngleRebuilt : mmffAngle);
 
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
@@ -4645,26 +4748,35 @@ const std::string defaultMMFFAngleData[] = {
     "0	64	82	65	1.281	112.955	E94\n",
     "EOS"};
 
-class MMFFStbnCollection *MMFFStbnCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFStbnCollection> MMFFStbnCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFStbnCollection::ds_flag;
+#else
+boost::once_flag MMFFStbnCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFStbn;
 
 MMFFStbnCollection *MMFFStbnCollection::getMMFFStbn(
     const std::string &mmffStbn) {
-  if (!ds_instance) {
-    ds_instance = new MMFFStbnCollection(mmffStbn);
-  } else if (mmffStbn != "") {
-    delete ds_instance;
-    ds_instance = new MMFFStbnCollection(mmffStbn);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffStbn));
+#else
+  static bool created = false;
+  if (!created || !mmffStbn.empty()) {
+    created = true;
+    create(mmffStbn);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFStbnCollection::MMFFStbnCollection(std::string mmffStbn) {
-  if (mmffStbn == "") {
-    mmffStbn = defaultMMFFStbn;
-  }
-  std::istringstream inStream(mmffStbn);
+void MMFFStbnCollection::create(const std::string &mmffStbn) {
+  ds_instance.reset(new MMFFStbnCollection(mmffStbn));
+}
+
+MMFFStbnCollection::MMFFStbnCollection(const std::string &mmffStbn) {
+  std::istringstream inStream(mmffStbn.empty() ? defaultMMFFStbn : mmffStbn);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -5008,26 +5120,35 @@ const std::string defaultMMFFStbn =
     "0	36	81	80	0.018	0.422	C94\n"
     "0	78	81	80	0.366	0.419	C94\n";
 
-class MMFFDfsbCollection *MMFFDfsbCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFDfsbCollection> MMFFDfsbCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFDfsbCollection::ds_flag;
+#else
+boost::once_flag MMFFDfsbCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFDfsb;
 
 MMFFDfsbCollection *MMFFDfsbCollection::getMMFFDfsb(
     const std::string &mmffDfsb) {
-  if (!ds_instance) {
-    ds_instance = new MMFFDfsbCollection(mmffDfsb);
-  } else if (mmffDfsb != "") {
-    delete ds_instance;
-    ds_instance = new MMFFDfsbCollection(mmffDfsb);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffDfsb));
+#else
+  static bool created = false;
+  if (!created || !mmffDfsb.empty()) {
+    created = true;
+    create(mmffDfsb);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFDfsbCollection::MMFFDfsbCollection(std::string mmffDfsb) {
-  if (mmffDfsb == "") {
-    mmffDfsb = defaultMMFFDfsb;
-  }
-  std::istringstream inStream(mmffDfsb);
+void MMFFDfsbCollection::create(const std::string &mmffDfsb) {
+  ds_instance.reset(new MMFFDfsbCollection(mmffDfsb));
+}
+
+MMFFDfsbCollection::MMFFDfsbCollection(const std::string &mmffDfsb) {
+  std::istringstream inStream(mmffDfsb.empty() ? defaultMMFFDfsb : mmffDfsb);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -5091,7 +5212,12 @@ const std::string defaultMMFFDfsb =
     "3	2	4	0.25	0.25\n"
     "4	2	4	0.25	0.25\n";
 
-class MMFFOopCollection *MMFFOopCollection::ds_instance[2] = {NULL, NULL};
+boost::scoped_ptr<MMFFOopCollection> MMFFOopCollection::ds_instance[2];
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFOopCollection::ds_flag;
+#else
+boost::once_flag MMFFOopCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFOop;
 extern const std::string defaultMMFFsOop;
@@ -5099,20 +5225,26 @@ extern const std::string defaultMMFFsOop;
 MMFFOopCollection *MMFFOopCollection::getMMFFOop(const bool isMMFFs,
                                                  const std::string &mmffOop) {
   unsigned int i = (isMMFFs ? 1 : 0);
-  if (!ds_instance[i]) {
-    ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
-  } else if (mmffOop != "") {
-    delete ds_instance[i];
-    ds_instance[i] = new MMFFOopCollection(isMMFFs, mmffOop);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, isMMFFs, mmffOop));
+#else
+  static bool created = false;
+  if (!created || !mmffOop.empty()) {
+    created = true;
+    create(isMMFFs, mmffOop);
   }
-  return ds_instance[i];
+#endif
+  return ds_instance[i].get();
 }
 
-MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, std::string mmffOop) {
-  if (mmffOop == "") {
-    mmffOop = (isMMFFs ? defaultMMFFsOop : defaultMMFFOop);
-  }
-  std::istringstream inStream(mmffOop);
+void MMFFOopCollection::create(const bool isMMFFs, const std::string &mmffOop) {
+  unsigned int i = (isMMFFs ? 1 : 0);
+  ds_instance[i].reset(new MMFFOopCollection(isMMFFs, mmffOop));
+}
+
+MMFFOopCollection::MMFFOopCollection(const bool isMMFFs, const std::string &mmffOop) {
+  std::istringstream inStream(mmffOop.empty()
+    ? (isMMFFs ? defaultMMFFsOop : defaultMMFFOop) : mmffOop);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -5417,7 +5549,12 @@ const std::string defaultMMFFsOop =
     "36	81	78	80	0.016	C94\n"
     "0	82	0	0	0.000	*-82-*-*	E94	DEF\n";
 
-class MMFFTorCollection *MMFFTorCollection::ds_instance[2] = {NULL, NULL};
+boost::scoped_ptr<MMFFTorCollection> MMFFTorCollection::ds_instance[2];
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFTorCollection::ds_flag;
+#else
+boost::once_flag MMFFTorCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFTor;
 extern const std::string defaultMMFFsTor;
@@ -5425,20 +5562,26 @@ extern const std::string defaultMMFFsTor;
 MMFFTorCollection *MMFFTorCollection::getMMFFTor(const bool isMMFFs,
                                                  const std::string &mmffTor) {
   unsigned int i = (isMMFFs ? 1 : 0);
-  if (!ds_instance[i]) {
-    ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
-  } else if (mmffTor != "") {
-    delete ds_instance[i];
-    ds_instance[i] = new MMFFTorCollection(isMMFFs, mmffTor);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, isMMFFs, mmffTor));
+#else
+  static bool created = false;
+  if (!created || !mmffTor.empty()) {
+    created = true;
+    create(isMMFFs, mmffTor);
   }
-  return ds_instance[i];
+#endif
+  return ds_instance[i].get();
 }
 
-MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, std::string mmffTor) {
-  if (mmffTor == "") {
-    mmffTor = (isMMFFs ? defaultMMFFsTor : defaultMMFFTor);
-  }
-  std::istringstream inStream(mmffTor);
+void MMFFTorCollection::create(const bool isMMFFs, const std::string &mmffTor) {
+  unsigned int i = (isMMFFs ? 1 : 0);
+  ds_instance[i].reset(new MMFFTorCollection(isMMFFs, mmffTor));
+}
+
+MMFFTorCollection::MMFFTorCollection(const bool isMMFFs, const std::string &mmffTor) {
+  std::istringstream inStream(mmffTor.empty()
+    ? (isMMFFs ? defaultMMFFsTor : defaultMMFFTor) : mmffTor);
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {
     if (inLine[0] != '*') {
@@ -8429,25 +8572,34 @@ const std::string defaultMMFFsTor =
     "0	0	80	81	0	0.000	4.000	0.000	C94	"
     "0:*-80-81-*	Def\n";
 
-class MMFFVdWCollection *MMFFVdWCollection::ds_instance = NULL;
+boost::scoped_ptr<MMFFVdWCollection> MMFFVdWCollection::ds_instance;
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+boost::once_flag MMFFVdWCollection::ds_flag;
+#else
+boost::once_flag MMFFVdWCollection::ds_flag = BOOST_ONCE_INIT;
+#endif
 
 extern const std::string defaultMMFFVdW;
 
 MMFFVdWCollection *MMFFVdWCollection::getMMFFVdW(const std::string &mmffVdW) {
-  if (!ds_instance) {
-    ds_instance = new MMFFVdWCollection(mmffVdW);
-  } else if (mmffVdW != "") {
-    delete ds_instance;
-    ds_instance = new MMFFVdWCollection(mmffVdW);
+#ifdef RDK_THREADSAFE_SSS
+  boost::call_once(ds_flag, boost::bind(&create, mmffVdW));
+#else
+  static bool created = false;
+  if (!created || !mmffVdW.empty()) {
+    created = true;
+    create(mmffVdW);
   }
-  return ds_instance;
+#endif
+  return ds_instance.get();
 }
 
-MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {
-  if (mmffVdW == "") {
-    mmffVdW = defaultMMFFVdW;
-  }
-  std::istringstream inStream(mmffVdW);
+void MMFFVdWCollection::create(const std::string &mmffVdW) {
+  ds_instance.reset(new MMFFVdWCollection(mmffVdW));
+}
+
+MMFFVdWCollection::MMFFVdWCollection(const std::string &mmffVdW) {
+  std::istringstream inStream(mmffVdW.empty() ? defaultMMFFVdW : mmffVdW);
   bool firstLine = true;
   std::string inLine = RDKit::getLine(inStream);
   while (!(inStream.eof())) {

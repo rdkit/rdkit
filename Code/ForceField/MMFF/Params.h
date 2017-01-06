@@ -20,6 +20,9 @@
 #include <map>
 #include <iostream>
 #include <boost/cstdint.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/thread/once.hpp>
+#include <boost/noncopyable.hpp>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -153,7 +156,7 @@ class MMFFVdWRijstarEps {
   double epsilon;
 };
 
-class MMFFAromCollection {
+class MMFFAromCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFAromCollection
   /*!
@@ -188,12 +191,14 @@ class MMFFAromCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFAromCollection(const boost::uint8_t mmffArom[]);
-  static class MMFFAromCollection *ds_instance;  //!< the singleton
+  MMFFAromCollection(const boost::uint8_t *mmffArom);
+  static void create(const boost::uint8_t *mmffArom);
+  static boost::scoped_ptr<MMFFAromCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
   std::vector<boost::uint8_t> d_params;          //!< the aromatic type vector
 };
 
-class MMFFDefCollection {
+class MMFFDefCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFDefCollection
   /*!
@@ -233,8 +238,10 @@ class MMFFDefCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFDefCollection(std::string mmffDef);
-  static class MMFFDefCollection *ds_instance;  //!< the singleton
+  MMFFDefCollection(const std::string &mmffDef);
+  static void create(const std::string &mmffDef);
+  static boost::scoped_ptr<MMFFDefCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFDef> d_params;  //!< the parameter map
 #else
@@ -242,7 +249,7 @@ class MMFFDefCollection {
 #endif
 };
 
-class MMFFPropCollection {
+class MMFFPropCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFPropCollection
   /*!
@@ -285,8 +292,10 @@ class MMFFPropCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFPropCollection(std::string mmffProp);
-  static class MMFFPropCollection *ds_instance;  //!< the singleton
+  MMFFPropCollection(const std::string &mmffProp);
+  static void create(const std::string &mmffProp);
+  static boost::scoped_ptr<MMFFPropCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFProp> d_params;  //!< the parameter map
 #else
@@ -295,7 +304,7 @@ class MMFFPropCollection {
 #endif
 };
 
-class MMFFPBCICollection {
+class MMFFPBCICollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFPBCICollection
   /*!
@@ -334,8 +343,10 @@ class MMFFPBCICollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFPBCICollection(std::string mmffPBCI);
-  static class MMFFPBCICollection *ds_instance;  //!< the singleton
+  MMFFPBCICollection(const std::string &mmffPBCI);
+  static void create(const std::string &mmffPBCI);
+  static boost::scoped_ptr<MMFFPBCICollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFPBCI> d_params;  //!< the parameter map
 #else
@@ -343,7 +354,7 @@ class MMFFPBCICollection {
 #endif
 };
 
-class MMFFChgCollection {
+class MMFFChgCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFChgCollection
   /*!
@@ -418,8 +429,10 @@ class MMFFChgCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFChgCollection(std::string mmffChg);
-  static class MMFFChgCollection *ds_instance;  //!< the singleton
+  MMFFChgCollection(const std::string &mmffChg);
+  static void create(const std::string &mmffChg);
+  static boost::scoped_ptr<MMFFChgCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 //!< the parameter 3D-map
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
@@ -434,7 +447,7 @@ class MMFFChgCollection {
 #endif
 };
 
-class MMFFBondCollection {
+class MMFFBondCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFBondCollection
   /*!
@@ -513,8 +526,10 @@ class MMFFBondCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFBondCollection(std::string mmffBond);
-  static class MMFFBondCollection *ds_instance;  //!< the singleton
+  MMFFBondCollection(const std::string &mmffBond);
+  static void create(const std::string &mmffBond);
+  static boost::scoped_ptr<MMFFBondCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<
       const unsigned int,
@@ -528,7 +543,7 @@ class MMFFBondCollection {
 #endif
 };
 
-class MMFFBndkCollection {
+class MMFFBndkCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFBndkCollection
   /*!
@@ -592,8 +607,10 @@ class MMFFBndkCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFBndkCollection(std::string mmffBndk);
-  static class MMFFBndkCollection *ds_instance;  //!< the singleton
+  MMFFBndkCollection(const std::string &mmffBndk);
+  static void create(const std::string &mmffBond);
+  static boost::scoped_ptr<MMFFBndkCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, std::map<const unsigned int, MMFFBond> >
       d_params;  //!< the parameter 2D-map
@@ -604,7 +621,7 @@ class MMFFBndkCollection {
 #endif
 };
 
-class MMFFHerschbachLaurieCollection {
+class MMFFHerschbachLaurieCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFHerschbachLaurieCollection
   /*!
@@ -671,8 +688,10 @@ class MMFFHerschbachLaurieCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFHerschbachLaurieCollection(std::string mmffHerschbachLaurie);
-  static class MMFFHerschbachLaurieCollection *ds_instance;  //!< the singleton
+  MMFFHerschbachLaurieCollection(const std::string &mmffHerschbachLaurie);
+  static void create(const std::string &mmffHerschbachLaurie);
+  static boost::scoped_ptr<MMFFHerschbachLaurieCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int, MMFFHerschbachLaurie> >
@@ -684,7 +703,7 @@ class MMFFHerschbachLaurieCollection {
 #endif
 };
 
-class MMFFCovRadPauEleCollection {
+class MMFFCovRadPauEleCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFCovRadPauEleCollection
   /*!
@@ -731,8 +750,10 @@ class MMFFCovRadPauEleCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFCovRadPauEleCollection(std::string mmffCovRadPauEle);
-  static class MMFFCovRadPauEleCollection *ds_instance;  //!< the singleton
+  MMFFCovRadPauEleCollection(const std::string &mmffCovRadPauEle);
+  static void create(const std::string &mmffCovRadPauEle);
+  static boost::scoped_ptr<MMFFCovRadPauEleCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFCovRadPauEle>
       d_params;  //!< the parameter map
@@ -742,7 +763,7 @@ class MMFFCovRadPauEleCollection {
 #endif
 };
 
-class MMFFAngleCollection {
+class MMFFAngleCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFAngleCollection
   /*!
@@ -858,8 +879,10 @@ class MMFFAngleCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFAngleCollection(std::string mmffAngle);
-  static class MMFFAngleCollection *ds_instance;  //!< the singleton
+  MMFFAngleCollection(const std::string &mmffAngle);
+  static void create(const std::string &mmffAngle);
+  static boost::scoped_ptr<MMFFAngleCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -876,7 +899,7 @@ class MMFFAngleCollection {
 #endif
 };
 
-class MMFFStbnCollection {
+class MMFFStbnCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFStbnCollection
   /*!
@@ -977,8 +1000,10 @@ class MMFFStbnCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFStbnCollection(std::string mmffStbn);
-  static class MMFFStbnCollection *ds_instance;  //!< the singleton
+  MMFFStbnCollection(const std::string &mmffStbn);
+  static void create(const std::string &mmffStbn);
+  static boost::scoped_ptr<MMFFStbnCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -995,7 +1020,7 @@ class MMFFStbnCollection {
 #endif
 };
 
-class MMFFDfsbCollection {
+class MMFFDfsbCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFDfsbCollection
   /*!
@@ -1055,15 +1080,17 @@ class MMFFDfsbCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFDfsbCollection(std::string mmffDfsb);
-  static class MMFFDfsbCollection *ds_instance;  //!< the singleton
+  MMFFDfsbCollection(const std::string &mmffDfsb);
+  static void create(const std::string &mmffDfsb);
+  static boost::scoped_ptr<MMFFDfsbCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
   std::map<
       const unsigned int,
       std::map<const unsigned int, std::map<const unsigned int, MMFFStbn> > >
       d_params;  //!< the parameter 3D-map
 };
 
-class MMFFOopCollection {
+class MMFFOopCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFOopCollection
   /*!
@@ -1175,8 +1202,10 @@ class MMFFOopCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFOopCollection(const bool isMMFFs, std::string mmffOop);
-  static class MMFFOopCollection *ds_instance[2];  //!< the singleton
+  MMFFOopCollection(const bool isMMFFs, const std::string &mmffOop);
+  static void create(const bool isMMFFs, const std::string &mmffOop);
+  static boost::scoped_ptr<MMFFOopCollection> ds_instance[2];  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1192,7 +1221,7 @@ class MMFFOopCollection {
 #endif
 };
 
-class MMFFTorCollection {
+class MMFFTorCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFTorCollection
   /*!
@@ -1360,8 +1389,10 @@ class MMFFTorCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFTorCollection(const bool isMMFFs, std::string mmffTor);
-  static class MMFFTorCollection *ds_instance[2];  //!< the singleton
+  MMFFTorCollection(const bool isMMFFs, const std::string &mmffTor);
+  static void create(const bool isMMFFs, const std::string &mmffTor);
+  static boost::scoped_ptr<MMFFTorCollection> ds_instance[2];  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int,
            std::map<const unsigned int,
@@ -1381,7 +1412,7 @@ class MMFFTorCollection {
 #endif
 };
 
-class MMFFVdWCollection {
+class MMFFVdWCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton MMFFVdWCollection
   /*!
@@ -1429,8 +1460,10 @@ class MMFFVdWCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  MMFFVdWCollection(std::string mmffVdW);
-  static class MMFFVdWCollection *ds_instance;  //!< the singleton
+  MMFFVdWCollection(const std::string &mmffVdW);
+  static void create(const std::string &mmffVdW);
+  static boost::scoped_ptr<MMFFVdWCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else

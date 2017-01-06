@@ -13,6 +13,9 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <boost/scoped_ptr.hpp>
+#include <boost/thread/once.hpp>
+#include <boost/noncopyable.hpp>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -108,7 +111,7 @@ const double amideBondOrder =
   format (see Params.cpp for an example).
 
 */
-class ParamCollection {
+class ParamCollection : private boost::noncopyable {
  public:
   //! gets a pointer to the singleton ParamCollection
   /*!
@@ -143,8 +146,10 @@ class ParamCollection {
 
  private:
   //! to force this to be a singleton, the constructor must be private
-  ParamCollection(std::string paramData);
-  static class ParamCollection *ds_instance;     //!< the singleton
+  ParamCollection(const std::string &paramData);
+  static void create(const std::string &paramData);
+  static boost::scoped_ptr<ParamCollection> ds_instance;  //!< the singleton
+  static boost::once_flag ds_flag;
   std::map<std::string, AtomicParams> d_params;  //!< the parameter map
 };
 }
