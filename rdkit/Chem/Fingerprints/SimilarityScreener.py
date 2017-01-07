@@ -46,8 +46,7 @@ class SimilarityScreener(object):
     self.probe = probe
 
   def Reset(self):
-    """ used to reset screeners that behave as iterators
-    """
+    """ used to reset screeners that behave as iterators """
     pass
 
   # FIX: add setters/getters for attributes
