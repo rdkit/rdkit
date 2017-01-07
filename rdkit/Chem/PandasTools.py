@@ -104,10 +104,10 @@ from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
+from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
 from rdkit.six.moves import cStringIO as StringIO
-
 
 try:
   import pandas as pd
@@ -119,11 +119,12 @@ try:
       v = pd.__version__
     except AttributeError:
       v = pd.version.version
-    v = re.split(r'[^0-9,.]',v)[0].split('.')
+    v = re.split(r'[^0-9,.]', v)[0].split('.')
     return tuple(int(vi) for vi in v)
 
   if _getPandasVersion() < (0, 10):
-    print("Pandas version {0} not compatible with tests".format(_getPandasVersion()), file=sys.stderr)
+    print("Pandas version {0} not compatible with tests".format(_getPandasVersion()),
+          file=sys.stderr)
     pd = None
   else:
     if 'display.width' in pd.core.config._registered_options:
@@ -212,9 +213,10 @@ def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
 
 try:
   from rdkit.Avalon import pyAvalonTools as pyAvalonTools
-  _fingerprinter = lambda x, y: pyAvalonTools.GetAvalonFP(x, isQuery=y,
-                                                          bitFlags=pyAvalonTools.avalonSSSBits)
+  # Calculate the Avalon fingerprint
+  _fingerprinter = lambda x, y: pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
 except ImportError:
+  # Calculate fingerprint using SMARTS patterns
   _fingerprinter = lambda x, y: Chem.PatternFingerprint(x, fpSize=2048)
 
 
@@ -241,9 +243,6 @@ def _molge(x, y):
     return False
 
 
-Chem.Mol.__ge__ = _molge  # lambda x,y: x.HasSubstructMatch(y)
-
-
 def PrintAsBase64PNGString(x, renderer=None):
   '''returns the molecules as base64 encoded PNG image
   '''
@@ -260,8 +259,6 @@ def PrintAsBase64PNGString(x, renderer=None):
 
 def PrintDefaultMolRep(x):
   return str(x.__repr__())
-
-Chem.Mol.__str__ = PrintAsBase64PNGString
 
 
 def _MolPlusFingerprint(m):
@@ -527,11 +524,11 @@ def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=F
   Generic set to true results in SMILES of generic framework.
   '''
   if Generic:
-    frame[MurckoCol] = frame.apply(lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
-      MurckoScaffold.GetScaffoldForMol(x[molCol]))), axis=1)
+    func = lambda x: Chem.MolToSmiles(MurckoScaffold.MakeScaffoldGeneric(
+      MurckoScaffold.GetScaffoldForMol(x[molCol])))
   else:
-    frame[MurckoCol] = frame.apply(
-      lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol])), axis=1)
+    func = lambda x: Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
+  frame[MurckoCol] = frame.apply(func, axis=1)
 
 
 def AlignMol(mol, scaffold):
@@ -549,6 +546,29 @@ def AlignToScaffold(frame, molCol='ROMol', scaffoldCol='Murcko_SMILES'):
   Aligns molecules in molCol to scaffolds in scaffoldCol
   '''
   frame[molCol] = frame.apply(lambda x: AlignMol(x[molCol], x[scaffoldCol]), axis=1)
+
+
+# ==========================================================================================
+# Monkey patching RDkit functionality
+def InstallPandasTools():
+  """ Monkey patch a few RDkit methods of Chem.Mol """
+  global _originalSettings
+  if len(_originalSettings) == 0:
+    _originalSettings['Chem.Mol.__ge__'] = Chem.Mol.__ge__
+    _originalSettings['Chem.Mol.__str__'] = Chem.Mol.__str__
+  rdchem.Mol.__ge__ = _molge
+  rdchem.Mol.__str__ = PrintAsBase64PNGString
+
+
+def UninstallPandasTools():
+  """ Monkey patch a few RDkit methods of Chem.Mol """
+  global _originalSettings
+  Chem.Mol.__ge__ = _originalSettings['Chem.Mol.__ge__']
+  Chem.Mol.__str__ = _originalSettings['Chem.Mol.__str__']
+
+
+_originalSettings = {}
+InstallPandasTools()
 
 
 # ------------------------------------
