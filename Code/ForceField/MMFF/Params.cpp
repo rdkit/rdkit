@@ -19,10 +19,12 @@
 #include <iostream>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
+#include <Geometry/point.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/bind.hpp>
-#include <Geometry/point.h>
+#include <RDGeneral/BoostEndInclude.h>
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 

@@ -13,9 +13,11 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/once.hpp>
 #include <boost/noncopyable.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -12,8 +12,10 @@
 #ifndef __RD_UFFINVERSION_H__
 #define __RD_UFFINVERSION_H__
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
 #include <Geometry/point.h>
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/tuple/tuple.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace ForceFields {
 namespace UFF {

@@ -13,7 +13,9 @@
 #define __RD_MMFFTORSIONANGLE_H__
 
 #include <ForceField/Contrib.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/tuple/tuple.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDGeom {
 class Point3D;
