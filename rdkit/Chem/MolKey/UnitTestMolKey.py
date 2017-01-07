@@ -1,6 +1,3 @@
-# $Id$
-#
-#  Copyright (C) 2006  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
