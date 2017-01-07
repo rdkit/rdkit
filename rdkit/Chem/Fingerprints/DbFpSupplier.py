@@ -11,16 +11,10 @@
 #DOC
 
 """
-import sys
-
 from rdkit import DataStructs
 from rdkit import six
 from rdkit.VLib.Node import VLibNode
 from rdkit.six.moves import cPickle
-
-
-def warning(msg, dest=sys.stderr):
-  dest.write(msg)
 
 
 class DbFpSupplier(VLibNode):
@@ -85,7 +79,6 @@ class DbFpSupplier(VLibNode):
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
-  >>> import os.path
   >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
@@ -182,16 +175,16 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
     return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
