@@ -1,6 +1,6 @@
 tests = [
-  #   ("python", "SDFToCSV.py --test", {}),
-  ]
+  ("python", "UnitTestSDFToCSV.py", {}),
+]
 
 longTests = []
 
