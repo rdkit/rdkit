@@ -1,11 +1,4 @@
-"""
-  Run unit tests and doctests for MurckoScaffolds
-"""
-
-tests = [
-  ("python", "UnitTestMurckoScaffold.py", {}),
-  ("python", "MurckoScaffold.py", {}),
-]
+tests = [("python", "UnitTestUtils.py", {}), ]
 
 longTests = []
 

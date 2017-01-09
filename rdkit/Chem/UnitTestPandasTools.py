@@ -1,26 +1,25 @@
 from __future__ import print_function
 
+import doctest
 import gzip
 import os
 import shutil
 import tempfile
 import unittest
-import doctest
 
 import numpy
 
+from rdkit.Chem import PandasTools
 from rdkit.six import PY3, StringIO, BytesIO
 from rdkit import RDConfig, rdBase, Chem
 
-from rdkit.Chem import PandasTools
 try:
   import IPython
 except ImportError:
   IPython = None
 
-
 # We make sure that we don't mess up the Mol methods for the rest of the tests
-# PandasTools.UninstallPandasTools()
+PandasTools.UninstallPandasTools()
 
 
 @unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')
@@ -32,7 +31,7 @@ class TestPandasTools(unittest.TestCase):
     super(TestPandasTools, self).__init__(methodName=methodName)
 
   def setUp(self):
-    # PandasTools.InstallPandasTools()
+    PandasTools.InstallPandasTools()
     PandasTools.ChangeMoleculeRendering(renderer='PNG')
     self._molRepresentation = PandasTools.molRepresentation
     self._highlightSubstructures = PandasTools.highlightSubstructures
@@ -40,37 +39,37 @@ class TestPandasTools(unittest.TestCase):
   def tearDown(self):
     PandasTools.molRepresentation = self._molRepresentation
     PandasTools.highlightSubstructures = self._highlightSubstructures
-    # PandasTools.UninstallPandasTools()
+    PandasTools.UninstallPandasTools()
 
-  def test_Doctest(self):
+  def testDoctest(self):
     # We need to do it like this to ensure that default RDkit functionality is restored
-    failed, _ = doctest.testmod(PandasTools, optionflags=doctest.ELLIPSIS +
-                                doctest.NORMALIZE_WHITESPACE)
+    failed, _ = doctest.testmod(PandasTools,
+                                optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
     self.assertFalse(failed)
 
-#   def test_RestoreMonkeyPatch(self):
-#     sio = getStreamIO(methane + peroxide)
-#     df = PandasTools.LoadSDF(sio)
-#     html = df.to_html()
-#     self.assertIn('data:image/png;base64', html)
-#     self.assertIn('table', html)
-#
-#     PandasTools.UninstallPandasTools()
-#     html = df.to_html()
-#     self.assertNotIn('data:image/png;base64', html)
-#     self.assertIn('rdkit.Chem.rdchem.Mol', html)
-#     self.assertIn('table', html)
-#
-#     PandasTools.InstallPandasTools()
-#     html = df.to_html()
-#     self.assertIn('data:image/png;base64', html)
-#     self.assertIn('table', html)
-#
-#     PandasTools.UninstallPandasTools()
-#     html = df.to_html()
-#     self.assertNotIn('data:image/png;base64', html)
-#     self.assertIn('rdkit.Chem.rdchem.Mol', html)
-#     self.assertIn('table', html)
+  def test_RestoreMonkeyPatch(self):
+    sio = getStreamIO(methane + peroxide)
+    df = PandasTools.LoadSDF(sio)
+    html = df.to_html()
+    self.assertIn('data:image/png;base64', html)
+    self.assertIn('table', html)
+
+    PandasTools.UninstallPandasTools()
+    html = df.to_html()
+    self.assertNotIn('data:image/png;base64', html)
+    self.assertIn('rdkit.Chem.rdchem.Mol', html)
+    self.assertIn('table', html)
+
+    PandasTools.InstallPandasTools()
+    html = df.to_html()
+    self.assertIn('data:image/png;base64', html)
+    self.assertIn('table', html)
+
+    PandasTools.UninstallPandasTools()
+    html = df.to_html()
+    self.assertNotIn('data:image/png;base64', html)
+    self.assertIn('rdkit.Chem.rdchem.Mol', html)
+    self.assertIn('table', html)
 
   def test_FrameToGridImage(self):
     # This test only makes sure that we get no exception. To see the created images, set
@@ -149,6 +148,8 @@ class TestPandasTools(unittest.TestCase):
     self.assertIn('ROMol', str(df))
 
   def test_molge(self):
+    # We want to have the default RDkit functionality for testing
+    PandasTools.UninstallPandasTools()
     molge = PandasTools._molge
     mol1 = Chem.MolFromSmiles('CCC')
     mol2 = Chem.MolFromSmiles('CC')
