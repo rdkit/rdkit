@@ -4765,6 +4765,24 @@ void testGithub1049() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1251() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1251: MolFromMolBlock sanitizing when it should not be"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName = rdbase + "github1251.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 39);
+    TEST_ASSERT(m->getNumBonds() == 44);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4848,11 +4866,12 @@ void RunTests() {
   testGithub1023();
   testGithub1034();
   testGithub1049();
-#endif
   testPDBFile();
   testSequences();
 
-  // testSequenceReaders();
+// testSequenceReaders();
+#endif
+  testGithub1251();
 }
 
 // must be in German Locale for test...
