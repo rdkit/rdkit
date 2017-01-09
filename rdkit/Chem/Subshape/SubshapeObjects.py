@@ -1,10 +1,7 @@
-# $Id$
 #
-# Copyright (C) 2007 by Greg Landrum 
+# Copyright (C) 2007 by Greg Landrum
 #  All rights reserved
 #
-from rdkit import Chem
-from rdkit import Geometry
 
 
 class SkeletonPoint(object):
@@ -20,7 +17,7 @@ class SkeletonPoint(object):
     self.location = kwargs.get('location', None)
 
   def _initMemberData(self):
-    self.shapeMoments = (0.0, ) * 3
+    self.shapeMoments = (0.0,) * 3
     self.shapeDirs = [None] * 3
     self.molFeatures = []
     self.featmapFeatures = []
@@ -68,8 +65,9 @@ def DisplaySubshapeSkeleton(viewer, shape, name, color=(1, 0, 1), colorByOrder=F
 
 
 def DisplaySubshape(viewer, shape, name, showSkelPts=True, color=(1, 0, 1)):
+  import os
+  import tempfile
   from rdkit import Geometry
-  import os, tempfile
   fName = tempfile.mktemp('.grd')
   Geometry.WriteGridToFile(shape.grid, fName)
   viewer.server.loadSurface(fName, name, '', 2.5)
