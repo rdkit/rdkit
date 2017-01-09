@@ -232,8 +232,8 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
   # now start removing them
   if verbose:
     print('Compute centroids:', len(skelPts))
-  gridBoxVolume = shapeGrid.GetSpacing() ** 3
-  maxVol = 4.0 * math.pi / 3.0 * winRad ** 3 * maxGridVal / gridBoxVolume
+  gridBoxVolume = shapeGrid.GetSpacing()**3
+  maxVol = 4.0 * math.pi / 3.0 * winRad**3 * maxGridVal / gridBoxVolume
   i = 0
   while i < len(skelPts):
     pt = skelPts[i]

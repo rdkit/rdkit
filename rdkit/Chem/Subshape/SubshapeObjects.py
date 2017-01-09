@@ -17,7 +17,7 @@ class SkeletonPoint(object):
     self.location = kwargs.get('location', None)
 
   def _initMemberData(self):
-    self.shapeMoments = (0.0,) * 3
+    self.shapeMoments = (0.0, ) * 3
     self.shapeDirs = [None] * 3
     self.molFeatures = []
     self.featmapFeatures = []
