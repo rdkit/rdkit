@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):  # pragma: nocover
     return factory
 
   def test_NotImplemented(self):
-    assert LazyGenerator is None, 'Review LazyGenerator unit tests'
+    self.assertIsNone(LazyGenerator, 'Review LazyGenerator unit tests')
 
   @unittest.skipIf(LazyGenerator is None, 'LazyGenerator implementation incomplete')
   def test1_simple(self):

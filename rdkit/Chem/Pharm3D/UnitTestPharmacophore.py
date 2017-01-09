@@ -54,7 +54,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(pcophore.getFeature(1))
     self.assertTrue(pcophore.getFeature(2))
     self.assertRaises(IndexError, pcophore.getFeature, 3)
-
+    print()
+    print(str(pcophore))
     self.assertIn('Aromatic', str(pcophore))
 
   def test2BoundSetting(self):

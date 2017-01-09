@@ -7,11 +7,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.TestRunner import redirect_stdout
-from rdkit.six import StringIO
-"""unit testing code for the signatures
-
-"""
 import os.path
 import unittest
 
@@ -19,6 +14,8 @@ from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem.Pharm2D import Generate, SigFactory, Matcher, Gobbi_Pharm2D
+from rdkit.TestRunner import redirect_stdout
+from rdkit.six import StringIO
 
 
 class TestCase(unittest.TestCase):

@@ -130,8 +130,6 @@ class TestCase(unittest.TestCase):
     m2 = next(suppl)
     sig1 = Generate.Gen2DFingerprint(m1, self.factory)
     sig2 = Generate.Gen2DFingerprint(m2, self.factory)
-    #     ob1 = set(sig1.GetOnBits())
-    #     ob2 = set(sig2.GetOnBits())
     self.assertEqual(sig1, sig2)
 
   def testOrderBug2(self):

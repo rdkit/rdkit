@@ -115,17 +115,17 @@ class Pharmacophore:
   def __str__(self):
     res = ' ' * 14
     for i, iFeat in enumerate(self._feats):
-      res += '%12s ' % iFeat.GetFamily()
+      res += '%13s ' % iFeat.GetFamily()
     res += '\n'
     for i, iFeat in enumerate(self._feats):
       res += '%13s ' % iFeat.GetFamily()
       for j, _ in enumerate(self._feats):
         if j < i:
-          res += '%12.3f ' % self.getLowerBound(i, j)
+          res += '%13.3f ' % self.getLowerBound(i, j)
         elif j > i:
-          res += '%12.3f ' % self.getUpperBound(i, j)
+          res += '%13.3f ' % self.getUpperBound(i, j)
         else:
-          res += '% 12.3f ' % 0.0
+          res += '% 13.3f ' % 0.0
       res += '\n'
     return res
 
