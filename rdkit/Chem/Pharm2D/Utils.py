@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #
@@ -19,7 +18,6 @@
 """
 from __future__ import print_function, division
 
-from collections import defaultdict, Counter
 import itertools
 
 #
