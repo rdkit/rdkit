@@ -47,7 +47,7 @@ class TestCase(unittest.TestCase):
 
     results = DbResultSet(self.curs, self.conn, cmd)
     supp = ForwardDbMolSupplier(results)
-    self.assertEqual(supp.GetColumnNames(), ('ID',))
+    self.assertEqual(supp.GetColumnNames(), ('ID', ))
 
     for smiles, mol in zip(expected, supp):
       self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmiles(smiles[0])), Chem.MolToSmiles(mol))
@@ -66,7 +66,7 @@ class TestCase(unittest.TestCase):
     results = RandomAccessDbResultSet(self.curs, self.conn, cmd)
     supp = RandomAccessDbMolSupplier(results)
     self.assertEqual(len(supp), len(expected))
-    self.assertEqual(supp.GetColumnNames(), ('ID',))
+    self.assertEqual(supp.GetColumnNames(), ('ID', ))
     for smiles, mol in zip(expected, supp):
       self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmiles(smiles[0])), Chem.MolToSmiles(mol))
       self.assertEqual(smiles[1], mol.GetProp('ID'))
