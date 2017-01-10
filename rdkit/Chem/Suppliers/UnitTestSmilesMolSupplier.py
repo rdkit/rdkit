@@ -8,11 +8,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-"""unit testing code for the Smiles file handling stuff
-
 """
-import unittest, sys, os
-from rdkit import RDConfig
+unit testing code for the Smiles file handling stuff
+"""
+import unittest
+
 from rdkit import Chem
 from rdkit.six import next
 
@@ -101,5 +101,5 @@ class TestCase(unittest.TestCase):
     self.assertTrue(supp[3])
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
