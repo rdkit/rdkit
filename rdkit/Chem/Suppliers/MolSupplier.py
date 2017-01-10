@@ -39,3 +39,5 @@ class MolSupplier(object):
 
     """
     pass
+
+  __next__ = next  # PY3

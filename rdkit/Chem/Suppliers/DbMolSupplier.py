@@ -46,7 +46,7 @@ class DbMolSupplier(MolSupplier):
       self.nameCol = self._colNames.index(nameCol)
     except ValueError:
       self.nameCol = -1
-    for name in molColumnFormats.keys():
+    for name in molColumnFormats:
       name = name.upper()
       try:
         idx = self._colNames.index(name)
