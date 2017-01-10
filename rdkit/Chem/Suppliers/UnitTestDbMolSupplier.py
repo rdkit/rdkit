@@ -1,27 +1,16 @@
-# $Id$
-#
-#  Copyright (C) 2003-2006  greg Landrum and Rational Discovery LLC
-#
-#   @@ All Rights Reserved @@
-#  This file is part of the RDKit.
-#  The contents are covered by the terms of the BSD license
-#  which is included in the file license.txt, found at the root
-#  of the RDKit source tree.
-#
-import random
 """unit testing code for the DbResultSet object
 
 """
 
+import random
 import unittest
-
-from six import next
 
 from rdkit import RDConfig, Chem
 from rdkit.Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier, RandomAccessDbMolSupplier
 from rdkit.Chem.Suppliers.MolSupplier import MolSupplier
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
+from rdkit.six import next
 
 
 class TestCase(unittest.TestCase):
@@ -47,7 +36,7 @@ class TestCase(unittest.TestCase):
 
     results = DbResultSet(self.curs, self.conn, cmd)
     supp = ForwardDbMolSupplier(results)
-    self.assertEqual(supp.GetColumnNames(), ('ID', ))
+    self.assertEqual(supp.GetColumnNames(), ('ID',))
 
     for smiles, mol in zip(expected, supp):
       self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmiles(smiles[0])), Chem.MolToSmiles(mol))
@@ -66,7 +55,7 @@ class TestCase(unittest.TestCase):
     results = RandomAccessDbResultSet(self.curs, self.conn, cmd)
     supp = RandomAccessDbMolSupplier(results)
     self.assertEqual(len(supp), len(expected))
-    self.assertEqual(supp.GetColumnNames(), ('ID', ))
+    self.assertEqual(supp.GetColumnNames(), ('ID',))
     for smiles, mol in zip(expected, supp):
       self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmiles(smiles[0])), Chem.MolToSmiles(mol))
       self.assertEqual(smiles[1], mol.GetProp('ID'))
