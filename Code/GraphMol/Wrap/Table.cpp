@@ -45,6 +45,8 @@ std::string periodicTableClassDoc =
 \n\
     - GetNOuterElecs (number of valence electrons)\n\
 \n\
+    - GetMostCommonIsotope\n\
+\n\
   When it makes sense, these can be queried using either an atomic number (integer)\n\
   or an atomic symbol (string)\n\
 \n";
