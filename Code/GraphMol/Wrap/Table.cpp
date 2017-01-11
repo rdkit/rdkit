@@ -89,7 +89,10 @@ struct table_wrapper {
                                    PeriodicTable::getNouterElecs)
         .def("GetNOuterElecs",
              (int (PeriodicTable::*)(const std::string &) const) &
-                 PeriodicTable::getNouterElecs);
+                 PeriodicTable::getNouterElecs)
+        .def("GetMostCommonIsotope",
+             (int (PeriodicTable::*)(const std::string &) const) &
+                PeriodicTable::getMostCommonIsotope);
 
     python::def(
         "GetPeriodicTable", GetTable,
