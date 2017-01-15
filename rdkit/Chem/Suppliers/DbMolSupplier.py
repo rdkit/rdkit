@@ -11,7 +11,6 @@
 Supplies a class for working with molecules from databases
 """
 import sys
-import traceback
 
 from rdkit import Chem
 from rdkit.Chem.Suppliers.MolSupplier import MolSupplier
@@ -78,6 +77,7 @@ class DbMolSupplier(MolSupplier):
       elif self.molFmt == 'PKL':
         newM = Chem.Mol(str(molD))
     except Exception:
+      import traceback
       traceback.print_exc()
       newM = None
     else:
@@ -85,6 +85,7 @@ class DbMolSupplier(MolSupplier):
         try:
           newM = self.transformFunc(newM, data)
         except Exception:
+          import traceback
           traceback.print_exc()
           newM = None
       if newM:
