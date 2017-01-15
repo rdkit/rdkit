@@ -140,8 +140,8 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
     yy += w * (loc.x * loc.x + loc.z * loc.z);
     zz += w * (loc.y * loc.y + loc.x * loc.x);
     xy -= w * loc.x * loc.y;
-    xz += w * loc.x * loc.z;
-    yz += w * loc.z * loc.y;
+    xz -= w * loc.x * loc.z;
+    yz -= w * loc.z * loc.y;
   }
 }
 }
