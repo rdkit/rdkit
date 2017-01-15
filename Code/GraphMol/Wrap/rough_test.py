@@ -120,6 +120,15 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tuple(tbl.GetValenceList("S")) == (2, 4, 6))
     self.assertTrue(tbl.GetNOuterElecs(6) == 4)
     self.assertTrue(tbl.GetNOuterElecs("C") == 4)
+    self.assertTrue(tbl.GetMostCommonIsotope(6) == 12)
+    self.assertTrue(tbl.GetMostCommonIsotope('C') == 12)
+    self.assertTrue(tbl.GetMostCommonIsotopeMass(6) == 12.0)
+    self.assertTrue(tbl.GetMostCommonIsotopeMass('C') == 12.0)
+    self.assertTrue(tbl.GetAbundanceForIsotope(6, 12) == 98.93)
+    self.assertTrue(tbl.GetAbundanceForIsotope('C', 12) == 98.93)
+    self.assertTrue(feq(tbl.GetRb0(6), 0.77))
+    self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
+    self.assertTrue(tbl.GetElementSymbol(6) == 'C')
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -3900,3 +3909,4 @@ if __name__ == '__main__':
     runner.run(suite)
   else:
     unittest.main()
+
