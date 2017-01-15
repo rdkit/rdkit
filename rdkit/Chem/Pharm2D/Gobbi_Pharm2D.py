@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #
@@ -12,9 +11,8 @@
   Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
 
 """
-from rdkit import Chem
-from rdkit.Chem.Pharm2D.SigFactory import SigFactory
 from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem.Pharm2D.SigFactory import SigFactory
 
 fdef = """
 DefineFeature Hydrophobic [$([C;H2,H1](!=*)[C;H2,H1][C;H2,H1][$([C;H1,H2,H3]);!$(C=*)]),$(C([C;H2,H3])([C;H2,H3])[C;H2,H3])]

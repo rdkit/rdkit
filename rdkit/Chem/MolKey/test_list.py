@@ -1,8 +1,6 @@
 try:
-  from rdkit.Chem.MolKey import MolKey
   tests = [
-    ("python", "InchiInfo.py", {}),
-    ("python", "MolKey.py", {}),
+    ("python", "UnitTestMolKey.py", {}),
   ]
 except ImportError:
   pass

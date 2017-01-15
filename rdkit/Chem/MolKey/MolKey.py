@@ -31,18 +31,23 @@
 # Created by Greg Landrum based on code from Thomas Mueller
 # August 2012
 #
-#pylint: disable=C0111,W0311
 try:
   from rdkit.Avalon import pyAvalonTools
 except ImportError:
   raise ImportError("This code requires the RDKit to be built with AvalonTools support")
 
-from rdkit.Chem.MolKey import InchiInfo
-from rdkit import RDConfig
-from rdkit import Chem
+import base64
 from collections import namedtuple
+import hashlib
 import logging
-import os, re, uuid, base64, hashlib, tempfile
+import os
+import re
+import tempfile
+import uuid
+
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.Chem.MolKey import InchiInfo
 
 
 class MolIdentifierException(Exception):
@@ -67,7 +72,8 @@ RDKIT_CONVERSION_ERROR = ERROR_DICT['RDKIT_CONVERSION_ERROR']
 INCHI_READWRITE_ERROR = ERROR_DICT['INCHI_READWRITE_ERROR']
 NULL_MOL = ERROR_DICT['NULL_MOL']
 
-BAD_SET = pyAvalonTools.StruChkResult.bad_set | INCHI_COMPUTATION_ERROR | RDKIT_CONVERSION_ERROR | INCHI_READWRITE_ERROR | NULL_MOL
+BAD_SET = (pyAvalonTools.StruChkResult.bad_set | INCHI_COMPUTATION_ERROR | RDKIT_CONVERSION_ERROR |
+           INCHI_READWRITE_ERROR | NULL_MOL)
 
 GET_STEREO_RE = re.compile(r'^InChI=1S(.*?)/(t.*?)/m\d/s1(.*$)')
 NULL_SMILES_RE = re.compile(r'^\s*$|^\s*NO_STRUCTURE\s*$', re.IGNORECASE)
@@ -244,7 +250,7 @@ def GetInchiForCTAB(ctab):
   ctab_str = ctab
   (strucheck_err, fixed_mol) = CheckCTAB(ctab_str, False)
   if strucheck_err & BAD_SET:
-    return (strucheck_err, None, fixed_mol)
+    return InchiResult(strucheck_err, None, fixed_mol)
 
   conversion_err = 0
   try:
@@ -323,8 +329,8 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
     information """
   key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
   if key_string:
-    return "{0}|{1}".format(MOL_KEY_VERSION, base64.b64encode(
-      hashlib.md5(key_string.encode('UTF-8')).digest()).decode())  #pylint: disable=E1101
+    return "{0}|{1}".format(
+      MOL_KEY_VERSION, base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode())
   else:
     return None
 
@@ -351,11 +357,7 @@ def _get_chiral_identification_string(n_def, n_udf):
 
 def ErrorBitsToText(err):
   " returns a list of error bit descriptions for the error code provided "
-  error_text_list = []
-  for err_dict_key in ERROR_DICT:
-    if (err & ERROR_DICT[err_dict_key]) > 0:
-      error_text_list.append(err_dict_key)
-  return error_text_list
+  return [k for k, v in ERROR_DICT.items() if (err & v) > 0]
 
 
 MolKeyResult = namedtuple(
@@ -410,7 +412,8 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   try:
     err, inchi, fixed_mol = GetInchiForCTAB(ctab)
   except BadMoleculeException:
-    logger.warn('Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab))
+    msg = u'Corrupt molecule substituting no-struct: --->\n{0}\n<----'.format(ctab)
+    logger.warn(msg)
     err = NULL_MOL
     key = _identify(err, '', '', None, None)
     return MolKeyResult(key, err, '', '', None, None)
@@ -431,7 +434,7 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   if not (err & BAD_SET):
     (n_stereo, n_undef_stereo, is_meso,
      dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
-    if stereo_category == None or stereo_category == 'DEFAULT':  # compute if not set
+    if stereo_category is None or stereo_category == 'DEFAULT':  # compute if not set
       stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo, n_undef_stereo)
   else:
     raise NotImplementedError(
@@ -440,16 +443,16 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

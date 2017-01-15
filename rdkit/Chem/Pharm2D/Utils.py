@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #
@@ -18,11 +17,12 @@
 
 """
 from __future__ import print_function, division
-import numpy
+
+import itertools
 
 #
 #  number of points in a scaffold -> sequence of distances (p1,p2) in
-#   the scaffold   
+#   the scaffold
 #
 nPointDistDict = {
   2: ((0, 1), ),
@@ -166,7 +166,7 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
      - idx: used in the recursion
 
      - startAt: used in the recursion
-    
+
   **Returns**
 
      an integer
@@ -252,17 +252,17 @@ def GetAllCombinations(choices, noDups=1, which=0):
     - which: used in recursion
 
   **Returns**
-    
+
     a list of lists
 
   >>> GetAllCombinations([(0,),(1,),(2,)])
   [[0, 1, 2]]
   >>> GetAllCombinations([(0,),(1,3),(2,)])
   [[0, 1, 2], [0, 3, 2]]
-    
+
   >>> GetAllCombinations([(0,1),(1,3),(2,)])
   [[0, 1, 2], [0, 3, 2], [1, 3, 2]]
-    
+
   """
   if which >= len(choices):
     res = []
@@ -283,6 +283,7 @@ def GetUniqueCombinations(choices, classes, which=0):
   of the elements of _choices_.
 
   """
+  #   print(choices, classes)
   assert len(choices) == len(classes)
   if which >= len(choices):
     res = []
@@ -305,6 +306,22 @@ def GetUniqueCombinations(choices, classes, which=0):
   return res
 
 
+def GetUniqueCombinations_new(choices, classes, which=0):
+  """  Does the combinatorial explosion of the possible combinations
+  of the elements of _choices_.
+
+  """
+  #   print(choices, classes)
+  assert len(choices) == len(classes)
+  combos = set()
+  for choice in itertools.product(*choices):
+    # If a choice occurs in more than one of the fields, we ignore this case
+    if len(set(choice)) != len(choice):
+      continue
+    combos.add(tuple(sorted((cls, ch) for cls, ch in zip(classes, choice))))
+  return [list(combo) for combo in sorted(combos)]
+
+
 def UniquifyCombinations(combos):
   """ uniquifies the combinations in the argument
 
@@ -317,14 +334,12 @@ def UniquifyCombinations(combos):
       - a list of tuples containing the unique combos
 
   """
-  print('>>> u:', combos)
   resD = {}
   for combo in combos:
     k = combo[:]
     k.sort()
     resD[tuple(k)] = tuple(combo)
-  print('    >>> u:', resD.values())
-  return resD.values()
+  return list(resD.values())
 
 
 def GetPossibleScaffolds(nPts, bins, useTriangleInequality=True):
@@ -347,7 +362,7 @@ def GetPossibleScaffolds(nPts, bins, useTriangleInequality=True):
 
 
 def OrderTriangle(featIndices, dists):
-  """ 
+  """
     put the distances for a triangle into canonical order
 
     It's easy if the features are all different:
@@ -365,7 +380,7 @@ def OrderTriangle(featIndices, dists):
     ([0, 0, 0], [3, 2, 1])
     >>> OrderTriangle([0,0,0],[3,2,1])
     ([0, 0, 0], [3, 2, 1])
-    
+
     >>> OrderTriangle([0,0,1],[3,2,1])
     ([0, 0, 1], [3, 2, 1])
     >>> OrderTriangle([0,0,1],[1,3,2])
@@ -374,7 +389,7 @@ def OrderTriangle(featIndices, dists):
     ([0, 0, 1], [1, 3, 2])
     >>> OrderTriangle([0,0,1],[1,3,2])
     ([0, 0, 1], [1, 3, 2])
-    
+
   """
   if len(featIndices) != 3:
     raise ValueError('bad indices')
@@ -428,7 +443,7 @@ def OrderTriangle(featIndices, dists):
       else:
         ireorder = (2, 1, 0)
         dreorder = (2, 1, 0)
-    else:  #featIndices[1]==featIndices[2]:
+    else:  # featIndices[1]==featIndices[2]:
       if dists[0] > dists[1]:
         ireorder = (0, 1, 2)
         dreorder = (0, 1, 2)
@@ -440,16 +455,16 @@ def OrderTriangle(featIndices, dists):
   return featIndices, dists
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
