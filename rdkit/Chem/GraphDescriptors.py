@@ -133,7 +133,7 @@ def _pyKappa1(mol):
   alpha = HallKierAlpha(mol)
   denom = P1 + alpha
   if denom:
-    kappa = (A + alpha) * (A + alpha - 1) ** 2 / denom ** 2
+    kappa = (A + alpha) * (A + alpha - 1)**2 / denom**2
   else:
     kappa = 0.0
   return kappa
@@ -149,9 +149,9 @@ def _pyKappa2(mol):
   P2 = len(Chem.FindAllPathsOfLengthN(mol, 2))
   A = mol.GetNumHeavyAtoms()
   alpha = HallKierAlpha(mol)
-  denom = (P2 + alpha) ** 2
+  denom = (P2 + alpha)**2
   if denom:
-    kappa = (A + alpha - 1) * (A + alpha - 2) ** 2 / denom
+    kappa = (A + alpha - 1) * (A + alpha - 2)**2 / denom
   else:
     kappa = 0
   return kappa
@@ -167,12 +167,12 @@ def _pyKappa3(mol):
   P3 = len(Chem.FindAllPathsOfLengthN(mol, 3))
   A = mol.GetNumHeavyAtoms()
   alpha = HallKierAlpha(mol)
-  denom = (P3 + alpha) ** 2
+  denom = (P3 + alpha)**2
   if denom:
     if A % 2 == 1:
-      kappa = (A + alpha - 1) * (A + alpha - 3) ** 2 / denom
+      kappa = (A + alpha - 1) * (A + alpha - 3)**2 / denom
     else:
-      kappa = (A + alpha - 2) * (A + alpha - 3) ** 2 / denom
+      kappa = (A + alpha - 2) * (A + alpha - 3)**2 / denom
   else:
     kappa = 0
   return kappa

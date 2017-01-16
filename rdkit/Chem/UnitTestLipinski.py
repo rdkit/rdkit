@@ -21,7 +21,6 @@ from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Chem import Lipinski, rdMolDescriptors, Crippen
 
-
 NonStrict = "NUM_ROTATABLEBONDS_O"
 Strict = "NUM_ROTATABLEBONDS"
 
