@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
@@ -8,13 +7,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" Supplies a class for working with molecules from databases
-#DOC 
-
 """
+Supplies a class for working with molecules from databases
+"""
+import sys
+
 from rdkit import Chem
 from rdkit.Chem.Suppliers.MolSupplier import MolSupplier
-import sys
 
 
 def warning(msg, dest=sys.stderr):
@@ -25,7 +24,7 @@ class DbMolSupplier(MolSupplier):
   """
     new molecules come back with all additional fields from the
     database set in a "_fieldsFromDb" data member
-  
+
   """
 
   def __init__(self, dbResults, molColumnFormats={'SMILES': 'SMI',
@@ -46,7 +45,7 @@ class DbMolSupplier(MolSupplier):
       self.nameCol = self._colNames.index(nameCol)
     except ValueError:
       self.nameCol = -1
-    for name in molColumnFormats.keys():
+    for name in molColumnFormats:
       name = name.upper()
       try:
         idx = self._colNames.index(name)
@@ -105,7 +104,7 @@ class ForwardDbMolSupplier(DbMolSupplier):
 
     new molecules come back with all additional fields from the
     database set in a "_fieldsFromDb" data member
-  
+
   """
 
   def __init__(self, dbResults, **kwargs):
@@ -121,7 +120,7 @@ class ForwardDbMolSupplier(DbMolSupplier):
     self._dataIter = iter(self._data)
 
   def NextMol(self):
-    """ 
+    """
 
       NOTE: this has side effects
 

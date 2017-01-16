@@ -47,7 +47,6 @@ Here's the general flow of things:
 from __future__ import print_function
 
 from math import *  # @UnusedWildImport
-import traceback
 
 from rdkit import RDConfig
 
@@ -336,6 +335,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
     evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:  # pragma: nocover
     if __DEBUG:
+      import traceback
       print('Sub Failure!')
       traceback.print_exc()
       print(evalTarget)
@@ -348,6 +348,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
     v = eval(evalTarget)
   except Exception:  # pragma: nocover
     if __DEBUG:
+      import traceback
       outF = open(RDConfig.RDCodeDir + '/ml/descriptors/log.txt', 'a+')
       outF.write('#------------------------------\n')
       outF.write('formula: %s\n' % repr(formula))
