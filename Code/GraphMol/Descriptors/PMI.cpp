@@ -56,7 +56,49 @@ bool getMoments(const ROMol& mol, int confId, bool useAtomicMasses, double& pm1,
     pm1 = moments(0);
     pm2 = moments(1);
     pm3 = moments(2);
-    // std::cerr<<"   moments: "<<pm1<<" "<<pm2<<" "<<pm3<<std::endl;
+    mol.setProp(pn1, pm1, true);
+    mol.setProp(pn2, pm2, true);
+    mol.setProp(pn3, pm3, true);
+  }
+  return res;
+}
+bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
+                            double& pm1, double& pm2, double& pm3) {
+  PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
+  const char* pn1 = useAtomicMasses ? "_PMI1_mass_cov" : "_PMI1_cov";
+  const char* pn2 = useAtomicMasses ? "_PMI2_mass_cov" : "_PMI2_cov";
+  const char* pn3 = useAtomicMasses ? "_PMI3_mass_cov" : "_PMI3_cov";
+
+  if (mol.hasProp(pn1) && mol.hasProp(pn2) && mol.hasProp(pn3)) {
+    mol.getProp(pn1, pm1);
+    mol.getProp(pn2, pm2);
+    mol.getProp(pn3, pm3);
+    return true;
+  }
+
+  const Conformer& conf = mol.getConformer(confId);
+
+  Eigen::Matrix3d axes;
+  Eigen::Vector3d moments;
+  bool res;
+  bool ignoreHs = false;
+  if (useAtomicMasses) {
+    std::vector<double> weights;
+    weights.resize(mol.getNumAtoms());
+    for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
+         ++cai) {
+      weights[(*cai)->getIdx()] = (*cai)->getMass();
+    }
+    res = MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
+        conf, axes, moments, ignoreHs, false, &weights);
+  } else {
+    res = MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
+        conf, axes, moments, ignoreHs);
+  }
+  if (res) {
+    pm1 = moments(0);
+    pm2 = moments(1);
+    pm3 = moments(2);
     mol.setProp(pn1, pm1, true);
     mol.setProp(pn2, pm2, true);
     mol.setProp(pn3, pm3, true);
@@ -117,27 +159,11 @@ double PMI3(const ROMol& mol, int confId, bool useAtomicMasses) {
 double radiusOfGyration(const ROMol& mol, int confId, bool useAtomicMasses) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
-  if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
+  if (!getMomentsFromGyration(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
-  double denom;
-  if (useAtomicMasses) {
-    denom = 0.0;
-    for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-         ++cai) {
-      denom += (*cai)->getMass();
-    }
-  } else {
-    denom = mol.getNumAtoms();
-  }
-  if (denom < 1e-8) return 0.0;
-  if (pm1 < 1e-4) {
-    // planar
-    return sqrt(sqrt(pm2 * pm3) / denom);
-  } else {
-    return sqrt(2 * M_PI * pow(pm1 * pm2 * pm3, 1. / 3) / denom);
-  }
+  return sqrt(pm1 + pm2 + pm3);
 }
 
 double inertialShapeFactor(const ROMol& mol, int confId, bool useAtomicMasses) {
@@ -168,10 +194,11 @@ double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses) {
     return sqrt(pm3 * pm3 - pm1 * pm1) / pm3;
   }
 }
+
 double asphericity(const ROMol& mol, int confId, bool useAtomicMasses) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
-  if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
+  if (!getMomentsFromGyration(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
@@ -179,15 +206,17 @@ double asphericity(const ROMol& mol, int confId, bool useAtomicMasses) {
     // no coordinates
     return 0.0;
   } else {
-    return 0.5 * (pow(pm3 - pm2, 2) + pow(pm3 - pm1, 2) + pow(pm2 - pm1, 2)) /
-           (pm1 * pm1 + pm2 * pm2 + pm3 * pm3);
+    double denom = pm1 + pm2 + pm3;
+
+    return 0.5 * (pow(pm1 - pm2, 2) + pow(pm1 - pm3, 2) + pow(pm2 - pm3, 2)) /
+           (denom * denom);
   }
 }
 double spherocityIndex(const ROMol& mol, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   bool useAtomicMasses = false;
   double pm1, pm2, pm3;
-  if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
+  if (!getMomentsFromGyration(mol, confId, useAtomicMasses, pm1, pm2, pm3)) {
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }

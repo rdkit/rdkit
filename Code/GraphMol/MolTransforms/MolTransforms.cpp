@@ -76,19 +76,17 @@ void computeCovarianceTerms(const Conformer &conf,
     }
     RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
     loc -= center;
+    double w = 1.0;
     if (weights) {
-      double w = (*weights)[(*cai)->getIdx()];
-      wSum += w;
-      loc *= w;
-    } else {
-      wSum += 1.0;
+      w = (*weights)[(*cai)->getIdx()];
     }
-    xx += loc.x * loc.x;
-    xy += loc.x * loc.y;
-    xz += loc.x * loc.z;
-    yy += loc.y * loc.y;
-    yz += loc.y * loc.z;
-    zz += loc.z * loc.z;
+    wSum += w;
+    xx += w * loc.x * loc.x;
+    xy += w * loc.x * loc.y;
+    xz += w * loc.x * loc.z;
+    yy += w * loc.y * loc.y;
+    yz += w * loc.y * loc.z;
+    zz += w * loc.z * loc.z;
   }
   if (normalize) {
     xx /= wSum;
@@ -182,6 +180,59 @@ bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
   double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
   computeInertiaTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
                       ignoreHs, weights);
+
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
+  // std::cerr<<"  matrix: "<<mat<<std::endl;
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+  if (eigensolver.info() != Eigen::Success) {
+    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
+                          << std::endl;
+    return false;
+  }
+
+  axes = eigensolver.eigenvectors();
+  moments = eigensolver.eigenvalues();
+  if (!weights) {
+    conf.getOwningMol().setProp(axesPropName, axes, true);
+    conf.getOwningMol().setProp(momentsPropName, moments, true);
+  }
+  return true;
+}
+bool computePrincipalAxesAndMomentsFromGyrationMatrix(
+    const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments, bool ignoreHs, bool force,
+    const std::vector<double> *weights) {
+  PRECONDITION((!weights || weights->size() >= conf.getNumAtoms()),
+               "bad weights vector");
+  const char *axesPropName =
+      ignoreHs ? "_principalAxes_noH_cov" : "_principalAxes_cov";
+  const char *momentsPropName =
+      ignoreHs ? "_principalMoments_noH_cov" : "_principalMoments_cov";
+  if (!weights && !force && conf.getOwningMol().hasProp(axesPropName) &&
+      conf.getOwningMol().hasProp(momentsPropName)) {
+    conf.getOwningMol().getProp(axesPropName, axes);
+    conf.getOwningMol().getProp(momentsPropName, moments);
+    return true;
+  }
+  const ROMol &mol = conf.getOwningMol();
+  RDGeom::Point3D origin(0, 0, 0);
+  double wSum = 0.0;
+  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    double w = 1.0;
+    if (weights) {
+      w = (*weights)[i];
+    }
+    wSum += w;
+    origin += conf.getAtomPos(i) * w;
+  }
+  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
+  origin /= wSum;
+
+  double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
+  computeCovarianceTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
+                         true, ignoreHs, weights);
 
   Eigen::Matrix3d mat;
   mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;

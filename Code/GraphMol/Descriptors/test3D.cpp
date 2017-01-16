@@ -330,54 +330,72 @@ void testNPREdges() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test3DVals() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    3D descriptors." << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_1.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::radiusOfGyration(*m);
+    TEST_ASSERT(fabs(val - 1.511) < 1e-2);
+    val = RDKit::Descriptors::eccentricity(*m);
+    TEST_ASSERT(fabs(val - 0.866) < 1e-2);
+    val = RDKit::Descriptors::asphericity(*m);
+    TEST_ASSERT(fabs(val - 0.25) < 1e-2);
+    val = RDKit::Descriptors::spherocityIndex(*m);
+    TEST_ASSERT(fabs(val) < 1e-2);
+
+    delete m;
+  }
+  {  // a rod (dimethyl acetylene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::radiusOfGyration(*m);
+    TEST_ASSERT(fabs(val - 1.686) < 1e-2);
+    val = RDKit::Descriptors::eccentricity(*m);
+    TEST_ASSERT(fabs(val - 1.0) < 1e-2);
+    val = RDKit::Descriptors::asphericity(*m);
+    TEST_ASSERT(fabs(val - 0.875) < 1e-2);
+    val = RDKit::Descriptors::spherocityIndex(*m);
+    // nothing really precise to say here
+    TEST_ASSERT((0 < val) && (val < 0.25));
+
+    delete m;
+  }
+  {  // adamantane
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_3.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    double val;
+
+    val = RDKit::Descriptors::radiusOfGyration(*m);
+    TEST_ASSERT(fabs(val - 1.827) < 1e-2);
+    val = RDKit::Descriptors::eccentricity(*m);
+    TEST_ASSERT(fabs(val) < 1e-2);
+    val = RDKit::Descriptors::asphericity(*m);
+    TEST_ASSERT(fabs(val) < 1e-2);
+    val = RDKit::Descriptors::spherocityIndex(*m);
+    TEST_ASSERT(fabs(val - 1) < 1e-2);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void test3DEdges() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    3D descriptor edge cases." << std::endl;
-
-  {
-    std::string pathName = getenv("RDBASE");
-    std::string sdfName =
-        pathName + "/Code/GraphMol/Descriptors/test_data/linear.mol";
-
-    RDKit::ROMol *m = MolFileToMol(sdfName);
-    TEST_ASSERT(m);
-    double val;
-
-    val = RDKit::Descriptors::radiusOfGyration(*m);
-    TEST_ASSERT(fabs(val) < 1e-2);
-    val = RDKit::Descriptors::inertialShapeFactor(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
-    val = RDKit::Descriptors::eccentricity(*m);
-    TEST_ASSERT(fabs(1.0 - val) < 1e-4);
-    val = RDKit::Descriptors::asphericity(*m);
-    TEST_ASSERT(fabs(1.0 - val) < 1e-4);
-    val = RDKit::Descriptors::spherocityIndex(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
-
-    delete m;
-  }
-  {
-    std::string pathName = getenv("RDBASE");
-    std::string sdfName =
-        pathName + "/Code/GraphMol/Descriptors/test_data/planar.mol";
-
-    RDKit::ROMol *m = MolFileToMol(sdfName);
-    TEST_ASSERT(m);
-    double val;
-
-    val = RDKit::Descriptors::radiusOfGyration(*m);
-    TEST_ASSERT(fabs(val) > 1e-2);
-    val = RDKit::Descriptors::inertialShapeFactor(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
-    val = RDKit::Descriptors::eccentricity(*m);
-    TEST_ASSERT(fabs(1.0 - val) < 1e-4);
-    val = RDKit::Descriptors::asphericity(*m);
-    TEST_ASSERT(fabs(0.5 - val) < 1e-4);
-    val = RDKit::Descriptors::spherocityIndex(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
-
-    delete m;
-  }
   {  // octahedron
     RDKit::RWMol m;
     m.addAtom(new RDKit::Atom(1));
@@ -396,8 +414,6 @@ void test3DEdges() {
     double val;
     val = RDKit::Descriptors::radiusOfGyration(m);
     TEST_ASSERT(fabs(val) > 0.1);
-    val = RDKit::Descriptors::inertialShapeFactor(m);
-    TEST_ASSERT(fabs(val) > 1);
     val = RDKit::Descriptors::eccentricity(m);
     TEST_ASSERT(fabs(val) < 1e-4);
     val = RDKit::Descriptors::asphericity(m);
@@ -440,5 +456,6 @@ int main() {
   testNPR1();
   testPMIEdges();
   testNPREdges();
+  test3DVals();
   test3DEdges();
 }
