@@ -537,7 +537,7 @@ double calcScale(double width, double height, double x_range, double y_range,
   } else if (x_range > tol) {
     scale = double(width) / x_range;
   } else {
-    scale = 0;
+    scale = 1;
   }
   return scale;
 }

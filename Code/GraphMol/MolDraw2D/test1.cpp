@@ -1822,6 +1822,50 @@ M  END";
     TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
     delete m;
   }
+  {
+    std::string mb =
+        "water\n\
+     RDKit          2D\n\
+\n\
+  1  0  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_3.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
+  {
+    std::string mb =
+        "water\n\
+     RDKit          2D\n\
+\n\
+  1  0  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.0000    0.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_4.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
   std::cerr << " Done" << std::endl;
 }
 
