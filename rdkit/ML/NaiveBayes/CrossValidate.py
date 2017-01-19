@@ -20,9 +20,9 @@ except ImportError:
 
 def makeNBClassificationModel(trainExamples, attrs, nPossibleValues, nQuantBounds,
                               mEstimateVal=-1.0, useSigs=False, ensemble=None, useCMIM=0, **kwargs):
-  if CMIM is not None and useCMIM > 0 and useSigs and not ensemble:  # pragma: nocover
+  if CMIM is not None and useCMIM > 0 and useSigs and not ensemble:
     ensemble = CMIM.SelectFeatures(trainExamples, useCMIM, bvCol=1)
-  if ensemble:  # pragma: nocover
+  if ensemble:
     attrs = ensemble
   model = NaiveBayesClassifier(attrs, nPossibleValues, nQuantBounds, mEstimateVal=mEstimateVal,
                                useSigs=useSigs)
@@ -74,7 +74,7 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds, mEstim
   else:
     xValError, _ = CrossValidate(NBmodel, examples, appendExamples=0)
 
-  if not silent:  # pragma: nocover
+  if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
   NBmodel._trainIndices = trainIndices
   return NBmodel, xValError

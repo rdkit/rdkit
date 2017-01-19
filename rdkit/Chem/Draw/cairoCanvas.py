@@ -9,7 +9,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-#pylint: disable=F0401,C0324,C0322,W0142
 import sys, os
 
 from rdkit import six

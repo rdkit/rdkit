@@ -15,7 +15,7 @@ import numpy
 # try to get the C versions of these routines
 try:
   import rdkit.ML.InfoTheory.rdInfoTheory as cEntropy
-except ImportError:  # pragma: nocover
+except ImportError:
   hascEntropy = 0
 else:
   hascEntropy = 1

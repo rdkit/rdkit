@@ -128,7 +128,7 @@ def PackageToXml(pkg, summary="N/A", trainingDataId='N/A', dataPerformance=[],
 
 if __name__ == '__main__':  # pragma: nocover
   import sys
-  from rdkit.six.moves import cPickle  # @UnresolvedImport
+  from rdkit.six.moves import cPickle
   from rdkit.six import StringIO
   pkg = cPickle.load(open(sys.argv[1], 'rb'))
   perf = (.80, .95, .70, [[4, 1], [1, 4]])

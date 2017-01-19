@@ -6,7 +6,7 @@ from rdkit.Chem import MCS, FragmentMatcher, MACCSkeys, Descriptors, TemplateAli
 from rdkit.Chem import Recap, BRICS, AllChem, PropertyMol, SaltRemover
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(MCS, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(FragmentMatcher, optionflags=doctest.ELLIPSIS))

@@ -20,7 +20,7 @@ from rdkit.VLib.Supply import SupplyNode
 from rdkit.six import StringIO
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(SDSupply, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(SmartsMolFilter, optionflags=doctest.ELLIPSIS))

@@ -5,7 +5,7 @@
 
 """
 from __future__ import print_function
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class DescriptorCalculator:

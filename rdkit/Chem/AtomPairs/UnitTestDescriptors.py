@@ -19,7 +19,7 @@ from rdkit import RDConfig
 from rdkit.Chem.AtomPairs import Pairs, Torsions, Utils, Sheridan
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(Pairs, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Sheridan, optionflags=doctest.ELLIPSIS))

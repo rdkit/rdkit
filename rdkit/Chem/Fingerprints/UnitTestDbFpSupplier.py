@@ -18,7 +18,7 @@ from rdkit.Chem.Fingerprints import DbFpSupplier
 from rdkit.Dbase.DbConnection import DbConnect
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(DbFpSupplier, optionflags=doctest.ELLIPSIS))
   return tests

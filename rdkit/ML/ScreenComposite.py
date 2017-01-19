@@ -120,8 +120,8 @@ from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.six.moves import cPickle  # @UnresolvedImport
-from rdkit.six.moves import input  # @UnresolvedImport
+from rdkit.six.moves import cPickle
+from rdkit.six.moves import input
 
 
 try:
@@ -430,7 +430,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
   voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int)
   for res in goodRes:
     voteTab[res, res] += 1
-  for ans, res, conf, idx in badVotes:  # @UnusedVariable
+  for ans, res, conf, idx in badVotes:
     voteTab[ans, res] += 1
 
   if verbose:
@@ -530,19 +530,19 @@ def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, sc
 
   nGood = len(goodVotes)
   goodAccum = 0.
-  for res, pred, conf, idx in goodVotes:  # @UnusedVariable
+  for res, pred, conf, idx in goodVotes:
     goodAccum += conf
 
   misCount = len(badVotes)
   badAccum = 0.
-  for res, pred, conf, idx in badVotes:  # @UnusedVariable
+  for res, pred, conf, idx in badVotes:
     badAccum += conf
 
   nSkipped = len(noVotes)
   goodSkipped = 0
   badSkipped = 0
   skipAccum = 0.
-  for ans, pred, conf, idx in noVotes:  # @UnusedVariable
+  for ans, pred, conf, idx in noVotes:
     skipAccum += conf
     if ans != pred:
       badSkipped += 1
@@ -777,11 +777,11 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       message('******  WARNING: Random model being screened with non-random data.')
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
 
-    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)  # @UnusedVariable
+    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)
 
     nPossible = model.GetQuantBounds()[1]
     if callback:
-      cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)  # @IgnorePep8
+      cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)
     else:
       cb = None
     if not hasattr(details, 'errorEstimate') or not details.errorEstimate:
@@ -795,14 +795,14 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     if voteTab is None:
       voteTab = numpy.zeros(vT.shape, numpy.float)
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
-      for a, p, c, idx in badVotes:  # @UnusedVariable
+      for a, p, c, idx in badVotes:
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
             badVoteDict[label] = badVoteDict.get(label, 0) + 1
         else:
           badVoteDict[label] = badVoteDict.get(label, 0) + 1
-      for a, p, c, idx in noVotes:  # @UnusedVariable
+      for a, p, c, idx in noVotes:
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
@@ -1120,14 +1120,14 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
     idx = ptIds.index(ID)
     acts[idx] = act
   outF.write('#ID Pred Conf %s\n' % (actColName))
-  for ans, pred, conf, idx in goodVotes:  # @UnusedVariable
+  for ans, pred, conf, idx in goodVotes:
     act = acts[idx]
     if act != 'None':
       act = float(act)
     else:
       act = 0
     outF.write('%s %d %.4f %f\n' % (ptIds[idx], pred, conf, act))
-  for ans, pred, conf, idx in badVotes:  # @UnusedVariable
+  for ans, pred, conf, idx in badVotes:
     act = acts[idx]
     if act != 'None':
       act = float(act)
@@ -1281,7 +1281,7 @@ def ParseArgs(details):
     elif arg == '-v':
       details.filterVal = float(val)
     elif arg == '-V':
-      verbose = 1  # @UnusedVariable
+      verbose = 1
     elif arg == '--predPlot':
       details.detailedScreen = 1
       details.predPlot = val

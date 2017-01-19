@@ -33,7 +33,7 @@ def _InitScoreTable(self, dbConn, tableName, idInfo='', actInfo=''):
   self._dbTableName = tableName
 
 
-def _ScoreToDb(self, sig, dbConn, tableName=None, id=None, act=None):  # @ReservedAssignment
+def _ScoreToDb(self, sig, dbConn, tableName=None, id=None, act=None):
   """ scores the "signature" that is passed in and puts the
   results in the db table
 

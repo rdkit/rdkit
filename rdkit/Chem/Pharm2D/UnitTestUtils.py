@@ -18,7 +18,7 @@ import unittest
 from rdkit.Chem.Pharm2D import Utils
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(Utils, optionflags=doctest.ELLIPSIS))
   return tests

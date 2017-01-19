@@ -16,7 +16,7 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.ML import AnalyzeComposite
-from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle as pickle
 
 
 class TestCase(unittest.TestCase):
@@ -29,20 +29,20 @@ class TestCase(unittest.TestCase):
     try:
       with open(name1, 'rb') as pklF:
         c1 = pickle.load(pklF)
-    except Exception:  # pragma: nocover
+    except Exception:
       c1 = None
     self.assertTrue(c1)
     name2 = os.path.join(self.baseDir, 'humanoral.2.pkl')
     try:
       with open(name2, 'rb') as pklF:
         c2 = pickle.load(pklF)
-    except Exception:  # pragma: nocover
+    except Exception:
       c2 = None
     self.assertTrue(c2)
 
     try:
       res = AnalyzeComposite.ProcessIt([c1, c2], verbose=-1)
-    except Exception:  # pragma: nocover
+    except Exception:
       import traceback
       traceback.print_exc()
       ok = 0
