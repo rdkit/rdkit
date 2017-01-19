@@ -1866,6 +1866,30 @@ M  END";
     TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
     delete m;
   }
+
+  {
+    std::string smiles = "C=C(O)C(O)";  // made up
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    smiles = "O";
+    RWMol *m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*m2, "m2");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_5.svg");
+    outs << text;
+    outs.flush();
+    delete m1;
+    delete m2;
+  }
+
   std::cerr << " Done" << std::endl;
 }
 
