@@ -525,6 +525,23 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   }
 }
 
+namespace {
+double calcScale(double width, double height, double x_range, double y_range,
+                 double tol = 1e-4) {
+  double scale;
+  if (x_range > tol && y_range > tol) {
+    scale = std::min(double(width) / x_range, double(height) / y_range);
+  } else if (y_range > tol) {
+    scale = double(height) / y_range;
+  } else if (x_range > tol) {
+    scale = double(width) / x_range;
+  } else {
+    scale = 0;
+  }
+  return scale;
+}
+}
+
 // ****************************************************************************
 void MolDraw2D::calculateScale(int width, int height) {
   PRECONDITION(width > 0, "bad width");
@@ -544,13 +561,9 @@ void MolDraw2D::calculateScale(int width, int height) {
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-  } else {
-    scale_ = 0;
-  }
+  scale_ = calcScale(width, height, x_range_, y_range_);
 
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
+  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << " "
   //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   // we may need to adjust the scale if there are atom symbols that go off
@@ -581,7 +594,7 @@ void MolDraw2D::calculateScale(int width, int height) {
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+    scale_ = calcScale(width, height, x_range_, y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
@@ -599,8 +612,8 @@ void MolDraw2D::calculateScale(int width, int height) {
   // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
   //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+  if (x_range_ > 1e-4 || y_range_ > 1e-4) {
+    scale_ = calcScale(width, height, x_range_, y_range_);
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
     Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
