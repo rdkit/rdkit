@@ -526,6 +526,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
 }
 
 namespace {
+//! figure out what the scaling should be, robust w.r.t. zero x or y ranges.
 double calcScale(double width, double height, double x_range, double y_range,
                  double tol = 1e-4) {
   double scale;
@@ -540,7 +541,7 @@ double calcScale(double width, double height, double x_range, double y_range,
   }
   return scale;
 }
-}
+}  // end of anoymous namespace
 
 // ****************************************************************************
 void MolDraw2D::calculateScale(int width, int height) {
