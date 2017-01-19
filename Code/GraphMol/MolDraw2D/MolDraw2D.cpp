@@ -525,24 +525,6 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   }
 }
 
-namespace {
-//! figure out what the scaling should be, robust w.r.t. zero x or y ranges.
-double calcScale(double width, double height, double x_range, double y_range,
-                 double tol = 1e-4) {
-  double scale;
-  if (x_range > tol && y_range > tol) {
-    scale = std::min(double(width) / x_range, double(height) / y_range);
-  } else if (y_range > tol) {
-    scale = double(height) / y_range;
-  } else if (x_range > tol) {
-    scale = double(width) / x_range;
-  } else {
-    scale = 1;
-  }
-  return scale;
-}
-}  // end of anoymous namespace
-
 // ****************************************************************************
 void MolDraw2D::calculateScale(int width, int height) {
   PRECONDITION(width > 0, "bad width");
@@ -562,15 +544,22 @@ void MolDraw2D::calculateScale(int width, int height) {
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
-  scale_ = calcScale(width, height, x_range_, y_range_);
-
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << " "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
+  if (x_range_ < 1e-4) {
+    x_range_ = 1.;
+    x_min_ -= 0.5;
+    x_max += 0.5;
+  }
+  if (y_range_ < 1e-4) {
+    y_range_ = 1.;
+    y_min_ -= 0.5;
+    y_max += 0.5;
+  }
+  scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
 
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
-  while (scale_ > 0.0) {
+  while (scale_ > 1e-4) {
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
         double atsym_width, atsym_height;
@@ -595,14 +584,13 @@ void MolDraw2D::calculateScale(int width, int height) {
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
-    scale_ = calcScale(width, height, x_range_, y_range_);
+    if (x_range_ < 1e-4) x_range_ = 1.;
+    if (y_range_ < 1e-4) y_range_ = 1.;
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
   }
-
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   // put a 5% buffer round the drawing and calculate a final scale
   x_min_ -= drawOptions().padding * x_range_;
@@ -610,11 +598,8 @@ void MolDraw2D::calculateScale(int width, int height) {
   y_min_ -= drawOptions().padding * y_range_;
   y_range_ *= 1 + 2 * drawOptions().padding;
 
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
-
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
-    scale_ = calcScale(width, height, x_range_, y_range_);
+    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
     Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
@@ -623,11 +608,8 @@ void MolDraw2D::calculateScale(int width, int height) {
     mid.y += y_offset_;
     x_trans_ = (width / 2 - mid.x) / scale_;
     y_trans_ = (mid.y - height / 2) / scale_;
-    // std::cerr << " mid: " << mid << " " << scale_ << "    " << x_trans_ <<
-    // "-"
-    //           << y_trans_ << std::endl;
   } else {
-    scale_ = 0.;
+    scale_ = 1;
     x_trans_ = 0.;
     y_trans_ = 0.;
   }
