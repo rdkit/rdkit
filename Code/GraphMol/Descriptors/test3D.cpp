@@ -207,6 +207,42 @@ void testPMIEdges() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPMI2() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    More PMI/NPR tests." << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/pmi.sdf";
+
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+  while (!reader.atEnd()) {
+    RDKit::ROMol *mnoh = reader.next();
+    TEST_ASSERT(mnoh);
+    RDKit::ROMol *m = MolOps::addHs(*mnoh);
+    delete mnoh;
+    double pmi1 = RDKit::Descriptors::PMI1(*m);
+    double pmi2 = RDKit::Descriptors::PMI2(*m);
+    double pmi3 = RDKit::Descriptors::PMI3(*m);
+
+    double npr1 = RDKit::Descriptors::NPR1(*m);
+    double npr2 = RDKit::Descriptors::NPR2(*m);
+
+    std::cerr << "1" << m->getProp<double>("pmi1") << " " <<  pmi1 << std::endl;
+    std::cerr << "2" << m->getProp<double>("pmi2") << " " <<  pmi2 << std::endl;
+    std::cerr << "3" << m->getProp<double>("pmi3") << " " <<  pmi3 << std::endl;
+            
+    TEST_ASSERT(compare( "pmi1", m->getProp<double>("pmi1"), pmi1) );
+    TEST_ASSERT(compare( "pmi2", m->getProp<double>("pmi2"), pmi2) );
+    TEST_ASSERT(compare( "pmi3", m->getProp<double>("pmi3"), pmi3) );
+
+    TEST_ASSERT(compare( "npr1", m->getProp<double>("pmi1"), npr1) );
+    TEST_ASSERT(compare( "npr2", m->getProp<double>("pmi1"), npr2) );
+    delete m;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testNPR1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic NPR tests." << std::endl;
@@ -453,6 +489,8 @@ void test3DEdges() {
 int main() {
   RDLog::InitLogs();
   testPMI1();
+  testPMI2();
+
   testNPR1();
   testPMIEdges();
   testNPREdges();
