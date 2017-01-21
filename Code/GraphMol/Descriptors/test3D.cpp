@@ -39,7 +39,7 @@ using namespace RDKit::Descriptors;
 
 bool compare(const std::string &inm, double ref, double val,
              double tol = 1e-3) {
-  if (fabs(ref - val) > .001) {
+  if (fabs(ref - val) > tol) {
     std::cerr << "value mismatch: " << inm << " " << ref << " " << val
               << std::endl;
   }
@@ -219,7 +219,8 @@ void testPMI2() {
   while (!reader.atEnd()) {
     RDKit::ROMol *mnoh = reader.next();
     TEST_ASSERT(mnoh);
-    RDKit::ROMol *m = MolOps::addHs(*mnoh);
+    bool explicitOnly = false, addCoords = true;
+    RDKit::ROMol *m = MolOps::addHs(*mnoh, explicitOnly, addCoords);
     delete mnoh;
     double pmi1 = RDKit::Descriptors::PMI1(*m);
     double pmi2 = RDKit::Descriptors::PMI2(*m);
@@ -228,16 +229,14 @@ void testPMI2() {
     double npr1 = RDKit::Descriptors::NPR1(*m);
     double npr2 = RDKit::Descriptors::NPR2(*m);
 
-    std::cerr << "1" << m->getProp<double>("pmi1") << " " <<  pmi1 << std::endl;
-    std::cerr << "2" << m->getProp<double>("pmi2") << " " <<  pmi2 << std::endl;
-    std::cerr << "3" << m->getProp<double>("pmi3") << " " <<  pmi3 << std::endl;
-            
-    TEST_ASSERT(compare( "pmi1", m->getProp<double>("pmi1"), pmi1) );
-    TEST_ASSERT(compare( "pmi2", m->getProp<double>("pmi2"), pmi2) );
-    TEST_ASSERT(compare( "pmi3", m->getProp<double>("pmi3"), pmi3) );
+    // tolerances are coarse because the reference values come from MOE
+    // and the placement of Hs is not identical
+    TEST_ASSERT(compare("pmi1", m->getProp<double>("pmi1"), pmi1, pmi1 / 100));
+    TEST_ASSERT(compare("pmi2", m->getProp<double>("pmi2"), pmi2, pmi2 / 100));
+    TEST_ASSERT(compare("pmi3", m->getProp<double>("pmi3"), pmi3, pmi3 / 100));
 
-    TEST_ASSERT(compare( "npr1", m->getProp<double>("pmi1"), npr1) );
-    TEST_ASSERT(compare( "npr2", m->getProp<double>("pmi1"), npr2) );
+    TEST_ASSERT(compare("npr1", m->getProp<double>("npr1"), npr1, npr1 / 100));
+    TEST_ASSERT(compare("npr2", m->getProp<double>("npr2"), npr2, npr2 / 100));
     delete m;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -491,9 +490,11 @@ int main() {
   testPMI1();
   testPMI2();
 
+#if 1
   testNPR1();
   testPMIEdges();
   testNPREdges();
   test3DVals();
   test3DEdges();
+#endif
 }
