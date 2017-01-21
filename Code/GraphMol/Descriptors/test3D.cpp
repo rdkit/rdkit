@@ -163,7 +163,6 @@ void testPMIEdges() {
 
     RDKit::ROMol *m = MolFileToMol(sdfName);
     TEST_ASSERT(m);
-    double val;
 
     TEST_ASSERT(RDKit::Descriptors::PMI2(*m) - RDKit::Descriptors::PMI1(*m) <
                 1e-2);
@@ -178,7 +177,6 @@ void testPMIEdges() {
 
     RDKit::ROMol *m = MolFileToMol(sdfName);
     TEST_ASSERT(m);
-    double val;
 
     TEST_ASSERT(RDKit::Descriptors::PMI2(*m) - RDKit::Descriptors::PMI1(*m) <
                 1e-2);
@@ -272,6 +270,11 @@ void testNPR1() {
     compare(nm, pmi1_m / pmi3_m, val);
     val = RDKit::Descriptors::NPR2(*m);
     compare(nm, pmi2_m / pmi3_m, val);
+
+    val = RDKit::Descriptors::NPR1(*m, -1, false);
+    compare(nm, pmi1_nom / pmi3_nom, val);
+    val = RDKit::Descriptors::NPR2(*m, -1, false);
+    compare(nm, pmi2_nom / pmi3_nom, val);
 
     delete m;
     ++nDone;
