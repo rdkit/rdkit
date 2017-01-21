@@ -39,7 +39,7 @@ using namespace RDKit::Descriptors;
 
 bool compare(const std::string &inm, double ref, double val,
              double tol = 1e-3) {
-  if (fabs(ref - val) > .001) {
+  if (fabs(ref - val) > tol) {
     std::cerr << "value mismatch: " << inm << " " << ref << " " << val
               << std::endl;
   }
@@ -163,7 +163,6 @@ void testPMIEdges() {
 
     RDKit::ROMol *m = MolFileToMol(sdfName);
     TEST_ASSERT(m);
-    double val;
 
     TEST_ASSERT(RDKit::Descriptors::PMI2(*m) - RDKit::Descriptors::PMI1(*m) <
                 1e-2);
@@ -178,7 +177,6 @@ void testPMIEdges() {
 
     RDKit::ROMol *m = MolFileToMol(sdfName);
     TEST_ASSERT(m);
-    double val;
 
     TEST_ASSERT(RDKit::Descriptors::PMI2(*m) - RDKit::Descriptors::PMI1(*m) <
                 1e-2);
@@ -204,6 +202,41 @@ void testPMIEdges() {
     TEST_ASSERT(fabs(val) < 1e-4);
   }
 
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testPMI2() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    More PMI/NPR tests." << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/pmi.sdf";
+
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+  while (!reader.atEnd()) {
+    RDKit::ROMol *mnoh = reader.next();
+    TEST_ASSERT(mnoh);
+    bool explicitOnly = false, addCoords = true;
+    RDKit::ROMol *m = MolOps::addHs(*mnoh, explicitOnly, addCoords);
+    delete mnoh;
+    double pmi1 = RDKit::Descriptors::PMI1(*m);
+    double pmi2 = RDKit::Descriptors::PMI2(*m);
+    double pmi3 = RDKit::Descriptors::PMI3(*m);
+
+    double npr1 = RDKit::Descriptors::NPR1(*m);
+    double npr2 = RDKit::Descriptors::NPR2(*m);
+
+    // tolerances are coarse because the reference values come from MOE
+    // and the placement of Hs is not identical
+    TEST_ASSERT(compare("pmi1", m->getProp<double>("pmi1"), pmi1, pmi1 / 100));
+    TEST_ASSERT(compare("pmi2", m->getProp<double>("pmi2"), pmi2, pmi2 / 100));
+    TEST_ASSERT(compare("pmi3", m->getProp<double>("pmi3"), pmi3, pmi3 / 100));
+
+    TEST_ASSERT(compare("npr1", m->getProp<double>("npr1"), npr1, npr1 / 100));
+    TEST_ASSERT(compare("npr2", m->getProp<double>("npr2"), npr2, npr2 / 100));
+    delete m;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -237,6 +270,11 @@ void testNPR1() {
     compare(nm, pmi1_m / pmi3_m, val);
     val = RDKit::Descriptors::NPR2(*m);
     compare(nm, pmi2_m / pmi3_m, val);
+
+    val = RDKit::Descriptors::NPR1(*m, -1, false);
+    compare(nm, pmi1_nom / pmi3_nom, val);
+    val = RDKit::Descriptors::NPR2(*m, -1, false);
+    compare(nm, pmi2_nom / pmi3_nom, val);
 
     delete m;
     ++nDone;
@@ -453,9 +491,13 @@ void test3DEdges() {
 int main() {
   RDLog::InitLogs();
   testPMI1();
+  testPMI2();
+
+#if 1
   testNPR1();
   testPMIEdges();
   testNPREdges();
   test3DVals();
   test3DEdges();
+#endif
 }
