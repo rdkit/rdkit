@@ -1015,6 +1015,68 @@ void testGithub713() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testPickleProps() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing pickling of properties"
+                       << std::endl;
+
+  std::vector<double> v;
+  v.push_back(1234.);
+  v.push_back(444.);
+  v.push_back(1123.);
+  
+  ROMol *m = SmilesToMol("CC");
+  m->setProp("double", 1.0);
+  m->setProp("int", 100);
+  m->setProp("bool", true);
+  m->setProp("boolfalse", false);
+
+  m->setProp("dvec", v);
+
+  Atom *a = m->getAtomWithIdx(0);
+  a->setProp("double", 1.0);
+  a->setProp("int", 100);
+  a->setProp("bool", true);
+  a->setProp("boolfalse", false);
+  a->setProp("dvec", v);
+  Bond *b = m->getBondWithIdx(0);
+  b->setProp("double", 1.0);
+  b->setProp("int", 100);
+  b->setProp("bool", true);
+  b->setProp("boolfalse", false);
+  b->setProp("dvec", v);
+  
+  std::string pkl;
+  MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AllProps);
+  delete m;
+  m = new RWMol(pkl);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getProp<double>("double") == 1.0);
+  TEST_ASSERT(m->getProp<int>("int") == 100);
+  TEST_ASSERT(m->getProp<bool>("bool") == true);
+  TEST_ASSERT(m->getProp<bool>("boolfalse") == false);
+  //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+
+  BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+  a = m->getAtomWithIdx(0);
+  TEST_ASSERT(a->getProp<double>("double") == 1.0);
+  TEST_ASSERT(a->getProp<int>("int") == 100);
+  TEST_ASSERT(a->getProp<bool>("bool") == true);
+  TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+  //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+
+  BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+  b = m->getBondWithIdx(0);
+  TEST_ASSERT(b->getProp<double>("double") == 1.0);
+  TEST_ASSERT(b->getProp<int>("int") == 100);
+  TEST_ASSERT(b->getProp<bool>("bool") == true);
+  TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+  //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+  
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1036,6 +1098,7 @@ int main(int argc, char *argv[]) {
   // timeTest(doLong);
   testQueries();
   testRadicals();
+  testPickleProps();
 #endif
   testIssue2788233();
   testIssue3202580();
@@ -1046,4 +1109,5 @@ int main(int argc, char *argv[]) {
   testAtomResidues();
   testGithub149();
   testGithub713();
+
 }

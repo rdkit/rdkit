@@ -23,6 +23,10 @@ protected:
   void clear() {
     dp_props.reset();
   }
+  //! gets the underlying Dictionary
+  const Dict &getDict() const { return dp_props; }
+        Dict &getDict()       { return dp_props; }
+  
   // ------------------------------------
   //  Local Property Dict functionality
   //  all setProp functions are const because they
