@@ -44,7 +44,7 @@ class MolPicklerException : public std::exception {
 
 namespace PropertyPickleOptions {
   const unsigned int Default = 0; // no data pickled
-  const unsigned int AllProps = 0xFFFF; // all data pickled
+  const unsigned int AllProps = 0xFFFFFFFF; // all data pickled
   const unsigned int MolProps = 0x1; // only public non computed properties
   const unsigned int AtomProps = 0x10;
   const unsigned int BondProps = 0x100;
