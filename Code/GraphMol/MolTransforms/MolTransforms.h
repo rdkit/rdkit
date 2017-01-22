@@ -43,27 +43,52 @@ RDGeom::Point3D computeCentroid(const RDKit::Conformer &conf,
                                 bool ignoreHs = true);
 
 #ifdef RDK_HAS_EIGEN3
-//! Compute principal axes and moments for a conformer
+//! Compute principal axes and moments of inertia for a conformer
 /*!
+  These values are calculated from the inertia tensor:
+    Iij = - sum_{s=1..N}(w_s * r_{si} * r_{sj}) i != j
+    Iii = sum_{s=1..N} sum_{j!=i} (w_s * r_{sj} * r_{sj})
+  where the coordinates are relative to the center of mass.
+
+
   \param conf       Conformer of interest
   \param axes       used to return the principal axes
   \param  moments    used to return the principal moments
   \param ignoreHs   If true, ignore hydrogen atoms
-  \param force      If true, the calculation will be carried out even if a cached value is present
+  \param force      If true, the calculation will be carried out even if a
+  cached value is present
   \param weights    If present used to weight the atomic coordinates
 
   \returns whether or not the calculation was successful
 */
-bool computePrincipalAxesAndMoments(
-    const RDKit::Conformer &conf,
-    Eigen::Matrix3d &axes,
-    Eigen::Vector3d &moments,
-    bool ignoreHs = true,
-    bool force = false,
+bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
+                                    Eigen::Matrix3d &axes,
+                                    Eigen::Vector3d &moments,
+                                    bool ignoreHs = false, bool force = false,
+                                    const std::vector<double> *weights = NULL);
+//! Compute principal axes and moments from the gyration matrix of a conformer
+/*!
+
+  These values are calculated from the gyration matrix/tensor:
+    Iij = sum_{s=1..N}(w_s * r_{si} * r_{sj}) i != j
+    Iii = sum_{s=1..N} sum_{t!=s}(w_s * r_{si} * r_{ti})
+  where the coordinates are relative to the center of mass.
+
+  \param conf       Conformer of interest
+  \param axes       used to return the principal axes
+  \param  moments    used to return the principal moments
+  \param ignoreHs   If true, ignore hydrogen atoms
+  \param force      If true, the calculation will be carried out even if a
+  cached value is present
+  \param weights    If present used to weight the atomic coordinates
+
+  \returns whether or not the calculation was successful
+*/
+bool computePrincipalAxesAndMomentsFromGyrationMatrix(
+    const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments, bool ignoreHs = false, bool force = false,
     const std::vector<double> *weights = NULL);
 #endif
-
-
 
 //! Compute the transformation require to orient the conformation
 //! along the principal axes about the center; i.e. center is made to coincide
