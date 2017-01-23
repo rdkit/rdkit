@@ -805,7 +805,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, ENDPROPS);
   }
 
-  if(propertyFlags & PropertyPickleOptions::AtomProps) {
+  if(propertyFlags & PropertyPickleOptions::BondProps) {
     streamWrite(ss, BEGINBONDPROPS);
     for (ROMol::ConstBondIterator bondIt = mol->beginBonds(); bondIt != mol->endBonds();
          bondIt++) {
