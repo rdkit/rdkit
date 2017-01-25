@@ -1770,6 +1770,129 @@ void testGithub1035() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1271() {
+  std::cout << " ----------------- Testing github 1271: MolDraw2D not drawing "
+               "anything for molecules aligned with the X or Y axes"
+            << std::endl;
+  {
+    std::string mb =
+        "ethane\n\
+     RDKit          2D\n\
+\n\
+  2  1  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.7500    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7500   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_1.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
+  {
+    std::string mb =
+        "ethane\n\
+     RDKit          2D\n\
+\n\
+  2  1  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.0000    0.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.0000   -0.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_2.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
+  {
+    std::string mb =
+        "water\n\
+     RDKit          2D\n\
+\n\
+  1  0  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_3.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
+  {
+    std::string mb =
+        "water\n\
+     RDKit          2D\n\
+\n\
+  1  0  0  0  0  0  0  0  0  0999 V2000\n\
+   -0.0000    0.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+M  END";
+    RWMol *m = MolBlockToMol(mb);
+    TEST_ASSERT(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_4.svg");
+    outs << text;
+    outs.flush();
+    TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
+    delete m;
+  }
+
+  {
+    std::string smiles = "C=C(O)C(O)";  // made up
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    smiles = "O";
+    RWMol *m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    MolDraw2DUtils::prepareMolForDrawing(*m2);
+
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawMolecule(*m1, "m1");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*m2, "m2");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test1271_5.svg");
+    outs << text;
+    outs.flush();
+    delete m1;
+    delete m2;
+  }
+
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1796,8 +1919,9 @@ int main() {
   test10DrawSecondMol();
   test11DrawMolGrid();
   test12DrawMols();
-#endif
   test13JSONConfig();
   testGithub1090();
   testGithub1035();
+#endif
+  testGithub1271();
 }
