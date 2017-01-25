@@ -59,52 +59,51 @@ RDGeom::Point3D computeCentroid(const Conformer &conf, bool ignoreHs) {
 }
 namespace {
 void computeCovarianceTerms(const Conformer &conf,
-  const RDGeom::Point3D &center,
-  double &xx, double &xy, double &xz, double &yy, double &yz, double &zz,
-  bool normalize, bool ignoreHs,
-  const std::vector<double> *weights ){
-    PRECONDITION(!weights || weights->size()>=conf.getNumAtoms(), "bad weights vector");
+                            const RDGeom::Point3D &center, double &xx,
+                            double &xy, double &xz, double &yy, double &yz,
+                            double &zz, bool normalize, bool ignoreHs,
+                            const std::vector<double> *weights) {
+  PRECONDITION(!weights || weights->size() >= conf.getNumAtoms(),
+               "bad weights vector");
 
-    xx = xy = xz = yy = yz = zz = 0.0;
-    const ROMol &mol = conf.getOwningMol();
-    double wSum = 0.0;
-    for (ROMol::ConstAtomIterator cai = mol.beginAtoms();
-        cai != mol.endAtoms(); cai++) {
-      if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
-        continue;
-      }
-      RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
-      loc -= center;
-      if(weights) {
-        double w = (*weights)[(*cai)->getIdx()];
-        wSum += w;
-        loc *= w;
-      } else {
-        wSum+=1.0;
-      }
-      xx += loc.x * loc.x;
-      xy += loc.x * loc.y;
-      xz += loc.x * loc.z;
-      yy += loc.y * loc.y;
-      yz += loc.y * loc.z;
-      zz += loc.z * loc.z;
-
+  xx = xy = xz = yy = yz = zz = 0.0;
+  const ROMol &mol = conf.getOwningMol();
+  double wSum = 0.0;
+  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
+       cai++) {
+    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+      continue;
     }
-    if (normalize) {
-      xx /= wSum;
-      xy /= wSum;
-      xz /= wSum;
-      yy /= wSum;
-      yz /= wSum;
-      zz /= wSum;
+    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    loc -= center;
+    double w = 1.0;
+    if (weights) {
+      w = (*weights)[(*cai)->getIdx()];
     }
+    wSum += w;
+    xx += w * loc.x * loc.x;
+    xy += w * loc.x * loc.y;
+    xz += w * loc.x * loc.z;
+    yy += w * loc.y * loc.y;
+    yz += w * loc.y * loc.z;
+    zz += w * loc.z * loc.z;
+  }
+  if (normalize) {
+    xx /= wSum;
+    xy /= wSum;
+    xz /= wSum;
+    yy /= wSum;
+    yz /= wSum;
+    zz /= wSum;
+  }
 }
 
 RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     const Conformer &conf, const RDGeom::Point3D &center, bool normalize,
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
-  computeCovarianceTerms(conf,center,xx,xy,xz,yy,yz,zz,normalize,ignoreHs,NULL);
+  computeCovarianceTerms(conf, center, xx, xy, xz, yy, yz, zz, normalize,
+                         ignoreHs, NULL);
   RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);
@@ -114,68 +113,146 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
   res->setVal(2, 2, zz);
   return res;
 }
+
+void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
+                         double &xx, double &xy, double &xz, double &yy,
+                         double &yz, double &zz, bool ignoreHs,
+                         const std::vector<double> *weights) {
+  PRECONDITION(!weights || weights->size() >= conf.getNumAtoms(),
+               "bad weights vector");
+
+  xx = xy = xz = yy = yz = zz = 0.0;
+  const ROMol &mol = conf.getOwningMol();
+  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
+       cai++) {
+    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+      continue;
+    }
+    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    loc -= center;
+    double w = 1.0;
+    if (weights) {
+      w = (*weights)[(*cai)->getIdx()];
+    }
+    xx += w * (loc.y * loc.y + loc.z * loc.z);
+    yy += w * (loc.x * loc.x + loc.z * loc.z);
+    zz += w * (loc.y * loc.y + loc.x * loc.x);
+    xy -= w * loc.x * loc.y;
+    xz -= w * loc.x * loc.z;
+    yz -= w * loc.z * loc.y;
+  }
+}
 }
 #ifdef RDK_HAS_EIGEN3
 #include <Eigen/Dense>
 
-bool computePrincipalAxesAndMoments(
-    const RDKit::Conformer &conf,
-    Eigen::Matrix3d &axes,
-    Eigen::Vector3d &moments,
-    bool ignoreHs,
-    bool force,
-    const std::vector<double> *weights){
-  PRECONDITION((!weights || weights->size()>=conf.getNumAtoms()),"bad weights vector");
+bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
+                                    Eigen::Matrix3d &axes,
+                                    Eigen::Vector3d &moments, bool ignoreHs,
+                                    bool force,
+                                    const std::vector<double> *weights) {
+  PRECONDITION((!weights || weights->size() >= conf.getNumAtoms()),
+               "bad weights vector");
   const char *axesPropName = ignoreHs ? "_principalAxes_noH" : "_principalAxes";
-  const char *momentsPropName = ignoreHs ? "_principalMoments_noH" : "_principalMoments";
-  if(!weights && !force &&
-      conf.getOwningMol().hasProp(axesPropName) &&
-      conf.getOwningMol().hasProp(momentsPropName) ){
-    conf.getOwningMol().getProp(axesPropName,axes);
-    conf.getOwningMol().getProp(momentsPropName,moments);
+  const char *momentsPropName =
+      ignoreHs ? "_principalMoments_noH" : "_principalMoments";
+  if (!weights && !force && conf.getOwningMol().hasProp(axesPropName) &&
+      conf.getOwningMol().hasProp(momentsPropName)) {
+    conf.getOwningMol().getProp(axesPropName, axes);
+    conf.getOwningMol().getProp(momentsPropName, moments);
     return true;
   }
-  const ROMol &mol=conf.getOwningMol();
-  RDGeom::Point3D origin(0,0,0);
-  double wSum=0.0;
-  for(unsigned int i=0;i<conf.getNumAtoms();++i){
-    if(ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum()==1) continue;
-    double w=1.0;
-    if(weights){
-      w=(*weights)[i];
+  const ROMol &mol = conf.getOwningMol();
+  RDGeom::Point3D origin(0, 0, 0);
+  double wSum = 0.0;
+  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    double w = 1.0;
+    if (weights) {
+      w = (*weights)[i];
     }
-    wSum+=w;
-    origin+=conf.getAtomPos(i)*w;
+    wSum += w;
+    origin += conf.getAtomPos(i) * w;
   }
   // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
   origin /= wSum;
 
-  double sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ;
-  computeCovarianceTerms(conf,origin,sumXX,sumXY,sumXZ,sumYY,sumYZ,sumZZ,
-      true,ignoreHs,weights);
+  double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
+  computeInertiaTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
+                      ignoreHs, weights);
 
   Eigen::Matrix3d mat;
-  mat << sumXX, sumXY, sumXZ,
-    sumXY, sumYY, sumYZ,
-    sumXZ, sumYZ, sumZZ;
+  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
   // std::cerr<<"  matrix: "<<mat<<std::endl;
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
-  if(eigensolver.info()!=Eigen::Success){
-    BOOST_LOG(rdErrorLog)<<"eigenvalue calculation did not converge"<<std::endl;
+  if (eigensolver.info() != Eigen::Success) {
+    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
+                          << std::endl;
     return false;
   }
 
   axes = eigensolver.eigenvectors();
   moments = eigensolver.eigenvalues();
-  if(!weights) {
-    conf.getOwningMol().setProp(axesPropName,axes, true);
-    conf.getOwningMol().setProp(momentsPropName,moments, true);
+  if (!weights) {
+    conf.getOwningMol().setProp(axesPropName, axes, true);
+    conf.getOwningMol().setProp(momentsPropName, moments, true);
+  }
+  return true;
+}
+bool computePrincipalAxesAndMomentsFromGyrationMatrix(
+    const RDKit::Conformer &conf, Eigen::Matrix3d &axes,
+    Eigen::Vector3d &moments, bool ignoreHs, bool force,
+    const std::vector<double> *weights) {
+  PRECONDITION((!weights || weights->size() >= conf.getNumAtoms()),
+               "bad weights vector");
+  const char *axesPropName =
+      ignoreHs ? "_principalAxes_noH_cov" : "_principalAxes_cov";
+  const char *momentsPropName =
+      ignoreHs ? "_principalMoments_noH_cov" : "_principalMoments_cov";
+  if (!weights && !force && conf.getOwningMol().hasProp(axesPropName) &&
+      conf.getOwningMol().hasProp(momentsPropName)) {
+    conf.getOwningMol().getProp(axesPropName, axes);
+    conf.getOwningMol().getProp(momentsPropName, moments);
+    return true;
+  }
+  const ROMol &mol = conf.getOwningMol();
+  RDGeom::Point3D origin(0, 0, 0);
+  double wSum = 0.0;
+  for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
+    if (ignoreHs && mol.getAtomWithIdx(i)->getAtomicNum() == 1) continue;
+    double w = 1.0;
+    if (weights) {
+      w = (*weights)[i];
+    }
+    wSum += w;
+    origin += conf.getAtomPos(i) * w;
+  }
+  // std::cerr<<"  origin: "<<origin<<" "<<wSum<<std::endl;
+  origin /= wSum;
+
+  double sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ;
+  computeCovarianceTerms(conf, origin, sumXX, sumXY, sumXZ, sumYY, sumYZ, sumZZ,
+                         true, ignoreHs, weights);
+
+  Eigen::Matrix3d mat;
+  mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
+  // std::cerr<<"  matrix: "<<mat<<std::endl;
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
+  if (eigensolver.info() != Eigen::Success) {
+    BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"
+                          << std::endl;
+    return false;
+  }
+
+  axes = eigensolver.eigenvectors();
+  moments = eigensolver.eigenvalues();
+  if (!weights) {
+    conf.getOwningMol().setProp(axesPropName, axes, true);
+    conf.getOwningMol().setProp(momentsPropName, moments, true);
   }
   return true;
 }
 #endif
-
-
 
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
@@ -356,8 +433,8 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   }
 }
 
-double getAngleRad(const Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
-                   unsigned int kAtomId) {
+double getAngleRad(const Conformer &conf, unsigned int iAtomId,
+                   unsigned int jAtomId, unsigned int kAtomId) {
   const RDGeom::POINT3D_VECT &pos = conf.getPositions();
   URANGE_CHECK(iAtomId, pos.size() - 1);
   URANGE_CHECK(jAtomId, pos.size() - 1);
