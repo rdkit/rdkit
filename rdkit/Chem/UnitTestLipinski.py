@@ -43,10 +43,6 @@ class TestCase(unittest.TestCase):
 
     suppl = Chem.SDMolSupplier(self.inFileName)
     idx = 1
-    # oldDonorSmarts = Chem.MolFromSmarts('[NH1,NH2,OH1]')
-    # OldDonorCount = lambda x, y = oldDonorSmarts: Lipinski._NumMatches(x, y)
-    # oldAcceptorSmarts = Chem.MolFromSmarts('[N,O]')
-    # OldAcceptorCount = lambda x, y = oldAcceptorSmarts: Lipinski._NumMatches(x, y)
     for m in suppl:
       if m:
         calc = Lipinski.NHOHCount(m)
