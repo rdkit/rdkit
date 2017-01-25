@@ -21,7 +21,7 @@ def feq(n1, n2, tol=1e-5):
   return abs(n1 - n2) <= tol
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(FeatMaps, optionflags=doctest.ELLIPSIS))
   return tests

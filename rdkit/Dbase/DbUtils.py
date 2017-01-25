@@ -116,7 +116,7 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
         c.execute(cmd)
       else:
         c.execute(cmd, extras)
-    except Exception:  # pragma: nocover
+    except Exception:
       sys.stderr.write('the command "%s" generated errors:\n' % (cmd))
       import traceback
       traceback.print_exc()
@@ -224,7 +224,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
         locType = str
         try:
           d = str(d)
-        except UnicodeError as msg:  # pragma: nocover
+        except UnicodeError as msg:
           print('cannot convert text from row %d col %d to a string' % (row + 2, col))
           print('\t>%s' % (repr(d)))
           raise UnicodeError(msg)
@@ -237,7 +237,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
       else:
         try:
           fD = float(int(d))
-        except OverflowError:  # pragma: nocover
+        except OverflowError:
           locType = float
         else:
           if fD == d:
@@ -292,7 +292,7 @@ def GetTypeStrings(colHeadings, colTypes, keyCol=None):
 def _insertBlock(conn, sqlStr, block, silent=False):
   try:
     conn.cursor().executemany(sqlStr, block)
-  except Exception:  # pragma: nocover
+  except Exception:
     res = 0
     conn.commit()
     for row in block:
@@ -329,7 +329,7 @@ def _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMark
   try:
     sqlStr = 'create table %s (%s)' % (table, colDefs)
     c.execute(sqlStr)
-  except Exception:  # pragma: nocover
+  except Exception:
     print('create table failed: ', sqlStr)
     print('here is the exception:')
     import traceback

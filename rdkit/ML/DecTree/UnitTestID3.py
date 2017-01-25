@@ -10,7 +10,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData
 from rdkit.ML.DecTree import ID3
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class ID3TestCase(unittest.TestCase):

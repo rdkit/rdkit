@@ -6,7 +6,7 @@
 """
 from __future__ import print_function
 
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 # FIX: the TreeNode class has not been updated to new-style classes

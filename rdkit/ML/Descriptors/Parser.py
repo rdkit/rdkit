@@ -46,7 +46,8 @@ Here's the general flow of things:
 
 from __future__ import print_function
 
-from math import *  # @UnusedWildImport
+# The wildcard import is required to make functions available for the eval statement
+from math import *
 
 from rdkit import RDConfig
 
@@ -333,7 +334,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
-  except Exception:  # pragma: nocover
+  except Exception:
     if __DEBUG:
       import traceback
       print('Sub Failure!')
@@ -346,7 +347,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
 
   try:
     v = eval(evalTarget)
-  except Exception:  # pragma: nocover
+  except Exception:
     if __DEBUG:
       import traceback
       outF = open(RDConfig.RDCodeDir + '/ml/descriptors/log.txt', 'a+')
@@ -414,14 +415,14 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
-  except Exception:  # pragma: nocover
+  except Exception:
     return res
   for i in range(len(composVect)):
-    propDict = propDictList[i]  # @UnusedVariable
-    compos = composVect[i]  # @UnusedVariable
+    propDict = propDictList[i]
+    compos = composVect[i]
     try:
       v = eval(evalTarget)
-    except Exception:  # pragma: nocover
+    except Exception:
       v = -666
     res[i] = v
   return res

@@ -12,7 +12,7 @@ from rdkit.TestRunner import redirect_stdout
 from rdkit.six import StringIO
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(SplitData, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(DataUtils, optionflags=doctest.ELLIPSIS))

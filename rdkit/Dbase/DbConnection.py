@@ -232,7 +232,7 @@ class DbConnect(object):
     addStr = 'create table %s (%s)' % (tableName, colString)
     try:
       c.execute(addStr)
-    except Exception:  # pragma: nocover
+    except Exception:
       import traceback
       print('command failed:', addStr)
       traceback.print_exc()
@@ -258,7 +258,7 @@ class DbConnect(object):
     cmd = "insert into %s values %s" % (tableName, insTxt)
     try:
       c.execute(cmd, vals)
-    except Exception:  # pragma: nocover
+    except Exception:
       import traceback
       print('insert failed:')
       print(cmd)
@@ -299,7 +299,7 @@ class DbConnect(object):
     c = self.GetCursor()
     try:
       c.execute("alter table %s add %s %s" % (tableName, colName, colType))
-    except Exception:  # pragma: nocover
+    except Exception:
       print('AddColumn failed')
 
   def Commit(self):

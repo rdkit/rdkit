@@ -17,7 +17,7 @@ from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculat
 from rdkit.ML.ModelPackage import Packager, PackageUtils
 from rdkit.ML.ModelPackage.Packager import ModelPackage
 from rdkit.six import BytesIO
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 def feq(a, b, tol=1e-4):

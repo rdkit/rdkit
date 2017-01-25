@@ -14,7 +14,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 def feq(n1, n2, tol=1e-4):

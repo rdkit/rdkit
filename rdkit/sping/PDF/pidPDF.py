@@ -13,7 +13,6 @@ self.pdf which offers numerous lower-level drawing routines.
 # except drawFigure, which doesn't behave like PostScript
 # paths so I left it unchanged.
 
-#pylint: disable=E1103,W0311,E1101
 from __future__ import print_function
 #standard python library modules
 from . import pdfmetrics

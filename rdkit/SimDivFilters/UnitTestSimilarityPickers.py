@@ -18,7 +18,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.SimDivFilters import SimilarityPickers
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(SimilarityPickers, optionflags=doctest.ELLIPSIS))
   return tests
