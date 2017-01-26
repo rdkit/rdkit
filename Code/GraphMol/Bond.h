@@ -98,8 +98,10 @@ class Bond : public RDProps {
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,  // Z double bond
-    STEREOE,  // E double bond
+    STEREOZ,     // Z double bond
+    STEREOE,     // E double bond
+    STEREOCIS,   // cis double bond
+    STEREOTRANS  // trans double bond
   } BondStereo;
 
   Bond();
