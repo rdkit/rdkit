@@ -549,7 +549,7 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
         (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
       if (stype == Bond::STEREOZ) {
         stype = Bond::STEREOE;
-      } else if (stype == Bond::STEREOE) {
+      } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
         stype = Bond::STEREOZ;
       }
     }
@@ -604,7 +604,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
   bool preferCis = false;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOE)) {
+      (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
     // the ring check here was a big part of github #697
     if (mol.getRingInfo()->numBondRings(bid2) > 1) {
       if (mol.getRingInfo()->numBondRings(bid1) == 1 &&

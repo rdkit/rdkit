@@ -354,9 +354,11 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     unsigned int stereo = 0;
     switch (bond->getStereo()) {
       case Bond::STEREOZ:
+      case Bond::STEREOCIS:
         stereo = 1;
         break;
       case Bond::STEREOE:
+      case Bond::STEREOTRANS:
         stereo = 2;
         break;
       default:

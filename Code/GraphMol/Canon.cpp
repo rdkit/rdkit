@@ -240,7 +240,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
 
   // now set the directionality on the other side:
   if (setFromBond1) {
-    if (dblBond->getStereo() == Bond::STEREOE) {
+    if (dblBond->getStereo() == (Bond::STEREOE || Bond::STEREOTRANS)) {
       atom2Dir = atom1Dir;
     } else if (dblBond->getStereo() == Bond::STEREOZ) {
       atom2Dir = (atom1Dir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT
@@ -289,7 +289,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
     // we come before a ring closure:
     if (dblBond->getStereo() == Bond::STEREOZ) {
       atom1Dir = atom2Dir;
-    } else if (dblBond->getStereo() == Bond::STEREOE) {
+    } else if (dblBond->getStereo() == (Bond::STEREOE || Bond::STEREOTRANS)) {
       atom1Dir = (atom2Dir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT
                                                 : Bond::ENDUPRIGHT;
     }
