@@ -339,7 +339,9 @@ struct bond_wrapper {
         .value("STEREONONE", Bond::STEREONONE)
         .value("STEREOANY", Bond::STEREOANY)
         .value("STEREOZ", Bond::STEREOZ)
-        .value("STEREOE", Bond::STEREOE);
+        .value("STEREOE", Bond::STEREOE)
+        .value("STEREOCIS", Bond::STEREOCIS)
+        .value("STEREOTRANS", Bond::STEREOTRANS);
 
     bondClassDoc =
         "The class to store QueryBonds.\n\

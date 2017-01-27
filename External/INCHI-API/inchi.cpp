@@ -1861,7 +1861,8 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
         bond->getStereo() > Bond::STEREOANY &&
         bond->getStereoAtoms().size() >= 2) {
       inchi_Stereo0D stereo0D;
-      if (bond->getStereo() == Bond::STEREOZ)
+      if (bond->getStereo() == Bond::STEREOZ ||
+          bond->getStereo() == Bond::STEREOCIS)
         stereo0D.parity = INCHI_PARITY_ODD;
       else
         stereo0D.parity = INCHI_PARITY_EVEN;
