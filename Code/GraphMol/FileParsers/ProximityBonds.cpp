@@ -226,6 +226,9 @@ static bool StandardPDBDoubleBond(unsigned int rescode, unsigned int atm1,
         return true;
       break;
     case BCNAM('H', 'I', 'S'):
+    case BCNAM('H', 'I', 'E'):
+    case BCNAM('H', 'I', 'D'):
+    case BCNAM('H', 'I', 'P'):
       if (atm1 == BCATM(' ', 'C', ' ', ' ') &&
           atm2 == BCATM(' ', 'O', ' ', ' '))
         return true;
