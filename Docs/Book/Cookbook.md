@@ -267,7 +267,7 @@ Examples of using it:
     rms = rdMolAlign.AlignMol(mol1, mol2)
     tani = rdShapeHelpers.ShapeTanimotoDist(mol1, mol2)
     prtr = rdShapeHelpers.ShapeProtrudeDist(mol1, mol2)
-    print('{0:.11f} {1:.11f} {2:.13f}'.format(rms, tani, prtr))
+    print(rms, tani, prtr)
 
 This produces:
 
@@ -291,7 +291,7 @@ Examples of using it:
     fp2 = Generate.Gen2DFingerprint(mol2, factory, dMat=Chem.Get3DDistanceMatrix(mol2))
     # Tanimoto similarity
     tani = DataStructs.TanimotoSimilarity(fp1, fp2)
-    print('{0:.12f}'.format(tani))
+    print(tani)
 
 This produces:
 
@@ -323,7 +323,7 @@ Examples of using it:
     tfd1 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2)
     tfd2 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, useWeights=False)
     tfd3 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, maxDev='spec')
-    print('{:.13f} {:.12f} {:.13f}'.format(tfd1, tfd2, tfd3))
+    print(tfd1, tfd2, tfd3)
 
 This produces:
 
