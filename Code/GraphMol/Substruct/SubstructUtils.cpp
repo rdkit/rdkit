@@ -24,8 +24,8 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
   // " " << a2->getIdx() << std::endl;
   bool res;
   if (useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
-    res = static_cast<QueryAtom *>(a1.get())
-              ->QueryMatch(static_cast<QueryAtom *>(a2.get()));
+    res = static_cast<QueryAtom *>(a1.get())->QueryMatch(
+        static_cast<QueryAtom *>(a2.get()));
   } else {
     res = a1->Match(a2);
   }
@@ -55,10 +55,18 @@ bool bondCompat(const BOND_SPTR &b1, const BOND_SPTR &b2,
   PRECONDITION(b2, "bad bond");
   bool res;
   if (useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
-    res = static_cast<QueryBond *>(b1.get())
-              ->QueryMatch(static_cast<QueryBond *>(b2.get()));
+    res = static_cast<QueryBond *>(b1.get())->QueryMatch(
+        static_cast<QueryBond *>(b2.get()));
   } else {
     res = b1->Match(b2);
+  }
+  if (res && b1->getBondType() == Bond::DATIVE &&
+      b2->getBondType() == Bond::DATIVE) {
+    // for dative bonds we need to make sure that the direction also matches:
+    if (!b1->getBeginAtom()->Match(b1->getBeginAtom()) ||
+        !b1->getEndAtom()->Match(b2->getEndAtom())) {
+      res = false;
+    }
   }
   // std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ":
   // " << res << std::endl;
