@@ -409,6 +409,8 @@ The code:
     fp = numpy.zeros((1,))
     DataStructs.ConvertToNumpyArray(AllChem.GetMorganFingerprintAsBitVect(m5, 2), fp)
 
+    # Reshape to a matrix for one sample
+    fp = fp.reshape(1, -1)
     print rf.predict(fp)
     print rf.predict_proba(fp)
 
@@ -425,6 +427,7 @@ The code:
 
     # helper function
     def getProba(fp, predictionFunction):
+      fp = fp.reshape(1, -1)
       return predictionFunction(fp)[0][1]
 
     m5 = Chem.MolFromSmiles('c1ccccc1O')
