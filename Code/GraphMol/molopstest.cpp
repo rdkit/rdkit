@@ -6051,6 +6051,84 @@ void testPotentialStereoBonds() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSetBondStereo() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Bond::setStereo(Bond::STEREOCIS / Bond::STEREOTRANS)"
+                       << std::endl;
+
+  // tests to make sure neighboring bond stereo is handled properly
+  {
+    const char *smiles[] = {"CC=CC",   "CC=C/C=C/C",   "CC=C/C=C\\C",   "CC=C\\C=C/C",   "CC=C\\C=C\\C",
+                          "C(C)=CC", "C(C)=C/C=C/C", "C(C)=C/C=C\\C", "C(C)=C\\C=C/C", "C(C)=C\\C=C\\C"};
+    const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
+    const Bond::BondStereo ezstros[] = {Bond::STEREOZ,   Bond::STEREOE};
+
+    for (size_t i = 0; i < 10; ++i) {
+      ROMol *m = SmilesToMol(smiles[i]);
+      MolOps::findPotentialStereoBonds(*m);
+      Bond *bond = m->getBondWithIdx(1);
+
+      for (size_t j = 0; j < 2; ++j) {
+        Bond::BondStereo desired_stereo = stereos[j];
+        bond->setStereo(desired_stereo);
+
+        bool doIsomericSmiles = true;
+        bool doKekule = false;
+        int rootedAtAtom = -1;
+        bool canonical = false;
+        std::string isosmi = MolToSmiles(*m, doIsomericSmiles, doKekule, rootedAtAtom, canonical);
+
+        ROMol *isomol = SmilesToMol(isosmi);
+        Bond *isobond = isomol->getBondWithIdx(1);
+        const Bond::BondStereo expected_ez_stereo = ezstros[j];
+        TEST_ASSERT(isobond->getStereo() == expected_ez_stereo);
+
+        std::string round_trip_isosmi = MolToSmiles(*m, doIsomericSmiles, doKekule, rootedAtAtom, canonical);
+        TEST_ASSERT(isosmi == round_trip_isosmi);
+
+        BOOST_LOG(rdInfoLog) << isosmi << " == " << round_trip_isosmi << " " << desired_stereo << std::endl;
+
+        delete isomol;
+      }
+      delete m;
+    }
+  }
+
+  // tests enumerating all possible smiles with halogens still yield
+  // the same isomeric canonical smiles strings.
+  {
+    const char *smiles[] = {"ClC=CF",
+                            "FC=CCl",
+                            "C(Cl)=CF",
+                            "C(F)=CCl"};
+    const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
+
+    for (size_t j = 0; j < 2; ++j) {
+      Bond::BondStereo desired_stereo = stereos[j];
+
+      std::string refSmiles;
+      for (size_t i = 0; i < 4; ++i) {
+        ROMol *m = SmilesToMol(smiles[i]);
+        MolOps::findPotentialStereoBonds(*m);
+        TEST_ASSERT(m->getNumAtoms() == 4);
+
+        Bond *doubleBond = m->getBondWithIdx(1);
+        doubleBond->setStereo(desired_stereo);
+
+        bool doIsomericSmiles = true;
+        std::string isocansmi = MolToSmiles(*m, doIsomericSmiles);
+
+        if (refSmiles.empty()) {
+          refSmiles = isocansmi;
+        }
+        BOOST_LOG(rdInfoLog) << refSmiles << " == " << isocansmi << " " << desired_stereo << std::endl;
+        TEST_ASSERT(refSmiles == isocansmi);
+
+        delete m;
+      }
+    }
+  }
+}
+
 void testGithubIssue754() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #754 : "
                           "loss of double bond geometry with removeHs"
@@ -6710,8 +6788,9 @@ int main() {
   testGithubIssue607();
   testAdjustQueryProperties();
   testGithubIssue1204();
-#endif
   testPotentialStereoBonds();
+  testSetBondStereo();
+#endif
 
   return 0;
 }
