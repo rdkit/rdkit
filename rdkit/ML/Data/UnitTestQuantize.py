@@ -7,7 +7,7 @@
 import unittest
 
 from rdkit.ML.Data import Quantize
-from rdkit.six.moves import map  # @UnresolvedImport
+from rdkit.six.moves import map
 
 
 class TestCase(unittest.TestCase):

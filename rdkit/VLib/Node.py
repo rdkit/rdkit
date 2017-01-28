@@ -27,7 +27,7 @@ class VLibNode(object):
     self.reset()
     return self
 
-  def next(self):  # pragma: nocover
+  def next(self):
     """ part of the iterator interface
 
       raises StopIteration on failure

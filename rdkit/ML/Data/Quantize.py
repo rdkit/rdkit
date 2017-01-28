@@ -17,7 +17,7 @@ lie.
 from __future__ import print_function
 import numpy
 from rdkit.ML.InfoTheory import entropy
-from rdkit.six.moves import zip, map, range  # @UnresolvedImport
+from rdkit.six.moves import zip, map, range
 try:
   from rdkit.ML.Data import cQuantize
 except ImportError:

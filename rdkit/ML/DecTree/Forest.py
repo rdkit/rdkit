@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy
 
 from rdkit.ML.DecTree import CrossValidate, PruneTree
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class Forest(object):

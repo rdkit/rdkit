@@ -12,7 +12,7 @@ from rdkit import RDConfig
 from rdkit.ML.DecTree import Tree
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import StringIO
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class TreeTestCase(unittest.TestCase):

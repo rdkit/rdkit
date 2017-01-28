@@ -5,7 +5,7 @@ tests = [
   ("python", "UnitTestChemBond.py", {}),
   ("python", "UnitTestChemSmarts.py", {}),
   ("python", "UnitTestFragmentDescriptors.py", {}),
-  ("python", "UnitTestGraphDescriptors.2.py", {}),
+  ("python", "UnitTestGraphDescriptors_2.py", {}),
   ("python", "UnitTestLipinski.py", {}),
   ("python", "UnitTestMCS.py", {}),
   ("python", "UnitTestOldBugs.py", {}),

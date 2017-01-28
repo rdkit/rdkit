@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2006  Rational Discovery LLC
 #
@@ -14,21 +13,24 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, os
-from rdkit.six.moves import cPickle
+
+import os
+import unittest
+
 from rdkit import Chem
-from rdkit.Chem import Lipinski, rdMolDescriptors
+from rdkit import RDConfig
+from rdkit.Chem import Lipinski, rdMolDescriptors, Crippen
 
 NonStrict = "NUM_ROTATABLEBONDS_O"
 Strict = "NUM_ROTATABLEBONDS"
+
+doLong = False
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    print('\n%s: ' % self.shortDescription(), end='')
-    self.inFileName = '%s/NCI/first_200.props.sdf' % (RDConfig.RDDataDir)
+    self.inFileName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
 
   def test1(self):
     " testing first 200 mols from NCI "
@@ -41,10 +43,6 @@ class TestCase(unittest.TestCase):
 
     suppl = Chem.SDMolSupplier(self.inFileName)
     idx = 1
-    oldDonorSmarts = Chem.MolFromSmarts('[NH1,NH2,OH1]')
-    OldDonorCount = lambda x, y=oldDonorSmarts: Lipinski._NumMatches(x, y)
-    oldAcceptorSmarts = Chem.MolFromSmarts('[N,O]')
-    OldAcceptorCount = lambda x, y=oldAcceptorSmarts: Lipinski._NumMatches(x, y)
     for m in suppl:
       if m:
         calc = Lipinski.NHOHCount(m)
@@ -105,5 +103,65 @@ class TestCase(unittest.TestCase):
     self.assertTrue(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=C(C)NC(=O)C')) == 2)
 
 
+class TestCase_Regression(unittest.TestCase):
+
+  @staticmethod
+  def _regressionData(filename, col):
+    """ Return entries form regression dataset.
+    Returns the line number, smiles, molecule, and the value found in column col
+    """
+    with open(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', filename), 'r') as inF:
+      for lineNum, line in enumerate(inF, 1):
+        if line[0] == '#':
+          continue
+        splitL = line.split(',')
+        smi = splitL[0]
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+          raise AssertionError('line %d, smiles: %s' % (lineNum, smi))
+        expected = float(splitL[col])
+        yield lineNum, smi, mol, expected
+
+  def __testDesc(self, fileN, col, func):
+    for lineNum, smi, mol, expected in self._regressionData(fileN, col):
+      if abs(expected - 666.0) < 1e-4:  # Unavailable data point
+        continue
+      try:
+        val = func(mol)
+      except Exception:
+        val = 666
+      assert abs(val - expected) < 1e-4, 'line %d, mol %s (calc = %f) should have val = %f' % (
+        lineNum, smi, val, expected)
+
+  def testLipinskiLong(self):
+    """ Lipinski parameter """
+    if not doLong:
+      raise unittest.SkipTest('long test')
+    fName = 'PP_descrs_regress.csv'
+    self.__testDesc(fName, 30, Lipinski.NumHDonors)
+    self.__testDesc(fName, 31, Lipinski.NumHeteroatoms)
+    self.__testDesc(fName, 32, Lipinski.NumRotatableBonds)
+    self.__testDesc(fName, 33, lambda x: Crippen.MolLogP(x, includeHs=1))
+
+    fName = 'Block_regress.Lip.csv'
+    self.__testDesc(fName, 1, Lipinski.NumHAcceptors)
+    self.__testDesc(fName, 2, Lipinski.NumHDonors)
+    self.__testDesc(fName, 3, Lipinski.NumHeteroatoms)
+    self.__testDesc(fName, 4, Lipinski.NumRotatableBonds)
+
+    fName = 'PP_descrs_regress.2.csv'
+    self.__testDesc(fName, 33, lambda x: Crippen.MolLogP(x, includeHs=1))
+
+
 if __name__ == '__main__':
+  import argparse
+  import sys
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-l', default=False, action='store_true', dest='doLong')
+  args = parser.parse_args()
+  doLong = args.doLong
+
+  # Remove the -l flag if present so that it isn't interpreted by unittest.main()
+  if 'l' in sys.argv:
+    sys.argv.remove('-l')
   unittest.main()

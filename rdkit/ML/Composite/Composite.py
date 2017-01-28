@@ -24,7 +24,7 @@ Other compatibility notes:
 """
 from __future__ import print_function
 import numpy
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 from rdkit.ML.Data import DataUtils
 
 
@@ -493,7 +493,7 @@ class Composite(object):
       m = self.GetModel(i)
       try:
         m.ClearExamples()
-      except AttributeError:  # pragma: nocover
+      except AttributeError:
         pass
 
   def Pickle(self, fileName='foo.pkl', saveExamples=0):
@@ -538,7 +538,7 @@ class Composite(object):
     if model in self.modelList:
       try:
         idx = self.modelList.index(model)
-      except ValueError:  # pragma: nocover
+      except ValueError:
         # FIX: we should never get here, but sometimes we do anyway
         self.modelList.append(model)
         self.errList.append(error)

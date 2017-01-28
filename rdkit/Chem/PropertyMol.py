@@ -10,7 +10,8 @@ class PropertyMol(Chem.Mol):
 
    >>> import os
    >>> from rdkit.six.moves import cPickle
-   >>> m = Chem.MolFromMolFile(os.path.join(os.path.dirname(__file__), 'test_data/benzene.mol'))
+   >>> from rdkit import RDConfig
+   >>> m = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data/benzene.mol'))
    >>> m.GetProp('_Name')
    'benzene.mol'
 
