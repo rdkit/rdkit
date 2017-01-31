@@ -277,7 +277,23 @@ class Bond : public RDProps {
   BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); };
 
   //! sets our stereo code
-  void setStereo(BondStereo what) { d_stereo = what; };
+  /*!
+      STEREONONE, STEREOANY, STEREOE and STEREOZ can be set without
+      neighboring atoms specified in getStereoAtoms since they are
+      defined by the topology of the molecular graph. In order to set
+      STEREOCIS or STEREOTRANS the neighboring atoms must be set first
+      to know what atoms are being considered.
+
+      <b>Notes:</b>
+        - Bond::setStereoAtoms(int bgnIdx, int endIdx) is not yet created, need to create this
+        - MolOps::findPotentialStereoBonds can be used to set
+          getStereoAtoms before setting CIS/TRANS
+  */
+  void setStereo(BondStereo what) {
+    PRECONDITION(what <= STEREOE || getStereoAtoms().size() == 2,
+                 "Stereo atoms should be specified before specifying CIS/TRANS bond stereochemistry")
+    d_stereo = what;
+  };
   //! returns our stereo code
   BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
 
