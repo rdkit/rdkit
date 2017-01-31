@@ -127,14 +127,13 @@ struct bond_wrapper {
              "Set the type of the bond as a BondDir\n")
 
         .def("GetStereo", &Bond::getStereo,
-             "Returns the CIP-classification of the bond as a BondStereo\n")
-        // this is no longer exposed because it requires that stereo atoms
-        // be set. This is a task that is tricky and "dangerous".
-        //.def("SetStereo",&Bond::setStereo,
-        //	   "Set the CIP-classification of the bond as a BondStereo\n")
+             "Returns the stereo configuration of the bond as a BondStereo\n")
+        .def("SetStereo", &Bond::setStereo,
+             "Set the stereo configuration of the bond as a BondStereo\n")
         .def("GetStereoAtoms", getBondStereoAtoms,
              "Returns the indices of the atoms setting this bond's "
              "stereochemistry.")
+
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
              "Returns the contribution of the bond to the valence of an "
