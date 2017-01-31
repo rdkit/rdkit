@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,6 +29,7 @@ RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
 void CloseMolRings(RDKit::RWMol *mol, bool toleratePartials);
 void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 void CleanupAfterParsing(RDKit::RWMol *mol);
+void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText, std::string::const_iterator &pos);
 };
 
 #endif

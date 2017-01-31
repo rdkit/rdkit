@@ -14,8 +14,10 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 
 extern const int ci_LOCAL_INF;
