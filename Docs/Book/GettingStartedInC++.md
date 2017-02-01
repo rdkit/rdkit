@@ -52,7 +52,7 @@ and in what order can involve a tedious amount of trial and error.
 
 ## Should You Use C++ or Python?
 
-There is no doubt that is is much easier to start learning with
+There is no doubt that it is much easier get started with
 Python.  If you follow the installation instructions, you will be able
 to start programming and using scripts straightaway.  If all you are
 going to do is use scripts to do relatively simple things,
@@ -168,9 +168,9 @@ Groups of molecules are read using a Supplier (for example, an
 RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
 
 while( !mol_supplier.atEnd() ) {
-	  mol = mol_supplier.next();
-	  std::cout << mol->getNumAtoms() << std::endl;
-	  delete mol;
+  mol = mol_supplier.next();
+  std::cout << mol->getNumAtoms() << std::endl;
+  delete mol;
 }
 ```
 gives
@@ -187,10 +187,10 @@ The supplier can be treated as a random-access object [(example2)](./C++Examples
 RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
 
 for( int i = int( mol_supplier.length() ) - 1 ; i >= 0  ; --i ) {
-	RDKit::ROMol *mol = mol_supplier[i];
-	std::cout << mol->getProp<std::string>( "_Name" ) << " has "
-	          << mol->getNumAtoms() << " atoms." << std::endl;
-	delete mol;
+  RDKit::ROMol *mol = mol_supplier[i];
+  std::cout << mol->getProp<std::string>( "_Name" ) << " has "
+            << mol->getNumAtoms() << " atoms." << std::endl;
+  delete mol;
 }
 ```
 gives
@@ -208,13 +208,13 @@ read before working with it [(example2)](./C++Examples/example2.cpp):
 RDKit::SDMolSupplier *mol_supplier = new RDKit::SDMolSupplier( "data/5ht3ligs.sdf" , true );
 
 for( int i = int( mol_supplier->length() ) - 1 ; i >= 0 ; --i ) {
-	RDKit::ROMol *mol = (*mol_supplier)[i];
-	if( !mol ) {
-		continue;
-	}
-	std::cout << mol->getProp<std::string>( "_Name" ) << " has "
-	          << mol->getNumAtoms() << " atoms." << std::endl;
-	delete mol;
+  RDKit::ROMol *mol = (*mol_supplier)[i];
+  if( !mol ) {
+    continue;
+  }
+  std::cout << mol->getProp<std::string>( "_Name" ) << " has "
+            << mol->getNumAtoms() << " atoms." << std::endl;
+  delete mol;
 }
 ```
 
@@ -240,9 +240,9 @@ Note that the forward suppliers cannot be used in random-access mode,
 and a compile-time error will result if you attempt to [(example2)](./C++Examples/example2.cpp):
 
 ```
-   error: no match for ‘operator[]’ (operand types are
-   ‘RDKit::ForwardSDMolSupplier’ and ‘int’) 
-      mol = forward_supplier[1];
+error: no match for ‘operator[]’ (operand types are
+‘RDKit::ForwardSDMolSupplier’ and ‘int’) 
+   mol = forward_supplier[1];
 ```
 
 ### Writing molecules
@@ -521,7 +521,7 @@ std::cout << oss.str() << std::endl;
 ```
 
 Other available writers include SmilesWriter and TDTWriter (for those
-of you with an interest in historical Cheminformatics!)
+of you with an interest in historical Cheminformatics).
 
 ## Working with Molecules
 
@@ -536,9 +536,9 @@ RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "C1OC1" ) );
 RDKit::ROMol::VERTEX_ITER it , end;
 boost::tie( it , end ) = mol->getVertices();
 while( it != end ) {
-    const RDKit::Atom *atom = (*mol)[*it].get();
-    std::cout << atom->getAtomicNum() << std::endl;
-    ++it;
+  const RDKit::Atom *atom = (*mol)[*it].get();
+  std::cout << atom->getAtomicNum() << std::endl;
+  ++it;
 }
 ```
 gives
@@ -549,8 +549,8 @@ An alternative method uses the fact that atoms and bonds can be
 selected by index number [(example6)](./C++Examples/example6.cpp):
 ```c++
 for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
-    const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
-    std::cout << atom->getAtomicNum() << std::endl;
+  const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
+  std::cout << atom->getAtomicNum() << std::endl;
 }
 ```
 Likewise with bonds [(example6)](./C++Examples/example6.cpp):
@@ -558,14 +558,14 @@ Likewise with bonds [(example6)](./C++Examples/example6.cpp):
 RDKit::ROMol::EDGE_ITER bond_it , bond_end;
 boost::tie( bond_it , bond_end ) = mol->getEdges();
 while( bond_it != bond_end ) {
-	const RDKit::Bond *bond = (*mol)[*bond_it].get();
-	std::cout << bond->getBondType() << std::endl;
-    ++bond_it;
+  const RDKit::Bond *bond = (*mol)[*bond_it].get();
+  std::cout << bond->getBondType() << std::endl;
+  ++bond_it;
 }
 
 for( unsigned int i = 0 , is = mol->getNumBonds() ; i < is ; ++i ) {
-	const RDKit::Bond *bond = mol->getBondWithIdx( i ); 
-    std::cout << bond->getIsAromatic() << std::endl;   
+  const RDKit::Bond *bond = mol->getBondWithIdx( i );
+  std::cout << bond->getIsAromatic() << std::endl;
 }
 ```
 gives
@@ -581,9 +581,9 @@ RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "C1OC1Cl" ) );
 const RDKit::Bond *bond = mol2->getBondBetweenAtoms( 0 , 1 );
 std::cout << bond->getBeginAtomIdx() << " to "
           << bond->getBeginAtomIdx() << " is "
-		  << bond->getBondType() << std::endl;
+          << bond->getBondType() << std::endl;
 if( !mol2->getBondBetweenAtoms( 0 , 3 ) ) {
-    std::cout << "No bond between 0 and 3" << std::endl;
+  std::cout << "No bond between 0 and 3" << std::endl;
 }
 ```
 
@@ -594,9 +594,9 @@ const RDKit::Atom *atom = mol2->getAtomWithIdx( 2 );
 RDKit::ROMol::ADJ_ITER nbr , end_nbr;
 boost::tie( nbr , end_nbr ) = mol2->getAtomNeighbors( atom );
 while( nbr != end_nbr ) {
-    const RDKit::Atom *nbr_atom = (*mol2)[*nbr].get();
-    std::cout << nbr_atom->getIdx() << " : " << nbr_atom->getAtomicNum() << std::endl;
-    ++nbr;
+  const RDKit::Atom *nbr_atom = (*mol2)[*nbr].get();
+  std::cout << nbr_atom->getIdx() << " : " << nbr_atom->getAtomicNum() << std::endl;
+  ++nbr;
 }
 ```
 gives
@@ -617,17 +617,17 @@ It is relatively easy to obtain ring information for atoms and bonds
 RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "OC1C2C1CC2" ) );
 
 if( !mol->getRingInfo()->isInitialized() ) {
-    RDKit::MolOps::findSSSR( *mol );
+  RDKit::MolOps::findSSSR( *mol );
 }
 for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
-	const RDKit::Atom *atom = mol->getAtomWithIdx( i );
-    std::cout << mol->getRingInfo()->numAtomRings( atom->getIdx() ) << " ";
+  const RDKit::Atom *atom = mol->getAtomWithIdx( i );
+  std::cout << mol->getRingInfo()->numAtomRings( atom->getIdx() ) << " ";
 }
 std::cout << std::endl;
 
 for( unsigned int i = 0 , is = mol->getNumBonds() ; i < is ; ++i ) {
-    const RDKit::Bond *bond = mol->getBondWithIdx( i );
-	std::cout << mol->getRingInfo()->numBondRings( bond->getIdx() ) << " ";
+  const RDKit::Bond *bond = mol->getBondWithIdx( i );
+  std::cout << mol->getRingInfo()->numBondRings( bond->getIdx() ) << " ";
 }
 std::cout << std::endl;
 ```
@@ -642,7 +642,7 @@ whether or not the return value is zero [(example7)](./C++Examples/example7.cpp)
 ```c++
 const RDKit::Bond *bond = mol->getBondWithIdx( 1 );
 if( mol->getRingInfo()->numBondRings( bond->getIdx() )) {
-    std::cout <<  "Bond " << bond->getIdx() << " is in a ring" << std::endl;;
+  std::cout <<  "Bond " << bond->getIdx() << " is in a ring" << std::endl;;
 }
 
 ```
@@ -656,11 +656,11 @@ obtained from the RingInfo object of the molecule [(example7)](./C++Examples/exa
 std::cout << "Atom 2 is in ring of size 3 : "
           << mol->getRingInfo()->isAtomInRingOfSize( 2 , 3 ) << std::endl;
 std::cout << "Atom 2 is in ring of size 4 : "
-	      << mol->getRingInfo()->isAtomInRingOfSize( 2 , 4 ) << std::endl;
+          << mol->getRingInfo()->isAtomInRingOfSize( 2 , 4 ) << std::endl;
 std::cout << "Atom 2 is in ring of size 5 : "
-	      << mol->getRingInfo()->isAtomInRingOfSize( 2 , 5 ) << std::endl;
+          << mol->getRingInfo()->isAtomInRingOfSize( 2 , 5 ) << std::endl;
 std::cout << "Bond 1 is in ring of size 3 : "
-	      << mol->getRingInfo()->isBondInRingOfSize( 1 , 3 ) << std::endl;
+          << mol->getRingInfo()->isBondInRingOfSize( 1 , 3 ) << std::endl;
 
 ```
 gives
@@ -677,10 +677,10 @@ RDKit::VECT_INT_VECT rings;
 RDKit::MolOps::symmetrizeSSSR( *mol , rings );
 std::cout << "Number of symmetric SSSR rings : " << rings.size() << std::endl;
 for( auto it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 ) {
-	for( auto it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
-      std::cout << *it2 << " ";
-    }
-    std::cout << std::endl;
+  for( auto it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
+    std::cout << *it2 << " ";
+  }
+  std::cout << std::endl;
 }
 ```
 gives
@@ -694,7 +694,6 @@ interested in the number of "true" SSSR, use the `findSSSR` function
 [(example7)](./C++Examples/example7.cpp):
 ```c++
 std::cout << "Number of SSSR rings : " << RDKit::MolOps::findSSSR( *mol ) << std::endl;
-
 ```
 gives
 ```
@@ -708,7 +707,7 @@ discussed in more detail below in the section
 
 Normally molecules are stored in the RDKit with the hydrogen atoms
 implicit (i.e. not explicitly present in the molecular graph).  When
-it is useful to have the hydrogens explicitly persent, for example
+it is useful to have the hydrogens explicitly present, for example
 when generating or optimizing the 3D geometry, the
 `RDKit::MolOps::addHs` function can be used
 [(example8)](./C++Examples/example8.cpp). 
@@ -740,13 +739,13 @@ having aromatic bond types. This can be changed with the
 `RDKit::MolOps::Kekulize` function, which must be called with an RWMol
 [(example9)](./C++Examples/example9.cpp):
 ```c++
-  RDKit::RWMOL_SPTR mol( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
-  std::cout << "Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
-  std::cout << "Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+RDKit::RWMOL_SPTR mol( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
+std::cout << "Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
+std::cout << "Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
 
-  RDKit::MolOps::Kekulize( *mol );
-  std::cout << "After default Kekulize : Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
-  std::cout << "After default Kekulize : Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
+RDKit::MolOps::Kekulize( *mol );
+std::cout << "After default Kekulize : Order : " << mol->getBondWithIdx( 0 )->getBondType() << std::endl;
+std::cout << "After default Kekulize : Aromatic : " << mol->getBondWithIdx( 0 )->getIsAromatic() << std::endl;
 ```
 gives
 ```
@@ -757,7 +756,7 @@ After default Kekulize : Aromatic : 0
 ```
 The bond orders are defined as the enum BondType in
 [Bond.h](../../Code/GraphMol/Bond.h), and an aromatic bond
-currenly has the value 12.
+currently has the value 12.
 Note that by default the Kekulize function clears the aromatic flags
 on the atoms and bonds. **This is in contrast to the Python version of
 Kekulize, which preserves the flags by default.**  The behaviour can be
@@ -814,8 +813,7 @@ default. This can be forced by passing `true` as the third parameter
 #include <Geometry/point.h>
 .
 .
-RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) ,
-	                       true );
+RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) , true );
 ```
 
 The `point.h` must be included for the typedef that defines
@@ -845,8 +843,7 @@ RDKit::MatchVectType matchVect;
 if( RDKit::SubstructMatch( *mol1 , *templ , matchVect ) ) {
   RDKit::Conformer &conf = templ->getConformer();
   RDGeom::INT_POINT2D_MAP coordMap;
-  for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ;
-	 mv != matchVect.end() ; ++mv ) {
+  for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ; mv != matchVect.end() ; ++mv ) {
     RDGeom::Point3D pt3 = conf.getAtomPos( mv->first );
     RDGeom::Point2D pt2( pt3.x , pt3.y );
     coordMap[mv->second] = pt2;
@@ -866,7 +863,7 @@ incorporated in December 2016.
 ### Working with 3D Molecules
 
 The RDKit can generate conformations for molecules using two different
-methods.  The original method used distance geometry. [#blaney]_
+methods.  The original method used distance geometry [[1]](#blaney).
 The algorithm followed is:
 
 1. The molecule's distance bounds matrix is calculated based on the
@@ -887,10 +884,10 @@ The algorithm followed is:
 Note that the conformations that result from this procedure tend to be
 fairly ugly. They should be cleaned up using a force field.
 This can be done within the RDKit using its implementation of the
-Universal Force Field (UFF). [#rappe]_ 
+Universal Force Field UFF[[2]](#rappe).
 
 More recently, there is an implementation of the method of Riniker and
-Landrum [#riniker2]_ which uses torsion angle preferences from the
+Landrum [[3]](#riniker2) which uses torsion angle preferences from the
 Cambridge Structural Database (CSD) to correct the conformers after
 distance geometry has been used to generate them.  With this method,
 there should be no need to use a minimisation step to clean up the
@@ -927,7 +924,8 @@ results but disguises the inherently non-deterministic nature of the
 algorithm.
 
 The RDKit also has an implementation of the MMFF94 force field
-available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]
+available [[4]](#mmff1), [[5]](#mmff2), [[6]](#mmff3),
+[[7]](#mmff4), [[8]](#mmffs).
 [(example11.cpp)](./C++Examples/example11.cpp):
 ```c++
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
@@ -1065,12 +1063,12 @@ std::cout << "Read " << read_cnt << " molecules." << std::endl;
 ```
 However, currently the pickling process does not preserve and
 properties attached to the molecule, which included the molecule name
-(property "_Name").
+(property "_Name"). This is likely to change in 2017.
 
 ### Drawing Molecules
 The RDKit has some built-in functionality for drawing molecules, found
 in the RDKit namespace, with header files in
-`$RDBASE/Code/GraphMol/MolDraw2D'.  There is an abstract base class
+`$RDBASE/Code/GraphMol/MolDraw2D`.  There is an abstract base class
 MolDraw2D which defines the interface and does the drawing, with
 concrete classes for drawing to SVG or PNG files and Qt and wx
 widgets.  Only the SVG output is built by default, Cairo support
@@ -1134,7 +1132,7 @@ Pattern matched molecule
 ```
 showing that atoms 0, 5 and 6 in the phenol matched the query. If the
 pattern matches multiple times (as in this case, where 4, 5, 6 is also
-a match), an arbitrary set is returned.
+a match), a single arbitrary set is returned.
 
 All possible matches can also be returned:
 [(example14.cpp)](./C++Examples/example14.cpp):
@@ -1305,7 +1303,7 @@ if( RDKit::SubstructMatch( *mol2 , *patt5 , res , true , true ) ) {
 ```
 gives
 ```
-Chiral mol, non-chiral query match
+Chiral mol, non-chiral query : match
 Non-chiral mol, chiral query : NO match
 ```
 
@@ -1314,8 +1312,8 @@ Non-chiral mol, chiral query : NO match
 It is possible to attach indices to the atoms in the SMARTS
 pattern. This is most often done in reaction SMARTS (see Chemical
 Reactions), but is more general than that. For example, in the SMARTS
-patterns for torsion angle analysis published by Guba et al. (`DOI:
-acs.jcim.5b00522`) indices are used to define the four atoms of the
+patterns for torsion angle analysis published by Guba et
+al. [[9]](#guba) indices are used to define the four atoms of the
 torsion of interest. This allows additional atoms to be used to define
 the environment of the four torsion atoms, as in
 `[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]` for an aromatic C=N
@@ -1390,4 +1388,33 @@ are present in the molecule, there is a
 `rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
 SSSR count, not the potentially non-unique set of rings.
 
-
+## Footnotes
+1. <a name="blaney"></a>Blaney, J. M.; Dixon, J. S. "Distance Geometry
+in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH:
+New York, 1994. 
+2. <a name="rappe"></a>Rappé, A. K.; Casewit, C. J.; Colwell, K. S.;
+Goddard III, W. A.; Skiff, W. M. "UFF, a full periodic table force
+field for molecular mechanics and molecular dynamics
+simulations". *J. Am. Chem. Soc.* **114**:10024-35 (1992) . 
+3. <a name="riniker2"></a>Riniker, S.; Landrum, G. A. "Better Informed
+Distance Geometry: Using What We Know To Improve Conformation
+Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) 
+4. <a name="mmff1"></a>Halgren, T. A. "Merck molecular force
+field. I. Basis, form, scope, parameterization, and performance of
+MMFF94." *J. Comp. Chem.* **17**:490–19 (1996).
+5. <a name="mmff2"></a>Halgren, T. A. "Merck molecular force
+field. II. MMFF94 van der Waals and electrostatic parameters for
+intermolecular interactions." *J. Comp. Chem.* **17**:520–52 (1996).
+6. <a name="mmff3"></a>Halgren, T. A. "Merck molecular force
+field. III. Molecular geometries and vibrational frequencies for
+MMFF94." *J. Comp. Chem.* **17**:553–86 (1996). 
+7. <a name="mmff4"></a>Halgren, T. A. & Nachbar, R. B. "Merck
+molecular force field. IV. conformational energies and geometries
+for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996). 
+8. <a name="mmffs"></a>Halgren, T. A. "MMFF VI. MMFF94s option for
+energy minimization studies." *J. Comp. Chem.* **20**:720–9
+(1999). 
+9. <a name="guba"></a>Guba, W.; Meyder, A.; Rarey, M.; Hert,
+J. "Torsion Library Reloaded: A New Version of Expert-Derived
+SMARTS Rules for Assessing Conformations of Small
+Molecules". *J. Chem. Inf. Model.* ** 56**:1-5 (2016)
