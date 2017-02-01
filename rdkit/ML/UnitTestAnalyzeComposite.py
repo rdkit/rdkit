@@ -11,23 +11,17 @@
 """unit testing code for the AnalyzeComposite functionality
 
 """
+import os
+import unittest
+
 from rdkit import RDConfig
-import unittest, os
 from rdkit.ML import AnalyzeComposite
 from rdkit.six.moves import cPickle as pickle
-
-
-def feq(a, b, tol=1e-4):
-  if abs(a - b) > tol:
-    return 0
-  else:
-    return 1
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
     self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
 
   def test1_Issue163(self):
@@ -63,5 +57,5 @@ class TestCase(unittest.TestCase):
       self.assertTrue(len(entry) == 5)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

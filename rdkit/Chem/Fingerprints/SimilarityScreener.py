@@ -14,9 +14,8 @@ See _SimilarityScreener_ for overview of required API
 
 """
 from rdkit import DataStructs
-from rdkit.DataStructs import TopNContainer
-from rdkit import RDConfig
 from rdkit import six
+from rdkit.DataStructs import TopNContainer
 
 
 class SimilarityScreener(object):
@@ -28,9 +27,9 @@ class SimilarityScreener(object):
       metric: a function that takes two arguments and returns a similarity
               measure between them
 
-      dataSource: the source pool from which to draw, needs to support 
+      dataSource: the source pool from which to draw, needs to support
               a next() method
-              
+
       fingerprinter: a function that takes a molecule and returns a
              fingerprint of the appropriate format
 
@@ -47,8 +46,7 @@ class SimilarityScreener(object):
     self.probe = probe
 
   def Reset(self):
-    """ used to reset screeners that behave as iterators
-    """
+    """ used to reset screeners that behave as iterators """
     pass
 
   # FIX: add setters/getters for attributes
@@ -80,7 +78,7 @@ class ThresholdScreener(SimilarityScreener):
        Hits are *not* stored locally, so if a client resets
        the iteration and starts over, the same amount of work must
        be done to retrieve the hits.
-       
+
      - The thinness and laziness forces us to support only forward
        iteration (not random access)
 

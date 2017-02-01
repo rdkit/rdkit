@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
@@ -37,6 +36,8 @@ class MolSupplier(object):
 
   def NextMol(self):
     """   Must be implemented in child class
- 
+
     """
     pass
+
+  __next__ = next  # PY3

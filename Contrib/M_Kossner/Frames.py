@@ -162,7 +162,7 @@ if __name__ == '__main__':
   for mol in suppl:
     m = GetFrame(mol)
     cansmiles = Chem.MolToSmiles(m, isomericSmiles=True)
-    if FrameDict.has_key(cansmiles):
+    if cansmiles in FrameDict:
       FrameDict[cansmiles].append(mol)
     else:
       FrameDict[cansmiles] = [mol, ]

@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
@@ -8,14 +7,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from __future__ import print_function
-
-raise NotImplementedError('not finished yet')
 """ lazy generator of 2D pharmacophore signature data
 
 """
-import rdkit.Chem
-from rdkit.Chem.Pharm2D import SigFactory, Matcher, Utils
+from __future__ import print_function
+
+from rdkit.Chem.Pharm2D import SigFactory, Matcher
+
+raise NotImplementedError('not finished yet')
 
 
 class Generator(object):
@@ -26,12 +25,12 @@ class Generator(object):
    - mol: the molecules whose signature is being worked with
 
    - sigFactory : the SigFactory object with signature parameters
-            NOTE: no preprocessing is carried out for _sigFactory_. 
-                  It *must* be pre-initialized.     
+            NOTE: no preprocessing is carried out for _sigFactory_.
+                  It *must* be pre-initialized.
 
-   **Notes**  
+   **Notes**
 
-     - 
+     -
   """
 
   def __init__(self, sigFactory, mol, dMat=None, bitCache=True):
@@ -49,7 +48,7 @@ class Generator(object):
        - bitCache: (optional) if nonzero, a local cache of which bits
          have been queried will be maintained.  Otherwise things must
          be recalculate each time a bit is queried.
-       
+
     """
     if not isinstance(sigFactory, SigFactory.SigFactory):
       raise ValueError('bad factory')
@@ -89,7 +88,7 @@ class Generator(object):
     """
     if idx < 0 or idx >= self.sig.GetSize():
       raise IndexError('Index %d invalid' % (idx))
-    if self.bits is not None and self.bits.has_key(idx):
+    if self.bits is not None and idx in self.bits:
       return self.bits[idx]
 
     tmp = Matcher.GetAtomsMatchingBit(self.sig, idx, self.mol, dMat=self.dMat, justOne=1,

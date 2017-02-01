@@ -14,19 +14,20 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+
+import sys
+
+from rdkit.Dbase import DbInfo
+from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
+from rdkit.six import string_types, StringIO
+from rdkit.six.moves import xrange
 
 
 def _take(fromL, what):
+  """ Given a list fromL, returns an iterator of the elements specified using their
+  indices in the list what """
   return map(lambda x, y=fromL: y[x], what)
-
-
-from rdkit.Dbase import DbModule
-import sys
-from rdkit.Dbase import DbInfo
-from rdkit.six.moves import xrange  #@UnresolvedImport #pylint: disable=F0401
-from rdkit.six import string_types
 
 
 def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', join='', cn=None):
@@ -37,14 +38,14 @@ def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', j
      - dBase: database name
 
      - table: table name
-     
+
      - fieldString: a string with the names of the fields to be extracted,
         this should be a comma delimited list
 
      - user and  password:
 
      - join: a join clause (omit the verb 'join')
-       
+
 
     **Returns**
 
@@ -89,6 +90,13 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
       - EFF: this isn't particularly efficient
 
   """
+  if forceList and (transform is not None):
+    raise ValueError('forceList and transform arguments are not compatible')
+  if forceList and (not randomAccess):
+    raise ValueError('when forceList is set, randomAccess must also be used')
+  if removeDups > -1:
+    forceList = True
+
   if not cn:
     cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
@@ -118,13 +126,13 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
     if not randomAccess:
       raise ValueError('when forceList is set, randomAccess must also be used')
     data = c.fetchall()
-    if removeDups > 0:
-      seen = []
+    if removeDups >= 0:
+      seen = set()
       for entry in data[:]:
         if entry[removeDups] in seen:
           data.remove(entry)
         else:
-          seen.append(entry[removeDups])
+          seen.add(entry[removeDups])
   else:
     if randomAccess:
       klass = RandomAccessDbResultSet
@@ -159,7 +167,7 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
 
     **Returns**
 
-      - the CSV data (as text) 
+      - the CSV data (as text)
 
   """
   if len(where) and where.strip().find('where') == -1:
@@ -194,7 +202,7 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
 
 
 def TypeFinder(data, nRows, nCols, nullMarker=None):
-  """ 
+  """
 
     finds the types of the columns in _data_
 
@@ -209,33 +217,34 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
     typeHere = [-1, 1]
     for row in xrange(nRows):
       d = data[row][col]
-      if d is not None:
-        locType = type(d)
-        if locType != float and locType != int:
-          locType = str
-          try:
-            d = str(d)
-          except UnicodeError as msg:
-            print('cannot convert text from row %d col %d to a string' % (row + 2, col))
-            print('\t>%s' % (repr(d)))
-            raise UnicodeError(msg)
+      if d is None:
+        continue
+      locType = type(d)
+      if locType != float and locType != int:
+        locType = str
+        try:
+          d = str(d)
+        except UnicodeError as msg:
+          print('cannot convert text from row %d col %d to a string' % (row + 2, col))
+          print('\t>%s' % (repr(d)))
+          raise UnicodeError(msg)
+      else:
+        typeHere[1] = max(typeHere[1], len(str(d)))
+      if isinstance(d, string_types):
+        if nullMarker is None or d != nullMarker:
+          l = max(len(d), typeHere[1])
+          typeHere = [str, l]
+      else:
+        try:
+          fD = float(int(d))
+        except OverflowError:
+          locType = float
         else:
-          typeHere[1] = max(typeHere[1], len(str(d)))
-        if isinstance(d, string_types):
-          if nullMarker is None or d != nullMarker:
-            l = max(len(d), typeHere[1])
-            typeHere = [str, l]
-        else:
-          try:
-            fD = float(int(d))
-          except OverflowError:
-            locType = float
-          else:
-            if fD == d:
-              locType = int
-          if not isinstance(typeHere[0], string_types) and \
-             priorities[locType] > priorities[typeHere[0]]:
-            typeHere[0] = locType
+          if fD == d:
+            locType = int
+        if not isinstance(typeHere[0], string_types) and \
+           priorities[locType] > priorities[typeHere[0]]:
+          typeHere[0] = locType
     res[col] = typeHere
   return res
 
@@ -245,7 +254,7 @@ def _AdjustColHeadings(colHeadings, maxColLabelLen):
 
     removes illegal characters from column headings
     and truncates those which are too long.
-    
+
   """
   for i in xrange(len(colHeadings)):
     # replace unallowed characters and strip extra white space
@@ -372,12 +381,12 @@ def TextFileToDatabase(dBase, table, inF, delim=',', user='sysdba', password='ma
       - inF: the file like object from which the data should
         be pulled (must support readline())
 
-      - delim: the delimiter used to separate fields  
+      - delim: the delimiter used to separate fields
 
       - user: the user name to use in connecting to the DB
 
       - password: the password to use in connecting to the DB
-      
+
       - maxColLabelLen: the maximum length a column label should be
         allowed to have (truncation otherwise)
 
@@ -433,21 +442,18 @@ def DatabaseToDatabase(fromDb, fromTbl, toDb, toTbl, fields='*', join='', where=
   """
 
    FIX: at the moment this is a hack
-   
+
   """
-  from io import StringIO
   sio = StringIO()
   sio.write(
     DatabaseToText(fromDb, fromTbl, fields=fields, join=join, where=where, user=user,
                    password=password))
-  sio.seek(-1)
+  sio.seek(0)
   TextFileToDatabase(toDb, toTbl, sio, user=user, password=password, keyCol=keyCol,
                      nullMarker=nullMarker)
 
 
-if __name__ == '__main__':
-  from io import StringIO
-
+if __name__ == '__main__':  # pragma: nocover
   sio = StringIO()
   sio.write('foo,bar,baz\n')
   sio.write('1,2,3\n')

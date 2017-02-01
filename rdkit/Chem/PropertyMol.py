@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2007-2010 Greg Landrum
 # All Rights Reserved
@@ -9,8 +8,10 @@ from rdkit import Chem
 class PropertyMol(Chem.Mol):
   """ allows rdkit molecules to be pickled with their properties saved.
 
+   >>> import os
    >>> from rdkit.six.moves import cPickle
-   >>> m = Chem.MolFromMolFile('test_data/benzene.mol')
+   >>> from rdkit import RDConfig
+   >>> m = Chem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data/benzene.mol'))
    >>> m.GetProp('_Name')
    'benzene.mol'
 
@@ -48,7 +49,7 @@ class PropertyMol(Chem.Mol):
    but the Property mols still convert all values to strings before storing:
    >>> pm.GetProp('IntVal')
    '1'
-   
+
    This is a test for sf.net issue 2880943: make sure properties end up in SD files:
    >>> import tempfile,os
    >>> fn = tempfile.mktemp('.sdf')
@@ -79,7 +80,7 @@ class PropertyMol(Chem.Mol):
    ...   pass
 
 
-   
+
   """
   __getstate_manages_dict__ = True
 

@@ -1,6 +1,7 @@
 tests = [
   ("python", "UnitTestSDMolSupplier.py", {}),
   ("python", "UnitTestSmilesMolSupplier.py", {}),
+  ("python", "UnitTestDbMolSupplier.py", {}),
 ]
 
 longTests = []

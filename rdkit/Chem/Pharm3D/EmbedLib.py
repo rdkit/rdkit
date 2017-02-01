@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
@@ -9,21 +8,24 @@
 #  of the RDKit source tree.
 #
 from __future__ import print_function
-from rdkit import RDConfig
 
-import sys, time, math
-from rdkit.ML.Data import Stats
-import rdkit.DistanceGeometry as DG
-from rdkit import Chem
+import math
+import sys
+import time
+
 import numpy
-from rdkit.Chem import rdDistGeom as MolDG
+
+from rdkit import Chem
+from rdkit import RDLogger as logging
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem import ChemicalForceFields
-import Pharmacophore, ExcludedVolume
-from rdkit import Geometry
+from rdkit.Chem import rdDistGeom as MolDG
+from rdkit.Chem.Pharm3D import ExcludedVolume
+import rdkit.DistanceGeometry as DG
+from rdkit.ML.Data import Stats
+
 _times = {}
 
-from rdkit import RDLogger as logging
 logger = logging.logger()
 defaultFeatLength = 2.0
 
@@ -48,7 +50,7 @@ def GetAtomHeavyNeighbors(atom):
   0
   >>> l[1].GetIdx()
   2
-  
+
   """
   res = []
   for nbr in atom.GetNeighbors():
@@ -81,7 +83,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    >>> boundsMat.shape == (3, 3)
    True
 
-   
+
    We make the assumption that the points of the
    feature form a regular polygon, are listed in order
    (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
@@ -139,8 +141,8 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
     bm[replaceIdx, idx1] = minVal
     if useDirs:
       # set the point - direction point bounds:
-      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1]**2 + maxVal**2)
-      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx]**2 + minVal**2)
+      bm[idx1, replaceIdx + 1] = numpy.sqrt(bm[replaceIdx, replaceIdx + 1] ** 2 + maxVal ** 2)
+      bm[replaceIdx + 1, idx1] = numpy.sqrt(bm[replaceIdx + 1, replaceIdx] ** 2 + minVal ** 2)
   return bm, replaceIdx
 
 
@@ -170,18 +172,18 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   """
   nAts = mol.GetNumAtoms()
   weights = []
-  if (atomMatch):
+  if atomMatch:
     for i in range(len(atomMatch)):
       for j in range(i + 1, len(atomMatch)):
         weights.append((i, j, weight))
-  if (excludedVolumes):
+  if excludedVolumes:
     for vol in excludedVolumes:
       idx = vol.index
       # excluded volumes affect every other atom:
       for i in range(nAts):
         weights.append((i, idx, weight))
   coords = DG.EmbedBoundsMatrix(bm, weights=weights, numZeroFail=1, randomSeed=randomSeed)
-  #for row in coords:
+  # for row in coords:
   #  print(', '.join(['%.2f'%x for x in row]))
 
   conf = Chem.Conformer(nAts)
@@ -192,7 +194,8 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
     for vol in excludedVolumes:
       vol.pos = numpy.array(coords[vol.index])
 
-    #print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1]), file=sys.stderr)
+    print('   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(coords[-1]),
+          file=sys.stderr)
   mol.AddConformer(conf)
 
 
@@ -264,8 +267,13 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
   atomMatch is a sequence of sequences containing atom indices
   for each of the pharmacophore's features.
 
-    >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
+    >>> from rdkit import Geometry
+    >>> from rdkit.Chem.Pharm3D import Pharmacophore
+    >>> feats = [
+    ...   ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+    ...                                        Geometry.Point3D(0.0, 0.0, 0.0)),
+    ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+    ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
     ...   ]
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 1.0)
@@ -331,10 +339,14 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
     2) a list of embeddings (molecules with a single conformer)
     3) the number of failed attempts at embedding
 
-
+    >>> from rdkit import Geometry
+    >>> from rdkit.Chem.Pharm3D import Pharmacophore
     >>> m = Chem.MolFromSmiles('OCCN')
-    >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
+    >>> feats = [
+    ...   ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+    ...                                        Geometry.Point3D(0.0, 0.0, 0.0)),
+    ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+    ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
     ...   ]
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.5)
@@ -370,11 +382,11 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
     DG.DoTriangleSmoothing(bounds)
 
   bm = bounds.copy()
-  #print '------------'
-  #print 'initial'
-  #for row in bm:
+  # print '------------'
+  # print 'initial'
+  # for row in bm:
   #  print ' ',' '.join(['% 4.2f'%x for x in row])
-  #print '------------'
+  # print '------------'
 
   bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
 
@@ -384,11 +396,11 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   if not DG.DoTriangleSmoothing(bm):
     raise ValueError("could not smooth bounds matrix")
 
-  #print '------------'
-  #print 'post replace and smooth'
-  #for row in bm:
+  # print '------------'
+  # print 'post replace and smooth'
+  # for row in bm:
   #  print ' ',' '.join(['% 4.2f'%x for x in row])
-  #print '------------'
+  # print '------------'
 
   if targetNumber <= 0:
     targetNumber = count
@@ -415,8 +427,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
       for idx, stereo in mol._chiralCenters:
         if stereo in ('R', 'S'):
           vol = ComputeChiralVolume(m2, idx)
-          if (stereo=='R' and vol>=0) or \
-             (stereo=='S' and vol<=0):
+          if (stereo == 'R' and vol >= 0) or (stereo == 'S' and vol <= 0):
             keepIt = False
             break
       if keepIt:
@@ -466,10 +477,15 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
 
 
 
+    >>> from rdkit import Geometry
+    >>> from rdkit.Chem.Pharm3D import Pharmacophore
     >>> m = Chem.MolFromSmiles('OCCN')
-    >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
-    ...   ]
+    >>> feats = [
+    ...  ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+    ...                                       Geometry.Point3D(0.0, 0.0, 0.0)),
+    ...  ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+    ...                                       Geometry.Point3D(2.65, 0.0, 0.0)),
+    ...  ]
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.5)
     >>> pcophore.setUpperBound(0,1, 2.8)
@@ -542,7 +558,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
       logger.debug('ff.AddExtraPoint(%.4f,%.4f,%.4f)' % (exVol.pos[0], exVol.pos[1], exVol.pos[2]))
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
       indices = []
-      for localIndices, foo, bar in exVol.featInfo:
+      for localIndices, _, _ in exVol.featInfo:
         indices += list(localIndices)
       for i in range(nAts):
         v = numpy.array(conf.GetAtomPosition(i)) - numpy.array(exVol.pos)
@@ -565,7 +581,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
 
   if verbose:
     print(Chem.MolToMolBlock(mol))
-    for i, vol in enumerate(excludedVolumes):
+    for i, _ in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
       print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
             file=sys.stderr)
@@ -581,7 +597,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
   if verbose:
     print('--------')
     print(Chem.MolToMolBlock(mol))
-    for i, vol in enumerate(excludedVolumes):
+    for i, _ in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
       print('   % 7.4f   % 7.4f   % 7.4f Sb  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
             file=sys.stderr)
@@ -602,14 +618,14 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   Returns a 9-tuple:
       1) the mean value of E1
       2) the sample standard deviation of E1
-      3) the mean value of E2               
+      3) the mean value of E2
       4) the sample standard deviation of E2
-      5) the mean value of E3               
+      5) the mean value of E3
       6) the sample standard deviation of E3
-      7) the mean value of E4               
+      7) the mean value of E4
       8) the sample standard deviation of E4
       9) The number of embeddings that failed
-  
+
   """
   global _times
   atomMatch = [list(x.GetAtomIds()) for x in match]
@@ -685,9 +701,12 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
 
 
     >>> import os.path
-    >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> from rdkit import Geometry, RDConfig
+    >>> from rdkit.Chem.Pharm3D import Pharmacophore
+    >>> fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data/BaseFeatures.fdef')
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+    >>> activeFeats = [
+    ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> m = Chem.MolFromSmiles('FCCN')
@@ -721,9 +740,11 @@ def _getFeatDict(mol, featFactory, features):
   """ **INTERNAL USE ONLY**
 
     >>> import os.path
-    >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> from rdkit import Geometry, RDConfig, Chem
+    >>> fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data/BaseFeatures.fdef')
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+    >>> activeFeats = [
+    ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> d =_getFeatDict(m,featFactory,activeFeats)
@@ -741,12 +762,12 @@ def _getFeatDict(mol, featFactory, features):
     (0,)
     >>> acceptors[1].GetAtomIds()
     (3,)
-    
+
   """
   molFeats = {}
   for feat in features:
     family = feat.GetFamily()
-    if not family in molFeats:
+    if family not in molFeats:
       matches = featFactory.GetFeaturesForMol(mol, includeOnly=family)
       molFeats[family] = matches
   return molFeats
@@ -761,9 +782,11 @@ def MatchFeatsToMol(mol, featFactory, features):
 
 
     >>> import os.path
-    >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(dataDir,'BaseFeatures.fdef'))
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> from rdkit import RDConfig, Geometry
+    >>> fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data/BaseFeatures.fdef')
+    >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+    >>> activeFeats = [
+    ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
     >>> match,mList = MatchFeatsToMol(m,featFactory,activeFeats)
@@ -811,9 +834,10 @@ def CombiEnum(sequence):
 
   >>> [x for x in CombiEnum(((1,2),(10,20)))]
   [[1, 10], [1, 20], [2, 10], [2, 20]]
-  
+
   >>> [x for x in CombiEnum(((1,2),(10,20),(100,200)))]
-  [[1, 10, 100], [1, 10, 200], [1, 20, 100], [1, 20, 200], [2, 10, 100], [2, 10, 200], [2, 20, 100], [2, 20, 200]]
+  [[1, 10, 100], [1, 10, 200], [1, 20, 100], [1, 20, 200], [2, 10, 100],
+   [2, 10, 200], [2, 20, 100], [2, 20, 200]]
 
   """
   if not len(sequence):
@@ -828,7 +852,7 @@ def CombiEnum(sequence):
 
 
 def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
-  """ removes rows from a bounds matrix that are 
+  """ removes rows from a bounds matrix that are
   that are greater than a threshold value away from a set of
   other points
 
@@ -847,7 +871,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    we don't touch the input matrix:
    >>> boundsMat.shape == (3, 3)
    True
-   
+
    >>> print(', '.join(['%.3f'%x for x in bm[0]]))
    0.000, 3.000
    >>> print(', '.join(['%.3f'%x for x in bm[1]]))
@@ -865,7 +889,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
    >>> bm.shape == (3, 3)
    True
-  
+
   """
   nPts = bm.shape[0]
   k = numpy.zeros(nPts, numpy.int0)
@@ -886,11 +910,16 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
 
 def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   """
-
-  >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-  ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
-  ...                ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1', Geometry.Point3D(5.12, 0.908, 0.0)),
-  ...                ]
+  >>> from rdkit import Geometry
+  >>> from rdkit.Chem.Pharm3D import Pharmacophore
+  >>> feats = [
+  ...   ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+  ...                                        Geometry.Point3D(0.0, 0.0, 0.0)),
+  ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+  ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
+  ...   ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
+  ...                                        Geometry.Point3D(5.12, 0.908, 0.0)),
+  ...   ]
   >>> pcophore=Pharmacophore.Pharmacophore(feats)
   >>> pcophore.setLowerBound(0,1, 1.1)
   >>> pcophore.setUpperBound(0,1, 1.9)
@@ -919,10 +948,15 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   False
 
   # we ignore the point locations here and just use their definitions:
-  >>> feats = [ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1', Geometry.Point3D(0.0, 0.0, 0.0)),
-  ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
-  ...                ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1', Geometry.Point3D(5.12, 0.908, 0.0)),
-  ...                ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1', Geometry.Point3D(2.65, 0.0, 0.0)),
+  >>> feats = [
+  ...   ChemicalFeatures.FreeChemicalFeature('HBondAcceptor', 'HAcceptor1',
+  ...                                        Geometry.Point3D(0.0, 0.0, 0.0)),
+  ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+  ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
+  ...   ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
+  ...                                        Geometry.Point3D(5.12, 0.908, 0.0)),
+  ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
+  ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
   ...                ]
   >>> pcophore=Pharmacophore.Pharmacophore(feats)
   >>> pcophore.setLowerBound(0,1, 2.1)
@@ -957,15 +991,15 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
           idx1 = atomMatch[l][0]
           if idx1 < idx0:
             idx0, idx1 = idx1, idx0
-          if bounds[idx1,idx0] >= pcophore.getUpperBound(k, l) or \
-             bounds[idx0,idx1] <= pcophore.getLowerBound(k, l) :
+          if (bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or
+              bounds[idx0, idx1] <= pcophore.getLowerBound(k, l)):
             if verbose:
               print('\t  (%d,%d) [%d,%d] fail' % (idx1, idx0, k, l))
               print('\t    %f,%f - %f,%f' % (bounds[idx1, idx0], pcophore.getUpperBound(k, l),
                                              bounds[idx0, idx1], pcophore.getLowerBound(k, l)))
-            #logger.debug('\t >%s'%str(atomMatch))
-            #logger.debug()
-            #logger.debug('\t    %f,%f - %f,%f'%(bounds[idx1,idx0],pcophore.getUpperBound(k,l),
+            # logger.debug('\t >%s'%str(atomMatch))
+            # logger.debug()
+            # logger.debug('\t    %f,%f - %f,%f'%(bounds[idx1,idx0],pcophore.getUpperBound(k,l),
             #                                    bounds[idx0,idx1],pcophore.getLowerBound(k,l)))
             return False
   return True
@@ -975,8 +1009,10 @@ def Check2DBounds(atomMatch, mol, pcophore):
   """ checks to see if a particular mapping of features onto
   a molecule satisfies a pharmacophore's 2D restrictions
 
-
-    >>> activeFeats = [ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
+    >>> from rdkit import Geometry
+    >>> from rdkit.Chem.Pharm3D import Pharmacophore
+    >>> activeFeats = [
+    ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> pcophore.setUpperBound2D(0,1,3)
@@ -991,8 +1027,8 @@ def Check2DBounds(atomMatch, mol, pcophore):
   nFeats = len(atomMatch)
   for i in range(nFeats):
     for j in range(i + 1, nFeats):
-      lowerB = pcophore._boundsMat2D[j, i]  #lowerB = pcophore.getLowerBound2D(i,j)
-      upperB = pcophore._boundsMat2D[i, j]  #upperB = pcophore.getUpperBound2D(i,j)
+      lowerB = pcophore._boundsMat2D[j, i]  # lowerB = pcophore.getLowerBound2D(i,j)
+      upperB = pcophore._boundsMat2D[i, j]  # upperB = pcophore.getUpperBound2D(i,j)
       dij = 10000
       for atomI in atomMatch[i]:
         for atomJ in atomMatch[j]:
@@ -1032,7 +1068,7 @@ def ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=False, index=0, 
   """ Enumerates the list of atom mappings a molecule
   has to a particular pharmacophore.
   We do check distance bounds here.
-  
+
 
   """
   nMatches = len(matches)
@@ -1112,7 +1148,7 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
     else:
       pass2D = True
     if atomMatch and pass2D and \
-       CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=verbose):
+       CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=verbose):
       if verbose:
         print('  ..CoarseScreen: Pass')
 
@@ -1122,7 +1158,6 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
         for row in bm:
           print(' ', ' '.join(['% 4.2f' % x for x in row]))
       bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore)
-      sz = bm.shape[0]
       if verbose:
         print('pre downsample:')
         for row in bm:
@@ -1150,11 +1185,12 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
 
 def ComputeChiralVolume(mol, centerIdx, confId=-1):
   """ Computes the chiral volume of an atom
-  
-  We're using the chiral volume formula from Figure 7 of 
+
+  We're using the chiral volume formula from Figure 7 of
   Blaney and Dixon, Rev. Comp. Chem. V, 299-335 (1994)
 
     >>> import os.path
+    >>> from rdkit import RDConfig
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
 
     R configuration atoms give negative volumes:
@@ -1164,7 +1200,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'R'
     >>> ComputeChiralVolume(mol,1) < 0
     True
-  
+
     S configuration atoms give positive volumes:
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
     >>> Chem.AssignStereochemistry(mol)
@@ -1172,7 +1208,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'S'
     >>> ComputeChiralVolume(mol,1) > 0
     True
-    
+
     Non-chiral (or non-specified) atoms give zero volume:
     >>> ComputeChiralVolume(mol,0) == 0.0
     True
@@ -1184,16 +1220,16 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     'R'
     >>> ComputeChiralVolume(mol,1)<0
     True
-  
+
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
     >>> ComputeChiralVolume(mol,1)>0
     True
-  
 
-  
+
+
   """
   conf = mol.GetConformer(confId)
   Chem.AssignStereochemistry(mol)
@@ -1223,16 +1259,16 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
   return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
-  import sys
-  failed, tried = _test()
+def _runDoctests(verbose=None):  # pragma: nocover
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
+                              verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

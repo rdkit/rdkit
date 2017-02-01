@@ -11,8 +11,9 @@
 from __future__ import division
 from rdkit import rdBase
 from rdkit.DataStructs import cDataStructs
-__doc__ = cDataStructs.__doc__
 from rdkit.DataStructs.cDataStructs import *
+
+__doc__ = cDataStructs.__doc__
 
 similarityFunctions = [
   ('Tanimoto', TanimotoSimilarity, ''),

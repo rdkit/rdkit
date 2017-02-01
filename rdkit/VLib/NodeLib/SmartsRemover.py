@@ -3,9 +3,6 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import RDConfig
-from rdkit import six
-import sys, os, types
 from rdkit import Chem
 from rdkit.VLib.Transform import TransformNode
 
@@ -96,10 +93,10 @@ class SmartsRemover(TransformNode):
     self._patterns = tuple(targets)
 
   def transform(self, cmpd):
-    #sys.stderr.write('\tTRANSFORM: %s\n'%(Chem.MolToSmiles(cmpd)))
+    # sys.stderr.write('\tTRANSFORM: %s\n'%(Chem.MolToSmiles(cmpd)))
     for patt in self._patterns:
       cmpd = Chem.DeleteSubstructs(cmpd, patt, onlyFrags=self._wholeFragments)
-      #sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
+      # sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
 
     return cmpd
 
@@ -138,19 +135,23 @@ biggerTest = """
 
 """
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
 __test__ = {'bigger': biggerTest}
 
 
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

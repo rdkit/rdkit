@@ -59,6 +59,8 @@
 %include <GraphMol/Atom.h>
 
 %newobject RDKit::Atom::getProp;
+%newobject RDKit::Atom::getBonds;
+
 %extend RDKit::Atom {
   std::string getProp(const std::string key){
     std::string res;

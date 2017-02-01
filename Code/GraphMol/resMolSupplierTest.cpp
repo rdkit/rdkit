@@ -83,14 +83,12 @@ void testBaseFunctionality() {
   resMolSuppl =
       new ResonanceMolSupplier((ROMol &)*mol, ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
-  std::map<Bond::BondType, bool> bondTypeMap;
+  std::set<Bond::BondType> bondTypeSet;
   // check that we actually have two alternate Kekule structures
-  bondTypeMap[(*resMolSuppl)[0]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  bondTypeMap[(*resMolSuppl)[1]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  TEST_ASSERT(bondTypeMap.size() == 2);
-  bondTypeMap.clear();
+  bondTypeSet.insert((*resMolSuppl)[0]->getBondBetweenAtoms(3, 4)->getBondType());
+  bondTypeSet.insert((*resMolSuppl)[1]->getBondBetweenAtoms(3, 4)->getBondType());
+  TEST_ASSERT(bondTypeSet.size() == 2);
+  bondTypeSet.clear();
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
@@ -686,6 +684,36 @@ void testCrambin() {
   delete crambin;
 }
 
+void testGitHub1166() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testGitHub1166" << std::endl;
+  RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
+  ResonanceMolSupplier *resMolSuppl =
+      new ResonanceMolSupplier(static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+  TEST_ASSERT(resMolSuppl->length() == 8);
+  // check that formal charges on odd indices are in the same position
+  // as on even indices
+  for (unsigned int i = 0; i < resMolSuppl->length(); i += 2) {
+    TEST_ASSERT((*resMolSuppl)[i]->getNumAtoms() == (*resMolSuppl)[i + 1]->getNumAtoms());
+    for (unsigned int atomIdx = 0; atomIdx < (*resMolSuppl)[i]->getNumAtoms(); ++atomIdx)
+      TEST_ASSERT((*resMolSuppl)[i]->getAtomWithIdx(atomIdx)->getFormalCharge()
+        == (*resMolSuppl)[i + 1]->getAtomWithIdx(atomIdx)->getFormalCharge());
+    // check that bond orders are alternate on aromatic bonds between
+    // structures on odd indices and structures on even indices
+    TEST_ASSERT((*resMolSuppl)[i]->getNumBonds() == (*resMolSuppl)[i + 1]->getNumBonds());
+    for (unsigned int bondIdx = 0; bondIdx < (*resMolSuppl)[i]->getNumBonds(); ++bondIdx)
+      TEST_ASSERT((!(*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getIsAromatic()
+        && !(*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getIsAromatic()
+        && ((*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getBondType()
+        == (*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getBondType()))
+        || ((*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getIsAromatic()
+        && (*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getIsAromatic()
+        && (static_cast<int>((*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getBondTypeAsDouble()
+        + (*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getBondTypeAsDouble()) == 3)));
+  }
+  delete resMolSuppl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -705,6 +733,7 @@ int main() {
   testSubstructMatchAcetate();
   testSubstructMatchDMAP();
   testCrambin();
+  testGitHub1166();
 #endif
   return 0;
 }

@@ -10,12 +10,16 @@
 #
 """ unit testing code for BitEnsembles
 """
-from rdkit import RDConfig
 import os
+import shutil
+import tempfile
 import unittest
-from rdkit.DataStructs.BitEnsemble import BitEnsemble
-from rdkit.DataStructs import BitEnsembleDb
+
+from rdkit import RDConfig
 from rdkit.DataStructs import SparseBitVect
+# This import is important to initialize the BitEnsemble module
+from rdkit.DataStructs import BitEnsembleDb
+from rdkit.DataStructs.BitEnsemble import BitEnsemble
 
 
 class TestCase(unittest.TestCase):
@@ -23,6 +27,7 @@ class TestCase(unittest.TestCase):
   def test1(self):
     ensemble = BitEnsemble()
     ensemble.SetBits([1, 11, 21, 31])
+    self.assertEqual(ensemble.GetNumBits(), 4)
     bv = SparseBitVect(100)
     bv.SetBit(1)
     bv.SetBit(11)
@@ -63,11 +68,10 @@ class TestCase(unittest.TestCase):
     from rdkit.Dbase.DbConnection import DbConnect
     fName = RDConfig.RDTestDatabase
     if RDConfig.useSqlLite:
-      import tempfile, shutil
-      tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
+      _, tempName = tempfile.mkstemp(suffix='sqlt')
       self.tempDbName = tempName
       shutil.copyfile(fName, tempName)
-    else:
+    else:  # pragma: nocover
       tempName = '::RDTests'
     self.conn = DbConnect(tempName)
     self.dbTblName = 'bit_ensemble_test'
@@ -77,7 +81,7 @@ class TestCase(unittest.TestCase):
     if hasattr(self, 'tempDbName') and RDConfig.useSqlLite and os.path.exists(self.tempDbName):
       try:
         os.unlink(self.tempDbName)
-      except:
+      except:  # pragma: nocover
         import traceback
         traceback.print_exc()
 
@@ -133,5 +137,5 @@ class TestCase(unittest.TestCase):
     self.conn = None
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

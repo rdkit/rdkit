@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -204,20 +203,20 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSequence(python::object seq, bool sanitize, bool lowerD) {
+ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
   RWMol *newM = 0;
   try {
-    newM = SequenceToMol(pyObjectToString(seq), sanitize, lowerD);
+    newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromFASTA(python::object seq, bool sanitize, bool lowerD) {
+ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
   RWMol *newM = 0;
   try {
-    newM = FASTAToMol(pyObjectToString(seq), sanitize, lowerD);
+    newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
@@ -322,6 +321,13 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
   }
 
   return resRanks;
+}
+
+ROMol *MolFromSmilesHelper(python::object ismiles,
+                           const SmilesParserParams &params) {
+  std::string smiles = pyObjectToString(ismiles);
+
+  return SmilesToMol(smiles,params);
 }
 }
 
@@ -612,6 +618,43 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
 
+  python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
+      "SmilesParserParams", "Parameters controlling SMILES Parsing")
+      .def_readwrite("maxIterations",
+                     &RDKit::SmilesParserParams::debugParse,
+                     "controls the amount of debugging information produced")
+     .def_readwrite("parseName",
+                    &RDKit::SmilesParserParams::parseName,
+                    "controls whether or not the molecule name is also parsed")
+      .def_readwrite("allowCXSMILES",
+                     &RDKit::SmilesParserParams::allowCXSMILES,
+                     "controls whether or not the CXSMILES extensions are parsed")
+       .def_readwrite("sanitize",
+                      &RDKit::SmilesParserParams::sanitize,
+                      "controls whether or not the molecule is sanitized before being returned")
+      .def_readwrite("removeHs",
+                     &RDKit::SmilesParserParams::removeHs,
+                     "controls whether or not Hs are removed before the molecule is returned");
+     docString =
+         "Construct a molecule from a SMILES string.\n\n\
+     ARGUMENTS:\n\
+   \n\
+       - SMILES: the smiles string\n\
+   \n\
+       - params: used to provide optional parameters for the SMILES parsing\n\
+   \n\
+     RETURNS:\n\
+   \n\
+       a Mol object, None on failure.\n\
+   \n";
+   python::def("MolFromSmiles",
+               MolFromSmilesHelper,
+               (python::arg("SMILES"), python::arg("params")),
+               docString.c_str(),
+               python::return_value_policy<python::manage_new_object>());
+
+
+
   docString =
       "Construct a molecule from a SMILES string.\n\n\
   ARGUMENTS:\n\
@@ -898,8 +941,17 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to True.\n\
 \n\
-    - lowerD: (optional)\n\
-      Defaults to false.\n\
+    - flavor: (optional)\n\
+      0 Protein, L amino acids (default)\n\
+      1 Protein, D amino acids\n\
+      2 RNA, no cap\n\
+      3 RNA, 5' cap\n\
+      4 RNA, 3' cap\n\
+      5 RNA, both caps\n\
+      6 DNA, no cap\n\
+      7 DNA, 5' cap\n\
+      8 DNA, 3' cap\n\
+      9 DNA, both caps\n\
 \n\
   RETURNS:\n\
 \n\
@@ -907,7 +959,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def("MolFromSequence", RDKit::MolFromSequence,
               (python::arg("text"), python::arg("sanitize") = true,
-               python::arg("lowerD") = false),
+               python::arg("flavor") = 0),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =
@@ -934,16 +986,24 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to True.\n\
 \n\
-    - lowerD: (optional)\n\
-      Defaults to false.\n\
-\n\
+- flavor: (optional)\n\
+  0 Protein, L amino acids (default)\n\
+  1 Protein, D amino acids\n\
+  2 RNA, no cap\n\
+  3 RNA, 5' cap\n\
+  4 RNA, 3' cap\n\
+  5 RNA, both caps\n\
+  6 DNA, no cap\n\
+  7 DNA, 5' cap\n\
+  8 DNA, 3' cap\n\
+  9 DNA, both caps\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromFASTA", RDKit::MolFromFASTA,
               (python::arg("text"), python::arg("sanitize") = true,
-               python::arg("lowerD") = false),
+               python::arg("flavor") = 0),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString =

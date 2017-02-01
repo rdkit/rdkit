@@ -253,6 +253,95 @@ This can be changed using the rdkit.do\_chiral\_sss configuration variable:
 
     Time: 35.383 ms
 
+#### Tuning queries
+
+It is frequently useful to be able to exert a bit more control over substructure queries without
+having to construct complex SMARTS queries. The cartridge function `mol_adjust_query_properties()`
+can be used to do just this. Here is an example of the default behavior, using a  
+query for 2,6 di-substituted pyridines:
+
+    chembl_21=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1') limit 10;
+     molregno |                                         m                                          
+    ----------+------------------------------------------------------------------------------------
+       562310 | COc1ccc(C2C(C(=O)Nc3cccc(C)n3)c3ccccc3C(=O)N2C2CCCCC2)cc1
+      1607792 | O=C(Nc1cccc(-c2ccccc2)n1)N(CCC(c1ccccc1)c1ccccc1)CCN1CCOCC1
+      1587116 | O=C(Nc1cccc(F)n1)c1cc(F)cc(Oc2cncnc2)c1
+      1587131 | O=C(Nc1cccc(Cl)n1)c1cc(Cl)cc(Oc2cncnc2)c1
+      1592611 | Cc1cccc(NC(=O)[C@@H](C[C@H](O)[C@@H](N)CN2CC(=O)N(c3ccccc3Cl)CC2(C)C)C(C)C)n1
+      1033789 | Cc1cccc(NC(=O)C(C)n2cc([N+](=O)[O-])cn2)n1
+      1571533 | CCCOc1ccc(C(=O)Nc2cccc(CC)n2)cc1
+      1592338 | CN1CCC(C(=O)c2cccc(NC(=O)c3c(F)cc(F)cc3F)n2)CC1
+      1053301 | Cc1cccc(NC(=O)C(Cc2ccccc2)NS(=O)(=O)c2cccc3nsnc23)n1
+      1323252 | O=C(Nc1cccc(NC(=O)C(=O)C2CCC3=C(Sc4ccccc4N3)C2=O)n1)C(=O)C1CCC2=C(Sc3ccccc3N2)C1=O
+    (10 rows)
+
+By default `mol_adjust_query_properties()` makes the following changes to the molecule:
+
+- Converts dummy atoms into "any" queries
+- Adds a degree query to every ring atom so that its substitution must match what was provided
+- Aromaticity perception is done (if it hasn't been done already)
+
+We can control the behavior by providing an additional JSON argument. Here's an example
+where we disable the additional degree queries:
+
+    chembl_21=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_21(# '{"adjustDegree":false}') limit 10;
+     molregno |                                     m                                      
+    ----------+----------------------------------------------------------------------------
+       526211 | COc1ccc2nccc(N3CCCN(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1.Cl
+       531033 | COc1ccc2nccc(N3CCC(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2c1
+       527205 | COc1ccc2nccc(N3CCC(O)(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1.Cl
+       528941 | COc1cc(F)c2ncc(F)c(CCN3C[C@@H](O)[C@@H](CNCc4ccc5c(n4)NC(=O)CS5)C3)c2c1.Cl
+       539575 | COc1cc(F)c2ncc(Cl)c([C@@H](O)CN3CCC(NCc4ccc5c(n4)NC(=O)CO5)CC3)c2c1.Cl
+       542344 | COc1ccc2ncc(C#N)c(CCN3C4CCC3CC(NCc3ccc5c(n3)NC(=O)CS5)C4)c2c1
+       530834 | COc1ccc2ncc(F)c(CCN3CC[C@H](NC(=O)c4ccc5c(n4)NC(=O)CS5)[C@H](O)C3)c2n1
+       613181 | O=C(Nc1ccc(-c2ccncc2)c(-c2ccccn2)n1)C1CC1
+       527469 | COc1ccc2nccc(N3CCC(CCNCc4ccc5c(n4)NC(=O)CO5)CC3)c2c1
+       527419 | COc1ccc2ncc(C#N)c(CCN3CCC(NCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1
+    (10 rows)
+
+or where we don't add the additional degree queries to ring atoms or dummies (they are only
+added to chain atoms):
+
+    chembl_21=# select molregno,m from rdk.mols where m@>mol_adjust_query_properties('*c1cccc(NC(=O)*)n1',
+    chembl_21(# '{"adjustDegree":true,"adjustDegreeFlags":"IGNORERINGS|IGNOREDUMMIES"}') limit 10;
+     molregno |                                     m                                      
+    ----------+----------------------------------------------------------------------------
+       526211 | COc1ccc2nccc(N3CCCN(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1.Cl
+       531033 | COc1ccc2nccc(N3CCC(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2c1
+       527205 | COc1ccc2nccc(N3CCC(O)(CCNCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1.Cl
+       528941 | COc1cc(F)c2ncc(F)c(CCN3C[C@@H](O)[C@@H](CNCc4ccc5c(n4)NC(=O)CS5)C3)c2c1.Cl
+       539575 | COc1cc(F)c2ncc(Cl)c([C@@H](O)CN3CCC(NCc4ccc5c(n4)NC(=O)CO5)CC3)c2c1.Cl
+       542344 | COc1ccc2ncc(C#N)c(CCN3C4CCC3CC(NCc3ccc5c(n3)NC(=O)CS5)C4)c2c1
+       530834 | COc1ccc2ncc(F)c(CCN3CC[C@H](NC(=O)c4ccc5c(n4)NC(=O)CS5)[C@H](O)C3)c2n1
+       613181 | O=C(Nc1ccc(-c2ccncc2)c(-c2ccccn2)n1)C1CC1
+       527469 | COc1ccc2nccc(N3CCC(CCNCc4ccc5c(n4)NC(=O)CO5)CC3)c2c1
+       527419 | COc1ccc2ncc(C#N)c(CCN3CCC(NCc4ccc5c(n4)NC(=O)CS5)CC3)c2n1
+    (10 rows)
+
+The options available are:
+
+- **adjustDegree** (default: true) : adds a query to match the input atomic degree
+- **adjustDegreeFlags** (default: ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS) controls where the degree is adjusted
+- **adjustRingCount** (default: false) : adds a query to match the input ring count
+- **adjustRingCountFlags** (default: ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS) controls where the ring count is adjusted
+- **makeDummiesQueries** (default: true) : convert dummy atoms in the input structure into any-atom queries
+- **aromatizeIfPossible** (default: true) : run the aromaticity perception algorithm on the input structure (note: this is largely redundant since molecules built from smiles always have aromaticity perceived)
+- **makeBondsGeneric** (default: false) : convert bonds into any-bond queries
+- **makeBondsGenericFlags** (default: false) : controls which bonds are made generic
+- **makeAtomsGeneric** (default: false) : convert atoms into any-atom queries
+- **makeAtomsGenericFlags** (default: false) : controls which atoms are made generic
+
+The various `Flags` arguments mentioned above, which control where particular options are applied,
+are constructed by combining operations from the list below with the `|` character.
+
+- **IGNORENONE** : apply the operation to all atoms
+- **IGNORERINGS** : do not apply the operation to ring atoms
+- **IGNORECHAINS** : do not apply the operation to chain atoms
+- **IGNOREDUMMIES** : do not apply the operation to dummy atoms
+- **IGNORENONDUMMIES** : do not apply the operation to non-dummy atoms
+- **IGNOREALL** : do not apply the operation to any atoms
+
 ### Similarity searches
 
 Basic similarity searching:
@@ -524,11 +613,14 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_to\_smarts(mol) : returns SMARTS string for a molecule.
 -   mol\_to\_pkl(mol) : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012\_09) release*)
 -   mol\_to\_ctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014\_03 release*)
+-   mol\_to\_svg(mol,string default '',int default 250, int default 200, string default '') : returns an SVG with a drawing of the molecule. The optional parameters are a string to use as the legend, the width of the image, the height of the image, and a JSON with additional rendering parameters. (*available from the 2016\_09 release*)
+
 
 ##### Substructure operations
 
 -   substruct(mol,mol) : returns whether or not the second mol is a substructure of the first.
 -   substruct\_count(mol,mol,bool default true) : returns the number of substructure matches between the second molecule and the first. The third argument toggles whether or not the matches are uniquified. (*available from 2013\_03 release*)
+-   mol_adjust_query_properties(mol,string default '') : returns a new molecule with additional query information attached. (*available from the 2016\_09 release*)
 
 ##### Descriptors
 
@@ -604,8 +696,8 @@ These pickles can then be converted into molecules:
 
 ## License
 
-This document is copyright (C) 2013-2015 by Greg Landrum
+This document is copyright (C) 2013-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: “Do whatever you want with it, but please give us some credit.”

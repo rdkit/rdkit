@@ -19,6 +19,7 @@
 
 """
 import numpy
+
 from rdkit.ML.InfoTheory import entropy
 
 
@@ -69,7 +70,7 @@ def CalcInfoGains(bitVects, actVals, nPossibleActs, nPossibleBitVals=2):
     - nPossibleBitVals: (optional) if specified, this integer provides the maximum
       value attainable by the (increasingly inaccurately named) bits in _bitVects_.
 
-   **Returns**   
+   **Returns**
 
      a list of floats
 
@@ -77,7 +78,7 @@ def CalcInfoGains(bitVects, actVals, nPossibleActs, nPossibleBitVals=2):
   if len(bitVects) != len(actVals):
     raise ValueError('var and activity lists should be the same length')
   nBits = len(bitVects[0])
-  res = numpy.zeros(nBits, Float)
+  res = numpy.zeros(nBits, numpy.float)
 
   for bit in range(nBits):
     counts = FormCounts(bitVects, actVals, bit, nPossibleActs, nPossibleBitVals=nPossibleBitVals)
@@ -117,7 +118,7 @@ def RankBits(bitVects, actVals, nPossibleBitVals=2, metricFunc=CalcInfoGains):
 
 
 def AnalyzeSparseVects(bitVects, actVals):
-  """ #DOC 
+  """ #DOC
 
   **Arguments**
 
@@ -125,7 +126,7 @@ def AnalyzeSparseVects(bitVects, actVals):
 
     - actVals: a *sequence*
 
-   **Returns**   
+   **Returns**
 
      a list of floats
 
@@ -156,7 +157,6 @@ def AnalyzeSparseVects(bitVects, actVals):
   resTbl = numpy.zeros((2, 2), numpy.integer)
   res = []
   gains = []
-  counts = []
   for bit in range(nBits):
     nAct, nInact = actives[bit], inactives[bit]
     if nAct or nInact:

@@ -2,7 +2,6 @@
 #
 # Created by Peter Gedeck, June 2008
 #
-# pylint: disable=missing-docstring
 
 from collections import namedtuple
 import doctest
@@ -17,7 +16,7 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import (GetScaffoldForMol, _pyGetScaffo
 TestMolecule = namedtuple('TestMolecule', 'smiles,scaffold')
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(MurckoScaffold, optionflags=doctest.ELLIPSIS))
   return tests

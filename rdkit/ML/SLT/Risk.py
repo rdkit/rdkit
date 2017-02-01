@@ -33,7 +33,7 @@ def BurgesRiskBound(VCDim, nData, nWrong, conf):
     **Returns**
 
       - a float
-      
+
     **Notes**
 
      - This has been validated against the Burges paper
@@ -75,7 +75,7 @@ def CristianiRiskBound(VCDim, nData, nWrong, conf):
     **Returns**
 
       - a float
-      
+
     **Notes**
 
       - this generates odd (mismatching) values
@@ -118,12 +118,12 @@ def CherkasskyRiskBound(VCDim, nData, nWrong, conf, a1=1.0, a2=2.0):
     **Returns**
 
       - a float
-      
+
 
     **Notes**
 
      - This appears to behave reasonably
-    
+
      - the equality a1=1.0 is by analogy to Burges's paper.
 
   """

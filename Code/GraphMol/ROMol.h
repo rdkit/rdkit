@@ -42,8 +42,11 @@ typedef boost::shared_ptr<Atom> ATOM_SPTR;
 typedef boost::shared_ptr<Bond> BOND_SPTR;
 
 //! This is the BGL type used to store the topology:
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              ATOM_SPTR, BOND_SPTR>
+typedef boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS,
+    ATOM_SPTR, BOND_SPTR>
     MolGraph;
 class MolPickler;
 class RWMol;
@@ -175,7 +178,7 @@ class ROMol : public RDProps {
   //@}
   //! \endcond
 
-  ROMol() : RDProps() { initMol(); }
+  ROMol() : RDProps(), numBonds(0) { initMol(); }
 
   //! copy constructor with a twist
   /*!
@@ -191,12 +194,14 @@ class ROMol : public RDProps {
   ROMol(const ROMol &other, bool quickCopy = false, int confId = -1) : RDProps() {
     dp_ringInfo = 0;
     initFromOther(other, quickCopy, confId);
+    numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
   };
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr);
 
   virtual ~ROMol() { destroy(); };
 
+  //@}
   //! \name Atoms
   //@{
 
@@ -591,8 +596,12 @@ class ROMol : public RDProps {
   ROMol &operator=(
       const ROMol &);  // disable assignment, RWMol's support assignment
 
-#ifdef WIN32
- protected:
+protected:
+  unsigned int numBonds;  
+#ifndef WIN32
+private:
+
+
 #endif
   void initMol();
   virtual void destroy();

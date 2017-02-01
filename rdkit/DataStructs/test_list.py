@@ -1,10 +1,8 @@
 tests = [
+  ("python", "UnitTestDocTests.py", {}),
   ("python", "UnitTestcBitVect.py", {}),
   ("python", "UnitTestBitEnsemble.py", {}),
   ("python", "UnitTestTopNContainer.py", {}),
-  ("python", "BitUtils.py", {}),
-  ("python", "VectCollection.py", {}),
-  ("python", "LazySignature.py", {}),
 ]
 longTests = []
 

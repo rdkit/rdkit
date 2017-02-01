@@ -29,7 +29,7 @@ class Canvas(CanvasBase):
     if imageType == "pdf":
       from rdkit.sping.PDF.pidPDF import PDFCanvas as _Canvas
     elif imageType == "ps":
-      from rdkit.sping.PS.pidPS import PSCanvas as _Canvas  #@UnresolvedImport
+      from rdkit.sping.PS.pidPS import PSCanvas as _Canvas
     elif imageType == "svg":
       from rdkit.sping.SVG.pidSVG import SVGCanvas as _Canvas
     elif imageType == "png":

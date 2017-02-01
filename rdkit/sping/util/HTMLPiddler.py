@@ -50,6 +50,8 @@ from __future__ import print_function
 import htmllib, formatter, string
 from types import *
 import piddle
+from rdkit.six import string_types
+from rdkit.six.moves import input
 
 TRACE = 0
 
@@ -139,7 +141,7 @@ class _HtmlPiddleWriter:
       points = self.DefaultFontSize
     if fontParams[3]:
       face = "courier"  #"modern"
-    elif type(size) is StringType and size[0] == "h":
+    elif isinstance(size, string_types) and size[0] == "h":
       face = "helvetica"  #"swiss"
     else:
       face = "times"  #"roman"
@@ -195,7 +197,7 @@ class _HtmlPiddleWriter:
     self.x = self.indent
     self.atbreak = 0
     if TRACE:
-      raw_input('lb')
+      input('lb')
 
   def send_hor_rule(self):
     self.send_line_break()
@@ -208,11 +210,11 @@ class _HtmlPiddleWriter:
   def send_literal_data(self, data):
     if not data:
       return
-    lines = string.splitfields(data, '\n')
-    text = string.expandtabs(lines[0])
+    lines = data.split(data, '\n')
+    text = lines[0].replace('\t', ' '*8)
     for l in lines[1:]:
       self.OutputLine(text, 1)
-      text = string.expandtabs(l)
+      text = l.replace('\t', ' '*8)
     self.OutputLine(text, 0)
     self.atbreak = 0
 
@@ -222,7 +224,7 @@ class _HtmlPiddleWriter:
     atbreak = self.atbreak or data[0] in string.whitespace
     text = ""
     pixels = chars = 0
-    for word in string.split(data):
+    for word in data.split():
       bword = " " + word  # blank + word
       length = len(bword)
       # The current line is "text" and its size is
@@ -381,9 +383,9 @@ def demo(html=DEMO_HTML):
     #print('   3. piddleTK')
     #print('   4. piddleWX')
     print('   0. EXIT')
-    sel = raw_input('Enter Selection Number: ')
+    sel = input('Enter Selection Number: ')
     try:
-      sel = string.atoi(string.strip(sel))
+      sel = int(sel.strip())
     except Exception:
       sel = -1
     if (sel == 0):

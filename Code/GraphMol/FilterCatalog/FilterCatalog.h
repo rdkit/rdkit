@@ -197,7 +197,7 @@ class FilterCatalog : public FCatalog {
 
   //------------------------------------
   //! returns the number of entries in the catalog
-  virtual unsigned int getNumEntries() const { return d_entries.size(); }
+  virtual unsigned int getNumEntries() const { return static_cast<unsigned int>(d_entries.size()); }
 
   //------------------------------------
   //! Reset the current catalog to match the specified FilterCatalogParameters

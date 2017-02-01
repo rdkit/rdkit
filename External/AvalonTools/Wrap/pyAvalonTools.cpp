@@ -280,6 +280,9 @@ the return tuple.";
               (python::arg("molstring"), python::arg("isSmiles")),
               docString.c_str());
 
+  python::def("GetCheckMolLog", AvalonTools::getCheckMolLog,
+              "Returns the Struchk log for the last molecules processed.");
+  
   python::scope().attr("avalonSSSBits") = AvalonTools::avalonSSSBits;
   python::scope().attr("avalonSimilarityBits") =
       AvalonTools::avalonSimilarityBits;

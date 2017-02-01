@@ -22,9 +22,9 @@ def ExplainAtomCode(code, branchSubtract=0):
     - the code to be considered
 
     - branchSubtract: (optional) the constant that was subtracted off
-      the number of neighbors before integrating it into the code.  
+      the number of neighbors before integrating it into the code.
       This is used by the topological torsions code.
-      
+
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
   >>> code = GetAtomCode(m.GetAtomWithIdx(0))
@@ -42,19 +42,18 @@ def ExplainAtomCode(code, branchSubtract=0):
   >>> code = GetAtomCode(m.GetAtomWithIdx(4))
   >>> ExplainAtomCode(code)
   ('O', 1, 0)
-  
+
   """
   typeMask = (1 << rdMolDescriptors.AtomPairsParameters.numTypeBits) - 1
   branchMask = (1 << rdMolDescriptors.AtomPairsParameters.numBranchBits) - 1
   piMask = (1 << rdMolDescriptors.AtomPairsParameters.numPiBits) - 1
 
   nBranch = int(code & branchMask)
-  #print(code,end='')
   code = code >> rdMolDescriptors.AtomPairsParameters.numBranchBits
+
   nPi = int(code & piMask)
-  #print(code,end='')
   code = code >> rdMolDescriptors.AtomPairsParameters.numPiBits
-  #print(code,end='')
+
   typeIdx = int(code & typeMask)
   if typeIdx < len(rdMolDescriptors.AtomPairsParameters.atomTypes):
     atomNum = rdMolDescriptors.AtomPairsParameters.atomTypes[typeIdx]
@@ -89,6 +88,10 @@ def NumPiElectrons(atom):
   1
   >>> NumPiElectrons(m.GetAtomWithIdx(3))
   0
+
+  >>> m = Chem.MolFromSmiles('c1ccccc1')
+  >>> NumPiElectrons(m.GetAtomWithIdx(0))
+  1
 
   FIX: this behaves oddly in these cases:
   >>> m = Chem.MolFromSmiles('S(=O)(=O)')
@@ -137,7 +140,7 @@ def BitsInCommon(v1, v2):
   Here's how duplicates are handled:
   >>> BitsInCommon( (1,2,2,3,4), (2,2,4,5,6) )
   3
-   
+
   """
   res = 0
   v2Pos = 0
@@ -168,7 +171,7 @@ def DiceSimilarity(v1, v2, bounds=None):
 
     - the vectors must be sorted
 
-    
+
   >>> DiceSimilarity( (1,2,3), (1,2,3) )
   1.0
   >>> DiceSimilarity( (1,2,3), (5,6) )
@@ -186,6 +189,20 @@ def DiceSimilarity(v1, v2, bounds=None):
   >>> DiceSimilarity( (1,1,3,4,5,6), (1,) )==2./7
   True
 
+  edge case
+  >>> DiceSimilarity( (), () )
+  0.0
+
+  and bounds check
+  >>> DiceSimilarity( (1,1,3,4), (1,1))
+  0.666...
+  >>> DiceSimilarity( (1,1,3,4), (1,1), bounds=0.3)
+  0.666...
+  >>> DiceSimilarity( (1,1,3,4), (1,1), bounds=0.33)
+  0.666...
+  >>> DiceSimilarity( (1,1,3,4,5,6), (1,1), bounds=0.34)
+  0.0
+
   """
   denom = 1.0 * (len(v1) + len(v2))
   if not denom:
@@ -196,7 +213,6 @@ def DiceSimilarity(v1, v2, bounds=None):
     else:
       numer = 2.0 * BitsInCommon(v1, v2)
     res = numer / denom
-
   return res
 
 
@@ -227,7 +243,7 @@ def Dot(v1, v2):
   0
   >>> Dot( (), (5,6) )
   0
-  
+
   """
   res = 0
   nV1 = len(v1)
@@ -244,7 +260,6 @@ def Dot(v1, v2):
     while j < nV2 and v2[j] < v1Val:
       j += 1
     if j < nV2 and v2[j] == v1Val:
-      v2Val = v2[j]
       v2Count = 1
       j += 1
       while j < nV2 and v2[j] == v1Val:
@@ -294,16 +309,16 @@ def CosineSimilarity(v1, v2):
   return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

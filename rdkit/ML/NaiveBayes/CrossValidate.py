@@ -8,8 +8,10 @@ and evaluation of individual models
 
 """
 from __future__ import print_function
-from rdkit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
+
 from rdkit.ML.Data import SplitData
+from rdkit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
+
 try:
   from rdkit.ML.FeatureSelect import CMIM
 except ImportError:
@@ -67,10 +69,10 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds, mEstim
   NBmodel = modelBuilder(trainExamples, attrs, nPossibleValues, nQuantBounds, mEstimateVal,
                          **kwargs)
 
-  if not calcTotalError:  #
-    xValError, badExamples = CrossValidate(NBmodel, testExamples, appendExamples=1)
+  if not calcTotalError:
+    xValError, _ = CrossValidate(NBmodel, testExamples, appendExamples=1)
   else:
-    xValError, badExamples = CrossValidate(NBmodel, examples, appendExamples=0)
+    xValError, _ = CrossValidate(NBmodel, examples, appendExamples=0)
 
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))

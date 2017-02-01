@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2002-2008 greg Landrum and Rational Discovery LLC
 #
@@ -34,8 +33,10 @@
 
 """
 from __future__ import print_function
+
 from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 _verbose = 0
@@ -109,8 +110,8 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   minCount = sigFactory.minPointCount
   maxCount = sigFactory.maxPointCount
   if maxCount > 3:
-    logger.warning(
-      ' Pharmacophores with more than 3 points are not currently supported.\nSetting maxCount to 3.')
+    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\n' +
+                   'Setting maxCount to 3.')
     maxCount = 3
 
   # generate the molecule's distance matrix, if required

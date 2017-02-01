@@ -9,7 +9,6 @@
 #  of the RDKit source tree.
 #
 from rdkit import Geometry
-from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem.FeatMaps import FeatMaps, FeatMapPoint
 import re
 """
@@ -190,18 +189,3 @@ class FeatMapParser(object):
       feats.append(p)
       l = self._NextLine()
     return feats
-
-
-#------------------------------------
-#
-#  doctest boilerplate
-#
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
-  import sys
-  failed, tried = _test()
-  sys.exit(failed)

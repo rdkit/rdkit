@@ -58,6 +58,9 @@ struct MolDrawOptions {
   double multipleBondOffset;  // offset (in Angstroms) for the extra lines in a
                               // multiple bond
   double padding;  // fraction of empty space to leave around the molecule
+  double additionalAtomLabelPadding;  // additional padding to leave around atom
+                                      // labels. Expressed as a fraction of the
+                                      // font size.
   std::map<int, std::string> atomLabels;       // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
 
@@ -74,7 +77,8 @@ struct MolDrawOptions {
         legendFontSize(12),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
-        padding(0.05){};
+        padding(0.05),
+        additionalAtomLabelPadding(0.0){};
 };
 
 class MolDraw2D {

@@ -90,6 +90,7 @@ class FPBReader {
   FPBReader(std::istream *inStream, bool takeOwnership = true,
             bool lazyRead = false)
       : dp_istrm(inStream),
+        dp_impl(NULL),
         df_owner(takeOwnership),
         df_init(false),
         df_lazyRead(lazyRead){};
@@ -268,6 +269,7 @@ class FPBReader {
       throw BadFileException(errout.str());
     }
     dp_istrm = tmpStream;
+    dp_impl = NULL;
     df_owner = true;
     df_init = false;
     df_lazyRead = lazyRead;

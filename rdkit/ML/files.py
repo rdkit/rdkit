@@ -3,8 +3,10 @@
 
 """
 from __future__ import print_function
+
+import re
+
 import numpy
-import string, re
 
 
 class ReFile:
@@ -27,7 +29,7 @@ class ReFile:
       inLine = self.inFile.readline()
       if inLine == '':
         return ''
-      result = string.strip(self.regExp.split(inLine)[0])
+      result = self.regExp.split(inLine)[0].strip()
     return result
 
   def readlines(self):
@@ -39,7 +41,7 @@ class ReFile:
     res = []
     inLines = self.inFile.readlines()
     for line in inLines:
-      result = string.strip(self.regExp.split(line)[0])
+      result = self.regExp.split(line)[0].strip()
       if result != '':
         res.append(result)
 
@@ -77,7 +79,7 @@ def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
    a tuple of two Numeric arrays:
 
     (independant variables, dependant variables).
-  
+
   """
   inFile = ReFile(fileName)
   dataLines = inFile.readlines()
@@ -88,11 +90,11 @@ def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   else:
     _convfunc = int
 
-  nIndVars = len(string.split(dataLines[0])) - 1
+  nIndVars = len(dataLines[0].split()) - 1
   indVarMat = numpy.zeros((nPts, nIndVars), dataType)
   depVarVect = numpy.zeros(nPts, dataType)
   for i in range(nPts):
-    splitLine = string.split(dataLines[i])
+    splitLine = dataLines[i].split()
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]
     indVarMat[i, :] = map(_convfunc, splitLine)

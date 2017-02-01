@@ -12,6 +12,7 @@
 
 #include "MolDraw2DSVG.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
 namespace RDKit {
@@ -23,12 +24,21 @@ std::string DrawColourToSVG(const DrawColour &col) {
   unsigned int v;
   unsigned int i = 1;
   v = int(255 * col.get<0>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.get<1>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.get<2>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   return res;
@@ -259,6 +269,16 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   }
 }
 
+namespace {
+void escape_xhtml(std::string &data) {
+  boost::algorithm::replace_all(data, "&", "&amp;");
+  boost::algorithm::replace_all(data, "\"", "&quot;");
+  boost::algorithm::replace_all(data, "\'", "&apos;");
+  boost::algorithm::replace_all(data, "<", "&lt;");
+  boost::algorithm::replace_all(data, ">", "&gt;");
+}
+}
+
 // ****************************************************************************
 // draws the string centred on cds
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
@@ -306,6 +326,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
       if (!first_span) {
+        escape_xhtml(span);
         d_os << span << "</svg:tspan>";
         span = "";
       }
@@ -335,6 +356,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     }
     span += str[i];
   }
+  escape_xhtml(span);
   d_os << span << "</svg:tspan>";
   d_os << "</svg:text>\n";
 }

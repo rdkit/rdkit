@@ -5,7 +5,10 @@
 
 """
 from __future__ import print_function
-import re, os
+
+import os
+import re
+
 from rdkit import RDConfig
 from rdkit.six.moves import xrange
 
@@ -123,7 +126,7 @@ def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
     **Returns**
 
       the number of valence electrons
-      
+
   """
   arr = config.split(' ')
 
@@ -139,7 +142,7 @@ def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
   return nEl
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
 
   print(SplitComposition('Fe'))
   print(SplitComposition('Fe3Al'))

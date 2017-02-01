@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -31,6 +31,25 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 %module RDKFuncs
+
+#if defined(SWIGWORDSIZE64)
+%{
+// There's a problem with SWIG, 64bit windows, and modern VC++ versions
+//   This fine, fine piece of code fixes that.
+//   it's ok to think this is horrible, we won't mind
+#ifdef _MSC_VER
+
+#ifndef LONG_MAX
+#include <limits.h>
+#endif
+
+#if LONG_MAX==INT_MAX
+#define LONG_MAX (INT_MAX+1)
+#endif
+
+#endif
+%}
+#endif
 
 /* Suppress the unimportant warnings */
 #pragma SWIG nowarn=503,516
@@ -49,7 +68,11 @@
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
-%include "stdint.i"
+#ifdef SWIGWIN
+%include "../msvc_stdint.i"
+#else
+%include "../stdint.i"
+#endif
 %include "std_string.i"
 %include "std_list.i"
 %include "extend_std_vector.i"

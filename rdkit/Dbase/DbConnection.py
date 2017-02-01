@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
 #
@@ -12,15 +11,12 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import sys, types
+
+from rdkit.Dbase import DbUtils, DbInfo, DbModule
 
 
 class DbError(RuntimeError):
   pass
-
-
-from rdkit.Dbase import DbUtils, DbInfo, DbModule
 
 
 class DbConnect(object):
@@ -28,7 +24,7 @@ class DbConnect(object):
     interacting with databases.
 
     It includes some GUI functionality
-    
+
   """
 
   def __init__(self, dbName='', tableName='', user='sysdba', password='masterkey'):
@@ -43,7 +39,6 @@ class DbConnect(object):
         - user: the username for DB access
 
         - password: the password to be used for DB access
-      
 
     """
 
@@ -53,29 +48,6 @@ class DbConnect(object):
     self.password = password
     self.cn = None
     self.cursor = None
-
-  def UpdateTableNames(self, dlg):
-    """ Modifies a connect dialog to reflect new table names
-
-     **Arguments**
-
-       - dlg: the dialog to be updated
-       
-
-    """
-    self.user = self.userEntry.GetValue()
-    self.password = self.passwdEntry.GetValue()
-    self.dbName = self.dbBrowseButton.GetValue()
-    for i in xrange(self.dbTableChoice.Number()):
-      self.dbTableChoice.Delete(0)
-
-    names = self.GetTableNames()
-
-    for name in names:
-      self.dbTableChoice.Append(name)
-    dlg.sizer.Fit(dlg)
-    dlg.sizer.SetSizeHints(dlg)
-    dlg.Refresh()
 
   def GetTableNames(self, includeViews=0):
     """ gets a list of tables available in a database
@@ -92,7 +64,6 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetTableNames_
-       
 
     """
     return DbInfo.GetTableNames(self.dbName, self.user, self.password, includeViews=includeViews,
@@ -108,11 +79,9 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetColumnNames_
-       
 
     """
-    if not table:
-      table = self.tableName
+    table = table or self.tableName
     return DbInfo.GetColumnNames(self.dbName, table, self.user, self.password, join=join, what=what,
                                  cn=self.cn)
 
@@ -130,11 +99,9 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetColumnNamesAndTypes_
-       
 
     """
-    if not table:
-      table = self.tableName
+    table = table or self.tableName
     return DbInfo.GetColumnNamesAndTypes(self.dbName, table, self.user, self.password, join=join,
                                          what=what, cn=self.cn)
 
@@ -155,8 +122,7 @@ class DbConnect(object):
         - this uses _DbUtils.GetColumns_
 
     """
-    if not table:
-      table = self.tableName
+    table = table or self.tableName
     return DbUtils.GetColumns(self.dbName, table, fields, self.user, self.password, join=join)
 
   def GetData(self, table=None, fields='*', where='', removeDups=-1, join='', transform=None,
@@ -166,7 +132,7 @@ class DbConnect(object):
       **Arguments**
 
        - table: (optional) the table to use
-       
+
        - fields: a string with the names of the fields to be extracted,
          this should be a comma delimited list
 
@@ -182,11 +148,9 @@ class DbConnect(object):
       **Notes**
 
         - this uses _DbUtils.GetData_
-       
 
     """
-    if table is None:
-      table = self.tableName
+    table = table or self.tableName
     kwargs['forceList'] = kwargs.get('forceList', 0)
     return DbUtils.GetData(self.dbName, table, fieldString=fields, whereString=where,
                            user=self.user, password=self.password, removeDups=removeDups, join=join,
@@ -198,7 +162,7 @@ class DbConnect(object):
       **Arguments**
 
        - table: (optional) the table to use
-       
+
        - where: the SQL where clause to be used with the DB query
 
        - join: the SQL join clause to be used with the DB query
@@ -213,8 +177,7 @@ class DbConnect(object):
         - this uses _DbUtils.GetData_
 
     """
-    if table is None:
-      table = self.tableName
+    table = table or self.tableName
     return DbUtils.GetData(self.dbName, table, fieldString='count(*)', whereString=where,
                            cn=self.cn, user=self.user, password=self.password, join=join,
                            forceList=0)[0][0]
@@ -254,7 +217,6 @@ class DbConnect(object):
       - if a table named _tableName_ already exists, it will be dropped
 
       - the sqlQuery for addition is: "create table %(tableName) (%(colString))"
-      
 
     """
     c = self.GetCursor()
@@ -291,8 +253,8 @@ class DbConnect(object):
     if type(vals) != tuple:
       vals = tuple(vals)
     insTxt = '(' + ','.join([DbModule.placeHolder] * len(vals)) + ')'
-    #insTxt = '(%s'%('%s,'*len(vals))
-    #insTxt = insTxt[0:-1]+')'
+    # insTxt = '(%s'%('%s,'*len(vals))
+    # insTxt = insTxt[0:-1]+')'
     cmd = "insert into %s values %s" % (tableName, insTxt)
     try:
       c.execute(cmd, vals)
@@ -342,7 +304,6 @@ class DbConnect(object):
 
   def Commit(self):
     """ commits the current transaction
-    
 
     """
     self.cn.commit()

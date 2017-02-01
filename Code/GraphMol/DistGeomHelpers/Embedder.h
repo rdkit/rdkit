@@ -221,6 +221,176 @@ INT_VECT EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0);
+
+//! Parameter object for controlling embedding
+/*!
+  numConfs       Number of conformations to be generated
+
+  numThreads     Sets the number of threads to use (more than one thread
+                 will only be used if the RDKit was build with multithread
+                 support) If set to zero, the max supported by the system will
+                 be used.
+
+  maxIterations  Max. number of times the embedding will be tried if
+                 coordinates are not obtained successfully. The default
+                 value is 10x the number of atoms.
+
+  randomSeed     provides a seed for the random number generator (so that
+                 the same coordinates can be obtained for a molecule on
+                 multiple runs).
+                 If negative, the RNG will not be seeded.
+
+  clearConfs     Clear all existing conformations on the molecule
+
+  useRandomCoords  Start the embedding from random coordinates instead of
+                   using eigenvalues of the distance matrix.
+
+  boxSizeMult    Determines the size of the box that is used for
+                 random coordinates. If this is a positive number, the
+                 side length will equal the largest element of the distance
+                 matrix times \c boxSizeMult. If this is a negative number,
+                 the side length will equal \c -boxSizeMult (i.e. independent
+                 of the elements of the distance matrix).
+
+  randNegEig     Picks coordinates at random when a embedding process produces
+                 negative eigenvalues
+
+  numZeroFail    Fail embedding if we find this many or more zero eigenvalues
+                 (within a tolerance)
+
+  pruneRmsThresh Retain only the conformations out of 'numConfs' after
+                 embedding that are at least this far apart from each other.
+                 RMSD is computed on the heavy atoms.
+                 Prunining is greedy; i.e. the first embedded conformation is
+                 retained and from then on only those that are at least
+                 \c pruneRmsThresh away from already
+                 retained conformations are kept. The pruning is done
+                 after embedding and bounds violation minimization.
+                 No pruning by default.
+
+  coordMap       a map of int to Point3D, between atom IDs and their locations
+                 their locations.  If this container is provided, the
+                 coordinates are used to set distance constraints on the
+                 embedding. The resulting conformer(s) should have distances
+                 between the specified atoms that reproduce those between the
+                 points in \c coordMap. Because the embedding produces a
+                 molecule in an arbitrary reference frame, an alignment step
+                 is required to actually reproduce the provided coordinates.
+
+  optimizerForceTol set the tolerance on forces in the DGeom optimizer
+                    (this shouldn't normally be altered in client code).
+
+  ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
+                           smoothing fails
+
+  enforceChirality  enforce the correct chirality if chiral centers are present
+
+  useExpTorsionAnglePrefs  impose experimental torsion-angle preferences
+
+  useBasicKnowledge  impose "basic knowledge" terms such as flat
+                     aromatic rings, ketones, etc.
+
+  verbose        print output of experimental torsion-angle preferences
+
+  basinThresh    set the basin threshold for the DGeom force field,
+                 (this shouldn't normally be altered in client code).
+*/
+struct EmbedParameters {
+  unsigned int maxIterations;
+  int numThreads;
+  int randomSeed;
+  bool clearConfs;
+  bool useRandomCoords;
+  double boxSizeMult;
+  bool randNegEig;
+  unsigned int numZeroFail;
+  const std::map<int, RDGeom::Point3D> *coordMap;
+  double optimizerForceTol;
+  bool ignoreSmoothingFailures;
+  bool enforceChirality;
+  bool useExpTorsionAnglePrefs;
+  bool useBasicKnowledge;
+  bool verbose;
+  double basinThresh;
+  double pruneRmsThresh;
+  EmbedParameters()
+      : maxIterations(0),
+        numThreads(1),
+        randomSeed(-1),
+        clearConfs(true),
+        useRandomCoords(false),
+        boxSizeMult(2.0),
+        randNegEig(true),
+        numZeroFail(1),
+        coordMap(NULL),
+        optimizerForceTol(1e-3),
+        ignoreSmoothingFailures(false),
+        enforceChirality(true),
+        useExpTorsionAnglePrefs(false),
+        useBasicKnowledge(false),
+        verbose(false),
+        basinThresh(5.0),
+        pruneRmsThresh(-1.0){};
+  EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
+                  bool clearConfs, bool useRandomCoords, double boxSizeMult,
+                  bool randNegEig, unsigned int numZeroFail,
+                  const std::map<int, RDGeom::Point3D> *coordMap,
+                  double optimizerForceTol, bool ignoreSmoothingFailures,
+                  bool enforceChirality, bool useExpTorsionAnglePrefs,
+                  bool useBasicKnowledge, bool verbose, double basinThresh,
+                  double pruneRmsThresh)
+      : maxIterations(maxIterations),
+        numThreads(numThreads),
+        randomSeed(randomSeed),
+        clearConfs(clearConfs),
+        useRandomCoords(useRandomCoords),
+        boxSizeMult(boxSizeMult),
+        randNegEig(randNegEig),
+        numZeroFail(numZeroFail),
+        coordMap(coordMap),
+        optimizerForceTol(optimizerForceTol),
+        ignoreSmoothingFailures(ignoreSmoothingFailures),
+        enforceChirality(enforceChirality),
+        useExpTorsionAnglePrefs(useExpTorsionAnglePrefs),
+        useBasicKnowledge(useBasicKnowledge),
+        verbose(verbose),
+        basinThresh(basinThresh),
+        pruneRmsThresh(pruneRmsThresh){};
+};
+
+//! Parameters corresponding to Sereina Riniker's KDG approach
+extern const EmbedParameters KDG;
+//! Parameters corresponding to Sereina Riniker's ETDG approach
+extern const EmbedParameters ETDG;
+//! Parameters corresponding to Sereina Riniker's ETKDG approach
+extern const EmbedParameters ETKDG;
+
+inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
+  return EmbedMolecule(
+      mol, params.maxIterations, params.randomSeed, params.clearConfs,
+      params.useRandomCoords, params.boxSizeMult, params.randNegEig,
+      params.numZeroFail, params.coordMap, params.optimizerForceTol,
+      params.ignoreSmoothingFailures, params.enforceChirality,
+      params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
+      params.basinThresh);
+}
+inline void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
+                               const EmbedParameters &params) {
+  EmbedMultipleConfs(
+      mol, res, numConfs, params.numThreads, params.maxIterations,
+      params.randomSeed, params.clearConfs, params.useRandomCoords,
+      params.boxSizeMult, params.randNegEig, params.numZeroFail,
+      params.pruneRmsThresh, params.coordMap, params.optimizerForceTol,
+      params.ignoreSmoothingFailures, params.enforceChirality,
+      params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
+      params.basinThresh);
+}
+inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
+                                   const EmbedParameters &params) {
+  INT_VECT res;
+  EmbedMultipleConfs(mol, res, numConfs, params);
+  return res;
+}
 }
 }
 

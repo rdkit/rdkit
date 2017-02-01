@@ -39,7 +39,9 @@
 #include <GraphMol/SLNParse/SLNAttribs.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace SLNParse {

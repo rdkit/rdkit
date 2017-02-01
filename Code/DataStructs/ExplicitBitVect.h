@@ -11,7 +11,9 @@
 #ifndef __RD_EXPLICITBITVECTS_H__
 #define __RD_EXPLICITBITVECTS_H__
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include "BitVect.h"
 
 //! a class for bit vectors that are densely occupied
@@ -41,7 +43,8 @@ class ExplicitBitVect : public BitVect {
   //! construct directly from a dynamic_bitset pointer
   //  takes ownership of the pointer
   ExplicitBitVect(boost::dynamic_bitset<> *bits)
-      : dp_bits(bits), d_size(bits->size()), d_numOnBits(bits->count()){};
+      : dp_bits(bits), d_size(static_cast<unsigned int>(bits->size())),
+        d_numOnBits(static_cast<unsigned int>(bits->count())){};
 
   ~ExplicitBitVect();
 

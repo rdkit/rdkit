@@ -192,12 +192,11 @@ _MolsToGridImageSaved = None
 def ShowMols(mols, **kwargs):
   global _MolsToGridImageSaved
   if 'useSVG' not in kwargs:
-    # use SVG by default
-    kwargs['useSVG'] = True
+    kwargs['useSVG'] = ipython_useSVG
   if _MolsToGridImageSaved is not None:
     fn = _MolsToGridImageSaved
   else:
-    fm = Draw.MolsToGridImage
+    fn = Draw.MolsToGridImage
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
@@ -221,6 +220,8 @@ def InstallIPythonRenderer():
   Image.Image._repr_png_ = display_pil_image
   _MolsToGridImageSaved = Draw.MolsToGridImage
   Draw.MolsToGridImage = ShowMols
+  rdchem.Mol.__DebugMol = rdchem.Mol.Debug
+  rdchem.Mol.Debug = lambda self, useStdout=False: self.__DebugMol(useStdout=useStdout)
 
 
 InstallIPythonRenderer()
@@ -242,3 +243,6 @@ def UninstallIPythonRenderer():
   del Image.Image._repr_png_
   if _MolsToGridImageSaved is not None:
     Draw.MolsToGridImage = _MolsToGridImageSaved
+  if hasattr(rdchem.Mol, '__DebugMol'):
+    rdchem.Mol.Debug = rdchem.Mol.__DebugMol
+    del rdchem.Mol.__DebugMol
