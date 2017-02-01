@@ -18,14 +18,14 @@ find_package( MyRDKit COMPONENTS FileParsers SmilesParse Depictor RDGeometryLib
   MolAlign Optimizer RDGeometryLib ForceField ForceFieldHelpers Alignment
   ForceField ForceFieldHelpers MolTransforms EigenSolvers )
 
-include_directories( ${RDKIT_INCLUDE_DIR} ${CAIRO_INCLUDE_DIRS} )
+include_directories( ${RDKIT_INCLUDE_DIR} ${CAIRO_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 message( "${CAIRO_INCLUDE_DIRS}" )
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR})
 
 set( LIBS ${RDKIT_LIBRARIES} ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} z )
 
-foreach( exnum RANGE 1 11 )
+foreach( exnum RANGE 1 16 )
   message( "Example : ${exnum}" )
   set( exe "example${exnum}" )
   set( src "${exe}.cpp" )
@@ -33,5 +33,5 @@ foreach( exnum RANGE 1 11 )
   target_link_libraries( ${exe} ${LIBS} )
 endforeach( exnum )
 
-add_executable( test_example test_example.cpp )
-target_link_libraries( test_example ${LIBS} )
+# add_executable( test_example test_example.cpp )
+# target_link_libraries( test_example ${LIBS} )

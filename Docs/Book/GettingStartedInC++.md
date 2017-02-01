@@ -48,7 +48,7 @@ will be unnecessary for some of the programs. The first 3 programs
 don't need the Depictor and SubstructMatch libraries, for instance,
 although on my Ubuntu 16.04 system, the RDGeometryLib appears to need
 to be included twice. Working out which libraries need to be linked to
-and in what order can involve a tedious amount of trial and error!
+and in what order can involve a tedious amount of trial and error.
 
 ## Should You Use C++ or Python?
 
@@ -64,6 +64,15 @@ of your own programming logic and only using the RDKit for peripheral
 things like I/O, SMARTS matching, preparing 2D images and the like,
 then it is likely that you will have good performance gains if you
 write in C++ and compile to a native executable.
+
+Another consideration is the completeness of the API.  A lot of the
+higher level functionality in RDKit is developed in Python, and
+back-porting to C++ occurs on a demand-driven basis.  There are
+therefore examples of quite useful functionality, such as drawing
+multiple 2D molecule diagrams to a grid, or computing the RMS
+differences between conformers that are not available in C++.  Of
+course, if this affects you you can always implement the C++ version
+and submit a Pull Request.
 
 ## Memory Management
 
@@ -121,7 +130,7 @@ RDKit::ROMol *mol3 = RDKit::SmilesToMol( "Cc1cccc" );
 ```
 
 All these return a pointer to an ROMol on success, or 0 (aka Null) on
-failure. Obviously the object must be deleted when finished with to
+failure. Obviously, the object must be deleted when finished with to
 prevent memory leaks.
 
 If the SMILES parsing fails, an `RDKit::MolSanitizeException` (derived
@@ -151,7 +160,7 @@ displays something like: `[12:20:41] Can't kekulize mol`.
 
 ### Reading sets of molecules
 
-Groups of molecule are read using a Supplier (for example, an
+Groups of molecules are read using a Supplier (for example, an
 `RDKit::SDMolSupplier` or an `RDKit::SmilesMolSupplier`)
 [(example2)](./C++Examples/example2.cpp):
 
@@ -282,7 +291,7 @@ std::cout << RDKit::MolToSmiles( *mol3 ) << std::endl;
 all produce `c1ccncc1` as output.
 
 If you'd like to have the Kekule form of the SMILES, you need to Kekulize
-a RWMol copy of the molecule, using the Kekulize function declared in
+an RWMol copy of the molecule, using the Kekulize function declared in
 MolOps.h [(example3)](./C++Examples/example3.cpp):
 
 ```c++
@@ -298,7 +307,7 @@ gives
 CC(O)C1=CC=CC=C1
 ```
 
-Note: as of this writing (Aug 2008), the SMILES provided when one
+Note: as of Aug 2008, the SMILES provided when one
 requests kekuleSmiles are not canonical. The limitation is not in the
 SMILES generation, but in the kekulization itself.
 
@@ -695,12 +704,12 @@ The distinction between symmetrized and non-symmetrized SSSR is
 discussed in more detail below in the section
 [The SSSR Problem](#TheSSSRProblem).
 
-## Modifying molecules
+### Modifying molecules
 
 Normally molecules are stored in the RDKit with the hydrogen atoms
 implicit (i.e. not explicitly present in the molecular graph).  When
 it is useful to have the hydrogens explicitly persent, for example
-wehn generating or optimizing the 3D geometry, the
+when generating or optimizing the 3D geometry, the
 `RDKit::MolOps::addHs` function can be used
 [(example8)](./C++Examples/example8.cpp). 
 ```c++
@@ -749,7 +758,7 @@ After default Kekulize : Aromatic : 0
 The bond orders are defined as the enum BondType in
 [Bond.h](../../Code/GraphMol/Bond.h), and an aromatic bond
 currenly has the value 12.
-Note that by default, the Kekulize function clears the aromatic flags
+Note that by default the Kekulize function clears the aromatic flags
 on the atoms and bonds. **This is in contrast to the Python version of
 Kekulize, which preserves the flags by default.**  The behaviour can be
 forced explicitly [(example9.cpp)](./C++Examples/example9.cpp): 
@@ -782,10 +791,10 @@ Aromatic : 1
 ```
 once more.
 
-## Working with 2D molecules: Generating Depictions
+### Working with 2D molecules: Generating Depictions
 
-The RDKit has a library for generating depictions (sets of 2D)
-coordinates for molecules.  This library, which is part of the
+The RDKit has a library for generating depictions (sets of 2D
+coordinates) for molecules.  This library, which is part of the
 RDDepict namespace, is accessed via the `RDDepict::Compute2DCoords`
 function [(example10.cpp)](./C++Examples/example10.cpp):
 ```c++
@@ -810,7 +819,7 @@ RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) ,
 ```
 
 The `point.h` must be included for the typedef that defines
-`INT_POINT2D_MAP`, of which more later..
+`INT_POINT2D_MAP`, of which more later.
 By default, all existing conformations are removed when the 2D
 coordinates are created.  This can be changed by passing false as a
 4th parameter.  The 2D coordinates are added as another conformation
@@ -820,8 +829,9 @@ molecule, and probably best avoided.
 The Python API has a convenience function
 `GenerateDepictionMatching2DStructure` which forces the 2D coordinate
 generation to orientate molecules according to a template structure.
-There is currently no such function in C++, but it is relatively
-simple to reproduce the effects
+A C++ version of the function, generateDepictionMatching2DStructure
+was included in late December 2016.  If that is later than the version
+of RDKit you are using, then the effect can be achieved thus:
 [(example10.cpp)](./C++Examples/example10.cpp):
 ```c++
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -850,12 +860,10 @@ molecule templ onto corresponding atoms in the reference molecule.
 It is also possible to produce a 2D picture that attempts to mimic as
 closely as possible a 3D conformation.  Again, an equivalent of the
 Python function
-`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure` doesn't
-exist in C++, but if you examine
-[AllChem.py](../../rdkit/Chem/AllChem.py) you will get an idea of how
-to reproduce the effect.
+`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure` was
+incorporated in December 2016.
 
-## Working with 3D Molecules
+### Working with 3D Molecules
 
 The RDKit can generate conformations for molecules using two different
 methods.  The original method used distance geometry. [#blaney]_
@@ -958,8 +966,8 @@ std::cout << "Number of conformations : " << mol2_cids.size()
 ```
 The conformer ids are returned in `mol1_cids` and `mol2_cids` and
 there are two overloaded functions with different ways of supplying
-the information.  As before, the CSD-based method is invoked by that
-last two `true` parameters, and in the example above the the default
+the information.  As before, the CSD-based method is invoked by the
+last two `true` parameters, and in the example above the default
 number of conformations to be produced has been changed from 10 to 20.
 The conformers so generated can be aligned
 to each other and the RMS values calculated
@@ -980,7 +988,7 @@ The RMS values for the overlays will be fed into rms_list on return.
 Note the somewhat inconvenient issue that `EmbedMultipleConfs` returns
 a vector of `ints` for the conformer ids, but `alignMolConformers`
 requires a vector of `unsigned ints`. The first vector of `unsigned
-ints` in the `alignMolConformers` declaration is atom ids, and allowd
+ints` in the `alignMolConformers` declaration is atom ids, and allows
 the alignment to be performed on just a subset of atoms which can be
 convenient for overlaying a core and seeing how the other bits of the
 molecule varied in the different conformations.
@@ -995,7 +1003,376 @@ the RDKit is not intended to be a replacement for a “real”
 conformational analysis tool; it merely provides quick 3D structures
 for cases when they are required. On the other hand, the second
 method, when a sufficiently large number of conformers are generated,
-should be adequate for most purposes.
+should be adequate for most purposes. It is probably better to ignore
+the first, historical, method entirely. It is only left as the default
+method to avoid breaking existing code.
+
+### Preserving Molecules
+
+Molecules can be preserved, or serialised, or pickled, using the class
+MolPickler in the namespace of the same name:
+[(example12.cpp)](./C++Examples/example12.cpp):
+```c++
+#include <GraphMol/MolPickler.h>
+.
+.
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1ccncc1" );
+std::string pickle;
+RDKit::MolPickler::pickleMol( *mol1 , pickle );
+RDKit::ROMol mol2;
+RDKit::MolPickler::molFromPickle( pickle , mol2 );
+std::cout << RDKit::MolToSmiles( mol2 ) << std::endl;
+```
+Note that the string is in binary format and will appear
+as gibberish if printed to a screen. The RDKit pickle format is fairly
+compact and it is much, much faster to build a molecule from a pickle
+than from a Mol file or SMILES string, so storing as pickles molecules
+you will be working with repeatedly can be a good idea:
+[(example12.cpp)](./C++Examples/example12.cpp):
+```c++
+// writing to pickle file
+std::string smi_file = getenv("RDBASE");
+smi_file += "/Code/GraphMol/test_data/canonSmiles.long.smi";
+std::string pkl_name = "canonSmiles.long.pkl";
+
+// tab-delimited file, SMILES in column 0, name in 1, no title line
+RDKit::SmilesMolSupplier suppl( smi_file , "\t" , 0 , 1 , false );
+std::ofstream pickle_ostream( pkl_name , std::ios_base::binary );
+int write_cnt = 0;
+while( !suppl.atEnd() ) {
+  RDKit::ROMol *mol = suppl.next();
+  RDKit::MolPickler::pickleMol( *mol , pickle_ostream );
+  delete mol;
+  ++write_cnt;
+}
+pickle_ostream.close();  
+std::cout << "Wrote " << write_cnt << " molecules" << std::endl;
+
+// reading from pickle file
+std::ifstream pickle_istream( pkl_name , std::ios_base::binary );
+int read_cnt = 0;
+while( !pickle_istream.eof() ) {
+  RDKit::ROMol mol3;
+  try {
+    RDKit::MolPickler::molFromPickle( pickle_istream , mol3 );
+  } catch( RDKit::MolPicklerException &e ) {
+    break;
+  }
+  ++read_cnt;
+}
+pickle_istream.close();
+std::cout << "Read " << read_cnt << " molecules." << std::endl;
+```
+However, currently the pickling process does not preserve and
+properties attached to the molecule, which included the molecule name
+(property "_Name").
+
+### Drawing Molecules
+The RDKit has some built-in functionality for drawing molecules, found
+in the RDKit namespace, with header files in
+`$RDBASE/Code/GraphMol/MolDraw2D'.  There is an abstract base class
+MolDraw2D which defines the interface and does the drawing, with
+concrete classes for drawing to SVG or PNG files and Qt and wx
+widgets.  Only the SVG output is built by default, Cairo support
+requires the argument `-DRDK_BUILD_CAIRO_SUPPORT=ON` to cmake, and Qt
+support `-DRDK_BUILD_QT_SUPPORT=ON`. To create an SVG file:
+[(example13.cpp)](./C++Examples/example13.cpp):
+```c++
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+.
+.
+RDKit::SDMolSupplier mol_supplier( "data/cdk2.sdf" , true );
+RDKit::ROMol *mol1 = mol_supplier.next();
+RDDepict::compute2DCoords( *mol1 );
+std::ofstream outs("cdk_mol1.svg");
+RDKit::MolDraw2DSVG svg_drawer(300, 300, outs);
+svg_drawer.drawMolecule( *mol1 );
+svg_drawer.finishDrawing();
+outs.close();
+```
+The procedure for a PNG is slightly different:
+[(example13.cpp)](./C++Examples/example13.cpp):
+```c++
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+.
+.
+RDKit::MolDraw2DCairo cairo_drawer(300, 300);
+cairo_drawer.drawMolecule(*mol1);
+cairo_drawer.finishDrawing();
+cairo_drawer.writeDrawingText("cdk_mol1.png");
+```
+The Python wrapper includes the function `Chem.MolsToGridImage`.
+There is, as yet, no equivalent in the C++ version.
+
+### Substructure Searching
+
+Substructure matching can be done using query molecules built from
+SMARTS.
+[(example14.cpp)](./C++Examples/example14.cpp):
+```c++
+#include <GraphMol/Substruct/SubstructMatch.h>
+.
+.
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1ccccc1O" );
+RDKit::RWMol *patt = RDKit::SmartsToMol( "ccO" );
+RDKit::MatchVectType res;
+if( RDKit::SubstructMatch( *mol1 , *patt , res ) ) {
+  std::cout << "Pattern matched molecule" << std::endl;
+}
+for( size_t i = 0 ; i < res.size() ; ++i ) {
+  std::cout << "(" << res[i].first << "," << res[i].second << ") ";
+}
+std::cout << std::endl;
+```
+`SubstructMatch` returns a bool to flag whether there was a match, and
+replaces the contents of `res` with a mapping of the atom indices in
+the pattern and a set of atoms that match in the molecule. In the
+above example, the output is:
+```
+Pattern matched molecule
+(0,0)(1,5)(2,6)
+```
+showing that atoms 0, 5 and 6 in the phenol matched the query. If the
+pattern matches multiple times (as in this case, where 4, 5, 6 is also
+a match), an arbitrary set is returned.
+
+All possible matches can also be returned:
+[(example14.cpp)](./C++Examples/example14.cpp):
+```c++
+std::vector<RDKit::MatchVectType> hits_vect;
+if( RDKit::SubstructMatch( *mol1 , *patt , hits_vect ) ) {
+  for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
+    std::cout << "Match " << i + 1 << " : ";
+    for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+	std::cout << "(" << hits_vect[i][j].first << ","
+		  << hits_vect[i][j].second << ")";
+    }
+    std::cout << std::endl;
+  }
+}
+```
+This gives
+```
+Match 1 : (0,0)(1,5)(2,6)
+Match 2 : (0,4)(1,5)(2,6)
+
+```
+It is easy to filter lists of molecules:
+[(example14.cpp)](./C++Examples/example14.cpp):
+```c++
+RDKit::SDMolSupplier mol_supplier( "data/actives_5ht3.sdf" , true );
+RDKit::RWMol *patt1 = RDKit::SmartsToMol( "c[NH1]" );
+std::vector<RDKit::ROMol *> matches;
+while( !mol_supplier.atEnd() ) {
+  RDKit::ROMol *mol3 = mol_supplier.next();
+  if( mol3 && RDKit::SubstructMatch( *mol3 , *patt1 , res ) ) {
+    matches.push_back( mol3 );
+  } else {
+    delete mol3;
+  }
+}
+std::cout << "There were " << matches.size() << " hits in the file." << std::endl;
+```
+There should be 22 matches in the file.
+
+Substructure matching can also be done using molecules built from
+SMILES instead of SMARTS:
+[(example14.cpp)](./C++Examples/example14.cpp):
+```c++
+RDKit::ROMol *mol4 = RDKit::SmilesToMol( "C1=CC=CC=C1OC" );
+RDKit::RWMol *smi_mol1 = RDKit::SmilesToMol( "CO" );
+if( RDKit::SubstructMatch( *mol4 , *smi_mol1 , res ) ) {
+  std::cout << "SMILES match" << std::endl;
+} else {
+  std::cout << "Not SMILES match" << std::endl;
+}
+RDKit::RWMol *smt_mol1 = RDKit::SmartsToMol( "CO" );
+if( RDKit::SubstructMatch( *mol4 , *smt_mol1 , res ) ) {
+  std::cout << "SMARTS match" << std::endl;
+} else {
+  std::cout << "Not SMARTS match" << std::endl;
+}
+```
+But don't forget that the semantics of the two languages are not
+exactly equivalent:
+[(example14.cpp)](./C++Examples/example14.cpp):
+```c++
+RDKit::ROMol *mol4 = RDKit::SmilesToMol( "C1=CC=CC=C1OC" );
+RDKit::RWMol *smi_mol2 = RDKit::SmilesToMol( "COC" );
+if( RDKit::SubstructMatch( *mol4 , *smi_mol2 , res ) ) {
+  std::cout << "SMILES match" << std::endl;
+} else {
+  std::cout << "Not SMILES match" << std::endl;
+}
+RDKit::RWMol *smt_mol2 = RDKit::SmartsToMol( "COC" );
+if( RDKit::SubstructMatch( *mol4 , *smt_mol2 , res ) ) {
+  std::cout << "SMARTS match" << std::endl;
+} else {
+  std::cout << "Not SMARTS match" << std::endl;
+}
+// Needs aromatic C
+RDKit::RWMol *smt_mol3 = RDKit::SmartsToMol( "COc" );
+if( RDKit::SubstructMatch( *mol4 , *smt_mol3 , res ) ) {
+  std::cout << "SMARTS match" << std::endl;
+} else {
+  std::cout << "Not SMARTS match" << std::endl;
+}
+```
+gives
+```
+SMILES match
+Not SMARTS match
+SMARTS match
+```
+
+### Stereochemistry in substructure matches
+By default, information about stereochemistry is not used in
+substructure searches:
+[(example15.cpp)](./C++Examples/example15.cpp):
+```c++
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "CC[C@H](F)Cl" );
+RDKit::RWMol *patt1 = RDKit::SmartsToMol( "C[C@H](F)Cl" );
+RDKit::MatchVectType res;
+if( RDKit::SubstructMatch( *mol1 , *patt1 , res ) ) {
+  std::cout << "SMARTS 1 match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 1 match" << std::endl;
+}
+RDKit::RWMol *patt2 = RDKit::SmartsToMol( "C[C@@H](F)Cl" );
+if( RDKit::SubstructMatch( *mol1 , *patt2 , res ) ) {
+  std::cout << "SMARTS 2 match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 2 match" << std::endl;
+}
+RDKit::RWMol *patt3 = RDKit::SmartsToMol( "CC(F)Cl" );
+if( RDKit::SubstructMatch( *mol1 , *patt3 , res ) ) {
+  std::cout << "SMARTS 3 match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 3 match" << std::endl;
+}
+```
+All 3 SMARTS patterns match the molecule. To use the chirality
+information, you need to pass `true` as the optional fourth parameter,
+corresponding to useChirality:
+[(example15.cpp)](./C++Examples/example15.cpp):
+```c++
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "CC[C@H](F)Cl" );
+RDKit::RWMol *patt1 = RDKit::SmartsToMol( "C[C@H](F)Cl" );
+RDKit::MatchVectType res;
+if( RDKit::SubstructMatch( *mol1 , *patt1 , res , true , true ) ) {
+  std::cout << "SMARTS 1 chiral match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 1 chiral match" << std::endl;
+}
+RDKit::RWMol *patt2 = RDKit::SmartsToMol( "C[C@@H](F)Cl" );
+if( RDKit::SubstructMatch( *mol1 , *patt2 , res , true , true ) ) {
+  std::cout << "SMARTS 2 chiral match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 2 chiral match" << std::endl;
+}
+RDKit::RWMol *patt3 = RDKit::SmartsToMol( "CC(F)Cl" );
+if( RDKit::SubstructMatch( *mol1 , *patt3 , res , true , true ) ) {
+  std::cout << "SMARTS 3 chiral match" << std::endl;
+} else {
+  std::cout << "Not SMARTS 3 chiral match" << std::endl;
+}
+```
+gives
+```
+SMARTS 1 chiral match
+Not SMARTS 2 chiral match
+SMARTS 3 chiral match
+```
+Notice that when useChirality is true, a non-chiral query __does__
+match a chiral molecule. The same is not true for a chiral query and a
+non-chiral molecule:
+[(example15.cpp)](./C++Examples/example15.cpp):
+```c++
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "CC[C@H](F)Cl" );
+RDKit::RWMol *mol2 = RDKit::SmilesToMol( "CC(F)Cl" );
+if( RDKit::SubstructMatch( *mol1 , *mol2 , res , true , true ) ) {
+  std::cout << "Chiral mol, non-chiral query : match" << std::endl;
+} else {
+  std::cout << "Chiral mol, non-chiral query : NO match" << std::endl;
+}
+
+RDKit::RWMol *patt5 = RDKit::SmilesToMol( "C[C@H](F)Cl" );
+if( RDKit::SubstructMatch( *mol2 , *patt5 , res , true , true ) ) {
+  std::cout << "Non-chiral mol, chiral query : match" << std::endl;
+} else {
+  std::cout << "Non-chiral mol, chiral query : NO match" << std::endl;
+}
+```
+gives
+```
+Chiral mol, non-chiral query match
+Non-chiral mol, chiral query : NO match
+```
+
+### Atom Map Indices in SMARTS
+
+It is possible to attach indices to the atoms in the SMARTS
+pattern. This is most often done in reaction SMARTS (see Chemical
+Reactions), but is more general than that. For example, in the SMARTS
+patterns for torsion angle analysis published by Guba et al. (`DOI:
+acs.jcim.5b00522`) indices are used to define the four atoms of the
+torsion of interest. This allows additional atoms to be used to define
+the environment of the four torsion atoms, as in
+`[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]` for an aromatic C=N
+torsion. We might wonder in passing why they didn’t use recursive
+SMARTS for this, which would have made life easier, but it is what it
+is. The atom lists from GetSubstructureMatches are guaranteed to be in
+order of the SMARTS, but in this case we’ll get five atoms so we need
+a way of picking out, in the correct order, the four of interest. When
+the SMARTS is parsed, the relevant atoms are assigned an atom map
+number property that we can easily extract: 
+[(example16.cpp)](./C++Examples/example16.cpp):
+```c++
+RDKit::RWMol *patt1 = RDKit::SmartsToMol( "[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]" );
+std::map<int,unsigned int> ind_map;
+RDKit::ROMol::VERTEX_ITER it , end;
+boost::tie( it , end ) = patt1->getVertices();
+while( it != end ) {
+  const RDKit::Atom *atom = (*patt1)[*it].get();
+  int map_num = atom->getAtomMapNum();
+  if( map_num ) {
+    ind_map[map_num-1] = atom->getIdx();
+  }
+  ++it;
+}
+std::vector<unsigned int> map_list;
+for( std::map<int,unsigned int>::iterator i = ind_map.begin() ; i != ind_map.end() ; ++i ) {
+  map_list.push_back( i->second );
+}
+for( size_t i = 0 , is = map_list.size() ; i < is ; ++i ) {
+  std::cout << map_list[i] << " ";
+}
+std::cout << std::endl;
+```
+gives
+```
+0 1 3 4
+```
+Then, when using the query on a molecule, you can get the indices of
+the four matching atoms like this:
+[(example16.cpp)](./C++Examples/example16.cpp):
+```c++
+RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1cccc(C)c1C(C)=NC" );
+std::vector<RDKit::MatchVectType> hits_vect;
+if( RDKit::SubstructMatch( *mol1 , *patt1 , hits_vect ) ) {
+  for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
+    std::cout << "Match " << i + 1 << " : ";
+    for( size_t j = 0 ; j < map_list.size() ; ++j ) {
+	std::cout << hits_vect[i][map_list[j]].second << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+```
+gives
+```
+Match 1 : 1 7 8 10
+```
 
 ## <a name="TheSSSRProblem"></a>The SSSR Problem
 

@@ -36,7 +36,7 @@ int main( int argc , char **argv ) {
   std::ostringstream oss;
   RDKit::SDWriter *sdf_writer = new RDKit::SDWriter( &oss , false );
   // Note that this requires a C++11 compliant compiler
-  for( auto it = mols.begin() ; it != mols.end() ; ++it ) {
+  for( std::vector<RDKit::ROMol *>::iterator it = mols.begin() ; it != mols.end() ; ++it ) {
     sdf_writer->write( *(*it) );
   }
 

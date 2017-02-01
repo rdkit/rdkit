@@ -14,6 +14,7 @@ set(CMAKE_AUTOMOC ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   ADD_DEFINITIONS("-fPIC")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 include_directories(
