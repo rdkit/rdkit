@@ -147,6 +147,38 @@ class TestCase(unittest.TestCase):
     bedroc = Scoring.CalcBEDROC(self.scoreAllDecoys, self.index, self.alpha)
     self.assertEqual(bedroc, 0.0)
 
+  def test_safeguard_sort(self):
+
+    # Garbage scores with sorted classes show garbage performance
+    nan = float('nan')
+    scores = [(nan, 0)] * 10 + [(nan, 1)] * 10
+    naively_sorted_scores = sorted(scores)
+    safeguarded_scores = Scoring.avoid_sorting_artifacts_on_ranking(naively_sorted_scores, -1)
+    # This is the problem
+    self.assertEqual(Scoring.CalcAUC(naively_sorted_scores, 1), 0)
+    self.assertEqual(Scoring.CalcAUC(naively_sorted_scores[::-1], 1), 1)
+    # This is the solution
+    self.assertNotEqual(Scoring.CalcAUC(safeguarded_scores, 1), 0)
+    self.assertNotEqual(Scoring.CalcAUC(safeguarded_scores[::-1], 1), 1)
+    # In general, classes should be randomly mixed
+    self.assertNotEqual([0] * 10 + [1] * 10,
+                        [clazz for _, clazz in safeguarded_scores])
+
+    # Do not use the class for sorting (plus multiscore, negative class index and reverse)
+    scores = ([[i % 5, i % 5, 0] for i in range(1000)] +
+              [[i % 5, i % 5, 1] for i in range(1000)])
+    tol = 0.1
+    # This is the problem: the AUC here is incorrect; it should be 0.5...
+    self.assertNotAlmostEqual(Scoring.CalcAUC(sorted(scores, reverse=True), -1),
+                              0.5, delta=tol)
+    # ...but it is, wrongly, 0.6, because we have used the class when sorting
+    self.assertAlmostEqual(Scoring.CalcAUC(sorted(scores, reverse=True), -1),
+                           0.6, delta=tol)
+    # This is the solution
+    safeguarded_scores = Scoring.avoid_sorting_artifacts_on_ranking(scores, -1)
+    self.assertAlmostEqual(Scoring.CalcAUC(safeguarded_scores, -1), 0.5, delta=tol)
+
+    # N.B. the same tests would also apply to RIE, enrichment factor, BEDROC...
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

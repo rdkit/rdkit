@@ -14,6 +14,40 @@ after a file from Peter Gedeck, Greg Landrum
 """
 
 import math
+import random  # Does rdkit depend on numpy? => Use np.random instead
+import copy
+from operator import itemgetter
+
+
+def avoid_sorting_artifacts_on_ranking(scores, col, reverse=False):
+  """
+  Safeguard against rotten ROCs (& AUCs & RIEs and whatnot) due to ordering artifacts.
+
+  Avoids having artificially good/bad scores because:
+    - `scores` are ordered by class (col) and python stable (tim)sort
+      keeps the order on ties; this is specially bad if our model
+      returns garbage scores, let them be nans or any other constant.
+    - related, we leak the class in sorting
+
+  These problems are not uncommon. See the unit tests for some artificial examples.
+  """
+  # Shuffle
+  scores = copy.copy(scores)        # No side effects
+  random.Random(0).shuffle(scores)  # Shuffle (deterministically)
+  # If numpy is a core dependency of rdkit,
+  # we could just use more efficient shuffling.
+
+  # Sort without taking the class into account
+  # This works for any of {list, tuple, numpy array, ...}
+  scores_dim = len(scores[0])
+  if col < 0:
+    col += scores_dim
+  all_but_class = itemgetter(*[i for i in range(scores_dim) if i != col])
+  return sorted(scores, key=all_but_class, reverse=reverse)
+
+  # I guess I should use camel case
+  # Could these safeguards be introduced in ROC/BEDROC etc. without changing
+  # the API but for adding keyword arguments?
 
 
 def CalcROC(scores, col):
