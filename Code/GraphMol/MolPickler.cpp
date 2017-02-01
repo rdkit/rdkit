@@ -23,8 +23,8 @@ using boost::int32_t;
 using boost::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 7;
-const int32_t MolPickler::versionMinor = 2;
+const int32_t MolPickler::versionMajor = 8;
+const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
