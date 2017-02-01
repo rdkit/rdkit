@@ -814,6 +814,16 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, ENDPROPS);
   }
 
+  if(propertyFlags & PropertyPickleOptions::QueryAtomData) {
+    streamWrite(ss, BEGINQUERYATOMDATA);
+    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
+         atIt++) {
+      _pickleQueryAtomData(ss, *atIt);
+    }
+    streamWrite(ss, ENDPROPS);
+  }
+
+
   streamWrite(ss, ENDMOL);
 }
 
@@ -925,6 +935,13 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
         _unpickleProperties(ss, **bdIt);
       }
       streamRead(ss, tag, version);
+    } else if (tag == BEGINQUERYATOMDATA) {
+      for (ROMol::AtomIterator atIt = mol->beginAtoms();
+           atIt != mol->endAtoms();
+           atIt++) {
+        _unpickleAtomData(ss, *atIt, version);
+      }
+      streamRead(ss, tag, version);
     } else {
       break; // break to tag != ENDMOL
     }
@@ -979,13 +996,151 @@ bool getAtomMapNumber(const Atom *atom, int &mapNum) {
 }
 }
 
+int32_t MolPickler::_pickleAtomData(std::ostream &tss, const Atom *atom) {
+  int32_t propFlags = 0;
+  char tmpChar;
+  signed char tmpSchar;
+  // tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+  // if(fabs(tmpFloat)>.0001){
+  //   propFlags |= 1;
+  //   streamWrite(tss,tmpFloat);
+  // }
+  tmpSchar = static_cast<signed char>(atom->getFormalCharge());
+  if (tmpSchar != 0) {
+    propFlags |= 1 << 1;
+    streamWrite(tss, tmpSchar);
+  }
+  tmpChar = static_cast<char>(atom->getChiralTag());
+  if (tmpChar != 0) {
+    propFlags |= 1 << 2;
+    streamWrite(tss, tmpChar);
+  }
+  tmpChar = static_cast<char>(atom->getHybridization());
+  if (tmpChar != static_cast<char>(Atom::SP3)) {
+    propFlags |= 1 << 3;
+    streamWrite(tss, tmpChar);
+  }
+
+  tmpChar = static_cast<char>(atom->getNumExplicitHs());
+  if (tmpChar != 0) {
+    propFlags |= 1 << 4;
+    streamWrite(tss, tmpChar);
+  }
+  if (atom->d_explicitValence > 0) {
+    tmpChar = static_cast<char>(atom->d_explicitValence);
+    propFlags |= 1 << 5;
+    streamWrite(tss, tmpChar);
+  }
+  if (atom->d_implicitValence > 0) {
+    tmpChar = static_cast<char>(atom->d_implicitValence);
+    propFlags |= 1 << 6;
+    streamWrite(tss, tmpChar);
+  }
+  tmpChar = static_cast<char>(atom->getNumRadicalElectrons());
+  if (tmpChar != 0) {
+    propFlags |= 1 << 7;
+    streamWrite(tss, tmpChar);
+  }
+
+  unsigned int tmpuint = atom->getIsotope();
+  if (tmpuint > 0) {
+    propFlags |= 1 << 8;
+    streamWrite(tss, tmpuint);
+  }
+  return propFlags;
+}
+
+void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
+  int propFlags;
+  char tmpChar;
+  signed char tmpSchar;
+
+  streamRead(ss, propFlags, version);
+  if (propFlags & 1) {
+    float tmpFloat;
+    streamRead(ss, tmpFloat, version);
+    int iso = static_cast<int>(floor(tmpFloat + atom->getMass() + .0001));
+    atom->setIsotope(iso);
+  }
+
+  if (propFlags & (1 << 1)) {
+    streamRead(ss, tmpSchar, version);
+  } else {
+    tmpSchar = 0;
+  }
+  atom->setFormalCharge(static_cast<int>(tmpSchar));
+
+  if (propFlags & (1 << 2)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = 0;
+  }
+  atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
+
+  if (propFlags & (1 << 3)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = Atom::SP3;
+  }
+  atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
+
+  if (propFlags & (1 << 4)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = 0;
+  }
+  atom->setNumExplicitHs(tmpChar);
+
+  if (propFlags & (1 << 5)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = 0;
+  }
+  atom->d_explicitValence = tmpChar;
+
+  if (propFlags & (1 << 6)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = 0;
+  }
+  atom->d_implicitValence = tmpChar;
+  if (propFlags & (1 << 7)) {
+    streamRead(ss, tmpChar, version);
+  } else {
+    tmpChar = 0;
+  }
+  atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
+
+  atom->d_isotope = 0;
+  if (propFlags & (1 << 8)) {
+    unsigned int tmpuint;
+    streamRead(ss, tmpuint, version);
+    atom->setIsotope(tmpuint);
+  }
+}
+
+
+void MolPickler::_pickleQueryAtomData(std::ostream &ss, const Atom *atom) {
+  if (atom->hasQuery()) {
+    std::stringstream tss(std::ios_base::binary | std::ios_base::out |
+                          std::ios_base::in);
+
+    int32_t propFlags = _pickleAtomData(tss, atom);
+    streamWrite(ss, propFlags);
+    ss.write(tss.str().c_str(), tss.str().size());
+  } else {
+    // not a query so do nothing
+    int32_t propFlags = 0;
+    streamWrite(ss, propFlags);
+  }
+}
+
 // T refers to the type of the atom indices written
 template <typename T>
 void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   PRECONDITION(atom, "empty atom");
   char tmpChar;
   unsigned char tmpUchar;
-  signed char tmpSchar;
   int tmpInt;
   char flags;
 
@@ -1005,55 +1160,7 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   if (!atom->hasQuery()) {
     std::stringstream tss(std::ios_base::binary | std::ios_base::out |
                           std::ios_base::in);
-    int32_t propFlags = 0;
-    // tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-    // if(fabs(tmpFloat)>.0001){
-    //   propFlags |= 1;
-    //   streamWrite(tss,tmpFloat);
-    // }
-    tmpSchar = static_cast<signed char>(atom->getFormalCharge());
-    if (tmpSchar != 0) {
-      propFlags |= 1 << 1;
-      streamWrite(tss, tmpSchar);
-    }
-    tmpChar = static_cast<char>(atom->getChiralTag());
-    if (tmpChar != 0) {
-      propFlags |= 1 << 2;
-      streamWrite(tss, tmpChar);
-    }
-    tmpChar = static_cast<char>(atom->getHybridization());
-    if (tmpChar != static_cast<char>(Atom::SP3)) {
-      propFlags |= 1 << 3;
-      streamWrite(tss, tmpChar);
-    }
-
-    tmpChar = static_cast<char>(atom->getNumExplicitHs());
-    if (tmpChar != 0) {
-      propFlags |= 1 << 4;
-      streamWrite(tss, tmpChar);
-    }
-    if (atom->d_explicitValence > 0) {
-      tmpChar = static_cast<char>(atom->d_explicitValence);
-      propFlags |= 1 << 5;
-      streamWrite(tss, tmpChar);
-    }
-    if (atom->d_implicitValence > 0) {
-      tmpChar = static_cast<char>(atom->d_implicitValence);
-      propFlags |= 1 << 6;
-      streamWrite(tss, tmpChar);
-    }
-    tmpChar = static_cast<char>(atom->getNumRadicalElectrons());
-    if (tmpChar != 0) {
-      propFlags |= 1 << 7;
-      streamWrite(tss, tmpChar);
-    }
-
-    unsigned int tmpuint = atom->getIsotope();
-    if (tmpuint > 0) {
-      propFlags |= 1 << 8;
-      streamWrite(tss, tmpuint);
-    }
-
+    int32_t propFlags = _pickleAtomData(tss, atom);
     streamWrite(ss, propFlags);
     ss.write(tss.str().c_str(), tss.str().size());
   } else {
@@ -1216,69 +1323,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
         atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
       }
     } else {
-      int propFlags;
-      streamRead(ss, propFlags, version);
-      if (propFlags & 1) {
-        float tmpFloat;
-        streamRead(ss, tmpFloat, version);
-        int iso = static_cast<int>(floor(tmpFloat + atom->getMass() + .0001));
-        atom->setIsotope(iso);
-      }
-
-      if (propFlags & (1 << 1)) {
-        streamRead(ss, tmpSchar, version);
-      } else {
-        tmpSchar = 0;
-      }
-      atom->setFormalCharge(static_cast<int>(tmpSchar));
-
-      if (propFlags & (1 << 2)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = 0;
-      }
-      atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
-
-      if (propFlags & (1 << 3)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = Atom::SP3;
-      }
-      atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
-
-      if (propFlags & (1 << 4)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = 0;
-      }
-      atom->setNumExplicitHs(tmpChar);
-
-      if (propFlags & (1 << 5)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = 0;
-      }
-      atom->d_explicitValence = tmpChar;
-
-      if (propFlags & (1 << 6)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = 0;
-      }
-      atom->d_implicitValence = tmpChar;
-      if (propFlags & (1 << 7)) {
-        streamRead(ss, tmpChar, version);
-      } else {
-        tmpChar = 0;
-      }
-      atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
-
-      atom->d_isotope = 0;
-      if (propFlags & (1 << 8)) {
-        unsigned int tmpuint;
-        streamRead(ss, tmpuint, version);
-        atom->setIsotope(tmpuint);
-      }
+      _unpickleAtomData(ss, atom, version);
     }
 
   } else if (version > 5000) {

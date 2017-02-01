@@ -48,6 +48,7 @@ namespace PropertyPickleOptions {
   const unsigned int MolProps = 0x1; // only public non computed properties
   const unsigned int AtomProps = 0x10;
   const unsigned int BondProps = 0x100;
+  const unsigned int QueryAtomData = 0x100;
   const unsigned int PrivateProps = 0x10000;
   const unsigned int ComputedProps = 0x100000;
 }
@@ -125,6 +126,7 @@ class MolPickler {
     END_ATOM_MONOMER,
     BEGINATOMPROPS,
     BEGINBONDPROPS,
+    BEGINQUERYATOMDATA,
   } Tags;
 
   //! pickles a molecule and sends the results to stream \c ss
@@ -155,6 +157,13 @@ class MolPickler {
   };
 
  private:
+  //! Pickle nonquery atom data
+  static int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
+  //! depickle nonquery atom data
+  static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
+
+  static void _pickleQueryAtomData(std::ostream &tss, const Atom *atom);
+  
   //! do the actual work of pickling a molecule
   template <typename T>
   static void _pickle(const ROMol *mol, std::ostream &ss,
