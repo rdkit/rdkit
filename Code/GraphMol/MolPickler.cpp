@@ -799,7 +799,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   if(propertyFlags & PropertyPickleOptions::AtomProps) {
     streamWrite(ss, BEGINATOMPROPS);
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
-         atIt++) {
+         ++atIt) {
       _pickleProperties(ss, **atIt, propertyFlags);
     }
     streamWrite(ss, ENDPROPS);
@@ -808,7 +808,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   if(propertyFlags & PropertyPickleOptions::BondProps) {
     streamWrite(ss, BEGINBONDPROPS);
     for (ROMol::ConstBondIterator bondIt = mol->beginBonds(); bondIt != mol->endBonds();
-         bondIt++) {
+         ++bondIt) {
       _pickleProperties(ss, **bondIt, propertyFlags);
     }
     streamWrite(ss, ENDPROPS);
@@ -817,7 +817,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   if(propertyFlags & PropertyPickleOptions::QueryAtomData) {
     streamWrite(ss, BEGINQUERYATOMDATA);
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
-         atIt++) {
+         ++atIt) {
       _pickleQueryAtomData(ss, *atIt);
     }
     streamWrite(ss, ENDPROPS);
@@ -924,21 +924,21 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     } else if (tag == BEGINATOMPROPS) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
            atIt != mol->endAtoms();
-           atIt++) {
+           ++atIt) {
         _unpickleProperties(ss, **atIt);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINBONDPROPS) {
       for (ROMol::BondIterator bdIt = mol->beginBonds();
            bdIt != mol->endBonds();
-           bdIt++) {
+           ++bdIt) {
         _unpickleProperties(ss, **bdIt);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINQUERYATOMDATA) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
            atIt != mol->endAtoms();
-           atIt++) {
+           ++atIt) {
         _unpickleAtomData(ss, *atIt, version);
       }
       streamRead(ss, tag, version);
@@ -959,7 +959,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     // queries. update their property caches
     // (was sf.net Issue 3316407)
     for (ROMol::AtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
-         atIt++) {
+         ++atIt) {
       Atom *atom = *atIt;
       if (atom->hasQuery()) {
         atom->updatePropertyCache(false);
@@ -1669,7 +1669,7 @@ void MolPickler::_pickleV1(const ROMol *mol, std::ostream &ss) {
   if (mol->getNumConformers() > 0) {
     conf = &(mol->getConformer());
   }
-  for (atIt = mol->beginAtoms(); atIt != mol->endAtoms(); atIt++) {
+  for (atIt = mol->beginAtoms(); atIt != mol->endAtoms(); ++atIt) {
     const Atom *atom = *atIt;
 
     streamWrite(ss, BEGINATOM);
@@ -1703,7 +1703,7 @@ void MolPickler::_pickleV1(const ROMol *mol, std::ostream &ss) {
   }
 
   ROMol::ConstBondIterator bondIt;
-  for (bondIt = mol->beginBonds(); bondIt != mol->endBonds(); bondIt++) {
+  for (bondIt = mol->beginBonds(); bondIt != mol->endBonds(); ++bondIt) {
     const Bond *bond = *bondIt;
     streamWrite(ss, BEGINBOND);
     streamWrite(ss, BOND_INDEX, bond->getIdx());
