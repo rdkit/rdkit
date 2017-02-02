@@ -635,7 +635,8 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
 
 }  // end of anonymous namespace
 
-void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss, unsigned int propertyFlags) {
+void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
+                           unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
   streamWrite(ss, endianId);
   streamWrite(ss, static_cast<int>(VERSION));
@@ -652,7 +653,8 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss, unsigned int prop
   _pickleV1(mol, ss);
 #endif
 }
-void MolPickler::pickleMol(const ROMol *mol, std::string &res, unsigned int pickleFlags) {
+void MolPickler::pickleMol(const ROMol *mol, std::string &res,
+                           unsigned int pickleFlags) {
   PRECONDITION(mol, "empty molecule");
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
@@ -790,39 +792,38 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if(propertyFlags & PropertyPickleOptions::MolProps) {
+  if (propertyFlags & PropertyPickleOptions::MolProps) {
     streamWrite(ss, BEGINPROPS);
     _pickleProperties(ss, *mol, propertyFlags);
     streamWrite(ss, ENDPROPS);
   }
 
-  if(propertyFlags & PropertyPickleOptions::AtomProps) {
+  if (propertyFlags & PropertyPickleOptions::AtomProps) {
     streamWrite(ss, BEGINATOMPROPS);
-    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
-         ++atIt) {
+    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
+         atIt != mol->endAtoms(); ++atIt) {
       _pickleProperties(ss, **atIt, propertyFlags);
     }
     streamWrite(ss, ENDPROPS);
   }
 
-  if(propertyFlags & PropertyPickleOptions::BondProps) {
+  if (propertyFlags & PropertyPickleOptions::BondProps) {
     streamWrite(ss, BEGINBONDPROPS);
-    for (ROMol::ConstBondIterator bondIt = mol->beginBonds(); bondIt != mol->endBonds();
-         ++bondIt) {
+    for (ROMol::ConstBondIterator bondIt = mol->beginBonds();
+         bondIt != mol->endBonds(); ++bondIt) {
       _pickleProperties(ss, **bondIt, propertyFlags);
     }
     streamWrite(ss, ENDPROPS);
   }
 
-  if(propertyFlags & PropertyPickleOptions::QueryAtomData) {
+  if (propertyFlags & PropertyPickleOptions::QueryAtomData) {
     streamWrite(ss, BEGINQUERYATOMDATA);
-    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms(); atIt != mol->endAtoms();
-         ++atIt) {
+    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
+         atIt != mol->endAtoms(); ++atIt) {
       _pickleQueryAtomData(ss, *atIt);
     }
     streamWrite(ss, ENDPROPS);
   }
-
 
   streamWrite(ss, ENDMOL);
 }
@@ -917,35 +918,32 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     streamRead(ss, tag, version);
   }
 
-  while(tag != ENDMOL) {
-    if(tag == BEGINPROPS) {
+  while (tag != ENDMOL) {
+    if (tag == BEGINPROPS) {
       _unpickleProperties(ss, *mol);
       streamRead(ss, tag, version);
     } else if (tag == BEGINATOMPROPS) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
-           atIt != mol->endAtoms();
-           ++atIt) {
+           atIt != mol->endAtoms(); ++atIt) {
         _unpickleProperties(ss, **atIt);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINBONDPROPS) {
       for (ROMol::BondIterator bdIt = mol->beginBonds();
-           bdIt != mol->endBonds();
-           ++bdIt) {
+           bdIt != mol->endBonds(); ++bdIt) {
         _unpickleProperties(ss, **bdIt);
       }
       streamRead(ss, tag, version);
     } else if (tag == BEGINQUERYATOMDATA) {
       for (ROMol::AtomIterator atIt = mol->beginAtoms();
-           atIt != mol->endAtoms();
-           ++atIt) {
+           atIt != mol->endAtoms(); ++atIt) {
         _unpickleAtomData(ss, *atIt, version);
       }
       streamRead(ss, tag, version);
     } else {
-      break; // break to tag != ENDMOL
+      break;  // break to tag != ENDMOL
     }
-    if(tag != ENDPROPS) {
+    if (tag != ENDPROPS) {
       throw MolPicklerException("Bad pickle format: ENDPROPS tag not found.");
     }
     streamRead(ss, tag, version);
@@ -1118,7 +1116,6 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
     atom->setIsotope(tmpuint);
   }
 }
-
 
 void MolPickler::_pickleQueryAtomData(std::ostream &ss, const Atom *atom) {
   if (atom->hasQuery()) {
@@ -1641,11 +1638,9 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
 
 void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                    unsigned int pickleFlags) {
-  if(!pickleFlags)
-    return;
+  if (!pickleFlags) return;
 
-  streamWriteProps(ss, props, 
-                   pickleFlags & PropertyPickleOptions::PrivateProps,
+  streamWriteProps(ss, props, pickleFlags & PropertyPickleOptions::PrivateProps,
                    pickleFlags & PropertyPickleOptions::ComputedProps);
 }
 

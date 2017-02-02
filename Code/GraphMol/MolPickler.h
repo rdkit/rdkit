@@ -43,16 +43,15 @@ class MolPicklerException : public std::exception {
 };
 
 namespace PropertyPickleOptions {
-  const unsigned int NoProps = 0; // no data pickled
-  const unsigned int AllProps = 0xFFFFFFFF; // all data pickled
-  const unsigned int MolProps = 0x1; // only public non computed properties
-  const unsigned int AtomProps = 0x10;
-  const unsigned int BondProps = 0x100;
-  const unsigned int QueryAtomData = 0x100;
-  const unsigned int PrivateProps = 0x10000;
-  const unsigned int ComputedProps = 0x100000;
+const unsigned int NoProps = 0;            // no data pickled
+const unsigned int AllProps = 0xFFFFFFFF;  // all data pickled
+const unsigned int MolProps = 0x1;  // only public non computed properties
+const unsigned int AtomProps = 0x10;
+const unsigned int BondProps = 0x100;
+const unsigned int QueryAtomData = 0x100;
+const unsigned int PrivateProps = 0x10000;
+const unsigned int ComputedProps = 0x100000;
 }
-  
 
 //! handles pickling (serializing) molecules
 class MolPickler {
@@ -130,17 +129,21 @@ class MolPickler {
   } Tags;
 
   //! pickles a molecule and sends the results to stream \c ss
-  static void pickleMol(const ROMol *mol, std::ostream &ss,
-                        unsigned int propertyFlags=PropertyPickleOptions::NoProps);
-  static void pickleMol(const ROMol &mol, std::ostream &ss,
-                        unsigned int propertyFlags=PropertyPickleOptions::NoProps) {
+  static void pickleMol(
+      const ROMol *mol, std::ostream &ss,
+      unsigned int propertyFlags = PropertyPickleOptions::NoProps);
+  static void pickleMol(
+      const ROMol &mol, std::ostream &ss,
+      unsigned int propertyFlags = PropertyPickleOptions::NoProps) {
     MolPickler::pickleMol(&mol, ss, propertyFlags);
   };
   //! pickles a molecule and adds the results to string \c res
-  static void pickleMol(const ROMol *mol, std::string &res,
-                        unsigned int propertyFlags=PropertyPickleOptions::NoProps);
-  static void pickleMol(const ROMol &mol, std::string &res,
-                        unsigned int propertyFlags=PropertyPickleOptions::NoProps) {
+  static void pickleMol(
+      const ROMol *mol, std::string &res,
+      unsigned int propertyFlags = PropertyPickleOptions::NoProps);
+  static void pickleMol(
+      const ROMol &mol, std::string &res,
+      unsigned int propertyFlags = PropertyPickleOptions::NoProps) {
     MolPickler::pickleMol(&mol, res, propertyFlags);
   };
 
@@ -163,7 +166,7 @@ class MolPickler {
   static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
 
   static void _pickleQueryAtomData(std::ostream &tss, const Atom *atom);
-  
+
   //! do the actual work of pickling a molecule
   template <typename T>
   static void _pickle(const ROMol *mol, std::ostream &ss,
@@ -219,7 +222,7 @@ class MolPickler {
                                 unsigned int pickleFlags);
   //! unpickle standard properties
   static void _unpickleProperties(std::istream &ss, RDProps &props);
-  
+
   //! backwards compatibility
   static void _pickleV1(const ROMol *mol, std::ostream &ss);
   //! backwards compatibility
