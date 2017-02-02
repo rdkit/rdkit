@@ -11,7 +11,11 @@ int main( int argc , char **argv ) {
   RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
   std::cout << mol1 << std::endl;
 
-  RDKit::SDMolSupplier mol_supplier( "data/input.mol" , true );
+  std::string file_root = getenv( "RDBASE" );
+  file_root += "/Docs/Book";
+
+  std::string mol_file = file_root + "/data/input.mol";
+  RDKit::SDMolSupplier mol_supplier( mol_file , true );
   RDKit::ROMol *mol2 = mol_supplier.next();
   std::cout << mol2 << std::endl;
 

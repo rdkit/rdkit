@@ -46,7 +46,11 @@ int main( int argc , char **argv ) {
   RDKit::ROMol *mol5 = RDKit::MolOps::removeHs( *mol3 );
   RDKit::MolOps::removeHs( *mol4 );
 
-  std::ofstream ofs( "data/foo.mol" );
+  std::string file_root = getenv( "RDBASE" );
+  file_root += "/Docs/Book";
+
+  std::string mol_file = file_root + "/data/foo.mol";
+  std::ofstream ofs( mol_file );
   ofs << RDKit::MolToMolBlock( *mol5 );
 
 }

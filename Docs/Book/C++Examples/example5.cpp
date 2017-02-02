@@ -18,8 +18,12 @@
 
 int main( int argc , char **argv ) {
 
+  std::string file_root = getenv( "RDBASE" );
+  file_root += "/Docs/Book";
+
   RDKit::ROMol *mol;
-  RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
+  std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
+  RDKit::SDMolSupplier mol_supplier( sdf_file , true );
   std::vector<RDKit::ROMol *> mols;
   while( !mol_supplier.atEnd() ) {
     mol = mol_supplier.next();
@@ -28,7 +32,8 @@ int main( int argc , char **argv ) {
     }
   }
 
-  RDKit::PDBWriter pdb_writer( "data/5ht3ligs.pdb" );
+  std::string pdb_file = file_root + "/data/5ht3ligs.pdb";
+  RDKit::PDBWriter pdb_writer( pdb_file );
   for( std::size_t i = 0 , is = mols.size() ; i < is ; ++i ) {
     pdb_writer.write( *mols[i] );
   }

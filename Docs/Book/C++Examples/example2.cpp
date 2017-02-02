@@ -14,8 +14,12 @@
 
 int main( int argc , char **argv ) {
 
+  std::string file_root = getenv( "RDBASE" );
+  file_root += "/Docs/Book";
+
   RDKit::ROMol *mol;
-  RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
+  std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
+  RDKit::SDMolSupplier mol_supplier( sdf_file , true );
   while( !mol_supplier.atEnd() ) {
     mol = mol_supplier.next();
     std::cout << mol->getProp<std::string>( "_Name" ) << " has " << mol->getNumAtoms() << " atoms." << std::endl;
@@ -32,8 +36,8 @@ int main( int argc , char **argv ) {
 
   boost::iostreams::filtering_istream ins;
   ins.push( boost::iostreams::gzip_decompressor() );
-  ins.push( boost::iostreams::file_source( "data/actives_5ht3.sdf.gz" ) );
-
+  std::string comp_sdf_file = file_root + "/data/actives_5ht3.sdf.gz";
+  ins.push( boost::iostreams::file_source( comp_sdf_file ) );
   RDKit::ForwardSDMolSupplier forward_supplier( &ins , true );
   while( !forward_supplier.atEnd() ) {
     mol = forward_supplier.next();

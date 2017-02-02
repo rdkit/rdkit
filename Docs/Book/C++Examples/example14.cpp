@@ -34,7 +34,11 @@ int main( int argc , char **argv ) {
     }
   }
 
-  RDKit::SDMolSupplier mol_supplier( "data/actives_5ht3.sdf" , true );
+  std::string file_root = getenv( "RDBASE" );
+  file_root += "/Docs/Book";
+
+  std::string sdf_file = file_root + "/data/actives_5ht3.sdf";
+  RDKit::SDMolSupplier mol_supplier( sdf_file , true );
   RDKit::RWMol *patt1 = RDKit::SmartsToMol( "c[NH1]" );
   std::vector<RDKit::ROMol *> matches;
   while( !mol_supplier.atEnd() ) {
