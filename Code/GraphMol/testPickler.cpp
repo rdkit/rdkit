@@ -1030,7 +1030,6 @@ void testPickleProps() {
   m->setProp("int", 100);
   m->setProp("bool", true);
   m->setProp("boolfalse", false);
-
   m->setProp("dvec", v);
 
   Atom *a = m->getAtomWithIdx(0);
@@ -1039,39 +1038,200 @@ void testPickleProps() {
   a->setProp("bool", true);
   a->setProp("boolfalse", false);
   a->setProp("dvec", v);
+  a->setProp("_private", true);
+  
   Bond *b = m->getBondWithIdx(0);
   b->setProp("double", 1.0);
   b->setProp("int", 100);
   b->setProp("bool", true);
   b->setProp("boolfalse", false);
   b->setProp("dvec", v);
+  b->setProp("_private", true);
   
   std::string pkl;
-  MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AllProps);
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AllProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getProp<double>("double") == 1.0);
+    TEST_ASSERT(m2->getProp<int>("int") == 100);
+    TEST_ASSERT(m2->getProp<bool>("bool") == true);
+    TEST_ASSERT(m2->getProp<bool>("boolfalse") == false);
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(a->getProp<bool>("_private") == true);
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(b->getProp<bool>("_private") == true);
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::MolProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getProp<double>("double") == 1.0);
+    TEST_ASSERT(m2->getProp<int>("int") == 100);
+    TEST_ASSERT(m2->getProp<bool>("bool") == true);
+    TEST_ASSERT(m2->getProp<bool>("boolfalse") == false);
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AtomProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(!a->hasProp("_private"));
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AtomProps | PropertyPickleOptions::PrivateProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(a->getProp<bool>("_private") == true);
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+  
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::BondProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+    
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(!b->hasProp("_private"));
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::BondProps | PropertyPickleOptions::PrivateProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+    //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+    
+    //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
+    
+    BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(b->getProp<bool>("_private") == true);
+    //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
+    delete m2;
+  }
+  
   delete m;
-  m = new RWMol(pkl);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getProp<double>("double") == 1.0);
-  TEST_ASSERT(m->getProp<int>("int") == 100);
-  TEST_ASSERT(m->getProp<bool>("bool") == true);
-  TEST_ASSERT(m->getProp<bool>("boolfalse") == false);
-  //TEST_ASSERT(m->getProp<std::vector<double> >("dvec") == v);
-
-  BOOST_LOG(rdErrorLog) << "\tatoms" << std::endl;
-  a = m->getAtomWithIdx(0);
-  TEST_ASSERT(a->getProp<double>("double") == 1.0);
-  TEST_ASSERT(a->getProp<int>("int") == 100);
-  TEST_ASSERT(a->getProp<bool>("bool") == true);
-  TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
-  //TEST_ASSERT(a->getProp<std::vector<double> >("dvec") == v);
-
-  BOOST_LOG(rdErrorLog) << "\tbonds" << std::endl;
-  b = m->getBondWithIdx(0);
-  TEST_ASSERT(b->getProp<double>("double") == 1.0);
-  TEST_ASSERT(b->getProp<int>("int") == 100);
-  TEST_ASSERT(b->getProp<bool>("bool") == true);
-  TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
-  //TEST_ASSERT(b->getProp<std::vector<double> >("dvec") == v);
   
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
