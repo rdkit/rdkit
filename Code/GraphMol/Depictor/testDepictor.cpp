@@ -881,6 +881,39 @@ void testGitHubIssue1112() {
   }
 }
 
+void testGitHubIssue1286() {
+  // GenerateDepictionMatching2DStructure isn't matching 2D structure
+  {
+    std::string smiles = "C(=O)C(C)NC=O";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 7);
+
+    smiles = "C(=O)C(C)NC(=O)C1CC1";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 10);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(i);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(i);
+      std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1064,6 +1097,15 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "   Test GitHub Issue 1112: Bad coordinate generation for H2\n";
   testGitHubIssue1112();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1286: "
+                          "GenerateDepictionMatching2DStructure isn't matching "
+                          "2D structure\n";
+  testGitHubIssue1286();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
 
