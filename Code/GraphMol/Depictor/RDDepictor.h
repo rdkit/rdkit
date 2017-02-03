@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,19 +8,19 @@
 //  of the RDKit source tree.
 //
 
-#ifndef _RDDEPICTOR_H_
-#define _RDDEPICTOR_H_
+#ifndef RDDEPICTOR_H
+#define RDDEPICTOR_H
 
 #include <RDGeneral/types.h>
-#include <list>
-#include <GraphMol/ROMol.h>
-#include "EmbeddedFrag.h"
+#include <Geometry/point.h>
+#include <boost/smart_ptr.hpp>
 
 namespace RDKit {
 class ROMol;
 }
 
 namespace RDDepict {
+typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
 class DepictException : public std::exception {
  public:
@@ -145,16 +145,17 @@ unsigned int compute2DCoordsMimicDistMat(
   \param referencePattern -  (optional) a query molecule to be used to
                              generate the atom mapping between the molecule
                              and the reference.
-  \param acceptFailure - (optional) if True, standard depictions will be generated
-                         for molecules that don't have a substructure match to the
+  \param acceptFailure - (optional) if True, standard depictions will be
+  generated
+                         for molecules that don't have a substructure match to
+  the
                          reference; if false, throws a DepictException.
 
 */
-void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
-					   const RDKit::ROMol &reference ,
-					   int confId = -1 ,
-					   RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>( 0 ) ,
-					   bool acceptFailure = false );
+void generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
+    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(0),
+    bool acceptFailure = false);
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
 //   it mimics the coordinates of a 3D reference structure.
@@ -173,16 +174,16 @@ void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
   \param refPattern - (optional) a query molecule to map a subset of
                       the reference onto the mol, so that only some of the
                       atoms are aligned.
-  \param acceptFailure - (optional) if true, standard depictions will be generated
+  \param acceptFailure - (optional) if true, standard depictions will be
+  generated
                          for molecules that don't match the reference or the
                          referencePattern; if false, throws a DepictException.
 */
-void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
-					   const RDKit::ROMol &reference ,
-					   int confId = -1 ,
-					   RDKit::ROMol *referencePattern = 0 ,
-					   bool acceptFailure = false );
-
+void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
+                                          const RDKit::ROMol &reference,
+                                          int confId = -1,
+                                          RDKit::ROMol *referencePattern = 0,
+                                          bool acceptFailure = false);
 };
 
 #endif
