@@ -179,9 +179,10 @@ class MolMatchFinalCheckFunctor {
         if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0])
           end2Matches = 1;
       }
-      // std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" -
-      // "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<"
-      // "<<end2Matches<<std::endl;
+      // std::cerr << "  bnd: " << qBnd->getIdx() << ":" << qBnd->getStereo()
+      //           << " - " << mBnd->getIdx() << ":" << mBnd->getStereo()
+      //           << "  --  " << end1Matches << " " << end2Matches <<
+      //           std::endl;
       if (mBnd->getStereo() == qBnd->getStereo() &&
           (end1Matches + end2Matches) == 1)
         return false;
