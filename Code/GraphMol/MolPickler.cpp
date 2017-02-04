@@ -19,6 +19,11 @@
 #include <Query/QueryObjects.h>
 #include <map>
 #include <boost/cstdint.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread/once.hpp>
+#include <boost/thread/mutex.hpp>
+#endif
+
 using boost::int32_t;
 using boost::uint32_t;
 namespace RDKit {
@@ -49,6 +54,49 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
     tag = static_cast<MolPickler::Tags>(tmp);
   }
 }
+
+namespace {
+static unsigned int defaultProperties = PropertyPickleOptions::NoProps;
+
+#ifdef RDK_THREADSAFE_SSS
+boost::mutex &propmutex_get() {
+  // create on demand
+  static boost::mutex _mutex;
+  return _mutex;
+}
+
+void propmutex_create() {
+  boost::mutex &mutex = propmutex_get();
+  boost::mutex::scoped_lock test_lock(mutex);
+}
+
+boost::mutex& GetPropMutex() {
+#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
+  static boost::once_flag flag;
+#else
+  static boost::once_flag flag = BOOST_ONCE_INIT;
+#endif
+  boost::call_once(&propmutex_create, flag);
+  return propmutex_get();
+}
+#endif
+}
+
+unsigned int MolPickler::getDefaultPickleProperties() {
+#ifdef RDK_THREADSAFE_SSS
+  boost::mutex::scoped_lock lock(GetPropMutex());
+#endif
+  unsigned int props = defaultProperties;
+  return props;
+}
+
+void MolPickler::setDefaultPickleProperties(unsigned int props) {
+#ifdef RDK_THREADSAFE_SSS  
+  boost::mutex::scoped_lock lock(GetPropMutex());
+#endif
+  defaultProperties = props;
+}
+
 
 namespace {
 using namespace Queries;
@@ -635,6 +683,10 @@ AtomMonomerInfo *unpickleAtomMonomerInfo(std::istream &ss, int version) {
 
 }  // end of anonymous namespace
 
+void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss) {
+  pickleMol(mol, ss, MolPickler::getDefaultPickleProperties());
+}
+
 void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
                            unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
@@ -653,6 +705,15 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
   _pickleV1(mol, ss);
 #endif
 }
+
+void MolPickler::pickleMol(const ROMol &mol, std::ostream &ss) {
+  pickleMol(&mol, ss, MolPickler::getDefaultPickleProperties());
+}
+
+void MolPickler::pickleMol(const ROMol *mol, std::string &res) {
+  pickleMol(mol, res, MolPickler::getDefaultPickleProperties());
+}
+
 void MolPickler::pickleMol(const ROMol *mol, std::string &res,
                            unsigned int pickleFlags) {
   PRECONDITION(mol, "empty molecule");
@@ -660,6 +721,10 @@ void MolPickler::pickleMol(const ROMol *mol, std::string &res,
                        std::ios_base::in);
   MolPickler::pickleMol(mol, ss, pickleFlags);
   res = ss.str();
+}
+
+void MolPickler::pickleMol(const ROMol &mol, std::string &ss) {
+  pickleMol(&mol, ss, MolPickler::getDefaultPickleProperties());
 }
 
 // NOTE: if the mol passed in here already has atoms and bonds, they will

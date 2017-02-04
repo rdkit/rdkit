@@ -101,6 +101,9 @@ rdkit_test(graphmoltestChirality testChirality.cpp
 rdkit_test(graphmoltestPickler testPickler.cpp  
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
+rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp  
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
+
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 #rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES SmilesParse_static FileParsers_static GraphMol_static
