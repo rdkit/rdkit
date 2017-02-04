@@ -42,6 +42,7 @@ class MolPicklerException : public std::exception {
   std::string _msg;
 };
 
+namespace PicklerOps {
 typedef enum {
   NoProps = 0,            // no data pickled
   MolProps = 0x1,         // only public non computed properties
@@ -52,6 +53,7 @@ typedef enum {
   ComputedProps = 0x100000,
   AllProps = 0xFFFFFFFF,  // all data pickled
 } PropertyPickleOptions;
+}
 
 //! handles pickling (serializing) molecules
 class MolPickler {

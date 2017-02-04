@@ -1050,7 +1050,7 @@ void testPickleProps() {
   
   std::string pkl;
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AllProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(m2->getProp<double>("double") == 1.0);
@@ -1075,7 +1075,7 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::MolProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::MolProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(m2->getProp<double>("double") == 1.0);
@@ -1101,7 +1101,7 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AtomProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::AtomProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));
@@ -1126,7 +1126,7 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::AtomProps | PropertyPickleOptions::PrivateProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::AtomProps | PicklerOps::PrivateProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));
@@ -1152,7 +1152,7 @@ void testPickleProps() {
   }
   
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::BondProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::BondProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));
@@ -1177,7 +1177,7 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PropertyPickleOptions::BondProps | PropertyPickleOptions::PrivateProps);
+    MolPickler::pickleMol(*m, pkl, PicklerOps::BondProps | PicklerOps::PrivateProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));

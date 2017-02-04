@@ -56,7 +56,7 @@ void streamRead(std::istream &ss, MolPickler::Tags &tag, int version) {
 }
 
 namespace {
-static unsigned int defaultProperties = PropertyPickleOptions::NoProps;
+static unsigned int defaultProperties = PicklerOps::NoProps;
 
 #ifdef RDK_THREADSAFE_SSS
 boost::mutex &propmutex_get() {
@@ -857,13 +857,13 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     }
   }
 
-  if (propertyFlags & PropertyPickleOptions::MolProps) {
+  if (propertyFlags & PicklerOps::MolProps) {
     streamWrite(ss, BEGINPROPS);
     _pickleProperties(ss, *mol, propertyFlags);
     streamWrite(ss, ENDPROPS);
   }
 
-  if (propertyFlags & PropertyPickleOptions::AtomProps) {
+  if (propertyFlags & PicklerOps::AtomProps) {
     streamWrite(ss, BEGINATOMPROPS);
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
          atIt != mol->endAtoms(); ++atIt) {
@@ -872,7 +872,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, ENDPROPS);
   }
 
-  if (propertyFlags & PropertyPickleOptions::BondProps) {
+  if (propertyFlags & PicklerOps::BondProps) {
     streamWrite(ss, BEGINBONDPROPS);
     for (ROMol::ConstBondIterator bondIt = mol->beginBonds();
          bondIt != mol->endBonds(); ++bondIt) {
@@ -881,7 +881,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, ENDPROPS);
   }
 
-  if (propertyFlags & PropertyPickleOptions::QueryAtomData) {
+  if (propertyFlags & PicklerOps::QueryAtomData) {
     streamWrite(ss, BEGINQUERYATOMDATA);
     for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
          atIt != mol->endAtoms(); ++atIt) {
@@ -1705,8 +1705,8 @@ void MolPickler::_pickleProperties(std::ostream &ss, const RDProps &props,
                                    unsigned int pickleFlags) {
   if (!pickleFlags) return;
 
-  streamWriteProps(ss, props, pickleFlags & PropertyPickleOptions::PrivateProps,
-                   pickleFlags & PropertyPickleOptions::ComputedProps);
+  streamWriteProps(ss, props, pickleFlags & PicklerOps::PrivateProps,
+                   pickleFlags & PicklerOps::ComputedProps);
 }
 
 //! unpickle standard properties

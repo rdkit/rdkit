@@ -281,15 +281,15 @@ struct mol_wrapper {
     python::register_exception_translator<ConformerException>(
         &rdExceptionTranslator);
 
-    python::enum_<RDKit::PropertyPickleOptions>("PropertyPickleOptions")
-        .value("NoProps", RDKit::PropertyPickleOptions::NoProps)
-        .value("MolProps", RDKit::PropertyPickleOptions::MolProps)
-        .value("AtomProps", RDKit::PropertyPickleOptions::AtomProps)
-        .value("BondProps", RDKit::PropertyPickleOptions::BondProps)
-        .value("QueryAtomData", RDKit::PropertyPickleOptions::QueryAtomData)
-        .value("PrivateProps", RDKit::PropertyPickleOptions::PrivateProps)
-        .value("ComputedProps", RDKit::PropertyPickleOptions::ComputedProps)
-        .value("AllProps", RDKit::PropertyPickleOptions::AllProps)
+    python::enum_<RDKit::PicklerOps::PropertyPickleOptions>("PropertyPickleOptions")
+        .value("NoProps", RDKit::PicklerOps::NoProps)
+        .value("MolProps", RDKit::PicklerOps::MolProps)
+        .value("AtomProps", RDKit::PicklerOps::AtomProps)
+        .value("BondProps", RDKit::PicklerOps::BondProps)
+        .value("QueryAtomData", RDKit::PicklerOps::QueryAtomData)
+        .value("PrivateProps", RDKit::PicklerOps::PrivateProps)
+        .value("ComputedProps", RDKit::PicklerOps::ComputedProps)
+        .value("AllProps", RDKit::PicklerOps::AllProps)
         .export_values();
     ;
 
