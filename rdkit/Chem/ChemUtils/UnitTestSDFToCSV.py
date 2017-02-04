@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
 
   def test2(self):
     import os
-    from rdkit.six.moves import cStringIO as StringIO  #@UnresolvedImport #pylint: disable=F0401
+    from rdkit.six.moves import cStringIO as StringIO
     fName = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_200.props.sdf')
     suppl = Chem.SDMolSupplier(fName)
     io = StringIO()

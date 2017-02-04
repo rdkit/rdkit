@@ -11,7 +11,7 @@ import copy
 import numpy
 
 from rdkit.ML.DecTree import CrossValidate, DecTree
-from rdkit.six.moves import range  # @UnresolvedImport
+from rdkit.six.moves import range
 
 _verbose = 0
 
@@ -201,7 +201,7 @@ def PruneTree(tree, trainExamples, testExamples, minimizeTestErrorOnly=1):
   # screen the test data through the tree so that we end up with the
   #  appropriate points stored at each node of the tree. Results are ignored
   #
-  totErr, badEx = CrossValidate.CrossValidate(tree, testSet, appendExamples=1)  # @UnusedVariable
+  totErr, badEx = CrossValidate.CrossValidate(tree, testSet, appendExamples=1)
 
   #
   # Prune

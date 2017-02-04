@@ -12,7 +12,7 @@
     canvases
 
 """
-from sping import pid as piddle  # @UnresolvedImport
+from sping import pid as piddle
 
 
 class VisOpts(object):

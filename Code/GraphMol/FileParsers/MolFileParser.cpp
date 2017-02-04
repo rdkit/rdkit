@@ -7,6 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
@@ -16,12 +22,6 @@
 #include <RDGeneral/RDLog.h>
 
 #include <fstream>
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
-#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
@@ -852,7 +852,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
   }
   std::vector<std::string> splitToken;
   std::string resid = text.substr(1, text.size() - 2);
-  boost::split(splitToken, resid, boost::is_any_of(" "));
+  boost::split(splitToken, resid, boost::is_any_of(std::string(" ")));
   if (splitToken.size() < 1) {
     std::ostringstream errout;
     errout << "Bad RGROUPS specification " << text << " on line " << line
@@ -1064,17 +1064,9 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
       } else if (symb == "Q") {
-        ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
-        q->setDescription("AtomOr");
-        q->setNegation(true);
-        q->addChild(
-            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(6)));
-        q->addChild(
-            QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(1)));
-        query->setQuery(q);
+        query->setQuery(makeQAtomQuery());
       } else if (symb == "A") {
-        query->setQuery(makeAtomNumQuery(1));
-        query->getQuery()->setNegation(true);
+        query->setQuery(makeAAtomQuery());
       }
       delete res;
       res = query;

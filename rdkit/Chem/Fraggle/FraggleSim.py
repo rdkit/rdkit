@@ -211,7 +211,7 @@ def generate_fraggle_fragmentation(mol, verbose=False):
   # find the relevant bonds to break
   acyclic_matching_atoms = mol.GetSubstructMatches(ACYC_SMARTS)
   cyclic_matching_atoms = mol.GetSubstructMatches(CYC_SMARTS)
-  if verbose:  # pragma: nocover
+  if verbose:
     print("Matching Atoms:")
     print("acyclic matching atoms: ", acyclic_matching_atoms)
     print("cyclic matching atoms: ", cyclic_matching_atoms)
@@ -313,7 +313,7 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
     try:
       Chem.SanitizeMol(pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^
                        Chem.SANITIZE_SETAROMATICITY)
-    except Exception:  # pragma: nocover
+    except Exception:
       sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
       pMol = Chem.Mol(mol)
 
@@ -343,7 +343,7 @@ def compute_fraggle_similarity_for_subs(inMol, qMol, qSmi, qSubs, tverskyThresh=
   try:
     rmMolFp = Chem.RDKFingerprint(rmMol, **rdkitFpParams)
     fraggle_sim = max(DataStructs.FingerprintSimilarity(qmMolFp, rmMolFp), rdkit_sim)
-  except Exception:  # pragma: nocover
+  except Exception:
     sys.stderr.write("Can't generate fp for: %s\n" % (Chem.MolToSmiles(rmMol, True)))
     fraggle_sim = 0.0
 

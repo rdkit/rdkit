@@ -242,7 +242,7 @@ class SpreadPicker(GenericPicker):
       else:
         fps.append(origFp)
       j += 1
-      if not silent and not j % 1000:  # pragma: nocover
+      if not silent and not j % 1000:
         print('scored %d fps' % j)
 
     # now go probe by probe and select the current top entry until we are finished:

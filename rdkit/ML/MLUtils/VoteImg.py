@@ -178,7 +178,7 @@ def Usage():
 if __name__ == '__main__':
   import sys
   import getopt
-  from rdkit.six.moves import cPickle  # @UnresolvedImport
+  from rdkit.six.moves import cPickle
   from rdkit.ML.Data import DataUtils
 
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')
@@ -214,7 +214,7 @@ if __name__ == '__main__':
   if dbName == '':
     data = DataUtils.BuildQuantDataSet(fName)
   else:
-    data = DataUtils.DBToQuantData(dbName, fName)  # @UndefinedVariable function no longer defined
+    data = DataUtils.DBToQuantData(dbName, fName)  # Function no longer defined
 
   dataSet = data.GetNamedData()
 

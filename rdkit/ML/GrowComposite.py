@@ -104,7 +104,7 @@ from rdkit.ML import CompositeRun
 from rdkit.ML import ScreenComposite, BuildComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.ML.Data import DataUtils, SplitData
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -169,7 +169,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
       details.tableName = fName
       data = details.GetDataSet()
     else:
-      data = DataUtils.DBToQuantData(  # @UndefinedVariable function no longer defined
+      data = DataUtils.DBToQuantData(  # Function no longer defined
         details.dbName, fName, quantName=details.qTableName, user=details.dbUser,
         password=details.dbPassword)
 
@@ -209,7 +209,7 @@ def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, 
                    progressCallback=progressCallback, silent=not _verbose)
 
   else:
-    from rdkit.ML.Neural import CrossValidate  # @Reimport
+    from rdkit.ML.Neural import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
                    buildDriver=driver, needsQuantization=0)
