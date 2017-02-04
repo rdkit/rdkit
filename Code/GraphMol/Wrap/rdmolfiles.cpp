@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -323,6 +322,13 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
 
   return resRanks;
 }
+
+ROMol *MolFromSmilesHelper(python::object ismiles,
+                           const SmilesParserParams &params) {
+  std::string smiles = pyObjectToString(ismiles);
+
+  return SmilesToMol(smiles,params);
+}
 }
 
 // MolSupplier stuff
@@ -611,6 +617,43 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("includeStereo") = false, python::arg("confId") = -1,
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
+
+  python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
+      "SmilesParserParams", "Parameters controlling SMILES Parsing")
+      .def_readwrite("maxIterations",
+                     &RDKit::SmilesParserParams::debugParse,
+                     "controls the amount of debugging information produced")
+     .def_readwrite("parseName",
+                    &RDKit::SmilesParserParams::parseName,
+                    "controls whether or not the molecule name is also parsed")
+      .def_readwrite("allowCXSMILES",
+                     &RDKit::SmilesParserParams::allowCXSMILES,
+                     "controls whether or not the CXSMILES extensions are parsed")
+       .def_readwrite("sanitize",
+                      &RDKit::SmilesParserParams::sanitize,
+                      "controls whether or not the molecule is sanitized before being returned")
+      .def_readwrite("removeHs",
+                     &RDKit::SmilesParserParams::removeHs,
+                     "controls whether or not Hs are removed before the molecule is returned");
+     docString =
+         "Construct a molecule from a SMILES string.\n\n\
+     ARGUMENTS:\n\
+   \n\
+       - SMILES: the smiles string\n\
+   \n\
+       - params: used to provide optional parameters for the SMILES parsing\n\
+   \n\
+     RETURNS:\n\
+   \n\
+       a Mol object, None on failure.\n\
+   \n";
+   python::def("MolFromSmiles",
+               MolFromSmilesHelper,
+               (python::arg("SMILES"), python::arg("params")),
+               docString.c_str(),
+               python::return_value_policy<python::manage_new_object>());
+
+
 
   docString =
       "Construct a molecule from a SMILES string.\n\n\

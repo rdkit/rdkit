@@ -8,6 +8,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
@@ -16,9 +22,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -181,7 +184,9 @@ void TDTMolSupplier::checkForEnd() {
   // we are not at the end of file, but check for blank lines:
   std::string tempStr;
   std::getline(*dp_inStream, tempStr);
-  boost::trim_left_if(tempStr, boost::is_any_of(" \t\r\n"));
+
+  boost::trim_left_if(tempStr, boost::is_any_of(std::string(" \t\r\n")));
+
   if (tempStr.length() == 0) {
     df_end = true;
     // the -1 here is because by the time we get here we've already pushed on

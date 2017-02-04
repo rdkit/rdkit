@@ -656,7 +656,7 @@ int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
   for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); ++vivi) {
-    unsigned int ringSz = (*vivi).size();
+    size_t ringSz = (*vivi).size();
     // test ring size:
     if ((minRingSize && ringSz < minRingSize) ||
         (maxRingSize && ringSz > maxRingSize))

@@ -3844,6 +3844,105 @@ void testGithub1219() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSmilesParseParams() {
+	BOOST_LOG(rdInfoLog)
+		<< "Testing the SmilesParseParams class"
+		<< std::endl;
+	{
+		std::string smiles = "C1=CC=CC=C1[H]";
+		ROMol *m = SmilesToMol(smiles);
+		TEST_ASSERT(m);
+		TEST_ASSERT(m->getNumAtoms() == 6);
+		TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+		delete m;
+
+		{
+			SmilesParserParams params;
+			m = SmilesToMol(smiles,params);
+			TEST_ASSERT(m);
+			TEST_ASSERT(m->getNumAtoms() == 6);
+			TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+			delete m;
+		}
+		{ // no removeHs, with sanitization
+			SmilesParserParams params;
+      params.removeHs = false;
+			m = SmilesToMol(smiles,params);
+			TEST_ASSERT(m);
+			TEST_ASSERT(m->getNumAtoms() == 7);
+			TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+			delete m;
+		}
+    { // removeHs, no sanitization
+      SmilesParserParams params;
+      params.sanitize = false;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 6);
+      TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+      delete m;
+    }
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.removeHs = false;
+      params.sanitize = false;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 7);
+      TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+      delete m;
+    }
+  }
+
+  { // basic name parsing
+    std::string smiles = "CCCC the_name";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(!m);
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(!m);
+    }
+    { // no removeHs, no sanitization
+       SmilesParserParams params;
+       params.parseName = true;
+       m = SmilesToMol(smiles, params);
+       TEST_ASSERT(m);
+       TEST_ASSERT(m->getNumAtoms() == 4);
+       TEST_ASSERT(m->hasProp(common_properties::_Name));
+       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name)=="the_name");
+       delete m;
+    }
+  }
+  { // name parsing2
+    std::string smiles = "CCCC\tthe_name";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  { // name parsing3
+    std::string smiles = "CCCC\t  the_name  ";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3911,4 +4010,5 @@ int main(int argc, char *argv[]) {
   testGithub760();
   testDativeBonds();
   testGithub1219();
+  testSmilesParseParams();
 }
