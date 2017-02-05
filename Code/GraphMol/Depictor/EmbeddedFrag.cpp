@@ -102,6 +102,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
     CHECK_INVARIANT(aid < na, "");
     EmbeddedAtom eatom(aid, cri->second);
     eatom.neighs.clear();
+    eatom.df_fixed = true;
     d_eatoms[aid] = eatom;
     d_done = false;
   }
