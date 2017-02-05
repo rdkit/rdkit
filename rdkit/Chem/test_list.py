@@ -22,7 +22,7 @@ tests = [
   ("python", "UnitTestPandasTools.py", {}),
   ("python", "UnitTestPeriodicTable.py", {}),
   ("python", "UnitTestDocTestsChem.py", {}),
-  ("python", "UnitTestCLI.py", {}),
+  ("python", "UnitTestFeatFinderCLI.py", {}),
   ("python", "test_list.py", {'dir': 'AtomPairs'}),
   ("python", "test_list.py", {'dir': 'ChemUtils'}),
   ("python", "test_list.py", {'dir': 'EState'}),
