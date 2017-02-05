@@ -1,3 +1,26 @@
+# Release_2016.09.4
+(Changes relative to Release_2016.09.4)
+
+## Acknowledgements:
+Chris Earnshaw, Peter Gedeck, Brian Kelley, Paolo Tosco, 'i-tub'
+
+## Bug Fixes:
+  - Remove deprecated string module functions
+ (github pull #1223 from gedeck)
+  - Turns on -fpermissive for gcc >= 6 and boost < 1.62
+ (github pull #1225 from bp-kelley)
+  - FindPotentialStereoBonds() failure
+ (github issue #1230 from greglandrum)
+  - - fixed build failure on Windows due to missing link to library
+ (github pull #1241 from ptosco)
+  - MolFromMolBlock sanitizing when it should not be
+ (github issue #1251 from greglandrum)
+  - PMI descriptors incorrect
+ (github issue #1262 from greglandrum)
+  - Reactions don't modify isotope unless chemical element is specified for the product
+ (github issue #1266 from i-tub)
+
+
 # Release_2016.09.3
 (Changes relative to Release_2016.09.2)
 
