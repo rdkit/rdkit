@@ -16,9 +16,7 @@ from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
 from rdkit.six.moves import cPickle
 
-
-def feq(n1, n2, tol=1e-4):
-  return abs(n1 - n2) < tol
+doLong = False
 
 
 class TestCase(unittest.TestCase):
@@ -71,16 +69,16 @@ class TestCase(unittest.TestCase):
       fp = fpgen.GetFPForMol(mol, fragCat)
       if i < len(obits):
         smi = Chem.MolToSmiles(mol)
-        assert fp.GetNumOnBits() == obits[i], '%s: %s' % (smi, str(fp.GetOnBits()))
+        self.assertEqual(fp.GetNumOnBits(), obits[i], msg='%s: %s' % (smi, str(fp.GetOnBits())))
       obl = fp.GetOnBits()
       if i < len(obls):
-        assert tuple(obl) == obls[i], '%s: %s' % (smi, obl)
+        self.assertEqual(tuple(obl), obls[i], msg='%s: %s' % (smi, obl))
       i += 1
 
   def test1CatGen(self):
     self._fillCat(self.smiList2)
-    assert self.fragCat.GetNumEntries() == 21
-    assert self.fragCat.GetFPLength() == 21
+    self.assertEqual(self.fragCat.GetNumEntries(), 21)
+    self.assertEqual(self.fragCat.GetFPLength(), 21)
     self._testBits(self.fragCat)
 
   def test2CatStringPickle(self):
@@ -88,14 +86,14 @@ class TestCase(unittest.TestCase):
 
     # test non-binary pickle:
     cat2 = cPickle.loads(cPickle.dumps(self.fragCat))
-    assert cat2.GetNumEntries() == 21
-    assert cat2.GetFPLength() == 21
+    self.assertEqual(cat2.GetNumEntries(), 21)
+    self.assertEqual(cat2.GetFPLength(), 21)
     self._testBits(cat2)
 
     # test binary pickle:
     cat2 = cPickle.loads(cPickle.dumps(self.fragCat, 1))
-    assert cat2.GetNumEntries() == 21
-    assert cat2.GetFPLength() == 21
+    self.assertEqual(cat2.GetNumEntries(), 21)
+    self.assertEqual(cat2.GetFPLength(), 21)
     self._testBits(cat2)
 
   def test3CatFilePickle(self):
@@ -105,14 +103,14 @@ class TestCase(unittest.TestCase):
       pklTFile.close()
     with io.BytesIO(buf) as pklFile:
       cat = cPickle.load(pklFile, encoding='bytes')
-    assert cat.GetNumEntries() == 21
-    assert cat.GetFPLength() == 21
+    self.assertEqual(cat.GetNumEntries(), 21)
+    self.assertEqual(cat.GetFPLength(), 21)
     self._testBits(cat)
 
   def test4CatGuts(self):
     self._fillCat(self.smiList2)
-    assert self.fragCat.GetNumEntries() == 21
-    assert self.fragCat.GetFPLength() == 21
+    self.assertEqual(self.fragCat.GetNumEntries(), 21)
+    self.assertEqual(self.fragCat.GetFPLength(), 21)
     #
     # FIX: (Issue 162)
     # bits like 11 and 15 are questionable here because the underlying
@@ -140,12 +138,15 @@ class TestCase(unittest.TestCase):
     for i in range(len(descrs)):
       ID, d, order, ids = descrs[i]
       descr = self.fragCat.GetBitDescription(ID)
-      assert descr == d, '%d: %s != %s' % (ID, descr, d)
-      assert self.fragCat.GetBitOrder(ID) == order
-      assert tuple(self.fragCat.GetBitFuncGroupIds(ID)) == ids, '%d: %s != %s' % (
-        ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids))
+      self.assertEqual(descr, d, msg='%d: %s != %s' % (ID, descr, d))
+      self.assertEqual(self.fragCat.GetBitOrder(ID), order)
+      self.assertEqual(
+        tuple(self.fragCat.GetBitFuncGroupIds(ID)), ids,
+        msg='%d: %s != %s' % (ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids)))
 
-  def _test5MoreComplex(self):
+  def test5MoreComplex(self):
+    if not doLong:
+      raise unittest.SkipTest('Longer running test skipped')
     lastIdx = 0
     ranges = {}
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList), ',', 0, -1, 0)
@@ -158,86 +159,98 @@ class TestCase(unittest.TestCase):
     for i, mol in enumerate(suppl):
       fp = fpgen.GetFPForMol(mol, self.fragCat)
       for bit in ranges[i]:
-        assert fp[bit], '%s: %s' % (Chem.MolToSmiles(mol), str(bit))
+        self.assertEqual(fp[bit], 1, msg='%s: %s' % (Chem.MolToSmiles(mol), str(bit)))
 
   def test6Builder(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
-    assert cat.GetNumEntries() == 21
-    assert cat.GetFPLength() == 21
+    self.assertEqual(cat.GetNumEntries(), 21)
+    self.assertEqual(cat.GetFPLength(), 21)
     self._testBits(cat)
 
   def test7ScoreMolecules(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
-    assert cat.GetNumEntries() == 21
-    assert cat.GetFPLength() == 21
+    self.assertEqual(cat.GetNumEntries(), 21)
+    self.assertEqual(cat.GetFPLength(), 21)
 
     scores, obls = BuildFragmentCatalog.ScoreMolecules(suppl, cat, acts=self.list2Acts,
                                                        reportFreq=20)
     for i in range(len(self.list2Obls)):
-      assert tuple(obls[i]) == self.list2Obls[i], '%d: %s != %s' % (i, str(obls[i]),
-                                                                    str(self.list2Obls[i]))
+      self.assertEqual(
+        tuple(obls[i]), self.list2Obls[i], msg='%d: %s != %s' % (i, str(obls[i]),
+                                                                 str(self.list2Obls[i])))
 
     scores2 = BuildFragmentCatalog.ScoreFromLists(obls, suppl, cat, acts=self.list2Acts,
                                                   reportFreq=20)
     for i in range(len(scores)):
-      assert (scores[i] == scores2[i]).all(), '%d: %s != %s' % (i, str(scores[i]), str(scores2[i]))
+      self.assertTrue((scores[i] == scores2[i]).all(),
+                      msg='%d: %s != %s' % (i, str(scores[i]), str(scores2[i])))
 
   def test8MolRanks(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
-    assert cat.GetNumEntries() == 21
-    assert cat.GetFPLength() == 21
+    self.assertEqual(cat.GetNumEntries(), 21)
+    self.assertEqual(cat.GetFPLength(), 21)
 
     # new InfoGain ranking:
     bitInfo, _ = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
                                                 reportFreq=20, biasList=(1, ))
     entry = bitInfo[0]
-    assert int(entry[0]) == 0
-    assert cat.GetBitDescription(int(entry[0])) == 'C<-O>C'
-    assert feq(entry[1], 0.4669)
+    self.assertEqual(int(entry[0]), 0)
+    self.assertEqual(cat.GetBitDescription(int(entry[0])), 'C<-O>C')
+    self.assertAlmostEqual(entry[1], 0.4669, delta=1e-4)
 
     entry = bitInfo[1]
-    assert int(entry[0]) in (2, 6)
+    self.assertIn(int(entry[0]), (2, 6))
     txt = cat.GetBitDescription(int(entry[0]))
-    self.assertTrue(txt in ('C<-O>CC', 'C<-O>=C'), txt)
-    assert feq(entry[1], 0.1611)
+    self.assertIn(txt, ('C<-O>CC', 'C<-O>=C'), msg=txt)
+    self.assertAlmostEqual(entry[1], 0.1611, delta=1e-4)
 
     entry = bitInfo[6]
-    assert int(entry[0]) == 16
-    assert cat.GetBitDescription(int(entry[0])) == 'C=CC<-O>'
-    assert feq(entry[1], 0.0560)
+    self.assertEqual(int(entry[0]), 16)
+    self.assertEqual(cat.GetBitDescription(int(entry[0])), 'C=CC<-O>')
+    self.assertAlmostEqual(entry[1], 0.0560, delta=1e-4)
 
     # standard InfoGain ranking:
     bitInfo, _ = BuildFragmentCatalog.CalcGains(suppl, cat, topN=10, acts=self.list2Acts,
                                                 reportFreq=20)
     entry = bitInfo[0]
-    assert int(entry[0]) == 0
-    assert cat.GetBitDescription(int(entry[0])) == 'C<-O>C'
-    assert feq(entry[1], 0.4669)
+    self.assertEqual(int(entry[0]), 0)
+    self.assertEqual(cat.GetBitDescription(int(entry[0])), 'C<-O>C')
+    self.assertAlmostEqual(entry[1], 0.4669, delta=1e-4)
 
     entry = bitInfo[1]
-    assert int(entry[0]) == 5
-    assert cat.GetBitDescription(int(entry[0])) == 'C=CC'
-    assert feq(entry[1], 0.2057)
+    self.assertEqual(int(entry[0]), 5)
+    self.assertEqual(cat.GetBitDescription(int(entry[0])), 'C=CC')
+    self.assertAlmostEqual(entry[1], 0.2057, delta=1e-4)
 
   def test9Issue116(self):
     smiList = ['Cc1ccccc1']
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, 0)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=2, maxPath=2)
-    assert cat.GetFPLength() == 2
-    assert cat.GetBitDescription(0) == 'ccC'
+    self.assertEqual(cat.GetFPLength(), 2)
+    self.assertEqual(cat.GetBitDescription(0), 'ccC')
     fpgen = FragmentCatalog.FragFPGenerator()
     mol = Chem.MolFromSmiles('Cc1ccccc1')
     fp = fpgen.GetFPForMol(mol, cat)
-    assert fp[0]
-    assert fp[1]
+    self.assertEqual(fp[0], 1)
+    self.assertEqual(fp[1], 1)
     mol = Chem.MolFromSmiles('c1ccccc1-c1ccccc1')
     fp = fpgen.GetFPForMol(mol, cat)
-    assert not fp[0]
-    assert fp[1]
+    self.assertEqual(fp[0], 0)
+    self.assertEqual(fp[1], 1)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
+  import argparse
+  import sys
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-l', default=False, action='store_true', dest='doLong')
+  args = parser.parse_args()
+  doLong = args.doLong
+
+  # Remove the -l flag if present so that it isn't interpreted by unittest.main()
+  if 'l' in sys.argv:
+    sys.argv.remove('-l')
   unittest.main()
