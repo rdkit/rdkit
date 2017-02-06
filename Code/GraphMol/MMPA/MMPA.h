@@ -65,7 +65,7 @@ bool fragmentMol(const ROMol& mol,
 /*!
   \param mol           Molecule to fragment
   \param result        Vector of Core and Sidechain results from the various
- cuts
+                        cuts
   \param bondsToCut      Vector of bond indices to use as cut points
   \param minCuts        Minimum number of times to cut the molecule to generate
                         fragments.  
