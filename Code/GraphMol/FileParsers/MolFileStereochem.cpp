@@ -102,7 +102,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
     }
     ++beg;
   }
-  int nNbrs = neighborBondIndices.size();
+  size_t nNbrs = neighborBondIndices.size();
 
   //----------------------------------------------------------
   //
