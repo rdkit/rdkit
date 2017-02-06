@@ -11,23 +11,24 @@
 """unit testing code for database connection objects
 
 """
+import os
+import shutil
+import tempfile
+import unittest
+
 from rdkit import RDConfig
-import unittest, os, sys, tempfile, shutil
 from rdkit.Dbase.DbConnection import DbConnect
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
-    #sys.stderr.write('\n%s: \n'%self.shortDescription())
-    #sys.stderr.flush()
     self.baseDir = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'test_data')
     self.dbName = RDConfig.RDTestDatabase
     self.colHeads = ('int_col', 'floatCol', 'strCol')
     self.colTypes = ('integer', 'float', 'string')
     if RDConfig.useSqlLite:
-      tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
+      _, tempName = tempfile.mkstemp(suffix='sqlt')
       self.tempDbName = tempName
       shutil.copyfile(self.dbName, self.tempDbName)
     else:
@@ -41,6 +42,17 @@ class TestCase(unittest.TestCase):
         import traceback
         traceback.print_exc()
 
+  def test_GetTableNames(self):
+    # We can get the table names of a database with prior instantiation of a cursor
+    conn = DbConnect(self.tempDbName)
+    conn.GetCursor()
+    names_Cursor = sorted(conn.GetTableNames())
+
+    # and without (this tests functionality of DbInfo
+    conn = DbConnect(self.tempDbName)
+    names_noCursor = sorted(conn.GetTableNames())
+    self.assertEqual(names_Cursor, names_noCursor)
+
   def testAddTable(self):
     """ tests AddTable and GetTableNames functionalities """
     newTblName = 'NEW_TABLE'
@@ -50,9 +62,13 @@ class TestCase(unittest.TestCase):
     except Exception:
       pass
     conn.Commit()
+
+    self.assertNotIn(newTblName, [x.strip() for x in conn.GetTableNames()])
     conn.AddTable(newTblName, 'id int')
-    names = [x.strip() for x in conn.GetTableNames()]
-    assert newTblName in names, 'name (%s) not found in %s' % (newTblName, str(names))
+    self.assertIn(newTblName, [x.strip() for x in conn.GetTableNames()])
+
+    self.assertEqual(conn.GetColumnNames(table=newTblName), ['id'])
+
     conn.GetCursor().execute('drop table %s' % (newTblName))
 
   def testCursor(self):
@@ -71,17 +87,17 @@ class TestCase(unittest.TestCase):
     except Exception:
       import traceback
       traceback.print_exc()
-      assert 0
+      raise AssertionError('create view failed')
     conn.Commit()
 
-    names = [x.strip() for x in conn.GetTableNames(includeViews=0)]
-    assert viewName not in names, 'improper view found'
-    names = [x.strip() for x in conn.GetTableNames(includeViews=1)]
-    assert viewName in names, 'improper view found in %s' % (str(names))
+    self.assertNotIn(viewName, [x.strip() for x in conn.GetTableNames(includeViews=0)],
+                     'improper view found')
+    self.assertIn(viewName, [x.strip() for x in conn.GetTableNames(includeViews=1)],
+                  'improper view not found')
     try:
       curs.execute('drop view %s' % (viewName))
     except Exception:
-      assert 0, 'drop table failed'
+      raise AssertionError('drop table failed')
 
   def testGetData1(self):
     """ basic functionality
@@ -92,6 +108,13 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0]) == (0, 11)
     assert tuple(d[2]) == (4, 31)
     self.assertRaises(IndexError, lambda: d[11])
+
+    d = conn.GetColumns(fields='id,val')
+    self.assertEqual(len(d), 10)
+    assert tuple(d[0]) == (0, 11)
+    assert tuple(d[2]) == (4, 31)
+
+    self.assertEqual(conn.GetDataCount(), 10)
 
   def testGetData2(self):
     """ using removeDups
@@ -138,7 +161,10 @@ class TestCase(unittest.TestCase):
   def testGetData5(self):
     """ using a RandomAccessDbResultSet with a Transform
     """
-    fn = lambda x: (x[0], x[1] * 2)
+
+    def fn(x):
+      return (x[0], x[1] * 2)
+
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=1, transform=fn)
 
@@ -150,7 +176,10 @@ class TestCase(unittest.TestCase):
   def testGetData6(self):
     """ using a DbResultSet with a Transform
     """
-    fn = lambda x: (x[0], x[1] * 2)
+
+    def fn(x):
+      return (x[0], x[1] * 2)
+
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=0, transform=fn)
     self.assertRaises(TypeError, lambda: len(d))
@@ -161,7 +190,41 @@ class TestCase(unittest.TestCase):
     assert tuple(rs[0]) == (0, 22)
     assert tuple(rs[2]) == (4, 62)
 
-  def testInsertData(self):
+  def test_InsertData(self):
+    newTblName = 'NEW_TABLE'
+    conn = DbConnect(self.tempDbName)
+    try:
+      conn.GetCursor().execute('drop table %s' % (newTblName))
+    except Exception:
+      pass
+    conn.Commit()
+    conn.AddTable(newTblName, 'id int,val1 int, val2 int')
+    for i in range(10):
+      conn.InsertData(newTblName, (i, i + 1, 2 * i))
+    conn.Commit()
+    d = conn.GetData(table=newTblName)
+    assert len(d) == 10
+
+    self.assertEqual(len(conn.GetColumnNames(table=newTblName)), 3)
+    conn.AddColumn(newTblName, 'val3', 'int')
+    #     conn.Commit()
+    self.assertEqual(len(conn.GetColumnNames(table=newTblName)), 4)
+    d = conn.GetColumns('id,val3', table=newTblName)
+    self.assertEqual(len(d), 10)
+    self.assertTrue(all(r[1] is None for r in d))
+    for r in d:
+      conn.InsertColumnData(newTblName, 'val3', r[0], 'id={0}'.format(r[0]))
+    conn.Commit()
+    d = conn.GetColumns('id,val3', table=newTblName)
+    self.assertTrue(all(r[0] == r[1] for r in d))
+
+    d = None
+    try:
+      conn.GetCursor().execute('drop table %s' % (newTblName))
+    except Exception:
+      assert 0, 'drop table failed'
+
+  def test_InsertColumnData(self):
     """ tests InsertData and InsertColumnData functionalities """
     newTblName = 'NEW_TABLE'
     conn = DbConnect(self.tempDbName)

@@ -6,15 +6,16 @@
 
 """
 from __future__ import print_function
-import numpy
-import math
-import copy, types
-from rdkit import six
-from rdkit.six.moves import xrange
 
-numericTypes = [int, float]
-if six.PY2:
-  numericTypes.append(long)
+import copy
+import math
+
+import numpy
+
+from rdkit.six import integer_types
+
+
+numericTypes = integer_types + (float, )
 
 
 class MLDataSet(object):
@@ -53,7 +54,7 @@ class MLDataSet(object):
 
         - ptNames: the names (labels) of the individual data points
            This is _nPts_ long
-           
+
         - nResults: the number of results columns in the data lists.  This is usually
                     1, but can be higher.
     """
@@ -92,13 +93,12 @@ class MLDataSet(object):
     """
     nVars = self.GetNVars() + self.nResults
     nPossible = [-1] * nVars
-    cols = list(xrange(nVars))
+    cols = list(range(nVars))
     for i, bounds in enumerate(self.qBounds):
       if len(bounds) > 0:
         nPossible[i] = len(bounds)
         cols.remove(i)
 
-    nPts = self.GetNPts()
     for i, pt in enumerate(self.data):
       for col in cols[:]:
         d = pt[col]
@@ -146,10 +146,10 @@ class MLDataSet(object):
 
        a named example is the result of prepending the example
         name to the data list
-        
+
     """
     res = [None] * self.nPts
-    for i in xrange(self.nPts):
+    for i in range(self.nPts):
       res[i] = [self.ptNames[i]] + self.data[i][:]
     return res
 
@@ -239,10 +239,10 @@ class MLQuantDataSet(MLDataSet):
 
        a named example is the result of prepending the example
         name to the data list
-        
+
     """
     res = [None] * self.nPts
-    for i in xrange(self.nPts):
+    for i in range(self.nPts):
       res[i] = [self.ptNames[i]] + self.data[i].tolist()
     return res
 
@@ -302,7 +302,7 @@ class MLQuantDataSet(MLDataSet):
 
         - ptNames: the names (labels) of the individual data points
            This is _nPts_ long
-           
+
         - nResults: the number of results columns in the data lists.  This is usually
                     1, but can be higher.
     """
@@ -329,21 +329,21 @@ class MLQuantDataSet(MLDataSet):
 
 
 if __name__ == '__main__':
-  import DataUtils
+  from . import DataUtils
   examples = [[0, 0, 0, 0, 0], [0, 0, 0, 1, 0], [1, 0, 0, 0, 1], [2, 1, 0, 0, 1], [2, 2, 1, 0, 1]]
   varNames = ['foo1', 'foo2', 'foo3', 'foo4', 'res']
   ptNames = ['p1', 'p2', 'p3', 'p4', 'p5']
-  set = MLQuantDataSet(examples, varNames=varNames, ptNames=ptNames)
-  DataUtils.WritePickledData('test_data/test.qdat.pkl', set)
-  print('nVars:', set.GetNVars())
-  print('nPts:', set.GetNPts())
-  print('nPoss:', set.GetNPossibleVals())
-  print('qBounds:', set.GetQuantBounds())
-  print('data:', set.GetAllData())
-  print('Input data:', set.GetInputData())
-  print('results:', set.GetResults())
+  dataset = MLQuantDataSet(examples, varNames=varNames, ptNames=ptNames)
+  DataUtils.WritePickledData('test_data/test.qdat.pkl', dataset)
+  print('nVars:', dataset.GetNVars())
+  print('nPts:', dataset.GetNPts())
+  print('nPoss:', dataset.GetNPossibleVals())
+  print('qBounds:', dataset.GetQuantBounds())
+  print('data:', dataset.GetAllData())
+  print('Input data:', dataset.GetInputData())
+  print('results:', dataset.GetResults())
 
-  print('nameddata:', set.GetNamedData())
+  print('nameddata:', dataset.GetNamedData())
 
   examples = [
     ['foo', 1, 1.0, 1, 1.1],
@@ -355,14 +355,14 @@ if __name__ == '__main__':
   qBounds = [[], [], [], [], [2, 4]]
   varNames = ['foo1', 'foo2', 'foo3', 'foo4', 'res']
   ptNames = ['p1', 'p2', 'p3', 'p4', 'p5']
-  set = MLDataSet(examples, qBounds=qBounds)
-  DataUtils.WritePickledData('test_data/test.dat.pkl', set)
-  print('nVars:', set.GetNVars())
-  print('nPts:', set.GetNPts())
-  print('nPoss:', set.GetNPossibleVals())
-  print('qBounds:', set.GetQuantBounds())
-  print('data:', set.GetAllData())
-  print('Input data:', set.GetInputData())
-  print('results:', set.GetResults())
+  dataset = MLDataSet(examples, qBounds=qBounds)
+  DataUtils.WritePickledData('test_data/test.dat.pkl', dataset)
+  print('nVars:', dataset.GetNVars())
+  print('nPts:', dataset.GetNPts())
+  print('nPoss:', dataset.GetNPossibleVals())
+  print('qBounds:', dataset.GetQuantBounds())
+  print('data:', dataset.GetAllData())
+  print('Input data:', dataset.GetInputData())
+  print('results:', dataset.GetResults())
 
-  print('nameddata:', set.GetNamedData())
+  print('nameddata:', dataset.GetNamedData())

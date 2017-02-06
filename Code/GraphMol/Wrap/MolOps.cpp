@@ -351,13 +351,8 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
-#ifdef RDK_32BIT_BUILD
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, int sanitizeOps,
+MolOps::SanitizeFlags sanitizeMol(ROMol &mol,  boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
-#else
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, unsigned int sanitizeOps,
-                                  bool catchErrors) {
-#endif
   RWMol &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
   if (catchErrors) {
@@ -1509,6 +1504,23 @@ struct molops_wrapper {
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Find bonds than can be cis/trans in a molecule and mark them as 'any'.\n\
+         This function finds any double bonds that can potentially be part\n\
+         of a cis/trans system. No attempt is made here to mark them cis or trans\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - cleanIt: (optional) if this option is set to true, any previous marking of _CIPCode\n\
+               on the bond is cleared - otherwise it is left untouched\n\
+\n";
+    python::def("FindPotentialStereoBonds", MolOps::findPotentialStereoBonds,
+                (python::arg("mol"), python::arg("cleanIt") = false),
+                docString.c_str());
+
 
     // ------------------------------------------------------------------------
     docString =

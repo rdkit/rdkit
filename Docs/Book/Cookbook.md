@@ -179,7 +179,7 @@ Examples of using it:
           "CC[N-]C(=O)CC")
     for smi in smis:
         (molSmiles, neutralised) = NeutraliseCharges(smi)
-        print smi,"->",molSmiles
+        print(smi + "->" + molSmiles)
 
 This produces:
 
@@ -221,11 +221,11 @@ The code:
     mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
     # Align them
     rms = rdMolAlign.AlignMol(mol1, mol2)
-    print rms
+    print(rms)
     # Align them with OPEN3DAlign
     pyO3A = rdMolAlign.GetO3A(mol1, mol2)
     score = pyO3A.Align()
-    print score
+    print(score)
 
 This produces:
 
@@ -240,11 +240,11 @@ Examples of using it:
     from rdkit.Chem import AllChem
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     cids = AllChem.EmbedMultipleConfs(mol, numConfs=50, maxAttempts=1000, pruneRmsThresh=0.1)
-    print len(cids)
+    print(len(cids))
     # align the conformers
     rmslist = []
     AllChem.AlignMolConformers(mol, RMSlist=rmslist)
-    print len(rmslist)
+    print(len(rmslist))
     # calculate RMS of confomers 1 and 9 separately
     rms = AllChem.GetConformerRMS(mol, 1, 9, prealigned=True)
 
@@ -267,7 +267,7 @@ Examples of using it:
     rms = rdMolAlign.AlignMol(mol1, mol2)
     tani = rdShapeHelpers.ShapeTanimotoDist(mol1, mol2)
     prtr = rdShapeHelpers.ShapeProtrudeDist(mol1, mol2)
-    print rms, tani, prtr
+    print(rms, tani, prtr)
 
 This produces:
 
@@ -291,7 +291,7 @@ Examples of using it:
     fp2 = Generate.Gen2DFingerprint(mol2, factory, dMat=Chem.Get3DDistanceMatrix(mol2))
     # Tanimoto similarity
     tani = DataStructs.TanimotoSimilarity(fp1, fp2)
-    print tani
+    print(tani)
 
 This produces:
 
@@ -323,7 +323,7 @@ Examples of using it:
     tfd1 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2)
     tfd2 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, useWeights=False)
     tfd3 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, maxDev='spec')
-    print tfd1, tfd2, tfd3
+    print(tfd1, tfd2, tfd3)
 
 This produces:
 
@@ -341,7 +341,7 @@ Examples of using it:
     mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
     mol1.AddConformer(mol2.GetConformer(), assignId=True)
     tfd = TorsionFingerprints.GetTFDBetweenConformers(mol1, confIds1=[0], confIds2=[1])
-    print tfd
+    print(tfd)
 
 This produces:
 
@@ -409,8 +409,8 @@ The code:
     fp = numpy.zeros((1,))
     DataStructs.ConvertToNumpyArray(AllChem.GetMorganFingerprintAsBitVect(m5, 2), fp)
 
-    print rf.predict(fp)
-    print rf.predict_proba(fp)
+    print(rf.predict((fp,)))
+    print(rf.predict_proba((fp,)))
 
 The output with scikit-learn version 0.13 is:
 
@@ -425,7 +425,7 @@ The code:
 
     # helper function
     def getProba(fp, predictionFunction):
-      return predictionFunction(fp)[0][1]
+      return predictionFunction((fp,))[0][1]
 
     m5 = Chem.MolFromSmiles('c1ccccc1O')
     fig, maxweight = SimilarityMaps.GetSimilarityMapForModel(m5, SimilarityMaps.GetMorganFingerprint, lambda x: getProba(x, rf.predict_proba))
@@ -463,7 +463,7 @@ The code:
           at.SetIsotope(label(at))
 
     mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
-    print mcs.smartsString
+    print(mcs.smartsString)
 
 This generates the following output:
 
@@ -483,7 +483,7 @@ This works because we know that the atom indices in the copies and the original 
                                         isomericSmiles=True,
                                         canonical=False)
 
-    print getMCSSmiles(ms[0],nms[0],mcs)
+    print(getMCSSmiles(ms[0],nms[0],mcs))
 
     COc1ccc(C(Nc2nc3c(ncn3COC)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1
 
@@ -523,7 +523,7 @@ Example usage:
 
 The variable clusters contains the results:
 
-    >>> print clusters[200]
+    >>> print(clusters[200])
     (6164, 1400, 1403, 1537, 1543, 6575, 6759)
 
 That cluster contains 7 points, the centroid is point 6164.
@@ -594,7 +594,7 @@ The code:
       for i in range(mol_count - 1):
           for j in range(i+1, mol_count):
               # show something is being done ... because for large mol_count this will take some time
-              print "Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count)
+              print("Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count))
               # calculate RMSD and store in an array
               # unlike AlignMol this takes care of symmetry
               spread_values.append(str(AllChem.GetBestRMS(mols[i], mols[j])))
@@ -609,7 +609,7 @@ The code:
           opts, args = getopt.getopt(sys.argv[1:], "vf:o:")
       except getopt.GetoptError, err:
           # print help information and exit:
-          print str(err) # will print something like "option -a not recognized"
+          print(str(err)) # will print something like "option -a not recognized"
           sys.exit(401)
 
       # DEFAULTS
@@ -618,7 +618,7 @@ The code:
 
       for opt, arg in opts:
           if opt == "-v":
-              print "RMSD Spread 1.1"
+              print("RMSD Spread 1.1")
               sys.exit()
           elif opt == "-f":
               molecules_file = arg

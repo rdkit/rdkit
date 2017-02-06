@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 # Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 # All rights are reserved.
@@ -60,12 +58,12 @@ class ModelPackage(object):
 
   def GetSupplementalData(self):
     if not hasattr(self, '_supplementalData'):
-      self._supplementalData = []
+      self.SetSupplementalData([])
     return self._supplementalData
 
   def AddSupplementalData(self, data):
     if not hasattr(self, '_supplementalData'):
-      self._supplementalData = []
+      self.SetSupplementalData([])
     self._supplementalData.append(data)
 
   def Classify(self, obj, label='', threshold=0):

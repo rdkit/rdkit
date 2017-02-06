@@ -19,7 +19,6 @@ You can find the latest version of this file:
 import Tkinter, tkFont
 tk = Tkinter
 import rdkit.sping.pid
-import string
 
 __version__ = "0.3"
 __date__ = "April 8, 1999"
@@ -135,7 +134,7 @@ class FontManager:
     if font.face:
       # check if the user specified a generic face type
       # like serif or monospaced. check is case-insenstive.
-      f = string.lower(font.face)
+      f = font.face.lower()
       if f in self.__alt_faces:
         family = self.__alt_faces[f]
       else:

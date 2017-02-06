@@ -4765,6 +4765,61 @@ void testGithub1049() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileDativeBonds() {
+  BOOST_LOG(rdInfoLog) << "Test MDL molfiles with dative bonds (V3000 only)"
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  // Read molfiles with dative bonds.
+  {
+    std::string fName = rdbase + "dative_bonds_one.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
+
+    std::string smiles = MolToSmiles(*m);
+    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]");
+
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "dative_bonds_two.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumBonds() == 10);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType() == Bond::DATIVE);
+    TEST_ASSERT(m->getBondWithIdx(9)->getBondType() == Bond::DATIVE);
+
+    std::string smiles = MolToSmiles(*m);
+    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1251() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1251: MolFromMolBlock sanitizing when it should not be"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName = rdbase + "github1251.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 39);
+    TEST_ASSERT(m->getNumBonds() == 44);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4848,11 +4903,14 @@ void RunTests() {
   testGithub1023();
   testGithub1034();
   testGithub1049();
-#endif
   testPDBFile();
   testSequences();
 
   // testSequenceReaders();
+
+  testMolFileDativeBonds();
+#endif
+  testGithub1251();
 }
 
 // must be in German Locale for test...

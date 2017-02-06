@@ -19,7 +19,7 @@ namespace SmartsWrite {
 //! returns the SMARTS for a QueryAtom
 std::string GetAtomSmarts(const QueryAtom *qatom);
 //! returns the SMARTS for a QueryBond
-std::string GetBondSmarts(const QueryBond *qbond);
+std::string GetBondSmarts(const QueryBond *qbond, int atomToLeftIdx = -1);
 }
 
 class ROMol;

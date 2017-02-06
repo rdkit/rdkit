@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2014 Rational Discovery LLC
+//  Copyright (C) 2003-2016 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3777,6 +3776,173 @@ void testGithub786() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testDativeBonds() {
+  BOOST_LOG(rdInfoLog) << "testing dative bond support" << std::endl;
+  {
+    std::string smiles = "CCC(=O)O->[Cu]";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    int dative_bond_count = 0;
+    for (size_t i = 0; i < m->getNumBonds(); i++) {
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+        dative_bond_count++;
+    }
+    TEST_ASSERT(dative_bond_count == 1);
+
+    std::string out_smiles = MolToSmiles(*m, true);
+    delete m;
+    TEST_ASSERT(out_smiles == smiles);
+  }
+  {
+    std::string smiles = "CCC(=O)O->[Cu]<-OC(O)CC";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    int dative_bond_count = 0;
+    for (size_t i = 0; i < m->getNumBonds(); i++) {
+      if (m->getBondWithIdx(i)->getBondType() == Bond::DATIVE)
+        dative_bond_count++;
+    }
+    TEST_ASSERT(dative_bond_count == 2);
+
+    std::string out_smiles = MolToSmiles(*m, true);
+    delete m;
+    TEST_ASSERT(out_smiles == smiles);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1219() {
+  BOOST_LOG(rdInfoLog)
+      << "Stereochemistry not output to SMILES when allHsExplicit=True"
+      << std::endl;
+  {
+    std::string smiles = "C[C@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    bool doIsomericSmiles = true;
+    bool doKekule = false;
+    int rootedAtAtom = -1;
+    bool canonical = true, allBondsExplicit = false, allHsExplicit = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles, doKekule, rootedAtAtom,
+                                   canonical, allBondsExplicit, allHsExplicit);
+    TEST_ASSERT(csmi == "[CH3][C@H]([F])[Cl]");
+    delete m;
+  }
+  {  // another manifestation was that chiral flags were not output for atoms
+     // not in the organic subset
+    std::string smiles = "C[Si@H](F)Cl";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    bool doIsomericSmiles = true;
+    std::string csmi = MolToSmiles(*m, doIsomericSmiles);
+    TEST_ASSERT(csmi == "C[Si@H](F)Cl");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testSmilesParseParams() {
+	BOOST_LOG(rdInfoLog)
+		<< "Testing the SmilesParseParams class"
+		<< std::endl;
+	{
+		std::string smiles = "C1=CC=CC=C1[H]";
+		ROMol *m = SmilesToMol(smiles);
+		TEST_ASSERT(m);
+		TEST_ASSERT(m->getNumAtoms() == 6);
+		TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+		delete m;
+
+		{
+			SmilesParserParams params;
+			m = SmilesToMol(smiles,params);
+			TEST_ASSERT(m);
+			TEST_ASSERT(m->getNumAtoms() == 6);
+			TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+			delete m;
+		}
+		{ // no removeHs, with sanitization
+			SmilesParserParams params;
+      params.removeHs = false;
+			m = SmilesToMol(smiles,params);
+			TEST_ASSERT(m);
+			TEST_ASSERT(m->getNumAtoms() == 7);
+			TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+			delete m;
+		}
+    { // removeHs, no sanitization
+      SmilesParserParams params;
+      params.sanitize = false;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 6);
+      TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+      delete m;
+    }
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.removeHs = false;
+      params.sanitize = false;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 7);
+      TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+      delete m;
+    }
+  }
+
+  { // basic name parsing
+    std::string smiles = "CCCC the_name";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(!m);
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      m = SmilesToMol(smiles, params);
+      TEST_ASSERT(!m);
+    }
+    { // no removeHs, no sanitization
+       SmilesParserParams params;
+       params.parseName = true;
+       m = SmilesToMol(smiles, params);
+       TEST_ASSERT(m);
+       TEST_ASSERT(m->getNumAtoms() == 4);
+       TEST_ASSERT(m->hasProp(common_properties::_Name));
+       TEST_ASSERT(m->getProp<std::string>(common_properties::_Name)=="the_name");
+       delete m;
+    }
+  }
+  { // name parsing2
+    std::string smiles = "CCCC\tthe_name";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  { // name parsing3
+    std::string smiles = "CCCC\t  the_name  ";
+    { // no removeHs, no sanitization
+      SmilesParserParams params;
+      params.parseName = true;
+      RWMol *m = SmilesToMol(smiles, params);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 4);
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "the_name");
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3842,4 +4008,7 @@ int main(int argc, char *argv[]) {
   testGithub532();
   testGithub786();
   testGithub760();
+  testDativeBonds();
+  testGithub1219();
+  testSmilesParseParams();
 }

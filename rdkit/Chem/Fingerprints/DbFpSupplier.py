@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
@@ -9,26 +8,20 @@
 #  of the RDKit source tree.
 #
 """ Supplies a class for working with fingerprints from databases
-#DOC 
+#DOC
 
 """
-from rdkit import RDConfig
-from rdkit.VLib.Node import VLibNode
 from rdkit import DataStructs
 from rdkit import six
+from rdkit.VLib.Node import VLibNode
 from rdkit.six.moves import cPickle
-import sys
-
-
-def warning(msg, dest=sys.stderr):
-  dest.write(msg)
 
 
 class DbFpSupplier(VLibNode):
   """
     new fps come back with all additional fields from the
     database set in a "_fieldsFromDb" data member
-  
+
   """
 
   def __init__(self, dbResults, fpColName='AutoFragmentFp', usePickles=True):
@@ -86,7 +79,7 @@ class DbFpSupplier(VLibNode):
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
-  >>> import os.path
+  >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
@@ -110,13 +103,13 @@ class ForwardDbFpSupplier(DbFpSupplier):
     self._dataIter = iter(self._data)
 
   def NextItem(self):
-    """ 
+    """
 
       NOTE: this has side effects
 
     """
     try:
-      d = self._dataIter.next()
+      d = next(self._dataIter)
     except StopIteration:
       d = None
     if d is not None:
@@ -129,6 +122,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
 class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
   >>> import os.path
+  >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
@@ -142,7 +136,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   128
   >>> fp.GetNumOnBits()
   54
-  
+
   a standard loop over the fingerprints:
   >>> fps = []
   >>> for fp in suppl:
@@ -181,16 +175,16 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
     return res
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

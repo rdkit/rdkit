@@ -37,7 +37,7 @@ from rdkit.sping.pid import *
 from rdkit.sping.PDF import pidPDF, pdfmetrics
 from reportlab.lib import colors
 from reportlab.graphics import shapes
-import string, os, types
+import os, types
 
 from math import *
 

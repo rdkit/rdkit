@@ -14,19 +14,20 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+
+import sys
+
+from rdkit.Dbase import DbInfo
+from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
+from rdkit.six import string_types, StringIO
+from rdkit.six.moves import xrange
 
 
 def _take(fromL, what):
+  """ Given a list fromL, returns an iterator of the elements specified using their
+  indices in the list what """
   return map(lambda x, y=fromL: y[x], what)
-
-
-from rdkit.Dbase import DbModule
-import sys
-from rdkit.Dbase import DbInfo
-from rdkit.six.moves import xrange  #@UnresolvedImport #pylint: disable=F0401
-from rdkit.six import string_types
 
 
 def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', join='', cn=None):
@@ -89,6 +90,13 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
       - EFF: this isn't particularly efficient
 
   """
+  if forceList and (transform is not None):
+    raise ValueError('forceList and transform arguments are not compatible')
+  if forceList and (not randomAccess):
+    raise ValueError('when forceList is set, randomAccess must also be used')
+  if removeDups > -1:
+    forceList = True
+
   if not cn:
     cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
@@ -209,33 +217,34 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
     typeHere = [-1, 1]
     for row in xrange(nRows):
       d = data[row][col]
-      if d is not None:
-        locType = type(d)
-        if locType != float and locType != int:
-          locType = str
-          try:
-            d = str(d)
-          except UnicodeError as msg:
-            print('cannot convert text from row %d col %d to a string' % (row + 2, col))
-            print('\t>%s' % (repr(d)))
-            raise UnicodeError(msg)
+      if d is None:
+        continue
+      locType = type(d)
+      if locType != float and locType != int:
+        locType = str
+        try:
+          d = str(d)
+        except UnicodeError as msg:
+          print('cannot convert text from row %d col %d to a string' % (row + 2, col))
+          print('\t>%s' % (repr(d)))
+          raise UnicodeError(msg)
+      else:
+        typeHere[1] = max(typeHere[1], len(str(d)))
+      if isinstance(d, string_types):
+        if nullMarker is None or d != nullMarker:
+          l = max(len(d), typeHere[1])
+          typeHere = [str, l]
+      else:
+        try:
+          fD = float(int(d))
+        except OverflowError:
+          locType = float
         else:
-          typeHere[1] = max(typeHere[1], len(str(d)))
-        if isinstance(d, string_types):
-          if nullMarker is None or d != nullMarker:
-            l = max(len(d), typeHere[1])
-            typeHere = [str, l]
-        else:
-          try:
-            fD = float(int(d))
-          except OverflowError:
-            locType = float
-          else:
-            if fD == d:
-              locType = int
-          if not isinstance(typeHere[0], string_types) and \
-             priorities[locType] > priorities[typeHere[0]]:
-            typeHere[0] = locType
+          if fD == d:
+            locType = int
+        if not isinstance(typeHere[0], string_types) and \
+           priorities[locType] > priorities[typeHere[0]]:
+          typeHere[0] = locType
     res[col] = typeHere
   return res
 
@@ -435,19 +444,16 @@ def DatabaseToDatabase(fromDb, fromTbl, toDb, toTbl, fields='*', join='', where=
    FIX: at the moment this is a hack
 
   """
-  from io import StringIO
   sio = StringIO()
   sio.write(
     DatabaseToText(fromDb, fromTbl, fields=fields, join=join, where=where, user=user,
                    password=password))
-  sio.seek(-1)
+  sio.seek(0)
   TextFileToDatabase(toDb, toTbl, sio, user=user, password=password, keyCol=keyCol,
                      nullMarker=nullMarker)
 
 
-if __name__ == '__main__':
-  from io import StringIO
-
+if __name__ == '__main__':  # pragma: nocover
   sio = StringIO()
   sio.write('foo,bar,baz\n')
   sio.write('1,2,3\n')

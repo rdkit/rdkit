@@ -3,17 +3,17 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys, os.path
-from rdkit import RDConfig
-from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
 from rdkit import six
+from rdkit.VLib.Supply import SupplyNode
 
 
 class SmilesSupplyNode(SupplyNode):
   """ Smiles supplier
 
   Sample Usage:
+    >>> import os
+    >>> from rdkit import RDConfig
     >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
                              'test_data','pgp_20.txt')
     >>> suppl = SmilesSupplyNode(fileN,delim="\\t",smilesColumn=2,nameColumn=1,titleLine=1)
@@ -34,7 +34,7 @@ class SmilesSupplyNode(SupplyNode):
     >>> suppl.next().GetProp("_Name")
     'AMIODARONE'
     >>> suppl.reset()
-  
+
   """
 
   def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=0, **kwargs):
@@ -62,16 +62,16 @@ if six.PY3:
   SmilesSupplyNode.__next__ = SmilesSupplyNode.next
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
+  import doctest
   import sys
-  failed, tried = _test()
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

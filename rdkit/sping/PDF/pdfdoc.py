@@ -16,7 +16,6 @@ piddlePDF calls pdfgen and offers a high-level interface.
 from __future__ import print_function
 import os
 import sys
-import string
 import time
 import tempfile
 from types import *
@@ -184,7 +183,7 @@ class PDFDocument:
     #way so the system knows it is a PDF file.
     #This supplied by Joe Strout
     if os.name == 'mac':
-      import macfs  #@UnresolvedImport
+      import macfs
       try:
         macfs.FSSpec(filename).SetCreatorType('CARO', 'PDF ')
       except Exception:
@@ -264,7 +263,7 @@ class OutputGrabber:
       self.data.append(x)
 
   def getData(self):
-    return string.join(self.data)
+    return ' '.join(self.data)
 
   def close(self):
     sys.stdout = self.oldoutput
@@ -321,9 +320,9 @@ class PDFCatalog(PDFObject):
   "requires RefPages and RefOutlines set"
 
   def __init__(self):
-    self.template = string.join([
+    self.template = LINEEND.join([
       '<<', '/Type /Catalog', '/Pages %d 0 R', '/Outlines %d 0 R', '>>'
-    ], LINEEND)
+    ])
 
   def save(self, file):
     file.write(self.template % (self.RefPages, self.RefOutlines) + LINEEND)
@@ -344,10 +343,10 @@ class PDFInfo(PDFObject):
 
   def save(self, file):
     file.write(
-      string.join([
+      LINEEND.join([
         "<</Title (%s)", "/Author (%s)", "/CreationDate (D:%s)", "/Producer (PDFgen)",
         "/Subject (%s)", ">>"
-      ], LINEEND) % (pdfutils._escape(self.title), pdfutils._escape(self.author), self.datestr,
+      ]) % (pdfutils._escape(self.title), pdfutils._escape(self.author), self.datestr,
                      pdfutils._escape(self.subject)) + LINEEND)
 
 
@@ -355,7 +354,7 @@ class PDFOutline(PDFObject):
   "null outline, does nothing yet"
 
   def __init__(self):
-    self.template = string.join(['<<', '/Type /Outlines', '/Count 0', '>>'], LINEEND)
+    self.template = LINEEND.join(['<<', '/Type /Outlines', '/Count 0', '>>'])
 
   def save(self, file):
     file.write(self.template + LINEEND)
@@ -373,7 +372,7 @@ class PDFPageCollection(PDFObject):
       lines.append(str(page) + ' 0 R ')
     lines.append(']')
     lines.append('>>')
-    text = string.join(lines, LINEEND)
+    text = LINEEND.join(lines)
     file.write(text + LINEEND)
 
 
@@ -391,7 +390,7 @@ class PDFPage(PDFObject):
     self.pageTransitionString = ''  # presentation effects
     # editors on different systems may put different things in the line end
     # without me noticing.  No triple-quoted strings allowed!
-    self.template = string.join([
+    self.template = LINEEND.join([
       '<<',
       '/Type /Page',
       '/Parent %(parentpos)d 0 R',
@@ -404,8 +403,7 @@ class PDFPage(PDFObject):
       '/Contents %(contentspos)d 0 R',
       '%(transitionString)s',
       '>>'
-    ],
-                                LINEEND)
+    ])
 
   def setCompression(self, onoff=0):
     "Turns page compression on or off"
@@ -428,8 +426,8 @@ class PDFPage(PDFObject):
     self.drawables = []
 
   def setStream(self, data):
-    if type(data) is ListType:
-      data = string.join(data, LINEEND)
+    if isinstance(data, (list, tuple)):
+      data = LINEEND.join(data, LINEEND)
     self.stream.setStream(data)
 
 
@@ -477,13 +475,13 @@ class PDFImage(PDFObject):
   # sample one while developing.  Currently, images go in a literals
   def save(self, file):
     file.write(
-      string.join([
+      LINEEND.join([
         '<<', '/Type /XObject', '/Subtype /Image', '/Name /Im0', '/Width 24', '/Height 23',
         '/BitsPerComponent 1', '/ColorSpace /DeviceGray', '/Filter /ASCIIHexDecode', '/Length 174',
         '>>', 'stream', '003B00 002700 002480 0E4940 114920 14B220 3CB650',
         '75FE88 17FF8C 175F14 1C07E2 3803C4 703182 F8EDFC',
         'B2BBC2 BB6F84 31BFC2 18EA3C 0E3E00 07FC00 03F800', '1E1800 1FF800>', 'endstream', 'endobj'
-      ], LINEEND) + LINEEND)
+      ]) + LINEEND)
 
 
 class PDFType1Font(PDFObject):
@@ -491,10 +489,10 @@ class PDFType1Font(PDFObject):
   def __init__(self, key, font):
     self.fontname = font
     self.keyname = key
-    self.template = string.join([
+    self.template = LINEEND.join([
       '<<', '/Type /Font', '/Subtype /Type1', '/Name /%s', '/BaseFont /%s',
       '/Encoding /MacRomanEncoding', '>>'
-    ], LINEEND)
+    ])
 
   def save(self, file):
     file.write(self.template % (self.keyname, self.fontname) + LINEEND)

@@ -1,5 +1,5 @@
 # $Id$
-# 
+#
 #  Copyright (C)2003-2006  Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -98,25 +98,25 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
       pos[0] -= (nHere // 2 - .5) * spacePerNode
 
       # Find the locations and draw connectors:
-      for id in ids:
-        if not bitIds or id in bitIds:
+      for ID in ids:
+        if not bitIds or ID in bitIds:
           # first do lines down to the next level:
           if levelLen != maxLevel:
-            for neighbor in adjList[id]:
+            for neighbor in adjList[ID]:
               if neighbor in drawLocs:
                 p2 = drawLocs[neighbor][0]
                 canvas.drawLine(pos[0], pos[1], p2[0], p2[1], visOpts.lineColor, visOpts.lineWidth)
-          drawLocs[id] = tuple(pos), nodeRad
+          drawLocs[ID] = tuple(pos), nodeRad
           pos[0] += spacePerNode
 
-  for id in drawLocs.keys():
-    pos, nodeRad = drawLocs[id]
+  for ID in drawLocs.keys():
+    pos, nodeRad = drawLocs[ID]
     x1, y1 = pos[0] - nodeRad, pos[1] - nodeRad
     x2, y2 = pos[0] + nodeRad, pos[1] + nodeRad
-    drawColor = entryColors.get(id, visOpts.circColor)
+    drawColor = entryColors.get(ID, visOpts.circColor)
     canvas.drawEllipse(x1, y1, x2, y2, visOpts.outlineColor, 0, drawColor)
-    label = str(id)
-    #txtLoc = ( pos[0]-canvas.stringWidth(label)/2,
+    label = str(ID)
+    # txtLoc = ( pos[0]-canvas.stringWidth(label)/2,
     #           pos[1]+canvas.fontHeight()/4 )
     txtLoc = (pos[0] + canvas.fontHeight() / 4, pos[1] + canvas.stringWidth(label) / 2)
     canvas.drawString(label, txtLoc[0], txtLoc[1], angle=90)

@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -42,6 +42,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Descriptors/Crippen.h>
@@ -66,7 +67,7 @@
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
 
-// These prevent duplicate definitions in Java code 
+// These prevent duplicate definitions in Java code
 %ignore RDKit::ROMol::getAtomDegree(const Atom *) const;
 %ignore RDKit::ROMol::setAtomBookmark(Atom *,int);
 %ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
@@ -90,7 +91,7 @@
 
 /*
  * Special handling for Conformer objects which should not be GCed until the molecule is destroyed
- * We want to modify the behavior of the Conformer coming into the addConformer method without 
+ * We want to modify the behavior of the Conformer coming into the addConformer method without
  * impacting Conformer objects that are arguments to other methods. Therefore we define a pattern
  * that will trigger special handling of the Conformer input (the addConf method  match this pattern).
  * Then add the necessary Java code to modify the Conformer object to no longer be the owner of the
@@ -155,6 +156,15 @@
   void MolToPDBFile(std::string fName,int confId=-1,unsigned int flavor=0) {
     RDKit::MolToPDBFile(*($self), fName, confId, flavor);
   }
+  std::string MolToSequence() {
+    return RDKit::MolToSequence(*($self));
+  }
+  std::string MolToFASTA() {
+    return RDKit::MolToFASTA(*($self));
+  }
+  std::string MolToHELM() {
+    return RDKit::MolToHELM(*($self));
+  }
 
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
@@ -212,7 +222,7 @@
   /* Methods from ConjugHybrid.cpp */
   void setConjugation() {
     RDKit::MolOps::setConjugation(*($self));
-  } 
+  }
 
   void setHybridization() {
     RDKit::MolOps::setHybridization(*($self));
@@ -228,9 +238,9 @@
                                bool permuteDeg4Nodes=false) {
     return RDDepict::compute2DCoords(*($self),
                                coordMap,
-                               canonOrient, 
-                               clearConfs, 
-                               nFlipsPerSample, 
+                               canonOrient,
+                               clearConfs,
+                               nFlipsPerSample,
                                nSamples,
                                sampleSeed,
                                permuteDeg4Nodes);
@@ -254,7 +264,7 @@
     }
   }
 
-  
+
   unsigned int compute2DCoordsMimicDistMat(const RDDepict::DOUBLE_SMART_PTR *dmat=0,
                                            bool canonOrient=true,
                                            bool clearConfs=true,
@@ -363,21 +373,21 @@
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
-  double alignMol(const RDKit::ROMol &refMol, 
+  double alignMol(const RDKit::ROMol &refMol,
                   int prbCid=-1, int refCid=-1,
-                  const std::vector<std::pair<int,int> > *atomMap=0, 
-                  const RDNumeric::DoubleVector *weights=0, 
+                  const std::vector<std::pair<int,int> > *atomMap=0,
+                  const RDNumeric::DoubleVector *weights=0,
                   bool reflect=false, unsigned int maxIters=50) {
     return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
-  
+
   void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
                           const std::vector<unsigned int> *confIds=0,
-                          const RDNumeric::DoubleVector  *weights=0, 
+                          const RDNumeric::DoubleVector  *weights=0,
                           bool reflect=false, unsigned int maxIters=50) {
     RDKit::MolAlign::alignMolConformers(*($self), atomIds, confIds, weights, reflect, maxIters);
   }
-  
+
   /* From GraphMol/MolAlign/AlignMolecules */
   double getAlignmentTransform(const RDKit::ROMol &refMol,
                              RDGeom::Transform3D &trans, int prbCid = -1,
@@ -388,13 +398,13 @@
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
-  std::pair<double,double> O3AAlignMol(RDKit::ROMol &refMol, 
+  std::pair<double,double> O3AAlignMol(RDKit::ROMol &refMol,
                                        int prbCid=-1, int refCid=-1,
                                        bool reflect=false, unsigned int maxIters=50,
                                        unsigned int accuracy=0) {
     RDKit::MMFF::MMFFMolProperties prbMP(*($self));
     RDKit::MMFF::MMFFMolProperties refMP(refMol);
-    
+
     RDKit::MolAlign::O3A o3a(*($self), refMol, &prbMP, &refMP, RDKit::MolAlign::O3A::MMFF94,
                              prbCid, refCid,
                              reflect,maxIters,accuracy);

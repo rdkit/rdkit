@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -16,29 +15,23 @@ Sample Usage:
 
   python MolSimilarity.py  -d data.gdb -t daylight_sig --idName="Mol_ID" \
       --topN=100 --smiles='c1(C=O)ccc(Oc2ccccc2)cc1' --smilesTable=raw_dop_data \
-      --smilesName="structure" -o results.csv 
+      --smilesName="structure" -o results.csv
 
 """
-from rdkit import RDConfig
-from rdkit import DataStructs
+import types
+
 from rdkit import Chem
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
-from rdkit.DataStructs.TopNContainer import TopNContainer
-import sys, types
-from rdkit.six.moves import cPickle
+from rdkit import DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols, DbFpSupplier
+from rdkit.DataStructs.TopNContainer import TopNContainer
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.six.moves import cPickle
+
 try:
   from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
 except ImportError:
   _dataSeq = None
-
-from rdkit import DataStructs
-
-_cvsVersion = "$Id$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
 
 
 def _ConstructSQL(details, extraFields=''):
@@ -54,7 +47,7 @@ def _ConstructSQL(details, extraFields=''):
       fields = fields + ',%s' % (details.actName)
     join = join + 'join %s act on act.%s=%s.%s' % (details.actTableName, details.idName,
                                                    details.tableName, details.idName)
-  #data = conn.GetData(fields=fields,join=join)
+  # data = conn.GetData(fields=fields,join=join)
   if extraFields:
     fields += ',' + extraFields
   cmd = 'select %s from %s %s' % (fields, details.tableName, join)
@@ -133,8 +126,8 @@ def GetFingerprints(details):
       traceback.print_exc()
     cmd = _ConstructSQL(details, extraFields=details.fpColName)
     curs = conn.GetCursor()
-    #curs.execute(cmd)
-    #print 'CURSOR:',curs,curs.closed
+    # curs.execute(cmd)
+    # print 'CURSOR:',curs,curs.closed
     if _dataSeq:
       suppl = _dataSeq(curs, cmd, depickle=not details.noPickle, klass=DataStructs.ExplicitBitVect)
       _dataSeq._conn = conn
@@ -153,11 +146,11 @@ def GetFingerprints(details):
     done = 0
     while not done:
       try:
-        id, fp = cPickle.load(inF)
+        ID, fp = cPickle.load(inF)
       except Exception:
         done = 1
       else:
-        fp._fieldsFromDb = [id]
+        fp._fieldsFromDb = [ID]
         suppl.append(fp)
   else:
     suppl = None
@@ -191,24 +184,24 @@ def ScreenFingerprints(details, data, mol=None, probeFp=None):
     fp1 = probeFp
     if not details.noPickle:
       if type(pt) in (types.TupleType, types.ListType):
-        id, fp = pt
+        ID, fp = pt
       else:
         fp = pt
-        id = pt._fieldsFromDb[0]
+        ID = pt._fieldsFromDb[0]
       score = DataStructs.FingerprintSimilarity(fp1, fp, details.metric)
     else:
-      id, pkl = pt
+      ID, pkl = pt
       score = details.metric(fp1, str(pkl))
     if topN:
-      topN.Insert(score, id)
+      topN.Insert(score, ID)
     elif not details.doThreshold or \
-             (details.doThreshold and score>=details.screenThresh):
-      res.append((id, score))
+             (details.doThreshold and score >= details.screenThresh):
+      res.append((ID, score))
     count += 1
     if hasattr(details, 'stopAfter') and count >= details.stopAfter:
       break
-  for score, id in topN:
-    res.append((id, score))
+  for score, ID in topN:
+    res.append((ID, score))
 
   return res
 
@@ -259,7 +252,7 @@ Usage: MolSimilarity.py [args] <fName>
 
   If <fName> is provided and no tableName is specified (see below),
   data will be read from the pickled file <fName>.  This file should
-  contain a series of pickled (id,fingerprint) tuples.
+  contain a series of pickled (ID,fingerprint) tuples.
 
   NOTE: at the moment the user is responsible for ensuring that the
   fingerprint parameters given at run time (used to fingerprint the
@@ -268,18 +261,18 @@ Usage: MolSimilarity.py [args] <fName>
   Command line arguments are:
     - --smiles=val: sets the SMILES for the input molecule.  This is
       a required argument.
-      
+
     - -d _dbName_: set the name of the database from which
       to pull input fingerprint information.
 
-    - -t _tableName_: set the name of the database table 
+    - -t _tableName_: set the name of the database table
       from which to pull input fingerprint information
 
     - --smilesTable=val: sets the name of the database table
       which contains SMILES for the input fingerprints.  If this
       information is provided along with smilesName (see below),
       the output file will contain SMILES data
-      
+
     - --smilesName=val: sets the name of the SMILES column
       in the input database.  Default is *SMILES*.
 
@@ -290,10 +283,10 @@ Usage: MolSimilarity.py [args] <fName>
 
     - --idName=val: sets the name of the id column in the input
       database.  Default is *ID*.
-      
+
     - -o _outFileName_:  name of the output file (output will
       be a CSV file with one line for each of the output molecules
-      
+
     - --dice: use the DICE similarity metric instead of Tanimoto
 
     - --cosine: use the cosine similarity metric instead of Tanimoto
@@ -301,13 +294,13 @@ Usage: MolSimilarity.py [args] <fName>
     - --fpColName=val: name to use for the column which stores
       fingerprints (in pickled format) in the output db table.
       Default is *AutoFragmentFP*
-      
+
     - --minPath=val:  minimum path length to be included in
       fragment-based fingerprints. Default is *1*.
 
     - --maxPath=val:  maximum path length to be included in
       fragment-based fingerprints. Default is *7*.
-      
+
     - --nBitsPerHash: number of bits to be set in the output
       fingerprint for each fragment. Default is *4*.
 
@@ -316,8 +309,8 @@ Usage: MolSimilarity.py [args] <fName>
 
     - -V: include valence information in the fingerprints
       Default is *false*.
-      
-    - -H: include Hs in the fingerprint 
+
+    - -H: include Hs in the fingerprint
       Default is *false*.
 
     - --useMACCS: use the public MACCS keys to do the fingerprinting
@@ -326,7 +319,7 @@ Usage: MolSimilarity.py [args] <fName>
 
 """
 if __name__ == '__main__':
-  FingerprintMols.message("This is MolSimilarity version %s\n\n" % (__VERSION_STRING))
+  FingerprintMols.message("This is MolSimilarity\n\n")
   FingerprintMols._usageDoc = _usageDoc
   details = FingerprintMols.ParseArgs()
   ScreenFromDetails(details)

@@ -30,7 +30,7 @@ if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:
   WHERE c.relkind IN ('r','v','S','')
   AND n.nspname NOT IN ('pg_catalog', 'pg_toast')
   AND pg_catalog.pg_table_is_visible(c.oid)
-                              
+
   """
   getDbSql = """ select datname from pg_database where datallowconn """
   fileWildcard = None
@@ -41,10 +41,8 @@ if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:
 elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   try:
     import sqlite3 as sqlite
-    #from sqlite3 import *
   except ImportError:
     from pysqlite2 import dbapi2 as sqlite
-    #from pysqlite2 import *
   sqlTextTypes = []
   sqlIntTypes = []
   sqlFloatTypes = []
@@ -53,10 +51,12 @@ elif hasattr(RDConfig, "useSqlLite") and RDConfig.useSqlLite:
   getTablesAndViewsSql = """select name from SQLite_Master where type in ('table','view')"""
   getDbSql = None
   dbFileWildcard = '*.sqlt'
+  fileWildcard = dbFileWildcard
   placeHolder = '?'
   binaryTypeName = "blob"
   binaryHolder = memoryview if six.PY3 else buffer
 
-  connect = lambda x, *args: sqlite.connect(x)
+  def connect(x, *args):
+    return sqlite.connect(x)
 else:
   raise ImportError("Neither sqlite nor PgSQL support found.")

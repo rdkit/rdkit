@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2004-2006 Rational Discovery LLC
 #
@@ -8,6 +7,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+
+
 class ExcludedVolume(object):
 
   def __init__(self, featInfo, index=-1, exclusionDist=3.0):
@@ -17,8 +18,8 @@ class ExcludedVolume(object):
     """
     self.index = index
     try:
-      l = len(featInfo)
-    except AttributeError:
+      _ = len(featInfo)
+    except TypeError:
       raise ValueError('featInfo argument must be a sequence of sequences')
 
     if not len(featInfo):
@@ -26,9 +27,7 @@ class ExcludedVolume(object):
 
     try:
       a, b, c = featInfo[0]
-    except Type:
-      raise ValueError('featInfo elements must be 3-sequences')
-    except ValueError:
+    except (TypeError, ValueError):
       raise ValueError('featInfo elements must be 3-sequences')
 
     self.featInfo = featInfo[:]

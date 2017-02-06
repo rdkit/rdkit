@@ -11,38 +11,30 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import numpy as np
-from numpy import linalg
 
 
 def GetMoments(mol, includeWeights):
   conf = mol.GetConformer()
   if includeWeights:
-    weights = [x.GetMass() for x in mol.GetAtoms()]
+    masses = np.array([x.GetMass() for x in mol.GetAtoms()])
   else:
-    weights = [1.0] * mol.GetNumAtoms()
+    masses = [1.0] * mol.GetNumAtoms()
 
-  pts = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
-  wSum = sum(weights)
-  origin = np.sum([pts[i] * weights[i] for i in range(mol.GetNumAtoms())], 0)
-  origin /= wSum
-  sumXX = 0
-  sumXY = 0
-  sumXZ = 0
-  sumYY = 0
-  sumYZ = 0
-  sumZZ = 0
-  sums = np.zeros((3, 3), np.double)
-  for j, pt in enumerate(pts):
-    dp = weights[j] * (pt - origin)
-    for i in range(3):
-      sums[i, i] += dp[i] * dp[i]
-      for j in range(i + 1, 3):
-        sums[i, j] += dp[i] * dp[j]
-        sums[j, i] += dp[i] * dp[j]
-  sums /= wSum
-  vals, vects = linalg.eigh(sums)
-  vals = sorted(vals)
-  return vals
+  ps = conf.GetPositions()
+  mps = [x*y for x,y in zip(ps,masses)]
+  centroid = np.sum(mps,axis=0)/sum(masses)
+  cps = ps - centroid
+  xx = xy = xz = yy = yz = zz = 0.0
+  for m,p in zip(masses,cps):
+    xx += m*(p[1]*p[1] + p[2]*p[2])
+    yy += m*(p[0]*p[0] + p[2]*p[2])
+    zz += m*(p[1]*p[1] + p[0]*p[0])
+    xy -= m*p[0]*p[1]
+    xz -= m*p[0]*p[2]
+    yz -= m*p[1]*p[2]
+  covm = np.array([[xx,xy,xz],[xy,yy,yz],[xz,yz,zz]])
+  res = np.linalg.eigvals(covm)
+  return sorted(res)
 
 
 if __name__ == '__main__':
