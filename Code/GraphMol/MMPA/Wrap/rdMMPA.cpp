@@ -97,11 +97,10 @@ python::tuple fragmentMolHelper3(const RDKit::ROMol& mol,
                                  python::list ob,
                                  unsigned int minCuts,
                                  unsigned int maxCuts,
-                                 unsigned int maxCutBonds,
                                  bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
   std::vector<unsigned int> v= ConvertToVect(ob);
-  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts, maxCutBonds);
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts);
   python::list pyres;
   if (ok) {
     for (std::vector<std::pair<RDKit::ROMOL_SPTR,
@@ -130,12 +129,11 @@ python::tuple fragmentMolHelper4(const RDKit::ROMol& mol,
                                  python::tuple ob,
                                  unsigned int minCuts,
                                  unsigned int maxCuts,
-                                 unsigned int maxCutBonds,
                                  bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
   std::vector<unsigned int> v= ConvertToVect(ob);
 
-  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts, maxCutBonds);
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, v, minCuts, maxCuts);
   python::list pyres;
   if (ok) {
     for (std::vector<std::pair<RDKit::ROMOL_SPTR,
@@ -189,7 +187,6 @@ BOOST_PYTHON_MODULE(rdMMPA) {
                python::arg("bondsToCut"),
                python::arg("minCuts")=1,
                python::arg("maxCuts")=3,
-               python::arg("maxCutBonds")=20,
                python::arg("resultsAsMols") = true),
               docString.c_str());
 
@@ -198,7 +195,6 @@ BOOST_PYTHON_MODULE(rdMMPA) {
                python::arg("bondsToCut"),
                python::arg("minCuts")=1,
                python::arg("maxCuts")=3,
-               python::arg("maxCutBonds")=20,
                python::arg("resultsAsMols") = true),
               docString.c_str());
   

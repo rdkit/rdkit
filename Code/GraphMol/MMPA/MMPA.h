@@ -81,8 +81,7 @@ bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& result,
                  const std::vector<unsigned int>& bondsToCut,
                  unsigned int minCuts = 1,
-                 unsigned int maxCuts = 3,
-                 unsigned int maxCutBonds = 20);
+                 unsigned int maxCuts = 3);
 
 }
 }  // namespace RDKit

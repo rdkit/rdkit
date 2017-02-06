@@ -416,8 +416,7 @@ bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res,
                  const std::vector<unsigned int>& bondsToCut,
                  unsigned int minCuts,
-                 unsigned int maxCuts,
-                 unsigned int maxCutBonds) {
+                 unsigned int maxCuts) {
   std::vector<BondVector_t> matching_bonds;  // List of matched query's bonds
 
   BOOST_FOREACH(unsigned int i, bondsToCut) {
