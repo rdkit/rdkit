@@ -71,10 +71,6 @@ bool fragmentMol(const ROMol& mol,
                         fragments.  
   \param maxCuts        Maximum number of times to cut the molecule to generate
                         fragments.
-  \param maxCutBonds  Set the bond limit for determining which molecules
-                        to analyze.  If a molecule has more than
-                        this number of cutabble bonds, ignore.
-
  \return true if the molecule was fragmented, false otherwise.
 */
 bool fragmentMol(const ROMol& mol,
