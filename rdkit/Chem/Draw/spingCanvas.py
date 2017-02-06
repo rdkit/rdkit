@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2008 Greg Landrum
 #
@@ -8,12 +7,10 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.sping import pid
+import re
 
-import math, re
-
-from rdkit.sping.PIL.pidPIL import PILCanvas
 from rdkit.Chem.Draw.canvasbase import CanvasBase
+from rdkit.sping import pid
 
 faceMap = {'sans': 'helvetica', 'serif': 'times'}
 
