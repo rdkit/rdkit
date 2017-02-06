@@ -217,13 +217,14 @@ def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):
 
   #-----------------------------------------------------------------------------
 def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, maxDistC=15.0,
-                         distTol=1.5, symFactor=1.5):
+                         distTol=1.5, symFactor=1.5, verbose=False):
   nTermPts = len(termPts)
   skelPts = []
   shapeVect = shapeGrid.GetOccupancyVect()
   nGridPts = len(shapeVect)
   # find all possible skeleton points
-  print('generate all possible')
+  if verbose:
+    print('generate all possible')
   for i in range(nGridPts):
     if shapeVect[i] < maxGridVal:
       continue
@@ -237,7 +238,8 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
     if ok:
       skelPts.append(SubshapeObjects.SkeletonPoint(location=posI))
   # now start removing them
-  print('Compute centroids:', len(skelPts))
+  if verbose:
+    print('Compute centroids:', len(skelPts))
   gridBoxVolume = shapeGrid.GetSpacing()**3
   maxVol = 4.0 * math.pi / 3.0 * winRad**3 * maxGridVal / gridBoxVolume
   i = 0
@@ -255,7 +257,8 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
       pt.location.z = centroid.z
       i += 1
 
-  print('remove points:', len(skelPts))
+  if verbose:
+    print('remove points:', len(skelPts))
   res = termPts + skelPts
   i = 0
   while i < len(res):

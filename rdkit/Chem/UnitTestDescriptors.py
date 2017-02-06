@@ -12,7 +12,7 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+from rdkit import RDConfig, RDLogger
 import unittest, os.path
 import io
 from rdkit.six.moves import cPickle
@@ -30,6 +30,9 @@ def feq(n1, n2, tol=1e-4):
 
 class TestCase(unittest.TestCase):
 
+  def tearDown(self):
+    RDLogger.EnableLog('rdApp.error')
+
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
     for smi in smis:
@@ -37,6 +40,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
+          RDLogger.DisableLog('rdApp.error')
           v = fn(m)
         except RuntimeError:
           # 3D descriptors fail since the mol has no conformers
@@ -45,6 +49,9 @@ class TestCase(unittest.TestCase):
           import traceback
           traceback.print_exc()
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
+        finally:
+          RDLogger.EnableLog('rdApp.error')
+
 
   def testMolFormula(self):
     for (smiles, expected) in (("[NH4+]", "H4N+"),
