@@ -1,5 +1,6 @@
+from __future__ import print_function
 from rdkit import RDConfig
-import unittest
+import sys, unittest
 from rdkit import Chem
 from rdkit.Chem import rdMMPA
 
@@ -129,7 +130,23 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(set(frags1+frags2), set(frags))
 
-      
+
+  def test8(self):
+    m = Chem.MolFromSmiles('Cc1ccccc1NC(=O)C(C)[NH+]1CCCC1')  # ZINC00000051
+    sm = Chem.MolFromSmarts("[#6+0;!$(*=,#[!#6])]!@!=!#[*]")
+    matching_atoms = m.GetSubstructMatches(sm)
+    bonds = []
+    for a,b in matching_atoms:
+      bond = m.GetBondBetweenAtoms(a,b)
+      bonds.append(bond.GetIdx())
+
+    frags = rdMMPA.FragmentMol(m, resultsAsMols=False)
+    frags2 =  rdMMPA.FragmentMol(m, bonds, resultsAsMols=False)
+    frags3 =  rdMMPA.FragmentMol(m, tuple(bonds), resultsAsMols=False)
+    self.assertEqual(frags, frags2)
+    self.assertEqual(frags2, frags3)
+
+    
 
 
 if __name__ == "__main__":
