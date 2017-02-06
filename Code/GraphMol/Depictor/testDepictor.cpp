@@ -899,12 +899,15 @@ void testGitHubIssue1286() {
     RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
     TEST_ASSERT(mol->getNumConformers() == 1);
 
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
     const Conformer &tconf = templ->getConformer();
     const Conformer &mconf = mol->getConformer();
     for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
       const RDGeom::Point3D &tp = tconf.getAtomPos(i);
       const RDGeom::Point3D &mp = mconf.getAtomPos(i);
-      std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
       TEST_ASSERT(feq(tp.x, mp.x));
       TEST_ASSERT(feq(tp.y, mp.y));
     }
@@ -1003,13 +1006,6 @@ int main() {
 
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
-  testIssue2303566();
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
-
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test Issue 2821647\n";
   testIssue2821647();
   BOOST_LOG(rdInfoLog)
@@ -1063,7 +1059,7 @@ int main() {
   testGitHubIssue8();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
+
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 78\n";
@@ -1099,6 +1095,14 @@ int main() {
   testGitHubIssue1112();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
+  testIssue2303566();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+#endif
 
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";

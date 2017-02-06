@@ -311,7 +311,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // perform random sampling here to improve the density
   for (eri = efrags.begin(); eri != efrags.end(); eri++) {
     // either sample the 2D space by randomly flipping rotatable
-    // bonds in the structure or flip onyl bonds along the shortest
+    // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
       eri->randomSampleFlipsAndPermutations(
