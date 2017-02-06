@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -31,17 +30,17 @@
 #
 # Created by Sereina Riniker, Aug 2013
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit import DataStructs
-from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Chem import rdmolops
-from rdkit.Chem import Draw
-from rdkit.six import iteritems
-import numpy
-import math
 import copy
+import math
+
 from matplotlib import cm
+import numpy
+
+from rdkit import Chem
+from rdkit import DataStructs
+from rdkit.Chem import Draw
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.six import iteritems
 
 
 def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity):
@@ -119,18 +118,9 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol,
-                                weights,
-                                colorMap=cm.PiYG,
-                                scale=-1,
-                                size=(250, 250),
-                                sigma=None,
-                                coordScale=1.5,
-                                step=0.01,
-                                colors='k',
-                                contourLines=10,
-                                alpha=0.5,
-                                **kwargs):
+def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250),
+                                sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
+                                alpha=0.5, **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.
 
@@ -214,13 +204,25 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs)
   return fig, maxWeight
 
 
-apDict = {}
-apDict[
-  'normal'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
-apDict[
-  'hashed'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
-apDict[
-  'bv'] = lambda m, bits, minl, maxl, bpe, ia, **kwargs: rdMD.GetHashedAtomPairFingerprintAsBitVect(m, nBits=bits, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+def initApFingerprints():
+
+  def _normalFingerprint(m, bits, minl, maxl, bpe, ia, **kwargs):
+    return rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, ignoreAtoms=ia, **kwargs)
+
+  def _hashedFingerprint(m, bits, minl, maxl, bpe, ia, **kwargs):
+    return rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl,
+                                             ignoreAtoms=ia, **kwargs)
+
+  def _bvFingerprint(m, bits, minl, maxl, bpe, ia, **kwargs):
+    return rdMD.GetHashedAtomPairFingerprintAsBitVect(m, nBits=bits, minLength=minl, maxLength=maxl,
+                                                      nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+
+  return {'normal': _normalFingerprint,
+          'hashed': _hashedFingerprint,
+          'bv': _bvFingerprint, }
+
+
+apDict = initApFingerprints()
 
 
 # usage:   lambda m,i: GetAPFingerprint(m, i, fpType, nBits, minLength, maxLength, nBitsPerEntry)
@@ -247,13 +249,25 @@ def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1, m
   return apDict[fpType](mol, nBits, minLength, maxLength, nBitsPerEntry, [atomId], **kwargs)
 
 
-ttDict = {}
-ttDict[
-  'normal'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetTopologicalTorsionFingerprint(m, targetSize=ts, ignoreAtoms=ia, **kwargs)
-ttDict[
-  'hashed'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, ignoreAtoms=ia, **kwargs)
-ttDict[
-  'bv'] = lambda m, bits, ts, bpe, ia, **kwargs: rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+def initTtFingerprints():
+
+  def _normalFingerprint(m, bits, ts, bpe, ia, **kwargs):
+    return rdMD.GetTopologicalTorsionFingerprint(m, targetSize=ts, ignoreAtoms=ia, **kwargs)
+
+  def _hashedFingerprint(m, bits, ts, bpe, ia, **kwargs):
+    return rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, ignoreAtoms=ia,
+                                                       **kwargs)
+
+  def _bvFingerprint(m, bits, ts, bpe, ia, **kwargs):
+    return rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(
+      m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia, **kwargs)
+
+  return {'normal': _normalFingerprint,
+          'hashed': _hashedFingerprint,
+          'bv': _bvFingerprint, }
+
+
+ttDict = initApFingerprints()
 
 
 # usage:   lambda m,i: GetTTFingerprint(m, i, fpType, nBits, targetSize)
@@ -312,9 +326,9 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
                                         **kwargs)
     # construct the bit map
     if fpType == 'bv':
-      bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
+      bitmap = [DataStructs.ExplicitBitVect(nBits) for _ in range(mol.GetNumAtoms())]
     else:
-      bitmap = [[] for x in range(mol.GetNumAtoms())]
+      bitmap = [[] for _ in range(mol.GetNumAtoms())]
     for bit, es in iteritems(info):
       for at1, rad in es:
         if rad == 0:  # for radius 0
@@ -325,7 +339,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
         else:  # for radii > 0
           env = Chem.FindAtomEnvironmentOfRadiusN(mol, rad, at1)
           amap = {}
-          submol = Chem.PathToSubmol(mol, env, atomMap=amap)
+          _ = Chem.PathToSubmol(mol, env, atomMap=amap)
           for at2 in amap.keys():
             if fpType == 'bv':
               bitmap[at2][bit] = 1

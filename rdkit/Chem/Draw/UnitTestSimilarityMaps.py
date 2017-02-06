@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -33,14 +32,15 @@
 """ unit testing code for molecule drawing
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, os, tempfile
+import sys
+import unittest
+import os
 from rdkit import Chem
-from rdkit.Chem import Draw
-
+import matplotlib.pyplot as plt
+from rdkit.RDLogger import logger
 import platform
+
 if platform.system() == "Linux":
-  import os, sys
   if not os.environ.get("DISPLAY", None):
     try:
       # Force matplotlib to not use any Xwindows backend.
@@ -54,7 +54,7 @@ try:
   from rdkit.Chem.Draw import SimilarityMaps as sm
 except ImportError:
   sm = None
-from rdkit.RDLogger import logger
+
 logger = logger()
 
 
