@@ -31,17 +31,20 @@
 #ifndef RDKIT_RDVALUE_TAGGED_UNION_H
 #define RDKIT_RDVALUE_TAGGED_UNION_H
 
-#include <boost/cstdint.hpp>
 #include <cassert>
-#include <boost/any.hpp>
 #include "Invariant.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/cstdint.hpp>
+#include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include "LocaleSwitcher.h"
 
 #define RDVALUE_HASBOOL

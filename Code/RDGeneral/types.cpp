@@ -1,7 +1,5 @@
-// $Id$
 //
-//                 Copyright 2001-2006
-//                   Rational Discovery LLC
+//  Copyright 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -98,6 +96,8 @@ const std::string numArom = "numArom";
 const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
+const std::string atomLabel = "atomLabel";
+
 }  // end common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

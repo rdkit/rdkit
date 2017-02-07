@@ -148,7 +148,7 @@ class ChemicalReaction {
   unsigned int addReactantTemplate(ROMOL_SPTR mol) {
     this->df_needsInit = true;
     this->m_reactantTemplates.push_back(mol);
-    return this->m_reactantTemplates.size();
+    return rdcast<unsigned int>(this->m_reactantTemplates.size());
   }
 
   //! Adds a new agent template
@@ -158,7 +158,7 @@ class ChemicalReaction {
   */
   unsigned int addAgentTemplate(ROMOL_SPTR mol) {
     this->m_agentTemplates.push_back(mol);
-    return this->m_agentTemplates.size();
+    return rdcast<unsigned int>(this->m_agentTemplates.size());
   }
 
   //! Adds a new product template
@@ -168,7 +168,7 @@ class ChemicalReaction {
   */
   unsigned int addProductTemplate(ROMOL_SPTR mol) {
     this->m_productTemplates.push_back(mol);
-    return this->m_productTemplates.size();
+    return rdcast<unsigned int>(this->m_productTemplates.size());
   }
 
   //! Removes the reactant templates from a reaction if atom mapping ratio is
@@ -271,13 +271,13 @@ class ChemicalReaction {
     return this->m_agentTemplates.end();
   }
   unsigned int getNumReactantTemplates() const {
-    return this->m_reactantTemplates.size();
+    return rdcast<unsigned int>(this->m_reactantTemplates.size());
   };
   unsigned int getNumProductTemplates() const {
-    return this->m_productTemplates.size();
+    return rdcast<unsigned int>(this->m_productTemplates.size());
   };
   unsigned int getNumAgentTemplates() const {
-    return this->m_agentTemplates.size();
+    return rdcast<unsigned int>(this->m_agentTemplates.size());
   };
 
   //! initializes our internal reactant-matching datastructures.
