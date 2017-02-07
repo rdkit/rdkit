@@ -136,6 +136,7 @@ struct bond_wrapper {
         .def("SetStereoAtoms", &Bond::setStereoAtoms,
              "Set the indices of the atoms setting this bond's "
              "stereochemistry.\n")
+
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
              "Returns the contribution of the bond to the valence of an "
