@@ -1841,6 +1841,50 @@ M  END
       for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
         self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
 
+  def testBondSetStereoAtoms(self):
+    # use this difficult molecule that only generates 4 isomers, but
+    # assume all double bonds are stereo!
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+
+    def getNbr(atom, exclude):
+      for nbr in atom.GetNeighbors():
+        if nbr.GetIdx() not in exclude:
+          return nbr
+      raise ValueError("No neighbor found!")
+
+    double_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetBondType() == 2:
+        double_bonds.append(bond)
+
+        exclude = {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()}
+        bgnNbr = getNbr(bond.GetBeginAtom(), exclude)
+        endNbr = getNbr(bond.GetEndAtom(), exclude)
+
+        bond.SetStereoAtoms(bgnNbr.GetIdx(), endNbr.GetIdx())
+
+    self.assertEquals(len(double_bonds), 3)
+
+    import itertools
+    stereos = [Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ]
+    isomers = set()
+    for stereo_config in itertools.product(stereos, repeat=len(double_bonds)):
+      for bond, stereo in zip(double_bonds, stereo_config):
+        bond.SetStereo(stereo)
+      smi = Chem.MolToSmiles(mol, True)
+      isomers.add(smi)
+
+    # the dependent double bond stereo isn't picked up by this, should it?
+    self.assertEquals(len(isomers), 6)
+
+    # round tripping them through one more time does pick up the dependency, so meh?
+    round_trip_isomers = set()
+    for smi in isomers:
+      isosmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), True)
+      round_trip_isomers.add(isosmi)
+
+    self.assertEquals(len(round_trip_isomers), 4)
 
   def test36SubstructMatchStr(self):
     """ test the _SubstructMatchStr function """

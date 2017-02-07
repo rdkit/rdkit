@@ -132,8 +132,10 @@ struct bond_wrapper {
              "Set the stereo configuration of the bond as a BondStereo\n")
         .def("GetStereoAtoms", getBondStereoAtoms,
              "Returns the indices of the atoms setting this bond's "
-             "stereochemistry.")
-
+             "stereochemistry.\n")
+        .def("SetStereoAtoms", &Bond::setStereoAtoms,
+             "Set the indices of the atoms setting this bond's "
+             "stereochemistry.\n")
         .def("GetValenceContrib",
              (double (Bond::*)(const Atom *) const) & Bond::getValenceContrib,
              "Returns the contribution of the bond to the valence of an "
