@@ -305,6 +305,18 @@ void Bond::initBond() {
   dp_stereoAtoms = NULL;
 };
 
+void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
+  PRECONDITION(getOwningMol().getBondBetweenAtoms(getBeginAtomIdx(), bgnIdx) != NULL,
+               "bgnIdx not connected to begin atom of bond");
+  PRECONDITION(getOwningMol().getBondBetweenAtoms(getEndAtomIdx(), endIdx) != NULL,
+               "endIdx not connected to end atom of bond");
+
+  INT_VECT &atoms = getStereoAtoms();
+  atoms.clear();
+  atoms.push_back(bgnIdx);
+  atoms.push_back(endIdx);
+};
+
 };  // end o' namespace
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {

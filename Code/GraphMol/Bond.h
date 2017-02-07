@@ -297,6 +297,20 @@ class Bond : public RDProps {
   //! returns our stereo code
   BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
 
+  //! sets the atoms to be considered as reference points for bond stereo
+  /*!
+      These do not necessarily need to be the highest 'ranking' atoms
+      like CIP stereo requires. They can be any arbitrary atoms
+      neighboring the begin and end atoms of this bond
+      respectively. STEREOCIS or STEREOTRANS is then set relative to
+      only these atoms.
+
+      If CIP rankings are desired, use
+      MolOps::findPotentialStereoBonds, but this is a more costly
+      function as it takes the whole molecule topology into account.
+  */
+  void setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx);
+
   //! returns the indices of our stereo atoms
   const INT_VECT &getStereoAtoms() const {
     if (!dp_stereoAtoms) {

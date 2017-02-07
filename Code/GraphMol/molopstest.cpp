@@ -6129,6 +6129,66 @@ void testSetBondStereo() {
   }
 }
 
+void testBondSetStereoAtoms() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Bond::setStereoAtoms(...)"
+                       << std::endl;
+
+  // tests to make sure setStereoAtoms works as expected
+  {
+    bool doIsomericSmiles = true;
+    std::string unspec_smiles = "FC(Cl)=C(Br)I";
+
+    ROMol *m = SmilesToMol(unspec_smiles);
+
+    Bond *doubleBond = m->getBondWithIdx(2);
+    TEST_ASSERT(doubleBond->getBondType() == 2);
+
+
+    doubleBond->setStereoAtoms(0, 4);
+    doubleBond->setStereo(Bond::STEREOCIS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(\\Br)I");
+    // this should be the same as the previous
+    doubleBond->setStereoAtoms(0, 5);
+    doubleBond->setStereo(Bond::STEREOTRANS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(\\Br)I");
+
+
+    doubleBond->setStereoAtoms(0, 4);
+    doubleBond->setStereo(Bond::STEREOTRANS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(/Br)I");
+    // this should be the same as the previous
+    doubleBond->setStereoAtoms(0, 5);
+    doubleBond->setStereo(Bond::STEREOCIS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(/Br)I");
+
+
+    doubleBond->setStereoAtoms(3, 4);
+    doubleBond->setStereo(Bond::STEREOTRANS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(\\Br)I");
+    // this should be the same as the previous
+    doubleBond->setStereoAtoms(3, 5);
+    doubleBond->setStereo(Bond::STEREOCIS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(\\Br)I");
+
+
+    doubleBond->setStereoAtoms(3, 4);
+    doubleBond->setStereo(Bond::STEREOCIS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(/Br)I");
+    // this should be the same as the previous
+    doubleBond->setStereoAtoms(3, 5);
+    doubleBond->setStereo(Bond::STEREOTRANS);
+    BOOST_LOG(rdInfoLog) << MolToSmiles(*m, doIsomericSmiles) << std::endl;
+    TEST_ASSERT(MolToSmiles(*m, doIsomericSmiles) == "F/C(Cl)=C(/Br)I");
+  }
+}
+
 void testGithubIssue754() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github #754 : "
                           "loss of double bond geometry with removeHs"
@@ -6791,6 +6851,8 @@ int main() {
   testPotentialStereoBonds();
   testSetBondStereo();
 #endif
+
+  testBondSetStereoAtoms();
 
   return 0;
 }
