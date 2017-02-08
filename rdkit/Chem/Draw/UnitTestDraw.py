@@ -119,7 +119,7 @@ class TestCase(unittest.TestCase):
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
   def testSpingImageDash(self):
     os.environ['RDKIT_CANVAS'] = 'sping'
-    self._testMolToImage(kekulize=False)
+    self._testMolToImage(kekulize=False, showImage=False)
 
   @unittest.skipIf(spingCanvas is None, 'Skipping sping test')
   def testGithubIssue54(self):
@@ -138,7 +138,7 @@ class TestCase(unittest.TestCase):
     self._testMolToImage(mol=Chem.MolFromSmiles('c1cccc2cc(cccc3)c3cc21'))
     self._testMolToImage(mol=Chem.MolFromSmiles('C1=CC=CC=CC=C1'))
     self._testMolToImage(mol=Chem.MolFromSmiles('C=C=C'))
-    self._testMolToImage(mol=Chem.MolFromSmiles('CC#N'))
+    self._testMolToImage(mol=Chem.MolFromSmiles('CC#N'), showImage=True)
     self._testMolToImage(mol=Chem.MolFromSmiles('[CH2-][C-2]C[CH3+][CH5+2]'))
     self._testMolToImage(mol=Chem.MolFromSmiles('[Na+].[OH-]'))
     self._testMolToImage(mol=Chem.MolFromSmiles('c1ccccc1c1ccccc1'),

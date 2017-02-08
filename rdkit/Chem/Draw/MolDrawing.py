@@ -257,11 +257,10 @@ class MolDrawing(object):
         addDefaultLine(fp3, fp4)
 
     elif bType == Chem.BondType.AROMATIC:
-      self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
+      addDefaultLine(newpos, newnbrPos)
       fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
       addDefaultLine(fp1, fp2, dash=self.drawingOptions.dash)
     elif bType == Chem.BondType.TRIPLE:
-      self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
       addDefaultLine(newpos, newnbrPos)
       fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
       addDefaultLine(fp1, fp2)
