@@ -36,7 +36,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
 from rdkit.ML.DecTree import TreeUtils, Tree
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 __VERSION_STRING = "2.2.0"

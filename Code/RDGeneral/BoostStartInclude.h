@@ -69,7 +69,9 @@
 
 #elif defined(_MSC_VER)
 /* Microsoft Visual Studio. --------------------------------- */
-#pragma warning(push, 0)
+#pragma warning(push)
+#pragma warning(disable:4996 4267)
+
 #elif defined(__PGI)
 /* Portland Group PGCC/PGCPP. ------------------------------- */
 

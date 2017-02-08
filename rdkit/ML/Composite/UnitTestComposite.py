@@ -8,7 +8,7 @@
 """
 import unittest
 import io
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 from rdkit.ML.Composite import Composite
 from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
 from rdkit import RDConfig
@@ -72,8 +72,8 @@ class TestCase(unittest.TestCase):
     self.treeComposite = composite
     self.assertEqual(len(composite), len(self.refCompos))
     for i in range(len(composite)):
-      t1, c1, e1 = composite[i]  # @UnusedVariable
-      t2, c2, e2 = self.refCompos[i]  # @UnusedVariable
+      t1, c1, e1 = composite[i]
+      t2, c2, e2 = self.refCompos[i]
       self.assertEqual(e1, e2)
       # we used to check for equality here, but since there are redundant errors,
       #  that's non-trivial.

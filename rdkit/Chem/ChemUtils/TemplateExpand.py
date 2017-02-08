@@ -81,7 +81,6 @@ def Usage():
   print(_usage, file=sys.stderr)
   sys.exit(-1)
 
-#pylint: disable=C0111,C0103,C0322,C0324,C0323
 nDumped = 0
 
 
@@ -331,7 +330,7 @@ if __name__ == '__main__':
       redrawTemplate = False
 
   if templateSmarts:
-    splitL = templateSmarts.split(' ')  #pylint: disable=E1103
+    splitL = templateSmarts.split(' ')
     templateSmarts = []
     for i, sma in enumerate(splitL):
       patt = Chem.MolFromSmarts(sma)

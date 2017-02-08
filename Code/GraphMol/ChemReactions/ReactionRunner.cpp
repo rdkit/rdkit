@@ -393,8 +393,11 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     productAtom->setAtomicNum(reactantAtom.getAtomicNum());
     productAtom->setIsAromatic(reactantAtom.getIsAromatic());
     // don't copy isotope information over from dummy atoms
-    productAtom->setIsotope(reactantAtom.getIsotope());
-
+    // (part of github #243) unless we're setting implicit properties,
+    // in which case we do need to copy them in (github #1269)
+    if (!setImplicitProperties) {
+      productAtom->setIsotope(reactantAtom.getIsotope());
+    }
     // remove dummy labels (if present)
     if (productAtom->hasProp(common_properties::dummyLabel)) {
       productAtom->clearProp(common_properties::dummyLabel);

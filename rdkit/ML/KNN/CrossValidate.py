@@ -67,7 +67,7 @@ def CrossValidate(knnMod, testExamples, appendExamples=0):
 def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
                           modelBuilder=makeClassificationModel,
                           distFunc=DistFunctions.EuclideanDist, holdOutFrac=0.3, silent=0,
-                          calcTotalError=0, **kwargs):  # @IgnorePep8
+                          calcTotalError=0, **kwargs):
   """ Driver function for building a KNN model of a specified type
 
   **Arguments**

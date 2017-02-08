@@ -17,7 +17,7 @@ def feq(a, b, tol=1e-4):
   return abs(a - b) < tol
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(DistFunctions, optionflags=doctest.ELLIPSIS))
   return tests
@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
     fName = os.path.join(RDConfig.RDCodeDir, 'ML', 'KNN', 'test_data', 'random_pts.csv')
     data = DataUtils.TextFileToData(fName)
     examples = data.GetNamedData()
-    npvals = data.GetNPossibleVals()  # @UnusedVariable
+    npvals = data.GetNPossibleVals()
     nvars = data.GetNVars()
     attrs = list(range(1, nvars + 1))
     numNeigh = 11

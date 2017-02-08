@@ -212,7 +212,7 @@ from rdkit.ML import ScreenComposite
 from rdkit.ML.Composite import Composite, BayesComposite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
@@ -231,7 +231,7 @@ def message(msg):
       - msg: the string to be displayed
 
   """
-  if _verbose:  # pragma: nocover
+  if _verbose:
     sys.stdout.write('%s\n' % (msg))
 
 
@@ -522,7 +522,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       silent=not _verbose)
 
   elif details.useSigTrees:
-    from rdkit.ML.DecTree import CrossValidate  # @Reimport
+    from rdkit.ML.DecTree import CrossValidate
     from rdkit.ML.DecTree import BuildSigTree
     builder = BuildSigTree.SigTreeBuilder
     driver = CrossValidate.CrossValidationDriver
@@ -550,7 +550,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       allowCollection=allowCollections, silent=not _verbose)
 
   elif details.useKNN:
-    from rdkit.ML.KNN import CrossValidate  # @Reimport
+    from rdkit.ML.KNN import CrossValidate
     from rdkit.ML.KNN import DistFunctions
 
     driver = CrossValidate.CrossValidationDriver
@@ -567,7 +567,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                    holdOutFrac=details.internalHoldoutFrac, distFunc=dfunc)
 
   elif details.useNaiveBayes or details.useSigBayes:
-    from rdkit.ML.NaiveBayes import CrossValidate  # @Reimport
+    from rdkit.ML.NaiveBayes import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     if not (hasattr(details, 'useSigBayes') and details.useSigBayes):
       composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
@@ -604,7 +604,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     # #                    silent=not _verbose)
 
   else:
-    from rdkit.ML.Neural import CrossValidate  # @Reimport
+    from rdkit.ML.Neural import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
                    buildDriver=driver, needsQuantization=0)
@@ -657,7 +657,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     message('\nEntire data set:')
     resTup = ScreenComposite.ShowVoteResults(
       range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
-    nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup  # @UnusedVariable
+    nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
     nPts = len(namedExamples)
     nClass = nGood + nBad
     _runDetails.overall_error = float(nBad) / nClass
@@ -672,7 +672,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       message('\nHold-out data:')
       resTup = ScreenComposite.ShowVoteResults(
         range(len(testExamples)), testExamples, composite, nPossibleVals[-1], details.threshold)
-      nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup  # @UnusedVariable
+      nGood, nBad, nSkip, avgGood, avgBad, avgSkip, voteTab = resTup
       nPts = len(testExamples)
       nClass = nGood + nBad
       _runDetails.holdout_error = float(nBad) / nClass
@@ -743,7 +743,7 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
     details.tableName = fName
     data = details.GetDataSet()
   else:
-    data = DataUtils.DBToQuantData(details.dbName,  # @UndefinedVariable function no longer defined
+    data = DataUtils.DBToQuantData(details.dbName,  # Function no longer defined
                                    fName,
                                    quantName=details.qTableName,
                                    user=details.dbUser,

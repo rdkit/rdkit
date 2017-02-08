@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 #
@@ -13,10 +12,13 @@
 
 """
 from __future__ import print_function, division
-from rdkit.DataStructs import SparseBitVect, IntSparseIntVect, LongSparseIntVect
-from rdkit.Chem.Pharm2D import Utils
+
 import copy
+
 import numpy
+
+from rdkit.Chem.Pharm2D import Utils
+from rdkit.DataStructs import SparseBitVect, IntSparseIntVect, LongSparseIntVect
 
 _verbose = False
 
@@ -92,7 +94,7 @@ class SigFactory(object):
       a string with the HTML
 
     """
-    nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)
+    raise NotImplementedError('Missing implementation')
 
   def GetBitDescription(self, bitIdx):
     """  returns a text description of the bit
@@ -129,16 +131,15 @@ class SigFactory(object):
     **Returns**
 
       an integer bin index
-      
+
     **Note**
 
       the value returned here is not an index in the overall
       signature.  It is, rather, an offset of a scaffold in the
       possible combinations of distance bins for a given
       proto-pharmacophore.
-    
+
     """
-    nBins = len(bins)
     nDists = len(dists)
     whichBins = [0] * nDists
 
@@ -206,7 +207,7 @@ class SigFactory(object):
     **Returns**
 
       the integer bit index
-      
+
     """
     nPoints = len(featIndices)
     if nPoints > 3:
@@ -246,14 +247,14 @@ class SigFactory(object):
         print('\tScaffolds:', repr(self._scaffolds[len(dists)]), type(self._scaffolds[len(dists)]))
         print('\tDists:', repr(dists), type(dists))
         print('\tbins:', repr(self._bins), type(self._bins))
-      bin = self._findBinIdx(dists, self._bins, self._scaffolds[len(dists)])
+      bin_ = self._findBinIdx(dists, self._bins, self._scaffolds[len(dists)])
     except ValueError:
       fams = self.GetFeatFamilies()
       fams = [fams[x] for x in featIndices]
       raise IndexError('distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s' %
                        (fams, dists, self._bins, self._scaffolds))
 
-    return startIdx + offset + bin
+    return startIdx + offset + bin_
 
   def GetBitInfo(self, idx):
     """ returns information about the given bit
@@ -271,7 +272,7 @@ class SigFactory(object):
          2) the proto-pharmacophore (tuple of pattern indices)
 
          3) the scaffold (tuple of distance indices)
-     
+
     """
     if idx >= self._sigSize:
       raise IndexError('bad index (%d) queried. %d is the max' % (idx, self._sigSize))

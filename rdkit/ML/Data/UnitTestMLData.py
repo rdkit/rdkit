@@ -11,7 +11,7 @@ import unittest
 from rdkit import RDConfig
 from rdkit.ML.Data import MLData, DataUtils
 from rdkit.six import StringIO
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class TestCase(unittest.TestCase):

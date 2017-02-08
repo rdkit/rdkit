@@ -13,8 +13,10 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SanitException.h>
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include "MolSupplier.h"
 #include "FileParsers.h"
 

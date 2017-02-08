@@ -71,13 +71,13 @@ class ModelPackage(object):
       self.Init()
     try:
       descs = self._descCalc.CalcDescriptors(obj)
-    except Exception:  # pragma: nocover
+    except Exception:
       raise DescriptorCalculationError('problems encountered generating descriptors')
 
     argVect = [label] + list(descs) + [0]
     try:
       res = self._model.ClassifyExample(argVect, threshold=threshold, appendExample=0)
-    except Exception:  # pragma: nocover
+    except Exception:
       import traceback
       traceback.print_exc()
       raise ClassificationError('problems encountered generating prediction')

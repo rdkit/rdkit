@@ -11,7 +11,7 @@
 from rdkit import six
 from rdkit import RDConfig
 
-if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:  # pragma: nocover
+if hasattr(RDConfig, "usePgSQL") and RDConfig.usePgSQL:
   from pyPgSQL import PgSQL
   # as of this writing (March 2004), this results in a speedup in
   # getting results back from the wrapper:

@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2013  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2017  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -120,6 +120,15 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tuple(tbl.GetValenceList("S")) == (2, 4, 6))
     self.assertTrue(tbl.GetNOuterElecs(6) == 4)
     self.assertTrue(tbl.GetNOuterElecs("C") == 4)
+    self.assertTrue(tbl.GetMostCommonIsotope(6) == 12)
+    self.assertTrue(tbl.GetMostCommonIsotope('C') == 12)
+    self.assertTrue(tbl.GetMostCommonIsotopeMass(6) == 12.0)
+    self.assertTrue(tbl.GetMostCommonIsotopeMass('C') == 12.0)
+    self.assertTrue(tbl.GetAbundanceForIsotope(6, 12) == 98.93)
+    self.assertTrue(tbl.GetAbundanceForIsotope('C', 12) == 98.93)
+    self.assertTrue(feq(tbl.GetRb0(6), 0.77))
+    self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
+    self.assertTrue(tbl.GetElementSymbol(6) == 'C')
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -3888,6 +3897,19 @@ CAS<~>
     self.assertRaises(RuntimeError, lambda: a.IsInRing())
     self.assertRaises(RuntimeError, lambda: a.IsInRingSize(4))
 
+  def testSmilesParseParams(self):
+    smi = "CCC |$foo;;bar$| ourname"
+    m = Chem.MolFromSmiles(smi)
+    self.assertTrue(m is None)
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    ps.parseName = True
+    m = Chem.MolFromSmiles(smi,ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEquals(m.GetAtomWithIdx(0).GetProp('atomLabel'),"foo")
+    self.assertTrue(m.HasProp('_Name'))
+    self.assertEquals(m.GetProp('_Name'),"ourname")
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
@@ -3900,3 +3922,4 @@ if __name__ == '__main__':
     runner.run(suite)
   else:
     unittest.main()
+

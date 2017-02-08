@@ -6,6 +6,5 @@ from rdkit import rdBase
 try:
   from rdkit.SimDivFilters import rdSimDivPickers
   from rdkit.SimDivFilters.rdSimDivPickers import *
-except ImportError:  # pragma: nocover
-  import traceback
+except ImportError:
   rdSimDivPickers = None

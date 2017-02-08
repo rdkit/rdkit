@@ -147,7 +147,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(r, 0)
 
   def test4(self):
-    from rdkit.six.moves import cPickle  # @UnresolvedImport
+    from rdkit.six.moves import cPickle
     gz = gzip.open(
       os.path.join(RDConfig.RDCodeDir, 'ML', 'DecTree', 'test_data', 'cdk2-few.pkl.gz'), 'rb')
     examples = cPickle.load(gz, encoding='Latin1')
