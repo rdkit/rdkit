@@ -35,6 +35,23 @@ class TestCase(unittest.TestCase):
     self.assertNotIn('Mol-3', out.getvalue())
     self.assertEqual(err.getvalue(), '')
 
+  def test_FeatFinderCLIexceptions(self):
+    smilesFile = os.path.join(RDConfig.RDDataDir, 'NCI', 'first_5K.smi')
+    featureFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Pharm2D', 'test_data',
+                               'BaseFeatures.fdef')
+    parser = FeatFinderCLI.initParser()
+    cmd = '-n 10 {0} {1}'.format(smilesFile, smilesFile)
+    with self.assertRaises(SystemExit), outputRedirect() as (_, err):
+      args = parser.parse_args(cmd.split())
+      FeatFinderCLI.processArgs(args, parser)
+    self.assertIn('error', err.getvalue())
+
+    cmd = '-n 10 {0} {1}'.format(featureFile, 'incorrectFilename')
+    with self.assertRaises(SystemExit), outputRedirect() as (_, err):
+      args = parser.parse_args(cmd.split())
+      FeatFinderCLI.processArgs(args, parser)
+    self.assertIn('error', err.getvalue())
+
 
 @contextmanager
 def outputRedirect():
