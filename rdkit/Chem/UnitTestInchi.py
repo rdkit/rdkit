@@ -161,8 +161,8 @@ class TestCase(unittest.TestCase):
         else:
           same += 1
 
-      print("{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}".format(
-        COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
+      fmt = "\n{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}"
+      print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
       self.assertEqual(same, 1164)
       self.assertEqual(diff, 0)
       self.assertEqual(reasonable, 17)
@@ -246,8 +246,8 @@ class TestCase(unittest.TestCase):
           print()
         else:
           same += 1
-      print("{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}".format(
-        COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
+      fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
+      print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
       self.assertEqual(same, 620)
       self.assertEqual(diff, 0)
       self.assertEqual(reasonable, 561)
