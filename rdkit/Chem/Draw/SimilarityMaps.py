@@ -267,7 +267,7 @@ def initTtFingerprints():
           'bv': _bvFingerprint, }
 
 
-ttDict = initApFingerprints()
+ttDict = initTtFingerprints()
 
 
 # usage:   lambda m,i: GetTTFingerprint(m, i, fpType, nBits, targetSize)
