@@ -1,5 +1,5 @@
 //
-// Substructure searching with SMARTS atom map indices - example15.cpp
+// Substructure searching with SMARTS atom map indices - example16.cpp
 
 #include <iostream>
 #include <map>

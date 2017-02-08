@@ -45,8 +45,8 @@ int main( int argc , char **argv ) {
   RDKit::VECT_INT_VECT rings;
   RDKit::MolOps::symmetrizeSSSR( *mol , rings );
   std::cout << "Number of symmetric SSSR rings : " << rings.size() << std::endl;
-  for( auto it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 ) {
-    for( auto it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
+  for( RDKit::VECT_INT_VECT::iterator it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 ) {
+    for( RDKit::INT_VECT::iterator it2 = it1->begin() , it2_end = it1->end() ; it2 != it2_end ; ++it2 ) {
       std::cout << *it2 << " ";
     }
     std::cout << std::endl;

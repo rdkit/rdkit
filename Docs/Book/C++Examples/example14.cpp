@@ -1,5 +1,5 @@
 //
-// Substructure searching - example13.cpp
+// Substructure searching - example14.cpp
 
 #include <iostream>
 #include <vector>

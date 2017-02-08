@@ -95,6 +95,16 @@ defined in the relevant header files.  Two particularly useful ones
 are `RDKit::ROMOL_SPTR` and `RDKit::RWMOL_SPTR`, for `RDKit::ROMol`
 and `RDKit::RWMol` objects respectively.
 
+This isn't just relevant to the RDKit, but worth noting. The new C++
+standard also has `shared_ptr` and `scoped_ptr` in the standard
+namespace (essentially, they've adopted the boost libraries).  As I
+discovered the hard way, if you put `using namespace boost` and `using
+namespace std` at the top of your source file (and let's face it, who
+doeesn't?) , and use the unqualified name `shared_ptr` in your 
+code, then when you start using C++11, you'll have to go all through
+your code explicitly stating whether you're using `std::shared_ptr` or
+`boost::shared_ptr`.  Worth getting in the habit now!
+
 ## The Molecule Objects
 
 Unlike in the Python libraries, in C++ there are two different

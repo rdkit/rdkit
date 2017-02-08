@@ -26,7 +26,7 @@ int main( int argc , char **argv ) {
   
   // tab-delimited file, SMILES in column 0, name in 1, no title line
   RDKit::SmilesMolSupplier suppl( smi_file , "\t" , 0 , 1 , false );
-  std::ofstream pickle_ostream( pkl_name , std::ios_base::binary );
+  std::ofstream pickle_ostream( pkl_name.c_str() , std::ios_base::binary );
   int write_cnt = 0;
   while( !suppl.atEnd() ) {
     RDKit::ROMol *mol = suppl.next();
@@ -38,7 +38,7 @@ int main( int argc , char **argv ) {
   std::cout << "Wrote " << write_cnt << " molecules" << std::endl;
   
   // reading from pickle file
-  std::ifstream pickle_istream( pkl_name , std::ios_base::binary );
+  std::ifstream pickle_istream( pkl_name.c_str() , std::ios_base::binary );
   int read_cnt = 0;
   while( !pickle_istream.eof() ) {
     RDKit::ROMol mol3;

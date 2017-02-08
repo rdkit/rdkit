@@ -1,5 +1,5 @@
 //
-// Generating depictions - example12.cpp
+// Generating depictions - example13.cpp
 
 #include <fstream>
 #include <GraphMol/GraphMol.h>
@@ -18,7 +18,7 @@ int main( int argc , char **argv ) {
   RDKit::ROMol *mol1 = mol_supplier.next();
   RDDepict::compute2DCoords( *mol1 );
   std::string svg_file = file_root + "/data/cdk_mol1.svg";
-  std::ofstream outs( svg_file );
+  std::ofstream outs( svg_file.c_str() );
   RDKit::MolDraw2DSVG svg_drawer(300, 300, outs);
   svg_drawer.drawMolecule( *mol1 );
   svg_drawer.finishDrawing();

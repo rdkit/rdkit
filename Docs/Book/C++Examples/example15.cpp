@@ -1,5 +1,5 @@
 //
-// Substructure searching with stereochemistry - example14.cpp
+// Substructure searching with stereochemistry - example15.cpp
 
 #include <iostream>
 #include <GraphMol/GraphMol.h>

@@ -50,7 +50,7 @@ int main( int argc , char **argv ) {
   file_root += "/Docs/Book";
 
   std::string mol_file = file_root + "/data/foo.mol";
-  std::ofstream ofs( mol_file );
+  std::ofstream ofs( mol_file.c_str() );
   ofs << RDKit::MolToMolBlock( *mol5 );
 
 }
