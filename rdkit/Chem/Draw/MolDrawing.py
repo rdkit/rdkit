@@ -403,9 +403,9 @@ class MolDrawing(object):
         nbrSum[1] += nbrPos[1] - pos[1]
 
       iso = atom.GetIsotope()
-      labelIt = any([not self.drawingOptions.noCarbonSymbols, atom.GetAtomicNum() != 6,
-                     atom.GetFormalCharge() != 0, atom.GetNumRadicalElectrons(), includeAtomNumbers,
-                     iso, atom.HasProp('molAtomMapNumber'), atom.GetDegree() == 0])
+      labelIt = (not self.drawingOptions.noCarbonSymbols or iso or atom.GetAtomicNum() != 6 or
+                 atom.GetFormalCharge() != 0 or atom.GetNumRadicalElectrons() or
+                 includeAtomNumbers or atom.HasProp('molAtomMapNumber') or atom.GetDegree() == 0)
       orient = ''
       if labelIt:
         baseOffset = 0

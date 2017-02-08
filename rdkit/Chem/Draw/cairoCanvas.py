@@ -18,7 +18,6 @@ from PIL import Image
 from rdkit import six
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 
-
 if not six.PY3:
   bytes = buffer
 
@@ -135,7 +134,6 @@ if 'RDK_NOPANGO' not in os.environ:
 if (not hasattr(cairo.ImageSurface, 'get_data') and
     not hasattr(cairo.ImageSurface, 'get_data_as_rgba')):
   raise ImportError('cairo version too old')
-
 
 scriptPattern = re.compile(r'\<.+?\>')
 
