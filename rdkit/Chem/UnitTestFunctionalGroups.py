@@ -151,18 +151,4 @@ Amine\tN\tAmine
 
 
 if __name__ == '__main__':
-  import sys, getopt, re
-  doLong = 0
-  if len(sys.argv) > 1:
-    args, extras = getopt.getopt(sys.argv[1:], 'l')
-    for arg, val in args:
-      if arg == '-l':
-        doLong = 1
-      sys.argv.remove('-l')
-  if doLong:
-    for methName in dir(TestCase):
-      if re.match('_test', methName):
-        newName = re.sub('_test', 'test', methName)
-        exec('TestCase.%s = TestCase.%s' % (newName, methName))
-
   unittest.main()
