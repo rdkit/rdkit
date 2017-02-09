@@ -49,13 +49,7 @@ def initParser():
 _splashMessage = """
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
   FeatFinderCLI
-
-  Copyright (C) 2005 Rational Discovery LLC
-
-  This software is copyrighted.  The software may not be copied,
-  reproduced, translated or reduced to any electronic medium or
-  machine-readable form without the prior written consent of
-  Rational Discovery LLC.
+  Part of the RDKit (http://www.rdkit.org)
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 """
 
