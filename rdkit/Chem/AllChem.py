@@ -55,9 +55,9 @@ def TransformMol(mol, tform, confId=-1, keepConfs=False):
     if confId == -1:
       confId = 0
     allConfIds = [c.GetId() for c in mol.GetConformers()]
-    for id_ in allConfIds:
-      if not id_ == confId:
-        mol.RemoveConformer(id_)
+    for cid in allConfIds:
+      if not cid == confId:
+        mol.RemoveConformer(cid)
     # reset the conf Id to zero since there is only one conformer left
     mol.GetConformer(confId).SetId(0)
 
