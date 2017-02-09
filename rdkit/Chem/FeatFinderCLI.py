@@ -36,11 +36,14 @@ def GetAtomFeatInfo(factory, mol):
 
 def initParser():
   """ Initialize the parser """
-  parser = argparse.ArgumentParser(description='Create aligned depiction', epilog=_splashMessage,
+  parser = argparse.ArgumentParser(description='Determine pharmacophore features of molecules',
+                                   epilog=_splashMessage,
                                    formatter_class=argparse.RawDescriptionHelpFormatter)
-  parser.add_argument('-r', dest='reverseIt', default=False, action='store_true')
+  parser.add_argument('-r', dest='reverseIt', default=False, action='store_true',
+                      help='Set to get atoms lists for each feature.')
   parser.add_argument('-n', dest='maxLines', default=-1, help=argparse.SUPPRESS, type=int)
-  parser.add_argument('fdefFilename', type=existingFile)
+  parser.add_argument('fdefFilename', type=existingFile,
+                      help='Pharmacophore feature definition file')
   parser.add_argument('smilesFilename', type=existingFile,
                       help='The smiles file should have SMILES in the first column')
   return parser
