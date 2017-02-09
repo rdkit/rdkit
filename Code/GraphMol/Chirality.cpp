@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +12,7 @@
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
+#include <set>
 #include <algorithm>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
@@ -402,9 +402,17 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   }
 }
 
+// conditions for an atom to be a candidate for ring stereochem:
+//   1) two non-ring neighbors that have different ranks
+//   2) one non-ring neighbor and two ring neighbors (the ring neighbors will
+//      have the same rank)
+//   3) four ring neighbors with three different ranks
+//   4) three ring neighbors with two different ranks
+//     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
 bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
+  std::set<unsigned int> nbrRanks;
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
@@ -417,20 +425,17 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         if (!ringInfo->numBondRings(bond->getIdx())) {
           nonRingNbrs.push_back(bond->getOtherAtom(atom));
         } else {
-          ringNbrs.push_back(bond->getOtherAtom(atom));
+          const Atom *nbr = bond->getOtherAtom(atom);
+          ringNbrs.push_back(nbr);
+          unsigned int rnk = 0;
+          nbr->getPropIfPresent(common_properties::_CIPRank, rnk);
+          nbrRanks.insert(rnk);
         }
         ++beg;
       }
 
       unsigned int rank1 = 0, rank2 = 0;
       switch (nonRingNbrs.size()) {
-        case 0:
-          // don't do spiro:
-          res = false;
-          break;
-        case 1:
-          if (ringNbrs.size() == 2) res = true;
-          break;
         case 2:
           if (nonRingNbrs[0]->getPropIfPresent(common_properties::_CIPRank,
                                                rank1) &&
@@ -441,6 +446,18 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
             } else {
               res = true;
             }
+          }
+          break;
+        case 1:
+          if (ringNbrs.size() == 2) res = true;
+          break;
+        case 0:
+          if (ringNbrs.size() == 4 && nbrRanks.size() >= 3) {
+            res = true;
+          } else if (ringNbrs.size() == 3 && nbrRanks.size() >= 2) {
+            res = true;
+          } else {
+            res = false;
           }
           break;
         default:
