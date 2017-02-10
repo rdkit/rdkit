@@ -452,9 +452,9 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
           if (ringNbrs.size() == 2) res = true;
           break;
         case 0:
-          if (ringNbrs.size() == 4 && nbrRanks.size() >= 3) {
+          if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
             res = true;
-          } else if (ringNbrs.size() == 3 && nbrRanks.size() >= 2) {
+          } else if (ringNbrs.size() == 3 && nbrRanks.size() == 2) {
             res = true;
           } else {
             res = false;
