@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2007-2010 Greg Landrum
+#  Copyright (C) 2007-2017 Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -12,7 +11,7 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig, RDLogger
+from rdkit import RDConfig
 import unittest, os.path
 import io
 from rdkit.six.moves import cPickle
@@ -30,8 +29,18 @@ def feq(n1, n2, tol=1e-4):
 
 class TestCase(unittest.TestCase):
 
-  def tearDown(self):
-    RDLogger.EnableLog('rdApp.error')
+  def testGithub1287(self):
+    smis = ('CCC', )
+    for smi in smis:
+      m = Chem.MolFromSmiles(smi)
+      self.assertTrue(m)
+      for nm, fn in Descriptors._descList:
+        try:
+          v = fn(m)
+        except Exception:
+          import traceback
+          traceback.print_exc()
+          raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
@@ -40,18 +49,11 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          RDLogger.DisableLog('rdApp.error')
           v = fn(m)
-        except RuntimeError:
-          # 3D descriptors fail since the mol has no conformers
-          pass
         except Exception:
           import traceback
           traceback.print_exc()
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
-        finally:
-          RDLogger.EnableLog('rdApp.error')
-
 
   def testMolFormula(self):
     for (smiles, expected) in (("[NH4+]", "H4N+"),
