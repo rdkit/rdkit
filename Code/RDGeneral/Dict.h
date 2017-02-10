@@ -33,6 +33,7 @@ typedef std::vector<std::string> STR_VECT;
 //!  The actual storage is done using \c RDValue objects.
 //!
 class Dict {
+public:  
   struct Pair {
     std::string key;
     RDValue val;
@@ -43,7 +44,7 @@ class Dict {
   };
 
   typedef std::vector<Pair> DataType;
-public:
+
   Dict() : _data(), _hasNonPodData(false) {  };
 
   Dict(const Dict &other) : _data(other._data) {
@@ -78,6 +79,12 @@ public:
   };
 
   //----------------------------------------------------------
+  //! \brief Access to the underlying data.
+  const DataType &getData() const { return _data; }
+        DataType &getData()       { return _data; }
+  
+  //----------------------------------------------------------
+
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
   bool hasVal(const std::string &what) const {

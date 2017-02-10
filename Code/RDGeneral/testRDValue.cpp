@@ -1,6 +1,7 @@
 #include "RDValue.h"
 #include "RDProps.h"
 #include "Invariant.h"
+#include "StreamOps.h"
 #include <limits>
 #include <vector>
 #include <list>
@@ -140,10 +141,70 @@ std::vector<T> makeVec() {
   return vec;
 }
 
+template<class T>
+void testProp(T val) {
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/prop.pkl";
+  
+  {
+    std::ofstream ss(pklName.c_str(), std::ios_base::binary);
+    RDProps p;
+    p.setProp<T>("foo", val);
+    TEST_ASSERT(streamWriteProps(ss, p));
+  }
+  
+  {
+    std::ifstream ss(pklName.c_str(), std::ios_base::binary);
+    RDProps p2;
+    streamReadProps(ss, p2);
+    TEST_ASSERT(p2.getProp<T>("foo") == val);
+  }
+};
+
+void testPropertyPickler() {
+  std::cerr << "== int" << std::endl;
+  testProp<int>(1234);
+  std::cerr << "== double" << std::endl;
+  testProp<double>(1234.);
+  std::cerr << "== float" << std::endl;
+  testProp<float>(1234.0f);
+  std::cerr << "== unsigned int" << std::endl;
+  testProp<unsigned int>(1234u);
+  std::cerr << "== bool" << std::endl;
+  testProp<bool>(true);
+  std::cerr << "== std::string" << std::endl;
+  testProp<std::string>(std::string("the quick brown fox jumps over the lazy dog"));
+  
+  testProp(0);
+  testProp(0.);
+  testProp(0.0f);
+  testProp(0u);
+  testProp(false);
+
+  /*
+  testProp(makeVec<int>());
+  testProp(makeVec<int>());
+  testProp(makeVec<int>());
+  testProp(makeVec<unsigned int>());
+
+  {
+    std::vector<std::string> v;
+    v.push_back("a");
+    v.push_back("b");
+    v.push_back("c");
+    v.push_back("d");
+    v.push_back("e");
+    testProp(v);
+  }
+  */
+}
+
+
 int main() {
   std::cerr << "-- running tests -- " << std::endl;
   testPOD();
   testPODVectors();
   testStringVect();
   testNaN();
+  testPropertyPickler();
 }
