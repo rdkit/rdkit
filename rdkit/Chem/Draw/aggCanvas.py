@@ -136,9 +136,7 @@ class Canvas(CanvasBase):
       supH *= 0.5
       subH *= 0.5
       h += supH + subH
-      # bw, bh = w + h * 0.4, w * 1.4
       offset = w * pos[2]
-      # dPos = pos[0]-bw/2.,pos[1]-bh/2.
       dPos = [pos[0] - w / 2. + offset, pos[1] - h / 2.]
       if orientation == 'W':
         dPos = [pos[0] - w + offset, pos[1] - h / 2.]

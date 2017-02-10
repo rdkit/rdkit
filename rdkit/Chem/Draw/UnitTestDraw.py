@@ -40,6 +40,10 @@ except ImportError:
 class TestCase(unittest.TestCase):
   showAllImages = False
 
+  def test_interactive(self):
+    # We avoid checking in the code with development flag set
+    self.assertFalse(self.showAllImages)
+
   def setUp(self):
     if IPythonConsole is not None and Draw.MolsToGridImage == IPythonConsole.ShowMols:
       IPythonConsole.UninstallIPythonRenderer()
@@ -105,6 +109,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(img)
     self.assertEqual(img.size().height(), 300)
     self.assertEqual(img.size().width(), 300)
+    # img.save('/tmp/D_me.png')
 
   @unittest.skipIf(cairoCanvas is None, 'Skipping cairo test')
   def testCairoImageDash(self):

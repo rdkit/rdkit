@@ -138,7 +138,6 @@ class MolDrawing(object):
     # if we're a ring bond, we may need to flip over to the other side:
     if bond.IsInRing():
       bondIdx = bond.GetIdx()
-      # a1Idx = a1.GetIdx()
       a2Idx = a2.GetIdx()
       # find a ring bond from a1 to an atom other than a2:
       for otherBond in a1.GetBonds():
@@ -365,7 +364,10 @@ class MolDrawing(object):
     labelSizes = {}
     for atom in mol.GetAtoms():
       labelSizes[atom.GetIdx()] = None
-      drawAtom = not (ignoreHs and atom.GetAtomicNum() == 1)
+      if ignoreHs and atom.GetAtomicNum() == 1:
+        drawAtom = False
+      else:
+        drawAtom = True
       idx = atom.GetIdx()
       pos = self.atomPs[mol].get(idx, None)
       if pos is None:
@@ -413,10 +415,11 @@ class MolDrawing(object):
           symbolLength = len(symbol)
         else:
           base = atom.GetSymbol()
-          if base == 'H' and self.drawingOptions.atomLabelDeuteriumTritium:
+          if (base == 'H' and (iso == 2 or iso == 3) and
+              self.drawingOptions.atomLabelDeuteriumTritium):
             if iso == 2:
               base = 'D'
-            elif iso == 3:
+            else:
               base = 'T'
             iso = 0
           symbolLength = len(base)
