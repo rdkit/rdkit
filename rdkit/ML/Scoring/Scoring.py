@@ -15,7 +15,6 @@ after a file from Peter Gedeck, Greg Landrum
 
 import math
 import numpy as np
-import copy
 from operator import itemgetter
 
 
@@ -32,7 +31,9 @@ def sortByColumns(scores, col, reverse=False):
   These problems are not uncommon. See the unit tests for some artificial examples.
   """
   # Shuffle
-  scores = copy.copy(scores)                # No side effects
+  scores = list(scores)                     # No side effects
+  if 0 == len(scores):
+    raise ValueError('scores cannot be empty')
   np.random.RandomState(0).shuffle(scores)  # Shuffle (deterministically)
 
   # Sort without taking the class into account
