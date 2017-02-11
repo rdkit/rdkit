@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -883,7 +882,7 @@ void testGitHubIssue1112() {
 
 void testGitHubIssue1286() {
   // GenerateDepictionMatching2DStructure isn't matching 2D structure
-  {
+  {  // the original report
     std::string smiles = "C(=O)C(C)NC=O";
     RWMol *templ = SmilesToMol(smiles);
     TEST_ASSERT(templ);
@@ -907,6 +906,41 @@ void testGitHubIssue1286() {
     for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
       const RDGeom::Point3D &tp = tconf.getAtomPos(i);
       const RDGeom::Point3D &mp = mconf.getAtomPos(i);
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
+  }
+  {  // extremely crowded. This one tests bond shortening and angle opening
+    std::string smiles = "CC(=O)C1=CC=CC2=C1C=CC=C2";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 13);
+
+    smiles = "O=C(N)C1=C(C=CC2=C1C(=CC=C2)C(C)=O)C(C)(C)C";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 20);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*mol, *templ, mv));
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(mv[i].first);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(mv[i].second);
       // std::cerr << i << ": " << tp << " | " << mp << std::endl;
       TEST_ASSERT(feq(tp.x, mp.x));
       TEST_ASSERT(feq(tp.y, mp.y));
