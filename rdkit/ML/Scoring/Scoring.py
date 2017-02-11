@@ -12,7 +12,7 @@ after a file from Peter Gedeck, Greg Landrum
 \param fractions: list of fractions at which the value shall be calculated
 \param alpha: exponential weight
 """
-
+from __future__ import print_function
 import math
 import numpy as np
 from operator import itemgetter
@@ -20,15 +20,89 @@ from operator import itemgetter
 
 def SortByColumns(scores, classCol, reverse=False):
   """
-  Safeguard against rotten ROCs (& AUCs & RIEs and whatnot) due to ordering artifacts.
+  Safeguard against wrong ROCs (& AUCs & RIEs and whatnot) due to ordering artifacts.
 
-  Avoids having artificially good/bad scores because:
+  Like `sorted` but preshuffles and explicitly ignores class attributes.
+
+  This avoids having artificially good/bad scores because:
     - `scores` are ordered by class (col) and python stable (tim)sort
       keeps the order on ties; this is specially bad if our model
-      returns garbage (nan) scores, or any other constant.
-    - related, we leak the class in sorting
+      returns (nan) scores, or any other constant.
+    - related, we leak the class in sorting; it is easy to introduce
+      this kind of bugs as one would tend to put together scores and
+      classes when ranking.
 
-  These problems are not uncommon. See the unit tests for some artificial examples.
+  Parameters
+  ----------
+  scores : list, tuple, np.array or the likes
+    A 2-dimensional matrix of scores.
+    num_rows=len(scores), num_columns=len(scores[0])
+
+  classCol : int or int collection
+    The columns to ignore.
+
+  reverse : bool, default False
+    If True, scores are sorted in ascending order
+    (e.g. the lower a distance is, the higher is the score).
+    If False, use descending.
+    (e.g. the higher a probability estimate is, the higher the score).
+
+  Examples
+  --------
+    This is an extreme example with:
+      - every example tied
+      - the data pre-sorted by class
+    >>> scores = [
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 0],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ...     [0.2, 0.3, 1],
+    ... ]
+
+    The correct value of the AUC for these scores is 0.5.
+    (in fact, the scores are completely uninformative).
+    Using `SortByColumns` make it explicit how correct sorting
+    must be done to get the correct result.
+    >>> shuffled_sorted_scores = SortByColumns(scores, -1)
+    >>> print('Scores are uninformative, so AUC must be',
+    ...       CalcAUC(shuffled_sorted_scores, -1))
+    Scores are uninformative, so AUC must be 0.5
+
+    If we simply sort using scores, data preordering will make the
+    AUC estimation wrong.
+    >>> sorted_scores = sorted(scores, key=lambda x: (x[0], x[1]))
+    >>> print('If we let initial ordering to leak, AUC will wrongly be',
+    ...       CalcAUC(sorted_scores, -1))
+    If we let initial ordering to leak, AUC will wrongly be 0.0
+
+    If we forget to remove the class when sorting, class membership leaking
+    will render the AUC estimation wrong.
+    >>> class_leaked_scores = sorted(scores, reverse=True)
+    >>> print('If we let the class to leak when sorting, AUC will wrongly be',
+    ...       CalcAUC(class_leaked_scores, -1))
+    If we let the class to leak when sorting, AUC will wrongly be 1.0
+
+  See also
+  --------
+    Github PR: https://github.com/rdkit/rdkit/pull/1306
+    Discusses some performance penalties incurred when using this function
+    as currently implemented
   """
   # Shuffle
   scores = list(scores)                     # No side effects
