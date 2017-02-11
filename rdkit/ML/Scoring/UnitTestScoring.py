@@ -153,7 +153,7 @@ class TestCase(unittest.TestCase):
     nan = float('nan')
     scores = [(nan, 0)] * 10 + [(nan, 1)] * 10
     naively_sorted_scores = sorted(scores)
-    safeguarded_scores = Scoring.sortByColumns(naively_sorted_scores, -1)
+    safeguarded_scores = Scoring.SortByColumns(naively_sorted_scores, -1)
     # This is the problem
     self.assertEqual(Scoring.CalcAUC(naively_sorted_scores, 1), 0)
     self.assertEqual(Scoring.CalcAUC(naively_sorted_scores[::-1], 1), 1)
@@ -175,7 +175,7 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(Scoring.CalcAUC(sorted(scores, reverse=True), -1),
                            0.6, delta=tol)
     # This is the solution
-    safeguarded_scores = Scoring.sortByColumns(scores, -1)
+    safeguarded_scores = Scoring.SortByColumns(scores, -1)
     self.assertAlmostEqual(Scoring.CalcAUC(safeguarded_scores, -1), 0.5, delta=tol)
 
     # N.B. the same tests would also apply to RIE, enrichment factor, BEDROC...

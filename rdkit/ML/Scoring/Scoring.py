@@ -18,7 +18,7 @@ import numpy as np
 from operator import itemgetter
 
 
-def sortByColumns(scores, col, reverse=False):
+def SortByColumns(scores, classCol, reverse=False):
   """
   Safeguard against rotten ROCs (& AUCs & RIEs and whatnot) due to ordering artifacts.
 
