@@ -149,7 +149,7 @@ class TestCase(unittest.TestCase):
 
   def test_safeguard_sort(self):
 
-    # Garbage scores with sorted classes show garbage performance
+    # NaN scores with sorted classes show uninformative performance
     nan = float('nan')
     scores = [(nan, 0)] * 10 + [(nan, 1)] * 10
     naively_sorted_scores = sorted(scores)
