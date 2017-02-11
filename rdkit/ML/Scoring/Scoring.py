@@ -36,17 +36,19 @@ def sortByColumns(scores, col, reverse=False):
     raise ValueError('scores cannot be empty')
   np.random.RandomState(0).shuffle(scores)  # Shuffle (deterministically)
 
+  # Allow to pass collections of columns to ignore
+  if isinstance(classCol, int):
+    classCol = (classCol,)
+
   # Sort without taking the class into account
   # This works for any of {list, tuple, numpy array, ...}
-  scores_dim = len(scores[0])
-  if col < 0:
-    col += scores_dim
-  all_but_class = itemgetter(*[i for i in range(scores_dim) if i != col])
-  return sorted(scores, key=all_but_class, reverse=reverse)
+  numCols = len(scores[0])
+  classCol = set(c if c >= 0 else c + numCols for c in classCol)
+  allButClass = itemgetter(*[i for i in range(numCols) if i not in classCol])
+  return sorted(scores, key=allButClass, reverse=reverse)
 
-  # I guess I should use camel case
-  # Could these safeguards be introduced in ROC/BEDROC etc. without changing
-  # the API but for adding keyword arguments?
+  # Could these safeguards be introduced in ROC/BEDROC etc.
+  # without changing the API but for adding keyword arguments?
 
 
 def CalcROC(scores, col):
