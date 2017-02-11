@@ -19,7 +19,7 @@ import copy
 from operator import itemgetter
 
 
-def avoid_sorting_artifacts_on_ranking(scores, col, reverse=False):
+def sortByColumns(scores, col, reverse=False):
   """
   Safeguard against rotten ROCs (& AUCs & RIEs and whatnot) due to ordering artifacts.
 
