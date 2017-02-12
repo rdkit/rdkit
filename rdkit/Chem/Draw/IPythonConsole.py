@@ -33,7 +33,7 @@ kekulizeStructures = True
 ipython_useSVG = False
 ipython_3d = False
 molSize_3d = (400, 400)
-drawing_type_3d = {'stick':{}}
+drawing_type_3d = 'stick' # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 # expose RDLogs to Python StdErr so they are shown
 #  in the IPythonConsole not the server logs.
@@ -52,12 +52,16 @@ def _addMolToView(mol,view,confId,drawAs):
     mb = Chem.MolToMolBlock(mol,confId=confId)
     view.addModel(mb,'sdf')
   if drawAs is None:
-    drawAs = 'stick'
+    drawAs = drawing_type_3d
   view.setStyle({drawAs:{}})
 
-def drawMol3D(m,p=None,confId=-1,drawAs=None):
+def drawMol3D(m,p=None,confId=-1,drawAs=None,bgColor=None,size=None):
+  if bgColor is None:
+    bgColor = bgcolor_3d
+  if size is None:
+    size=molSize_3d
   if p is None:
-    p = py3Dmol.view(width=400,height=400)
+    p = py3Dmol.view(width=size[0],height=size[1])
   p.removeAllModels()
   try:
     iter(m)
@@ -68,7 +72,7 @@ def drawMol3D(m,p=None,confId=-1,drawAs=None):
     for m in ms:
       _addMolToView(m,p,confId,drawAs)
 
-  p.setBackgroundColor('0xeeeeee')
+  p.setBackgroundColor(bgColor)
   p.zoomTo()
   return p.show()
 
