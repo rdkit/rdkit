@@ -66,6 +66,7 @@
 #include <vector>
 #include <stack>
 #include <set>
+#include <queue>
 #include "inchi.h"
 #include <algorithm>
 
