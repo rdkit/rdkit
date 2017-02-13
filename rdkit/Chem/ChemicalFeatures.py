@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2006  greg Landrum and Rational Discovery LLC
 #
@@ -8,8 +7,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.Chem.rdMolChemicalFeatures import *
 from rdkit.Chem.rdChemicalFeatures import *
+from rdkit.Chem.rdMolChemicalFeatures import *
 
 
 def MCFF_GetFeaturesForMol(self, mol, includeOnly=""):
