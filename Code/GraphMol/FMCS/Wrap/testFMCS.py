@@ -181,6 +181,35 @@ class TestCase(unittest.TestCase):
     r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
     self.assertEqual(r.smartsString, "")
 
+  def test8MatchParams(self):
+    smis = ("CCC1NC1", "CCC1N(C)C1", "CCC1OC1")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps = rdFMCS.MCSParameters()
+    ps.BondCompareParameters.CompleteRingsOnly = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 3)
+
+
+    ps = rdFMCS.MCSParameters()
+    ps.SetAtomTyper(rdFMCS.AtomCompare.CompareAny)
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 5)
+
+  def test9MatchCharge(self):
+    smis = ("CCNC", "CCN(C)C", "CC[N+](C)C")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps = rdFMCS.MCSParameters()
+    ps.AtomCompareParameters.MatchFormalCharge = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 2)
+
+
 
 if __name__ == "__main__":
   unittest.main()
