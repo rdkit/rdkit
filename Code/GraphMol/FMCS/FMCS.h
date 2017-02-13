@@ -23,9 +23,11 @@ struct MCSParameters;
 struct MCSAtomCompareParameters {
   bool MatchValences;
   bool MatchChiralTag;
+  bool MatchFormalCharge;
 
  public:
-  MCSAtomCompareParameters() : MatchValences(false), MatchChiralTag(false) {}
+  MCSAtomCompareParameters()
+      : MatchValences(false), MatchChiralTag(false), MatchFormalCharge(false) {}
 };
 
 struct MCSBondCompareParameters {
@@ -54,30 +56,33 @@ typedef bool (*MCSBondCompareFunction)(const MCSBondCompareParameters& p,
                                        void* userData);
 
 // Some predefined functors:
-RDKIT_WRAP_DECL bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
-                       unsigned int atom1, const ROMol& mol2,
-                       unsigned int atom2, void* userData);
+RDKIT_WRAP_DECL bool MCSAtomCompareAny(const MCSAtomCompareParameters& p,
+                                       const ROMol& mol1, unsigned int atom1,
+                                       const ROMol& mol2, unsigned int atom2,
+                                       void* userData);
 
 RDKIT_WRAP_DECL bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
-                            const ROMol& mol1, unsigned int atom1,
-                            const ROMol& mol2, unsigned int atom2,
-                            void* userData);
+                                            const ROMol& mol1,
+                                            unsigned int atom1,
+                                            const ROMol& mol2,
+                                            unsigned int atom2, void* userData);
 RDKIT_WRAP_DECL bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
-                            const ROMol& mol1, unsigned int atom1,
-                            const ROMol& mol2, unsigned int atom2,
-                            void* userData);
+                                            const ROMol& mol1,
+                                            unsigned int atom1,
+                                            const ROMol& mol2,
+                                            unsigned int atom2, void* userData);
 
-RDKIT_WRAP_DECL bool MCSBondCompareAny(const MCSBondCompareParameters& p, const ROMol& mol1,
-                       unsigned int bond1, const ROMol& mol2,
-                       unsigned int bond2, void* userData);
-RDKIT_WRAP_DECL bool MCSBondCompareOrder(const MCSBondCompareParameters& p, const ROMol& mol1,
-                         unsigned int bond1, const ROMol& mol2,
-                         unsigned int bond2,
-                         void* userData);  // ignore Aromatization
-RDKIT_WRAP_DECL bool MCSBondCompareOrderExact(const MCSBondCompareParameters& p,
-                              const ROMol& mol1, unsigned int bond1,
-                              const ROMol& mol2, unsigned int bond2,
-                              void* userData);
+RDKIT_WRAP_DECL bool MCSBondCompareAny(const MCSBondCompareParameters& p,
+                                       const ROMol& mol1, unsigned int bond1,
+                                       const ROMol& mol2, unsigned int bond2,
+                                       void* userData);
+RDKIT_WRAP_DECL bool MCSBondCompareOrder(
+    const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1,
+    const ROMol& mol2, unsigned int bond2,
+    void* userData);  // ignore Aromatization
+RDKIT_WRAP_DECL bool MCSBondCompareOrderExact(
+    const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1,
+    const ROMol& mol2, unsigned int bond2, void* userData);
 
 struct MCSProgressData {
   unsigned NumAtoms;
