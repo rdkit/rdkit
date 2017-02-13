@@ -11,11 +11,12 @@
 """ unit testing code for molecule suppliers
 
 """
+import os
+import unittest
+
+from rdkit import Chem, RDLogger
 from rdkit import RDConfig
-import unittest, os
 from rdkit.six import next
-from rdkit.six.moves import cPickle
-from rdkit import Chem
 
 
 class TestCase(unittest.TestCase):
@@ -29,6 +30,7 @@ class TestCase(unittest.TestCase):
         os.unlink(fileN)
       except OSError:
         pass
+    RDLogger.EnableLog('rdApp.error')
 
   def test1SDSupplier(self):
     fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib', 'test_data', 'NCI_aids.10.sdf')
@@ -52,7 +54,7 @@ class TestCase(unittest.TestCase):
     assert m.GetProp('CAS_RN') == '6290-84-2'
 
     suppl.reset()
-    for i in range(10):
+    for _ in range(10):
       m = next(suppl)
     try:
       m = next(suppl)
@@ -81,7 +83,7 @@ class TestCase(unittest.TestCase):
     assert m.GetProp('_Name') == 'AMIODARONE'
     assert m.GetProp('ID') == 'RD-PGP-0002'
     suppl.reset()
-    for i in range(20):
+    for _ in range(20):
       m = next(suppl)
     try:
       m = next(suppl)
@@ -97,6 +99,8 @@ CC(=O)O,3
 fail,4
 CCOC,5
 """
+    RDLogger.DisableLog('rdApp.error')
+
     import tempfile
     fileN = tempfile.mktemp('.csv')
     with open(fileN, 'w+') as f:

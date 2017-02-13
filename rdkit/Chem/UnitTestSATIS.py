@@ -12,20 +12,17 @@
 
 """
 from __future__ import print_function
+
 import unittest
-from rdkit.Chem import *
+
+from rdkit import Chem
 from rdkit.Chem import SATIS
-from rdkit.six.moves import xrange
 
 
 class TestCase(unittest.TestCase):
 
-  def setUp(self):
-    print('\n%s: ' % self.shortDescription(), end='')
-
   def test1(self):
-    """ first set of test cases
-    """
+    """ first set of test cases """
     data = [('CC(=O)NC', ['0601010106', '0606070895', '0806999995', '0701060699', '0601010107']),
             ('O=CC(=O)C', ['0806999993', '0601060893', '0606060894', '0806999994', '0601010106']),
             ('C(=O)OCC(=O)O', ['0601080896', '0806999996', '0806069996', '0601010608', '0606080898',
@@ -35,7 +32,7 @@ class TestCase(unittest.TestCase):
                                   '3515999999', '0801159999']), ]
 
     for smi, res in data:
-      m = MolFromSmiles(smi)
+      m = Chem.MolFromSmiles(smi)
       satis = SATIS.SATISTypes(m)
       assert satis == res, "Bad SATIS for mol %s: %s should have been %s" % (smi, str(satis),
                                                                              str(res))
