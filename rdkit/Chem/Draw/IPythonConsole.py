@@ -1,3 +1,12 @@
+#
+#  Copyright (C) 2011-2017 Greg Landrum
+#
+#   @@ All Rights Reserved @@
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
+#
 import sys
 import IPython
 
@@ -42,9 +51,8 @@ Chem.WrapLogs()
 
 def _addMolToView(mol,view,confId,drawAs):
   if mol.GetNumAtoms()>=999 or drawAs == 'cartoon':
-    # py3DMol doesn't currently support multiple conect records
-    # and is happier with TER and MASTER records present
-    pdb = Chem.MolToPDBBlock(mol,flavor=0x20|0x10|0x8)
+    # py3DMol is happier with TER and MASTER records present
+    pdb = Chem.MolToPDBBlock(mol,flavor=0x20|0x10)
     view.addModel(pdb,'pdb')
   else:
     # py3Dmol does not currently support v3k mol files, so
