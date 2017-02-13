@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -33,28 +32,30 @@
 """ unit testing code for molecule drawing
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, os, tempfile
+import sys
+import unittest
+import os
 from rdkit import Chem
-from rdkit.Chem import Draw
-
+from rdkit.RDLogger import logger
 import platform
-if platform.system() == "Linux":
-  import os, sys
-  if not os.environ.get("DISPLAY", None):
-    try:
+try:
+  import matplotlib
+  if platform.system() == "Linux":
+    if not os.environ.get("DISPLAY", None):
       # Force matplotlib to not use any Xwindows backend.
-      import matplotlib
       print("Forcing use of Agg renderer", file=sys.stderr)
       matplotlib.use('Agg')
-    except ImportError:
-      pass
+except ImportError:
+  matplotlib = None
 
 try:
   from rdkit.Chem.Draw import SimilarityMaps as sm
+  from rdkit.Chem.Draw.mplCanvas import Canvas
+except RuntimeError:
+  sm = None
 except ImportError:
   sm = None
-from rdkit.RDLogger import logger
+
 logger = logger()
 
 
@@ -64,6 +65,7 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
+  @unittest.skipUnless(sm, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
@@ -72,7 +74,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertEqual(w, r)
 
-    fig, maxWeight = sm.GetSimilarityMapForFingerprint(
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
       self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
     self.assertEqual(maxWeight, 0.5)
 
@@ -126,6 +128,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
+  @unittest.skipUnless(sm, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
     m1 = Chem.MolFromSmiles('CC[C@](F)(Cl)c1ccccc1')
