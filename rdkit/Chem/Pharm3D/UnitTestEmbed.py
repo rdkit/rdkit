@@ -156,8 +156,8 @@ class TestCase(unittest.TestCase):
                                       randomSeed=23)
             tgt = testResults[name]
             self.assertEqual(len(tgt), len(stats))
-            print(name)
-            print(','.join(['%.2f' % x for x in stats]))
+            # print(name)
+            # print(','.join(['%.2f' % x for x in stats]))
             # we'll use different tolerances for the different values:
             self.assertTrue(feq(tgt[0], stats[0], 5.0), (tgt[0], stats[0]))
             for i in range(2, len(tgt)):

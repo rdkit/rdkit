@@ -3911,6 +3911,60 @@ CAS<~>
     self.assertTrue(m.HasProp('_Name'))
     self.assertEquals(m.GetProp('_Name'),"ourname")
 
+  def testPickleProps(self):
+    from rdkit.six.moves import cPickle
+    m = Chem.MolFromSmiles('C1=CN=CC=C1')
+    m.SetProp("_Name", "Name")
+    for atom in m.GetAtoms():
+      atom.SetProp("_foo", "bar"+str(atom.GetIdx()))
+      atom.SetProp("foo", "baz"+str(atom.GetIdx()))
+
+    Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.AllProps )
+    pkl = cPickle.dumps(m)
+    m2 = cPickle.loads(pkl)
+    smi1 = Chem.MolToSmiles(m)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+    self.assertEqual(m2.GetProp("_Name"), "Name")
+    for atom in m2.GetAtoms():
+      self.assertEqual(atom.GetProp("_foo"), "bar"+str(atom.GetIdx()))
+      self.assertEqual(atom.GetProp("foo"), "baz"+str(atom.GetIdx()))
+
+    Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.AtomProps )
+    pkl = cPickle.dumps(m)
+    m2 = cPickle.loads(pkl)
+    smi1 = Chem.MolToSmiles(m)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+    self.assertFalse(m2.HasProp("_Name"))
+    for atom in m2.GetAtoms():
+      self.assertFalse(atom.HasProp("_foo"))
+      self.assertEqual(atom.GetProp("foo"), "baz"+str(atom.GetIdx()))
+
+    Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.NoProps )
+    pkl = cPickle.dumps(m)
+    m2 = cPickle.loads(pkl)
+    smi1 = Chem.MolToSmiles(m)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+    self.assertFalse(m2.HasProp("_Name"))
+    for atom in m2.GetAtoms():
+      self.assertFalse(atom.HasProp("_foo"))
+      self.assertFalse(atom.HasProp("foo"))
+    
+    Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.MolProps |
+                                     Chem.PropertyPickleOptions.PrivateProps)
+    pkl = cPickle.dumps(m)
+    m2 = cPickle.loads(pkl)
+    smi1 = Chem.MolToSmiles(m)
+    smi2 = Chem.MolToSmiles(m2)
+    self.assertTrue(smi1 == smi2)
+    self.assertEqual(m2.GetProp("_Name"), "Name")
+    for atom in m2.GetAtoms():
+      self.assertFalse(atom.HasProp("_foo"))
+      self.assertFalse(atom.HasProp("foo"))
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

@@ -1,6 +1,5 @@
-# $Id$
 #
-# Copyright (C) 2001-2010 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2017 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -17,15 +16,14 @@ def _isCallable(thing):
   return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
               hasattr(thing,'__call__')
 
-
 _descList = []
 
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen
   from rdkit.Chem.EState import EState_VSA
-  mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Descriptors3D, Fragments]
+  mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
   otherMods = [Chem]
 

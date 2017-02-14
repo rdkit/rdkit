@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2007-2010 Greg Landrum
+//   Copyright (C) 2007-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2246,6 +2245,48 @@ void testGithub803() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1294() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 1294: ring stereochemistry "
+                          "perception failing for spiro centers"
+                       << std::endl;
+
+  {  // the original example from the bug report
+    std::string smi = "O[C@H]1CC[C@]11CC[C@@](Cl)(Br)CC1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 12);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+
+  {  // not spiro, but affected by same bug
+    std::string smi = "C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 14);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(13)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+
+  {
+    std::string smi = "C[C@H]1CC[C@@]2(CC[C@H](F)CC2)OC1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 13);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2267,9 +2308,10 @@ int main() {
   testRingStereochemistry();
   testGithub87();
   testGithub90();
-#endif
   testIssue2705543();
   testGithub553();
   testGithub803();
+#endif
+  testGithub1294();
   return 0;
 }
