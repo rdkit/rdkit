@@ -49,7 +49,7 @@ bgcolor_3d = '0xeeeeee'
 Chem.WrapLogs()
 
 
-def _addMolToView(mol,view,confId,drawAs):
+def addMolToView(mol,view,confId=-1,drawAs=None):
   if mol.GetNumAtoms()>=999 or drawAs == 'cartoon':
     # py3DMol is happier with TER and MASTER records present
     pdb = Chem.MolToPDBBlock(mol,flavor=0x20|0x10)
@@ -63,26 +63,26 @@ def _addMolToView(mol,view,confId,drawAs):
     drawAs = drawing_type_3d
   view.setStyle({drawAs:{}})
 
-def drawMol3D(m,p=None,confId=-1,drawAs=None,bgColor=None,size=None):
+def drawMol3D(m,view=None,confId=-1,drawAs=None,bgColor=None,size=None):
   if bgColor is None:
     bgColor = bgcolor_3d
   if size is None:
     size=molSize_3d
-  if p is None:
-    p = py3Dmol.view(width=size[0],height=size[1])
-  p.removeAllModels()
+  if view is None:
+    view = py3Dmol.view(width=size[0],height=size[1])
+  view.removeAllModels()
   try:
     iter(m)
   except TypeError:
-    _addMolToView(m,p,confId,drawAs)
+    addMolToView(m,view,confId,drawAs)
   else:
     ms = m
     for m in ms:
-      _addMolToView(m,p,confId,drawAs)
+      addMolToView(m,view,confId,drawAs)
 
-  p.setBackgroundColor(bgColor)
-  p.zoomTo()
-  return p.show()
+  view.setBackgroundColor(bgColor)
+  view.zoomTo()
+  return view.show()
 
 def _toJSON(mol):
   """For IPython notebook, renders 3D webGL objects."""
