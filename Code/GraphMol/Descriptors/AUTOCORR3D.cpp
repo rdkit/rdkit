@@ -74,7 +74,6 @@ double* retreiveVect(VectorXd matrix) {
   }
 
 VectorXd getEigenVect(std::vector<double> v){
-
       double* varray_ptr = &v[0];
       Map<VectorXd> V(varray_ptr,v.size());
       return V;
@@ -140,7 +139,6 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms, con
 
    VectorXd Wr = getEigenVect(wr);
 
- 
    MatrixXd Bi;
    MatrixXd tmp;
    double TDBmat[8][10];
