@@ -39,6 +39,18 @@ python::object MolToBinary(const ROMol &self) {
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
+
+python::object MolToBinaryWithProps(const ROMol &self, unsigned int props) {
+  std::string res;
+  {
+    NOGIL gil;
+    MolPickler::pickleMol(self, res, props);
+  }
+  python::object retval = python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  return retval;
+}
+
 //
 // allows molecules to be pickled.
 //  since molecules have a constructor that takes a binary string
@@ -269,6 +281,23 @@ struct mol_wrapper {
     python::register_exception_translator<ConformerException>(
         &rdExceptionTranslator);
 
+    python::enum_<RDKit::PicklerOps::PropertyPickleOptions>("PropertyPickleOptions")
+        .value("NoProps", RDKit::PicklerOps::NoProps)
+        .value("MolProps", RDKit::PicklerOps::MolProps)
+        .value("AtomProps", RDKit::PicklerOps::AtomProps)
+        .value("BondProps", RDKit::PicklerOps::BondProps)
+        .value("QueryAtomData", RDKit::PicklerOps::QueryAtomData)
+        .value("PrivateProps", RDKit::PicklerOps::PrivateProps)
+        .value("ComputedProps", RDKit::PicklerOps::ComputedProps)
+        .value("AllProps", RDKit::PicklerOps::AllProps)
+        .export_values();
+    ;
+
+    python::def("GetDefaultPickleProperties", MolPickler::getDefaultPickleProperties,
+                "Get the current global mol pickler options.");
+    python::def("SetDefaultPickleProperties", MolPickler::setDefaultPickleProperties,
+                "Set the current global mol pickler options.");
+    
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
         python::init<>("Constructor, takes no arguments"))
@@ -613,6 +642,10 @@ struct mol_wrapper {
 
         .def("ToBinary", MolToBinary,
              "Returns a binary string representation of the molecule.\n")
+        .def("ToBinary", MolToBinaryWithProps,
+             (python::arg("mol"), python::arg("propertyFlags")),
+             "Returns a binary string representation of the molecule pickling the "
+              "specified properties.\n")
 
         .def("GetRingInfo", &ROMol::getRingInfo,
              python::return_value_policy<python::reference_existing_object>(),

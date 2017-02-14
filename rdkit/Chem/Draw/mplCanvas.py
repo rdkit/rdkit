@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2008 Greg Landrum
 #
@@ -10,10 +9,7 @@
 #
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
-from matplotlib.axes import Axes
 from matplotlib.pyplot import figure
-#from matplotlib import textpath,font_manager
-import numpy
 
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 
@@ -72,7 +68,6 @@ class Canvas(CanvasBase):
       tw, th = canvas.transData.inverted().transform((w, h))
     except AttributeError:
       tw, th = 0.1, 0.1  # <- kludge
-    #print annot.xytext,w,h,tw,th
     return (tw, th, 0)
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), **kwargs):

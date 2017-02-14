@@ -351,7 +351,7 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol,  boost::uint64_t sanitizeOps,
+MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
   RWMol &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
@@ -751,26 +751,29 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
     }
 
     int v1, v2;
-    if (sz != 1 && sz != 2)
-      throw ValueErrorException(
-          "Input not a vector of (core_atom_idx,molecule_atom_idx) or "
-          "(molecule_atom_idx,...) entries");
-    if (sz == 1) {
-      if (length != core.getNumAtoms()) {
-        std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
+    switch (sz) {
+      case 1:
+        if (length != core.getNumAtoms()) {
+          std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
 
-        std::stringstream ss;
-        ss << std::string(
-                  "When using input vector of type (molecule_atom_idx,...) "
-                  "supplied core requires ")
-           << core.getNumAtoms() << entries;
-        throw ValueErrorException(ss.str());
-      }
-      v1 = (int)i;
-      v2 = python::extract<int>(match[i]);
-    } else if (sz == 2) {
-      v1 = python::extract<int>(match[i][0]);
-      v2 = python::extract<int>(match[i][1]);
+          std::stringstream ss;
+          ss << std::string(
+                    "When using input vector of type (molecule_atom_idx,...) "
+                    "supplied core requires ")
+             << core.getNumAtoms() << entries;
+          throw ValueErrorException(ss.str());
+        }
+        v1 = (int)i;
+        v2 = python::extract<int>(match[i]);
+        break;
+      case 2:
+        v1 = python::extract<int>(match[i][0]);
+        v2 = python::extract<int>(match[i][1]);
+        break;
+      default:
+        throw ValueErrorException(
+            "Input not a vector of (core_atom_idx,molecule_atom_idx) or "
+            "(molecule_atom_idx,...) entries");
     }
     matchVect.push_back(std::make_pair(v1, v2));
   }
@@ -798,7 +801,6 @@ struct molops_wrapper {
         .export_values();
     ;
 
-
     // ------------------------------------------------------------------------
     docString =
         "Assign stereochemistry to bonds based on coordinates.\n\
@@ -808,10 +810,9 @@ struct molops_wrapper {
     - mol: the molecule to be modified\n\
     - conformer: Conformer providing the coordinates\n\
 \n";
-    python::def(
-        "DetectBondStereoChemistry", DetectBondStereoChemistry,
-        (python::arg("mol"), python::arg("conformer")),
-        docString.c_str());
+    python::def("DetectBondStereoChemistry", DetectBondStereoChemistry,
+                (python::arg("mol"), python::arg("conformer")),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1520,7 +1521,6 @@ struct molops_wrapper {
     python::def("FindPotentialStereoBonds", MolOps::findPotentialStereoBonds,
                 (python::arg("mol"), python::arg("cleanIt") = false),
                 docString.c_str());
-
 
     // ------------------------------------------------------------------------
     docString =
