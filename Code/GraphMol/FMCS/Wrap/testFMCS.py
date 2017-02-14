@@ -209,6 +209,21 @@ class TestCase(unittest.TestCase):
     mcs = rdFMCS.FindMCS(ms,ps)
     self.assertEqual(mcs.numAtoms, 2)
 
+  def test10MatchChargeAndParams(self):
+    smis = ("CCNC", "CCN(C)C", "CC[N+](C)C", "CC[C+](C)C")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 2)
+
+    ps = rdFMCS.MCSParameters()
+    ps.SetAtomTyper(rdFMCS.AtomCompare.CompareAny)
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps.AtomCompareParameters.MatchFormalCharge = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 2)
 
 
 if __name__ == "__main__":
