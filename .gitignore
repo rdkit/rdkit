@@ -34,7 +34,6 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
 
 /rdkit/RDPaths.py
-/rdkit/Chem/inchi.py
 
 #- Files created during tests
 /Code/ForceField/MMFF/test_data/MMFF94_dative_min.sdf
