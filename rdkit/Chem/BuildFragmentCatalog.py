@@ -117,7 +117,7 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
       nPts = len(suppl)
     else:
       nPts = -1
-  progress = reportProgress(reportFreq, nPts)
+  progress = ReportProgress(reportFreq, nPts)
   for i, mol in enumerate(suppl):
     if i == nPts:
       break
@@ -166,7 +166,7 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
   fpgen = FragmentCatalog.FragFPGenerator()
   suppl.reset()
-  progress = reportProgress(reportFreq)
+  progress = ReportProgress(reportFreq)
   for i, mol in enumerate(suppl, 1):
     progress()
     if mol:
@@ -225,7 +225,7 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
     actName = suppl[0].GetPropNames()[-1]
   suppl.reset()
 
-  progress = reportProgress(reportFreq, nPts, start=1)
+  progress = ReportProgress(reportFreq, nPts, start=1)
   for i in range(1, nPts + 1):
     mol = next(suppl)
     if not acts:
@@ -272,7 +272,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
   else:
     ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
   fps = []
-  progress = reportProgress(reportFreq, nMols)
+  progress = ReportProgress(reportFreq, nMols)
   for i, mol in enumerate(suppl, 0):
     if not acts:
       try:
@@ -314,7 +314,7 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
     ranker.SetBiasList(biasList)
   else:
     ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
-  progress = reportProgress(reportFreq, nMols)
+  progress = ReportProgress(reportFreq, nMols)
   for i, mol in enumerate(suppl):
     if not acts:
       try:
@@ -332,25 +332,27 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
   return gains
 
 
-def reportProgress(reportFreq, nobjects=-1, start=0):
+class ReportProgress(object):
   """ Print progress messages """
-  if nobjects > 0:
-    fmt = 'Done {0} of {1}.\n'
-    fmtMsg = 'Done {0} of {1}, {2}.\n'
-  else:
-    fmt = 'Done {0}.\n'
-    fmtMsg = 'Done {0}, {2}.\n'
-  count = start
 
-  def counter(msg=None):
-    nonlocal count
-    if count and not count % reportFreq:
+  def __init__(self, reportFreq, nobjects=-1, start=0):
+    if nobjects > 0:
+      self.fmt = 'Done {0.count} of {0.nobjects}.\n'
+      self.fmtMsg = 'Done {0.count} of {0.nobjects}, {1}.\n'
+    else:
+      self.fmt = 'Done {0.count}.\n'
+      self.fmtMsg = 'Done {0.count}, {1}.\n'
+    self.count = start
+    self.reportFreq = reportFreq
+    self.nobjects = nobjects
+
+  def __call__(self, msg=None):
+    if self.count and not self.count % self.reportFreq:
       if msg is None:
-        message(fmt.format(count, nobjects))
+        message(self.fmt.format(self))
       else:
-        message(fmtMsg.format(count, nobjects, msg))
-    count += 1
-  return counter
+        message(self.fmtMsg.format(self, msg))
+    self.count += 1
 
 
 def OutputGainsData(outF, gains, cat, nActs=2):
