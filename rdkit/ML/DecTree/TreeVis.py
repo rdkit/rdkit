@@ -6,8 +6,9 @@
 """ functionality for drawing trees on sping canvases
 
 """
-from rdkit.sping import pid as piddle
 import math
+
+from rdkit.sping import pid as piddle
 
 
 class VisOpts(object):
@@ -188,11 +189,11 @@ def DrawTree(tree, canvas, nRes=2, scaleLeaves=False, allowShrink=True, showPuri
   dims = canvas.size
   loc = (dims[0] / 2, visOpts.vertOffset)
   if scaleLeaves:
-    #try:
-    #  l = tree._scales
-    #except AttributeError:
-    #  l = None
-    #if l is None:
+    # try:
+    #   l = tree._scales
+    # except AttributeError:
+    #   l = None
+    # if l is None:
     SetNodeScales(tree)
   if allowShrink:
     treeWid = CalcTreeWidth(tree)
@@ -211,7 +212,7 @@ def ResetTree(tree):
 
 
 def _simpleTest(canv):
-  from Tree import TreeNode as Node
+  from .Tree import TreeNode as Node
   root = Node(None, 'r', label='r')
   c1 = root.AddChild('l1_1', label='l1_1')
   c2 = root.AddChild('l1_2', isTerminal=1, label=1)

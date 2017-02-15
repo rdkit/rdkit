@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #
@@ -81,7 +80,7 @@ class FragmentMatcher(object):
   def GetMatches(self, mol, uniquify=1):
     if self._onPatt is None:
       return None
-    return mol.GetSubstructMatches(self._onPatt, uniquify)
+    return mol.GetSubstructMatches(self._onPatt, uniquify=uniquify)
 
   def GetBond(self, idx):
     if self._onPatt is None:

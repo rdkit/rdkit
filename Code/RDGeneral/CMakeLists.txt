@@ -43,6 +43,7 @@ rdkit_headers(Exceptions.h
               RDValue-taggedunion.h
               RDLog.h
               RDProps.h
+              RDThreads.h
               StreamOps.h
               types.h
               utils.h

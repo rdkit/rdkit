@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
+//  Copyright (C) 2013-2016 Paolo Tosco
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -24,6 +24,135 @@
 namespace RDKit {
 namespace MMFF {
 using namespace ForceFields::MMFF;
+
+class RingMembership {
+ public:
+  RingMembership() : d_isInAromaticRing(false) {};
+  bool getIsInAromaticRing() const {
+    return d_isInAromaticRing;
+  }
+  void setIsInAromaticRing(bool isInAromaticRing) {
+    d_isInAromaticRing = isInAromaticRing;
+  }
+  const std::set<boost::uint32_t>& getRingIdxSet() const {
+    return d_ringIdxSet;
+  }
+  std::set<boost::uint32_t>& getRingIdxSet() {
+    return d_ringIdxSet;
+  }
+ private:
+  bool d_isInAromaticRing;
+  std::set<boost::uint32_t> d_ringIdxSet;
+};
+
+class RingMembershipSize {
+ typedef std::map<unsigned int, RingMembership> RingMembershipMap;
+ typedef std::map<unsigned int, RingMembershipMap> RingSizeMembershipMap;
+ public:
+  static const boost::uint32_t IS_AROMATIC_BIT;
+  RingMembershipSize(const ROMol &mol);
+  bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) const;
+  bool areAtomsInSameAromaticRing(const Atom *atom1, const Atom *atom2) const;
+  bool areAtomsInSameRingOfSize(const unsigned int ringSize, const unsigned int numAtoms, ...) const;
+ private:
+  RingSizeMembershipMap d_ringSizeMembershipMap;
+};
+
+const boost::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1 << 31);
+
+RingMembershipSize::RingMembershipSize(const ROMol &mol) {
+  static const unsigned int MAX_NUM_RINGS = (0xFFFFFFFF >> 1);
+  const RingInfo *ringInfo = mol.getRingInfo();
+  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  PRECONDITION(atomRings.size() < MAX_NUM_RINGS, "Too many rings");
+  for (boost::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
+    unsigned int ringSize = atomRings[ringIdx].size();
+    boost::uint32_t ringIdxWithAromaticFlag = ringIdx;
+    bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
+    if (ringIsAromatic) 
+      ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
+    RingSizeMembershipMap::iterator it = d_ringSizeMembershipMap.find(ringSize);
+    if (it == d_ringSizeMembershipMap.end())
+      it = d_ringSizeMembershipMap.insert(std::make_pair(ringSize, RingMembershipMap())).first;
+    for (INT_VECT::const_iterator atomIdxIt = atomRings[ringIdx].begin();
+      atomIdxIt != atomRings[ringIdx].end(); ++atomIdxIt) {
+      RingMembershipMap::iterator it2 = it->second.find(*atomIdxIt);
+      if (it2 == it->second.end())
+        it2 = it->second.insert(std::make_pair(*atomIdxIt, RingMembership())).first;
+      it2->second.getRingIdxSet().insert(ringIdxWithAromaticFlag);
+      if (ringIsAromatic)
+        it2->second.setIsInAromaticRing(true);
+    }
+  }
+}
+
+// returns true if the atom is in an aromatic ring of size ringSize
+bool RingMembershipSize::isAtomInAromaticRingOfSize(
+    const Atom *atom, const unsigned int ringSize) const {
+  RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.find(ringSize);
+  bool isAromatic = (it != d_ringSizeMembershipMap.end());
+  if (isAromatic) {
+    RingMembershipMap::const_iterator it2 = it->second.find(atom->getIdx());
+    isAromatic = (it2 != it->second.end());
+    if (isAromatic)
+      isAromatic = it2->second.getIsInAromaticRing();
+  }
+    
+  return isAromatic;
+}
+
+bool RingMembershipSize::areAtomsInSameAromaticRing(
+    const Atom *atom1, const Atom *atom2) const {
+  bool areInSameAromaticRing = false;
+
+  for (RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.begin();
+    !areInSameAromaticRing && (it != d_ringSizeMembershipMap.end()); ++it) {
+    std::vector<boost::uint32_t> intersectVect;
+    RingMembershipMap::const_iterator it1 = it->second.find(atom1->getIdx());
+    RingMembershipMap::const_iterator it2 = it->second.find(atom2->getIdx());
+    if ((it1 != it->second.end()) && (it2 != it->second.end())) {
+      std::set_intersection(it1->second.getRingIdxSet().begin(),
+        it1->second.getRingIdxSet().end(), it2->second.getRingIdxSet().begin(),
+        it2->second.getRingIdxSet().end(), std::back_inserter(intersectVect));
+      for (std::vector<boost::uint32_t>::const_iterator ivIt = intersectVect.begin();
+        !areInSameAromaticRing && (ivIt != intersectVect.end()); ++ ivIt)
+        areInSameAromaticRing = *ivIt & IS_AROMATIC_BIT;
+    }
+  }
+
+  return areInSameAromaticRing;
+}
+
+bool RingMembershipSize::areAtomsInSameRingOfSize(
+    const unsigned int ringSize, const unsigned int numAtoms, ...) const {
+  va_list atoms;
+  bool areInSameRingOfSize = false;
+  
+  RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.find(ringSize);
+  if (it != d_ringSizeMembershipMap.end()) {
+    va_start(atoms, numAtoms);
+    unsigned int idx1 = va_arg(atoms, const Atom *)->getIdx();
+    RingMembershipMap::const_iterator it1 = it->second.find(idx1);
+    if (it1 != it->second.end()) {
+      std::set<boost::uint32_t> commonSet = it1->second.getRingIdxSet();
+      for (unsigned int i = 1; !commonSet.empty() && (i < numAtoms); ++i) {
+        areInSameRingOfSize = false;
+        unsigned int idx2 = va_arg(atoms, const Atom *)->getIdx();
+        RingMembershipMap::const_iterator it2 = it->second.find(idx2);
+        if (it2 == it->second.end()) break;
+        std::set<boost::uint32_t> intersect;
+        std::set_intersection(commonSet.begin(), commonSet.end(),
+          it2->second.getRingIdxSet().begin(), it2->second.getRingIdxSet().end(),
+          std::inserter(intersect, intersect.end()));
+        commonSet = intersect;
+        areInSameRingOfSize = !commonSet.empty();
+      }
+    }
+    va_end(atoms);
+  }
+
+  return areInSameRingOfSize;
+}
 
 // given the atomic num, this function returns the periodic
 // table row number, starting from 0 for hydrogen
@@ -72,39 +201,37 @@ unsigned int getPeriodicTableRowHL(const int atomicNum) {
 // given the MMFF atom type, this function returns true
 // if it is aromatic
 bool isAromaticAtomType(const unsigned int atomType) {
-  const unsigned int aromatic_array[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
+  static const unsigned int aromatic_array[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
                                          66, 69, 76, 78, 79, 80, 81, 82};
-  const std::vector<int> aromaticTypes(
+  const std::set<unsigned int> aromaticTypes(
       aromatic_array,
       aromatic_array + sizeof(aromatic_array) / sizeof(aromatic_array[0]));
 
-  return ((std::find(aromaticTypes.begin(), aromaticTypes.end(), atomType) !=
-           aromaticTypes.end())
-              ? true
-              : false);
+  return (aromaticTypes.find(atomType) != aromaticTypes.end());
+}
+
+bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
+  bool isAromatic = true;
+  for (unsigned int i = 0; isAromatic && (i < ringIndxVect.size() - 1); ++i)
+    isAromatic = (mol.getBondBetweenAtoms(
+      ringIndxVect[i], ringIndxVect[i + 1])->getBondType() == Bond::AROMATIC);
+  return isAromatic;
 }
 
 // returns true if the atom is in a ring of size ringSize
 bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) {
-  unsigned int i;
-  unsigned int j;
   bool isAromatic = false;
-  ROMol mol = atom->getOwningMol();
-  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
+  const ROMol &mol = atom->getOwningMol();
+  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
 
   if (atom->getIsAromatic()) {
-    for (i = 0; (!isAromatic) && (i < atomRings.size()); ++i) {
+    for (unsigned int i = 0; (!isAromatic) && (i < atomRings.size()); ++i) {
       if ((atomRings[i].size() != ringSize) ||
           (std::find(atomRings[i].begin(), atomRings[i].end(),
                      atom->getIdx()) == atomRings[i].end())) {
         continue;
       }
-      for (j = 0, isAromatic = true;
-           isAromatic && (j < atomRings[i].size() - 1); ++j) {
-        isAromatic =
-            (mol.getBondBetweenAtoms(atomRings[i][j], atomRings[i][j + 1])
-                 ->getBondType() == Bond::AROMATIC);
-      }
+      isAromatic = isRingAromatic(mol, atomRings[i]);
     }
   }
 
@@ -114,7 +241,7 @@ bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) {
 // returns true if the atom is an N-oxide
 bool isAtomNOxide(const Atom *atom) {
   bool isNOxide = false;
-  ROMol mol = atom->getOwningMol();
+  const ROMol &mol = atom->getOwningMol();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
 
@@ -231,7 +358,7 @@ bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
                               const unsigned int numAtoms, ...) {
   unsigned int i;
   bool areInSameRingOfSize = false;
-  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
+  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
   unsigned int idx;
   va_list atomIdxs;
 
@@ -258,7 +385,7 @@ bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
   unsigned int i;
   unsigned int j;
   bool areInSameAromatic = false;
-  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
+  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
 
   if (mol.getAtomWithIdx(idx1)->getIsAromatic() &&
       mol.getAtomWithIdx(idx2)->getIsAromatic()) {
@@ -296,7 +423,7 @@ void setMMFFAromaticity(RWMol &mol) {
   RingInfo *ringInfo = mol.getRingInfo();
   Atom *atom;
   Bond *bond;
-  VECT_INT_VECT atomRings = ringInfo->atomRings();
+  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   boost::dynamic_bitset<> aromBitVect(mol.getNumAtoms());
@@ -455,7 +582,8 @@ void setMMFFAromaticity(RWMol &mol) {
 }
 
 // sets the MMFF atomType for a heavy atom
-void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
+void MMFFMolProperties::setMMFFHeavyAtomType(
+    const RingMembershipSize &rmSize, const Atom *atom) {
   unsigned int atomType = 0;
   unsigned int i;
   unsigned int j;
@@ -464,7 +592,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
   bool isAlphaOS = false;
   bool isBetaOS = false;
   bool isNSO2orNSO3orNCN = false;
-  ROMol mol = atom->getOwningMol();
+  const ROMol &mol = atom->getOwningMol();
   RingInfo *ringInfo = mol.getRingInfo();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
@@ -476,7 +604,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
   std::vector<const Atom *> betaHet;
 
   if (atom->getIsAromatic()) {
-    if (isAtomInAromaticRingOfSize(atom, 5)) {
+    if (rmSize.isAtomInAromaticRingOfSize(atom, 5)) {
       // 5-membered aromatic rings
       // if ipso is carbon or nitrogen, find eventual alpha and beta heteroatoms
       if ((atom->getAtomicNum() == 6) || (atom->getAtomicNum() == 7)) {
@@ -486,14 +614,13 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
           const Atom *nbrAtom = mol[*nbrIdx].get();
           // if the alpha neighbor is not in a 5-membered aromatic
           // ring, skip to the next neighbor
-          if (!isAtomInAromaticRingOfSize(nbrAtom, 5)) {
+          if (!rmSize.isAtomInAromaticRingOfSize(nbrAtom, 5)) {
             continue;
           }
           // if the alpha neighbor belongs to the same ring of ipso atom
           // and it is either oxygen, sulfur, or non-N-oxide trivalent nitrogen,
           // add it to the alpha atom vector
-          if (areAtomsInSameRingOfSize(mol, 5, 2, atom->getIdx(),
-                                       nbrAtom->getIdx()) &&
+          if (rmSize.areAtomsInSameRingOfSize(5, 2, atom, nbrAtom) &&
               ((nbrAtom->getAtomicNum() == 8) ||
                (nbrAtom->getAtomicNum() == 16) ||
                ((nbrAtom->getAtomicNum() == 7) &&
@@ -511,15 +638,14 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
             }
             // if the beta neighbor is not in a 5-membered aromatic
             // ring, skip to the next neighbor
-            if (!isAtomInAromaticRingOfSize(nbr2Atom, 5)) {
+            if (!rmSize.isAtomInAromaticRingOfSize(nbr2Atom, 5)) {
               continue;
             }
             // if the beta neighbor belongs to the same ring of ipso atom
             // and it is either oxygen, sulfur, or non-N-oxide trivalent
             // nitrogen,
             // add it to the beta atom vector
-            if (areAtomsInSameRingOfSize(mol, 5, 2, atom->getIdx(),
-                                         nbr2Atom->getIdx()) &&
+            if (rmSize.areAtomsInSameRingOfSize(5, 2, atom, nbr2Atom) &&
                 ((nbr2Atom->getAtomicNum() == 8) ||
                  (nbr2Atom->getAtomicNum() == 16) ||
                  ((nbr2Atom->getAtomicNum() == 7) &&
@@ -543,8 +669,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
           // do alpha and beta heteroatoms belong to the same ring?
           for (i = 0; (!alphaOrBetaInSameRing) && (i < alphaHet.size()); ++i) {
             for (j = 0; (!alphaOrBetaInSameRing) && (j < betaHet.size()); ++j) {
-              alphaOrBetaInSameRing = areAtomsInSameRingOfSize(
-                  mol, 5, 2, alphaHet[i]->getIdx(), betaHet[j]->getIdx());
+              alphaOrBetaInSameRing = rmSize.areAtomsInSameRingOfSize(
+                  5, 2, alphaHet[i], betaHet[j]);
             }
           }
         }
@@ -574,10 +700,10 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
                     (!isAtomNOxide(nbrAtom))) {
                   ++nFormalCharge;
                 }
-                if (isAtomInAromaticRingOfSize(nbrAtom, 5)) {
+                if (rmSize.isAtomInAromaticRingOfSize(nbrAtom, 5)) {
                   ++nInAromatic5Ring;
                 }
-                if (isAtomInAromaticRingOfSize(nbrAtom, 6)) {
+                if (rmSize.isAtomInAromaticRingOfSize(nbrAtom, 6)) {
                   ++nInAromatic6Ring;
                 }
               }
@@ -608,8 +734,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
                   (!(ringInfo->isAtomInRingOfSize(nbrAtom->getIdx(), 6)))) {
                 surroundedByBenzeneC = false;
               }
-              if (areAtomsInSameRingOfSize(mol, 5, 2, atom->getIdx(),
-                                           nbrAtom->getIdx()) &&
+              if (rmSize.areAtomsInSameRingOfSize(5, 2, atom, nbrAtom) &&
                   (!(nbrAtom->getIsAromatic()))) {
                 surroundedByArom = false;
               }
@@ -727,7 +852,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
       }
     }
 
-    if ((!atomType) && (isAtomInAromaticRingOfSize(atom, 6))) {
+    if (!atomType && (rmSize.isAtomInAromaticRingOfSize(atom, 6))) {
       // 6-membered aromatic rings
       switch (atom->getAtomicNum()) {
         // Carbon
@@ -1095,7 +1220,7 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom) {
                     if (nbr2Atom->getFormalCharge() == 1) {
                       ++nFormalCharge;
                     }
-                    if (isAtomInAromaticRingOfSize(nbrAtom, 6)) {
+                    if (rmSize.isAtomInAromaticRingOfSize(nbrAtom, 6)) {
                       ++nInAromatic6Ring;
                     }
                     // count how many oxygens are bonded to this nitrogen
@@ -2034,7 +2159,7 @@ void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom) {
   bool isHOCO = false;
   bool isHOP = false;
   bool isHOS = false;
-  ROMol mol = atom->getOwningMol();
+  const ROMol &mol = atom->getOwningMol();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   ROMol::ADJ_ITER nbr2Idx;
@@ -2298,7 +2423,7 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
       d_oStream(&oStream),
       d_MMFFAtomPropertiesPtrVect(mol.getNumAtoms()) {
   ROMol::AtomIterator it;
-  if (!(mol.hasProp(common_properties::_MMFFSanitized))) {
+  if (!mol.hasProp(common_properties::_MMFFSanitized)) {
     bool isAromaticSet = false;
     for (it = mol.beginAtoms(); (!isAromaticSet) && (it != mol.endAtoms());
          ++it) {
@@ -2317,9 +2442,10 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
   boost::uint8_t atomType = 1;
 
   setMMFFAromaticity((RWMol &)mol);
+  RingMembershipSize rmSize(mol);
   for (it = mol.beginAtoms(); it != mol.endAtoms(); ++it) {
     if ((*it)->getAtomicNum() != 1) {
-      this->setMMFFHeavyAtomType(*it);
+      this->setMMFFHeavyAtomType(rmSize, *it);
     }
   }
   for (it = mol.beginAtoms(); atomType && (it != mol.endAtoms()); ++it) {
@@ -2647,7 +2773,6 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
         r0_i[0] -= dec;
         r0_i[1] -= dec;
       }
-      std::cout << "BO_ij=" << BO_ij << std::endl;
 #endif
   // equation (18) - MMFF.V, page 625
   mmffBondParams->r0 = (r0_i[0] + r0_i[1] -

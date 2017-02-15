@@ -1549,8 +1549,7 @@ void testGithub696() {
 }
 
 void testGithub697() {
-  {
-    // a group of chembl molecules (and things derived from them), all of which
+  {  // a group of chembl molecules (and things derived from them), all of which
     // contain a c1cscn1 heterocycle
     std::string smis[] = {
         "C1SC2=NC1CCCCCC2", "C1CCCc2nc(CC1)cs2", "C1Cc2coc(n2)-c2coc(C1)n2",
@@ -1602,6 +1601,25 @@ void testGithub697() {
   }
 }
 
+namespace {
+void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
+                  int expectedConfId = -1) {
+  PRECONDITION(m, "bad pointer");
+  PRECONDITION(expected, "bad pointer");
+  TEST_ASSERT(m->getNumAtoms() == expected->getNumAtoms());
+  const Conformer &conf1 = m->getConformer(molConfId);
+  const Conformer &conf2 = expected->getConformer(expectedConfId);
+  for (unsigned int i = 0; i < m->getNumAtoms(); i++) {
+    TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
+                expected->getAtomWithIdx(i)->getAtomicNum());
+
+    RDGeom::Point3D pt1i = conf1.getAtomPos(i);
+    RDGeom::Point3D pt2i = conf2.getAtomPos(i);
+    TEST_ASSERT((pt1i - pt2i).length() < 10e-4);
+  }
+}
+}
+
 void testGithub971() {
   {
     // sample molecule found by Sereina
@@ -1643,19 +1661,145 @@ void testGithub971() {
     RWMol *expected = MolBlockToMol(expectedMb);
     unsigned int nat = expected->getNumAtoms();
     TEST_ASSERT(nat == m->getNumAtoms());
-    
-    const Conformer &conf1 = m->getConformer(0);
-    const Conformer &conf2 = expected->getConformer(0);
-    for (unsigned int i = 0; i < nat; i++) {
-      TEST_ASSERT(m->getAtomWithIdx(i)->getAtomicNum() ==
-                  expected->getAtomWithIdx(i)->getAtomicNum());
-                  
-      RDGeom::Point3D pt1i = conf1.getAtomPos(i);
-      RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-      TEST_ASSERT( (pt1i - pt2i).length() < 10e-4 );
-    }
+    compareConfs(m, expected, 0, 0);
     delete m;
     delete expected;
+  }
+}
+
+void testEmbedParameters() {
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.dg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.useExpTorsionAnglePrefs = true;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.useExpTorsionAnglePrefs = true;
+    params.useBasicKnowledge = true;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.useBasicKnowledge = true;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  //------------
+  // using the pre-defined parameter sets
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
+  }
+  {
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
+    RWMol *ref = MolFileToMol(fname, true, false);
+    TEST_ASSERT(ref);
+    RWMol *mol = SmilesToMol("OCCC");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
+    params.randomSeed = 42;
+    DGeomHelpers::EmbedMolecule(*mol, params);
+    compareConfs(ref, mol);
+
+    delete ref;
+    delete mol;
   }
 }
 
@@ -1808,7 +1952,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test github issue 696: Bad 1-4 bounds matrix "
                           "elements in highly constrained system\n";
   testGithub696();
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog)
@@ -1819,6 +1962,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t ugly conformations can be generated for highly "
                           "constrained ring systems.\n";
   testGithub971();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
+  testEmbedParameters();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

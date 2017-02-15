@@ -1,8 +1,7 @@
 #
 #  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
-#  All Rights Reserved 
+#  All Rights Reserved
 #
-import numpy
 
 
 def _CenterTForm(dataSet):

@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -21,18 +20,17 @@ Sample Usage:
 
 
 """
+
 from __future__ import print_function
+
+import getopt
+import sys
+
 from rdkit import Chem
+from rdkit import DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
-from rdkit import DataStructs
-import sys
 from rdkit.six.moves import cPickle
-
-_cvsVersion = "$Id$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
 
 
 def error(msg):
@@ -81,17 +79,17 @@ def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFing
                            reportFreq=10, maxMols=-1, **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
 
-  Returns a list of 2-tuples: (id,fp)
-  
+  Returns a list of 2-tuples: (ID,fp)
+
   """
   res = []
   nDone = 0
   for entry in dataSource:
-    id, smi = str(entry[idCol]), str(entry[smiCol])
+    ID, smi = str(entry[idCol]), str(entry[smiCol])
     mol = Chem.MolFromSmiles(smi)
     if mol is not None:
       fp = FingerprintMol(mol, fingerprinter, **fpArgs)
-      res.append((id, fp))
+      res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
         message('Done %d molecules\n' % (nDone))
@@ -106,15 +104,15 @@ def FingerprintsFromMols(mols, fingerprinter=Chem.RDKFingerprint, reportFreq=10,
                          **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
 
-  Returns a list of 2-tuples: (id,fp)
-  
+  Returns a list of 2-tuples: (ID,fp)
+
   """
   res = []
   nDone = 0
-  for id, mol in mols:
+  for ID, mol in mols:
     if mol:
       fp = FingerprintMol(mol, fingerprinter, **fpArgs)
-      res.append((id, fp))
+      res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
         message('Done %d molecules\n' % (nDone))
@@ -129,24 +127,24 @@ def FingerprintsFromPickles(dataSource, idCol, pklCol, fingerprinter=Chem.RDKFin
                             reportFreq=10, maxMols=-1, **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
 
-  Returns a list of 2-tuples: (id,fp)
-  
+  Returns a list of 2-tuples: (ID,fp)
+
   """
   res = []
   nDone = 0
   for entry in dataSource:
-    id, pkl = str(entry[idCol]), str(entry[pklCol])
+    ID, pkl = str(entry[idCol]), str(entry[pklCol])
     mol = Chem.Mol(pkl)
     if mol is not None:
       fp = FingerprintMol(mol, fingerprinter, **fpArgs)
-      res.append((id, fp))
+      res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
         message('Done %d molecules\n' % (nDone))
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
-      error('Problems parsing pickle for id: %s\n' % id)
+      error('Problems parsing pickle for ID: %s\n' % ID)
   return res
 
 
@@ -237,7 +235,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:
       from rdkit.Dbase.DbConnection import DbConnect
-      from rdkit.Dbase import DbInfo, DbUtils, DbModule
+      from rdkit.Dbase import DbUtils, DbModule
       conn = DbConnect(dbName)
       #
       #  We don't have a db open already, so we'll need to figure out
@@ -262,8 +260,8 @@ def FingerprintsFromDetails(details, reportFreq=10):
       #
       # And add the data
       #
-      for id, fp in fps:
-        tpl = id, DbModule.binaryHolder(fp.ToBinary())
+      for ID, fp in fps:
+        tpl = ID, DbModule.binaryHolder(fp.ToBinary())
         conn.InsertData(details.outTableName, tpl)
       conn.Commit()
   return fps
@@ -363,15 +361,15 @@ Usage: FingerprintMols.py [args] <fName>
   If <fName> is provided and no tableName is specified (see below),
   data will be read from the text file <fName>.  Text files delimited
   with either commas (extension .csv) or tabs (extension .txt) are
-  supported. 
+  supported.
 
   Command line arguments are:
     - -d _dbName_: set the name of the database from which
-      to pull input molecule information.  If output is 
+      to pull input molecule information.  If output is
       going to a database, this will also be used for that
       unless the --outDbName option is used.
 
-    - -t _tableName_: set the name of the database table 
+    - -t _tableName_: set the name of the database table
       from which to pull input molecule information
 
     - --smilesName=val: sets the name of the SMILES column
@@ -383,11 +381,11 @@ Usage: FingerprintMols.py [args] <fName>
     - --idName=val: sets the name of the id column in the input
       database.  Defaults to be the name of the first db column
       (or *ID* for text files).
-      
+
     - -o _outFileName_:  name of the output file (output will
       be a pickle file with one label,fingerprint entry for each
-      molecule).  
-      
+      molecule).
+
     - --outTable=val: name of the output db table used to store
       fingerprints.  If this table already exists, it will be
       replaced.
@@ -398,7 +396,7 @@ Usage: FingerprintMols.py [args] <fName>
     - --fpColName=val: name to use for the column which stores
       fingerprints (in pickled format) in the output db table.
       Default is *AutoFragmentFP*
-      
+
     - --maxSize=val:  base size of the fingerprints to be generated
       Default is *2048*
 
@@ -414,7 +412,7 @@ Usage: FingerprintMols.py [args] <fName>
 
     - --maxPath=val:  maximum path length to be included in
       fragment-based fingerprints. Default is *7*.
-      
+
     - --nBitsPerHash: number of bits to be set in the output
       fingerprint for each fragment. Default is *2*.
 
@@ -423,8 +421,8 @@ Usage: FingerprintMols.py [args] <fName>
 
     - -V: include valence information in the fingerprints
       Default is *false*.
-      
-    - -H: include Hs in the fingerprint 
+
+    - -H: include Hs in the fingerprint
       Default is *false*.
 
     - --maxMols=val: sets the maximum number of molecules to be
@@ -449,7 +447,6 @@ def ParseArgs(details=None):
        screener; not all arguments make sense for all applications.
 
   """
-  import sys, getopt
   args = sys.argv[1:]
   try:
     args, extras = getopt.getopt(args,
@@ -577,6 +574,6 @@ def ParseArgs(details=None):
 
 
 if __name__ == '__main__':
-  message("This is FingerprintMols version %s\n\n" % (__VERSION_STRING))
+  message("This is FingerprintMols\n\n")
   details = ParseArgs()
   FingerprintsFromDetails(details)

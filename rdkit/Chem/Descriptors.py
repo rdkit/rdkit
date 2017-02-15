@@ -1,6 +1,5 @@
-# $Id$
 #
-# Copyright (C) 2001-2010 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2017 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -16,7 +15,6 @@ import collections
 def _isCallable(thing):
   return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
               hasattr(thing,'__call__')
-
 
 _descList = []
 

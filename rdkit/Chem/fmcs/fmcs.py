@@ -1047,7 +1047,7 @@ def find_duplicates(cangen_nodes, start, end):
   result = []
   prev_value = -1
   count = 0
-  for index in xrange(start, end):
+  for index in range(start, end):
     node = cangen_nodes[index]
     if node.value == prev_value:
       count += 1
@@ -2461,19 +2461,19 @@ def parse_select(s):
     m = range_pat.match(s, start)
     if m is not None:
       # Selected from 'left' to (and including) 'right'
-      # Convert into xrange fields, starting from 0
+      # Convert into range fields, starting from 0
       left = int(m.group(1))
       right = m.group(2)
       if not right:
         ranges.append(starting_from(left - 1))
       else:
-        ranges.append(xrange(left - 1, int(right)))
+        ranges.append(range(left - 1, int(right)))
     else:
       # Selected a single value
       m = value_pat.match(s, start)
       if m is not None:
         val = int(m.group(1))
-        ranges.append(xrange(val - 1, val))
+        ranges.append(range(val - 1, val))
       else:
         raise argparse.ArgumentTypeError("Unknown character at position %d of %r" % (start + 1, s))
     start = m.end()

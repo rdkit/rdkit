@@ -5927,7 +5927,7 @@ void test62Github975() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
-void testCopyConstructor() {
+void test63CopyConstructor() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing copy constructor" << std::endl;
 
@@ -5943,12 +5943,43 @@ void testCopyConstructor() {
     removeMappingNumbersFromReactions(*rxn_new);
     std::string smi2 = ChemicalReactionToRxnSmiles(*rxn);
     std::string new_smi = ChemicalReactionToRxnSmiles(*rxn_new);
+    std::cerr << "smi1 " << smi1 << std::endl;
+    std::cerr << "smi2 " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
     TEST_ASSERT(smi2 != new_smi);
     TEST_ASSERT(new_smi == "CCC(N)(O)Cl>>CC(C)(N)O.Cl");
 
     delete rxn;
     delete rxn_new;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test64Github1266() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github 1266: Reactions don't modify isotope "
+                          "unless chemical element is specified for the product"
+                       << std::endl;
+
+  {
+    std::string smi = "[13:1]>>[14:1]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      smi = "C[13CH3]";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getIsotope() == 14);
+    }
+
+    delete rxn;
   }
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -6007,7 +6038,6 @@ int main() {
   test40AgentsInSmarts();
   test41Github233();
   test42ReactionSmiles();
-  test43Github243();
   test44Github290();
   test45SmilesWriter();
   test46Agents();
@@ -6024,12 +6054,14 @@ int main() {
   test57IntroductionOfNewChiralCenters();
   test58MolFileValueRoundTrip();
   test59ReactionCanonicalization();
-#endif
-
   test60RunSingleReactant();
   test61Github685();
   test62Github975();
-  testCopyConstructor();
+  test63CopyConstructor();
+#endif
+
+  test43Github243();
+  test64Github1266();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

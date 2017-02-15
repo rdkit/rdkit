@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -411,7 +411,24 @@ T *makeAtomRingBondCountQuery(int what, const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
-//! returns a Query for matching atoms with a particular number of ring bonds
+//! returns a Query for matching generic A atoms (heavy atoms)
+ATOM_EQUALS_QUERY *makeAAtomQuery();
+//! returns a Query for matching generic AH atoms (any atom)
+ATOM_EQUALS_QUERY *makeAHAtomQuery();
+//! returns a Query for matching generic Q atoms (heteroatoms)
+ATOM_OR_QUERY *makeQAtomQuery();
+//! returns a Query for matching generic QH atoms (heteroatom or H)
+ATOM_EQUALS_QUERY *makeQHAtomQuery();
+//! returns a Query for matching generic X atoms (halogens)
+ATOM_OR_QUERY *makeXAtomQuery();
+//! returns a Query for matching generic XH atoms (halogen or H)
+ATOM_OR_QUERY *makeXHAtomQuery();
+//! returns a Query for matching generic M atoms (metals)
+ATOM_OR_QUERY *makeMAtomQuery();
+//! returns a Query for matching generic MH atoms (metals or H)
+ATOM_OR_QUERY *makeMHAtomQuery();
+
+//! returns a Query for matching atoms that have ring bonds
 template <class T>
 T *makeAtomHasRingBondQuery(const std::string &descr) {
   return makeAtomSimpleQuery<T>(1, queryAtomHasRingBond, descr);

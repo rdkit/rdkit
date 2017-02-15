@@ -5,6 +5,7 @@ tests = [
   ("python", "test_list.py", {'dir': 'Dbase'}),
   ("python", "test_list.py", {'dir': 'SimDivFilters'}),
   ("python", "test_list.py", {'dir': 'VLib'}),
+  ("python", "test_list.py", {'dir': 'utils'}),
 ]
 
 longTests = []

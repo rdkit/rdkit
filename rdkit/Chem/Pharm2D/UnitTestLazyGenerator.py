@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2006  greg Landrum and Rational Discovery LLC
 #
@@ -12,25 +11,34 @@
 
 """
 import unittest
+
 from rdkit import Chem
-from rdkit.Chem.Pharm2D import SigFactory, LazyGenerator
+from rdkit.Chem.Pharm2D import SigFactory
+
+try:
+  from rdkit.Chem.Pharm2D import LazyGenerator
+except NotImplementedError:
+  LazyGenerator = None
 
 
-class TestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):  # pragma: nocover
 
-  def setUp(self):
-    self.factory = SigFactory.SigFactory()
-    self.factory.SetPatternsFromSmarts(['O', 'N'])
-    self.factory.SetBins([(0, 2), (2, 5), (5, 8)])
-    self.factory.SetMinCount(2)
-    self.factory.SetMaxCount(3)
+  def getFactory(self):
+    factory = SigFactory.SigFactory()
+    factory.SetPatternsFromSmarts(['O', 'N'])
+    factory.SetBins([(0, 2), (2, 5), (5, 8)])
+    factory.SetMinCount(2)
+    factory.SetMaxCount(3)
+    return factory
 
-  def test1(self):
-    """ simple tests
+  def test_NotImplemented(self):
+    self.assertIsNone(LazyGenerator, 'Review LazyGenerator unit tests')
 
-    """
+  @unittest.skipIf(LazyGenerator is None, 'LazyGenerator implementation incomplete')
+  def test1_simple(self):
     mol = Chem.MolFromSmiles('OCC(=O)CCCN')
-    sig = self.factory.GetSignature()
+    factory = self.getFactory()
+    sig = factory.GetSignature()
     assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
     sig.SetIncludeBondOrder(0)
     gen = LazyGenerator.Generator(sig, mol)
@@ -42,7 +50,7 @@ class TestCase(unittest.TestCase):
       assert gen.GetBit(bit), 'bit %d not properly set' % (bit)
       assert not gen[bit + 50], 'bit %d improperly set' % (bit + 100)
 
-    sig = self.factory.GetSignature()
+    sig = factory.GetSignature()
     assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
     sig.SetIncludeBondOrder(1)
     gen = LazyGenerator.Generator(sig, mol)
@@ -70,5 +78,5 @@ class TestCase(unittest.TestCase):
     assert ok, 'accessing bogus bit did not fail'
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

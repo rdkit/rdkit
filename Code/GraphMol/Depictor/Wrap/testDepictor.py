@@ -216,6 +216,24 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(conf.GetAtomPosition(0).x, -0.750, 3)
     self.assertAlmostEqual(conf.GetAtomPosition(1).x, 0.750, 3)
 
+  def testConstrainedCoords(self) :
+    templ = Chem.MolFromSmiles( 'c1nccc2n1ccc2' )
+    rdDepictor.Compute2DCoords( templ )
+    m1 = Chem.MolFromSmiles( 'c1cccc2ncn3cccc3c21' )
+    rdDepictor.GenerateDepictionMatching2DStructure(m1,templ)
+    m2 = Chem.MolFromSmiles( 'c1cc(Cl)cc2ncn3cccc3c21' )
+    rdDepictor.Compute2DCoords(m2)
+    refPatt1 = Chem.MolFromSmarts( '*1****2*1***2' )
+    rdDepictor.GenerateDepictionMatching2DStructure( m2 , templ , -1 , refPatt1 )
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Depictor', 'test_data',
+                         '1XP0_ligand.sdf')
+
+    xp0_lig = Chem.MolFromMolFile( fileN )
+    xp0_lig_2d = Chem.Mol( xp0_lig )
+    rdDepictor.GenerateDepictionMatching3DStructure( xp0_lig_2d , xp0_lig )
+    xp0_ref = Chem.MolFromSmarts( '[#6]1~[#7][#6]~[#6]2[#6](=[#8])[#7]~[#6](c3ccccc3)[#7][#7]12' )
+    rdDepictor.GenerateDepictionMatching3DStructure( xp0_lig_2d , xp0_lig , -1 , xp0_ref )
+
 
 if __name__ == '__main__':
   unittest.main()

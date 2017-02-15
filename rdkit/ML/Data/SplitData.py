@@ -1,15 +1,12 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 from __future__ import print_function
-import random
-import os.path, sys
 
-from rdkit import RDConfig, RDRandom
-from rdkit.six.moves import xrange
+import random
+
+from rdkit import RDRandom
 
 SeqTypes = (list, tuple)
 
@@ -84,7 +81,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
 
   The replacement approach returns a fixed number in the training set,
   a variable number in the test set and can contain duplicates in the
-  training set. 
+  training set.
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> test,train = SplitIndices(10,.5,replacement=1)
   >>> test
@@ -96,7 +93,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
   [4, 5, 1, 1, 4]
   >>> train
   [0, 2, 3, 6, 7, 8, 9]
-  
+
   """
   if frac < 0. or frac > 1.:
     raise ValueError('frac must be between 0.0 and 1.0 (frac=%f)' % (frac))
@@ -123,7 +120,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
       else:
         resTest.append(i)
   else:
-    perm = list(xrange(nPts))
+    perm = list(range(nPts))
     random.shuffle(perm, random=random.random)
     nTrain = int(nPts * frac)
 
@@ -152,7 +149,7 @@ def SplitDataSet(data, frac, silent=0):
      a 2-tuple containing the two new data sets.
 
   """
-  if frac > 0. or frac < 1.:
+  if frac < 0. or frac > 1.:
     raise ValueError('frac must be between 0.0 and 1.0')
 
   nOrig = len(data)
@@ -173,7 +170,7 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   **Arguments**:
 
     - conn: a DbConnect object
-    
+
     - frac: the split fraction. This can optionally be specified as a
       sequence with a different fraction for each activity value.
 
@@ -203,8 +200,9 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   ids and inactives with odd ids:
   >>> from rdkit.ML.Data import DataUtils
   >>> from rdkit.Dbase.DbConnection import DbConnect
+  >>> from rdkit import RDConfig
   >>> conn = DbConnect(RDConfig.RDTestDatabase)
-  
+
   Pull a set of points from a simple table... take 33% of all points:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,1./3.,'basic_2class')
@@ -233,7 +231,6 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   >>> [str(x) for x in train]
   ['id-5', 'id-3', 'id-1', 'id-4', 'id-10', 'id-8']
 
-  
   """
   if not table:
     table = conn.tableName
@@ -296,12 +293,16 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   return trainPts, testPts
 
 
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

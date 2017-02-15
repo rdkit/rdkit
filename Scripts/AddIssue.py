@@ -9,7 +9,7 @@ def create(db, **issue):
   # first we need to create a 'msg' node containing the message
   msg = {}
   # check if the message was passed on the command line
-  if issue.has_key('messages'):
+  if 'messages' in issue:
     # from command line
     msg['content'] = issue['messages']
   else:
@@ -23,7 +23,7 @@ def create(db, **issue):
   # resolve linked and multilinked properties
   properties = db.issue.getprops()
   for key in issue.keys():
-    if properties.has_key(key):
+    if key in properties:
       if isinstance(properties[key], hyperdb.Link):
         if not issue[key].isdigit():
           # resolve linked property names into node ids

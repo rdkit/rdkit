@@ -11,9 +11,10 @@
 """ Interface to the C++ Murtagh hierarchic clustering code
 
 """
+import numpy
+
 from rdkit.ML.Cluster import Clusters
 from rdkit.ML.Cluster.Clustering import MurtaghCluster, MurtaghDistCluster
-import numpy
 
 # constants to select the clustering algorithm
 WARDS = 1

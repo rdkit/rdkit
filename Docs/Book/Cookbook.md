@@ -124,7 +124,7 @@ The code:
     """ contribution from Hans de Winter """
     from rdkit import Chem
     from rdkit.Chem import AllChem
-    
+
     def _InitialiseNeutralisationReactions():
         patts= (
             # Imidazoles
@@ -147,7 +147,7 @@ The code:
             ('[$([N-]C=O)]','N'),
             )
         return [(Chem.MolFromSmarts(x),Chem.MolFromSmiles(y,False)) for x,y in patts]
-    
+
     _reactions=None
     def NeutraliseCharges(smiles, reactions=None):
         global _reactions
@@ -179,7 +179,7 @@ Examples of using it:
           "CC[N-]C(=O)CC")
     for smi in smis:
         (molSmiles, neutralised) = NeutraliseCharges(smi)
-        print smi,"->",molSmiles
+        print(smi + "->" + molSmiles)
 
 This produces:
 
@@ -199,31 +199,12 @@ This produces:
 
 The RDKit contains a range of 3D functionalities such as:
 
-<table>
-<colgroup>
-<col width="47%" />
-</colgroup>
-<tbody>
-<tr class="odd">
-<td align="left">Shape alignment</td>
-</tr>
-<tr class="even">
-<td align="left">RMS calculation</td>
-</tr>
-<tr class="odd">
-<td align="left">Shape Tanimoto Distance</td>
-</tr>
-<tr class="even">
-<td align="left">Shape Protrude Distance</td>
-</tr>
-<tr class="odd">
-<td align="left">3D pharmacophore fingerprint</td>
-</tr>
-<tr class="even">
-<td align="left">Torsion fingerprint (deviation)</td>
-</tr>
-</tbody>
-</table>
+  - Shape alignment
+  - RMS calculation
+  - Shape Tanimoto Distance
+  - Shape Protrude Distance
+  - 3D pharmacophore fingerprint
+  - Torsion fingerprint (deviation)
 
 There are two alignment methods currently available in the RDKit. As an example we use two crystal structures from the PDB of the same molecule.
 
@@ -240,11 +221,11 @@ The code:
     mol2 = AllChem.AssignBondOrdersFromTemplate(ref, mol2)
     # Align them
     rms = rdMolAlign.AlignMol(mol1, mol2)
-    print rms
+    print(rms)
     # Align them with OPEN3DAlign
     pyO3A = rdMolAlign.GetO3A(mol1, mol2)
     score = pyO3A.Align()
-    print score
+    print(score)
 
 This produces:
 
@@ -259,11 +240,11 @@ Examples of using it:
     from rdkit.Chem import AllChem
     mol = Chem.MolFromSmiles('NC(=[NH2+])c1ccc(C[C@@H](NC(=O)CNS(=O)(=O)c2ccc3ccccc3c2)C(=O)N2CCCCC2)cc1')
     cids = AllChem.EmbedMultipleConfs(mol, numConfs=50, maxAttempts=1000, pruneRmsThresh=0.1)
-    print len(cids)
+    print(len(cids))
     # align the conformers
     rmslist = []
     AllChem.AlignMolConformers(mol, RMSlist=rmslist)
-    print len(rmslist)
+    print(len(rmslist))
     # calculate RMS of confomers 1 and 9 separately
     rms = AllChem.GetConformerRMS(mol, 1, 9, prealigned=True)
 
@@ -286,7 +267,7 @@ Examples of using it:
     rms = rdMolAlign.AlignMol(mol1, mol2)
     tani = rdShapeHelpers.ShapeTanimotoDist(mol1, mol2)
     prtr = rdShapeHelpers.ShapeProtrudeDist(mol1, mol2)
-    print rms, tani, prtr
+    print(rms, tani, prtr)
 
 This produces:
 
@@ -310,15 +291,15 @@ Examples of using it:
     fp2 = Generate.Gen2DFingerprint(mol2, factory, dMat=Chem.Get3DDistanceMatrix(mol2))
     # Tanimoto similarity
     tani = DataStructs.TanimotoSimilarity(fp1, fp2)
-    print tani
+    print(tani)
 
 This produces:
 
     0.451665312754
 
-The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). For a pair of conformations of a molecule, the torsional angles of the rotatable bonds and the ring systems are recorded in a torsion fingerprint (TF), and the deviations between the TFs calculated, normalized and summed up. For each torsion, a set of four atoms a-b-c-d are selected. 
+The RDKit provides an implementation of the torsion fingerprint deviation (TFD) approach developed by Schulz-Gasch et al. (J. Chem. Inf. Model, 52, 1499, 2012). For a pair of conformations of a molecule, the torsional angles of the rotatable bonds and the ring systems are recorded in a torsion fingerprint (TF), and the deviations between the TFs calculated, normalized and summed up. For each torsion, a set of four atoms a-b-c-d are selected.
 
-The RDKit implementation allows the user to customize the torsion fingerprints as described in the following. 
+The RDKit implementation allows the user to customize the torsion fingerprints as described in the following.
 
 -   In the original approach, the torsions are weighted based on their distance to the center of the molecule. By default, this weighting is performed, but can be turned off using the flag useWeights=False
 -   If symmetric atoms a and/or d exist, all possible torsional angles are calculated. To determine if two atoms are symmetric, the hash codes from the Morgan algorithm at a given radius are used (default: radius = 2).
@@ -342,7 +323,7 @@ Examples of using it:
     tfd1 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2)
     tfd2 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, useWeights=False)
     tfd3 = TorsionFingerprints.GetTFDBetweenMolecules(mol1, mol2, maxDev='spec')
-    print tfd1, tfd2, tfd3
+    print(tfd1, tfd2, tfd3)
 
 This produces:
 
@@ -360,7 +341,7 @@ Examples of using it:
     mol2 = Chem.MolFromPDBFile(RDConfig.RDBaseDir+'/rdkit/Chem/test_data/1PPC_ligand.pdb')
     mol1.AddConformer(mol2.GetConformer(), assignId=True)
     tfd = TorsionFingerprints.GetTFDBetweenConformers(mol1, confIds1=[0], confIds2=[1])
-    print tfd
+    print(tfd)
 
 This produces:
 
@@ -428,14 +409,13 @@ The code:
     fp = numpy.zeros((1,))
     DataStructs.ConvertToNumpyArray(AllChem.GetMorganFingerprintAsBitVect(m5, 2), fp)
 
-    print rf.predict(fp)
-    print rf.predict_proba(fp)
+    print(rf.predict((fp,)))
+    print(rf.predict_proba((fp,)))
 
 The output with scikit-learn version 0.13 is:
 
-> [1]
->
-> [[ 0.14 0.86]]
+    [1]
+    [[ 0.14 0.86]]
 
 Generating a similarity map for this model.
 
@@ -445,7 +425,7 @@ The code:
 
     # helper function
     def getProba(fp, predictionFunction):
-      return predictionFunction(fp)[0][1]
+      return predictionFunction((fp,))[0][1]
 
     m5 = Chem.MolFromSmiles('c1ccccc1O')
     fig, maxweight = SimilarityMaps.GetSimilarityMapForModel(m5, SimilarityMaps.GetMorganFingerprint, lambda x: getProba(x, rf.predict_proba))
@@ -466,24 +446,24 @@ The code:
 
     from rdkit import Chem
     from rdkit.Chem import rdFMCS
-    
+
     # our test molecules:
     smis=["COc1ccc(C(Nc2nc3c(ncn3COCC=O)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1",
           "COc1ccc(C(Nc2nc3c(ncn3COC(CO)(CO)CO)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1"]
     ms = [Chem.MolFromSmiles(x) for x in smis]
-    
+
     def label(a):
       " a simple hash combining atom number and hybridization "
       return 100*int(a.GetHybridization())+a.GetAtomicNum()
-    
+
     # copy the molecules, since we will be changing them
     nms = [Chem.Mol(x) for x in ms]
     for nm in nms:
       for at in nm.GetAtoms():
           at.SetIsotope(label(at))
-    
+
     mcs=rdFMCS.FindMCS(nms,atomCompare=rdFMCS.AtomCompare.CompareIsotopes)
-    print mcs.smartsString
+    print(mcs.smartsString)
 
 This generates the following output:
 
@@ -502,8 +482,8 @@ This works because we know that the atom indices in the copies and the original 
         return Chem.MolFragmentToSmiles(mol,atomsToUse=match,
                                         isomericSmiles=True,
                                         canonical=False)
-    
-    print getMCSSmiles(ms[0],nms[0],mcs)
+
+    print(getMCSSmiles(ms[0],nms[0],mcs))
 
     COc1ccc(C(Nc2nc3c(ncn3COC)c(=O)[nH]2)(c2ccccc2)c2ccccc2)cc1
 
@@ -543,7 +523,7 @@ Example usage:
 
 The variable clusters contains the results:
 
-    >>> print clusters[200]
+    >>> print(clusters[200])
     (6164, 1400, 1403, 1537, 1543, 6575, 6759)
 
 That cluster contains 7 points, the centroid is point 6164.
@@ -614,7 +594,7 @@ The code:
       for i in range(mol_count - 1):
           for j in range(i+1, mol_count):
               # show something is being done ... because for large mol_count this will take some time
-              print "Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count)
+              print("Aligning molecule #%d with molecule #%d (%d molecules in all)" % (i, j, mol_count))
               # calculate RMSD and store in an array
               # unlike AlignMol this takes care of symmetry
               spread_values.append(str(AllChem.GetBestRMS(mols[i], mols[j])))
@@ -629,7 +609,7 @@ The code:
           opts, args = getopt.getopt(sys.argv[1:], "vf:o:")
       except getopt.GetoptError, err:
           # print help information and exit:
-          print str(err) # will print something like "option -a not recognized"
+          print(str(err)) # will print something like "option -a not recognized"
           sys.exit(401)
 
       # DEFAULTS
@@ -638,7 +618,7 @@ The code:
 
       for opt, arg in opts:
           if opt == "-v":
-              print "RMSD Spread 1.1"
+              print("RMSD Spread 1.1")
               sys.exit()
           elif opt == "-f":
               molecules_file = arg
@@ -668,8 +648,8 @@ This program may be executed at the command line in the following manner (provid
 
 ## License
 
-This document is copyright (C) 2012-2015 by Greg Landrum
+This document is copyright (C) 2012-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: “Do whatever you want with it, but please give us some credit.”

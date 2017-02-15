@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2004-2006  greg Landrum and Rational Discovery LLC
 #
@@ -8,17 +7,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import unittest, sys, os
-from rdkit.six.moves import cPickle
-from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures, AllChem
-import EmbedLib
-import gzip
+import os
+import unittest
 
-from rdkit import DistanceGeometry as DG
+from rdkit import Chem
 from rdkit import Geometry
-import Pharmacophore
+from rdkit import RDConfig
+from rdkit.Chem import ChemicalFeatures, AllChem
+from rdkit.Chem.Pharm3D import Pharmacophore
 
 
 def feq(n1, n2, tol=1e-5):
@@ -28,8 +24,8 @@ def feq(n1, n2, tol=1e-5):
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    self.fdefBlock = \
-                   """DefineFeature HAcceptor1 [N,O;H0]
+    self.fdefBlock = """
+                   DefineFeature HAcceptor1 [N,O;H0]
                       Family HBondAcceptor
                       Weights 1.0
                    EndFeature
@@ -58,6 +54,9 @@ class TestCase(unittest.TestCase):
     self.assertTrue(pcophore.getFeature(1))
     self.assertTrue(pcophore.getFeature(2))
     self.assertRaises(IndexError, pcophore.getFeature, 3)
+    # print()
+    # print(str(pcophore))
+    self.assertIn('Aromatic', str(pcophore))
 
   def test2BoundSetting(self):
     pcophore = self.pcophore
@@ -72,6 +71,16 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, pcophore.setUpperBound, 0, 3, 2.0, checkBounds=True)
     self.assertRaises(IndexError, pcophore.setUpperBound, 3, 0, 2.0)
     self.assertRaises(ValueError, pcophore.setUpperBound, 3, 0, 2.0, checkBounds=True)
+
+    nfeatures = len(pcophore._feats)
+    self.assertTrue(pcophore._checkBounds(0, 0))
+    self.assertTrue(pcophore._checkBounds(0, nfeatures - 1))
+    self.assertTrue(pcophore._checkBounds(nfeatures - 1, 0))
+    self.assertTrue(pcophore._checkBounds(nfeatures - 1, nfeatures - 1))
+    self.assertRaises(ValueError, pcophore._checkBounds, -1, 0)
+    self.assertRaises(ValueError, pcophore._checkBounds, 0, -1)
+    self.assertRaises(ValueError, pcophore._checkBounds, nfeatures, 0)
+    self.assertRaises(ValueError, pcophore._checkBounds, 0, nfeatures)
 
     pcophore.setLowerBound(0, 1, 2.0)
     self.assertTrue(feq(pcophore.getLowerBound(0, 1), 2.0))
@@ -121,5 +130,5 @@ class TestCase(unittest.TestCase):
     Pharmacophore.Pharmacophore(feats)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

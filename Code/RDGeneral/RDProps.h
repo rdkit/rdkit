@@ -7,7 +7,7 @@
 namespace RDKit {
 
 class RDProps {
-protected:
+ protected:
   mutable Dict dp_props;
   // It is a quirk of history that this is mutable
   //  as the RDKit allows properties to be set
@@ -16,13 +16,15 @@ protected:
  public:
   RDProps() : dp_props() {}
   RDProps(const RDProps &rhs) : dp_props(rhs.dp_props) {}
-  RDProps& operator=(const RDProps &rhs) {
+  RDProps &operator=(const RDProps &rhs) {
     dp_props = rhs.dp_props;
     return *this;
   }
-  void clear() {
-    dp_props.reset();
-  }
+  void clear() { dp_props.reset(); }
+  //! gets the underlying Dictionary
+  const Dict &getDict() const { return dp_props; }
+  Dict &getDict() { return dp_props; }
+
   // ------------------------------------
   //  Local Property Dict functionality
   //  all setProp functions are const because they
@@ -111,9 +113,7 @@ protected:
   }
 
   //! \overload
-  bool hasProp(const std::string &key) const {
-    return dp_props.hasVal(key);
-  };
+  bool hasProp(const std::string &key) const { return dp_props.hasVal(key); };
 
   //! clears the value of a \c property
   /*!

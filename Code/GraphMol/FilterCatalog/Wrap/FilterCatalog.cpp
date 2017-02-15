@@ -71,7 +71,7 @@ void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
   std::vector<boost::shared_ptr<FilterMatcherBase> > temp;
 
   for (; begin != end; ++begin) {
-    temp.push_back((*begin)->Clone());
+    temp.push_back((*begin)->copy());
   }
   fc.setExclusionPatterns(temp);
 }
@@ -147,7 +147,7 @@ class PythonFilterMatch : public FilterMatcherBase {
         functor(self),
         incref(false){};
 
-  // ONLY CALLED FROM C++ from the Clone operation
+  // ONLY CALLED FROM C++ from the copy operation
   PythonFilterMatch(const PythonFilterMatch &rhs)
       : FilterMatcherBase(rhs), functor(rhs.functor), incref(true) {
     python::incref(functor);
@@ -174,7 +174,7 @@ class PythonFilterMatch : public FilterMatcherBase {
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const {
     return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
   }
 };
@@ -287,9 +287,9 @@ const char *FilterCatalogEntryDoc =
     "hzone_phenol_A(479)\n"
     "\n\n";
 
-python::dict GetFlattenedFunctionalGroupHierarchyHelper() {
+python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
-      GetFlattenedFunctionalGroupHierarchy();
+      GetFlattenedFunctionalGroupHierarchy(normalize);
   python::dict dict;
   for (std::map<std::string, ROMOL_SPTR>::const_iterator it = flattened.begin();
        it != flattened.end(); ++it) {
@@ -443,6 +443,7 @@ struct filtercat_wrapper {
     python::def(
         "GetFlattenedFunctionalGroupHierarchy",
         GetFlattenedFunctionalGroupHierarchyHelper,
+        (python::args("normalized")=false),
         "Returns the flattened functional group hierarchy as a dictionary "
         " of name:ROMOL_SPTR substructure items");
 

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -103,7 +102,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
     }
     ++beg;
   }
-  int nNbrs = neighborBondIndices.size();
+  size_t nNbrs = neighborBondIndices.size();
 
   //----------------------------------------------------------
   //
@@ -656,7 +655,7 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         Atom *atom = bond->getBeginAtom();
         if (atom->getImplicitValence() == -1) {
-          atom->calcExplicitValence();
+          atom->calcExplicitValence(false);
           atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = FindAtomStereochemistry(mol, bond, conf);

@@ -860,9 +860,12 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   boost::dynamic_bitset<> ringAtoms(nats);
 
   INT_VECT atomDegrees(nats);
+  INT_VECT atomDegreesWithZeroOrderBonds(nats);
   for (unsigned int i = 0; i < nats; ++i) {
     const Atom *atom = mol.getAtomWithIdx(i);
-    atomDegrees[i] = atom->getDegree();
+    int deg = atom->getDegree();
+    atomDegrees[i] = deg;
+    atomDegreesWithZeroOrderBonds[i] = deg;
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
@@ -881,17 +884,37 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
+    if (curFrag.size() < 3)
+      continue;
+
     // the following is the list of atoms that are useful in the next round of
     // trimming
     // basically atoms that become degree 0 or 1 because of bond removals
     // initialized with atoms of degrees 0 and 1
     INT_SET changed;
+    int bndcnt_with_zero_order_bonds = 0;
+    unsigned int nbnds = 0;
     for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
-      unsigned int deg = atomDegrees[*aidi];
+      int atom_idx = *aidi;
+      bndcnt_with_zero_order_bonds += atomDegreesWithZeroOrderBonds[atom_idx];
+
+      int deg = atomDegrees[atom_idx];
+
+      nbnds += deg;
       if (deg < 2) {
         changed.insert((*aidi));
       }
     }
+
+    // check to see if this fragment can even have a possible ring
+    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0, "fragment graph has a dangling degree");
+    bndcnt_with_zero_order_bonds = bndcnt_with_zero_order_bonds / 2;
+    int num_possible_rings = bndcnt_with_zero_order_bonds - curFrag.size() + 1;
+    if (num_possible_rings < 1)
+      continue;
+
+    CHECK_INVARIANT(nbnds % 2 == 0, "fragment graph problem when including zero-order bonds");
+    nbnds = nbnds / 2;
 
     boost::dynamic_bitset<> doneAts(nats);
     unsigned int nAtomsDone = 0;
@@ -968,19 +991,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
       }  // done with degree 3 node
     }    // done finding rings in this fragement
 
-    // calculate the cyclomatic number for the fragment:
-    unsigned int nbnds = 0;
-    for (ROMol::ConstBondIterator bndIt = mol.beginBonds();
-         bndIt != mol.endBonds(); ++bndIt) {
-      if (std::find(curFrag.begin(), curFrag.end(),
-                    (*bndIt)->getBeginAtomIdx()) != curFrag.end() &&
-          std::find(curFrag.begin(), curFrag.end(),
-                    (*bndIt)->getEndAtomIdx()) != curFrag.end() &&
-          (*bndIt)->getBondType() != Bond::ZERO) {
-        ++nbnds;
-      }
-    }
-
 #if 0
         std::cerr<<"\n\nFOUND:\n";
         for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
@@ -990,6 +1000,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
           std::cerr<<std::endl;
         }
 #endif
+    // calculate the cyclomatic number for the fragment:
     int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
     int ssiz = rdcast<int>(fragRes.size());
 

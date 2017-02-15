@@ -21,7 +21,7 @@ def CrossValidate(net, testExamples, tolerance, appendExamples=0):
 
       - testExamples: a list of examples to be used for testing
 
-      - appendExamples: a toggle which is ignored, it's just here to maintain 
+      - appendExamples: a toggle which is ignored, it's just here to maintain
          the same API as the decision tree code.
 
     **Returns**
@@ -31,7 +31,7 @@ def CrossValidate(net, testExamples, tolerance, appendExamples=0):
         1) the percent error of the net
 
         2) a list of misclassified examples
-        
+
    **Note**
      At the moment, this is specific to nets with only one output
   """
@@ -83,7 +83,7 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
          1) the net
 
          2) the cross-validation error of the net
-         
+
     **Note**
       At the moment, this is specific to nets with only one output
 
@@ -117,9 +117,9 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
   if not silent:
     print('Testing with %d examples' % nTest)
   if not calcTotalError:
-    xValError, badExamples = CrossValidate(net, testExamples, tolerance)
+    xValError, _ = CrossValidate(net, testExamples, tolerance)
   else:
-    xValError, badExamples = CrossValidate(net, allExamples, tolerance)
+    xValError, _ = CrossValidate(net, examples, tolerance)
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
   net._trainIndices = trainIndices

@@ -50,7 +50,7 @@ class DiscreteValueVect {
 
   //! constructor from a pickle
   DiscreteValueVect(const std::string &pkl) {
-    initFromText(pkl.c_str(), pkl.size());
+    initFromText(pkl.c_str(), static_cast<unsigned int>(pkl.size()));
   };
   //! constructor from a pickle
   DiscreteValueVect(const char *pkl, const unsigned int len) {

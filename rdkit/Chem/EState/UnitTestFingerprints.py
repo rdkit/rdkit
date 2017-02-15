@@ -18,7 +18,7 @@ from __future__ import print_function
 import unittest
 
 import numpy
-from six import StringIO
+from rdkit.six import StringIO
 
 from rdkit import Chem
 from rdkit.Chem.EState import Fingerprinter

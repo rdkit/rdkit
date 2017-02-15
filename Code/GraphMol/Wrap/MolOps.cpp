@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
 //
@@ -320,10 +319,10 @@ PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
                                const ROMol &replacement,
                                bool replaceAll = false,
                                unsigned int replacementConnectionPoint = 0,
-                               bool useChirality=false) {
-  std::vector<ROMOL_SPTR> v = replaceSubstructs(
-      orig, query, replacement, replaceAll, replacementConnectionPoint,
-      useChirality);
+                               bool useChirality = false) {
+  std::vector<ROMOL_SPTR> v =
+      replaceSubstructs(orig, query, replacement, replaceAll,
+                        replacementConnectionPoint, useChirality);
   PyObject *res = PyTuple_New(v.size());
   for (unsigned int i = 0; i < v.size(); ++i) {
     PyTuple_SetItem(res, i, python::converter::shared_ptr_to_python(v[i]));
@@ -352,13 +351,8 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
   }
 }
-#ifdef RDK_32BIT_BUILD
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, int sanitizeOps,
+MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
                                   bool catchErrors) {
-#else
-MolOps::SanitizeFlags sanitizeMol(ROMol &mol, unsigned int sanitizeOps,
-                                  bool catchErrors) {
-#endif
   RWMol &wmol = static_cast<RWMol &>(mol);
   unsigned int operationThatFailed;
   if (catchErrors) {
@@ -741,45 +735,51 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   return MolOps::adjustQueryProperties(mol, &params);
 }
 
-ROMol *replaceCoreHelper(const ROMol &mol,
-                         const ROMol &core,
-                         python::object match,
-                         bool replaceDummies,
-                         bool labelByIndex,
-                         bool requireDummyMatch=false) {
+ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
+                         python::object match, bool replaceDummies,
+                         bool labelByIndex, bool requireDummyMatch = false) {
   // convert input to MatchVect
   MatchVectType matchVect;
 
   unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
-  
+
   for (unsigned int i = 0; i < length; ++i) {
     int sz = 1;
-    if(PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(), "__len__")) {
+    if (PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(),
+                               "__len__")) {
       sz = python::extract<unsigned int>(match[i].attr("__len__")());
     }
-    
-    int v1,v2;
-    if (sz != 1 && sz != 2)
-      throw ValueErrorException("Input not a vector of (core_atom_idx,molecule_atom_idx) or (molecule_atom_idx,...) entries" );
-    if (sz == 1) {
-      if(length != core.getNumAtoms()) {
-        std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
-          
-        std::stringstream ss;
-        ss << std::string("When using input vector of type (molecule_atom_idx,...) supplied core requires ")
-           << core.getNumAtoms() << entries;
-        throw ValueErrorException(ss.str());
-      }
-      v1 = (int)i;
-      v2 = python::extract<int>(match[i]);
-    } else if (sz == 2) {
-      v1 = python::extract<int>(match[i][0]);
-      v2 = python::extract<int>(match[i][1]);
+
+    int v1, v2;
+    switch (sz) {
+      case 1:
+        if (length != core.getNumAtoms()) {
+          std::string entries = core.getNumAtoms() == 1 ? " entry" : " entries";
+
+          std::stringstream ss;
+          ss << std::string(
+                    "When using input vector of type (molecule_atom_idx,...) "
+                    "supplied core requires ")
+             << core.getNumAtoms() << entries;
+          throw ValueErrorException(ss.str());
+        }
+        v1 = (int)i;
+        v2 = python::extract<int>(match[i]);
+        break;
+      case 2:
+        v1 = python::extract<int>(match[i][0]);
+        v2 = python::extract<int>(match[i][1]);
+        break;
+      default:
+        throw ValueErrorException(
+            "Input not a vector of (core_atom_idx,molecule_atom_idx) or "
+            "(molecule_atom_idx,...) entries");
     }
-    matchVect.push_back(std::make_pair(v1,v2));
+    matchVect.push_back(std::make_pair(v1, v2));
   }
 
-  return replaceCore(mol, core, matchVect, replaceDummies, labelByIndex, requireDummyMatch);
+  return replaceCore(mol, core, matchVect, replaceDummies, labelByIndex,
+                     requireDummyMatch);
 }
 
 struct molops_wrapper {
@@ -800,6 +800,19 @@ struct molops_wrapper {
         .value("SANITIZE_ALL", MolOps::SANITIZE_ALL)
         .export_values();
     ;
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Assign stereochemistry to bonds based on coordinates.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+    - conformer: Conformer providing the coordinates\n\
+\n";
+    python::def("DetectBondStereoChemistry", DetectBondStereoChemistry,
+                (python::arg("mol"), python::arg("conformer")),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -974,12 +987,12 @@ struct molops_wrapper {
 \n\
     - DeleteSubstructs('CCOCCl.Cl','Cl') -> 'CCOC'\n\
 \n";
-    python::def("DeleteSubstructs", deleteSubstructs,
-                (python::arg("mol"), python::arg("query"),
-                 python::arg("onlyFrags") = false,
-                 python::arg("useChirality") = false),
-                docString.c_str(),
-                python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "DeleteSubstructs", deleteSubstructs,
+        (python::arg("mol"), python::arg("query"),
+         python::arg("onlyFrags") = false, python::arg("useChirality") = false),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
     docString = "Do a Murcko decomposition and return the scaffold";
     python::def("MurckoDecompose", MurckoDecompose, (python::arg("mol")),
                 docString.c_str(),
@@ -1495,6 +1508,22 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
+        "Find bonds than can be cis/trans in a molecule and mark them as 'any'.\n\
+         This function finds any double bonds that can potentially be part\n\
+         of a cis/trans system. No attempt is made here to mark them cis or trans\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - cleanIt: (optional) if this option is set to true, any previous marking of _CIPCode\n\
+               on the bond is cleared - otherwise it is left untouched\n\
+\n";
+    python::def("FindPotentialStereoBonds", MolOps::findPotentialStereoBonds,
+                (python::arg("mol"), python::arg("cleanIt") = false),
+                docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
         "Removes all stereochemistry info from the molecule.\n\
 \n";
     python::def("RemoveStereochemistry", MolOps::removeStereochemistry,
@@ -1832,14 +1861,13 @@ EXAMPLES:\n\
     ['[1*]OCCC[2*]', '[1*]CCCO[2*]']\n\
 \n\
 ";
-    python::def("ReplaceCore",
-                replaceCoreHelper,
-                (python::arg("mol"), python::arg("core"), python::arg("matches"),
-                 python::arg("replaceDummies") = true,
+    python::def("ReplaceCore", replaceCoreHelper,
+                (python::arg("mol"), python::arg("core"),
+                 python::arg("matches"), python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
                  python::arg("requireDummyMatch") = false),
                 docString.c_str(),
-                python::return_value_policy<python::manage_new_object>());    
+                python::return_value_policy<python::manage_new_object>());
     // ------------------------------------------------------------------------
     docString =
         "Removes the core of a molecule and labels the sidechains with dummy atoms.\n\
@@ -1921,8 +1949,8 @@ EXAMPLES:\n\
    '[1*]CN'\n\
 \n\
 \n";
-    python::def("ReplaceCore",
-                (ROMol *(*)(const ROMol&, const ROMol&, bool,bool,bool,bool))replaceCore,
+    python::def("ReplaceCore", (ROMol * (*)(const ROMol &, const ROMol &, bool,
+                                            bool, bool, bool))replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
@@ -2028,8 +2056,8 @@ EXAMPLES:\n\
 
     python::enum_<MolOps::AdjustQueryWhichFlags>("AdjustQueryWhichFlags")
         .value("ADJUST_IGNORENONE", MolOps::ADJUST_IGNORENONE)
-        .value("ADJUST_IGNORECHAINATOMS", MolOps::ADJUST_IGNORECHAINATOMS)
-        .value("ADJUST_IGNORERINGATOMS", MolOps::ADJUST_IGNORERINGATOMS)
+        .value("ADJUST_IGNORECHAINS", MolOps::ADJUST_IGNORECHAINS)
+        .value("ADJUST_IGNORERINGS", MolOps::ADJUST_IGNORERINGS)
         .value("ADJUST_IGNOREDUMMIES", MolOps::ADJUST_IGNOREDUMMIES)
         .value("ADJUST_IGNORENONDUMMIES", MolOps::ADJUST_IGNORENONDUMMIES)
         .value("ADJUST_IGNOREALL", MolOps::ADJUST_IGNOREALL)
@@ -2051,12 +2079,21 @@ Attributes:\n\
       dummy atoms that do not have a specified isotope are converted to any-atom queries \n\
   - aromatizeIfPossible: \n\
       attempts aromaticity perception on the molecule \n\
+  - makeBondsGeneric: \n\
+      convert bonds to generic (any) bonds \n\
+  - makeBondsGenericFlags: \n\
+      controls which bonds are made generic \n\
+  - makeAtomsGeneric: \n\
+      convert atoms to generic (any) atoms \n\
+  - makeAtomsGenericFlags: \n\
+      controls which atoms are made generic \n\
 \n\
-A note on the flags controlling which atoms are modified: \n\
-   These generally limit the set of atoms to be modified.\n\
+A note on the flags controlling which atoms/bonds are modified: \n\
+   These generally limit the set of atoms/bonds to be modified.\n\
    For example if ADJUST_RINGSONLY is set, then only atoms in rings will be modified.\n\
        ADJUST_IGNORENONE causes all atoms to be modified\n\
        ADJUST_SETALL sets all of the ADJUST flags\n\
+   Some of the options obviously make no sense for bonds\n\
 ";
     python::class_<MolOps::AdjustQueryParameters>("AdjustQueryParameters",
                                                   docString.c_str())
@@ -2071,7 +2108,15 @@ A note on the flags controlling which atoms are modified: \n\
         .def_readwrite("makeDummiesQueries",
                        &MolOps::AdjustQueryParameters::makeDummiesQueries)
         .def_readwrite("aromatizeIfPossible",
-                       &MolOps::AdjustQueryParameters::aromatizeIfPossible);
+                       &MolOps::AdjustQueryParameters::aromatizeIfPossible)
+        .def_readwrite("makeBondsGeneric",
+                       &MolOps::AdjustQueryParameters::makeBondsGeneric)
+        .def_readwrite("makeBondsGenericFlags",
+                       &MolOps::AdjustQueryParameters::makeBondsGenericFlags)
+        .def_readwrite("makeAtomsGeneric",
+                       &MolOps::AdjustQueryParameters::makeAtomsGeneric)
+        .def_readwrite("makeAtomsGenericFlags",
+                       &MolOps::AdjustQueryParameters::makeAtomsGenericFlags);
 
     docString =
         "Returns a new molecule where the query properties of atoms have been "

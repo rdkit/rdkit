@@ -46,7 +46,6 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 from rdkit.sping.pid import *
 from rdkit.sping.PDF import pdfmetrics  # for font info
-import string
 from rdkit import six
 from math import *
 
@@ -74,7 +73,7 @@ def _PointListToSVG(points, dupFirst=0):
 
   """
   outStr = ''
-  for i in xrange(len(points)):
+  for i in range(len(points)):
     outStr = outStr + '%.2f,%.2f ' % (points[i][0], points[i][1])
   # add back on the first point.  This is not required in the spec,
   #  but Adobe's beta-quality viewer seems to not like it being skipped
@@ -130,9 +129,9 @@ class SVGCanvas(Canvas):
     }
 
     try:
-      face = piddle_font_map[string.lower(font.face)]
+      face = piddle_font_map[font.face.lower()]
     except Exception:
-      return piddle_font_map[string.lower('sansserif')]
+      return piddle_font_map['sansserif']
 
     name = face + '-'
     if font.bold and face in ['Courier', 'Helvetica', 'Times']:
@@ -160,19 +159,19 @@ class SVGCanvas(Canvas):
     if font.face is None:
       font.__dict__['face'] = 'sansserif'  # quick hack -cwl
     if isinstance(font.face, six.string_types):
-      if len(string.split(font.face)) > 1:
+      if len(font.face.split()) > 1:
         familyStr = '\'%s\'' % font.face
       else:
         familyStr = font.face
     else:
       face = font.face[0]
-      if len(string.split(face)) > 1:
+      if len(face.split()) > 1:
         familyStr = '\'%s\'' % (face)
       else:
         familyStr = face
-      for i in xrange(1, len(font.face)):
+      for i in range(1, len(font.face)):
         face = font.face[i]
-        if len(string.split(face)) > 1:
+        if len(face.split()) > 1:
           familyStr = ', \'%s\'' % (face)
         else:
           familyStr = familyStr + ', %s' % face
@@ -302,7 +301,7 @@ class SVGCanvas(Canvas):
       styleStr += ' '.join([str(x) for x in dash])
       styleStr += '"'
     outStr = '<svg:line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" %s>' % (x1, y1, x2, y2, styleStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:line>\n'
     self._txt = self._txt + outStr
@@ -344,7 +343,7 @@ class SVGCanvas(Canvas):
 
     # draw it
     outStr = '<svg:polygon %s %s points="%s">' % (fillStr, edgeStr, pointStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:polygon>\n'
     self._txt = self._txt + outStr
@@ -386,10 +385,10 @@ class SVGCanvas(Canvas):
 
     # draw it
     mods = [fillStr, edgeStr, ellipseStr]
-    if kwargs.has_key('extraAttribs'):
+    if 'extraAttribs' in kwargs:
       mods.append(kwargs['extraAttribs'])
     outStr = '<svg:ellipse %s>' % (' '.join(mods))
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:ellipse>\n'
     self._txt = self._txt + outStr
@@ -440,14 +439,14 @@ class SVGCanvas(Canvas):
     # draw it
     if not filling:
       outStr = '<svg:path %s %s d="%s">' % (fillStr, edgeStr, pathStr)
-      if kwargs.has_key('bodyText'):
+      if 'bodyText' in kwargs:
         outStr += kwargs['bodyText']
       outStr += '</svg:path>\n'
     else:
       outStr = '<svg:path %s d="%s">' % (fillStr, fillPathStr)
       outStr += '</svg:path>\n'
       outStr = outStr + '<svg:path fill="none" %s d="%s">' % (edgeStr, strokePathStr)
-      if kwargs.has_key('bodyText'):
+      if 'bodyText' in kwargs:
         outStr += kwargs['bodyText']
       outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -489,7 +488,7 @@ class SVGCanvas(Canvas):
 
     # draw it
     outStr = '<svg:path %s %s d="%s">' % (fillStr, edgeStr, curveStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -526,14 +525,14 @@ class SVGCanvas(Canvas):
       xLoc = x
       yLoc = y
       outStr += '<svg:g>'
-    lines = string.split(s, '\n')
+    lines = s.split('\n')
     lineHeight = self.fontHeight(font)
     yP = yLoc
     for line in lines:
       outStr += self._drawStringOneLine(line, xLoc, yP, fontStr, svgColor, **kwargs)
       yP = yP + lineHeight
 
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:g>'
 
@@ -598,7 +597,7 @@ class SVGCanvas(Canvas):
     if closed == 1:
       pathStr = pathStr + 'Z'
     outStr = '<svg:path %s %s d="%s">' % (edgeStr, fillStr, pathStr)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
@@ -609,7 +608,7 @@ class SVGCanvas(Canvas):
       into SVG is to read it from a file.  So we'll save out to a PNG
       file, then set a link to that in the SVG.
     """
-    imageFileName = '%s-%d.%s' % (self.name, self._nImages, string.lower(self._imageFormat))
+    imageFileName = '%s-%d.%s' % (self.name, self._nImages, self._imageFormat.lower())
     self._nImages = self._nImages + 1
     image.save(imageFileName, format=self._imageFormat)
 
@@ -620,7 +619,7 @@ class SVGCanvas(Canvas):
       im_height = abs(y2 - y1)
     outStr = '<svg:image x="%.2f" y="%.2f" width="%.2f" height="%.2f" xlink:href="%s">'%\
              (x1,y1,im_width,im_height,imageFileName)
-    if kwargs.has_key('bodyText'):
+    if 'bodyText' in kwargs:
       outStr += kwargs['bodyText']
     outStr += '</svg:image>\n'
     self._txt = self._txt + outStr

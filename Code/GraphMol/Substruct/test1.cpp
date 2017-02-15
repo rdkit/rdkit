@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1163,6 +1162,42 @@ void testGitHubIssue688() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testDativeMatch() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test dative-bond matching" << std::endl;
+  {
+    std::string smi = "[Cu]->[Fe]";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+
+    // make sure a self-match works
+    MatchVectType match;
+    TEST_ASSERT(SubstructMatch(*mol, *mol, match));
+    TEST_ASSERT(match.size() == mol->getNumAtoms());
+
+    {  // reverse the order and make sure that works
+      std::string sma = "[Fe]<-[Cu]";
+      ROMol *qmol = SmilesToMol(sma);
+      TEST_ASSERT(qmol);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*mol, *qmol, match));
+      TEST_ASSERT(match.size() == qmol->getNumAtoms());
+      delete qmol;
+    }
+    {  // reverse the direction and make sure that does not work.
+      std::string sma = "[Fe]->[Cu]";
+      ROMol *qmol = SmilesToMol(sma);
+      TEST_ASSERT(qmol);
+      MatchVectType match;
+      TEST_ASSERT(!SubstructMatch(*mol, *qmol, match));
+      delete qmol;
+    }
+
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 #if 1
   test1();
@@ -1182,5 +1217,6 @@ int main(int argc, char *argv[]) {
 #endif
   testChiralMatch();
   testGitHubIssue688();
+  testDativeMatch();
   return 0;
 }

@@ -12,6 +12,8 @@
 #define _RD_STREAMOPS_H
 
 #include "types.h"
+#include "Invariant.h"
+#include "RDProps.h"
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -221,6 +223,14 @@ void streamWrite(std::ostream &ss, const T &val) {
   T tval = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(val);
   ss.write((const char *)&tval, sizeof(T));
 }
+
+//! special case for string
+inline void streamWrite(std::ostream &ss, const std::string &what) {
+  unsigned int l = rdcast<unsigned int>(what.length());
+  ss.write((const char *)&l, sizeof(l));
+  ss.write(what.c_str(), sizeof(char) * l);
+};
+
 //! does a binary read of an object from a stream
 template <typename T>
 void streamRead(std::istream &ss, T &loc) {
@@ -228,6 +238,25 @@ void streamRead(std::istream &ss, T &loc) {
   ss.read((char *)&tloc, sizeof(T));
   loc = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(tloc);
 }
+
+//! special case for string
+template <class T>
+void streamRead(std::istream &ss, T &obj, int version) {
+  RDUNUSED_PARAM(version);
+  streamRead(ss, obj);
+}
+
+inline void streamRead(std::istream &ss, std::string &what, int version) {
+  RDUNUSED_PARAM(version);
+  unsigned int l;
+  ss.read((char *)&l, sizeof(l));
+  char *buff = new char[l + 1];
+  ss.read(buff, sizeof(char) * l);
+  buff[l] = 0;
+  what = buff;
+  delete[] buff;
+};
+
 
 //! grabs the next line from an instream and returns it.
 inline std::string getLine(std::istream *inStream) {
@@ -242,6 +271,159 @@ inline std::string getLine(std::istream *inStream) {
 inline std::string getLine(std::istream &inStream) {
   return getLine(&inStream);
 }
+
+// n.b. We can't use RDTypeTag directly, they are implementation
+//  specific
+namespace DTags {
+  const unsigned char StringTag = 0;
+  const unsigned char IntTag = 1;
+  const unsigned char UnsignedIntTag = 2;
+  const unsigned char BoolTag = 3;
+  const unsigned char FloatTag = 4;
+  const unsigned char DoubleTag = 5;
+  const unsigned char EndTag = 0xFF;
+}
+
+inline bool isSerializable(const Dict::Pair &pair) {
+  switch (pair.val.getTag()) {
+    case RDTypeTag::StringTag:
+    case RDTypeTag::IntTag:
+    case RDTypeTag::UnsignedIntTag:
+    case RDTypeTag::BoolTag:
+    case RDTypeTag::FloatTag:
+    case RDTypeTag::DoubleTag:
+      return true;
+    default:
+      return false;
+  }
+}
+
+inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
+  switch (pair.val.getTag()) {
+    case RDTypeTag::StringTag:
+    case RDTypeTag::IntTag:
+    case RDTypeTag::UnsignedIntTag:
+    case RDTypeTag::BoolTag:
+    case RDTypeTag::FloatTag:
+    case RDTypeTag::DoubleTag:
+      break;
+    default:
+      return false;
+  }
+
+  streamWrite(ss, pair.key);
+  switch (pair.val.getTag()) {
+    case RDTypeTag::StringTag:
+      streamWrite(ss, DTags::StringTag);
+      streamWrite(ss, rdvalue_cast<std::string>(pair.val));
+      break;
+    case RDTypeTag::IntTag:
+      streamWrite(ss, DTags::IntTag);
+      streamWrite(ss, rdvalue_cast<int>(pair.val));
+      break;
+    case RDTypeTag::UnsignedIntTag:
+      streamWrite(ss, DTags::UnsignedIntTag);
+      streamWrite(ss, rdvalue_cast<unsigned int>(pair.val));
+      break;
+    case RDTypeTag::BoolTag:
+      streamWrite(ss, DTags::BoolTag);
+      streamWrite(ss, rdvalue_cast<bool>(pair.val));
+      break;
+    case RDTypeTag::FloatTag:
+      streamWrite(ss, DTags::FloatTag);
+      streamWrite(ss, rdvalue_cast<float>(pair.val));
+      break;
+    case RDTypeTag::DoubleTag:
+      streamWrite(ss, DTags::DoubleTag);
+      streamWrite(ss, rdvalue_cast<double>(pair.val));
+      break;
+    default:
+      std::cerr << "Failed to write " << pair.key << std::endl;
+      return false;
+  }
+  return true;
+}
+
+inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
+                             bool savePrivate=false, bool saveComputed=false) {
+  STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
+  std::set<std::string> propnames(propsToSave.begin(), propsToSave.end());
+  
+  const Dict &dict = props.getDict();
+  unsigned int count = 0;
+  for(Dict::DataType::const_iterator it = dict.getData().begin();
+      it != dict.getData().end();
+      ++it) {
+    if(isSerializable(*it) && propnames.find(it->key) != propnames.end()) {
+      count ++;
+    }
+  }
+
+  streamWrite(ss, count); // packed int?
+  
+  unsigned int writtenCount = 0;
+  for(Dict::DataType::const_iterator it = dict.getData().begin();
+      it != dict.getData().end();
+      ++it) {
+    if(isSerializable(*it) && propnames.find(it->key) != propnames.end()) {
+      // note - not all properties are serializable, this may be
+      //  a null op
+      if(streamWriteProp(ss, *it)) {
+        writtenCount++;
+      }
+    }
+  }
+  POSTCONDITION(count==writtenCount, "Estimated property count not equal to written");
+  return true;
+}
+
+template<class T>
+void readRDValue(std::istream &ss, RDValue &value) {
+  T v;
+  streamRead(ss, v);
+  value = v;
+}
+
+inline void readRDValueString(std::istream &ss, RDValue &value) {
+  std::string v;
+  int version=0;
+  streamRead(ss, v, version);
+  value = v;
+}
+
+inline bool streamReadProp(std::istream &ss, Dict::Pair &pair) {
+  int version=0;
+  streamRead(ss, pair.key, version);
+
+  unsigned char type;
+  streamRead(ss, type);
+  switch(type) {
+    case DTags::StringTag: readRDValueString(ss, pair.val); break;
+    case DTags::IntTag: readRDValue<int>(ss, pair.val); break;
+    case DTags::UnsignedIntTag: readRDValue<unsigned int>(ss, pair.val); break;
+    case DTags::BoolTag: readRDValue<bool>(ss, pair.val); break;
+    case DTags::FloatTag: readRDValue<float>(ss, pair.val); break;
+    case DTags::DoubleTag: readRDValue<double>(ss, pair.val); break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+inline unsigned int streamReadProps(std::istream &ss, RDProps &props) {
+  unsigned int count;
+  streamRead(ss, count);
+
+  Dict &dict = props.getDict();
+  dict.getData().resize(count);
+  for(unsigned index = 0; index<count; ++index) {
+    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index]),
+                    "Corrupted property serialization detected");
+  }
+
+  return count;
+}
+
 }
 
 #endif

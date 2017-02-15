@@ -2,10 +2,13 @@
 # Copyright (C) 2006-2016 Greg Landrum
 #  All Rights Reserved
 #
-import os, re
-from rdkit.six import iteritems
+import os
+import re
+
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
 from rdkit.Chem.Draw.rdMolDraw2D import *
+from rdkit.six import iteritems
 
 
 def _getCanvas():
@@ -36,7 +39,8 @@ def _getCanvas():
       from rdkit.Chem.Draw.spingCanvas import Canvas
       useSping = True
   if useSping:
-    DrawingOptions.radicalSymbol = '.'  #<- the sping canvas doesn't support unicode well
+    # <- the sping canvas doesn't support unicode well
+    DrawingOptions.radicalSymbol = '.'
   return useAGG, useCairo, Canvas
 
 
@@ -97,8 +101,7 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
   else:
     img = None
 
-  if options is None:
-    options = DrawingOptions()
+  options = options or DrawingOptions()
   if fitImage:
     options.dotsPerAngstrom = int(min(size) / 10)
   options.wedgeDashedBonds = wedgeBonds
@@ -165,7 +168,7 @@ def MolToFile(mol, fileName, size=(300, 300), kekulize=True, wedgeBonds=True, im
   if useCairo or useAGG:
     canvas = Canvas(size=size, imageType=imageType, fileName=fileName)
   else:
-    options.radicalSymbol = '.'  #<- the sping canvas doesn't support unicode well
+    options.radicalSymbol = '.'  # <- the sping canvas doesn't support unicode well
     canvas = Canvas(size=size, name=fileName, imageType=imageType)
   drawer = MolDrawing(canvas=canvas, drawingOptions=options)
   if kekulize:
@@ -235,7 +238,7 @@ def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=Non
     options = DrawingOptions()
     options.bgColor = None
   if fitImage:
-    drawingOptions.dotsPerAngstrom = int(min(size) / 10)
+    options.dotsPerAngstrom = int(min(size) / 10)
   options.wedgeDashedBonds = wedgeBonds
   drawer = MolDrawing(canvas=canvas, drawingOptions=options)
   omol = mol
@@ -306,7 +309,6 @@ def _moltoimg(mol, sz, highlights, legend, **kwargs):
     import Image
   except ImportError:
     from PIL import Image
-  from rdkit.Chem.Draw import rdMolDraw2D
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
     img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
   else:
