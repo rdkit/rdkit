@@ -182,15 +182,8 @@ bool computePrincipalAxesAndMoments(const RDKit::Conformer &conf,
                       ignoreHs, weights);
 
   Eigen::Matrix3d mat;
-<<<<<<< HEAD
-  mat << sumXX, sumXY, sumXZ,
-    sumXY, sumYY, sumYZ,
-    sumXZ, sumYZ, sumZZ;
-  //std::cerr<<"  matrix: "<<mat<<std::endl;
-=======
   mat << sumXX, sumXY, sumXZ, sumXY, sumYY, sumYZ, sumXZ, sumYZ, sumZZ;
   // std::cerr<<"  matrix: "<<mat<<std::endl;
->>>>>>> rdkit/master
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(mat);
   if (eigensolver.info() != Eigen::Success) {
     BOOST_LOG(rdErrorLog) << "eigenvalue calculation did not converge"

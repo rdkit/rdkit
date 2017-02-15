@@ -14,15 +14,21 @@ from __future__ import print_function
 from rdkit.Chem import rdMolDescriptors
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 if hasattr(rdMolDescriptors,'CalcPMI1'):
     PMI1 = lambda *x,**y:rdMolDescriptors.CalcPMI1(*x,**y)
     PMI1.version = rdMolDescriptors._CalcPMI1_version
     PMI1.__doc__= """ First (smallest) principal moment of inertia
 =======
+=======
+>>>>>>> rdkit/master
 if hasattr(rdMolDescriptors, 'CalcPMI1'):
   PMI1 = lambda *x, **y: rdMolDescriptors.CalcPMI1(*x, **y)
   PMI1.version = rdMolDescriptors._CalcPMI1_version
   PMI1.__doc__ = """ First (smallest) principal moment of inertia
+<<<<<<< HEAD
+>>>>>>> rdkit/master
+=======
 >>>>>>> rdkit/master
 
     **Arguments**
@@ -35,9 +41,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     PMI2 = lambda *x,**y:rdMolDescriptors.CalcPMI2(*x,**y)
     PMI2.version = rdMolDescriptors._CalcPMI2_version
     PMI2.__doc__= """ Second principal moment of inertia
+=======
+  PMI2 = lambda *x, **y: rdMolDescriptors.CalcPMI2(*x, **y)
+  PMI2.version = rdMolDescriptors._CalcPMI2_version
+  PMI2.__doc__ = """ Second principal moment of inertia
+>>>>>>> rdkit/master
 =======
   PMI2 = lambda *x, **y: rdMolDescriptors.CalcPMI2(*x, **y)
   PMI2.version = rdMolDescriptors._CalcPMI2_version
@@ -54,9 +66,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     PMI3 = lambda *x,**y:rdMolDescriptors.CalcPMI3(*x,**y)
     PMI3.version = rdMolDescriptors._CalcPMI3_version
     PMI3.__doc__= """ Third (largest) principal moment of inertia
+=======
+  PMI3 = lambda *x, **y: rdMolDescriptors.CalcPMI3(*x, **y)
+  PMI3.version = rdMolDescriptors._CalcPMI3_version
+  PMI3.__doc__ = """ Third (largest) principal moment of inertia
+>>>>>>> rdkit/master
 =======
   PMI3 = lambda *x, **y: rdMolDescriptors.CalcPMI3(*x, **y)
   PMI3.version = rdMolDescriptors._CalcPMI3_version
@@ -73,9 +91,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     NPR1 = lambda *x,**y:rdMolDescriptors.CalcNPR1(*x,**y)
     NPR1.version = rdMolDescriptors._CalcNPR1_version
     NPR1.__doc__= """ Normalized principal moments ratio 1 (=I1/I3)
+=======
+  NPR1 = lambda *x, **y: rdMolDescriptors.CalcNPR1(*x, **y)
+  NPR1.version = rdMolDescriptors._CalcNPR1_version
+  NPR1.__doc__ = """ Normalized principal moments ratio 1 (=I1/I3)
+>>>>>>> rdkit/master
 =======
   NPR1 = lambda *x, **y: rdMolDescriptors.CalcNPR1(*x, **y)
   NPR1.version = rdMolDescriptors._CalcNPR1_version
@@ -96,9 +120,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     NPR2 = lambda *x,**y:rdMolDescriptors.CalcNPR2(*x,**y)
     NPR2.version = rdMolDescriptors._CalcNPR2_version
     NPR2.__doc__= """ Normalized principal moments ratio 2 (=I2/I3)
+=======
+  NPR2 = lambda *x, **y: rdMolDescriptors.CalcNPR2(*x, **y)
+  NPR2.version = rdMolDescriptors._CalcNPR2_version
+  NPR2.__doc__ = """ Normalized principal moments ratio 2 (=I2/I3)
+>>>>>>> rdkit/master
 =======
   NPR2 = lambda *x, **y: rdMolDescriptors.CalcNPR2(*x, **y)
   NPR2.version = rdMolDescriptors._CalcNPR2_version
@@ -119,9 +149,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     RadiusOfGyration = lambda *x,**y:rdMolDescriptors.CalcRadiusOfGyration(*x,**y)
     RadiusOfGyration.version = rdMolDescriptors._CalcRadiusOfGyration_version
     RadiusOfGyration.__doc__= """ Radius of gyration
+=======
+  RadiusOfGyration = lambda *x, **y: rdMolDescriptors.CalcRadiusOfGyration(*x, **y)
+  RadiusOfGyration.version = rdMolDescriptors._CalcRadiusOfGyration_version
+  RadiusOfGyration.__doc__ = """ Radius of gyration
+>>>>>>> rdkit/master
 =======
   RadiusOfGyration = lambda *x, **y: rdMolDescriptors.CalcRadiusOfGyration(*x, **y)
   RadiusOfGyration.version = rdMolDescriptors._CalcRadiusOfGyration_version
@@ -146,9 +182,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     InertialShapeFactor = lambda *x,**y:rdMolDescriptors.CalcInertialShapeFactor(*x,**y)
     InertialShapeFactor.version = rdMolDescriptors._CalcInertialShapeFactor_version
     InertialShapeFactor.__doc__= """ Inertial shape factor
+=======
+  InertialShapeFactor = lambda *x, **y: rdMolDescriptors.CalcInertialShapeFactor(*x, **y)
+  InertialShapeFactor.version = rdMolDescriptors._CalcInertialShapeFactor_version
+  InertialShapeFactor.__doc__ = """ Inertial shape factor
+>>>>>>> rdkit/master
 =======
   InertialShapeFactor = lambda *x, **y: rdMolDescriptors.CalcInertialShapeFactor(*x, **y)
   InertialShapeFactor.version = rdMolDescriptors._CalcInertialShapeFactor_version
@@ -172,9 +214,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     Eccentricity = lambda *x,**y:rdMolDescriptors.CalcEccentricity(*x,**y)
     Eccentricity.version = rdMolDescriptors._CalcEccentricity_version
     Eccentricity.__doc__= """ molecular eccentricity
+=======
+  Eccentricity = lambda *x, **y: rdMolDescriptors.CalcEccentricity(*x, **y)
+  Eccentricity.version = rdMolDescriptors._CalcEccentricity_version
+  Eccentricity.__doc__ = """ molecular eccentricity
+>>>>>>> rdkit/master
 =======
   Eccentricity = lambda *x, **y: rdMolDescriptors.CalcEccentricity(*x, **y)
   Eccentricity.version = rdMolDescriptors._CalcEccentricity_version
@@ -198,9 +246,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     Asphericity = lambda *x,**y:rdMolDescriptors.CalcAsphericity(*x,**y)
     Asphericity.version = rdMolDescriptors._CalcAsphericity_version
     Asphericity.__doc__= """ molecular asphericity
+=======
+  Asphericity = lambda *x, **y: rdMolDescriptors.CalcAsphericity(*x, **y)
+  Asphericity.version = rdMolDescriptors._CalcAsphericity_version
+  Asphericity.__doc__ = """ molecular asphericity
+>>>>>>> rdkit/master
 =======
   Asphericity = lambda *x, **y: rdMolDescriptors.CalcAsphericity(*x, **y)
   Asphericity.version = rdMolDescriptors._CalcAsphericity_version
@@ -224,9 +278,15 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
         calculation. Defaults to True
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     SpherocityIndex = lambda *x,**y:rdMolDescriptors.CalcSpherocityIndex(*x,**y)
     SpherocityIndex.version = rdMolDescriptors._CalcSpherocityIndex_version
     SpherocityIndex.__doc__= """ Molecular spherocityIndex
+=======
+  SpherocityIndex = lambda *x, **y: rdMolDescriptors.CalcSpherocityIndex(*x, **y)
+  SpherocityIndex.version = rdMolDescriptors._CalcSpherocityIndex_version
+  SpherocityIndex.__doc__ = """ Molecular spherocityIndex
+>>>>>>> rdkit/master
 =======
   SpherocityIndex = lambda *x, **y: rdMolDescriptors.CalcSpherocityIndex(*x, **y)
   SpherocityIndex.version = rdMolDescriptors._CalcSpherocityIndex_version
