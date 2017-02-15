@@ -352,6 +352,10 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     unsigned int degreeNbr = nbr->getDegree();
     unsigned int nReps = 1;
     unsigned int stereo = 0;
+    // FIX: Since the user can set the stereoatoms, the use of STEREOCIS and
+    // STEREOTRANS here isn't actually canonical. In order for that to work we
+    // would need to be able to canonicalize the CIS/TRANS assignment, which is
+    // not currently being done
     switch (bond->getStereo()) {
       case Bond::STEREOZ:
       case Bond::STEREOCIS:

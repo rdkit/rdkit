@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -282,16 +282,16 @@ class Bond : public RDProps {
       neighboring atoms specified in getStereoAtoms since they are
       defined by the topology of the molecular graph. In order to set
       STEREOCIS or STEREOTRANS the neighboring atoms must be set first
-      to know what atoms are being considered.
+      (using setStereoBonds()) to know what atoms are being considered.
 
       <b>Notes:</b>
-        - Bond::setStereoAtoms(int bgnIdx, int endIdx) is not yet created, need to create this
         - MolOps::findPotentialStereoBonds can be used to set
           getStereoAtoms before setting CIS/TRANS
   */
   void setStereo(BondStereo what) {
     PRECONDITION(what <= STEREOE || getStereoAtoms().size() == 2,
-                 "Stereo atoms should be specified before specifying CIS/TRANS bond stereochemistry")
+                 "Stereo atoms should be specified before specifying CIS/TRANS "
+                 "bond stereochemistry")
     d_stereo = what;
   };
   //! returns our stereo code
