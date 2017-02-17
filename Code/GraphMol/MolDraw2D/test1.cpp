@@ -1893,6 +1893,40 @@ M  END";
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1322() {
+  std::cout << " ----------------- Testing github 1322: add custom atom labels"
+            << std::endl;
+  {
+    std::string smiles = "CCC[Se]";  // made up
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      TEST_ASSERT(text.find("Se") != std::string::npos);
+    }
+    {
+      m1->getAtomWithIdx(3)->setProp(common_properties::atomLabel,
+                                     "customlabel");
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test1322_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("Se") == std::string::npos);
+      TEST_ASSERT(text.find("customlabel") != std::string::npos);
+    }
+    delete m1;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1924,4 +1958,5 @@ int main() {
   testGithub1035();
 #endif
   testGithub1271();
+  testGithub1322();
 }
