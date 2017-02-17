@@ -519,6 +519,6 @@ if __name__ == '__main__':
   doLong = args.doLong
 
   # Remove the -l flag if present so that it isn't interpreted by unittest.main()
-  if 'l' in sys.argv:
+  if '-l' in sys.argv:
     sys.argv.remove('-l')
   unittest.main()
