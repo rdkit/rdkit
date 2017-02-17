@@ -18,7 +18,6 @@ def ComputeGridIndices(shapeGrid, winRad):
   gridSpacing = shapeGrid.GetSpacing()
   dX = shapeGrid.GetNumX()
   dY = shapeGrid.GetNumY()
-  # dZ = shapeGrid.GetNumZ()
   radInGrid = int(winRad / gridSpacing)
   indicesInSphere = []
   for i in range(-radInGrid, radInGrid + 1):

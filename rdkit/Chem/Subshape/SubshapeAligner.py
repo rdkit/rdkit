@@ -313,8 +313,8 @@ class SubshapeAligner(object):
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,
                pruneStats=None):
     for alignment in self.GetTriangleMatches(target, query):
-      if builder.featFactory and not self._checkMatchFeatures(target.skelPts, query.skelPts,
-                                                              alignment):
+      if (not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment) and
+          builder.featFactory):
         if pruneStats is not None:
           pruneStats['features'] = pruneStats.get('features', 0) + 1
         continue
