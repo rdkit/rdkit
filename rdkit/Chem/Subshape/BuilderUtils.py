@@ -1,26 +1,23 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
-# $Id$
 #
-# Copyright (C) 2007 by Greg Landrum 
+# Copyright (C) 2007-2017 by Greg Landrum
 #  All rights reserved
 #
 from __future__ import print_function
 
-from rdkit import Geometry
-from rdkit.Chem.Subshape import SubshapeObjects
 import math
+
 import numpy
 
+from rdkit import Geometry
+from rdkit.Chem.Subshape import SubshapeObjects
 
-#-----------------------------------------------------------------------------
+
 def ComputeGridIndices(shapeGrid, winRad):
   if getattr(shapeGrid, '_indicesInSphere', None):
     return shapeGrid._indicesInSphere
   gridSpacing = shapeGrid.GetSpacing()
   dX = shapeGrid.GetNumX()
   dY = shapeGrid.GetNumY()
-  dZ = shapeGrid.GetNumZ()
   radInGrid = int(winRad / gridSpacing)
   indicesInSphere = []
   for i in range(-radInGrid, radInGrid + 1):
@@ -34,7 +31,6 @@ def ComputeGridIndices(shapeGrid, winRad):
   return indicesInSphere
 
 
-#-----------------------------------------------------------------------------
 def ComputeShapeGridCentroid(pt, shapeGrid, winRad):
   count = 0
   centroid = Geometry.Point3D(0, 0, 0)
@@ -54,22 +50,20 @@ def ComputeShapeGridCentroid(pt, shapeGrid, winRad):
   if not count:
     raise ValueError('found no weight in sphere')
   centroid /= count
-  #print 'csgc:','(%2f,%2f,%2f)'%tuple(pt),'(%2f,%2f,%2f)'%tuple(centroid),count
+  # print 'csgc:','(%2f,%2f,%2f)'%tuple(pt),'(%2f,%2f,%2f)'%tuple(centroid),count
   return count, centroid
 
 
-#-----------------------------------------------------------------------------
 def FindTerminalPtsFromShape(shape, winRad, fraction, maxGridVal=3):
   pts = Geometry.FindGridTerminalPoints(shape.grid, winRad, fraction)
   termPts = [SubshapeObjects.SkeletonPoint(location=x) for x in pts]
   return termPts
 
 
-#-----------------------------------------------------------------------------
 def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
   mol = conf.GetOwningMol()
   nAts = conf.GetNumAtoms()
-  nbrLists = [[] for x in range(nAts)]
+  nbrLists = [[] for _ in range(nAts)]
   for i in range(nAts):
     if (mol.GetAtomWithIdx(i).GetAtomicNum() <= 1):
       continue
@@ -84,7 +78,7 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
         nbrLists[i].append((j, pj))
         nbrLists[j].append((i, pi))
   termPts = []
-  #for i in range(nAts):
+  # for i in range(nAts):
   #  if not len(nbrLists[i]): continue
   #  if len(nbrLists[i])>10:
   #    print i+1,len(nbrLists[i])
@@ -113,7 +107,6 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
   return termPts
 
 
-#-----------------------------------------------------------------------------
 def FindGridPointBetweenPoints(pt1, pt2, shapeGrid, winRad):
   center = pt1 + pt2
   center /= 2.0
@@ -125,7 +118,6 @@ def FindGridPointBetweenPoints(pt1, pt2, shapeGrid, winRad):
   return center
 
 
-#-----------------------------------------------------------------------------
 def ClusterTerminalPts(pts, winRad, scale):
   res = []
   tagged = [(y, x) for x, y in enumerate(pts)]
@@ -175,7 +167,7 @@ def GetMoreTerminalPoints(shape, pts, winRad, maxGridVal, targetNumber=5):
 
 
 def FindFarthestGridPoint(shape, loc, winRad, maxGridVal):
-  """ find the grid point with max occupancy that is furthest from a 
+  """ find the grid point with max occupancy that is furthest from a
     given location
   """
   shapeGrid = shape.grid
@@ -215,7 +207,6 @@ def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):
     GetMoreTerminalPoints(shape, pts, winRad, maxGridVal, targetNumPts)
 
 
-  #-----------------------------------------------------------------------------
 def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, maxDistC=15.0,
                          distTol=1.5, symFactor=1.5, verbose=False):
   nTermPts = len(termPts)
@@ -246,7 +237,7 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
   while i < len(skelPts):
     pt = skelPts[i]
     count, centroid = Geometry.ComputeGridCentroid(shapeGrid, pt.location, winRad)
-    #count,centroid=ComputeShapeGridCentroid(pt.location,shapeGrid,winRad)
+    # count,centroid=ComputeShapeGridCentroid(pt.location,shapeGrid,winRad)
     centroidPtDist = centroid.Distance(pt.location)
     if centroidPtDist > maxDistC:
       del skelPts[i]
@@ -274,7 +265,7 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
         if ptJ.fracVol > mFrac:
           p = j
           mFrac = ptJ.fracVol
-    #print i,len(res),p,mFrac
+    # print i,len(res),p,mFrac
     if p > -1:
       ptP = res.pop(p)
       j = startJ
@@ -286,12 +277,11 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
         else:
           j += 1
       res.append(ptP)
-      #print '% 3d'%i,'% 5.2f % 5.2f % 5.2f'%tuple(list(ptI.location)),' - ','% 5.2f % 5.2f % 5.2f'%tuple(list(ptJ.location))
+      # print '% 3d'%i,'% 5.2f % 5.2f % 5.2f'%tuple(list(ptI.location)),' - ','% 5.2f % 5.2f % 5.2f'%tuple(list(ptJ.location))
     i += 1
   return res
 
 
-#-----------------------------------------------------------------------------
 def CalculateDirectionsAtPoint(pt, shapeGrid, winRad):
   shapeGridVect = shapeGrid.GetOccupancyVect()
   nGridPts = len(shapeGridVect)
@@ -302,7 +292,7 @@ def CalculateDirectionsAtPoint(pt, shapeGrid, winRad):
 
   dX = shapeGrid.GetNumX()
   dY = shapeGrid.GetNumY()
-  dZ = shapeGrid.GetNumZ()
+  # dZ = shapeGrid.GetNumZ()
   idx = shapeGrid.GetGridPointIndex(pt.location)
   idxZ = idx // (dX * dY)
   rem = idx % (dX * dY)
@@ -342,18 +332,17 @@ def CalculateDirectionsAtPoint(pt, shapeGrid, winRad):
   pt.shapeMoments = tuple(eVals)
   pt.shapeDirs = tuple([Geometry.Point3D(p[0], p[1], p[2]) for p in eVects])
 
-  #print '-------------'
-  #print pt.location.x,pt.location.y,pt.location.z
-  #for v in covMat:
+  # print '-------------'
+  # print pt.location.x,pt.location.y,pt.location.z
+  # for v in covMat:
   # print '  ',v
-  #print '---'
-  #print eVals
-  #for v in eVects:
+  # print '---'
+  # print eVals
+  # for v in eVects:
   #  print '  ',v
-  #print '-------------'
+  # print '-------------'
 
 
-#-----------------------------------------------------------------------------
 def AssignMolFeatsToPoints(pts, mol, featFactory, winRad):
   feats = featFactory.GetFeaturesForMol(mol)
   for i, pt in enumerate(pts):
