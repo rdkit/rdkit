@@ -28,6 +28,22 @@ using namespace std;
 
 namespace RDKit {
 
+namespace {
+void getBondHighlightsForAtoms(const ROMol &mol,
+                               const vector<int> &highlight_atoms,
+                               vector<int> &highlight_bonds) {
+  highlight_bonds.clear();
+  for (vector<int>::const_iterator ai = highlight_atoms.begin();
+       ai != highlight_atoms.end(); ++ai) {
+    for (vector<int>::const_iterator aj = ai + 1; aj != highlight_atoms.end();
+         ++aj) {
+      const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
+      if (bnd) highlight_bonds.push_back(bnd->getIdx());
+    }
+  }
+}
+}
+
 // ****************************************************************************
 MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
     : needs_scale_(true),
@@ -63,14 +79,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    for (vector<int>::const_iterator ai = highlight_atoms->begin();
-         ai != highlight_atoms->end(); ++ai) {
-      for (vector<int>::const_iterator aj = ai + 1;
-           aj != highlight_atoms->end(); ++aj) {
-        const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-        if (bnd) highlight_bonds.push_back(bnd->getIdx());
-      }
-    }
+    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
                highlight_atom_map, NULL, highlight_radii, confId);

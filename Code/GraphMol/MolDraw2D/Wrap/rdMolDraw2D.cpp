@@ -26,35 +26,39 @@ namespace python = boost::python;
 
 namespace RDKit {
 namespace {
+void pyDictToColourMap(python::object pyo, std::map<int, DrawColour> &res) {
+  python::dict tDict = python::extract<python::dict>(pyo);
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
+    python::tuple tpl = python::extract<python::tuple>(tDict.values()[i]);
+    float r = python::extract<float>(tpl[0]);
+    float g = python::extract<float>(tpl[1]);
+    float b = python::extract<float>(tpl[2]);
+    DrawColour clr(r, g, b);
+    res[python::extract<int>(tDict.keys()[i])] = clr;
+  }
+}
 std::map<int, DrawColour> *pyDictToColourMap(python::object pyo) {
   std::map<int, DrawColour> *res = NULL;
   if (pyo) {
     res = new std::map<int, DrawColour>;
-    python::dict tDict = python::extract<python::dict>(pyo);
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(tDict.keys().attr("__len__")());
-         ++i) {
-      python::tuple tpl = python::extract<python::tuple>(tDict.values()[i]);
-      float r = python::extract<float>(tpl[0]);
-      float g = python::extract<float>(tpl[1]);
-      float b = python::extract<float>(tpl[2]);
-      DrawColour clr(r, g, b);
-      (*res)[python::extract<int>(tDict.keys()[i])] = clr;
-    }
+    pyDictToColourMap(pyo, *res);
   }
   return res;
+}
+void pyDictToDoubleMap(python::object pyo, std::map<int, double> &res) {
+  python::dict tDict = python::extract<python::dict>(pyo);
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
+    double r = python::extract<double>(tDict.values()[i]);
+    res[python::extract<int>(tDict.keys()[i])] = r;
+  }
 }
 std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
   std::map<int, double> *res = NULL;
   if (pyo) {
     res = new std::map<int, double>;
-    python::dict tDict = python::extract<python::dict>(pyo);
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(tDict.keys().attr("__len__")());
-         ++i) {
-      double r = python::extract<double>(tDict.values()[i]);
-      (*res)[python::extract<int>(tDict.keys()[i])] = r;
-    }
+    pyDictToDoubleMap(pyo, *res);
   }
   return res;
 }
@@ -105,6 +109,49 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atom_radii,
                           python::object pconfIds, python::object plegends) {
   rdk_auto_ptr<std::vector<ROMol *> > mols = pythonObjectToVect<ROMol *>(pmols);
+  unsigned int nThere = mols->size();
+  rdk_auto_ptr<std::vector<std::vector<int> > > highlightAtoms;
+  if (highlight_atoms) {
+    if (python::extract<unsigned int>(highlight_atoms.attr("__len__")()) !=
+        nThere) {
+      throw ValueErrorException(
+          "If highlight_atoms is provided it must be the same length as the "
+          "molecule list.");
+    }
+    highlightAtoms.reset(new std::vector<std::vector<int> >(nThere));
+    for (unsigned int i = 0; i < nThere; ++i) {
+      pythonObjectToVect(highlight_atoms[i], (*highlightAtoms)[i]);
+    }
+  }
+  rdk_auto_ptr<std::vector<std::vector<int> > > highlightBonds;
+  if (highlight_bonds) {
+    if (python::extract<unsigned int>(highlight_bonds.attr("__len__")()) !=
+        nThere) {
+      throw ValueErrorException(
+          "If highlight_bonds is provided it must be the same length as the "
+          "molecule list.");
+    }
+    highlightBonds.reset(new std::vector<std::vector<int> >(nThere));
+    for (unsigned int i = 0; i < nThere; ++i) {
+      pythonObjectToVect(highlight_bonds[i], (*highlightBonds)[i]);
+    }
+  }
+
+  rdk_auto_ptr<std::vector<std::map<int, DrawColour> > > highlightAtomMap;
+  if (highlight_atom_map) {
+    if (python::extract<unsigned int>(highlight_atom_map.attr("__len__")()) !=
+        nThere) {
+      throw ValueErrorException(
+          "If highlight_atom_map is provided it must be the same length as the "
+          "molecule list.");
+    }
+    highlightAtomMap.reset(new std::vector<std::map<int, DrawColour> >(nThere));
+    for (unsigned int i = 0; i < nThere; ++i) {
+      pyDictToColourMap(highlight_atom_map[i], (*highlightAtomMap)[i]);
+    }
+  }
+  rdk_auto_ptr<std::vector<std::map<int, DrawColour> > > highlightBondMap;
+  rdk_auto_ptr<std::vector<std::map<int, double> > > highlightRadii;
   // rdk_auto_ptr<std::vector<int> > highlightAtoms =
   //     pythonObjectToVect(highlight_atoms,
   //     static_cast<int>(mol.getNumAtoms()));
@@ -120,7 +167,9 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   rdk_auto_ptr<std::vector<std::string> > legends =
       pythonObjectToVect<std::string>(plegends);
 
-  self.drawMolecules(*mols, legends.get(), NULL, NULL, NULL, NULL, NULL,
+  self.drawMolecules(*mols, legends.get(), highlightAtoms.get(),
+                     highlightBonds.get(), highlightAtomMap.get(),
+                     highlightBondMap.get(), highlightRadii.get(),
                      confIds.get());
 }
 
