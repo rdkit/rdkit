@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -115,7 +115,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     if (python::extract<unsigned int>(highlight_atoms.attr("__len__")()) !=
         nThere) {
       throw ValueErrorException(
-          "If highlight_atoms is provided it must be the same length as the "
+          "If highlightAtoms is provided it must be the same length as the "
           "molecule list.");
     }
     highlightAtoms.reset(new std::vector<std::vector<int> >(nThere));
@@ -128,7 +128,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     if (python::extract<unsigned int>(highlight_bonds.attr("__len__")()) !=
         nThere) {
       throw ValueErrorException(
-          "If highlight_bonds is provided it must be the same length as the "
+          "If highlightBonds is provided it must be the same length as the "
           "molecule list.");
     }
     highlightBonds.reset(new std::vector<std::vector<int> >(nThere));
@@ -142,7 +142,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     if (python::extract<unsigned int>(highlight_atom_map.attr("__len__")()) !=
         nThere) {
       throw ValueErrorException(
-          "If highlight_atom_map is provided it must be the same length as the "
+          "If highlightAtomMap is provided it must be the same length as the "
           "molecule list.");
     }
     highlightAtomMap.reset(new std::vector<std::map<int, DrawColour> >(nThere));
@@ -151,7 +151,31 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     }
   }
   rdk_auto_ptr<std::vector<std::map<int, DrawColour> > > highlightBondMap;
+  if (highlight_bond_map) {
+    if (python::extract<unsigned int>(highlight_bond_map.attr("__len__")()) !=
+        nThere) {
+      throw ValueErrorException(
+          "If highlightBondMap is provided it must be the same length as the "
+          "molecule list.");
+    }
+    highlightBondMap.reset(new std::vector<std::map<int, DrawColour> >(nThere));
+    for (unsigned int i = 0; i < nThere; ++i) {
+      pyDictToColourMap(highlight_bond_map[i], (*highlightBondMap)[i]);
+    }
+  }
   rdk_auto_ptr<std::vector<std::map<int, double> > > highlightRadii;
+  if (highlight_atom_radii) {
+    if (python::extract<unsigned int>(highlight_atom_radii.attr("__len__")()) !=
+        nThere) {
+      throw ValueErrorException(
+          "If highlightAtomRadii is provided it must be the same length as the "
+          "molecule list.");
+    }
+    highlightRadii.reset(new std::vector<std::map<int, double> >(nThere));
+    for (unsigned int i = 0; i < nThere; ++i) {
+      pyDictToDoubleMap(highlight_atom_radii[i], (*highlightRadii)[i]);
+    }
+  }
   // rdk_auto_ptr<std::vector<int> > highlightAtoms =
   //     pythonObjectToVect(highlight_atoms,
   //     static_cast<int>(mol.getNumAtoms()));

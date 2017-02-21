@@ -149,6 +149,7 @@ void MolDraw2D::doContinuousHighlighting(
             highlight_radii->find(this_idx) != highlight_radii->end()) {
           radius = highlight_radii->find(this_idx)->second;
         }
+
         Point2D offset(radius, radius);
         p1 -= offset;
         p2 += offset;
