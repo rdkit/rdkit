@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(c2)
 
     try:
-      res = AnalyzeComposite.ProcessIt([c1, c2], verbose=-1)
+      res = sorted(AnalyzeComposite.ProcessIt([c1, c2], verbose=-1))
     except Exception:
       import traceback
       traceback.print_exc()
@@ -52,7 +52,7 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(res[0][0],'BALABANJ')
     self.assertEqual(res[1][0],'BERTZCT')
-    self.assertEqual(res[-1][0],'FR_UNBRCH_ALKANE')
+    self.assertEqual(res[-1][0],'VSA_ESTATE9')
     for entry in res:
       self.assertEqual(len(entry),5)
 
