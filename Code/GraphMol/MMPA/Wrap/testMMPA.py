@@ -1,6 +1,6 @@
 from __future__ import print_function
 from rdkit import RDConfig
-import sys, unittest
+import unittest
 from rdkit import Chem
 from rdkit.Chem import rdMMPA
 
@@ -146,6 +146,24 @@ class TestCase(unittest.TestCase):
     self.assertEqual(frags, frags2)
     self.assertEqual(frags2, frags3)
 
+  def test9(self):
+    m = Chem.MolFromSmiles("Oc1ccccc1N")
+
+    try:
+      
+      frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=0, maxCutBonds=21,
+                                  resultsAsMols=False)
+      self.assertTrue(False) # should not get here
+    except ValueError, e:
+      self.assertEqual(str(e), "supplied maxCuts is less than minCuts")
+
+    try:
+      
+      frags1 = rdMMPA.FragmentMol(m, minCuts=0, maxCuts=0, maxCutBonds=21,
+                                  resultsAsMols=False)
+      self.assertTrue(False) # should not get here
+    except ValueError, e:
+      self.assertEqual(str(e), "minCuts must be greater than 0")
     
 
 
