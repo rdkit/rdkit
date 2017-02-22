@@ -154,7 +154,7 @@ class TestCase(unittest.TestCase):
       frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=0, maxCutBonds=21,
                                   resultsAsMols=False)
       self.assertTrue(False) # should not get here
-    except ValueError, e:
+    except ValueError as e:
       self.assertEqual(str(e), "supplied maxCuts is less than minCuts")
 
     try:
@@ -162,7 +162,7 @@ class TestCase(unittest.TestCase):
       frags1 = rdMMPA.FragmentMol(m, minCuts=0, maxCuts=0, maxCutBonds=21,
                                   resultsAsMols=False)
       self.assertTrue(False) # should not get here
-    except ValueError, e:
+    except ValueError as e:
       self.assertEqual(str(e), "minCuts must be greater than 0")
     
 
