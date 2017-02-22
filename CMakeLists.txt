@@ -314,11 +314,6 @@ else(RDK_TEST_COVERAGE)
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-array-bounds -fPIC")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
-  if(APPLE)
-   if (CMAKE_CXX_COMPILE_VERSION VERSION_GREATER 6.0)
-     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedef")
-   endif()
-  endif()
  endif()
 endif(RDK_TEST_COVERAGE)
 
