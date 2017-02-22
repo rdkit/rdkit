@@ -314,6 +314,12 @@ static inline void processCuts(
     size_t i, size_t minCuts, size_t maxCuts, BondVector_t& bonds_selected,
     const std::vector<BondVector_t>& matching_bonds, const ROMol& mol,
     std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >& res) {
+  if(maxCuts < minCuts)
+    throw ValueErrorException("supplied maxCuts is less than minCuts");
+        
+  if(minCuts==0)
+    throw ValueErrorException("minCuts must be greater than 0");
+
   for (size_t x = i; x < matching_bonds.size(); x++) {
     appendBonds(bonds_selected, matching_bonds[x]);
     if(bonds_selected.size() >= minCuts) {
@@ -421,13 +427,11 @@ bool fragmentMol(const ROMol& mol,
 
   BOOST_FOREACH(unsigned int i, bondsToCut) {
     const Bond *bond = mol.getBondWithIdx(i);
-    if(bond) {
-      BondVector_t bonds;
-      unsigned int a1 = bond->getBeginAtomIdx();
-      unsigned int a2 = bond->getEndAtomIdx();
-      bonds.push_back( std::pair<unsigned int, unsigned int>(a1, a2) );
-      matching_bonds.push_back(bonds);
-    }
+    BondVector_t bonds;
+    unsigned int a1 = bond->getBeginAtomIdx();
+    unsigned int a2 = bond->getEndAtomIdx();
+    bonds.push_back( std::make_pair(a1, a2) );
+    matching_bonds.push_back(bonds);
   }
 
   // loop to generate every cut in the molecule
