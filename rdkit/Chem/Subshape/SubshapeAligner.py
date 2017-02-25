@@ -1,16 +1,17 @@
-# $Id$
 #
-# Copyright (C) 2007-2008 by Greg Landrum 
+# Copyright (C) 2007-2008 by Greg Landrum
 #  All rights reserved
 #
 from __future__ import print_function
 
-from rdkit import RDLogger
-logger = RDLogger.logger()
-from rdkit import Chem, Geometry
 import numpy
-from rdkit.Numerics import Alignment
+
+from rdkit import Chem, Geometry
+from rdkit import RDLogger
 from rdkit.Chem.Subshape import SubshapeObjects
+from rdkit.Numerics import Alignment
+
+logger = RDLogger.logger()
 
 
 class SubshapeAlignment(object):
@@ -47,13 +48,13 @@ class SubshapeDistanceMetric(object):
   PROTRUDE = 1
 
 
-# returns the distance between two shapea according to the provided metric
 def GetShapeShapeDistance(s1, s2, distMetric):
+  """ returns the distance between two shapes according to the provided metric """
   if distMetric == SubshapeDistanceMetric.PROTRUDE:
-    #print s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal()
+    # print(s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal())
     if s1.grid.GetOccupancyVect().GetTotalVal() < s2.grid.GetOccupancyVect().GetTotalVal():
       d = Geometry.ProtrudeDistance(s1.grid, s2.grid)
-      #print d
+      # print(d)
     else:
       d = Geometry.ProtrudeDistance(s2.grid, s1.grid)
   else:
@@ -61,9 +62,9 @@ def GetShapeShapeDistance(s1, s2, distMetric):
   return d
 
 
-# clusters a set of alignments and returns the cluster centroid
 def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
                       distMetric=SubshapeDistanceMetric.PROTRUDE, tempConfId=1001):
+  """ clusters a set of alignments and returns the cluster centroid """
   from rdkit.ML.Cluster import Butina
   dists = []
   for i in range(len(alignments)):
@@ -82,10 +83,7 @@ def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
 
 
 def TransformMol(mol, tform, confId=-1, newConfId=100):
-  """  Applies the transformation to a molecule and sets it up with
-  a single conformer
-
-  """
+  """  Applies the transformation to a molecule and sets it up with a single conformer """
   newConf = Chem.Conformer()
   newConf.SetId(0)
   refConf = mol.GetConformer(confId)
@@ -106,8 +104,8 @@ class SubshapeAligner(object):
   numFeatThresh = 3
   dirThresh = 2.6
   edgeTol = 6.0
-  #coarseGridToleranceMult=1.5
-  #medGridToleranceMult=1.25
+  # coarseGridToleranceMult=1.5
+  # medGridToleranceMult=1.25
   coarseGridToleranceMult = 1.0
   medGridToleranceMult = 1.0
 
@@ -116,7 +114,6 @@ class SubshapeAligner(object):
         matches between the two shapes
     """
     ssdTol = (self.triangleRMSTol**2) * 9
-    res = []
     tgtPts = target.skelPts
     queryPts = query.skelPts
     tgtLs = {}
@@ -139,9 +136,9 @@ class SubshapeAligner(object):
     for tgtTri in _getAllTriangles(tgtPts, orderedTraversal=True):
       tgtLocs = [tgtPts[x].location for x in tgtTri]
       for queryTri in _getAllTriangles(queryPts, orderedTraversal=False):
-        if ((tgtTri[0],tgtTri[1]),(queryTri[0],queryTri[1])) in compatEdges and \
-           ((tgtTri[0],tgtTri[2]),(queryTri[0],queryTri[2])) in compatEdges and \
-           ((tgtTri[1],tgtTri[2]),(queryTri[1],queryTri[2])) in compatEdges:
+        if ((tgtTri[0], tgtTri[1]), (queryTri[0], queryTri[1])) in compatEdges and \
+           ((tgtTri[0], tgtTri[2]), (queryTri[0], queryTri[2])) in compatEdges and \
+           ((tgtTri[1], tgtTri[2]), (queryTri[1], queryTri[2])) in compatEdges:
           queryLocs = [queryPts[x].location for x in queryTri]
           ssd, tf = Alignment.GetAlignmentTransform(tgtLocs, queryLocs)
           if ssd <= ssdTol:
@@ -162,7 +159,7 @@ class SubshapeAligner(object):
       if not tgtFeats and not qFeats:
         nMatched += 1
       else:
-        for j, jFeat in enumerate(tgtFeats):
+        for jFeat in tgtFeats:
           if jFeat in qFeats:
             nMatched += 1
             break
@@ -252,7 +249,6 @@ class SubshapeAligner(object):
         builder.gridSpacing = oSpace
         fineGrid = builder.GenerateSubshapeShape(queryMol, tConfId, addSkeleton=False)
         d = GetShapeShapeDistance(fineGrid, target, self.distMetric)
-        #print '        ',d
         if d > self.shapeDistTol:
           matchOk = False
           if pruneStats is not None:
@@ -272,7 +268,6 @@ class SubshapeAligner(object):
     nOrig = len(alignments)
     nDone = 0
     while i < len(alignments):
-      removeIt = False
       alg = alignments[i]
       nDone += 1
       if not nDone % 100:
@@ -318,8 +313,8 @@ class SubshapeAligner(object):
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,
                pruneStats=None):
     for alignment in self.GetTriangleMatches(target, query):
-      if builder.featFactory and \
-         not self._checkMatchFeatures(target.skelPts,query.skelPts,alignment):
+      if (not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment) and
+          builder.featFactory):
         if pruneStats is not None:
           pruneStats['features'] = pruneStats.get('features', 0) + 1
         continue
@@ -338,16 +333,19 @@ class SubshapeAligner(object):
       yield alignment
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   from rdkit.six.moves import cPickle
-  tgtMol, tgtShape = cPickle.load(file('target.pkl', 'rb'))
-  queryMol, queryShape = cPickle.load(file('query.pkl', 'rb'))
-  builder = cPickle.load(file('builder.pkl', 'rb'))
+  from rdkit.Chem.PyMol import MolViewer
+  with open('target.pkl', 'rb') as f:
+    tgtMol, tgtShape = cPickle.load(f)
+  with open('query.pkl', 'rb') as f:
+    queryMol, queryShape = cPickle.load(f)
+  with open('builder.pkl', 'rb') as f:
+    builder = cPickle.load(f)
   aligner = SubshapeAligner()
   algs = aligner.GetSubshapeAlignments(tgtMol, tgtShape, queryMol, queryShape, builder)
   print(len(algs))
 
-  from rdkit.Chem.PyMol import MolViewer
   v = MolViewer()
   v.ShowMol(tgtMol, name='Target', showOnly=True)
   v.ShowMol(queryMol, name='Query', showOnly=False)
