@@ -285,7 +285,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   eeatm.loc = RDGeom::Point2D(BOND_LEN, 0.0);
   eeatm.nbr1 = begAtm;
   eeatm.CisTransNbr = nbrAtms[1];
-  if (stype == RDKit::Bond::STEREOZ) {
+  if (stype == RDKit::Bond::STEREOZ || stype == RDKit::Bond::STEREOCIS) {
     eeatm.normal = RDGeom::Point2D(0.0, -1.0);
     eeatm.ccw = true;
   } else {

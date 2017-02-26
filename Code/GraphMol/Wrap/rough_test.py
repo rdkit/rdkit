@@ -1636,6 +1636,256 @@ M  END
     self.assertDoesNotHaveDoubleBondStereo("C=C")
     self.assertDoesNotHaveDoubleBondStereo("C1CCCCC1C(C1CCCCC1)=CC1CCCCC1")
 
+  def assertDoubleBondStereo(self, smi, stereo):
+    mol = Chem.MolFromSmiles(smi)
+
+    bond = mol.GetBondWithIdx(1)
+    self.assertEquals(bond.GetBondType(), Chem.BondType.DOUBLE)
+    self.assertEquals(bond.GetStereo(), stereo)
+    self.assertEquals(list(bond.GetStereoAtoms()), [0, 3])
+
+  def allStereoBonds(self, bonds):
+    for bond in bonds:
+      self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+
+  def testBondSetStereo(self):
+    for testAssignStereo in [False, True]:
+      mol = Chem.MolFromSmiles("FC=CF")
+      Chem.FindPotentialStereoBonds(mol)
+
+      for bond in mol.GetBonds():
+        if (bond.GetBondType() == Chem.BondType.DOUBLE and
+            bond.GetStereo() == Chem.BondStereo.STEREOANY):
+          break
+      self.assertEquals(bond.GetBondType(), Chem.BondType.DOUBLE)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOANY)
+      self.assertEquals(list(bond.GetStereoAtoms()), [0, 3])
+
+      bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOTRANS)
+      if testAssignStereo: # should be invariant of Chem.AssignStereochemistry being called
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEquals(smi, "F/C=C/F")
+      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
+
+      bond.SetStereo(Chem.BondStereo.STEREOCIS)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOCIS)
+      if testAssignStereo:
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEquals(smi, "F/C=C\F")
+      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
+
+  def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
+    if not bonds:
+      yield done_bonds, Chem.Mol(mol)
+      return
+
+    bond = bonds[0]
+    child_bonds = bonds[1:]
+    self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOE], child_bonds):
+      yield isomer
+
+    self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOCIS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOZ], child_bonds):
+      yield isomer
+
+  def testBondSetStereoDifficultCase(self):
+    unspec_smiles = "CCC=CC(CO)=C(C)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      self.allStereoBonds(stereo_bonds)
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      self.allStereoBonds(stereo_bonds)
+
+      self.assertNotIn(isosmi, isomers)
+      isomers.add(isosmi)
+
+      isomol = Chem.MolFromSmiles(isosmi)
+      round_trip_stereo = [b.GetStereo() for b in isomol.GetBonds() if b.GetStereo() != Chem.BondStereo.STEREONONE]
+
+      self.assertEquals(bond_stereo, round_trip_stereo)
+
+    self.assertEqual(len(isomers), 4)
+
+
+  def getNumUnspecifiedBondStereo(self, smi):
+    mol = Chem.MolFromSmiles(smi)
+    Chem.FindPotentialStereoBonds(mol)
+
+    count = 0
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        count += 1
+
+    return count
+
+  def testBondSetStereoReallyDifficultCase(self):
+    # this one is much trickier because a double bond can gain and
+    # lose it's stereochemistry based upon whether 2 other double
+    # bonds have the same or different stereo chemistry.
+
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    self.assertEquals(len(stereo_bonds), 2)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      isomers.add(isosmi)
+
+    self.assertEquals(len(isomers), 3)
+
+    # one of these then gains a new stereo bond due to the
+    # introduction of a new symmetry
+    counts = {}
+    for isosmi in isomers:
+      num_unspecified = self.getNumUnspecifiedBondStereo(isosmi)
+      counts[num_unspecified] = counts.get(num_unspecified, 0) + 1
+
+    # 2 of the isomers don't have any unspecified bond stereo centers
+    # left, 1 does
+    self.assertEquals(counts, {0 : 2, 1 : 1})
+
+  def assertBondSetStereoIsAlwaysEquivalent(self, all_smiles, desired_stereo, bond_idx):
+    refSmiles = None
+    for smi in all_smiles:
+      mol = Chem.MolFromSmiles(smi)
+
+      doubleBond = None
+      for bond in mol.GetBonds():
+        if bond.GetBondType() == Chem.BondType.DOUBLE:
+          doubleBond = bond
+
+      self.assertTrue(doubleBond is not None)
+
+      Chem.FindPotentialStereoBonds(mol)
+      doubleBond.SetStereo(desired_stereo)
+
+      isosmi = Chem.MolToSmiles(mol, isomericSmiles=True)
+
+      if refSmiles is None:
+        refSmiles = isosmi
+
+      self.assertEquals(refSmiles, isosmi)
+
+  def testBondSetStereoAllHalogens(self):
+    # can't get much more brutal than this test
+    from itertools import combinations, permutations
+    halogens = ['F', 'Cl', 'Br', 'I']
+
+    # binary double bond stereo
+    for unique_set in combinations(halogens, 2):
+      all_smiles = []
+      for fmt in ['%sC=C%s', 'C(%s)=C%s']:
+        for ordering in permutations(unique_set):
+          all_smiles.append(fmt % ordering)
+
+      #print(fmt, all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+    # tertiary double bond stereo
+    for unique_set in combinations(halogens, 3):
+      for mono_side in unique_set:
+        halogens_left = list(unique_set)
+        halogens_left.remove(mono_side)
+        for binary_side in combinations(halogens_left, 2):
+          all_smiles = []
+
+          for binary_side_permutation in permutations(binary_side):
+            all_smiles.append('%sC=C(%s)%s' % ((mono_side,) + binary_side_permutation))
+            all_smiles.append('C(%s)=C(%s)%s' % ((mono_side,) + binary_side_permutation))
+
+            all_smiles.append('%sC(%s)=C%s' % (binary_side_permutation + (mono_side,)))
+            all_smiles.append('C(%s)(%s)=C%s' % (binary_side_permutation + (mono_side,)))
+
+          #print(all_smiles)
+          for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+            self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+
+    # quaternary double bond stereo
+    for unique_ordering in permutations(halogens):
+      left_side = unique_ordering[:2]
+      rght_side = unique_ordering[2:]
+
+      all_smiles = []
+      for left_side_permutation in permutations(left_side):
+        for rght_side_permutation in permutations(rght_side):
+          for smifmt in ['%sC(%s)=C(%s)%s', 'C(%s)(%s)=C(%s)%s']:
+            all_smiles.append(smifmt % (left_side_permutation + rght_side_permutation))
+
+      #print(all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+  def testBondSetStereoAtoms(self):
+    # use this difficult molecule that only generates 4 isomers, but
+    # assume all double bonds are stereo!
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+
+    def getNbr(atom, exclude):
+      for nbr in atom.GetNeighbors():
+        if nbr.GetIdx() not in exclude:
+          return nbr
+      raise ValueError("No neighbor found!")
+
+    double_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetBondType() == 2:
+        double_bonds.append(bond)
+
+        exclude = {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()}
+        bgnNbr = getNbr(bond.GetBeginAtom(), exclude)
+        endNbr = getNbr(bond.GetEndAtom(), exclude)
+
+        bond.SetStereoAtoms(bgnNbr.GetIdx(), endNbr.GetIdx())
+
+    self.assertEquals(len(double_bonds), 3)
+
+    import itertools
+    stereos = [Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ]
+    isomers = set()
+    for stereo_config in itertools.product(stereos, repeat=len(double_bonds)):
+      for bond, stereo in zip(double_bonds, stereo_config):
+        bond.SetStereo(stereo)
+      smi = Chem.MolToSmiles(mol, True)
+      isomers.add(smi)
+
+    # the dependent double bond stereo isn't picked up by this, should it?
+    self.assertEquals(len(isomers), 6)
+
+    # round tripping them through one more time does pick up the dependency, so meh?
+    round_trip_isomers = set()
+    for smi in isomers:
+      isosmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), True)
+      round_trip_isomers.add(isosmi)
+
+    self.assertEquals(len(round_trip_isomers), 4)
+
   def test36SubstructMatchStr(self):
     """ test the _SubstructMatchStr function """
     query = Chem.MolFromSmarts('[n,p]1ccccc1')

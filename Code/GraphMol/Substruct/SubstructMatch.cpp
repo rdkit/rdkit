@@ -55,8 +55,9 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               std::vector<MatchVectType> *matches,
                               unsigned int bi, unsigned int ei);
 
-typedef std::list<std::pair<MolGraph::vertex_descriptor,
-                            MolGraph::vertex_descriptor> > ssPairType;
+typedef std::list<
+    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor> >
+    ssPairType;
 
 class MolMatchFinalCheckFunctor {
  public:
@@ -144,8 +145,7 @@ class MolMatchFinalCheckFunctor {
     for (unsigned int i = 0; i < d_query.getNumBonds(); ++i) {
       const Bond *qBnd = d_query.getBondWithIdx(i);
       if (qBnd->getBondType() != Bond::DOUBLE ||
-          (qBnd->getStereo() != Bond::STEREOZ &&
-           qBnd->getStereo() != Bond::STEREOE))
+          qBnd->getStereo() <= Bond::STEREOANY)
         continue;
 
       // don't think this can actually happen, but check to be sure:
@@ -159,8 +159,7 @@ class MolMatchFinalCheckFunctor {
           c2[qMap[qBnd->getBeginAtomIdx()]], c2[qMap[qBnd->getEndAtomIdx()]]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
-          (mBnd->getStereo() != Bond::STEREOZ &&
-           mBnd->getStereo() != Bond::STEREOE))
+          qBnd->getStereo() <= Bond::STEREOANY)
         continue;
       // don't think this can actually happen, but check to be sure:
       if (mBnd->getStereoAtoms().size() != 2) continue;
@@ -180,9 +179,10 @@ class MolMatchFinalCheckFunctor {
         if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0])
           end2Matches = 1;
       }
-      // std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" -
-      // "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<"
-      // "<<end2Matches<<std::endl;
+      // std::cerr << "  bnd: " << qBnd->getIdx() << ":" << qBnd->getStereo()
+      //           << " - " << mBnd->getIdx() << ":" << mBnd->getStereo()
+      //           << "  --  " << end1Matches << " " << end2Matches <<
+      //           std::endl;
       if (mBnd->getStereo() == qBnd->getStereo() &&
           (end1Matches + end2Matches) == 1)
         return false;
@@ -242,12 +242,10 @@ class BondLabelFunctor {
     if (df_useChirality) {
       const BOND_SPTR qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
-          (qBnd->getStereo() == Bond::STEREOZ ||
-           qBnd->getStereo() == Bond::STEREOE)) {
+          qBnd->getStereo() > Bond::STEREOANY) {
         const BOND_SPTR mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
-            !(mBnd->getStereo() == Bond::STEREOZ ||
-              mBnd->getStereo() == Bond::STEREOE))
+            mBnd->getStereo() <= Bond::STEREOANY)
           return false;
       }
     }
@@ -451,8 +449,9 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
                             int numThreads) {
   matches.clear();
   detail::ResSubstructMatchHelperArgs_ args = {
-      resMolSupplier, query, uniquify, recursionPossible, useChirality,
-      useQueryQueryMatches, maxMatches};
+      resMolSupplier,    query,        uniquify,
+      recursionPossible, useChirality, useQueryQueryMatches,
+      maxMatches};
   unsigned int nt =
       std::min(resMolSupplier.length(), getNumThreadsToUse(numThreads));
   if (nt == 1)
