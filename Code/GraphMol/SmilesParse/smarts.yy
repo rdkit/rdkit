@@ -379,6 +379,11 @@ atom_query:	simple_atom
   delete $1->getQuery();
   $1->setQuery(makeAtomImplicitHCountQuery($2));
 }
+| H_TOKEN charge_spec {
+  QueryAtom *newQ = new QueryAtom(1);
+  newQ->expandQuery(makeAtomFormalChargeQuery($2),Queries::COMPOSITE_AND,true);
+  $$=newQ;
+}
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1865,6 +1864,39 @@ void testGithub893() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1338() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1338: SMARTS proton query parsed incorrectly"
+      << std::endl;
+  {  // this worked all along
+    RWMol *p;
+    std::string sma = "[#1+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {  // make sure we aren't breaking anything else
+    RWMol *p;
+    std::string sma = "[H2]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 0);
+    delete p;
+  }
+  {  // this was the problem
+    RWMol *p;
+    std::string sma = "[H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -1906,6 +1938,7 @@ int main(int argc, char *argv[]) {
   testGithub766();
   testGithub893();
   testTransuranic();
+  testGithub1338();
 
   return 0;
 }
