@@ -110,7 +110,7 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 }
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-
+#if 0
 python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   res = RDKit::Descriptors::RDF(mol, confId);
@@ -144,17 +144,16 @@ python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId) {
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
+#endif
 
 python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
-  res = RDKit::Descriptors::AUTOCORR3D(mol, confId);
+  RDKit::Descriptors::AUTOCORR3D(mol, res, confId);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 #endif
-
-
 
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -541,7 +540,6 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   return pyres;
 }
 
-
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
@@ -569,26 +567,22 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
 /// I know a lot more about how boost works.
 /// @brief Type that allows for registration of conversions from
 ///        python iterable types.
-struct iterable_converter
-{
+struct iterable_converter {
   /// @note Registers converter from a python interable type to the
   ///       provided type.
   template <typename Container>
-  iterable_converter&
-  from_python()
-  {
+  iterable_converter &from_python() {
     boost::python::converter::registry::push_back(
-      &iterable_converter::convertible,
-      &iterable_converter::construct<Container>,
-      boost::python::type_id<Container>());
+        &iterable_converter::convertible,
+        &iterable_converter::construct<Container>,
+        boost::python::type_id<Container>());
 
     // Support chaining.
     return *this;
   }
 
   /// @brief Check if PyObject is iterable.
-  static void* convertible(PyObject* object)
-  {
+  static void *convertible(PyObject *object) {
     return PyObject_GetIter(object) ? object : NULL;
   }
 
@@ -601,9 +595,8 @@ struct iterable_converter
   ///     I.e. Container(begin, end)
   template <typename Container>
   static void construct(
-    PyObject* object,
-    boost::python::converter::rvalue_from_python_stage1_data* data)
-  {
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
     namespace python = boost::python;
     // Object is a borrowed reference, so create a handle indicting it is
     // borrowed for proper reference counting.
@@ -612,19 +605,17 @@ struct iterable_converter
     // Obtain a handle to the memory block that the converter has allocated
     // for the C++ type.
     typedef python::converter::rvalue_from_python_storage<Container>
-                                                                storage_type;
-    void* storage = reinterpret_cast<storage_type*>(data)->storage.bytes;
+        storage_type;
+    void *storage = reinterpret_cast<storage_type *>(data)->storage.bytes;
 
-    typedef python::stl_input_iterator<typename Container::value_type>
-                                                                    iterator;
+    typedef python::stl_input_iterator<typename Container::value_type> iterator;
 
     // Allocate the C++ type into the converter's memory block, and assign
     // its handle to the converter's convertible variable.  The C++
     // container is populated by passing the begin and end iterators of
     // the python object to the container's constructor.
-    new (storage) Container(
-      iterator(python::object(handle)), // begin
-      iterator());                      // end
+    new (storage) Container(iterator(python::object(handle)),  // begin
+                            iterator());                       // end
     data->convertible = storage;
   }
 };
@@ -634,21 +625,18 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
 
   // n.b. until we switch the query d_dataFunc over to boost::function
   //  we can't use python props in functions.
-  PythonPropertyFunctor(PyObject *self, const std::string &name, const std::string &version) :
-      PropertyFunctor(name, version), self(self) {
+  PythonPropertyFunctor(PyObject *self, const std::string &name,
+                        const std::string &version)
+      : PropertyFunctor(name, version), self(self) {
     python::incref(self);
-
   }
 
-  ~PythonPropertyFunctor() {
-    python::decref(self);
-  }
+  ~PythonPropertyFunctor() { python::decref(self); }
 
   double operator()(const RDKit::ROMol &mol) const {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };
-
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -881,22 +869,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   // exposes calcNumRotatableBondOptions (must be a better way!)
 
-  docString = "Options for generating rotatble bonds\n\
+  docString =
+      "Options for generating rotatble bonds\n\
  NonStrict - standard loose definitions\n\
  Strict - stricter definition excluding amides, esters, etc\n\
  StrictLinkages - adds rotors between rotatable bonds\n\
  Default - Current RDKit default\n";
 
-  python::enum_<RDKit::Descriptors::NumRotatableBondsOptions>("NumRotatableBondsOptions", docString.c_str())
+  python::enum_<RDKit::Descriptors::NumRotatableBondsOptions>(
+      "NumRotatableBondsOptions", docString.c_str())
       .value("NonStrict", RDKit::Descriptors::NonStrict)
       .value("Strict", RDKit::Descriptors::Strict)
       .value("StrictLinkages", RDKit::Descriptors::StrictLinkages)
-      .value("Default", RDKit::Descriptors::Default)
-       ;
+      .value("Default", RDKit::Descriptors::Default);
 
 #ifdef RDK_USE_STRICT_ROTOR_DEFINITION
-    docString=
-        "returns the number of rotatable bonds for a molecule.\n\
+  docString =
+      "returns the number of rotatable bonds for a molecule.\n\
    strict = NumRotatableBondsOptions.NonStrict - Simple rotatable bond definition.\n\
    strict = NumRotatableBondsOptions.Strict - (default) does not count things like\n\
             amide or ester bonds\n\
@@ -910,8 +899,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now\n\
          considered non-rotatable";
 #else
-    docString=
-        "returns the number of rotatable bonds for a molecule.\n\
+  docString =
+      "returns the number of rotatable bonds for a molecule.\n\
    strict = NumRotatableBondsOptions.NonStrict - (default) Simple rotatable bond definition.\n\
    strict = NumRotatableBondsOptions.Strict - does not count things like\n\
             amide or ester bonds\n\
@@ -926,23 +915,20 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
          considered non-rotatable";
 #endif
 
-  python::def(
-      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&, bool))
-                                RDKit::Descriptors::calcNumRotatableBonds,
-      (python::arg("mol"),
-       python::arg("strict")),
-      docString.c_str());
+  python::def("CalcNumRotatableBonds",
+              (unsigned int (*)(const RDKit::ROMol &,
+                                bool))RDKit::Descriptors::calcNumRotatableBonds,
+              (python::arg("mol"), python::arg("strict")), docString.c_str());
 
   python::def(
-      "CalcNumRotatableBonds", (unsigned int (*)(const RDKit::ROMol&,
-                                                 RDKit::Descriptors::NumRotatableBondsOptions))
-                                RDKit::Descriptors::calcNumRotatableBonds,
-      (python::arg("mol"),
-       python::arg("strict") = RDKit::Descriptors::Default),
+      "CalcNumRotatableBonds",
+      (unsigned int (*)(const RDKit::ROMol &,
+                        RDKit::Descriptors::NumRotatableBondsOptions))
+          RDKit::Descriptors::calcNumRotatableBonds,
+      (python::arg("mol"), python::arg("strict") = RDKit::Descriptors::Default),
       docString.c_str());
   python::scope().attr("_CalcNumRotatableBonds_version") =
       RDKit::Descriptors::NumRotatableBondsVersion;
-
 
   docString = "returns the number of rings for a molecule";
   python::def("CalcNumRings", RDKit::Descriptors::calcNumRings,
@@ -1188,13 +1174,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
 
-  docString = "Property computation class stored in the property registry.\n"
+  docString =
+      "Property computation class stored in the property registry.\n"
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
-                 RDKit::Descriptors::PropertyFunctor*,
+                 RDKit::Descriptors::PropertyFunctor *,
                  boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
-                 boost::noncopyable>("PropertyFunctor", docString.c_str(), python::no_init)
+                 boost::noncopyable>("PropertyFunctor", docString.c_str(),
+                                     python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
            "Compute the property for the specified molecule")
       .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
@@ -1204,189 +1192,193 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   iterable_converter().from_python<std::vector<std::string> >();
 
-  docString = "Property computation and registry system.  To compute all registered properties:\n"
+  docString =
+      "Property computation and registry system.  To compute all registered "
+      "properties:\n"
       "mol = Chem.MolFromSmiles('c1ccccc1')\n"
       "properties = rdMolDescriptors.Properties()\n"
-      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "for name, value in zip(properties.GetPropertyNames(), "
+      "properties.ComputeProperties(mol)):\n"
       "  print(name, value)\n\n"
       "To compute a subset\n"
       "properties = rdMolDescriptors.Properties(['exactmw', 'lipinskiHBA'])\n"
-      "for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):\n"
+      "for name, value in zip(properties.GetPropertyNames(), "
+      "properties.ComputeProperties(mol)):\n"
       "  print(name, value)\n\n"
       "";
 
   python::class_<RDKit::Descriptors::Properties,
-                 RDKit::Descriptors::Properties*>("Properties", docString.c_str(), python::init<>() )
-      .def(python::init<const std::vector<std::string>&>())
-      .def("GetPropertyNames", &RDKit::Descriptors::Properties::getPropertyNames,
+                 RDKit::Descriptors::Properties *>(
+      "Properties", docString.c_str(), python::init<>())
+      .def(python::init<const std::vector<std::string> &>())
+      .def("GetPropertyNames",
+           &RDKit::Descriptors::Properties::getPropertyNames,
            "Return the property names computed by this instance")
-      .def("ComputeProperties", &RDKit::Descriptors::Properties::computeProperties,
-           (python::arg("mol"), python::arg("annotateMol")=false),
-           "Return a list of computed properties, if annotateMol==True, annotate the molecule with "
+      .def("ComputeProperties",
+           &RDKit::Descriptors::Properties::computeProperties,
+           (python::arg("mol"), python::arg("annotateMol") = false),
+           "Return a list of computed properties, if annotateMol==True, "
+           "annotate the molecule with "
            "the computed properties.")
       .def("AnnotateProperties",
            &RDKit::Descriptors::Properties::annotateProperties,
            python::arg("mol"),
-           "Annotate the molecule with the computed properties.  These properties will be available "
+           "Annotate the molecule with the computed properties.  These "
+           "properties will be available "
            "as SDData or from mol.GetProp(prop)")
-      .def("GetAvailableProperties", &RDKit::Descriptors::Properties::getAvailableProperties,
-           "Return all available property names that can be computed").staticmethod("GetAvailableProperties")
+      .def("GetAvailableProperties",
+           &RDKit::Descriptors::Properties::getAvailableProperties,
+           "Return all available property names that can be computed")
+      .staticmethod("GetAvailableProperties")
       .def("GetProperty", &RDKit::Descriptors::Properties::getProperty,
-           python::arg("propName"),
-           "Return the named property if it exists").staticmethod("GetProperty")
-      .def("RegisterProperty", &RDKit::Descriptors::Properties::registerProperty,
+           python::arg("propName"), "Return the named property if it exists")
+      .staticmethod("GetProperty")
+      .def("RegisterProperty",
+           &RDKit::Descriptors::Properties::registerProperty,
            python::arg("propertyFunctor"),
-           "Register a new property object (not thread safe)").staticmethod("RegisterProperty");
+           "Register a new property object (not thread safe)")
+      .staticmethod("RegisterProperty");
 
   python::class_<PythonPropertyFunctor, boost::noncopyable,
                  python::bases<RDKit::Descriptors::PropertyFunctor> >(
-                     "PythonPropertyFunctor","",python::init<
-                     PyObject*, const std::string &, const std::string &>())
+      "PythonPropertyFunctor", "",
+      python::init<PyObject *, const std::string &, const std::string &>())
       .def("__call__", &PythonPropertyFunctor::operator(),
            "Compute the property for the specified molecule");
 
-  docString = "Property Range Query for a molecule.  Match(mol) -> true if in range";
-  python::class_<Queries::RangeQuery<double, RDKit::ROMol const&, true>,
-                 Queries::RangeQuery<double, RDKit::ROMol const&, true>*,
-                 boost::noncopyable>(
-                     "PropertyRangeQuery",
-                     docString.c_str(),
-                     python::no_init)
-      .def("Match", &Queries::RangeQuery<double, RDKit::ROMol const&, true>::Match);
+  docString =
+      "Property Range Query for a molecule.  Match(mol) -> true if in range";
+  python::class_<Queries::RangeQuery<double, RDKit::ROMol const &, true>,
+                 Queries::RangeQuery<double, RDKit::ROMol const &, true> *,
+                 boost::noncopyable>("PropertyRangeQuery", docString.c_str(),
+                                     python::no_init)
+      .def("Match",
+           &Queries::RangeQuery<double, RDKit::ROMol const &, true>::Match);
 
-  docString = "Generates a Range property for the specified property, between min and max\n"
+  docString =
+      "Generates a Range property for the specified property, between min and "
+      "max\n"
       "query = MakePropertyRangeQuery('exactmw', 0, 500)\n"
       "query.Match( mol )";
 
   python::def("MakePropertyRangeQuery",
               RDKit::Descriptors::makePropertyRangeQuery,
-              (python::arg("name"), python::arg("min"), python::arg("max")), docString.c_str(),
+              (python::arg("name"), python::arg("min"), python::arg("max")),
+              docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-
+#if 0
   python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
-  docString ="Returns the RDF vector (radial distribution fonction) descriptors";
+  docString =
+      "Returns the RDF vector (radial distribution fonction) descriptors";
   python::def("CalcRDF", calcRDFs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
+  python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
 
-  python::scope().attr("_CalcMORSE_version") =  RDKit::Descriptors::MORSEVersion;
-
-  docString = "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
+  docString =
+      "Returns the MORSE vector (Molecule Representation of Structures based "
+      "on Electron diffraction) descriptors";
   python::def("CalcMORSE", calcMORSEs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
-
- python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
-  docString ="Returns the WHIM descriptors vector () descriptors";
+  python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
+  docString = "Returns the WHIM descriptors vector () descriptors";
   python::def("CalcWHIM", calcWHIMs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
- python::scope().attr("_CalcGETAWAY_version") = RDKit::Descriptors::GETAWAYVersion;
-  docString ="Returns the GETAWAY descriptors vector () descriptors";
+  python::scope().attr("_CalcGETAWAY_version") =
+      RDKit::Descriptors::GETAWAYVersion;
+  docString = "Returns the GETAWAY descriptors vector () descriptors";
   python::def("CalcGETAWAY", calcGETAWAYs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
-
- python::scope().attr("_CalcAUTOCORR3D_version") = RDKit::Descriptors::AUTOCORR3DVersion;
-  docString ="Returns the GETAWAY descriptors vector () descriptors";
+#endif
+  python::scope().attr("_CalcAUTOCORR3D_version") =
+      RDKit::Descriptors::AUTOCORR3DVersion;
+  docString = "Returns the GETAWAY descriptors vector () descriptors";
   python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
-  python::scope().attr("_CalcPBF_version") =
-      RDKit::Descriptors::PBFVersion;
+  python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
   docString =
-      "Returns the PBF (plane of best fit) descriptor (http://dx.doi.org/10.1021/ci300293f)";
+      "Returns the PBF (plane of best fit) descriptor "
+      "(http://dx.doi.org/10.1021/ci300293f)";
   python::def("CalcPBF", RDKit::Descriptors::PBF,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
-  python::scope().attr("_CalcNPR1_version") =
-      RDKit::Descriptors::NPR1Version;
-  docString =
-      "";
+  python::scope().attr("_CalcNPR1_version") = RDKit::Descriptors::NPR1Version;
+  docString = "";
   python::def("CalcNPR1", RDKit::Descriptors::NPR1,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
-  python::scope().attr("_CalcNPR2_version") =
-                  RDKit::Descriptors::NPR2Version;
-  docString =
-                  "";
+  python::scope().attr("_CalcNPR2_version") = RDKit::Descriptors::NPR2Version;
+  docString = "";
   python::def("CalcNPR2", RDKit::Descriptors::NPR2,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
-  python::scope().attr("_CalcPMI1_version") =
-      RDKit::Descriptors::PMI1Version;
-  docString =
-      "";
+  python::scope().attr("_CalcPMI1_version") = RDKit::Descriptors::PMI1Version;
+  docString = "";
   python::def("CalcPMI1", RDKit::Descriptors::PMI1,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
-  python::scope().attr("_CalcPMI2_version") =
-                  RDKit::Descriptors::PMI2Version;
-  docString =
-                  "";
+  python::scope().attr("_CalcPMI2_version") = RDKit::Descriptors::PMI2Version;
+  docString = "";
   python::def("CalcPMI2", RDKit::Descriptors::PMI2,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
-  python::scope().attr("_CalcPMI3_version") =
-                  RDKit::Descriptors::PMI3Version;
-  docString =
-                  "";
+  python::scope().attr("_CalcPMI3_version") = RDKit::Descriptors::PMI3Version;
+  docString = "";
   python::def("CalcPMI3", RDKit::Descriptors::PMI3,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
 
   python::scope().attr("_CalcRadiusOfGyration_version") =
-                  RDKit::Descriptors::radiusOfGyrationVersion;
-  docString =
-                  "";
+      RDKit::Descriptors::radiusOfGyrationVersion;
+  docString = "";
   python::def("CalcRadiusOfGyration", RDKit::Descriptors::radiusOfGyration,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
   python::scope().attr("_CalcInertialShapeFactor_version") =
-                  RDKit::Descriptors::inertialShapeFactorVersion;
-  docString =
-                  "";
-  python::def("CalcInertialShapeFactor", RDKit::Descriptors::inertialShapeFactor,
+      RDKit::Descriptors::inertialShapeFactorVersion;
+  docString = "";
+  python::def("CalcInertialShapeFactor",
+              RDKit::Descriptors::inertialShapeFactor,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
 
   python::scope().attr("_CalcEccentricity_version") =
-                  RDKit::Descriptors::eccentricityVersion;
-  docString =
-                  "";
+      RDKit::Descriptors::eccentricityVersion;
+  docString = "";
   python::def("CalcEccentricity", RDKit::Descriptors::eccentricity,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
   python::scope().attr("_CalcAsphericity_version") =
-                  RDKit::Descriptors::asphericityVersion;
-  docString =
-                  "";
+      RDKit::Descriptors::asphericityVersion;
+  docString = "";
   python::def("CalcAsphericity", RDKit::Descriptors::asphericity,
               (python::arg("mol"), python::arg("confId") = -1,
-              python::arg("useAtomicMasses")=true),
+               python::arg("useAtomicMasses") = true),
               docString.c_str());
   python::scope().attr("_CalcSpherocityIndex_version") =
-                  RDKit::Descriptors::spherocityIndexVersion;
-  docString =
-                  "";
+      RDKit::Descriptors::spherocityIndexVersion;
+  docString = "";
   python::def("CalcSpherocityIndex", RDKit::Descriptors::spherocityIndex,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
 #endif
-
 }

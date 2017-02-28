@@ -2005,7 +2005,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
           q = makeBondNullQuery();
           bond->setQuery(q);
           BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType
-                                  << ", found on line" << line
+                                  << ", found on line " << line
                                   << ". Using an \"any\" query." << std::endl;
         }
         break;

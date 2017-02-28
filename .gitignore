@@ -68,6 +68,7 @@ __pycache__/
 /Code/GraphMol/Wrap/test_data/outSmiles.txt
 
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
 

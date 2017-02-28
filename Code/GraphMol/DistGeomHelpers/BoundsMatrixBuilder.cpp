@@ -547,10 +547,21 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
     const INT_VECT &stAtoms = bnd->getStereoAtoms();
     if ((static_cast<unsigned int>(stAtoms[0]) != aid1) ^
         (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
-      if (stype == Bond::STEREOZ) {
-        stype = Bond::STEREOE;
-      } else if (stype == Bond::STEREOE) {
-        stype = Bond::STEREOZ;
+      switch (stype) {
+        case Bond::STEREOZ:
+          stype = Bond::STEREOE;
+          break;
+        case Bond::STEREOE:
+          stype = Bond::STEREOZ;
+          break;
+        case Bond::STEREOCIS:
+          stype = Bond::STEREOTRANS;
+          break;
+        case Bond::STEREOTRANS:
+          stype = Bond::STEREOCIS;
+          break;
+        default:
+          break;
       }
     }
   }
@@ -604,7 +615,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
   bool preferCis = false;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOE)) {
+      (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
     // the ring check here was a big part of github #697
     if (mol.getRingInfo()->numBondRings(bid2) > 1) {
       if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
@@ -736,7 +747,8 @@ void _setTwoInDiffRing14Bounds(const ROMol &mol, const Bond *bnd1,
                                const Bond *bnd2, const Bond *bnd3,
                                ComputedData &accumData,
                                DistGeom::BoundsMatPtr mmat, double *dmat) {
-  // this turns out to be very similar to all bonds in the same ring situation.
+  // this turns out to be very similar to all bonds in the same ring
+  // situation.
   // There is probably some fine tuning that can be done when the atoms a2 and
   // a3 are not sp2 hybridized,
   // but we will not worry about that now; simple use 0-180 deg for non-sp2
@@ -886,10 +898,11 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         path14.type = Path14Configuration::CIS;
         accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
         accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
-        // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 << "\n";
+        // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 <<
+        // "\n";
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
         Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
-        if (stype == Bond::STEREOZ) {
+        if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
           dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) -
                GEN_DIST_TOL;
           du = dl + 2 * GEN_DIST_TOL;
@@ -949,7 +962,8 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
              GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
         path14.type = Path14Configuration::OTHER;
-        // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 << "\n";
+        // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 <<
+        // "\n";
       } else if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
 // It's an amide or ester:
@@ -1051,7 +1065,8 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     default:
-      // BOOST_LOG(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 << "\n";
+      // BOOST_LOG(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 <<
+      // "\n";
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
       du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
 
@@ -1325,7 +1340,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 // some helper functions to set 15 distances
 
 /*
- compute the lower and upper bounds for the distance between 15 atoms give than
+ compute the lower and upper bounds for the distance between 15 atoms give
+ than
  the first
  four atoms are in cis configuration. The 15 limits are computed assuming the
  following
@@ -1365,7 +1381,8 @@ double _compute15DistsCisCis(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the distance between 15 atoms give than
+ compute the lower and upper bounds for the distance between 15 atoms give
+ than
  the first
  four atoms are in cis configuration. The 15 limits are computed assuming the
  following
@@ -1405,9 +1422,11 @@ double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given than
+ compute the lower and upper bounds for the dsitance between 15 atoms given
+ than
  the first
- four atoms are in trans configuration. The 15 limits are computed assuming the
+ four atoms are in trans configuration. The 15 limits are computed assuming
+ the
  following
  configuration
 
@@ -1447,9 +1466,11 @@ double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
 }
 
 /*
- compute the lower and upper bounds for the dsitance between 15 atoms given than
+ compute the lower and upper bounds for the dsitance between 15 atoms given
+ than
  the first
- four atoms are in trans configuration. The 15 limits are computed assuming the
+ four atoms are in trans configuration. The 15 limits are computed assuming
+ the
  following
  configuration
 
@@ -1512,7 +1533,8 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
     dl = 0.0;
     if (accumData.bondAdj->getVal(bid3, i) == static_cast<int>(aid4)) {
       aid5 = mol.getBondWithIdx(i)->getOtherAtomIdx(aid4);
-      // make sure we did not com back to the first atom in the path - possible
+      // make sure we did not com back to the first atom in the path -
+      // possible
       // with 4 membered rings
       // this is a fix for Issue 244
 
