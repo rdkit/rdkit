@@ -148,7 +148,7 @@ python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId) {
 
 python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
-  res = RDKit::Descriptors::AUTOCORR3D(mol, confId);
+  RDKit::Descriptors::AUTOCORR3D(mol, res, confId);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
@@ -359,8 +359,9 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
+      for (std::vector<std::pair<boost::uint32_t,
+                                 boost::uint32_t> >::const_iterator vIt =
+               v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -441,8 +442,9 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
+      for (std::vector<std::pair<boost::uint32_t,
+                                 boost::uint32_t> >::const_iterator vIt =
+               v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
