@@ -97,11 +97,9 @@ double* GetGeodesicMatrix(double* dist, int lag, int numAtoms) {
   return Geodesic;
 }
 
-double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms,
-                                 const ROMol& mol) {
+void get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms,
+                              const ROMol& mol, std::vector<double>& res) {
   Map<MatrixXd> dm(dist3D, numAtoms, numAtoms);
-
-  double* w = new double[80];
 
   std::vector<double> wp = moldata3D.GetRelativePol(mol);
 
@@ -187,31 +185,24 @@ double* get3DautocorrelationDesc(double* dist3D, double* dist, int numAtoms,
     TDBmat[7][i] = dtmp;
   }
 
-  // create the Output vector!
-  w = AppendDouble(w, TDBmat[0], 10, 0);
-  w = AppendDouble(w, TDBmat[1], 10, 10);
-  w = AppendDouble(w, TDBmat[2], 10, 20);
-  w = AppendDouble(w, TDBmat[3], 10, 30);
-  w = AppendDouble(w, TDBmat[4], 10, 40);
-  w = AppendDouble(w, TDBmat[5], 10, 50);
-  w = AppendDouble(w, TDBmat[6], 10, 60);
-  w = AppendDouble(w, TDBmat[7], 10, 70);
-
-  return w;
+  // update the Output vector!
+  for (unsigned int j = 0; j < 8; ++j) {
+    for (unsigned int i = 0; i < 10; ++i) {
+      res[j * 10 + i] = TDBmat[j][i];
+    }
+  }
 }
 
-double* Get3Dauto(double* dist3D, double* dist, int numAtoms,
-                  const ROMol& mol) {
+void Get3Dauto(double* dist3D, double* dist, int numAtoms, const ROMol& mol,
+               std::vector<double>& res) {
   // std::vector<std::string>
   // AUTOCORRNAMES={"TDB01u","TDB02u","TDB03u","TDB04u","TDB05u","TDB06u","TDB07u","TDB08u","TDB09u","TDB10u","TDB01m","TDB02m","TDB03m","TDB04m","TDB05m","TDB06m","TDB07m","TDB08m","TDB09m","TDB10m","TDB01v","TDB02v","TDB03v","TDB04v","TDB05v","TDB06v","TDB07v","TDB08v","TDB09v","TDB10v","TDB01e","TDB02e","TDB03e","TDB04e","TDB05e","TDB06e","TDB07e","TDB08e","TDB09e","TDB10e","TDB01p","TDB02p","TDB03p","TDB04p","TDB05p","TDB06p","TDB07p","TDB08p","TDB09p","TDB10p","TDB01i","TDB02i","TDB03i","TDB04i","TDB05i","TDB06i","TDB07i","TDB08i","TDB09i","TDB10i","TDB01s","TDB02s","TDB03s","TDB04s","TDB05s","TDB06s","TDB07s","TDB08s","TDB09s","TDB10s","TDB01r","TDB02r","TDB03r","TDB04r","TDB05r","TDB06r","TDB07r","TDB08r","TDB09r","TDB10r"};
-  double* res = new double[80];
-  res = get3DautocorrelationDesc(dist3D, dist, numAtoms, mol);
-  return res;
+  get3DautocorrelationDesc(dist3D, dist, numAtoms, mol, res);
 }
 
 }  // end of anonymous namespace
 
-std::vector<double> AUTOCORR3D(const ROMol& mol, int confId) {
+void AUTOCORR3D(const ROMol& mol, std::vector<double>& res, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
@@ -219,14 +210,10 @@ std::vector<double> AUTOCORR3D(const ROMol& mol, int confId) {
 
   double* dist = MolOps::getDistanceMat(mol, false);
   double* dist3D = MolOps::get3DDistanceMat(mol, confId);
-  double* wpol = Get3Dauto(dist3D, dist, numAtoms, mol);
 
-  std::vector<double> dataVec;
-  for (int i = 0; i < 80; i++) {
-    dataVec.push_back(wpol[i]);
-  }
-
-  return dataVec;
+  res.clear();
+  res.resize(80);
+  Get3Dauto(dist3D, dist, numAtoms, mol, res);
 }
 
 }  // end of Descriptors namespace
