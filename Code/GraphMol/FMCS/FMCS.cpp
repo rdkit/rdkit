@@ -38,6 +38,8 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
         pt.get<bool>("MatchValences", p.AtomCompareParameters.MatchValences);
     p.AtomCompareParameters.MatchChiralTag =
         pt.get<bool>("MatchChiralTag", p.AtomCompareParameters.MatchChiralTag);
+    p.AtomCompareParameters.MatchFormalCharge = pt.get<bool>(
+        "MatchFormalCharge", p.AtomCompareParameters.MatchFormalCharge);
     p.BondCompareParameters.RingMatchesRingOnly = pt.get<bool>(
         "RingMatchesRingOnly", p.BondCompareParameters.RingMatchesRingOnly);
     p.BondCompareParameters.CompleteRingsOnly = pt.get<bool>(
@@ -134,6 +136,14 @@ bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
 // PREDEFINED FUNCTORS:
 
 //=== ATOM COMPARE ========================================================
+static bool checkAtomCharge(const MCSAtomCompareParameters& p,
+                            const ROMol& mol1, unsigned int atom1,
+                            const ROMol& mol2, unsigned int atom2) {
+  RDUNUSED_PARAM(p);
+  const Atom& a1 = *mol1.getAtomWithIdx(atom1);
+  const Atom& a2 = *mol2.getAtomWithIdx(atom2);
+  return a1.getFormalCharge() == a2.getFormalCharge();
+}
 static bool checkAtomChirality(const MCSAtomCompareParameters& p,
                                const ROMol& mol1, unsigned int atom1,
                                const ROMol& mol2, unsigned int atom2) {
@@ -152,7 +162,11 @@ static bool checkAtomChirality(const MCSAtomCompareParameters& p,
 bool MCSAtomCompareAny(const MCSAtomCompareParameters& p, const ROMol& mol1,
                        unsigned int atom1, const ROMol& mol2,
                        unsigned int atom2, void*) {
-  if (p.MatchChiralTag) return checkAtomChirality(p, mol1, atom1, mol2, atom2);
+  if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
+    return false;
+  if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
+    return false;
+
   return true;
 }
 
@@ -164,7 +178,10 @@ bool MCSAtomCompareElements(const MCSAtomCompareParameters& p,
   if (a1.getAtomicNum() != a2.getAtomicNum()) return false;
   if (p.MatchValences && a1.getTotalValence() != a2.getTotalValence())
     return false;
-  if (p.MatchChiralTag) return checkAtomChirality(p, mol1, atom1, mol2, atom2);
+  if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
+    return false;
+  if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
+    return false;
   return true;
 }
 
@@ -178,7 +195,10 @@ bool MCSAtomCompareIsotopes(const MCSAtomCompareParameters& p,
   const Atom& a1 = *mol1.getAtomWithIdx(atom1);
   const Atom& a2 = *mol2.getAtomWithIdx(atom2);
   if (a1.getIsotope() != a2.getIsotope()) return false;
-  if (p.MatchChiralTag) return checkAtomChirality(p, mol1, atom1, mol2, atom2);
+  if (p.MatchChiralTag && !checkAtomChirality(p, mol1, atom1, mol2, atom2))
+    return false;
+  if (p.MatchFormalCharge && !checkAtomCharge(p, mol1, atom1, mol2, atom2))
+    return false;
   return true;
 }
 
