@@ -45,6 +45,8 @@ def generateAll():
     end = time.time()
 
 if(__name__=='__main__'):
+    # FIX: We need to actually add some tests here, but this doees not need to
+    # to be done until the C++ code and tests are straightened out.
     generateAll();
 
 # thefile = open('testSMWHIM.txt', 'w')
