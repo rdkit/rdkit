@@ -2008,6 +2008,17 @@ void testGithub1338() {
     TEST_ASSERT(asma == "[N&H1]");
     delete p;
   }
+  {
+    RWMol *p;
+    std::string sma = "[N;2H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&2*&H1&+]");
+    delete p;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
