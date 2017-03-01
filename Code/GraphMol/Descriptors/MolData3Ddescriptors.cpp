@@ -118,21 +118,26 @@ int MolData3Ddescriptors::GetPrincipalQuantumNumber(int AtomicNum) {
 
 std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is;
-
+  std::vector<double> Is(numAtoms,1.0);
+  std::cout << "coucou \n";
+  
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
-    int degree = atom->getDegree();
-    if (degree>0 and atNum>1) {
+    int degree = atom->getDegree(); // number of substituants
+    if (degree > 0 and atNum > 1) {
       int h = atom->getTotalNumHs();
-      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum);
-      double dv =(double) Zv-h;
-      dv = dv / (double) (atNum-Zv-1);
-      int N =  GetPrincipalQuantumNumber(atNum);
-      Is.push_back(round(1000*(4.0/(N*N)*dv+1.0)/degree)/1000);  // WHIM-P5.pdf paper 1997  => +7 & NoHydrogens is used!
+      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum); // number of valence (explicit with Hs)
+      double dv =(double) Zv-h;  // number of valence electron without Hs
+      int N =  GetPrincipalQuantumNumber(atNum); // principal quantum number
+      double d = (double) degree-h;
+        if (d>0) {
+            Is[i]=round(1000*(4.0/(N*N)*dv+1.0)/d)/1000;
+        }
+        else {
+            Is[i]=0.0;
+        }
     }
-    else Is.push_back(0);
  }
 
  return Is;
@@ -144,7 +149,7 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
 std::vector<double> MolData3Ddescriptors::GetEState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
  
-  std::vector<double> Is =GetIState(mol);
+  std::vector<double> Is = GetIState(mol);
 
   double tmp,p;
   double *dist =  RDKit::MolOps::getDistanceMat(mol,false,false);

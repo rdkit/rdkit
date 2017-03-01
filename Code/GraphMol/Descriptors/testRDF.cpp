@@ -40,7 +40,9 @@ void testRDF1() {
     m->getProp("_Name",nm);
 
 
-    std::vector<double> drdf = RDKit::Descriptors::RDF(*m);
+    std::vector<double> drdf;
+
+    RDKit::Descriptors::RDF(*m,drdf,-1);
   
        
     std::cout << "=>read molecule: " << nDone  << std::endl;
@@ -89,7 +91,9 @@ void testRDF() {
     m->getProp("_Name",nm);
 
 
-    std::vector<double> drdf = RDKit::Descriptors::RDF(*m);
+    std::vector<double> drdf;
+
+    RDKit::Descriptors::RDF(*m, drdf, -1);
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
