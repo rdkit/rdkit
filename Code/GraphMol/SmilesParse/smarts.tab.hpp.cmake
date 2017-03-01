@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
-# define YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+#ifndef YY_YYSMARTS_USERS_GLANDRUM_RDK_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+# define YY_YYSMARTS_USERS_GLANDRUM_RDK_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -85,18 +85,20 @@ extern int yysmarts_debug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
-#line 51 "smarts.yy" /* yacc.c:1909  */
+#line 51 "smarts.yy" /* yacc.c:1915  */
 
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
   int                      ival;
 
-#line 99 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
+#line 99 "/Users/glandrum/rdk/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1915  */
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -105,4 +107,4 @@ union YYSTYPE
 
 int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, void *scanner);
 
-#endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMARTS_USERS_GLANDRUM_RDK_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */
