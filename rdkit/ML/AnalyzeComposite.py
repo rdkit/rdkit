@@ -83,7 +83,7 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
     if verbose >= 0:
       print('# Average Descriptor Positions')
     retVal = []
-    for k in globalRes.keys():
+    for k in globalRes:
       name = descNames[k]
       if verbose >= 0:
         strRes = ', '.join(['%4.2f' % x for x in globalRes[k]])
