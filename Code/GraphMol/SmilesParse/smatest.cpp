@@ -1903,6 +1903,54 @@ void testGithub1338() {
     TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
     delete p;
   }
+  {
+    RWMol *p;
+    std::string sma = "[2H]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[2H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[2H:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[H:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[H+:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
 
   // -- a series around Hs following other symbols:
   {
@@ -1924,7 +1972,7 @@ void testGithub1338() {
     std::string asma = SmartsWrite::GetAtomSmarts(
         static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
     // std::cerr << "  SMA: " << asma << std::endl;
-    TEST_ASSERT(asma == "[N&#1&+]");
+    TEST_ASSERT(asma == "[N&H1&+]");
     delete p;
   }
   {
