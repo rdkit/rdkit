@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2012, Institue of Cancer Research.
+//  Copyright (c) 2016, Guillaume GODIN
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string GETAWAYVersion = "1.0.0";
-    std::vector<double> GETAWAY(const ROMol&,int confId=-1);
+    void GETAWAY(const ROMol&, std::vector<double> &res, int confId=-1);
   }
 }
 #endif

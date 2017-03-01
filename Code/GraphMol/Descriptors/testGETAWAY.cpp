@@ -39,13 +39,12 @@ void testGETAWAY() {
     m->getProp("_Name",nm);
 
     std::vector<double> dgetaway;
-    dgetaway = RDKit::Descriptors::GETAWAY(*m, -1);
+    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1);
 
     for (int j=0;j<273;j++) {
         std::cout << dgetaway[j] << ",";
      }
 
-       
     std::cout << "=>read molecule: " << nDone  << std::endl;
 
     delete m;
