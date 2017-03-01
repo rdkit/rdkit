@@ -59,7 +59,9 @@ void testMORSE(){
     m->getProp("_Name",nm);
 
 
-    std::vector<double> drdf = RDKit::Descriptors::MORSE(*m);
+    std::vector<double> drdf;
+
+    RDKit::Descriptors::MORSE(*m, drdf, -1);
 
 
     std::vector<std::string> myrow=data[nDone];

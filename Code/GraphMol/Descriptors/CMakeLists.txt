@@ -1,6 +1,6 @@
 if(RDK_BUILD_DESCRIPTORS3D)
-  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h Data3Ddescriptors.h MolData3Ddescriptors.h AUTOCORR3D.h RDF.h)
-  set(DESC3D_SOURCES PBF.cpp PMI.cpp Data3Ddescriptors.cpp MolData3Ddescriptors.cpp AUTOCORR3D.cpp RDF.cpp)
+  set(DESC3D_HDRS MolDescriptors3D.h PBF.h PMI.h Data3Ddescriptors.h MolData3Ddescriptors.h AUTOCORR3D.h RDF.h MORSE.h)
+  set(DESC3D_SOURCES PBF.cpp PMI.cpp Data3Ddescriptors.cpp MolData3Ddescriptors.cpp AUTOCORR3D.cpp RDF.cpp MORSE.cpp)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_library(Descriptors
@@ -28,8 +28,8 @@ if(RDK_BUILD_DESCRIPTORS3D)
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
  rdkit_test(testRDF testRDF.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
-#  rdkit_test(testMORSE testMORSE.cpp
-#LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+ rdkit_test(testMORSE testMORSE.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 #  rdkit_test(test3D test3D.cpp
 #LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 #  rdkit_test(testWHIM testWHIM.cpp

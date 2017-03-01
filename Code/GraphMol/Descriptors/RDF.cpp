@@ -156,8 +156,8 @@ namespace RDKit {
               R1.insert( R1.end() , R3.begin() , R3.end());
               R1.insert( R1.end() , R4.begin() , R4.end());
               R1.insert( R1.end() , R5.begin() , R5.end());
-              R1.insert( R1.end() , R6.begin() , R6.end());
-              R1.insert( R1.end() , R7.begin() , R7.end());
+              R1.insert( R1.end() , R6.begin() , R6.end()); // 
+              R1.insert( R1.end() , R7.begin() , R7.end()); // 180 -210
 
               res = R1;
 

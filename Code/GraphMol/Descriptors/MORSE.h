@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2012, Institue of Cancer Research.
+//  Copyright (c) 2016, Guillaume GODIN
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,7 @@
 //  Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality of Molecules, Nicholas C. Firth, Nathan Brown, and Julian Blagg, Journal of Chemical Information and Modeling 2012 52 (10), 2516-2525
 
 //
-//
-// Created by Nicholas Firth, November 2011
-// Modifications by Greg Landrum for inclusion in the RDKit core, September 2016
-// Adding RBF by Guillaume Godin
+// Adding MORSE by Guillaume Godin
 
 #ifndef MORSERDKIT_H_SEPT2016
 #define MORSERDKIT_H_SEPT2016
@@ -49,7 +46,7 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string MORSEVersion = "1.0.0";
-    std::vector<double> MORSE(const ROMol&,int confId=-1);
+    void MORSE(const ROMol&, std::vector<double> &res , int confId=-1);
   }
 }
 #endif
