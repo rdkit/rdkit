@@ -119,8 +119,7 @@ int MolData3Ddescriptors::GetPrincipalQuantumNumber(int AtomicNum) {
 std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
   std::vector<double> Is(numAtoms,1.0);
-  std::cout << "coucou \n";
-  
+
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
@@ -130,7 +129,7 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
       int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum); // number of valence (explicit with Hs)
       double dv =(double) Zv-h;  // number of valence electron without Hs
       int N =  GetPrincipalQuantumNumber(atNum); // principal quantum number
-      double d = (double) degree-h;
+      double d = (double) degree-h; // degree-h  or degree ???
         if (d>0) {
             Is[i]=round(1000*(4.0/(N*N)*dv+1.0)/d)/1000;
         }

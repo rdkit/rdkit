@@ -21,7 +21,7 @@
 #include <GraphMol/Descriptors/GETAWAY.h>
 
 void testGETAWAY() {
-  std::cout << "=>start test rdf\n";
+  std::cout << "=>start test GETAWAY\n";
 
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
