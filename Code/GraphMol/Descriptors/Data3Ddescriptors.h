@@ -26,5 +26,4 @@ class Data3Ddescriptors
 	   double* getRCOV();
 
 };
-#endif 
-
+#endif

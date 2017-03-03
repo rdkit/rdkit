@@ -43,4 +43,3 @@ double* Data3Ddescriptors::getIonPOL( ){
 double* Data3Ddescriptors::getRCOV( ){
 	return rcov;
 }
-

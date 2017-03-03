@@ -29,7 +29,7 @@ void testRDF1() {
       pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
   int nDone = 0;
   while (!reader.atEnd()) {
     ++nDone;
@@ -43,8 +43,9 @@ void testRDF1() {
     std::vector<double> drdf;
 
     RDKit::Descriptors::RDF(*m,drdf,-1);
-  
-       
+
+
+
     std::cout << "=>read molecule: " << nDone  << std::endl;
 
     delete m;
@@ -91,9 +92,11 @@ void testRDF() {
     m->getProp("_Name",nm);
 
 
+
     std::vector<double> drdf;
 
     RDKit::Descriptors::RDF(*m, drdf, -1);
+
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
@@ -107,7 +110,7 @@ void testRDF() {
             }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-        
+
        }
     std::cout << "=>read molecule: " << nDone  << std::endl;
 

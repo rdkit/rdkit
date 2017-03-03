@@ -28,7 +28,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// for build & set RDBASE! => export RDBASE=/Users/GVALMTGG/Github/rdkit_mine/
+// Created by Guillaume Godin 2016
+// for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -46,6 +47,7 @@
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
+
 
 using namespace Eigen;
 
@@ -95,7 +97,7 @@ namespace RDKit {
               return svd;
           }
 
-          // this method use the new Canonical Ranking Atoms to gene we don't need it there but can be useful in another package 
+          // this method use the new Canonical Ranking Atoms to gene we don't need it there but can be useful in another package
           std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                                        bool breakTies = true,
                                                        bool includeChirality = true,

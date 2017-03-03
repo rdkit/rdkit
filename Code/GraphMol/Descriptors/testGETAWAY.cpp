@@ -1,4 +1,4 @@
-//
+//  Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -27,8 +27,9 @@ void testGETAWAY() {
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene2.sdf";
 
+
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
   int nDone = 0;
   while (!reader.atEnd()) {
     ++nDone;
@@ -110,10 +111,9 @@ void testGETAWAY1() {
             }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-        
+
        }
     std::cout << "=>read molecule: " << nDone  << std::endl;
-
 
     delete m;
     ++nDone;
@@ -124,9 +124,11 @@ void testGETAWAY1() {
 
 
 
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testGETAWAY();
   testGETAWAY1();
+
 
 }

@@ -179,7 +179,7 @@ namespace RDKit {
             void get3DautocorrelationDesc2(double* dist3D, double* dist, int numAtoms,
                                           const ROMol& mol, std::vector<double>& res) {
 
-                
+
                 std::vector<double> wp = moldata3D.GetRelativePol(mol);
                 std::vector<double> wm = moldata3D.GetRelativeMW(mol);
                 std::vector<double> wv = moldata3D.GetRelativeVdW(mol);
@@ -245,8 +245,8 @@ namespace RDKit {
             // there is no link between to two
             void get3DautocorrelationDesc3(double* dist3D, double* dist, int numAtoms,
                                            const ROMol& mol, std::vector<double>& res) {
-                
-                
+
+
                 std::vector<double> wp = moldata3D.GetRelativePol(mol);
                 std::vector<double> wm = moldata3D.GetRelativeMW(mol);
                 std::vector<double> wv = moldata3D.GetRelativeVdW(mol);
@@ -256,7 +256,7 @@ namespace RDKit {
                 std::vector<double> ws = moldata3D.GetIState(mol);
                 std::vector<double> wr = moldata3D.GetRelativeRcov(mol);
                 double w[8][numAtoms];
-                
+
                 for (unsigned int i = 0; i < numAtoms; i++) {
                     w[0][i] = wu[i];
                     w[1][i] = wm[i];
@@ -267,7 +267,7 @@ namespace RDKit {
                     w[6][i] = ws[i];
                     w[7][i] = wr[i];
                 }
-                
+
                 double TDBmat[8][10];
                 for (unsigned int k = 0; k < 10; k++) {
                     int maxkVertexPairs = 0;
@@ -284,13 +284,13 @@ namespace RDKit {
                                     TDBmat[t][k] += w[t][i] * w[t][j];
 
                                     //TDBmat[t][k] += dist3D[j * numAtoms + i];
-                                    
+
                                 }
                                 maxkVertexPairs += 1;
                             }
                         }
                     }
-                    
+
                     for (unsigned int t = 0; t < 8; ++t)
                     {
                         if (maxkVertexPairs>0) {
@@ -301,7 +301,7 @@ namespace RDKit {
                         }
                     }
                 }
-                
+
                 // update the Output vector!
                 for (unsigned int j = 0; j < 8; ++j) {
                     for (unsigned int i = 0; i < 10; ++i) {
@@ -309,10 +309,10 @@ namespace RDKit {
                     }
                 }
             }
-            
 
-            
-            
+
+
+
 
             void Get3Dauto(double* dist3D, double* topologicaldistance, int numAtoms, const ROMol& mol,
                            std::vector<double>& res) {

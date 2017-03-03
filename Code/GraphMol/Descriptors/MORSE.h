@@ -28,15 +28,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// For more information on the Plane of Best Fit please see http://pubs.acs.org/doi/abs/10.1021/ci300293f
-//
-//  If this code has been useful to you, please include the reference
-//  in any work which has made use of it:
+// Created by  MORSE by Guillaume Godin
 
-//  Plane of Best Fit: A Novel Method to Characterize the Three-Dimensionality of Molecules, Nicholas C. Firth, Nathan Brown, and Julian Blagg, Journal of Chemical Information and Modeling 2012 52 (10), 2516-2525
-
-//
-// Adding MORSE by Guillaume Godin
 
 #ifndef MORSERDKIT_H_SEPT2016
 #define MORSERDKIT_H_SEPT2016
@@ -47,6 +40,7 @@ namespace RDKit {
   namespace Descriptors {
     const std::string MORSEVersion = "1.0.0";
     void MORSE(const ROMol&, std::vector<double> &res , int confId=-1);
+
   }
 }
 #endif

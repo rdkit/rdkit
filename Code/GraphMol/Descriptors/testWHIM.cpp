@@ -1,4 +1,4 @@
-//
+//  Created by Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -30,7 +30,7 @@ void testWHIM2() {
       pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
   int nDone = 0;
   while (!reader.atEnd()) {
     ++nDone;
@@ -63,7 +63,7 @@ void testWHIM3() {
       pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene2.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
   int nDone = 0;
   while (!reader.atEnd()) {
     ++nDone;
@@ -87,6 +87,7 @@ void testWHIM3() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
 void testWHIM1() {
   std::cout << "=>start test rdf\n";
 
@@ -95,7 +96,7 @@ void testWHIM1() {
       pathName + "/Code/GraphMol/Descriptors/test_data/1mol.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
   int nDone = 0;
   while (!reader.atEnd()) {
     ++nDone;
@@ -117,7 +118,7 @@ void testWHIM1() {
 
 //}
 
-       
+
     std::cout << "=>read molecule: " << nDone  << std::endl;
 
     delete m;
@@ -136,6 +137,7 @@ void testWHIM() {
   std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/whim.out";
   std::ifstream instrm(fName.c_str());
   std::ofstream output("whim.txt");
+
   std::string line;
   std::vector<std::vector<std::string>> data;
 
@@ -146,10 +148,12 @@ void testWHIM() {
       while(std::getline(ss, phrase, '\t')) {
           row.push_back(std::move(phrase));
       }
+
       data.push_back(std::move(row));
   }
 
   std::cout << "=>read file\n";
+
   int nDone = 0;
   while (!reader.atEnd()) {
 
@@ -165,19 +169,22 @@ void testWHIM() {
     for (int i=0;i<114;i++)
        {
            output << dwhim[i] << "\t";
+
             double ref =atof(myrow[i+1].c_str());
             if(fabs(ref-dwhim[i])>0.05){
               std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
             }
-           //TEST_ASSERT(fabs(ref-dwhim[i])<0.05);        
+           //TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
        }
     output << "\n";
     std::cout << "=>read molecule: " << nDone  << std::endl;
+
     delete m;
     ++nDone;
   }
 
   output.close();
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -191,5 +198,6 @@ int main(int argc, char *argv[]) {
   //testWHIM3();
 
 //  testWHIM();
+
 
 }

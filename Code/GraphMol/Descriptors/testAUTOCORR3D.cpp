@@ -1,4 +1,4 @@
-//
+//  Created by Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -23,7 +23,7 @@ void testautocorrelation() {
   std::cout << "=>start test autocorr3D\n";
 
   std::string pathName = getenv("RDBASE");
-  
+
   //std::cout << "Path: " << pathName << "\n";
 
   std::string sdfName =
@@ -110,6 +110,7 @@ void testautocorrelation() {
     delete m;
      ++nDone;
 
+
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -118,4 +119,5 @@ void testautocorrelation() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testautocorrelation();
+
 }

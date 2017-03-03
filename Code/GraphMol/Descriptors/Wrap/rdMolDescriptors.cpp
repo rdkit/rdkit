@@ -111,22 +111,6 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #if 0
-python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
-  std::vector<double> res;
-  res = RDKit::Descriptors::RDF(mol, confId);
-  python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
-  return pyres;
-}
-
-
-python::list calcMORSEs(const RDKit::ROMol &mol, int confId) {
-  std::vector<double> res;
-  res = RDKit::Descriptors::MORSE(mol, confId);
-  python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
-  return pyres;
-}
 
 
 python::list calcWHIMs(const RDKit::ROMol &mol, int confId) {
@@ -146,6 +130,23 @@ python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId) {
 }
 #endif
 
+python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::RDF(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+
+python::list calcMORSEs(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::MORSE(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
 python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   RDKit::Descriptors::AUTOCORR3D(mol, res, confId);
@@ -154,6 +155,7 @@ python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   return pyres;
 }
 #endif
+
 
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -539,6 +541,7 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
   return pyres;
 }
+
 
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
@@ -1270,6 +1273,43 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #if 0
   python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
+
+  python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
+  docString ="Returns the RDF vector (radial distribution fonction) descriptors";
+  python::def("CalcRDF", calcRDFs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+
+  python::scope().attr("_CalcMORSE_version") =  RDKit::Descriptors::MORSEVersion;
+
+  docString = "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
+  python::def("CalcMORSE", calcMORSEs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+
+ python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
+  docString ="Returns the WHIM descriptors vector () descriptors";
+  python::def("CalcWHIM", calcWHIMs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+ python::scope().attr("_CalcGETAWAY_version") = RDKit::Descriptors::GETAWAYVersion;
+  docString ="Returns the GETAWAY descriptors vector () descriptors";
+  python::def("CalcGETAWAY", calcGETAWAYs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+ python::scope().attr("_CalcAUTOCORR3D_version") = RDKit::Descriptors::AUTOCORR3DVersion;
+  docString ="Returns the GETAWAY descriptors vector () descriptors";
+  python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  python::scope().attr("_CalcPBF_version") =
+      RDKit::Descriptors::PBFVersion;
+>>>>>>> master
   docString =
       "Returns the RDF vector (radial distribution fonction) descriptors";
   python::def("CalcRDF", calcRDFs,
@@ -1298,6 +1338,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 #endif
+
+
+  python::scope().attr("_CalcRDF_version") =
+    RDKit::Descriptors::RDFVersion;
+  docString ="Returns radial distribution fonction descriptors";
+  python::def("CalcRDF", calcRDFs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+
+  python::scope().attr("_CalcMORSE_version") =
+    RDKit::Descriptors::MORSEVersion;
+  docString = "Returns Molecule Representation of Structures based on Electron diffraction descriptors";
+  python::def("CalcMORSE", calcMORSEs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
   python::scope().attr("_CalcAUTOCORR3D_version") =
       RDKit::Descriptors::AUTOCORR3DVersion;
   docString = "Returns the GETAWAY descriptors vector () descriptors";

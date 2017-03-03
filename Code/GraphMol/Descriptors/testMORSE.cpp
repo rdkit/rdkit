@@ -1,4 +1,4 @@
-//
+//  Created by Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -64,6 +64,7 @@ void testMORSE(){
     RDKit::Descriptors::MORSE(*m, drdf, -1);
 
 
+
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);
@@ -76,7 +77,7 @@ void testMORSE(){
             }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-        
+
        }
 
 

@@ -120,6 +120,7 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
   std::vector<double> Is(numAtoms,1.0);
 
+
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
@@ -143,12 +144,13 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
 }
 
 
-// adaptation from EState.py 
+// adaptation from EState.py
 // we need the Is value only there
 std::vector<double> MolData3Ddescriptors::GetEState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
- 
+
   std::vector<double> Is = GetIState(mol);
+
 
   double tmp,p;
   double *dist =  RDKit::MolOps::getDistanceMat(mol,false,false);
@@ -180,7 +182,7 @@ std::vector<double> MolData3Ddescriptors::GetEState(const  RDKit::ROMol &mol){
 std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
 
   int numAtoms = mol.getNumAtoms();
- 
+
   std::vector<double> Si =GetIState(mol);
 
 
@@ -222,5 +224,3 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const  RDKit::ROMol &mol){
 
  return Si;
 }
-
-

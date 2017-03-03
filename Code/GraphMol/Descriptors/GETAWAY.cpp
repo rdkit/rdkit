@@ -104,7 +104,7 @@ namespace RDKit {
             int j=0;
             int count=0;
             for (unsigned int i = 0; i < data.size(); i++) {
-                
+
                 //std::cout << diffs[i] << ",";
                 count++;
                 // if a difference exceeds 0.01 <=> 1%, start a new group: if transform is used!
@@ -348,7 +348,7 @@ namespace RDKit {
            std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
 
            VectorXd Wv = getEigenVect(wv);
-           
+
            std::vector<double> we= moldata3D.GetRelativeENeg(mol);
 
            VectorXd We = getEigenVect(we);
@@ -373,7 +373,7 @@ namespace RDKit {
           double Hk[7][9];
           double Rk[7][8];
           double Rp[7][8];
-          
+
 
            double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
 
@@ -393,7 +393,7 @@ namespace RDKit {
               HATSp =0.0;
               HATSi =0.0;
               HATSs =0.0;
-              
+
               H0u=0.0;
               H0m=0.0;
               H0v=0.0;
@@ -414,7 +414,7 @@ namespace RDKit {
                             HATSi+=getHATS((double)Wi(j), (double)Wi(j), (double)H(j,j), (double)H(j,j));
                             HATSs+=getHATS((double)Ws(j), (double)Ws(j), (double)H(j,j), (double)H(j,j));
 
-                            if (H(j,k)>0) { 
+                            if (H(j,k)>0) {
                                 H0u+=getH((double)Wu(j), (double)Wu(k), (double)H(j,k));
                                 H0m+=getH((double)Wm(j), (double)Wm(k), (double)H(j,k));
                                 H0v+=getH((double)Wv(j), (double)Wv(k), (double)H(j,k));
@@ -660,7 +660,7 @@ namespace RDKit {
            }
           res.push_back(HATSTs);
 
-          res.push_back(rcon); 
+          res.push_back(rcon);
           res.push_back(RARS);
           res.push_back(EIG(0));
 
@@ -758,7 +758,7 @@ namespace RDKit {
             "R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
              */
 
-   
+
 
         void GetGETAWAY(double* dist3D, double*AdjMat, std::vector<double> Vpoints,
           const ROMol& mol, const Conformer &conf,  std::vector<int> Heavylist,  std::vector<double>& res) {
@@ -814,7 +814,7 @@ namespace RDKit {
         double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
         res.clear();
-        //res.resize(224);// not yet implented 
+        //res.resize(224);// not yet implented
 
         GetGETAWAY(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res);
 
