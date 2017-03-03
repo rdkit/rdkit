@@ -35,6 +35,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "GETAWAY.h"
+#include "PBF.h"
 #include "MolData3Ddescriptors.h"
 
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
@@ -63,6 +64,9 @@ namespace RDKit {
 
         MolData3Ddescriptors moldata3D;
 
+        double roundn(double in,int factor) {
+            return round(in*pow(10,factor))/pow(10,factor);
+          }
 
         double* retreiveMat(MatrixXd matrix) {
            double* arrayd = matrix.data();
@@ -93,16 +97,19 @@ namespace RDKit {
 
             std::adjacent_difference(data.begin(), data.end(), std::back_inserter(diffs));
 
-            // convert differences to percentage changes
-            std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
-                std::divides<double>());
+            // convert differences into percentage changes
+            //std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
+            //    std::divides<double>());
 
             int j=0;
             int count=0;
             for (unsigned int i = 0; i < data.size(); i++) {
+                
+                //std::cout << diffs[i] << ",";
                 count++;
-                // if a difference exceeds 1%, start a new group:
-                if (diffs[i] > 0.001)  {// diff=0.01 <=> 1%
+                // if a difference exceeds 0.01 <=> 1%, start a new group: if transform is used!
+                // use diff not ratio (with 0.002 precision!)
+                if (diffs[i] > 0.0015)  {
                     Store.push_back(count);
                     count=0;
                     j++;
@@ -208,17 +215,17 @@ namespace RDKit {
         // we use instead of atomic absolute values the atomic relative ones as in Dragon
                 double RCON=0.0;
                 VectorXd VSR = R.rowwise().sum();
-                for (int i=0; i<numAtoms; ++i)
+                for (int i=0; i<numAtoms-1; ++i)
                     {
-                        for (int j=0; j<numAtoms; ++j)
+                        for (int j= i+1; j<numAtoms; ++j)
                         {
                             if (Adj(i,j)>0)
                             {
-                                RCON += VSR(i)*VSR(j);
+                                RCON += sqrt(VSR(i)*VSR(j)); // the sqrt is in the sum not over the sum!
                             }
                         }
                     }
-          return sqrt(RCON);
+          return RCON;
         }
 
 
@@ -259,46 +266,63 @@ namespace RDKit {
         void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
           std::vector<int> Heavylist,const ROMol& mol, std::vector<double>& res) {
 
-            // prepare data for Whim parameter computation
+            // prepare data for Getaway parameter computation
             // compute parameters
 
             VectorXd Lev=H.diagonal();
-
+            //std::cout << "Leverages:" << Lev << "\n";
 
             std::vector<double> heavyLev;
 
             for (int i=0;i<numAtoms;i++){
-              if (Heavylist[i]==1) 
-                heavyLev.push_back(Lev(i));
+
+              if (Heavylist[i]==1){
+                heavyLev.push_back(roundn(Lev(i),4));
+               }
             }
+
+
+
             std::vector<double> Clus= clusterArray(heavyLev);
             double numHeavy=heavyLev.size();
 
 
             double ITH0 = numHeavy*log(numHeavy)/log(2);
             double ITH=ITH0;
+            //std::cout << "clus size:" << Clus.size() << "\n";
             for (unsigned int j=0;j<Clus.size();j++){
+              //std::cout << j << ":" << Clus[j] << "\n";
               ITH -= Clus[j]*log(Clus[j])/log(2);
             }
+            //std::cout << "ITH" << ITH << "\n";
             res.push_back(ITH);
 
             double ISH=ITH/ITH0;
             res.push_back(ISH);
+            //std::cout << "ISH" << ISH << "\n";
 
+            double pbf=RDKit::Descriptors::PBF(mol);
+            double D;
+            if (pbf<0.0001) {
+              D=2.0;
+            } else {
+              D=3.0;
+            }
+            // hardcoded the number of dimension ... need to find a method to compute it in all case
+            // use the PBF to determine 2D vs 3D (with Thresold) how to determine if it's linear ? (ie D=1)
             double HIC=0.0;
             for (int i=0;i<numAtoms;i++) {
-              HIC-=H(i,i)/2.0*log(H(i,i)/2.0)/log(2);
+              HIC-=H(i,i)/D*log(H(i,i)/D)/log(2);
             }
             res.push_back(HIC);
 
-            // hardcoded the number of dimension ... need to find a method to compute it in all case
-            double HGM=1.0;
+
+            double HGM = 1.0;
             for (int i=0;i<numAtoms;i++) {
               HGM=HGM*H(i,i);
             }
             HGM=100.0*pow(HGM,1.0/numAtoms);
             res.push_back(HGM);
-
 
             double RARS=R.rowwise().sum().sum()/numAtoms;
 
@@ -636,7 +660,7 @@ namespace RDKit {
            }
           res.push_back(HATSTs);
 
-          res.push_back(rcon); // this is not the same as in Dragon
+          res.push_back(rcon); 
           res.push_back(RARS);
           res.push_back(EIG(0));
 
@@ -758,7 +782,7 @@ namespace RDKit {
             MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
 
-             getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res);
+            getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res);
           }
 
 
@@ -790,7 +814,7 @@ namespace RDKit {
         double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
         res.clear();
-        res.resize(224); 
+        //res.resize(224);// not yet implented 
 
         GetGETAWAY(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res);
 

@@ -34,7 +34,6 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "WHIM.h"
-#include "PBF.h"
 #include "MolData3Ddescriptors.h"
 #include <GraphMol/new_canon.h>
 
@@ -345,7 +344,6 @@ namespace RDKit {
         std::vector<double> WHIM(const ROMol& mol, int confId, double th){
             PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
             int numAtoms = mol.getNumAtoms();
-            //double pbf=RDKit::Descriptors::PBF(mol);
             const Conformer &conf = mol.getConformer(confId);
             double Vpoints[3*numAtoms];
 
