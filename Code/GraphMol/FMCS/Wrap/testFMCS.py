@@ -31,9 +31,9 @@ class TestCase(unittest.TestCase):
       mcs.smartsString,
       '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
     qm = Chem.MolFromSmarts(mcs.smartsString)
-    self.failUnless(qm is not None)
+    self.assertTrue(qm is not None)
     for m in ms:
-      self.failUnless(m.HasSubstructMatch(qm))
+      self.assertTrue(m.HasSubstructMatch(qm))
 
     mcs = rdFMCS.FindMCS(ms, threshold=0.8)
     self.assertEqual(mcs.numBonds, 21)
@@ -42,9 +42,9 @@ class TestCase(unittest.TestCase):
       mcs.smartsString,
       '[#6](:[#6]:[#6]):[#6]:[#7]:[#6]-[#6]-[#7](-[#6](-[#6])-[#6]1:[#6]:[#6]:[#6]:[#6]:[#7]:1)-[#6]-[#6]-[#6]-[#6]-[#7]')
     qm = Chem.MolFromSmarts(mcs.smartsString)
-    self.failUnless(qm is not None)
+    self.assertTrue(qm is not None)
     for m in ms:
-      self.failUnless(m.HasSubstructMatch(qm))
+      self.assertTrue(m.HasSubstructMatch(qm))
 
   def test2(self):
     smis = ("CHEMBL122452 CN(CCCN(C)CCc1ccccc1)CCOC(c1ccccc1)c1ccccc1",
@@ -67,9 +67,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(mcs.numBonds, 9)
     self.assertEqual(mcs.numAtoms, 10)
     qm = Chem.MolFromSmarts(mcs.smartsString)
-    self.failUnless(qm is not None)
+    self.assertTrue(qm is not None)
     for m in ms:
-      self.failUnless(m.HasSubstructMatch(qm))
+      self.assertTrue(m.HasSubstructMatch(qm))
     # smarts too hard to canonicalize this
     #self.assertEqual(mcs.smartsString,'[#6]-,:[#6]-,:[#6]-,:[#6]-,:[#6](-[#6]-[#8]-[#6]:,-[#6])-,:[#6]')
 
@@ -77,12 +77,12 @@ class TestCase(unittest.TestCase):
     self.assertEqual(mcs.numBonds, 20)
     self.assertEqual(mcs.numAtoms, 19)
     qm = Chem.MolFromSmarts(mcs.smartsString)
-    self.failUnless(qm is not None)
+    self.assertTrue(qm is not None)
     nHits = 0
     for m in ms:
       if m.HasSubstructMatch(qm):
         nHits += 1
-    self.failUnless(nHits >= int(0.8 * len(smis)))
+    self.assertTrue(nHits >= int(0.8 * len(smis)))
     # smarts too hard to canonicalize this
     #self.assertEqual(mcs.smartsString,'[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6](-[#8]-[#6]-[#6]-[#7]-[#6]-[#6])-[#6]2:[#6]:[#6]:[#6]:[#6]:[#6]:2')
 
@@ -101,10 +101,10 @@ class TestCase(unittest.TestCase):
     self.assertEqual(mcs.numAtoms, 3)
     qm = Chem.MolFromSmarts(mcs.smartsString)
 
-    self.failUnless(Chem.MolFromSmiles('CC[14CH3]').HasSubstructMatch(qm))
-    self.failIf(Chem.MolFromSmiles('CC[13CH3]').HasSubstructMatch(qm))
-    self.failUnless(Chem.MolFromSmiles('OO[14CH3]').HasSubstructMatch(qm))
-    self.failIf(Chem.MolFromSmiles('O[13CH2][14CH3]').HasSubstructMatch(qm))
+    self.assertTrue(Chem.MolFromSmiles('CC[14CH3]').HasSubstructMatch(qm))
+    self.assertFalse(Chem.MolFromSmiles('CC[13CH3]').HasSubstructMatch(qm))
+    self.assertTrue(Chem.MolFromSmiles('OO[14CH3]').HasSubstructMatch(qm))
+    self.assertFalse(Chem.MolFromSmiles('O[13CH2][14CH3]').HasSubstructMatch(qm))
 
   def test4RingMatches(self):
     smis = ['CCCCC', 'CCC1CCCCC1']
@@ -180,6 +180,51 @@ class TestCase(unittest.TestCase):
     self.assertEqual(r.smartsString, "[#6]1-[#6]-[#6]-1")
     r = rdFMCS.FindMCS(ms, seedSmarts='C1OC1')
     self.assertEqual(r.smartsString, "")
+
+  def test8MatchParams(self):
+    smis = ("CCC1NC1", "CCC1N(C)C1", "CCC1OC1")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps = rdFMCS.MCSParameters()
+    ps.BondCompareParameters.CompleteRingsOnly = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 3)
+
+    ps = rdFMCS.MCSParameters()
+    ps.SetAtomTyper(rdFMCS.AtomCompare.CompareAny)
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 5)
+
+  def test9MatchCharge(self):
+    smis = ("CCNC", "CCN(C)C", "CC[N+](C)C")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps = rdFMCS.MCSParameters()
+    ps.AtomCompareParameters.MatchFormalCharge = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 2)
+
+  def test10MatchChargeAndParams(self):
+    smis = ("CCNC", "CCN(C)C", "CC[N+](C)C", "CC[C+](C)C")
+    ms = [Chem.MolFromSmiles(x) for x in smis]
+
+    mcs = rdFMCS.FindMCS(ms)
+    self.assertEqual(mcs.numAtoms, 2)
+
+    ps = rdFMCS.MCSParameters()
+    ps.SetAtomTyper(rdFMCS.AtomCompare.CompareAny)
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 4)
+
+    ps.AtomCompareParameters.MatchFormalCharge = True
+    mcs = rdFMCS.FindMCS(ms,ps)
+    self.assertEqual(mcs.numAtoms, 2)
 
 
 if __name__ == "__main__":
