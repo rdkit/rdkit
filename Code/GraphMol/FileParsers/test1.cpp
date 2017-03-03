@@ -4820,6 +4820,38 @@ void testGithub1251() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1029() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1029: PDB reader fails for arginine explicit hydrogens "
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // the original bug report
+    std::string fName = rdbase + "github1029.1.pdb";
+    bool sanitize = true, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3268);
+    TEST_ASSERT(m->getNumBonds() == 3302);
+    TEST_ASSERT(m->getAtomWithIdx(121)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(121)->getFormalCharge() == 1);
+
+    delete m;
+  }
+  {  // a second report that came in
+    std::string fName = rdbase + "github1029.1jld_chaina.pdb";
+    bool sanitize = false, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 1533);
+    TEST_ASSERT(m->getNumBonds() == 1545);
+    TEST_ASSERT(m->getAtomWithIdx(123)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(123)->getFormalCharge() == 1);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 void RunTests() {
 #if 1
   test1();
@@ -4909,8 +4941,9 @@ void RunTests() {
   // testSequenceReaders();
 
   testMolFileDativeBonds();
-#endif
   testGithub1251();
+#endif
+  testGithub1029();
 }
 
 // must be in German Locale for test...
