@@ -14,7 +14,6 @@
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
 #include "MolFileStereochem.h"
-#include "ProximityBonds.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -4852,6 +4851,31 @@ void testGithub1029() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testGithub1340() {
+  BOOST_LOG(rdInfoLog) << "Test github 1340: PDB parser creating H-H bonds "
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // a second report that came in
+    std::string fName = rdbase + "github1340.1jld_snip.pdb";
+    bool sanitize = true, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 37);
+    TEST_ASSERT(m->getNumBonds() == 35);
+    TEST_ASSERT(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(34)->getAtomicNum() == 1);
+    RDGeom::Point3D p10 = m->getConformer().getAtomPos(10);
+    RDGeom::Point3D p34 = m->getConformer().getAtomPos(34);
+    TEST_ASSERT((p34 - p10).length() < 1.0);
+    TEST_ASSERT(!m->getBondBetweenAtoms(10, 34));
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4944,6 +4968,7 @@ void RunTests() {
   testGithub1251();
 #endif
   testGithub1029();
+  testGithub1340();
 }
 
 // must be in German Locale for test...
