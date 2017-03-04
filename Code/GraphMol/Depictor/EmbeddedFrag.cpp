@@ -1795,7 +1795,7 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
     aidA = _findDeg1Neighbor(dp_mol, aid1);
     aidB = _findDeg1Neighbor(dp_mol, aid2);
     type = 1;
-  } else if ((deg1 == 1 && !fixed1) && (deg2 > 1 || fixed1)) {
+  } else if ((deg1 == 1 && !fixed1) && (deg2 > 1 || fixed2)) {
     aidA = _findDeg1Neighbor(dp_mol, aid1);
     aidB = _findClosestNeighbor(dp_mol, dmat, aidA, aid2);
     type = 2;
