@@ -449,6 +449,23 @@ static void StandardPDBResidueChirality(RWMol *mol) {
   }
 }
 
+void BasicPDBCleanup(RWMol &mol) {
+  ROMol::VERTEX_ITER atBegin, atEnd;
+  boost::tie(atBegin, atEnd) = mol.getVertices();
+  while (atBegin != atEnd) {
+    ATOM_SPTR atom = mol[*atBegin];
+    atom->calcExplicitValence(false);
+
+    // correct four-valent neutral N -> N+
+    // This was github #1029
+    if (atom->getAtomicNum() == 7 && atom->getFormalCharge() == 0 &&
+        atom->getExplicitValence() == 4) {
+      atom->setFormalCharge(1);
+    }
+    ++atBegin;
+  }
+}
+
 RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
                      unsigned int flavor) {
   PRECONDITION(str, "bad char ptr");
@@ -526,12 +543,10 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
 
   if (!mol) return (RWMol *)0;
 
-  ConnectTheDots(mol);
+  ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
   StandardPDBResidueBondOrders(mol);
 
-  for (std::map<int, Atom *>::iterator mi = amap.begin(); mi != amap.end();
-       ++mi)
-    (*mi).second->calcExplicitValence(false);
+  BasicPDBCleanup(*mol);
 
   if (sanitize) {
     if (removeHs) {
