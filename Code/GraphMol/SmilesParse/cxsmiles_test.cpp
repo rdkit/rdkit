@@ -325,6 +325,58 @@ void testAtomValues() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testAtomProps() {
+  BOOST_LOG(rdInfoLog) << "testing atom properties" << std::endl;
+  {  // testing atom properties
+    std::string smiles =
+        "C1CN1 "
+        "|atomProp:0.prop2.val2:0.prop1.val1:1.prop2.v2&#38;4:1.prop1.v1;2;3|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop1"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop1") == "val1");
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop2"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop2"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop2") == "v2&4");
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop1"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop1") ==
+                "v1;2;3");
+
+    delete m;
+  }
+
+  {  // testing atom properties + values
+    std::string smiles =
+        "C1CN1 "
+        "|atomProp:0.prop2.val2:1.prop1.v1;2;3,$_AV:value 2;&#59;value1;$|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("prop2"));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>("prop2") == "val2");
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("prop1"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>("prop1") ==
+                "v1;2;3");
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
+                    common_properties::molFileValue) == "value 2");
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::molFileValue) == ";value1");
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -336,6 +388,7 @@ int main(int argc, char *argv[]) {
   testCXSmilesAndName();
   testCoordinateBonds();
   testRadicals();
-#endif
   testAtomValues();
+#endif
+  testAtomProps();
 }
