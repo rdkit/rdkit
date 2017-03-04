@@ -292,8 +292,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     while (atom != end_atom) {
       const Atom *at1 = mol[*atom].get();
       ++atom;
-      if (drawOptions().atomLabels.find(at1->getIdx()) !=
-          drawOptions().atomLabels.end()) {
+      if (at1->hasProp(common_properties::atomLabel) ||
+          drawOptions().atomLabels.find(at1->getIdx()) !=
+              drawOptions().atomLabels.end()) {
         // skip dummies that explicitly have a label provided
         continue;
       }
@@ -1276,6 +1277,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     // specified labels are trump: no matter what else happens we will show
     // them.
     symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (atom.hasProp(common_properties::atomLabel)) {
+    symbol = atom.getProp<std::string>(common_properties::atomLabel);
   } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
              atom.getDegree() == 1) {
     symbol = "";
