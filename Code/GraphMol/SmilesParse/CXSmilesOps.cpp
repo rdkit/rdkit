@@ -199,6 +199,8 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       if (!parse_coordinate_bonds(first, last, mol)) return false;
     } else if (*first == '^') {
       if (!parse_radicals(first, last, mol)) return false;
+    } else {
+      ++first;
     }
     // if(first < last && *first != '|') ++first;
   }
