@@ -25,13 +25,54 @@ namespace parser {
 template <typename Iterator>
 std::string read_text_to(Iterator &first, Iterator last, const char sep,
                          const char blockend) {
+  std::string res = "";
   Iterator start = first;
   // EFF: there are certainly faster ways to do this
   while (first != last && *first != sep && *first != blockend) {
-    ++first;
+    if (*first == '&' && first + 2 < last && *(first + 1) == '#') {
+      // escaped char
+      if (start != first) {
+        res += std::string(start, first);
+      }
+      Iterator next = first + 2;
+      while (next != last && *next >= '0' && *next <= '9') {
+        ++next;
+      }
+      if (next == last || *next != ';')
+        throw RDKit::SmilesParseException(
+            "failure parsing CXSMILES extensions: quoted block not terminated "
+            "with ';'");
+      if (next > first + 2) {
+        std::string blk = std::string(first + 2, next);
+        res += (char)(boost::lexical_cast<int>(blk));
+      }
+      first = next + 1;
+      start = first;
+    } else {
+      ++first;
+    }
   }
-  std::string res(start, first);
+  if (start != first) res += std::string(start, first);
   return res;
+}
+
+template <typename Iterator>
+bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  if (first >= last || *first != '$') return false;
+  first += 5;
+  unsigned int atIdx = 0;
+  while (first != last && *first != '$') {
+    std::string tkn = read_text_to(first, last, ';', '$');
+    if (tkn != "") {
+      mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::molFileValue,
+                                         tkn);
+    }
+    ++atIdx;
+    if (first != last && *first != '$') ++first;
+  }
+  if (first == last || *first != '$') return false;
+  ++first;
+  return true;
 }
 
 template <typename Iterator>
@@ -194,7 +235,13 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (*first == '(') {
       if (!parse_coords(first, last, mol)) return false;
     } else if (*first == '$') {
-      if (!parse_atom_labels(first, last, mol)) return false;
+      if ((first + 4) < last && *(first + 1) == '_' && *(first + 2) == 'A' &&
+          *(first + 3) == 'V' && *(first + 4) == ':') {
+        if (!parse_atom_values(first, last, mol)) return false;
+
+      } else {
+        if (!parse_atom_labels(first, last, mol)) return false;
+      }
     } else if (*first == 'C') {
       if (!parse_coordinate_bonds(first, last, mol)) return false;
     } else if (*first == '^') {

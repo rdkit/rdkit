@@ -296,14 +296,46 @@ void testRadicals() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testAtomValues() {
+  BOOST_LOG(rdInfoLog) << "testing atom values" << std::endl;
+  {  // testing atom values
+    std::string smiles =
+        "CCC1=CC=CC=C1 |$_AV:value 2;&#59;value1;value "
+        "5&#59;6;;;;;$,c:4,6,t:2|";
+    SmilesParserParams params;
+    params.allowCXSMILES = true;
+    ROMol *m = SmilesToMol(smiles, params);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
+                    common_properties::molFileValue) == "value 2");
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::molFileValue) == ";value1");
+
+    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp(common_properties::molFileValue));
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(
+                    common_properties::molFileValue) == "value 5;6");
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
+#if 1
   testBase();
   testCoords2D();
   testAtomLabels();
   testCXSmilesAndName();
   testCoordinateBonds();
   testRadicals();
+#endif
+  testAtomValues();
 }
