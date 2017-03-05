@@ -375,6 +375,8 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!highlight_radii || highlight_radii->size() == mols.size(),
                "bad size");
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
+  PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
+  PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
