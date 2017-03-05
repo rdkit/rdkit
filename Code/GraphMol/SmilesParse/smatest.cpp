@@ -1931,6 +1931,10 @@ void testGithub1338() {
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    TEST_ASSERT(
+        p->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(p->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molAtomMapNumber) == 3);
     delete p;
   }
   {
