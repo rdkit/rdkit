@@ -64,7 +64,7 @@ namespace RDKit {
               int numAtoms = conf.getNumAtoms();
               int confId = conf.getId();
 
-              std::vector<double> IState = moldata3D.GetIState(mol); // get the real IState value not the EState!
+              std::vector<double> IState = moldata3D.GetIStateDrag(mol); // get the real IState value not the EState!
 
               // apply a weigthing based on the
               /*

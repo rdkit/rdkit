@@ -17,10 +17,10 @@
 #include <fstream>
 #include <sstream>
 
-#include <GraphMol/Descriptors/AUTOCORR3D.h>
+#include <GraphMol/Descriptors/AUTOCORR2D.h>
 
 void testautocorrelation() {
-  std::cout << "=>start test autocorr3D\n";
+  std::cout << "=>start test autocorr2D\n";
 
   std::string pathName = getenv("RDBASE");
 
@@ -31,7 +31,7 @@ void testautocorrelation() {
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/auto3D_dragon.out";
+  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/auto2D_dragon.out";
 
   std::ifstream instrm(fName.c_str());
 
@@ -55,6 +55,9 @@ void testautocorrelation() {
   int nDone = 0;
   while (!reader.atEnd()) {
 
+    if (nDone > 1) {
+      break;
+    }
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
@@ -62,7 +65,7 @@ void testautocorrelation() {
 
     std::vector<double> da3d;
 
-    RDKit::Descriptors::AUTOCORR3D(*m, da3d, -1);
+    RDKit::Descriptors::AUTOCORR2D(*m, da3d, -1);
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
@@ -72,16 +75,15 @@ void testautocorrelation() {
     TEST_ASSERT(inm==nm);
 
 
-    std::cout << "*******\n";
+
 
     for (int i = 0; i < 80 ; i++) {
           double ref =atof(myrow[i+1].c_str());
 
-          std::cout << da3d[i] << ",";
 
-          //if(fabs(ref-da3d[i])>0.05){
-          //  std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
-          //}
+          if(fabs(ref-da3d[i])>0.05){
+            std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
+          }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
     }
