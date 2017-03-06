@@ -124,13 +124,13 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
-    int degree = atom->getDegree(); // number of substituants
+    int degree = atom->getDegree(); // number of substituants (heavy of not?)
     if (degree > 0 and atNum > 1) {
-      int h = atom->getTotalNumHs();
-      int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum); // number of valence (explicit with Hs)
-      double dv =(double) Zv-h;  // number of valence electron without Hs
+      int h = atom->getTotalNumHs(true); // caution getTotalNumHs(true) to count h !!!!
+      int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h; // number of valence (explicit with Hs)
+      //double dv =(double) Zv-h;  // number of valence electron without Hs
       int N =  GetPrincipalQuantumNumber(atNum); // principal quantum number
-      double d = (double) degree; // degree-h  or degree ???
+      double d = (double) degree-h; // degree-h  or degree ???
         if (d>0) {
             Is[i]=round(1000*(4.0/(N*N)*dv+1.0)/d)/1000;
         }
