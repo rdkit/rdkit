@@ -129,7 +129,7 @@ void testWHIM1() {
 
 
 void testWHIM() {
-  std::cout << "=>start test rdf\n";
+  std::cout << "=>start test WHIM\n";
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
@@ -152,7 +152,6 @@ void testWHIM() {
       data.push_back(std::move(row));
   }
 
-  std::cout << "=>read file\n";
 
   int nDone = 0;
   while (!reader.atEnd()) {
@@ -171,13 +170,22 @@ void testWHIM() {
            output << dwhim[i] << "\t";
 
             double ref =atof(myrow[i+1].c_str());
-            if(fabs(ref-dwhim[i])>0.05){
-              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
+            // 1% error
+            if (fabs(ref)> 0.1){
+              if(fabs((ref-dwhim[i])/ref)>0.01){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
+              }
+            }
+
+            // 2% error on very some values!
+            if (fabs(ref)<= 0.1){
+              if(fabs((ref-dwhim[i]))>0.02){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
+              }
             }
            //TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
        }
-    output << "\n";
-    std::cout << "=>read molecule: " << nDone  << std::endl;
+
 
     delete m;
     ++nDone;
@@ -185,7 +193,7 @@ void testWHIM() {
 
   output.close();
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
 }
 
 

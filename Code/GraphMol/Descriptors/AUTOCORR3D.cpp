@@ -166,7 +166,7 @@ namespace RDKit {
                 // update the Output vector!
                 for (unsigned int j = 0; j < 8; ++j) {
                     for (unsigned int i = 0; i < 10; ++i) {
-                        res[j * 10 + i] = TDBmat[j][i] /  (numAtoms * (numAtoms - 1));
+                        res[j * 10 + i] = round( 1000 *TDBmat[j][i] /  (numAtoms * (numAtoms - 1))) / 1000;
                     }
                 }
             }

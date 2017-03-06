@@ -241,10 +241,11 @@ namespace RDKit {
 
         double getHtotal(double * Hk){
 
-
           return Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
 
         }
+
+
 
         double getRtotal(double * Rk){
 
@@ -277,7 +278,7 @@ namespace RDKit {
             for (int i=0;i<numAtoms;i++){
 
               if (Heavylist[i]==1){
-                heavyLev.push_back(roundn(Lev(i),4));
+                heavyLev.push_back(roundn(Lev(i),3));
                }
             }
 
@@ -294,12 +295,10 @@ namespace RDKit {
               //std::cout << j << ":" << Clus[j] << "\n";
               ITH -= Clus[j]*log(Clus[j])/log(2);
             }
-            //std::cout << "ITH" << ITH << "\n";
-            res.push_back(ITH);
+            res[0]=ITH;
 
             double ISH=ITH/ITH0;
-            res.push_back(ISH);
-            //std::cout << "ISH" << ISH << "\n";
+            res[1]=ISH;
 
             double pbf=RDKit::Descriptors::PBF(mol);
             double D;
@@ -314,7 +313,7 @@ namespace RDKit {
             for (int i=0;i<numAtoms;i++) {
               HIC-=H(i,i)/D*log(H(i,i)/D)/log(2);
             }
-            res.push_back(HIC);
+            res[2]=HIC;
 
 
             double HGM = 1.0;
@@ -322,7 +321,7 @@ namespace RDKit {
               HGM=HGM*H(i,i);
             }
             HGM=100.0*pow(HGM,1.0/numAtoms);
-            res.push_back(HGM);
+            res[3]=HGM;
 
             double RARS=R.rowwise().sum().sum()/numAtoms;
 
@@ -357,7 +356,7 @@ namespace RDKit {
 
            VectorXd Wu = getEigenVect(wu);
 
-           std::vector<double>  ws =  moldata3D.GetEState(mol);
+           std::vector<double>  ws =  moldata3D.GetIState(mol);
 
            VectorXd Ws = getEigenVect(ws);
 
@@ -383,8 +382,6 @@ namespace RDKit {
             }
               double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
               Map<MatrixXd> Bj(Bimat, numAtoms,numAtoms);
-
-
 
               HATSu =0.0;
               HATSm =0.0;
@@ -430,8 +427,8 @@ namespace RDKit {
 
 
               if (i>0) { // use Bj
-                  for (int j=0;j<numAtoms;j++){
-                    for (int k=j;k<numAtoms;k++){
+                  for (int j=0;j<numAtoms-1;j++){
+                    for (int k=j+1;k<numAtoms;k++){
                       if (Bj(j,k)==1){
                             HATSu+=getHATS((double)Wu(j), (double)Wu(k), (double)H(j,j), (double)H(k,k));
                             HATSm+=getHATS((double)Wm(j), (double)Wm(k), (double)H(j,j), (double)H(k,k));
@@ -551,34 +548,71 @@ namespace RDKit {
                 }
           }
 
-          //HATSk[0]+2*(HATSk[1]+HATSk[2]+HATSk[3]+HATSk[4]+HATSk[5]+HATSk[6]+HATSk[7]+HATSk[8]);
-          double HATSTu = getHtotal(HATSk[0]);
-          double HATSTm = getHtotal(HATSk[1]);
-          double HATSTv = getHtotal(HATSk[2]);
-          double HATSTe = getHtotal(HATSk[3]);
-          double HATSTp = getHtotal(HATSk[4]);
-          double HATSTi = getHtotal(HATSk[5]);
-          double HATSTs = getHtotal(HATSk[6]);
+          // can be column vs row selecgted that can explain the issue!
+          double HATSTu = HATSk[0][0];
+          double HATSTm = HATSk[1][0];
+          double HATSTv = HATSk[2][0];
+          double HATSTe = HATSk[3][0];
+          double HATSTp = HATSk[4][0];
+          double HATSTi = HATSk[5][0];
+          double HATSTs = HATSk[6][0];
+
+          for (int i =1; i < 9; i++ ) {
+            HATSTu += 2*HATSk[0][i];
+            HATSTm += 2*HATSk[1][i];
+            HATSTv += 2*HATSk[2][i];
+            HATSTe += 2*HATSk[3][i];
+            HATSTp += 2*HATSk[4][i];
+            HATSTi += 2*HATSk[5][i];
+            HATSTs += 2*HATSk[6][i];
+          }
+
+          double HTu = Hk[0][0];
+          double HTm = Hk[1][0];
+          double HTv = Hk[2][0];
+          double HTe = Hk[3][0];
+          double HTp = Hk[4][0];
+          double HTi = Hk[5][0];
+          double HTs = Hk[6][0];
+
+          for (int i =1; i < 9; i++ ) {
+            HTu += 2*Hk[0][i];
+            HTm += 2*Hk[1][i];
+            HTv += 2*Hk[2][i];
+            HTe += 2*Hk[3][i];
+            HTp += 2*Hk[4][i];
+            HTi += 2*Hk[5][i];
+            HTs += 2*Hk[6][i];
+          }
 
 
-          // Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
-          double HTu = getHtotal(Hk[0]);
-          double HTm = getHtotal(Hk[1]);
-          double HTv = getHtotal(Hk[2]);
-          double HTe = getHtotal(Hk[3]);
-          double HTp = getHtotal(Hk[4]);
-          double HTi = getHtotal(Hk[5]);
-          double HTs = getHtotal(Hk[6]);
+                  Rk[0][i-1]=R0u;
+                  Rk[1][i-1]=R0m;
+                  Rk[2][i-1]=R0v;
+                  Rk[3][i-1]=R0e;
+                  Rk[4][i-1]=R0p;
+                  Rk[5][i-1]=R0i;
+                  Rk[6][i-1]=R0s;
 
-          //
           //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
-          double RTu = getRtotal(Rk[0]);
-          double RTm = getRtotal(Rk[1]);
-          double RTv = getRtotal(Rk[2]);
-          double RTe = getRtotal(Rk[3]);
-          double RTp = getRtotal(Rk[4]);
-          double RTi = getRtotal(Rk[5]);
-          double RTs = getRtotal(Rk[6]);
+          
+          double RTu = 0.0;
+          double RTm = 0.0;
+          double RTv = 0.0;
+          double RTe = 0.0;
+          double RTp = 0.0;
+          double RTi = 0.0;
+          double RTs = 0.0;
+
+          for (int i =0; i < 0; i++ ) {
+            RTu += 2*Rk[0][i];
+            RTm += 2*Rk[1][i];
+            RTv += 2*Rk[2][i];
+            RTe += 2*Rk[3][i];
+            RTp += 2*Rk[4][i];
+            RTi += 2*Rk[5][i];
+            RTs += 2*Rk[6][i];
+          }
 
 
           double RTMu=getMax(Rp[0]);
@@ -591,151 +625,72 @@ namespace RDKit {
 
           // create the output vector...
           for (int i=0;i<9;i++){
-            res.push_back(Hk[0][i]);
-           }
-          res.push_back(HTu);
+            res[i+4]=Hk[0][i];
+            res[i+14]=HATSk[0][i];
+            res[i+24]=Hk[1][i];
+            res[i+34]=HATSk[1][i];
+            res[i+44]=Hk[2][i];
+            res[i+54]=HATSk[2][i];
+            res[i+64]=Hk[3][i];
+            res[i+74]=HATSk[3][i];
+            res[i+84]=Hk[4][i];
+            res[i+94]=HATSk[4][i];
+            res[i+104]=Hk[5][i];
+            res[i+114]=HATSk[5][i];
+            res[i+124]=Hk[6][i];
+            res[i+134]=HATSk[6][i];
 
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[0][i]);
            }
-          res.push_back(HATSTu);
+          res[13]=HTu;
+          res[23]=HATSTu;
+          res[33]=HTm;
+          res[43]=HATSTm;
+          res[53]=HTv;
+          res[63]=HATSTv;
+          res[73]=HTe;
+          res[83]=HATSTe;
+          res[93]=HTp;
+          res[103]=HATSTp;
+          res[113]=HTi;
+          res[123]=HATSTi;
+          res[133]=HTs;
+          res[143]=HATSTs;
 
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[1][i]);
-           }
-          res.push_back(HTm);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[1][i]);
-           }
-          res.push_back(HATSTm);
-
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[2][i]);
-           }
-          res.push_back(HTv);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[2][i]);
-           }
-          res.push_back(HATSTv);
-
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[3][i]);
-           }
-          res.push_back(HTe);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[3][i]);
-           }
-          res.push_back(HATSTe);
-
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[4][i]);
-           }
-          res.push_back(HTp);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[4][i]);
-           }
-          res.push_back(HATSTp);
-
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[5][i]);
-           }
-          res.push_back(HTi);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[5][i]);
-           }
-          res.push_back(HATSTi);
-
-          for (int i=0;i<9;i++){
-            res.push_back(Hk[6][i]);
-           }
-          res.push_back(HTs);
-
-          for (int i=0;i<9;i++){
-            res.push_back(HATSk[6][i]);
-           }
-          res.push_back(HATSTs);
-
-          res.push_back(rcon);
-          res.push_back(RARS);
-          res.push_back(EIG(0));
+          res[144]=rcon;
+          res[145]=RARS;
+          res[146]=EIG(0);
 
            for (int i=0;i<8;i++){
-            res.push_back(Rk[0][i]);
+            res[i+147]=Rk[0][i];
+            res[i+156]=Rp[0][i];
+            res[i+165]=Rk[1][i];
+            res[i+174]=Rp[1][i];
+            res[i+183]=Rk[2][i];
+            res[i+192]=Rp[2][i];
+            res[i+201]=Rk[3][i];
+            res[i+210]=Rp[3][i];
+            res[i+219]=Rk[4][i];
+            res[i+228]=Rp[4][i];
+            res[i+237]=Rk[5][i];
+            res[i+246]=Rp[5][i];
+            res[i+255]=Rk[6][i];
+            res[i+264]=Rp[6][i];
            }
-          res.push_back(RTu);
 
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[0][i]);
-           }
-          res.push_back(RTMu);
-
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[1][i]);
-           }
-          res.push_back(RTm);
-
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[1][i]);
-           }
-          res.push_back(RTMm);
-
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[2][i]);
-           }
-          res.push_back(RTv);
-
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[2][i]);
-           }
-          res.push_back(RTMv);
-
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[3][i]);
-           }
-          res.push_back(RTe);
-
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[3][i]);
-           }
-          res.push_back(RTMe);
-
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[4][i]);
-           }
-          res.push_back(RTp);
-
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[4][i]);
-           }
-          res.push_back(RTMp);
-
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[5][i]);
-           }
-          res.push_back(RTi);
-
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[5][i]);
-           }
-          res.push_back(RTMi);
-
-          // wrong vs Dragon
-           for (int i=0;i<8;i++){
-            res.push_back(Rk[6][i]);
-           }
-           // wrong vs Dragon
-          res.push_back(RTs);
-          // wrong vs Dragon
-          for (int i=0;i<8;i++){
-            res.push_back(Rp[6][i]);
-           }
-           // wrong vs Dragon
-          res.push_back(RTMs);
+          res[155]=RTu;
+          res[164]=RTMu;
+          res[173]=RTm;
+          res[182]=RTMm;
+          res[191]=RTv;
+          res[200]=RTMv;
+          res[209]=RTe;
+          res[218]=RTMe;
+          res[227]=RTp;
+          res[236]=RTMp;
+          res[245]=RTi;
+          res[254]=RTMi;
+          res[263]=RTs;
+          res[272]=RTMs;
 
         }
 
@@ -814,7 +769,7 @@ namespace RDKit {
         double *AdjMat = MolOps::getAdjacencyMatrix(mol,false,0,false,0); // false to have only the 1,0 matrix unweighted
 
         res.clear();
-        //res.resize(224);// not yet implented
+        res.resize(273);
 
         GetGETAWAY(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res);
 

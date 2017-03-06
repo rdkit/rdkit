@@ -49,8 +49,6 @@ void testautocorrelation() {
       data.push_back(std::move(row));
   }
 
-  //std::cout << "=>read file ok\n";
-
 
   int nDone = 0;
   while (!reader.atEnd()) {
@@ -67,46 +65,30 @@ void testautocorrelation() {
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
 
-    std::cout << inm.c_str() << ":";
-
     TEST_ASSERT(inm==nm);
-
-
-    std::cout << "*******\n";
 
     for (int i = 0; i < 80 ; i++) {
           double ref =atof(myrow[i+1].c_str());
 
-
-          if(fabs(ref-da3d[i])>0.05){
+        if (fabs(ref) >= 0.1){
+          if(fabs((ref-da3d[i])/ref)>0.01){
             std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
           }
-
+        }
+        if (fabs(ref) < 0.1){
+          if(fabs((ref-da3d[i]))>0.02){
+            std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
+          }
+        }
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
     }
-
-    // FIX: at the moment this isn't actually testing anything, it's just
-    // running the calculation. The best test would be an SDF that has some
-    // molecules with 3D structures and calculated values of the individual
-    // descriptors (from DRAGON for example) that you can compare against.
-    // many of the tests in the test.cpp directory here (for example
-    // testLipinski1()) show how to do this.
-    //for (int j = 0; j < 80; j++) {
-    //  std::cout << dwhim[j] << ",";
-    //}
-    //std::cout << "\n";
-
-    //}
-
-    //std::cout << "done \n" << nDone << std::endl;
 
     delete m;
      ++nDone;
 
-
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

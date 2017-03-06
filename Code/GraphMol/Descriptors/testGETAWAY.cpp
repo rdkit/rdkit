@@ -20,42 +20,9 @@
 
 #include <GraphMol/Descriptors/GETAWAY.h>
 
+
+
 void testGETAWAY() {
-  std::cout << "=>start test GETAWAY\n";
-
-  std::string pathName = getenv("RDBASE");
-  std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene2.sdf";
-
-
-  RDKit::SDMolSupplier reader(sdfName, true, false);
-
-  int nDone = 0;
-  while (!reader.atEnd()) {
-    ++nDone;
-
-    RDKit::ROMol *m = reader.next();
-    TEST_ASSERT(m);
-    std::string nm;
-    m->getProp("_Name",nm);
-
-    std::vector<double> descgetaway;
-    RDKit::Descriptors::GETAWAY(*m, descgetaway, -1);
-
-    for (int j=0;j<273;j++) {
-        std::cout << descgetaway[j] << ",";
-     }
-
-    std::cout << "=>read molecule: " << nDone  << std::endl;
-
-    delete m;
-  }
-
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-}
-
-
-void testGETAWAY1() {
   std::cout << "=>start test GETAWAY\n";
 
   std::string pathName = getenv("RDBASE");
@@ -82,7 +49,6 @@ void testGETAWAY1() {
       data.push_back(std::move(row));
   }
 
-  std::cout << "=>read file\n";
 
   int nDone = 0;
   while (!reader.atEnd()) {
@@ -106,20 +72,28 @@ void testGETAWAY1() {
     for (int i=0;i<273;i++)
        {
             double ref =atof(myrow[i+1].c_str());
-            if(fabs(ref-dgetaway[i])>0.05){
-              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< dgetaway[i] <<std::endl;
+
+            if (fabs(ref) > 1){
+              if(fabs((ref-dgetaway[i])/ref)>0.01){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< dgetaway[i] <<std::endl;
+              }
             }
+          if (fabs(ref) <= 1){
+             if(fabs(ref-dgetaway[i])>0.02){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< dgetaway[i] <<std::endl;
+              }
+          }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
 
        }
-    std::cout << "=>read molecule: " << nDone  << std::endl;
 
     delete m;
     ++nDone;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+
+    BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
 }
 
 
@@ -128,7 +102,6 @@ void testGETAWAY1() {
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testGETAWAY();
-  testGETAWAY1();
 
 
 }
