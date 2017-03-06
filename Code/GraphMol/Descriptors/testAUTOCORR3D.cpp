@@ -77,11 +77,10 @@ void testautocorrelation() {
     for (int i = 0; i < 80 ; i++) {
           double ref =atof(myrow[i+1].c_str());
 
-          std::cout << da3d[i] << ",";
 
-          //if(fabs(ref-da3d[i])>0.05){
-          //  std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
-          //}
+          if(fabs(ref-da3d[i])>0.05){
+            std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
+          }
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
     }

@@ -80,6 +80,8 @@ namespace RDKit {
 
             // matrix prod that mimic the v2 version
             // the code is in respect to Dragon 6 descriptors.
+            // replace the number of "Bicount" vertex per lag by a (numAtoms * (numAtoms - 1))!
+            // provided by Kobe team!
             void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance, int numAtoms,
                                           const ROMol& mol, std::vector<double>& res) {
                 Map<MatrixXd> dm(dist3D, numAtoms, numAtoms);
@@ -106,8 +108,6 @@ namespace RDKit {
                 std::vector<double> ws = moldata3D.GetIState(mol);
                 VectorXd Ws = getEigenVect(ws);
 
-                std::cout << "IState Vector\n" << Ws;
-
                 std::vector<double> wr = moldata3D.GetRelativeRcov(mol);
                 VectorXd Wr = getEigenVect(wr);
 
@@ -120,7 +120,7 @@ namespace RDKit {
                     double* Bimat = GetGeodesicMatrix(topologicaldistance, i + 1, numAtoms);
                     Map<MatrixXd> Bi(Bimat, numAtoms, numAtoms);
                     MatrixXd RBi = Bi.cwiseProduct(dm);
-                    double Bicount = (double)Bi.sum();
+                    // double Bicount = (double)Bi.sum();
 
                     tmp = Wu.transpose() * RBi * Wu ;
                     dtmp = (double)tmp(0);
@@ -192,7 +192,6 @@ namespace RDKit {
 
             res.clear();
             res.resize(80);
-            //Get3Dauto(dist3D, topologicaldistance, numAtoms, mol, res);
             Get3Dauto(dist3D, topologicaldistance, numAtoms, mol, res);
         }
     }  // end of Descriptors namespace

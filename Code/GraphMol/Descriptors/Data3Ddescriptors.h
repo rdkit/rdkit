@@ -14,7 +14,7 @@ class Data3Ddescriptors
 		static double neg[110];
 		static double pol[110];
 		static double ionpol[110];
-		static double rcov[83];
+		static double rcov[110];
 
    public:
 	   Data3Ddescriptors();

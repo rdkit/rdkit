@@ -118,8 +118,7 @@ int MolData3Ddescriptors::GetPrincipalQuantumNumber(int AtomicNum) {
 
 std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
   int numAtoms = mol.getNumAtoms();
-  std::vector<double> Is(numAtoms,1.0);
-
+  std::vector<double> Is(numAtoms,1.0); // values set to 1 for Hs
 
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
@@ -128,14 +127,10 @@ std::vector<double> MolData3Ddescriptors::GetIState(const  RDKit::ROMol &mol){
     if (degree > 0 and atNum > 1) {
       int h = atom->getTotalNumHs(true); // caution getTotalNumHs(true) to count h !!!!
       int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum)-h; // number of valence (explicit with Hs)
-      //double dv =(double) Zv-h;  // number of valence electron without Hs
       int N =  GetPrincipalQuantumNumber(atNum); // principal quantum number
-      double d = (double) degree-h; // degree-h  or degree ???
+      double d = (double) degree-h; // degree-h
         if (d>0) {
             Is[i]=round(1000*(4.0/(N*N)*dv+1.0)/d)/1000;
-        }
-        else {
-            Is[i]=1.0;
         }
     }
  }
@@ -147,40 +142,18 @@ std::vector<double> MolData3Ddescriptors::GetIStateDrag(const  RDKit::ROMol &mol
   int numAtoms = mol.getNumAtoms();
   std::vector<double> Is(numAtoms,1.0);
 
-//  double *AdjMat = RDKit::MolOps::getAdjacencyMatrix(mol,false,0,false,0);
-/*
-  std::vector<int> Zv(numAtoms,0.0);
-  for (int i = 0; i < numAtoms; ++i) {
-    const RDKit::Atom * atomi= mol.getAtomWithIdx(i);
-    int atNumi=atomi->getAtomicNum();
-    if (atNumi > 1) {
-      for (int j = 0; j < numAtoms; ++j) {
-        const RDKit::Atom * atomj= mol.getAtomWithIdx(j);
-        int atNumj=atomj->getAtomicNum();
-        if (atNumj >1) {
-          Zv[i]+=AdjMat[j * numAtoms + i];
-        }
-      }
-    }
-  }
-*/
-
   for (int i = 0; i < numAtoms; ++i) {
     const RDKit::Atom * atom= mol.getAtomWithIdx(i);
     int atNum=atom->getAtomicNum();
     int degree = atom->getDegree(); // number of substituants
     if (degree > 0 and atNum > 1) {
-      int h = atom->getTotalNumHs();
-
+      int h = atom->getTotalNumHs(true);
       int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum); // number of valence (explicit with Hs)
       double dv =(double) Zv-h;  // number of valence electron without Hs
       int N =  GetPrincipalQuantumNumber(atNum); // principal quantum number
-      double d = (double) degree; // degree-h  or degree ???
+      double d = (double) degree-h; // degree-h
         if (d>0) {
             Is[i]=round(1000*(4.0/(N*N)*dv+1.0)/d)/1000;
-        }
-        else {
-            Is[i]=1.0;
         }
     }
  }
