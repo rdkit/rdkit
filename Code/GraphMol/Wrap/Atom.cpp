@@ -402,6 +402,7 @@ struct atom_wrapper {
 
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)
+        .value("S", Atom::S)
         .value("SP", Atom::SP)
         .value("SP2", Atom::SP2)
         .value("SP3", Atom::SP3)

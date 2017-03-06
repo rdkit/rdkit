@@ -4201,7 +4201,7 @@ CAS<~>
     for atom in m2.GetAtoms():
       self.assertFalse(atom.HasProp("_foo"))
       self.assertFalse(atom.HasProp("foo"))
-    
+
     Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.MolProps |
                                      Chem.PropertyPickleOptions.PrivateProps)
     pkl = cPickle.dumps(m)
@@ -4213,6 +4213,15 @@ CAS<~>
     for atom in m2.GetAtoms():
       self.assertFalse(atom.HasProp("_foo"))
       self.assertFalse(atom.HasProp("foo"))
+
+  def testGithub1352(self):
+    self.assertTrue('SP' in Chem.HybridizationType.names)
+    self.assertTrue('S' in Chem.HybridizationType.names)
+    m = Chem.MolFromSmiles('CC(=O)O.[Na]')
+    self.assertEqual(m.GetAtomWithIdx(0).GetHybridization().name,'SP3')
+    self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name,'S')
+
+
 
 
 if __name__ == '__main__':
@@ -4226,4 +4235,3 @@ if __name__ == '__main__':
     runner.run(suite)
   else:
     unittest.main()
-
