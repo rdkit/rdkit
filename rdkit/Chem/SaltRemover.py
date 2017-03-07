@@ -170,10 +170,11 @@ class SaltRemover(object):
     if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
       return mol
     modified = False
+    natoms = mol.GetNumAtoms()
     for salt in self.salts:
-      tMol = _applyPattern(mol, salt, dontRemoveEverything)
-      if tMol is not mol:
-        mol = tMol
+      mol = _applyPattern(mol, salt, dontRemoveEverything)
+      if natoms != mol.GetNumAtoms():
+        natoms = mol.GetNumAtoms()
         modified = True
         if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
           break
