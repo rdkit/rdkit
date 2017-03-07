@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2012, Institue of Cancer Research.
+//  Copyright (c) 2016, Guillaume GODIN
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Adding WHIM descriptors to 3D descriptors by Guillaume Godin
+// Adding GETAWAY descriptors by Guillaume Godin
 // for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
 
 #include <GraphMol/RDKitBase.h>

@@ -42,7 +42,7 @@ void testWHIM2() {
 
     std::vector<double> dwhim;
 
-    dwhim = RDKit::Descriptors::WHIM(*m, -1, 0.01);
+    RDKit::Descriptors::WHIM(*m,dwhim, -1, 0.01);
     for (int j=0;j<114;j++) {
       std::cout << dwhim[j] << ",";
      }
@@ -75,7 +75,7 @@ void testWHIM3() {
 
     std::vector<double> dwhim;
 
-    dwhim = RDKit::Descriptors::WHIM(*m, -1, 0.01);
+    RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01);
     for (int j=0;j<114;j++) {
       std::cout << dwhim[j] << ",";
      }
@@ -110,7 +110,7 @@ void testWHIM1() {
     std::vector<double> dwhim;
 //for (int i=1;i<11;i++) {
  // std::cout << "i:" << 0.005*i << "\n";
-    dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
+    RDKit::Descriptors::WHIM(*m, dwhim, -1,0.01);
     for (int j=0;j<114;j++) {
       std::cout << dwhim[j] << ",";
      }
@@ -160,7 +160,8 @@ void testWHIM() {
     TEST_ASSERT(m);
     std::string nm;
     m->getProp("_Name",nm);
-    std::vector<double> dwhim = RDKit::Descriptors::WHIM(*m, -1,0.01);
+    std::vector<double> dwhim;
+    RDKit::Descriptors::WHIM(*m, dwhim,-1,0.01);
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);

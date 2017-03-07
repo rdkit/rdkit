@@ -1,5 +1,5 @@
-//  Guillaume GODIN
-//  Copyright (C) 2012-2016 Greg Landrum
+//
+//  Copyright (c) 2016, Guillaume GODIN
 //   @@ All Rights Reserved @@
 //
 //  This file is part of the RDKit.
@@ -69,13 +69,12 @@ void testGETAWAY(double precision) {
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);
     //std::cout <<  "\n";
+    int numAtoms= m->getNumAtoms();
+    std::cout << "number of Atoms : " << numAtoms<< "\n";
 
     for (int i=0;i<273;i++)
        {
             double ref =atof(myrow[i+1].c_str());
-
-
-          //  std::cout << dgetaway[i] << ",";
 
             if (fabs(ref) > 1){
               if(fabs((ref-dgetaway[i])/ref)>0.01){
@@ -87,9 +86,7 @@ void testGETAWAY(double precision) {
                 std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< dgetaway[i] <<std::endl;
               }
           }
-
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-
        }
 
     delete m;

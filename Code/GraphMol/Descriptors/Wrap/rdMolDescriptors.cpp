@@ -110,17 +110,16 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 }
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-#if 0
 
 
 python::list calcWHIMs(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
-  res = RDKit::Descriptors::WHIM(mol, confId);
+  RDKit::Descriptors::WHIM(mol, res, confId);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
-#endif
+
 
 python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId, double precision) {
   std::vector<double> res;

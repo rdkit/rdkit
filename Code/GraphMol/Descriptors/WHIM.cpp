@@ -28,8 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Created by Guillaume Godin 2016
-// for build & set RDBASE! => export RDBASE=/Users/mbp/Github/rdkit_mine/
+// for build & set RDBASE! => export RDBASE=/Users/GVALMTGG/Github/rdkit_mine/
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -47,7 +46,6 @@
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
-
 
 using namespace Eigen;
 
@@ -97,7 +95,7 @@ namespace RDKit {
               return svd;
           }
 
-          // this method use the new Canonical Ranking Atoms to gene we don't need it there but can be useful in another package
+          // this method use the new Canonical Ranking Atoms to gene we don't need it there but can be useful in another package 
           std::vector<unsigned int> CanonicalRankAtoms(const ROMol &mol,
                                                        bool breakTies = true,
                                                        bool includeChirality = true,
@@ -272,12 +270,15 @@ namespace RDKit {
               return w;
           }
 
-          std::vector<double>  GetWHIMs(const Conformer &conf, double Vpoints[], double th){
-              std::vector<double> w(18);
-              std::vector<double> res(126);
-              //ROMol& mol = conf.getOwningMol();
-              //MolOps::removeHs(mol, false, false); // special case
-              //int numAtoms = mol.getNumAtoms();
+          void GetWHIMs(const Conformer &conf, std::vector<double> &result, double Vpoints[], double th){
+              std::vector<double> wu(18);
+              std::vector<double> wm(18);
+              std::vector<double> wv(18);
+              std::vector<double> we(18);
+              std::vector<double> wp(18);
+              std::vector<double> wi(18);
+              std::vector<double> ws(18);
+
               int numAtoms = conf.getNumAtoms();
               Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
               MatrixXd MatOrigin=matorigin.transpose();
@@ -285,66 +286,48 @@ namespace RDKit {
 
               // 18 values stored in this order : "L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"
               weigthvector = moldata3D.GetUn(numAtoms);
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*0] = w[i];
-              }
-              w.clear();
-              w.resize(18);
+              wu= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
               weigthvector = moldata3D.GetRelativeMW(conf.getOwningMol());
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*1] = w[i];
-              }
-              w.clear();
-              w.resize(18);
+              wm= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
               weigthvector = moldata3D.GetRelativeVdW(conf.getOwningMol());
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*2] = w[i];
-              }
-              w.clear();
-              w.resize(18);
+              wv= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
               weigthvector = moldata3D.GetRelativeENeg(conf.getOwningMol());
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*3] = w[i];
-              }
-              w.clear();
-              w.resize(18);
+              we= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
               weigthvector = moldata3D.GetRelativePol(conf.getOwningMol());
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*4] = w[i];
-              }
-              w.clear();
-              w.resize(18);
+              wp= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
               weigthvector = moldata3D.GetRelativeIonPol(conf.getOwningMol());
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
-              for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*5] = w[i];
-              }
+              wi= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
 
-              w.clear();
-              w.resize(18);
-              weigthvector = moldata3D.GetIState(conf.getOwningMol()); // caution not only neighours hum not sure on this based on the paper! Also this should be only on Heavy atoms
-              w= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              weigthvector = moldata3D.GetIState(conf.getOwningMol());
+              ws= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+
+              result.clear();
+              result.resize(126);
+
               for (int i = 0 ; i < 18 ; i++) {
-                res[i+18*6] = w[i];
+                result[i+18*0] = wu[i];
+                result[i+18*1] = wm[i];
+                result[i+18*2] = wv[i];
+                result[i+18*3] = we[i];
+                result[i+18*4] = wp[i];
+                result[i+18*5] = wi[i];
+                result[i+18*6] = ws[i];
               }
-              w.clear();
-              return res;
+              wu.clear();
+              wm.clear();
+              wv.clear();
+              we.clear();
+              wp.clear();
+              wi.clear();
+              ws.clear();
           }
-        } //end of anonymous namespace
 
-
-        std::vector<double> WHIM(const ROMol& mol, int confId, double th){
-            PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
+        void getWHIM(const ROMol& mol,  std::vector<double> &res, int confId, double th){
             int numAtoms = mol.getNumAtoms();
             const Conformer &conf = mol.getConformer(confId);
             double Vpoints[3*numAtoms];
@@ -355,9 +338,8 @@ namespace RDKit {
                Vpoints[3*i+2] =conf.getAtomPos(i).z;
             }
 
-            std::vector<double> res(114);
             std::vector<double>  w(126);
-            w= GetWHIMs(conf, Vpoints, th);
+            GetWHIMs(conf, w, Vpoints, th);
 
             // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
             int map1[11] = {0,1,2,6,7,14,15,16,10,11,12};
@@ -380,7 +362,18 @@ namespace RDKit {
               res[i + 15*7+2] = roundn(w[5 + 18* i], 3);   //108 109 110 111 112 113 114 //Vu  Vm  Vv  Ve  Vp  Vi  Vs
             }
           // res output are : L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap  Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu  Vm  Vv  Ve  Vp  Vi  Vs
-            return res;
+          }
+
+        } //end of anonymous namespace
+
+
+        void WHIM(const ROMol& mol, std::vector<double> &res, int confId, double th){
+            PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
+ 
+              res.clear();
+              res.resize(126);
+              getWHIM(mol,  res,  confId,  th);
+
           }
     } // end of Descriptors namespace
 } // end of RDKit namespace
