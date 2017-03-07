@@ -120,15 +120,16 @@ python::list calcWHIMs(const RDKit::ROMol &mol, int confId) {
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
+#endif
 
-python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId) {
+python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId, double precision) {
   std::vector<double> res;
-  res = RDKit::Descriptors::GETAWAY(mol, confId);
+  RDKit::Descriptors::GETAWAY(mol, res, confId, precision);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
-#endif
+
 
 python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
   std::vector<double> res;

@@ -40,7 +40,7 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string GETAWAYVersion = "1.0.0";
-    void GETAWAY(const ROMol&, std::vector<double> &res, int confId=-1);
+    void GETAWAY(const ROMol&, std::vector<double> &res, int confId=-1, double precision=1e-3);
   }
 }
 #endif

@@ -86,7 +86,7 @@ namespace RDKit {
         }
 
         // need to clean that code to have always the same output which is not the case
-        std::vector<double>  clusterArray(std::vector<double> data) {
+        std::vector<double>  clusterArray(std::vector<double> data, double precision) {
             std::vector<double> Store;
 
             // sort the input data
@@ -108,8 +108,8 @@ namespace RDKit {
                 //std::cout << diffs[i] << ",";
                 count++;
                 // if a difference exceeds 0.01 <=> 1%, start a new group: if transform is used!
-                // use diff not ratio (with 0.002 precision!)
-                if (diffs[i] > 0.0015)  {
+                // use diff not ratio (with 0.003 precision look like it's what it's used in Dragon 6!)
+                if (diffs[i] > precision)  {
                     Store.push_back(count);
                     count=0;
                     j++;
@@ -140,7 +140,7 @@ namespace RDKit {
 
         MatrixXd GetPinv(MatrixXd A){
             JacobiSVD<MatrixXd> svd = getSVD(A);
-            double  pinvtoler=1.e-2; // choose your tolerance wisely!
+            double  pinvtoler=1.e-3; // choose your tolerance wisely!
             VectorXd vs=svd.singularValues();
             VectorXd vsinv=svd.singularValues();
 
@@ -239,20 +239,6 @@ namespace RDKit {
 
         }
 
-        double getHtotal(double * Hk){
-
-          return Hk[0]+2*(Hk[1]+Hk[2]+Hk[3]+Hk[4]+Hk[5]+Hk[6]+Hk[7]+Hk[8]);
-
-        }
-
-
-
-        double getRtotal(double * Rk){
-
-          return 2*(Rk[0]+Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]);
-
-        }
-
         double getMax(double * Rk){
          double RTp=0;
          for (int j=0;j<8;j++){
@@ -265,100 +251,98 @@ namespace RDKit {
         }
 
         void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
-          std::vector<int> Heavylist,const ROMol& mol, std::vector<double>& res) {
+          std::vector<int> Heavylist,const ROMol& mol, std::vector<double>& res, double precision) {
 
             // prepare data for Getaway parameter computation
             // compute parameters
 
-            VectorXd Lev=H.diagonal();
-            //std::cout << "Leverages:" << Lev << "\n";
+          VectorXd Lev=H.diagonal();
 
-            std::vector<double> heavyLev;
+          std::vector<double> heavyLev;
 
-            for (int i=0;i<numAtoms;i++){
+          for (int i=0;i<numAtoms;i++){
 
-              if (Heavylist[i]==1){
-                heavyLev.push_back(roundn(Lev(i),3));
-               }
+            if (Heavylist[i]==1){
+              heavyLev.push_back(roundn(Lev(i),3));
             }
+          }
 
 
 
-            std::vector<double> Clus= clusterArray(heavyLev);
-            double numHeavy=heavyLev.size();
+          std::vector<double> Clus = clusterArray(heavyLev, precision);
+          double numHeavy=heavyLev.size();
 
 
-            double ITH0 = numHeavy*log(numHeavy)/log(2);
-            double ITH=ITH0;
+          double ITH0 = numHeavy * log(numHeavy) / log(2);
+          double ITH = ITH0;
             //std::cout << "clus size:" << Clus.size() << "\n";
-            for (unsigned int j=0;j<Clus.size();j++){
+          for (unsigned int j=0;j<Clus.size();j++){
               //std::cout << j << ":" << Clus[j] << "\n";
-              ITH -= Clus[j]*log(Clus[j])/log(2);
+              ITH -= Clus[j] * log( Clus[j] ) / log( 2 );
             }
-            res[0]=ITH;
+          res[0] = ITH;
 
-            double ISH=ITH/ITH0;
-            res[1]=ISH;
+          double ISH = ITH / ITH0;
+          res[1]=ISH;
 
-            double pbf=RDKit::Descriptors::PBF(mol);
-            double D;
-            if (pbf<0.0001) {
-              D=2.0;
-            } else {
+          double pbf=RDKit::Descriptors::PBF(mol);
+          double D;
+          if (pbf<1.e-4) {
+            D=2.0;
+          } else {
               D=3.0;
-            }
+          }
             // hardcoded the number of dimension ... need to find a method to compute it in all case
             // use the PBF to determine 2D vs 3D (with Thresold) how to determine if it's linear ? (ie D=1)
-            double HIC=0.0;
-            for (int i=0;i<numAtoms;i++) {
-              HIC-=H(i,i)/D*log(H(i,i)/D)/log(2);
-            }
-            res[2]=HIC;
+          double HIC=0.0;
+          for (int i=0;i<numAtoms;i++) {
+            HIC -= H(i,i) / D * log( H(i,i) / D ) / log( 2 );
+          }
+          res[2] = HIC;
 
 
-            double HGM = 1.0;
-            for (int i=0;i<numAtoms;i++) {
-              HGM=HGM*H(i,i);
-            }
-            HGM=100.0*pow(HGM,1.0/numAtoms);
-            res[3]=HGM;
+          double HGM = 1.0;
+          for (int i = 0 ; i < numAtoms ; i++) {
+            HGM = HGM * H(i,i);
+          }
+          HGM=100.0 * pow( HGM , 1.0 / numAtoms);
+          res[3] = HGM;
 
-            double RARS=R.rowwise().sum().sum()/numAtoms;
+          double RARS=R.rowwise().sum().sum() / numAtoms;
 
-            JacobiSVD<MatrixXd> mysvd = getSVD(R);
+          JacobiSVD<MatrixXd> mysvd = getSVD(R);
 
-            VectorXd EIG = mysvd.singularValues();
+          VectorXd EIG = mysvd.singularValues();
 
-           double rcon= getRCON(R,  Adj, numAtoms);
+          double rcon= getRCON(R,  Adj, numAtoms);
 
-        // get the Weigthed vectors
-           std::vector<double> wp= moldata3D.GetRelativePol(mol);
+          std::vector<double> wp= moldata3D.GetRelativePol(mol);
 
-           VectorXd Wp = getEigenVect(wp);
+          VectorXd Wp = getEigenVect(wp);
 
-           std::vector<double> wm= moldata3D.GetRelativeMW(mol);
+          std::vector<double> wm= moldata3D.GetRelativeMW(mol);
 
-           VectorXd Wm = getEigenVect(wm);
+          VectorXd Wm = getEigenVect(wm);
 
-           std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
+          std::vector<double> wi= moldata3D.GetRelativeIonPol(mol);
 
-           VectorXd Wi = getEigenVect(wi);
+          VectorXd Wi = getEigenVect(wi);
 
-           std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
+          std::vector<double> wv= moldata3D.GetRelativeVdW(mol);
 
-           VectorXd Wv = getEigenVect(wv);
+          VectorXd Wv = getEigenVect(wv);
 
-           std::vector<double> we= moldata3D.GetRelativeENeg(mol);
+          std::vector<double> we= moldata3D.GetRelativeENeg(mol);
 
-           VectorXd We = getEigenVect(we);
+          VectorXd We = getEigenVect(we);
 
-           std::vector<double>  wu = moldata3D.GetUn(numAtoms);
+          std::vector<double> wu = moldata3D.GetUn(numAtoms);
 
-           VectorXd Wu = getEigenVect(wu);
+          VectorXd Wu = getEigenVect(wu);
 
-           std::vector<double>  ws =  moldata3D.GetIState(mol);
+          std::vector<double> ws =  moldata3D.GetIState(mol);
 
-           VectorXd Ws = getEigenVect(ws);
+          VectorXd Ws = getEigenVect(ws);
 
 
           MatrixXd Bi;
@@ -549,50 +533,41 @@ namespace RDKit {
           }
 
           // can be column vs row selecgted that can explain the issue!
-          double HATSTu = HATSk[0][0];
-          double HATSTm = HATSk[1][0];
-          double HATSTv = HATSk[2][0];
-          double HATSTe = HATSk[3][0];
-          double HATSTp = HATSk[4][0];
-          double HATSTi = HATSk[5][0];
-          double HATSTs = HATSk[6][0];
+          double HATSTu = round(1000*HATSk[0][0]) / 1000;
+          double HATSTm = round(1000*HATSk[1][0]) / 1000;
+          double HATSTv = round(1000*HATSk[2][0]) / 1000;
+          double HATSTe = round(1000*HATSk[3][0]) / 1000;
+          double HATSTp = round(1000*HATSk[4][0]) / 1000;
+          double HATSTi = round(1000*HATSk[5][0]) / 1000;
+          double HATSTs = round(1000*HATSk[6][0]) / 1000;
 
-          for (int i =1; i < 9; i++ ) {
-            HATSTu += 2*HATSk[0][i];
-            HATSTm += 2*HATSk[1][i];
-            HATSTv += 2*HATSk[2][i];
-            HATSTe += 2*HATSk[3][i];
-            HATSTp += 2*HATSk[4][i];
-            HATSTi += 2*HATSk[5][i];
-            HATSTs += 2*HATSk[6][i];
+          for (int ii =1; ii < 9; ii++ ) {
+            HATSTu += 2 * round( 1000* HATSk[0][ii] ) / 1000 ;
+            HATSTm += 2 * round( 1000* HATSk[1][ii] ) / 1000 ;
+            HATSTv += 2 * round( 1000* HATSk[2][ii] ) / 1000 ;
+            HATSTe += 2 * round( 1000* HATSk[3][ii] ) / 1000 ;
+            HATSTp += 2 * round( 1000* HATSk[4][ii] ) / 1000 ;
+            HATSTi += 2 * round( 1000* HATSk[5][ii] ) / 1000 ;
+            HATSTs += 2 * round( 1000* HATSk[6][ii] ) / 1000 ;
           }
 
-          double HTu = Hk[0][0];
-          double HTm = Hk[1][0];
-          double HTv = Hk[2][0];
-          double HTe = Hk[3][0];
-          double HTp = Hk[4][0];
-          double HTi = Hk[5][0];
-          double HTs = Hk[6][0];
+          double HTu = round (1000* Hk[0][0]) / 1000;
+          double HTm = round (1000* Hk[1][0]) / 1000;
+          double HTv = round (1000* Hk[2][0]) / 1000;
+          double HTe = round (1000* Hk[3][0]) / 1000;
+          double HTp = round (1000* Hk[4][0]) / 1000;
+          double HTi = round (1000* Hk[5][0]) / 1000;
+          double HTs = round (1000* Hk[6][0]) / 1000;
 
-          for (int i =1; i < 9; i++ ) {
-            HTu += 2*Hk[0][i];
-            HTm += 2*Hk[1][i];
-            HTv += 2*Hk[2][i];
-            HTe += 2*Hk[3][i];
-            HTp += 2*Hk[4][i];
-            HTi += 2*Hk[5][i];
-            HTs += 2*Hk[6][i];
+          for (int ii =1; ii < 9; ii++ ) {
+            HTu += 2* round (1000 * Hk[0][ii] ) / 1000;
+            HTm += 2* round (1000 * Hk[1][ii] ) / 1000;
+            HTv += 2* round (1000 * Hk[2][ii] ) / 1000;
+            HTe += 2* round (1000 * Hk[3][ii] ) / 1000;
+            HTp += 2* round (1000 * Hk[4][ii] ) / 1000;
+            HTi += 2* round (1000 * Hk[5][ii] ) / 1000;
+            HTs += 2* round (1000 * Hk[6][ii] ) / 1000;
           }
-
-
-                  Rk[0][i-1]=R0u;
-                  Rk[1][i-1]=R0m;
-                  Rk[2][i-1]=R0v;
-                  Rk[3][i-1]=R0e;
-                  Rk[4][i-1]=R0p;
-                  Rk[5][i-1]=R0i;
-                  Rk[6][i-1]=R0s;
 
           //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
           
@@ -604,41 +579,41 @@ namespace RDKit {
           double RTi = 0.0;
           double RTs = 0.0;
 
-          for (int i =0; i < 0; i++ ) {
-            RTu += 2*Rk[0][i];
-            RTm += 2*Rk[1][i];
-            RTv += 2*Rk[2][i];
-            RTe += 2*Rk[3][i];
-            RTp += 2*Rk[4][i];
-            RTi += 2*Rk[5][i];
-            RTs += 2*Rk[6][i];
+          for (int ii =0; ii < 8; ii++ ) {
+            RTu += 2.0 * round ( 1000 * Rk[0][ii] ) / 1000;
+            RTm += 2.0 * round ( 1000 * Rk[1][ii] ) / 1000;
+            RTv += 2.0 * round ( 1000 * Rk[2][ii] ) / 1000;
+            RTe += 2.0 * round ( 1000 * Rk[3][ii] ) / 1000;
+            RTp += 2.0 * round ( 1000 * Rk[4][ii] ) / 1000;
+            RTi += 2.0 * round ( 1000 * Rk[5][ii] ) / 1000;
+            RTs += 2.0 * round ( 1000 * Rk[6][ii] ) / 1000;
           }
 
 
-          double RTMu=getMax(Rp[0]);
-          double RTMm=getMax(Rp[1]);
-          double RTMv=getMax(Rp[2]);
-          double RTMe=getMax(Rp[3]);
-          double RTMp=getMax(Rp[4]);
-          double RTMi=getMax(Rp[5]);
-          double RTMs=getMax(Rp[6]);
+          double RTMu = getMax( Rp[0] );
+          double RTMm = getMax( Rp[1] );
+          double RTMv = getMax( Rp[2] );
+          double RTMe = getMax( Rp[3] );
+          double RTMp = getMax( Rp[4] );
+          double RTMi = getMax( Rp[5] );
+          double RTMs = getMax( Rp[6] );
 
           // create the output vector...
           for (int i=0;i<9;i++){
-            res[i+4]=Hk[0][i];
-            res[i+14]=HATSk[0][i];
-            res[i+24]=Hk[1][i];
-            res[i+34]=HATSk[1][i];
-            res[i+44]=Hk[2][i];
-            res[i+54]=HATSk[2][i];
-            res[i+64]=Hk[3][i];
-            res[i+74]=HATSk[3][i];
-            res[i+84]=Hk[4][i];
-            res[i+94]=HATSk[4][i];
-            res[i+104]=Hk[5][i];
-            res[i+114]=HATSk[5][i];
-            res[i+124]=Hk[6][i];
-            res[i+134]=HATSk[6][i];
+            res[i + 4]=Hk[0][i];
+            res[i + 14]=HATSk[0][i];
+            res[i + 24]=Hk[1][i];
+            res[i + 34]=HATSk[1][i];
+            res[i + 44]=Hk[2][i];
+            res[i + 54]=HATSk[2][i];
+            res[i + 64]=Hk[3][i];
+            res[i + 74]=HATSk[3][i];
+            res[i + 84]=Hk[4][i];
+            res[i + 94]=HATSk[4][i];
+            res[i + 104]=Hk[5][i];
+            res[i + 114]=HATSk[5][i];
+            res[i + 124]=Hk[6][i];
+            res[i + 134]=HATSk[6][i];
 
            }
           res[13]=HTu;
@@ -660,22 +635,22 @@ namespace RDKit {
           res[145]=RARS;
           res[146]=EIG(0);
 
-           for (int i=0;i<8;i++){
-            res[i+147]=Rk[0][i];
-            res[i+156]=Rp[0][i];
-            res[i+165]=Rk[1][i];
-            res[i+174]=Rp[1][i];
-            res[i+183]=Rk[2][i];
-            res[i+192]=Rp[2][i];
-            res[i+201]=Rk[3][i];
-            res[i+210]=Rp[3][i];
-            res[i+219]=Rk[4][i];
-            res[i+228]=Rp[4][i];
-            res[i+237]=Rk[5][i];
-            res[i+246]=Rp[5][i];
-            res[i+255]=Rk[6][i];
-            res[i+264]=Rp[6][i];
-           }
+          for (int i=0;i<8;i++){
+            res[i + 147]=Rk[0][i];
+            res[i + 156]=Rp[0][i];
+            res[i + 165]=Rk[1][i];
+            res[i + 174]=Rp[1][i];
+            res[i + 183]=Rk[2][i];
+            res[i + 192]=Rp[2][i];
+            res[i + 201]=Rk[3][i];
+            res[i + 210]=Rp[3][i];
+            res[i + 219]=Rk[4][i];
+            res[i + 228]=Rp[4][i];
+            res[i + 237]=Rk[5][i];
+            res[i + 246]=Rp[5][i];
+            res[i + 255]=Rk[6][i];
+            res[i + 264]=Rp[6][i];
+          }
 
           res[155]=RTu;
           res[164]=RTMu;
@@ -716,7 +691,7 @@ namespace RDKit {
 
 
         void GetGETAWAY(double* dist3D, double*AdjMat, std::vector<double> Vpoints,
-          const ROMol& mol, const Conformer &conf,  std::vector<int> Heavylist,  std::vector<double>& res) {
+          const ROMol& mol, const Conformer &conf,  std::vector<int> Heavylist,  std::vector<double>& res, double precision) {
 
             int numAtoms = conf.getNumAtoms();
 
@@ -736,8 +711,7 @@ namespace RDKit {
 
             MatrixXd R = GetRmatrix(H, DM, numAtoms);
 
-
-            getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res);
+            getGETAWAYDesc(H, R, ADJ, numAtoms, Heavylist, mol, res, precision);
           }
 
 
@@ -745,7 +719,7 @@ namespace RDKit {
       } //end of anonymous namespace
 
 
-      void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId){
+      void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId, double precision){
         PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
 
         int numAtoms = mol.getNumAtoms();
@@ -755,9 +729,9 @@ namespace RDKit {
         std::vector<double> Vpoints(3*numAtoms);
 
         for(int i=0; i<numAtoms; ++i){
-           Vpoints[3*i]   =conf.getAtomPos(i).x;
-           Vpoints[3*i+1] =conf.getAtomPos(i).y;
-           Vpoints[3*i+2] =conf.getAtomPos(i).z;
+           Vpoints[3 * i]     = conf.getAtomPos(i).x;
+           Vpoints[3 * i + 1] = conf.getAtomPos(i).y;
+           Vpoints[3 * i + 2] = conf.getAtomPos(i).z;
         }
 
         std::vector<int> Heavylist= GetHeavyList(mol);
@@ -771,7 +745,7 @@ namespace RDKit {
         res.clear();
         res.resize(273);
 
-        GetGETAWAY(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res);
+        GetGETAWAY(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res, precision);
 
       }
 

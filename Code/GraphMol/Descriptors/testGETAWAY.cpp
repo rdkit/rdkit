@@ -22,7 +22,7 @@
 
 
 
-void testGETAWAY() {
+void testGETAWAY(double precision) {
   std::cout << "=>start test GETAWAY\n";
 
   std::string pathName = getenv("RDBASE");
@@ -63,15 +63,19 @@ void testGETAWAY() {
 
     std::vector<double> dgetaway;
 
-    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1);
+    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, precision);
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);
+    //std::cout <<  "\n";
 
     for (int i=0;i<273;i++)
        {
             double ref =atof(myrow[i+1].c_str());
+
+
+          //  std::cout << dgetaway[i] << ",";
 
             if (fabs(ref) > 1){
               if(fabs((ref-dgetaway[i])/ref)>0.01){
@@ -100,8 +104,16 @@ void testGETAWAY() {
 
 
 int main(int argc, char *argv[]) {
-  RDLog::InitLogs();
-  testGETAWAY();
 
+  if ( argc != 2 ){
+     std::cout << "Provide a precision for the test";
+  } 
+  else {
+
+  RDLog::InitLogs();
+  double num = atof(argv[1]);
+
+  testGETAWAY(num);
+  }
 
 }
