@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
 #
@@ -57,8 +56,9 @@ def SATISTypes(mol, neighborsToInclude=4):
   # Collect all atom indices that match one of the special patterns
   specialCaseMatches = []
   for patt, specialCaseIdx in specialCases:
-    if mol.HasSubstructMatch(patt):
-      matches = set(itertools.chain(*(mol.GetSubstructMatches(patt))))
+    matches = mol.GetSubstructMatches(patt)
+    if matches:
+      matches = set(itertools.chain(*matches))
       specialCaseMatches.append((specialCaseIdx, matches))
 
   codes = [None] * nAtoms
@@ -69,7 +69,7 @@ def SATISTypes(mol, neighborsToInclude=4):
     code[0] = min(atom.GetAtomicNum(), 99)
 
     # Get atomic numbers of connected neighbours and use for code
-    otherIndices = [bond.GetOtherAtom(atom).GetIdx() for bond in atom.GetBonds()]
+    otherIndices = [x.GetIdx() for x in atom.GetNeighbors()]
     otherNums = sorted([atomicNums[x] for x in otherIndices] + [1] * atom.GetTotalNumHs())
     if len(otherNums) > neighborsToInclude:
       # Get the last neighborsToInclude elements from otherNums
