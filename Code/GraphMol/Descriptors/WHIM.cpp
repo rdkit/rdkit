@@ -121,7 +121,7 @@ namespace RDKit {
             return V;
           }
 
-          std::vector<double> getWhimD(std::vector<double> weigthvector, MatrixXd MatOrigin, int numAtoms, double th, bool printscore) {
+          std::vector<double> getWhimD(std::vector<double> weigthvector, MatrixXd MatOrigin, int numAtoms, double th) {
 
               double* weigtharray = &weigthvector[0];
 
@@ -163,7 +163,6 @@ namespace RDKit {
               w[9]= 3.0 / 4.0 * res; // K
 
               // center original matrix
-
               VectorXd v1 = Scores.col(0);
               VectorXd v2 = Scores.col(1);
               VectorXd v3 = Scores.col(2);
@@ -204,16 +203,7 @@ namespace RDKit {
                   Scores(j,i) = roundn( Scores(j,i) , 2); // round the matrix! same as eigen tolerance !
                 }
               }
-              /*
-              std::vector<double> VS;
-              // need to make a copy of the vector using "CopyVect" to std:vector center and reinject to vector
 
-              for (int i = 0 ; i < 3 ; i++) {
-                  VS = centeringVector(CopyVect(Scores.col(i)));
-                  for (int j = 0 ; j < numAtoms ; j++){
-                    Scores(j,i) = VS[j];
-                  }
-              }*/
               for (int i = 0 ; i < 3 ; i++) {
                 double ns=0.0;
                 for (int j = 0 ; j < numAtoms-1 ; j++) {
@@ -284,27 +274,27 @@ namespace RDKit {
               MatrixXd MatOrigin=matorigin.transpose();
               std::vector<double> weigthvector;
 
-              // 18 values stored in this order : "L1u","L2u","L3u","Tu","Au","Vu","P1u","P2u","P3u","Ku","E1u","E2u","E3u","Du","G1u","G2u","G3u","Gu"
+              // intermediate 18 values stored in this order per weighted vector : "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
               weigthvector = moldata3D.GetUn(numAtoms);
-              wu= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              wu= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetRelativeMW(conf.getOwningMol());
-              wm= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              wm= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetRelativeVdW(conf.getOwningMol());
-              wv= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              wv= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetRelativeENeg(conf.getOwningMol());
-              we= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              we= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetRelativePol(conf.getOwningMol());
-              wp= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              wp= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetRelativeIonPol(conf.getOwningMol());
-              wi= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              wi= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               weigthvector = moldata3D.GetIState(conf.getOwningMol());
-              ws= getWhimD(weigthvector, MatOrigin, numAtoms, th, false);
+              ws= getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
               result.clear();
               result.resize(126);
@@ -341,27 +331,26 @@ namespace RDKit {
             std::vector<double>  w(126);
             GetWHIMs(conf, w, Vpoints, th);
 
-            // takes only L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
+            // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2 E3
             int map1[11] = {0,1,2,6,7,14,15,16,10,11,12};
 
             for (int k = 0 ; k < 7 ; k++) {
               for (int i = 0 ; i < 11 ; i++) {
-                  res[i + 11 * k ] = roundn( w[ map1[i] + 18 * k ] , 3 );
+                  res[i + 11 * k ] = roundn( w[ map1[i] + 18 * k ] , 3);
               }
             }
 
             for (int i = 0 ; i < 2; i++) {
-              res[i + 13*7] = roundn(w[17 + 18* i], 3);  //92  93 //Gu  Gm
+              res[i + 13*7] = roundn( w[17 + 18* i], 3);  //92  93 for Gu  Gm
             }
 
             for (int i = 0 ; i < 7; i++) {
-              res[i + 11*7] = roundn(w[3 + 18* i], 3);     //78  79  80  81  82  83  84 //Tu  Tm  Tv  Te  Tp  Ti  Ts
-              res[i + 12*7] = roundn(w[4 + 18* i], 3);     //85  86  87  88  89  90  91 //Au  Am  Av  Ae  Ap  Ai  As
-              res[i + 13*7+2] = roundn(w[9 + 18* i], 3);   //94  95  96  97  98  99  100 //Ku  Km  Kv  Ke  Kp  Ki  Ks
-              res[i + 14*7+2] = roundn(w[13 + 18* i], 3);  //101 102 103 104 105 106 107 //Du  Dm  Dv  De  Dp  Di  Ds
-              res[i + 15*7+2] = roundn(w[5 + 18* i], 3);   //108 109 110 111 112 113 114 //Vu  Vm  Vv  Ve  Vp  Vi  Vs
+              res[i + 11*7] = roundn( w[3 + 18* i], 3);     //78  79  80  81  82  83  84  for Tu  Tm  Tv  Te  Tp  Ti  Ts
+              res[i + 12*7] = roundn( w[4 + 18* i], 3);     //85  86  87  88  89  90  91  for Tu  Am  Av  Ae  Ap  Ai  As
+              res[i + 13*7+2] = roundn( w[9 + 18* i], 3);   //94  95  96  97  98  99  100 for Ku  Km  Kv  Ke  Kp  Ki  Ks
+              res[i + 14*7+2] = roundn( w[13 + 18* i], 3);  //101 102 103 104 105 106 107 for Du  Dm  Dv  De  Dp  Di  Ds
+              res[i + 15*7+2] = roundn( w[5 + 18* i], 3);   //108 109 110 111 112 113 114 for Vu  Vm  Vv  Ve  Vp  Vi  Vs
             }
-          // res output are : L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap  Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu  Vm  Vv  Ve  Vp  Vi  Vs
           }
 
         } //end of anonymous namespace
@@ -369,9 +358,10 @@ namespace RDKit {
 
         void WHIM(const ROMol& mol, std::vector<double> &res, int confId, double th){
             PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
- 
+             // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap  Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu  Vm  Vv  Ve  Vp  Vi  Vs
+
               res.clear();
-              res.resize(126);
+              res.resize(114);
               getWHIM(mol,  res,  confId,  th);
 
           }
