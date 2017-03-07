@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -824,43 +823,42 @@ void testGitHubIssue1073() {
 }
 
 void testConstrainedCoords() {
-
   std::string rdbase = getenv("RDBASE");
   std::string ofile =
-    rdbase + "/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf";
+      rdbase + "/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf";
   SDWriter writer(ofile);
 
-  std::string templ_smiles= "c1nccc2n1ccc2";
-  ROMol *templ = SmilesToMol( templ_smiles );
-  TEST_ASSERT( templ );
-  RDDepict::compute2DCoords( *templ );
+  std::string templ_smiles = "c1nccc2n1ccc2";
+  ROMol *templ = SmilesToMol(templ_smiles);
+  TEST_ASSERT(templ);
+  RDDepict::compute2DCoords(*templ);
   std::string smiles = "c1cccc2ncn3cccc3c21";
-  ROMol *m = SmilesToMol( smiles );
-  TEST_ASSERT( m );
-  RDDepict::generateDepictionMatching2DStructure( *m , *templ );
-  writer.write( *m );
-  
+  ROMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  RDDepict::generateDepictionMatching2DStructure(*m, *templ);
+  writer.write(*m);
+
   std::string smarts = "*1****2*1***2";
-  ROMol *refPatt = SmartsToMol( smarts );
-  RDDepict::generateDepictionMatching2DStructure( *m , *templ , -1 , refPatt );
-  writer.write( *m );
-  
+  ROMol *refPatt = SmartsToMol(smarts);
+  RDDepict::generateDepictionMatching2DStructure(*m, *templ, -1, refPatt);
+  writer.write(*m);
+
   delete templ;
   delete m;
   delete refPatt;
 
   std::string xp0_file =
-    rdbase + "/Code/GraphMol/Depictor/test_data/1XP0_ligand.sdf";
-  RDKit::ROMol *xp0_lig = RDKit::MolFileToMol( xp0_file );
-  RDKit::ROMol *xp0_lig_2d = new RDKit::ROMol( *xp0_lig );
-  RDDepict::compute2DCoords( *xp0_lig_2d );
-  writer.write( *xp0_lig_2d );
-  RDDepict::generateDepictionMatching3DStructure( *xp0_lig_2d , *xp0_lig );
-  writer.write( *xp0_lig_2d );
+      rdbase + "/Code/GraphMol/Depictor/test_data/1XP0_ligand.sdf";
+  RDKit::ROMol *xp0_lig = RDKit::MolFileToMol(xp0_file);
+  RDKit::ROMol *xp0_lig_2d = new RDKit::ROMol(*xp0_lig);
+  RDDepict::compute2DCoords(*xp0_lig_2d);
+  writer.write(*xp0_lig_2d);
+  RDDepict::generateDepictionMatching3DStructure(*xp0_lig_2d, *xp0_lig);
+  writer.write(*xp0_lig_2d);
 
   delete xp0_lig;
   delete xp0_lig_2d;
-}  
+}
 void testGitHubIssue1112() {
   // Bad coordinate generation for H2
   {
@@ -879,6 +877,77 @@ void testGitHubIssue1112() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(1).z, 0));
 
     delete m;
+  }
+}
+
+void testGitHubIssue1286() {
+  // GenerateDepictionMatching2DStructure isn't matching 2D structure
+  {  // the original report
+    std::string smiles = "C(=O)C(C)NC=O";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 7);
+
+    smiles = "C(=O)C(C)NC(=O)C1CC1";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 10);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(i);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(i);
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
+  }
+  {  // extremely crowded. This one tests bond shortening and angle opening
+    std::string smiles = "CC(=O)C1=CC=CC2=C1C=CC=C2";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 13);
+
+    smiles = "O=C(N)C1=C(C=CC2=C1C(=CC=C2)C(C)=O)C(C)(C)C";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 20);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*mol, *templ, mv));
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(mv[i].first);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(mv[i].second);
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
   }
 }
 
@@ -971,13 +1040,6 @@ int main() {
 
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
-  testIssue2303566();
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
-
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test Issue 2821647\n";
   testIssue2821647();
   BOOST_LOG(rdInfoLog)
@@ -1031,7 +1093,7 @@ int main() {
   testGitHubIssue8();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
+
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 78\n";
@@ -1065,6 +1127,23 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "   Test GitHub Issue 1112: Bad coordinate generation for H2\n";
   testGitHubIssue1112();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
+  testIssue2303566();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+#endif
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1286: "
+                          "GenerateDepictionMatching2DStructure isn't matching "
+                          "2D structure\n";
+  testGitHubIssue1286();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
 
