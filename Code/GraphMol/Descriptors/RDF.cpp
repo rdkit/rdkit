@@ -60,6 +60,8 @@ namespace RDKit {
               return res;
             }
 
+            
+
             std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
               int numAtoms = conf.getNumAtoms();
               int confId = conf.getId();

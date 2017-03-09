@@ -1271,82 +1271,28 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
-#if 0
-  python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
-
-  python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
-  docString ="Returns the RDF vector (radial distribution fonction) descriptors";
-  python::def("CalcRDF", calcRDFs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
 
 
-  python::scope().attr("_CalcMORSE_version") =  RDKit::Descriptors::MORSEVersion;
-
-  docString = "Returns the MORSE vector (Molecule Representation of Structures based on Electron diffraction) descriptors";
-  python::def("CalcMORSE", calcMORSEs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
-
- python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
-  docString ="Returns the WHIM descriptors vector () descriptors";
-  python::def("CalcWHIM", calcWHIMs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
- python::scope().attr("_CalcGETAWAY_version") = RDKit::Descriptors::GETAWAYVersion;
-  docString ="Returns the GETAWAY descriptors vector () descriptors";
-  python::def("CalcGETAWAY", calcGETAWAYs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
- python::scope().attr("_CalcAUTOCORR3D_version") = RDKit::Descriptors::AUTOCORR3DVersion;
-  docString ="Returns the GETAWAY descriptors vector () descriptors";
-  python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
-  python::scope().attr("_CalcPBF_version") =
-      RDKit::Descriptors::PBFVersion;
->>>>>>> master
-  docString =
-      "Returns the RDF vector (radial distribution fonction) descriptors";
-  python::def("CalcRDF", calcRDFs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
-  python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
-
-  docString =
-      "Returns the MORSE vector (Molecule Representation of Structures based "
-      "on Electron diffraction) descriptors";
-  python::def("CalcMORSE", calcMORSEs,
-              (python::arg("mol"), python::arg("confId") = -1),
-              docString.c_str());
-
-  python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
-  docString = "Returns the WHIM descriptors vector () descriptors";
+  python::scope().attr("_CalcWHIM_version") = 
+    RDKit::Descriptors::WHIMVersion;
+  docString = "Returns the WHIM descriptors vector";
   python::def("CalcWHIM", calcWHIMs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
   python::scope().attr("_CalcGETAWAY_version") =
       RDKit::Descriptors::GETAWAYVersion;
-  docString = "Returns the GETAWAY descriptors vector () descriptors";
+  docString = "Returns the GETAWAY descriptors vector";
   python::def("CalcGETAWAY", calcGETAWAYs,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1, python::arg("precision") = 0.001),
               docString.c_str());
-#endif
-
 
   python::scope().attr("_CalcRDF_version") =
     RDKit::Descriptors::RDFVersion;
-  docString ="Returns radial distribution fonction descriptors";
+  docString ="Returns radial distribution fonction descriptors (RDF)";
   python::def("CalcRDF", calcRDFs,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
-
 
   python::scope().attr("_CalcMORSE_version") =
     RDKit::Descriptors::MORSEVersion;
@@ -1357,7 +1303,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   python::scope().attr("_CalcAUTOCORR3D_version") =
       RDKit::Descriptors::AUTOCORR3DVersion;
-  docString = "Returns the GETAWAY descriptors vector () descriptors";
+  docString = "Returns 3D Autocorrelation descriptors vector";
   python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());

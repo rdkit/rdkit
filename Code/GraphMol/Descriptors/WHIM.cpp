@@ -109,13 +109,13 @@ namespace RDKit {
           std::vector<double> centeringVector(std::vector<double> V){
             double D;
             double AD=1000000.0;
-            for (int i = 0 ; i < V.size() ; i++){
+            for (unsigned long i = 0 ; i < V.size() ; i++){
                 if (std::abs(V[i])<AD) {
                   D=V[i];
                   AD=abs(V[i]);
                 }
             }
-            for (int i=0;i<V.size();i++){
+            for (unsigned long i = 0 ;i < V.size() ; i++){
                   V[i]=V[i]-D;
                 }
             return V;
@@ -200,7 +200,7 @@ namespace RDKit {
               // check if two atoms are symetric versus the new axis ie newx,newy,newz a
               for (int i = 0 ; i < 3 ; i++) {
                 for (int j = 0 ; j < numAtoms ; j++) {
-                  Scores(j,i) = roundn( Scores(j,i) , 2); // round the matrix! same as eigen tolerance !
+                  Scores(j,i) = roundn( Scores(j,i) , 3); // round the matrix! same as eigen tolerance !
                 }
               }
 

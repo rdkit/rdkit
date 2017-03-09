@@ -1,3 +1,4 @@
+//
 //  Copyright (c) 2016, Guillaume GODIN
 //  All rights reserved.
 //
@@ -27,7 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//
+// https://en.wikipedia.org/wiki/Molecular_descriptor
 //
 // Created by Guillaume Godin 2016
 
