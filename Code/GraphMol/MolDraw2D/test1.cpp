@@ -1651,6 +1651,25 @@ void test12DrawMols() {
     outs.flush();
   }
 
+  {  // github #1325: multiple molecules in one pane
+    MolDraw2DSVG drawer(300, 300, 300, 300);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_3.svg");
+    outs << text;
+    outs.flush();
+  }
+
+  {  // github #1325: multiple molecules in one pane
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_4.svg");
+    outs << text;
+    outs.flush();
+  }
   {
     mols[2] = NULL;
     mols[4] = NULL;
