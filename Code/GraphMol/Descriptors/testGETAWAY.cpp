@@ -53,7 +53,7 @@ void testGETAWAY(double precision) {
   int nDone = 0;
   while (!reader.atEnd()) {
 
-    if (nDone > 4) {
+    if (nDone > 10) {
       break;
     }
     RDKit::ROMol *m = reader.next();

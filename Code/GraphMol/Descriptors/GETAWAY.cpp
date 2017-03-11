@@ -50,8 +50,10 @@
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <iostream>
+#include <deque>
 #include <Eigen/Core>
 #include <Eigen/QR>
+
 
 using namespace Eigen;
 
@@ -85,7 +87,30 @@ namespace RDKit {
             return V;
         }
 
+        double round_to_n_digits_(double x, int n)
+        {
+            char buff[32];
+            sprintf(buff, "%.*f", n, x);
+            return atof(buff);
+        }
+
+        double round_to_n_digits(double x, int n){
+            double scale = pow(10.0, ceil(log10(fabs(x))) + n);
+            return round(x * scale) / scale;
+        }
+
+        bool IsClose(double a, double b, unsigned int n)
+        {
+           bool isclose=false;
+           if (fabs(a - b) <=  pow(0.1,n) * 1.1) {
+                isclose=true;
+           }
+            return isclose;
+        }
+
         // need to clean that code to have always the same output which is not the case
+        // the classes used the last 2 digit +/- 1 to cluster in the same group (with 3 digit precision)
+        // 0.012 and 0.013 are in the same group while 0.014 are not!
         std::vector<double>  clusterArray(std::vector<double> data, double precision) {
             std::vector<double> Store;
 
@@ -109,13 +134,63 @@ namespace RDKit {
                 count++;
                 // if a difference exceeds 0.01 <=> 1%, start a new group: if transform is used!
                 // use diff not ratio (with 0.003 precision look like it's what it's used in Dragon 6!)
-                if (diffs[i] > precision)  {
+                if (diffs[i] > pow(0.1,precision))  {
                     Store.push_back(count);
                     count=0;
                     j++;
                 }
             }
 
+            return Store;
+        }
+
+
+
+        // need to clean that code to have always the same output which is not the case
+        // the classes used the last 2 digit +/- 1 to cluster in the same group (with 3 digit precision)
+        // 0.012 and 0.013 are in the same group while 0.014 are not!
+        // alternative clustering method not working as in Dragon
+        std::vector<double>  clusterArray2(std::vector<double> data, int precision) {
+            std::vector<double> Store;
+
+            // sort the input data descend order!
+            std::sort(data.begin(), data.end(), std::greater<double>());
+
+            std::deque<double> B;
+            for (unsigned int i = 0; i < data.size(); i++) {
+              B.push_back(data[i]);
+            }
+
+            int count=0;
+            while (!B.empty()) {
+              double dk = B.front();
+              B.pop_front();
+              count++;
+              // case where the last value is not grouped it goes to the single last group
+              if (B.empty()) {
+                  Store.push_back(count);
+              }
+
+              for (unsigned int i = 0; i < B.size(); i++) {
+                  if (IsClose(dk,B[i],3)) {
+                    count++;
+                  }
+                  else {
+                      Store.push_back(count);
+                      for (unsigned int j = 0; j < i   ; j++) {
+                          B.pop_front();
+                      }
+                      count=0;
+                      break;
+                  }
+
+                  if (i==B.size()-1) {
+                    Store.push_back(count);
+                    B.pop_front();
+                    count=0;
+                  }
+              }
+            }
             return Store;
         }
 
@@ -257,56 +332,49 @@ namespace RDKit {
             // compute parameters
 
           VectorXd Lev=H.diagonal();
-
           std::vector<double> heavyLev;
 
           for (int i=0;i<numAtoms;i++){
-
             if (Heavylist[i]==1){
-              heavyLev.push_back(roundn(Lev(i),3));
+              heavyLev.push_back(round_to_n_digits(Lev(i),precision));
             }
           }
 
+          std::vector<double> Clus = clusterArray2(heavyLev,precision);
 
-
-          std::vector<double> Clus = clusterArray(heavyLev, precision);
           double numHeavy=heavyLev.size();
-
-
           double ITH0 = numHeavy * log(numHeavy) / log(2);
           double ITH = ITH0;
-            //std::cout << "clus size:" << Clus.size() << "\n";
           for (unsigned int j=0;j<Clus.size();j++){
-              //std::cout << j << ":" << Clus[j] << "\n";
               ITH -= Clus[j] * log( Clus[j] ) / log( 2 );
             }
-          res[0] = ITH;
-
+          res[0] = roundn(ITH , 3);  // issue somethime with this due to cluster
           double ISH = ITH / ITH0;
-          res[1]=ISH;
+          res[1] = roundn(ISH , 3);  // issue somethime with this due to cluster
 
+          // use the PBF to determine 2D vs 3D (with Thresold)
+          // determine if this is a plane molecule
           double pbf=RDKit::Descriptors::PBF(mol);
           double D;
-          if (pbf<1.e-4) {
+          if (pbf<1.e-5) {
             D=2.0;
           } else {
               D=3.0;
           }
-            // hardcoded the number of dimension ... need to find a method to compute it in all case
-            // use the PBF to determine 2D vs 3D (with Thresold) how to determine if it's linear ? (ie D=1)
+
+          // what about linear molecule ie (D=1) ?
           double HIC=0.0;
           for (int i=0;i<numAtoms;i++) {
             HIC -= H(i,i) / D * log( H(i,i) / D ) / log( 2 );
           }
-          res[2] = HIC;
-
+          res[2] = roundn(HIC , 3);
 
           double HGM = 1.0;
           for (int i = 0 ; i < numAtoms ; i++) {
             HGM = HGM * H(i,i);
           }
           HGM=100.0 * pow( HGM , 1.0 / numAtoms);
-          res[3] = HGM;
+          res[3] = roundn(HGM , 3);
 
           double RARS=R.rowwise().sum().sum() / numAtoms;
 
@@ -344,10 +412,12 @@ namespace RDKit {
 
           VectorXd Ws = getEigenVect(ws);
 
-
           MatrixXd Bi;
           MatrixXd RBw;
           double HATSu,HATSm,HATSv,HATSe,HATSp,HATSi,HATSs;
+          double HATSut,HATSmt,HATSvt,HATSet,HATSpt,HATSit,HATSst;
+          double H0ut,H0mt,H0vt,H0et,H0pt,H0it,H0st;
+          double R0ut,R0mt,R0vt,R0et,R0pt,R0it,R0st;
           double H0u,H0m,H0v,H0e,H0p,H0i,H0s;
           double R0u,R0m,R0v,R0e,R0p,R0i,R0s;
           double Rkmaxu,Rkmaxm,Rkmaxv,Rkmaxe,Rkmaxp,Rkmaxi,Rkmaxs;
@@ -357,15 +427,43 @@ namespace RDKit {
           double Rk[7][8];
           double Rp[7][8];
 
+          double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
 
-           double *dist = MolOps::getDistanceMat(mol, false); // need to be be set to false to have topological distance not weigthed!
+          Map<MatrixXd> D2(dist, numAtoms,numAtoms);
 
-          for (int i=0;i<9;i++){
+          double Dmax = D2.colwise().maxCoeff().maxCoeff();
+
+          HATSut =0.0;
+          HATSmt =0.0;
+          HATSvt =0.0;
+          HATSet =0.0;
+          HATSpt =0.0;
+          HATSit =0.0;
+          HATSst =0.0;
+
+          H0ut=0.0;
+          H0mt=0.0;
+          H0vt=0.0;
+          H0et=0.0;
+          H0pt=0.0;
+          H0it=0.0;
+          H0st=0.0;
+
+          R0ut=0.0;
+          R0mt=0.0;
+          R0vt=0.0;
+          R0et=0.0;
+          R0pt=0.0;
+          R0it=0.0;
+          R0st=0.0;
+
+          // need to loop other all the D values so <= not <!
+          for (int i = 0; i <= Dmax; i++){
             if (i==0) {
               Bi = H.diagonal().asDiagonal();
             }
-              double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
-              Map<MatrixXd> Bj(Bimat, numAtoms,numAtoms);
+            double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
+            Map<MatrixXd> Bj(Bimat, numAtoms,numAtoms);
 
               HATSu =0.0;
               HATSm =0.0;
@@ -409,8 +507,7 @@ namespace RDKit {
                   }
                 }
 
-
-              if (i>0) { // use Bj
+              if (i>0 and i<9) { // use Bj
                   for (int j=0;j<numAtoms-1;j++){
                     for (int k=j+1;k<numAtoms;k++){
                       if (Bj(j,k)==1){
@@ -421,7 +518,6 @@ namespace RDKit {
                             HATSp+=getHATS((double)Wp(j), (double)Wp(k), (double)H(j,j), (double)H(k,k));
                             HATSi+=getHATS((double)Wi(j), (double)Wi(k), (double)H(j,j), (double)H(k,k));
                             HATSs+=getHATS((double)Ws(j), (double)Ws(k), (double)H(j,j), (double)H(k,k));
-
 
 
                           if (H(j,k)>0) {
@@ -438,22 +534,49 @@ namespace RDKit {
                   }
                 }
 
+                if (i>=9) { // Totals missing part
+                  for (int j=0;j<numAtoms-1;j++){
+                    for (int k=j+1;k<numAtoms;k++){
+                      if (Bj(j,k)==1){
+                            HATSut+=2*getHATS((double)Wu(j), (double)Wu(k), (double)H(j,j), (double)H(k,k));
+                            HATSmt+=2*getHATS((double)Wm(j), (double)Wm(k), (double)H(j,j), (double)H(k,k));
+                            HATSvt+=2*getHATS((double)Wv(j), (double)Wv(k), (double)H(j,j), (double)H(k,k));
+                            HATSet+=2*getHATS((double)We(j), (double)We(k), (double)H(j,j), (double)H(k,k));
+                            HATSpt+=2*getHATS((double)Wp(j), (double)Wp(k), (double)H(j,j), (double)H(k,k));
+                            HATSit+=2*getHATS((double)Wi(j), (double)Wi(k), (double)H(j,j), (double)H(k,k));
+                            HATSst+=2*getHATS((double)Ws(j), (double)Ws(k), (double)H(j,j), (double)H(k,k));
 
-                HATSk[0][i]=HATSu;
-                HATSk[1][i]=HATSm;
-                HATSk[2][i]=HATSv;
-                HATSk[3][i]=HATSe;
-                HATSk[4][i]=HATSp;
-                HATSk[5][i]=HATSi;
-                HATSk[6][i]=HATSs;
+                          if (H(j,k)>0) {
+                                H0ut+=2*getH((double)Wu(j), (double)Wu(k), (double)H(j,k));
+                                H0mt+=2*getH((double)Wm(j), (double)Wm(k), (double)H(j,k));
+                                H0vt+=2*getH((double)Wv(j), (double)Wv(k), (double)H(j,k));
+                                H0et+=2*getH((double)We(j), (double)We(k), (double)H(j,k));
+                                H0pt+=2*getH((double)Wp(j), (double)Wp(k), (double)H(j,k));
+                                H0it+=2*getH((double)Wi(j), (double)Wi(k), (double)H(j,k));
+                                H0st+=2*getH((double)Ws(j), (double)Ws(k), (double)H(j,k));
+                          }
+                      }
+                    }
+                  }
+                }
 
-                Hk[0][i]=H0u;
-                Hk[1][i]=H0m;
-                Hk[2][i]=H0v;
-                Hk[3][i]=H0e;
-                Hk[4][i]=H0p;
-                Hk[5][i]=H0i;
-                Hk[6][i]=H0s;
+                if (i<9) {
+                  HATSk[0][i]=HATSu;
+                  HATSk[1][i]=HATSm;
+                  HATSk[2][i]=HATSv;
+                  HATSk[3][i]=HATSe;
+                  HATSk[4][i]=HATSp;
+                  HATSk[5][i]=HATSi;
+                  HATSk[6][i]=HATSs;
+
+                  Hk[0][i]=H0u;
+                  Hk[1][i]=H0m;
+                  Hk[2][i]=H0v;
+                  Hk[3][i]=H0e;
+                  Hk[4][i]=H0p;
+                  Hk[5][i]=H0i;
+                  Hk[6][i]=H0s;
+                }
 
                 R0u=0.0;
                 R0m=0.0;
@@ -471,105 +594,122 @@ namespace RDKit {
                 Rkmaxi=0;
                 Rkmaxs=0;
 
-               if (i>0) {
-               for (int j=0;j<numAtoms-1;j++){
-                    for (int k=j+1;k<numAtoms;k++){
-                      if (Bj(j,k)==1){
-                          tmpu = getH((double)Wu(j), (double)Wu(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmpm = getH((double)Wm(j), (double)Wm(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmpv = getH((double)Wv(j), (double)Wv(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmpe = getH((double)We(j), (double)We(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmpp = getH((double)Wp(j), (double)Wp(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmpi = getH((double)Wi(j), (double)Wi(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          tmps = getH((double)Ws(j), (double)Ws(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
-                          R0u+=tmpu;
-                          R0m+=tmpm;
-                          R0v+=tmpv;
-                          R0e+=tmpe;
-                          R0p+=tmpp;
-                          R0i+=tmpi;
-                          R0s+=tmps;
-                          if (tmpu>Rkmaxu) {
-                            Rkmaxu=tmpu;
-                          }
-                          if (tmpm>Rkmaxm) {
-                            Rkmaxm=tmpm;
-                          }
-                          if (tmpv>Rkmaxv) {
-                            Rkmaxv=tmpv;
-                          }
-                          if (tmpe>Rkmaxe) {
-                            Rkmaxe=tmpe;
-                          }
-                          if (tmpp>Rkmaxp) {
-                            Rkmaxp=tmpp;
-                          }
-                          if (tmpi>Rkmaxi) {
-                            Rkmaxi=tmpi;
-                          }
-                          if (tmps>Rkmaxs) {
-                            Rkmaxs=tmps;
-                          }
+               // from 1 to 8
+               if (i>0 and i<9) {
+                 for (int j=0;j<numAtoms-1;j++){
+                      for (int k=j+1;k<numAtoms;k++){
+                        if (Bj(j,k)==1){
+                            tmpu = getH((double)Wu(j), (double)Wu(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmpm = getH((double)Wm(j), (double)Wm(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmpv = getH((double)Wv(j), (double)Wv(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmpe = getH((double)We(j), (double)We(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmpp = getH((double)Wp(j), (double)Wp(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmpi = getH((double)Wi(j), (double)Wi(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            tmps = getH((double)Ws(j), (double)Ws(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0u+=tmpu;
+                            R0m+=tmpm;
+                            R0v+=tmpv;
+                            R0e+=tmpe;
+                            R0p+=tmpp;
+                            R0i+=tmpi;
+                            R0s+=tmps;
+                            if (tmpu>Rkmaxu) {
+                              Rkmaxu=tmpu;
+                            }
+                            if (tmpm>Rkmaxm) {
+                              Rkmaxm=tmpm;
+                            }
+                            if (tmpv>Rkmaxv) {
+                              Rkmaxv=tmpv;
+                            }
+                            if (tmpe>Rkmaxe) {
+                              Rkmaxe=tmpe;
+                            }
+                            if (tmpp>Rkmaxp) {
+                              Rkmaxp=tmpp;
+                            }
+                            if (tmpi>Rkmaxi) {
+                              Rkmaxi=tmpi;
+                            }
+                            if (tmps>Rkmaxs) {
+                              Rkmaxs=tmps;
+                            }
+                        }
                       }
-                    }
                   }
-                  Rk[0][i-1]=R0u;
-                  Rk[1][i-1]=R0m;
-                  Rk[2][i-1]=R0v;
-                  Rk[3][i-1]=R0e;
-                  Rk[4][i-1]=R0p;
-                  Rk[5][i-1]=R0i;
-                  Rk[6][i-1]=R0s;
 
-                  Rp[0][i-1]=Rkmaxu;
-                  Rp[1][i-1]=Rkmaxm;
-                  Rp[2][i-1]=Rkmaxv;
-                  Rp[3][i-1]=Rkmaxe;
-                  Rp[4][i-1]=Rkmaxp;
-                  Rp[5][i-1]=Rkmaxi;
-                  Rp[6][i-1]=Rkmaxs;
+                    Rk[0][i-1]=R0u;
+                    Rk[1][i-1]=R0m;
+                    Rk[2][i-1]=R0v;
+                    Rk[3][i-1]=R0e;
+                    Rk[4][i-1]=R0p;
+                    Rk[5][i-1]=R0i;
+                    Rk[6][i-1]=R0s;
 
+                    Rp[0][i-1]=Rkmaxu;
+                    Rp[1][i-1]=Rkmaxm;
+                    Rp[2][i-1]=Rkmaxv;
+                    Rp[3][i-1]=Rkmaxe;
+                    Rp[4][i-1]=Rkmaxp;
+                    Rp[5][i-1]=Rkmaxi;
+                    Rp[6][i-1]=Rkmaxs;
                 }
+
+            if (i>=9) {
+                 for (int j=0;j<numAtoms-1;j++){
+                      for (int k=j+1;k<numAtoms;k++){
+                        if (Bj(j,k)==1){
+                            R0ut += 2 * getH((double)Wu(j), (double)Wu(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0mt += 2 * getH((double)Wm(j), (double)Wm(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0vt += 2 * getH((double)Wv(j), (double)Wv(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0et += 2 * getH((double)We(j), (double)We(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0pt += 2 * getH((double)Wp(j), (double)Wp(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0it += 2 * getH((double)Wi(j), (double)Wi(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                            R0st += 2 * getH((double)Ws(j), (double)Ws(k), (double)R(j,k)); // Use same function but on all R not "H>0" like in the previous loop & i>0!
+                  }
+                }
+              }
+            }
           }
 
           // can be column vs row selecgted that can explain the issue!
-          double HATSTu = round(1000*HATSk[0][0]) / 1000;
-          double HATSTm = round(1000*HATSk[1][0]) / 1000;
-          double HATSTv = round(1000*HATSk[2][0]) / 1000;
-          double HATSTe = round(1000*HATSk[3][0]) / 1000;
-          double HATSTp = round(1000*HATSk[4][0]) / 1000;
-          double HATSTi = round(1000*HATSk[5][0]) / 1000;
-          double HATSTs = round(1000*HATSk[6][0]) / 1000;
+          double HATSTu = HATSk[0][0] + HATSut;
+          double HATSTm = HATSk[1][0] + HATSmt;
+          double HATSTv = HATSk[2][0] + HATSvt;
+          double HATSTe = HATSk[3][0] + HATSet;
+          double HATSTp = HATSk[4][0] + HATSpt;
+          double HATSTi = HATSk[5][0] + HATSit;
+          double HATSTs = HATSk[6][0] + HATSst;
 
           for (int ii =1; ii < 9; ii++ ) {
-            HATSTu += 2 * round( 1000* HATSk[0][ii] ) / 1000 ;
-            HATSTm += 2 * round( 1000* HATSk[1][ii] ) / 1000 ;
-            HATSTv += 2 * round( 1000* HATSk[2][ii] ) / 1000 ;
-            HATSTe += 2 * round( 1000* HATSk[3][ii] ) / 1000 ;
-            HATSTp += 2 * round( 1000* HATSk[4][ii] ) / 1000 ;
-            HATSTi += 2 * round( 1000* HATSk[5][ii] ) / 1000 ;
-            HATSTs += 2 * round( 1000* HATSk[6][ii] ) / 1000 ;
+            HATSTu += 2 * HATSk[0][ii];
+            HATSTm += 2 * HATSk[1][ii];
+            HATSTv += 2 * HATSk[2][ii];
+            HATSTe += 2 * HATSk[3][ii];
+            HATSTp += 2 * HATSk[4][ii];
+            HATSTi += 2 * HATSk[5][ii];
+            HATSTs += 2 * HATSk[6][ii];
           }
 
-          double HTu = round (1000* Hk[0][0]) / 1000;
-          double HTm = round (1000* Hk[1][0]) / 1000;
-          double HTv = round (1000* Hk[2][0]) / 1000;
-          double HTe = round (1000* Hk[3][0]) / 1000;
-          double HTp = round (1000* Hk[4][0]) / 1000;
-          double HTi = round (1000* Hk[5][0]) / 1000;
-          double HTs = round (1000* Hk[6][0]) / 1000;
+          double HTu = Hk[0][0] + H0ut;
+          double HTm = Hk[1][0] + H0mt;
+          double HTv = Hk[2][0] + H0vt;
+          double HTe = Hk[3][0] + H0et;
+          double HTp = Hk[4][0] + H0pt;
+          double HTi = Hk[5][0] + H0it;
+          double HTs = Hk[6][0] + H0st;
 
           for (int ii =1; ii < 9; ii++ ) {
-            HTu += 2* round (1000 * Hk[0][ii] ) / 1000;
-            HTm += 2* round (1000 * Hk[1][ii] ) / 1000;
-            HTv += 2* round (1000 * Hk[2][ii] ) / 1000;
-            HTe += 2* round (1000 * Hk[3][ii] ) / 1000;
-            HTp += 2* round (1000 * Hk[4][ii] ) / 1000;
-            HTi += 2* round (1000 * Hk[5][ii] ) / 1000;
-            HTs += 2* round (1000 * Hk[6][ii] ) / 1000;
+            HTu += 2.0 *  Hk[0][ii] ;
+            HTm += 2.0 *  Hk[1][ii] ;
+            HTv += 2.0 *  Hk[2][ii] ;
+            HTe += 2.0 *  Hk[3][ii] ;
+            HTp += 2.0 *  Hk[4][ii] ;
+            HTi += 2.0 *  Hk[5][ii] ;
+            HTs += 2.0 *  Hk[6][ii] ;
           }
 
-          //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]);
+          //2*(Rk[1]+Rk[2]+Rk[3]+Rk[4]+Rk[5]+Rk[6]+Rk[7]+Rk[8]) // this is not true this is on all the elemen;
           
           double RTu = 0.0;
           double RTm = 0.0;
@@ -580,15 +720,14 @@ namespace RDKit {
           double RTs = 0.0;
 
           for (int ii =0; ii < 8; ii++ ) {
-            RTu += 2.0 * round ( 1000 * Rk[0][ii] ) / 1000;
-            RTm += 2.0 * round ( 1000 * Rk[1][ii] ) / 1000;
-            RTv += 2.0 * round ( 1000 * Rk[2][ii] ) / 1000;
-            RTe += 2.0 * round ( 1000 * Rk[3][ii] ) / 1000;
-            RTp += 2.0 * round ( 1000 * Rk[4][ii] ) / 1000;
-            RTi += 2.0 * round ( 1000 * Rk[5][ii] ) / 1000;
-            RTs += 2.0 * round ( 1000 * Rk[6][ii] ) / 1000;
+            RTu += 2.0 *  Rk[0][ii];
+            RTm += 2.0 *  Rk[1][ii];
+            RTv += 2.0 *  Rk[2][ii];
+            RTe += 2.0 *  Rk[3][ii];
+            RTp += 2.0 *  Rk[4][ii];
+            RTi += 2.0 *  Rk[5][ii];
+            RTs += 2.0 *  Rk[6][ii];
           }
-
 
           double RTMu = getMax( Rp[0] );
           double RTMm = getMax( Rp[1] );
@@ -600,72 +739,73 @@ namespace RDKit {
 
           // create the output vector...
           for (int i=0;i<9;i++){
-            res[i + 4]=Hk[0][i];
-            res[i + 14]=HATSk[0][i];
-            res[i + 24]=Hk[1][i];
-            res[i + 34]=HATSk[1][i];
-            res[i + 44]=Hk[2][i];
-            res[i + 54]=HATSk[2][i];
-            res[i + 64]=Hk[3][i];
-            res[i + 74]=HATSk[3][i];
-            res[i + 84]=Hk[4][i];
-            res[i + 94]=HATSk[4][i];
-            res[i + 104]=Hk[5][i];
-            res[i + 114]=HATSk[5][i];
-            res[i + 124]=Hk[6][i];
-            res[i + 134]=HATSk[6][i];
-
+            res[i + 4]  = roundn(Hk[0][i] , 3);
+            res[i + 14] = roundn(HATSk[0][i], 3);
+            res[i + 24] = roundn(Hk[1][i], 3);
+            res[i + 34] = roundn(HATSk[1][i], 3);
+            res[i + 44] = roundn(Hk[2][i], 3);
+            res[i + 54] = roundn(HATSk[2][i], 3);
+            res[i + 64] = roundn(Hk[3][i], 3);
+            res[i + 74] = roundn(HATSk[3][i], 3);
+            res[i + 84] = roundn(Hk[4][i], 3);
+            res[i + 94] = roundn(HATSk[4][i], 3);
+            res[i + 104]= roundn(Hk[5][i], 3);
+            res[i + 114]= roundn(HATSk[5][i], 3);
+            res[i + 124]= roundn(Hk[6][i], 3);
+            res[i + 134]= roundn(HATSk[6][i], 3);
            }
-          res[13]=HTu;
-          res[23]=HATSTu;
-          res[33]=HTm;
-          res[43]=HATSTm;
-          res[53]=HTv;
-          res[63]=HATSTv;
-          res[73]=HTe;
-          res[83]=HATSTe;
-          res[93]=HTp;
-          res[103]=HATSTp;
-          res[113]=HTi;
-          res[123]=HATSTi;
-          res[133]=HTs;
-          res[143]=HATSTs;
 
-          res[144]=rcon;
-          res[145]=RARS;
-          res[146]=EIG(0);
+
+          res[13]  = roundn(HTu, 3);
+          res[23]  = roundn(HATSTu, 3);  
+          res[33]  = roundn(HTm, 3);
+          res[43]  = roundn(HATSTm, 3);
+          res[53]  = roundn(HTv, 3);
+          res[63]  = roundn(HATSTv, 3);
+          res[73]  = roundn(HTe, 3);
+          res[83]  = roundn(HATSTe, 3);  
+          res[93]  = roundn(HTp, 3);
+          res[103] = roundn(HATSTp, 3);
+          res[113] = roundn(HTi, 3);
+          res[123] = roundn(HATSTi, 3);  
+          res[133] = roundn(HTs, 3);
+          res[143] = roundn(HATSTs, 3); 
+
+          res[144] = roundn(rcon, 3);
+          res[145] = roundn(RARS, 3);
+          res[146] = roundn(EIG(0), 3);
 
           for (int i=0;i<8;i++){
-            res[i + 147]=Rk[0][i];
-            res[i + 156]=Rp[0][i];
-            res[i + 165]=Rk[1][i];
-            res[i + 174]=Rp[1][i];
-            res[i + 183]=Rk[2][i];
-            res[i + 192]=Rp[2][i];
-            res[i + 201]=Rk[3][i];
-            res[i + 210]=Rp[3][i];
-            res[i + 219]=Rk[4][i];
-            res[i + 228]=Rp[4][i];
-            res[i + 237]=Rk[5][i];
-            res[i + 246]=Rp[5][i];
-            res[i + 255]=Rk[6][i];
-            res[i + 264]=Rp[6][i];
+            res[i + 147] = roundn(Rk[0][i], 3);
+            res[i + 156] = roundn(Rp[0][i], 3);
+            res[i + 165] = roundn(Rk[1][i], 3);
+            res[i + 174] = roundn(Rp[1][i], 3);
+            res[i + 183] = roundn(Rk[2][i], 3);
+            res[i + 192] = roundn(Rp[2][i], 3);
+            res[i + 201] = roundn(Rk[3][i], 3);
+            res[i + 210] = roundn(Rp[3][i], 3);
+            res[i + 219] = roundn(Rk[4][i], 3);
+            res[i + 228] = roundn(Rp[4][i], 3);
+            res[i + 237] = roundn(Rk[5][i], 3);
+            res[i + 246] = roundn(Rp[5][i], 3);
+            res[i + 255] = roundn(Rk[6][i], 3);
+            res[i + 264] = roundn(Rp[6][i], 3);
           }
 
-          res[155]=RTu;
-          res[164]=RTMu;
-          res[173]=RTm;
-          res[182]=RTMm;
-          res[191]=RTv;
-          res[200]=RTMv;
-          res[209]=RTe;
-          res[218]=RTMe;
-          res[227]=RTp;
-          res[236]=RTMp;
-          res[245]=RTi;
-          res[254]=RTMi;
-          res[263]=RTs;
-          res[272]=RTMs;
+          res[155] = roundn(RTu + R0ut, 3); 
+          res[164] = roundn(RTMu, 3);
+          res[173] = roundn(RTm + R0mt, 3);
+          res[182] = roundn(RTMm, 3);
+          res[191] = roundn(RTv + R0vt, 3);
+          res[200] = roundn(RTMv, 3);
+          res[209] = roundn(RTe + R0et, 3); 
+          res[218] = roundn(RTMe, 3);
+          res[227] = roundn(RTp + R0pt, 3);
+          res[236] = roundn(RTMp, 3);
+          res[245] = roundn(RTi + R0it, 3); 
+          res[254] = roundn(RTMi, 3);
+          res[263] = roundn(RTs + R0st, 3);
+          res[272] = roundn(RTMs, 3);
 
         }
 
