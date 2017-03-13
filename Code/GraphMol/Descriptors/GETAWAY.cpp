@@ -90,12 +90,12 @@ namespace RDKit {
         double round_to_n_digits_(double x, int n)
         {
             char buff[32];
-            sprintf(buff, "%.*f", n, x);
+            sprintf(buff, "%.*g", n, x); // use g to have significative digits!
             return atof(buff);
         }
 
         double round_to_n_digits(double x, int n){
-            double scale = pow(10.0, ceil(log10(fabs(x))) + n);
+            double scale = pow(10.0, ceil(log10(abs(x))) + n);
             return round(x * scale) / scale;
         }
 
@@ -105,6 +105,29 @@ namespace RDKit {
            if (fabs(a - b) <=  pow(0.1,n) * 1.1) {
                 isclose=true;
            }
+            return isclose;
+        }
+
+
+        bool IsClose2(double a, double b, unsigned int n) {
+              bool isclose=false;
+              std::string sa,sb;
+              std::string ta,tb;
+              std::stringstream outa,outb;
+              outa << a;
+              sa = outa.str();
+              outb << b;
+              sb = outb.str();
+              ta = sa.substr(sa.find(".")+1);
+              tb = sb.substr(sb.find(".")+1);
+              // same number of digits!
+              if (ta.length() == tb.length()) {
+                // last digit +/-1 deviation only!)
+               if (abs(atoi(ta.c_str())-atoi(tb.c_str()))<2) {
+                  //std::cout << a << "," << b << " ta:"  << ta << "," << "tb:" << tb<< "\n";
+                  isclose=true;
+                }
+              }
             return isclose;
         }
 
@@ -144,8 +167,6 @@ namespace RDKit {
             return Store;
         }
 
-
-
         // need to clean that code to have always the same output which is not the case
         // the classes used the last 2 digit +/- 1 to cluster in the same group (with 3 digit precision)
         // 0.012 and 0.013 are in the same group while 0.014 are not!
@@ -155,11 +176,13 @@ namespace RDKit {
 
             // sort the input data descend order!
             std::sort(data.begin(), data.end(), std::greater<double>());
-
             std::deque<double> B;
             for (unsigned int i = 0; i < data.size(); i++) {
               B.push_back(data[i]);
+              //std::cout << data[i] << ",";
+
             }
+              //std::cout << "\n";
 
             int count=0;
             while (!B.empty()) {
@@ -172,7 +195,7 @@ namespace RDKit {
               }
 
               for (unsigned int i = 0; i < B.size(); i++) {
-                  if (IsClose(dk,B[i],3)) {
+                  if (IsClose2(dk,B[i],precision)) {
                     count++;
                   }
                   else {
@@ -326,7 +349,7 @@ namespace RDKit {
         }
 
         void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
-          std::vector<int> Heavylist,const ROMol& mol, std::vector<double>& res, double precision) {
+          std::vector<int> Heavylist,const ROMol& mol, std::vector<double>& res, int precision) {
 
             // prepare data for Getaway parameter computation
             // compute parameters
@@ -336,17 +359,18 @@ namespace RDKit {
 
           for (int i=0;i<numAtoms;i++){
             if (Heavylist[i]==1){
-              heavyLev.push_back(round_to_n_digits(Lev(i),precision));
+              heavyLev.push_back(round_to_n_digits_(Lev(i),precision));
             }
           }
+
 
           std::vector<double> Clus = clusterArray2(heavyLev,precision);
 
           double numHeavy=heavyLev.size();
-          double ITH0 = numHeavy * log(numHeavy) / log(2);
+          double ITH0 = numHeavy * log(numHeavy) / log( 2.0 );
           double ITH = ITH0;
           for (unsigned int j=0;j<Clus.size();j++){
-              ITH -= Clus[j] * log( Clus[j] ) / log( 2 );
+              ITH -= Clus[j] * log( Clus[j] ) / log( 2.0 );
             }
           res[0] = roundn(ITH , 3);  // issue somethime with this due to cluster
           double ISH = ITH / ITH0;
@@ -831,7 +855,7 @@ namespace RDKit {
 
 
         void GetGETAWAY(double* dist3D, double*AdjMat, std::vector<double> Vpoints,
-          const ROMol& mol, const Conformer &conf,  std::vector<int> Heavylist,  std::vector<double>& res, double precision) {
+          const ROMol& mol, const Conformer &conf,  std::vector<int> Heavylist,  std::vector<double>& res, int precision) {
 
             int numAtoms = conf.getNumAtoms();
 
@@ -859,7 +883,7 @@ namespace RDKit {
       } //end of anonymous namespace
 
 
-      void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId, double precision){
+      void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId, int precision){
         PRECONDITION(mol.getNumConformers()>=1,"molecule has no conformers")
 
         int numAtoms = mol.getNumAtoms();

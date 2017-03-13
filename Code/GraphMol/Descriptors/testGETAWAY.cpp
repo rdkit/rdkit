@@ -22,7 +22,7 @@
 
 
 
-void testGETAWAY(double precision) {
+void testGETAWAY(int precision) {
   std::cout << "=>start test GETAWAY\n";
 
   std::string pathName = getenv("RDBASE");
@@ -53,9 +53,9 @@ void testGETAWAY(double precision) {
   int nDone = 0;
   while (!reader.atEnd()) {
 
-    if (nDone > 10) {
-      break;
-    }
+   // if (nDone > 10) {
+   //   break;
+   // }
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
   else {
 
   RDLog::InitLogs();
-  double num = atof(argv[1]);
+  int num = atoi(argv[1]);
 
   testGETAWAY(num);
   }

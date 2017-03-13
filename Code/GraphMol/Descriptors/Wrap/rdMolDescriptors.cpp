@@ -1284,7 +1284,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       RDKit::Descriptors::GETAWAYVersion;
   docString = "Returns the GETAWAY descriptors vector";
   python::def("CalcGETAWAY", calcGETAWAYs,
-              (python::arg("mol"), python::arg("confId") = -1, python::arg("precision") = 0.001),
+              (python::arg("mol"), python::arg("confId") = -1, python::arg("precision") = 2),
               docString.c_str());
 
   python::scope().attr("_CalcRDF_version") =
