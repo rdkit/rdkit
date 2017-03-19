@@ -8,6 +8,8 @@
 // Original author: David Cosgrove (AstraZeneca)
 // 27th May 2014
 //
+// Extensively modified by Greg Landrum
+//
 
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -373,6 +375,8 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!highlight_radii || highlight_radii->size() == mols.size(),
                "bad size");
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
+  PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
+  PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
@@ -399,11 +403,16 @@ void MolDraw2D::drawMolecules(
   }
   setScale(panelWidth(), panelHeight(), minP, maxP);
   int nCols = width() / panelWidth();
+  int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
     if (!mols[i]) continue;
 
-    int row = i / nCols;
-    int col = i % nCols;
+    int row = 0;
+    // note that this also works when no panel size is specified since
+    // the panel dimensions defaults to -1
+    if (nRows > 1) row = i / nCols;
+    int col = 0;
+    if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : NULL,

@@ -51,7 +51,7 @@ typedef enum {
   QueryAtomData = 0x100,
   PrivateProps = 0x10000,
   ComputedProps = 0x100000,
-  AllProps = 0xFFFFFFFF,  // all data pickled
+  AllProps = 0x7FFFFFFF,  // all data pickled (only 31 bit flags in case enum==int)
 } PropertyPickleOptions;
 }
 

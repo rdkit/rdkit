@@ -183,6 +183,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
+%shared_ptr(RDKit::FilterCatalogEntry);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);
@@ -234,6 +235,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolTransforms.i"
 %include "../FMCS.i"
 %include "../MolDraw2D.i"
+%include "../FilterCatalog.i"
+%include "../Trajectory.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR

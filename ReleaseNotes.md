@@ -2,6 +2,7 @@
 (Changes relative to Release_2016.09.1)
 
 ## Important
+- The fix for bug #879 requires that all substructure search indices be rebuilt.
 
 ## Acknowledgements:
 
