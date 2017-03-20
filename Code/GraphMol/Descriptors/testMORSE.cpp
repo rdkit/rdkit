@@ -1,4 +1,4 @@
-//
+//  Created by Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -59,33 +59,41 @@ void testMORSE(){
     m->getProp("_Name",nm);
 
 
-    std::vector<double> drdf = RDKit::Descriptors::MORSE(*m);
+    std::vector<double> dmorse;
+
+    RDKit::Descriptors::MORSE(*m, dmorse, -1);
+
 
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
     TEST_ASSERT(inm==nm);
 
-    for (int i=0;i<drdf.size();i++)
+    for (int i=0;i<dmorse.size();i++)
        {
             double ref =atof(myrow[i+1].c_str());
-            if(fabs(ref-drdf[i])>0.05){
-              std::cout<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< drdf[i] <<std::endl;
+
+            if (fabs(ref) > 0.01){
+              if(fabs((ref-dmorse[i])/ref)>1){
+                std::cout<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dmorse[i] <<std::endl;
+              }
             }
 
-           //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-        
+            if (fabs(ref)< 0.01){
+             if(fabs(ref-dmorse[i])>0.02){
+                  std::cout<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dmorse[i] <<std::endl;
+              }
+            }
+           //TEST_ASSERT(fabs(ref-dmorse[i])<0.05);
+
        }
-
-
-    std::cout << "=>read molecule: " << nDone  << std::endl;
 
 
     delete m;
     ++nDone;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
 
 }
 

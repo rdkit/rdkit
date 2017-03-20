@@ -9,12 +9,12 @@ using namespace std;
 class Data3Ddescriptors
 {
    private:
-		static double mw[53];
-		static double vdW[83];
-		static double neg[53];
-		static double pol[53];
-		static double ionpol[83];
-		static double rcov[83];
+		static double mw[110];
+		static double vdW[110];
+		static double neg[110];
+		static double pol[110];
+		static double ionpol[110];
+		static double rcov[110];
 
    public:
 	   Data3Ddescriptors();
@@ -26,5 +26,4 @@ class Data3Ddescriptors
 	   double* getRCOV();
 
 };
-#endif 
-
+#endif

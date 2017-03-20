@@ -20,37 +20,6 @@
 
 #include <GraphMol/Descriptors/RDF.h>
 
-
-void testRDF1() {
-  std::cout << "=>start test rdf\n";
-
-  std::string pathName = getenv("RDBASE");
-  std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
-
-  RDKit::SDMolSupplier reader(sdfName, true, false);
- 
-  int nDone = 0;
-  while (!reader.atEnd()) {
-    ++nDone;
-
-    RDKit::ROMol *m = reader.next();
-    TEST_ASSERT(m);
-    std::string nm;
-    m->getProp("_Name",nm);
-
-
-    std::vector<double> drdf = RDKit::Descriptors::RDF(*m);
-  
-       
-    std::cout << "=>read molecule: " << nDone  << std::endl;
-
-    delete m;
-  }
-
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-}
-
 void testRDF() {
   std::cout << "=>start test rdf\n";
 
@@ -78,7 +47,6 @@ void testRDF() {
       data.push_back(std::move(row));
   }
 
-  std::cout << "=>read file\n";
 
   int nDone = 0;
   while (!reader.atEnd()) {
@@ -89,7 +57,11 @@ void testRDF() {
     m->getProp("_Name",nm);
 
 
-    std::vector<double> drdf = RDKit::Descriptors::RDF(*m);
+
+    std::vector<double> drdf;
+
+    RDKit::Descriptors::RDF(*m, drdf, -1);
+
 
     std::vector<std::string> myrow=data[nDone];
     std::string inm= myrow[0];
@@ -98,27 +70,34 @@ void testRDF() {
     for (int i=0;i<drdf.size();i++)
        {
             double ref =atof(myrow[i+1].c_str());
-            if(fabs(ref-drdf[i])>0.05){
-              std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< drdf[i] <<std::endl;
+
+            if (fabs(ref) > 1){
+              if(fabs((ref-drdf[i])/ref)>0.01){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< drdf[i] <<std::endl;
+              }
             }
 
+            if (fabs(ref) <= 1){
+              if(fabs((ref-drdf[i]))>0.02){
+                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" dragon: "<<ref<<" rdkit: "<< drdf[i] <<std::endl;
+
+              }
+            }
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
-        
+
        }
-    std::cout << "=>read molecule: " << nDone  << std::endl;
 
 
     delete m;
     ++nDone;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testRDF();
-  testRDF1();
 
 
 }

@@ -34,15 +34,15 @@
 // Created by Guillaume GODIN, 2016
 
 
-#ifndef AUTOCORR3DRDKIT_H_SEPT2016
-#define AUTOCORR3DRDKIT_H_SEPT2016
+#ifndef AUTOCORR2DRDKIT_H_SEPT2016
+#define AUTOCORR2DRDKIT_H_SEPT2016
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
-const std::string AUTOCORR3DVersion = "1.0.0";
-void AUTOCORR3D(const ROMol &, std::vector<double> &res, int confId = -1);
+const std::string AUTOCORR2DVersion = "1.0.0";
+void AUTOCORR2D(const ROMol &, std::vector<double> &res, int confId = -1);
 }
 }
 #endif
