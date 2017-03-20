@@ -1,3 +1,23 @@
+# Release_2017.03.1
+(Changes relative to Release_2016.09.1)
+
+## Important
+- The fix for bug #879 requires that all substructure search indices be rebuilt.
+
+## Acknowledgements:
+
+## Highlights:
+
+## New Features and Enhancements:
+
+## New Database Cartridge Features:
+
+## New Java Wrapper Features:
+
+## Bug Fixes:
+
+## Deprecated code (to be removed in a future release):
+
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
@@ -325,7 +345,11 @@ Vianello, Maciek Wojcikowski
 
 ## Deprecated code (to be removed in a future release):
   - rdkit.VLib python module
-
+  - SanitizeRxn parameters "ChemDrawRxnAdjustParams" has been renamed to
+    "MatchOnlyAtRgroupsAdjustParams".  These settings did not reflect
+    how integrations with SciQuest or the Perkin Elmer ELN behaved and
+    were confusing to users (especially since they were not explicit)
+    
 ## Removed code:
 
 ## Contrib updates:

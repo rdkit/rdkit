@@ -198,7 +198,7 @@ void MaximumCommonSubgraph::init() {
 #endif
   Targets.resize(Molecules.size() - 1);
   size_t i = 0;
-  for (std::vector<const ROMol*>::iterator it = Molecules.begin() + 1;
+  for (std::vector<const ROMol *>::iterator it = Molecules.begin() + 1;
        it != Molecules.end(); it++, i++) {
     Targets[i].Molecule = *it;
     // build Target Topology ADD ATOMs
@@ -219,9 +219,8 @@ void MaximumCommonSubgraph::init() {
     // fill out RingMatchTables
     if (!userData  // predefined functor - compute RingMatchTable for all
                    // targets
-        &&
-        (Parameters.BondCompareParameters.CompleteRingsOnly ||
-         Parameters.BondCompareParameters.RingMatchesRingOnly)) {
+        && (Parameters.BondCompareParameters.CompleteRingsOnly ||
+            Parameters.BondCompareParameters.RingMatchesRingOnly)) {
 #ifdef FAST_SUBSTRUCT_CACHE
       RingMatchTables.addTargetBondRingsIndeces(Targets[i].Molecule);
       RingMatchTables.computeRingMatchTable(QueryMolecule, Targets[i].Molecule,
@@ -564,7 +563,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
     }
     // AND BUILD BOND MATCH INFO
     unsigned bi = 0;
-    for (std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin();
+    for (std::vector<const Bond *>::const_iterator bond = mcsIdx.Bonds.begin();
          bond != mcsIdx.Bonds.end(); bond++, bi++) {
       unsigned i = atomIdxMap[(*bond)->getBeginAtomIdx()];
       unsigned j = atomIdxMap[(*bond)->getEndAtomIdx()];
@@ -580,7 +579,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
 
   RWMol mol;        // create molecule from MCS for MolToSmarts()
   unsigned ai = 0;  // SeedAtomIdx
-  for (std::vector<const Atom*>::const_iterator atom = mcsIdx.Atoms.begin();
+  for (std::vector<const Atom *>::const_iterator atom = mcsIdx.Atoms.begin();
        atom != mcsIdx.Atoms.end(); atom++, ai++) {
     if (Parameters.AtomTyper ==
         MCSAtomCompareIsotopes) {  // do '[0*]-[0*]-[13*]' for CC[13NH2]
@@ -606,7 +605,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
     }
   }
   unsigned bi = 0;  // Seed Idx
-  for (std::vector<const Bond*>::const_iterator bond = mcsIdx.Bonds.begin();
+  for (std::vector<const Bond *>::const_iterator bond = mcsIdx.Bonds.begin();
        bond != mcsIdx.Bonds.end(); bond++, bi++) {
     QueryBond b;
     unsigned beginAtomIdx = atomIdxMap[(*bond)->getBeginAtomIdx()];
@@ -621,8 +620,7 @@ std::string MaximumCommonSubgraph::generateResultSMARTS(
       b.expandQuery(makeBondOrderEqualsQuery(bm->second->getBondType()),
                     Queries::COMPOSITE_OR);
       if (Parameters.BondCompareParameters.MatchStereo &&
-          (bm->second->getStereo() == Bond::STEREOZ ||
-           bm->second->getStereo() == Bond::STEREOE))
+          bm->second->getStereo() > Bond::STEREOANY)
         b.setStereo(bm->second->getStereo());
     }
     mol.addBond(&b, false);
@@ -814,7 +812,8 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
               << "\n";
     std::cout << " slowMatchCalls = "
               << VerboseStatistics.MatchCall -
-                     VerboseStatistics.FastMatchCallTrue << "\n"
+                     VerboseStatistics.FastMatchCallTrue
+              << "\n"
               << " slowMatchFound = " << VerboseStatistics.SlowMatchCallTrue
               << "\n";
 
@@ -827,7 +826,8 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     std::cout << "  DupCacheFound = " << VerboseStatistics.DupCacheFound
               << "   " << VerboseStatistics.DupCacheFoundMatch << " matched, "
               << VerboseStatistics.DupCacheFound -
-                     VerboseStatistics.DupCacheFoundMatch << " mismatched\n";
+                     VerboseStatistics.DupCacheFoundMatch
+              << " mismatched\n";
 #ifdef FAST_SUBSTRUCT_CACHE
     std::cout << "HashCache size  = " << HashCache.keyssize() << " keys\n";
     std::cout << "HashCache size  = " << HashCache.fullsize() << " entries\n";

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,9 +14,7 @@
 
 namespace RDKit {
 
-Bond::Bond() : RDProps() {
-  initBond();
-};
+Bond::Bond() : RDProps() { initBond(); };
 
 Bond::Bond(BondType bT) : RDProps() {
   initBond();
@@ -42,9 +39,7 @@ Bond::Bond(const Bond &other) : RDProps(other) {
   d_index = other.d_index;
 }
 
-Bond::~Bond() {
-  delete dp_stereoAtoms;
-}
+Bond::~Bond() { delete dp_stereoAtoms; }
 
 Bond &Bond::operator=(const Bond &other) {
   dp_mol = other.dp_mol;
@@ -303,6 +298,20 @@ void Bond::initBond() {
   d_index = 0;
   df_isConjugated = 0;
   dp_stereoAtoms = NULL;
+};
+
+void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
+  PRECONDITION(
+      getOwningMol().getBondBetweenAtoms(getBeginAtomIdx(), bgnIdx) != NULL,
+      "bgnIdx not connected to begin atom of bond");
+  PRECONDITION(
+      getOwningMol().getBondBetweenAtoms(getEndAtomIdx(), endIdx) != NULL,
+      "endIdx not connected to end atom of bond");
+
+  INT_VECT &atoms = getStereoAtoms();
+  atoms.clear();
+  atoms.push_back(bgnIdx);
+  atoms.push_back(endIdx);
 };
 
 };  // end o' namespace

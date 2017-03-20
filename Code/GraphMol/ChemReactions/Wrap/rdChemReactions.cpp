@@ -816,7 +816,10 @@ Sample Usage:\n\
                 "Returns the default adjustment parameters for reactant templates");
 
     python::def("GetChemDrawRxnAdjustParams", RDKit::RxnOps::ChemDrawRxnAdjustParams,
-                "Returns the chemdraw style adjustment parameters for reactant templates");
+                "(deprecated, see MatchOnlyAtRgroupsAdjustParams)\n\tReturns the chemdraw style adjustment parameters for reactant templates");
+
+    python::def("MatchOnlyAtRgroupsAdjustParams", RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
+                "Only match at the specified rgroup locations in the reactant templates");
 
     std::string docstring = "feed me";
     python::def(

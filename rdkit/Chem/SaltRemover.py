@@ -31,21 +31,22 @@
 # Created by Greg Landrum, Dec 2006
 #
 
-from rdkit import Chem
-import os, re
+import os
+import re
 
+from rdkit import Chem
 from rdkit import RDConfig
+from contextlib import closing
 
 
 class SaltRemover(object):
   defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
-  defnData = None
-  salts = None
 
   def __init__(self, defnFilename=None, defnData=None):
     if defnFilename:
       self.defnFilename = defnFilename
     self.defnData = defnData
+    self.salts = None
     self._initPatterns()
 
   def _initPatterns(self):
@@ -74,15 +75,16 @@ class SaltRemover(object):
       inF = StringIO(self.defnData)
     else:
       inF = open(self.defnFilename, 'r')
-    self.salts = []
-    for line in inF:
-      line = line.strip().split('//')[0]
-      if line:
-        splitL = whitespace.split(line)
-        salt = Chem.MolFromSmarts(splitL[0])
-        if salt is None:
-          raise ValueError(line)
-        self.salts.append(salt)
+    with closing(inF):
+      self.salts = []
+      for line in inF:
+        line = line.strip().split('//')[0]
+        if line:
+          splitL = whitespace.split(line)
+          salt = Chem.MolFromSmarts(splitL[0])
+          if salt is None:
+            raise ValueError(line)
+          self.salts.append(salt)
 
   def StripMol(self, mol, dontRemoveEverything=False):
     """
@@ -168,10 +170,11 @@ class SaltRemover(object):
     if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
       return mol
     modified = False
-    for i, salt in enumerate(self.salts):
-      tMol = _applyPattern(mol, salt, dontRemoveEverything)
-      if tMol is not mol:
-        mol = tMol
+    natoms = mol.GetNumAtoms()
+    for salt in self.salts:
+      mol = _applyPattern(mol, salt, dontRemoveEverything)
+      if natoms != mol.GetNumAtoms():
+        natoms = mol.GetNumAtoms()
         modified = True
         if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
           break
@@ -197,16 +200,16 @@ class SaltRemover(object):
     return self.StripMol(mol, dontRemoveEverything=dontRemoveEverything)
 
 
-  #------------------------------------
-  #
-  #  doctest boilerplate
-  #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

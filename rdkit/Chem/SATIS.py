@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
 #
@@ -12,15 +11,12 @@
 
 """
 from __future__ import print_function
+
+import itertools
+
 from rdkit import Chem
-from rdkit.six.moves import xrange
 
-_debug = 0
-
-#
-#  These are SMARTS patterns for the special cases used in
-#  SATIS typing.
-#
+#  These are SMARTS patterns for the special cases used in SATIS typing.
 aldehydePatt = Chem.MolFromSmarts('[CD2]=[OD1]')
 ketonePatt = Chem.MolFromSmarts('[CD3]=[OD1]')
 amidePatt = Chem.MolFromSmarts('[CD3](=[OD1])-[#7]')
@@ -53,72 +49,41 @@ def SATISTypes(mol, neighborsToInclude=4):
      a list of strings nAtoms long
 
   """
-  global specialCases
-
   nAtoms = mol.GetNumAtoms()
-  atomicNums = [0] * nAtoms
   atoms = mol.GetAtoms()
-  for i in xrange(nAtoms):
-    atomicNums[i] = atoms[i].GetAtomicNum()
+  atomicNums = [atom.GetAtomicNum() for atom in atoms]
 
-  nSpecialCases = len(specialCases)
-  specialCaseMatches = [None] * nSpecialCases
-  for i, (patt, idx) in enumerate(specialCases):
-    if mol.HasSubstructMatch(patt):
-      specialCaseMatches[i] = mol.GetSubstructMatches(patt)
-    else:
-      specialCaseMatches[i] = ()
+  # Collect all atom indices that match one of the special patterns
+  specialCaseMatches = []
+  for patt, specialCaseIdx in specialCases:
+    matches = mol.GetSubstructMatches(patt)
+    if matches:
+      matches = set(itertools.chain(*matches))
+      specialCaseMatches.append((specialCaseIdx, matches))
 
   codes = [None] * nAtoms
-  for i in range(nAtoms):
+  for i, atom in enumerate(atoms):
     code = [99] * (neighborsToInclude + 1)
-    atom = atoms[i]
-    atomIdx = atom.GetIdx()
+
+    # Atom
     code[0] = min(atom.GetAtomicNum(), 99)
-    bonds = atom.GetBonds()
-    nBonds = len(bonds)
-    otherIndices = [-1] * nBonds
-    if _debug:
-      print(code[0], end='')
-    for j in range(nBonds):
-      otherIndices[j] = bonds[j].GetOtherAtom(atom).GetIdx()
-      if _debug:
-        print(otherIndices[j], end='')
-    if _debug:
-      print()
-    otherNums = [atomicNums[x] for x in otherIndices] + \
-                [1]*atom.GetTotalNumHs()
-    otherNums.sort()
 
-    nOthers = len(otherNums)
-    if nOthers > neighborsToInclude:
-      otherNums.reverse()
-      otherNums = otherNums[:neighborsToInclude]
-      otherNums.reverse()
-      for j in range(neighborsToInclude):
-        code[j + 1] = min(otherNums[j], 99)
-    else:
-      for j in range(nOthers):
-        code[j + 1] = min(otherNums[j], 99)
-      if nOthers < neighborsToInclude and code[0] in [6, 8]:
-        found = 0
-        for j in range(nSpecialCases):
-          for matchTuple in specialCaseMatches[j]:
-            if atomIdx in matchTuple:
-              code[-1] = specialCases[j][1]
-              found = 1
-              break
-          if found:
-            break
+    # Get atomic numbers of connected neighbours and use for code
+    otherIndices = [x.GetIdx() for x in atom.GetNeighbors()]
+    otherNums = sorted([atomicNums[x] for x in otherIndices] + [1] * atom.GetTotalNumHs())
+    if len(otherNums) > neighborsToInclude:
+      # Get the last neighborsToInclude elements from otherNums
+      otherNums = otherNums[-neighborsToInclude:]
+    for j, otherNum in enumerate(otherNums, 1):
+      code[j] = min(otherNum, 99)
 
-    codes[i] = ''.join(['%02d' % (x) for x in code])
+    # Handle special cases where we have less than neighborsToInclude neighbors
+    if len(otherNums) < neighborsToInclude and code[0] in [6, 8]:
+      atomIdx = atom.GetIdx()
+      for specialCaseIdx, matches in specialCaseMatches:
+        if atomIdx in matches:
+          code[-1] = specialCaseIdx
+          break
+
+    codes[i] = ''.join('%02d' % (x) for x in code)
   return codes
-
-
-if __name__ == '__main__':
-  smis = ['CC(=O)NC', 'CP(F)(Cl)(Br)(O)', 'O=CC(=O)C', 'C(=O)OCC(=O)O', 'C(=O)[O-]']
-  for smi in smis:
-    print(smi)
-    m = Chem.MolFromSmiles(smi)
-    codes = SATISTypes(m)
-    print(codes)
