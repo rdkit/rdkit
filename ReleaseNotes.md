@@ -345,7 +345,11 @@ Vianello, Maciek Wojcikowski
 
 ## Deprecated code (to be removed in a future release):
   - rdkit.VLib python module
-
+  - SanitizeRxn parameters "ChemDrawRxnAdjustParams" has been renamed to
+    "MatchOnlyAtRgroupsAdjustParams".  These settings did not reflect
+    how integrations with SciQuest or the Perkin Elmer ELN behaved and
+    were confusing to users (especially since they were not explicit)
+    
 ## Removed code:
 
 ## Contrib updates:
