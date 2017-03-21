@@ -374,9 +374,31 @@ void test8() {
       TEST_ASSERT((*queryIt)->getIdx() == 1);
       nSeen++;
     }
-    TEST_ASSERT(nSeen = 1);
+    TEST_ASSERT(nSeen == 1);
     delete m;
     delete q;
+  }
+
+  BOOST_LOG(rdInfoLog) << "test8 done" << endl;
+};
+
+void testGithub1366() {
+  {
+    string smi = "*C*";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+    for (RWMol::AtomIterator iter = m->beginAtoms(); iter != m->endAtoms();
+         ++iter) {
+      if ((*iter)->getAtomicNum() == 0) {
+        std::cerr << "remove: " << (*iter)->getIdx() << std::endl;
+        m->removeAtom((*iter)->getIdx());
+      } else {
+        std::cerr << "keep: " << (*iter)->getIdx() << std::endl;
+      }
+    }
+    TEST_ASSERT(m->getNumAtoms() == 1);
+    delete m;
   }
 
   BOOST_LOG(rdInfoLog) << "test8 done" << endl;
@@ -393,6 +415,7 @@ int main() {
   test7();
   test8();
   testIssue263();
+  testGithub1366();
 
   return 0;
 }
