@@ -4227,7 +4227,7 @@ CAS<~>
     ats = iter(mol.GetAtoms())
     atom = next(ats)
     mol.RemoveAtom(atom.GetIdx())
-    self.assertRaises(ValueError,next,ats)
+    self.assertRaises(RuntimeError,next,ats)
 
 
 if __name__ == '__main__':
