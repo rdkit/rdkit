@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -407,7 +406,7 @@ void testGithub1366() {
       bool ok = false;
       try {
         *iter;
-      } catch (const ValueErrorException &e) {
+      } catch (const std::runtime_error &e) {
         ok = true;
       }
       TEST_ASSERT(ok);
