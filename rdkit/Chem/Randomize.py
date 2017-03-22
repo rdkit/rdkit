@@ -43,6 +43,17 @@ def RandomizeMolBlock(molB):
     inL = '% 3d% 3d' % (idx1 + 1, idx2 + 1) + inL[6:]
     res.append(inL)
     idx += 1
+  #Charges
+  for i in range(idx, len(splitB)):
+    if splitB[i][0:6] == "M  CHG":
+      line = splitB[i]
+      chargeline = line.split()
+      col = line[0:9]
+      for i in range(3,len(chargeline),2):
+        col = col +"%4i%4i"%(order.index(int(chargeline[i])-1)+1,int(chargeline[i+1])+1)
+      #print col
+      res.append(col)
+    
   res.append('M  END')
   return '\n'.join(res)
 
