@@ -81,12 +81,14 @@ int AtomIterator_<Atom_, Mol_>::operator-(
 // dereference
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
+  PRECONDITION(_mol != NULL, "no molecule");
   RANGE_CHECK(0, _pos, _max - 1);
   return (*_mol)[_pos].get();
 }
 // random access
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator[](const int which) const {
+  PRECONDITION(_mol != NULL, "no molecule");
   RANGE_CHECK(0, which, _max - 1);
   return (*_mol)[which].get();
 }
@@ -206,6 +208,7 @@ bool HeteroatomIterator_<Atom_, Mol_>::operator!=(const ThisType &other) const {
 
 template <class Atom_, class Mol_>
 Atom_ *HeteroatomIterator_<Atom_, Mol_>::operator*() const {
+  PRECONDITION(_mol != NULL, "no molecule");
   return (*_mol)[_pos].get();
 }
 // pre-increment
@@ -310,6 +313,7 @@ bool AromaticAtomIterator_<Atom_, Mol_>::operator!=(
 
 template <class Atom_, class Mol_>
 Atom_ *AromaticAtomIterator_<Atom_, Mol_>::operator*() const {
+  PRECONDITION(_mol != NULL, "no molecule");
   return (*_mol)[_pos].get();
 }
 // pre-increment
