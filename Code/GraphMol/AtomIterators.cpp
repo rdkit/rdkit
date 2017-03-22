@@ -82,6 +82,8 @@ int AtomIterator_<Atom_, Mol_>::operator-(
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
   PRECONDITION(_mol != NULL, "no molecule");
+  if (_max > _mol->getNumAtoms())
+    throw ValueErrorException("invalid AtomIterator dereferenced");
   RANGE_CHECK(0, _pos, _max - 1);
   return (*_mol)[_pos].get();
 }
@@ -89,6 +91,8 @@ Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator[](const int which) const {
   PRECONDITION(_mol != NULL, "no molecule");
+  if (_max > _mol->getNumAtoms())
+    throw ValueErrorException("invalid AtomIterator access");
   RANGE_CHECK(0, which, _max - 1);
   return (*_mol)[which].get();
 }
@@ -213,8 +217,8 @@ Atom_ *HeteroatomIterator_<Atom_, Mol_>::operator*() const {
 }
 // pre-increment
 template <class Atom_, class Mol_>
-HeteroatomIterator_<Atom_, Mol_> &HeteroatomIterator_<Atom_, Mol_>::
-operator++() {
+HeteroatomIterator_<Atom_, Mol_>
+    &HeteroatomIterator_<Atom_, Mol_>::operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -227,8 +231,8 @@ HeteroatomIterator_<Atom_, Mol_> HeteroatomIterator_<Atom_, Mol_>::operator++(
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-HeteroatomIterator_<Atom_, Mol_> &HeteroatomIterator_<Atom_, Mol_>::
-operator--() {
+HeteroatomIterator_<Atom_, Mol_>
+    &HeteroatomIterator_<Atom_, Mol_>::operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
@@ -292,8 +296,8 @@ AromaticAtomIterator_<Atom_, Mol_>::AromaticAtomIterator_(
 }
 
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
-operator=(const ThisType &other) {
+AromaticAtomIterator_<Atom_, Mol_>
+    &AromaticAtomIterator_<Atom_, Mol_>::operator=(const ThisType &other) {
   _mol = other._mol;
   _end = other._end;
   _pos = other._pos;
@@ -318,8 +322,8 @@ Atom_ *AromaticAtomIterator_<Atom_, Mol_>::operator*() const {
 }
 // pre-increment
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
-operator++() {
+AromaticAtomIterator_<Atom_, Mol_>
+    &AromaticAtomIterator_<Atom_, Mol_>::operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -332,8 +336,8 @@ operator++(int) {
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
-operator--() {
+AromaticAtomIterator_<Atom_, Mol_>
+    &AromaticAtomIterator_<Atom_, Mol_>::operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
@@ -552,8 +556,8 @@ Atom_ *MatchingAtomIterator_<Atom_, Mol_>::operator*() const {
 }
 // pre-increment
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_> &MatchingAtomIterator_<Atom_, Mol_>::
-operator++() {
+MatchingAtomIterator_<Atom_, Mol_>
+    &MatchingAtomIterator_<Atom_, Mol_>::operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -566,8 +570,8 @@ operator++(int) {
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_> &MatchingAtomIterator_<Atom_, Mol_>::
-operator--() {
+MatchingAtomIterator_<Atom_, Mol_>
+    &MatchingAtomIterator_<Atom_, Mol_>::operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
