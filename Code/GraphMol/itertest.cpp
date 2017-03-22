@@ -388,20 +388,34 @@ void testGithub1366() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
-    for (RWMol::AtomIterator iter = m->beginAtoms(); iter != m->endAtoms();
-         ++iter) {
-      if ((*iter)->getAtomicNum() == 0) {
-        std::cerr << "remove: " << (*iter)->getIdx() << std::endl;
-        m->removeAtom((*iter)->getIdx());
-      } else {
-        std::cerr << "keep: " << (*iter)->getIdx() << std::endl;
-      }
+    {
+      RWMol::AtomIterator iter = m->beginAtoms();
+      TEST_ASSERT((*iter)->getAtomicNum() == 0);
+      ++iter;
+      TEST_ASSERT((*iter)->getAtomicNum() == 6);
+      ++iter;
+      TEST_ASSERT((*iter)->getAtomicNum() == 0);
+      ++iter;
+      TEST_ASSERT(iter == m->endAtoms());
     }
-    TEST_ASSERT(m->getNumAtoms() == 1);
+
+    {
+      RWMol::AtomIterator iter = m->beginAtoms();
+      TEST_ASSERT((*iter)->getAtomicNum() == 0);
+      m->removeAtom((*iter)->getIdx());
+      // at this point the iterator is no longer valid.
+      bool ok = false;
+      try {
+        *iter;
+      } catch (const ValueErrorException &e) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
     delete m;
   }
 
-  BOOST_LOG(rdInfoLog) << "test8 done" << endl;
+  BOOST_LOG(rdInfoLog) << "testGithub1366 done" << endl;
 };
 
 int main() {
