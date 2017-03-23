@@ -24,38 +24,34 @@ void testautocorrelation() {
 
   std::string pathName = getenv("RDBASE");
 
-  std::cout << "Path: " << pathName << "\n";
+  // std::cout << "Path: " << pathName << "\n";
 
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
-
-    std::cout << "sdfName: " << sdfName << "\n";
-
-
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/auto3D_dragon.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/auto3D_dragon.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string>> data;
+  std::vector<std::vector<std::string> > data;
 
-  while(std::getline(instrm, line)) {
-      std::string phrase;
-      std::vector<std::string> row;
-      std::stringstream ss(line);
-      while(std::getline(ss, phrase, '\t')) {
-          row.push_back(phrase);
-      }
+  while (std::getline(instrm, line)) {
+    std::string phrase;
+    std::vector<std::string> row;
+    std::stringstream ss(line);
+    while (std::getline(ss, phrase, '\t')) {
+      row.push_back(phrase);
+    }
 
-      data.push_back(row);
+    data.push_back(row);
   }
 
   int nDone = 0;
   while (!reader.atEnd()) {
-
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
@@ -65,37 +61,28 @@ void testautocorrelation() {
 
     RDKit::Descriptors::AUTOCORR3D(*m, da3d, -1);
 
-    std::vector<std::string> myrow=data[nDone];
-    std::string inm= myrow[0];
+    std::vector<std::string> myrow = data[nDone];
+    std::string inm = myrow[0];
 
-    TEST_ASSERT(inm==nm);
+    TEST_ASSERT(inm == nm);
 
-    for (int i = 0; i < 80 ; i++) {
-          double ref =atof(myrow[i+1].c_str());
-
-        if (fabs(ref) >= 0.1){
-          if(fabs((ref-da3d[i])/ref)>0.01){
-            std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
-          }
-        }
-        if (fabs(ref) < 0.1){
-          if(fabs((ref-da3d[i]))>0.02){
-            std::cout<<"value mismatch: pos" << i <<" "<< inm <<" "<< ref <<" "<< da3d[i] << std::endl;
-          }
-        }
-           //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
+    for (int i = 0; i < 80; i++) {
+      double ref = atof(myrow[i + 1].c_str());
+      if (fabs(ref - da3d[i]) > 0.0015) {
+        std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
+                  << " " << da3d[i] << std::endl;
+      }
+      TEST_ASSERT(fabs(ref - da3d[i]) < 0.0015);
     }
-
     delete m;
-     ++nDone;
-
+    ++nDone;
   }
 
-  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
+                        << std::endl;
 }
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testautocorrelation();
-
 }

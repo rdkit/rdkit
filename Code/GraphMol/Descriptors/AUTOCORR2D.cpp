@@ -60,148 +60,145 @@ namespace RDKit {
 
 
           // this is the Broto-Moreau 2D descriptors (centered or not)
-            void get2DautocorrelationDesc(const ROMol& mol, std::vector<double>& res, double* dist,
-                int numAtoms) {
-
-                std::vector<double> wp = moldata3D.GetRelativePol(mol);
-                std::vector<double> wm = moldata3D.GetRelativeMW(mol);
-                std::vector<double> wv = moldata3D.GetRelativeVdW(mol);
-                std::vector<double> wi = moldata3D.GetRelativeIonPol(mol);
-                std::vector<double> we = moldata3D.GetRelativeENeg(mol);
-                std::vector<double> ws = moldata3D.GetIState(mol);
-                double w[6][numAtoms];
-                //std::vector<double> wmean(6,0);
+          void get2DautocorrelationDesc(double* dist, int numAtoms,
+                           const ROMol& mol, std::vector<double>& res) {
 
 
-                for ( int i = 0; i < numAtoms; i++) {
-                    w[0][i] = wm[i];
-                    w[1][i] = wv[i];
-                    w[2][i] = we[i];
-                    w[3][i] = wp[i];
-                    w[4][i] = wi[i];
-                    w[5][i] = ws[i];
-                }
-                /*
-                for (unsigned int i = 0; i < numAtoms; i++) {
-                  for (unsigned int t = 0; t < 6; ++t) {
-                    wmean[t] += w[t][i] / (double) numAtoms;
-                  }
-                }
+                            std::vector<double> wp = moldata3D.GetRelativePol(mol);
+                            std::vector<double> wm = moldata3D.GetRelativeMW(mol);
+                            std::vector<double> wv = moldata3D.GetRelativeVdW(mol);
+                            std::vector<double> wi = moldata3D.GetRelativeIonPol(mol);
+                            std::vector<double> we = moldata3D.GetRelativeENeg(mol);
+                            std::vector<double> ws = moldata3D.GetIState(mol);
+                            double w[6][numAtoms];
+                            std::vector<double> wmean(6,0);
 
-                std::vector<double> squaresumdiff(6,0.0);
-                for (unsigned int i = 0; i < numAtoms; i++) {
-                  for (unsigned int t = 0; t < 6; ++t) {
-                    squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
-                  }
-                }
-                */
-                double TDBmat[6][8];
-                //double TDBmatM[6][8];
-                //double TDBmatG[6][8];
-                //double TDBmatC[6][8];
 
-                for (unsigned int k = 0; k < 8; k++) {
-                    for (unsigned int t = 0; t < 6; ++t) {
-                        TDBmat[t][k] = 0.0;
-                        //TDBmatM[t][k] = 0.0;
-                        //TDBmatG[t][k] = 0.0;
-                        //TDBmatC[t][k] = 0.0;
-                    }
-                }
+                            for (unsigned int i = 0; i < numAtoms; i++) {
+                                w[0][i] = wm[i];
+                                w[1][i] = wv[i];
+                                w[2][i] = we[i];
+                                w[3][i] = wp[i];
+                                w[4][i] = wi[i];
+                                w[5][i] = ws[i];
+                            }
 
-                std::cout << "DistMat:" << "\n\n";
+                            for (unsigned int i = 0; i < numAtoms; i++) {
+                              for (unsigned int t = 0; t < 6; ++t) {
+                                wmean[t] += w[t][i] / (double) numAtoms;
+                              }
+                            }
 
-                for (unsigned int k = 0; k < 8; k++) {
-                    int maxkVertexPairs = 0;
-                    for (int i = 0; i < numAtoms - 1 ; ++i)
-                    {
-                        for (int j = i + 1; j < numAtoms; ++j)
-                        {   //std::cout << dist[i * numAtoms + j] << "|";
-                            if (dist[i * numAtoms + j]==k + 1)
-                            {
+                            std::vector<double> squaresumdiff(6,0.0);
+                            for (unsigned int i = 0; i < numAtoms; i++) {
+                              for (unsigned int t = 0; t < 6; ++t) {
+                                squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
+                              }
+                            }
+
+                            double TDBmat[6][8] = { {0.0} };
+                            double TDBmatM[6][8] = { {0.0} };
+                            double TDBmatG[6][8] = { {0.0} };
+                            double TDBmatC[6][8] = { {0.0} };
+
+                            for (unsigned int k = 0; k < 8; k++) {
+                                int maxkVertexPairs = 0;
+                                for (unsigned int i = 0; i < numAtoms - 1 ; ++i)
+                                {
+                                    for (unsigned int j = i + 1; j < numAtoms; ++j)
+                                    {
+                                        if (dist[j * numAtoms + i]==k + 1)
+                                        {
+                                            for (unsigned int t = 0; t < 6; ++t)
+                                            {
+                                                TDBmatM[t][k] += (w[t][i]-wmean[t]) * (w[t][j]-wmean[t]);
+                                                TDBmatG[t][k] += (w[t][i] - w[t][j]) * (w[t][i] - w[t][j]);
+                                                TDBmat[t][k] += w[t][i] * w[t][j];
+                                                TDBmatC[t][k] += abs(w[t][i]-wmean[t]) * abs(w[t][j]-wmean[t]);
+                                            }
+                                            maxkVertexPairs += 1;
+                                        }
+                                    }
+                                }
+
                                 for (unsigned int t = 0; t < 6; ++t)
                                 {
-                                    //TDBmatM[t][k] += (w[t][i]-wmean[t]) * (w[t][j]-wmean[t]);
-                                    //TDBmatG[t][k] += (w[t][i] - w[t][j]) * (w[t][i] - w[t][j]);
-                                    TDBmat[t][k] += w[t][i] * w[t][j];
-                                    //TDBmatC[t][k] += abs(w[t][i]-wmean[t]) * abs(w[t][j]-wmean[t]);
+                                    if (maxkVertexPairs>0) {
+                                        TDBmat[t][k] = log(TDBmat[t][k]+1) ;
+                                        TDBmatG[t][k] = TDBmatG[t][k]/squaresumdiff[t]/maxkVertexPairs/2/(numAtoms-1);
+                                        TDBmatM[t][k] = TDBmatM[t][k]/squaresumdiff[t]/maxkVertexPairs/(numAtoms);
+                                        TDBmatC[t][k] = TDBmatC[t][k];
+                                    }
+                                    else {
+                                        TDBmat[t][k] =  0.0;
+                                        TDBmatC[t][k] =  0.0;
+                                        TDBmatM[t][k] =  0.0;
+                                        TDBmatG[t][k] =  0.0;
+                                    }
                                 }
-                                maxkVertexPairs += 1;
                             }
+
+                            // for (unsigned int j = 0; j < 6; ++j) {
+                            //     for (unsigned int i = 0; i < 8; ++i) {
+                            //       std::cout <<   TDBmatC[j][i]  << ",";
+                            //       std::cout <<   TDBmatM[j][i]  << ",";
+                            //       std::cout <<   TDBmatG[j][i]  << ",";
+                            //       std::cout <<   TDBmat[j][i]  << ",";
+                            //
+                            //     }
+                            // }
+
+                            // update the Output vector!
+                            for (unsigned int j = 0; j < 6; ++j) {
+                                for (unsigned int i = 0; i < 8; ++i) {
+                                    res[j * 8 + i] = TDBmat[j][i];
+
+
+                                }
+                            }
+
+                            for (unsigned int j = 0; j < 6; ++j) {
+                                for (unsigned int i = 0; i < 8; ++i) {
+                                    res[j * 8 + i+48] = TDBmatC[j][i];
+                              }
+                            }
+
+
+                            for (unsigned int j = 0; j < 6; ++j) {
+                                for (unsigned int i = 0; i < 8; ++i) {
+                                  res[j * 8 + i+96] = TDBmatM[j][i];
+                                }
+                            }
+
+                            for (unsigned int j = 0; j < 6; ++j) {
+                                for (unsigned int i = 0; i < 8; ++i) {
+                                  res[j * 8 + i+144] = TDBmatG[j][i];
+                                }
+                            }
+
                         }
-                    }
-
-                    std::cout << "Results:" << "\n\n";
-                    for (unsigned int t = 0; t < 6; ++t)
-                    {
-                        if (maxkVertexPairs>0) {
-                            TDBmat[t][k]  = log(TDBmat[t][k]+1) ;
-                            //TDBmatG[t][k] = TDBmatG[t][k]/squaresumdiff[t]/maxkVertexPairs/2/(numAtoms-1);
-                            //TDBmatM[t][k] = TDBmatM[t][k]/squaresumdiff[t]/maxkVertexPairs/(numAtoms);
-                            //TDBmatC[t][k] = TDBmatC[t][k];
-                        }
-                        else {
-                            TDBmat[t][k]  =  0.0;
-                            //TDBmatC[t][k] =  0.0;
-                            //TDBmatM[t][k] =  0.0;
-                            //TDBmatG[t][k] =  0.0;
-                        }
-                    }
-                }
-
-                for (unsigned int j = 0; j < 6; ++j) {
-                    for (unsigned int i = 0; i < 8; ++i) {
-                      //std::cout <<  TDBmatC[j][i]  << ",";
-                      //std::cout <<  TDBmatM[j][i]  << ",";
-                      //std::cout <<  TDBmatG[j][i]  << ",";
-                      std::cout << "i," << i << ",j," << j <<  TDBmat[j][i]   << "|";
-                      res[j * 8 + i] = TDBmat[j][i];
-
-                    }
-                }
 
 
- /*                // update the Output vector!
-                for (unsigned int j = 0; j < 6; ++j) {
-                    for (unsigned int i = 0; i < 8; ++i) {
-                        res[j * 8 + i] = TDBmat[j][i];
-                    }
-                }
-
-                for (unsigned int j = 0; j < 6; ++j) {
-                    for (unsigned int i = 0; i < 8; ++i) {
-                        res[j * 8 + i+48] = TDBmatC[j][i];
-                  }
-                }
 
 
-                for (unsigned int j = 0; j < 6; ++j) {
-                    for (unsigned int i = 0; i < 8; ++i) {
-                      res[j * 8 + i+96] = TDBmatM[j][i];
-                    }
-                }
+            void Get2Dauto(double* topologicaldistance, int numAtoms, const ROMol& mol,
+                           std::vector<double>& res) {
+                // AUTOCORRNAMES={"TDB01u","TDB02u","TDB03u","TDB04u","TDB05u","TDB06u","TDB07u","TDB08u","TDB09u","TDB10u","TDB01m","TDB02m","TDB03m","TDB04m","TDB05m","TDB06m","TDB07m","TDB08m","TDB09m","TDB10m","TDB01v","TDB02v","TDB03v","TDB04v","TDB05v","TDB06v","TDB07v","TDB08v","TDB09v","TDB10v","TDB01e","TDB02e","TDB03e","TDB04e","TDB05e","TDB06e","TDB07e","TDB08e","TDB09e","TDB10e","TDB01p","TDB02p","TDB03p","TDB04p","TDB05p","TDB06p","TDB07p","TDB08p","TDB09p","TDB10p","TDB01i","TDB02i","TDB03i","TDB04i","TDB05i","TDB06i","TDB07i","TDB08i","TDB09i","TDB10i","TDB01s","TDB02s","TDB03s","TDB04s","TDB05s","TDB06s","TDB07s","TDB08s","TDB09s","TDB10s","TDB01r","TDB02r","TDB03r","TDB04r","TDB05r","TDB06r","TDB07r","TDB08r","TDB09r","TDB10r"};
 
-                for (unsigned int j = 0; j < 6; ++j) {
-                    for (unsigned int i = 0; i < 8; ++i) {
-                      res[j * 8 + i+144] = TDBmatG[j][i];
-                    }
-                }
-                */
-            }
-
-            void Get2Dauto(const ROMol& mol, std::vector<double>& res, double* topologicaldistance, int numAtoms) {
-                get2DautocorrelationDesc(mol, res, topologicaldistance, numAtoms);
+                get2DautocorrelationDesc(topologicaldistance, numAtoms, mol, res);
             }
 
         }  // end of anonymous namespace
 
         void AUTOCORR2D(const ROMol& mol, std::vector<double>& res, int confId) {
             int numAtoms = mol.getNumAtoms();
+            const Conformer& conf = mol.getConformer(confId);
             double* topologicaldistance = MolOps::getDistanceMat(mol, false);  // topological matrix
 
             res.clear();
             res.resize(192);
-            Get2Dauto(mol, res, topologicaldistance, numAtoms);
+            //Get3Dauto(dist3D, topologicaldistance, numAtoms, mol, res);
+            Get2Dauto( topologicaldistance, numAtoms, mol, res);
 
         }
     }  // end of Descriptors namespace

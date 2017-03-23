@@ -17,10 +17,7 @@
 #include <fstream>
 #include <sstream>
 
-
 #include <GraphMol/Descriptors/WHIM.h>
-
-
 
 void testWHIM2() {
   std::cout << "=>start test chlorobenzene whim from rdkit\n";
@@ -38,14 +35,14 @@ void testWHIM2() {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
-    m->getProp("_Name",nm);
+    m->getProp("_Name", nm);
 
     std::vector<double> dwhim;
 
-    RDKit::Descriptors::WHIM(*m,dwhim, -1, 0.01);
-    for (int j=0;j<114;j++) {
+    RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01);
+    for (int j = 0; j < 114; j++) {
       std::cout << dwhim[j] << ",";
-     }
+    }
     std::cout << "\n";
 
     delete m;
@@ -53,7 +50,6 @@ void testWHIM2() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
 
 void testWHIM3() {
   std::cout << "=>start test chlorobenzene whim original\n";
@@ -71,14 +67,14 @@ void testWHIM3() {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
-    m->getProp("_Name",nm);
+    m->getProp("_Name", nm);
 
     std::vector<double> dwhim;
 
     RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01);
-    for (int j=0;j<114;j++) {
+    for (int j = 0; j < 114; j++) {
       std::cout << dwhim[j] << ",";
-     }
+    }
     std::cout << "\n";
 
     delete m;
@@ -86,7 +82,6 @@ void testWHIM3() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
 
 void testWHIM1() {
   std::cout << "=>start test rdf\n";
@@ -104,22 +99,20 @@ void testWHIM1() {
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
-    m->getProp("_Name",nm);
-
+    m->getProp("_Name", nm);
 
     std::vector<double> dwhim;
-//for (int i=1;i<11;i++) {
- // std::cout << "i:" << 0.005*i << "\n";
-    RDKit::Descriptors::WHIM(*m, dwhim, -1,0.01);
-    for (int j=0;j<114;j++) {
+    // for (int i=1;i<11;i++) {
+    // std::cout << "i:" << 0.005*i << "\n";
+    RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01);
+    for (int j = 0; j < 114; j++) {
       std::cout << dwhim[j] << ",";
-     }
+    }
     std::cout << "\n";
 
-//}
+    //}
 
-
-    std::cout << "=>read molecule: " << nDone  << std::endl;
+    std::cout << "=>read molecule: " << nDone << std::endl;
 
     delete m;
   }
@@ -127,86 +120,85 @@ void testWHIM1() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-
 void testWHIM() {
   std::cout << "=>start test WHIM\n";
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName+"/Code/GraphMol/Descriptors/test_data/whim.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/whim.out";
   std::ifstream instrm(fName.c_str());
-  std::ofstream output("whim.txt");
 
   std::string line;
-  std::vector<std::vector<std::string>> data;
+  std::vector<std::vector<std::string> > data;
 
-  while(std::getline(instrm, line)) {
-      std::string phrase;
-      std::vector<std::string> row;
-      std::stringstream ss(line);
-      while(std::getline(ss, phrase, '\t')) {
-          row.push_back(phrase);
-      }
+  while (std::getline(instrm, line)) {
+    std::string phrase;
+    std::vector<std::string> row;
+    std::stringstream ss(line);
+    while (std::getline(ss, phrase, '\t')) {
+      row.push_back(phrase);
+    }
 
-      data.push_back(row);
+    data.push_back(row);
   }
-
 
   int nDone = 0;
   while (!reader.atEnd()) {
-
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
-    m->getProp("_Name",nm);
+    m->getProp("_Name", nm);
     std::vector<double> dwhim;
-    RDKit::Descriptors::WHIM(*m, dwhim,-1,0.01);
-    std::vector<std::string> myrow=data[nDone];
-    std::string inm= myrow[0];
-    TEST_ASSERT(inm==nm);
+    RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01);
+    std::vector<std::string> myrow = data[nDone];
+    std::string inm = myrow[0];
+    TEST_ASSERT(inm == nm);
 
-    for (int i=0;i<114;i++)
-       {
-           output << dwhim[i] << "\t";
+    for (int i = 0; i < 114; i++) {
+      std::cerr << dwhim[i] << "\t";
+    }
+    std::cerr << std::endl;
+    for (int i = 0; i < 114; i++) {
+      double ref = atof(myrow[i + 1].c_str());
+#if 0
+      // 1% error
+      if (fabs(ref) > 0.1) {
+        if (fabs((ref - dwhim[i]) / ref) > 0.01) {
+          // std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
+          //           << " " << dwhim[i] << std::endl;
+        }
+      }
 
-            double ref =atof(myrow[i+1].c_str());
-            // 1% error
-            if (fabs(ref)> 0.1){
-              if(fabs((ref-dwhim[i])/ref)>0.01){
-                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
-              }
-            }
-
-            // 2% error on very some values!
-            if (fabs(ref)<= 0.1){
-              if(fabs((ref-dwhim[i]))>0.02){
-                std::cerr<<"value mismatch: pos" << i <<" "<<inm<<" "<<ref<<" "<< dwhim[i] <<std::endl;
-              }
-            }
-           //TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
-       }
-
+      // 2% error on very some values!
+      if (fabs(ref) <= 0.1) {
+        if (fabs((ref - dwhim[i])) > 0.02) {
+          // std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
+          //           << " " << dwhim[i] << std::endl;
+        }
+      }
+      // TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
+#endif
+      if (fabs(ref - dwhim[i]) > 0.01) {
+        std::cerr << "value mismatch: pos" << i << " " << ref << " " << dwhim[i]
+                  << std::endl;
+      }
+      // TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
+    }
 
     delete m;
     ++nDone;
   }
 
-  output.close();
-
-  BOOST_LOG(rdErrorLog) << "test on : " <<  nDone <<" molecules done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
+                        << std::endl;
 }
-
-
-
-
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testWHIM();
-  //testWHIM3();
+  // testWHIM3();
 
-//  testWHIM();
-
-
+  //  testWHIM();
 }
