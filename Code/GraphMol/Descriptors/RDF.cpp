@@ -60,38 +60,8 @@ namespace RDKit {
               return res;
             }
 
-            
-
-            std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
-              int numAtoms = conf.getNumAtoms();
-              int confId = conf.getId();
-
+            std::vector<double> prepareIState(const ROMol &mol) {
               std::vector<double> IState = moldata3D.GetIStateDrag(mol); // get the real IState value not the EState!
-
-              // apply a weigthing based on the
-              /*
-              int maxC =0;
-              double Cistate=0.0;
-              for (int i=0;i< numAtoms;i++){
-                if (mol.getAtomWithIdx(i)->getAtomicNum()==6){
-                  Cistate +=IState[i];
-                  maxC++;
-                }
-              }
-
-              if (maxC>0) {
-              double meanCistate = Cistate / (double) maxC;
-              for (int i=0; i<numAtoms; ++i) {
-                  IState[i] = IState[i] / meanCistate ;
-                }
-              }
-              */
-
-              // weighting using 7.0 only ???
-              //for (int i=0; i<numAtoms; ++i) {
-              // IState[i] = (IState[i]+7.0) / (7.0);
-              //}
-
               return IState;
             }
 
@@ -119,7 +89,7 @@ namespace RDKit {
               std::vector<double> IonPol = moldata3D.GetRelativeIonPol(mol);
               std::vector<double> RelativeElectroNeg = moldata3D.GetRelativeENeg(mol);
               std::vector<double> RelativeVdW = moldata3D.GetRelativeVdW(mol);
-              std::vector<double> IState = prepareIState(mol,confId);
+              std::vector<double> IState = prepareIState(mol);
 
 
               double p;
@@ -167,8 +137,6 @@ namespace RDKit {
 
             void GetRDF(double* dist3D, const ROMol& mol, const Conformer &conf,
                                  std::vector<double>& res) {
-
-
                       getRDFDesc(dist3D, mol, conf, res);
              }
 

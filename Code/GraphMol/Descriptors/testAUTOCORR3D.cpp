@@ -24,10 +24,14 @@ void testautocorrelation() {
 
   std::string pathName = getenv("RDBASE");
 
-  //std::cout << "Path: " << pathName << "\n";
+  std::cout << "Path: " << pathName << "\n";
 
   std::string sdfName =
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+
+
+    std::cout << "sdfName: " << sdfName << "\n";
+
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
@@ -43,12 +47,11 @@ void testautocorrelation() {
       std::vector<std::string> row;
       std::stringstream ss(line);
       while(std::getline(ss, phrase, '\t')) {
-          row.push_back(std::move(phrase));
+          row.push_back(phrase);
       }
 
-      data.push_back(std::move(row));
+      data.push_back(row);
   }
-
 
   int nDone = 0;
   while (!reader.atEnd()) {

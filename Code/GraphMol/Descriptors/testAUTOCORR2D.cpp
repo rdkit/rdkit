@@ -38,18 +38,20 @@ void testautocorrelation() {
   std::string line;
   std::vector<std::vector<std::string>> data;
 
+
   while(std::getline(instrm, line)) {
       std::string phrase;
       std::vector<std::string> row;
       std::stringstream ss(line);
       while(std::getline(ss, phrase, '\t')) {
-          row.push_back(std::move(phrase));
+          row.push_back(phrase);
       }
 
-      data.push_back(std::move(row));
+      data.push_back(row);
   }
 
-  //std::cout << "=>read file ok\n";
+
+  std::cout << "=>read file ok\n";
 
 
   int nDone = 0;
@@ -74,10 +76,7 @@ void testautocorrelation() {
 
     TEST_ASSERT(inm==nm);
 
-
-
-
-    for (int i = 0; i < 80 ; i++) {
+    for (int i = 0; i < 60 ; i++) {
           double ref =atof(myrow[i+1].c_str());
 
 
@@ -87,21 +86,6 @@ void testautocorrelation() {
 
            //TEST_ASSERT(fabs(ref-drdf[i])<0.05);
     }
-
-    // FIX: at the moment this isn't actually testing anything, it's just
-    // running the calculation. The best test would be an SDF that has some
-    // molecules with 3D structures and calculated values of the individual
-    // descriptors (from DRAGON for example) that you can compare against.
-    // many of the tests in the test.cpp directory here (for example
-    // testLipinski1()) show how to do this.
-    //for (int j = 0; j < 80; j++) {
-    //  std::cout << dwhim[j] << ",";
-    //}
-    //std::cout << "\n";
-
-    //}
-
-    //std::cout << "done \n" << nDone << std::endl;
 
     delete m;
      ++nDone;

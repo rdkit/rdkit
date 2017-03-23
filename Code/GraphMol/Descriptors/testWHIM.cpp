@@ -146,10 +146,10 @@ void testWHIM() {
       std::vector<std::string> row;
       std::stringstream ss(line);
       while(std::getline(ss, phrase, '\t')) {
-          row.push_back(std::move(phrase));
+          row.push_back(phrase);
       }
 
-      data.push_back(std::move(row));
+      data.push_back(row);
   }
 
 

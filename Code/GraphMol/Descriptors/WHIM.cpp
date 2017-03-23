@@ -61,13 +61,13 @@ namespace RDKit {
             return round(in*pow(10,factor))/pow(10,factor);
           }
 
-          double* retreiveMat(Eigen::MatrixXd matrix) {
-             double* arrayd = matrix.data();
+          double* retreiveMat(Eigen::MatrixXd M) {
+             double* arrayd = M.data();
              return arrayd;
           }
 
-          double* retreiveVect(Eigen::VectorXd matrix) {
-             double* arrayd = matrix.data();
+          double* retreiveVect(Eigen::VectorXd M) {
+             double* arrayd = M.data();
              return arrayd;
           }
 
@@ -78,20 +78,18 @@ namespace RDKit {
             return v2;
           }
 
-
-
-          MatrixXd GetCenterMatrix(MatrixXd Mat){
-              VectorXd v = Mat.colwise().mean();
-              MatrixXd X=Mat.rowwise() - v.transpose();
+          MatrixXd GetCenterMatrix(MatrixXd M){
+              VectorXd v = M.colwise().mean();
+              MatrixXd X = M.rowwise() - v.transpose();
               return X;
           }
 
-          MatrixXd GetCovMatrix(MatrixXd X, MatrixXd Weigth, double weigth){
-              return X.transpose() * Weigth * X / weigth;
+          MatrixXd GetCovMatrix(MatrixXd X, MatrixXd W, double w){
+              return X.transpose() * W * X / w;
           }
 
-          JacobiSVD<MatrixXd> getSVD(MatrixXd Mat) {
-              JacobiSVD<MatrixXd> svd(Mat,  ComputeThinU | ComputeThinV);
+          JacobiSVD<MatrixXd> getSVD(MatrixXd M) {
+              JacobiSVD<MatrixXd> svd(M,  ComputeThinU | ComputeThinV);
               return svd;
           }
 
@@ -224,21 +222,15 @@ namespace RDKit {
                   }
                 }
 
-                double na=0.0;
-                na = (double) nAT - ns;
+                double na = (double) nAT - ns;
 
-                gamma[i] =0.0;
-                if (ns>0) {
-                     gamma[i] = (ns / nAT) * log(ns / nAT) / log(2) + (na / nAT) * log(1.0 / nAT) / log(2); // log2 base used
-                     gamma[i] = 1.0 / (1.0 - gamma[i]);
-                }
                 // trick to have the WHIM value always set ns to one if there is no symetry on the axis!
                 if (ns==0) {
                      ns=1;
                      na=nAT-ns;
-                     gamma[i] = (ns / nAT) * log(ns / nAT) / log(2) + (na / nAT) * log(1.0 / nAT) / log(2); // log2 base used
-                     gamma[i] = 1.0 / (1.0 - gamma[i]);
                 }
+                gamma[i] = (ns / nAT) * log(ns / nAT) / log(2) + (na / nAT) * log(1.0 / nAT) / log(2); // log2 base used
+                gamma[i] = 1.0 / (1.0 - gamma[i]);
 
               }
 
@@ -270,7 +262,7 @@ namespace RDKit {
               std::vector<double> ws(18);
 
               int numAtoms = conf.getNumAtoms();
-              Map<MatrixXd> matorigin(Vpoints, 3,numAtoms);
+              Map<MatrixXd> matorigin(Vpoints, 3, numAtoms);
               MatrixXd MatOrigin=matorigin.transpose();
               std::vector<double> weigthvector;
 
@@ -309,12 +301,20 @@ namespace RDKit {
                 result[i+18*6] = ws[i];
               }
               wu.clear();
+              wu.resize(18);
               wm.clear();
+              wm.resize(18);
               wv.clear();
+              wv.resize(18);
               we.clear();
+              we.resize(18);
               wp.clear();
+              wp.resize(18);
               wi.clear();
+              wi.resize(18);
               ws.clear();
+              ws.resize(18);
+
           }
 
         void getWHIM(const ROMol& mol,  std::vector<double> &res, int confId, double th){
@@ -351,6 +351,8 @@ namespace RDKit {
               res[i + 14*7+2] = roundn( w[13 + 18* i], 3);  //101 102 103 104 105 106 107 for Du  Dm  Dv  De  Dp  Di  Ds
               res[i + 15*7+2] = roundn( w[5 + 18* i], 3);   //108 109 110 111 112 113 114 for Vu  Vm  Vv  Ve  Vp  Vi  Vs
             }
+            w.clear();
+            w.resize(126);
           }
 
         } //end of anonymous namespace
