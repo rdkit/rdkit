@@ -263,7 +263,7 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets):
   for chains in _combiEnumerator(sidechainSets):
     prodSets = reaction.RunReactants(chains)
     for prods in prodSets:
-      yield prods
+      yield prods, chains
 
 
 def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
