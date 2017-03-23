@@ -13,6 +13,9 @@ from rdkit.six.moves import range
 from rdkit import Chem
 
 
+def grouped(iterable, n):
+  return zip(*[iter(iterable)]*n)
+
 def RandomizeMolBlock(molB):
   splitB = molB.split('\n')
   res = []
@@ -49,11 +52,12 @@ def RandomizeMolBlock(molB):
       line = splitB[i]
       chargeline = line.split()
       col = line[0:9]
-      for i in range(3,len(chargeline),2):
-        col = col +"%4i%4i"%(order.index(int(chargeline[i])-1)+1,int(chargeline[i+1])+1)
-      #print col
+      for atom, charge in grouped(chargeline[3:], 2):
+        atom = order.index(int(atom) - 1) + 1
+        charge = int(charge)
+        col += "%4i%4i" % (atom, charge)
       res.append(col)
-    
+
   res.append('M  END')
   return '\n'.join(res)
 
