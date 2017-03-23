@@ -21,12 +21,12 @@ int main( int argc , char **argv ) {
   std::string file_root = getenv( "RDBASE" );
   file_root += "/Docs/Book";
 
-  RDKit::ROMol *mol;
   std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
-  RDKit::SDMolSupplier mol_supplier( sdf_file , true );
-  std::vector<RDKit::ROMol *> mols;
+  bool takeOwnership = true;
+  RDKit::SDMolSupplier mol_supplier( sdf_file , takeOwnership );
+  std::vector<RDKit::ROMOL_SPTR> mols;
   while( !mol_supplier.atEnd() ) {
-    mol = mol_supplier.next();
+    RDKit::ROMOL_SPTR mol( mol_supplier.next() );
     if( mol ) {
       mols.push_back( mol );
     }
@@ -39,9 +39,11 @@ int main( int argc , char **argv ) {
   }
 
   std::ostringstream oss;
-  RDKit::SDWriter *sdf_writer = new RDKit::SDWriter( &oss , false );
-  // Note that this requires a C++11 compliant compiler
-  for( std::vector<RDKit::ROMol *>::iterator it = mols.begin() ; it != mols.end() ; ++it ) {
+  // takeOwnership must be false for this, as we don't want the SDWriter trying
+  // to delete the std::ostringstream.
+  takeOwnership = false;
+  boost::shared_ptr<RDKit::SDWriter> sdf_writer( new RDKit::SDWriter( &oss , takeOwnership ) );
+  for( std::vector<RDKit::ROMOL_SPTR>::iterator it = mols.begin() ; it != mols.end() ; ++it ) {
     sdf_writer->write( *(*it) );
   }
 

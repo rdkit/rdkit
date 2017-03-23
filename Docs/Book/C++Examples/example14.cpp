@@ -10,8 +10,8 @@
 
 int main( int argc , char **argv ) {
 
-  RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1ccccc1O" );
-  RDKit::RWMol *patt = RDKit::SmartsToMol( "ccO" );
+  RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "c1ccccc1O" ) );
+  RDKit::RWMOL_SPTR patt( RDKit::SmartsToMol( "ccO" ) );
   RDKit::MatchVectType res;
   if( RDKit::SubstructMatch( *mol1 , *patt , res ) ) {
     std::cout << "Pattern matched molecule : " << std::endl;
@@ -39,46 +39,44 @@ int main( int argc , char **argv ) {
 
   std::string sdf_file = file_root + "/data/actives_5ht3.sdf";
   RDKit::SDMolSupplier mol_supplier( sdf_file , true );
-  RDKit::RWMol *patt1 = RDKit::SmartsToMol( "c[NH1]" );
-  std::vector<RDKit::ROMol *> matches;
+  RDKit::RWMOL_SPTR patt1( RDKit::SmartsToMol( "c[NH1]" ) );
+  std::vector<RDKit::ROMOL_SPTR> matches;
   while( !mol_supplier.atEnd() ) {
-    RDKit::ROMol *mol3 = mol_supplier.next();
+    RDKit::ROMOL_SPTR mol3( mol_supplier.next() );
     if( mol3 && RDKit::SubstructMatch( *mol3 , *patt1 , res ) ) {
       matches.push_back( mol3 );
-    } else {
-      delete mol3;
     }
   }
   std::cout << "There were " << matches.size() << " hits in the file." << std::endl;
 
-  RDKit::ROMol *mol4 = RDKit::SmilesToMol( "C1=CC=CC=C1OC" );
-  RDKit::RWMol *smi_mol1 = RDKit::SmilesToMol( "CO" );
+  RDKit::ROMOL_SPTR mol4( RDKit::SmilesToMol( "C1=CC=CC=C1OC" ) );
+  RDKit::RWMOL_SPTR smi_mol1( RDKit::SmilesToMol( "CO" ) );
   if( RDKit::SubstructMatch( *mol4 , *smi_mol1 , res ) ) {
     std::cout << "SMILES match" << std::endl;
   } else {
     std::cout << "Not SMILES match" << std::endl;
   }
-  RDKit::RWMol *smt_mol1 = RDKit::SmartsToMol( "CO" );
+  RDKit::RWMOL_SPTR smt_mol1( RDKit::SmartsToMol( "CO" ) );
   if( RDKit::SubstructMatch( *mol4 , *smt_mol1 , res ) ) {
     std::cout << "SMARTS match" << std::endl;
   } else {
     std::cout << "Not SMARTS match" << std::endl;
   }
 
-  RDKit::RWMol *smi_mol2 = RDKit::SmilesToMol( "COC" );
+  RDKit::RWMOL_SPTR smi_mol2( RDKit::SmilesToMol( "COC" ) );
   if( RDKit::SubstructMatch( *mol4 , *smi_mol2 , res ) ) {
     std::cout << "SMILES match" << std::endl;
   } else {
     std::cout << "Not SMILES match" << std::endl;
   }
-  RDKit::RWMol *smt_mol2 = RDKit::SmartsToMol( "COC" );
+  RDKit::RWMOL_SPTR smt_mol2( RDKit::SmartsToMol( "COC" ) );
   if( RDKit::SubstructMatch( *mol4 , *smt_mol2 , res ) ) {
     std::cout << "SMARTS match" << std::endl;
   } else {
     std::cout << "Not SMARTS match" << std::endl;
   }
   // Needs aromatic C
-  RDKit::RWMol *smt_mol3 = RDKit::SmartsToMol( "COc" );
+  RDKit::RWMOL_SPTR smt_mol3( RDKit::SmartsToMol( "COc" ) );
   if( RDKit::SubstructMatch( *mol4 , *smt_mol3 , res ) ) {
     std::cout << "SMARTS match" << std::endl;
   } else {

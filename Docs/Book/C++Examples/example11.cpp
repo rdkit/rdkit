@@ -30,15 +30,18 @@ int main( int main , char **argv ) {
 				      1e-3 , false , true , true , true );
   RDKit::MMFF::MMFFOptimizeMolecule( *mol2 , 1000 , "MMFF94s" );
 
+  // using the parameters class
+  RDKit::DGeomHelpers::EmbedParameters params(RDKit::DGeomHelpers::ETKDG);
+  params.randomSeed = true;
+  RDKit::DGeomHelpers::EmbedMolecule( *mol2 , params );
+  
   // Multiple conformations
   RDKit::INT_VECT mol1_cids = RDKit::DGeomHelpers::EmbedMultipleConfs( *mol1 , 10 );
   std::cout << "Number of conformations : " << mol1_cids.size() << std::endl;
 
   RDKit::INT_VECT mol2_cids;
-  RDKit::DGeomHelpers::EmbedMultipleConfs( *mol2 , mol2_cids , 20 , 1 , 30 , 1234 ,
-					   true , false , 2.0 , true , 1 , -1.0 , 
-					   static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
-					   1e-3 , false , true , true , true );
+  int numConfs = 20;
+  RDKit::DGeomHelpers::EmbedMultipleConfs( *mol2 , mol2_cids , numConfs , params );
   std::cout << "Number of conformations : " << mol2_cids.size() << std::endl;
 
   std::vector<double> rms_list;

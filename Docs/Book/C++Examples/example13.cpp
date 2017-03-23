@@ -4,9 +4,11 @@
 #include <fstream>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#ifdef RDK_CAIRO_BUILD
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#endif
 
 int main( int argc , char **argv ) {
 
@@ -14,8 +16,7 @@ int main( int argc , char **argv ) {
   file_root += "/Docs/Book";
 
   std::string sdf_file = file_root + "/data/cdk2.sdf";
-  RDKit::SDMolSupplier mol_supplier( sdf_file , true );
-  RDKit::ROMol *mol1 = mol_supplier.next();
+  RDKit::ROMOL_SPTR mol1( RDKit::MolFileToMol( sdf_file ) );
   RDDepict::compute2DCoords( *mol1 );
   std::string svg_file = file_root + "/data/cdk_mol1.svg";
   std::ofstream outs( svg_file.c_str() );
@@ -24,10 +25,12 @@ int main( int argc , char **argv ) {
   svg_drawer.finishDrawing();
   outs.close();
 
+#ifdef RDK_CAIRO_BUILD
   RDKit::MolDraw2DCairo cairo_drawer(300, 300);
   cairo_drawer.drawMolecule(*mol1);
   cairo_drawer.finishDrawing();
   std::string png_file = file_root + "/data/cdk_mol1.png";
   cairo_drawer.writeDrawingText( png_file );
+ #endif
   
 }

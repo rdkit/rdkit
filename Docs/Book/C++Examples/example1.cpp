@@ -4,31 +4,26 @@
 #include <iostream>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 int main( int argc , char **argv ) {
 
   RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
-  std::cout << mol1 << std::endl;
 
   std::string file_root = getenv( "RDBASE" );
   file_root += "/Docs/Book";
 
   std::string mol_file = file_root + "/data/input.mol";
-  RDKit::SDMolSupplier mol_supplier( mol_file , true );
-  RDKit::ROMol *mol2 = mol_supplier.next();
-  std::cout << mol2 << std::endl;
+  RDKit::ROMOL_SPTR mol2( RDKit::MolFileToMol( mol_file ) );
 
   try {
-    RDKit::ROMol *mol3 = RDKit::SmilesToMol( "CO(C)C" );
-    std::cout << mol3 << std::endl;
-  } catch( std::exception &e ) {
+    RDKit::ROMOL_SPTR mol3( RDKit::SmilesToMol( "CO(C)C" ) );
+  } catch( RDKit::MolSanitizeException &e ) {
     // std::cout << e.what() << std::endl;
   }
   try {
-    RDKit::ROMol *mol4 = RDKit::SmilesToMol( "c1cc1" );
-    std::cout << mol4 << std::endl;
-  } catch( std::exception &e ) {
+    RDKit::ROMOL_SPTR mol4( RDKit::SmilesToMol( "c1cc1" ) );
+  } catch( RDKit::MolSanitizeException &e ) {
     // std::cout << e.what() << std::endl;
   }
 }

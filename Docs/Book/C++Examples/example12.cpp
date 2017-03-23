@@ -12,7 +12,7 @@
 
 int main( int argc , char **argv ) {
 
-  RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1ccncc1" );
+  RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "c1ccncc1" ) );
   std::string pickle;
   RDKit::MolPickler::pickleMol( *mol1 , pickle );
   RDKit::ROMol mol2;
@@ -29,9 +29,8 @@ int main( int argc , char **argv ) {
   std::ofstream pickle_ostream( pkl_name.c_str() , std::ios_base::binary );
   int write_cnt = 0;
   while( !suppl.atEnd() ) {
-    RDKit::ROMol *mol = suppl.next();
+    RDKit::ROMOL_SPTR mol( suppl.next() );
     RDKit::MolPickler::pickleMol( *mol , pickle_ostream );
-    delete mol;
     ++write_cnt;
   }
   pickle_ostream.close();  

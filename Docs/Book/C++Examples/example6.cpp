@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <GraphMol/GraphMol.h>
+#include <GraphMol/AtomIterators.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 int main( int argc , char **argv ) {
@@ -19,6 +20,11 @@ int main( int argc , char **argv ) {
   }
   std::cout << std::endl;   
 
+  for( RDKit::ROMol::AtomIterator ai = mol->beginAtoms() ; ai != mol->endAtoms() ; ++ai) {
+    std::cout << (*ai)->getAtomicNum() << " ";
+  }
+  std::cout << std::endl;   
+    
   for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
     const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
     std::cout << atom->getAtomicNum() << " ";

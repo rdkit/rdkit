@@ -2,7 +2,7 @@
 
 ## What is this?
 
-This document is intended to provied an overview of how one can use
+This document is intended to provide an overview of how one can use
 the RDKit functionality from C++. Like the 'Getting Started with the
 RDKit in Python' it is not comprehensive and it's not a manual.  It is
 modelled very closely on the Python version, and most of the text will
@@ -19,7 +19,8 @@ experiment and change settings to get this working.  You will
 need a reasonably modern C++ compiler. On linux systems this will most
 likely be the GNU compiler gcc, although it could be Clang.  On Macs,
 the opposite is true, and on Windows machines it will probably be
-Visual C++.  At present, RDKit uses a relatively old-fashioned dialect
+Visual C++.  At present, RDKit uses a relatively old-fashioned (or, as
+Greg prefers, "maximally backwards compatible") dialect
 of C++, so gcc version 3.4 or higher is adequate, but this is due to
 change within the next year.
 
@@ -37,8 +38,8 @@ different header files spread across several directories in the
 system, and defined across a number of different libraries.  The right
 headers will need to be included in the source code, and libraries
 linked to during linking.  Whilst it's possible to include all headers
-and libraries in all executables this will result in bloated
-executables which will take up a lot more disk and memory, especially
+and libraries in all executables this will result in slower compile
+times, especially
 if you are doing static linking.  When linking to the static (.a)
 libraries rather than the shared-object (.so) ones, the order the
 libraries appear in linking list can be important.  See the
@@ -63,16 +64,25 @@ However, if you are going to do more complicated things, using a lot
 of your own programming logic and only using the RDKit for peripheral
 things like I/O, SMARTS matching, preparing 2D images and the like,
 then it is likely that you will have good performance gains if you
-write in C++ and compile to a native executable.
+write in C++ and compile to a native executable.  One reason for
+faster executables from C++ is that because the code is only compiled
+once, it can be worth the compiler spending more time optimising the
+code for speed.  In Python, where the compilation is done each time at
+run-time, this overhead is less acceptable.  Writing inefficient code
+is relatively easy in any language, but the C++ compiler can save you
+from yourself-at higher optimisation levels, it will re-arrange loops,
+factorise expressions etc., so that the final executable may be
+difficult to align with the original source code.  For example
+(Huw!), the gcc will change sqrt(a) * sqrt(b) to sqrt(a*b) removing an
+expensive square root operation.
 
 Another consideration is the completeness of the API.  A lot of the
 higher level functionality in RDKit is developed in Python, and
 back-porting to C++ occurs on a demand-driven basis.  There are
-therefore examples of quite useful functionality, such as drawing
-multiple 2D molecule diagrams to a grid, or computing the RMS
-differences between conformers that are not available in C++.  Of
-course, if this affects you you can always implement the C++ version
-and submit a Pull Request.
+therefore examples of quite useful functionality, such as computing
+the RMS differences between conformers that are not available in C++.
+Of course, if this affects you you can always implement the C++ version
+and submit a Pull Request. Indeed, the RMS calculation is on its way.
 
 ## Memory Management
 
@@ -95,25 +105,24 @@ defined in the relevant header files.  Two particularly useful ones
 are `RDKit::ROMOL_SPTR` and `RDKit::RWMOL_SPTR`, for `RDKit::ROMol`
 and `RDKit::RWMol` objects respectively.
 
-This isn't just relevant to the RDKit, but worth noting. The new C++
+Something that isn't just relevant to the RDKit, but worth noting
+generally, is that the new C++
 standard also has `shared_ptr` and `scoped_ptr` in the standard
 namespace (essentially, they've adopted the boost libraries).  As I
 discovered the hard way, if you put `using namespace boost` and `using
 namespace std` at the top of your source file (and let's face it, who
-doeesn't?) , and use the unqualified name `shared_ptr` in your 
-code, then when you start using C++11, you'll have to go all through
+doesn't?), and use the unqualified name `shared_ptr` in your 
+code, then, when you start using C++11, you'll have to go all through
 your code explicitly stating whether you're using `std::shared_ptr` or
 `boost::shared_ptr`.  Worth getting in the habit now!
 
-## The Molecule Objects
+## The Molecule Classes
 
 Unlike in the Python libraries, in C++ there are two different
-molecule objects, `RDKit::ROMol` and `RDKit::RWMol`.  They are both
+molecule classes, `RDKit::ROMol` and `RDKit::RWMol`.  They are both
 declared in GraphMol.h. ROMol (the Read-Only molecule) is used in
-most instances. It can't be edited and therefore can be used as a
-`const` parameter in function calls, which allows the compiler more
-freedom to optimise code.  On those occasions where you will need to
-edit the molecule, you'll need to use the RWMol (Read-Write).
+most instances. It can't be edited.  On those occasions where you will
+need to edit the molecule, you'll need to use the RWMol (Read-Write).
 
 ## Reading and Writing Molecules
 
@@ -131,26 +140,33 @@ to cover most use cases:
 Individual molecules can be constructed using a variety of approaches [(example1)](./C++Examples/example1.cpp):
 
 ```c++
+std::string file_root = getenv( "RDBASE" );
+file_root += "/Docs/Book";
 RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
 
-RDKit::MolSupplier mol_supplier( "data/input.mol" , true );
-RDKit::ROMol *mol2 = mol_supplier.next();
+std::string mol_file = file_root + "/data/input.mol";
+RDKit::ROMOL_SPTR mol2( RDKit::MolFileToMol( mol_file ) );
+std::cout << *mol2 << std::endl;
 
-RDKit::ROMol *mol3 = RDKit::SmilesToMol( "Cc1cccc" );
+RDKit::ROMOL_SPTR mol3( RDKit::SmilesToMol( "Cc1cccc" ) );
 ```
 
-All these return a pointer to an ROMol on success, or 0 (aka Null) on
+All these return a pointer to an ROMol on success, or NULL on
 failure. Obviously, the object must be deleted when finished with to
-prevent memory leaks.
+prevent memory leaks. In the example above, and henceforth in this
+document, the molecules, apart from mol1, are wrapped in shared
+pointers so that the objects are deleted as soon as the shared pointer
+goes out of scope. 
 
-If the SMILES parsing fails, an `RDKit::MolSanitizeException` (derived
+If the molecule can't be sanitized after SMILES parsing, an
+`RDKit::MolSanitizeException` (derived 
 from `std::exception`) is thrown, and an attempt is made to provide
 sensible error messages [(example1)](./C++Examples/example1.cpp):
 
 ```c++
 try {
-   RDKit::ROMol *mol = RDKit::SmilesToMol( "CO(C)C" )
-} catch( std::exception &e ) {
+   RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "CO(C)C" ) );
+} catch( RDKit::MolSanitizeException &e ) {
    // empty catch
 }
 ```
@@ -160,8 +176,8 @@ is greater than permitted` and [(example1)](./C++Examples/example1.cpp)
 
 ```c++
 try {
-   RDKit::ROMol *mol = RDKit::SmilesToMol( "c1cc1" )
-} catch( std::exception &e ) {
+   RDKit::ROMOL_SPTR mol( RDKit::SmilesToMol( "c1cc1" ) );
+} catch( RDKit::MolSanitizeException &e ) {
    // empty catch
 }
 ```
@@ -175,12 +191,15 @@ Groups of molecules are read using a Supplier (for example, an
 [(example2)](./C++Examples/example2.cpp):
 
 ```c++
-RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
-
+RDKit::ROMOL_SPTR mol;
+std::string file_root = getenv( "RDBASE" );
+file_root += "/Docs/Book";
+std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
+bool takeOwnership = true;
+RDKit::SDMolSupplier mol_supplier( sdf_file , takeOwnership );
 while( !mol_supplier.atEnd() ) {
-  mol = mol_supplier.next();
-  std::cout << mol->getNumAtoms() << std::endl;
-  delete mol;
+  mol.reset( mol_supplier.next() );
+  std::cout << mol->getProp<std::string>( "_Name" ) << " has " << mol->getNumAtoms() << " atoms." << std::endl;
 }
 ```
 gives
@@ -194,13 +213,13 @@ gives
 The supplier can be treated as a random-access object [(example2)](./C++Examples/example2.cpp):
 
 ```c++
-RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
-
+RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , takeOwnership );
 for( int i = int( mol_supplier.length() ) - 1 ; i >= 0  ; --i ) {
-  RDKit::ROMol *mol = mol_supplier[i];
-  std::cout << mol->getProp<std::string>( "_Name" ) << " has "
-            << mol->getNumAtoms() << " atoms." << std::endl;
-  delete mol;
+  RDKit::ROMOL_SPTR mol( mol_supplier[i] );
+  if( mol ) {
+    std::cout << mol->getProp<std::string>( "_Name" ) << " has "
+	          << mol->getNumAtoms() << " atoms." << std::endl;
+  }
 }
 ```
 gives
@@ -215,16 +234,16 @@ A good practice is to test each molecule to see if it was correctly
 read before working with it [(example2)](./C++Examples/example2.cpp):
 
 ```c++
-RDKit::SDMolSupplier *mol_supplier = new RDKit::SDMolSupplier( "data/5ht3ligs.sdf" , true );
+bool takeOwnership = true;
+RDKit::SDMolSupplier *mol_supplier = new RDKit::SDMolSupplier( "data/5ht3ligs.sdf" , takeOwnership );
 
 for( int i = int( mol_supplier->length() ) - 1 ; i >= 0 ; --i ) {
-  RDKit::ROMol *mol = (*mol_supplier)[i];
+  RDKit::ROMOL_SPTR mol( (*mol_supplier)[i] );
   if( !mol ) {
     continue;
   }
   std::cout << mol->getProp<std::string>( "_Name" ) << " has "
             << mol->getNumAtoms() << " atoms." << std::endl;
-  delete mol;
 }
 ```
 
@@ -234,15 +253,21 @@ of compressed files, using, for example, the `boost::iostreams`
 objects [(example2)](./C++Examples/example2.cpp):
 
 ```c++
+std::string file_root = getenv( "RDBASE" );
+file_root += "/Docs/Book";
 boost::iostreams::filtering_istream ins;
 ins.push( boost::iostreams::gzip_decompressor() );
-ins.push( boost::iostreams::file_source( "data/actives_5ht3.sdf.gz" ) );
-
-RDKit::ForwardSDMolSupplier forward_supplier( &ins , true );
+std::string comp_sdf_file = file_root + "/data/actives_5ht3.sdf.gz";
+ins.push( boost::iostreams::file_source( comp_sdf_file ) );
+// takeOwnership must be false for this, as we don't want the SDWriter trying
+// to delete the boost::iostream
+bool takeOwnership = false;
+RDKit::ForwardSDMolSupplier forward_supplier( &ins , takeOwnership );
 while( !forward_supplier.atEnd() ) {
-  mol = forward_supplier.next();
-  std::cout << mol->getProp<std::string>( "_Name" ) << " has " << mol->getNumAtoms() << " atoms." << std::endl;
-  delete mol;
+  mol.reset( forward_supplier.next() );
+  if( mol ) {
+    std::cout << mol->getProp<std::string>( "_Name" ) << " has " << mol->getNumAtoms() << " atoms." << std::endl;
+  }
 }
 ```
 
@@ -266,7 +291,7 @@ For example, for SMILES [(example3)](./C++Examples/example3.cpp):
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 .
 .
-RDKit::ROMol *mol = RDKit::MolFromMolFile( "data/chiral.mol" );
+RDKit::ROMOL_SPTR mol( RDKit::MolFromMolFile( "data/chiral.mol" ) );
 std::cout << RDKit::MolToSmiles( *mol ) << std::endl;
 ```
 gives
@@ -275,26 +300,27 @@ CC(O)c1ccccc1
 ```
 and [(example3)](./C++Examples/example3.cpp)
 ```c++
-std::cout << RDKit::MolToSmiles( *mol , true ) << std::endl;
+bool isomeric = true;
+std::cout << RDKit::MolToSmiles( *mol , isomeric ) << std::endl;
 ```
 produces
 ```
 C[C@H](O)c1ccccc1
 ```
-where the `true` in the second function call specifies that isomeric
+where the `isomeric` in the second function call specifies that isomeric
 SMILES should be produced.
 Note that the SMILES produced is canonical, so the output should be
 the same no matter how a particular molecule is input.  For example
 [(example3)](./C++Examples/example3.cpp)
 
 ```c++
-RDKit::ROMol *mol1 = RDKit::SmilesToMol( "C1=CC=CN=C1" );
+RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "C1=CC=CN=C1" ) );
 std::cout << RDKit::MolToSmiles( *mol1 ) << std::endl;
 
-RDKit::ROMol *mol2 = RDKit::SmilesToMol( "c1cccnc1" );
+RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "c1cccnc1" ) );
 std::cout << RDKit::MolToSmiles( *mol2 ) << std::endl;
 
-RDKit::ROMol *mol3 = RDKit::SmilesToMol( "n1ccccc1" );
+RDKit::ROMOL_SPTR mol3( RDKit::SmilesToMol( "n1ccccc1" ) );
 std::cout << RDKit::MolToSmiles( *mol3 ) << std::endl;
 ```
 
@@ -308,7 +334,7 @@ MolOps.h [(example3)](./C++Examples/example3.cpp):
 #include <GraphMol/MolOps.h>
 .
 .
-RDKit::RWMol *mol4 = new RDKit::RWMol( *mol );
+RDKit::RWMOL_SPTR mol4( new RDKit::RWMol( *mol ) );
 RDKit::MolOps::Kekulize( *mol4 );
 std::cout << RDKit::MolToSmiles( *mol4 ) << std::endl;
 ```
@@ -317,14 +343,14 @@ gives
 CC(O)C1=CC=CC=C1
 ```
 
-Note: as of Aug 2008, the SMILES provided when one
+Note: as of March 2017, the SMILES provided when one
 requests kekuleSmiles are not canonical. The limitation is not in the
 SMILES generation, but in the kekulization itself.
 
 MDL Mol blocks are also available [(example3)](./C++Examples/example3.cpp):
 
 ```c++
-RDKit::ROMol *mol1 = RDKit::SmilesToMol( "C1=CC=CN=C1" );
+RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "C1=CC=CN=C1" ) );
 std::cout << RDKit::MolToMolBlock( *mol1 ) << std::endl;
 ```
 gives
@@ -373,7 +399,8 @@ M  END
 ```
 
 Note that setProp, which is a general function, can be called on an
-ROMol as well as an RWMol, which came as a surprise to me.
+ROMol as well as an RWMol, which came as a surprise to me as I had
+assumed a read-only molecule would be less changeable than that.
 
 In order for atom or bond stereochemistry to be recognised correctly by most
 software, it's essential that the Mol block have atomic coordinates.
@@ -387,7 +414,7 @@ function in the RDDepict namespace and declared in RDDepictor.h
 #include <GraphMol/Depictor/RDDepictor.h>
 .
 .
-RDKit::ROMol *mol1 = RDKit::SmilesToMol( "C1CCC1" );
+RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "C1CCC1" ) );
 RDDepict::compute2DCoords( *mol1 );
 std::cout << RDKit::MolToMolBlock( *mol1 ) << std::endl;
 ```
@@ -415,7 +442,7 @@ Or you can add 3D coordinates by embedding the molecule [(example4)](./C++Exampl
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
 .
 .
-RDKit::ROMol *mol2 = RDKit::SmilesToMol( "C1CCC1" );
+RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "C1CCC1" ) );
 mol2->setProp( "_Name" , "cyclobutane3D" );
 RDKit::DGeomHelpers::EmbedMolecule( *mol2 );
 RDKit::MMFF::MMFFOptimizeMolecule( *mol2 , 1000 , "MMFF94s" );
@@ -445,10 +472,10 @@ To get good 3D conformations, it's almost always a good idea to add
 hydrogens to the molecule first [(example4)](./C++Examples/example4.cpp):
 
 ```c++
-RDKit::ROMol *mol3 = RDKit::MolOps::addHs( *mol2 );
+RDKit::ROMOL_SPTR mol3( RDKit::MolOps::addHs( *mol2 ) );
 RDKit::MMFF::MMFFOptimizeMolecule( *mol3 , 1000 , "MMFF94s" );
 
-RDKit::RWMol *mol4 = new RDKit::RWMol( *mol3 );
+RDKit::RWMOL_SPTR mol4( new RDKit::RWMol( *mol3 ) );
 RDKit::MolOps::addHs( *mol4 );
 ```
 
@@ -469,7 +496,7 @@ Once the optimisation is complete, the hydrogens can be removed
 again [(example4)](./C++Examples/example4.cpp):
 
 ```c++
-RDKit::ROMol *mol5 = RDKit::MolOps::removeHs( *mol3 );
+RDKit::ROMOL_SPTR mol5( RDKit::MolOps::removeHs( *mol3 );
 RDKit::MolOps::removeHs( *mol4 );
 ```
 
@@ -496,14 +523,18 @@ concrete subclass of the `MolWriter` class [(example5)](./C++Examples/example5.c
 #include <GraphMol/FileParsers/MolWriters.h>
 .
 .
-RDKit::ROMol *mol;
-RDKit::SDMolSupplier mol_supplier( "data/5ht3ligs.sdf" , true );
-std::vector<RDKit::ROMol *> mols;
+std::string file_root = getenv( "RDBASE" );
+file_root += "/Docs/Book";
+
+std::string sdf_file = file_root + "/data/5ht3ligs.sdf";
+bool takeOwnership = true;
+RDKit::SDMolSupplier mol_supplier( sdf_file , takeOwnership );
+std::vector<RDKit::ROMOL_SPTR> mols;
 while( !mol_supplier.atEnd() ) {
-   mol = mol_supplier.next();
-   if( mol ) {
-     mols.push_back( mol );
-   }
+  RDKit::ROMOL_SPTR mol( mol_supplier.next() );
+  if( mol ) {
+    mols.push_back( mol );
+  }
 }
 
 RDKit::PDBWriter pdb_writer( "data/5ht3ligs.pdb" );
@@ -521,12 +552,13 @@ string in memory [(example5)](./C++Examples/example5.cpp):
 .
 .
 std::ostringstream oss;
-RDKit::SDWriter *sdf_writer = new RDKit::SDWriter( &oss , false );
-// Note that this requires a C++11 compliant compiler
-for( auto it = mols.begin() ; it != mols.end() ; ++it ) {
+// takeOwnership must be false for this, as we don't want the SDWriter trying
+// to delete the std::ostringstream.
+takeOwnership = false;
+boost::shared_ptr<RDKit::SDWriter> sdf_writer( new RDKit::SDWriter( &oss , takeOwnership ) );
+for( std::vector<RDKit::ROMOL_SPTR>::iterator it = mols.begin() ; it != mols.end() ; ++it ) {
   sdf_writer->write( *(*it) );
 }
-
 std::cout << oss.str() << std::endl;
 ```
 
@@ -555,8 +587,21 @@ gives
 ```
 6 8 6
 ```
-An alternative method uses the fact that atoms and bonds can be
-selected by index number [(example6)](./C++Examples/example6.cpp):
+As an alternative, there are AtomIterators and
+BondIterators[(example6)](./C++Examples/example6.cpp):
+```c++
+#include <GraphMol/AtomIterators.h>
+.
+.
+for( RDKit::ROMol::AtomIterator ai = mol->beginAtoms() ; ai != mol->endAtoms() ; ++ai) {
+  std::cout << (*ai)->getAtomicNum() << " ";
+}
+std::cout << std::endl;   
+```
+which is functionally equivalent to the above.
+Finally, there's a method that uses the fact that atoms and bonds
+can be selected by index number
+[(example6)](./C++Examples/example6.cpp):
 ```c++
 for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
   const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
@@ -585,7 +630,7 @@ gives
 ```
 
 A bond can be specified by the atoms at its ends, with
-a zero pointer being returned if there isn't one [(example6)](./C++Examples/example6.cpp):
+a NULL pointer being returned if there isn't one [(example6)](./C++Examples/example6.cpp):
 ```c++
 RDKit::ROMOL_SPTR mol2( RDKit::SmilesToMol( "C1OC1Cl" ) );
 const RDKit::Bond *bond = mol2->getBondBetweenAtoms( 0 , 1 );
@@ -931,7 +976,20 @@ values.  Setting the random number seed to other than the default -1
 ensures that the same conformations are produced each time the code is
 run.  This is convenient when testing to ensure reproducibility of
 results but disguises the inherently non-deterministic nature of the
-algorithm.
+algorithm - with different random number seeds, you will most likely
+obtain different conformation sets due to the use of random starting
+points for the geometry initialisation.
+
+Including lots of default parameters just to alter the 2 at the end is
+a tad tedious, so to make it easier and clearer, there is a parameter
+class:
+[(example11.cpp)](./C++Examples/example11.cpp):
+```c++
+RDKit::DGeomHelpers::EmbedParameters params(RDKit::DGeomHelpers::ETKDG);
+params.randomSeed = true;
+RDKit::DGeomHelpers::EmbedMolecule( *mol2 , params );
+```
+which is functionally equivalent to the first version.
 
 The RDKit also has an implementation of the MMFF94 force field
 available [[4]](#mmff1), [[5]](#mmff2), [[6]](#mmff3),
@@ -965,17 +1023,15 @@ RDKit::INT_VECT mol1_cids = RDKit::DGeomHelpers::EmbedMultipleConfs( *mol1 , 10 
 std::cout << "Number of conformations : " << mol1_cids.size() << std::endl;
 
 RDKit::INT_VECT mol2_cids;
-RDKit::DGeomHelpers::EmbedMultipleConfs( *mol2 , mol2_cids , 20 , 1 , 30 , 1234 ,
-                                         true , false , 2.0 , true , 1 , -1.0 , 
-                                         static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
-                                         1e-3 , false , true , true , true );
+int numConfs = 20;
+RDKit::DGeomHelpers::EmbedMultipleConfs( *mol2 , mol2_cids , numConfs , params );
 std::cout << "Number of conformations : " << mol2_cids.size()
           << std::endl;
 ```
 The conformer ids are returned in `mol1_cids` and `mol2_cids` and
 there are two overloaded functions with different ways of supplying
-the information.  As before, the CSD-based method is invoked by the
-last two `true` parameters, and in the example above the default
+the information.  As before, the CSD-based method is invoked by
+EmbedParameters object, and in the example above the default
 number of conformations to be produced has been changed from 10 to 20.
 The conformers so generated can be aligned
 to each other and the RMS values calculated
@@ -995,7 +1051,9 @@ RDKit::MolAlign::alignMolConformers( *mol2 ,
 The RMS values for the overlays will be fed into rms_list on return.
 Note the somewhat inconvenient issue that `EmbedMultipleConfs` returns
 a vector of `ints` for the conformer ids, but `alignMolConformers`
-requires a vector of `unsigned ints`. The first vector of `unsigned
+requires a vector of `unsigned ints`. The reason for this is that
+`EmbedMultipleConfs` uses -1 to denote a failed embedding.  The first
+vector of `unsigned 
 ints` in the `alignMolConformers` declaration is atom ids, and allows
 the alignment to be performed on just a subset of atoms which can be
 convenient for overlaying a core and seeing how the other bits of the
@@ -1003,7 +1061,7 @@ molecule varied in the different conformations.
 
 There is no C++ equivalent to the Python function
 `AllChem.GetConformerRMS()` to compute the RMS between two specific
-conformers (e.g. 1 and 9).
+conformers (e.g. 1 and 9) although it is coming.
 
 *Disclaimer/Warning*: Conformation generation is a difficult and
 subtle task. The original, default, 2D->3D conversion provided with
@@ -1034,7 +1092,7 @@ std::cout << RDKit::MolToSmiles( mol2 ) << std::endl;
 Note that the string is in binary format and will appear
 as gibberish if printed to a screen. The RDKit pickle format is fairly
 compact and it is much, much faster to build a molecule from a pickle
-than from a Mol file or SMILES string, so storing as pickles molecules
+than from a Mol file or SMILES string, so storing pickles of molecules
 you will be working with repeatedly can be a good idea:
 [(example12.cpp)](./C++Examples/example12.cpp):
 ```c++
@@ -1073,7 +1131,7 @@ std::cout << "Read " << read_cnt << " molecules." << std::endl;
 ```
 However, currently the pickling process does not preserve and
 properties attached to the molecule, which included the molecule name
-(property "_Name"). This is likely to change in 2017.
+(property "_Name"). This will change in the 2017.03 release.
 
 ### Drawing Molecules
 The RDKit has some built-in functionality for drawing molecules, found
@@ -1110,7 +1168,9 @@ cairo_drawer.finishDrawing();
 cairo_drawer.writeDrawingText("cdk_mol1.png");
 ```
 The Python wrapper includes the function `Chem.MolsToGridImage`.
-There is, as yet, no equivalent in the C++ version.
+There is, as yet, no equivalent in the C++ version although
+`test11DrawMolGrid` in `$RDBASE/Code/GraphMol/MolDraw2D/test1.cpp`
+shows that it can be achieved relatively simply.
 
 ### Substructure Searching
 

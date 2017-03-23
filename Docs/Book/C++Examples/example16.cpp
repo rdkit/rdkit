@@ -10,7 +10,7 @@
 
 int main( int argc , char **argv ) {
 
-  RDKit::RWMol *patt1 = RDKit::SmartsToMol( "[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]" );
+  RDKit::RWMOL_SPTR patt1( RDKit::SmartsToMol( "[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]" ) );
   std::map<int,unsigned int> ind_map;
   RDKit::ROMol::VERTEX_ITER it , end;
   boost::tie( it , end ) = patt1->getVertices();
@@ -31,7 +31,7 @@ int main( int argc , char **argv ) {
   }
   std::cout << std::endl;
 
-  RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1cccc(C)c1C(C)=NC" );
+  RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "Cc1cccc(C)c1C(C)=NC" ) );
   std::vector<RDKit::MatchVectType> hits_vect;
   if( RDKit::SubstructMatch( *mol1 , *patt1 , hits_vect ) ) {
     for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {

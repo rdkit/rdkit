@@ -17,9 +17,9 @@ int main( int argc , char **argv ) {
   RDDepict::compute2DCoords( *mol , static_cast<RDGeom::INT_POINT2D_MAP *>( 0 ) ,
 			     true );
   
-  RDKit::ROMol *templ = RDKit::SmilesToMol( "c1nccc2n1ccc2" );
+  RDKit::ROMOL_SPTR templ( RDKit::SmilesToMol( "c1nccc2n1ccc2" ) );
   RDDepict::compute2DCoords( *templ );
-  RDKit::ROMol *mol1 = RDKit::SmilesToMol( "c1cccc2ncn3cccc3c21" );
+  RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "c1cccc2ncn3cccc3c21" ) );
   
   RDKit::MatchVectType matchVect;
   if( RDKit::SubstructMatch( *mol1 , *templ , matchVect ) ) {
