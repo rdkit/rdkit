@@ -13,6 +13,7 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import Randomize
+import random
 
 
 def MolBlockToSmiles(mb):
@@ -21,17 +22,20 @@ def MolBlockToSmiles(mb):
 class TestCase(unittest.TestCase):
 
   def test1(self):
-    smiles = ["C[N+](C)(C)C", "CC(=O)[O-]", "[NH3+]CC(=O)[O-]",'[Cl-].[Cl-].[Mg+2]']
+    random.seed(42)
+    smiles = ["C[N+](C)(C)C", "CC(=O)[O-]", "[NH3+]CC(=O)[O-]",'[Cl-].[Cl-].[Mg+2]','[O-][O-]','[O-]C[O-]','[Na+].[Na+].[O-2]']
     msg = "Could not randomize charged mol %s"
-    for smi in smiles:
-      mb = Chem.MolToMolBlock(Chem.MolFromSmiles(smi))
-      rmb = Randomize.RandomizeMolBlock(mb)
-      #Test if fails conversion
-      self.assertNotEqual(None,Chem.MolFromMolBlock(rmb), msg=msg % (smi))
-      #Test if canonical Smile is same
-      self.assertEqual(MolBlockToSmiles(mb),MolBlockToSmiles(mb),msg=msg % (smi))
+    for i in range(10):
+      for smi in smiles:
+        mb = Chem.MolToMolBlock(Chem.MolFromSmiles(smi))
+        rmb = Randomize.RandomizeMolBlock(mb)
+        #Test if fails conversion
+        self.assertNotEqual(None,Chem.MolFromMolBlock(rmb), msg=msg % (smi))
+        #Test if canonical Smile is same
+        self.assertEqual(MolBlockToSmiles(mb),MolBlockToSmiles(mb),msg=msg % (smi))
 
   def test2(self):
+    random.seed(42)
     smiles = ['CON', 'c1ccccn1', 'C/C=C/F']
     msg = "\nRef: %s\n   : %s"
     nReps = 10
