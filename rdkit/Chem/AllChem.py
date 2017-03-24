@@ -261,12 +261,12 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
       else:
         yield [item]
 
-  ProductEduct = namedtuple('ProductEduct', 'products,educts')
+  ProductReactant = namedtuple('ProductReactant', 'products,reactant')
   for chains in _combiEnumerator(sidechainSets):
     prodSets = reaction.RunReactants(chains)
     for prods in prodSets:
       if returnReactants:
-        yield ProductEduct(prods, chains)
+        yield ProductReactant(prods, chains)
       else:
         yield prods
 
