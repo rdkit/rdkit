@@ -121,7 +121,7 @@ def GetNumUnspecifiedChiralCenters(mol):
   unspeccenters = 0
   unspecificcenters = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
   for center in unspecificcenters:
-    if center[1] = '?':
+    if center[1] == '?':
       unspeccenters += 1
   return unspeccenters
 
