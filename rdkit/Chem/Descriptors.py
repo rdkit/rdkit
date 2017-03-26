@@ -106,8 +106,7 @@ def GetNumSpecifiedChiralCenters(mol):
   1
   
   """
-  specificcenters = Chem.FindMolChiralCenters(mol)
-  return len(specificcenters)
+  return len(Chem.FindMolChiralCenters(mol))
 
 def GetNumUnspecifiedChiralCenters(mol):
   """Number of unspecified chiral centers in a molecule
@@ -116,9 +115,9 @@ def GetNumUnspecifiedChiralCenters(mol):
   
   """
   
-  matches = sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) 
+  return sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) 
               if x[1] == '?')
-  return matches
+ 
 
 
 def NumValenceElectrons(mol):
