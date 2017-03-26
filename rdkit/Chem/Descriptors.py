@@ -102,7 +102,7 @@ def GetNumChiralCenters(mol):
 
 def GetNumSpecifiedChiralCenters(mol):
   """Number of specified chiral centers in a molecule
-  >>>>  GetNumSpecifiedChiralCenters(Chem.MolFromSmiles('C[C@H](N)O'))
+  >>>> GetNumSpecifiedChiralCenters(Chem.MolFromSmiles('C[C@H](N)O'))
   1
   
   """
