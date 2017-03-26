@@ -90,9 +90,9 @@ ExactMolWt.__doc__ = """The exact molecular weight of the molecule
 """
 def GetNumChiralCenters(mol):
   """The number of chiral centers in a molecule
-  >>>> GetNumChiralCenters(Chem.MolFromSmiles('CC(N)O'))
+  >>> GetNumChiralCenters(Chem.MolFromSmiles('CC(N)O'))
   1
-  >>>> GetNumChiralCenters(Chem.MolFromSmiles('CC(Br)C(N)O'))
+  >>> GetNumChiralCenters(Chem.MolFromSmiles('CC(Br)C(N)O'))
   2
   
   """
@@ -102,7 +102,7 @@ def GetNumChiralCenters(mol):
 
 def GetNumSpecifiedChiralCenters(mol):
   """Number of specified chiral centers in a molecule
-  >>>> GetNumSpecifiedChiralCenters(Chem.MolFromSmiles('C[C@H](N)O'))
+  >>> GetNumSpecifiedChiralCenters(Chem.MolFromSmiles('C[C@H](N)O'))
   1
   
   """
@@ -110,7 +110,7 @@ def GetNumSpecifiedChiralCenters(mol):
 
 def GetNumUnspecifiedChiralCenters(mol):
   """Number of unspecified chiral centers in a molecule
-  >>>> GetNumUnspecifiedChiralCenters(Chem.MolFromSmiles('CC(N)O'))
+  >>> GetNumUnspecifiedChiralCenters(Chem.MolFromSmiles('CC(N)O'))
   1
   
   """
