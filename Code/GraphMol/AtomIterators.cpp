@@ -81,8 +81,6 @@ int AtomIterator_<Atom_, Mol_>::operator-(
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
   PRECONDITION(_mol != NULL, "no molecule");
-  if (_max > _mol->getNumAtoms())
-    throw std::runtime_error("invalid AtomIterator dereferenced");
   RANGE_CHECK(0, _pos, _max - 1);
   return (*_mol)[_pos].get();
 }
@@ -90,8 +88,6 @@ Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator[](const int which) const {
   PRECONDITION(_mol != NULL, "no molecule");
-  if (_max > _mol->getNumAtoms())
-    throw std::runtime_error("invalid AtomIterator access");
   RANGE_CHECK(0, which, _max - 1);
   return (*_mol)[which].get();
 }

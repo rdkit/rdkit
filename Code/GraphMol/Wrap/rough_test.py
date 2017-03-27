@@ -4229,6 +4229,13 @@ CAS<~>
     mol.RemoveAtom(atom.GetIdx())
     self.assertRaises(RuntimeError,next,ats)
 
+    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.RWMol(mol)
+    bonds = iter(mol.GetBonds())
+    bond = next(bonds)
+    mol.RemoveBond(bond.GetBeginAtomIdx(),bond.GetEndAtomIdx())
+    self.assertRaises(RuntimeError,next,bonds)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
