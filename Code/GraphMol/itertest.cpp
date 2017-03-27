@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -373,48 +374,12 @@ void test8() {
       TEST_ASSERT((*queryIt)->getIdx() == 1);
       nSeen++;
     }
-    TEST_ASSERT(nSeen == 1);
+    TEST_ASSERT(nSeen = 1);
     delete m;
     delete q;
   }
 
   BOOST_LOG(rdInfoLog) << "test8 done" << endl;
-};
-
-void testGithub1366() {
-  {
-    string smi = "*C*";
-    RWMol *m = SmilesToMol(smi);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    {
-      RWMol::AtomIterator iter = m->beginAtoms();
-      TEST_ASSERT((*iter)->getAtomicNum() == 0);
-      ++iter;
-      TEST_ASSERT((*iter)->getAtomicNum() == 6);
-      ++iter;
-      TEST_ASSERT((*iter)->getAtomicNum() == 0);
-      ++iter;
-      TEST_ASSERT(iter == m->endAtoms());
-    }
-
-    {
-      RWMol::AtomIterator iter = m->beginAtoms();
-      TEST_ASSERT((*iter)->getAtomicNum() == 0);
-      m->removeAtom((*iter)->getIdx());
-      // at this point the iterator is no longer valid.
-      bool ok = false;
-      try {
-        *iter;
-      } catch (const std::runtime_error &e) {
-        ok = true;
-      }
-      TEST_ASSERT(ok);
-    }
-    delete m;
-  }
-
-  BOOST_LOG(rdInfoLog) << "testGithub1366 done" << endl;
 };
 
 int main() {
@@ -428,7 +393,6 @@ int main() {
   test7();
   test8();
   testIssue263();
-  testGithub1366();
 
   return 0;
 }

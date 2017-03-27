@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -80,18 +81,12 @@ int AtomIterator_<Atom_, Mol_>::operator-(
 // dereference
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator*() const {
-  PRECONDITION(_mol != NULL, "no molecule");
-  if (_max > _mol->getNumAtoms())
-    throw std::runtime_error("invalid AtomIterator dereferenced");
   RANGE_CHECK(0, _pos, _max - 1);
   return (*_mol)[_pos].get();
 }
 // random access
 template <class Atom_, class Mol_>
 Atom_ *AtomIterator_<Atom_, Mol_>::operator[](const int which) const {
-  PRECONDITION(_mol != NULL, "no molecule");
-  if (_max > _mol->getNumAtoms())
-    throw std::runtime_error("invalid AtomIterator access");
   RANGE_CHECK(0, which, _max - 1);
   return (*_mol)[which].get();
 }
@@ -211,13 +206,12 @@ bool HeteroatomIterator_<Atom_, Mol_>::operator!=(const ThisType &other) const {
 
 template <class Atom_, class Mol_>
 Atom_ *HeteroatomIterator_<Atom_, Mol_>::operator*() const {
-  PRECONDITION(_mol != NULL, "no molecule");
   return (*_mol)[_pos].get();
 }
 // pre-increment
 template <class Atom_, class Mol_>
-HeteroatomIterator_<Atom_, Mol_>
-    &HeteroatomIterator_<Atom_, Mol_>::operator++() {
+HeteroatomIterator_<Atom_, Mol_> &HeteroatomIterator_<Atom_, Mol_>::
+operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -230,8 +224,8 @@ HeteroatomIterator_<Atom_, Mol_> HeteroatomIterator_<Atom_, Mol_>::operator++(
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-HeteroatomIterator_<Atom_, Mol_>
-    &HeteroatomIterator_<Atom_, Mol_>::operator--() {
+HeteroatomIterator_<Atom_, Mol_> &HeteroatomIterator_<Atom_, Mol_>::
+operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
@@ -295,8 +289,8 @@ AromaticAtomIterator_<Atom_, Mol_>::AromaticAtomIterator_(
 }
 
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_>
-    &AromaticAtomIterator_<Atom_, Mol_>::operator=(const ThisType &other) {
+AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
+operator=(const ThisType &other) {
   _mol = other._mol;
   _end = other._end;
   _pos = other._pos;
@@ -316,13 +310,12 @@ bool AromaticAtomIterator_<Atom_, Mol_>::operator!=(
 
 template <class Atom_, class Mol_>
 Atom_ *AromaticAtomIterator_<Atom_, Mol_>::operator*() const {
-  PRECONDITION(_mol != NULL, "no molecule");
   return (*_mol)[_pos].get();
 }
 // pre-increment
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_>
-    &AromaticAtomIterator_<Atom_, Mol_>::operator++() {
+AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
+operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -335,8 +328,8 @@ operator++(int) {
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-AromaticAtomIterator_<Atom_, Mol_>
-    &AromaticAtomIterator_<Atom_, Mol_>::operator--() {
+AromaticAtomIterator_<Atom_, Mol_> &AromaticAtomIterator_<Atom_, Mol_>::
+operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
@@ -555,8 +548,8 @@ Atom_ *MatchingAtomIterator_<Atom_, Mol_>::operator*() const {
 }
 // pre-increment
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_>
-    &MatchingAtomIterator_<Atom_, Mol_>::operator++() {
+MatchingAtomIterator_<Atom_, Mol_> &MatchingAtomIterator_<Atom_, Mol_>::
+operator++() {
   _pos = _findNext(_pos + 1);
   return *this;
 }
@@ -569,8 +562,8 @@ operator++(int) {
 }
 // pre-decrement
 template <class Atom_, class Mol_>
-MatchingAtomIterator_<Atom_, Mol_>
-    &MatchingAtomIterator_<Atom_, Mol_>::operator--() {
+MatchingAtomIterator_<Atom_, Mol_> &MatchingAtomIterator_<Atom_, Mol_>::
+operator--() {
   _pos = _findPrev(_pos - 1);
   return *this;
 }
