@@ -139,7 +139,7 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
                                     std::vector<unsigned int> *atoms = NULL);
 
 extern const std::string NumAtomStereoCentersVersion;
-//! calculates the number of stereo atom stereo centers
+//! calculates the total number of atom stereo centers
 unsigned numAtomStereoCenters(const ROMol &mol);
 
 //! calculates the number of unspecified stereo atom stereo centers
