@@ -17,6 +17,7 @@
 ## Bug Fixes:
 
 ## Deprecated code (to be removed in a future release):
+- rdkit.Chem.MCS: please use rdkit.Chem.rdFMCS instead
 
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
