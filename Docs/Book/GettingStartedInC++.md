@@ -6,7 +6,8 @@ This document is intended to provide an overview of how one can use
 the RDKit functionality from C++. Like the 'Getting Started with the
 RDKit in Python' it is not comprehensive and it's not a manual.  It is
 modelled very closely on the Python version, and most of the text will
-be similar if not identical.
+be similar if not identical.  It is a work-in-progress, and will be
+added to over the coming months.
 
 ## Building and Running C++ RDKit Programs
 
@@ -918,7 +919,7 @@ incorporated in December 2016.
 ### Working with 3D Molecules
 
 The RDKit can generate conformations for molecules using two different
-methods.  The original method used distance geometry [[1]](#blaney).
+methods.  The original method uses distance geometry [[1]](#blaney).
 The algorithm followed is:
 
 1. The molecule's distance bounds matrix is calculated based on the
@@ -946,7 +947,9 @@ Landrum [[3]](#riniker2) which uses torsion angle preferences from the
 Cambridge Structural Database (CSD) to correct the conformers after
 distance geometry has been used to generate them.  With this method,
 there should be no need to use a minimisation step to clean up the
-structures.
+structures; indeed, it is often undesirable as it may move the
+torsions away from the CSD-based distributions, somewhat negating the
+point.
 
 The full process of embedding and optimizing a molecule is easier than
 all the above verbiage makes it sound
@@ -963,33 +966,20 @@ RDKit::DGeomHelpers::EmbedMolecule( *mol1 , 0 , 1234 );
 RDKit::UFF::UFFOptimizeMolecule( *mol1 );
 
 // new Riniker and Landrum CSD-based method
-RDKit::ROMOL_SPTR mol2( RDKit::MolOps::addHs( *mol ) );
-RDKit::DGeomHelpers::EmbedMolecule( *mol2 , 0 , 1234 , true , false ,
-                                    2.0 , true , 1 ,
-                                    static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
-                                    1e-3 , false , true , true , true );
-```
-In the second call to `EmbedMolecule`, it is the last two `true`
-parameters that enforce the second embedding method.  Apart from the
-random number seed (1234) the other parameters are set to default
-values.  Setting the random number seed to other than the default -1
-ensures that the same conformations are produced each time the code is
-run.  This is convenient when testing to ensure reproducibility of
-results but disguises the inherently non-deterministic nature of the
-algorithm - with different random number seeds, you will most likely
-obtain different conformation sets due to the use of random starting
-points for the geometry initialisation.
-
-Including lots of default parameters just to alter the 2 at the end is
-a tad tedious, so to make it easier and clearer, there is a parameter
-class:
-[(example11.cpp)](./C++Examples/example11.cpp):
-```c++
-RDKit::DGeomHelpers::EmbedParameters params(RDKit::DGeomHelpers::ETKDG);
-params.randomSeed = true;
+// using the parameters class
+RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDG );
+params.randomSeed = 1234;
 RDKit::DGeomHelpers::EmbedMolecule( *mol2 , params );
 ```
-which is functionally equivalent to the first version.
+The Riniker and Landrum method has a number of parameters that may be
+altered for various reasons beyond the scope of this document. One
+that you may want to alter is the random number seed; setting the
+random number seed to other than the default -1 ensures that the same
+conformations are produced each time the code is run.  This is
+convenient when testing to ensure reproducibility of results.  To make
+it easier to vary the parameters, there is the EmbedParameters class
+which is initialised to the default values on construction, and whose
+individual values can be varied as desired.
 
 The RDKit also has an implementation of the MMFF94 force field
 available [[4]](#mmff1), [[5]](#mmff2), [[6]](#mmff3),
@@ -1062,6 +1052,15 @@ molecule varied in the different conformations.
 There is no C++ equivalent to the Python function
 `AllChem.GetConformerRMS()` to compute the RMS between two specific
 conformers (e.g. 1 and 9) although it is coming.
+
+It is important to remember that unless you specify a random number
+seed, you will not necessarily get the same conformations each time
+you run the embedding on the same molecule, especially if you only
+generate a small number of conformations relative to the number of
+torsions in the structure.  If it's important in your use-case that
+you have a good sampling of the conformations including all the
+low-energy ones, you should be sure to
+specify a large maximum number of conformations.
 
 *Disclaimer/Warning*: Conformation generation is a difficult and
 subtle task. The original, default, 2D->3D conversion provided with

@@ -23,16 +23,9 @@ int main( int main , char **argv ) {
   RDKit::UFF::UFFOptimizeMolecule( *mol1 );
   
   // new Riniker and Landrum CSD-based method
-  RDKit::ROMOL_SPTR mol2( RDKit::MolOps::addHs( *mol ) );
-  RDKit::DGeomHelpers::EmbedMolecule( *mol2 , 0 , 1234 , true , false ,
-				      2.0 , true , 1 ,
-				      static_cast<const std::map<int,RDGeom::Point3D> *> ( 0 ) ,
-				      1e-3 , false , true , true , true );
-  RDKit::MMFF::MMFFOptimizeMolecule( *mol2 , 1000 , "MMFF94s" );
-
   // using the parameters class
-  RDKit::DGeomHelpers::EmbedParameters params(RDKit::DGeomHelpers::ETKDG);
-  params.randomSeed = true;
+  RDKit::DGeomHelpers::EmbedParameters params( RDKit::DGeomHelpers::ETKDG );
+  params.randomSeed = 1234;
   RDKit::DGeomHelpers::EmbedMolecule( *mol2 , params );
   
   // Multiple conformations

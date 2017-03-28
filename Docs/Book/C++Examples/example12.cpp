@@ -22,7 +22,7 @@ int main( int argc , char **argv ) {
   // writing to pickle file
   std::string smi_file = getenv("RDBASE");
   smi_file += "/Code/GraphMol/test_data/canonSmiles.long.smi";
-  std::string pkl_name = "canonSmiles.long.pkl";
+  std::string pkl_name = "canonSmiles.long.bin";
   
   // tab-delimited file, SMILES in column 0, name in 1, no title line
   RDKit::SmilesMolSupplier suppl( smi_file , "\t" , 0 , 1 , false );
