@@ -4221,7 +4221,20 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(0).GetHybridization().name,'SP3')
     self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name,'S')
 
+  def testGithub1366(self):
+    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.RWMol(mol)
+    ats = iter(mol.GetAtoms())
+    atom = next(ats)
+    mol.RemoveAtom(atom.GetIdx())
+    self.assertRaises(RuntimeError,next,ats)
 
+    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.RWMol(mol)
+    bonds = iter(mol.GetBonds())
+    bond = next(bonds)
+    mol.RemoveBond(bond.GetBeginAtomIdx(),bond.GetEndAtomIdx())
+    self.assertRaises(RuntimeError,next,bonds)
 
 
 if __name__ == '__main__':
