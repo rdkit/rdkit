@@ -1139,6 +1139,22 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
 
+  python::scope().attr("_CalcNumAtomStereoCenters_version") =
+      RDKit::Descriptors::NumAtomStereoCentersVersion;
+  docString =
+      "Returns the total number of atomic stereocenters (specified and "
+      "unspecified)";
+  python::def("CalcNumAtomStereoCenters",
+              RDKit::Descriptors::numAtomStereoCenters, (python::arg("mol")),
+              docString.c_str());
+
+  python::scope().attr("_CalcNumUnspecifiedAtomStereoCenters_version") =
+      RDKit::Descriptors::NumUnspecifiedAtomStereoCentersVersion;
+  docString = "Returns the number of unspecified atomic stereocenters";
+  python::def("CalcNumUnspecifiedAtomStereoCenters",
+              RDKit::Descriptors::numUnspecifiedAtomStereoCenters,
+              (python::arg("mol")), docString.c_str());
+
   docString = "Property computation class stored in the property registry.\n"
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
