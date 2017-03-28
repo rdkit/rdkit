@@ -445,6 +445,34 @@ class TestCase(unittest.TestCase):
     query = rdMD.MakePropertyRangeQuery("exactmw", 1000, 10000)
     self.assertFalse(query.Match(Chem.MolFromSmiles("C")))
 
+  def testNumStereoCenters(self):
+    m = Chem.MolFromSmiles('CC(F)(Cl)[C@H](Cl)Br')
+    self.assertEqual(rdMD.CalcNumAtomStereoCenters(m),2)
+    self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(m),1)
+    # Tests from Berend Huisman:
+    for (smiles, expected) in (("C", 0),
+                          ("c1ccccc1", 0),
+                          ("CC(Cl)Br", 1),
+                          ("CCC(C)C(Cl)Br", 2),
+                          ("CCC(C(Cl)Br)C(F)I", 3),
+                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
+                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3), ):
+      mol = Chem.MolFromSmiles(smiles)
+      actual = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
+      self.assertEqual(rdMD.CalcNumAtomStereoCenters(mol), expected)
+    for (smiles, expected) in (("C", 0),
+                          ("c1ccccc1", 0),
+                          ("CC(Cl)Br", 1),
+                          ("CCC(C)C(Cl)Br", 2),
+                          ("CCC(C(Cl)Br)C(F)I", 3),
+                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
+                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1), ):
+      mol = Chem.MolFromSmiles(smiles)
+      actual = sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) if x[1] == '?')
+      self.assertEqual(actual, expected)
+      self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(mol), expected)
+
+
 
 if __name__ == '__main__':
   unittest.main()
