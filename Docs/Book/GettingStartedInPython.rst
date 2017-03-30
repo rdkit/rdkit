@@ -449,12 +449,23 @@ rdkit.Chem.rdchem.BondType.DOUBLE
 >>> m.GetBondWithIdx(1).GetBondType()
 rdkit.Chem.rdchem.BondType.SINGLE
 
-The bonds are still marked as being aromatic:
+By default, the bonds are still marked as being aromatic:
 
 >>> m.GetBondWithIdx(1).GetIsAromatic()
 True
 
-and can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
+because the flags in the original molecule are not cleared (clearAromaticFlags defaults to False).
+You can explicitly force or decline a clearing of the flags:
+
+>>> m = Chem.MolFromSmiles('c1ccccc1')
+>>> m.GetBondWithIdx(0).GetIsAromatic()
+True
+>>> m1 = Chem.MolFromSmiles('c1ccccc1')
+>>> Chem.Kekulize(m1, clearAromaticFlags=True)
+>>> m1.GetBondWithIdx(0).GetIsAromatic()
+False
+
+Bonds can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
 
 >>> Chem.SanitizeMol(m)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
@@ -562,7 +573,11 @@ MMFF-related methods.
 >>> AllChem.MMFFOptimizeMolecule(m2)
 0
 
-Note the calls to `Chem.AddHs()` in the examples above. By default RDKit molecules do not have H atoms explicity present in the graph, but they are important for getting realistic geometries, so they generally should be added.
+Note the calls to `Chem.AddHs()` in the examples above. By default
+RDKit molecules do not have H atoms explicitly present in the graph,
+but they are important for getting realistic geometries, so they
+generally should be added.  They can always be removed afterwards
+if necessary with a call to `Chem.RemoveHs()`. 
 
 With the RDKit, multiple conformers can also be generated using the two
 different embedding methods. In both cases this is simply a matter of
