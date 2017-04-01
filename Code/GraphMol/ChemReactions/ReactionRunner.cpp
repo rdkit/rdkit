@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -282,11 +281,15 @@ struct ReactantProductAtomMapping {
   std::map<unsigned int, std::vector<unsigned int> > reactProdAtomMap;
   std::map<unsigned int, unsigned int> prodReactAtomMap;
   std::map<unsigned int, unsigned int> prodAtomBondMap;
+  // maps atom map number to a particular
+  // (reactant template, atom id) pair
+  std::map<int, std::pair<unsigned int, unsigned int> >
+      atomMapToReactantAtomMap;
 };
 
 ReactantProductAtomMapping *getAtomMappingsReactantProduct(
-    const MatchVectType &match, const ROMol &reactantTemplate,
-    RWMOL_SPTR product, unsigned numReactAtoms) {
+    const MatchVectType &match, unsigned int reactantIdx,
+    const ROMol &reactantTemplate, RWMOL_SPTR product, unsigned numReactAtoms) {
   ReactantProductAtomMapping *mapping =
       new ReactantProductAtomMapping(numReactAtoms);
   for (unsigned int i = 0; i < match.size(); i++) {
@@ -294,6 +297,9 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     int molAtomMapNumber;
     if (templateAtom->getPropIfPresent(common_properties::molAtomMapNumber,
                                        molAtomMapNumber)) {
+      mapping->atomMapToReactantAtomMap[molAtomMapNumber] =
+          std::make_pair(reactantIdx, match[i].first);
+
       if (product->hasAtomBookmark(molAtomMapNumber)) {
         RWMol::ATOM_PTR_LIST atomIdxs =
             product->getAllAtomsWithBookmark(molAtomMapNumber);
@@ -521,6 +527,17 @@ void addReactantNeighborsToProduct(
             const Bond *origB =
                 reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
             addMissingProductBonds(*origB, product, mapping);
+          } else {
+            // both atoms are in the match.
+            // they are bonded in the reactant (otherwise we wouldn't be here),
+            // but not bonded in the product template (otherwise the bond would
+            // have been added earlier.
+            // If they do not have a bond in the reactant template then set one
+            // here. IF they do have a bond in the reactant template, then we
+            // assume that this is an intentional bond break
+            // this was github #1387
+            if (mapping->atomMapToReactantAtomMap.find)
+              ;
           }
         } else if (mapping->reactProdAtomMap.find(*nbrIdx) !=
                    mapping->reactProdAtomMap.end()) {
@@ -720,6 +737,7 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
 void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
+                              unsigned int reactantIdx,
                               const ROMOL_SPTR reactantTemplate,
                               Conformer *productConf) {
   // start by looping over all matches and marking the reactant atoms that
@@ -728,8 +746,9 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // particular product (or, perhaps, not in any product)
   // At the same time we'll set up a map between the indices of those
   // atoms and their index in the product.
-  ReactantProductAtomMapping *mapping = getAtomMappingsReactantProduct(
-      match, *reactantTemplate, product, reactantSptr->getNumAtoms());
+  ReactantProductAtomMapping *mapping =
+      getAtomMappingsReactantProduct(match, reactantIdx, *reactantTemplate,
+                                     product, reactantSptr->getNumAtoms());
 
   boost::dynamic_bitset<> visitedAtoms(reactantSptr->getNumAtoms());
 
@@ -825,7 +844,8 @@ MOL_SPTR_VECT generateOneProductSet(
     for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), *iter, conf);
+                               reactantsMatch.at(reactantId), reactantId, *iter,
+                               conf);
     }
 
     if (doConfs) {
