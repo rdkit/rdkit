@@ -9,9 +9,13 @@
 Brian Cole, David Cosgrove, Berend Huisman, Peter Gedeck, 'i-tub',
 Jan Holst Jensen, Brian Kelley, Rich Lewis, Brian Mack, Eloy Felix Manzanares,
 Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain, Paolo Tosco,
-Riccardo Vianello, Hsiao Yi 
+Riccardo Vianello, Hsiao Yi
 
 ## Highlights:
+  - It's now possible (though not the default) to pickle molecule properties
+  with the molecule
+  - There's a new, and still in development, "Getting started in C++" document.
+  - A lot of the Python code has been cleaned up
 
 ## New Features and Enhancements:
   - Add removeHs option to MolFromSmiles()
@@ -108,6 +112,8 @@ Riccardo Vianello, Hsiao Yi
  (github pull #1301 from gedeck)
   - Minor cleanup in rdkit.Chem
  (github pull #1304 from gedeck)
+  - Start using py3Dmol in the notebook
+ (github pull #1308 from greglandrum)
   - Add the option to match formal charges to FMCS
  (github pull #1311 from greglandrum)
   - Review of rdkit.Chem.Subshape
@@ -134,8 +140,6 @@ Riccardo Vianello, Hsiao Yi
  (github pull #1367 from bp-kelley)
   - Update AllChem.py
  (github pull #1378 from BerendHuisman)
-
-## New Database Cartridge Features:
 
 ## New Java Wrapper Features:
 
@@ -202,6 +206,12 @@ Riccardo Vianello, Hsiao Yi
  (github pull #1351 from bp-kelley)
   - Hybridization type of group 1 metals
  (github issue #1352 from richlewis42)
+  - bad python docs for some distance geometry functions
+ (github issue #1385 from greglandrum)
+
+## Contrib updates:
+  - Chemical reaction role assignment code from Nadine Schneider
+ (github pull #1185 from NadineSchneider)
 
 ## Deprecated code (to be removed in a future release):
 - rdkit.Chem.MCS: please use rdkit.Chem.rdFMCS instead
