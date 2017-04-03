@@ -6419,7 +6419,6 @@ void test69Github1387() {
       std::vector<int> mapping;
       unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
       TEST_ASSERT(nPieces = 2);
-      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
       TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != NULL);
     }
     {  // the bug, plus a ring closure:
@@ -6432,7 +6431,6 @@ void test69Github1387() {
       std::vector<int> mapping;
       unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
       TEST_ASSERT(nPieces = 2);
-      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
       TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != NULL);
     }
     delete rxn;
@@ -6467,7 +6465,6 @@ void test69Github1387() {
       std::vector<int> mapping;
       unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
       TEST_ASSERT(nPieces = 2);
-      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
       TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
     }
     {  // the bug, plus a ring closure:
@@ -6480,7 +6477,6 @@ void test69Github1387() {
       std::vector<int> mapping;
       unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
       TEST_ASSERT(nPieces = 2);
-      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
       TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
     }
 
