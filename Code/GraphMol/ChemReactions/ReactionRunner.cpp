@@ -281,10 +281,6 @@ struct ReactantProductAtomMapping {
   std::map<unsigned int, std::vector<unsigned int> > reactProdAtomMap;
   std::map<unsigned int, unsigned int> prodReactAtomMap;
   std::map<unsigned int, unsigned int> prodAtomBondMap;
-  // maps atom map number to a particular
-  // (reactant template, atom id) pair
-  std::map<int, std::pair<unsigned int, unsigned int> >
-      atomMapToReactantAtomMap;
 
   // maps (atom map number,atom map number) pairs in the reactant template
   // to whether or not they are bonded.
@@ -293,8 +289,8 @@ struct ReactantProductAtomMapping {
 };
 
 ReactantProductAtomMapping *getAtomMappingsReactantProduct(
-    const MatchVectType &match, unsigned int reactantIdx,
-    const ROMol &reactantTemplate, RWMOL_SPTR product, unsigned numReactAtoms) {
+    const MatchVectType &match, const ROMol &reactantTemplate,
+    RWMOL_SPTR product, unsigned numReactAtoms) {
   ReactantProductAtomMapping *mapping =
       new ReactantProductAtomMapping(numReactAtoms);
 
@@ -325,9 +321,6 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     int molAtomMapNumber;
     if (templateAtom->getPropIfPresent(common_properties::molAtomMapNumber,
                                        molAtomMapNumber)) {
-      mapping->atomMapToReactantAtomMap[molAtomMapNumber] =
-          std::make_pair(reactantIdx, match[i].first);
-
       if (product->hasAtomBookmark(molAtomMapNumber)) {
         RWMol::ATOM_PTR_LIST atomIdxs =
             product->getAllAtomsWithBookmark(molAtomMapNumber);
@@ -814,7 +807,6 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
 void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
-                              unsigned int reactantIdx,
                               const ROMOL_SPTR reactantTemplate,
                               Conformer *productConf) {
   // start by looping over all matches and marking the reactant atoms that
@@ -823,9 +815,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // particular product (or, perhaps, not in any product)
   // At the same time we'll set up a map between the indices of those
   // atoms and their index in the product.
-  ReactantProductAtomMapping *mapping =
-      getAtomMappingsReactantProduct(match, reactantIdx, *reactantTemplate,
-                                     product, reactantSptr->getNumAtoms());
+  ReactantProductAtomMapping *mapping = getAtomMappingsReactantProduct(
+      match, *reactantTemplate, product, reactantSptr->getNumAtoms());
 
   boost::dynamic_bitset<> visitedAtoms(reactantSptr->getNumAtoms());
 
@@ -921,8 +912,7 @@ MOL_SPTR_VECT generateOneProductSet(
     for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), reactantId, *iter,
-                               conf);
+                               reactantsMatch.at(reactantId), *iter, conf);
     }
 
     if (doConfs) {
