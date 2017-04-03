@@ -6435,6 +6435,54 @@ void test69Github1387() {
       std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
       TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != NULL);
     }
+    delete rxn;
+  }
+  {  // reorder the same reaction
+    const std::string smarts =
+        "([O:2](-[*:1])[CH3:3].[CH3:6][O:5]-[*:4])>>(C[C:3][O:2]-[*:1].[*:4]"
+        "-[O:5][C:6]C)";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {  // this always worked
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) == NULL);
+    }
+    {  // the bug:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
+    }
+    {  // the bug, plus a ring closure:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COC1CCC1OC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      std::cerr << "res: " << MolToSmiles(*prods[0][0], true) << std::endl;
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
+    }
 
     delete rxn;
   }
@@ -6448,7 +6496,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
 
-#if 1
+#if 0
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
@@ -6514,14 +6562,14 @@ int main() {
   test61Github685();
   test62Github975();
   test63CopyConstructor();
-#endif
-
   test43Github243();
   test64Github1266();
   test65SanitizeUnmappedHs();
   test66SanitizeMappedHs();
   test67SanitizeMappedHsInReactantAndProd();
   test68MappedHToHeavy();
+#endif
+
   test69Github1387();
 
   BOOST_LOG(rdInfoLog)
