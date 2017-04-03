@@ -605,10 +605,10 @@ void addReactantNeighborsToProduct(
                 if (mapping->reactantTemplateAtomBonds.find(
                         std::make_pair(a1mapidx, a2mapidx)) ==
                     mapping->reactantTemplateAtomBonds.end()) {
-                  std::cerr << "YOWZA: " << a1mapidx << "(" << prodBeginIdx
-                            << ")"
-                            << " " << a2mapidx << "(" << prodEndIdx << ")"
-                            << " " << std::endl;
+                  // std::cerr << "YOWZA: " << a1mapidx << "(" << prodBeginIdx
+                  //           << ")"
+                  //           << " " << a2mapidx << "(" << prodEndIdx << ")"
+                  //           << " " << std::endl;
                   const Bond *origB =
                       reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
                   addMissingProductBonds(*origB, product, mapping);

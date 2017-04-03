@@ -6496,7 +6496,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Reactions \n";
 
-#if 0
+#if 1
   test1Basics();
   test2SimpleReactions();
   test3RingFormation();
