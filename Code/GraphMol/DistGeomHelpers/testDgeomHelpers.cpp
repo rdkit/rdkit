@@ -1809,21 +1809,20 @@ void testGithub1227() {
     TEST_ASSERT(m);
     MolOps::addHs(*m);
     TEST_ASSERT(m->getNumAtoms() == 8);
-
+    INT_VECT cids;
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
     params.randomSeed = 0xf00d;
 
-    INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
-    DGeomHelpers::EmbedMolecule(*m, params);
-    TEST_ASSERT(cids.size() == 10);
-    params.pruneRmsThresh = 0.5;
-
     cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
-    TEST_ASSERT(cids.size() == 6);
+    TEST_ASSERT(cids.size() == 10);
 
-    params.onlyHeavyAtomsForRMS = true;
+    params.pruneRmsThresh = 0.5;
     cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
     TEST_ASSERT(cids.size() == 1);
+
+    params.onlyHeavyAtomsForRMS = false;  // the old default behavior
+    cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
+    TEST_ASSERT(cids.size() == 6);
 
     delete m;
   }

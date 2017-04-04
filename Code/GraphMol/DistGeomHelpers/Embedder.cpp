@@ -67,7 +67,7 @@ const EmbedParameters KDG(0,      // maxIterations
                           false,  // verbose
                           5.0,    // basinThresh
                           -1.0,   // pruneRmsThresh
-                          false   // onlyHeavyAtomsForRMS
+                          true    // onlyHeavyAtomsForRMS
                           );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
@@ -88,7 +88,7 @@ const EmbedParameters ETDG(0,      // maxIterations
                            false,  // verbose
                            5.0,    // basinThresh
                            -1.0,   // pruneRmsThresh
-                           false   // onlyHeavyAtomsForRMS
+                           true    // onlyHeavyAtomsForRMS
                            );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,      // maxIterations
@@ -108,7 +108,7 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             false,  // verbose
                             5.0,    // basinThresh
                             -1.0,   // pruneRmsThresh
-                            false   // onlyHeavyAtomsForRMS
+                            true    // onlyHeavyAtomsForRMS
                             );
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
