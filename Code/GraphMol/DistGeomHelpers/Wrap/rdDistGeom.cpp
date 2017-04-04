@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -313,7 +312,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      &RDKit::DGeomHelpers::EmbedParameters::pruneRmsThresh,
                      "used to filter multiple conformations: keep only "
                      "conformations that are at least this far apart from each "
-                     "other");
+                     "other")
+      .def_readwrite(
+          "onlyHeavyAtomsForRMS",
+          &RDKit::DGeomHelpers::EmbedParameters::onlyHeavyAtomsForRMS,
+          "Only consider heavy atoms when doing RMS filtering");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
