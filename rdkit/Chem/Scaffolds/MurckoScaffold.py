@@ -69,7 +69,7 @@ def GetScaffoldForMol(mol):
   'c1ccc(Oc2ccccn2)cc1'
 
   """
-  if 1:  # pylint: disable=using-constant-test
+  if 1:
     res = Chem.MurckoDecompose(mol)
     res.ClearComputedProps()
     res.UpdatePropertyCache()
@@ -108,7 +108,7 @@ def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
     raise ValueError('No molecule provided')
   scaffold = GetScaffoldForMol(mol)
   if not scaffold:
-    return None  # pragma: nocover
+    return None
   return Chem.MolToSmiles(scaffold, includeChirality)
 
 
@@ -122,7 +122,7 @@ def MurckoScaffoldSmilesFromSmiles(smiles, includeChirality=False):
   return MurckoScaffoldSmiles(smiles=smiles, includeChirality=includeChirality)
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #

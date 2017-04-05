@@ -172,11 +172,11 @@ class BackProp(Trainer):
         converged = 1
 
 #      if cycle % 10 == 0 and not silent:
-      if not silent:  # pragma: nocover
+      if not silent:
         print('epoch %d, error: % 6.4f' % (cycle, newErr))
 
       cycle = cycle + 1
-    if not silent:  # pragma: nocover
+    if not silent:
       if converged:
         print('Converged after %d epochs.' % cycle)
       else:
@@ -260,7 +260,7 @@ if __name__ == '__main__':  # pragma: nocover
   if 0:
     net = testXor()
     print('Xor:', net)
-    from rdkit.six.moves import cPickle  # @UnresolvedImport
+    from rdkit.six.moves import cPickle
     outF = open('xornet.pkl', 'wb+')
     cPickle.dump(net, outF)
     outF.close()

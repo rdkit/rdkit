@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
@@ -11,12 +10,13 @@
 """unit testing code for the signatures
 
 """
-from rdkit import Chem
-import unittest
-from rdkit.Chem.Pharm2D import Generate, SigFactory, Utils
-from rdkit.Chem import ChemicalFeatures
 import os.path
+import unittest
+
+from rdkit import Chem
 from rdkit import RDConfig
+from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem.Pharm2D import Generate, SigFactory
 
 
 class TestCase(unittest.TestCase):
@@ -65,15 +65,12 @@ class TestCase(unittest.TestCase):
       idx = self.factory.GetBitIdx(patts, dists)
       self.assertEqual(bit, idx)
 
-      cnt, feats, bins = self.factory.GetBitInfo(bit)
+      cnt, feats, _ = self.factory.GetBitInfo(bit)
       self.assertEqual(cnt, len(patts))
       self.assertEqual(feats, patts)
 
   def test3BitIdx(self):
-    """ test 3 point p'cophore ids,
-    you can never have too much of this stuff
-
-    """
+    # test 3 point p'cophore ids, you can never have too much of this stuff
     self.factory.SetBins(((0, 2), (2, 4), (4, 8)))
     self.factory.Init()
     self.assertEqual(self.factory.GetSigSize(), 990)
@@ -86,7 +83,7 @@ class TestCase(unittest.TestCase):
       idx = self.factory.GetBitIdx(patts, dists)
       self.assertEqual(idx, ans)
 
-      cnt, feats, bins = self.factory.GetBitInfo(ans)
+      cnt, feats, _ = self.factory.GetBitInfo(ans)
       self.assertEqual(cnt, len(patts))
       self.assertEqual(feats, patts)
 
@@ -104,9 +101,18 @@ class TestCase(unittest.TestCase):
     for patts, dists, ans in probes:
       idx = self.factory.GetBitIdx(patts, dists)
       self.assertEqual(idx, ans)
-      cnt, feats, bins = self.factory.GetBitInfo(ans)
+      cnt, feats, _ = self.factory.GetBitInfo(ans)
       self.assertEqual(cnt, len(patts))
       self.assertEqual(feats, patts)
+
+    # Test exception handlers
+    self.assertRaises(NotImplementedError, self.factory.GetBitIdx, (0, 0, 0, 0), (1, 3, 1, 2))
+    self.assertRaises(IndexError, self.factory.GetBitIdx, (0, ), (1, ))
+    self.factory.maxPointCount = 2
+    self.assertRaises(IndexError, self.factory.GetBitIdx, (0, 0, 0), (1, 3, 1))
+    self.factory.maxPointCount = 3
+    self.assertRaises(IndexError, self.factory.GetBitIdx, (0, -1, 0), (1, 3, 1))
+    self.assertRaises(IndexError, self.factory.GetBitIdx, (0, self.factory._nFeats, 0), (1, 3, 1))
 
   def test5SimpleSig(self):
     factory = self.factory
@@ -186,9 +192,7 @@ class TestCase(unittest.TestCase):
   # FIX: add test for perms argument to Gen2DFingerprint
 
   def test9BondOrderSigs(self):
-    """ test sigs where bond order is used
-
-    """
+    # test sigs where bond order is used
     factory = self.factory
     factory.SetBins([(1, 4), (4, 7), (7, 10)])
     factory.minPointCount = 2
@@ -210,7 +214,9 @@ class TestCase(unittest.TestCase):
   def testDefaultFactory(self):
     from rdkit.Chem import Pharm2D
     factory = Pharm2D.DefaultSigFactory()
-    #Generate._verbose=True
+    self.assertEqual(factory.GetNumBins(), 7)
+    
+    # Generate._verbose=True
     mol = Chem.MolFromSmiles('OCCC(=O)')
     sig = Generate.Gen2DFingerprint(mol, factory)
     self.assertEqual(len(sig), 19355)
@@ -225,6 +231,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(labels, ['Acceptor', 'Hydrophobe'])
     self.assertEqual(list(dMat[0]), [0, 0])
     self.assertEqual(list(dMat[1]), [0, 0])
+
+    txt = factory.GetBitDescription(21)
+    self.assertEqual(txt, 'Acceptor Hydrophobe |0 0|0 0|')
 
     txt = factory.GetBitDescription(21)
     self.assertEqual(txt, 'Acceptor Hydrophobe |0 0|0 0|')
@@ -244,6 +253,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(
       factory.GetBitDescription(4361), 'Acceptor Donor Hydrophobe |0 2 0|2 0 0|0 0 0|')
 
+    self.assertRaises(NotImplementedError, factory.GetBitDescriptionAsText, 21)
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

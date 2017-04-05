@@ -56,24 +56,24 @@ def CalcTreeNodeSizes(node):
   node.nLevelsBelow = nBelow + 1
 
 
-def _ExampleCounter(node, min, max):  # @ReservedAssignment
+def _ExampleCounter(node, min, max):
   if node.GetTerminal():
     cnt = node.nExamples
     if cnt < min:
-      min = cnt  # @ReservedAssignment
+      min = cnt
     if cnt > max:
-      max = cnt  # @ReservedAssignment
+      max = cnt
   else:
     for child in node.GetChildren():
       provMin, provMax = _ExampleCounter(child, min, max)
       if provMin < min:
-        min = provMin  # @ReservedAssignment
+        min = provMin
       if provMax > max:
-        max = provMax  # @ReservedAssignment
+        max = provMax
   return min, max
 
 
-def _ApplyNodeScales(node, min, max):  # @ReservedAssignment
+def _ApplyNodeScales(node, min, max):
   if node.GetTerminal():
     if max != min:
       loc = float(node.nExamples - min) / (max - min)
@@ -86,8 +86,8 @@ def _ApplyNodeScales(node, min, max):  # @ReservedAssignment
 
 
 def SetNodeScales(node):
-  min, max = 1e8, -1e8  # @ReservedAssignment
-  min, max = _ExampleCounter(node, min, max)  # @ReservedAssignment
+  min, max = 1e8, -1e8
+  min, max = _ExampleCounter(node, min, max)
   node._scales = min, max
   _ApplyNodeScales(node, min, max)
 
@@ -105,7 +105,7 @@ def DrawTreeNode(node, loc, canvas, nRes=2, scaleLeaves=False, showPurity=False)
   if not scaleLeaves or not node.GetTerminal():
     rad = visOpts.circRad
   else:
-    scaleLoc = getattr(node, "_scaleLoc", 0.5)  # @UnusedVariable
+    scaleLoc = getattr(node, "_scaleLoc", 0.5)
 
     rad = visOpts.minCircRad + node._scaleLoc * (visOpts.maxCircRad - visOpts.minCircRad)
 
@@ -215,9 +215,9 @@ def _simpleTest(canv):
   from .Tree import TreeNode as Node
   root = Node(None, 'r', label='r')
   c1 = root.AddChild('l1_1', label='l1_1')
-  c2 = root.AddChild('l1_2', isTerminal=1, label=1)  # @UnusedVariable
-  c3 = c1.AddChild('l2_1', isTerminal=1, label=0)  # @UnusedVariable
-  c4 = c1.AddChild('l2_2', isTerminal=1, label=1)  # @UnusedVariable
+  c2 = root.AddChild('l1_2', isTerminal=1, label=1)
+  c3 = c1.AddChild('l2_1', isTerminal=1, label=0)
+  c4 = c1.AddChild('l2_2', isTerminal=1, label=1)
 
   DrawTreeNode(root, (150, visOpts.vertOffset), canv)
 

@@ -9,32 +9,22 @@
 #  of the RDKit source tree.
 #
 from rdkit import Chem
-from rdkit import RDConfig
 import numpy
 import math
-import sys
 import copy
-import pprint
 from rdkit.six import cmp
+import functools
 
 periodicTable = Chem.GetPeriodicTable()
 
 
 class Font(object):
-  face = 'sans'
-  size = '12'
-  weight = 'normal'
-  name = None
 
   def __init__(self, face=None, size=None, name=None, weight=None):
-    if face:
-      self.face = face
-    if size:
-      self.size = size
-    if name:
-      self.name = name
-    if weight:
-      self.weight = weight
+    self.face = face or 'sans'
+    self.size = size or '12'
+    self.weight = weight or 'normal'
+    self.name = name
 
 
 class DrawingOptions(object):
@@ -84,19 +74,15 @@ class DrawingOptions(object):
 
 
 class MolDrawing(object):
-  atomPs = None
-  canvas = None
-  canvasSize = None
 
   def __init__(self, canvas=None, drawingOptions=None):
     self.canvas = canvas
+    self.canvasSize = None
     if canvas:
       self.canvasSize = canvas.size
+    self.drawingOptions = drawingOptions or DrawingOptions()
+
     self.atomPs = {}
-    if drawingOptions is None:
-      self.drawingOptions = DrawingOptions()
-    else:
-      self.drawingOptions = drawingOptions
     self.boundingBoxes = {}
 
     if self.drawingOptions.bgColor is not None:
@@ -108,8 +94,8 @@ class MolDrawing(object):
     res = [0, 0]
     res[0] = (pos[0] + self.molTrans[0]
               ) * self.currDotsPerAngstrom * self.drawingOptions.useFraction + self.drawingTrans[0]
-    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom*self.drawingOptions.useFraction + \
-                                 self.drawingTrans[1])
+    res[1] = self.canvasSize[1] - ((pos[1] + self.molTrans[1]) * self.currDotsPerAngstrom *
+                                   self.drawingOptions.useFraction + self.drawingTrans[1])
     return res
 
   def _getBondOffset(self, p1, p2):
@@ -128,8 +114,7 @@ class MolDrawing(object):
     return perp, offsetX, offsetY
 
   def _getOffsetBondPts(self, p1, p2, offsetX, offsetY, lenFrac=None):
-    if not lenFrac:
-      lenFrac = self.drawingOptions.dblBondLengthFrac
+    lenFrac = lenFrac or self.drawingOptions.dblBondLengthFrac
 
     dx = p2[0] - p1[0]
     dy = p2[1] - p1[1]
@@ -141,27 +126,22 @@ class MolDrawing(object):
 
     # now move a portion of the way along the line to the neighbor:
     frac = (1. - lenFrac) / 2
-    fracP1 = fracP1[0]+dx*frac,\
-             fracP1[1]+dy*frac
-
-    fracP2 = fracP1[0]+dx*lenFrac,\
-             fracP1[1]+dy*lenFrac
+    fracP1 = fracP1[0] + dx * frac, fracP1[1] + dy * frac
+    fracP2 = fracP1[0] + dx * lenFrac, fracP1[1] + dy * lenFrac
     return fracP1, fracP2
 
-  def _offsetDblBond(self, p1, p2, bond, a1, a2, conf, dir=1, lenFrac=None):
+  def _offsetDblBond(self, p1, p2, bond, a1, a2, conf, direction=1, lenFrac=None):
     perp, offsetX, offsetY = self._getBondOffset(p1, p2)
-    offsetX = offsetX * dir
-    offsetY = offsetY * dir
+    offsetX = offsetX * direction
+    offsetY = offsetY * direction
 
     # if we're a ring bond, we may need to flip over to the other side:
     if bond.IsInRing():
       bondIdx = bond.GetIdx()
-      a1Idx = a1.GetIdx()
       a2Idx = a2.GetIdx()
       # find a ring bond from a1 to an atom other than a2:
       for otherBond in a1.GetBonds():
-        if otherBond.GetIdx()!=bondIdx and \
-           otherBond.IsInRing():
+        if otherBond.GetIdx() != bondIdx and otherBond.IsInRing():
           sharedRing = False
           for ring in self.bondRings:
             if bondIdx in ring and otherBond.GetIdx() in ring:
@@ -188,7 +168,7 @@ class MolDrawing(object):
 
   def _getBondAttachmentCoordinates(self, p1, p2, labelSize):
     newpos = [None, None]
-    if labelSize != None:
+    if labelSize is not None:
       labelSizeOffset = [labelSize[0][0] / 2 + (cmp(p2[0], p1[0]) * labelSize[0][2]),
                          labelSize[0][1] / 2]
       if p1[1] == p2[1]:
@@ -212,16 +192,14 @@ class MolDrawing(object):
     return newpos
 
   def _drawWedgedBond(self, bond, pos, nbrPos, width=None, color=None, dash=None):
-    if width is None:
-      width = self.drawingOptions.bondLineWidth
-    if color is None:
-      color = self.drawingOptions.defaultColor
-    perp, offsetX, offsetY = self._getBondOffset(pos, nbrPos)
+    width = width or self.drawingOptions.bondLineWidth
+    color = color or self.drawingOptions.defaultColor
+    _, offsetX, offsetY = self._getBondOffset(pos, nbrPos)
     offsetX *= .75
     offsetY *= .75
     poly = ((pos[0], pos[1]), (nbrPos[0] + offsetX, nbrPos[1] + offsetY),
             (nbrPos[0] - offsetX, nbrPos[1] - offsetY))
-    #canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
+    # canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
     if not dash:
       self.canvas.addCanvasPolygon(poly, color=color)
     elif self.drawingOptions.wedgeDashedBonds and self.canvas.addCanvasDashedWedge:
@@ -231,14 +209,15 @@ class MolDrawing(object):
 
   def _drawBond(self, bond, atom, nbr, pos, nbrPos, conf, width=None, color=None, color2=None,
                 labelSize1=None, labelSize2=None):
-    if width is None:
-      width = self.drawingOptions.bondLineWidth
-    if color is None:
-      color = self.drawingOptions.defaultColor
+    width = width or self.drawingOptions.bondLineWidth
+    color = color or self.drawingOptions.defaultColor
+    color2 = color2 or self.drawingOptions.defaultColor
     p1_raw = copy.deepcopy(pos)
     p2_raw = copy.deepcopy(nbrPos)
     newpos = self._getBondAttachmentCoordinates(p1_raw, p2_raw, labelSize1)
     newnbrPos = self._getBondAttachmentCoordinates(p2_raw, p1_raw, labelSize2)
+    addDefaultLine = functools.partial(self.canvas.addCanvasLine, linewidth=width, color=color,
+                                       color2=color2)
     bType = bond.GetBondType()
     if bType == Chem.BondType.SINGLE:
       bDir = bond.GetBondDir()
@@ -250,54 +229,47 @@ class MolDrawing(object):
           wcolor = color
         else:
           p2, p1 = newpos, newnbrPos
-          if color2 is not None:
-            wcolor = color2
-          else:
-            wcolor = self.drawingOptions.defaultColor
+          wcolor = color2
         if bDir == Chem.BondDir.BEGINWEDGE:
           self._drawWedgedBond(bond, p1, p2, color=wcolor, width=width)
         elif bDir == Chem.BondDir.BEGINDASH:
           self._drawWedgedBond(bond, p1, p2, color=wcolor, width=width,
                                dash=self.drawingOptions.dash)
-
       else:
-        self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
+        addDefaultLine(newpos, newnbrPos)
     elif bType == Chem.BondType.DOUBLE:
-      crossBond = (self.drawingOptions.showUnknownDoubleBonds and \
-                     bond.GetStereo() == Chem.BondStereo.STEREOANY)
-      if not crossBond and \
-            ( bond.IsInRing() or (atom.GetDegree()!=1 and bond.GetOtherAtom(atom).GetDegree()!=1) ):
-        self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
+      crossBond = (self.drawingOptions.showUnknownDoubleBonds and
+                   bond.GetStereo() == Chem.BondStereo.STEREOANY)
+      if (not crossBond and (bond.IsInRing() or
+                             (atom.GetDegree() != 1 and bond.GetOtherAtom(atom).GetDegree() != 1))):
+        addDefaultLine(newpos, newnbrPos)
         fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
-        self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2)
+        addDefaultLine(fp1, fp2)
       else:
-        fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, dir=.5,
+        fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, direction=.5,
                                        lenFrac=1.0)
-        fp3, fp4 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, dir=-.5,
+        fp3, fp4 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, direction=-.5,
                                        lenFrac=1.0)
         if crossBond:
           fp2, fp4 = fp4, fp2
-        self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2)
-        self.canvas.addCanvasLine(fp3, fp4, linewidth=width, color=color, color2=color2)
+        addDefaultLine(fp1, fp2)
+        addDefaultLine(fp3, fp4)
 
     elif bType == Chem.BondType.AROMATIC:
-      self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
+      addDefaultLine(newpos, newnbrPos)
       fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
-      self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2,
-                                dash=self.drawingOptions.dash)
+      addDefaultLine(fp1, fp2, dash=self.drawingOptions.dash)
     elif bType == Chem.BondType.TRIPLE:
-      self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2)
+      addDefaultLine(newpos, newnbrPos)
       fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf)
-      self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2)
-      fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, dir=-1)
-      self.canvas.addCanvasLine(fp1, fp2, linewidth=width, color=color, color2=color2)
+      addDefaultLine(fp1, fp2)
+      fp1, fp2 = self._offsetDblBond(newpos, newnbrPos, bond, atom, nbr, conf, direction=-1)
+      addDefaultLine(fp1, fp2)
     else:
-      self.canvas.addCanvasLine(newpos, newnbrPos, linewidth=width, color=color, color2=color2,
-                                dash=(1, 2))
+      addDefaultLine(newpos, newnbrPos, dash=(1, 2))
 
   def scaleAndCenter(self, mol, conf, coordCenter=False, canvasSize=None, ignoreHs=False):
-    if canvasSize is None:
-      canvasSize = self.canvasSize
+    canvasSize = canvasSize or self.canvasSize
     xAccum = 0
     yAccum = 0
     minX = 1e8
@@ -346,11 +318,9 @@ class MolDrawing(object):
     self.drawingTrans = drawingTrans
 
   def _drawLabel(self, label, pos, baseOffset, font, color=None, **kwargs):
-    if color is None:
-      color = self.drawingOptions.defaultColor
+    color = color or self.drawingOptions.defaultColor
     x1 = pos[0]
     y1 = pos[1]
-    labelP = x1, y1
     labelSize = self.canvas.addCanvasText(label, (x1, y1, baseOffset), font, color, **kwargs)
     return labelSize
 
@@ -375,12 +345,8 @@ class MolDrawing(object):
     if centerIt:
       self.scaleAndCenter(mol, conf, ignoreHs=ignoreHs)
     else:
-      if molTrans is None:
-        molTrans = (0, 0)
-      self.molTrans = molTrans
-      if drawingTrans is None:
-        drawingTrans = (0, 0)
-      self.drawingTrans = drawingTrans
+      self.molTrans = molTrans or (0, 0)
+      self.drawingTrans = drawingTrans or (0, 0)
 
     font = Font(face=self.drawingOptions.atomLabelFontFace, size=self.currAtomLabelFontSize)
 
@@ -438,15 +404,9 @@ class MolDrawing(object):
         nbrSum[1] += nbrPos[1] - pos[1]
 
       iso = atom.GetIsotope()
-
-      labelIt= not self.drawingOptions.noCarbonSymbols or \
-               atom.GetAtomicNum()!=6 or \
-               atom.GetFormalCharge()!=0 or \
-               atom.GetNumRadicalElectrons() or \
-               includeAtomNumbers or \
-               iso or \
-               atom.HasProp('molAtomMapNumber') or \
-               atom.GetDegree()==0
+      labelIt = (not self.drawingOptions.noCarbonSymbols or iso or atom.GetAtomicNum() != 6 or
+                 atom.GetFormalCharge() != 0 or atom.GetNumRadicalElectrons() or
+                 includeAtomNumbers or atom.HasProp('molAtomMapNumber') or atom.GetDegree() == 0)
       orient = ''
       if labelIt:
         baseOffset = 0
@@ -457,7 +417,7 @@ class MolDrawing(object):
           base = atom.GetSymbol()
           if (base == 'H' and (iso == 2 or iso == 3) and
               self.drawingOptions.atomLabelDeuteriumTritium):
-            if (iso == 2):
+            if iso == 2:
               base = 'D'
             else:
               base = 'T'
@@ -477,18 +437,15 @@ class MolDrawing(object):
           else:
             hs = ''
           chg = atom.GetFormalCharge()
-          if chg != 0:
-            if chg == 1:
-              chg = '+'
-            elif chg == -1:
-              chg = '-'
-            elif chg > 1:
-              chg = '+%d' % chg
-            elif chg < -1:
-              chg = '-%d' % chg
-            symbolLength += len(chg)
-          else:
+          if chg == 0:
             chg = ''
+          elif chg == 1:
+            chg = '+'
+          elif chg == -1:
+            chg = '-'
+          else:
+            chg = '%+d' % chg
+          symbolLength += len(chg)
           if chg:
             chg = '<sup>%s</sup>' % chg
 
@@ -513,8 +470,10 @@ class MolDrawing(object):
             symbolLength += mapNumLength
           deg = atom.GetDegree()
           # This should be done in a better way in the future:
-          # 'baseOffset' should be determined by getting the size of 'isotope' and the size of 'base', or the size of 'mapNum' and the size of 'base'
-          # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact position of the base
+          # 'baseOffset' should be determined by getting the size of 'isotope' and
+          # the size of 'base', or the size of 'mapNum' and the size of 'base'
+          # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact
+          # position of the base
           if deg == 0:
             if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O', 'S', 'Se', 'Te', 'F',
                                                                        'Cl', 'Br', 'I', 'At'):
@@ -588,7 +547,7 @@ class MolDrawing(object):
 
     if flagCloseContactsDist > 0:
       tol = flagCloseContactsDist * flagCloseContactsDist
-      for i, atomi in enumerate(mol.GetAtoms()):
+      for i, _ in enumerate(mol.GetAtoms()):
         pi = numpy.array(self.atomPs[mol][i])
         for j in range(i + 1, mol.GetNumAtoms()):
           pj = numpy.array(self.atomPs[mol][j])
@@ -597,7 +556,7 @@ class MolDrawing(object):
           if dist2 <= tol:
             self.canvas.addCanvasPolygon(
               ((pi[0] - 2 * flagCloseContactsDist, pi[1] - 2 * flagCloseContactsDist),
-               (pi[0] + 2 * flagCloseContactsDist, pi[1] - 2 * flagCloseContactsDist), (
-                 pi[0] + 2 * flagCloseContactsDist, pi[1] + 2 * flagCloseContactsDist),
-               (pi[0] - 2 * flagCloseContactsDist,
-                pi[1] + 2 * flagCloseContactsDist)), color=(1., 0, 0), fill=False, stroke=True)
+               (pi[0] + 2 * flagCloseContactsDist, pi[1] - 2 * flagCloseContactsDist),
+               (pi[0] + 2 * flagCloseContactsDist, pi[1] + 2 * flagCloseContactsDist),
+               (pi[0] - 2 * flagCloseContactsDist, pi[1] + 2 * flagCloseContactsDist)),
+              color=(1., 0, 0), fill=False, stroke=True)

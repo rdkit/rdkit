@@ -55,6 +55,7 @@ class ss_matcher {
 
 namespace RDKit {
 const char *pqs[] = {
+    "[D0]",  // special case: single atom fragment
     "[*]~[*]", "[*]~[*]~[*]", "[R]~1~[R]~[R]~1",
     //"[*]~[*]~[*]~[*]",
     "[*]~[*](~[*])~[*]",
@@ -96,7 +97,8 @@ const char *pqs[] = {
 #endif
     ""};
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 namespace detail {
 void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {

@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2007-2010 Greg Landrum
+#  Copyright (C) 2007-2017 Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -30,6 +29,19 @@ def feq(n1, n2, tol=1e-4):
 
 class TestCase(unittest.TestCase):
 
+  def testGithub1287(self):
+    smis = ('CCC', )
+    for smi in smis:
+      m = Chem.MolFromSmiles(smi)
+      self.assertTrue(m)
+      for nm, fn in Descriptors._descList:
+        try:
+          v = fn(m)
+        except Exception:
+          import traceback
+          traceback.print_exc()
+          raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
+
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
     for smi in smis:
@@ -38,9 +50,6 @@ class TestCase(unittest.TestCase):
       for nm, fn in Descriptors._descList:
         try:
           v = fn(m)
-        except RuntimeError:
-          # 3D descriptors fail since the mol has no conformers
-          pass
         except Exception:
           import traceback
           traceback.print_exc()
@@ -111,18 +120,4 @@ class TestCase(unittest.TestCase):
 
 # - - - - -
 if __name__ == '__main__':
-  import sys, getopt, re
-  doLong = 0
-  if len(sys.argv) > 1:
-    args, extras = getopt.getopt(sys.argv[1:], 'l')
-    for arg, val in args:
-      if arg == '-l':
-        doLong = 1
-      sys.argv.remove('-l')
-  if doLong:
-    for methName in dir(TestCase):
-      if re.match('_test', methName):
-        newName = re.sub('_test', 'test', methName)
-        exec('TestCase.%s = TestCase.%s' % (newName, methName))
-
   unittest.main()

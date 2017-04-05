@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2006 Rational Discovery LLC
 #
@@ -8,13 +7,14 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import os
 import io
+import os
 import unittest
-from rdkit import RDConfig
+
 from rdkit import Chem
+from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 def feq(n1, n2, tol=1e-4):

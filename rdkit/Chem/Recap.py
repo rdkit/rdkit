@@ -1,4 +1,3 @@
-#  $Id$
 #
 #  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -37,23 +36,25 @@ of just as a set of fragments. The hope is that this will allow a bit
 more flexibility in working with the results.
 
 For example:
+>>> from rdkit import Chem
+>>> from rdkit.Chem import Recap
 >>> m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncc(OC)cc1')
 >>> res = Recap.RecapDecompose(m)
 >>> res
-<Chem.Recap.RecapHierarchyNode object at 0x00CDB5D0>
->>> res.children.keys()
-['[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1OC1CC1']
->>> res.GetAllChildren().keys()
-['[*]c1ccccc1[*]', '[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1OC1CC1']
+<...Chem.Recap.RecapHierarchyNode object at ...>
+>>> sorted(res.children.keys())
+['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1-c1...cc(OC)c...1', '[*]c1ccccc1OC1CC1']
+>>> sorted(res.GetAllChildren().keys())
+['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1-c1...cc(OC)c...1', '[*]c1ccccc1OC1CC1', '[*]c1ccccc1[*]']
 
 
 To get the standard set of RECAP results, use GetLeaves():
 >>> leaves=res.GetLeaves()
->>> leaves.keys()
-['[*]c1ccccc1[*]', '[*]c1ccc(OC)cn1', '[*]C1CC1']
+>>> sorted(leaves.keys())
+['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1[*]']
 >>> leaf = leaves['[*]C1CC1']
 >>> leaf.mol
-<Chem.rdchem.Mol object at 0x00CBE0F0>
+<...Chem.rdchem.Mol object at ...>
 
 
 """

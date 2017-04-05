@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #
@@ -12,12 +11,14 @@
 
 """
 from __future__ import print_function
-import unittest
+
 import os
-from rdkit.six import next
-from rdkit import RDConfig
+import unittest
+
 from rdkit import Chem
+from rdkit import RDConfig
 from rdkit.Chem.Pharm2D import Gobbi_Pharm2D, Generate
+from rdkit.six import next
 
 
 class TestCase(unittest.TestCase):
@@ -129,8 +130,6 @@ class TestCase(unittest.TestCase):
     m2 = next(suppl)
     sig1 = Generate.Gen2DFingerprint(m1, self.factory)
     sig2 = Generate.Gen2DFingerprint(m2, self.factory)
-    ob1 = set(sig1.GetOnBits())
-    ob2 = set(sig2.GetOnBits())
     self.assertEqual(sig1, sig2)
 
   def testOrderBug2(self):
@@ -139,16 +138,16 @@ class TestCase(unittest.TestCase):
     probes = ['Oc1nc(Oc2ncccc2)ccc1']
     for smi in probes:
       m1 = Chem.MolFromSmiles(smi)
-      #m1.Debug()
+      # m1.Debug()
       sig1 = Generate.Gen2DFingerprint(m1, self.factory)
       csmi = Chem.MolToSmiles(m1)
       m2 = Chem.MolFromSmiles(csmi)
-      #m2.Debug()
+      # m2.Debug()
       sig2 = Generate.Gen2DFingerprint(m2, self.factory)
       self.assertTrue(list(sig1.GetOnBits()) == list(sig2.GetOnBits()), '%s %s' % (smi, csmi))
       self.assertEqual(DataStructs.DiceSimilarity(sig1, sig2), 1.0)
       self.assertEqual(sig1, sig2)
-      for i in range(10):
+      for _ in range(10):
         m2 = Randomize.RandomizeMol(m1)
         sig2 = Generate.Gen2DFingerprint(m2, self.factory)
         if sig2 != sig1:
@@ -178,5 +177,5 @@ class TestCase(unittest.TestCase):
     self.assertEqual(sorted(bi[157]), [[(0, ), (6, )], [(5, ), (0, )]])
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

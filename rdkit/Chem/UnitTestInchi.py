@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -39,7 +38,7 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.Chem import rdDepictor
-from rdkit.rdBase import DisableLog, EnableLog
+from rdkit import RDLogger
 from rdkit.six.moves.cPickle import loads
 from rdkit.Chem import ForwardSDMolSupplier, SanitizeMol
 from rdkit.Chem import MolFromSmiles, MolToSmiles
@@ -115,10 +114,11 @@ class TestCase(unittest.TestCase):
       pkl = inF.read()
     self.dataset_inchi['problematic'] = loads(pkl, encoding='latin1')
     # disable logging
-    DisableLog('rdApp.warning')
+    RDLogger.DisableLog('rdApp.warning')
 
   def tearDown(self):
-    EnableLog('rdApp.warning')
+    RDLogger.EnableLog('rdApp.warning')
+    RDLogger.EnableLog('rdApp.error')
 
   def test0InchiWritePubChem(self):
     for fp, f in self.dataset.items():
@@ -161,8 +161,8 @@ class TestCase(unittest.TestCase):
         else:
           same += 1
 
-      print("{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}".format(
-        COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
+      fmt = "\n{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}"
+      print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
       self.assertEqual(same, 1164)
       self.assertEqual(diff, 0)
       self.assertEqual(reasonable, 17)
@@ -175,7 +175,9 @@ class TestCase(unittest.TestCase):
           continue
         x = MolToInchi(m)
         y = None
+        RDLogger.DisableLog('rdApp.error')
         mol = MolFromInchi(x)
+        RDLogger.EnableLog('rdApp.error')
         if mol is not None:
           y = MolToInchi(MolFromSmiles(MolToSmiles(mol, isomericSmiles=True)))
         if y is None:
@@ -244,8 +246,8 @@ class TestCase(unittest.TestCase):
           print()
         else:
           same += 1
-      print("{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}".format(
-        COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
+      fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
+      print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
       self.assertEqual(same, 620)
       self.assertEqual(diff, 0)
       self.assertEqual(reasonable, 561)

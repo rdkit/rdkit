@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -31,17 +30,17 @@
 #
 # Created by Sereina Riniker, Aug 2013
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit import DataStructs
-from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Chem import rdmolops
-from rdkit.Chem import Draw
-from rdkit.six import iteritems
-import numpy
-import math
 import copy
+import math
+
 from matplotlib import cm
+import numpy
+
+from rdkit import Chem
+from rdkit import DataStructs
+from rdkit.Chem import Draw
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.six import iteritems
 
 
 def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity):
@@ -119,18 +118,9 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol,
-                                weights,
-                                colorMap=cm.PiYG,
-                                scale=-1,
-                                size=(250, 250),
-                                sigma=None,  #@UndefinedVariable  #pylint: disable=E1101
-                                coordScale=1.5,
-                                step=0.01,
-                                colors='k',
-                                contourLines=10,
-                                alpha=0.5,
-                                **kwargs):
+def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250),
+                                sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
+                                alpha=0.5, **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.
 
@@ -312,9 +302,9 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
                                         **kwargs)
     # construct the bit map
     if fpType == 'bv':
-      bitmap = [DataStructs.ExplicitBitVect(nBits) for x in range(mol.GetNumAtoms())]
+      bitmap = [DataStructs.ExplicitBitVect(nBits) for _ in range(mol.GetNumAtoms())]
     else:
-      bitmap = [[] for x in range(mol.GetNumAtoms())]
+      bitmap = [[] for _ in range(mol.GetNumAtoms())]
     for bit, es in iteritems(info):
       for at1, rad in es:
         if rad == 0:  # for radius 0
@@ -325,7 +315,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
         else:  # for radii > 0
           env = Chem.FindAtomEnvironmentOfRadiusN(mol, rad, at1)
           amap = {}
-          submol = Chem.PathToSubmol(mol, env, atomMap=amap)
+          Chem.PathToSubmol(mol, env, atomMap=amap)
           for at2 in amap.keys():
             if fpType == 'bv':
               bitmap[at2][bit] = 1

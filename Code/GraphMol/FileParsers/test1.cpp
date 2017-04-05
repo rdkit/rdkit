@@ -14,7 +14,6 @@
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
 #include "MolFileStereochem.h"
-#include "ProximityBonds.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -4802,6 +4801,81 @@ void testMolFileDativeBonds() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1251() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1251: MolFromMolBlock sanitizing when it should not be"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName = rdbase + "github1251.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 39);
+    TEST_ASSERT(m->getNumBonds() == 44);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1029() {
+  BOOST_LOG(rdInfoLog)
+      << "Test github 1029: PDB reader fails for arginine explicit hydrogens "
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // the original bug report
+    std::string fName = rdbase + "github1029.1.pdb";
+    bool sanitize = true, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3268);
+    TEST_ASSERT(m->getNumBonds() == 3302);
+    TEST_ASSERT(m->getAtomWithIdx(121)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(121)->getFormalCharge() == 1);
+
+    delete m;
+  }
+  {  // a second report that came in
+    std::string fName = rdbase + "github1029.1jld_chaina.pdb";
+    bool sanitize = false, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 1533);
+    TEST_ASSERT(m->getNumBonds() == 1545);
+    TEST_ASSERT(m->getAtomWithIdx(123)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(123)->getFormalCharge() == 1);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1340() {
+  BOOST_LOG(rdInfoLog) << "Test github 1340: PDB parser creating H-H bonds "
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // a second report that came in
+    std::string fName = rdbase + "github1340.1jld_snip.pdb";
+    bool sanitize = true, removeHs = false;
+    ROMol *m = PDBFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 37);
+    TEST_ASSERT(m->getNumBonds() == 35);
+    TEST_ASSERT(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(34)->getAtomicNum() == 1);
+    RDGeom::Point3D p10 = m->getConformer().getAtomPos(10);
+    RDGeom::Point3D p34 = m->getConformer().getAtomPos(34);
+    TEST_ASSERT((p34 - p10).length() < 1.0);
+    TEST_ASSERT(!m->getBondBetweenAtoms(10, 34));
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4885,13 +4959,16 @@ void RunTests() {
   testGithub1023();
   testGithub1034();
   testGithub1049();
-#endif
   testPDBFile();
   testSequences();
 
   // testSequenceReaders();
 
   testMolFileDativeBonds();
+  testGithub1251();
+#endif
+  testGithub1029();
+  testGithub1340();
 }
 
 // must be in German Locale for test...

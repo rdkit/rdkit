@@ -40,7 +40,7 @@ def CalcTotalEntropy(examples, nPossibleVals):
   return entropy.InfoEntropy(resList)
 
 
-def GenVarTable(examples, nPossibleVals, vars):  # @ReservedAssignment
+def GenVarTable(examples, nPossibleVals, vars):
   """Generates a list of variable tables for the examples passed in.
 
     The table for a given variable records the number of times each possible value

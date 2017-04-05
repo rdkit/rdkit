@@ -13,7 +13,7 @@ from rdkit.ML.DecTree import CrossValidate
 from rdkit.ML.DecTree import randomtest
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import BytesIO, StringIO
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class XValTestCase(unittest.TestCase):

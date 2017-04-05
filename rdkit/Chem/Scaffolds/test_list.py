@@ -3,7 +3,7 @@
 """
 
 tests = [
-  ("python", "test_MurckoScaffold.py", {}),
+  ("python", "UnitTestMurckoScaffold.py", {}),
   ("python", "MurckoScaffold.py", {}),
 ]
 

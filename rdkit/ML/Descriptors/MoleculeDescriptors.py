@@ -11,7 +11,7 @@ import re
 from rdkit.Chem import Descriptors as DescriptorsMod
 from rdkit.ML.Descriptors import Descriptors
 from rdkit.RDLogger import logger
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 logger = logger()
 
@@ -86,7 +86,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       fn = getattr(DescriptorsMod, nm, lambda x: 777)
       try:
         res[i] = fn(mol)
-      except Exception:  # pragma: nocover
+      except Exception:
         import traceback
         traceback.print_exc()
     return tuple(res)

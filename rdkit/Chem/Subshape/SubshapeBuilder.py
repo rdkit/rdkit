@@ -1,25 +1,25 @@
-# $Id$
 #
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
 from __future__ import print_function
-from rdkit import Chem, Geometry
-from rdkit.Chem import AllChem
-from rdkit.Chem.Subshape import SubshapeObjects
-from rdkit.Chem.Subshape import BuilderUtils
-from rdkit.six.moves import cPickle
+
+import copy
 import time
 
+from rdkit import Chem, Geometry
+from rdkit.Chem import AllChem
+from rdkit.Chem.Subshape import BuilderUtils
+from rdkit.Chem.Subshape import SubshapeObjects
+from rdkit.six.moves import cPickle
 
-#-----------------------------------------------------------------------------
+
 class SubshapeCombineOperations(object):
   UNION = 0
   SUM = 1
   INTERSECT = 2
 
 
-#-----------------------------------------------------------------------------
 class SubshapeBuilder(object):
   gridDims = (20, 15, 10)
   gridSpacing = 0.5
@@ -49,7 +49,7 @@ class SubshapeBuilder(object):
     AllChem.EncodeShape(cmpd, shape.grid, ignoreHs=False, confId=confId)
     if addSkeleton:
       conf = cmpd.GetConformer(confId)
-      self.GenerateSubshapeSkeleton(shape, conf, kwargs)
+      self.GenerateSubshapeSkeleton(shape, conf, **kwargs)
     return shape
 
   def __call__(self, cmpd, **kwargs):
@@ -67,14 +67,13 @@ class SubshapeBuilder(object):
 
     if not terminalPtsOnly:
       pts = BuilderUtils.AppendSkeletonPoints(shape.grid, pts, self.winRad, self.stepSize)
-    for i, pt in enumerate(pts):
+    for pt in pts:
       BuilderUtils.CalculateDirectionsAtPoint(pt, shape.grid, self.winRad)
     if conf and self.featFactory:
       BuilderUtils.AssignMolFeatsToPoints(pts, conf.GetOwningMol(), self.featFactory, self.winRad)
     shape.skelPts = pts
 
   def CombineSubshapes(self, subshape1, subshape2, operation=SubshapeCombineOperations.UNION):
-    import copy
     cs = copy.deepcopy(subshape1)
     if operation == SubshapeCombineOperations.UNION:
       cs.grid |= subshape2.grid
@@ -87,18 +86,20 @@ class SubshapeBuilder(object):
     return cs
 
 
-if __name__ == '__main__':
-  from rdkit.Chem import AllChem, ChemicalFeatures
+if __name__ == '__main__':  # pragma: nocover
   from rdkit.Chem.PyMol import MolViewer
-  #cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
-  #cmpd = Chem.AddHs(cmpd)
+  from rdkit.six.moves import cPickle
+  import tempfile
+
+  # cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
+  # cmpd = Chem.AddHs(cmpd)
   if 1:
     cmpd = Chem.MolFromSmiles('C1=CC=C1C#CC1=CC=C1')
     cmpd = Chem.AddHs(cmpd)
     AllChem.EmbedMolecule(cmpd)
     AllChem.UFFOptimizeMolecule(cmpd)
     AllChem.CanonicalizeMol(cmpd)
-    print(Chem.MolToMolBlock(cmpd), file=file('testmol.mol', 'w+'))
+    # print(Chem.MolToMolBlock(cmpd), file=file('testmol.mol', 'w+'))
   else:
     cmpd = Chem.MolFromMolFile('testmol.mol')
   builder = SubshapeBuilder()
@@ -106,7 +107,6 @@ if __name__ == '__main__':
     shape = builder.GenerateSubshapeShape(cmpd)
   v = MolViewer()
   if 1:
-    import tempfile
     tmpFile = tempfile.mktemp('.grd')
     v.server.deleteAll()
     Geometry.WriteGridToFile(shape.grid, tmpFile)
@@ -115,7 +115,8 @@ if __name__ == '__main__':
     v.server.loadSurface(tmpFile, 'testGrid', '', 2.5)
   v.server.resetCGO('*')
 
-  cPickle.dump(shape, file('subshape.pkl', 'w+'))
+  with open('subshape.pkl', 'w+') as f:
+    cPickle.dump(shape, f)
   for i, pt in enumerate(shape.skelPts):
     v.server.sphere(tuple(pt.location), .5, (1, 0, 1), 'Pt-%d' % i)
     if not hasattr(pt, 'shapeDirs'):

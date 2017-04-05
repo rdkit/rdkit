@@ -20,7 +20,6 @@ def CompactListRepr(lst):
   '[0]+[1]*4'
   >>> CompactListRepr('foo')
   "['f']+['o']*2"
-  
 
   """
   if not len(lst):
@@ -30,7 +29,7 @@ def CompactListRepr(lst):
   last = lst[0]
   count = 1
   i = 1
-  while (i < len(lst)):
+  while i < len(lst):
     if lst[i] != last:
       label = '[%s]' % repr(last)
       if count > 1:
@@ -50,16 +49,16 @@ def CompactListRepr(lst):
   return '+'.join(components)
 
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

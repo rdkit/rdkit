@@ -50,7 +50,7 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
   if names1 is not None:
     model.SetInputOrder(names1)
   for pt in set1:
-    pred, conf = model.ClassifyExample(pt)  # @UnusedVariable
+    pred, conf = model.ClassifyExample(pt)
     if actQuantBounds:
       ans = model.QuantizeActivity(pt)[-1]
     else:
@@ -62,7 +62,7 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
   if names2 is not None:
     model.SetInputOrder(names2)
   for pt in set2:
-    pred, conf = model.ClassifyExample(pt)  # @UnusedVariable
+    pred, conf = model.ClassifyExample(pt)
     if actQuantBounds:
       ans = model.QuantizeActivity(pt)[-1]
     else:

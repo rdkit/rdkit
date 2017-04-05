@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
@@ -8,11 +7,12 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Geometry
 import numpy
-from rdkit import Chem
+
+from rdkit import Geometry
 from rdkit.Chem import ChemicalFeatures
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 
@@ -58,76 +58,74 @@ class Pharmacophore:
     return self._feats[i]
 
   def getUpperBound(self, i, j):
-    if (i > j):
+    if i > j:
       j, i = i, j
     return self._boundsMat[i, j]
 
   def getLowerBound(self, i, j):
-    if (j > i):
+    if j > i:
       j, i = i, j
     return self._boundsMat[i, j]
 
   def _checkBounds(self, i, j):
     " raises ValueError on failure "
     nf = len(self._feats)
-    if (i < 0) or (i >= nf):
-      raise ValueError("Index out of bound")
-    if (j < 0) or (j >= nf):
-      raise ValueError("Index out of bound")
-    return True
+    if (0 <= i < nf) and (0 <= j < nf):
+      return True
+    raise ValueError("Index out of bound")
 
   def setUpperBound(self, i, j, val, checkBounds=False):
-    if (checkBounds):
+    if checkBounds:
       self._checkBounds(i, j)
-    if (i > j):
+    if i > j:
       j, i = i, j
     self._boundsMat[i, j] = val
 
   def setLowerBound(self, i, j, val, checkBounds=False):
-    if (checkBounds):
+    if checkBounds:
       self._checkBounds(i, j)
-    if (j > i):
+    if j > i:
       j, i = i, j
     self._boundsMat[i, j] = val
 
   def getUpperBound2D(self, i, j):
-    if (i > j):
+    if i > j:
       j, i = i, j
     return self._boundsMat2D[i, j]
 
   def getLowerBound2D(self, i, j):
-    if (j > i):
+    if j > i:
       j, i = i, j
     return self._boundsMat2D[i, j]
 
   def setUpperBound2D(self, i, j, val, checkBounds=False):
-    if (checkBounds):
+    if checkBounds:
       self._checkBounds(i, j)
-    if (i > j):
+    if i > j:
       j, i = i, j
     self._boundsMat2D[i, j] = val
 
   def setLowerBound2D(self, i, j, val, checkBounds=False):
-    if (checkBounds):
+    if checkBounds:
       self._checkBounds(i, j)
-    if (j > i):
+    if j > i:
       j, i = i, j
     self._boundsMat2D[i, j] = val
 
   def __str__(self):
-    res = ' ' * 13
+    res = ' ' * 14
     for i, iFeat in enumerate(self._feats):
-      res += '% 12s ' % iFeat.GetFamily()
+      res += '%13s ' % iFeat.GetFamily()
     res += '\n'
     for i, iFeat in enumerate(self._feats):
-      res += '% 12s ' % iFeat.GetFamily()
-      for j, jFeat in enumerate(self._feats):
+      res += '%13s ' % iFeat.GetFamily()
+      for j, _ in enumerate(self._feats):
         if j < i:
-          res += '% 12.3f ' % self.getLowerBound(i, j)
+          res += '%13.3f ' % self.getLowerBound(i, j)
         elif j > i:
-          res += '% 12.3f ' % self.getUpperBound(i, j)
+          res += '%13.3f ' % self.getUpperBound(i, j)
         else:
-          res += '% 12.3f ' % 0.0
+          res += '% 13.3f ' % 0.0
       res += '\n'
     return res
 
@@ -178,8 +176,6 @@ class ExplicitPharmacophore:
     self.initFromLines(inF.readlines())
 
   def initFromLines(self, lines):
-    from rdkit.Chem import ChemicalFeatures
-
     import re
     spaces = re.compile('[\ \t]+')
 

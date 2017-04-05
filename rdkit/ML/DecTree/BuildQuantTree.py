@@ -12,7 +12,7 @@ import random
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
-from rdkit.six.moves import range  # @UnresolvedImport
+from rdkit.six.moves import range
 
 
 def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, attrs, exIndices=None,
@@ -42,7 +42,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
       # vTable = map(lambda x,z=var:x[z],examples)
       try:
         vTable = [examples[x][var] for x in exIndices]
-      except IndexError:  # pragma: nocover
+      except IndexError:
         print('index error retrieving variable: %d' % var)
         raise
       qBounds, gainHere = Quantize.FindVarMultQuantBounds(vTable, nBounds, resCodes, nPossibleRes)

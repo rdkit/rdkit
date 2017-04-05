@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +16,25 @@
 
 namespace RDKit {
 class RWMol;
+
+struct SmilesParserParams {
+	int debugParse;
+	bool sanitize;
+	std::map<std::string, std::string> *replacements;
+	bool allowCXSMILES;
+	bool parseName;
+	bool removeHs;
+	SmilesParserParams() :
+		debugParse(0),
+		sanitize(true),
+		replacements(NULL),
+		allowCXSMILES(false),
+		parseName(false),
+		removeHs(true)
+	{};
+};
+RWMol *SmilesToMol(const std::string &smi, const SmilesParserParams &params);
+
 
 //! Construct a molecule from a SMILES string
 /*!
@@ -44,9 +63,23 @@ class RWMol;
  \endcode
 
  */
-RWMol *SmilesToMol(const std::string &smi, int debugParse = 0,
-                   bool sanitize = 1,
-                   std::map<std::string, std::string> *replacements = 0);
+inline RWMol *SmilesToMol(const std::string &smi, int debugParse = 0,
+                   bool sanitize = true,
+                   std::map<std::string, std::string> *replacements = 0){
+  SmilesParserParams params;
+  params.debugParse = debugParse;
+  params.replacements = replacements;
+  if(sanitize) {
+    params.sanitize=true;
+    params.removeHs=true;
+  } else {
+    params.sanitize=false;
+    params.removeHs=false;
+  }
+  return SmilesToMol(smi,params);
+};
+
+
 //! Construct a molecule from a SMARTS string
 /*!
  \param sma           the SMARTS to convert

@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #
@@ -38,7 +37,7 @@
 
  - --onbits=*filename*: filename to hold the pickled OnBitLists.
    If -b is provided, this file will be overwritten
-  
+
  - --scores=*filename*: filename to hold the text score data.
    If -s is provided, this file will be overwritten
 
@@ -64,21 +63,18 @@
 
 """
 from __future__ import print_function
-import sys, os
-from rdkit.six.moves import cPickle  #@UnresolvedImport #pylint: disable=F0401
-from rdkit.six import next
-from rdkit import Chem
+
+import os
+import sys
+
+import numpy
+
 from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog
 from rdkit.Dbase.DbConnection import DbConnect
-import numpy
 from rdkit.ML import InfoTheory
-import types
-
-_cvsVersion = "$Revision$"
-idx1 = _cvsVersion.find(':') + 1
-idx2 = _cvsVersion.rfind('$')
-__VERSION_STRING = "%s" % (_cvsVersion[idx1:idx2])
+from rdkit.six import next
+from rdkit.six.moves import cPickle
 
 
 def message(msg, dest=sys.stdout):
@@ -101,12 +97,12 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
       - minPath, maxPath: (optional) names of the minimum and maximum path lengths
         to be considered
 
-      - reportFreq: (optional) how often to display status information  
+      - reportFreq: (optional) how often to display status information
 
     **Returns**
 
       a FragmentCatalog
-      
+
   """
   if groupFileName is None:
     groupFileName = os.path.join(RDConfig.RDDataDir, "FunctionalGroups.txt")
@@ -153,7 +149,7 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
       - nActs: (optional) number of possible activity values
 
-      - reportFreq: (optional) how often to display status information  
+      - reportFreq: (optional) how often to display status information
 
     **Returns**
 
@@ -186,9 +182,9 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
       obls.append([x for x in fp.GetOnBits()])
       for j in range(nBits):
         resTbl[j, 0, act] += 1
-      for id in obls[i - 1]:
-        resTbl[id - 1, 0, act] -= 1
-        resTbl[id - 1, 1, act] += 1
+      for id_ in obls[i - 1]:
+        resTbl[id_ - 1, 0, act] -= 1
+        resTbl[id_ - 1, 1, act] += 1
     else:
       obls.append([])
     i += 1
@@ -200,7 +196,7 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
   """  similar to _ScoreMolecules()_, but uses pre-calculated bit lists
     for the molecules (this speeds things up a lot)
 
-    
+
     **Arguments**
 
       - bitLists: sequence of on bit sequences for the input molecules
@@ -217,7 +213,7 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
 
       - nActs: (optional) number of possible activity values
 
-      - reportFreq: (optional) how often to display status information  
+      - reportFreq: (optional) how often to display status information
 
     **Returns**
 
@@ -242,13 +238,13 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
     if i and not i % reportFreq:
       message('Done %d of %d\n' % (i, nPts))
     ids = set()
-    for id in bitLists[i - 1]:
-      ids.add(id - 1)
+    for id_ in bitLists[i - 1]:
+      ids.add(id_ - 1)
     for j in range(nBits):
       resTbl[j, 0, act] += 1
-    for id in ids:
-      resTbl[id, 0, act] -= 1
-      resTbl[id, 1, act] += 1
+    for id_ in ids:
+      resTbl[id_, 0, act] -= 1
+      resTbl[id_, 1, act] += 1
   return resTbl
 
 
@@ -260,7 +256,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
     Returns a 2-tuple:
        1) gains matrix
        2) list of fingerprints
-    
+
   """
   nBits = catalog.GetFPLength()
   if topN < 0:
@@ -268,13 +264,12 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
   if not actName and not acts:
     actName = suppl[0].GetPropNames()[-1]
 
-  gains = [0] * nBits
   if hasattr(suppl, '__len__'):
     nMols = len(suppl)
   else:
     nMols = -1
   fpgen = FragmentCatalog.FragFPGenerator()
-  #ranker = InfoTheory.InfoBitRanker(nBits,nActs,InfoTheory.InfoType.ENTROPY)
+  # ranker = InfoTheory.InfoBitRanker(nBits,nActs,InfoTheory.InfoType.ENTROPY)
   if biasList:
     ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.BIASENTROPY)
     ranker.SetBiasList(biasList)
@@ -311,7 +306,7 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
   """ calculates info gains from a set of fingerprints
 
     *DOC*
-    
+
   """
   nBits = len(fps[0])
   if topN < 0:
@@ -319,7 +314,6 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
   if not actName and not acts:
     actName = suppl[0].GetPropNames()[-1]
 
-  gains = [0] * nBits
   if hasattr(suppl, '__len__'):
     nMols = len(suppl)
   else:
@@ -357,10 +351,10 @@ def OutputGainsData(outF, gains, cat, nActs=2):
   else:
     outF.write('id,Gain,%s\n' % (','.join(actHeaders)))
   for entry in gains:
-    id = int(entry[0])
-    outL = [str(id)]
+    id_ = int(entry[0])
+    outL = [str(id_)]
     if cat:
-      descr = cat.GetBitDescription(id)
+      descr = cat.GetBitDescription(id_)
       outL.append(descr)
     outL.append('%.6f' % entry[1])
     outL += ['%d' % x for x in entry[2:]]
@@ -373,8 +367,8 @@ def ProcessGainsData(inF, delim=',', idCol=0, gainCol=1):
 
   """
   res = []
-  inL = inF.readline()
-  for line in inF.xreadlines():
+  _ = inF.readline()
+  for line in inF:
     splitL = line.strip().split(delim)
     res.append((splitL[idCol], float(splitL[gainCol])))
   return res
@@ -390,11 +384,11 @@ def ShowDetails(catalog, gains, nToDo=-1, outF=sys.stdout, idCol=0, gainCol=1, o
   if nToDo < 0:
     nToDo = len(gains)
   for i in range(nToDo):
-    id = int(gains[i][idCol])
+    id_ = int(gains[i][idCol])
     gain = float(gains[i][gainCol])
-    descr = catalog.GetFragDescription(id)
+    descr = catalog.GetFragDescription(id_)
     if descr:
-      outF.write('%s\n' % (outDelim.join((str(id), descr, str(gain)))))
+      outF.write('%s\n' % (outDelim.join((str(id_), descr, str(gain)))))
 
 
 def SupplierFromDetails(details):
@@ -407,23 +401,23 @@ def SupplierFromDetails(details):
   else:
     suppl = SmilesSupplyNode(details.inFileName, delim=details.delim, nameColumn=details.nameCol,
                              smilesColumn=details.smiCol, titleLine=details.hasTitle)
-    if type(details.actCol) == types.IntType:
+    if isinstance(details.actCol, int):
       suppl.reset()
       m = next(suppl)
       actName = m.GetPropNames()[details.actCol]
       details.actCol = actName
-    if type(details.nameCol) == types.IntType:
+    if isinstance(details.nameCol, int):
       suppl.reset()
       m = next(suppl)
       nameName = m.GetPropNames()[details.nameCol]
       details.nameCol = nameName
       suppl.reset()
-  if type(details.actCol) == types.IntType:
+  if isinstance(details.actCol, int):
     suppl.reset()
     m = next(suppl)
     actName = m.GetPropNames()[details.actCol]
     details.actCol = actName
-  if type(details.nameCol) == types.IntType:
+  if isinstance(details.nameCol, int):
     suppl.reset()
     m = next(suppl)
     nameName = m.GetPropNames()[details.nameCol]
@@ -433,9 +427,9 @@ def SupplierFromDetails(details):
 
 
 def Usage():
-  print("This is BuildFragmentCatalog version %s" % (__VERSION_STRING))
+  print("This is BuildFragmentCatalog")
   print('usage error')
-  #print(__doc__)
+  # print(__doc__)
   sys.exit(-1)
 
 

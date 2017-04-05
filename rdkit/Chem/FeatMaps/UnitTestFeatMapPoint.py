@@ -14,7 +14,7 @@ import unittest
 from rdkit.Chem.FeatMaps import FeatMapPoint
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(FeatMapPoint, optionflags=doctest.ELLIPSIS))
   return tests

@@ -19,7 +19,7 @@ class SigTreeNode(DecTree.DecTreeNode):
 
   """
 
-  def NameModel(self, *args, **kwargs):  # pragma: nocover
+  def NameModel(self, *args, **kwargs):
     pass
 
   def ClassifyExample(self, example, appendExamples=0):

@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2008 Greg Landrum
 #
@@ -8,13 +7,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from aggdraw import Brush, Pen  #@UnresolvedImport #pylint: disable=F0401
-from aggdraw import Font  #@UnresolvedImport #pylint: disable=F0401
-import math
-from rdkit import RDConfig
-import os, re
+import os
+import re
 
-from aggdraw import Draw  #@UnresolvedImport #pylint: disable=F0401
+from aggdraw import Brush, Pen
+from aggdraw import Draw
+from aggdraw import Font
+from rdkit import RDConfig
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 
 faceMap = {'sans': os.path.join(RDConfig.RDCodeDir, 'Chem', 'Draw', 'FreeSans.ttf')}
@@ -137,9 +136,7 @@ class Canvas(CanvasBase):
       supH *= 0.5
       subH *= 0.5
       h += supH + subH
-      bw, bh = w + h * 0.4, w * 1.4
       offset = w * pos[2]
-      #dPos = pos[0]-bw/2.,pos[1]-bh/2.
       dPos = [pos[0] - w / 2. + offset, pos[1] - h / 2.]
       if orientation == 'W':
         dPos = [pos[0] - w + offset, pos[1] - h / 2.]

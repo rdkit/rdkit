@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
 #
@@ -15,12 +14,17 @@ descriptors.
 
 """
 from __future__ import print_function
+
+import bisect
+
+import numpy
+
 from rdkit import Chem
-from rdkit.Chem.PeriodicTable import numTable
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
-import numpy
-import bisect
+from rdkit.Chem.PeriodicTable import numTable
+
+
 radCol = 5
 bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
 
@@ -87,8 +91,8 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
     else:
       bij = Ri + Rj - bondScaleFacts[0]
     dij = min(max(abs(Ri - Rj), bij), Ri + Rj)
-    Vi[idx1] += Rj * Rj - (Ri - dij)**2 / dij
-    Vi[idx2] += Ri * Ri - (Rj - dij)**2 / dij
+    Vi[idx1] += Rj * Rj - (Ri - dij) ** 2 / dij
+    Vi[idx2] += Ri * Ri - (Rj - dij) ** 2 / dij
 
   # add in hydrogens
   if includeHs:
@@ -98,17 +102,17 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
       Ri = rads[i]
       bij = Ri + Rj
       dij = min(max(abs(Ri - Rj), bij), Ri + Rj)
-      Vi[i] += Rj * Rj - (Ri - dij)**2 / dij
-      Vi[j] += Ri * Ri - (Rj - dij)**2 / dij
+      Vi[i] += Rj * Rj - (Ri - dij) ** 2 / dij
+      Vi[j] += Ri * Ri - (Rj - dij) ** 2 / dij
 
   for i in range(nAts + 1):
     Ri = rads[i]
-    Vi[i] = 4 * math.pi * Ri**2 - math.pi * Ri * Vi[i]
+    Vi[i] = 4 * math.pi * Ri ** 2 - math.pi * Ri * Vi[i]
 
   mol._labuteContribs = Vi
   return Vi
 
-#def SMR_VSA(mol,bins=[0.11,0.26,0.35,0.39,0.44,0.485,0.56]):
+# def SMR_VSA(mol,bins=[0.11,0.26,0.35,0.39,0.44,0.485,0.56]):
 # original default bins from assuming Labute values are logs
 # mrBins=[1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63]
 mrBins = [1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63, 3.8, 4.0]
@@ -137,8 +141,8 @@ def pySMR_VSA_(mol, bins=None, force=1):
     prop = propContribs[i]
     vol = volContribs[i + 1]
     if prop is not None:
-      bin = bisect.bisect_right(bins, prop[1])
-      ans[bin] += vol
+      bin_ = bisect.bisect_right(bins, prop[1])
+      ans[bin_] += vol
 
   mol._smrVSA = ans
   return ans
@@ -176,8 +180,8 @@ def pySlogP_VSA_(mol, bins=None, force=1):
     prop = propContribs[i]
     vol = volContribs[i + 1]
     if prop is not None:
-      bin = bisect.bisect_right(bins, prop[0])
-      ans[bin] += vol
+      bin_ = bisect.bisect_right(bins, prop[0])
+      ans[bin_] += vol
 
   mol._slogpVSA = ans
   return ans
@@ -202,11 +206,11 @@ def pyPEOE_VSA_(mol, bins=None, force=1):
   if bins is None:
     bins = chgBins
   Crippen._Init()
-  #print('\ts:',repr(mol.GetMol()))
-  #print('\t\t:',len(mol.GetAtoms()))
+  # print('\ts:',repr(mol.GetMol()))
+  # print('\t\t:',len(mol.GetAtoms()))
   rdPartialCharges.ComputeGasteigerCharges(mol)
 
-  #propContribs = [float(x.GetProp('_GasteigerCharge'))  for x in mol.GetAtoms()]
+  # propContribs = [float(x.GetProp('_GasteigerCharge'))  for x in mol.GetAtoms()]
   propContribs = []
   for at in mol.GetAtoms():
     p = at.GetProp('_GasteigerCharge')
@@ -215,17 +219,15 @@ def pyPEOE_VSA_(mol, bins=None, force=1):
     except ValueError:
       v = 0.0
     propContribs.append(v)
-  #print '\tp',propContribs
   volContribs = _LabuteHelper(mol)
-  #print '\tv',volContribs
 
   ans = numpy.zeros(len(bins) + 1, 'd')
   for i in range(len(propContribs)):
     prop = propContribs[i]
     vol = volContribs[i + 1]
     if prop is not None:
-      bin = bisect.bisect_right(bins, prop)
-      ans[bin] += vol
+      bin_ = bisect.bisect_right(bins, prop)
+      ans[bin_] += vol
 
   mol._peoeVSA = ans
   return ans
@@ -234,11 +236,11 @@ def pyPEOE_VSA_(mol, bins=None, force=1):
 PEOE_VSA_ = rdMolDescriptors.PEOE_VSA_
 
 
-#-------------------------------------------------
+# -------------------------------------------------
 # install the various VSA descriptors in the namespace
 def _InstallDescriptors():
   for i in range(len(mrBins)):
-    fn = lambda x, y=i: SMR_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: SMR_VSA_(x, force=0)[y]
     if i > 0:
       fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, mrBins[i - 1],
                                                                         mrBins[i])
@@ -248,14 +250,14 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: SMR_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: SMR_VSA_(x, force=0)[y]
   fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, mrBins[i - 1])
   fn.version = "1.0.1"
   name = "SMR_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(logpBins)):
-    fn = lambda x, y=i: SlogP_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: SlogP_VSA_(x, force=0)[y]
     if i > 0:
       fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, logpBins[i - 1],
                                                                           logpBins[i])
@@ -265,14 +267,14 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: SlogP_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: SlogP_VSA_(x, force=0)[y]
   fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, logpBins[i - 1])
   fn.version = "1.0.1"
   name = "SlogP_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(chgBins)):
-    fn = lambda x, y=i: PEOE_VSA_(x, force=0)[y]
+    fn = lambda x, y = i: PEOE_VSA_(x, force=0)[y]
     if i > 0:
       fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, chgBins[i - 1],
                                                                             chgBins[i])
@@ -282,7 +284,7 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: PEOE_VSA_(x, force=0)[y]
+  fn = lambda x, y = i: PEOE_VSA_(x, force=0)[y]
   fn.version = "1.0.1"
   fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, chgBins[i - 1])
   name = "PEOE_VSA%d" % (i + 1)
@@ -320,7 +322,7 @@ def _pyTPSAContribs(mol, verbose=False):
    Algorithm described in:
     P. Ertl, B. Rohde, P. Selzer
      Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
-     Contributions and Its Application to the Prediction of Drug Transport 
+     Contributions and Its Application to the Prediction of Drug Transport
      Properties, J.Med.Chem. 43, 3714-3717, 2000
 
    Implementation based on the Daylight contrib program tpsa.c
@@ -338,10 +340,8 @@ def _pyTPSAContribs(mol, verbose=False):
     atom = mol.GetAtomWithIdx(i)
     atNum = atom.GetAtomicNum()
     if atNum in [7, 8]:
-      #nHs = atom.GetImplicitValence()-atom.GetHvyValence()
       nHs = atom.GetTotalNumHs()
       chg = atom.GetFormalCharge()
-      isArom = atom.GetIsAromatic()
       in3Ring = atom.IsInRingSize(3)
 
       bonds = atom.GetBonds()
@@ -356,12 +356,12 @@ def _pyTPSAContribs(mol, verbose=False):
           if bond.GetIsAromatic():
             nArom += 1
           else:
-            ord = bond.GetBondType()
-            if ord == Chem.BondType.SINGLE:
+            order = bond.GetBondType()
+            if order == Chem.BondType.SINGLE:
               nSing += 1
-            elif ord == Chem.BondType.DOUBLE:
+            elif order == Chem.BondType.DOUBLE:
               nDoub += 1
-            elif ord == Chem.BondType.TRIPLE:
+            elif order == Chem.BondType.TRIPLE:
               nTrip += 1
         else:
           numNeighbors -= 1
@@ -431,7 +431,6 @@ def _pyTPSAContribs(mol, verbose=False):
           if tmp < 0.0:
             tmp = 0.0
       elif atNum == 8:
-        #print(nHs,nSing,chg)
         if numNeighbors == 1:
           if nHs == 0 and nDoub == 1 and chg == 0:
             tmp = 17.07
@@ -467,7 +466,7 @@ def _pyTPSA(mol, verbose=False):
    Algorithm in:
     P. Ertl, B. Rohde, P. Selzer
      Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
-     Contributions and Its Application to the Prediction of Drug Transport 
+     Contributions and Its Application to the Prediction of Drug Transport
      Properties, J.Med.Chem. 43, 3714-3717, 2000
 
    Implementation based on the Daylight contrib program tpsa.c
@@ -484,15 +483,15 @@ _pyTPSA.version = "1.0.1"
 TPSA = lambda *x, **y: rdMolDescriptors.CalcTPSA(*x, **y)
 TPSA.version = rdMolDescriptors._CalcTPSA_version
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   smis = ['C', 'CC', 'CCC', 'CCCC', 'CO', 'CCO', 'COC']
   smis = ['C(=O)O', 'c1ccccc1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)
-    #print(smi, LabuteASA(m))
+    # print(smi, LabuteASA(m))
     print('-----------\n', smi)
-    #print('M:',['% 4.2f'%x for x in SMR_VSA_(m)])
-    #print('L:',['% 4.2f'%x for x in SlogP_VSA_(m)])
+    # print('M:',['% 4.2f'%x for x in SMR_VSA_(m)])
+    # print('L:',['% 4.2f'%x for x in SlogP_VSA_(m)])
     print('P:', ['% 4.2f' % x for x in PEOE_VSA_(m)])
     print('P:', ['% 4.2f' % x for x in PEOE_VSA_(m)])
     print()

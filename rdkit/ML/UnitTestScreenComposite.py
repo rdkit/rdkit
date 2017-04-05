@@ -17,7 +17,7 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.ML import ScreenComposite
-from rdkit.six.moves import cPickle as pickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle as pickle
 
 
 class TestCase(unittest.TestCase):

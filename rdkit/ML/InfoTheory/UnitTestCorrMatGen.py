@@ -9,7 +9,7 @@ from rdkit.ML.InfoTheory import rdInfoTheory
 
 try:
   from rdkit.ML.InfoTheory import BitClusterer
-except ImportError:  # pragma: nocover
+except ImportError:
   BitClusterer = None
 
 

@@ -20,7 +20,9 @@
 #include <vector>
 #include "RDValue.h"
 #include "Exceptions.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 typedef std::vector<std::string> STR_VECT;
@@ -31,6 +33,7 @@ typedef std::vector<std::string> STR_VECT;
 //!  The actual storage is done using \c RDValue objects.
 //!
 class Dict {
+public:  
   struct Pair {
     std::string key;
     RDValue val;
@@ -39,9 +42,9 @@ class Dict {
    Pair(const std::string &s, const RDValue &v) : key(s), val(v) {
    }
   };
-  
+
   typedef std::vector<Pair> DataType;
-public:
+
   Dict() : _data(), _hasNonPodData(false) {  };
 
   Dict(const Dict &other) : _data(other._data) {
@@ -53,13 +56,13 @@ public:
         _data[i].key = other._data[i].key;
         copy_rdvalue(_data[i].val, other._data[i].val);
       }
-    }   
+    }
   }
-  
+
   ~Dict() {
     reset(); // to clear pointers if necessary
   }
-  
+
   Dict &operator=(const Dict &other) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
@@ -70,12 +73,18 @@ public:
         copy_rdvalue(_data[i].val, other._data[i].val);
       }
     } else {
-      _data = other._data;      
-    }    
+      _data = other._data;
+    }
     return *this;
   };
 
   //----------------------------------------------------------
+  //! \brief Access to the underlying data.
+  const DataType &getData() const { return _data; }
+        DataType &getData()       { return _data; }
+  
+  //----------------------------------------------------------
+
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
   bool hasVal(const std::string &what) const {
@@ -198,7 +207,7 @@ public:
     }
     _data.push_back(Pair(what, val));
   };
-  
+
   void setVal(const std::string &what, bool val) {
     setPODVal(what, val);
   }
@@ -206,19 +215,19 @@ public:
   void setVal(const std::string &what, double val) {
     setPODVal(what, val);
   }
-  
+
   void setVal(const std::string &what, float val) {
     setPODVal(what, val);
   }
-  
+
   void setVal(const std::string &what, int val) {
     setPODVal(what, val);
   }
-  
+
   void setVal(const std::string &what, unsigned int val) {
     setPODVal(what, val);
   }
-  
+
   //! \overload
   void setVal(const std::string &what, const char *val) {
     std::string h(val);
