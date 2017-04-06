@@ -1805,6 +1805,33 @@ void testEmbedParameters() {
 
 void testGithub1240() {
   {
+    std::cerr << "-----------------" << std::endl;
+    RWMol *mol = SmilesToMol("C1CCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.ignoreSmoothingFailures = true;
+    params.maxIterations = 1;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    delete mol;
+  }
+  {
+    std::cerr << "-----------------" << std::endl;
+    RWMol *mol = SmilesToMol("C1C3CC2CC(CC1C2)C3");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.ignoreSmoothingFailures = true;
+    params.maxIterations = 1;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    delete mol;
+  }
+  {
+    std::cerr << "-----------------" << std::endl;
     RWMol *mol = SmilesToMol("c1ccccccccc1");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
@@ -1812,8 +1839,27 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.ignoreSmoothingFailures = true;
+    params.maxIterations = 1;
+
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
+    std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+
+  {
+    std::cerr << "-----------------" << std::endl;
+    RWMol *mol = SmilesToMol("C/C(=C\\c1ccccc1)CN1C2CC[NH2+]CC1CC2");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.ignoreSmoothingFailures = true;
+    params.maxIterations = 10;
+
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    std::cerr << MolToMolBlock(*mol) << std::endl;
     delete mol;
   }
 }

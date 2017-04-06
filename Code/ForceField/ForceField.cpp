@@ -228,7 +228,9 @@ double ForceField::calcEnergy(std::vector<double> *contribs) const {
        contrib != d_contribs.end(); contrib++) {
     double e = (*contrib)->getEnergy(pos);
     res += e;
-    if (contribs) contribs->push_back(e);
+    if (contribs) {
+      contribs->push_back(e);
+    }
   }
   delete[] pos;
   return res;

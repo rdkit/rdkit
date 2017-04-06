@@ -34,6 +34,8 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 
+#define DEBUG_EMBEDDING 1
+
 #define ERROR_TOL 0.00001
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
@@ -387,13 +389,23 @@ bool _embedPoints(
         }
       }
       std::vector<double> e_contribs;
+      std::cerr << "\n\n\n\n\n\n\n\n\n\n--------------------------";
       double local_e = field->calcEnergy(&e_contribs);
-      // if (e_contribs.size()) {
-      //   std::cerr << "        check: " << local_e / nat << " "
-      //             << *(std::max_element(e_contribs.begin(),
-      //             e_contribs.end()))
-      //             << std::endl;
-      // }
+// if (e_contribs.size()) {
+//   std::cerr << "        check: " << local_e / nat << " "
+//             << *(std::max_element(e_contribs.begin(),
+//             e_contribs.end()))
+//             << std::endl;
+// }
+
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " Energy : " << local_e / nat << " "
+                << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+                << std::endl;
+      std::copy(e_contribs.begin(), e_contribs.end(),
+                std::ostream_iterator<double>(std::cerr, " "));
+      std::cerr << std::endl;
+#endif
 
       // check that neither the energy nor any of the contributions to it are
       // too high (this is part of github #971)
@@ -406,8 +418,8 @@ bool _embedPoints(
                   << *(std::max_element(e_contribs.begin(), e_contribs.end()))
                   << std::endl;
 #endif
-        gotCoords = false;
-        continue;
+        // gotCoords = false;
+        // continue;
       }
       // for each of the atoms in the "tetrahedralCarbons" list, make sure
       // that there is a minimum volume around them and that they are inside
