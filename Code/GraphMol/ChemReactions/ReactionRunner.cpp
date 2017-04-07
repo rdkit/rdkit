@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -282,6 +281,11 @@ struct ReactantProductAtomMapping {
   std::map<unsigned int, std::vector<unsigned int> > reactProdAtomMap;
   std::map<unsigned int, unsigned int> prodReactAtomMap;
   std::map<unsigned int, unsigned int> prodAtomBondMap;
+
+  // maps (atom map number,atom map number) pairs in the reactant template
+  // to whether or not they are bonded in the template.
+  std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+      reactantTemplateAtomBonds;
 };
 
 ReactantProductAtomMapping *getAtomMappingsReactantProduct(
@@ -289,6 +293,26 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     RWMOL_SPTR product, unsigned numReactAtoms) {
   ReactantProductAtomMapping *mapping =
       new ReactantProductAtomMapping(numReactAtoms);
+
+  // keep track of which mapped atoms in the reactant template are bonded to
+  // each other.
+  // This is part of the fix for #1387
+  {
+    ROMol::EDGE_ITER firstB, lastB;
+    boost::tie(firstB, lastB) = reactantTemplate.getEdges();
+    while (firstB != lastB) {
+      BOND_SPTR bond = reactantTemplate[*firstB];
+      // this will put in pairs with 0s for things that aren't mapped, but we
+      // don't care about that
+      int a1mapidx = bond->getBeginAtom()->getAtomMapNum();
+      int a2mapidx = bond->getEndAtom()->getAtomMapNum();
+      if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+      mapping->reactantTemplateAtomBonds[std::make_pair(a1mapidx, a2mapidx)] =
+          1;
+      ++firstB;
+    }
+  }
+
   for (unsigned int i = 0; i < match.size(); i++) {
     const Atom *templateAtom = reactantTemplate.getAtomWithIdx(match[i].first);
     int molAtomMapNumber;
@@ -483,8 +507,19 @@ void addReactantNeighborsToProduct(
     ReactantProductAtomMapping *mapping) {
   std::list<const Atom *> atomStack;
   atomStack.push_back(&reactantAtom);
+
+  // std::cerr << "-------------------" << std::endl;
+  // std::cerr << "  add reactant neighbors from: " << reactantAtom.getIdx()
+  //           << std::endl;
+  // #if 1
+  //   product->updatePropertyCache(false);
+  //   product->debugMol(std::cerr);
+  //   std::cerr << "-------------------" << std::endl;
+  // #endif
+
   while (!atomStack.empty()) {
     const Atom *lReactantAtom = atomStack.front();
+    // std::cerr << "    front: " << lReactantAtom->getIdx() << std::endl;
     atomStack.pop_front();
 
     // each atom in the stack is guaranteed to already be in the product:
@@ -507,6 +542,12 @@ void addReactantNeighborsToProduct(
       //  2) has been added: set a bond to it
       //  3) has not yet been added: add it, set a bond to it, and push it
       //     onto the stack
+      // std::cerr << "       nbr: " << *nbrIdx << std::endl;
+      // std::cerr << "              visited: " << visitedAtoms[*nbrIdx]
+      //           << "  skipped: " << mapping->skippedAtoms[*nbrIdx]
+      //           << " mapped: " << mapping->mappedAtoms[*nbrIdx]
+      //           << " mappedO: " << mapping->mappedAtoms[lreactIdx] <<
+      //           std::endl;
       if (!visitedAtoms[*nbrIdx] && !mapping->skippedAtoms[*nbrIdx]) {
         if (mapping->mappedAtoms[*nbrIdx]) {
           // this is case 1 (neighbor in match); set a bond to the neighbor if
@@ -521,6 +562,38 @@ void addReactantNeighborsToProduct(
             const Bond *origB =
                 reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
             addMissingProductBonds(*origB, product, mapping);
+          } else {
+            // both mapped atoms are in the match.
+            // they are bonded in the reactant (otherwise we wouldn't be here),
+            //
+            // If they do not have already have a bond in the product and did
+            // not have one in the reactant template then set one here
+            // If they do have a bond in the reactant template, then we
+            // assume that this is an intentional bond break, so we don't do
+            // anything
+            //
+            // this was github #1387
+            unsigned prodBeginIdx = mapping->reactProdAtomMap[lreactIdx][0];
+            unsigned prodEndIdx = mapping->reactProdAtomMap[*nbrIdx][0];
+            if (!product->getBondBetweenAtoms(prodBeginIdx, prodEndIdx)) {
+              // They must be mapped
+              CHECK_INVARIANT(
+                  product->getAtomWithIdx(prodBeginIdx)->hasProp(OLD_MAPNO) &&
+                      product->getAtomWithIdx(prodEndIdx)->hasProp(OLD_MAPNO),
+                  "atoms should be mapped in product");
+              int a1mapidx = product->getAtomWithIdx(prodBeginIdx)
+                                 ->getProp<int>(OLD_MAPNO);
+              int a2mapidx =
+                  product->getAtomWithIdx(prodEndIdx)->getProp<int>(OLD_MAPNO);
+              if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+              if (mapping->reactantTemplateAtomBonds.find(
+                      std::make_pair(a1mapidx, a2mapidx)) ==
+                  mapping->reactantTemplateAtomBonds.end()) {
+                const Bond *origB =
+                    reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
+                addMissingProductBonds(*origB, product, mapping);
+              }
+            }
           }
         } else if (mapping->reactProdAtomMap.find(*nbrIdx) !=
                    mapping->reactProdAtomMap.end()) {
