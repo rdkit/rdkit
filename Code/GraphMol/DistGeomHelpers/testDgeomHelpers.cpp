@@ -1805,61 +1805,67 @@ void testEmbedParameters() {
 
 void testGithub1240() {
   {
-    std::cerr << "-----------------" << std::endl;
     RWMol *mol = SmilesToMol("C1CCCCCCC1");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
-    params.ignoreSmoothingFailures = true;
     params.maxIterations = 1;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     delete mol;
   }
   {
-    std::cerr << "-----------------" << std::endl;
     RWMol *mol = SmilesToMol("C1C3CC2CC(CC1C2)C3");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
-    params.ignoreSmoothingFailures = true;
     params.maxIterations = 1;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     delete mol;
   }
   {
-    std::cerr << "-----------------" << std::endl;
     RWMol *mol = SmilesToMol("c1ccccccccc1");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     TEST_ASSERT(mol->getNumAtoms() == 20);
     DGeomHelpers::EmbedParameters params;
-    params.randomSeed = 42;
-    params.ignoreSmoothingFailures = true;
-    params.maxIterations = 1;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
 
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
-    std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
     delete mol;
   }
-
   {
-    std::cerr << "-----------------" << std::endl;
-    RWMol *mol = SmilesToMol("C/C(=C\\c1ccccc1)CN1C2CC[NH2+]CC1CC2");
+    RWMol *mol = SmilesToMol("c1ccccccc1");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 16);
     DGeomHelpers::EmbedParameters params;
-    params.randomSeed = 42;
-    params.ignoreSmoothingFailures = true;
-    params.maxIterations = 10;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
 
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
-    std::cerr << MolToMolBlock(*mol) << std::endl;
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol = SmilesToMol("c1ccccccccccc1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 24);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
+
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
     delete mol;
   }
 }
@@ -1870,7 +1876,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
-#if 0
+#if 1
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();

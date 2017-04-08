@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,7 +34,7 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 
-#define DEBUG_EMBEDDING 1
+//#define DEBUG_EMBEDDING 1
 
 #define ERROR_TOL 0.00001
 // these tolerances, all to detect and filter out bogus conformations, are a
@@ -389,7 +389,6 @@ bool _embedPoints(
         }
       }
       std::vector<double> e_contribs;
-      std::cerr << "\n\n\n\n\n\n\n\n\n\n--------------------------";
       double local_e = field->calcEnergy(&e_contribs);
 // if (e_contribs.size()) {
 //   std::cerr << "        check: " << local_e / nat << " "
@@ -402,9 +401,9 @@ bool _embedPoints(
       std::cerr << " Energy : " << local_e / nat << " "
                 << *(std::max_element(e_contribs.begin(), e_contribs.end()))
                 << std::endl;
-      std::copy(e_contribs.begin(), e_contribs.end(),
-                std::ostream_iterator<double>(std::cerr, " "));
-      std::cerr << std::endl;
+// std::copy(e_contribs.begin(), e_contribs.end(),
+//           std::ostream_iterator<double>(std::cerr, " "));
+// std::cerr << std::endl;
 #endif
 
       // check that neither the energy nor any of the contributions to it are
@@ -418,8 +417,8 @@ bool _embedPoints(
                   << *(std::max_element(e_contribs.begin(), e_contribs.end()))
                   << std::endl;
 #endif
-        // gotCoords = false;
-        // continue;
+        gotCoords = false;
+        continue;
       }
       // for each of the atoms in the "tetrahedralCarbons" list, make sure
       // that there is a minimum volume around them and that they are inside
