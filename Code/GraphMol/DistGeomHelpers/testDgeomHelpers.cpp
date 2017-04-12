@@ -1868,6 +1868,63 @@ void testGithub1240() {
     // std::cerr << MolToMolBlock(*mol) << std::endl;
     delete mol;
   }
+  {
+    // CHEMBL307150
+    RWMol *mol =
+        SmilesToMol("Cc1cc2ccn(C)c2c3c4C(=O)NC(=O)c4c5c6ccccc6[nH]c5c13");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+
+  {
+    // CHEMBL43398
+    RWMol *mol =
+        SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    delete mol;
+  }
+
+  {
+    // CHEMBL290986
+    // std::cerr << "-----------------------------------" << std::endl;
+    RWMol *mol = SmilesToMol(
+        "COc1c(O)ccc2O[C@@H]([C@@H]3CCCC(=C3)C)c4c(ccc5NC(C)(C)C=C(C)c45)c12");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << "-----------------------------------" << std::endl;
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
 }
 
 int main() {

@@ -225,10 +225,12 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
       double d2 = (p0 - p1).length();  // distance
       double lb = mmat.getLowerBound(a1, a2);
       double ub = mmat.getUpperBound(a1, a2);  // bounds
-      if (((d2 < lb) && (fabs(d2 - lb) > 0.17)) ||
-          ((d2 > ub) && (fabs(d2 - ub) > 0.17))) {
-        // std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
-        // << " " << fabs(d2-lb) << " " << fabs(d2-ub) << std::endl;
+      if (((d2 < lb) && (fabs(d2 - lb) > 0.1 * ub)) ||
+          ((d2 > ub) && (fabs(d2 - ub) > 0.1 * ub))) {
+#ifdef DEBUG_EMBEDDING
+        std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
+                  << " " << fabs(d2 - lb) << " " << fabs(d2 - ub) << std::endl;
+#endif
         return false;
       }
     }
@@ -291,8 +293,12 @@ bool _minimizeWithExpTorsions(
                                                      improperAtoms, atomNums);
     field2->initialize();
     // check if the energy is low enough
-    double planarityTolerance = 0.5;
+    double planarityTolerance = 0.7;
     if (field2->calcEnergy() > improperAtoms.size() * planarityTolerance) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << "   planar fail: " << field2->calcEnergy() << " "
+                << improperAtoms.size() * planarityTolerance << std::endl;
+#endif
       planar = false;
     }
     delete field2;
@@ -510,6 +516,11 @@ bool _embedPoints(
         if (atomsToCheck.size() > 0) {
           if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
             gotCoords = false;
+
+#ifdef DEBUG_EMBEDDING
+            std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: " << iter
+                      << std::endl;
+#endif
           }
         }
 
@@ -521,7 +532,7 @@ bool _embedPoints(
             // four points. That is also a fail.
             if (!_centerInVolume(chiralSet, *positions)) {
 #ifdef DEBUG_EMBEDDING
-              std::cerr << " fail3! (" << chiralSet->d_idx0
+              std::cerr << " fail3b! (" << chiralSet->d_idx0
                         << ") iter: " << iter << std::endl;
 #endif
               gotCoords = false;
