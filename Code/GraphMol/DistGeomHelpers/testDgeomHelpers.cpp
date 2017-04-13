@@ -1803,6 +1803,31 @@ void testEmbedParameters() {
   }
 }
 
+void testGithub1227() {
+  {
+    RWMol *m = SmilesToMol("CC");
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 8);
+    INT_VECT cids;
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = 0xf00d;
+
+    cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
+    TEST_ASSERT(cids.size() == 10);
+
+    params.pruneRmsThresh = 0.5;
+    cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
+    TEST_ASSERT(cids.size() == 1);
+
+    params.onlyHeavyAtomsForRMS = false;  // the old default behavior
+    cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
+    TEST_ASSERT(cids.size() == 6);
+
+    delete m;
+  }
+}
+
 void testGithub1240() {
   {
     RWMol *mol = SmilesToMol("C1CCCCCCC1");
@@ -2090,8 +2115,12 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
   testEmbedParameters();
-
 #endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "\t test github 1227: Hs being used in RMSD filtering.\n";
+  testGithub1227();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings.\n";
