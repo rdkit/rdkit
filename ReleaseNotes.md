@@ -2,7 +2,9 @@
 (Changes relative to Release_2016.09.1)
 
 ## Important
-- The fix for bug #879 requires that all substructure search indices be rebuilt.
+- The fix for bug #879 changes the definition of the layered fingerprint.
+  This means that all database columns using layered fingerprints as well as
+  all substructure search indices should be rebuilt.
 - All C++ library names now start with RDKit (see #1349).
 
 ## Acknowledgements:
