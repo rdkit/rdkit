@@ -6,10 +6,10 @@
 - All C++ library names now start with RDKit (see #1349).
 
 ## Acknowledgements:
-Brian Cole, David Cosgrove, Berend Huisman, Peter Gedeck, 'i-tub',
+Brian Cole, David Cosgrove, JW Feng, Berend Huisman, Peter Gedeck, 'i-tub',
 Jan Holst Jensen, Brian Kelley, Rich Lewis, Brian Mack, Eloy Felix Manzanares,
-Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain, Paolo Tosco,
-Riccardo Vianello, Hsiao Yi
+Stephen Roughley, Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain,
+Paolo Tosco, Riccardo Vianello, Hsiao Yi
 
 ## Highlights:
   - It's now possible (though not the default) to pickle molecule properties
@@ -182,11 +182,15 @@ Riccardo Vianello, Hsiao Yi
  (github pull #1223 from gedeck)
   - Turns on -fpermissive for gcc >= 6 and boost < 1.62
  (github pull #1225 from bp-kelley)
-  - FindPotentialStereoBonds() failure
+  - all-atom RMSD used to prune conformers in embedding code, docs say heavy-atom RMSD is used
+ (github issue #1227 from greglandrum)
+   - FindPotentialStereoBonds() failure
  (github issue #1230 from greglandrum)
   - make the Pandas version checking more robust
  (github pull #1239 from greglandrum)
-  - fixed build failure on Windows due to missing link to library
+  - Failure to embed larger aromatic rings
+ (github issue #1240 from greglandrum)
+   - fixed build failure on Windows due to missing link to library
  (github pull #1241 from ptosco)
   - fixed a test failure on Windows due to CR+LF encoding
  (github pull #1242 from ptosco)
@@ -208,6 +212,10 @@ Riccardo Vianello, Hsiao Yi
  (github issue #1352 from richlewis42)
   - bad python docs for some distance geometry functions
  (github issue #1385 from greglandrum)
+  - Bond from reactant not added to product
+ (github issue #1387 from greglandrum)
+  - int32_t with no namespace in MolPickler.h
+ (github issue #1388 from greglandrum)
 
 ## Contrib updates:
   - Chemical reaction role assignment code from Nadine Schneider
