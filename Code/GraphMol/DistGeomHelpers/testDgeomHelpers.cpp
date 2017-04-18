@@ -1828,6 +1828,130 @@ void testGithub1227() {
   }
 }
 
+void testGithub1240() {
+  {
+    RWMol *mol = SmilesToMol("C1CCCCCCC1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.maxIterations = 1;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    delete mol;
+  }
+  {
+    RWMol *mol = SmilesToMol("C1C3CC2CC(CC1C2)C3");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 42;
+    params.maxIterations = 1;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    delete mol;
+  }
+  {
+    RWMol *mol = SmilesToMol("c1ccccccccc1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 20);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
+
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol = SmilesToMol("c1ccccccc1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 16);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
+
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol = SmilesToMol("c1ccccccccccc1");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 24);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    params.maxIterations = 1;  // we should get this in one iteration
+
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+  {
+    // CHEMBL307150
+    RWMol *mol =
+        SmilesToMol("Cc1cc2ccn(C)c2c3c4C(=O)NC(=O)c4c5c6ccccc6[nH]c5c13");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+
+  {
+    // CHEMBL43398
+    RWMol *mol =
+        SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    delete mol;
+  }
+
+  {
+    // CHEMBL290986
+    // std::cerr << "-----------------------------------" << std::endl;
+    RWMol *mol = SmilesToMol(
+        "COc1c(O)ccc2O[C@@H]([C@@H]3CCCC(=C3)C)c4c(ccc5NC(C)(C)C=C(C)c45)c12");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    // std::cerr << "-----------------------------------" << std::endl;
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    delete mol;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -1997,6 +2121,10 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "\t test github 1227: Hs being used in RMSD filtering.\n";
   testGithub1227();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings.\n";
+  testGithub1240();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

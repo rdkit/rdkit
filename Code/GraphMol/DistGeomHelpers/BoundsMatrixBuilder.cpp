@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -570,7 +569,8 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
 
 void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                         const Bond *bnd3, ComputedData &accumData,
-                        DistGeom::BoundsMatPtr mmat, double *dmat) {
+                        DistGeom::BoundsMatPtr mmat, double *dmat,
+                        int ringSize) {
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -614,7 +614,11 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   path14.bid3 = bid3;
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
   bool preferCis = false;
-  if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+
+  // we add a check for the ring size here because there's no reason to assume
+  // cis bonds in bigger rings.
+  // This was part of github #1240: failure to embed larger aromatic rings
+  if (ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
       (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
     // the ring check here was a big part of github #697
     if (mol.getRingInfo()->numBondRings(bid2) > 1) {
@@ -632,7 +636,11 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     } else {
       preferCis = true;
     }
+  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+    preferCis = true;
   }
+  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
+  //           << std::endl;
   if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
@@ -753,7 +761,7 @@ void _setTwoInDiffRing14Bounds(const ROMol &mol, const Bond *bnd1,
   // a3 are not sp2 hybridized,
   // but we will not worry about that now; simple use 0-180 deg for non-sp2
   // cases.
-  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat);
+  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat, 0);
 }
 
 void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1,
@@ -761,7 +769,7 @@ void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1,
                                ComputedData &accumData,
                                DistGeom::BoundsMatPtr mmat, double *dmat) {
   // once this turns out to be similar to bonds in the same ring
-  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat);
+  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat, 0);
 }
 
 bool _checkH2NX3H1OX2(const Atom *atm) {
@@ -1150,7 +1158,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       if (rSize > 5) {
         _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                           accumData, mmat, distMatrix);
+                           accumData, mmat, distMatrix, rSize);
       } else {
         _record14Path(mol, bid1, bid2, bid3, accumData);
       }
