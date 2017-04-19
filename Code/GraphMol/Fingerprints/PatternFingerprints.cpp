@@ -55,7 +55,6 @@ class ss_matcher {
 
 namespace RDKit {
 const char *pqs[] = {
-    "[D0]",  // special case: single atom fragment
     "[*]~[*]", "[*]~[*]~[*]", "[R]~1~[R]~[R]~1",
     //"[*]~[*]~[*]~[*]",
     "[*]~[*](~[*])~[*]",
@@ -74,6 +73,7 @@ const char *pqs[] = {
     //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
     //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
+    "[D0]",  // special case: single atom fragment
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
