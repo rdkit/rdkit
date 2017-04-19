@@ -355,6 +355,7 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   else
     bond_p = bond_pin;
 
+  /* after the line below is executed, the takeOwnership flag has no effect */
   bond_p->setOwningMol(this);
   bool ok;
   MolGraph::edge_descriptor which;
