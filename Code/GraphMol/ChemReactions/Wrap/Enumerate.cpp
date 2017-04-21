@@ -39,6 +39,17 @@
 
 namespace python = boost::python;
 
+// Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
+namespace boost {
+  template<> const volatile RDKit::EnumerateLibraryBase* get_pointer(const volatile RDKit::EnumerateLibraryBase* p) { return p; }
+  template<> const volatile RDKit::EnumerationStrategyBase* get_pointer(const volatile RDKit::EnumerationStrategyBase* p) { return p; }
+  template<> const volatile RDKit::CartesianProductStrategy* get_pointer(const volatile RDKit::CartesianProductStrategy* p) { return p; }
+  template<> const volatile RDKit::RandomSampleStrategy* get_pointer(const volatile RDKit::RandomSampleStrategy* p) { return p; }
+  template<> const volatile RDKit::RandomSampleAllBBsStrategy* get_pointer(const volatile RDKit::RandomSampleAllBBsStrategy* p) { return p; }
+  template<> const volatile RDKit::EvenSamplePairsStrategy* get_pointer(const volatile RDKit::EvenSamplePairsStrategy* p) { return p; }
+}
+#endif
 
 namespace RDKit {
 
@@ -432,6 +443,13 @@ for result in itertools.islice(libary2, 1000):\n\
 };
 
 }// end of namespace
+
+// Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
+namespace boost {
+  template<> const volatile RDKit::EnumerateLibraryWrap* get_pointer(const volatile RDKit::EnumerateLibraryWrap* p) { return p; }
+}
+#endif
 
 void wrap_enumeration() {
   RDKit::enumeration_wrapper::wrap();

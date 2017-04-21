@@ -32,6 +32,15 @@
 #include <sstream>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 namespace python = boost::python;
+
+// Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
+namespace boost {
+  template<> const volatile RDKit::ROMol* get_pointer(const volatile RDKit::ROMol* p) { return p; }
+  template<> const volatile ExplicitBitVect* get_pointer(const volatile ExplicitBitVect* p) { return p; }
+}
+#endif
+
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {

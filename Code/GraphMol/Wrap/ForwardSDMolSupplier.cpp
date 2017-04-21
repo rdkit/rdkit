@@ -128,4 +128,11 @@ struct forwardsdmolsup_wrap {
 };
 }
 
+// Workaround for bug in Visual Studio 2015 Update 3
+#if defined(_MSC_VER) && (_MSC_VER == 1900) && (_MSC_FULL_VER >= 190024210)
+namespace boost {
+  template<> const volatile LocalForwardSDMolSupplier* get_pointer(const volatile LocalForwardSDMolSupplier* p) { return p; };
+}
+#endif
+
 void wrap_forwardsdsupplier() { RDKit::forwardsdmolsup_wrap::wrap(); }
