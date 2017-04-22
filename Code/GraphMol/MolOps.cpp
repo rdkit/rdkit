@@ -120,8 +120,8 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
   // the sanitization process):
   if (atom->calcExplicitValence(false) == 5 && atom->getDegree() == 3) {
     unsigned int aid = atom->getIdx();
-    Bond *dbl_to_O = NULL;
-    Atom *O_atom = NULL;
+    Bond *dbl_to_O = nullptr;
+    Atom *O_atom = nullptr;
     bool hasDoubleToCorN = false;
     RWMol::ADJ_ITER nid1, end1;
     boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
@@ -142,8 +142,8 @@ void phosphorusCleanup(RWMol &mol, Atom *atom) {
       }
       ++nid1;
     }  // end of loop over the first neigh
-    if (hasDoubleToCorN && dbl_to_O != NULL) {
-      TEST_ASSERT(O_atom != NULL);
+    if (hasDoubleToCorN && dbl_to_O != nullptr) {
+      TEST_ASSERT(O_atom != nullptr);
       O_atom->setFormalCharge(-1);
       dbl_to_O->setBondType(Bond::SINGLE);
       atom->setFormalCharge(1);
@@ -396,7 +396,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
   unsigned int nFrags = getMolFrags(mol, *mapping);
   std::vector<ROMOL_SPTR> res;
   if (nFrags == 1) {
-    ROMol *tmp = new ROMol(mol);
+    auto *tmp = new ROMol(mol);
     ROMOL_SPTR sptr(tmp);
     res.push_back(sptr);
     if (fragsMolAtomMapping) {
@@ -412,7 +412,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     boost::dynamic_bitset<> copiedBonds(mol.getNumBonds(), 0);
     res.reserve(nFrags);
     for (unsigned int frag = 0; frag < nFrags; ++frag) {
-      ROMol *tmp = new ROMol();
+      auto *tmp = new ROMol();
       ROMOL_SPTR sptr(tmp);
       res.push_back(sptr);
     }
@@ -449,10 +449,10 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       if (oAtm->getPropIfPresent(common_properties::_ringStereoAtoms,
                                  ringStereoAtomsMol)) {
         INT_VECT ringStereoAtomsCopied;
-        for (unsigned rnbr = 0; rnbr < ringStereoAtomsMol.size(); ++rnbr) {
-          int ori_ridx = abs(ringStereoAtomsMol[rnbr]) - 1;
+        for (int rnbr : ringStereoAtomsMol) {
+          int ori_ridx = abs(rnbr) - 1;
           int ridx = ids[ori_ridx] + 1;
-          if (ringStereoAtomsMol[rnbr] < 0) {
+          if (rnbr < 0) {
             ridx *= (-1);
           }
           ringStereoAtomsCopied.push_back(ridx);
@@ -480,24 +480,24 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
       nBond->getStereoAtoms().clear();
       INT_VECT stereoAtoms = bond->getStereoAtoms();
-      for (unsigned i = 0; i < stereoAtoms.size(); ++i) {
-        nBond->getStereoAtoms().push_back(ids[stereoAtoms[i]]);
+      for (int stereoAtom : stereoAtoms) {
+        nBond->getStereoAtoms().push_back(ids[stereoAtom]);
       }
       tmp->addBond(nBond, true);
     }
 
     // copy RingInfo
     if (mol.getRingInfo()->isInitialized()) {
-      for (unsigned i = 0; i < mol.getRingInfo()->atomRings().size(); ++i) {
+      for (const auto & i : mol.getRingInfo()->atomRings()) {
         INT_VECT aids;
         RWMol *tmp = static_cast<RWMol *>(
-            res[(*mapping)[mol.getRingInfo()->atomRings()[i][0]]].get());
+            res[(*mapping)[i[0]]].get());
         if (!tmp->getRingInfo()->isInitialized()) {
           tmp->getRingInfo()->initialize();
         }
-        for (unsigned j = 0; j < mol.getRingInfo()->atomRings()[i].size();
+        for (unsigned j = 0; j < i.size();
              ++j) {
-          aids.push_back(ids[mol.getRingInfo()->atomRings()[i][j]]);
+          aids.push_back(ids[i[j]]);
         }
         INT_VECT bids;
         INT_VECT_CI lastRai;
@@ -518,12 +518,11 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
     if (copyConformers) {
       // copy conformers
-      for (ROMol::ConstConformerIterator cit = mol.beginConformers();
+      for (auto cit = mol.beginConformers();
            cit != mol.endConformers(); ++cit) {
-        for (std::vector<ROMOL_SPTR>::iterator iter = res.begin();
-             iter != res.end(); ++iter) {
-          ROMol *newM = iter->get();
-          Conformer *conf = new Conformer(newM->getNumAtoms());
+        for (auto & re : res) {
+          ROMol *newM = re.get();
+          auto *conf = new Conformer(newM->getNumAtoms());
           conf->setId((*cit)->getId());
           conf->set3D((*cit)->is3D());
           newM->addConformer(conf);
@@ -546,9 +545,8 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
   }
 
   if (sanitizeFrags) {
-    for (std::vector<ROMOL_SPTR>::iterator iter = res.begin();
-         iter != res.end(); ++iter) {
-      sanitizeMol(*static_cast<RWMol *>(iter->get()));
+    for (auto & re : res) {
+      sanitizeMol(*static_cast<RWMol *>(re.get()));
     }
   }
 
@@ -627,13 +625,13 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     }
   }
   // update conformers
-  for (ROMol::ConstConformerIterator cit = mol.beginConformers();
+  for (auto cit = mol.beginConformers();
        cit != mol.endConformers(); ++cit) {
-    for (typename std::map<T, boost::shared_ptr<ROMol> >::iterator iter =
+    for (auto iter =
              res.begin();
          iter != res.end(); ++iter) {
       ROMol *newM = iter->second.get();
-      Conformer *conf = new Conformer(newM->getNumAtoms());
+      auto *conf = new Conformer(newM->getNumAtoms());
       conf->setId((*cit)->getId());
       conf->set3D((*cit)->is3D());
       newM->addConformer(conf);
@@ -646,7 +644,7 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     }
   }
   if (sanitizeFrags) {
-    for (typename std::map<T, boost::shared_ptr<ROMol> >::iterator iter =
+    for (auto iter =
              res.begin();
          iter != res.end(); ++iter) {
       sanitizeMol(*static_cast<RWMol *>(iter->second.get()));

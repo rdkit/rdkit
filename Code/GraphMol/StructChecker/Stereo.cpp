@@ -110,9 +110,9 @@ int DubiousStereochemistry(RWMol &mol) {
         nmulti++;
         if (RDKit::Bond::DOUBLE == bond.getBondType()) {
           unsigned jatom = nbp.Atoms[j];
-          for (unsigned jj = 0; jj < neighbour_array[jatom].Bonds.size(); jj++)
+          for (unsigned int jj : neighbour_array[jatom].Bonds)
             if (RDKit::Bond::DOUBLE ==
-                mol.getBondWithIdx(neighbour_array[jatom].Bonds[jj])
+                mol.getBondWithIdx(jj)
                     ->getBondType())
               ndb++;
         }
@@ -132,9 +132,9 @@ int DubiousStereochemistry(RWMol &mol) {
            n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
           (15 == element &&  // "P"
            n_ligands > 2 && n_ligands <= 4) ||
-          (14 == element &&  // "Si"
+          ((14 == element &&  // "Si"
            n_ligands > 2 && n_ligands <= 4) &&
-              nmulti == 0))
+              nmulti == 0)))
 
       for (unsigned j = 0; j < n_ligands; j++) {
         const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
@@ -219,8 +219,8 @@ int FixDubious3DMolecule(RWMol &mol) {
     for (j = 0; j < mol.getNumBonds(); j++) {
       const Bond *bond = mol.getBondWithIdx(j);
       if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
-          RDKit::Bond::BEGINDASH == bond->getBondDir() &&
-              i == bond->getBeginAtomIdx())
+          (RDKit::Bond::BEGINDASH == bond->getBondDir() &&
+              i == bond->getBeginAtomIdx()))
         break;
     }
     if (j < mol.getNumBonds()) continue;  // no stereo designation
@@ -330,9 +330,9 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
            n_ligands > 3 && n_ligands <= 4 && nmulti == 0) ||
           (15 == element &&  // "P"
            n_ligands > 2 && n_ligands <= 4) ||
-          (14 == element &&  // "Si"
+          ((14 == element &&  // "Si"
            n_ligands > 2 && n_ligands <= 4) &&
-              nmulti == 0)) {
+              nmulti == 0))) {
       for (unsigned j = 0; j < n_ligands; j++) {
         Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
         if (bj.getBeginAtomIdx() == i &&
@@ -779,7 +779,7 @@ int CisTransPerception(const ROMol &mol,
   std::vector<Neighbourhood> nba(mol.getNumAtoms());
   SetupNeighbourhood(mol, nba);
 
-  for (unsigned i = 0; i < bondColor.size(); i++) bondColor[i] = 0;
+  for (unsigned int & i : bondColor) i = 0;
   for (unsigned i = 0; i < nba.size(); i++)  // n_atoms
     if (numbering[i] > maxnum) maxnum = numbering[i];
 

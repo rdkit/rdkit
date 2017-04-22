@@ -896,7 +896,7 @@ void SDM::fillFromLAP(LAP &lap) {
     if (lap.getCost(i, lap.getRowSol(i)) >= O3_DUMMY_COST) {
       continue;
     }
-    SDMElement *sdmElement = new SDMElement;
+    auto *sdmElement = new SDMElement;
     sdmElement->idx[0] = i;
     sdmElement->idx[1] = lap.getRowSol(i);
     sdmElement->cost = lap.getCost(i, lap.getRowSol(i));
@@ -924,7 +924,7 @@ void SDM::fillFromLAP(LAP &lap) {
   }
   // loop over n_equiv rows
   for (i = 0; i < n_equiv; ++i) {
-    d_SDMPtrVect[i]->o3aConstraint = NULL;
+    d_SDMPtrVect[i]->o3aConstraint = nullptr;
     if (d_SDMPtrVect[i]->cost < 0) {
       // this is one of the constrained atom pairs, so assign it
       // a pointer to the relevant O3AConstraint object
@@ -1005,11 +1005,11 @@ void SDM::fillFromDist(double threshold,
            (j == (*d_o3aConstraintVect)[mapIdx]->getPrbIdx()) &&
            (i == (*d_o3aConstraintVect)[mapIdx]->getRefIdx()));
       if ((sqDist < sqThreshold) || isConstraint) {
-        SDMElement *sdmElement = new SDMElement();
+        auto *sdmElement = new SDMElement();
         sdmElement->idx[0] = i;
         sdmElement->idx[1] = j;
         sdmElement->sqDist = sqDist;
-        sdmElement->o3aConstraint = NULL;
+        sdmElement->o3aConstraint = nullptr;
         if (isConstraint) {
           sdmElement->o3aConstraint = (*d_o3aConstraintVect)[mapIdx];
           // in case there are duplicate constraints referring to the same
@@ -1168,9 +1168,9 @@ double SDM::scoreAlignment(double (*scoringFunc)(const unsigned int,
                            void *data) {
   double score = 0.0;
 
-  for (unsigned int i = 0; i < d_SDMPtrVect.size(); ++i) {
+  for (auto & i : d_SDMPtrVect) {
     score +=
-        scoringFunc(d_SDMPtrVect[i]->idx[1], d_SDMPtrVect[i]->idx[0], data);
+        scoringFunc(i->idx[1], i->idx[0], data);
   }
 
   return score;
@@ -1221,11 +1221,11 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
   std::vector<unsigned int> pairs(4, 0);
   std::vector<double> score(3, 0.0);
   std::vector<double> pairsRMSD(2, 0.0);
-  std::vector<SDM *> bestSDM((unsigned int)3, NULL);
+  std::vector<SDM *> bestSDM((unsigned int)3, nullptr);
   SDM startSDM(&prbConf, &refConf, o3aConstraintVect);
-  MolHistogram *refHist = NULL;
-  MolHistogram *prbHist = NULL;
-  LAP *lap = NULL;
+  MolHistogram *refHist = nullptr;
+  MolHistogram *prbHist = nullptr;
+  LAP *lap = nullptr;
   if (local) {
     startSDM.fillFromDist(O3_SDM_THRESHOLD_START, *refHvyAtoms, *prbHvyAtoms);
   } else {
@@ -1325,7 +1325,7 @@ O3A::O3A(int (*costFunc)(const unsigned int, const unsigned int, double,
     score[0] = bestSDM[0]->scoreAlignment(scoringFunc, data);
   }
   RDKit::MatchVectType *o3aMatchVect = new RDKit::MatchVectType(pairs[0]);
-  RDNumeric::DoubleVector *o3aWeights = new RDNumeric::DoubleVector(pairs[0]);
+  auto *o3aWeights = new RDNumeric::DoubleVector(pairs[0]);
   d_o3aMatchVect = o3aMatchVect;
   d_o3aWeights = o3aWeights;
   if (pairs[0] >= 3) {
@@ -1431,10 +1431,10 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
   int c;
   int l;
   std::vector<double> score(2, 0.0);
-  O3A *bestO3A = NULL;
-  MolHistogram *refHist = NULL;
-  MolHistogram *prbHist = NULL;
-  LAP *lap = NULL;
+  O3A *bestO3A = nullptr;
+  MolHistogram *refHist = nullptr;
+  MolHistogram *prbHist = nullptr;
+  LAP *lap = nullptr;
   if (!local) {
     refHist = (extRefHist ? extRefHist
                           : new MolHistogram(
@@ -1455,7 +1455,7 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
          c += ((accuracy < 3) ? 1 : (O3_MAX_WEIGHT_COEFF + 1))) {
       data.weight = (l ? c : 0);
       data.coeff = c;
-      O3A *o3a = new O3A(costFunc, weightFunc, scoringFunc, &data, prbMol,
+      auto *o3a = new O3A(costFunc, weightFunc, scoringFunc, &data, prbMol,
                          refMol, prbCid, refCid, &prbHvyAtoms, &refHvyAtoms,
                          reflect, maxIters, options, &o3aConstraintVect,
                          &extWorkPrbMol, lap, prbHist, refHist);
@@ -1474,7 +1474,7 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
   }
   unsigned int pairs = rdcast<unsigned int>(bestO3A->matches()->size());
   RDKit::MatchVectType *bestO3AMatchVect = new RDKit::MatchVectType(pairs);
-  RDNumeric::DoubleVector *bestO3AWeights = new RDNumeric::DoubleVector(pairs);
+  auto *bestO3AWeights = new RDNumeric::DoubleVector(pairs);
   d_o3aMatchVect = bestO3AMatchVect;
   d_o3aWeights = bestO3AWeights;
   if (pairs >= 3) {
@@ -1505,9 +1505,9 @@ double _rmsdMatchVect(ROMol *d_prbMol, const ROMol *d_refMol,
                       const RDKit::MatchVectType *matchVect) {
   double rmsd = 0.0;
   if (matchVect) {
-    for (unsigned int i = 0; i < (*matchVect).size(); ++i) {
+    for (const auto & i : (*matchVect)) {
       // first pair element is prb, second is ref
-      rmsd += (prbPos[(*matchVect)[i].first] - refPos[(*matchVect)[i].second])
+      rmsd += (prbPos[i.first] - refPos[i.second])
                   .lengthSq();
     }
     rmsd = sqrt(rmsd / (*matchVect).size());
@@ -1548,7 +1548,7 @@ double _rmsdMatchVect(ROMol *d_prbMol, const ROMol *d_refMol,
 
 double O3A::align() {
   double rmsd = 0.0;
-  const RDKit::MatchVectType *matchVectPtr = NULL;
+  const RDKit::MatchVectType *matchVectPtr = nullptr;
 
   if (d_o3aMatchVect && (d_o3aMatchVect->size() >= 3)) {
     alignMol(*d_prbMol, *d_refMol, d_prbCid, d_refCid, d_o3aMatchVect,
@@ -1635,7 +1635,7 @@ void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
        cit != prbMol->endConformers(); ++cit, ++i) {
     if (i % numThreads != threadIdx) continue;
 
-    O3A *lres =
+    auto *lres =
         new O3A(*prbMol, *refMol, prbProp, refProp, args->atomTypes,
                 (*cit)->getId(), args->refCid, args->reflect, args->maxIters,
                 args->options, args->constraintMap, args->constraintWeights);
@@ -1659,7 +1659,7 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
     unsigned int i = 0;
     for (ROMol::ConstConformerIterator cit = prbMol.beginConformers();
          cit != prbMol.endConformers(); ++cit, ++i) {
-      O3A *lres = new O3A(prbMol, refMol, prbProp, refProp, atomTypes,
+      auto *lres = new O3A(prbMol, refMol, prbProp, refProp, atomTypes,
                           (*cit)->getId(), refCid, reflect, maxIters, options,
                           constraintMap, constraintWeights);
       res[i].reset(lres);

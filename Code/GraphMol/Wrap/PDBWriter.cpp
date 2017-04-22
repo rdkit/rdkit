@@ -26,8 +26,8 @@ using boost_adaptbx::python::streambuf;
 namespace {
 PDBWriter *getPDBWriter(python::object &fileobj, unsigned int flavor = 0) {
   // FIX: minor leak here
-  streambuf *sb = new streambuf(fileobj);
-  streambuf::ostream *ost = new streambuf::ostream(*sb);
+  auto *sb = new streambuf(fileobj);
+  auto *ost = new streambuf::ostream(*sb);
   return new PDBWriter(ost, true, flavor);
 }
 }

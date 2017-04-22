@@ -36,7 +36,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
   }
-  std::map<int, RDGeom::Point3D> *pMapPtr = 0;
+  std::map<int, RDGeom::Point3D> *pMapPtr = nullptr;
   if (nKeys) {
     pMapPtr = &pMap;
   }
@@ -76,7 +76,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
   }
-  std::map<int, RDGeom::Point3D> *pMapPtr = 0;
+  std::map<int, RDGeom::Point3D> *pMapPtr = nullptr;
   if (nKeys) {
     pMapPtr = &pMap;
   }

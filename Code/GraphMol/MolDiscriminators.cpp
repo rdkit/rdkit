@@ -65,9 +65,8 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
     if (bondPath) {
       boost::dynamic_bitset<> atomsUsed(mol.getNumAtoms());
       boost::dynamic_bitset<> bondsUsed(mol.getNumBonds());
-      for (std::vector<int>::const_iterator ci = bondPath->begin();
-           ci != bondPath->end(); ci++) {
-        bondsUsed[*ci] = 1;
+      for (int ci : *bondPath) {
+        bondsUsed[ci] = 1;
       }
       std::vector<const Bond *> bonds;
       bonds.reserve(bondPath->size());
@@ -101,7 +100,7 @@ double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
     } else {
       nb = mol.getNumBonds();
       nAts = mol.getNumAtoms();
-      dMat = MolOps::getDistanceMat(mol, true, true, true, 0);
+      dMat = MolOps::getDistanceMat(mol, true, true, true, nullptr);
       res = computeBalabanJ(dMat, nb, nAts);
       delete[] dMat;
     }

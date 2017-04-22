@@ -60,7 +60,7 @@ const EmbedParameters KDG(0,      // maxIterations
                           2.0,    // boxSizeMult
                           true,   // randNegEig
                           1,      // numZeroFail
-                          NULL,   // coordMap
+                          nullptr,   // coordMap
                           1e-3,   // optimizerForceTol
                           false,  // ignoreSmoothingFailures
                           true,   // enforceChirality
@@ -81,7 +81,7 @@ const EmbedParameters ETDG(0,      // maxIterations
                            2.0,    // boxSizeMult
                            true,   // randNegEig
                            1,      // numZeroFail
-                           NULL,   // coordMap
+                           nullptr,   // coordMap
                            1e-3,   // optimizerForceTol
                            false,  // ignoreSmoothingFailures
                            false,  // enforceChirality
@@ -101,7 +101,7 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             2.0,    // boxSizeMult
                             true,   // randNegEig
                             1,      // numZeroFail
-                            NULL,   // coordMap
+                            nullptr,   // coordMap
                             1e-3,   // optimizerForceTol
                             false,  // ignoreSmoothingFailures
                             true,   // enforceChirality
@@ -258,9 +258,9 @@ bool _minimizeWithExpTorsions(
 
   // convert to 3D positions and create coordMap
   RDGeom::Point3DPtrVect positions3D;
-  for (unsigned int p = 0; p < positions.size(); ++p) {
+  for (auto & position : positions) {
     positions3D.push_back(new RDGeom::Point3D(
-        (*positions[p])[0], (*positions[p])[1], (*positions[p])[2]));
+        (*position)[0], (*position)[1], (*position)[2]));
   }
 
   // create the force field
@@ -345,7 +345,7 @@ bool _embedPoints(
   // conformations for large flexible molecules
   if (useRandomCoords) basinThresh = 1e8;
 
-  RDKit::double_source_type *rng = 0;
+  RDKit::double_source_type *rng = nullptr;
   RDKit::rng_type *generator;
   RDKit::uniform_double *distrib;
   if (seed > 0) {
@@ -386,7 +386,7 @@ bool _embedPoints(
     if (gotCoords) {
       boost::scoped_ptr<ForceFields::ForceField> field(
           DistGeom::constructForceField(*mmat, *positions, *chiralCenters, 1.0,
-                                        0.1, 0, basinThresh));
+                                        0.1, nullptr, basinThresh));
       unsigned int nPasses = 0;
       field->initialize();
       // std::cerr << "FIELD E: " << field->calcEnergy() << std::endl;
@@ -480,7 +480,7 @@ bool _embedPoints(
       if (gotCoords && (chiralCenters->size() > 0 || useRandomCoords)) {
         boost::scoped_ptr<ForceFields::ForceField> field2(
             DistGeom::constructForceField(*mmat, *positions, *chiralCenters,
-                                          0.2, 1.0, 0, basinThresh));
+                                          0.2, 1.0, nullptr, basinThresh));
         field2->initialize();
         // std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
         if (field2->calcEnergy() > ERROR_TOL) {
@@ -594,12 +594,12 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // postive chiral volume
-          DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(
+          auto *cset = new DistGeom::ChiralSet(
               (*ati)->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 5.0, 100.0);
           DistGeom::ChiralSetPtr cptr(cset);
           chiralCenters.push_back(cptr);
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          DistGeom::ChiralSet *cset =
+          auto *cset =
               new DistGeom::ChiralSet((*ati)->getIdx(), nbrs[0], nbrs[1],
                                       nbrs[2], nbrs[3], -100.0, -5.0);
           DistGeom::ChiralSetPtr cptr(cset);
@@ -614,7 +614,7 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
             // the coordMap
             // there's no sense doing 3-rings because those are a nightmare
           } else {
-            DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(
+            auto *cset = new DistGeom::ChiralSet(
                 (*ati)->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 0.0, 0.0);
             DistGeom::ChiralSetPtr cptr(cset);
             tetrahedralCenters.push_back(cptr);
@@ -705,12 +705,12 @@ void adjustBoundsMatFromCoordMap(
   //   std::cerr<<std::endl;
   // }
   // std::cerr<<std::endl;
-  for (std::map<int, RDGeom::Point3D>::const_iterator iIt = coordMap->begin();
+  for (auto iIt = coordMap->begin();
        iIt != coordMap->end(); ++iIt) {
     int iIdx = iIt->first;
     const RDGeom::Point3D &iPoint = iIt->second;
 
-    std::map<int, RDGeom::Point3D>::const_iterator jIt = iIt;
+    auto jIt = iIt;
     while (++jIt != coordMap->end()) {
       int jIdx = jIt->first;
       const RDGeom::Point3D &jPoint = jIt->second;
@@ -828,7 +828,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << "Constrained conformer generation (via the coordMap argument) does "
            "not work with molecules that have multiple fragments."
         << std::endl;
-    coordMap = 0;
+    coordMap = nullptr;
   }
   std::vector<Conformer *> confs;
   confs.reserve(numConfs);
@@ -846,7 +846,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   for (unsigned int fragIdx = 0; fragIdx < molFrags.size(); ++fragIdx) {
     ROMOL_SPTR piece = molFrags[fragIdx];
     unsigned int nAtoms = piece->getNumAtoms();
-    DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nAtoms);
+    auto *mat = new DistGeom::BoundsMatrix(nAtoms);
     DistGeom::BoundsMatPtr mmat(mat);
     initBoundsMat(mmat);
 

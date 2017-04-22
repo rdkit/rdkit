@@ -71,14 +71,13 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
     bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
     if (ringIsAromatic) 
       ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
-    RingSizeMembershipMap::iterator it = d_ringSizeMembershipMap.find(ringSize);
+    auto it = d_ringSizeMembershipMap.find(ringSize);
     if (it == d_ringSizeMembershipMap.end())
       it = d_ringSizeMembershipMap.insert(std::make_pair(ringSize, RingMembershipMap())).first;
-    for (INT_VECT::const_iterator atomIdxIt = atomRings[ringIdx].begin();
-      atomIdxIt != atomRings[ringIdx].end(); ++atomIdxIt) {
-      RingMembershipMap::iterator it2 = it->second.find(*atomIdxIt);
+    for (int atomIdxIt : atomRings[ringIdx]) {
+      auto it2 = it->second.find(atomIdxIt);
       if (it2 == it->second.end())
-        it2 = it->second.insert(std::make_pair(*atomIdxIt, RingMembership())).first;
+        it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership())).first;
       it2->second.getRingIdxSet().insert(ringIdxWithAromaticFlag);
       if (ringIsAromatic)
         it2->second.setIsInAromaticRing(true);
@@ -89,10 +88,10 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
 // returns true if the atom is in an aromatic ring of size ringSize
 bool RingMembershipSize::isAtomInAromaticRingOfSize(
     const Atom *atom, const unsigned int ringSize) const {
-  RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.find(ringSize);
+  auto it = d_ringSizeMembershipMap.find(ringSize);
   bool isAromatic = (it != d_ringSizeMembershipMap.end());
   if (isAromatic) {
-    RingMembershipMap::const_iterator it2 = it->second.find(atom->getIdx());
+    auto it2 = it->second.find(atom->getIdx());
     isAromatic = (it2 != it->second.end());
     if (isAromatic)
       isAromatic = it2->second.getIsInAromaticRing();
@@ -105,11 +104,11 @@ bool RingMembershipSize::areAtomsInSameAromaticRing(
     const Atom *atom1, const Atom *atom2) const {
   bool areInSameAromaticRing = false;
 
-  for (RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.begin();
+  for (auto it = d_ringSizeMembershipMap.begin();
     !areInSameAromaticRing && (it != d_ringSizeMembershipMap.end()); ++it) {
     std::vector<boost::uint32_t> intersectVect;
-    RingMembershipMap::const_iterator it1 = it->second.find(atom1->getIdx());
-    RingMembershipMap::const_iterator it2 = it->second.find(atom2->getIdx());
+    auto it1 = it->second.find(atom1->getIdx());
+    auto it2 = it->second.find(atom2->getIdx());
     if ((it1 != it->second.end()) && (it2 != it->second.end())) {
       std::set_intersection(it1->second.getRingIdxSet().begin(),
         it1->second.getRingIdxSet().end(), it2->second.getRingIdxSet().begin(),
@@ -128,17 +127,17 @@ bool RingMembershipSize::areAtomsInSameRingOfSize(
   va_list atoms;
   bool areInSameRingOfSize = false;
   
-  RingSizeMembershipMap::const_iterator it = d_ringSizeMembershipMap.find(ringSize);
+  auto it = d_ringSizeMembershipMap.find(ringSize);
   if (it != d_ringSizeMembershipMap.end()) {
     va_start(atoms, numAtoms);
     unsigned int idx1 = va_arg(atoms, const Atom *)->getIdx();
-    RingMembershipMap::const_iterator it1 = it->second.find(idx1);
+    auto it1 = it->second.find(idx1);
     if (it1 != it->second.end()) {
       std::set<boost::uint32_t> commonSet = it1->second.getRingIdxSet();
       for (unsigned int i = 1; !commonSet.empty() && (i < numAtoms); ++i) {
         areInSameRingOfSize = false;
         unsigned int idx2 = va_arg(atoms, const Atom *)->getIdx();
-        RingMembershipMap::const_iterator it2 = it->second.find(idx2);
+        auto it2 = it->second.find(idx2);
         if (it2 == it->second.end()) break;
         std::set<boost::uint32_t> intersect;
         std::set_intersection(commonSet.begin(), commonSet.end(),
@@ -2682,7 +2681,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
   PRECONDITION(mmffAtomPropParams[1],
                "property parameters for atom 2 not found");
 
-  ForceFields::MMFF::MMFFBond *mmffBondParams =
+  auto *mmffBondParams =
       new ForceFields::MMFF::MMFFBond();
   const double c = (((atomicNum1 == 1) || (atomicNum2 == 1)) ? 0.050 : 0.085);
   const double n = 1.4;
@@ -2814,7 +2813,7 @@ const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
   atomicNum[0] = mol.getAtomWithIdx(idx1)->getAtomicNum();
   atomicNum[1] = mol.getAtomWithIdx(idx2)->getAtomicNum();
   atomicNum[2] = mol.getAtomWithIdx(idx3)->getAtomicNum();
-  ForceFields::MMFF::MMFFAngle *mmffAngleParams =
+  auto *mmffAngleParams =
       new ForceFields::MMFF::MMFFAngle();
   unsigned int ringSize = isAngleInRingOfSize3or4(mol, idx1, idx2, idx3);
   if (!oldMMFFAngleParams) {
@@ -2958,7 +2957,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
 
   MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
   MMFFAromCollection *mmffArom = MMFFAromCollection::getMMFFArom();
-  ForceFields::MMFF::MMFFTor *mmffTorParams = new ForceFields::MMFF::MMFFTor();
+  auto *mmffTorParams = new ForceFields::MMFF::MMFFTor();
   unsigned int jAtomType = this->getMMFFAtomType(idx2);
   unsigned int kAtomType = this->getMMFFAtomType(idx3);
   const MMFFProp *jMMFFProp = (*mmffProp)(jAtomType);

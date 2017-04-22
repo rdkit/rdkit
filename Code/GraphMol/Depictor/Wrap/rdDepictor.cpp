@@ -80,7 +80,7 @@ unsigned int Compute2DCoordsMimicDistmat(
         "The array size does not match the number of atoms in the molecule");
   }
   double *inData = reinterpret_cast<double *>(PyArray_DATA(dmatrix));
-  double *cData = new double[nitems];
+  auto *cData = new double[nitems];
 
   memcpy(static_cast<void *>(cData), static_cast<const void *>(inData),
          nitems * sizeof(double));
@@ -106,7 +106,7 @@ unsigned int Compute2DCoordsMimicDistmat(
 					     python::object refPatt ,
 					     bool acceptFailure ) {
 
-    RDKit::ROMol *referencePattern = 0;
+    RDKit::ROMol *referencePattern = nullptr;
     if( refPatt != python::object() ) {
       referencePattern = python::extract<RDKit::ROMol *>( refPatt );
     }
@@ -122,7 +122,7 @@ unsigned int Compute2DCoordsMimicDistmat(
 					     python::object refPatt ,
 					     bool acceptFailure ) {
 
-    RDKit::ROMol *referencePattern = 0;
+    RDKit::ROMol *referencePattern = nullptr;
     if( refPatt ) {
       referencePattern = python::extract<RDKit::ROMol *>( refPatt );
     }

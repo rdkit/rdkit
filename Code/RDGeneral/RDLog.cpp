@@ -22,12 +22,12 @@ boost::logging::rdLogger cerrLogger(&std::cerr);
 boost::logging::rdLogger coutLogger(&std::cout);
 }
 
-boost::logging::rdLogger *rdAppLog = 0;
-boost::logging::rdLogger *rdDebugLog = 0;
+boost::logging::rdLogger *rdAppLog = nullptr;
+boost::logging::rdLogger *rdDebugLog = nullptr;
 boost::logging::rdLogger *rdInfoLog = &coutLogger;
 boost::logging::rdLogger *rdErrorLog = &cerrLogger;
 boost::logging::rdLogger *rdWarningLog = &cerrLogger;
-boost::logging::rdLogger *rdStatusLog = 0;
+boost::logging::rdLogger *rdStatusLog = nullptr;
 
 namespace boost {
 namespace logging {
@@ -75,7 +75,7 @@ void InitLogs() {
   rdErrorLog = new boost::logging::rdLogger(&std::cerr);
 }
 std::ostream &toStream(std::ostream &logstrm) {
-  time_t t = time(0);
+  time_t t = time(nullptr);
   tm details = *localtime(&t);
   logstrm << "[" << std::setw(2) << std::setfill('0') << details.tm_hour << ":"
           << std::setw(2) << std::setfill('0') << details.tm_min << ":"

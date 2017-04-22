@@ -127,7 +127,7 @@ double PBF(const ROMol &mol, int confId) {
   }
 
   std::vector<double> plane(4);
-  if (!getBestFitPlane(conf, points, plane, NULL)) {
+  if (!getBestFitPlane(conf, points, plane, nullptr)) {
     // the eigenvalue calculation failed, return 0
     // FIX: throw an exception here?
     return 0.0;

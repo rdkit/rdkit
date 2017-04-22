@@ -580,12 +580,12 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
 
   int initSize = bv1.getNumBits();
   int resSize = initSize / factor;
-  T1* res = new T1(resSize);
+  auto* res = new T1(resSize);
 
   IntVect onBits;
   bv1.getOnBits(onBits);
-  for (IntVectIter iv = onBits.begin(); iv != onBits.end(); iv++) {
-    int pos = (*iv) % resSize;
+  for (int & onBit : onBits) {
+    int pos = onBit % resSize;
     res->setBit(pos);
   }
   return res;
@@ -659,7 +659,7 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
     try {
       tptr[0] = fps[i];
       tptr[1] = fps[i + 1];
-      c = static_cast<unsigned short>(strtol(tptr, NULL, 16));
+      c = static_cast<unsigned short>(strtol(tptr, nullptr, 16));
     } catch (...) {
       std::ostringstream errout;
       errout << "Cannot convert FPS word: " << fps.substr(i, 2) << " to int";

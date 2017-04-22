@@ -103,8 +103,8 @@ RDNumeric::DoubleSymmMatrix *computeCovarianceMatrix(
     bool ignoreHs) {
   double xx, xy, xz, yy, yz, zz;
   computeCovarianceTerms(conf, center, xx, xy, xz, yy, yz, zz, normalize,
-                         ignoreHs, NULL);
-  RDNumeric::DoubleSymmMatrix *res = new RDNumeric::DoubleSymmMatrix(3, 3);
+                         ignoreHs, nullptr);
+  auto *res = new RDNumeric::DoubleSymmMatrix(3, 3);
   res->setVal(0, 0, xx);
   res->setVal(0, 1, xy);
   res->setVal(0, 2, xz);
@@ -273,7 +273,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // setting translation
   // translation
   unsigned int nAtms = conf.getNumAtoms();
-  RDGeom::Transform3D *trans = new RDGeom::Transform3D;
+  auto *trans = new RDGeom::Transform3D;
 
   // set the translation
   origin *= -1.0;
@@ -352,7 +352,7 @@ void canonicalizeConformer(Conformer &conf, const RDGeom::Point3D *center,
 void canonicalizeMol(RDKit::ROMol &mol, bool normalizeCovar, bool ignoreHs) {
   ROMol::ConformerIterator ci;
   for (ci = mol.beginConformers(); ci != mol.endConformers(); ci++) {
-    canonicalizeConformer(*(*ci), 0, normalizeCovar, ignoreHs);
+    canonicalizeConformer(*(*ci), nullptr, normalizeCovar, ignoreHs);
   }
 }
 
@@ -427,9 +427,8 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, iAtomId, jAtomId, alist);
   v *= (value / origValue - 1.);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
-    pos[*it] -= v;
+  for (unsigned int & it : alist) {
+    pos[it] -= v;
   }
 }
 
@@ -484,16 +483,15 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to j and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
+  for (unsigned int & it : alist) {
     // translate atom so that it coincides with the origin of rotation
-    pos[*it] -= rotAxisBegin;
+    pos[it] -= rotAxisBegin;
     // rotate around our rotation axis
     RDGeom::Transform3D rotByAngle;
     rotByAngle.SetRotation(value, rotAxis);
-    rotByAngle.TransformPoint(pos[*it]);
+    rotByAngle.TransformPoint(pos[it]);
     // translate atom back
-    pos[*it] += rotAxisBegin;
+    pos[it] += rotAxisBegin;
   }
 }
 
@@ -574,16 +572,15 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to k and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (std::list<unsigned int>::iterator it = alist.begin(); it != alist.end();
-       ++it) {
+  for (unsigned int & it : alist) {
     // translate atom so that it coincides with the origin of rotation
-    pos[*it] -= rotAxisBegin;
+    pos[it] -= rotAxisBegin;
     // rotate around our rotation axis
     RDGeom::Transform3D rotByAngle;
     rotByAngle.SetRotation(value, rotAxis);
-    rotByAngle.TransformPoint(pos[*it]);
+    rotByAngle.TransformPoint(pos[it]);
     // translate atom back
-    pos[*it] += rotAxisBegin;
+    pos[it] += rotAxisBegin;
   }
 }
 }

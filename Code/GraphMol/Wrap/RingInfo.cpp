@@ -22,18 +22,16 @@ using namespace RDKit;
 python::object atomRings(const RingInfo *self) {
   python::list res;
   VECT_INT_VECT rings = self->atomRings();
-  for (VECT_INT_VECT_I ringIt = rings.begin(); ringIt != rings.end();
-       ++ringIt) {
-    res.append(python::tuple(*ringIt));
+  for (auto & ring : rings) {
+    res.append(python::tuple(ring));
   }
   return python::tuple(res);
 }
 python::object bondRings(const RingInfo *self) {
   python::list res;
   VECT_INT_VECT rings = self->bondRings();
-  for (VECT_INT_VECT_I ringIt = rings.begin(); ringIt != rings.end();
-       ++ringIt) {
-    res.append(python::tuple(*ringIt));
+  for (auto & ring : rings) {
+    res.append(python::tuple(ring));
   }
   return python::tuple(res);
 }

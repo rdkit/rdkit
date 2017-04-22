@@ -28,7 +28,7 @@ bool comparePts(const RDGeom::Point3D &pt1, const RDGeom::Point3D &pt2,
 
 void test1Canonicalization() {
   ROMol *mol = SmilesToMol("C", 0, 1);
-  Conformer *conf = new Conformer(1);
+  auto *conf = new Conformer(1);
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   int cid = mol->addConformer(conf, true);
   CHECK_INVARIANT(cid >= 0, "")

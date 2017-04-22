@@ -14,7 +14,7 @@
 namespace RDKit {
 
 Conformer::Conformer(const Conformer &conf) {
-  dp_mol = 0;
+  dp_mol = nullptr;
   int i, nat = conf.getNumAtoms();
   d_positions.reserve(nat);
 

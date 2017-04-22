@@ -732,20 +732,18 @@ void getExperimentalTorsions(
         ExpTorsionAngleCollection::getParams();
 
     // loop over patterns
-    for (ExpTorsionAngleCollection::ParamsVect::const_iterator it =
-             params->begin();
-         it != params->end(); ++it) {
+    for (const auto & param : *params) {
       std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
+      SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
 
       // loop over matches
       for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
            matchIt != matches.end(); ++matchIt) {
         // get bond indices
-        aid1 = (*matchIt)[it->idx[0]].second;
-        aid2 = (*matchIt)[it->idx[1]].second;
-        aid3 = (*matchIt)[it->idx[2]].second;
-        aid4 = (*matchIt)[it->idx[3]].second;
+        aid1 = (*matchIt)[param.idx[0]].second;
+        aid2 = (*matchIt)[param.idx[1]].second;
+        aid3 = (*matchIt)[param.idx[2]].second;
+        aid4 = (*matchIt)[param.idx[3]].second;
         // FIX: check if bond is NULL
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         if (!doneBonds[bid2]) {
@@ -756,14 +754,14 @@ void getExperimentalTorsions(
           atoms[2] = aid3;
           atoms[3] = aid4;
           expTorsionAtoms.push_back(atoms);
-          expTorsionAngles.push_back(std::make_pair(it->signs, it->V));
+          expTorsionAngles.push_back(std::make_pair(param.signs, param.V));
           if (verbose) {
-            std::cout << it->smarts << ": " << aid1 << " " << aid2 << " "
+            std::cout << param.smarts << ": " << aid1 << " " << aid2 << " "
                       << aid3 << " " << aid4 << ", (";
-            for (unsigned int i = 0; i < it->V.size() - 1; ++i) {
-              std::cout << it->V[i] << ", ";
+            for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
+              std::cout << param.V[i] << ", ";
             }
-            std::cout << it->V[it->V.size() - 1] << ") " << std::endl;
+            std::cout << param.V[param.V.size() - 1] << ") " << std::endl;
           }
         }  // if not donePaths
       }    // end loop over matches
@@ -831,9 +829,8 @@ void getExperimentalTorsions(
         mol.getRingInfo();  // FIX: make sure we have ring info
     CHECK_INVARIANT(rinfo, "");
     const VECT_INT_VECT &atomRings = rinfo->atomRings();
-    for (VECT_INT_VECT_CI rii = atomRings.begin(); rii != atomRings.end();
-         rii++) {
-      unsigned int rSize = rii->size();
+    for (const auto & atomRing : atomRings) {
+      unsigned int rSize = atomRing.size();
       // we don't need to deal with 3 membered rings
       // and we do not treat rings greater than 6
       if (rSize < 4 || rSize > 6) {
@@ -842,10 +839,10 @@ void getExperimentalTorsions(
       // loop over ring atoms
       for (unsigned int i = 0; i < rSize; ++i) {
         // proper torsions
-        aid1 = (*rii)[i];
-        aid2 = (*rii)[(i + 1) % rSize];
-        aid3 = (*rii)[(i + 2) % rSize];
-        aid4 = (*rii)[(i + 3) % rSize];
+        aid1 = atomRing[i];
+        aid2 = atomRing[(i + 1) % rSize];
+        aid3 = atomRing[(i + 2) % rSize];
+        aid4 = atomRing[(i + 3) % rSize];
         bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
         // if all 4 atoms are SP2, add torsion
         if (!(doneBonds[bid2]) &&

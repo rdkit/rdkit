@@ -95,7 +95,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
   std::vector<int> mapNumbersSeen;
   std::map<int, const Atom *> reactingAtoms;
   unsigned int molIdx = 0;
-  for (MOL_SPTR_VECT::const_iterator molIter = this->beginReactantTemplates();
+  for (auto molIter = this->beginReactantTemplates();
        molIter != this->endReactantTemplates(); ++molIter) {
     bool thisMolMapped = false;
     for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();
@@ -130,7 +130,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
 
   std::vector<int> productNumbersSeen;
   molIdx = 0;
-  for (MOL_SPTR_VECT::const_iterator molIter = this->beginProductTemplates();
+  for (auto molIter = this->beginProductTemplates();
        molIter != this->endProductTemplates(); ++molIter) {
     // clear out some possible cached properties to prevent
     // misleading warnings
@@ -174,7 +174,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
         } else {
           productNumbersSeen.push_back(mapNum);
         }
-        std::vector<int>::iterator ivIt =
+        auto ivIt =
             std::find(mapNumbersSeen.begin(), mapNumbersSeen.end(), mapNum);
         if (ivIt == mapNumbersSeen.end()) {
           if (!seenAlready) {
@@ -207,7 +207,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
         while (!queries.empty()) {
           const Atom::QUERYATOM_QUERY *query = queries.front();
           queries.pop_front();
-          for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI qIter =
+          for (auto qIter =
                    query->beginChildren();
                qIter != query->endChildren(); ++qIter) {
             queries.push_back((*qIter).get());
@@ -320,7 +320,7 @@ bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
         "initReactantMatchers() must be called first");
   }
   which = 0;
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
+  for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, ++which) {
     MatchVectType tvect;
     if (SubstructMatch(mol, **iter, tvect)) {
@@ -342,7 +342,7 @@ bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
         "initReactantMatchers() must be called first");
   }
   which = 0;
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginProductTemplates();
+  for (auto iter = rxn.beginProductTemplates();
        iter != rxn.endProductTemplates(); ++iter, ++which) {
     MatchVectType tvect;
     if (SubstructMatch(mol, **iter, tvect)) {
@@ -364,7 +364,7 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
         "initReactantMatchers() must be called first");
   }
   which = 0;
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginAgentTemplates();
+  for (auto iter = rxn.beginAgentTemplates();
        iter != rxn.endAgentTemplates(); ++iter, ++which) {
     if (iter->get()->getNumHeavyAtoms() != mol.getNumHeavyAtoms()) {
       continue;
@@ -404,13 +404,13 @@ void addRecursiveQueriesToReaction(
         "initReactantMatchers() must be called first");
   }
 
-  if (reactantLabels != NULL) {
+  if (reactantLabels != nullptr) {
     (*reactantLabels).resize(0);
   }
 
   for (MOL_SPTR_VECT::const_iterator rIt = rxn.beginReactantTemplates();
        rIt != rxn.endReactantTemplates(); ++rIt) {
-    if (reactantLabels != NULL) {
+    if (reactantLabels != nullptr) {
       std::vector<std::pair<unsigned int, std::string> > labels;
       addRecursiveQueries(**rIt, queries, propName, &labels);
       (*reactantLabels).push_back(labels);
@@ -449,7 +449,7 @@ bool isComplexQuery(const Atom &a) {
   if (descr == "AtomAtomicNum") return false;
   if (descr == "AtomOr" || descr == "AtomXor") return true;
   if (descr == "AtomAnd") {
-    Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt =
+    auto childIt =
         a.getQuery()->beginChildren();
     int ncq = numComplexQueries(childIt, a.getQuery()->endChildren());
     if (ncq == 1) {
@@ -587,15 +587,15 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
 
   // find mapped atoms in the products :
   std::map<int, const Atom *> mappedProductAtoms;
-  for (MOL_SPTR_VECT::const_iterator rIt = rxn.beginProductTemplates();
+  for (auto rIt = rxn.beginProductTemplates();
        rIt != rxn.endProductTemplates(); ++rIt) {
     getMappedAtoms(*rIt, mappedProductAtoms);
   }
 
   // now loop over mapped atoms in the reactants, keeping track of
   // which reactant they are associated with, and check for changes.
-  VECT_INT_VECT::iterator resIt = res.begin();
-  for (MOL_SPTR_VECT::const_iterator rIt = rxn.beginReactantTemplates();
+  auto resIt = res.begin();
+  for (auto rIt = rxn.beginReactantTemplates();
        rIt != rxn.endReactantTemplates(); ++rIt, ++resIt) {
     ROMol::ATOM_ITER_PAIR atItP = (*rIt)->getVertices();
     while (atItP.first != atItP.second) {
@@ -626,7 +626,7 @@ void ChemicalReaction::removeUnmappedReactantTemplates(
     double thresholdUnmappedAtoms, bool moveToAgentTemplates,
     MOL_SPTR_VECT *targetVector) {
   MOL_SPTR_VECT res_reactantTemplates;
-  for (MOL_SPTR_VECT::iterator iter = beginReactantTemplates();
+  for (auto iter = beginReactantTemplates();
        iter != endReactantTemplates(); ++iter) {
     if (isReactionTemplateMoleculeAgent(*iter->get(), thresholdUnmappedAtoms)) {
       if (moveToAgentTemplates) {
@@ -650,7 +650,7 @@ void ChemicalReaction::removeUnmappedProductTemplates(
     double thresholdUnmappedAtoms, bool moveToAgentTemplates,
     MOL_SPTR_VECT *targetVector) {
   MOL_SPTR_VECT res_productTemplates;
-  for (MOL_SPTR_VECT::iterator iter = beginProductTemplates();
+  for (auto iter = beginProductTemplates();
        iter != endProductTemplates(); ++iter) {
     if (isReactionTemplateMoleculeAgent(*iter->get(), thresholdUnmappedAtoms)) {
       if (moveToAgentTemplates) {
@@ -672,7 +672,7 @@ void ChemicalReaction::removeUnmappedProductTemplates(
 
 void ChemicalReaction::removeAgentTemplates(MOL_SPTR_VECT *targetVector) {
   if (targetVector) {
-    for (MOL_SPTR_VECT::iterator iter = beginAgentTemplates();
+    for (auto iter = beginAgentTemplates();
          iter != endAgentTemplates(); ++iter) {
       targetVector->push_back(*iter);
     }

@@ -398,7 +398,7 @@ ExplicitBitVect *RDKFingerprintMol(
     atomInvariants= &lAtomInvariants;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
@@ -578,8 +578,8 @@ ExplicitBitVect *RDKFingerprintMol(
 
       if(bitInfo){
         std::vector<int> p;
-        for(unsigned int i=0; i < path.size();++i){
-          p.push_back(path[i]);
+        for(int i : path){
+          p.push_back(i);
         }
         (*bitInfo)[bit].push_back(p);
       }
@@ -665,7 +665,7 @@ ExplicitBitVect *LayeredFingerprintMol(
     ++firstA;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
 
   INT_PATH_LIST_MAP allPaths;
   if (!fromAtoms) {
@@ -696,9 +696,8 @@ ExplicitBitVect *LayeredFingerprintMol(
   boost::dynamic_bitset<> bondsInPath(mol.getNumBonds());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        ++paths) {
-    for (PATH_LIST_CI pathIt = paths->second.begin();
-         pathIt != paths->second.end(); ++pathIt) {
-      const PATH_TYPE &path = *pathIt;
+    for (const auto & path : paths->second) {
+      
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "Path: ";
       std::copy(path.begin(), path.end(),
@@ -714,9 +713,8 @@ ExplicitBitVect *LayeredFingerprintMol(
       // details about what kinds of query features appear on the path:
       unsigned int pathQueries = 0;
       // std::cerr<<" path: ";
-      for (PATH_TYPE::const_iterator pIt = path.begin(); pIt != path.end();
-           ++pIt) {
-        pathQueries |= isQueryBond[*pIt];
+      for (int pIt : path) {
+        pathQueries |= isQueryBond[pIt];
         // std::cerr<< *pIt <<"("<<isQueryBond[*pIt]<<") ";
       }
       // std::cerr<<" : "<<pathQueries<<std::endl;
@@ -726,8 +724,8 @@ ExplicitBitVect *LayeredFingerprintMol(
       atomsInPath.reset();
 
       std::vector<unsigned int> atomDegrees(mol.getNumAtoms(), 0);
-      for (unsigned int i = 0; i < path.size(); ++i) {
-        const Bond *bi = bondCache[path[i]];
+      for (int i : path) {
+        const Bond *bi = bondCache[i];
         atomDegrees[bi->getBeginAtomIdx()]++;
         atomDegrees[bi->getEndAtomIdx()]++;
         atomsInPath.set(bi->getBeginAtomIdx());
@@ -838,7 +836,7 @@ ExplicitBitVect *LayeredFingerprintMol(
       }
       unsigned int l = 0;
       bool flaggedPath = false;
-      for (std::vector<std::vector<unsigned int> >::iterator
+      for (auto
                layerIt = hashLayers.begin();
            layerIt != hashLayers.end(); ++layerIt, ++l) {
         if (!layerIt->size()) continue;
@@ -973,8 +971,8 @@ ExplicitBitVect *LayeredFingerprintMol(
 
         if(bitInfo){
           std::vector<int> p;
-          for(unsigned int i=0; i < path.size();++i){
-            p.push_back(path[i]);
+          for(int i : path){
+            p.push_back(i);
           }
           (*bitInfo)[bit].push_back(p);
         }
@@ -985,7 +983,7 @@ ExplicitBitVect *LayeredFingerprintMol(
     if(bitMap.size()){
       len=bitMap.rbegin()->first+1;
     }
-    SparseIntVect<boost::uint64_t> *res = new SparseIntVect<boost::uint64_t>(len);
+    auto *res = new SparseIntVect<boost::uint64_t>(len);
     std::map<unsigned int, unsigned int>::iterator iter;
     for(iter=bitMap.begin(); iter!=bitMap.end();++iter){
       res->setVal(iter->first,iter->second);

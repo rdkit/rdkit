@@ -61,8 +61,8 @@ std::string chemicalReactionTemplatesToString(
     bool toSmiles, bool canonical) {
   std::string res = "";
   std::vector<std::string> vfragsmi;
-  RDKit::MOL_SPTR_VECT::const_iterator begin = getStartIterator(rxn, type);
-  RDKit::MOL_SPTR_VECT::const_iterator end = getEndIterator(rxn, type);
+  auto begin = getStartIterator(rxn, type);
+  auto end = getEndIterator(rxn, type);
   for (; begin != end; ++begin) {
     vfragsmi.push_back(molToString(**begin, toSmiles));
   }
@@ -122,7 +122,7 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
         << std::setw(3) << rxn.getNumProductTemplates() << "\n";
   }
 
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
+  for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter) {
     // to write the mol block, we need ring information:
     MolOps::findSSSR(**iter);
@@ -130,7 +130,7 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
     res << MolToMolBlock(**iter, true, -1, false);
   }
   if (!separateAgents) {
-    for (MOL_SPTR_VECT::const_iterator iter = rxn.beginAgentTemplates();
+    for (auto iter = rxn.beginAgentTemplates();
          iter != rxn.endAgentTemplates(); ++iter) {
       // to write the mol block, we need ring information:
       MolOps::findSSSR(**iter);
@@ -138,7 +138,7 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
       res << MolToMolBlock(**iter, true, -1, false);
     }
   }
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginProductTemplates();
+  for (auto iter = rxn.beginProductTemplates();
        iter != rxn.endProductTemplates(); ++iter) {
     // to write the mol block, we need ring information:
     MolOps::findSSSR(**iter);
@@ -146,7 +146,7 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
     res << MolToMolBlock(**iter, true, -1, false);
   }
   if (separateAgents) {
-    for (MOL_SPTR_VECT::const_iterator iter = rxn.beginAgentTemplates();
+    for (auto iter = rxn.beginAgentTemplates();
          iter != rxn.endAgentTemplates(); ++iter) {
       // to write the mol block, we need ring information:
       MolOps::findSSSR(**iter);
@@ -160,19 +160,19 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
 
 //! returns a ROMol with RXNMolRole used for a reaction
 ROMol *ChemicalReactionToRxnMol(const ChemicalReaction &rxn) {
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
 
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
+  for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter) {
     setRXNRoleOfAllMoleculeAtoms(*iter->get(), 1);
     res->insertMol(*iter->get());
   }
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginProductTemplates();
+  for (auto iter = rxn.beginProductTemplates();
        iter != rxn.endProductTemplates(); ++iter) {
     setRXNRoleOfAllMoleculeAtoms(*iter->get(), 2);
     res->insertMol(*iter->get());
   }
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginAgentTemplates();
+  for (auto iter = rxn.beginAgentTemplates();
        iter != rxn.endAgentTemplates(); ++iter) {
     setRXNRoleOfAllMoleculeAtoms(*iter->get(), 3);
     res->insertMol(*iter->get());

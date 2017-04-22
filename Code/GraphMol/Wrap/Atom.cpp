@@ -34,7 +34,7 @@ std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   if (q) {
     for (unsigned int i = 0; i < depth; ++i) res += "  ";
     res += q->getFullDescription() + "\n";
-    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
+    for (auto ci = q->beginChildren();
          ci != q->endChildren(); ++ci) {
       res += qhelper((*ci).get(), depth + 1);
     }
@@ -134,7 +134,7 @@ AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
 }
 AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   AtomMonomerInfo *res = atom->getMonomerInfo();
-  if (!res) return NULL;
+  if (!res) return nullptr;
   if (res->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     throw_value_error("MonomerInfo is not a PDB Residue");
   }

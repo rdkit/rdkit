@@ -126,7 +126,7 @@ double RecurseHelper(double *vals, int nVals, long int *cuts, int nCuts,
                      long int *results, int nPossibleRes) {
   double maxGain = -1e6, gainHere;
   long int *bestCuts, *tCuts;
-  long int *varTable = 0;
+  long int *varTable = nullptr;
   int highestCutHere = nStarts - nCuts + which;
   int i, nBounds = nCuts;
 

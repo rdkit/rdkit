@@ -70,7 +70,7 @@ void parseMCSParametersJSON(const char* json, MCSParameters* params) {
 MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols,
                   const MCSParameters* params) {
   MCSParameters p;
-  if (0 == params) params = &p;
+  if (nullptr == params) params = &p;
   RDKit::FMCS::MaximumCommonSubgraph fmcs(params);
   return fmcs.find(mols);
 }
@@ -89,7 +89,7 @@ MCSResult findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
                   AtomComparator atomComp, BondComparator bondComp) {
   // AtomComparator atomComp=AtomCompareElements;
   // BondComparator bondComp=BondCompareOrder;
-  MCSParameters* ps = new MCSParameters();
+  auto* ps = new MCSParameters();
   ps->MaximizeBonds = maximizeBonds;
   ps->Threshold = threshold;
   ps->Timeout = timeout;
@@ -274,13 +274,11 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
     const RingInfo::VECT_INT_VECT& r1 = mol1.getRingInfo()->bondRings();
     const RingInfo::VECT_INT_VECT& r2 = mol2.getRingInfo()->bondRings();
     // for each query ring contains bond1
-    for (std::vector<size_t>::const_iterator r1i = ringsIdx1.begin();
-         r1i != ringsIdx1.end(); r1i++) {
-      const INT_VECT& br1 = r1[*r1i];  // ring contains bond1
+    for (unsigned long r1i : ringsIdx1) {
+      const INT_VECT& br1 = r1[r1i];  // ring contains bond1
       // check all target rings contained bond2
-      for (std::vector<size_t>::const_iterator r2i = ringsIdx2.begin();
-           r2i != ringsIdx2.end(); r2i++) {
-        const INT_VECT& br2 = r2[*r2i];  // ring contains bond2
+      for (unsigned long r2i : ringsIdx2) {
+        const INT_VECT& br2 = r2[r2i];  // ring contains bond2
         if (br1.size() != br2.size())    // rings are different
           continue;
         // compare rings as substructures

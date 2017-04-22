@@ -47,8 +47,8 @@ namespace RDKit {
 namespace SLNParse {
 namespace {
 int parseIntAttribVal(std::string attribName, std::string attribVal,
-                      int (*defaultFunc)(Atom const *at) = NULL,
-                      Atom *atom = NULL) {
+                      int (*defaultFunc)(Atom const *at) = nullptr,
+                      Atom *atom = nullptr) {
   PRECONDITION((!defaultFunc) || atom,
                "If a default func is provided, an atom must be as well.");
   int iVal;
@@ -74,15 +74,15 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
                                             int (*func)(Atom const *at),
                                             std::string description) {
   PRECONDITION(func, "bad query function");
-  QueryAtom::QUERYATOM_QUERY *res = 0;
+  QueryAtom::QUERYATOM_QUERY *res = nullptr;
   if (op == "=") {
-    ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
+    auto *tmp = new ATOM_EQUALS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "!=") {
-    ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
+    auto *tmp = new ATOM_EQUALS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
@@ -98,25 +98,25 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
     // seeing if the value is greater than the target; this is equiv to asking
     // if
     // the target is < the value.
-    ATOM_LESS_QUERY *tmp = new ATOM_LESS_QUERY;
+    auto *tmp = new ATOM_LESS_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == ">=") {
-    ATOM_LESSEQUAL_QUERY *tmp = new ATOM_LESSEQUAL_QUERY;
+    auto *tmp = new ATOM_LESSEQUAL_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "<") {
-    ATOM_GREATER_QUERY *tmp = new ATOM_GREATER_QUERY;
+    auto *tmp = new ATOM_GREATER_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
     res = tmp;
   } else if (op == "<=") {
-    ATOM_GREATEREQUAL_QUERY *tmp = new ATOM_GREATEREQUAL_QUERY;
+    auto *tmp = new ATOM_GREATEREQUAL_QUERY;
     tmp->setVal(val);
     tmp->setDataFunc(func);
     tmp->setDescription(description);
@@ -132,11 +132,11 @@ QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
 }
 
 void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
-  QueryAtom::QUERYATOM_QUERY *atomQuery = 0;
+  QueryAtom::QUERYATOM_QUERY *atomQuery = nullptr;
   bool lastWasLowPriAnd = false;
   for (AttribListType::const_iterator it = attribs.begin(); it != attribs.end();
        ++it) {
-    QueryAtom::QUERYATOM_QUERY *query = 0;
+    QueryAtom::QUERYATOM_QUERY *query = nullptr;
     AttribCombineOp how = it->first;
 
     boost::shared_ptr<AttribType> attribPtr = it->second;
@@ -296,7 +296,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                 QueryAtom::QUERYATOM_QUERY *newAndQuery;
                 newAndQuery = new ATOM_AND_QUERY;
                 newAndQuery->setDescription("AtomAnd");
-                QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI andChild =
+                auto andChild =
                     atomQuery->beginChildren();
                 newAndQuery->addChild(*andChild);
                 ++andChild;
@@ -356,7 +356,7 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
           (int)(query->getDataFunc()(atom)));
     }
     // now add the query's children to the queue and continue:
-    for (QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = query->beginChildren();
+    for (auto cIt = query->beginChildren();
          cIt != query->endChildren(); ++cIt) {
       q.push_back(const_cast<QueryAtom::QUERYATOM_QUERY *>(cIt->get()));
     }

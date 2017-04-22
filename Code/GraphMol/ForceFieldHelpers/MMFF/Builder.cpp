@@ -62,7 +62,7 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     MMFFBond mmffBondParams;
     if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                                     mmffBondParams)) {
-      BondStretchContrib *contrib = new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
+      auto *contrib = new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
         unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
@@ -263,7 +263,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         MMFFAngle mmffAngleParams;
         if (mmffMolProperties->getMMFFAngleBendParams(
                 mol, idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
-          AngleBendContrib *contrib = new AngleBendContrib(
+          auto *contrib = new AngleBendContrib(
               field, idx[0], idx[1], idx[2],
               &mmffAngleParams, mmffPropParamsCentralAtom);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -386,7 +386,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         if (mmffMolProperties->getMMFFStretchBendParams(
                 mol, idx[0], idx[1], idx[2], stretchBendType, mmffStbnParams,
                 mmffBondParams, mmffAngleParams)) {
-          StretchBendContrib *contrib = new StretchBendContrib(
+          auto *contrib = new StretchBendContrib(
               field, idx[0], idx[1], idx[2], &mmffStbnParams, &mmffAngleParams,
               &mmffBondParams[0], &mmffBondParams[1]);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -541,7 +541,7 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           n[3] = 0;
           break;
       }
-      OopBendContrib *contrib = new OopBendContrib(
+      auto *contrib = new OopBendContrib(
           field, idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
@@ -688,7 +688,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                 MMFFTor mmffTorParams;
                 if (mmffMolProperties->getMMFFTorsionParams(
                         mol, idx1, idx2, idx3, idx4, torType, mmffTorParams)) {
-                  TorsionAngleContrib *contrib = new TorsionAngleContrib(
+                  auto *contrib = new TorsionAngleContrib(
                       field, idx1, idx2, idx3, idx4, &mmffTorParams);
                   field->contribs().push_back(ForceFields::ContribPtr(contrib));
                   if (mmffMolProperties->getMMFFVerbosity()) {
@@ -808,7 +808,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         }
         MMFFVdWRijstarEps mmffVdWConstants;
         if (mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWConstants)) {
-          VdWContrib *contrib = new VdWContrib(field, i, j, &mmffVdWConstants);
+          auto *contrib = new VdWContrib(field, i, j, &mmffVdWConstants);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
           if (mmffMolProperties->getMMFFVerbosity()) {
             const Atom *iAtom = mol.getAtomWithIdx(i);
@@ -896,7 +896,7 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         double chargeTerm = mmffMolProperties->getMMFFPartialCharge(i) *
                             mmffMolProperties->getMMFFPartialCharge(j) /
                             dielConst;
-        EleContrib *contrib = new EleContrib(
+        auto *contrib = new EleContrib(
           field, i, j, chargeTerm, dielModel, is1_4);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
         if (mmffMolProperties->getMMFFVerbosity()) {
@@ -962,7 +962,7 @@ ForceFields::ForceField *constructForceField(
   PRECONDITION(mmffMolProperties->isValid(),
                "missing atom types - invalid force-field");
 
-  ForceFields::ForceField *res = new ForceFields::ForceField();
+  auto *res = new ForceFields::ForceField();
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {

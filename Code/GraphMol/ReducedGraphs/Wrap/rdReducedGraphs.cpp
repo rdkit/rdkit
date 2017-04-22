@@ -45,7 +45,7 @@ PyObject *GenerateErGFingerprintForReducedGraphHelper(const RDKit::ROMol &mol,
   }
   RDNumeric::DoubleVector *dv =
       RDKit::ReducedGraphs::generateErGFingerprintForReducedGraph(
-          mol, 0, fuzzIncrement, minPath, maxPath);
+          mol, nullptr, fuzzIncrement, minPath, maxPath);
   npy_intp dim = dv->size();
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)),
@@ -61,7 +61,7 @@ PyObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
     throw_value_error("specification of atom types not yet supported");
   }
   RDNumeric::DoubleVector *dv = RDKit::ReducedGraphs::getErGFingerprint(
-      mol, 0, fuzzIncrement, minPath, maxPath);
+      mol, nullptr, fuzzIncrement, minPath, maxPath);
   npy_intp dim = dv->size();
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)),

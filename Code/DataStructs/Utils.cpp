@@ -16,10 +16,10 @@
 //! Convert a SparseBitVector to an ExplicitBitVector
 ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv) {
   unsigned int sl = sbv->getNumBits();
-  ExplicitBitVect *ebv = new ExplicitBitVect(sl);
+  auto *ebv = new ExplicitBitVect(sl);
   const IntSet *bset = sbv->getBitSet();
-  for (IntSetConstIter it = bset->begin(); it != bset->end(); it++) {
-    ebv->setBit(*it);
+  for (int it : *bset) {
+    ebv->setBit(it);
   }
   return ebv;
 }

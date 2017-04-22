@@ -240,9 +240,8 @@ void test3() {
   BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
   // VECT_INT_VECT_I ri;
   // for (ri == bfrs.begin(); ri != bfrs.end(); ri++) {
-  for (unsigned int ri = 0; ri < bfrs.size(); ri++) {
+  for (auto bring : bfrs) {
     INT_VECT_I mi;
-    INT_VECT bring = bfrs[ri];
     BOOST_LOG(rdInfoLog) << "( ";
     // for (mi = (*ri).begin(); mi != (*ri).end(); mi++) {
     for (mi = bring.begin(); mi != bring.end(); mi++) {
@@ -1800,7 +1799,7 @@ void testIssue212() {
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 1);
-  Conformer *conf = new Conformer(1);
+  auto *conf = new Conformer(1);
   m->addConformer(conf);
   conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
   m2 = MolOps::addHs(*m, false, true);
@@ -1834,7 +1833,7 @@ void testAddHsCoords() {
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 1);
-  Conformer *conf = new Conformer(1);
+  auto *conf = new Conformer(1);
   m->addConformer(conf);
   conf->setAtomPos(0, RDGeom::Point3D(0, 0, 0));
 
@@ -2155,7 +2154,7 @@ void testAddConformers() {
   ROMol *m = SmilesToMol(smi);
   unsigned int i;
   for (i = 0; i < 5; i++) {
-    Conformer *conf = new Conformer(2);
+    auto *conf = new Conformer(2);
     conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
     conf->setAtomPos(1, RDGeom::Point3D(1.5, 0.0, 0.0));
     m->addConformer(conf, true);
@@ -2845,7 +2844,7 @@ void testSFIssue1942657() {
   try {
     m = SmilesToMol(smi);
   } catch (MolSanitizeException &e) {
-    m = 0;
+    m = nullptr;
   }
   TEST_ASSERT(!m);
 
@@ -2853,7 +2852,7 @@ void testSFIssue1942657() {
   try {
     m = SmilesToMol(smi);
   } catch (MolSanitizeException &e) {
-    m = 0;
+    m = nullptr;
   }
   TEST_ASSERT(!m);
 
@@ -2861,7 +2860,7 @@ void testSFIssue1942657() {
   try {
     m = SmilesToMol(smi);
   } catch (MolSanitizeException &e) {
-    m = 0;
+    m = nullptr;
   }
   TEST_ASSERT(!m);
 
@@ -2869,7 +2868,7 @@ void testSFIssue1942657() {
   try {
     m = SmilesToMol(smi);
   } catch (MolSanitizeException &e) {
-    m = 0;
+    m = nullptr;
   }
   TEST_ASSERT(!m);
 
@@ -4711,7 +4710,7 @@ void testZBO() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Testing ZBO basics" << std::endl;
   {
-    RWMol *m = new RWMol();
+    auto *m = new RWMol();
 
     m->addAtom(new Atom(26));
     m->addAtom(new Atom(6));
@@ -4870,7 +4869,7 @@ void testGithubIssue418() {
                           "removeHs not updating H count."
                        << std::endl;
   {
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     m2->addAtom(new Atom(7), true, true);
     m2->addAtom(new Atom(1), true, true);
     m2->addAtom(new Atom(1), true, true);
@@ -5772,7 +5771,7 @@ void testGithubIssue678() {
     std::string smiles = "CC";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    Conformer *conf = new Conformer(2);
+    auto *conf = new Conformer(2);
     m->addConformer(conf);
     MolOps::addHs(*m, false, true);
     TEST_ASSERT(m->getNumAtoms() == 8);
@@ -6062,8 +6061,8 @@ void testSetBondStereo() {
     const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
     const Bond::BondStereo ezstros[] = {Bond::STEREOZ,   Bond::STEREOE};
 
-    for (size_t i = 0; i < 10; ++i) {
-      ROMol *m = SmilesToMol(smiles[i]);
+    for (auto & smile : smiles) {
+      ROMol *m = SmilesToMol(smile);
       MolOps::findPotentialStereoBonds(*m);
       Bond *bond = m->getBondWithIdx(1);
 
@@ -6102,12 +6101,10 @@ void testSetBondStereo() {
                             "C(F)=CCl"};
     const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
 
-    for (size_t j = 0; j < 2; ++j) {
-      Bond::BondStereo desired_stereo = stereos[j];
-
+    for (auto desired_stereo : stereos) {
       std::string refSmiles;
-      for (size_t i = 0; i < 4; ++i) {
-        ROMol *m = SmilesToMol(smiles[i]);
+      for (auto & smile : smiles) {
+        ROMol *m = SmilesToMol(smile);
         MolOps::findPotentialStereoBonds(*m);
         TEST_ASSERT(m->getNumAtoms() == 4);
 
@@ -6495,9 +6492,9 @@ void testKekulizeErrorReporting() {
     try {
       m = SmilesToMol(smi);
     } catch (MolSanitizeException &e) {
-      m = NULL;
+      m = nullptr;
     }
-    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(m == nullptr);
     TEST_ASSERT(sstrm.str().find("0 1 2 3 4") != std::string::npos);
     delete m;
   }
@@ -6508,9 +6505,9 @@ void testKekulizeErrorReporting() {
     try {
       m = SmilesToMol(smi);
     } catch (MolSanitizeException &e) {
-      m = NULL;
+      m = nullptr;
     }
-    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(m == nullptr);
     TEST_ASSERT(sstrm.str().find("6 7 8 9 10") != std::string::npos);
     delete m;
   }
@@ -6521,9 +6518,9 @@ void testKekulizeErrorReporting() {
     try {
       m = SmilesToMol(smi);
     } catch (MolSanitizeException &e) {
-      m = NULL;
+      m = nullptr;
     }
-    TEST_ASSERT(m == NULL);
+    TEST_ASSERT(m == nullptr);
     TEST_ASSERT(sstrm.str().find("0 1 2 3 4") != std::string::npos);
     delete m;
   }

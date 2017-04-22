@@ -136,12 +136,12 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
       }
       std::sort(tmp.begin(), tmp.end());
       tmp.push_back(-1);
-      for (unsigned i = 0; i < tmp.size(); ++i) {
+      for (int i : tmp) {
         if (currentRNIdx >= atoms[idx].revistedNeighbors.size()) {
           atoms[idx].revistedNeighbors.resize(
               atoms[idx].revistedNeighbors.size() + 1000);
         }
-        atoms[idx].revistedNeighbors[currentRNIdx] = tmp[i];
+        atoms[idx].revistedNeighbors[currentRNIdx] = i;
         currentRNIdx++;
       }
       memset(revisitedNeighbors, 0, nAtoms * sizeof(int));
@@ -165,8 +165,8 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, int *order,
                      bool useSpecial = false, bool useChirality = false,
-                     const boost::dynamic_bitset<> *atomsInPlay = NULL,
-                     const boost::dynamic_bitset<> *bondsInPlay = NULL) {
+                     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+                     const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   const ROMol &mol = *ftor.dp_mol;
   canon_atom *atoms = ftor.dp_atoms;
   unsigned int nAts = mol.getNumAtoms();
@@ -388,7 +388,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     unsigned int symclass =
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;
     bondholder bh(bondholder(Bond::SINGLE, stereo, nbrIdx, symclass));
-    std::vector<bondholder>::iterator iPos =
+    auto iPos =
         std::lower_bound(nbrs.begin(), nbrs.end(), bh);
     nbrs.insert(iPos, nReps, bh);
   }
@@ -408,7 +408,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
                         const int &idx) {
   atom.atom = mol.getAtomWithIdx(idx);
   atom.index = idx;
-  atom.p_symbol = NULL;
+  atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
   atom.nbrIds = (int *)malloc(atom.degree * sizeof(int));
   getNbrs(mol, atom.atom, atom.nbrIds);
@@ -446,7 +446,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
     if (atomSymbols) {
       atoms[i].p_symbol = &(*atomSymbols)[i];
     } else {
-      atoms[i].p_symbol = 0;
+      atoms[i].p_symbol = nullptr;
     }
     advancedInitCanonAtom(mol, atoms[i], i);
     atoms[i].bonds.reserve(atoms[i].degree);
@@ -463,19 +463,19 @@ void initChiralCanonAtoms(const ROMol &mol,
 }
 
 void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
-  for (unsigned int i = 0; i < atoms.size(); ++i) {
-    if (atoms[i].nbrIds) {
-      free(atoms[i].nbrIds);
-      atoms[i].nbrIds = NULL;
+  for (auto & atom : atoms) {
+    if (atom.nbrIds) {
+      free(atom.nbrIds);
+      atom.nbrIds = nullptr;
     }
   }
 }
 
 void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
-  for (unsigned j = 0; j < nbrs.size(); ++j) {
-    unsigned nbrIdx = nbrs[j].nbrIdx;
+  for (auto & nbr : nbrs) {
+    unsigned nbrIdx = nbr.nbrIdx;
     unsigned newSymClass = atoms[nbrIdx].index;
-    nbrs.at(j).nbrSymClass = newSymClass;
+    nbr.nbrSymClass = newSymClass;
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
@@ -483,8 +483,8 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int> > &result) {
-  for (unsigned j = 0; j < nbrs.size(); ++j) {
-    unsigned nbrIdx = nbrs[j].nbrIdx;
+  for (auto & nbr : nbrs) {
+    unsigned nbrIdx = nbr.nbrIdx;
 
     if (atoms[nbrIdx].atom->getChiralTag() != 0) {
       std::vector<int> ref, probe;
@@ -493,29 +493,29 @@ void updateAtomNeighborNumSwaps(
       }
 
       probe.push_back(atomIdx);
-      for (unsigned i = 0; i < atoms[nbrIdx].bonds.size(); ++i) {
-        if (atoms[nbrIdx].bonds.at(i).nbrIdx != atomIdx) {
-          probe.push_back(atoms[nbrIdx].bonds.at(i).nbrIdx);
+      for (auto & bond : atoms[nbrIdx].bonds) {
+        if (bond.nbrIdx != atomIdx) {
+          probe.push_back(bond.nbrIdx);
         }
       }
 
       int nSwaps = static_cast<int>(countSwapsToInterconvert(ref, probe));
       if (atoms[nbrIdx].atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
         if (nSwaps % 2) {
-          result.push_back(std::make_pair(nbrs[j].nbrSymClass, 2));
+          result.push_back(std::make_pair(nbr.nbrSymClass, 2));
         } else {
-          result.push_back(std::make_pair(nbrs[j].nbrSymClass, 1));
+          result.push_back(std::make_pair(nbr.nbrSymClass, 1));
         }
       } else if (atoms[nbrIdx].atom->getChiralTag() ==
                  Atom::CHI_TETRAHEDRAL_CCW) {
         if (nSwaps % 2) {
-          result.push_back(std::make_pair(nbrs[j].nbrSymClass, 1));
+          result.push_back(std::make_pair(nbr.nbrSymClass, 1));
         } else {
-          result.push_back(std::make_pair(nbrs[j].nbrSymClass, 2));
+          result.push_back(std::make_pair(nbr.nbrSymClass, 2));
         }
       }
     } else {
-      result.push_back(std::make_pair(nbrs[j].nbrSymClass, 0));
+      result.push_back(std::make_pair(nbr.nbrSymClass, 0));
     }
   }
   sort(result.begin(), result.end());

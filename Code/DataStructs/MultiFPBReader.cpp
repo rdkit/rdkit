@@ -214,7 +214,7 @@ MultiFPBReader::MultiFPBReader(std::vector<FPBReader *> &readers,
   df_takeOwnership = takeOwnership;
   df_initOnSearch = initOnSearch;
   BOOST_FOREACH (FPBReader *rdr, readers) {
-    PRECONDITION(rdr != NULL, "bad reader");
+    PRECONDITION(rdr != nullptr, "bad reader");
   }
   d_readers = readers;
 }

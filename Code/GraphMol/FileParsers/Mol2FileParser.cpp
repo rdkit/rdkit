@@ -518,7 +518,7 @@ Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
     throw FileParseException("no info in mol2 atom line");
   }
 
-  Atom *res = new Atom();
+  auto *res = new Atom();
 
   // skip TriposAtomId
   ++itemIt;
@@ -560,22 +560,22 @@ Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
   // LP is not an atom so remove it ...
   if (symb == "LP") {
     delete res;
-    return NULL;
+    return nullptr;
   } else if (symb == "ANY" || symb == "Du") {
     // queryAtoms
     // according to the SYBYL spec, these match anything
-    QueryAtom *query = new QueryAtom(0);
+    auto *query = new QueryAtom(0);
     query->setQuery(makeAtomNullQuery());
     delete res;
     res = query;
   } else if (symb == "HEV") {
-    QueryAtom *query = new QueryAtom(1);
+    auto *query = new QueryAtom(1);
     query->getQuery()->setNegation(true);
     delete res;
     res = query;
   } else if (symb == "HET") {
     // Tripos: N,O,P,S
-    QueryAtom *query = new QueryAtom(7);
+    auto *query = new QueryAtom(7);
     query->expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR, true);
     query->expandQuery(makeAtomNumQuery(15), Queries::COMPOSITE_OR, true);
     query->expandQuery(makeAtomNumQuery(16), Queries::COMPOSITE_OR, true);
@@ -583,7 +583,7 @@ Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
     res = query;
   } else if (symb == "HAL") {
     // Tripos: F,Cl,Br,I
-    QueryAtom *query = new QueryAtom(9);
+    auto *query = new QueryAtom(9);
     query->expandQuery(makeAtomNumQuery(17), Queries::COMPOSITE_OR, true);
     query->expandQuery(makeAtomNumQuery(35), Queries::COMPOSITE_OR, true);
     query->expandQuery(makeAtomNumQuery(53), Queries::COMPOSITE_OR, true);
@@ -663,7 +663,7 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
   }
 
   if (idxCorresp[idx1] < 0 || idxCorresp[idx2] < 0) {
-    return NULL;
+    return nullptr;
   }
 
   // lexical casts of bond types is not really useful in this case since we
@@ -689,9 +689,9 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
     // but why would anyone specify a bond which is not connected?
     BOOST_LOG(rdWarningLog) << "Warning - unsupported bond type: " << tBType
                             << " ignored!" << std::endl;
-    return NULL;
+    return nullptr;
   }
-  Bond *res = new Bond(type);
+  auto *res = new Bond(type);
   res->setBeginAtomIdx(idxCorresp[idx1]);
   res->setEndAtomIdx(idxCorresp[idx2]);
   return res;
@@ -739,7 +739,7 @@ void ParseMol2AtomBlock(std::istream *inStream, RWMol *res, unsigned int nAtoms,
                                      "estimation." << std::endl;
   }
   // create conformer based on 3DPoints and add to RWMol
-  Conformer *conf = new Conformer(nAtoms - nLP);
+  auto *conf = new Conformer(nAtoms - nLP);
   std::vector<RDGeom::Point3D>::const_iterator threeDPsIt = threeDPs.begin();
   for (unsigned int i = 0; i < threeDPs.size(); ++i) {
     conf->setAtomPos(i, *threeDPsIt);
@@ -852,7 +852,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 
   inStream->seekg(molStart, std::ios::beg);
   tempStr = getLine(inStream);
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
   boost::trim_right(tempStr);
   res->setProp(common_properties::_Name, tempStr);
 
@@ -923,7 +923,7 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
 
     if (!molFixed) {
       delete res;
-      return NULL;
+      return nullptr;
     }
 
     // mol2 format does not support formal charge information, hence we need to
@@ -1015,7 +1015,7 @@ RWMol *Mol2FileToMol(const std::string &fName, bool sanitize, bool removeHs,
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = NULL;
+  RWMol *res = nullptr;
   if (!inStream.eof()) {
     res = Mol2DataStreamToMol(inStream, sanitize, removeHs);
   }

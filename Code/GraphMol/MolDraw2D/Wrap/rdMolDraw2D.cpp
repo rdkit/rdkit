@@ -39,7 +39,7 @@ void pyDictToColourMap(python::object pyo, std::map<int, DrawColour> &res) {
   }
 }
 std::map<int, DrawColour> *pyDictToColourMap(python::object pyo) {
-  std::map<int, DrawColour> *res = NULL;
+  std::map<int, DrawColour> *res = nullptr;
   if (pyo) {
     res = new std::map<int, DrawColour>;
     pyDictToColourMap(pyo, *res);
@@ -55,7 +55,7 @@ void pyDictToDoubleMap(python::object pyo, std::map<int, double> &res) {
   }
 }
 std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
-  std::map<int, double> *res = NULL;
+  std::map<int, double> *res = nullptr;
   if (pyo) {
     res = new std::map<int, double>;
     pyDictToDoubleMap(pyo, *res);
@@ -208,7 +208,7 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
 ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
                          bool addChiralHs = true, bool wedgeBonds = true,
                          bool forceCoords = false) {
-  RWMol *res = new RWMol(*m);
+  auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
                                        forceCoords);
   return static_cast<ROMol *>(res);

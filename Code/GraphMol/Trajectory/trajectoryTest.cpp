@@ -463,7 +463,7 @@ void testAddConformersFromTrajectory() {
   SDWriter w(fName);
   ForceFields::ForceField *field = MMFF::constructForceField(*mol);
   field->initialize();
-  SnapshotVect *sv = new SnapshotVect;
+  auto *sv = new SnapshotVect;
   int res = field->minimize(everySteps, sv, maxIts, gradTol);
   TEST_ASSERT(res == 0);
   Trajectory traj(3, mol->getNumAtoms(), sv);

@@ -26,7 +26,7 @@
 namespace RDKit {
 TDTWriter::TDTWriter(const std::string &fileName) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+    auto *tmpStream = new std::ofstream(fileName.c_str());
     if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
       std::ostringstream errout;
       errout << "Bad output file " << fileName;

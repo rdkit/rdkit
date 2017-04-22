@@ -32,6 +32,8 @@
 #include "FilterMatchers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
+#include <utility>
+
 namespace RDKit {
 const char *DEFAULT_FILTERMATCHERBASE_NAME = "Unnamed FilterMatcherBase";
 const char *SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
@@ -63,7 +65,7 @@ SmartsMatcher::SmartsMatcher(const std::string &name, const std::string &smarts,
 SmartsMatcher::SmartsMatcher(const std::string &name, ROMOL_SPTR pattern,
                              unsigned int minCount, unsigned int maxCount)
     : FilterMatcherBase(name),
-      d_pattern(pattern),
+      d_pattern(std::move(pattern)),
       d_min_count(minCount),
       d_max_count(maxCount) {}
 
@@ -100,8 +102,8 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
                    (d_max_count == UINT_MAX || count <= d_max_count));
     if (onPatExists) {
       boost::shared_ptr<FilterMatcherBase> clone = copy();
-      for (size_t i = 0; i < matches.size(); ++i) {
-        matchVect.push_back(FilterMatch(clone, matches[i]));
+      for (auto & matche : matches) {
+        matchVect.push_back(FilterMatch(clone, matche));
       }
     }
   }

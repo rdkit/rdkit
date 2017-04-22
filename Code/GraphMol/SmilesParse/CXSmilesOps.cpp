@@ -144,7 +144,7 @@ template <typename Iterator>
 bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != '(') return false;
 
-  RDKit::Conformer *conf = new Conformer(mol.getNumAtoms());
+  auto *conf = new Conformer(mol.getNumAtoms());
   mol.addConformer(conf);
   ++first;
   unsigned int atIdx = 0;
@@ -289,7 +289,7 @@ namespace {
 template <typename Q>
 void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   PRECONDITION(qry, "bad query");
-  QueryAtom *qa = new QueryAtom(0);
+  auto *qa = new QueryAtom(0);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
   mol.replaceAtom(idx, qa);

@@ -322,7 +322,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
                                             MolPickler::Tags tag, int version) {
   PRECONDITION(owner, "no query");
   std::string descr;
-  Query<int, T const *, true> *res = 0;
+  Query<int, T const *, true> *res = nullptr;
   int32_t val;
   int32_t nMembers;
   switch (tag) {
@@ -923,7 +923,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (tag != BEGINATOM) {
     throw MolPicklerException("Bad pickle format: BEGINATOM tag not found.");
   }
-  Conformer *conf = 0;
+  Conformer *conf = nullptr;
   if ((version >= 2000 && version < 3000) && includeCoords) {
     // there can only one conformation - since the poositions were stored on
     // the atoms themselves in this version
@@ -1255,13 +1255,13 @@ void MolPickler::_pickleConformer(std::ostream &ss, const Conformer *conf) {
   T tmpT = static_cast<T>(conf->getNumAtoms());
   streamWrite(ss, tmpT);
   const RDGeom::POINT3D_VECT &pts = conf->getPositions();
-  for (RDGeom::POINT3D_VECT_CI pti = pts.begin(); pti != pts.end(); pti++) {
+  for (const auto & pt : pts) {
     float tmpFloat;
-    tmpFloat = static_cast<float>(pti->x);
+    tmpFloat = static_cast<float>(pt.x);
     streamWrite(ss, tmpFloat);
-    tmpFloat = static_cast<float>(pti->y);
+    tmpFloat = static_cast<float>(pt.y);
     streamWrite(ss, tmpFloat);
-    tmpFloat = static_cast<float>(pti->z);
+    tmpFloat = static_cast<float>(pt.z);
     streamWrite(ss, tmpFloat);
   }
 }
@@ -1281,7 +1281,7 @@ Conformer *MolPickler::_conformerFromPickle(std::istream &ss, int version) {
   T tmpT;
   streamRead(ss, tmpT, version);
   unsigned int numAtoms = static_cast<unsigned int>(tmpT);
-  Conformer *conf = new Conformer(numAtoms);
+  auto *conf = new Conformer(numAtoms);
   conf->setId(cid);
   conf->set3D(is3D);
   for (unsigned int i = 0; i < numAtoms; i++) {
@@ -1307,7 +1307,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
   signed char tmpSchar;
   char flags;
   Tags tag;
-  Atom *atom = 0;
+  Atom *atom = nullptr;
   int atomicNum = 0;
 
   streamRead(ss, tmpUchar, version);
@@ -1498,9 +1498,8 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
     const INT_VECT &stereoAts = bond->getStereoAtoms();
     tmpChar = rdcast<unsigned int>(stereoAts.size());
     streamWrite(ss, tmpChar);
-    for (INT_VECT_CI idxIt = stereoAts.begin(); idxIt != stereoAts.end();
-         ++idxIt) {
-      tmpT = static_cast<T>(*idxIt);
+    for (int stereoAt : stereoAts) {
+      tmpT = static_cast<T>(stereoAt);
       streamWrite(ss, tmpT);
     }
   }
@@ -1520,7 +1519,7 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
   int begIdx, endIdx;
   T tmpT;
 
-  Bond *bond = NULL;
+  Bond *bond = nullptr;
   streamRead(ss, tmpT, version);
   if (directMap) {
     begIdx = tmpT;
@@ -1635,8 +1634,8 @@ void MolPickler::_pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
     ring = ringInfo->atomRings()[i];
     tmpT = static_cast<T>(ring.size());
     streamWrite(ss, tmpT);
-    for (unsigned int j = 0; j < ring.size(); j++) {
-      tmpT = static_cast<T>(atomIdxMap[ring[j]]);
+    for (int & j : ring) {
+      tmpT = static_cast<T>(atomIdxMap[j]);
       streamWrite(ss, tmpT);
     }
 #if 0
@@ -1725,7 +1724,7 @@ void MolPickler::_unpickleProperties(std::istream &ss, RDProps &props) {
 void MolPickler::_pickleV1(const ROMol *mol, std::ostream &ss) {
   PRECONDITION(mol, "empty molecule");
   ROMol::ConstAtomIterator atIt;
-  const Conformer *conf = 0;
+  const Conformer *conf = nullptr;
   if (mol->getNumConformers() > 0) {
     conf = &(mol->getConformer());
   }
@@ -1782,7 +1781,7 @@ void MolPickler::_depickleV1(std::istream &ss, ROMol *mol) {
   PRECONDITION(mol, "empty molecule");
   Tags tag;
 
-  Conformer *conf = new Conformer();
+  auto *conf = new Conformer();
   mol->addConformer(conf);
   streamRead(ss, tag, 1);
   while (tag != ENDMOL) {
@@ -1810,7 +1809,7 @@ void MolPickler::_addAtomFromPickleV1(std::istream &ss, ROMol *mol) {
   char charVar;
   int version = 1;
   streamRead(ss, tag, version);
-  Atom *atom = new Atom();
+  auto *atom = new Atom();
   Conformer &conf = mol->getConformer();
   RDGeom::Point3D pos;
   while (tag != ENDATOM) {
@@ -1866,7 +1865,7 @@ void MolPickler::_addBondFromPickleV1(std::istream &ss, ROMol *mol) {
   Bond::BondType bt;
   Bond::BondDir bd;
   streamRead(ss, tag, version);
-  Bond *bond = new Bond();
+  auto *bond = new Bond();
   while (tag != ENDBOND) {
     switch (tag) {
       case BOND_INDEX:

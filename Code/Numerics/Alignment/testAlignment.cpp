@@ -190,7 +190,7 @@ void testReflection() {
   double ssr = AlignPoints(rpts, qpts, trans);
   CHECK_INVARIANT(RDKit::feq(ssr, 1.0), "");
 
-  ssr = AlignPoints(rpts, qpts, trans, 0, true);
+  ssr = AlignPoints(rpts, qpts, trans, nullptr, true);
   CHECK_INVARIANT(RDKit::feq(ssr, 0.0), "");
 
   trans.TransformPoint(qpt1);

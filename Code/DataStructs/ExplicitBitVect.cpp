@@ -23,7 +23,7 @@
 
 ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   d_numOnBits = 0;
   _initForSize(size);
   if (bitsSet) {
@@ -33,13 +33,13 @@ ExplicitBitVect::ExplicitBitVect(unsigned int size, bool bitsSet) {
 }
 ExplicitBitVect::ExplicitBitVect(const std::string &s) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   d_numOnBits = 0;
   initFromText(s.c_str(), s.length());
 }
 ExplicitBitVect::ExplicitBitVect(const char *data, const unsigned int dataLen) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   d_numOnBits = 0;
   initFromText(data, dataLen);
 }
@@ -184,7 +184,7 @@ void ExplicitBitVect::_initForSize(unsigned int size) {
 
 ExplicitBitVect::~ExplicitBitVect() {
   delete dp_bits;
-  dp_bits = NULL;
+  dp_bits = nullptr;
 };
 
 std::string ExplicitBitVect::toString() const {

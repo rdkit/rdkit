@@ -27,7 +27,7 @@ namespace RDKit {
 SmilesMolSupplier *SmilesSupplierFromText(
     std::string text, std::string delimiter = " ", int smilesColumn = 0,
     int nameColumn = 1, bool titleLine = true, bool sanitize = true) {
-  SmilesMolSupplier *res = new SmilesMolSupplier();
+  auto *res = new SmilesMolSupplier();
   res->setData(text, delimiter, smilesColumn, nameColumn, titleLine, sanitize);
   return res;
 }

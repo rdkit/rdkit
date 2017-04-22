@@ -150,7 +150,7 @@ ROMol *GetProductTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumProductTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginProductTemplates();
+  auto iter = self->beginProductTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -159,7 +159,7 @@ ROMol *GetReactantTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumReactantTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginReactantTemplates();
+  auto iter = self->beginReactantTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -168,7 +168,7 @@ ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumAgentTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginAgentTemplates();
+  auto iter = self->beginAgentTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -187,8 +187,8 @@ void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
                                           moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp.at(i));
+      for (auto & i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -207,8 +207,8 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
                                          moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp.at(i));
+      for (auto & i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -222,8 +222,8 @@ void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList) {
     self.removeAgentTemplates(&tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp[i]);
+      for (auto & i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -282,8 +282,8 @@ python::object GetReactingAtoms(const ChemicalReaction &self,
                                 bool mappedAtomsOnly) {
   python::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
-  for (VECT_INT_VECT_I rIt = rAs.begin(); rIt != rAs.end(); ++rIt) {
-    res.append(python::tuple(*rIt));
+  for (auto & rA : rAs) {
+    res.append(python::tuple(rA));
   }
   return python::tuple(res);
 }
@@ -309,12 +309,12 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 
     // transform labels into python::tuple(python::tuple(python::tuple))
     python::list reactantLabels;
-    for (unsigned int i = 0; i < labels.size(); ++i) {
+    for (auto & label : labels) {
       python::list tmpLabels;
-      for (unsigned int j = 0; j < labels[i].size(); ++j) {
+      for (unsigned int j = 0; j < label.size(); ++j) {
         python::list tmpPair;
-        tmpPair.append(labels[i][j].first);
-        tmpPair.append(labels[i][j].second);
+        tmpPair.append(label[j].first);
+        tmpPair.append(label[j].second);
         tmpLabels.append(python::tuple(tmpPair));
       }
       reactantLabels.append(python::tuple(tmpLabels));
@@ -361,12 +361,12 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
 
   // transform labels into python::tuple(python::tuple(python::tuple))
   python::list reactantLabels;
-  for (unsigned int i = 0; i < labels.size(); ++i) {
+  for (auto & label : labels) {
     python::list tmpLabels;
-    for (unsigned int j = 0; j < labels[i].size(); ++j) {
+    for (unsigned int j = 0; j < label.size(); ++j) {
       python::list tmpPair;
-      tmpPair.append(labels[i][j].first);
-      tmpPair.append(labels[i][j].second);
+      tmpPair.append(label[j].first);
+      tmpPair.append(label[j].second);
       tmpLabels.append(python::tuple(tmpPair));
     }
     reactantLabels.append(python::tuple(tmpLabels));

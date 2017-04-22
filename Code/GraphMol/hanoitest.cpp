@@ -45,7 +45,7 @@ class int_compare_ftor {
   const int *dp_ints;
 
  public:
-  int_compare_ftor() : dp_ints(NULL){};
+  int_compare_ftor() : dp_ints(nullptr){};
   int_compare_ftor(const int *ints) : dp_ints(ints){};
   int operator()(int i, int j) const {
     PRECONDITION(dp_ints, "no ints");
@@ -62,8 +62,7 @@ class int_compare_ftor {
 
 void qs1(const std::vector<std::vector<int> > &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (qsort) vectors" << std::endl;
-  for (unsigned int i = 0; i < vects.size(); ++i) {
-    std::vector<int> tv = vects[i];
+  for (auto tv : vects) {
     int *data = &tv.front();
     qsort(data, tv.size(), sizeof(int), pcmp);
     for (unsigned int j = 1; j < tv.size(); ++j) {
@@ -75,16 +74,16 @@ void qs1(const std::vector<std::vector<int> > &vects) {
 
 void hs1(const std::vector<std::vector<int> > &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
-  for (unsigned int i = 0; i < vects.size(); ++i) {
-    const int *data = &vects[i].front();
+  for (const auto & vect : vects) {
+    const int *data = &vect.front();
     int_compare_ftor icmp(data);
-    int *indices = (int *)malloc(vects[i].size() * sizeof(int));
-    for (unsigned int j = 0; j < vects[i].size(); ++j) indices[j] = j;
-    int *count = (int *)malloc(vects[i].size() * sizeof(int));
-    int *changed = (int *)malloc(vects[i].size() * sizeof(int));
-    memset(changed, 1, vects[i].size() * sizeof(int));
-    RDKit::hanoisort(indices, vects[i].size(), count, changed, icmp);
-    for (unsigned int j = 1; j < vects[i].size(); ++j) {
+    int *indices = (int *)malloc(vect.size() * sizeof(int));
+    for (unsigned int j = 0; j < vect.size(); ++j) indices[j] = j;
+    int *count = (int *)malloc(vect.size() * sizeof(int));
+    int *changed = (int *)malloc(vect.size() * sizeof(int));
+    memset(changed, 1, vect.size() * sizeof(int));
+    RDKit::hanoisort(indices, vect.size(), count, changed, icmp);
+    for (unsigned int j = 1; j < vect.size(); ++j) {
       TEST_ASSERT(data[indices[j]] >= data[indices[j - 1]]);
     }
     free(count);
@@ -128,7 +127,7 @@ class atomcomparefunctor {
   Canon::canon_atom *d_atoms;
 
  public:
-  atomcomparefunctor() : d_atoms(NULL){};
+  atomcomparefunctor() : d_atoms(nullptr){};
   atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -156,7 +155,7 @@ class atomcomparefunctor2 {
   Canon::canon_atom *d_atoms;
 
  public:
-  atomcomparefunctor2() : d_atoms(NULL){};
+  atomcomparefunctor2() : d_atoms(nullptr){};
   atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -389,7 +388,7 @@ class atomcomparefunctor3 {
 
  public:
   bool df_useNbrs;
-  atomcomparefunctor3() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false){};
+  atomcomparefunctor3() : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -888,8 +887,8 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
     Canon::rankMolAtoms(*nm, ranks, true);
     char *ranksSet = (char *)malloc(nAtoms * sizeof(char));
     memset(ranksSet, 0, nAtoms * sizeof(char));
-    for (unsigned int i = 0; i < ranks.size(); i++) {
-      ranksSet[ranks[i]] = 1;
+    for (unsigned int rank : ranks) {
+      ranksSet[rank] = 1;
     }
     for (unsigned int i = 0; i < nAtoms; i++) {
       if (ranksSet[i] != 1) {
@@ -1419,7 +1418,7 @@ void test11() {
     std::vector<std::vector<int> > frags;
     unsigned int numFrag = MolOps::getMolFrags(*m, frags);
     for (unsigned i = 0; i < numFrag; ++i) {
-      std::string smii = MolFragmentToSmiles(*m, frags[i], 0, 0, 0, true);
+      std::string smii = MolFragmentToSmiles(*m, frags[i], nullptr, nullptr, nullptr, true);
       // std::cout << "Test "<< smii << std::endl;
       vfragsmi.push_back(smii);
     }

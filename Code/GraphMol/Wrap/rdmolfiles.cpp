@@ -68,7 +68,7 @@ ROMol *MolFromSmiles(python::object ismiles, bool sanitize,
   try {
     newM = SmilesToMol(smiles, 0, sanitize, &replacements);
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
@@ -88,7 +88,7 @@ ROMol *MolFromSmarts(python::object ismarts, bool mergeHs,
   try {
     newM = SmartsToMol(smarts, 0, mergeHs, &replacements);
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
@@ -101,7 +101,7 @@ ROMol *MolFromTPLFile(const char *filename, bool sanitize = true,
     PyErr_SetString(PyExc_IOError, e.message());
     throw python::error_already_set();
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
@@ -114,14 +114,14 @@ ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize = true,
   try {
     newM = TPLDataStreamToMol(&inStream, line, sanitize, skipFirstConf);
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
 
 ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
                       bool strictParsing) {
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
@@ -138,7 +138,7 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
                        bool strictParsing) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
@@ -158,7 +158,7 @@ ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
     PyErr_SetString(PyExc_IOError, e.message());
     throw python::error_already_set();
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
@@ -170,14 +170,14 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   try {
     newM = Mol2DataStreamToMol(inStream, sanitize, removeHs);
   } catch (...) {
-    newM = 0;
+    newM = nullptr;
   }
   return static_cast<ROMol *>(newM);
 }
 
 ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
                       unsigned int flavor) {
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = PDBFileToMol(filename, sanitize, removeHs, flavor);
   } catch (RDKit::BadFileException &e) {
@@ -193,7 +193,7 @@ ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
 ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
                        unsigned int flavor) {
   std::istringstream inStream(pyObjectToString(molBlock));
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor);
   } catch (RDKit::FileParseException &e) {
@@ -204,7 +204,7 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
 }
 
 ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
@@ -214,7 +214,7 @@ ROMol *MolFromSequence(python::object seq, bool sanitize, int flavor) {
   return static_cast<ROMol *>(newM);
 }
 ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
   } catch (RDKit::FileParseException &e) {
@@ -224,7 +224,7 @@ ROMol *MolFromFASTA(python::object seq, bool sanitize, int flavor) {
   return static_cast<ROMol *>(newM);
 }
 ROMol *MolFromHELM(python::object seq, bool sanitize) {
-  RWMol *newM = 0;
+  RWMol *newM = nullptr;
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
   } catch (RDKit::FileParseException &e) {

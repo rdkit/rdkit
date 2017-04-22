@@ -41,7 +41,7 @@ class MolFileUnhandledFeatureException : public std::exception {
       : _msg(msg){};
   //! get the error message
   const char *message() const { return _msg.c_str(); };
-  ~MolFileUnhandledFeatureException() throw(){};
+  ~MolFileUnhandledFeatureException() throw() override{};
 
  private:
   std::string _msg;
@@ -52,7 +52,7 @@ int toInt(const std::string &input, bool acceptSpaces) {
   int res = 0;
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
-  res = strtol(input.c_str(), NULL, 10);
+  res = strtol(input.c_str(), nullptr, 10);
   if (!res && !acceptSpaces && input[0] == ' ') {
     std::string trimmed = boost::trim_copy(input);
     if (trimmed.length() == 0) throw boost::bad_lexical_cast();
@@ -171,7 +171,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   URANGE_CHECK(idx, mol->getNumAtoms() - 1);
   QueryAtom a(*(mol->getAtomWithIdx(idx)));
 
-  ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+  auto *q = new ATOM_OR_QUERY;
   q->setDescription("AtomOr");
 
   switch (text[4]) {
@@ -786,7 +786,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     throw FileParseException(errout.str());
   }
   URANGE_CHECK(idx, mol->getNumAtoms() - 1);
-  QueryAtom *a = 0;
+  QueryAtom *a = nullptr;
 
   int nQueries;
   try {
@@ -886,7 +886,7 @@ void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
     }
     atom = FileParserUtils::replaceAtomWithQueryAtom(mol, atom);
     atom->setProp(common_properties::_MolFileRLabel, rLabel);
-    std::string dLabel = "R" + boost::lexical_cast<std::string>(rLabel);
+    std::string dLabel = "R" + std::to_string(rLabel);
     atom->setProp(common_properties::dummyLabel, dLabel);
     atom->setIsotope(rLabel);
     atom->setQuery(makeAtomNullQuery());
@@ -943,7 +943,7 @@ void ParseRGroupLabels(RWMol *mol, const std::string &text, unsigned int line) {
     // set the dummy label so that this is shown correctly
     // in other pieces of the code :
     // (this was sf.net issue 3316600)
-    std::string dLabel = "R" + boost::lexical_cast<std::string>(rLabel);
+    std::string dLabel = "R" + std::to_string(rLabel);
     qatom.setProp(common_properties::dummyLabel, dLabel);
 
     // the CTFile spec (June 2005 version) technically only allows
@@ -999,7 +999,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
 
 Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
                            unsigned int line) {
-  Atom *res = new Atom;
+  auto *res = new Atom;
   std::string symb;
   int massDiff, chg, hCount;
 
@@ -1059,7 +1059,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       symb == "LP" || symb == "R" || symb == "R#" ||
       (symb[0] == 'R' && symb >= "R0" && symb <= "R99")) {
     if (symb == "A" || symb == "Q" || symb == "*") {
-      QueryAtom *query = new QueryAtom(0);
+      auto *query = new QueryAtom(0);
       if (symb == "*") {
         // according to the MDL spec, these match anything
         query->setQuery(makeAtomNullQuery());
@@ -1260,7 +1260,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
   idx2--;
 
   Bond::BondType type;
-  Bond *res = 0;
+  Bond *res = nullptr;
   switch (bType) {
     case 1:
       type = Bond::SINGLE;
@@ -1363,7 +1363,7 @@ Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
       int topology = FileParserUtils::toInt(text.substr(15, 3));
       if (topology) {
         if (!res->hasQuery()) {
-          QueryBond *qBond = new QueryBond(*res);
+          auto *qBond = new QueryBond(*res);
           delete res;
           res = qBond;
         }
@@ -1534,7 +1534,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
     boost::trim(token);
   }
 
-  Atom *res = 0;
+  Atom *res = nullptr;
   if (token[0] == '[') {
     // atom list:
     if (token[token.length() - 1] != ']') {
@@ -1579,7 +1579,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
           // according to the MDL spec, these match anything
           res->setQuery(makeAtomNullQuery());
         } else if (token == "Q") {
-          ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+          auto *q = new ATOM_OR_QUERY;
           q->setDescription("AtomOr");
           q->setNegation(true);
           q->addChild(
@@ -2049,7 +2049,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       } else if (prop == "TOPO") {
         if (val != "0") {
           if (!bond->hasQuery()) {
-            QueryBond *qBond = new QueryBond(*bond);
+            auto *qBond = new QueryBond(*bond);
             delete bond;
             bond = qBond;
           }
@@ -2266,7 +2266,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
 
   mol->addConformer(conf, true);
-  conf = 0;
+  conf = nullptr;
 
   return fileComplete;
 }
@@ -2291,7 +2291,7 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     }
   }
   mol->addConformer(conf, true);
-  conf = 0;
+  conf = nullptr;
 
   ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
 
@@ -2317,9 +2317,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return NULL;
+    return nullptr;
   }
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
   res->setProp(common_properties::_Name, tempStr);
 
   // info
@@ -2355,7 +2355,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   if (tempStr.size() < 6) {
     if (res) {
       delete res;
-      res = NULL;
+      res = nullptr;
     }
     std::ostringstream errout;
     errout << "Counts line too short: '" << tempStr << "' on line" << line;
@@ -2373,7 +2373,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
   } catch (boost::bad_lexical_cast &) {
     if (res) {
       delete res;
-      res = NULL;
+      res = nullptr;
     }
     std::ostringstream errout;
     errout << "Cannot convert " << tempStr.substr(spos, 3) << " to int on line "
@@ -2421,7 +2421,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       errout << "CTAB version string invalid at line " << line;
       if (strictParsing) {
         delete res;
-        res = NULL;
+        res = nullptr;
         throw FileParseException(errout.str());
       } else {
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -2434,7 +2434,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
              << "' at line " << line;
       if (strictParsing) {
         delete res;
-        res = NULL;
+        res = nullptr;
         throw FileParseException(errout.str());
       } else {
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -2446,7 +2446,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     res->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
   }
 
-  Conformer *conf = 0;
+  Conformer *conf = nullptr;
   try {
     if (ctabVersion == 2000) {
       fileComplete = FileParserUtils::ParseV2000CTAB(inStream, line, res, conf,
@@ -2460,7 +2460,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
                << line << ")";
         if (strictParsing) {
           delete res;
-          res = NULL;
+          res = nullptr;
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
@@ -2474,8 +2474,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     // unhandled mol file feature, just delete the result
     delete res;
     delete conf;
-    res = NULL;
-    conf = NULL;
+    res = nullptr;
+    conf = nullptr;
     BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message()
                           << " on line: " << line << ". Molecule skipped."
                           << std::endl;
@@ -2496,16 +2496,16 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     // catch our exceptions and throw them back after cleanup
     delete res;
     delete conf;
-    res = NULL;
-    conf = NULL;
+    res = nullptr;
+    conf = nullptr;
     throw e;
   }
 
   if (!fileComplete) {
     delete res;
     delete conf;
-    res = NULL;
-    conf = NULL;
+    res = nullptr;
+    conf = nullptr;
     std::ostringstream errout;
     errout
         << "Problems encountered parsing Mol data, M  END missing around line "
@@ -2554,7 +2554,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         DetectBondStereoChemistry(*res, &conf);
       } catch (...) {
         delete res;
-        res = NULL;
+        res = nullptr;
         throw;
       }
       MolOps::assignStereochemistry(*res, true, true, true);
@@ -2601,7 +2601,7 @@ RWMol *MolFileToMol(const std::string &fName, bool sanitize, bool removeHs,
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = NULL;
+  RWMol *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
     res = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);

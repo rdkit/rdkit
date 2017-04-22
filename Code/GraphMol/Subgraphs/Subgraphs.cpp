@@ -105,10 +105,9 @@ void recurseWalk(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (INT_VECT::iterator bid = nbrs[next].begin(); bid != nbrs[next].end();
-           bid++) {
-        if (!forbidden[*bid]) {
-          tstack.push_back(*bid);
+      for (int & bid : nbrs[next]) {
+        if (!forbidden[bid]) {
+          tstack.push_back(bid);
         }
       }
 
@@ -165,10 +164,9 @@ void recurseWalkRange(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (INT_VECT::iterator bid = nbrs[next].begin(); bid != nbrs[next].end();
-           bid++) {
-        if (!forbidden[*bid]) {
-          tstack.push_back(*bid);
+      for (int & bid : nbrs[next]) {
+        if (!forbidden[bid]) {
+          tstack.push_back(bid);
         }
       }
 
@@ -226,7 +224,7 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
           // We *might* be adding the atom, but we need to make sure
           // that we're not just duplicating the second to last
           // element of the path:
-          PATH_TYPE::const_reverse_iterator rIt = path->rbegin();
+          auto rIt = path->rbegin();
           rIt++;
           if (*rIt != static_cast<int>(otherIdx)) {
             // PATH_TYPE newPath=*path;
@@ -307,7 +305,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
   PATH_LIST res;
 
   // start paths at each bond:
-  for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin(); nbi != nbrs.end();
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end();
        ++nbi) {
     // don't come back to this bond in the later subgraphs
     int i = (*nbi).first;
@@ -363,7 +361,7 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
   }
 
   // start paths at each bond:
-  for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin(); nbi != nbrs.end();
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end();
        nbi++) {
     int i = (*nbi).first;
 

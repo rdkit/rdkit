@@ -118,7 +118,7 @@ void testUniformGridPickling() {
     inS.open(pklName.c_str(), std::ios_base::binary);
     unsigned int length;
     inS >> length;
-    char *buff = new char[length];
+    auto *buff = new char[length];
     unsigned int nRead = 0;
     while (nRead < length) {
       nRead += inS.readsome(buff + nRead, length - nRead);

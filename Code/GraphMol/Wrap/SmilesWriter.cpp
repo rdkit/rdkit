@@ -30,8 +30,8 @@ SmilesWriter *getSmilesWriter(python::object &fileobj,
                               bool isomericSmiles = false,
                               bool kekuleSmiles = false) {
   // FIX: minor leak here
-  streambuf *sb = new streambuf(fileobj);
-  streambuf::ostream *ost = new streambuf::ostream(*sb);
+  auto *sb = new streambuf(fileobj);
+  auto *ost = new streambuf::ostream(*sb);
   return new SmilesWriter(ost, delimiter, nameHeader, includeHeader, true,
                           isomericSmiles, kekuleSmiles);
 }
