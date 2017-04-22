@@ -388,8 +388,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     unsigned int symclass =
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;
     bondholder bh(bondholder(Bond::SINGLE, stereo, nbrIdx, symclass));
-    auto iPos =
-        std::lower_bound(nbrs.begin(), nbrs.end(), bh);
+    auto iPos = std::lower_bound(nbrs.begin(), nbrs.end(), bh);
     nbrs.insert(iPos, nReps, bh);
   }
   std::reverse(nbrs.begin(), nbrs.end());
@@ -463,7 +462,7 @@ void initChiralCanonAtoms(const ROMol &mol,
 }
 
 void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
-  for (auto & atom : atoms) {
+  for (auto &atom : atoms) {
     if (atom.nbrIds) {
       free(atom.nbrIds);
       atom.nbrIds = nullptr;
@@ -472,7 +471,7 @@ void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
 }
 
 void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
     unsigned newSymClass = atoms[nbrIdx].index;
     nbr.nbrSymClass = newSymClass;
@@ -483,7 +482,7 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int> > &result) {
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
 
     if (atoms[nbrIdx].atom->getChiralTag() != 0) {
@@ -493,7 +492,7 @@ void updateAtomNeighborNumSwaps(
       }
 
       probe.push_back(atomIdx);
-      for (auto & bond : atoms[nbrIdx].bonds) {
+      for (auto &bond : atoms[nbrIdx].bonds) {
         if (bond.nbrIdx != atomIdx) {
           probe.push_back(bond.nbrIdx);
         }

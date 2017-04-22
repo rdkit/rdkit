@@ -61,10 +61,12 @@ const int MAX_DEPTH = 3;
 const FuncData_t FuncDataArray[] = {
     {0, "AcidChloride", "C(=O)Cl", "Acid Chloride", nullptr},
     {1, "AcidChloride.Aromatic", "[$(C-!@[a])](=O)(Cl)", "Aromatic", nullptr},
-    {1, "AcidChloride.Aliphatic", "[$(C-!@[A;!Cl])](=O)(Cl)", "Aliphatic", nullptr},
+    {1, "AcidChloride.Aliphatic", "[$(C-!@[A;!Cl])](=O)(Cl)", "Aliphatic",
+     nullptr},
 
     {0, "CarboxylicAcid", "C(=O)[O;H,-]", "Carboxylic acid", nullptr},
-    {1, "CarboxylicAcid.Aromatic", "[$(C-!@[a])](=O)([O;H,-])", "Aromatic", nullptr},
+    {1, "CarboxylicAcid.Aromatic", "[$(C-!@[a])](=O)([O;H,-])", "Aromatic",
+     nullptr},
     {1, "CarboxylicAcid.Aliphatic", "[$(C-!@[A;!O])](=O)([O;H,-])", "Aliphatic",
      nullptr},
     {1, "CarboxylicAcid.AlphaAmino",
@@ -74,11 +76,15 @@ const FuncData_t FuncDataArray[] = {
 
     {0, "SulfonylChloride", "[$(S-!@[#6])](=O)(=O)(Cl)", "Sulfonyl Chloride",
      nullptr},
-    {1, "SulfonylChloride.Aromatic", "[$(S-!@c)](=O)(=O)(Cl)", "Aromatic", nullptr},
-    {1, "SulfonylChloride.Aliphatic", "[$(S-!@C)](=O)(=O)(Cl)", "Aliphatic", nullptr},
+    {1, "SulfonylChloride.Aromatic", "[$(S-!@c)](=O)(=O)(Cl)", "Aromatic",
+     nullptr},
+    {1, "SulfonylChloride.Aliphatic", "[$(S-!@C)](=O)(=O)(Cl)", "Aliphatic",
+     nullptr},
 
-    {0, "Amine", "[N;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]", "Amine", nullptr},
-    {1, "Amine.Primary", "[N;H2;D1;$(N-!@[#6]);!$(N-C=[O,N,S])]", "Primary", nullptr},
+    {0, "Amine", "[N;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]", "Amine",
+     nullptr},
+    {1, "Amine.Primary", "[N;H2;D1;$(N-!@[#6]);!$(N-C=[O,N,S])]", "Primary",
+     nullptr},
     {2, "Amine.Primary.Aromatic", "[N;H2;D1;$(N-!@c);!$(N-C=[O,N,S])]",
      "Primary aromatic", nullptr},
     {2, "Amine.Primary.Aliphatic", "[N;H2;D1;$(N-!@C);!$(N-C=[O,N,S])]",
@@ -92,7 +98,8 @@ const FuncData_t FuncDataArray[] = {
     {1, "Amine.Tertiary", "[N;H0;D3;$(N(-[#6])(-[#6])-[#6]);!$(N-C=[O,N,S])]",
      "Tertiary", nullptr},
     {2, "Amine.Tertiary.Aromatic",
-     "[N;H0;D3;$(N(-[c])(-[#6])-[#6]);$(N-C=[O,N,S])]", "Tertiary aromatic", nullptr},
+     "[N;H0;D3;$(N(-[c])(-[#6])-[#6]);$(N-C=[O,N,S])]", "Tertiary aromatic",
+     nullptr},
     {2, "Amine.Tertiary.Aliphatic", "[N;H0;D3;$(N(-C)(-C)-C);!$(N-C=[O,N,S])]",
      "Tertiary aliphatic", nullptr},
     {1, "Amine.Aromatic", "[N;$(N-c);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]",
@@ -128,7 +135,8 @@ const FuncData_t FuncDataArray[] = {
      "Halogen", nullptr},
     {1, "Halogen.Aromatic", "[F,Cl,Br,I;$(*-!@c)]", "Aromatic", nullptr},
     {1, "Halogen.Aliphatic",
-     "[$([F,Cl,Br,I]-!@C);!$([F,Cl,Br,I]-!@C-!@[F,Cl,Br,I])]", "Aliphatic", nullptr},
+     "[$([F,Cl,Br,I]-!@C);!$([F,Cl,Br,I]-!@C-!@[F,Cl,Br,I])]", "Aliphatic",
+     nullptr},
     {1, "Halogen.NotFluorine",
      "[$([Cl,Br,I]-!@[#6]);!$([Cl,Br,I]-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](="
      "[O,S,N]))]",
@@ -145,7 +153,8 @@ const FuncData_t FuncDataArray[] = {
     {2, "Halogen.Bromine.Aliphatic",
      "[Br;$(Br-!@C);!$(Br-!@C-!@[F,Cl,Br,I]);!$(Br-[C,S](=[O,S,N]))]",
      "Aliphatic Bromine", nullptr},
-    {2, "Halogen.Bromine.Aromatic", "[Br;$(Br-!@c)]", "Aromatic Bromine", nullptr},
+    {2, "Halogen.Bromine.Aromatic", "[Br;$(Br-!@c)]", "Aromatic Bromine",
+     nullptr},
     {2, "Halogen.Bromine.BromoKetone", "[Br;$(Br-[CH2]-C(=O)-[#6])]",
      "Bromoketone", nullptr},
 
@@ -190,7 +199,7 @@ void hierarchy_create() {
   std::vector<FilterHierarchyMatcher *> toplevel;
   FilterHierarchyMatcher *stack[MAX_DEPTH];
 
-  for (const auto & i : FuncDataArray) {
+  for (const auto &i : FuncDataArray) {
     // Make a new node
     ROMOL_SPTR pattern(SmartsToMol(i.smarts, 0, true));
     pattern->setProp("Label", i.label);
@@ -223,10 +232,9 @@ void hierarchy_create() {
 
   // add the top levels to the filter catalog and give them ownership
   //  to the filter catalog
-  for (auto & i : toplevel) {
+  for (auto &i : toplevel) {
     fgroupHierarchy.addEntry(new FilterCatalogEntry(
-        i->getName(),
-        boost::shared_ptr<FilterMatcherBase>(i)));
+        i->getName(), boost::shared_ptr<FilterMatcherBase>(i)));
   }
 }
 }

@@ -65,7 +65,7 @@ void getNextLine(std::istream &inStream, std::string &line,
 bool expandAndTestSmarts(
     std::string &smarts,
     const std::map<std::string, std::string> &atomTypeDefs) {
-  for (const auto & atomTypeDef : atomTypeDefs) {
+  for (const auto &atomTypeDef : atomTypeDefs) {
     std::string atomName = atomTypeDef.first;
     std::string atomSma = atomTypeDef.second;
     boost::replace_all(smarts, atomName, atomSma);

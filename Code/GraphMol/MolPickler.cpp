@@ -1255,7 +1255,7 @@ void MolPickler::_pickleConformer(std::ostream &ss, const Conformer *conf) {
   T tmpT = static_cast<T>(conf->getNumAtoms());
   streamWrite(ss, tmpT);
   const RDGeom::POINT3D_VECT &pts = conf->getPositions();
-  for (const auto & pt : pts) {
+  for (const auto &pt : pts) {
     float tmpFloat;
     tmpFloat = static_cast<float>(pt.x);
     streamWrite(ss, tmpFloat);
@@ -1634,7 +1634,7 @@ void MolPickler::_pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
     ring = ringInfo->atomRings()[i];
     tmpT = static_cast<T>(ring.size());
     streamWrite(ss, tmpT);
-    for (int & j : ring) {
+    for (int &j : ring) {
       tmpT = static_cast<T>(atomIdxMap[j]);
       streamWrite(ss, tmpT);
     }

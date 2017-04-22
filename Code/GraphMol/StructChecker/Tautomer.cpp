@@ -65,7 +65,7 @@ bool StructCheckTautomer::applyTautomer(unsigned it) {
     }
   }
   // apply charge/radical fixes if any
-  for (auto & i : match) {
+  for (auto &i : match) {
     Atom &atom = *Mol.getAtomWithIdx(i.second);
     const Atom &ta = *toTautomer.getAtomWithIdx(i.first);
     atom.setFormalCharge(ta.getFormalCharge());

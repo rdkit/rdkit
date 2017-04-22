@@ -1683,7 +1683,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   // look for fixed atoms in the fragment:
   unsigned int nEndAtomsFixed = 0;
   unsigned int nAtomsFixed = 0;
-  for (auto & d_eatom : d_eatoms) {
+  for (auto &d_eatom : d_eatoms) {
     if (d_eatom.second.df_fixed) ++nAtomsFixed;
   }
   // if there are fixed atoms, look at the atoms on the "end side"
@@ -1710,7 +1710,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
       endSideFlip = false;
     }
   }
-  for (auto & d_eatom : d_eatoms) {
+  for (auto &d_eatom : d_eatoms) {
     RDKit::INT_VECT_CI fii = std::find(endSideAids.begin(), endSideAids.end(),
                                        static_cast<int>(d_eatom.first));
     if (endSideFlip ^ (fii == endSideAids.end())) {

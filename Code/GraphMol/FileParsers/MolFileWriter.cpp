@@ -211,8 +211,7 @@ bool isListQuery(const Atom::QUERYATOM_QUERY *q) {
   std::string descr = q->getDescription();
   if (descr == "AtomOr") {
     res = true;
-    for (auto cIt = q->beginChildren();
-         cIt != q->endChildren() && res; ++cIt) {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren() && res; ++cIt) {
       std::string descr = (*cIt)->getDescription();
       // we don't allow negation of any children of the query:
       if ((*cIt)->getNegation()) {
@@ -233,8 +232,7 @@ void getListQueryVals(const Atom::QUERYATOM_QUERY *q, INT_VECT &vals) {
   std::string descr = q->getDescription();
   PRECONDITION(descr == "AtomOr", "bad query");
   if (descr == "AtomOr") {
-    for (auto cIt = q->beginChildren();
-         cIt != q->endChildren(); ++cIt) {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
       std::string descr = (*cIt)->getDescription();
       CHECK_INVARIANT((descr == "AtomOr" || descr == "AtomAtomicNum"),
                       "bad query");

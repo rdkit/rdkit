@@ -52,65 +52,65 @@ typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
-const EmbedParameters KDG(0,      // maxIterations
-                          1,      // numThreads
-                          -1,     // randomSeed
-                          true,   // clearConfs
-                          false,  // useRandomCoords
-                          2.0,    // boxSizeMult
-                          true,   // randNegEig
-                          1,      // numZeroFail
-                          nullptr,   // coordMap
-                          1e-3,   // optimizerForceTol
-                          false,  // ignoreSmoothingFailures
-                          true,   // enforceChirality
-                          false,  // useExpTorsionAnglePrefs
-                          true,   // useBasicKnowledge
-                          false,  // verbose
-                          5.0,    // basinThresh
-                          -1.0,   // pruneRmsThresh
-                          true    // onlyHeavyAtomsForRMS
+const EmbedParameters KDG(0,        // maxIterations
+                          1,        // numThreads
+                          -1,       // randomSeed
+                          true,     // clearConfs
+                          false,    // useRandomCoords
+                          2.0,      // boxSizeMult
+                          true,     // randNegEig
+                          1,        // numZeroFail
+                          nullptr,  // coordMap
+                          1e-3,     // optimizerForceTol
+                          false,    // ignoreSmoothingFailures
+                          true,     // enforceChirality
+                          false,    // useExpTorsionAnglePrefs
+                          true,     // useBasicKnowledge
+                          false,    // verbose
+                          5.0,      // basinThresh
+                          -1.0,     // pruneRmsThresh
+                          true      // onlyHeavyAtomsForRMS
                           );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(0,      // maxIterations
-                           1,      // numThreads
-                           -1,     // randomSeed
-                           true,   // clearConfs
-                           false,  // useRandomCoords
-                           2.0,    // boxSizeMult
-                           true,   // randNegEig
-                           1,      // numZeroFail
-                           nullptr,   // coordMap
-                           1e-3,   // optimizerForceTol
-                           false,  // ignoreSmoothingFailures
-                           false,  // enforceChirality
-                           true,   // useExpTorsionAnglePrefs
-                           false,  // useBasicKnowledge
-                           false,  // verbose
-                           5.0,    // basinThresh
-                           -1.0,   // pruneRmsThresh
-                           true    // onlyHeavyAtomsForRMS
+const EmbedParameters ETDG(0,        // maxIterations
+                           1,        // numThreads
+                           -1,       // randomSeed
+                           true,     // clearConfs
+                           false,    // useRandomCoords
+                           2.0,      // boxSizeMult
+                           true,     // randNegEig
+                           1,        // numZeroFail
+                           nullptr,  // coordMap
+                           1e-3,     // optimizerForceTol
+                           false,    // ignoreSmoothingFailures
+                           false,    // enforceChirality
+                           true,     // useExpTorsionAnglePrefs
+                           false,    // useBasicKnowledge
+                           false,    // verbose
+                           5.0,      // basinThresh
+                           -1.0,     // pruneRmsThresh
+                           true      // onlyHeavyAtomsForRMS
                            );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
-const EmbedParameters ETKDG(0,      // maxIterations
-                            1,      // numThreads
-                            -1,     // randomSeed
-                            true,   // clearConfs
-                            false,  // useRandomCoords
-                            2.0,    // boxSizeMult
-                            true,   // randNegEig
-                            1,      // numZeroFail
-                            nullptr,   // coordMap
-                            1e-3,   // optimizerForceTol
-                            false,  // ignoreSmoothingFailures
-                            true,   // enforceChirality
-                            true,   // useExpTorsionAnglePrefs
-                            true,   // useBasicKnowledge
-                            false,  // verbose
-                            5.0,    // basinThresh
-                            -1.0,   // pruneRmsThresh
-                            true    // onlyHeavyAtomsForRMS
+const EmbedParameters ETKDG(0,        // maxIterations
+                            1,        // numThreads
+                            -1,       // randomSeed
+                            true,     // clearConfs
+                            false,    // useRandomCoords
+                            2.0,      // boxSizeMult
+                            true,     // randNegEig
+                            1,        // numZeroFail
+                            nullptr,  // coordMap
+                            1e-3,     // optimizerForceTol
+                            false,    // ignoreSmoothingFailures
+                            true,     // enforceChirality
+                            true,     // useExpTorsionAnglePrefs
+                            true,     // useBasicKnowledge
+                            false,    // verbose
+                            5.0,      // basinThresh
+                            -1.0,     // pruneRmsThresh
+                            true      // onlyHeavyAtomsForRMS
                             );
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
@@ -258,9 +258,9 @@ bool _minimizeWithExpTorsions(
 
   // convert to 3D positions and create coordMap
   RDGeom::Point3DPtrVect positions3D;
-  for (auto & position : positions) {
-    positions3D.push_back(new RDGeom::Point3D(
-        (*position)[0], (*position)[1], (*position)[2]));
+  for (auto &position : positions) {
+    positions3D.push_back(
+        new RDGeom::Point3D((*position)[0], (*position)[1], (*position)[2]));
   }
 
   // create the force field
@@ -705,8 +705,7 @@ void adjustBoundsMatFromCoordMap(
   //   std::cerr<<std::endl;
   // }
   // std::cerr<<std::endl;
-  for (auto iIt = coordMap->begin();
-       iIt != coordMap->end(); ++iIt) {
+  for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
     int iIdx = iIt->first;
     const RDGeom::Point3D &iPoint = iIt->second;
 

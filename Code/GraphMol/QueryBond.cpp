@@ -125,12 +125,11 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     res = true;
   } else if (d1 == "BondOr") {
     // FIX: handle negation on BondOr and BondAnd
-    for (auto iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       if (d2 == "BondOr") {
-        for (auto iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             res = true;
             break;
@@ -145,13 +144,12 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     }
   } else if (d1 == "BondAnd") {
     res = true;
-    for (auto iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       bool matched = false;
       if (d2 == "BondAnd") {
-        for (auto iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             matched = true;
             break;
@@ -168,8 +166,8 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     // FIX : handle BondXOr
   } else if (d2 == "BondOr") {
     // FIX: handle negation on BondOr and BondAnd
-    for (auto iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (queriesMatch(q1, iter2->get())) {
         res = true;
         break;
@@ -177,8 +175,8 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     }
   } else if (d2 == "BondAnd") {
     res = true;
-    for (auto iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (queriesMatch(q1, iter2->get())) {
         res = false;
         break;

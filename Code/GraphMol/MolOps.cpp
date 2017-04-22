@@ -488,15 +488,13 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
     // copy RingInfo
     if (mol.getRingInfo()->isInitialized()) {
-      for (const auto & i : mol.getRingInfo()->atomRings()) {
+      for (const auto &i : mol.getRingInfo()->atomRings()) {
         INT_VECT aids;
-        RWMol *tmp = static_cast<RWMol *>(
-            res[(*mapping)[i[0]]].get());
+        RWMol *tmp = static_cast<RWMol *>(res[(*mapping)[i[0]]].get());
         if (!tmp->getRingInfo()->isInitialized()) {
           tmp->getRingInfo()->initialize();
         }
-        for (unsigned j = 0; j < i.size();
-             ++j) {
+        for (unsigned j = 0; j < i.size(); ++j) {
           aids.push_back(ids[i[j]]);
         }
         INT_VECT bids;
@@ -518,9 +516,9 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
     if (copyConformers) {
       // copy conformers
-      for (auto cit = mol.beginConformers();
-           cit != mol.endConformers(); ++cit) {
-        for (auto & re : res) {
+      for (auto cit = mol.beginConformers(); cit != mol.endConformers();
+           ++cit) {
+        for (auto &re : res) {
           ROMol *newM = re.get();
           auto *conf = new Conformer(newM->getNumAtoms());
           conf->setId((*cit)->getId());
@@ -545,7 +543,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
   }
 
   if (sanitizeFrags) {
-    for (auto & re : res) {
+    for (auto &re : res) {
       sanitizeMol(*static_cast<RWMol *>(re.get()));
     }
   }
@@ -625,11 +623,8 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     }
   }
   // update conformers
-  for (auto cit = mol.beginConformers();
-       cit != mol.endConformers(); ++cit) {
-    for (auto iter =
-             res.begin();
-         iter != res.end(); ++iter) {
+  for (auto cit = mol.beginConformers(); cit != mol.endConformers(); ++cit) {
+    for (auto iter = res.begin(); iter != res.end(); ++iter) {
       ROMol *newM = iter->second.get();
       auto *conf = new Conformer(newM->getNumAtoms());
       conf->setId((*cit)->getId());
@@ -644,9 +639,7 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     }
   }
   if (sanitizeFrags) {
-    for (auto iter =
-             res.begin();
-         iter != res.end(); ++iter) {
+    for (auto iter = res.begin(); iter != res.end(); ++iter) {
       sanitizeMol(*static_cast<RWMol *>(iter->second.get()));
     }
   }

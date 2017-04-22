@@ -130,8 +130,7 @@ SparseIntVect<boost::uint32_t> *generateFingerprintChemReactionAsCountVect(
     ReactionMoleculeType mt) {
   PRECONDITION(fpSize != 0, "fpSize==0");
 
-  auto *result =
-      new SparseIntVect<boost::uint32_t>(fpSize);
+  auto *result = new SparseIntVect<boost::uint32_t>(fpSize);
   auto begin = getStartIterator(rxn, mt);
   auto end = getEndIterator(rxn, mt);
   for (; begin != end; ++begin) {

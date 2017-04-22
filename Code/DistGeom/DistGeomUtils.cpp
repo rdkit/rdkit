@@ -184,8 +184,7 @@ ForceFields::ForceField *constructForceField(
     std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  auto *field =
-      new ForceFields::ForceField(positions[0]->dimension());
+  auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; i++) {
     field->positions().push_back(positions[i]);
   }
@@ -208,8 +207,7 @@ ForceFields::ForceField *constructForceField(
         includeIt = true;
       }
       if (includeIt) {
-        auto *contrib =
-            new DistViolationContrib(field, i, j, u, l, w);
+        auto *contrib = new DistViolationContrib(field, i, j, u, l, w);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
     }
@@ -217,7 +215,7 @@ ForceFields::ForceField *constructForceField(
 
   // now add chiral constraints
   if (weightChiral > 1.e-8) {
-    for (const auto & cset : csets) {
+    for (const auto &cset : csets) {
       auto *contrib =
           new ChiralViolationContrib(field, cset.get(), weightChiral);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -227,8 +225,7 @@ ForceFields::ForceField *constructForceField(
   // finally the contribution from the fourth dimension if we need to
   if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
     for (unsigned int i = 1; i < N; i++) {
-      auto *contrib =
-          new FourthDimContrib(field, i, weightFourthDim);
+      auto *contrib = new FourthDimContrib(field, i, weightFourthDim);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -248,8 +245,7 @@ ForceFields::ForceField *construct3DForceField(
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
-  auto *field =
-      new ForceFields::ForceField(positions[0]->dimension());
+  auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
   }
@@ -268,16 +264,15 @@ ForceFields::ForceField *construct3DForceField(
     else
       atomPairs[j * N + i] = 1;
     // expTorsionAngles[t][0] = (signs, V's)
-    auto *contrib =
-        new ForceFields::CrystalFF::TorsionAngleContribM6(
-            field, i, j, k, l, expTorsionAngles[t].second,
-            expTorsionAngles[t].first);
+    auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
+        field, i, j, k, l, expTorsionAngles[t].second,
+        expTorsionAngles[t].first);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }  // torsion constraints
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
-  for (const auto & improperAtom : improperAtoms) {
+  for (const auto &improperAtom : improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
       n[1] = 1;
@@ -300,11 +295,10 @@ ForceFields::ForceField *construct3DForceField(
           n[3] = 0;
           break;
       }
-      auto *contrib =
-          new ForceFields::UFF::InversionContrib(
-              field, improperAtom[n[0]], improperAtom[n[1]],
-              improperAtom[n[2]], improperAtom[n[3]],
-              improperAtom[4], improperAtom[5], oobForceScalingFactor);
+      auto *contrib = new ForceFields::UFF::InversionContrib(
+          field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
+          improperAtom[n[3]], improperAtom[4], improperAtom[5],
+          oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -322,14 +316,13 @@ ForceFields::ForceField *construct3DForceField(
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;
-    auto *contrib =
-        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u,
-                                                        fdist);
+    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+        field, i, j, l, u, fdist);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }
 
   // 1,3 distance constraints
-  for (const auto & angle : angles) {
+  for (const auto &angle : angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
@@ -339,17 +332,15 @@ ForceFields::ForceField *construct3DForceField(
       atomPairs[j * N + i] = 1;
     // check for triple bonds
     if (angle[3]) {
-      auto *contrib =
-          new ForceFields::UFF::AngleConstraintContrib(field, i, j, k, 179.0,
-                                                       180.0, fdist);
+      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
+          field, i, j, k, 179.0, 180.0, fdist);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     } else {
       double d = ((*positions[i]) - (*positions[k])).length();
       double l = d - 0.01;
       double u = d + 0.01;
-      auto *contrib =
-          new ForceFields::UFF::DistanceConstraintContrib(field, i, k, l, u,
-                                                          fdist);
+      auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+          field, i, k, l, u, fdist);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -361,9 +352,8 @@ ForceFields::ForceField *construct3DForceField(
       if (!atomPairs[j * N + i]) {
         double l = mmat.getLowerBound(i, j);
         double u = mmat.getUpperBound(i, j);
-        auto *contrib =
-            new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u,
-                                                            fdist);
+        auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+            field, i, j, l, u, fdist);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
     }
@@ -384,8 +374,7 @@ ForceFields::ForceField *constructPlain3DForceField(
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   CHECK_INVARIANT(expTorsionAtoms.size() == expTorsionAngles.size(), "");
-  auto *field =
-      new ForceFields::ForceField(positions[0]->dimension());
+  auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
   }
@@ -404,10 +393,9 @@ ForceFields::ForceField *constructPlain3DForceField(
     else
       atomPairs[j * N + i] = 1;
     // expTorsionAngles[t][0] = (signs, V's)
-    auto *contrib =
-        new ForceFields::CrystalFF::TorsionAngleContribM6(
-            field, i, j, k, l, expTorsionAngles[t].second,
-            expTorsionAngles[t].first);
+    auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
+        field, i, j, k, l, expTorsionAngles[t].second,
+        expTorsionAngles[t].first);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }  // torsion constraints
 
@@ -424,9 +412,8 @@ ForceFields::ForceField *constructPlain3DForceField(
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;
-    auto *contrib =
-        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u,
-                                                        fdist);
+    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+        field, i, j, l, u, fdist);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }
 
@@ -441,9 +428,8 @@ ForceFields::ForceField *constructPlain3DForceField(
     double d = ((*positions[i]) - (*positions[j])).length();
     double l = d - 0.01;
     double u = d + 0.01;
-    auto *contrib =
-        new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u,
-                                                        fdist);
+    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+        field, i, j, l, u, fdist);
     field->contribs().push_back(ForceFields::ContribPtr(contrib));
   }
 
@@ -454,9 +440,8 @@ ForceFields::ForceField *constructPlain3DForceField(
       if (!atomPairs[j * N + i]) {
         double l = mmat.getLowerBound(i, j);
         double u = mmat.getUpperBound(i, j);
-        auto *contrib =
-            new ForceFields::UFF::DistanceConstraintContrib(field, i, j, l, u,
-                                                            fdist);
+        auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
+            field, i, j, l, u, fdist);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
     }
@@ -472,15 +457,14 @@ ForceFields::ForceField *construct3DImproperForceField(
   (void)atomNums;
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
-  auto *field =
-      new ForceFields::ForceField(positions[0]->dimension());
+  auto *field = new ForceFields::ForceField(positions[0]->dimension());
   for (unsigned int i = 0; i < N; ++i) {
     field->positions().push_back(positions[i]);
   }
 
   // improper torsions / out-of-plane bend / inversion
   double oobForceScalingFactor = 10.0;
-  for (const auto & improperAtom : improperAtoms) {
+  for (const auto &improperAtom : improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
       n[1] = 1;
@@ -503,11 +487,10 @@ ForceFields::ForceField *construct3DImproperForceField(
           n[3] = 0;
           break;
       }
-      auto *contrib =
-          new ForceFields::UFF::InversionContrib(
-              field, improperAtom[n[0]], improperAtom[n[1]],
-              improperAtom[n[2]], improperAtom[n[3]],
-              improperAtom[4], improperAtom[5], oobForceScalingFactor);
+      auto *contrib = new ForceFields::UFF::InversionContrib(
+          field, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
+          improperAtom[n[3]], improperAtom[4], improperAtom[5],
+          oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }

@@ -105,7 +105,7 @@ void recurseWalk(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (int & bid : nbrs[next]) {
+      for (int &bid : nbrs[next]) {
         if (!forbidden[bid]) {
           tstack.push_back(bid);
         }
@@ -164,7 +164,7 @@ void recurseWalkRange(
 
       // update a local stack before the next recursive call
       INT_VECT tstack = cands;
-      for (int & bid : nbrs[next]) {
+      for (int &bid : nbrs[next]) {
         if (!forbidden[bid]) {
           tstack.push_back(bid);
         }
@@ -305,8 +305,7 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
   PATH_LIST res;
 
   // start paths at each bond:
-  for (auto nbi = nbrs.begin(); nbi != nbrs.end();
-       ++nbi) {
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end(); ++nbi) {
     // don't come back to this bond in the later subgraphs
     int i = (*nbi).first;
 
@@ -361,8 +360,7 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
   }
 
   // start paths at each bond:
-  for (auto nbi = nbrs.begin(); nbi != nbrs.end();
-       nbi++) {
+  for (auto nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
     int i = (*nbi).first;
 
     // if we're only returning paths rooted at a particular atom, check now

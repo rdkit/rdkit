@@ -170,7 +170,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
     std::vector<ROMOL_SPTR> agents = MolOps::getMolFrags(*agentMol, false);
     delete agentMol;
-    for (auto & agent : agents) {
+    for (auto &agent : agents) {
       rxn->addAgentTemplate(agent);
     }
   }

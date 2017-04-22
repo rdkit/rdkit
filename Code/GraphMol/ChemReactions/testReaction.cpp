@@ -4918,7 +4918,8 @@ void test53ReactionSubstructureMatching() {
                        << std::endl;
   {
     std::string smi = "c1ccccc1>>c1ccncc1";
-    ChemicalReaction *query_rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
+    ChemicalReaction *query_rxn =
+        RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(query_rxn);
     TEST_ASSERT(query_rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(query_rxn->getNumProductTemplates() == 1);
@@ -5724,7 +5725,7 @@ void test60RunSingleReactant() {
     prods = rxn->runReactant(reag1, 0);
     TEST_ASSERT(prods.size() > 0);
 
-    for (auto & prod : prods) {
+    for (auto &prod : prods) {
       for (size_t prodidx = 0; prodidx < prod.size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prod[prodidx]) == expected);
@@ -5749,7 +5750,7 @@ void test60RunSingleReactant() {
     prods = rxn->runReactant(reag2, 1);
     TEST_ASSERT(prods.size() > 0);
 
-    for (auto & prod : prods) {
+    for (auto &prod : prods) {
       for (size_t prodidx = 0; prodidx < prod.size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
         TEST_ASSERT(MolToSmiles(*prod[prodidx]) == expected);

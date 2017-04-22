@@ -2048,8 +2048,8 @@ const std::string defaultMMFFBndk =
     "35	35	2.28	2.4	E94\n"
     "53	53	2.67	1.6	E94\n";
 
-class MMFFHerschbachLaurieCollection *
-    MMFFHerschbachLaurieCollection::ds_instance = nullptr;
+class MMFFHerschbachLaurieCollection
+    *MMFFHerschbachLaurieCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFHerschbachLaurie;
 

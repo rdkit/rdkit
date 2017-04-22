@@ -205,8 +205,7 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
         break;
@@ -356,8 +355,7 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0;
-           ++vi) {
+      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -377,8 +375,7 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
-    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;

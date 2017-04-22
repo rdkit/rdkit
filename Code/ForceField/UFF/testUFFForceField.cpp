@@ -1554,9 +1554,8 @@ void testUFFCopy() {
     ForceFields::ForceField *field = RDKit::UFF::constructForceField(*mol);
     TEST_ASSERT(field);
     field->initialize();
-    auto *dc =
-        new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0,
-                                                        1.0e5);
+    auto *dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0,
+                                                               2.0, 1.0e5);
     field->contribs().push_back(ForceFields::ContribPtr(dc));
     field->minimize();
     TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);

@@ -61,8 +61,8 @@ RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
                  "weight/atom mismatch");
     auto weightIt = dp_def->beginWeights();
     const Conformer &conf = dp_mol->getConformer(confId);
-    for (auto atomIt = d_atoms.begin();
-         atomIt != d_atoms.end(); atomIt++, weightIt++) {
+    for (auto atomIt = d_atoms.begin(); atomIt != d_atoms.end();
+         atomIt++, weightIt++) {
       const Atom *atom = *atomIt;
       RDGeom::Point3D p = conf.getAtomPos(atom->getIdx());
       p *= *weightIt;

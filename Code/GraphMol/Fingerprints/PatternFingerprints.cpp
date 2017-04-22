@@ -116,8 +116,7 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
   } else if (descr == "AtomXor") {
     return;
   } else if (descr == "AtomAnd") {
-    auto childIt =
-        a->getQuery()->beginChildren();
+    auto childIt = a->getQuery()->beginChildren();
     if ((*childIt)->getDescription() == "AtomAtomicNum" &&
         ((*(childIt + 1))->getDescription() == "AtomIsAliphatic" ||
          (*(childIt + 1))->getDescription() == "AtomIsAromatic") &&
@@ -127,15 +126,13 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
       return;
     }
   } else if (descr == "AtomOr") {
-    auto childIt =
-        a->getQuery()->beginChildren();
+    auto childIt = a->getQuery()->beginChildren();
     while (childIt != a->getQuery()->endChildren()) {
       if ((*childIt)->getDescription() == "AtomAtomicNum") {
         atomNums.push_back(
             static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
       } else if ((*childIt)->getDescription() == "AtomAnd") {
-        auto childIt2 =
-            (*childIt)->beginChildren();
+        auto childIt2 = (*childIt)->beginChildren();
         if ((*childIt2)->getDescription() == "AtomAtomicNum" &&
             ((*(childIt2 + 1))->getDescription() == "AtomIsAliphatic" ||
              (*(childIt2 + 1))->getDescription() == "AtomIsAromatic") &&

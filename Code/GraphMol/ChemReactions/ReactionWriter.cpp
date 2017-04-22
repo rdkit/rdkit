@@ -130,8 +130,8 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
     res << MolToMolBlock(**iter, true, -1, false);
   }
   if (!separateAgents) {
-    for (auto iter = rxn.beginAgentTemplates();
-         iter != rxn.endAgentTemplates(); ++iter) {
+    for (auto iter = rxn.beginAgentTemplates(); iter != rxn.endAgentTemplates();
+         ++iter) {
       // to write the mol block, we need ring information:
       MolOps::findSSSR(**iter);
       res << "$MOL\n";
@@ -146,8 +146,8 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
     res << MolToMolBlock(**iter, true, -1, false);
   }
   if (separateAgents) {
-    for (auto iter = rxn.beginAgentTemplates();
-         iter != rxn.endAgentTemplates(); ++iter) {
+    for (auto iter = rxn.beginAgentTemplates(); iter != rxn.endAgentTemplates();
+         ++iter) {
       // to write the mol block, we need ring information:
       MolOps::findSSSR(**iter);
       res << "$MOL\n";
@@ -172,8 +172,8 @@ ROMol *ChemicalReactionToRxnMol(const ChemicalReaction &rxn) {
     setRXNRoleOfAllMoleculeAtoms(*iter->get(), 2);
     res->insertMol(*iter->get());
   }
-  for (auto iter = rxn.beginAgentTemplates();
-       iter != rxn.endAgentTemplates(); ++iter) {
+  for (auto iter = rxn.beginAgentTemplates(); iter != rxn.endAgentTemplates();
+       ++iter) {
     setRXNRoleOfAllMoleculeAtoms(*iter->get(), 3);
     res->insertMol(*iter->get());
   }

@@ -175,7 +175,7 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     // since we'll be removing Hs later and that will break things:
     adjustAtomChiralities(res);
   }
-  for (auto & iter : molVect) {
+  for (auto &iter : molVect) {
     if (iter) delete iter;
   }
   return res;

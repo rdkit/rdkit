@@ -578,7 +578,7 @@ ExplicitBitVect *RDKFingerprintMol(
 
       if(bitInfo){
         std::vector<int> p;
-        for(int i : path){
+        for (int i : path) {
           p.push_back(i);
         }
         (*bitInfo)[bit].push_back(p);
@@ -696,8 +696,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   boost::dynamic_bitset<> bondsInPath(mol.getNumBonds());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        ++paths) {
-    for (const auto & path : paths->second) {
-      
+    for (const auto &path : paths->second) {
 #ifdef VERBOSE_FINGERPRINTING
       std::cerr << "Path: ";
       std::copy(path.begin(), path.end(),
@@ -836,9 +835,8 @@ ExplicitBitVect *LayeredFingerprintMol(
       }
       unsigned int l = 0;
       bool flaggedPath = false;
-      for (auto
-               layerIt = hashLayers.begin();
-           layerIt != hashLayers.end(); ++layerIt, ++l) {
+      for (auto layerIt = hashLayers.begin(); layerIt != hashLayers.end();
+           ++layerIt, ++l) {
         if (!layerIt->size()) continue;
         // ----
         std::sort(layerIt->begin(), layerIt->end());
@@ -971,7 +969,7 @@ ExplicitBitVect *LayeredFingerprintMol(
 
         if(bitInfo){
           std::vector<int> p;
-          for(int i : path){
+          for (int i : path) {
             p.push_back(i);
           }
           (*bitInfo)[bit].push_back(p);

@@ -127,7 +127,7 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
     SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
     for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
          mvIt != matchVect.end(); ++mvIt) {
-      for (const auto & mIt : *mvIt) {
+      for (const auto &mIt : *mvIt) {
         invars[mIt.second] |= mask;
       }
     }

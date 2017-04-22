@@ -439,8 +439,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     }
     if (keepIt) {
       pAtoms.reset();
-      for (auto pIt = path.begin(); pIt < path.end();
-           ++pIt) {
+      for (auto pIt = path.begin(); pIt < path.end(); ++pIt) {
         // look for a cycle that doesn't start at the first atom
         // we can't effectively canonicalize these at the moment
         // (was github #811)
@@ -568,8 +567,7 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
                "bad atomInvariants size");
   static int bounds[4] = {1, 2, 4, 8};
   unsigned int blockLength = nBits / nBitsPerEntry;
-  auto *sres =
-      new SparseIntVect<boost::int64_t>(blockLength);
+  auto *sres = new SparseIntVect<boost::int64_t>(blockLength);
   TorsionFpCalc(sres, mol, blockLength, targetSize, fromAtoms, ignoreAtoms,
                 atomInvariants, includeChirality);
   auto *res = new ExplicitBitVect(nBits);

@@ -63,7 +63,7 @@ void test1() {
       "CSSCC(NC(=O)CNC(=O)C(C)NC(=O)C(C(C)C)NC(=O)C(C(C)O)NC(=O)C(C(C)O)NC(=O)"
       "C(CC(C)C)NC2=O)C(=O)NC(CO)C(=O)N4",  // CHEMBL526869
   };
-  for (auto & i : smi) {
+  for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::vector<unsigned> atomsToUse;
     std::vector<unsigned> bondsToUse;
@@ -88,10 +88,10 @@ void test1() {
     fillAtomBondCodes(*mol, CF_NO_LABELS, &atomCodes, &bondCodes);
 
     HashCodeType res0 = generateMoleculeHashCode(*mol);
-    HashCodeType res1 =
-        generateMoleculeHashCode(*mol, &atomsToUse, nullptr, &atomCodes, &bondCodes);
-    HashCodeType res2 =
-        generateMoleculeHashCode(*mol, nullptr, &bondsToUse, &atomCodes, &bondCodes);
+    HashCodeType res1 = generateMoleculeHashCode(*mol, &atomsToUse, nullptr,
+                                                 &atomCodes, &bondCodes);
+    HashCodeType res2 = generateMoleculeHashCode(*mol, nullptr, &bondsToUse,
+                                                 &atomCodes, &bondCodes);
     HashCodeType res3 = generateMoleculeHashCode(*mol, &atomsToUse, &bondsToUse,
                                                  &atomCodes, &bondCodes);
 
@@ -121,7 +121,7 @@ void test2() {
 
   std::vector<HashCodeType> HashNonChiral;
 
-  for (auto & i : smi) {
+  for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
     std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
@@ -132,8 +132,8 @@ void test2() {
 
     //            fillAtomBondCodes(*mol, CF_ATOM_ALL &(~(CF_BOND_CHIRALITY |
     //            CF_ATOM_CHIRALITY | CF_ISOTOPE)), &atomCodes, &bondCodes);
-    HashCodeType res =
-        generateMoleculeHashCode(*mol, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType res = generateMoleculeHashCode(*mol, nullptr, nullptr,
+                                                &atomCodes, &bondCodes);
     HashNonChiral.push_back(res);
     std::cout << res << " = " << encode(&res, sizeof(res)) << " | " << i
               << std::endl;
@@ -158,15 +158,15 @@ void test21() {
 
   std::vector<HashCodeType> HashNonChiral;
 
-  for (auto & i : smi) {
+  for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
     std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
     fillAtomBondCodes(*mol, CF_BOND_ALL & (~(CF_BOND_CHIRALITY)), &atomCodes,
                       &bondCodes);
-    HashCodeType res =
-        generateMoleculeHashCode(*mol, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType res = generateMoleculeHashCode(*mol, nullptr, nullptr,
+                                                &atomCodes, &bondCodes);
     HashNonChiral.push_back(res);
     std::cout << res << " = " << encode(&res, sizeof(res)) << " | " << i
               << std::endl;
@@ -191,15 +191,15 @@ void test3() {
 
   std::vector<HashCodeType> HashChiral;
 
-  for (auto & i : smi) {
+  for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::vector<boost::uint32_t> atomCodes(mol->getNumAtoms());
     std::vector<boost::uint32_t> bondCodes(mol->getNumBonds());
 
     fillAtomBondCodes(*mol, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType resC =
-        generateMoleculeHashCode(*mol, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType resC = generateMoleculeHashCode(*mol, nullptr, nullptr,
+                                                 &atomCodes, &bondCodes);
     HashChiral.push_back(resC);
 
     std::cout << resC << " = " << encode(&resC, sizeof(resC)) << "  " << i
@@ -229,12 +229,12 @@ void test3a() {
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash1 =
-        generateMoleculeHashCode(*mol1, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash1 = generateMoleculeHashCode(*mol1, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash2 =
-        generateMoleculeHashCode(*mol2, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash2 = generateMoleculeHashCode(*mol2, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     std::cout << hash1 << " " << hash2 << std::endl;
     TEST_ASSERT(hash1 == hash2);
   }
@@ -250,12 +250,12 @@ void test3a() {
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash1 =
-        generateMoleculeHashCode(*mol1, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash1 = generateMoleculeHashCode(*mol1, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash2 =
-        generateMoleculeHashCode(*mol2, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash2 = generateMoleculeHashCode(*mol2, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     std::cout << hash1 << " " << hash2 << std::endl;
     TEST_ASSERT(hash1 == hash2);
   }
@@ -272,12 +272,12 @@ void test3a() {
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash1 =
-        generateMoleculeHashCode(*mol1, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash1 = generateMoleculeHashCode(*mol1, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash2 =
-        generateMoleculeHashCode(*mol2, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash2 = generateMoleculeHashCode(*mol2, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     std::cout << hash1 << " " << hash2 << std::endl;
     TEST_ASSERT(hash1 == hash2);
   }
@@ -293,12 +293,12 @@ void test3a() {
 
     fillAtomBondCodes(*mol1, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash1 =
-        generateMoleculeHashCode(*mol1, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash1 = generateMoleculeHashCode(*mol1, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     fillAtomBondCodes(*mol2, CF_BOND_CHIRALITY | CF_ATOM_CHIRALITY | CF_ISOTOPE,
                       &atomCodes, &bondCodes);
-    HashCodeType hash2 =
-        generateMoleculeHashCode(*mol2, nullptr, nullptr, &atomCodes, &bondCodes);
+    HashCodeType hash2 = generateMoleculeHashCode(*mol2, nullptr, nullptr,
+                                                  &atomCodes, &bondCodes);
     std::cout << hash1 << " " << hash2 << std::endl;
     TEST_ASSERT(hash1 != hash2);
   }
@@ -316,7 +316,7 @@ void test4() {
       "C[C@H]1CC[C@H](C)CC1", "C[C@H]1CC[C@@H](C)CC1", "CC1CCC(C)CC1",
   };
 
-  for (auto & i : smi) {
+  for (auto& i : smi) {
     ROMOL_SPTR mol = ROMOL_SPTR(SmilesToMol(i));
     std::cout << generateMoleculeHashSet(*mol, nullptr, nullptr) << "  " << i
               << std::endl;
@@ -449,8 +449,7 @@ void analyzeResults(std::list<HashResult>& res) {
   std::cout << "Collisions found:\n";
   //        std::sort(res.begin(), res.end(), lessHashResult_ALL);
   unsigned rn = 0, cn = 0;
-  for (auto r0 = res.begin(); r0 != res.end();
-       r0++) {
+  for (auto r0 = res.begin(); r0 != res.end(); r0++) {
     std::cerr << "Result: " << ++rn << "\r";
     if (0 == r0->Line)  // collision has been already found
       continue;
@@ -502,7 +501,7 @@ void testFileSMILES(const char* file, HashCodeType bitMask) {
     std::string id;
     std::cerr << "\rLine: " << ++line << " ";
     if ('#' != smiles[0] && ' ' != smiles[0] &&
-        '/' != smiles[0]              // commented to skip
+        '/' != smiles[0]                    // commented to skip
         && nullptr == strchr(smiles, '.'))  // skip ions
     {
       ROMOL_SPTR mol;

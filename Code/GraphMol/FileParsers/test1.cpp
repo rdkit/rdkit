@@ -4600,7 +4600,8 @@ void testParseCHG() {
   size_t pos = out.find(sub, 0);
   while (pos != std::string::npos) {
     positions.push_back(pos);
-    size_t num_entries = strtol(out.substr(pos + sub.size(), 3).c_str(), nullptr, 10);
+    size_t num_entries =
+        strtol(out.substr(pos + sub.size(), 3).c_str(), nullptr, 10);
     TEST_ASSERT(num_entries == 8);
     pos = out.find(sub, pos + 1);
   }

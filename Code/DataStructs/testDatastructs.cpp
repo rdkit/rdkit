@@ -553,8 +553,7 @@ void test6SparseIntVect() {
     iV1.setVal(4, 4);
     iV1.setVal(0, 2);
     iV1.setVal(3, 1);
-    auto iter =
-        iV1.getNonzeroElements().begin();
+    auto iter = iV1.getNonzeroElements().begin();
     TEST_ASSERT(iter->first == 0);
     TEST_ASSERT(iter->second == 2);
     ++iter;

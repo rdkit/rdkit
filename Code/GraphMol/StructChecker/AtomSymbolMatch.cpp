@@ -78,21 +78,23 @@ static const char *HC_table[] = /* pseudosymbol "G" */
 
 static const char *non_metal_hetero_elements[] = /* pseudosymbol "Q" */
     {
-        "He", "B",  "N",  "O",  "F",  "Ne", "Si", "P",  "S",  "Cl", "Ar",
-        "As", "Se", "Br", "Kr", "Sb", "Te", "I",  "Xe", "At", /* "Rn", This
-                                                                 element must be
-                                                                 removed */
+        "He",    "B",  "N",  "O",  "F",  "Ne", "Si", "P",  "S",  "Cl", "Ar",
+        "As",    "Se", "Br", "Kr", "Sb", "Te", "I",  "Xe", "At", /* "Rn", This
+                                                                    element must
+                                                                    be
+                                                                    removed */
         nullptr, /* because of a trick in utils.c */
 };
 
 static const char *metals[] = /* pseudosymbol "M" */
     {
-        "Li", "Be", "Na", "Mg", "Al", "K",  "Ca", "Sc", "Ti", "V",  "Cr", "Mn",
-        "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Rb", "Sr", "Y",  "Zr", "Nb", "Mo",
-        "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Cs", "Ba", "La", "Ce",
-        "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
-        "Lu", "Hf", "Ta", "W",  "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb",
-        "Bi", "Po", "Fr", "Ra", "Ac", "Th", "Pa", "U",  "Np", "Pu", nullptr,
+        "Li", "Be", "Na", "Mg", "Al",    "K",  "Ca", "Sc", "Ti", "V",  "Cr",
+        "Mn", "Fe", "Co", "Ni", "Cu",    "Zn", "Ga", "Rb", "Sr", "Y",  "Zr",
+        "Nb", "Mo", "Tc", "Ru", "Rh",    "Pd", "Ag", "Cd", "In", "Sn", "Cs",
+        "Ba", "La", "Ce", "Pr", "Nd",    "Pm", "Sm", "Eu", "Gd", "Tb", "Dy",
+        "Ho", "Er", "Tm", "Yb", "Lu",    "Hf", "Ta", "W",  "Re", "Os", "Ir",
+        "Pt", "Au", "Hg", "Tl", "Pb",    "Bi", "Po", "Fr", "Ra", "Ac", "Th",
+        "Pa", "U",  "Np", "Pu", nullptr,
 };
 
 static const char *non_metal_small_solution[] = /* pseudosymbol "Qs" */
@@ -137,8 +139,8 @@ static const char *ha2[] = /* pseudosymbol "ha2" */
 
 static const char *transition_metals[] = /* pseudosymbol "trn" */
     {
-        "Sc", "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Y",
-        "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "La", "Hf",
+        "Sc", "Ti", "V",  "Cr", "Mn", "Fe", "Co", "Ni", "Cu",    "Zn", "Y",
+        "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",    "La", "Hf",
         "Ta", "W",  "Re", "Os", "Ir", "Pt", "Au", "Hg", nullptr,
 };
 
@@ -195,7 +197,7 @@ static const char *tm8[] = /* pseudosymbol "tm8" */
 
 static const char *lanthanoids[] = /* pseudosymbol "lan" */
     {
-        "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb",
+        "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd",    "Tb",
         "Dy", "Ho", "Er", "Tm", "Yb", "Lu", nullptr,
 };
 

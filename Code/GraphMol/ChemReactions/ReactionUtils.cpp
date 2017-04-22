@@ -76,10 +76,9 @@ namespace {
 bool hasReactionMoleculeTemplateSubstructMatch(
     const RDKit::ChemicalReaction &rxn,
     const RDKit::ChemicalReaction &query_rxn, RDKit::ReactionMoleculeType t) {
-  for (auto begin = getStartIterator(rxn, t);
-       begin != getEndIterator(rxn, t); ++begin) {
-    for (auto begin_query =
-             getStartIterator(query_rxn, t);
+  for (auto begin = getStartIterator(rxn, t); begin != getEndIterator(rxn, t);
+       ++begin) {
+    for (auto begin_query = getStartIterator(query_rxn, t);
          begin_query != getEndIterator(query_rxn, t); ++begin_query) {
       MatchVectType tvect;
       if (SubstructMatch(*begin->get(), *begin_query->get(), tvect)) {
@@ -173,8 +172,8 @@ bool isReactionTemplateMoleculeAgent(const ROMol &mol, double agentThreshold) {
 namespace {
 
 void getMappingNumAtomIdxMapReactants(const ChemicalReaction& rxn, std::map<int,Atom::ChiralType>& reactantMapping){
-  for(auto reactIt=rxn.beginReactantTemplates();
-      reactIt!=rxn.endReactantTemplates();++reactIt){
+  for (auto reactIt = rxn.beginReactantTemplates();
+       reactIt != rxn.endReactantTemplates(); ++reactIt) {
     for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
         reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
       int reactMapNum = -1;
@@ -240,7 +239,7 @@ void updateProductsStereochem(ChemicalReaction *rxn) {
 namespace {
 
 void removeMappingNumbersFromReactionMoleculeTemplate(const MOL_SPTR_VECT &molVec){
-  for(const auto & begin : molVec){
+  for (const auto &begin : molVec) {
     ROMol &mol = *begin.get();
     for(ROMol::AtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();++atomIt){

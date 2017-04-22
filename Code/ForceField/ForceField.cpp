@@ -224,7 +224,7 @@ double ForceField::calcEnergy(std::vector<double> *contribs) const {
   auto *pos = new double[d_dimension * N];
   this->scatter(pos);
   // now loop over the contribs
-  for (const auto & d_contrib : d_contribs) {
+  for (const auto &d_contrib : d_contribs) {
     double e = d_contrib->getEnergy(pos);
     res += e;
     if (contribs) {
@@ -260,7 +260,7 @@ void ForceField::calcGrad(double *grad) const {
   unsigned int N = d_positions.size();
   auto *pos = new double[d_dimension * N];
   this->scatter(pos);
-  for (const auto & d_contrib : d_contribs) {
+  for (const auto &d_contrib : d_contribs) {
     d_contrib->getGrad(pos, grad);
   }
   // zero out gradient values for any fixed points:
@@ -315,7 +315,7 @@ void ForceField::gather(double *pos) {
   PRECONDITION(pos, "bad position vector");
 
   unsigned int tab = 0;
-  for (auto & d_position : d_positions) {
+  for (auto &d_position : d_positions) {
     for (unsigned int di = 0; di < this->dimension(); ++di) {
       (*d_position)[di] = pos[tab + di];
     }

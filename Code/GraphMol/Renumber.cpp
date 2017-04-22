@@ -70,8 +70,8 @@ ROMol *renumberAtoms(const ROMol &mol,
   }
 
   // Conformers:
-  for (auto oConf = mol.beginConformers();
-       oConf != mol.endConformers(); ++oConf) {
+  for (auto oConf = mol.beginConformers(); oConf != mol.endConformers();
+       ++oConf) {
     auto *nConf = new Conformer(nAts);
     for (unsigned int i = 0; i < nAts; ++i) {
       nConf->setAtomPos(i, (*oConf)->getAtomPos(newOrder[i]));

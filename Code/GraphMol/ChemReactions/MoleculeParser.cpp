@@ -74,8 +74,8 @@ ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
   MOL_SPTR_VECT fragments = MolOps::getMolFrags(mol);
 
   unsigned countFragments = 0;
-  for (auto iter = fragments.begin();
-       iter != fragments.end(); ++iter, countFragments++) {
+  for (auto iter = fragments.begin(); iter != fragments.end();
+       ++iter, countFragments++) {
     int role = getRXNRoleOfMolecule(*iter->get());
     if (!testForSameRXNRoleOfAllMoleculeAtoms(*iter->get(), role)) {
       BOOST_LOG(rdWarningLog)

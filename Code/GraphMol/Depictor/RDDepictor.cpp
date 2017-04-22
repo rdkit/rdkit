@@ -93,9 +93,9 @@ RDKit::INT_LIST getNonEmbeddedAtoms(const RDKit::ROMol &mol,
                                     const std::list<EmbeddedFrag> &efrags) {
   RDKit::INT_LIST res;
   boost::dynamic_bitset<> done(mol.getNumAtoms());
-  for (const auto & efrag : efrags) {
+  for (const auto &efrag : efrags) {
     const INT_EATOM_MAP &oatoms = efrag.GetEmbeddedAtoms();
-    for (const auto & oatom : oatoms) {
+    for (const auto &oatom : oatoms) {
       done[oatom.first] = 1;
     }
   }
@@ -116,8 +116,7 @@ std::list<EmbeddedFrag>::iterator _findLargestFrag(
     std::list<EmbeddedFrag> &efrags) {
   std::list<EmbeddedFrag>::iterator mfri;
   int msiz = 0;
-  for (auto efri = efrags.begin();
-       efri != efrags.end(); efri++) {
+  for (auto efri = efrags.begin(); efri != efrags.end(); efri++) {
     if ((!efri->isDone()) && (efri->Size() > msiz)) {
       msiz = efri->Size();
       mfri = efri;
@@ -135,7 +134,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
   if (efrags.empty()) {
     return;
   }
-  for (auto & efrag : efrags) {
+  for (auto &efrag : efrags) {
     efrag.computeBox();
   }
   auto eri = efrags.begin();
@@ -312,8 +311,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-      eri->randomSampleFlipsAndPermutations(
-          nFlipsPerSample, nSamples, sampleSeed, nullptr, 0.0, permuteDeg4Nodes);
+      eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
+                                            sampleSeed, nullptr, 0.0,
+                                            permuteDeg4Nodes);
     } else {
       eri->removeCollisionsBondFlip();
     }
@@ -450,7 +450,7 @@ void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
           "Reference pattern does not map to reference.");
     }
     refMatch.reserve(refMatchVect.size());
-    for (auto & i : refMatchVect) {
+    for (auto &i : refMatchVect) {
       refMatch.push_back(i.second);
     }
     RDKit::SubstructMatch(mol, *referencePattern, matchVect);

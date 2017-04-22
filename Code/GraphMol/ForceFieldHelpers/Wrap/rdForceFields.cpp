@@ -42,7 +42,7 @@ python::object UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                   ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (auto & re : res) {
+  for (auto &re : res) {
     pyres.append(python::make_tuple(re.first, re.second));
   }
   return pyres;
@@ -60,7 +60,7 @@ python::object MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                     ignoreInterfragInteractions);
   }
   python::list pyres;
-  for (auto & re : res) {
+  for (auto &re : res) {
     pyres.append(python::make_tuple(re.first, re.second));
   }
   return pyres;

@@ -6061,7 +6061,7 @@ void testSetBondStereo() {
     const Bond::BondStereo stereos[] = {Bond::STEREOCIS, Bond::STEREOTRANS};
     const Bond::BondStereo ezstros[] = {Bond::STEREOZ,   Bond::STEREOE};
 
-    for (auto & smile : smiles) {
+    for (auto &smile : smiles) {
       ROMol *m = SmilesToMol(smile);
       MolOps::findPotentialStereoBonds(*m);
       Bond *bond = m->getBondWithIdx(1);
@@ -6103,7 +6103,7 @@ void testSetBondStereo() {
 
     for (auto desired_stereo : stereos) {
       std::string refSmiles;
-      for (auto & smile : smiles) {
+      for (auto &smile : smiles) {
         ROMol *m = SmilesToMol(smile);
         MolOps::findPotentialStereoBonds(*m);
         TEST_ASSERT(m->getNumAtoms() == 4);

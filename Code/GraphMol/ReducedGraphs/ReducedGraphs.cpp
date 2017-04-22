@@ -76,7 +76,7 @@ typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
                          boost::flyweights::no_tracking> pattern_flyweight;
 
 void getErGAtomTypes(const ROMol &mol,
-                     std::vector<boost::dynamic_bitset<> > &types,
+                     std::vector<boost::dynamic_bitset<>> &types,
                      std::vector<const ROMol *> *patterns = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
 
@@ -190,7 +190,7 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
 
 ROMol *generateMolExtendedReducedGraph(
     const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes) {
-  std::vector<boost::dynamic_bitset<> > *latomTypes = nullptr;
+  std::vector<boost::dynamic_bitset<>> *latomTypes = nullptr;
   if (!atomTypes) {
     latomTypes = new std::vector<boost::dynamic_bitset<> >();
     atomTypes = latomTypes;

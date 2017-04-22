@@ -79,8 +79,8 @@ void RWMol::insertMol(const ROMol &other) {
 
   // add atom to any conformers as well, if we have any
   if (other.getNumConformers() && !getNumConformers()) {
-    for (auto cfi = other.beginConformers();
-         cfi != other.endConformers(); ++cfi) {
+    for (auto cfi = other.beginConformers(); cfi != other.endConformers();
+         ++cfi) {
       auto *nconf = new Conformer(getNumAtoms());
       nconf->set3D((*cfi)->is3D());
       nconf->setId((*cfi)->getId());
@@ -99,8 +99,8 @@ void RWMol::insertMol(const ROMol &other) {
           (*cfi)->setAtomPos(newAtomIds[i], (*ocfi)->getAtomPos(i));
       }
     } else {
-      for (auto cfi = this->beginConformers();
-           cfi != this->endConformers(); ++cfi) {
+      for (auto cfi = this->beginConformers(); cfi != this->endConformers();
+           ++cfi) {
         (*cfi)->resize(getNumAtoms());
         for (unsigned int newAtomId : newAtomIds)
           (*cfi)->setAtomPos(newAtomId, RDGeom::Point3D(0.0, 0.0, 0.0));
@@ -120,8 +120,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
     setAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
   }
   // add atom to any conformers as well, if we have any
-  for (auto cfi = this->beginConformers();
-       cfi != this->endConformers(); ++cfi) {
+  for (auto cfi = this->beginConformers(); cfi != this->endConformers();
+       ++cfi) {
     (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
   }
   return rdcast<unsigned int>(which);
@@ -200,7 +200,7 @@ void RWMol::removeAtom(Atom *atom) {
     nbrs.push_back(std::make_pair(atom->getIdx(), rdcast<unsigned int>(*b1)));
     ++b1;
   }
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     removeBond(nbr.first, nbr.second);
   }
 

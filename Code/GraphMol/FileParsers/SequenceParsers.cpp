@@ -1068,7 +1068,7 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
     case 9:  mol = NASequenceToMol(seq,true,true,true);    break;
 
     default:
-      return (RWMol*)nullptr;
+      return (RWMol *)nullptr;
   }
   if (sanitize && mol)
     MolOps::sanitizeMol(*mol);
@@ -1398,7 +1398,6 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
   Atom *r1 = nullptr;
   Atom *r2 = nullptr;
 
-
   AtomPDBResidueInfo info;
   info.setSerialNumber(1);
   info.setAltLoc(" ");
@@ -1471,8 +1470,7 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
         }
       }
     }
-    if (!name)
-      return (const char *)nullptr;
+    if (!name) return (const char *)nullptr;
 
     CreateNucleicAcid(mol,name,r1,r2,info,PCap5);
     if (prev && r1)
@@ -1483,8 +1481,7 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
       return ptr;
     if (*ptr == '.')
       ptr++;
-    if (*ptr != 'P')
-      return (const char*)nullptr;
+    if (*ptr != 'P') return (const char *)nullptr;
     ptr++;
     if (*ptr == '}') {
       CreatePCap3(mol,prev,info);

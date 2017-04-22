@@ -296,8 +296,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
                 QueryAtom::QUERYATOM_QUERY *newAndQuery;
                 newAndQuery = new ATOM_AND_QUERY;
                 newAndQuery->setDescription("AtomAnd");
-                auto andChild =
-                    atomQuery->beginChildren();
+                auto andChild = atomQuery->beginChildren();
                 newAndQuery->addChild(*andChild);
                 ++andChild;
 
@@ -356,8 +355,8 @@ void parseFinalAtomAttribs(Atom *atom, bool doingQuery) {
           (int)(query->getDataFunc()(atom)));
     }
     // now add the query's children to the queue and continue:
-    for (auto cIt = query->beginChildren();
-         cIt != query->endChildren(); ++cIt) {
+    for (auto cIt = query->beginChildren(); cIt != query->endChildren();
+         ++cIt) {
       q.push_back(const_cast<QueryAtom::QUERYATOM_QUERY *>(cIt->get()));
     }
   }

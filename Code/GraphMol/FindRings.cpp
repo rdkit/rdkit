@@ -37,7 +37,7 @@ boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
 
 void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
                     const ROMol &mol) {
-  for (const auto & re : res) {
+  for (const auto &re : res) {
     unsigned int rsiz = rdcast<unsigned int>(re.size());
     INT_VECT bring(rsiz);
     for (unsigned int i = 0; i < (rsiz - 1); i++) {
@@ -81,7 +81,7 @@ void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
 }
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
-  for (const auto & ring : rings) {
+  for (const auto &ring : rings) {
     storeRingInfo(mol, ring);
   }
 }
@@ -145,7 +145,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          const RINGINVAR_INT_VECT_MAP &dupD2Cands,
                          INT_VECT &atomDegrees,
                          boost::dynamic_bitset<> activeBonds) {
-  for (const auto & dupD2Cand : dupD2Cands) {
+  for (const auto &dupD2Cand : dupD2Cands) {
     const INT_VECT &dupCands = dupD2Cand.second;
     if (dupCands.size() > 1) {
       // we have duplicate candidates.
@@ -1220,8 +1220,7 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
         INT_VECT cycle;
         auto lastElem =
             std::find(traversalOrder.rbegin(), traversalOrder.rend(), atom);
-        for (auto rIt =
-                 lastElem;  // traversalOrder.rbegin();
+        for (auto rIt = lastElem;  // traversalOrder.rbegin();
              rIt != traversalOrder.rend() && (*rIt)->getIdx() != nbrIdx;
              ++rIt) {
           cycle.push_back((*rIt)->getIdx());

@@ -343,7 +343,7 @@ static const char *getHELMNAMonomer(const AtomPDBResidueInfo *info) {
       }
     }
   }
-  return (const char*)nullptr;
+  return (const char *)nullptr;
 }
 
 

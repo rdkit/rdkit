@@ -163,8 +163,7 @@ bool FilterCatalog::removeEntry(unsigned int idx) {
 }
 
 bool FilterCatalog::removeEntry(FilterCatalog::CONST_SENTRY entry) {
-  auto it =
-      std::find(d_entries.begin(), d_entries.end(), entry);
+  auto it = std::find(d_entries.begin(), d_entries.end(), entry);
   if (it != d_entries.end()) {
     d_entries.erase(it);
     return true;
@@ -198,7 +197,7 @@ bool FilterCatalog::hasMatch(const ROMol &mol) const {
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
     const ROMol &mol) const {
-  for (const auto & d_entrie : d_entries) {
+  for (const auto &d_entrie : d_entries) {
     if (d_entrie->hasFilterMatch(mol)) return d_entrie;
   }
   return CONST_SENTRY();
@@ -207,7 +206,7 @@ FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
 const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
     const ROMol &mol) const {
   std::vector<CONST_SENTRY> result;
-  for (const auto & d_entrie : d_entries) {
+  for (const auto &d_entrie : d_entries) {
     if (d_entrie->hasFilterMatch(mol)) result.push_back(d_entrie);
   }
   return result;
@@ -216,7 +215,7 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
 const std::vector<FilterMatch> FilterCatalog::getFilterMatches(
     const ROMol &mol) const {
   std::vector<FilterMatch> result;
-  for (const auto & d_entrie : d_entries) {
+  for (const auto &d_entrie : d_entries) {
     d_entrie->getFilterMatches(mol, result);
   }
   return result;

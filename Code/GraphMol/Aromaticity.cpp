@@ -655,7 +655,7 @@ int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (auto & sring : srings) {
+  for (auto &sring : srings) {
     size_t ringSz = sring.size();
     // test ring size:
     if ((minRingSize && ringSz < minRingSize) ||

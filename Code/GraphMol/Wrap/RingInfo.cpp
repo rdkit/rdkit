@@ -22,7 +22,7 @@ using namespace RDKit;
 python::object atomRings(const RingInfo *self) {
   python::list res;
   VECT_INT_VECT rings = self->atomRings();
-  for (auto & ring : rings) {
+  for (auto &ring : rings) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);
@@ -30,7 +30,7 @@ python::object atomRings(const RingInfo *self) {
 python::object bondRings(const RingInfo *self) {
   python::list res;
   VECT_INT_VECT rings = self->bondRings();
-  for (auto & ring : rings) {
+  for (auto &ring : rings) {
     res.append(python::tuple(ring));
   }
   return python::tuple(res);

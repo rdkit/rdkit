@@ -187,7 +187,7 @@ void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
                                           moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (auto & i : tmp) {
+      for (auto &i : tmp) {
         molList.append(i);
       }
     }
@@ -207,7 +207,7 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
                                          moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (auto & i : tmp) {
+      for (auto &i : tmp) {
         molList.append(i);
       }
     }
@@ -222,7 +222,7 @@ void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList) {
     self.removeAgentTemplates(&tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (auto & i : tmp) {
+      for (auto &i : tmp) {
         molList.append(i);
       }
     }
@@ -282,7 +282,7 @@ python::object GetReactingAtoms(const ChemicalReaction &self,
                                 bool mappedAtomsOnly) {
   python::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
-  for (auto & rA : rAs) {
+  for (auto &rA : rAs) {
     res.append(python::tuple(rA));
   }
   return python::tuple(res);
@@ -309,7 +309,7 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 
     // transform labels into python::tuple(python::tuple(python::tuple))
     python::list reactantLabels;
-    for (auto & label : labels) {
+    for (auto &label : labels) {
       python::list tmpLabels;
       for (unsigned int j = 0; j < label.size(); ++j) {
         python::list tmpPair;
@@ -361,7 +361,7 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
 
   // transform labels into python::tuple(python::tuple(python::tuple))
   python::list reactantLabels;
-  for (auto & label : labels) {
+  for (auto &label : labels) {
     python::list tmpLabels;
     for (unsigned int j = 0; j < label.size(); ++j) {
       python::list tmpPair;

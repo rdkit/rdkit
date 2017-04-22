@@ -142,8 +142,8 @@ bool ChargeFix::rechargeMolecule(unsigned &ndeprot, unsigned &nrefine) {
 void ChargeFix::resetColors() {
   BondColor.resize(Mol.getNumBonds());
   AtomColor.resize(Mol.getNumAtoms());
-  for (unsigned int & i : BondColor) i = 0;
-  for (unsigned int & i : AtomColor) i = 0;
+  for (unsigned int &i : BondColor) i = 0;
+  for (unsigned int &i : AtomColor) i = 0;
 }
 
 void ChargeFix::resetValues() {
@@ -182,9 +182,9 @@ bool ChargeFix::setpKaValues() {
     // Is atom acidic?
     bool found = false;
     const std::vector<unsigned> dummy_atom_ring_status;
-    for (const auto & AcidicAtom : Options.AcidicAtoms)
-      if (AAMatch(Mol, i, AcidicAtom, dummy_atom_ring_status,
-                  neighbour_array, Options.Verbose)) {
+    for (const auto &AcidicAtom : Options.AcidicAtoms)
+      if (AAMatch(Mol, i, AcidicAtom, dummy_atom_ring_status, neighbour_array,
+                  Options.Verbose)) {
         AtomColor[i]++;
         AtompKaValue[i] = 0.0;
         AAp = &AcidicAtom;
@@ -201,11 +201,9 @@ bool ChargeFix::setpKaValues() {
     //            throw..
 
     // add local charge increment
-    for (const auto & j : Options.ChargeIncTable)
-      if (AtomSymbolMatch(ap->getSymbol(),
-                          j.AtomSymbol)) {
-        AtompKaValue[i] +=
-            ap->getFormalCharge() * j.LocalInc;
+    for (const auto &j : Options.ChargeIncTable)
+      if (AtomSymbolMatch(ap->getSymbol(), j.AtomSymbol)) {
+        AtompKaValue[i] += ap->getFormalCharge() * j.LocalInc;
         //                if (charge_log && old_values[i] != 0 && ap->charge !=
         //                NONE) Options.ChargeIncTable[j].local_inc_used++;
         //                if (charge_log && old_values[i] != 0)
@@ -214,7 +212,7 @@ bool ChargeFix::setpKaValues() {
       }
 
     // add local atom acidity (atom_acidity_table)
-    for (const auto & j : Options.AtomAcidity)
+    for (const auto &j : Options.AtomAcidity)
       if (AtomSymbolMatch(ap->getSymbol(), j.AtomSymbol)) {
         AtompKaValue[i] += j.LocalInc;  // ip->LocalInc
         //                if (charge_log && old_values[i] != 0)
@@ -231,11 +229,9 @@ bool ChargeFix::setpKaValues() {
       const PathEntry *ppa = nullptr;
       // fetch alpha Path conductivity
       found = false;
-      for (const auto & k : Options.AlphaPathTable)
-        if (AtomSymbolMatch(ap->getSymbol(),
-                            k.Path.AtomSymbol) &&
-            LigandMatches(aap, abp, k.Path.Ligands[0],
-                          false)) {
+      for (const auto &k : Options.AlphaPathTable)
+        if (AtomSymbolMatch(ap->getSymbol(), k.Path.AtomSymbol) &&
+            LigandMatches(aap, abp, k.Path.Ligands[0], false)) {
           ppa = &k;
           found = true;
           break;
@@ -261,14 +257,12 @@ bool ChargeFix::setpKaValues() {
       // fetch alpha charge increment
       if (aap.getFormalCharge() != 0) {
         found = false;
-        for (const auto & k : Options.ChargeIncTable)
-          if (AtomSymbolMatch(aap.getSymbol(),
-                              k.AtomSymbol)) {
+        for (const auto &k : Options.ChargeIncTable)
+          if (AtomSymbolMatch(aap.getSymbol(), k.AtomSymbol)) {
             //                if (charge_log && old_values[i] != 0)
             //                    fprintf(charge_log, "+%d*%c4", aap->charge,
             //                    'B' + (cip - ChargeIncTable));
-            AtompKaValue[i] +=
-                aap.getFormalCharge() * k.AlphaInc;
+            AtompKaValue[i] += aap.getFormalCharge() * k.AlphaInc;
             //                if (charge_log && old_values[i] != 0)
             //                cip->alpha_inc_used++;
             found = true;
@@ -285,9 +279,8 @@ bool ChargeFix::setpKaValues() {
 
       // fetch alpha acidity increment
       found = false;
-      for (const auto & k : Options.AtomAcidity)
-        if (AtomSymbolMatch(aap.getSymbol(),
-                            k.AtomSymbol)) {
+      for (const auto &k : Options.AtomAcidity)
+        if (AtomSymbolMatch(aap.getSymbol(), k.AtomSymbol)) {
           //            if (charge_log && old_values[i] != 0)
           //                fprintf(charge_log, "+%c16", 'B' + (ppa -
           //                alpha_path_table));
@@ -319,9 +312,8 @@ bool ChargeFix::setpKaValues() {
         const PathEntry *ppb = nullptr;
         // fetch beta conductivity
         found = false;
-        for (const auto & l : Options.BetaPathTable)  // ppb++
-          if (AtomSymbolMatch(ap->getSymbol(),
-                              l.Path.AtomSymbol) &&
+        for (const auto &l : Options.BetaPathTable)  // ppb++
+          if (AtomSymbolMatch(ap->getSymbol(), l.Path.AtomSymbol) &&
               LigandMatches(aap, abp, ppb->Path.Ligands[0], false) &&
               LigandMatches(bap, bbp, ppb->Path.Ligands[1], false)) {
             ppb = &Options.BetaPathTable[k];
@@ -338,9 +330,8 @@ bool ChargeFix::setpKaValues() {
 
         // fetch beta acidity increment
         found = false;
-        for (const auto & l : Options.AtomAcidity)  // ip++
-          if (AtomSymbolMatch(bap.getSymbol(),
-                              l.AtomSymbol)) {
+        for (const auto &l : Options.AtomAcidity)  // ip++
+          if (AtomSymbolMatch(bap.getSymbol(), l.AtomSymbol)) {
             //                if (charge_log && old_values[i] != 0)
             //                    fprintf(charge_log, "+%c20", (int)('B' + (ppb
             //                    - beta_path_table)));
@@ -366,15 +357,13 @@ bool ChargeFix::setpKaValues() {
         // fetch beta charge increment
         if (bap.getFormalCharge() != 0) {
           found = false;
-          for (const auto & l : Options.ChargeIncTable)
-            if (AtomSymbolMatch(bap.getSymbol(),
-                                l.AtomSymbol)) {
+          for (const auto &l : Options.ChargeIncTable)
+            if (AtomSymbolMatch(bap.getSymbol(), l.AtomSymbol)) {
               //                    if (charge_log && old_values[i] != 0)
               //                        fprintf(charge_log, "+%d*%c5",
               //                        bap->charge, 'B' + (cip -
               //                        ChargeIncTable));
-              AtompKaValue[i] += bap.getFormalCharge() *
-                                 l.BetaInc;  // ap
+              AtompKaValue[i] += bap.getFormalCharge() * l.BetaInc;  // ap
               found = true;
               break;
             }
@@ -468,8 +457,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
     atom_ranks[i].atom = i + 1;
     atom_ranks[i].rank = 0;
     atom_ranks[i].rank_sum = 0;
-    auto elneg =
-        Options.ElnegTable.find(Mol.getAtomWithIdx(i)->getAtomicNum());
+    auto elneg = Options.ElnegTable.find(Mol.getAtomWithIdx(i)->getAtomicNum());
     if (Options.ElnegTable.end() != elneg)
       atom_ranks[i].elneg = elneg->second +
                             3.0 * Mol.getAtomWithIdx(i)->getFormalCharge() -
@@ -504,7 +492,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
         break;
 
   // use unsaturation to split ranks (rank sum is misused here)
-  for (auto & atom_rank : atom_ranks) atom_rank.rank_sum = 0;
+  for (auto &atom_rank : atom_ranks) atom_rank.rank_sum = 0;
   for (unsigned i = 0; i < Mol.getNumBonds(); i++) {
     const Bond &bond = *Mol.getBondWithIdx(i);
     if (convertBondType(bond.getBondType()) != SINGLE) {
@@ -538,7 +526,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
       } else
         break;
 
-  for (auto & atom_rank : atom_ranks) atom_rank.n_ligands = 0;
+  for (auto &atom_rank : atom_ranks) atom_rank.n_ligands = 0;
   for (unsigned i = 0; i < Mol.getNumBonds(); i++) {
     const Bond &bond = *Mol.getBondWithIdx(i);
     atom_ranks[bond.getBeginAtomIdx()].n_ligands++;
@@ -551,7 +539,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
     for (unsigned i = 0; i < atom_ranks.size(); i++)
       numbering[i] = atom_ranks[i].rank;
     // compute rank sums
-    for (auto & atom_rank : atom_ranks) atom_rank.rank_sum = 0;
+    for (auto &atom_rank : atom_ranks) atom_rank.rank_sum = 0;
     for (unsigned i = 0; i < Mol.getNumBonds(); i++) {
       const Bond &bond = *Mol.getBondWithIdx(i);
       atom_ranks[bond.getBeginAtomIdx()].rank_sum +=
@@ -572,7 +560,7 @@ int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
         }
       }
     }
-    for (auto & atom_rank : atom_ranks)  // use average rank sum
+    for (auto &atom_rank : atom_ranks)  // use average rank sum
       if (atom_rank.n_ligands > 0) {
         atom_rank.rank_sum *= 10;  // shift dec. point
         atom_rank.rank_sum /= atom_rank.n_ligands;

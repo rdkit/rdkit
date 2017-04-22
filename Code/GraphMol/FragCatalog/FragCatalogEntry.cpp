@@ -39,7 +39,7 @@ FragCatalogEntry::FragCatalogEntry(const ROMol *omol, const PATH_TYPE &path,
 
   // using aIdxMap initialize the location (and their IDs) of the
   // functional groups on dp_mol
-  for (const auto & mvtci : aidToFid) {
+  for (const auto &mvtci : aidToFid) {
     int oldAid = mvtci.first;
     if (aIdxMap.find(oldAid) != aIdxMap.end()) {
       int newAid = aIdxMap[oldAid];
@@ -202,7 +202,7 @@ void FragCatalogEntry::toStream(std::ostream &ss) const {
 
   tmpInt = d_aToFmap.size();
   streamWrite(ss, tmpInt);
-  for (const auto & iivmci : d_aToFmap) {
+  for (const auto &iivmci : d_aToFmap) {
     tmpInt = iivmci.first;
     streamWrite(ss, tmpInt);
     INT_VECT tmpVect = iivmci.second;

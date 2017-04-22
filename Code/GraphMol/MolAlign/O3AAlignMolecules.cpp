@@ -1168,9 +1168,8 @@ double SDM::scoreAlignment(double (*scoringFunc)(const unsigned int,
                            void *data) {
   double score = 0.0;
 
-  for (auto & i : d_SDMPtrVect) {
-    score +=
-        scoringFunc(i->idx[1], i->idx[0], data);
+  for (auto &i : d_SDMPtrVect) {
+    score += scoringFunc(i->idx[1], i->idx[0], data);
   }
 
   return score;
@@ -1456,9 +1455,9 @@ O3A::O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
       data.weight = (l ? c : 0);
       data.coeff = c;
       auto *o3a = new O3A(costFunc, weightFunc, scoringFunc, &data, prbMol,
-                         refMol, prbCid, refCid, &prbHvyAtoms, &refHvyAtoms,
-                         reflect, maxIters, options, &o3aConstraintVect,
-                         &extWorkPrbMol, lap, prbHist, refHist);
+                          refMol, prbCid, refCid, &prbHvyAtoms, &refHvyAtoms,
+                          reflect, maxIters, options, &o3aConstraintVect,
+                          &extWorkPrbMol, lap, prbHist, refHist);
       score[1] = o3a->score();
       if (((score[1] - score[0]) > O3_SCORE_THRESHOLD) ||
           isDoubleZero(score[0])) {
@@ -1505,10 +1504,9 @@ double _rmsdMatchVect(ROMol *d_prbMol, const ROMol *d_refMol,
                       const RDKit::MatchVectType *matchVect) {
   double rmsd = 0.0;
   if (matchVect) {
-    for (const auto & i : (*matchVect)) {
+    for (const auto &i : (*matchVect)) {
       // first pair element is prb, second is ref
-      rmsd += (prbPos[i.first] - refPos[i.second])
-                  .lengthSq();
+      rmsd += (prbPos[i.first] - refPos[i.second]).lengthSq();
     }
     rmsd = sqrt(rmsd / (*matchVect).size());
   } else {
@@ -1660,8 +1658,8 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
     for (ROMol::ConstConformerIterator cit = prbMol.beginConformers();
          cit != prbMol.endConformers(); ++cit, ++i) {
       auto *lres = new O3A(prbMol, refMol, prbProp, refProp, atomTypes,
-                          (*cit)->getId(), refCid, reflect, maxIters, options,
-                          constraintMap, constraintWeights);
+                           (*cit)->getId(), refCid, reflect, maxIters, options,
+                           constraintMap, constraintWeights);
       res[i].reset(lres);
     }
   }

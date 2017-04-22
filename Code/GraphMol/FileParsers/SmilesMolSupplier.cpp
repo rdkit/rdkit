@@ -36,8 +36,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   // Need to check if this has been fixed in VC++ 7.0
-  auto *tmpStream =
-      new std::ifstream(fileName.c_str(), std::ios_base::binary);
+  auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
 
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;

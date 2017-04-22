@@ -102,7 +102,7 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
                    (d_max_count == UINT_MAX || count <= d_max_count));
     if (onPatExists) {
       boost::shared_ptr<FilterMatcherBase> clone = copy();
-      for (auto & matche : matches) {
+      for (auto &matche : matches) {
         matchVect.push_back(FilterMatch(clone, matche));
       }
     }

@@ -23,13 +23,13 @@ namespace StructureCheck {
    
 static void verboseAtom(const ROMol &mol, int atom_idx, std::vector<Neighbourhood>& neighbours){
       char nstr[512] = "";
-   for (unsigned int j : neighbours[atom_idx].Atoms) {
-     const Atom &a = *mol.getAtomWithIdx(j);
-     snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), ", %s",
-              a.getSymbol().c_str());
-     if (0 != a.getFormalCharge())
-       snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), "%+d",
-                a.getFormalCharge());
+      for (unsigned int j : neighbours[atom_idx].Atoms) {
+        const Atom &a = *mol.getAtomWithIdx(j);
+        snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), ", %s",
+                 a.getSymbol().c_str());
+        if (0 != a.getFormalCharge())
+          snprintf(nstr + strlen(nstr), sizeof(nstr) - strlen(nstr), "%+d",
+                   a.getFormalCharge());
    }
    BOOST_LOG(rdInfoLog) << "* CheckAtom idx=" << atom_idx << ", "
                         << mol.getAtomWithIdx(atom_idx)->getSymbol()
@@ -104,7 +104,8 @@ static void applyAtomSymbolList(RWMol &mol, const std::string symbol, Atom &atom
   //  QueryAtom a(atom);  // copy all mol's atom properties to keep its
   for (tokp = strtok_r((char *)nullptr, ",", &context); tokp;
        tokp = strtok_r((char *)nullptr, ",", &context)) {
-      a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)), Queries::COMPOSITE_OR);
+    a.expandQuery(makeAtomNumQuery(getAtomicNumber(tokp)),
+                  Queries::COMPOSITE_OR);
   }
   mol.replaceAtom(atom.getIdx(), &a);
 }
@@ -140,7 +141,7 @@ bool TransformAugmentedAtoms(
   }
 
   const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
-  for (const auto & ring : rings) {
+  for (const auto &ring : rings) {
     for (size_t j = 0; j < ring.size(); j++) {
       bondInRing[ring[j]] = true;
       const Bond *bond = mol.getBondWithIdx(ring[j]);
@@ -254,8 +255,7 @@ bool TransformAugmentedAtoms(
   }
   // remove bonds marked to delete // BT_NONE
   if (!bondsToRemove.empty()) {
-    for (auto & i : bondsToRemove)
-      mol.removeBond(i.first, i.second);
+    for (auto &i : bondsToRemove) mol.removeBond(i.first, i.second);
   }
   return transformed;
 }
@@ -301,23 +301,20 @@ static bool RecMatchNeigh(std::vector<Neighbourhood>& matched_pairs,
       }
       visited[i] = true;
       std::vector<unsigned>& pairs = matched_pairs[i].Atoms;
-      for(unsigned int pair : pairs) {
-         if(used[pair])
-            continue;
-         used[pair] = true;
-         if(RecMatchNeigh(matched_pairs, visited, used)) {
-            return true;
-         }
-         used[pair] = false;
+      for (unsigned int pair : pairs) {
+        if (used[pair]) continue;
+        used[pair] = true;
+        if (RecMatchNeigh(matched_pairs, visited, used)) {
+          return true;
+        }
+        used[pair] = false;
       }
       visited[i] = false;
    }
-   for (auto && j : visited) 
-     if(!j)
-        return false;
-  for (auto && j : used) 
-     if(!j)
-        return false;
+   for (auto &&j : visited)
+     if (!j) return false;
+   for (auto &&j : used)
+     if (!j) return false;
    return true;
    
 }
@@ -363,12 +360,10 @@ bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
   }
   std::vector<bool> visited(nbph.Atoms.size());
   std::vector<bool> used(aa.Ligands.size());
-  
-  for (auto && j : visited) 
-     j = false;
-  for (auto && j : used) 
-     j = false;
-  
+
+  for (auto &&j : visited) j = false;
+  for (auto &&j : used) j = false;
+
   if(RecMatchNeigh(matched_pairs, visited, used)) {
     if (verbose)
       BOOST_LOG(rdInfoLog) << "RecMatch ret TRUE " << aa.ShortName << "\n";
@@ -481,13 +476,13 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
                       std::vector<unsigned> &bond_status) {
   atom_status.resize(mol.getNumAtoms());
   bond_status.resize(mol.getNumBonds());
-  for (unsigned int & atom_statu : atom_status) atom_statu = 0;
-  for (unsigned int & bond_statu : bond_status) bond_statu = 0;
+  for (unsigned int &atom_statu : atom_status) atom_statu = 0;
+  for (unsigned int &bond_statu : bond_status) bond_statu = 0;
   if (mol.getNumBonds() == 0) return;
   // for each bond compute amount of rings that contains the bond
   const RDKit::RingInfo &ringInfo = *mol.getRingInfo();
   const VECT_INT_VECT &bondRings = ringInfo.bondRings();
-  for (const auto & ring : bondRings) {
+  for (const auto &ring : bondRings) {
     for (unsigned i = 0; i < ring.size(); i++) {
       bond_status[i]++;
     }

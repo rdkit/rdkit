@@ -427,7 +427,7 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, iAtomId, jAtomId, alist);
   v *= (value / origValue - 1.);
-  for (unsigned int & it : alist) {
+  for (unsigned int &it : alist) {
     pos[it] -= v;
   }
 }
@@ -483,7 +483,7 @@ void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to j and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (unsigned int & it : alist) {
+  for (unsigned int &it : alist) {
     // translate atom so that it coincides with the origin of rotation
     pos[it] -= rotAxisBegin;
     // rotate around our rotation axis
@@ -572,7 +572,7 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   // get all atoms bonded to k and loop through them
   std::list<unsigned int> alist;
   _toBeMovedIdxList(mol, jAtomId, kAtomId, alist);
-  for (unsigned int & it : alist) {
+  for (unsigned int &it : alist) {
     // translate atom so that it coincides with the origin of rotation
     pos[it] -= rotAxisBegin;
     // rotate around our rotation axis

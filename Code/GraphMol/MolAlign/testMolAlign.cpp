@@ -88,7 +88,7 @@ void test1MolWithQueryAlign() {
 
   std::string fname3 =
       rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_trans.mol";
-  
+
   auto *m3 = new RWMol(*MolFileToMol(fname3));
   m3->replaceAtom(0, new QueryAtom(5));
 
@@ -340,8 +340,8 @@ void testCrippenO3AMolHist() {
     MolAlign::MolHistogram prbHist(*prbMol, prbDmat);
 
     MolAlign::O3A o3a(*prbMol, *refMol, &prbLogpContribs, &refLogpContribs,
-                      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, nullptr, nullptr,
-                      nullptr, &prbHist, &refHist);
+                      MolAlign::O3A::CRIPPEN, -1, -1, false, 50, 0, nullptr,
+                      nullptr, nullptr, &prbHist, &refHist);
     double rmsd = o3a.align();
     cumScore += o3a.score();
     cumMsd += rmsd * rmsd;
@@ -431,8 +431,8 @@ void testCrippenO3AConstraints() {
   std::vector<std::string> prbAtomTypeLabels(prbNAtoms);
   Descriptors::getCrippenAtomContribs(m2, prbLogpContribs, prbMRContribs, true,
                                       &prbAtomTypes, &prbAtomTypeLabels);
-  auto *o3a = new MolAlign::O3A(
-      m2, *m1, &prbLogpContribs, &prbLogpContribs, MolAlign::O3A::CRIPPEN);
+  auto *o3a = new MolAlign::O3A(m2, *m1, &prbLogpContribs, &prbLogpContribs,
+                                MolAlign::O3A::CRIPPEN);
   TEST_ASSERT(o3a);
   o3a->align();
   delete o3a;
@@ -548,9 +548,9 @@ void testCrippenO3AConstraintsAndLocalOnly() {
     constraintMap.push_back(std::make_pair(prbOIdx, refSIdx));
     RDNumeric::DoubleVector constraintWeights(1);
     constraintWeights[0] = weights[i];
-    auto *o3a = new MolAlign::O3A(
-        *prbMol, *refMol, &prbMP, &refMP, MolAlign::O3A::MMFF94, -1, -1, false,
-        50, 0, &constraintMap, &constraintWeights);
+    auto *o3a = new MolAlign::O3A(*prbMol, *refMol, &prbMP, &refMP,
+                                  MolAlign::O3A::MMFF94, -1, -1, false, 50, 0,
+                                  &constraintMap, &constraintWeights);
     TEST_ASSERT(o3a);
     o3a->align();
     delete o3a;
@@ -840,7 +840,7 @@ void testO3AMultiThreadBug() {
 
 #ifdef RDK_TEST_MULTITHREADED
   {
-    for (auto & mol : mols) {
+    for (auto &mol : mols) {
       ROMol prbMol = *mol;
       TEST_ASSERT(prbMol.getNumConformers() == 50);
 
@@ -870,7 +870,7 @@ void testO3AMultiThreadBug() {
 
 #endif
   delete refMol;
-  for (auto & mol : mols) delete mol;
+  for (auto &mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

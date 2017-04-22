@@ -532,7 +532,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   //  Now work the children
   //
   // ---------------------
-  for (auto & possible : possibles) {
+  for (auto &possible : possibles) {
     int possibleIdx = possible.get<1>();
     Bond *bond = possible.get<2>();
     switch (colors[possibleIdx]) {
@@ -690,8 +690,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //  Now work the children
   //
   // ---------------------
-  for (auto possiblesIt = possibles.begin();
-       possiblesIt != possibles.end(); possiblesIt++) {
+  for (auto possiblesIt = possibles.begin(); possiblesIt != possibles.end();
+       possiblesIt++) {
     int possibleIdx = possiblesIt->get<1>();
     if (colors[possibleIdx] != WHITE_NODE) {
       // we're either done or it's a ring-closure, which we already processed...
@@ -838,7 +838,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
     std::cerr<<"\n";
 #endif
   // find bonds that have directions indicated that are redundant:
-  for (auto & msI : molStack) {
+  for (auto &msI : molStack) {
     if (msI.type == MOL_STACK_BOND) {
       Bond *tBond = msI.obj.bond;
       const Atom *canonBeginAtom = mol.getAtomWithIdx(msI.number);
@@ -907,8 +907,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   INT_VECT cyclesAvailable(MAX_CYCLES, 1);
 
   VECT_INT_VECT cycles(nAtoms);
-  for (auto & cycle : cycles)
-    cycle.resize(0);
+  for (auto &cycle : cycles) cycle.resize(0);
 
   boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
 
@@ -996,7 +995,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
   // std::cerr<<"----->\ntraversal stack:"<<std::endl;
   // traverse the stack and canonicalize double bonds and atoms with (ring)
   // stereochemistry
-  for (auto & msI : molStack) {
+  for (auto &msI : molStack) {
 #if 0
       if(msI->type == MOL_STACK_ATOM) std::cerr<<" atom: "<<msI->obj.atom->getIdx()<<std::endl;
       else if(msI->type == MOL_STACK_BOND) std::cerr<<" bond: "<<msI->obj.bond->getIdx()<<" "<<msI->number<<" "<<msI->obj.bond->getBeginAtomIdx()<<"-"<<msI->obj.bond->getEndAtomIdx()<<" order: "<<msI->obj.bond->getBondType()<<std::endl;
@@ -1034,8 +1033,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             if (!ringStereoChemAdjusted[nbrIdx] &&
                 atomVisitOrders[nbrIdx] >
                     atomVisitOrders[msI.obj.atom->getIdx()]) {
-              mol.getAtomWithIdx(nbrIdx)
-                  ->setChiralTag(msI.obj.atom->getChiralTag());
+              mol.getAtomWithIdx(nbrIdx)->setChiralTag(
+                  msI.obj.atom->getChiralTag());
               if (nbrV < 0) {
                 mol.getAtomWithIdx(nbrIdx)->invertChirality();
               }

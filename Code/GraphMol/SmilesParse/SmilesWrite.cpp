@@ -477,9 +477,9 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
     }
     vfragsmi.push_back(res);
 
-    for (unsigned int & vit : atomOrdering) {
+    for (unsigned int &vit : atomOrdering) {
       vit = fragsMolAtomMapping[i][vit];  // Lookup the Id in the original
-                                            // molecule
+                                          // molecule
     }
     allAtomOrdering.push_back(atomOrdering);
   }
@@ -504,9 +504,8 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
                                    tmp[ti].second.end());
     }
   } else {  // Not canonical
-    for (auto & i : allAtomOrdering)
-      flattenedAtomOrdering.insert(flattenedAtomOrdering.end(),
-                                   i.begin(),
+    for (auto &i : allAtomOrdering)
+      flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), i.begin(),
                                    i.end());
     for (unsigned i = 0; i < vfragsmi.size(); ++i) {
       result += vfragsmi[i];

@@ -36,9 +36,8 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
   typedef std::vector<std::pair<std::string, std::set<int> > >
       MatchSetCollection;
   MatchSetCollection matchSets;
-  for (auto featDefIt =
-           beginFeatureDefs();
-       featDefIt != endFeatureDefs(); featDefIt++) {
+  for (auto featDefIt = beginFeatureDefs(); featDefIt != endFeatureDefs();
+       featDefIt++) {
     MolChemicalFeatureDef::CollectionType::value_type featDef = *featDefIt;
     if (limits == "" || limits == featDef->getFamily()) {
       std::vector<MatchVectType> matches;
@@ -52,7 +51,7 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
       for (unsigned int i = 0; i < numMatches; i++) {
         const MatchVectType &match = matches[i];
         std::set<int> matchSet;
-        for (const auto & mIt : match) {
+        for (const auto &mIt : match) {
           matchSet.insert(mIt.second);
         }
 
@@ -78,7 +77,7 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
           atoms.resize(match.size());
 
           // set up the atoms:
-          for (const auto & matchIt : match) {
+          for (const auto &matchIt : match) {
             int atomIdx = matchIt.second;
             int queryIdx = matchIt.first;
             atoms[queryIdx] = mol.getAtomWithIdx(atomIdx);

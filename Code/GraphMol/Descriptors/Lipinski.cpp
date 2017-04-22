@@ -160,7 +160,7 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
     BOOST_FOREACH (const MatchVectType &iv, matches) {
       bool distinct = true;
-      for (const auto & mIt : iv) {
+      for (const auto &mIt : iv) {
         if (atomsSeen[mIt.second]) {
           distinct = false;
         }

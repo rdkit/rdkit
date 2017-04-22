@@ -278,7 +278,7 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
       const INT_VECT& br1 = r1[r1i];  // ring contains bond1
       // check all target rings contained bond2
       for (unsigned long r2i : ringsIdx2) {
-        const INT_VECT& br2 = r2[r2i];  // ring contains bond2
+        const INT_VECT& br2 = r2[r2i];   // ring contains bond2
         if (br1.size() != br2.size())    // rings are different
           continue;
         // compare rings as substructures

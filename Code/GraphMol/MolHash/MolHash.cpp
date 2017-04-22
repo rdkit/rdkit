@@ -125,7 +125,7 @@ void fillAtomBondCodes(
   if (bondCodes) {
     std::map<unsigned, bool> bondsInRing;
     const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
-    for (const auto & ring : rings)
+    for (const auto &ring : rings)
       for (auto b = ring.begin(); b != ring.end(); b++)
         if (bondsInRing.end() == bondsInRing.find(*b))
           bondsInRing[(unsigned)*b] = true;
@@ -320,8 +320,9 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
     n = mol.getNumBonds();
     m.BondsIdx.resize(n);
     for (unsigned i = 0; i < n; i++) m.BondsIdx[i] = i;
-  } else if (nullptr != atomsToUse)  // selected atoms only and all/selected bonds
-                               // between them
+  } else if (nullptr !=
+             atomsToUse)  // selected atoms only and all/selected bonds
+                          // between them
   {
     std::map<unsigned, unsigned> addedBonds;
     unsigned n = atomsToUse->size();
@@ -352,8 +353,9 @@ static void prepareMolFragment(MolFragment &m, const ROMol &mol,
           if (nullptr != atomsToUse &&
               atomsToUse->end() ==
                   find(atomsToUse->begin(), atomsToUse->end(), endAtoms[ai]))
-            bond = nullptr;  // check if both ending atoms of the bond are selected by
-                       // atoms filter
+            bond = nullptr;  // check if both ending atoms of the bond are
+                             // selected by
+                             // atoms filter
         }
         if (nullptr != bond) {
           addedBonds[bond->getIdx()] = m.BondsIdx.size();

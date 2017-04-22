@@ -111,8 +111,8 @@ void testSamplers() {
       boost::shared_ptr<EnumerationStrategyBase>(randBBs.copy()));
   enumerators.push_back(
       boost::shared_ptr<EnumerationStrategyBase>(even.copy()));
-#ifdef RDK_USE_BOOST_SERIALIZATION    
-  for (auto & enumerator : enumerators) {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  for (auto &enumerator : enumerators) {
     TEST_ASSERT(enumerator->getNumPermutations() == 10 * 5 * 6);
     pickleTest(*enumerator, 10 * 5 * 6);
   }

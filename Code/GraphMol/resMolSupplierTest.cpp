@@ -143,7 +143,7 @@ void testBenzylCation() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int & indice : indices) {
+  for (unsigned int &indice : indices) {
     TEST_ASSERT(fcMap.find(indice) != fcMap.end());
     TEST_ASSERT(fcMap[indice] == 1);
   }
@@ -164,7 +164,7 @@ void testBenzylAnion() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int & indice : indices) {
+  for (unsigned int &indice : indices) {
     TEST_ASSERT(fcMap.find(indice) != fcMap.end());
     TEST_ASSERT(fcMap[indice] == -1);
   }
@@ -194,7 +194,7 @@ void testButadiene() {
     delete resMol;
   }
   unsigned int indices[] = {0, 3};
-  for (unsigned int & indice : indices) {
+  for (unsigned int &indice : indices) {
     TEST_ASSERT(fcMap.find(indice) != fcMap.end());
     TEST_ASSERT(fcMap[indice] == 0);
   }
@@ -240,7 +240,7 @@ void testChargeMigration() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int & indice : indices) {
+  for (unsigned int &indice : indices) {
     TEST_ASSERT(fcMap.find(indice) != fcMap.end());
     TEST_ASSERT(fcMap[indice] == 1);
   }
@@ -262,7 +262,7 @@ void testChargeSeparation1() {
     delete resMol;
   }
   unsigned int indices[] = {0, 8, 10};
-  for (unsigned int & indice : indices) {
+  for (unsigned int &indice : indices) {
     TEST_ASSERT(fcMap.find(indice) != fcMap.end());
     TEST_ASSERT(fcMap[indice] == 1);
   }
@@ -610,8 +610,7 @@ void testCrambin() {
   for (std::vector<RWMol *>::const_iterator it = res.begin(); it != res.end();
        ++it)
     delete *it;
-  auto *resMolSupplST =
-      new ResonanceMolSupplier((ROMol &)*crambin);
+  auto *resMolSupplST = new ResonanceMolSupplier((ROMol &)*crambin);
   TEST_ASSERT(resMolSupplST);
   // crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
   // and 1 terminal COO- (2 resonance structures each)
@@ -648,8 +647,7 @@ void testCrambin() {
 #ifdef RDK_TEST_MULTITHREADED
   std::vector<std::vector<unsigned int> > btVect2ST;
   getBtVectVect(resMolSupplST, btVect2ST);
-  auto *resMolSupplMT =
-      new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
+  auto *resMolSupplMT = new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
   TEST_ASSERT(resMolSupplMT);
   resMolSupplMT->setNumThreads(0);
   TEST_ASSERT(resMolSupplST->length() == resMolSupplMT->length());
@@ -661,18 +659,18 @@ void testCrambin() {
       TEST_ASSERT(btVect2ST[i][j] == btVect2MT[i][j]);
   }
   ResonanceMolSupplier *ptr[2] = {resMolSupplST, resMolSupplMT};
-  for (auto & i : ptr) {
-    n = SubstructMatch(*i, *carboxylateQuery, matchVect, false, true,
-                       false, false, 1000, 0);
+  for (auto &i : ptr) {
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, false, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 6);
-    n = SubstructMatch(*i, *carboxylateQuery, matchVect, true, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, true, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 3);
-    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, false, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, false, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 8);
-    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, true, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, true, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 2);
   }
   delete resMolSupplMT;
@@ -687,8 +685,8 @@ void testGitHub1166() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testGitHub1166" << std::endl;
   RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
-  auto *resMolSuppl =
-      new ResonanceMolSupplier(static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+  auto *resMolSuppl = new ResonanceMolSupplier(
+      static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
   // check that formal charges on odd indices are in the same position
   // as on even indices

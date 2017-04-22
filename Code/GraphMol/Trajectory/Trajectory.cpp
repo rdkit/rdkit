@@ -46,8 +46,7 @@ Trajectory::Trajectory(unsigned int dimension, unsigned int numPoints, SnapshotV
   if (!snapshotVect)
     snapshotVect = new SnapshotVect;
   d_snapshotVect.reset(snapshotVect);
-  for (auto & vectIt : *d_snapshotVect)
-    vectIt.d_trajectory = this;
+  for (auto &vectIt : *d_snapshotVect) vectIt.d_trajectory = this;
 }
 
 Trajectory::Trajectory(const Trajectory &other) :
@@ -162,8 +161,7 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
     "BOX"
   };
   std::set<std::string> ignoredKeywordSet;
-  for (auto & i : ignoredKeywordArray)
-    ignoredKeywordSet.insert(std::string(i));
+  for (auto &i : ignoredKeywordArray) ignoredKeywordSet.insert(std::string(i));
   while (inStream.good() && !inStream.eof()) {
     std::getline(inStream, tempStr);
     if (inStream.bad() || inStream.eof())
@@ -202,8 +200,7 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
     }
     else {
       std::string supportedBlocks("POSITIONRED, POSITION");
-      for (const auto & it : ignoredKeywordSet)
-        supportedBlocks += ", " + it;
+      for (const auto &it : ignoredKeywordSet) supportedBlocks += ", " + it;
       throw ValueErrorException("Unsupported block: "
         + tempStr + ". Supported blocks are " + supportedBlocks);
     }

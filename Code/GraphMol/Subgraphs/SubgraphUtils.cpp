@@ -90,8 +90,8 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   }
   if (mol.getNumConformers()) {
     // copy coordinates over:
-    for (auto confIt = mol.beginConformers();
-         confIt != mol.endConformers(); ++confIt) {
+    for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
+         ++confIt) {
       auto *conf = new Conformer(subMol->getNumAtoms());
       conf->set3D((*confIt)->is3D());
       for (INT_MAP_INT::const_iterator mapIt = atomIdxMap.begin();
@@ -228,7 +228,7 @@ PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPaths,
                         bool useBO) {
   PATH_LIST res;
   std::vector<DiscrimTuple> discrimsSeen;
-  for (const auto & allPath : allPaths) {
+  for (const auto &allPath : allPaths) {
     DiscrimTuple discrims = calcPathDiscriminators(mol, allPath, useBO);
     if (std::find(discrimsSeen.begin(), discrimsSeen.end(), discrims) ==
         discrimsSeen.end()) {

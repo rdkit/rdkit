@@ -57,8 +57,8 @@ void test1() {
        ++token) {
     std::string smi = *token;
     RWMol *m = SmilesToMol(smi, 0, 1);
-    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, false, 2, true, 1, nullptr,
-                                          1e-2);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, false, 2, true, 1,
+                                          nullptr, 1e-2);
     CHECK_INVARIANT(cid >= 0, "");
     ROMol *m2 = sdsup.next();
     // BOOST_LOG(rdInfoLog) << ">>> " << smi << std::endl;
@@ -570,8 +570,8 @@ void testMultipleConfsExpTors() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
-      *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false, true,
-      true, true, false);
+      *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
+      true, true, true, false);
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
   double energy;
@@ -799,8 +799,7 @@ void testIssue285() {
   }
   for (std::vector<std::string>::const_iterator mbI = molBlocks.begin();
        mbI != molBlocks.end(); ++mbI) {
-    for (auto mbJ = mbI + 1;
-         mbJ != molBlocks.end(); ++mbJ) {
+    for (auto mbJ = mbI + 1; mbJ != molBlocks.end(); ++mbJ) {
       TEST_ASSERT((*mbI) != (*mbJ));
     }
     // std::cerr << (*mbI) << "\n$$$$\n";
@@ -890,8 +889,8 @@ void testRandomCoords() {
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m = m2;
-    int cid =
-        DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1, nullptr, 1e-2);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2, true, 1,
+                                          nullptr, 1e-2);
     CHECK_INVARIANT(cid >= 0, "");
 // writer.write(*m);
 // writer.flush();
@@ -1318,7 +1317,7 @@ void testMultiThread() {
   }
   tg.join_all();
 
-  for (auto & mol : mols) delete mol;
+  for (auto &mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

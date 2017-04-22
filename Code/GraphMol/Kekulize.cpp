@@ -190,7 +190,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   }  // loop over all atoms in the fused system
 
   // now turn all the aromatic bond in this fused system to single
-  for (auto & bi : makeSingle) {
+  for (auto &bi : makeSingle) {
     bi->setBondType(Bond::SINGLE);
   }
 }

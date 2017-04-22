@@ -62,7 +62,8 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     MMFFBond mmffBondParams;
     if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                                     mmffBondParams)) {
-      auto *contrib = new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
+      auto *contrib =
+          new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
         unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
@@ -263,9 +264,9 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         MMFFAngle mmffAngleParams;
         if (mmffMolProperties->getMMFFAngleBendParams(
                 mol, idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
-          auto *contrib = new AngleBendContrib(
-              field, idx[0], idx[1], idx[2],
-              &mmffAngleParams, mmffPropParamsCentralAtom);
+          auto *contrib =
+              new AngleBendContrib(field, idx[0], idx[1], idx[2],
+                                   &mmffAngleParams, mmffPropParamsCentralAtom);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
@@ -541,8 +542,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           n[3] = 0;
           break;
       }
-      auto *contrib = new OopBendContrib(
-          field, idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
+      auto *contrib = new OopBendContrib(field, idx[n[0]], idx[n[1]], idx[n[2]],
+                                         idx[n[3]], &mmffOopParams);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
       if (mmffMolProperties->getMMFFVerbosity()) {
         const RDGeom::Point3D p1((*(points[idx[n[0]]]))[0],
@@ -896,8 +897,8 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         double chargeTerm = mmffMolProperties->getMMFFPartialCharge(i) *
                             mmffMolProperties->getMMFFPartialCharge(j) /
                             dielConst;
-        auto *contrib = new EleContrib(
-          field, i, j, chargeTerm, dielModel, is1_4);
+        auto *contrib =
+            new EleContrib(field, i, j, chargeTerm, dielModel, is1_4);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
         if (mmffMolProperties->getMMFFVerbosity()) {
           const unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);

@@ -520,8 +520,7 @@ bool isComplexQuery(const Bond *b) {
   if (descr == "BondOr") {
     // detect the types of queries that appear for unspecified bonds in SMARTS:
     if (b->getQuery()->endChildren() - b->getQuery()->beginChildren() == 2) {
-      for (auto child =
-               b->getQuery()->beginChildren();
+      for (auto child = b->getQuery()->beginChildren();
            child != b->getQuery()->endChildren(); ++child) {
         if ((*child)->getDescription() != "BondOrder" ||
             (*child)->getNegation())
@@ -550,8 +549,7 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
   }
   if (descr == "AtomOr" || descr == "AtomXor") return true;
   if (descr == "AtomAnd") {
-    auto childIt =
-        query->beginChildren();
+    auto childIt = query->beginChildren();
     while (childIt != query->endChildren()) {
       if (_complexQueryHelper(childIt->get(), hasAtNum)) return true;
       ++childIt;
@@ -594,8 +592,7 @@ bool isAtomAromatic(const Atom *a) {
       res = false;
       if (a->getQuery()->getNegation()) res = !res;
     } else if (descr == "AtomAnd") {
-      auto childIt =
-          a->getQuery()->beginChildren();
+      auto childIt = a->getQuery()->beginChildren();
       if ((*childIt)->getDescription() == "AtomAtomicNum") {
         if (a->getQuery()->getNegation()) {
           res = false;

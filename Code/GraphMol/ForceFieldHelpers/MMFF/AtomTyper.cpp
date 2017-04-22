@@ -77,7 +77,8 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
     for (int atomIdxIt : atomRings[ringIdx]) {
       auto it2 = it->second.find(atomIdxIt);
       if (it2 == it->second.end())
-        it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership())).first;
+        it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership()))
+                  .first;
       it2->second.getRingIdxSet().insert(ringIdxWithAromaticFlag);
       if (ringIsAromatic)
         it2->second.setIsInAromaticRing(true);
@@ -105,7 +106,7 @@ bool RingMembershipSize::areAtomsInSameAromaticRing(
   bool areInSameAromaticRing = false;
 
   for (auto it = d_ringSizeMembershipMap.begin();
-    !areInSameAromaticRing && (it != d_ringSizeMembershipMap.end()); ++it) {
+       !areInSameAromaticRing && (it != d_ringSizeMembershipMap.end()); ++it) {
     std::vector<boost::uint32_t> intersectVect;
     auto it1 = it->second.find(atom1->getIdx());
     auto it2 = it->second.find(atom2->getIdx());
@@ -126,7 +127,7 @@ bool RingMembershipSize::areAtomsInSameRingOfSize(
     const unsigned int ringSize, const unsigned int numAtoms, ...) const {
   va_list atoms;
   bool areInSameRingOfSize = false;
-  
+
   auto it = d_ringSizeMembershipMap.find(ringSize);
   if (it != d_ringSizeMembershipMap.end()) {
     va_start(atoms, numAtoms);
@@ -2681,8 +2682,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &mol,
   PRECONDITION(mmffAtomPropParams[1],
                "property parameters for atom 2 not found");
 
-  auto *mmffBondParams =
-      new ForceFields::MMFF::MMFFBond();
+  auto *mmffBondParams = new ForceFields::MMFF::MMFFBond();
   const double c = (((atomicNum1 == 1) || (atomicNum2 == 1)) ? 0.050 : 0.085);
   const double n = 1.4;
 #if 0
@@ -2813,8 +2813,7 @@ const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
   atomicNum[0] = mol.getAtomWithIdx(idx1)->getAtomicNum();
   atomicNum[1] = mol.getAtomWithIdx(idx2)->getAtomicNum();
   atomicNum[2] = mol.getAtomWithIdx(idx3)->getAtomicNum();
-  auto *mmffAngleParams =
-      new ForceFields::MMFF::MMFFAngle();
+  auto *mmffAngleParams = new ForceFields::MMFF::MMFFAngle();
   unsigned int ringSize = isAngleInRingOfSize3or4(mol, idx1, idx2, idx3);
   if (!oldMMFFAngleParams) {
     // angle rest value empirical rule

@@ -73,8 +73,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       dirVect.z = 1;
       // loop over the conformations and set the coordinates
-      for (auto cfi = mol->beginConformers();
-           cfi != mol->endConformers(); cfi++) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           cfi++) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         hydPos = heavyPos + dirVect * bondLength;
         (*cfi)->setAtomPos(hydIdx, hydPos);
@@ -86,8 +86,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       //  One other neighbor:
       // --------------------------------------------------------------------------
       nbr1 = getAtomNeighborNot(mol, heavyAtom, hydAtom);
-      for (auto cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
@@ -166,8 +166,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       }
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
-      for (auto cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         // start along the average of the two vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
@@ -255,8 +255,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
-      for (auto cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
@@ -327,8 +327,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // FIX: figure out what to do here
       // --------------------------------------------------------------------------
       hydPos = heavyPos + dirVect * bondLength;
-      for (auto cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
       break;
@@ -364,8 +364,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // loop over the conformations of the molecule and allocate new space
   // for the H locations (need to do this even if we aren't adding coords so
   // that the conformers have the correct number of atoms).
-  for (auto cfi = mol.beginConformers();
-       cfi != mol.endConformers(); ++cfi) {
+  for (auto cfi = mol.beginConformers(); cfi != mol.endConformers(); ++cfi) {
     (*cfi)->reserve(nSize);
   }
 

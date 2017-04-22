@@ -105,7 +105,6 @@ unsigned int Compute2DCoordsMimicDistmat(
 					     int confId ,
 					     python::object refPatt ,
 					     bool acceptFailure ) {
-
     RDKit::ROMol *referencePattern = nullptr;
     if( refPatt != python::object() ) {
       referencePattern = python::extract<RDKit::ROMol *>( refPatt );
@@ -121,7 +120,6 @@ unsigned int Compute2DCoordsMimicDistmat(
 					     int confId ,
 					     python::object refPatt ,
 					     bool acceptFailure ) {
-
     RDKit::ROMol *referencePattern = nullptr;
     if( refPatt ) {
       referencePattern = python::extract<RDKit::ROMol *>( refPatt );

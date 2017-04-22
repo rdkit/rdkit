@@ -74,7 +74,7 @@ void qs1(const std::vector<std::vector<int> > &vects) {
 
 void hs1(const std::vector<std::vector<int> > &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
-  for (const auto & vect : vects) {
+  for (const auto &vect : vects) {
     const int *data = &vect.front();
     int_compare_ftor icmp(data);
     int *indices = (int *)malloc(vect.size() * sizeof(int));
@@ -388,7 +388,8 @@ class atomcomparefunctor3 {
 
  public:
   bool df_useNbrs;
-  atomcomparefunctor3() : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
+  atomcomparefunctor3()
+      : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -1418,7 +1419,8 @@ void test11() {
     std::vector<std::vector<int> > frags;
     unsigned int numFrag = MolOps::getMolFrags(*m, frags);
     for (unsigned i = 0; i < numFrag; ++i) {
-      std::string smii = MolFragmentToSmiles(*m, frags[i], nullptr, nullptr, nullptr, true);
+      std::string smii =
+          MolFragmentToSmiles(*m, frags[i], nullptr, nullptr, nullptr, true);
       // std::cout << "Test "<< smii << std::endl;
       vfragsmi.push_back(smii);
     }

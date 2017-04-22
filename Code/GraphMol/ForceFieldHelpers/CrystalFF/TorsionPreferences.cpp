@@ -732,7 +732,7 @@ void getExperimentalTorsions(
         ExpTorsionAngleCollection::getParams();
 
     // loop over patterns
-    for (const auto & param : *params) {
+    for (const auto &param : *params) {
       std::vector<MatchVectType> matches;
       SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
 
@@ -829,7 +829,7 @@ void getExperimentalTorsions(
         mol.getRingInfo();  // FIX: make sure we have ring info
     CHECK_INVARIANT(rinfo, "");
     const VECT_INT_VECT &atomRings = rinfo->atomRings();
-    for (const auto & atomRing : atomRings) {
+    for (const auto &atomRing : atomRings) {
       unsigned int rSize = atomRing.size();
       // we don't need to deal with 3 membered rings
       // and we do not treat rings greater than 6

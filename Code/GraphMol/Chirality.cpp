@@ -185,7 +185,7 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     //
     // for each atom, get a sorted list of its neighbors' ranks:
     //
-    for (int & allIndice : allIndices) {
+    for (int &allIndice : allIndices) {
       CIP_ENTRY localEntry;
       localEntry.reserve(16);
 
@@ -232,13 +232,14 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
       // add a zero for each coordinated H:
       // (as long as we're not a query atom)
       if (!mol[allIndice]->hasQuery()) {
-        localEntry.insert(localEntry.begin(), mol[allIndice]->getTotalNumHs(), 0);
+        localEntry.insert(localEntry.begin(), mol[allIndice]->getTotalNumHs(),
+                          0);
       }
 
       // we now have a sorted list of our neighbors' ranks,
       // copy it on in reversed order:
-      cipEntries[allIndice].insert(cipEntries[allIndice].end(), localEntry.rbegin(),
-                             localEntry.rend());
+      cipEntries[allIndice].insert(cipEntries[allIndice].end(),
+                                   localEntry.rbegin(), localEntry.rend());
       if (cipEntries[allIndice].size() > longestEntry) {
         longestEntry = rdcast<unsigned int>(cipEntries[allIndice].size());
       }
@@ -247,10 +248,11 @@ void iterateCIPRanks(const ROMol &mol, DOUBLE_VECT &invars, UINT_VECT &ranks,
     //
     // pad the entries so that we compare rounds to themselves:
     //
-    for (int & allIndice : allIndices) {
+    for (int &allIndice : allIndices) {
       unsigned int sz = rdcast<unsigned int>(cipEntries[allIndice].size());
       if (sz < longestEntry) {
-        cipEntries[allIndice].insert(cipEntries[allIndice].end(), longestEntry - sz, -1);
+        cipEntries[allIndice].insert(cipEntries[allIndice].end(),
+                                     longestEntry - sz, -1);
       }
     }
     // ----------------------------------------------------
@@ -577,8 +579,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
         mol.getAtomWithIdx(ringAtomIdx)
             ->getPropIfPresent(common_properties::_ringStereoAtoms, lringatoms);
         CHECK_INVARIANT(lringatoms.size() > 0, "no other ring atoms found.");
-        for (auto orae = rae + 1; orae != ringStereoAtoms.end();
-             ++orae) {
+        for (auto orae = rae + 1; orae != ringStereoAtoms.end(); ++orae) {
           int oringAtomEntry = *orae;
           int oringAtomIdx =
               oringAtomEntry < 0 ? -oringAtomEntry - 1 : oringAtomEntry - 1;

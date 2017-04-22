@@ -69,8 +69,7 @@ class ComputedData {
     bondLengths.resize(nBonds);
     auto *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
     bondAdj.reset(bAdj);
-    auto *bAngles =
-        new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
+    auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
     cisPaths.resize(nBonds * nBonds * nBonds);
     transPaths.resize(nBonds * nBonds * nBonds);

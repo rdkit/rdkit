@@ -101,7 +101,7 @@ void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
   }
   if (RMSvector) {
     python::list &pyl = static_cast<python::list &>(RMSlist);
-    for (double & i : (*RMSvector)) {
+    for (double &i : (*RMSvector)) {
       pyl.append(i);
     }
     delete RMSvector;
@@ -215,7 +215,7 @@ class PyO3A {
     boost::python::list matchList;
     const RDKit::MatchVectType *o3aMatchVect = o3a->matches();
 
-    for (const auto & i : *o3aMatchVect) {
+    for (const auto &i : *o3aMatchVect) {
       boost::python::list match;
       match.append(i.first);
       match.append(i.second);
@@ -253,11 +253,9 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto & i : (*cMap)) {
-      if ((i.first < 0) ||
-          (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
-          (i.second < 0) ||
-          (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
+    for (auto &i : (*cMap)) {
+      if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
+          (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
       if ((prbMol[i.first]->getAtomicNum() == 1) ||
@@ -329,11 +327,9 @@ python::tuple getMMFFO3AForConfs(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto & i : (*cMap)) {
-      if ((i.first < 0) ||
-          (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
-          (i.second < 0) ||
-          (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
+    for (auto &i : (*cMap)) {
+      if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
+          (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
       if ((prbMol[i.first]->getAtomicNum() == 1) ||
@@ -376,7 +372,7 @@ python::tuple getMMFFO3AForConfs(
   }
 
   python::list pyres;
-  for (auto & re : res) {
+  for (auto &re : res) {
     pyres.append(new PyO3A(re));
   }
 
@@ -410,11 +406,9 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto & i : (*cMap)) {
-      if ((i.first < 0) ||
-          (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
-          (i.second < 0) ||
-          (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
+    for (auto &i : (*cMap)) {
+      if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
+          (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
       if ((prbMol[i.first]->getAtomicNum() == 1) ||
@@ -493,11 +487,9 @@ python::tuple getCrippenO3AForConfs(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto & i : (*cMap)) {
-      if ((i.first < 0) ||
-          (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
-          (i.second < 0) ||
-          (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
+    for (auto &i : (*cMap)) {
+      if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
+          (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
       }
       if ((prbMol[i.first]->getAtomicNum() == 1) ||
@@ -549,7 +541,7 @@ python::tuple getCrippenO3AForConfs(
                         maxIters, options, cMap, cWts);
   }
   python::list pyres;
-  for (auto & re : res) {
+  for (auto &re : res) {
     pyres.append(new PyO3A(re));
   }
 

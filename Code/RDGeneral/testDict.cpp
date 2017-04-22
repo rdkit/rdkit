@@ -197,7 +197,7 @@ void testRDAny() {
   }
   {
     std::clock_t clock1 = std::clock();
-    boost::any *v=nullptr, *vv;
+    boost::any *v = nullptr, *vv;
     for(int i=0;i<loops;++i) {
       vv = new boost::any(v?boost::any_cast<int>(*v) + i: i);
       delete v;
@@ -222,7 +222,7 @@ void testRDAny() {
 
   {
     std::clock_t clock1 = std::clock();
-    RDAny *v=nullptr, *vv;
+    RDAny *v = nullptr, *vv;
     for(int i=0;i<loops;++i) {
       vv = new RDAny(v ?rdany_cast<int>(*v) + i : i);
       delete v;
@@ -314,7 +314,7 @@ void testRDAny() {
     TEST_ASSERT((*rdany_cast<std::vector<int> *>((const RDAny&)vv))[0] == 100);
     delete p;
 
-    auto *m = new std::map<int,int>();
+    auto *m = new std::map<int, int>();
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks

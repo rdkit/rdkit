@@ -25,8 +25,7 @@ unsigned int ci_GRIDPICKLE_VERSION = 0x1;
 
 UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
   PRECONDITION(other.dp_storage, "cannot copy an unintialized grid");
-  auto *data =
-      new RDKit::DiscreteValueVect(*other.dp_storage);
+  auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);

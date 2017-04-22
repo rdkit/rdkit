@@ -319,7 +319,7 @@ void fragmentOnSomeBonds(
   boost::uint64_t state = (0x1 << maxToCut) - 1;
   boost::uint64_t stop = 0x1 << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
-  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabelsHere = nullptr;
+  std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
     dummyLabelsHere =
         new std::vector<std::pair<unsigned int, unsigned int> >(maxToCut);
@@ -441,8 +441,8 @@ ROMol *fragmentOnBonds(
                                mol.getBondBetweenAtoms(bidx, eidx));
       }
 
-      for (auto confIt = res->beginConformers();
-           confIt != res->endConformers(); ++confIt) {
+      for (auto confIt = res->beginConformers(); confIt != res->endConformers();
+           ++confIt) {
         Conformer *conf = (*confIt).get();
         conf->setAtomPos(idx1, conf->getAtomPos(bidx));
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
@@ -475,9 +475,10 @@ ROMol *fragmentOnBonds(const ROMol &mol,
 
   std::map<unsigned int, bool> environsMatch;
   if (atomEnvirons) {
-    for (const auto & atomEnviron : *atomEnvirons) {
+    for (const auto &atomEnviron : *atomEnvirons) {
       MatchVectType mv;
-      environsMatch[atomEnviron.first] = SubstructMatch(mol, *(atomEnviron.second), mv);
+      environsMatch[atomEnviron.first] =
+          SubstructMatch(mol, *(atomEnviron.second), mv);
     }
   }
 

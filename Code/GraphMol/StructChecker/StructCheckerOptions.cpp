@@ -430,7 +430,7 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
   std::vector<AugmentedAtom> good;
   good.reserve(sizeof(DefaultGoodAtoms) / sizeof(*DefaultGoodAtoms));
 
-  for (const auto & DefaultGoodAtom : DefaultGoodAtoms) {
+  for (const auto &DefaultGoodAtom : DefaultGoodAtoms) {
     good.push_back(AugmentedAtom());
     if (!StringToAugmentedAtom(DefaultGoodAtom.str, good.back())) {
       throw "INTERNAL ERROR in default data";
@@ -440,7 +440,7 @@ static void loadDefaultAugmentedAtoms(StructCheckerOptions &struchkOpts) {
   std::vector<AugmentedAtom> acidic;
   acidic.reserve(sizeof(DefaultAcidicAtoms) / sizeof(*DefaultAcidicAtoms));
 
-  for (const auto & DefaultAcidicAtom : DefaultAcidicAtoms) {
+  for (const auto &DefaultAcidicAtom : DefaultAcidicAtoms) {
     acidic.push_back(AugmentedAtom());
     if (!StringToAugmentedAtom(DefaultAcidicAtom.str, acidic.back())) {
       throw "INTERNAL ERROR in default data";
@@ -632,7 +632,7 @@ void StructCheckerOptions::setTautomerData(const std::vector<ROMOL_SPTR> &from,
 static void parseSMARTS(std::vector<ROMOL_SPTR> &mols,
                         const std::vector<std::string> &smarts) {
   mols.clear();
-  for (const auto & smart : smarts) {
+  for (const auto &smart : smarts) {
     ROMol *m = SmartsToMol(smart);
     if (m) mols.push_back(ROMOL_SPTR(m));
   }

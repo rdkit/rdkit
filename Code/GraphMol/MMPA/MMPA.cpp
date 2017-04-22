@@ -72,7 +72,7 @@ static inline void convertMatchingToBondVect(
     std::vector<BondVector_t>& matching_bonds,
     const std::vector<MatchVectType>& matching_atoms, const ROMol& mol) {
   RDUNUSED_PARAM(mol);
-  for (const auto & matching_atom : matching_atoms) {
+  for (const auto& matching_atom : matching_atoms) {
     matching_bonds.push_back(BondVector_t());
     BondVector_t& mb = matching_bonds.back();  // current match
     // assume patern is only one bond pattern
@@ -93,7 +93,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
   // loop through the bonds to delete. == deleteBonds()
   unsigned isotope = 0;
   std::map<unsigned, unsigned> isotope_track;
-  for (const auto & i : bonds_selected) {
+  for (const auto& i : bonds_selected) {
 #ifdef _DEBUG
     {
       std::string symbol =
@@ -162,8 +162,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       for (size_t i = 0; i < nFrags; i++) {
         unsigned nLabels = 0;
         for (int ai : frags[i]) {
-          if (isotope_track.end() !=
-              isotope_track.find(ai))  // new added atom
+          if (isotope_track.end() != isotope_track.find(ai))  // new added atom
             ++nLabels;                           // found connection point
         }
         if (nLabels >=
@@ -191,8 +190,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       unsigned nAttachments = 0;
       for (int ai : frags[i]) {
         if (isotope_track.end() !=
-            isotope_track.find(
-                ai))  // == if(a->hasProp("molAtomMapNumber"))
+            isotope_track.find(ai))  // == if(a->hasProp("molAtomMapNumber"))
           ++nAttachments;
       }
       if (maxAttachments < nAttachments) maxAttachments = nAttachments;
@@ -202,8 +200,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
             newAtomMap;  // key is atom index in source molecule
         for (int ai : frags[i]) {
           Atom* a = em.getAtomWithIdx(ai);
-          newAtomMap[ai] =
-              side_chains->addAtom(a->copy(), true, true);
+          newAtomMap[ai] = side_chains->addAtom(a->copy(), true, true);
         }
         // add all bonds from this fragment
         for (int ai : frags[i]) {
@@ -303,7 +300,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
 //=====================================================================
 static inline void appendBonds(BondVector_t& bonds,
                                const BondVector_t& matching_bonds) {
-  for (const auto & matching_bond : matching_bonds)
+  for (const auto& matching_bond : matching_bonds)
     bonds.push_back(matching_bond);
 }
 

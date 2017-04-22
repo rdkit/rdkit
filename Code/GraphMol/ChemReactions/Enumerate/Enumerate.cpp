@@ -142,14 +142,13 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
         // see if we have any sane products in the results
         std::vector<MOL_SPTR_VECT> partialProducts =
             rxn.runReactant(mol, reactant_idx);
-        for (auto & partialProduct : partialProducts) {
+        for (auto &partialProduct : partialProducts) {
           int saneProducts = 0;
-          for (size_t product_idx = 0;
-               product_idx < partialProduct.size();
+          for (size_t product_idx = 0; product_idx < partialProduct.size();
                ++product_idx) {
             try {
-              RWMol *m = dynamic_cast<RWMol *>(
-                  partialProduct[product_idx].get());
+              RWMol *m =
+                  dynamic_cast<RWMol *>(partialProduct[product_idx].get());
               MolOps::sanitizeMol(*m);
               saneProducts++;
             } catch (...) {

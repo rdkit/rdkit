@@ -584,7 +584,7 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
 
   IntVect onBits;
   bv1.getOnBits(onBits);
-  for (int & onBit : onBits) {
+  for (int& onBit : onBits) {
     int pos = onBit % resSize;
     res->setBit(pos);
   }

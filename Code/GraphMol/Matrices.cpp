@@ -114,8 +114,7 @@ void FloydWarshall(int dim, T *adjMat, int *pathMat,
          dim * dim * sizeof(T));
 
   // initialize the paths
-  for (auto i = activeAtoms.begin();
-       i != activeAtoms.end(); i++) {
+  for (auto i = activeAtoms.begin(); i != activeAtoms.end(); i++) {
     int itab = (*i) * dim;
     for (int activeAtom : activeAtoms) {
       if ((*i) == activeAtom || adjMat[itab + activeAtom] == LOCAL_INF) {
@@ -128,11 +127,9 @@ void FloydWarshall(int dim, T *adjMat, int *pathMat,
   memcpy(static_cast<void *>(lastP), static_cast<void *>(pathMat),
          dim * dim * sizeof(int));
 
-  for (auto k = activeAtoms.begin();
-       k != activeAtoms.end(); k++) {
+  for (auto k = activeAtoms.begin(); k != activeAtoms.end(); k++) {
     int ktab = (*k) * dim;
-    for (auto i = activeAtoms.begin();
-         i != activeAtoms.end(); i++) {
+    for (auto i = activeAtoms.begin(); i != activeAtoms.end(); i++) {
       int itab = (*i) * dim;
       for (int activeAtom : activeAtoms) {
         T v1 = lastD[itab + activeAtom];
@@ -387,8 +384,7 @@ double *get3DDistanceMat(const ROMol &mol, int confId, bool useAtomWts,
     propName = "_";
   }
   if (propName != "") {
-    propName += "3DDistanceMatrix_Conf" +
-                std::to_string(conf.getId());
+    propName += "3DDistanceMatrix_Conf" + std::to_string(conf.getId());
     if (!force && mol.hasProp(propName)) {
       mol.getProp(propName, sptr);
       return sptr.get();

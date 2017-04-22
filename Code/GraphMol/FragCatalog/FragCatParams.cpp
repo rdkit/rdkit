@@ -71,7 +71,7 @@ const ROMol *FragCatParams::getFuncGroup(unsigned int fid) const {
 void FragCatParams::toStream(std::ostream &ss) const {
   ss << d_lowerFragLen << " " << d_upperFragLen << " " << d_tolerance << "\n";
   ss << d_funcGroups.size() << "\n";
-  for (const auto & d_funcGroup : d_funcGroups) {
+  for (const auto &d_funcGroup : d_funcGroups) {
     std::string text;
     d_funcGroup->getProp(common_properties::_Name, text);
     ss << text;

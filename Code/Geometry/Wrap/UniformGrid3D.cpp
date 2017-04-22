@@ -37,8 +37,7 @@ UniformGrid3D *makeUnformGrid3D(double dimX, double dimY, double dimZ,
                                 DiscreteValueVect::DiscreteValueType valType =
                                     DiscreteValueVect::TWOBITVALUE,
                                 const Point3D *offSet = nullptr) {
-  auto *grd =
-      new UniformGrid3D(dimX, dimY, dimZ, spacing, valType, offSet);
+  auto *grd = new UniformGrid3D(dimX, dimY, dimZ, spacing, valType, offSet);
   return grd;
 }
 
@@ -79,7 +78,7 @@ python::tuple findGridTerminalPointsWrap(const UniformGrid3D &grid,
   std::vector<Point3D> res =
       findGridTerminalPoints(grid, windowRadius, inclusionFraction);
   python::list pyRes;
-  for (auto & re : res) {
+  for (auto &re : res) {
     pyRes.append(re);
   }
   return python::tuple(pyRes);

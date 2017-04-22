@@ -313,7 +313,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (const auto & vIt : v) {
+      for (const auto &vIt : v) {
         localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
@@ -393,7 +393,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (const auto & vIt : v) {
+      for (const auto &vIt : v) {
         localL.append(python::make_tuple(vIt.first, vIt.second));
       }
       bitInfo[iter->first] = python::tuple(localL);
@@ -585,9 +585,7 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
 
   }
 
-  ~PythonPropertyFunctor() override {
-    python::decref(self);
-  }
+  ~PythonPropertyFunctor() override { python::decref(self); }
 
   double operator()(const RDKit::ROMol &mol) const override {
     return python::call_method<double>(self, "__call__", boost::ref(mol));

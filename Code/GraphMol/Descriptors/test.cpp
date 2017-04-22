@@ -878,7 +878,7 @@ void testMultiThread() {
   }
   tg.join_all();
 
-  for (auto & mol : mols) delete mol;
+  for (auto &mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

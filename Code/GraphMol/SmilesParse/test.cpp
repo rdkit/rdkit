@@ -3071,7 +3071,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"[A]", "[B]", "[B]", "", ""};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3084,7 +3085,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[B]", "[A]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[A][B][B]");
     delete m;
   }
@@ -3097,7 +3099,8 @@ void testFragmentSmiles() {
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
     std::string labels[5] = {"", "", "[B]", "[A]", "[B]"};
     std::vector<std::string> atomLabels(labels, labels + 5);
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, &atomLabels);
     TEST_ASSERT(csmiles == "[B][A][B]");
     delete m;
   }
@@ -3108,7 +3111,8 @@ void testFragmentSmiles() {
     TEST_ASSERT(m);
     int as[] = {0, 1, 2, 3};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
-    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr);
+    std::string csmiles =
+        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr);
     TEST_ASSERT(csmiles == "CC(O)=O");
     delete m;
   }
@@ -3203,8 +3207,8 @@ void testFragmentSmiles() {
     TEST_ASSERT(m);
     int as[] = {0, 4};
     std::vector<int> atomsToUse(as, as + sizeof(as) / sizeof(int));
-    std::string csmiles =
-        MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr, nullptr, false, false, -1, false);
+    std::string csmiles = MolFragmentToSmiles(*m, atomsToUse, nullptr, nullptr,
+                                              nullptr, false, false, -1, false);
     std::cerr << csmiles << std::endl;
     TEST_ASSERT(csmiles == "O.C");
     delete m;

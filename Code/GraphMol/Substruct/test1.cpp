@@ -580,8 +580,7 @@ void testRecursiveSerialNumbers() {
     // here's the main query
     q2 = new RWMol();
     auto *qA = new QueryAtom(6);
-    auto *rsq =
-        new RecursiveStructureQuery(new RWMol(*q1), 1);
+    auto *rsq = new RecursiveStructureQuery(new RWMol(*q1), 1);
     qA->expandQuery(rsq, Queries::COMPOSITE_AND);
     // std::cout << "post expand: " << qA->getQuery() << std::endl;
     q2->addAtom(qA, true, true);
@@ -706,7 +705,7 @@ void testMultiThread() {
   std::cerr << " done" << std::endl;
   delete query;
 
-  for (auto & mol : mols) delete mol;
+  for (auto &mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

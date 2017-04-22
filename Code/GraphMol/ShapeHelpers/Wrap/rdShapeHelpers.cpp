@@ -116,8 +116,8 @@ void EncodeMolShape(
     MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                            maxLayers, ignoreHs);
   } else {
-    MolShapes::EncodeShape(mol, grid, confId, nullptr, vdwScale, stepSize, maxLayers,
-                           ignoreHs);
+    MolShapes::EncodeShape(mol, grid, confId, nullptr, vdwScale, stepSize,
+                           maxLayers, ignoreHs);
   }
 }
 

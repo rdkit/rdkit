@@ -582,7 +582,7 @@ void testIssue2995724() {
                           "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
                           "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
                           "CC1(OC(=C(C(=O)O1)C2=NCCC2)O)C"};
-    for (const auto & smi : smis) {
+    for (const auto &smi : smis) {
       RWMol *m1 = SmilesToMol(smi);
       unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
@@ -737,7 +737,7 @@ void testGitHubIssue78() {
                            "C1=CC=C2C(=C1)C=C3C=CC4=C5C3=C2C6C(C5=CC=C4)O6"};
     RWMol *p = SmartsToMol("[#6]~[#6]~1-[#8]-[#6]~1~[#6]");
     TEST_ASSERT(p);
-    for (const auto & smi : smis) {
+    for (const auto &smi : smis) {
       RWMol *m = SmilesToMol(smi);
       TEST_ASSERT(m);
       MatchVectType mv;

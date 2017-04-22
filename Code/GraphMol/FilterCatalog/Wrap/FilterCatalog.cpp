@@ -165,7 +165,7 @@ class PythonFilterMatch : public FilterMatcherBase {
   }
 
   bool getMatches(const ROMol &mol,
-                          std::vector<FilterMatch> &matchVect) const override {
+                  std::vector<FilterMatch> &matchVect) const override {
     return python::call_method<bool>(functor, "GetMatches", boost::ref(mol),
                                      boost::ref(matchVect));
   }
@@ -291,7 +291,7 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
       GetFlattenedFunctionalGroupHierarchy(normalize);
   python::dict dict;
-  for (const auto & it : flattened) {
+  for (const auto &it : flattened) {
     dict[it.first] = it.second;
   }
   return dict;

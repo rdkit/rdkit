@@ -320,19 +320,18 @@ int mmffValidationSuite(int argc, char *argv[]) {
     molTypeVec.push_back(molType);
   }
   boost::logging::disable_logs("rdApp.error");
-  for (auto & molTypeIt : molTypeVec) {
+  for (auto &molTypeIt : molTypeVec) {
     bool checkEnergy = (molTypeIt == "sdf");
-    for (auto & ffIt : ffVec) {
+    for (auto &ffIt : ffVec) {
       ref = pathName + ffIt + "_reference.log";
       molFileVec.clear();
       if (molFile == "") {
         molFileVec.push_back(pathName + ffIt + "_dative." + molTypeIt);
-        molFileVec.push_back(pathName + ffIt + "_hypervalent." +
-                             molTypeIt);
+        molFileVec.push_back(pathName + ffIt + "_hypervalent." + molTypeIt);
       } else {
         molFileVec.push_back(molFile);
       }
-      for (auto & molFileIt : molFileVec) {
+      for (auto &molFileIt : molFileVec) {
         std::vector<ROMol *> molVec;
         molVec.clear();
         if (molTypeIt == "sdf") {
@@ -348,9 +347,9 @@ int mmffValidationSuite(int argc, char *argv[]) {
           }
           smiSupplier.reset();
         }
-        SDWriter *sdfWriter = new SDWriter(
-            molFileIt.substr(0, molFileIt.length() - 4) + "_min" +
-            ((molTypeIt == "smi") ? "_from_SMILES" : "") + ".sdf");
+        SDWriter *sdfWriter =
+            new SDWriter(molFileIt.substr(0, molFileIt.length() - 4) + "_min" +
+                         ((molTypeIt == "smi") ? "_from_SMILES" : "") + ".sdf");
         ROMol *mol;
         std::string molName;
         std::vector<std::string> nameArray;
@@ -382,9 +381,8 @@ int mmffValidationSuite(int argc, char *argv[]) {
             rdkFStream << molName << std::endl;
             nameArray.push_back(molName);
           }
-          auto *mmffMolProperties =
-              new MMFF::MMFFMolProperties(
-                  *mol, ffIt, MMFF::MMFF_VERBOSITY_HIGH, rdkFStream);
+          auto *mmffMolProperties = new MMFF::MMFFMolProperties(
+              *mol, ffIt, MMFF::MMFF_VERBOSITY_HIGH, rdkFStream);
           if ((!mmffMolProperties) || (!(mmffMolProperties->isValid()))) {
             std::cerr << molName + ": error setting up force-field"
                       << std::endl;
@@ -528,8 +526,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 break;
               }
               std::stringstream rdkLineStream(rdkLine);
-              auto *bondStretchInstance =
-                  new BondStretchInstance();
+              auto *bondStretchInstance = new BondStretchInstance();
               bondStretchInstance->idx = n;
               rdkLineStream >> skip >> skip >> skip >> skip >>
                   bondStretchInstance->iAtomType >>
@@ -577,8 +574,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 break;
               }
               std::stringstream refLineStream(refLine);
-              auto *bondStretchInstance =
-                  new BondStretchInstance();
+              auto *bondStretchInstance = new BondStretchInstance();
               bondStretchInstance->idx = n;
               refLineStream >> skip >> skip >> skip >> skip >>
                   bondStretchInstance->iAtomType >>
@@ -842,8 +838,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 break;
               }
               std::stringstream rdkLineStream(rdkLine);
-              auto *stretchBendInstance =
-                  new StretchBendInstance();
+              auto *stretchBendInstance = new StretchBendInstance();
               stretchBendInstance->idx = n;
               rdkLineStream >> skip >> skip >> skip >> skip >> skip >> skip >>
                   stretchBendInstance->iAtomType >>
@@ -891,8 +886,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                 break;
               }
               std::stringstream refLineStream(refLine);
-              auto *stretchBendInstance =
-                  new StretchBendInstance();
+              auto *stretchBendInstance = new StretchBendInstance();
               stretchBendInstance->idx = n;
               refLineStream >> skip >> skip >> skip >> skip >>
                   stretchBendInstance->iAtomType >>
@@ -1681,9 +1675,8 @@ void testMMFFCopy() {
         RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
     TEST_ASSERT(field);
     field->initialize();
-    auto *dc =
-        new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0,
-                                                         1.0e5);
+    auto *dc = new ForceFields::MMFF::DistanceConstraintContrib(
+        field, 1, 3, 2.0, 2.0, 1.0e5);
     field->contribs().push_back(ForceFields::ContribPtr(dc));
     field->minimize();
     TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);

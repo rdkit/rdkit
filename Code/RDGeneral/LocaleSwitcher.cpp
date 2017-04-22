@@ -123,7 +123,7 @@ class LocaleSwitcherImpl {
     if (!recurseLocale(CurrentState) && old_locale != "C") {
       recurseLocale(SwitchLocale);
       old_loc = uselocale(nullptr);
-      loc = newlocale(LC_ALL_MASK, "C", (locale_t)nullptr);
+      loc = newlocale(LC_ALL_MASK, "C", (locale_t) nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
     } else

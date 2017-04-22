@@ -165,7 +165,7 @@ void test1() {
       TEST_ASSERT(ok);
   */
   StructChecker chk(options);
-  for (auto & smol : smols) {
+  for (auto& smol : smols) {
     RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
@@ -192,7 +192,7 @@ void test2() {
   // options.Verbose = true;
 
   StructChecker chk(options);
-  for (auto & smol : smols) {
+  for (auto& smol : smols) {
     RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);
@@ -784,7 +784,7 @@ void testAugmentedAtomTranslationsToAtomListQuery() {
       "C(=O)C",
   };
   StructChecker chk(options);
-  for (auto & smol : smols) {
+  for (auto& smol : smols) {
     RWMol* mol = SmilesToMol(smol);
     TEST_ASSERT(mol);
     unsigned flags = chk.checkMolStructure(*mol);

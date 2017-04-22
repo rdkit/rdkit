@@ -49,8 +49,8 @@ void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
       RDKit::MolOps::setConjugation(**templIt);
       RDKit::MolOps::setHybridization(**templIt);
     }
-    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample, nSamples,
-                    sampleSeed, permuteDeg4Nodes);
+    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+                    nSamples, sampleSeed, permuteDeg4Nodes);
     double minX = 100., maxX = -100.;
     BOOST_FOREACH (RDGeom::Point3D &pt,
                    (*templIt)->getConformer().getPositions()) {
@@ -71,8 +71,8 @@ void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn, double spacing,
       RDKit::MolOps::setConjugation(**templIt);
       RDKit::MolOps::setHybridization(**templIt);
     }
-    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample, nSamples,
-                    sampleSeed, permuteDeg4Nodes);
+    compute2DCoords(**templIt, nullptr, canonOrient, true, nFlipsPerSample,
+                    nSamples, sampleSeed, permuteDeg4Nodes);
     double minX = 100., maxX = -100.;
     BOOST_FOREACH (RDGeom::Point3D &pt,
                    (*templIt)->getConformer().getPositions()) {

@@ -24,7 +24,7 @@ python::tuple taniNbrHelper(const FPBReader *self, const std::string &bytes,
   std::vector<std::pair<double, unsigned int> > nbrs =
       self->getTanimotoNeighbors(bv, threshold);
   python::list result;
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);
@@ -36,7 +36,7 @@ python::tuple tverskyNbrHelper(const FPBReader *self, const std::string &bytes,
   std::vector<std::pair<double, unsigned int> > nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
   python::list result;
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);
@@ -47,7 +47,7 @@ python::tuple containingNbrHelper(const FPBReader *self,
       reinterpret_cast<const boost::uint8_t *>(bytes.c_str());
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   python::list result;
-  for (unsigned int & nbr : nbrs) {
+  for (unsigned int &nbr : nbrs) {
     result.append(nbr);
   }
   return python::tuple(result);
@@ -61,9 +61,8 @@ python::tuple multiTaniNbrHelper(const MultiFPBReader *self,
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTanimotoNeighbors(bv, threshold, numThreads);
   python::list result;
-  for (auto & nbr : nbrs) {
-    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(),
-                                     nbr.get<2>()));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
   }
   return python::tuple(result);
 }
@@ -76,9 +75,8 @@ python::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
   python::list result;
-  for (auto & nbr : nbrs) {
-    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(),
-                                     nbr.get<2>()));
+  for (auto &nbr : nbrs) {
+    result.append(python::make_tuple(nbr.get<0>(), nbr.get<1>(), nbr.get<2>()));
   }
   return python::tuple(result);
 }
@@ -90,7 +88,7 @@ python::tuple multiContainingNbrHelper(const MultiFPBReader *self,
   std::vector<std::pair<unsigned int, unsigned int> > nbrs =
       self->getContainingNeighbors(bv, numThreads);
   python::list result;
-  for (auto & nbr : nbrs) {
+  for (auto &nbr : nbrs) {
     result.append(python::make_tuple(nbr.first, nbr.second));
   }
   return python::tuple(result);

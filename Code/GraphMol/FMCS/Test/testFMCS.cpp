@@ -77,7 +77,7 @@ std::string getSmilesOnly(
 std::string getSmilesOnlyTxt(
     const char* smiles,
     std::string* id = nullptr) {  // remove label from string like "CHEMBL90218
-                            // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
+  // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
   const char* sp = strchr(smiles, ' ');
   if (sp && '\0' != *sp) {
     if (id) *id = std::string(smiles, sp - smiles);
@@ -258,7 +258,7 @@ void testFileMCSB(
     std::vector<ROMOL_SPTR> tcmols;
     fprintf(f, "# %u Using ", n + 1);
     if (fs) fprintf(fs, "\n//TEST %u\n", n + 1);
-    for (const auto & mid : *tc) {
+    for (const auto& mid : *tc) {
       std::map<std::string, size_t>::const_iterator id = molIdMap.find(mid);
       if (molIdMap.end() == id) continue;
       size_t i = id->second;
@@ -863,7 +863,7 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
   p.Timeout = 60;
   p.Verbose = false;
 
-  for (auto & i : test) {
+  for (auto& i : test) {
     std::string smiName = std::string("chembl_II_sets/") + i;
     std::string testsmi =
         testChEMBL_Txt(smiName.c_str(), th, "chembl_II_sets.C.res.csv");
@@ -910,7 +910,7 @@ void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
       "Target_no_10193_46700.txt", "Target_no_10980_30994.txt",
       "Target_no_11140_37038.txt",
   };
-  for (auto & i : test)
+  for (auto& i : test)
     testChEMBL_Txt((std::string("chembl_II_sets/") + i).c_str(), th,
                    "chembl_II_sets.SLOW.C++.res.csv");
 }
@@ -1030,7 +1030,7 @@ void testChEMBLdatALL(double th = 1.0) {
       "cmp_list_ChEMBL_93_actives.dat",
       "cmp_list_ChEMBL_zinc_decoys.dat",
   };
-  for (auto & i : test)
+  for (auto& i : test)
     testChEMBLdat(
         (std::string("benchmarking_platform-master/compounds/ChEMBL/") +
          i).c_str(),
@@ -1053,8 +1053,7 @@ void testTarget_no_10188_30149() {
       "COc1ccccc1Nc1ccc2c(c1)[nH]nc2-c1ccccc1 CHEMBL254443",
       "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
   };
-  for (auto & i : smi)
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
   t0 = nanoClock();
 #ifdef _DEBUG  // check memory leaks
   _CrtMemState _ms;
@@ -1096,8 +1095,7 @@ void testTarget_no_10188_49064() {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(I)cc3)nc21",
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
-  for (auto & i : smi)
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
@@ -1351,9 +1349,8 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::cout << "\n****** BIG MCS RANDOM SET test *********\n\n";
 
   unsigned maxMol = 0;
-  for (auto & all_mol : all_mols) {
-    if (maxMol < all_mol->getNumBonds())
-      maxMol = all_mol->getNumBonds();
+  for (auto& all_mol : all_mols) {
+    if (maxMol < all_mol->getNumBonds()) maxMol = all_mol->getNumBonds();
   }
   const unsigned N_BigRandomTests =
       all_mols.size() > 2000 ? all_mols.size() / 2 : all_mols.size() * 2;
@@ -1534,8 +1531,7 @@ void testGregSDFFileSetFiltered() {
   };
 
   double totalT = 0.;
-  for (auto & i : sdf)
-    totalT += testFileSDF((sdf_dir + i).c_str());
+  for (auto& i : sdf) totalT += testFileSDF((sdf_dir + i).c_str());
   printf(
       "\nTOTAL Time elapsed %.2lf "
       "seconds\n================================================\n",

@@ -485,7 +485,7 @@ ConjElectrons::ConjElectrons(ResonanceMolSupplier *parent,
     d_conjBondMap[bi] = new BondElectrons(this, bond);
     // store the pointers to AtomElectrons objects in a map
     const Atom *atom[2] = {bond->getBeginAtom(), bond->getEndAtom()};
-    for (auto & i : atom) {
+    for (auto &i : atom) {
       unsigned int ai = i->getIdx();
       if (d_conjAtomMap.find(ai) == d_conjAtomMap.end())
         d_conjAtomMap[ai] = new AtomElectrons(this, i);
@@ -507,9 +507,9 @@ ConjElectrons::ConjElectrons(const ConjElectrons &ce)
       d_ceMetrics(ce.d_ceMetrics),
       d_beginAIStack(ce.d_beginAIStack),
       d_parent(ce.d_parent) {
-  for (const auto & it : ce.d_conjAtomMap)
+  for (const auto &it : ce.d_conjAtomMap)
     d_conjAtomMap[it.first] = new AtomElectrons(this, *(it.second));
-  for (const auto & it : ce.d_conjBondMap)
+  for (const auto &it : ce.d_conjBondMap)
     d_conjBondMap[it.first] = new BondElectrons(this, *(it.second));
 }
 
@@ -811,8 +811,7 @@ void ConjElectrons::computeDistFormalCharges() {
   for (ConjAtomMap::const_iterator it1 = d_conjAtomMap.begin();
        it1 != d_conjAtomMap.end(); ++it1) {
     if (!it1->second->fc()) continue;
-    for (auto it2 = it1; it2 != d_conjAtomMap.end();
-         ++it2) {
+    for (auto it2 = it1; it2 != d_conjAtomMap.end(); ++it2) {
       if ((it1 == it2) || !it2->second->fc()) continue;
       unsigned int dist = rdcast<unsigned int>(
           MolOps::getShortestPath(d_parent->mol(), it1->first,
@@ -1214,8 +1213,7 @@ void ResonanceMolSupplier::assignConjGrpIdx() {
 // objects are collected in ceMap
 void ResonanceMolSupplier::enumerateNbArrangements(CEMap &ceMap,
                                                    CEMap &ceMapTmp) {
-  for (auto & it : ceMapTmp)
-    it.second->enumerateNonBonded(ceMap);
+  for (auto &it : ceMapTmp) it.second->enumerateNonBonded(ceMap);
 }
 
 void ResonanceMolSupplier::pruneStructures(CEMap &ceMap) {
@@ -1325,7 +1323,8 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
     while (ce && ce->popFromBeginStack(aiBegin)) {
       // aiBegin holds the atom index just popped from stack
       unsigned int ai[2] = {aiBegin, na};
-      AtomElectrons *ae[2] = {ce->getAtomElectronsWithIdx(ai[BEGIN_POS]), nullptr};
+      AtomElectrons *ae[2] = {ce->getAtomElectronsWithIdx(ai[BEGIN_POS]),
+                              nullptr};
       unsigned int bi = nb;
       BondElectrons *be = nullptr;
       // loop over neighbors of the atom popped from the

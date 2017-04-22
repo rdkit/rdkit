@@ -24,7 +24,8 @@
 using namespace RDKit;
 
 void testDeleteSubstruct() {
-  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr, *matcher2 = nullptr, *matcher3 = nullptr;
+  ROMol *mol1 = nullptr, *mol2 = nullptr, *matcher1 = nullptr,
+        *matcher2 = nullptr, *matcher3 = nullptr;
   std::string smi, sma;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -1479,8 +1480,8 @@ void testFragmentOnBonds() {
     std::vector<unsigned int> bindices(
         indices, indices + (sizeof(indices) / sizeof(indices[0])));
     std::vector<unsigned int> cutsPerAtom(mol->getNumAtoms());
-    ROMol *nmol = MolFragmenter::fragmentOnBonds(*mol, bindices, false, nullptr, nullptr,
-                                                 &cutsPerAtom);
+    ROMol *nmol = MolFragmenter::fragmentOnBonds(*mol, bindices, false, nullptr,
+                                                 nullptr, &cutsPerAtom);
     TEST_ASSERT(nmol);
     TEST_ASSERT(nmol->getNumAtoms() == 5);
     TEST_ASSERT(cutsPerAtom[0] == 1);

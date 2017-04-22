@@ -26,12 +26,10 @@ MolChemicalFeatureDef::MolChemicalFeatureDef(const std::string &smarts,
 }
 void MolChemicalFeatureDef::normalizeWeights() {
   double accum = 0.0;
-  for (auto i = this->beginWeights();
-       i != this->endWeights(); i++) {
+  for (auto i = this->beginWeights(); i != this->endWeights(); i++) {
     accum += *i;
   }
-  for (auto i = this->beginWeights();
-       i != this->endWeights(); i++) {
+  for (auto i = this->beginWeights(); i != this->endWeights(); i++) {
     *i /= accum;
   }
 }
