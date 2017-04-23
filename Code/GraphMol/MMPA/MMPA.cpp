@@ -341,10 +341,7 @@ bool fragmentMol(const ROMol& mol,
 bool fragmentMol(const ROMol& mol,
                  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
                  unsigned int minCuts, unsigned int maxCuts,
-                 unsigned int maxCutBonds,
-                 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& res,
-                 unsigned int maxCuts, unsigned int maxCutBonds,
-                 const std::string& pattern) {
+                 unsigned int maxCutBonds, const std::string& pattern) {
 #ifdef _DEBUG
   for (size_t i = 0; i < mol.getNumAtoms(); i++) {
     std::string symbol = mol.getAtomWithIdx(i)->getSymbol();
