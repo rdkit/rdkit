@@ -180,8 +180,7 @@ def delete_bonds(smi, id, mol, bonds, out):
         out.add(output)
 
 
-def fragment_mol(smi, id):
-
+def fragment_mol(smi, cid):
   mol = Chem.MolFromSmiles(smi)
 
   #different cuts can give the same fragments
@@ -193,9 +192,13 @@ def fragment_mol(smi, id):
   else:
     frags = rdMMPA.FragmentMol(mol, pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]", resultsAsMols=False)
     for core, chains in frags:
-      output = '%s,%s,%s,%s' % (smi, id, core, chains)
+      output = '%s,%s,%s,%s' % (smi, cid, core, chains)
       if (not (output in outlines)):
         outlines.add(output)
+    if not outlines:
+      # for molecules with no cuts, output the parent molecule itself
+      outlines.add('%s,%s,,' % (smi,cid))
+
   return outlines
 
 
@@ -221,9 +224,9 @@ if __name__ == '__main__':
 
     #returns a set containing the output
     o = fragment_mol(smiles, cmpd_id)
-
     for l in o:
       print(l)
+
 """
 optimization work.
 
