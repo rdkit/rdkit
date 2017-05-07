@@ -262,7 +262,6 @@ def qed(m=None,w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
   >>> m = Chem.MolFromSmiles('CCCCCNC(=N)NN=Cc1c[nH]c2ccc(CO)cc12')
   >>> qed(m)
   0.212...
-  >>> asdf
   """
   if p is None:
       p = properties(m)
