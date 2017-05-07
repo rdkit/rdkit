@@ -184,7 +184,7 @@ from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStat
 from rdkit.Chem.QED import qed
 
 def _FingerprintDensity(mol,func,*args,**kwargs):
-  fp = apply(func,(mol,)+args,kwargs)
+  fp = func(**((mol,)+args), **kwargs)
   if hasattr(fp,'GetNumOnBits'):
     val = fp.GetNumOnBits()
   else:
