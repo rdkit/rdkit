@@ -266,7 +266,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       } else {
         if (!parse_atom_labels(first, last, mol)) return false;
       }
-    } else if ((first + 9) < last &&
+    } else if (std::distance(first, last) > 9 &&
                std::string(first, first + 9) == "atomProp:") {
       first += 9;
       if (!parse_atom_props(first, last, mol)) return false;
