@@ -256,7 +256,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != '|') return false;
   ++first;
   while (first < last && *first != '|') {
-    Iterator::difference_type length = std::distance(first, last);
+    typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
       if (!parse_coords(first, last, mol)) return false;
     } else if (*first == '$') {
