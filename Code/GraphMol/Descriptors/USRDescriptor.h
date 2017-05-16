@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -15,7 +14,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -41,88 +41,90 @@
 #include <Geometry/point.h>
 #include <Numerics/Vector.h>
 
-namespace RDKit{
-  class ROMol;
-  class Conformer;
-  namespace Descriptors {
-    /*!
-      Calculates the ultra-fast shape recognition (USR) descriptor
+namespace RDKit {
+class ROMol;
+class Conformer;
+namespace Descriptors {
+/*!
+  Calculates the ultra-fast shape recognition (USR) descriptor
 
-      Reference: P. J. Ballester, W. G. Richards, JCC (2007), 28, 1711 - 1723.
+  Reference: P. J. Ballester, W. G. Richards, JCC (2007), 28, 1711 - 1723.
 
-      Derived from RDKit Python implementation of Jan Domanski
-      who derived his code from Adrian Schreyer's code:
-      http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
+  Derived from RDKit Python implementation of Jan Domanski
+  who derived his code from Adrian Schreyer's code:
+  http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
 
-      \param mol          the molecule of interest
-      \param descriptor   storage for the computed USR descriptor
-      \param confId       the conformer Id
+  \param mol          the molecule of interest
+  \param descriptor   storage for the computed USR descriptor
+  \param confId       the conformer Id
 
-    */
-    void USR(const ROMol &mol, std::vector<double> &descriptor, int confId = -1);
+*/
+void USR(const ROMol &mol, std::vector<double> &descriptor, int confId = -1);
 
-    /*!
-      Calculates the ultra-fast shape recognition with CREDO atom types (USRCAT) descriptor
+/*!
+  Calculates the ultra-fast shape recognition with CREDO atom types (USRCAT)
+  descriptor
 
-      Reference: A. M. Schreyer, T. Blundell, J. Cheminf. (2012), 4, 27.
+  Reference: A. M. Schreyer, T. Blundell, J. Cheminf. (2012), 4, 27.
 
-      Derived from Python implementation Adrian Schreyer:
-      http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
+  Derived from Python implementation Adrian Schreyer:
+  http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
 
-      \param mol          the molecule of interest
-      \param descriptor   storage for the computed USR descriptor
-      \param confId       the conformer Id
+  \param mol          the molecule of interest
+  \param descriptor   storage for the computed USR descriptor
+  \param confId       the conformer Id
 
-    */
-    void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
-                std::vector<std::vector<unsigned int> > &atomIds, int confId = -1);
-    /*!
-      Calculates the four distance distributions for the USR descriptor
+*/
+void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
+            std::vector<std::vector<unsigned int> > &atomIds, int confId = -1);
+/*!
+  Calculates the four distance distributions for the USR descriptor
 
-      \param coords      the atom coordinates
-      \param dist        storage for the four distance distributions
-      \param points      storage for the four points
+  \param coords      the atom coordinates
+  \param dist        storage for the four distance distributions
+  \param points      storage for the four points
 
-    */
-    void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
-                              std::vector<std::vector<double> > &dist,
-                              std::vector<RDGeom::Point3D> &points);
+*/
+void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
+                          std::vector<std::vector<double> > &dist,
+                          std::vector<RDGeom::Point3D> &points);
 
-    /*!
-      Calculates the four distance distributions for the USR descriptor
+/*!
+  Calculates the four distance distributions for the USR descriptor
 
-      \param coords      the atom coordinates
-      \param points      vector with the points
-      \param dist   storage for the distance distributions
+  \param coords      the atom coordinates
+  \param points      vector with the points
+  \param dist   storage for the distance distributions
 
-    */
-    void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
-                                        const std::vector<RDGeom::Point3D> &points,
-                                        std::vector<std::vector<double> > &dist);
+*/
+void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
+                                    const std::vector<RDGeom::Point3D> &points,
+                                    std::vector<std::vector<double> > &dist);
 
-    /*!
-      Calculates the USR descriptor from the four distance distributions
+/*!
+  Calculates the USR descriptor from the four distance distributions
 
-      \param dist        vector with the four distance distributions
-      \param descriptor  storage for the computed USR descriptor
+  \param dist        vector with the four distance distributions
+  \param descriptor  storage for the computed USR descriptor
 
-    */
-    void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
-                                  std::vector<double> &descriptor);
+*/
+void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
+                              std::vector<double> &descriptor);
 
-    /*!
-      Calculates the score between two USRCAT descriptors with weights
+/*!
+  Calculates the score between two USRCAT descriptors with weights
 
-      \param d1       descriptor 1
-      \param d2       descriptor 2
-      \param weights  the weights for each subset of moments
+  \param d1       descriptor 1
+  \param d2       descriptor 2
+  \param weights  the weights for each subset of moments
 
-      \return the score
-    */
-    double calcUSRScore(const std::vector<double> &d1, const std::vector<double> &d2,
-                        const std::vector<double> &weights);
+  \return the score
+*/
+double calcUSRScore(const std::vector<double> &d1,
+                    const std::vector<double> &d2,
+                    const std::vector<double> &weights);
 
-  } // end of namespace Descriptors
-} //end of namespace RDKit
+}  // end of namespace Descriptors
+}  // end of namespace RDKit
 
 #endif
