@@ -50,7 +50,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
   Iterator start = first;
   // EFF: there are certainly faster ways to do this
   while (first != last && delims.find_first_of(*first) == std::string::npos) {
-    if (*first == '&' && first + 2 < last && *(first + 1) == '#') {
+    if (*first == '&' && std::distance(first, last) > 2 && *(first + 1) == '#') {
       // escaped char
       if (start != first) {
         res += std::string(start, first);
@@ -256,17 +256,18 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != '|') return false;
   ++first;
   while (first < last && *first != '|') {
+    Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
       if (!parse_coords(first, last, mol)) return false;
     } else if (*first == '$') {
-      if ((first + 4) < last && *(first + 1) == '_' && *(first + 2) == 'A' &&
+      if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
           *(first + 3) == 'V' && *(first + 4) == ':') {
         first += 4;
         if (!parse_atom_values(first, last, mol)) return false;
       } else {
         if (!parse_atom_labels(first, last, mol)) return false;
       }
-    } else if (std::distance(first, last) > 9 &&
+    } else if (length > 9 &&
                std::string(first, first + 9) == "atomProp:") {
       first += 9;
       if (!parse_atom_props(first, last, mol)) return false;
