@@ -157,17 +157,18 @@
 %ignore RDKit::Dict::getPropList;
 
 
+#ifdef SWIGJAVA
 %typemap(jni) std::string RDKit::FilterCatalog::Serialize "jbyteArray"
 %typemap(jtype) std::string RDKit::FilterCatalog::Serialize "byte[]"
 %typemap(jstype) std::string RDKit::FilterCatalog::Serialize "byte[]"
 %typemap(javaout) std::string RDKit::FilterCatalog::Serialize {
   return $jnicall;
 }
-%typemap(javaout) std::string RDKit::FilterCatalog::Serialize {
+%typemap(out) std::string RDKit::FilterCatalog::Serialize {
   $result = JCALL1(NewByteArray, jenv, $1.size());
   JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
 }
-
+#endif
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 %include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 %include <GraphMol/FilterCatalog/FilterCatalog.h>
