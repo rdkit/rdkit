@@ -6,6 +6,6 @@ rdkit_headers(DistPicker.h
               HierarchicalClusterPicker.h
               MaxMinPicker.h DEST SimDivPickers)
 
+rdkit_test(testSimDivPickers testPickers.cpp LINK_LIBRARIES SimDivPickers RDGeneral)
+
 add_subdirectory(Wrap)
-
-
