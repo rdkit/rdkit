@@ -2287,6 +2287,59 @@ void testGithub1294() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1423() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 1423: Generate a warning for "
+                          "conflicting bond directions"
+                       << std::endl;
+
+  {  // this one is ok:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(/F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(warns.str() == "");
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // this one has a conflict:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("stereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+  {  // from the question that prompted this
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "CCCO\\C(=C/c1ccccc1)/C(\\OCC)=C\\c1ccccc1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("stereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2313,5 +2366,6 @@ int main() {
   testGithub803();
 #endif
   testGithub1294();
+  testGithub1423();
   return 0;
 }

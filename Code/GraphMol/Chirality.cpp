@@ -828,22 +828,39 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               endDir = endAtomNeighbors[1].second;
               endNbrAid = endAtomNeighbors[1].first;
             }
-            dblBond->getStereoAtoms().push_back(begNbrAid);
-            dblBond->getStereoAtoms().push_back(endNbrAid);
-            if (hasExplicitUnknownStereo) {
-              dblBond->setStereo(Bond::STEREOANY);
-              assignedABond = true;
-            } else if (begDir == endDir) {
-              // In findAtomNeighborDirHelper, we've set up the
-              // bond directions here so that they correspond to
-              // having both single bonds START at the double bond.
-              // This means that if the single bonds point in the same
-              // direction, the bond is cis, "Z"
-              dblBond->setStereo(Bond::STEREOZ);
+
+            bool conflictingDefns = false;
+            if ((begAtomNeighbors.size() == 2 &&
+                 begAtomNeighbors[0].second == begAtomNeighbors[1].second) ||
+                (endAtomNeighbors.size() == 2 &&
+                 endAtomNeighbors[0].second == endAtomNeighbors[1].second)) {
+              conflictingDefns = true;
+            }
+            if (conflictingDefns) {
+              dblBond->setStereo(Bond::STEREONONE);
+              BOOST_LOG(rdWarningLog)
+                  << "Conflicting single bond directions around double bond "
+                  << dblBond->getIdx() << ", stereo set to STEREONONE."
+                  << std::endl;
               assignedABond = true;
             } else {
-              dblBond->setStereo(Bond::STEREOE);
-              assignedABond = true;
+              dblBond->getStereoAtoms().push_back(begNbrAid);
+              dblBond->getStereoAtoms().push_back(endNbrAid);
+              if (hasExplicitUnknownStereo) {
+                dblBond->setStereo(Bond::STEREOANY);
+                assignedABond = true;
+              } else if (begDir == endDir) {
+                // In findAtomNeighborDirHelper, we've set up the
+                // bond directions here so that they correspond to
+                // having both single bonds START at the double bond.
+                // This means that if the single bonds point in the same
+                // direction, the bond is cis, "Z"
+                dblBond->setStereo(Bond::STEREOZ);
+                assignedABond = true;
+              } else {
+                dblBond->setStereo(Bond::STEREOE);
+                assignedABond = true;
+              }
             }
             --unassignedBonds;
           }
