@@ -14,23 +14,22 @@
 #include <boost/foreach.hpp>
 
 namespace {
-  double dist_on_line(unsigned int i,unsigned int j){
-    return abs(i-j);
-  }
+double dist_on_line(unsigned int i, unsigned int j) {
+  return abs((double)i - (double)j);
+}
 }
 void testGithub1421() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing github issue 1421: MaxMinPicker picking non-existent element." << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Testing github issue 1421: MaxMinPicker picking non-existent element."
+      << std::endl;
   RDPickers::MaxMinPicker pkr;
   RDKit::INT_VECT picks;
-  int poolSz=1000;
-  picks = pkr.lazyPick(dist_on_line,poolSz,10,RDKit::INT_VECT(),2748);
-  BOOST_FOREACH(int pick,picks){
-    TEST_ASSERT(pick<poolSz);
-  }
+  int poolSz = 1000;
+  picks = pkr.lazyPick(dist_on_line, poolSz, 10, RDKit::INT_VECT(), 2748);
+  BOOST_FOREACH (int pick, picks) { TEST_ASSERT(pick < poolSz); }
   BOOST_LOG(rdErrorLog) << "Done" << std::endl;
 }
-
 
 int main() {
   RDLog::InitLogs();
