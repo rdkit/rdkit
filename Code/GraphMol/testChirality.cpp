@@ -2315,8 +2315,13 @@ void testGithub1423() {
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+
     TEST_ASSERT(warns.str() != "");
-    TEST_ASSERT(warns.str().find("stereo set to STEREONONE") !=
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
                 std::string::npos);
     delete m;
     rdWarningLog->ClearTee();
@@ -2332,12 +2337,40 @@ void testGithub1423() {
     TEST_ASSERT(m->getBondWithIdx(15)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(15)->getStereo() == Bond::STEREONONE);
     TEST_ASSERT(warns.str() != "");
-    TEST_ASSERT(warns.str().find("stereo set to STEREONONE") !=
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
                 std::string::npos);
     delete m;
     rdWarningLog->ClearTee();
   }
 
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/[C@H](F)C=C(F)C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C1=C/C=C=C=C2C(=C([Si](C)(C)C)\\C=C/1)C(=O)c1ccccc12";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 int main() {
@@ -2364,8 +2397,8 @@ int main() {
   testIssue2705543();
   testGithub553();
   testGithub803();
-#endif
   testGithub1294();
+#endif
   testGithub1423();
   return 0;
 }

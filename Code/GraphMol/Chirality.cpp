@@ -756,7 +756,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
                "bad rank vector size");
   bool assignedABond = false;
   unsigned int unassignedBonds = 0;
-
+  boost::dynamic_bitset<> bondsToClear(mol.getNumBonds());
   // find the double bonds:
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
@@ -829,20 +829,39 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               endNbrAid = endAtomNeighbors[1].first;
             }
 
-            bool conflictingDefns = false;
-            if ((begAtomNeighbors.size() == 2 &&
-                 begAtomNeighbors[0].second == begAtomNeighbors[1].second) ||
-                (endAtomNeighbors.size() == 2 &&
-                 endAtomNeighbors[0].second == endAtomNeighbors[1].second)) {
-              conflictingDefns = true;
-            }
-            if (conflictingDefns) {
+            bool conflictingBegin = false;
+            bool conflictingEnd = false;
+            if (begAtomNeighbors.size() == 2 &&
+                begAtomNeighbors[0].second == begAtomNeighbors[1].second)
+              conflictingBegin = true;
+            if (endAtomNeighbors.size() == 2 &&
+                endAtomNeighbors[0].second == endAtomNeighbors[1].second)
+              conflictingEnd = true;
+            if (conflictingBegin || conflictingEnd) {
               dblBond->setStereo(Bond::STEREONONE);
               BOOST_LOG(rdWarningLog)
                   << "Conflicting single bond directions around double bond "
-                  << dblBond->getIdx() << ", stereo set to STEREONONE."
-                  << std::endl;
+                  << dblBond->getIdx() << "." << std::endl;
+              BOOST_LOG(rdWarningLog) << "  BondStereo set to STEREONONE and "
+                                         "single bond directions set to NONE."
+                                      << std::endl;
               assignedABond = true;
+              if (conflictingBegin) {
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[0].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[1].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
+              if (conflictingEnd) {
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[0].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[1].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
             } else {
               dblBond->getStereoAtoms().push_back(begNbrAid);
               dblBond->getStereoAtoms().push_back(endNbrAid);
@@ -868,6 +887,11 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       }
     }
   }
+
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    if (bondsToClear[i]) mol.getBondWithIdx(i)->setBondDir(Bond::NONE);
+  }
+
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
