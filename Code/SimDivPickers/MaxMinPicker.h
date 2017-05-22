@@ -149,7 +149,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   typedef boost::uniform_int<> distrib_type;
   typedef boost::variate_generator<rng_type &, distrib_type> source_type;
   rng_type generator(42u);
-  distrib_type dist(0, poolSize);
+  distrib_type dist(0, poolSize-1);
   source_type randomSource(generator, dist);
   if (seed > 0) generator.seed(static_cast<rng_type::result_type>(seed));
 
