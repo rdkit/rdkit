@@ -144,7 +144,7 @@ class ss_matcher {
 };
 
 // Definitions for feature points from
-// http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
+// https://bitbucket.org/aschreyer/usrcat/src/2aa77f970c2c/usrcat/__init__.py
 const char *smartsPatterns[4] = {
     "[#6+0!$(*~[#7,#8,F]),SH0+0v2,s+0,S^3,Cl+0,Br+0,I+0]",  // hydrophobic
     "[a]",                                                  // aromatic
