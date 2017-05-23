@@ -303,6 +303,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("DrawString", &RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
+      .def("GetDrawCoords", (RDGeom::Point2D (RDKit::MolDraw2D::*)(
+                                const RDGeom::Point2D &) const) &
+                                RDKit::MolDraw2D::getDrawCoords,
+           (python::arg("self"), python::arg("point")),
+           "get the coordinates in drawing space for a particular point in "
+           "molecule space")
+      .def("GetDrawCoords", (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
+                                RDKit::MolDraw2D::getDrawCoords,
+           (python::arg("self"), python::arg("atomIndex")),
+           "get the coordinates in drawing space for a particular atom")
       .def("drawOptions", (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
                               RDKit::MolDraw2D::drawOptions,
            python::return_internal_reference<
