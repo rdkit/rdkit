@@ -353,6 +353,27 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   }
 }
 
+void MolDraw2D::drawReaction(
+    const ChemicalReaction &rxn, const std::vector<std::string> *legends,
+    const std::vector<std::vector<int> > *highlight_atoms,
+    const std::vector<std::vector<int> > *highlight_bonds,
+    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
+    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
+    const std::vector<std::map<int, double> > *highlight_radii,
+    const std::vector<int> *confIds) {
+  std::vector<ROMol *> ms;
+  for (unsigned int i = 0; i < rxn.getNumReactantTemplates(); ++i) {
+    ms.push_back(rxn.getReactants()[i].get());
+  }
+  ms.push_back(NULL);
+  for (unsigned int i = 0; i < rxn.getNumProductTemplates(); ++i) {
+    ms.push_back(rxn.getProducts()[i].get());
+  }
+  drawMolecules(ms, legends, highlight_atoms, highlight_bonds,
+                highlight_atom_maps, highlight_bond_maps, highlight_radii,
+                confIds);
+}
+
 void MolDraw2D::drawMolecules(
     const std::vector<ROMol *> &mols, const std::vector<std::string> *legends,
     const std::vector<std::vector<int> > *highlight_atoms,

@@ -26,6 +26,7 @@
 
 #include <Geometry/point.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -122,6 +123,16 @@ class MolDraw2D {
 
   virtual void drawMolecules(
       const std::vector<ROMol *> &mols,
+      const std::vector<std::string> *legends = NULL,
+      const std::vector<std::vector<int> > *highlight_atoms = NULL,
+      const std::vector<std::vector<int> > *highlight_bonds = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
+      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
+      const std::vector<std::map<int, double> > *highlight_radii = NULL,
+      const std::vector<int> *confIds = NULL);
+
+  virtual void drawReaction(
+      const ChemicalReaction &rxn,
       const std::vector<std::string> *legends = NULL,
       const std::vector<std::vector<int> > *highlight_atoms = NULL,
       const std::vector<std::vector<int> > *highlight_bonds = NULL,
