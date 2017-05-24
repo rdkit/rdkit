@@ -7,6 +7,7 @@ rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
               MQN.cpp
               Property.cpp
+              USRDescriptor.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers ${RDKit_THREAD_LIBS})
@@ -19,6 +20,7 @@ rdkit_headers(Crippen.h Lipinski.h
               ConnectivityDescriptors.h MQN.h
               RegisterDescriptor.h
               Property.h
+              USRDescriptor.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
