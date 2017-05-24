@@ -372,6 +372,19 @@ void MolDraw2D::drawReaction(
   drawMolecules(ms, legends, highlight_atoms, highlight_bonds,
                 highlight_atom_maps, highlight_bond_maps, highlight_radii,
                 confIds);
+  // now add the symbols
+  double o_font_size = fontSize();
+  setFontSize(options_.legendFontSize /
+              scale_);  // set the font size to about 12 pixels high
+  DrawColour odc = colour();
+  setColour(options_.legendColour);
+  for (unsigned int i = 1; i < rxn.getNumReactantTemplates(); ++i) {
+    Point2D loc =
+        getAtomCoords(std::make_pair(panel_width_ * i., panel_height_ / 2));
+    drawString("+", loc);
+  }
+  setColour(odc);
+  setFontSize(o_font_size);
 }
 
 void MolDraw2D::drawMolecules(
