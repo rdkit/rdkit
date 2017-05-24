@@ -4,6 +4,7 @@ import random
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem
 from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit import Geometry
 
 
 class TestCase(unittest.TestCase):
@@ -170,6 +171,19 @@ M  END""")
     # 4 molecules, one atom each:
     self.assertEqual(svg.count('fill:#DB2D2B;fill-rule:evenodd;stroke:#DB2D2B'), 4)
 
+  def testGetDrawCoords(self):
+    m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
+    AllChem.Compute2DCoords(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(m)
+    conf = m.GetConformer()
+    for idx in range(m.GetNumAtoms()):
+        pos = conf.GetAtomPosition(idx)
+        pos = Geometry.Point2D(pos.x,pos.y)
+        dpos1 = d.GetDrawCoords(idx)
+        dpos2 = d.GetDrawCoords(pos)
+        self.assertAlmostEqual(dpos1.x,dpos2.x,6)
+        self.assertAlmostEqual(dpos1.y,dpos2.y,6)
 
 
 if __name__ == "__main__":
