@@ -377,11 +377,39 @@ void MolDraw2D::drawReaction(
   setFontSize(options_.legendFontSize /
               scale_);  // set the font size to about 12 pixels high
   DrawColour odc = colour();
-  setColour(options_.legendColour);
+  setColour(options_.symbolColour);
   for (unsigned int i = 1; i < rxn.getNumReactantTemplates(); ++i) {
+    setOffset(i * panelWidth(), 0);
+
     Point2D loc =
-        getAtomCoords(std::make_pair(panel_width_ * i., panel_height_ / 2));
+        getAtomCoords(std::make_pair<double, double>(0.0, 0.5 * panel_height_));
     drawString("+", loc);
+  }
+  for (unsigned int i = 1; i < rxn.getNumProductTemplates(); ++i) {
+    setOffset((i + rxn.getNumReactantTemplates() + 1) * panelWidth(), 0);
+
+    Point2D loc =
+        getAtomCoords(std::make_pair<double, double>(0.0, 0.5 * panel_height_));
+    drawString("+", loc);
+  }
+
+  // The arrow:
+  {
+    setOffset(rxn.getNumReactantTemplates() * panelWidth(), 0);
+    double arrowStart = 0.1 * panel_width_;
+    double arrowEnd = 0.9 * panel_width_;
+    double headx = 0.05 * (arrowEnd - arrowStart);
+    double heady = 0.05 * panel_height_;
+    Point2D loc1 =
+        getAtomCoords(std::make_pair(arrowStart, 0.5 * panel_height_));
+    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, 0.5 * panel_height_));
+    drawLine(loc1, loc2);
+    loc1 = getAtomCoords(
+        std::make_pair(arrowEnd - headx, 0.5 * panel_height_ + heady));
+    drawLine(loc1, loc2);
+    loc1 = getAtomCoords(
+        std::make_pair(arrowEnd - headx, 0.5 * panel_height_ - heady));
+    drawLine(loc1, loc2);
   }
   setColour(odc);
   setFontSize(o_font_size);

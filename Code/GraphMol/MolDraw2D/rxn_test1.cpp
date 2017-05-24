@@ -57,8 +57,7 @@ void test1() {
 
     double panex = 200, paney = 150;
     double width = panex * (rxn->getNumReactantTemplates() +
-                            rxn->getNumProductTemplates() +
-                            rxn->getNumAgentTemplates() + 1);
+                            rxn->getNumProductTemplates() + 1);
     double height = paney;
 #ifdef RDK_CAIRO_BUILD
     {

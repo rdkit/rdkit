@@ -64,6 +64,8 @@ struct MolDrawOptions {
                                       // font size.
   std::map<int, std::string> atomLabels;       // replacement labels for atoms
   std::vector<std::vector<int> > atomRegions;  // regions
+  DrawColour
+      symbolColour;  // color to be used for the symbols and arrows in reactions
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -79,7 +81,8 @@ struct MolDrawOptions {
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
         padding(0.05),
-        additionalAtomLabelPadding(0.0){};
+        additionalAtomLabelPadding(0.0),
+        symbolColour(0, 0, 0){};
 };
 
 class MolDraw2D {
