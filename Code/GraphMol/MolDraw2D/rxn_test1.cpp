@@ -40,20 +40,24 @@ void sanitizeReactionComponents(ChemicalReaction &rxn) {
   for (unsigned int i = 0; i < rxn.getNumProductTemplates(); ++i) {
     MolOps::sanitizeMol(*((RWMol *)(rxn.getProducts()[i].get())));
   }
+  for (unsigned int i = 0; i < rxn.getNumAgentTemplates(); ++i) {
+    MolOps::sanitizeMol(*((RWMol *)(rxn.getAgents()[i].get())));
+  }
 }
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
     std::string smiles =
-        "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C>[CH3:1][C:2](=[O:3])["
+        "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
+        "O:3])["
         "NH:6][CH3:5].[OH2:4]";
     std::string nameBase = "rxn_test1_1";
     bool useSmiles = true;
     ChemicalReaction *rxn =
         RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
     TEST_ASSERT(rxn);
-    sanitizeReactionComponents(*rxn);
+    // sanitizeReactionComponents(*rxn);
 
     double panex = 200, paney = 150;
     double width = panex * (rxn->getNumReactantTemplates() +
@@ -61,7 +65,7 @@ void test1() {
     double height = paney;
 #ifdef RDK_CAIRO_BUILD
     {
-      MolDraw2DCairo drawer(width, height, panex, paney);
+      MolDraw2DCairo drawer(width, height);
       drawer.drawReaction(*rxn);
       drawer.finishDrawing();
       drawer.writeDrawingText(nameBase + ".png");
@@ -69,7 +73,7 @@ void test1() {
 #endif
     {
       std::ofstream outs((nameBase + ".svg").c_str());
-      MolDraw2DSVG drawer(width, height, outs, panex, paney);
+      MolDraw2DSVG drawer(width, height, outs);
       drawer.drawReaction(*rxn);
       drawer.finishDrawing();
       outs.flush();

@@ -16,6 +16,8 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <Geometry/point.h>
 
 #include <cstdlib>
 #include <limits>
@@ -353,6 +355,89 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   }
 }
 
+namespace {
+void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
+                    int confId, bool shiftAgents) {
+  try {
+    MolOps::sanitizeMol(mol);
+  } catch (const MolSanitizeException &e) {
+    mol.updatePropertyCache(false);
+  }
+  // this also generates coordinates
+  MolDraw2DUtils::prepareMolForDrawing(mol);
+  double minX = 1e8;
+  double maxX = -1e8;
+
+  Conformer &conf = mol.getConformer(confId);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    minX = std::min(minX, conf.getAtomPos(i).x);
+  }
+  offset += abs(minX);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = conf.getAtomPos(i);
+    if (shiftAgents) {
+      p.y += maxY / 2;
+    } else {
+      maxY = std::max(p.y, maxY);
+    }
+    p.x += offset;
+    maxX = std::max(p.x, maxX);
+  }
+  offset = maxX + spacing;
+}
+void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
+                            Point2D &arrowBegin, Point2D &arrowEnd,
+                            std::vector<double> &plusLocs, double spacing,
+                            const std::vector<int> *confIds) {
+  plusLocs.resize(0);
+  double maxY = -1e8;
+  double offset = 0.0;
+
+  // reactants
+  for (unsigned int midx = 0; midx < rxn.getNumReactantTemplates(); ++midx) {
+    // add the "+" if required
+    if (midx > 0) {
+      plusLocs.push_back(offset);
+      offset += spacing;
+    }
+    ROMOL_SPTR reactant = rxn.getReactants()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[midx];
+    get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, cid, false);
+  }
+  arrowBegin.x = offset;
+
+  // agents
+  for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
+    ROMOL_SPTR agent = rxn.getAgents()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[midx];
+    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, cid, true);
+  }
+  if (rxn.getNumAgentTemplates()) {
+    arrowEnd.x = offset - spacing;
+  } else {
+    arrowEnd.x = offset + 5 * spacing;
+  }
+  offset = arrowEnd.x + 1.5 * spacing;
+
+  // reactants
+  for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
+    // add the "+" if required
+    if (midx > 0) {
+      plusLocs.push_back(offset);
+      offset += spacing;
+    }
+    ROMOL_SPTR product = rxn.getProducts()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[midx];
+    get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, cid, false);
+  }
+
+  arrowBegin.y = arrowEnd.y = maxY / 2;
+}
+}
+
 void MolDraw2D::drawReaction(
     const ChemicalReaction &rxn, const std::vector<std::string> *legends,
     const std::vector<std::vector<int> > *highlight_atoms,
@@ -361,6 +446,20 @@ void MolDraw2D::drawReaction(
     const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
     const std::vector<std::map<int, double> > *highlight_radii,
     const std::vector<int> *confIds) {
+  ChemicalReaction nrxn(rxn);
+  double spacing = 1.0;
+  Point2D arrowBegin, arrowEnd;
+  std::vector<double> plusLocs;
+
+  get2DCoordsForReaction(nrxn, drawOptions(), arrowBegin, arrowEnd, plusLocs,
+                         spacing, confIds);
+  // FIX: translate the extra args
+
+  ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
+  drawMolecule(*tmol);
+  delete tmol;
+
+#if 0
   std::vector<ROMol *> ms;
   for (unsigned int i = 0; i < rxn.getNumReactantTemplates(); ++i) {
     ms.push_back(rxn.getReactants()[i].get());
@@ -372,6 +471,20 @@ void MolDraw2D::drawReaction(
   drawMolecules(ms, legends, highlight_atoms, highlight_bonds,
                 highlight_atom_maps, highlight_bond_maps, highlight_radii,
                 confIds);
+  double oscale = scale_;
+  if (rxn.getNumAgentTemplates()) {
+    RWMol agent(*rxn.getAgents()[0]);
+    for (unsigned int i = 1; i < rxn.getNumAgentTemplates(); ++i) {
+      agent.insertMol(*rxn.getAgents()[i]);
+    }
+    setOffset(rxn.getNumReactantTemplates() * panelWidth(),
+              -panelHeight() / 2.);
+    MolDraw2DUtils::prepareMolForDrawing(agent);
+    scale_ *= 0.5;
+    agent.debugMol(std::cerr);
+    drawMolecule(agent);
+  }
+  scale_ = oscale;
   // now add the symbols
   double o_font_size = fontSize();
   setFontSize(options_.legendFontSize /
@@ -413,6 +526,7 @@ void MolDraw2D::drawReaction(
   }
   setColour(odc);
   setFontSize(o_font_size);
+#endif
 }
 
 void MolDraw2D::drawMolecules(
