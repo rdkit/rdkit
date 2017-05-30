@@ -404,7 +404,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 
   // reactants
   for (unsigned int midx = 0; midx < rxn.getNumReactantTemplates(); ++midx) {
-    // add the "+" if required
+    // add space for the "+" if required
     if (midx > 0) {
       plusLocs.push_back(offset);
       offset += spacing;
@@ -417,33 +417,64 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   }
   arrowBegin.x = offset;
 
-  // agents
-  for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
-    ROMOL_SPTR agent = rxn.getAgents()[midx];
-    int cid = -1;
-    if (confIds) cid = (*confIds)[midx];
-    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
-                   true, 0.5);
-  }
-  if (rxn.getNumAgentTemplates()) {
-    arrowEnd.x = offset - spacing;
-  } else {
-    arrowEnd.x = offset + 5 * spacing;
-  }
-  offset = arrowEnd.x + 1.5 * spacing;
+  offset += spacing;
 
-  // products
+  double begAgentOffset = offset;
+
+  // we need to do the products now so that we know the full y range.
+  // these will have the wrong X coordinates, but we'll fix that later.
+  offset = 0;
   for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
-    // add the "+" if required
+    // add space for the "+" if required
     if (midx > 0) {
       plusLocs.push_back(offset);
       offset += spacing;
     }
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
-    if (confIds) cid = (*confIds)[midx];
+    if (confIds)
+      cid = (*confIds)[rxn.getNumReactantTemplates() +
+                       rxn.getNumAgentTemplates() + midx];
     get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, minY, cid,
                    false, 1.0);
+  }
+
+  offset = begAgentOffset;
+  // agents
+  for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
+    ROMOL_SPTR agent = rxn.getAgents()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
+                   true, 0.45);
+  }
+  if (rxn.getNumAgentTemplates()) {
+    arrowEnd.x = offset;  //- spacing;
+  } else {
+    arrowEnd.x = offset + 3 * spacing;
+  }
+  offset = arrowEnd.x + 1.5 * spacing;
+
+  // now translate the products over
+  for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
+    ROMOL_SPTR product = rxn.getProducts()[midx];
+    int cid = -1;
+    if (confIds)
+      cid = (*confIds)[rxn.getNumReactantTemplates() +
+                       rxn.getNumAgentTemplates() + midx];
+    Conformer &conf = product->getConformer(cid);
+    for (unsigned int aidx = 0; aidx < product->getNumAtoms(); ++aidx) {
+      conf.getAtomPos(aidx).x += offset;
+    }
+  }
+
+  // fix the plus signs too
+  unsigned int startP = 0;
+  if (rxn.getNumReactantTemplates() > 1) {
+    startP = rxn.getNumReactantTemplates() - 1;
+  }
+  for (unsigned int pidx = startP; pidx < plusLocs.size(); ++pidx) {
+    plusLocs[pidx] += offset;
   }
 
   arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
