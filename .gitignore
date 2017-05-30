@@ -6,6 +6,10 @@
 /.project
 /.pydevproject
 
+#- CLion files
+/.idea/
+/cmake-build-*
+
 #- Binary files
 __pycache__/
 *.so
