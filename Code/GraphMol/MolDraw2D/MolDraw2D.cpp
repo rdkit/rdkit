@@ -372,7 +372,7 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
   double maxX = -1e8;
   double vShift = 0;
   if (shiftAgents) {
-    vShift = maxY / 2;
+    vShift = 1.1 * maxY / 2;
   }
 
   Conformer &conf = mol.getConformer(confId);
