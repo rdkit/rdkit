@@ -33,7 +33,8 @@ using namespace RDKit;
 #endif
 
 namespace {
-void drawit(ChemicalReaction *rxn, std::string nameBase) {
+void drawit(ChemicalReaction *rxn, std::string nameBase,
+            bool highlight_map = false) {
   double panex = 200, paney = 150;
   double width = panex * (rxn->getNumReactantTemplates() +
                           rxn->getNumProductTemplates() + 1);
@@ -41,7 +42,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase) {
 #ifdef RDK_CAIRO_BUILD
   {
     MolDraw2DCairo drawer(width, height);
-    drawer.drawReaction(*rxn);
+    drawer.drawReaction(*rxn, highlight_map);
     drawer.finishDrawing();
     drawer.writeDrawingText(nameBase + ".png");
   }
@@ -49,7 +50,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase) {
   {
     std::ofstream outs((nameBase + ".svg").c_str());
     MolDraw2DSVG drawer(width, height, outs);
-    drawer.drawReaction(*rxn);
+    drawer.drawReaction(*rxn, highlight_map);
     drawer.finishDrawing();
     outs.flush();
   }
@@ -119,6 +120,20 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
+
+  {
+    std::string smiles =
+        "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
+        "O:3])[NH:6][CH3:5].[OH2:4]";
+    std::string nameBase = "rxn_test1_6";
+    bool useSmiles = true;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    drawit(rxn, nameBase, true);
+    delete rxn;
+  }
+
   std::cout << " Done" << std::endl;
 }
 

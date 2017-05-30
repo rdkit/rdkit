@@ -135,8 +135,7 @@ class MolDraw2D {
       const std::vector<int> *confIds = NULL);
 
   virtual void drawReaction(
-      const ChemicalReaction &rxn,
-      const std::vector<std::string> *legends = NULL,
+      const ChemicalReaction &rxn, bool highlightByReactant = false,
       const std::vector<std::vector<int> > *highlight_atoms = NULL,
       const std::vector<std::vector<int> > *highlight_bonds = NULL,
       const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,

@@ -482,7 +482,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 }
 
 void MolDraw2D::drawReaction(
-    const ChemicalReaction &rxn, const std::vector<std::string> *legends,
+    const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<std::vector<int> > *highlight_atoms,
     const std::vector<std::vector<int> > *highlight_bonds,
     const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
@@ -496,8 +496,6 @@ void MolDraw2D::drawReaction(
 
   get2DCoordsForReaction(nrxn, drawOptions(), arrowBegin, arrowEnd, plusLocs,
                          spacing, confIds);
-
-  // FIX: translate the extra args
 
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
 
@@ -529,8 +527,67 @@ void MolDraw2D::drawReaction(
     atom_syms_.pop_back();
   }
 
-  drawMolecule(*tmol);
+  // FIX: finish this
+  std::vector<int> *all_highlight_atoms = NULL;
+  std::vector<int> *all_highlight_bonds = NULL;
+  std::map<int, DrawColour> *all_highlight_atom_maps = NULL;
+  std::map<int, DrawColour> *all_highlight_bond_maps = NULL;
+  std::map<int, double> *all_highlight_radii = NULL;
+
+  std::vector<int> *atom_highlights = NULL;
+  std::map<int, DrawColour> *atom_highlight_colors = NULL;
+  if (highlightByReactant) {
+    // FIX: these really should be defined elsewhere
+    std::vector<DrawColour> highlightColors;
+    highlightColors.push_back(DrawColour(.9, .6, .6));
+    highlightColors.push_back(DrawColour(.6, .6, .9));
+    highlightColors.push_back(DrawColour(.8, .8, .3));
+    highlightColors.push_back(DrawColour(.8, .6, .8));
+
+    std::vector<int> atomfragmap;
+    MolOps::getMolFrags(*tmol, atomfragmap);
+
+    atom_highlights = new std::vector<int>();
+    atom_highlight_colors = new std::map<int, DrawColour>();
+    std::map<int, int> atommap_fragmap;
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
+          atom->getAtomMapNum()) {
+        atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            highlightColors[atomfragmap[aidx] % highlightColors.size()];
+        atom->setAtomMapNum(0);
+      }
+    }
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 2 &&
+          atom->getAtomMapNum() &&
+          atommap_fragmap.find(atom->getAtomMapNum()) !=
+              atommap_fragmap.end()) {
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            highlightColors[atommap_fragmap[atom->getAtomMapNum()] %
+                            highlightColors.size()];
+        atom->setAtomMapNum(0);
+      }
+    }
+  }
+
+  drawMolecule(*tmol, "", atom_highlights, NULL, atom_highlight_colors);
+
   delete tmol;
+  delete atom_highlights;
+  delete atom_highlight_colors;
+  delete all_highlight_atoms;
+  delete all_highlight_bonds;
+  delete all_highlight_atom_maps;
+  delete all_highlight_bond_maps;
+  delete all_highlight_radii;
 
   double o_font_size = fontSize();
   setFontSize(2 * options_.legendFontSize / scale_);
