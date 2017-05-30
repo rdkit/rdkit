@@ -251,7 +251,6 @@ void testRadicals() {
   BOOST_LOG(rdInfoLog) << "testing radicals" << std::endl;
   {
     std::string smiles = "[O]C[O] |^1:0,2|";
-    ;
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);

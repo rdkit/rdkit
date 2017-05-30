@@ -149,9 +149,12 @@ except Exception as e:
 
 if pd:
   try:
-    from pandas.formats import format as fmt
-  except ImportError:
-    from pandas.core import format as fmt  # older versions
+    from pandas.io.formats import format as fmt
+  except:
+    try:
+      from pandas.formats import format as fmt
+    except ImportError:
+      from pandas.core import format as fmt  # older versions
 else:
   fmt = 'Pandas not available'
 
