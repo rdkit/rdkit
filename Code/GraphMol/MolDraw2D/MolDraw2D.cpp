@@ -1524,7 +1524,7 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
         // put the number as a subscript
         h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
       }
-      if (orient == MolDraw2D::W) {
+      if (orient == MolDraw2D::W || !atom.getDegree()) {
         preText.push_back(h);
       } else {
         postText.push_back(h);

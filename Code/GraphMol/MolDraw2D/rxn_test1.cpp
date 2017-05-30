@@ -61,8 +61,7 @@ void test1() {
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
-        "O:3])["
-        "NH:6][CH3:5].[OH2:4]";
+        "O:3])[NH:6][CH3:5].[OH2:4]";
     std::string nameBase = "rxn_test1_1";
     bool useSmiles = true;
     ChemicalReaction *rxn =
