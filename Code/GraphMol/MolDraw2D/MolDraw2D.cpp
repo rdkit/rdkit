@@ -496,9 +496,39 @@ void MolDraw2D::drawReaction(
 
   get2DCoordsForReaction(nrxn, drawOptions(), arrowBegin, arrowEnd, plusLocs,
                          spacing, confIds);
+
   // FIX: translate the extra args
 
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
+
+  if (needs_scale_ &&
+      (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
+    // drawMolecule() will figure out the scaling so that the molecule
+    // fits the drawing pane. In order to ensure that we have space for the
+    // arrow, we need to figoure out the scaling on our own.
+    RWMol tmol2;
+    tmol2.addAtom(new Atom(0), true, true);
+    tmol2.addAtom(new Atom(0), true, true);
+    tmol2.addConformer(new Conformer(2), true);
+    tmol2.getConformer().getAtomPos(0) =
+        RDGeom::Point3D(arrowBegin.x, arrowBegin.y, 0);
+    tmol2.getConformer().getAtomPos(1) =
+        RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
+
+    tmol2.insertMol(*tmol);
+    at_cds_.push_back(std::vector<Point2D>());
+    atomic_nums_.push_back(std::vector<int>());
+    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+    activeMolIdx_++;
+    extractAtomCoords(tmol2, 0, true);
+    calculateScale();
+    needs_scale_ = false;
+    activeMolIdx_--;
+    at_cds_.pop_back();
+    atomic_nums_.pop_back();
+    atom_syms_.pop_back();
+  }
+
   drawMolecule(*tmol);
   delete tmol;
 
