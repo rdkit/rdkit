@@ -134,6 +134,18 @@ void test1() {
     delete rxn;
   }
 
+  {
+    std::string smiles =
+        "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
+        "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
+    std::string nameBase = "rxn_test1_7";
+    bool useSmiles = true;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    drawit(rxn, nameBase, true);
+    delete rxn;
+  }
   std::cout << " Done" << std::endl;
 }
 

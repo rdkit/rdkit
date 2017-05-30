@@ -536,6 +536,8 @@ void MolDraw2D::drawReaction(
 
   std::vector<int> *atom_highlights = NULL;
   std::map<int, DrawColour> *atom_highlight_colors = NULL;
+  std::vector<int> *bond_highlights = NULL;
+  std::map<int, DrawColour> *bond_highlight_colors = NULL;
   if (highlightByReactant) {
     // FIX: these really should be defined elsewhere
     std::vector<DrawColour> highlightColors;
@@ -549,6 +551,8 @@ void MolDraw2D::drawReaction(
 
     atom_highlights = new std::vector<int>();
     atom_highlight_colors = new std::map<int, DrawColour>();
+    bond_highlights = new std::vector<int>();
+    bond_highlight_colors = new std::map<int, DrawColour>();
     std::map<int, int> atommap_fragmap;
     for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
       int atomRole = -1;
@@ -560,6 +564,21 @@ void MolDraw2D::drawReaction(
         (*atom_highlight_colors)[aidx] =
             highlightColors[atomfragmap[aidx] % highlightColors.size()];
         atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        ROMol::ADJ_ITER nbrIdx, endNbrs;
+        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
+        while (nbrIdx != endNbrs) {
+          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
+          if (nbr->getIdx() < aidx &&
+              atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+          ++nbrIdx;
+        }
       }
     }
     for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
@@ -574,15 +593,34 @@ void MolDraw2D::drawReaction(
             highlightColors[atommap_fragmap[atom->getAtomMapNum()] %
                             highlightColors.size()];
         atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        ROMol::ADJ_ITER nbrIdx, endNbrs;
+        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
+        while (nbrIdx != endNbrs) {
+          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
+          if (nbr->getIdx() < aidx &&
+              (*atom_highlight_colors)[nbr->getIdx()] ==
+                  (*atom_highlight_colors)[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+          ++nbrIdx;
+        }
       }
     }
   }
 
-  drawMolecule(*tmol, "", atom_highlights, NULL, atom_highlight_colors);
+  drawMolecule(*tmol, "", atom_highlights, bond_highlights,
+               atom_highlight_colors, bond_highlight_colors);
 
   delete tmol;
   delete atom_highlights;
   delete atom_highlight_colors;
+  delete bond_highlights;
+  delete bond_highlight_colors;
   delete all_highlight_atoms;
   delete all_highlight_bonds;
   delete all_highlight_atom_maps;
