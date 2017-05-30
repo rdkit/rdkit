@@ -134,14 +134,9 @@ class MolDraw2D {
       const std::vector<std::map<int, double> > *highlight_radii = NULL,
       const std::vector<int> *confIds = NULL);
 
-  virtual void drawReaction(
-      const ChemicalReaction &rxn, bool highlightByReactant = false,
-      const std::vector<std::vector<int> > *highlight_atoms = NULL,
-      const std::vector<std::vector<int> > *highlight_bonds = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_atom_maps = NULL,
-      const std::vector<std::map<int, DrawColour> > *highlight_bond_maps = NULL,
-      const std::vector<std::map<int, double> > *highlight_radii = NULL,
-      const std::vector<int> *confIds = NULL);
+  virtual void drawReaction(const ChemicalReaction &rxn,
+                            bool highlightByReactant = false,
+                            const std::vector<int> *confIds = NULL);
 
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates

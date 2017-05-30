@@ -481,14 +481,9 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 }
 }
 
-void MolDraw2D::drawReaction(
-    const ChemicalReaction &rxn, bool highlightByReactant,
-    const std::vector<std::vector<int> > *highlight_atoms,
-    const std::vector<std::vector<int> > *highlight_bonds,
-    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
-    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
-    const std::vector<std::map<int, double> > *highlight_radii,
-    const std::vector<int> *confIds) {
+void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
+                             bool highlightByReactant,
+                             const std::vector<int> *confIds) {
   ChemicalReaction nrxn(rxn);
   double spacing = 1.0;
   Point2D arrowBegin, arrowEnd;
@@ -526,13 +521,6 @@ void MolDraw2D::drawReaction(
     atomic_nums_.pop_back();
     atom_syms_.pop_back();
   }
-
-  // FIX: finish this
-  std::vector<int> *all_highlight_atoms = NULL;
-  std::vector<int> *all_highlight_bonds = NULL;
-  std::map<int, DrawColour> *all_highlight_atom_maps = NULL;
-  std::map<int, DrawColour> *all_highlight_bond_maps = NULL;
-  std::map<int, double> *all_highlight_radii = NULL;
 
   std::vector<int> *atom_highlights = NULL;
   std::map<int, DrawColour> *atom_highlight_colors = NULL;
@@ -621,11 +609,6 @@ void MolDraw2D::drawReaction(
   delete atom_highlight_colors;
   delete bond_highlights;
   delete bond_highlight_colors;
-  delete all_highlight_atoms;
-  delete all_highlight_bonds;
-  delete all_highlight_atom_maps;
-  delete all_highlight_bond_maps;
-  delete all_highlight_radii;
 
   double o_font_size = fontSize();
   setFontSize(2 * options_.legendFontSize / scale_);
