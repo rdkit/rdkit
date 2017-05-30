@@ -197,6 +197,13 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                      confIds.get());
 }
 
+void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
+                        bool highlightByReactant, python::object pconfIds) {
+  rdk_auto_ptr<std::vector<int> > confIds = pythonObjectToVect<int>(pconfIds);
+
+  self.drawReaction(rxn, highlightByReactant, confIds.get());
+}
+
 #ifdef RDK_CAIRO_BUILD
 python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
   std::string res = self.getDrawingText();
@@ -290,6 +297,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("confIds") = python::object(),
             python::arg("legends") = python::object()),
            "renders multiple molecules\n")
+      .def("DrawReaction", RDKit::drawReactionHelper,
+           (python::arg("self"), python::arg("rxn"),
+            python::arg("highlightByReactant") = false,
+            python::arg("confIds") = python::object()),
+           "renders a reaction\n")
       .def("Width", &RDKit::MolDraw2D::width,
            "get the width of the drawing canvas")
       .def("Height", &RDKit::MolDraw2D::height,

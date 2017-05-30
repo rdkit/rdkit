@@ -185,6 +185,25 @@ M  END""")
         self.assertAlmostEqual(dpos1.x,dpos2.x,6)
         self.assertAlmostEqual(dpos1.y,dpos2.y,6)
 
+  def testReaction1(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    d = Draw.MolDraw2DSVG(900, 300)
+    d.DrawReaction(rxn)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<svg:svg") != -1)
+    self.assertTrue(txt.find("</svg:svg>") != -1)
+    #print(txt,file=open('blah1.svg','w+'))
+
+  def testReaction2(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    d = Draw.MolDraw2DSVG(900, 300)
+    d.DrawReaction(rxn,highlightByReactant=True)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<svg:svg") != -1)
+    self.assertTrue(txt.find("</svg:svg>") != -1)
+    #print(txt,file=open('blah2.svg','w+'))
 
 if __name__ == "__main__":
   unittest.main()
