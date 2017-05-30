@@ -17,6 +17,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 
 #include <cstdlib>
@@ -357,28 +358,36 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
 
 namespace {
 void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
-                    int confId, bool shiftAgents) {
+                    double &minY, int confId, bool shiftAgents,
+                    double coordScale) {
   try {
     MolOps::sanitizeMol(mol);
   } catch (const MolSanitizeException &e) {
     mol.updatePropertyCache(false);
   }
-  // this also generates coordinates
+  const bool canonOrient = true;
+  RDDepict::compute2DCoords(mol, NULL, canonOrient);
   MolDraw2DUtils::prepareMolForDrawing(mol);
   double minX = 1e8;
   double maxX = -1e8;
+  double vShift = 0;
+  if (shiftAgents) {
+    vShift = maxY / 2;
+  }
 
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = conf.getAtomPos(i);
+    p *= coordScale;
     minX = std::min(minX, conf.getAtomPos(i).x);
   }
   offset += abs(minX);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     RDGeom::Point3D &p = conf.getAtomPos(i);
-    if (shiftAgents) {
-      p.y += maxY / 2;
-    } else {
+    p.y += vShift;
+    if (!shiftAgents) {
       maxY = std::max(p.y, maxY);
+      minY = std::min(p.y, minY);
     }
     p.x += offset;
     maxX = std::max(p.x, maxX);
@@ -390,7 +399,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
                             std::vector<double> &plusLocs, double spacing,
                             const std::vector<int> *confIds) {
   plusLocs.resize(0);
-  double maxY = -1e8;
+  double maxY = -1e8, minY = 1e8;
   double offset = 0.0;
 
   // reactants
@@ -403,7 +412,8 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     ROMOL_SPTR reactant = rxn.getReactants()[midx];
     int cid = -1;
     if (confIds) cid = (*confIds)[midx];
-    get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, cid, false);
+    get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, minY, cid,
+                   false, 1.0);
   }
   arrowBegin.x = offset;
 
@@ -412,7 +422,8 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     ROMOL_SPTR agent = rxn.getAgents()[midx];
     int cid = -1;
     if (confIds) cid = (*confIds)[midx];
-    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, cid, true);
+    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
+                   true, 0.5);
   }
   if (rxn.getNumAgentTemplates()) {
     arrowEnd.x = offset - spacing;
@@ -421,7 +432,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
   }
   offset = arrowEnd.x + 1.5 * spacing;
 
-  // reactants
+  // products
   for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
     // add the "+" if required
     if (midx > 0) {
@@ -431,10 +442,11 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
     ROMOL_SPTR product = rxn.getProducts()[midx];
     int cid = -1;
     if (confIds) cid = (*confIds)[midx];
-    get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, cid, false);
+    get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, minY, cid,
+                   false, 1.0);
   }
 
-  arrowBegin.y = arrowEnd.y = maxY / 2;
+  arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
 }
 }
 
@@ -459,74 +471,39 @@ void MolDraw2D::drawReaction(
   drawMolecule(*tmol);
   delete tmol;
 
-#if 0
-  std::vector<ROMol *> ms;
-  for (unsigned int i = 0; i < rxn.getNumReactantTemplates(); ++i) {
-    ms.push_back(rxn.getReactants()[i].get());
-  }
-  ms.push_back(NULL);
-  for (unsigned int i = 0; i < rxn.getNumProductTemplates(); ++i) {
-    ms.push_back(rxn.getProducts()[i].get());
-  }
-  drawMolecules(ms, legends, highlight_atoms, highlight_bonds,
-                highlight_atom_maps, highlight_bond_maps, highlight_radii,
-                confIds);
-  double oscale = scale_;
-  if (rxn.getNumAgentTemplates()) {
-    RWMol agent(*rxn.getAgents()[0]);
-    for (unsigned int i = 1; i < rxn.getNumAgentTemplates(); ++i) {
-      agent.insertMol(*rxn.getAgents()[i]);
-    }
-    setOffset(rxn.getNumReactantTemplates() * panelWidth(),
-              -panelHeight() / 2.);
-    MolDraw2DUtils::prepareMolForDrawing(agent);
-    scale_ *= 0.5;
-    agent.debugMol(std::cerr);
-    drawMolecule(agent);
-  }
-  scale_ = oscale;
-  // now add the symbols
   double o_font_size = fontSize();
-  setFontSize(options_.legendFontSize /
-              scale_);  // set the font size to about 12 pixels high
+  setFontSize(2 * options_.legendFontSize / scale_);
   DrawColour odc = colour();
   setColour(options_.symbolColour);
-  for (unsigned int i = 1; i < rxn.getNumReactantTemplates(); ++i) {
-    setOffset(i * panelWidth(), 0);
 
-    Point2D loc =
-        getAtomCoords(std::make_pair<double, double>(0.0, 0.5 * panel_height_));
-    drawString("+", loc);
-  }
-  for (unsigned int i = 1; i < rxn.getNumProductTemplates(); ++i) {
-    setOffset((i + rxn.getNumReactantTemplates() + 1) * panelWidth(), 0);
-
-    Point2D loc =
-        getAtomCoords(std::make_pair<double, double>(0.0, 0.5 * panel_height_));
+  // now add the symbols
+  BOOST_FOREACH (double plusLoc, plusLocs) {
+    Point2D loc(plusLoc, arrowBegin.y);
     drawString("+", loc);
   }
 
   // The arrow:
   {
-    setOffset(rxn.getNumReactantTemplates() * panelWidth(), 0);
-    double arrowStart = 0.1 * panel_width_;
-    double arrowEnd = 0.9 * panel_width_;
+    Point2D arrowBegin_canvas = getDrawCoords(arrowBegin);
+    Point2D arrowEnd_canvas = getDrawCoords(arrowEnd);
+
+    double arrowStart = arrowBegin_canvas.x;
+    double arrowEnd = arrowEnd_canvas.x;
     double headx = 0.05 * (arrowEnd - arrowStart);
-    double heady = 0.05 * panel_height_;
+    double heady = 2 * headx / 3;
     Point2D loc1 =
-        getAtomCoords(std::make_pair(arrowStart, 0.5 * panel_height_));
-    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, 0.5 * panel_height_));
+        getAtomCoords(std::make_pair(arrowStart, arrowBegin_canvas.y));
+    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, arrowBegin_canvas.y));
     drawLine(loc1, loc2);
     loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, 0.5 * panel_height_ + heady));
+        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y + heady));
     drawLine(loc1, loc2);
     loc1 = getAtomCoords(
-        std::make_pair(arrowEnd - headx, 0.5 * panel_height_ - heady));
+        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y - heady));
     drawLine(loc1, loc2);
   }
   setColour(odc);
   setFontSize(o_font_size);
-#endif
 }
 
 void MolDraw2D::drawMolecules(
