@@ -81,6 +81,39 @@ void test1() {
     delete rxn;
   }
 
+  {
+    std::string smiles =
+        "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
+        "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
+    std::string nameBase = "rxn_test1_2";
+    bool useSmiles = true;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    // sanitizeReactionComponents(*rxn);
+
+    double panex = 200, paney = 150;
+    double width = panex * (rxn->getNumReactantTemplates() +
+                            rxn->getNumProductTemplates() + 1);
+    double height = paney;
+#ifdef RDK_CAIRO_BUILD
+    {
+      MolDraw2DCairo drawer(width, height);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      drawer.writeDrawingText(nameBase + ".png");
+    }
+#endif
+    {
+      std::ofstream outs((nameBase + ".svg").c_str());
+      MolDraw2DSVG drawer(width, height, outs);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      outs.flush();
+    }
+    delete rxn;
+  }
+
   std::cout << " Done" << std::endl;
 }
 
