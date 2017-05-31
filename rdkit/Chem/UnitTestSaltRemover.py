@@ -31,5 +31,11 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(tuple.deleted), 1)
     self.assertEqual(Chem.MolToSmiles(tuple.deleted[0]), '[Na+]')
 
+  def test_withSmiFile(self):
+    testFile = os.sep.join(
+      [os.path.dirname(os.path.abspath(__file__)), 'test_data', 'c6h6-cdk.smi'])
+    remover = SaltRemover(defnFilename=testFile, defnFormat=InputFormat.SMILES)
+    self.assertEqual(len(remover.salts), 216)
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

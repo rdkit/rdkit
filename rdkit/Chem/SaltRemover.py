@@ -36,7 +36,7 @@ from collections import namedtuple
 from contextlib import closing
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem.rdmolfiles import SDMolSupplier
+from rdkit.Chem.rdmolfiles import SDMolSupplier, SmilesMolSupplier
 
 class InputFormat:
   SMARTS = 'smarts'
@@ -47,6 +47,7 @@ def _smartsFromSmartsLine(line):
   """
   Converts given line into a molecule using 'Chem.MolFromSmarts'.
   """
+  # Name the regular expression (better than inlining it)
   whitespace = re.compile(r'[\t ]+')
   # Reflects the specialisation of this method to read the rather unusual
   # SMARTS files with the // comments.
@@ -124,6 +125,8 @@ class SaltRemover(object):
         self.salts = [mol for mol in _getSmartsSaltsFromFile(self.defnFilename)]
       elif self.defnFormat == InputFormat.MOL:
         self.salts = [mol for mol in SDMolSupplier(self.defnFilename)]
+      elif self.defnFormat == InputFormat.SMILES:
+        self.salts = [mol for mol in SmilesMolSupplier(self.defnFilename)]
       else:
         raise ValueError('Unsupported format for supplier.')
 
