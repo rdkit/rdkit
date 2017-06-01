@@ -37,5 +37,15 @@ class TestCase(unittest.TestCase):
     remover = SaltRemover(defnFilename=testFile, defnFormat=InputFormat.SMILES)
     self.assertEqual(len(remover.salts), 216)
 
+  def test_withDontRemoveEverything(self):
+    testFile = os.sep.join(
+      [os.path.dirname(os.path.abspath(__file__)), 'test_data', 'witch-salts.sdf'])
+    remover = SaltRemover(defnFilename=testFile, defnFormat=InputFormat.MOL)
+    m = Chem.MolFromSmiles('Cc1ccccc1')
+    mol, deleted = remover.StripMolWithDeleted(m, dontRemoveEverything=True)
+    # List should be empty
+    self.assertFalse(deleted)
+    self.assertEqual(m, mol)
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

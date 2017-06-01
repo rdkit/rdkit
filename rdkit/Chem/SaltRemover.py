@@ -93,9 +93,18 @@ class SaltRemover(object):
     >>> len(remover.salts)>0
     True
 
+    Default input format is SMARTS
     >>> remover = SaltRemover(defnData="[Cl,Br]")
     >>> len(remover.salts)
     1
+
+    >>> remover = SaltRemover(defnData="[Cl,Br]", defnFormat=InputFormat.SMARTS)
+    >>> len(remover.salts)
+    1
+
+    >>> remover = SaltRemover(defnData="[Na+]\\nCC(=O)O", defnFormat=InputFormat.SMILES)
+    >>> len(remover.salts)
+    2
 
     >>> from rdkit import RDLogger
     >>> RDLogger.DisableLog('rdApp.error')
@@ -196,6 +205,21 @@ class SaltRemover(object):
   def StripMolWithDeleted(self, mol, dontRemoveEverything=False):
     """
     Strips given molecule and returns it, with the fragments which have been deleted.
+
+    >>> remover = SaltRemover(defnData="[Cl,Br]")
+    >>> len(remover.salts)
+    1
+
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl')
+    >>> res, deleted = remover.StripMolWithDeleted(mol)
+    >>> res.GetNumAtoms()
+    4
+    >>> len(deleted)
+    1
+    >>> deleted[0].GetNumAtoms()
+    1
+    >>> Chem.MolToSmiles(deleted[0])
+    'Cl'
     """
     return self._StripMol(mol, dontRemoveEverything)
 
@@ -219,11 +243,12 @@ class SaltRemover(object):
         res = t
       return res
 
+    StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
+    deleted = []
     if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
-      return mol
+      return StrippedMol(mol, deleted)
     modified = False
     natoms = mol.GetNumAtoms()
-    deleted = []
     for salt in self.salts:
       mol = _applyPattern(mol, salt, dontRemoveEverything)
       if natoms != mol.GetNumAtoms():
@@ -234,7 +259,6 @@ class SaltRemover(object):
           break
     if modified and mol.GetNumAtoms() > 0:
       Chem.SanitizeMol(mol)
-    StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
     return StrippedMol(mol, deleted)
 
   def __call__(self, mol, dontRemoveEverything=False):
