@@ -829,19 +829,17 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               endNbrAid = endAtomNeighbors[1].first;
             }
 
-            bool conflictingBegin = false;
-            bool conflictingEnd = false;
-            if (begAtomNeighbors.size() == 2 &&
-                begAtomNeighbors[0].second == begAtomNeighbors[1].second)
-              conflictingBegin = true;
-            if (endAtomNeighbors.size() == 2 &&
-                endAtomNeighbors[0].second == endAtomNeighbors[1].second)
-              conflictingEnd = true;
+            bool conflictingBegin =
+                (begAtomNeighbors.size() == 2 &&
+                 begAtomNeighbors[0].second == begAtomNeighbors[1].second);
+            bool conflictingEnd =
+                (endAtomNeighbors.size() == 2 &&
+                 endAtomNeighbors[0].second == endAtomNeighbors[1].second);
             if (conflictingBegin || conflictingEnd) {
               dblBond->setStereo(Bond::STEREONONE);
-              BOOST_LOG(rdWarningLog)
-                  << "Conflicting single bond directions around double bond "
-                  << dblBond->getIdx() << "." << std::endl;
+              BOOST_LOG(rdWarningLog) << "Conflicting single bond directions "
+                                         "around double bond at index"
+                                      << dblBond->getIdx() << "." << std::endl;
               BOOST_LOG(rdWarningLog) << "  BondStereo set to STEREONONE and "
                                          "single bond directions set to NONE."
                                       << std::endl;
