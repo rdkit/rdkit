@@ -838,7 +838,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
             if (conflictingBegin || conflictingEnd) {
               dblBond->setStereo(Bond::STEREONONE);
               BOOST_LOG(rdWarningLog) << "Conflicting single bond directions "
-                                         "around double bond at index"
+                                         "around double bond at index "
                                       << dblBond->getIdx() << "." << std::endl;
               BOOST_LOG(rdWarningLog) << "  BondStereo set to STEREONONE and "
                                          "single bond directions set to NONE."
