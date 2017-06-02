@@ -98,10 +98,6 @@ class SaltRemover(object):
     >>> len(remover.salts)
     1
 
-    >>> remover = SaltRemover(defnData="[Cl,Br]", defnFormat=InputFormat.SMARTS)
-    >>> len(remover.salts)
-    1
-
     >>> remover = SaltRemover(defnData="[Na+]\\nCC(=O)O", defnFormat=InputFormat.SMILES)
     >>> len(remover.salts)
     2
@@ -209,6 +205,13 @@ class SaltRemover(object):
     >>> remover = SaltRemover(defnData="[Cl,Br]")
     >>> len(remover.salts)
     1
+
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Br')
+    >>> res, deleted = remover.StripMolWithDeleted(mol)
+    >>> Chem.MolToSmiles(res)
+    'CN(C)C'
+    >>> [Chem.MolToSmarts(m) for m in deleted]
+    ['[Cl,Br]']
 
     >>> mol = Chem.MolFromSmiles('CN(C)C.Cl')
     >>> res, deleted = remover.StripMolWithDeleted(mol)

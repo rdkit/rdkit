@@ -47,5 +47,25 @@ class TestCase(unittest.TestCase):
     self.assertFalse(deleted)
     self.assertEqual(m, mol)
 
+  def test_SmilesVsSmarts(self):
+    # SMARTS
+    remover = SaltRemover(defnData="[Cl,Br]")
+    mol = Chem.MolFromSmiles('CN(Br)Cl.Cl')
+    res = remover.StripMol(mol)
+    self.assertEqual(res.GetNumAtoms(), 4)
+    self.assertEqual(Chem.MolToSmiles(res), 'CN(Cl)Br')
+    mol = Chem.MolFromSmiles('CN(C)C.Cl.Br')
+    res, deleted = remover.StripMolWithDeleted(mol)
+    self.assertEqual(Chem.MolToSmiles(res), 'CN(C)C')
+    # Because we read in SMARTS, we should output as well. Otherwise, we will have
+    # mismatches
+    self.assertListEqual([Chem.MolToSmarts(m) for m in deleted], ['[Cl,Br]'])
+    # SMILES
+    remover = SaltRemover(defnData="Cl", defnFormat=InputFormat.SMILES)
+    mol = Chem.MolFromSmiles('CN(Br)Cl.Cl')
+    res = remover.StripMol(mol)
+    self.assertEqual(res.GetNumAtoms(), 4)
+    self.assertEqual(Chem.MolToSmiles(res), 'CN(Cl)Br')
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()
