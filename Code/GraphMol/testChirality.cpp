@@ -2287,6 +2287,92 @@ void testGithub1294() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1423() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 1423: Generate a warning for "
+                          "conflicting bond directions"
+                       << std::endl;
+
+  {  // this one is ok:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(/F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(warns.str() == "");
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // this one has a conflict:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+  {  // from the question that prompted this
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "CCCO\\C(=C/c1ccccc1)/C(\\OCC)=C\\c1ccccc1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/[C@H](F)C=C(F)C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C1=C/C=C=C=C2C(=C([Si](C)(C)C)\\C=C/1)C(=O)c1ccccc12";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2311,7 +2397,8 @@ int main() {
   testIssue2705543();
   testGithub553();
   testGithub803();
-#endif
   testGithub1294();
+#endif
+  testGithub1423();
   return 0;
 }
