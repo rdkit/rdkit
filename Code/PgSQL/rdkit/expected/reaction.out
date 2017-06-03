@@ -672,7 +672,7 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5)
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',5));
    tanimoto_sml    
 -------------------
- 0.578571428571429
+ 0.588652482269504
 (1 row)
 
 SET rdkit.agent_FP_bit_ratio=0.5;
@@ -865,9 +865,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5)
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',5), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',5));
-   tanimoto_sml   
-------------------
- 0.58695652173913
+   tanimoto_sml    
+-------------------
+ 0.592857142857143
 (1 row)
 
 SET rdkit.ignore_reaction_agents=true;

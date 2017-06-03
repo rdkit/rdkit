@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -374,7 +373,7 @@ void test8() {
       TEST_ASSERT((*queryIt)->getIdx() == 1);
       nSeen++;
     }
-    TEST_ASSERT(nSeen = 1);
+    TEST_ASSERT(nSeen == 1);
     delete m;
     delete q;
   }

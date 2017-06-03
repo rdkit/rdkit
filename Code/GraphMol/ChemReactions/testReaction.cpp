@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +42,7 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Atom.h>
 #include <fstream>
@@ -5985,6 +5985,506 @@ void test64Github1266() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void test65SanitizeUnmappedHs() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Tests sanitize reaction (unmapped Hs) " << std::endl;
+
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701170941\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -2.5620    0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4235   -0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -3.0587   -0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.8322   -0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.3355    0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -1.7581    0.7120    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.0942    1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.5124    0.9090    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.3663   -1.1553    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.3000   -1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.8242    1.4780    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -2.2307    1.2821    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.9706    0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -2.5700   -1.4780    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -1.6500   -0.5736    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.6278   -0.3082    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      "  6  6  0  0  0  0            999 V2000\n"
+      "    3.8966    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.6111    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.6111   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    3.8966   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.1821   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.1821    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "M  END";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test66SanitizeMappedHs() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests sanitize reaction (mapped hs in react but not prod) "
+      << std::endl;
+
+  // H's are mapped in reactant but do not exist in product,
+  //  they can be merged
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701170941\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -2.5620    0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4235   -0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -3.0587   -0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.8322   -0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.3355    0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -1.7581    0.7120    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "   -3.0942    1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "   -4.5124    0.9090    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "   -4.3663   -1.1553    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "   -3.3000   -1.6022    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "   -3.8242    1.4780    0.0000 H   0  0  0  0  0  0  0  0  0 12  0  0\n"
+      "   -2.2307    1.2821    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "   -3.9706    0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -2.5700   -1.4780    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "   -1.6500   -0.5736    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "   -4.6278   -0.3082    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      "  6  6  0  0  0  0            999 V2000\n"
+      "    3.8966    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.6111    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.6111   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    3.8966   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.1821   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.1821    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "M  END";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test67SanitizeMappedHsInReactantAndProd() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests sanitize reaction (mapped hs in react and prod) " << std::endl;
+
+  // H's are mapped in reactant and in prod
+  //  they can be merged
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701171002\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710022D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -3.1881    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4736    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -2.4736   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.1881   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.9025    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -2.8178    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "   -4.3559    1.1018    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "   -4.6170   -0.8250    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "   -3.5583   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "   -2.0203   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "   -4.7262    0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 12  0  0\n"
+      "   -3.5583    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "   -3.9025   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -1.6500   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "   -1.7591    0.8250    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "   -2.8178   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710022D          \n"
+      "\n"
+      " 17 17  0  0  0  0            999 V2000\n"
+      "    4.1309    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.8454    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.8454   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    4.1309   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.4165   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.4165    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "    4.5012    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "    3.7607    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "    5.6690    0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "    5.2987    1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 17  0  0\n"
+      "    5.2987   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "    3.7607   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "    2.9631   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "    2.5929   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 18  0  0\n"
+      "    2.7020    0.8250    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "    4.5012   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "    5.6690   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  1  7  1  0  0  0  0\n"
+      "  1  8  1  0  0  0  0\n"
+      "  2  9  1  0  0  0  0\n"
+      "  2 10  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 11  1  0  0  0  0\n"
+      "  3 17  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  4 12  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "  5 14  1  0  0  0  0\n"
+      "  5 13  1  0  0  0  0\n"
+      "  6 15  1  0  0  0  0\n"
+      "M  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+void test68MappedHToHeavy() {
+  const std::string rxnblock =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701171005\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710052D          \n"
+      "\n"
+      "  3  2  0  0  0  0            999 V2000\n"
+      "   -1.2721   -0.0116    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -1.9866   -0.4241    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -1.2721    0.8134    0.0000 H   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "  2  1  1  0  0  0  0\n"
+      "  1  3  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710052D          \n"
+      "\n"
+      "  3  2  0  0  0  0            999 V2000\n"
+      "    2.3886   -0.0563    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    1.6741   -0.4688    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    2.3886    0.7688    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "  2  1  1  0  0  0  0\n"
+      "  1  3  1  0  0  0  0\n"
+      "M  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxnblock);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("CC")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 6);
+
+  std::stringstream sstrm;
+  rdWarningLog->SetTee(sstrm);
+  RxnOps::sanitizeRxn(*rxn);
+  std::string s = sstrm.str();
+  std::cerr << s << std::endl;
+  TEST_ASSERT(s.find("Reaction has explicit hydrogens, reactants will need "
+                     "explicit hydrogens (addHs)") != std::string::npos);
+  rdWarningLog->ClearTee();
+
+  delete rxn;
+}
+
+void test69Github1387() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests github1387: Bond from reactant not added to product"
+      << std::endl;
+
+  {
+    const std::string smarts =
+        "([*:1]-[O:2][CH3:3].[*:4]-[O:5][CH3:6])>>([*:1]-[O:2][C:3]C.[*:4]-[O:"
+        "5][C:6]C)";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {  // this always worked
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) == NULL);
+    }
+    {  // the bug:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != NULL);
+    }
+    {  // the bug, plus a ring closure:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COC1CCC1OC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != NULL);
+    }
+    delete rxn;
+  }
+  {  // reorder the same reaction
+    const std::string smarts =
+        "([O:2](-[*:1])[CH3:3].[CH3:6][O:5]-[*:4])>>(C[C:3][O:2]-[*:1].[*:4]"
+        "-[O:5][C:6]C)";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {  // this always worked
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) == NULL);
+    }
+    {  // the bug:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
+    }
+    {  // the bug, plus a ring closure:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COC1CCC1OC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != NULL);
+    }
+
+    delete rxn;
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6058,10 +6558,16 @@ int main() {
   test61Github685();
   test62Github975();
   test63CopyConstructor();
-#endif
-
   test43Github243();
   test64Github1266();
+  test65SanitizeUnmappedHs();
+  test66SanitizeMappedHs();
+  test67SanitizeMappedHsInReactantAndProd();
+  test68MappedHToHeavy();
+#endif
+
+  test69Github1387();
+
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

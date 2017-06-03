@@ -23,15 +23,102 @@ using namespace RDKit;
 
 namespace parser {
 template <typename Iterator>
-std::string read_text_to(Iterator &first, Iterator last, const char sep,
-                         const char blockend) {
-  Iterator start = first;
-  // EFF: there are certainly faster ways to do this
-  while (first != last && *first != sep && *first != blockend) {
+bool read_int(Iterator &first, Iterator last, unsigned int &res) {
+  std::string num = "";
+  while (first != last && *first >= '0' && *first <= '9') {
+    num += *first;
     ++first;
   }
-  std::string res(start, first);
+  if (num == "") {
+    return false;
+  }
+  res = boost::lexical_cast<unsigned int>(num);
+  return true;
+}
+template <typename Iterator>
+bool read_int_pair(Iterator &first, Iterator last, unsigned int &n1,
+                   unsigned int &n2, char sep = '.') {
+  if (!read_int(first, last, n1)) return false;
+  if (first >= last || *first != sep) return false;
+  ++first;
+  return read_int(first, last, n2);
+}
+
+template <typename Iterator>
+std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
+  std::string res = "";
+  Iterator start = first;
+  // EFF: there are certainly faster ways to do this
+  while (first != last && delims.find_first_of(*first) == std::string::npos) {
+    if (*first == '&' && std::distance(first, last) > 2 && *(first + 1) == '#') {
+      // escaped char
+      if (start != first) {
+        res += std::string(start, first);
+      }
+      Iterator next = first + 2;
+      while (next != last && *next >= '0' && *next <= '9') {
+        ++next;
+      }
+      if (next == last || *next != ';')
+        throw RDKit::SmilesParseException(
+            "failure parsing CXSMILES extensions: quoted block not terminated "
+            "with ';'");
+      if (next > first + 2) {
+        std::string blk = std::string(first + 2, next);
+        res += (char)(boost::lexical_cast<int>(blk));
+      }
+      first = next + 1;
+      start = first;
+    } else {
+      ++first;
+    }
+  }
+  if (start != first) res += std::string(start, first);
   return res;
+}
+
+template <typename Iterator>
+bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  if (first >= last || *first != ':') return false;
+  ++first;
+  unsigned int atIdx = 0;
+  while (first != last && *first != '$') {
+    std::string tkn = read_text_to(first, last, ";$");
+    if (tkn != "") {
+      mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::molFileValue,
+                                         tkn);
+    }
+    ++atIdx;
+    if (first != last && *first != '$') ++first;
+  }
+  if (first == last || *first != '$') return false;
+  ++first;
+  return true;
+}
+
+template <typename Iterator>
+bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+  if (first >= last) return false;
+  while (first != last && *first != '|' && *first != ',') {
+    unsigned int atIdx;
+    if (read_int(first, last, atIdx)) {
+      if (first == last || *first != '.') return false;
+      ++first;
+      std::string pname = read_text_to(first, last, ".");
+      if (pname != "") {
+        if (first == last || *first != '.') return false;
+        ++first;
+        std::string pval = read_text_to(first, last, ":|,");
+        if (pval != "") {
+          mol.getAtomWithIdx(atIdx)->setProp(pname, pval);
+        }
+      }
+    }
+    if (first != last && *first != '|' && *first != ',') ++first;
+  }
+  if (first != last && *first != '|' && *first != ',') return false;
+  if (*first != '|') ++first;
+  return true;
 }
 
 template <typename Iterator>
@@ -40,7 +127,7 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   ++first;
   unsigned int atIdx = 0;
   while (first != last && *first != '$') {
-    std::string tkn = read_text_to(first, last, ';', '$');
+    std::string tkn = read_text_to(first, last, ";$");
     if (tkn != "") {
       mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::atomLabel,
                                          tkn);
@@ -63,7 +150,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   unsigned int atIdx = 0;
   while (first != last && *first != ')') {
     RDGeom::Point3D pt;
-    std::string tkn = read_text_to(first, last, ';', ')');
+    std::string tkn = read_text_to(first, last, ";)");
     if (tkn != "") {
       std::vector<std::string> tokens;
       boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
@@ -82,28 +169,6 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first == last || *first != ')') return false;
   ++first;
   return true;
-}
-
-template <typename Iterator>
-bool read_int(Iterator &first, Iterator last, unsigned int &res) {
-  std::string num = "";
-  while (first != last && *first >= '0' && *first <= '9') {
-    num += *first;
-    ++first;
-  }
-  if (num == "") {
-    return false;
-  }
-  res = boost::lexical_cast<unsigned int>(num);
-  return true;
-}
-template <typename Iterator>
-bool read_int_pair(Iterator &first, Iterator last, unsigned int &n1,
-                   unsigned int &n2, char sep = '.') {
-  if (!read_int(first, last, n1)) return false;
-  if (first >= last || *first != sep) return false;
-  ++first;
-  return read_int(first, last, n2);
 }
 
 template <typename Iterator>
@@ -191,14 +256,27 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   if (first >= last || *first != '|') return false;
   ++first;
   while (first < last && *first != '|') {
+    typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
       if (!parse_coords(first, last, mol)) return false;
     } else if (*first == '$') {
-      if (!parse_atom_labels(first, last, mol)) return false;
+      if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
+          *(first + 3) == 'V' && *(first + 4) == ':') {
+        first += 4;
+        if (!parse_atom_values(first, last, mol)) return false;
+      } else {
+        if (!parse_atom_labels(first, last, mol)) return false;
+      }
+    } else if (length > 9 &&
+               std::string(first, first + 9) == "atomProp:") {
+      first += 9;
+      if (!parse_atom_props(first, last, mol)) return false;
     } else if (*first == 'C') {
       if (!parse_coordinate_bonds(first, last, mol)) return false;
     } else if (*first == '^') {
       if (!parse_radicals(first, last, mol)) return false;
+    } else {
+      ++first;
     }
     // if(first < last && *first != '|') ++first;
   }

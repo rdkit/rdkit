@@ -44,14 +44,15 @@ class MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,            // no data pickled
-  MolProps = 0x1,         // only public non computed properties
+  NoProps = 0,     // no data pickled
+  MolProps = 0x1,  // only public non computed properties
   AtomProps = 0x10,
   BondProps = 0x100,
   QueryAtomData = 0x100,
   PrivateProps = 0x10000,
   ComputedProps = 0x100000,
-  AllProps = 0xFFFFFFFF,  // all data pickled
+  AllProps =
+      0x7FFFFFFF,  // all data pickled (only 31 bit flags in case enum==int)
 } PropertyPickleOptions;
 }
 
@@ -169,7 +170,7 @@ class MolPickler {
 
  private:
   //! Pickle nonquery atom data
-  static int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
+  static boost::int32_t _pickleAtomData(std::ostream &tss, const Atom *atom);
   //! depickle nonquery atom data
   static void _unpickleAtomData(std::istream &tss, Atom *atom, int version);
 

@@ -1026,6 +1026,169 @@ void testCisTransMatch() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testCisTransMatch2() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test cis/trans matching part 2" << std::endl;
+
+  {
+    std::string qSmi = "CC=CC";
+    std::string mSmi = "CCC=CC";
+    ROMol *query = SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    TEST_ASSERT(query->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(1);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(4);
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    query->getBondWithIdx(1)->setStereo(Bond::STEREONONE);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+  }
+
+  {
+    std::string qSmi = "CC=CC";
+    std::string mSmi = "CC=C(C)F";
+    ROMol *query = SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    TEST_ASSERT(query->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    mol->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    mol->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    mol->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    mol->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    query->getBondWithIdx(1)->setStereo(Bond::STEREONONE);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+  }
+
+  {
+    std::string qSmi = "CC=CC";
+    std::string mSmi = "CCC=C(C)F";
+    ROMol *query = SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(query->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(1);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(4);
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    query->getBondWithIdx(1)->setStereo(Bond::STEREONONE);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+  }
+
+  {  // now make it harder: the stereoatoms don't match, but the stereochemistry
+     // does
+    std::string qSmi = "CC=CC";
+    std::string mSmi = "CCC=C(C)F";
+    ROMol *query = SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    TEST_ASSERT(query->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(1);
+    mol->getBondWithIdx(2)->getStereoAtoms().push_back(5);
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    query->getBondWithIdx(1)->setStereo(Bond::STEREONONE);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+  }
+
+  {  // now make it harder: the stereoatoms don't match on either end, but the
+     // stereochemistry does
+    std::string qSmi = "CC=CC";
+    std::string mSmi = "CCC(F)=C(C)F";
+    ROMol *query = SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    TEST_ASSERT(query->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(0);
+    query->getBondWithIdx(1)->getStereoAtoms().push_back(3);
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    TEST_ASSERT(mol->getBondWithIdx(3)->getBondType() == Bond::DOUBLE);
+    mol->getBondWithIdx(3)->getStereoAtoms().push_back(3);
+    mol->getBondWithIdx(3)->getStereoAtoms().push_back(6);
+    mol->getBondWithIdx(3)->setStereo(Bond::STEREOCIS);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+
+    mol->getBondWithIdx(3)->setStereo(Bond::STEREOTRANS);
+    TEST_ASSERT(!SubstructMatch(*mol, *query, matchV, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, false));
+
+    query->getBondWithIdx(1)->setStereo(Bond::STEREONONE);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+    query->getBondWithIdx(1)->setStereo(Bond::STEREOANY);
+    TEST_ASSERT(SubstructMatch(*mol, *query, matchV, true, true));
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testGitHubIssue15() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test GitHub issue 15" << std::endl;
@@ -1211,12 +1374,14 @@ int main(int argc, char *argv[]) {
   // test9();
   testRecursiveSerialNumbers();
   testMultiThread();
-  testCisTransMatch();
   testGitHubIssue15();
   testGitHubIssue409();
-#endif
   testChiralMatch();
   testGitHubIssue688();
   testDativeMatch();
+  testCisTransMatch();
+
+#endif
+  testCisTransMatch2();
   return 0;
 }

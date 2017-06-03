@@ -82,7 +82,22 @@ inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
 }
 
 // Default adjustment parameters for ChemDraw style matching of reagents
+//  -- deprecated - renamed MatchOnlyAtRgroupsAdjustParams
+//  -- this doesn't match sciquest style searching
 inline const MolOps::AdjustQueryParameters ChemDrawRxnAdjustParams() {
+  BOOST_LOG(rdWarningLog) <<
+      " deprecated -- please use MatchOnlyAtRgroupsAdjustParams instead" << std::endl;
+  MolOps::AdjustQueryParameters params;
+  params.adjustDegree = true;
+  params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+  params.adjustRingCount = false;
+  params.adjustRingCountFlags = MolOps::ADJUST_IGNORENONE;
+  params.makeDummiesQueries = false;
+  params.aromatizeIfPossible = true;
+  return params;
+}
+
+inline const MolOps::AdjustQueryParameters MatchOnlyAtRgroupsAdjustParams() {
   MolOps::AdjustQueryParameters params;
   params.adjustDegree = true;
   params.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;

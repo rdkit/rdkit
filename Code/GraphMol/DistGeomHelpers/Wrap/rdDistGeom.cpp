@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -313,11 +312,38 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      &RDKit::DGeomHelpers::EmbedParameters::pruneRmsThresh,
                      "used to filter multiple conformations: keep only "
                      "conformations that are at least this far apart from each "
-                     "other");
+                     "other")
+      .def_readwrite(
+          "onlyHeavyAtomsForRMS",
+          &RDKit::DGeomHelpers::EmbedParameters::onlyHeavyAtomsForRMS,
+          "Only consider heavy atoms when doing RMS filtering");
+  docString =
+      "Use distance geometry to obtain multiple sets of \n\
+ coordinates for a molecule\n\
+ \n\
+ ARGUMENTS:\n\n\
+  - mol : the molecule of interest\n\
+  - numConfs : the number of conformers to generate \n\
+  - params : an EmbedParameters object \n\
+ RETURNS:\n\n\
+    List of new conformation IDs \n\
+\n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
       (python::arg("mol"), python::arg("numConfs"), python::arg("params")),
       docString.c_str());
+
+  docString =
+      "Use distance geometry to obtain intial \n\
+ coordinates for a molecule\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interest\n\
+    - params : an EmbedParameters object \n\
+\n\
+ RETURNS:\n\n\
+    ID of the new conformation added to the molecule \n\
+\n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
   python::def("ETKDG", RDKit::getETKDG,

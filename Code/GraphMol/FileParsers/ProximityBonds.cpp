@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2017 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,12 +24,14 @@ static const double MAXDIST2 = 29.7025;  // MAXDIST*MAXDIST
 
 struct ProximityEntry {
   float x, y, z, r;
-  int atm, hash, next;
+  int atm, hash, next, elem;
 
   bool operator<(const ProximityEntry &p) const { return x < p.x; }
 };
 
-static bool IsBonded(ProximityEntry *p, ProximityEntry *q) {
+static bool IsBonded(ProximityEntry *p, ProximityEntry *q, unsigned int flags) {
+  if (flags & ctdIGNORE_H_H_CONTACTS && p->elem == 1 && q->elem == 1)
+    return false;
   double dx = (double)p->x - (double)q->x;
   double dist2 = dx * dx;
   if (dist2 > MAXDIST2) return false;
@@ -112,7 +114,7 @@ for (int j=0; j<count; j++) {
 #define HASHY 127
 #define HASHZ 3
 
-static void ConnectTheDots_Large(RWMol *mol) {
+static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
   int HashTable[HASHSIZE];
   memset(HashTable, -1, sizeof(HashTable));
 
@@ -132,6 +134,7 @@ static void ConnectTheDots_Large(RWMol *mol) {
     tmpi->z = (float)p.z;
     tmpi->r = (float)table->getRcovalent(elem);
     tmpi->atm = i;
+    tmpi->elem = elem;
 
     int hash = HASHX * (int)(p.x / MAXDIST) + HASHY * (int)(p.y / MAXDIST) +
                HASHZ * (int)(p.z / MAXDIST);
@@ -143,7 +146,7 @@ static void ConnectTheDots_Large(RWMol *mol) {
           int list = HashTable[probe & HASHMASK];
           while (list != -1) {
             ProximityEntry *tmpj = &tmp[list];
-            if (tmpj->hash == probe && IsBonded(tmpi, tmpj) &&
+            if (tmpj->hash == probe && IsBonded(tmpi, tmpj, flags) &&
                 !mol->getBondBetweenAtoms(tmpi->atm, tmpj->atm))
               mol->addBond(tmpi->atm, tmpj->atm, Bond::SINGLE);
             list = tmpj->next;
@@ -158,10 +161,10 @@ static void ConnectTheDots_Large(RWMol *mol) {
   free(tmp);
 }
 
-void ConnectTheDots(RWMol *mol) {
+void ConnectTheDots(RWMol *mol, unsigned int flags) {
   if (!mol || !mol->getNumConformers()) return;
   // Determine optimal algorithm to use by getNumAtoms()?
-  ConnectTheDots_Large(mol);
+  ConnectTheDots_Large(mol, flags);
 }
 
 bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {

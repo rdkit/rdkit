@@ -8,6 +8,8 @@
 // Original author: David Cosgrove (AstraZeneca)
 // 27th May 2014
 //
+// Extensively modified by Greg Landrum
+//
 
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -27,6 +29,22 @@ using namespace boost;
 using namespace std;
 
 namespace RDKit {
+
+namespace {
+void getBondHighlightsForAtoms(const ROMol &mol,
+                               const vector<int> &highlight_atoms,
+                               vector<int> &highlight_bonds) {
+  highlight_bonds.clear();
+  for (vector<int>::const_iterator ai = highlight_atoms.begin();
+       ai != highlight_atoms.end(); ++ai) {
+    for (vector<int>::const_iterator aj = ai + 1; aj != highlight_atoms.end();
+         ++aj) {
+      const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
+      if (bnd) highlight_bonds.push_back(bnd->getIdx());
+    }
+  }
+}
+}
 
 // ****************************************************************************
 MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
@@ -63,14 +81,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    for (vector<int>::const_iterator ai = highlight_atoms->begin();
-         ai != highlight_atoms->end(); ++ai) {
-      for (vector<int>::const_iterator aj = ai + 1;
-           aj != highlight_atoms->end(); ++aj) {
-        const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-        if (bnd) highlight_bonds.push_back(bnd->getIdx());
-      }
-    }
+    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
                highlight_atom_map, NULL, highlight_radii, confId);
@@ -140,6 +151,7 @@ void MolDraw2D::doContinuousHighlighting(
             highlight_radii->find(this_idx) != highlight_radii->end()) {
           radius = highlight_radii->find(this_idx)->second;
         }
+
         Point2D offset(radius, radius);
         p1 -= offset;
         p2 += offset;
@@ -282,8 +294,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     while (atom != end_atom) {
       const Atom *at1 = mol[*atom].get();
       ++atom;
-      if (drawOptions().atomLabels.find(at1->getIdx()) !=
-          drawOptions().atomLabels.end()) {
+      if (at1->hasProp(common_properties::atomLabel) ||
+          drawOptions().atomLabels.find(at1->getIdx()) !=
+              drawOptions().atomLabels.end()) {
         // skip dummies that explicitly have a label provided
         continue;
       }
@@ -362,6 +375,8 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!highlight_radii || highlight_radii->size() == mols.size(),
                "bad size");
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
+  PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
+  PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
@@ -388,11 +403,16 @@ void MolDraw2D::drawMolecules(
   }
   setScale(panelWidth(), panelHeight(), minP, maxP);
   int nCols = width() / panelWidth();
+  int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
     if (!mols[i]) continue;
 
-    int row = i / nCols;
-    int col = i % nCols;
+    int row = 0;
+    // note that this also works when no panel size is specified since
+    // the panel dimensions defaults to -1
+    if (nRows > 1) row = i / nCols;
+    int col = 0;
+    if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : NULL,
@@ -1266,6 +1286,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     // specified labels are trump: no matter what else happens we will show
     // them.
     symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (atom.hasProp(common_properties::atomLabel)) {
+    symbol = atom.getProp<std::string>(common_properties::atomLabel);
   } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
              atom.getDegree() == 1) {
     symbol = "";

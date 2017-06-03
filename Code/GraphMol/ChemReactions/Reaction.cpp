@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -317,7 +316,8 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
 bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
                                   unsigned int &which) {
   if (!rxn.isInitialized()) {
-    throw ChemicalReactionException("initMatchers() must be called first");
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
   }
   which = 0;
   for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
@@ -338,7 +338,8 @@ bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,
 bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
                                  unsigned int &which) {
   if (!rxn.isInitialized()) {
-    throw ChemicalReactionException("initMatchers() must be called first");
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
   }
   which = 0;
   for (MOL_SPTR_VECT::const_iterator iter = rxn.beginProductTemplates();
@@ -359,7 +360,8 @@ bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,
 bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
                                unsigned int &which) {
   if (!rxn.isInitialized()) {
-    throw ChemicalReactionException("initMatchers() must be called first");
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
   }
   which = 0;
   for (MOL_SPTR_VECT::const_iterator iter = rxn.beginAgentTemplates();
@@ -398,7 +400,8 @@ void addRecursiveQueriesToReaction(
     std::vector<std::vector<std::pair<unsigned int, std::string> > >
         *reactantLabels) {
   if (!rxn.isInitialized()) {
-    throw ChemicalReactionException("initMatchers() must be called first");
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
   }
 
   if (reactantLabels != NULL) {
@@ -576,7 +579,8 @@ bool getMappedAtoms(T &rIt, std::map<int, const Atom *> &mappedAtoms) {
 VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
                                bool mappedAtomsOnly) {
   if (!rxn.isInitialized()) {
-    throw ChemicalReactionException("initMatchers() must be called first");
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
   }
   VECT_INT_VECT res;
   res.resize(rxn.getNumReactantTemplates());

@@ -12,6 +12,7 @@
 
 """
 import warnings
+from collections import namedtuple
 
 import numpy
 
@@ -214,7 +215,7 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   return cmat
 
 
-def EnumerateLibraryFromReaction(reaction, sidechainSets):
+def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False):
   """ Returns a generator for the virtual library defined by
    a reaction and a sequence of sidechain sets
 
@@ -260,10 +261,14 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets):
       else:
         yield [item]
 
+  ProductReactants = namedtuple('ProductReactants', 'products,reactants')
   for chains in _combiEnumerator(sidechainSets):
     prodSets = reaction.RunReactants(chains)
     for prods in prodSets:
-      yield prods
+      if returnReactants:
+        yield ProductReactants(prods, chains)
+      else:
+        yield prods
 
 
 def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,

@@ -49,6 +49,12 @@ double DistViolationContrib::getEnergy(double *pos) const {
   } else {
     res = 0;
   }
+  // if (res > 0.1) {
+  //   std::cerr << "dvc:getEnergy: " << this->d_end1Idx << "-" <<
+  //   this->d_end2Idx
+  //             << ": " << d_lb << "-" << d_ub << " " << d << " => " << res
+  //             << std::endl;
+  // }
   return res;
 }
 
