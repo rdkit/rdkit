@@ -756,7 +756,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
                "bad rank vector size");
   bool assignedABond = false;
   unsigned int unassignedBonds = 0;
-
+  boost::dynamic_bitset<> bondsToClear(mol.getNumBonds());
   // find the double bonds:
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
@@ -828,22 +828,56 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               endDir = endAtomNeighbors[1].second;
               endNbrAid = endAtomNeighbors[1].first;
             }
-            dblBond->getStereoAtoms().push_back(begNbrAid);
-            dblBond->getStereoAtoms().push_back(endNbrAid);
-            if (hasExplicitUnknownStereo) {
-              dblBond->setStereo(Bond::STEREOANY);
+
+            bool conflictingBegin =
+                (begAtomNeighbors.size() == 2 &&
+                 begAtomNeighbors[0].second == begAtomNeighbors[1].second);
+            bool conflictingEnd =
+                (endAtomNeighbors.size() == 2 &&
+                 endAtomNeighbors[0].second == endAtomNeighbors[1].second);
+            if (conflictingBegin || conflictingEnd) {
+              dblBond->setStereo(Bond::STEREONONE);
+              BOOST_LOG(rdWarningLog) << "Conflicting single bond directions "
+                                         "around double bond at index "
+                                      << dblBond->getIdx() << "." << std::endl;
+              BOOST_LOG(rdWarningLog) << "  BondStereo set to STEREONONE and "
+                                         "single bond directions set to NONE."
+                                      << std::endl;
               assignedABond = true;
-            } else if (begDir == endDir) {
-              // In findAtomNeighborDirHelper, we've set up the
-              // bond directions here so that they correspond to
-              // having both single bonds START at the double bond.
-              // This means that if the single bonds point in the same
-              // direction, the bond is cis, "Z"
-              dblBond->setStereo(Bond::STEREOZ);
-              assignedABond = true;
+              if (conflictingBegin) {
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[0].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[1].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
+              if (conflictingEnd) {
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[0].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[1].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
             } else {
-              dblBond->setStereo(Bond::STEREOE);
-              assignedABond = true;
+              dblBond->getStereoAtoms().push_back(begNbrAid);
+              dblBond->getStereoAtoms().push_back(endNbrAid);
+              if (hasExplicitUnknownStereo) {
+                dblBond->setStereo(Bond::STEREOANY);
+                assignedABond = true;
+              } else if (begDir == endDir) {
+                // In findAtomNeighborDirHelper, we've set up the
+                // bond directions here so that they correspond to
+                // having both single bonds START at the double bond.
+                // This means that if the single bonds point in the same
+                // direction, the bond is cis, "Z"
+                dblBond->setStereo(Bond::STEREOZ);
+                assignedABond = true;
+              } else {
+                dblBond->setStereo(Bond::STEREOE);
+                assignedABond = true;
+              }
             }
             --unassignedBonds;
           }
@@ -851,6 +885,11 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       }
     }
   }
+
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    if (bondsToClear[i]) mol.getBondWithIdx(i)->setBondDir(Bond::NONE);
+  }
+
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
