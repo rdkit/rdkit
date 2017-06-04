@@ -269,12 +269,15 @@ def qed(m=None, w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
   """
   if p is None:
       p = properties(m)
+  print(p)
   d = [0.00] * 8
   for i in range(0, 8):
     d[i] = ads(p[i], pads[i][0], pads[i][1], pads[i][2], pads[i][3], pads[i][4], pads[i][5], pads[i][6])
+  print(d)
   t = 0.0
   for i in range(0, 8):
     t += w[i] * log(d[i])
+  print(t)
   return (exp(t / sum(w)))
 
 
