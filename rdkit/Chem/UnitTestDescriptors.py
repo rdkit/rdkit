@@ -11,20 +11,26 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, os.path
+
 import io
-from rdkit.six.moves import cPickle
-from rdkit import Chem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import Lipinski
+import os.path
+import unittest
+import doctest
+
 import numpy as np
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.Chem import AllChem
+from rdkit.Chem import Descriptors
+from rdkit.Chem import Lipinski
+from rdkit.Chem import rdMolDescriptors
+from rdkit.six.moves import cPickle
 
 
-def feq(n1, n2, tol=1e-4):
-  return abs(n1 - n2) <= tol
+def load_tests(loader, tests, ignore):
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(Descriptors, optionflags=doctest.ELLIPSIS))
+  return tests
 
 
 class TestCase(unittest.TestCase):
@@ -36,7 +42,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          v = fn(m)
+          _ = fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
@@ -49,7 +55,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          v = fn(m)
+          _ = fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
@@ -118,6 +124,15 @@ class TestCase(unittest.TestCase):
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs == tgt))
 
-# - - - - -
+  def test_FpDensityMorgan(self):
+    m = Chem.MolFromSmiles('CCCc1ccccc1')
+    fpd1 = Descriptors.FpDensityMorgan1(m)
+    fpd2 = Descriptors.FpDensityMorgan2(m)
+    fpd3 = Descriptors.FpDensityMorgan3(m)
+    self.assertAlmostEqual(fpd1, 2.0)
+    self.assertLess(fpd1, fpd2)
+    self.assertLess(fpd2, fpd3)
+
+
 if __name__ == '__main__':
   unittest.main()

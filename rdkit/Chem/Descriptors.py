@@ -181,6 +181,21 @@ def MinAbsPartialCharge(mol, force=False):
 MinAbsPartialCharge.version = "1.0.0"
 
 from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
+from rdkit.Chem.QED import qed
+
+
+def _FingerprintDensity(mol, func, *args, **kwargs):
+  fp = func(*((mol,) + args), **kwargs)
+  if hasattr(fp, 'GetNumOnBits'):
+    val = fp.GetNumOnBits()
+  else:
+    val = fp.GetTotalVal()
+  return float(val) / mol.GetNumHeavyAtoms()
+
+
+FpDensityMorgan1 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
+FpDensityMorgan2 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
+FpDensityMorgan3 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
 
 _setupDescriptors(locals())
 
@@ -210,16 +225,16 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     raise NotImplementedError("Please implement the __call__ method")
 
 
-  #------------------------------------
-  #
-  #  doctest boilerplate
-  #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()
