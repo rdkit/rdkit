@@ -21,6 +21,11 @@ def load_tests(loader, tests, ignore):
 
 class TestCase(unittest.TestCase):
   pass
+  def test_properties(self):
+    m = Chem.MolFromSmiles('N=C(CCSCc1csc(N=C(N)N)n1)NS(N)(=O)=O')
+    p = QED.properties(m)
+    self.assertEqual([], p)
+    
 
 # 
 # 
