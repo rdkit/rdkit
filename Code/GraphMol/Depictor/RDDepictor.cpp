@@ -149,9 +149,6 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
   ++eri;
   while (eri != efrags.end()) {
     bool xshift = true;
-    std::cerr << " SHIFT: " << xmax << "+" << xmin << "=" << xmax + xmin;
-    std::cerr << "   " << ymax << "+" << ymin << "=" << ymax + ymin;
-    std::cerr << std::endl;
 
     if (xmax + xmin > ymax + ymin) {
       xshift = false;
