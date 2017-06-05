@@ -32,25 +32,15 @@
 // for build & set RDBASE! => export RDBASE=/Users/GVALMTGG/Github/rdkit_mine/
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "WHIM.h"
 #include "MolData3Ddescriptors.h"
-#include <GraphMol/new_canon.h>
 
-#include <Numerics/EigenSolvers/PowerEigenSolver.h>
-
-#include <Numerics/Matrix.h>
-#include <Numerics/SquareMatrix.h>
-#include <Numerics/SymmMatrix.h>
-#include <boost/foreach.hpp>
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 
 using namespace Eigen;
-
-#define EIGEN_TOLERANCE 1.0e-2
 
 namespace RDKit {
 namespace Descriptors {

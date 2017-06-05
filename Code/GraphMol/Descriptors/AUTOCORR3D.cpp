@@ -32,19 +32,10 @@
 // Guillaume GODIN access the AutoCorrelation 3D descriptors names in Dragon TDB
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "AUTOCORR3D.h"
 #include "MolData3Ddescriptors.h"
 
-#include "GraphMol/PartialCharges/GasteigerCharges.h"
-#include "GraphMol/PartialCharges/GasteigerParams.h"
-#include <Numerics/EigenSolvers/PowerEigenSolver.h>
-
-#include <Numerics/Matrix.h>
-#include <Numerics/SquareMatrix.h>
-#include <Numerics/SymmMatrix.h>
-#include <boost/foreach.hpp>
 #include <math.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
