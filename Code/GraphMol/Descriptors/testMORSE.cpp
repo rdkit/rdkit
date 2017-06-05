@@ -20,7 +20,7 @@
 #include <GraphMol/Descriptors/MORSE.h>
 
 void testMORSE() {
-  std::cout << "=>start test rdf\n";
+  std::cout << "=>start test MORSE\n";
 
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
