@@ -48,6 +48,8 @@ def _setupDescriptors(namespace):
         # filter out python reference implementations:
         if name[:2] == 'py' and name[2:] in tmp:
           continue
+        if name == 'print_function':
+          continue
         thing = getattr(mod, name)
         if _isCallable(thing):
           namespace[name] = thing
