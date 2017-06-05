@@ -157,10 +157,6 @@ void testWHIM() {
     TEST_ASSERT(inm == nm);
 
     for (int i = 0; i < 114; i++) {
-      std::cerr << dwhim[i] << "\t";
-    }
-    std::cerr << std::endl;
-    for (int i = 0; i < 114; i++) {
       double ref = atof(myrow[i + 1].c_str());
 #if 0
       // 1% error
@@ -180,11 +176,12 @@ void testWHIM() {
       }
       // TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
 #endif
-      if (fabs(ref - dwhim[i]) > 0.01) {
-        std::cerr << "value mismatch: pos" << i << " " << ref << " " << dwhim[i]
-                  << std::endl;
+      if (ref >= 1 && fabs(ref - dwhim[i]) / ref >= 0.01) {
+        std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
+                  << " " << dwhim[i] << std::endl;
       }
-      // TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
+
+      TEST_ASSERT(ref < 1 || fabs(ref - dwhim[i]) / ref < 0.01);
     }
 
     delete m;
