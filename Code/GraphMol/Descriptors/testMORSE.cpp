@@ -80,12 +80,13 @@ void testMORSE() {
                     << " " << dmorse[i] << std::endl;
         }
       }
-      if (fabs(ref - dmorse[i]) > 0.5) {
+      if (ref > 1 && fabs(ref - dmorse[i]) / ref > 0.02) {
         std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << dmorse[i] << std::endl;
       }
-      // FIX: This tolerance seems too high
-      TEST_ASSERT(fabs(ref - dmorse[i]) < 0.5);
+      // we're testing reasonably sized values and want to be sure that we're
+      // within 2% of the reference.
+      TEST_ASSERT(ref < 1 || fabs(ref - dmorse[i]) / ref < 0.02);
     }
 
     delete m;

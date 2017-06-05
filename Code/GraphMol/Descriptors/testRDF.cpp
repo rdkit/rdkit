@@ -64,7 +64,7 @@ void testRDF() {
       double ref = atof(myrow[i + 1].c_str());
 
       if (fabs(ref) > 1) {
-        if (fabs((ref - drdf[i]) / ref) > 0.01) {
+        if (fabs((ref - drdf[i]) / ref) > 0.02) {
           std::cerr << "value mismatch: pos" << i << " " << inm
                     << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
         }
@@ -77,11 +77,12 @@ void testRDF() {
         }
       }
       // FIX: this tolerance seems too high
-      if (fabs((ref - drdf[i])) > 0.5) {
+      if (ref > 0.5 && fabs(ref - drdf[i]) / ref >= 0.02) {
         std::cerr << "value mismatch: pos" << i << " " << inm
-                  << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
+                  << " dragon: " << ref << " rdkit: " << drdf[i] << " "
+                  << fabs(ref - drdf[i]) / ref << std::endl;
       }
-      TEST_ASSERT(fabs(ref - drdf[i]) < 0.5);
+      TEST_ASSERT(ref < 0.5 || fabs(ref - drdf[i]) / ref < 0.02);
     }
 
     delete m;
