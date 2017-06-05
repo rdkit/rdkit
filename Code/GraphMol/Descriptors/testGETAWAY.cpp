@@ -19,7 +19,7 @@
 
 #include <GraphMol/Descriptors/GETAWAY.h>
 
-void testGETAWAY(int precision) {
+void testGETAWAY() {
   std::cout << "=>start test GETAWAY\n";
 
   std::string pathName = getenv("RDBASE");
@@ -58,7 +58,7 @@ void testGETAWAY(int precision) {
 
     std::vector<double> dgetaway;
 
-    RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, precision);
+    RDKit::Descriptors::GETAWAY(*m, dgetaway);
 
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
@@ -84,7 +84,7 @@ void testGETAWAY(int precision) {
                     << std::endl;
         }
       }
-      // TEST_ASSERT(fabs(ref-drdf[i])<0.05);
+      TEST_ASSERT(fabs(ref - dgetaway[i]) < 0.05);
     }
 
     delete m;
@@ -96,12 +96,6 @@ void testGETAWAY(int precision) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    std::cout << "Provide a precision for the test";
-  } else {
-    RDLog::InitLogs();
-    int num = atoi(argv[1]);
-
-    testGETAWAY(num);
-  }
+  RDLog::InitLogs();
+  testGETAWAY();
 }
