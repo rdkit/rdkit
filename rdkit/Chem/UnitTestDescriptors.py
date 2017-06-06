@@ -117,7 +117,44 @@ class TestCase(unittest.TestCase):
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs == tgt))
-
+  
+  def testNumChiralCenters(self):
+    for (smiles, expected) in (("C", 0),
+                          ("c1ccccc1", 0),
+                          ("CC(Cl)Br", 1),
+                          ("CCC(C)C(Cl)Br", 2),
+                          ("CCC(C(Cl)Br)C(F)I", 3),
+                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 3),
+                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 3), ):
+      mol = Chem.MolFromSmiles(smiles)
+      actual = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
+      self.assertEqual(actual, expected)
+  
+  
+  def testNumSpecificChiralCenters(self):
+    for (smiles, expected) in (("C", 0),
+                          ("c1ccccc1", 0),
+                          ("CC(Cl)Br", 0),
+                          ("CCC(C)C(Cl)Br", 0),
+                          ("CCC(C(Cl)Br)C(F)I", 0),
+                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 1),
+                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 2), ):
+      mol = Chem.MolFromSmiles(smiles)
+      actual = len(Chem.FindMolChiralCenters(mol))
+      self.assertEqual(actual, expected)
+  
+  def testNumUnspecificChiralCenters(self):
+    for (smiles, expected) in (("C", 0),
+                          ("c1ccccc1", 0),
+                          ("CC(Cl)Br", 1),
+                          ("CCC(C)C(Cl)Br", 2),
+                          ("CCC(C(Cl)Br)C(F)I", 3),
+                          ("[H][C@](F)(I)C(CC)C(Cl)Br", 2),
+                          ("[H][C@](F)(I)[C@@]([H])(CC)C(Cl)Br", 1), ):
+      mol = Chem.MolFromSmiles(smiles)
+      actual = sum(1 for x in Chem.FindMolChiralCenters(mol, includeUnassigned=True) if x[1] == '?')
+      self.assertEqual(actual, expected)
+      
 # - - - - -
 if __name__ == '__main__':
   unittest.main()
