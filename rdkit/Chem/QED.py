@@ -64,10 +64,13 @@ from rdkit.Chem import rdMolDescriptors as rdmd
 from rdkit import Chem
 
 # General
+from collections import namedtuple
 from copy import deepcopy
 from math import exp, log
 
-#
+QEDproperties = namedtuple('QEDproperties', 'MW,ALOGP,HBA,HBD,PSA,ROTB,AROM,ALERTS')
+
+
 AliphaticRings = Chem.MolFromSmarts('[$([A;R][!a])]')
 
 #
@@ -245,12 +248,11 @@ def properties(mol):
       x[2] += len(matches)
   x[3] = Lipinski.NumHDonors(mol)  # HBD
   x[4] = MolSurf.TPSA(mol)  # PSA
-  x[5] = Lipinski.NumRotatableBonds(mol)  # ROTB
+  x[5] = Lipinski.NumRotatableBonds(mol) # ROTB
   x[6] = Chem.GetSSSR(Chem.DeleteSubstructs(deepcopy(mol), AliphaticRings))  # AROM
   for alert in StructuralAlerts:  # ALERTS
     if (mol.HasSubstructMatch(alert)): x[7] += 1
-  return x
-
+  return QEDproperties(*x)
 
 def qed(m=None, w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
         p=None):
@@ -259,25 +261,22 @@ def qed(m=None, w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
   some examples from the QED paper, reference values from Peter G's original implementation
   >>> m = Chem.MolFromSmiles('N=C(CCSCc1csc(N=C(N)N)n1)NS(N)(=O)=O')
   >>> qed(m)
-  0.241...
+  0.253...
   >>> m = Chem.MolFromSmiles('CNC(=NCCSCc1nc[nH]c1C)NC#N')
   >>> qed(m)
-  0.217...
+  0.234...
   >>> m = Chem.MolFromSmiles('CCCCCNC(=N)NN=Cc1c[nH]c2ccc(CO)cc12')
   >>> qed(m)
-  0.212...
+  0.234...
   """
   if p is None:
       p = properties(m)
-  print(p)
   d = [0.00] * 8
   for i in range(0, 8):
     d[i] = ads(p[i], pads[i][0], pads[i][1], pads[i][2], pads[i][3], pads[i][4], pads[i][5], pads[i][6])
-  print(d)
   t = 0.0
   for i in range(0, 8):
     t += w[i] * log(d[i])
-  print(t)
   return (exp(t / sum(w)))
 
 
