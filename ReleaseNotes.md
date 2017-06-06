@@ -17,6 +17,8 @@ Peter Gedeck, Jameed Hussain, Brian Kelley, Matthew O'Meara, Steve Wilkins
  (github issue #1434 from momeara)
   - Impossible to build the RDKit from source without Python installed
  (github issue #1435 from greglandrum)
+  - fix a couple failing windows tests related to temp file removal
+ (github issue #1446 from greglandrum)
 
 
 # Release_2017.03.1
