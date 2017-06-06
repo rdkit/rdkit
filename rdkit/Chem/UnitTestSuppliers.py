@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rational Discovery LLC
+#  Copyright (C) 2003-2017  Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -93,6 +92,7 @@ CCOC,5
       suppl = Chem.SmilesMolSupplier(fileN, delimiter=',', smilesColumn=0, nameColumn=1,
                                      titleLine=0)
       ms = [x for x in suppl]
+      suppl = None
       while ms.count(None):
         ms.remove(None)
       self.assertEqual(len(ms), 3)
