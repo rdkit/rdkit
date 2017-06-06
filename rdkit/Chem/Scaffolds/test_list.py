@@ -1,16 +1,16 @@
+"""
+  Run unit tests and doctests for MurckoScaffolds
+"""
 
-tests=[
-  ("python","test_MurckoScaffold.py",{}),
-  ("python","MurckoScaffold.py",{}),
-  ]
+tests = [
+  ("python", "UnitTestMurckoScaffold.py", {}),
+  ("python", "MurckoScaffold.py", {}),
+]
 
+longTests = []
 
-
-longTests=[
-  ]
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import sys
   from rdkit import TestRunner
-  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  failed, tests = TestRunner.RunScript('test_list.py', 0, 1)
   sys.exit(len(failed))

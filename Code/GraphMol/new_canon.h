@@ -12,9 +12,11 @@
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <iostream>
 #include <cassert>

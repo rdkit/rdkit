@@ -39,19 +39,20 @@ from rdkit import RDLogger
 logger = RDLogger.logger()
 
 logLevelToLogFunctionLookup = {
-        logging.INFO : logger.info,
-        logging.DEBUG : logger.debug,
-        logging.WARNING : logger.warning,
-        logging.CRITICAL : logger.critical,
-        logging.ERROR : logger.error
-        }
+  logging.INFO: logger.info,
+  logging.DEBUG: logger.debug,
+  logging.WARNING: logger.warning,
+  logging.CRITICAL: logger.critical,
+  logging.ERROR: logger.error
+}
+
 
 class InchiReadWriteError(Exception):
-    pass
+  pass
 
-def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None,
-        treatWarningAsError=False):
-    """Construct a molecule from a InChI string
+
+def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None, treatWarningAsError=False):
+  """Construct a molecule from a InChI string
 
     Keyword arguments:
     sanitize -- set to True to enable sanitization of the molecule. Default is
@@ -67,31 +68,31 @@ def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None,
     Returns:
     a rdkit.Chem.rdchem.Mol instance
     """
-    try:
-        mol, retcode, message, log = rdinchi.InchiToMol(inchi, sanitize, removeHs)
-    except ValueError as e :
-        logger.error(str(e))
-        return None
+  try:
+    mol, retcode, message, log = rdinchi.InchiToMol(inchi, sanitize, removeHs)
+  except ValueError as e:
+    logger.error(str(e))
+    return None
 
-    if logLevel is not None:
-        if logLevel not in logLevelToLogFunctionLookup:
-            raise ValueError("Unsupported log level: %d" % logLevel)
-        log = logLevelToLogFunctionLookup[logLevel]
-        if retcode == 0:
-            log(message)
+  if logLevel is not None:
+    if logLevel not in logLevelToLogFunctionLookup:
+      raise ValueError("Unsupported log level: %d" % logLevel)
+    log = logLevelToLogFunctionLookup[logLevel]
+    if retcode == 0:
+      log(message)
 
-    if retcode != 0:
-        if retcode == 1:
-            logger.warning(message)
-        else:
-            logger.error(message)
-    if treatWarningAsError and retcode != 0:
-        raise InchiReadWriteError(mol, message)
-    return mol
+  if retcode != 0:
+    if retcode == 1:
+      logger.warning(message)
+    else:
+      logger.error(message)
+  if treatWarningAsError and retcode != 0:
+    raise InchiReadWriteError(mol, message)
+  return mol
 
-def MolToInchiAndAuxInfo(mol, options="", logLevel=None,
-        treatWarningAsError=False):
-    """Returns the standard InChI string and InChI auxInfo for a molecule
+
+def MolToInchiAndAuxInfo(mol, options="", logLevel=None, treatWarningAsError=False):
+  """Returns the standard InChI string and InChI auxInfo for a molecule
 
     Keyword arguments:
     logLevel -- the log level used for logging logs and messages from InChI
@@ -105,25 +106,26 @@ def MolToInchiAndAuxInfo(mol, options="", logLevel=None,
     a tuple of the standard InChI string and the auxInfo string returned by
     InChI API, in that order, for the input molecule
     """
-    inchi, retcode, message, logs, aux = rdinchi.MolToInchi(mol, options)
-    if logLevel is not None:
-        if logLevel not in logLevelToLogFunctionLookup:
-            raise ValueError("Unsupported log level: %d" % logLevel)
-        log = logLevelToLogFunctionLookup[logLevel]
-        if retcode == 0:
-            log(message)
-    if retcode != 0:
-        if retcode == 1:
-            logger.warning(message)
-        else:
-            logger.error(message)
+  inchi, retcode, message, logs, aux = rdinchi.MolToInchi(mol, options)
+  if logLevel is not None:
+    if logLevel not in logLevelToLogFunctionLookup:
+      raise ValueError("Unsupported log level: %d" % logLevel)
+    log = logLevelToLogFunctionLookup[logLevel]
+    if retcode == 0:
+      log(message)
+  if retcode != 0:
+    if retcode == 1:
+      logger.warning(message)
+    else:
+      logger.error(message)
 
-    if treatWarningAsError and retcode != 0:
-        raise InchiReadWriteError(inchi, aux, message)
-    return inchi, aux
+  if treatWarningAsError and retcode != 0:
+    raise InchiReadWriteError(inchi, aux, message)
+  return inchi, aux
+
 
 def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
-    """Returns the standard InChI string for a molecule
+  """Returns the standard InChI string for a molecule
 
     Keyword arguments:
     logLevel -- the log level used for logging logs and messages from InChI
@@ -136,25 +138,29 @@ def MolToInchi(mol, options="", logLevel=None, treatWarningAsError=False):
     Returns:
     the standard InChI string returned by InChI API for the input molecule
     """
-    if options.find('AuxNone')==-1:
-        if options:
-          options += " /AuxNone"
-        else:
-          options += "/AuxNone"
-          
-    try:
-        inchi, aux = MolToInchiAndAuxInfo(mol, options, logLevel=logLevel,
-                treatWarningAsError=treatWarningAsError)
-    except InchiReadWriteError as inst:
-        inchi, aux, message = inst.args
-        raise InchiReadWriteError(inchi, message)
-    return inchi
+  if options.find('AuxNone') == -1:
+    if options:
+      options += " /AuxNone"
+    else:
+      options += "/AuxNone"
+
+  try:
+    inchi, aux = MolToInchiAndAuxInfo(mol, options, logLevel=logLevel,
+                                      treatWarningAsError=treatWarningAsError)
+  except InchiReadWriteError as inst:
+    inchi, aux, message = inst.args
+    raise InchiReadWriteError(inchi, message)
+  return inchi
+
 
 def InchiToInchiKey(inchi):
-    """Return the InChI key for the given InChI string. Return None on error"""
-    ret = rdinchi.InchiToInchiKey(inchi)
-    if ret: return ret
-    else: return None
+  """Return the InChI key for the given InChI string. Return None on error"""
+  ret = rdinchi.InchiToInchiKey(inchi)
+  if ret:
+    return ret
+  else:
+    return None
 
-__all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolFromInchi', 
-        'InchiReadWriteError', 'InchiToInchiKey', 'INCHI_AVAILABLE']
+
+__all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolFromInchi', 'InchiReadWriteError',
+           'InchiToInchiKey', 'INCHI_AVAILABLE']

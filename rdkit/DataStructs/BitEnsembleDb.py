@@ -13,7 +13,8 @@
 """
 from rdkit.DataStructs.BitEnsemble import BitEnsemble
 
-def _InitScoreTable(self,dbConn,tableName,idInfo='',actInfo=''):
+
+def _InitScoreTable(self, dbConn, tableName, idInfo='', actInfo=''):
   """ inializes a db table to store our scores
 
     idInfo and actInfo should be strings with the definitions of the id and
@@ -25,16 +26,17 @@ def _InitScoreTable(self,dbConn,tableName,idInfo='',actInfo=''):
   else:
     cols = []
   for bit in self.GetBits():
-    cols.append('Bit_%d smallint'%(bit))
-  if actInfo  :
+    cols.append('Bit_%d smallint' % (bit))
+  if actInfo:
     cols.append(actInfo)
-  dbConn.AddTable(tableName,','.join(cols))
-  self._dbTableName=tableName
+  dbConn.AddTable(tableName, ','.join(cols))
+  self._dbTableName = tableName
 
-def _ScoreToDb(self,sig,dbConn,tableName=None,id=None,act=None):
+
+def _ScoreToDb(self, sig, dbConn, tableName=None, id=None, act=None):
   """ scores the "signature" that is passed in and puts the
   results in the db table
-  
+
   """
   if tableName is None:
     try:
@@ -45,15 +47,15 @@ def _ScoreToDb(self,sig,dbConn,tableName=None,id=None,act=None):
     cols = [id]
   else:
     cols = []
-  score = 0 
+  score = 0
   for bit in self.GetBits():
     b = sig[bit]
     cols.append(b)
     score += b
   if act is not None:
     cols.append(act)
-  dbConn.InsertData(tableName,cols)  
+  dbConn.InsertData(tableName, cols)
+
 
 BitEnsemble.InitScoreTable = _InitScoreTable
 BitEnsemble.ScoreToDb = _ScoreToDb
-

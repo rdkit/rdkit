@@ -3,10 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
 from rdkit import six
-
 from rdkit.VLib.Node import VLibNode
+
 
 class OutputNode(VLibNode):
   """ base class for nodes which dump output
@@ -38,45 +37,40 @@ class OutputNode(VLibNode):
     '1 2 '
 
   """
-  def __init__(self,dest=None,strFunc=None,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, dest=None, strFunc=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._dest = dest
-    self._func=strFunc
+    self._func = strFunc
+
   def next(self):
     parents = self.GetParents()
-    args = []
-    for parent in parents:
-      try:
-        args.append(parent.next())
-      except StopIteration:
-        raise StopIteration
-    if len(args)>1:
-      args = tuple(args)
-    else:
+    args = tuple([parent.next() for parent in parents])
+    if len(args) == 1:
       args = args[0]
-    if self._func is not None:
-      outp = self._func(args)
-    else:
-      outp = str(args)
     if self._dest:
+      if self._func is not None:
+        outp = self._func(args)
+      else:
+        outp = str(args)
       self._dest.write(outp)
     return args
 
-if six.PY3:
-    OutputNode.__next__ = OutputNode.next
 
-#------------------------------------
+if six.PY3:
+  OutputNode.__next__ = OutputNode.next
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
+  import doctest
   import sys
-  failed,tried = _test()
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
 
-  
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

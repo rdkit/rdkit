@@ -1,6 +1,8 @@
 # RDKit
 [![Build status](https://travis-ci.org/rdkit/rdkit.svg)](https://travis-ci.org/rdkit/rdkit)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
+[![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
+
 
 [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python.
 
@@ -36,6 +38,8 @@
   * [2012 UGM](http://www.rdkit.org/UGM/2012/)
   * [2013 UGM](https://github.com/rdkit/UGM_2013)
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
+  * [2015 UGM](https://github.com/rdkit/UGM_2015)
+  * [2016 UGM](https://github.com/rdkit/UGM_2016)
 
 ## Documentation
 Available on the [RDKit page](http://www.rdkit.org/docs/index.html)

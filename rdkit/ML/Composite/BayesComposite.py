@@ -23,7 +23,9 @@ Other compatibility notes:
 
 """
 from __future__ import print_function
+
 import numpy
+
 from rdkit.ML.Composite import Composite
 
 
@@ -32,9 +34,9 @@ class BayesComposite(Composite.Composite):
 
 
     **Notes**
-    
+
     - typical usage:
-    
+
        1) grow the composite with AddModel until happy with it
 
        2) call AverageErrors to calculate the average error values
@@ -44,15 +46,16 @@ class BayesComposite(Composite.Composite):
        4) call Train to update the Bayesian stats.
 
   """
-  def Train(self,data,verbose=0):
+
+  def Train(self, data, verbose=0):
     # FIX: this is wrong because it doesn't take the counts of each model into account
     nModels = len(self)
     nResults = self.nPossibleVals[-1]
-    self.resultProbs = numpy.zeros(nResults,numpy.float)
-    self.condProbs = [None]*nModels
+    self.resultProbs = numpy.zeros(nResults, numpy.float)
+    self.condProbs = [None] * nModels
 
     for i in range(nModels):
-      self.condProbs[i] = numpy.zeros((nResults,nResults),numpy.float)
+      self.condProbs[i] = numpy.zeros((nResults, nResults), numpy.float)
     # FIX: this is a quick hack which may slow things down a lot
     for example in data:
       act = self.QuantizeActivity(example)[-1]
@@ -64,39 +67,36 @@ class BayesComposite(Composite.Composite):
       if self.GetActivityQuantBounds():
         example = self.QuantizeActivity(example)
       if self.quantBounds is not None and 1 in self.quantizationRequirements:
-        quantExample = self.QuantizeExample(example,self.quantBounds)
+        quantExample = self.QuantizeExample(example, self.quantBounds)
       else:
         quantExample = []
 
       trueRes = int(example[-1])
 
-      votes = self.CollectVotes(example,quantExample)
+      votes = self.CollectVotes(example, quantExample)
 
       for i in range(nModels):
-        self.condProbs[i][votes[i],trueRes] += 1
-        
-      #self.condProbs /= self.resultProbs
+        self.condProbs[i][votes[i], trueRes] += 1
+
+      # self.condProbs /= self.resultProbs
     for i in range(nModels):
       for j in range(nResults):
         self.condProbs[i][j] /= sum(self.condProbs[i][j])
-      #self.condProbs[i] /= self.resultProbs
-      
+      # self.condProbs[i] /= self.resultProbs
 
     self.resultProbs /= sum(self.resultProbs)
 
     if verbose:
       print('**** Bayesian Results')
       print('Result probabilities')
-      print('\t',self.resultProbs)
+      print('\t', self.resultProbs)
       print('Model by model breakdown of conditional probs')
       for mat in self.condProbs:
         for row in mat:
-          print('\t',row)
+          print('\t', row)
         print()
-      
 
-      
-  def ClassifyExample(self,example,threshold=0,verbose=0,appendExample=0):
+  def ClassifyExample(self, example, threshold=0, verbose=0, appendExample=0):
     """ classifies the given example using the entire composite
 
       **Arguments**
@@ -117,33 +117,33 @@ class BayesComposite(Composite.Composite):
     if self.GetActivityQuantBounds():
       example = self.QuantizeActivity(example)
     if self.quantBounds is not None and 1 in self.quantizationRequirements:
-      quantExample = self.QuantizeExample(example,self.quantBounds)
+      quantExample = self.QuantizeExample(example, self.quantBounds)
     else:
       quantExample = []
-    self.modelVotes = self.CollectVotes(example,quantExample,appendExample=appendExample)
+    self.modelVotes = self.CollectVotes(example, quantExample, appendExample=appendExample)
 
     nPossibleRes = self.nPossibleVals[-1]
-    votes = [0.]*nPossibleRes
+    votes = [0.] * nPossibleRes
     for i in range(len(self)):
       predict = self.modelVotes[i]
       for j in range(nPossibleRes):
-        votes[j] += self.condProbs[i][predict,j]
+        votes[j] += self.condProbs[i][predict, j]
 
-    #totVotes = sum(votes)
+    # totVotes = sum(votes)
     res = numpy.argmax(votes)
     conf = votes[res] / len(self)
     if verbose:
-      print(votes,conf,example[-1])
+      print(votes, conf, example[-1])
     if conf > threshold:
-      return res,conf
+      return res, conf
     else:
-      return -1,conf
-
+      return -1, conf
 
   def __init__(self):
     Composite.Composite.__init__(self)
     self.resultProbs = None
     self.condProbs = None
+
 
 def CompositeToBayesComposite(obj):
   """ converts a Composite to a BayesComposite
@@ -158,7 +158,8 @@ def CompositeToBayesComposite(obj):
     obj.__class__ = BayesComposite
     obj.resultProbs = None
     obj.condProbs = None
-  
+
+
 def BayesCompositeToComposite(obj):
   """ converts a BayesComposite to a Composite.Composite
 

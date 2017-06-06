@@ -5,12 +5,16 @@
 
 """
 from __future__ import print_function
-import numpy
+
 import copy
+
+import numpy
+
 from rdkit.ML.DecTree import CrossValidate, DecTree
 from rdkit.six.moves import range
 
 _verbose = 0
+
 
 def MaxCount(examples):
   """ given a set of examples, returns the most common result code
@@ -22,26 +26,28 @@ def MaxCount(examples):
    **Returns**
 
      the most common result code
-     
+
   """
   resList = [x[-1] for x in examples]
   maxVal = max(resList)
-  counts = [None]*(maxVal+1)
-  for i in range(maxVal+1):
-    counts[i] = sum([x==i for x in resList])
+  counts = [None] * (maxVal + 1)
+  for i in range(maxVal + 1):
+    counts[i] = sum([x == i for x in resList])
 
   return numpy.argmax(counts)
+
 
 def _GetLocalError(node):
   nWrong = 0
   for example in node.GetExamples():
-    pred = node.ClassifyExample(example,appendExamples=0)
+    pred = node.ClassifyExample(example, appendExamples=0)
     if pred != example[-1]:
-      nWrong +=1
-      #if _verbose: print('------------------>MISS:',example,pred)
-  return nWrong    
+      nWrong += 1
+      # if _verbose: print('------------------>MISS:',example,pred)
+  return nWrong
 
-def _Pruner(node,level=0):
+
+def _Pruner(node, level=0):
   """Recursively finds and removes the nodes whose removals improve classification
 
      **Arguments**
@@ -50,7 +56,7 @@ def _Pruner(node,level=0):
          within node (i.e. node.GetExamples() should return the pruning data)
 
        - level: (optional) the level of recursion, used only in _verbose printing
-     
+
 
      **Returns**
 
@@ -61,17 +67,17 @@ def _Pruner(node,level=0):
 
       - This uses a greedy algorithm which basically does a DFS traversal of the tree,
         removing nodes whenever possible.
-      
+
       - If removing a node does not affect the accuracy, it *will be* removed.  We
         favor smaller trees.
-      
+
   """
-  if _verbose: print('  '*level,'<%d>  '%level,'>>> Pruner')
+  if _verbose:
+    print('  ' * level, '<%d>  ' % level, '>>> Pruner')
   children = node.GetChildren()[:]
-    
+
   bestTree = copy.deepcopy(node)
   bestErr = 1e6
-  emptyChildren=[]
   #
   # Loop over the children of this node, removing them when doing so
   #  either improves the local error or leaves it unchanged (we're
@@ -81,60 +87,66 @@ def _Pruner(node,level=0):
     child = children[i]
     examples = child.GetExamples()
     if _verbose:
-      print('  '*level,'<%d>  '%level,' Child:',i,child.GetLabel())
+      print('  ' * level, '<%d>  ' % level, ' Child:', i, child.GetLabel())
       bestTree.Print()
       print()
     if len(examples):
-      if _verbose: print('  '*level,'<%d>  '%level,'  Examples',len(examples))
-      if not child.GetTerminal():
-        if _verbose: print('  '*level,'<%d>  '%level,'    Nonterminal')
-
-        workTree = copy.deepcopy(bestTree)
-        #
-        # First recurse on the child (try removing things below it)
-        #
-        newNode = _Pruner(child,level=level+1)
-        workTree.ReplaceChildIndex(i,newNode)
-        tempErr = _GetLocalError(workTree)
-        if tempErr<=bestErr:
-          bestErr = tempErr
-          bestTree = copy.deepcopy(workTree)
-          if _verbose:
-            print('  '*level,'<%d>  '%level,'>->->->->->')
-            print('  '*level,'<%d>  '%level,'replacing:',i,child.GetLabel())
-            child.Print()
-            print('  '*level,'<%d>  '%level,'with:')
-            newNode.Print()
-            print('  '*level,'<%d>  '%level,'<-<-<-<-<-<')
-        else:
-          workTree.ReplaceChildIndex(i,child)
-        #
-        # Now try replacing the child entirely
-        #
-        bestGuess = MaxCount(child.GetExamples())
-        newNode = DecTree.DecTreeNode(workTree,'L:%d'%(bestGuess),
-                                      label=bestGuess,isTerminal=1)
-        newNode.SetExamples(child.GetExamples())
-        workTree.ReplaceChildIndex(i,newNode)
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '  Examples', len(examples))
+      if child.GetTerminal():
         if _verbose:
-          print('  '*level,'<%d>  '%level,'ATTEMPT:')
-          workTree.Print()
-        newErr = _GetLocalError(workTree)
-        if _verbose: print('  '*level,'<%d>  '%level,'---> ',newErr,bestErr)
-        if newErr <= bestErr:
-          bestErr = newErr
-          bestTree = copy.deepcopy(workTree)
-          if _verbose:
-            print('  '*level,'<%d>  '%level,'PRUNING:')
-            workTree.Print()
-        else:
-          if _verbose: print('  '*level,'<%d>  '%level,'FAIL')
-          # whoops... put the child back in:
-          workTree.ReplaceChildIndex(i,child)
+          print('  ' * level, '<%d>  ' % level, '    Terminal')
+        continue
+
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '    Nonterminal')
+
+      workTree = copy.deepcopy(bestTree)
+      #
+      # First recurse on the child (try removing things below it)
+      #
+      newNode = _Pruner(child, level=level + 1)
+      workTree.ReplaceChildIndex(i, newNode)
+      tempErr = _GetLocalError(workTree)
+      if tempErr <= bestErr:
+        bestErr = tempErr
+        bestTree = copy.deepcopy(workTree)
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, '>->->->->->')
+          print('  ' * level, '<%d>  ' % level, 'replacing:', i, child.GetLabel())
+          child.Print()
+          print('  ' * level, '<%d>  ' % level, 'with:')
+          newNode.Print()
+          print('  ' * level, '<%d>  ' % level, '<-<-<-<-<-<')
       else:
-        if _verbose: print('  '*level,'<%d>  '%level,'    Terminal')
+        workTree.ReplaceChildIndex(i, child)
+      #
+      # Now try replacing the child entirely
+      #
+      bestGuess = MaxCount(child.GetExamples())
+      newNode = DecTree.DecTreeNode(workTree, 'L:%d' % (bestGuess), label=bestGuess, isTerminal=1)
+      newNode.SetExamples(child.GetExamples())
+      workTree.ReplaceChildIndex(i, newNode)
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, 'ATTEMPT:')
+        workTree.Print()
+      newErr = _GetLocalError(workTree)
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '---> ', newErr, bestErr)
+      if newErr <= bestErr:
+        bestErr = newErr
+        bestTree = copy.deepcopy(workTree)
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, 'PRUNING:')
+          workTree.Print()
+      else:
+        if _verbose:
+          print('  ' * level, '<%d>  ' % level, 'FAIL')
+        # whoops... put the child back in:
+        workTree.ReplaceChildIndex(i, child)
     else:
-      if _verbose: print('  '*level,'<%d>  '%level,'  No Examples',len(examples))
+      if _verbose:
+        print('  ' * level, '<%d>  ' % level, '  No Examples', len(examples))
       #
       # FIX:  we need to figure out what to do here (nodes that contain
       #   no examples in the testing set).  I can concoct arguments for
@@ -143,10 +155,12 @@ def _Pruner(node,level=0):
       #
       pass
 
-  if _verbose: print('  '*level,'<%d>  '%level,'<<< out')
+  if _verbose:
+    print('  ' * level, '<%d>  ' % level, '<<< out')
   return bestTree
 
-def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
+
+def PruneTree(tree, trainExamples, testExamples, minimizeTestErrorOnly=1):
   """ implements a reduced-error pruning of decision trees
 
    This algorithm is described on page 69 of Mitchell's book.
@@ -185,10 +199,9 @@ def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
 
   #
   # screen the test data through the tree so that we end up with the
-  #  appropriate points stored at each node of the tree
+  #  appropriate points stored at each node of the tree. Results are ignored
   #
-  totErr,badEx = CrossValidate.CrossValidate(tree,testSet,appendExamples=1)
-
+  totErr, badEx = CrossValidate.CrossValidate(tree, testSet, appendExamples=1)
 
   #
   # Prune
@@ -198,10 +211,10 @@ def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
   #
   # And recalculate the errors
   #
-  totErr,badEx = CrossValidate.CrossValidate(newTree,testSet)
+  totErr, badEx = CrossValidate.CrossValidate(newTree, testSet)
   newTree.SetBadExamples(badEx)
 
-  return newTree,totErr
+  return newTree, totErr
 
 
 # -------
@@ -209,83 +222,85 @@ def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
 # -------
 def _testRandom():
   from rdkit.ML.DecTree import randomtest
-  #examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=20,randScale=0.25,nExamples = 200)
-  examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=10,randScale=0.5,nExamples = 200)
-  tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,nPossibleVals)
+  #   examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nVars=20, randScale=0.25,
+  #                                                                 nExamples=200)
+  examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nVars=10, randScale=0.5,
+                                                                nExamples=200)
+  tree, frac = CrossValidate.CrossValidationDriver(examples, attrs, nPossibleVals)
   tree.Print()
   tree.Pickle('orig.pkl')
   print('original error is:', frac)
-  
+
   print('----Pruning')
-  newTree,frac2 = PruneTree(tree,tree.GetTrainingExamples(),tree.GetTestExamples())
+  newTree, frac2 = PruneTree(tree, tree.GetTrainingExamples(), tree.GetTestExamples())
   newTree.Print()
-  print('pruned error is:',frac2)
-  newTree.Pickle('prune.pkl')  
+  print('pruned error is:', frac2)
+  newTree.Pickle('prune.pkl')
 
 
 def _testSpecific():
   from rdkit.ML.DecTree import ID3
-  oPts= [ \
-    [0,0,1,0],
-    [0,1,1,1],
-    [1,0,1,1],
-    [1,1,0,0],
-    [1,1,1,1],
-    ]
-  tPts = oPts+[[0,1,1,0],[0,1,1,0]]
+  oPts = [
+    [0, 0, 1, 0],
+    [0, 1, 1, 1],
+    [1, 0, 1, 1],
+    [1, 1, 0, 0],
+    [1, 1, 1, 1],
+  ]
+  tPts = oPts + [[0, 1, 1, 0], [0, 1, 1, 0]]
 
-  tree = ID3.ID3Boot(oPts,attrs=range(3),nPossibleVals=[2]*4)
+  tree = ID3.ID3Boot(oPts, attrs=range(3), nPossibleVals=[2] * 4)
   tree.Print()
-  err,badEx = CrossValidate.CrossValidate(tree,oPts)
-  print('original error:',err)
+  err, _ = CrossValidate.CrossValidate(tree, oPts)
+  print('original error:', err)
 
-
-  err,badEx = CrossValidate.CrossValidate(tree,tPts)
-  print('original holdout error:',err)
-  newTree,frac2 = PruneTree(tree,oPts,tPts)
+  err, _ = CrossValidate.CrossValidate(tree, tPts)
+  print('original holdout error:', err)
+  newTree, frac2 = PruneTree(tree, oPts, tPts)
   newTree.Print()
-  err,badEx = CrossValidate.CrossValidate(newTree,tPts)
-  print('pruned holdout error is:',err)
+  print('best error of pruned tree:', frac2)
+  err, badEx = CrossValidate.CrossValidate(newTree, tPts)
+  print('pruned holdout error is:', err)
   print(badEx)
 
-  print(len(tree),len(newTree))
+#   print(len(tree), len(newTree))
+
 
 def _testChain():
   from rdkit.ML.DecTree import ID3
-  oPts= [ \
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [1,0,0,0,1],
-    [0,0,1,1,0],
-    [0,0,1,1,0],
-    [0,0,1,1,1],
-    [0,1,0,1,0],
-    [0,1,0,1,0],
-    [0,1,0,0,1],
-    ]
+  oPts = [
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1],
+    [0, 0, 1, 1, 0],
+    [0, 0, 1, 1, 0],
+    [0, 0, 1, 1, 1],
+    [0, 1, 0, 1, 0],
+    [0, 1, 0, 1, 0],
+    [0, 1, 0, 0, 1],
+  ]
   tPts = oPts
 
-  tree = ID3.ID3Boot(oPts,attrs=range(len(oPts[0])-1),nPossibleVals=[2]*len(oPts[0]))
+  tree = ID3.ID3Boot(oPts, attrs=range(len(oPts[0]) - 1), nPossibleVals=[2] * len(oPts[0]))
   tree.Print()
-  err,badEx = CrossValidate.CrossValidate(tree,oPts)
-  print('original error:',err)
+  err, _ = CrossValidate.CrossValidate(tree, oPts)
+  print('original error:', err)
 
-
-  err,badEx = CrossValidate.CrossValidate(tree,tPts)
-  print('original holdout error:',err)
-  newTree,frac2 = PruneTree(tree,oPts,tPts)
+  err, _ = CrossValidate.CrossValidate(tree, tPts)
+  print('original holdout error:', err)
+  newTree, frac2 = PruneTree(tree, oPts, tPts)
   newTree.Print()
-  err,badEx = CrossValidate.CrossValidate(newTree,tPts)
-  print('pruned holdout error is:',err)
+  print('best error of pruned tree:', frac2)
+  err, badEx = CrossValidate.CrossValidate(newTree, tPts)
+  print('pruned holdout error is:', err)
   print(badEx)
 
 
-if __name__ == '__main__':
-  _verbose=1
-  #_testRandom()
-  
+if __name__ == '__main__':  # pragma: nocover
+  _verbose = 1
+  # _testRandom()
   _testChain()

@@ -16,16 +16,17 @@
 
      or, alternatively the matrix can be drawn, with indices as:
 
-       || - || 0 || 1 || 3 
-       || - || - || 2 || 4 
-       || - || - || - || 5 
-       || - || - || - || - 
+       || - || 0 || 1 || 3
+       || - || - || 2 || 4
+       || - || - || - || 5
+       || - || - || - || -
 
      the index of a given (row,col) pair is:
        '(col*(col-1))/2 + row'
 
 """
 from __future__ import print_function
+
 import numpy
 
 
@@ -44,16 +45,17 @@ def EuclideanDistance(inData):
 
   """
   nObjs = len(inData)
-  res = numpy.zeros((nObjs*(nObjs-1)/2),numpy.float)
+  res = numpy.zeros((nObjs * (nObjs - 1) / 2), numpy.float)
   nSoFar = 0
-  for col in range(1,nObjs):
+  for col in range(1, nObjs):
     for row in range(col):
-      t = inData[row]-inData[col]
-      res[nSoFar] = sum(t*t)
+      t = inData[row] - inData[col]
+      res[nSoFar] = sum(t * t)
       nSoFar += 1
   return numpy.sqrt(res)
 
-def CalcMetricMatrix(inData,metricFunc):
+
+def CalcMetricMatrix(inData, metricFunc):
   """ generates a metric matrix
 
     **Arguments**
@@ -68,12 +70,13 @@ def CalcMetricMatrix(inData,metricFunc):
       the metric matrix as a Numeric array
 
   """
-  nObjs = len(inData)
-  res = []
-  inData = map(lambda x:x.GetPosition(),inData)
+  #   nObjs = len(inData)
+  #   res = []
+  inData = map(lambda x: x.GetPosition(), inData)
   return metricFunc(inData)
 
-def FindMinValInList(mat,nObjs,minIdx=None):
+
+def FindMinValInList(mat, nObjs, minIdx=None):
   """ finds the minimum value in a metricMatrix and returns it and its indices
 
     **Arguments**
@@ -98,7 +101,7 @@ def FindMinValInList(mat,nObjs,minIdx=None):
       -this probably ain't the speediest thing on earth
 
   """
-  assert len(mat) == nObjs*(nObjs-1)/2, 'bad matrix length in FindMinValInList'
+  assert len(mat) == nObjs * (nObjs - 1) / 2, 'bad matrix length in FindMinValInList'
   if minIdx is None:
     minIdx = numpy.argmin(mat)
 
@@ -109,40 +112,33 @@ def FindMinValInList(mat,nObjs,minIdx=None):
     nSoFar += col
 
   row = minIdx - nSoFar + col
-  return row,col,mat[minIdx]
+  return row, col, mat[minIdx]
 
-def ShowMetricMat(metricMat,nObjs):
+
+def ShowMetricMat(metricMat, nObjs):
   """ displays a metric matrix
 
    **Arguments**
 
     - metricMat: the matrix to be displayed
-    
+
     - nObjs: the number of objects to display
 
   """
-  assert len(metricMat) == nObjs*(nObjs-1)/2, 'bad matrix length in FindMinValInList'
+  assert len(metricMat) == nObjs * (nObjs - 1) / 2, 'bad matrix length in FindMinValInList'
   for row in range(nObjs):
     for col in range(nObjs):
       if col <= row:
-        print('   ---    ',end='')
+        print('   ---    ', end='')
       else:
-        print('%10.6f'%metricMat[(col*(col-1))/2+row],end='')
+        print('%10.6f' % metricMat[(col * (col - 1)) / 2 + row], end='')
     print()
 
 
-
-methods = [
-  ("Euclidean",EuclideanDistance,"Euclidean Distance"),
-  ]
-
-
+methods = [("Euclidean", EuclideanDistance, "Euclidean Distance"), ]
 
 if __name__ == '__main__':
-  m = [.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0]
+  m = [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0]
   nObjs = 5
   for i in range(10):
-    print(i, FindMinValInList(m,nObjs,i))
-
-
-
+    print(i, FindMinValInList(m, nObjs, i))

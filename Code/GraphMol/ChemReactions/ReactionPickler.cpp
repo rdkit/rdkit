@@ -137,7 +137,7 @@ void ReactionPickler::_pickle(const ChemicalReaction *rxn, std::ostream &ss) {
   streamWrite(ss, BEGINPRODUCTS);
   for (MOL_SPTR_VECT::const_iterator tmpl = rxn->beginProductTemplates();
        tmpl != rxn->endProductTemplates(); ++tmpl) {
-    MolPickler::pickleMol(tmpl->get(), ss);
+    MolPickler::pickleMol(tmpl->get(), ss, PicklerOps::AllProps);
   }
   streamWrite(ss, ENDPRODUCTS);
 

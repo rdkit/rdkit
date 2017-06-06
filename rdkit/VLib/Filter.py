@@ -3,10 +3,10 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
 
-from rdkit.VLib.Node import VLibNode
 from rdkit import six
+from rdkit.VLib.Node import VLibNode
+
 
 class FilterNode(VLibNode):
   """ base class for nodes which filter their input
@@ -19,7 +19,7 @@ class FilterNode(VLibNode):
     - inputs (parents) can be stepped through in lockstep
 
     - we return a tuple if there's more than one input
-  
+
   Usage Example:
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> def func(a,b):
@@ -37,7 +37,7 @@ class FilterNode(VLibNode):
     >>> v
     [(1, 1), (2, 2), (3, 1)]
     >>> filt.Destroy()
-    
+
     Negation is also possible:
     >>> filt = FilterNode(func=func,negate=1)
     >>> suppl1 = SupplyNode(contents=[1,2,3,3])
@@ -61,17 +61,19 @@ class FilterNode(VLibNode):
 
 
   """
-  def __init__(self,func=None,negate=0,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, func=None, negate=0, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._func = func
     self._negate = negate
-  def SetNegate(self,state):
+
+  def SetNegate(self, state):
     self._negate = state
+
   def Negate(self):
     return self._negate
 
   def next(self):
-    done = 0
     parents = self.GetParents()
     while 1:
       args = []
@@ -85,32 +87,32 @@ class FilterNode(VLibNode):
         r = self._func(*args)
         if self._negate:
           r = not r
-          #sys.stderr.write('\t\tNEGATE -> %d\n'%(r))
+          # sys.stderr.write('\t\tNEGATE -> %d\n'%(r))
         if r:
           res = args
           break
       else:
         res = args
         break
-    if len(parents)==1:
+    if len(parents) == 1:
       res = res[0]
     return res
-  
-if six.PY3:
-    FilterNode.__next__ = FilterNode.next
 
-  
-#------------------------------------
+
+if six.PY3:
+  FilterNode.__next__ = FilterNode.next
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
-  
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

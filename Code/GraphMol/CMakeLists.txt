@@ -71,6 +71,7 @@ add_subdirectory(MolDraw2D)
 add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
+add_subdirectory(StructChecker)
 
 
 add_subdirectory(ReducedGraphs)
@@ -98,6 +99,9 @@ rdkit_test(graphmoltestChirality testChirality.cpp
            LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmoltestPickler testPickler.cpp  
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
+
+rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp  
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)

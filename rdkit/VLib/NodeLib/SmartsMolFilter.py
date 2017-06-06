@@ -3,18 +3,16 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import RDConfig
-from rdkit import six
-import sys,os,types
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
+
 
 class SmartsFilter(FilterNode):
   """ filter out molecules matching one or more SMARTS patterns
 
   There is a count associated with each pattern. Molecules are
   allowed to match the pattern up to this number of times.
-  
+
   Assumptions:
 
     - inputs are molecules
@@ -56,53 +54,51 @@ class SmartsFilter(FilterNode):
 
 
   """
-  def __init__(self,patterns=[],counts=[],**kwargs):
-    FilterNode.__init__(self,func=self.filter,**kwargs)
-    self._initPatterns(patterns,counts)
 
-  def _initPatterns(self,patterns,counts):
+  def __init__(self, patterns=[], counts=[], **kwargs):
+    FilterNode.__init__(self, func=self.filter, **kwargs)
+    self._initPatterns(patterns, counts)
+
+  def _initPatterns(self, patterns, counts):
     nPatts = len(patterns)
-    if len(counts) and len(counts)!=nPatts:
+    if len(counts) and len(counts) != nPatts:
       raise ValueError('if counts is specified, it must match patterns in length')
     if not len(counts):
-      counts = [1]*nPatts
-    targets = [None]*nPatts
+      counts = [1] * nPatts
+    targets = [None] * nPatts
     for i in range(nPatts):
       p = patterns[i]
       c = counts[i]
-      if type(p) in (str,bytes):
+      if type(p) in (str, bytes):
         m = Chem.MolFromSmarts(p)
         if not m:
-          raise ValueError('bad smarts: %s'%(p))
+          raise ValueError('bad smarts: %s' % (p))
         p = m
-      targets[i] = p,c
-    self._patterns = tuple(targets)  
-      
-  def filter(self,cmpd):
-    neg = self.Negate()
-    res = 0
-    #sys.stderr.write('\tFILTER: %s\n'%(Chem.MolToSmiles(cmpd)))
-    for patt,count in self._patterns:
+      targets[i] = p, c
+    self._patterns = tuple(targets)
+
+  def filter(self, cmpd):
+    res = False
+    for patt, count in self._patterns:
       ms = cmpd.GetSubstructMatches(patt)
       nMatches = len(ms)
       if nMatches >= count:
         # this query is an or, so we short circuit true:
-        res = 1
+        res = True
         break
     return res
-      
-#------------------------------------
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
-  
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

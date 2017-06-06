@@ -11,8 +11,9 @@ import sys
 from rdkit import Chem
 from rdkit.Chem.rdfiltercatalog import *
 
+
 class FilterMatcher(PythonFilterMatcher):
-    """FilterMatcher - This class allows creation of Python based
+  """FilterMatcher - This class allows creation of Python based
     filters.  Subclass this class to create a Filter useable
     in a FilterCatalogEntry
 
@@ -32,17 +33,18 @@ class FilterMatcher(PythonFilterMatcher):
          mw = rdMolDescriptors.CalcExactMolWt(mol)
          return not self.minMw <= mw <= self.maxMw
     """
-    def __init__(self, name="Unamed FilterMatcher"):
-        self.name = name
-        PythonFilterMatcher.__init__(self, self)
 
-    def HasMatch(self, mol):
-        """Return True if the filter matches the molecule"""
-        raise NotImplementedError("Need to implement HasMatch(mol) in a subclass of %s",
-                                  self.__class__.__name__)
+  def __init__(self, name="Unamed FilterMatcher"):
+    self.name = name
+    PythonFilterMatcher.__init__(self, self)
 
-    def GetMatches(self, mol, matchVect):
-        """GetMatches(mol, matchVect) -> returns True if the filter matches
+  def HasMatch(self, mol):
+    """Return True if the filter matches the molecule"""
+    raise NotImplementedError("Need to implement HasMatch(mol) in a subclass of %s",
+                              self.__class__.__name__)
+
+  def GetMatches(self, mol, matchVect):
+    """GetMatches(mol, matchVect) -> returns True if the filter matches
         (By default, this calls HasMatch and does not modify matchVect)
         
         matchVect is a vector of FilterMatch's which hold the matching
@@ -53,14 +55,12 @@ class FilterMatcher(PythonFilterMatcher):
         match = FilterMatch(self, v)
         matchVect.append( match )
         """
-        return self.HasMatch(mol)
+    return self.HasMatch(mol)
 
-    def IsValid(self, mol):
-        """Must override this function"""
-        raise NotImplementedError("IsValid must be implemented in a subclass of %s",
-                                  self.__class__.__name__)
+  def IsValid(self, mol):
+    """Must override this function"""
+    raise NotImplementedError("IsValid must be implemented in a subclass of %s",
+                              self.__class__.__name__)
 
-    def GetName(self):
-        return self.name
-
-    
+  def GetName(self):
+    return self.name

@@ -14,7 +14,9 @@
 import unittest
 from rdkit import Chem
 
+
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
     self.m = Chem.MolFromSmiles('CC(=O)CCSC')
@@ -24,10 +26,10 @@ class TestCase(unittest.TestCase):
     a = self.m.GetAtoms()[0]
     iV = a.GetImplicitValence()
     assert iV == 3
-    assert self.m.GetAtomWithIdx(1).GetImplicitValence()==0
-    assert self.m.GetAtomWithIdx(2).GetImplicitValence()==0
-    assert self.m.GetAtomWithIdx(3).GetImplicitValence()==2
-    
+    assert self.m.GetAtomWithIdx(1).GetImplicitValence() == 0
+    assert self.m.GetAtomWithIdx(2).GetImplicitValence() == 0
+    assert self.m.GetAtomWithIdx(3).GetImplicitValence() == 2
+
   def test2BondIter(self):
     " testing bond iteration "
     a = self.m.GetAtomWithIdx(1)
@@ -39,38 +41,34 @@ class TestCase(unittest.TestCase):
 
   def test3GetBond(self):
     " testing GetBondBetweenAtoms(idx,idx) "
-    b = self.m.GetBondBetweenAtoms(1,2)
-    assert b.GetBondType() == Chem.BondType.DOUBLE,'GetBond failed'
+    b = self.m.GetBondBetweenAtoms(1, 2)
+    assert b.GetBondType() == Chem.BondType.DOUBLE, 'GetBond failed'
 
   def test4Props(self):
     " testing atomic props "
     a = self.m.GetAtomWithIdx(1)
-    assert a.GetSymbol()=='C'
-    assert a.GetAtomicNum()==6
-    assert a.GetFormalCharge()==0
-    assert a.GetDegree()==3
-    assert a.GetImplicitValence()==0
-    assert a.GetExplicitValence()==4
-    
+    assert a.GetSymbol() == 'C'
+    assert a.GetAtomicNum() == 6
+    assert a.GetFormalCharge() == 0
+    assert a.GetDegree() == 3
+    assert a.GetImplicitValence() == 0
+    assert a.GetExplicitValence() == 4
+
   def test5Setters(self):
     " testing setting atomic props "
     a = Chem.Atom(6)
-    assert a.GetSymbol()=='C'
-    assert a.GetAtomicNum()==6
+    assert a.GetSymbol() == 'C'
+    assert a.GetAtomicNum() == 6
     a.SetFormalCharge(1)
-    assert a.GetFormalCharge()==1
+    assert a.GetFormalCharge() == 1
     try:
       a.GetImplicitValence()
     except RuntimeError:
-      ok=1
+      ok = 1
     else:
-      ok=0
+      ok = 0
     assert ok
-
-    
-    
 
 
 if __name__ == '__main__':
   unittest.main()
-

@@ -37,30 +37,33 @@ from rdkit.Chem import rdSLNParse
 from rdkit import Geometry
 from rdkit import RDConfig
 import unittest
-import os,sys
+import os, sys
 
-class TestCase(unittest.TestCase) :
+
+class TestCase(unittest.TestCase):
+
   def setUp(self):
-    self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','SLNParse','testData')
+    self.dataDir = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SLNParse', 'testData')
 
   def test1Basics(self):
     m1 = rdSLNParse.MolFromSLN('CH3CH3')
     self.failUnless(m1)
-    self.failUnless(m1.GetNumAtoms()==2)
+    self.failUnless(m1.GetNumAtoms() == 2)
 
     m1 = rdSLNParse.MolFromSLN('C[1]H:CH:CH:CH:CH:CH:@1')
     self.failUnless(m1)
-    self.failUnless(m1.GetNumAtoms()==6)
-    
+    self.failUnless(m1.GetNumAtoms() == 6)
+
   def test2Queries(self):
     patt = rdSLNParse.MolFromQuerySLN('C[HC=2]~O')
     self.failUnless(patt)
-    self.failUnless(patt.GetNumAtoms()==2)
-    
-    m=Chem.MolFromSmiles('COCC=O')
+    self.failUnless(patt.GetNumAtoms() == 2)
+
+    m = Chem.MolFromSmiles('COCC=O')
     self.failUnless(m.HasSubstructMatch(patt))
     ms = m.GetSubstructMatches(patt)
-    self.failUnless(len(ms)==1)
-    
+    self.failUnless(len(ms) == 1)
+
+
 if __name__ == '__main__':
   unittest.main()

@@ -1,22 +1,12 @@
+tests = [
+  ("python", "UnitTestVLib.py", {}),
+  ("python", "test_list.py", {'dir': 'NodeLib'}),
+]
 
-tests=[
-  ("python","Node.py",{}),
-  ("python","Filter.py",{}),
-  ("python","Output.py",{}),
-  ("python","Supply.py",{}),
-  ("python","Transform.py",{}),
-  ("python","test_list.py",{'dir':'NodeLib'}),
-  ]
+longTests = []
 
-
-
-longTests=[
-
-  ]
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import sys
   from rdkit import TestRunner
-  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  failed, tests = TestRunner.RunScript('test_list.py', 0, 1)
   sys.exit(len(failed))
-    

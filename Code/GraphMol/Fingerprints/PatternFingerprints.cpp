@@ -73,6 +73,7 @@ const char *pqs[] = {
     //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
     //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
+    "[D0]",  // special case: single atom fragment
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
@@ -96,7 +97,8 @@ const char *pqs[] = {
 #endif
     ""};
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 namespace detail {
 void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {

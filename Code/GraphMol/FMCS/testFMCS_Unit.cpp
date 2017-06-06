@@ -1058,7 +1058,8 @@ void testGithub631() {
         MCSResult res = findMCS(mols, &p);
         BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " "
                              << res.NumAtoms << " atoms, " << res.NumBonds
-                             << " bonds\n" << std::endl;
+                             << " bonds\n"
+                             << std::endl;
         ;
 
         TEST_ASSERT(res.NumAtoms == mols[0]->getNumAtoms());
@@ -1073,7 +1074,8 @@ void testGithub631() {
         MCSResult res = findMCS(mols, &p);
         BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " "
                              << res.NumAtoms << " atoms, " << res.NumBonds
-                             << " bonds\n" << std::endl;
+                             << " bonds\n"
+                             << std::endl;
         ;
 
         TEST_ASSERT(res.NumAtoms == mols[0]->getNumAtoms());
@@ -1082,6 +1084,50 @@ void testGithub631() {
       BOOST_LOG(rdInfoLog) << "============================================"
                            << std::endl;
     }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testFormalChargeMatch() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing including formal charge in matches "
+                       << std::endl;
+  std::vector<ROMOL_SPTR> mols;
+  const char* smi[] = {"CCNC", "CCN(C)C", "CC[N+](C)C"};
+
+  for (size_t i = 0; i < sizeof(smi) / sizeof(smi[0]); i++) {
+    RWMol* m = SmilesToMol(getSmilesOnly(smi[i]));
+    TEST_ASSERT(m);
+
+    mols.push_back(ROMOL_SPTR(m));
+  }
+  {
+    // by default charge is not used.
+    MCSParameters p;
+    MCSResult res = findMCS(mols, &p);
+    BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms
+                         << " atoms, " << res.NumBonds << " bonds\n"
+                         << std::endl;
+    ;
+
+    TEST_ASSERT(res.NumAtoms == 4);
+    TEST_ASSERT(res.NumBonds == 3);
+  }
+  {
+    // check charge
+    MCSParameters p;
+    p.AtomCompareParameters.MatchFormalCharge = true;
+    MCSResult res = findMCS(mols, &p);
+    BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms
+                         << " atoms, " << res.NumBonds << " bonds\n"
+                         << std::endl;
+    ;
+
+    TEST_ASSERT(res.NumAtoms == 2);
+    TEST_ASSERT(res.NumBonds == 1);
+  }
+
+  BOOST_LOG(rdInfoLog) << "============================================"
+                       << std::endl;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1141,6 +1187,8 @@ int main(int argc, const char* argv[]) {
   testChirality();
   testGithub631();
   //---
+
+  testFormalChargeMatch();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

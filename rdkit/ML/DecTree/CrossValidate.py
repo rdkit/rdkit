@@ -9,14 +9,16 @@ cross validation == evaluating the accuracy of a tree.
 
 """
 from __future__ import print_function
-from rdkit.ML.DecTree import ID3
-from rdkit.ML.Data import SplitData
-import numpy
-from rdkit.six.moves import xrange
 
-def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
-                      nPossibleVals,treeBuilder,nQuantBounds=[],
-                      **kwargs):
+import numpy
+
+from rdkit.ML.Data import SplitData
+from rdkit.ML.DecTree import ID3
+from rdkit.ML.DecTree import randomtest
+
+
+def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals, treeBuilder,
+                      nQuantBounds=[], **kwargs):
   """ loops through all possible tree roots and chooses the one which produces the best tree
 
   **Arguments**
@@ -39,7 +41,7 @@ def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
   **Returns**
 
     The best tree found
-    
+
   **Notes**
 
     1) Trees are built using _trainExamples_
@@ -54,29 +56,30 @@ def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
   attrs = attrs[:]
   if nQuantBounds:
     for i in range(len(nQuantBounds)):
-      if nQuantBounds[i]==-1 and i in attrs:
+      if nQuantBounds[i] == -1 and i in attrs:
         attrs.remove(i)
   nAttrs = len(attrs)
-  trees = [None]*nAttrs
-  errs = [0]*nAttrs
+  trees = [None] * nAttrs
+  errs = [0] * nAttrs
   errs[0] = 1e6
 
-  for i in xrange(1,nAttrs):
-    argD = {'initialVar':attrs[i]}
+  for i in range(1, nAttrs):
+    argD = {'initialVar': attrs[i]}
     argD.update(kwargs)
     if nQuantBounds is None or nQuantBounds == []:
-      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,**argd)
+      trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, **argD)
     else:
-      trees[i] = treeBuilder(trainExamples,attrs,nPossibleVals,nQuantBounds,**argD)
+      trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, nQuantBounds, **argD)
     if trees[i]:
-      errs[i],foo = CrossValidate(trees[i],examples,appendExamples=0)
+      errs[i], _ = CrossValidate(trees[i], examples, appendExamples=0)
     else:
       errs[i] = 1e6
   best = numpy.argmin(errs)
   # FIX: this used to say 'trees[i]', could that possibly have been right?
   return trees[best]
 
-def CrossValidate(tree,testExamples,appendExamples=0):
+
+def CrossValidate(tree, testExamples, appendExamples=0):
   """ Determines the classification error for the testExamples
 
     **Arguments**
@@ -96,28 +99,25 @@ def CrossValidate(tree,testExamples,appendExamples=0):
         1) the percent error of the tree
 
         2) a list of misclassified examples
-        
+
   """
   nTest = len(testExamples)
   nBad = 0
   badExamples = []
-  for i in xrange(nTest):
+  for i in range(nTest):
     testEx = testExamples[i]
     trueRes = testEx[-1]
-    res = tree.ClassifyExample(testEx,appendExamples)
+    res = tree.ClassifyExample(testEx, appendExamples)
     if (trueRes != res).any():
       badExamples.append(testEx)
       nBad += 1
-    
-  
-  return float(nBad)/nTest,badExamples
 
-def CrossValidationDriver(examples,attrs,nPossibleVals,holdOutFrac=.3,silent=0,
-                          calcTotalError=0,treeBuilder=ID3.ID3Boot,lessGreedy=0,
-                          startAt=None,
-                          nQuantBounds=[],
-                          maxDepth=-1,
-                          **kwargs):
+  return float(nBad) / nTest, badExamples
+
+
+def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent=0,
+                          calcTotalError=0, treeBuilder=ID3.ID3Boot, lessGreedy=0, startAt=None,
+                          nQuantBounds=[], maxDepth=-1, **kwargs):
   """ Driver function for building trees and doing cross validation
 
     **Arguments**
@@ -157,70 +157,62 @@ def CrossValidationDriver(examples,attrs,nPossibleVals,holdOutFrac=.3,silent=0,
          1) the tree
 
          2) the cross-validation error of the tree
-         
+
   """
   nTot = len(examples)
-  if not kwargs.get('replacementSelection',0):
-    testIndices,trainIndices = SplitData.SplitIndices(nTot,holdOutFrac,
-                                                      silent=1,legacy=1,
-                                                      replacement=0)
+  if not kwargs.get('replacementSelection', 0):
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
+                                                       replacement=0)
   else:
-    testIndices,trainIndices = SplitData.SplitIndices(nTot,holdOutFrac,
-                                                      silent=1,legacy=0,
-                                                      replacement=1)
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
+                                                       replacement=1)
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
-  
+
   nTrain = len(trainExamples)
   if not silent:
-    print('Training with %d examples'%(nTrain))
+    print('Training with %d examples' % (nTrain))
 
   if not lessGreedy:
     if nQuantBounds is None or nQuantBounds == []:
-      tree = treeBuilder(trainExamples,attrs,nPossibleVals,
-                         initialVar=startAt,maxDepth=maxDepth,**kwargs)
+      tree = treeBuilder(trainExamples, attrs, nPossibleVals, initialVar=startAt, maxDepth=maxDepth,
+                         **kwargs)
     else:
-      tree = treeBuilder(trainExamples,attrs,nPossibleVals,nQuantBounds,
-                         initialVar=startAt,maxDepth=maxDepth,**kwargs)
+      tree = treeBuilder(trainExamples, attrs, nPossibleVals, nQuantBounds, initialVar=startAt,
+                         maxDepth=maxDepth, **kwargs)
   else:
-    tree = ChooseOptimalRoot(examples,trainExamples,testExamples,
-                             attrs,nPossibleVals,treeBuilder,nQuantBounds,
-                             maxDepth=maxDepth,**kwargs)
+    tree = ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals,
+                             treeBuilder, nQuantBounds, maxDepth=maxDepth, **kwargs)
 
   nTest = len(testExamples)
   if not silent:
-    print('Testing with %d examples'%nTest)
+    print('Testing with %d examples' % nTest)
   if not calcTotalError:
-    xValError,badExamples = CrossValidate(tree,testExamples,appendExamples=1)
+    xValError, badExamples = CrossValidate(tree, testExamples, appendExamples=1)
   else:
-    xValError,badExamples = CrossValidate(tree,examples,appendExamples=0)    
+    xValError, badExamples = CrossValidate(tree, examples, appendExamples=0)
   if not silent:
-    print('Validation error was %%%4.2f'%(100*xValError))
+    print('Validation error was %%%4.2f' % (100 * xValError))
   tree.SetBadExamples(badExamples)
   tree.SetTrainingExamples(trainExamples)
   tree.SetTestExamples(testExamples)
   tree._trainIndices = trainIndices
-  return tree,xValError
+  return tree, xValError
 
 
 def TestRun():
-  """ testing code
-
-  """
-  from rdkit.ML.DecTree import randomtest
-  examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200)
-  tree,frac = CrossValidationDriver(examples,attrs,
-                                    nPossibleVals)
+  """ testing code """
+  examples, attrs, nPossibleVals = randomtest.GenRandomExamples(nExamples=200)
+  tree, _ = CrossValidationDriver(examples, attrs, nPossibleVals)
 
   tree.Pickle('save.pkl')
-  
+
   import copy
   t2 = copy.deepcopy(tree)
-  print('t1 == t2',tree==t2)
+  print('t1 == t2', tree == t2)
   l = [tree]
   print('t2 in [tree]', t2 in l, l.index(t2))
 
-if __name__  == '__main__':
-  TestRun()
-  
 
+if __name__ == '__main__':  # pragma: nocover
+  TestRun()

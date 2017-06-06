@@ -14,6 +14,7 @@
 #include <fstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
@@ -206,9 +207,10 @@ static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
   AtomPDBResidueInfo *info = new AtomPDBResidueInfo(tmp, serialno);
   atom->setMonomerInfo(info);
 
-  if (len >= 20)
+  if (len >= 20) {
     tmp = std::string(ptr + 17, 3);
-  else
+    // boost::trim(tmp);
+  } else
     tmp = "UNL";
   info->setResidueName(tmp);
   if (ptr[0] == 'H') info->setIsHeteroAtom(true);
@@ -447,6 +449,23 @@ static void StandardPDBResidueChirality(RWMol *mol) {
   }
 }
 
+void BasicPDBCleanup(RWMol &mol) {
+  ROMol::VERTEX_ITER atBegin, atEnd;
+  boost::tie(atBegin, atEnd) = mol.getVertices();
+  while (atBegin != atEnd) {
+    ATOM_SPTR atom = mol[*atBegin];
+    atom->calcExplicitValence(false);
+
+    // correct four-valent neutral N -> N+
+    // This was github #1029
+    if (atom->getAtomicNum() == 7 && atom->getFormalCharge() == 0 &&
+        atom->getExplicitValence() == 4) {
+      atom->setFormalCharge(1);
+    }
+    ++atBegin;
+  }
+}
+
 RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
                      unsigned int flavor) {
   PRECONDITION(str, "bad char ptr");
@@ -524,12 +543,10 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
 
   if (!mol) return (RWMol *)0;
 
-  ConnectTheDots(mol);
+  ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
   StandardPDBResidueBondOrders(mol);
 
-  for (std::map<int, Atom *>::iterator mi = amap.begin(); mi != amap.end();
-       ++mi)
-    (*mi).second->calcExplicitValence(false);
+  BasicPDBCleanup(*mol);
 
   if (sanitize) {
     if (removeHs) {

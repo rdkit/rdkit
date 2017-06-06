@@ -8,6 +8,8 @@
 // Original author: David Cosgrove (AstraZeneca)
 // 27th May 2014
 //
+// Extensively modified by Greg Landrum
+//
 
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -27,6 +29,22 @@ using namespace boost;
 using namespace std;
 
 namespace RDKit {
+
+namespace {
+void getBondHighlightsForAtoms(const ROMol &mol,
+                               const vector<int> &highlight_atoms,
+                               vector<int> &highlight_bonds) {
+  highlight_bonds.clear();
+  for (vector<int>::const_iterator ai = highlight_atoms.begin();
+       ai != highlight_atoms.end(); ++ai) {
+    for (vector<int>::const_iterator aj = ai + 1; aj != highlight_atoms.end();
+         ++aj) {
+      const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
+      if (bnd) highlight_bonds.push_back(bnd->getIdx());
+    }
+  }
+}
+}
 
 // ****************************************************************************
 MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
@@ -63,14 +81,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    for (vector<int>::const_iterator ai = highlight_atoms->begin();
-         ai != highlight_atoms->end(); ++ai) {
-      for (vector<int>::const_iterator aj = ai + 1;
-           aj != highlight_atoms->end(); ++aj) {
-        const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-        if (bnd) highlight_bonds.push_back(bnd->getIdx());
-      }
-    }
+    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
                highlight_atom_map, NULL, highlight_radii, confId);
@@ -140,6 +151,7 @@ void MolDraw2D::doContinuousHighlighting(
             highlight_radii->find(this_idx) != highlight_radii->end()) {
           radius = highlight_radii->find(this_idx)->second;
         }
+
         Point2D offset(radius, radius);
         p1 -= offset;
         p2 += offset;
@@ -282,8 +294,9 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     while (atom != end_atom) {
       const Atom *at1 = mol[*atom].get();
       ++atom;
-      if (drawOptions().atomLabels.find(at1->getIdx()) !=
-          drawOptions().atomLabels.end()) {
+      if (at1->hasProp(common_properties::atomLabel) ||
+          drawOptions().atomLabels.find(at1->getIdx()) !=
+              drawOptions().atomLabels.end()) {
         // skip dummies that explicitly have a label provided
         continue;
       }
@@ -328,7 +341,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     // the 0.94 is completely empirical and was brought over from Python
     Point2D loc =
         getAtomCoords(std::make_pair(panel_width_ / 2., 0.94 * panel_height_));
-
     double o_font_size = fontSize();
     setFontSize(options_.legendFontSize /
                 scale_);  // set the font size to about 12 pixels high
@@ -363,6 +375,8 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!highlight_radii || highlight_radii->size() == mols.size(),
                "bad size");
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
+  PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
+  PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
 
   std::vector<RWMol> tmols;
   tmols.reserve(mols.size());
@@ -389,11 +403,16 @@ void MolDraw2D::drawMolecules(
   }
   setScale(panelWidth(), panelHeight(), minP, maxP);
   int nCols = width() / panelWidth();
+  int nRows = height() / panelHeight();
   for (unsigned int i = 0; i < mols.size(); ++i) {
     if (!mols[i]) continue;
 
-    int row = i / nCols;
-    int col = i % nCols;
+    int row = 0;
+    // note that this also works when no panel size is specified since
+    // the panel dimensions defaults to -1
+    if (nRows > 1) row = i / nCols;
+    int col = 0;
+    if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : NULL,
@@ -545,19 +564,22 @@ void MolDraw2D::calculateScale(int width, int height) {
 
   x_range_ = x_max - x_min_;
   y_range_ = y_max - y_min_;
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
-    scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-  } else {
-    scale_ = 0;
+  if (x_range_ < 1e-4) {
+    x_range_ = 1.;
+    x_min_ -= 0.5;
+    x_max += 0.5;
   }
-
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
+  if (y_range_ < 1e-4) {
+    y_range_ = 1.;
+    y_min_ -= 0.5;
+    y_max += 0.5;
+  }
+  scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
 
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
-  while (scale_ > 0.0) {
+  while (scale_ > 1e-4) {
     for (int i = 0, is = atom_syms_[activeMolIdx_].size(); i < is; ++i) {
       if (!atom_syms_[activeMolIdx_][i].first.empty()) {
         double atsym_width, atsym_height;
@@ -582,14 +604,13 @@ void MolDraw2D::calculateScale(int width, int height) {
     double old_scale = scale_;
     x_range_ = x_max - x_min_;
     y_range_ = y_max - y_min_;
+    if (x_range_ < 1e-4) x_range_ = 1.;
+    if (y_range_ < 1e-4) y_range_ = 1.;
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     if (fabs(scale_ - old_scale) < 0.1) {
       break;
     }
   }
-
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
 
   // put a 5% buffer round the drawing and calculate a final scale
   x_min_ -= drawOptions().padding * x_range_;
@@ -597,10 +618,7 @@ void MolDraw2D::calculateScale(int width, int height) {
   y_min_ -= drawOptions().padding * y_range_;
   y_range_ *= 1 + 2 * drawOptions().padding;
 
-  // std::cerr << "  " << x_max << "-" << x_min_ << " " << x_range_ << "    "
-  //           << y_max << "-" << y_min_ << " " << y_range_ << std::endl;
-
-  if (x_range_ > 1e-4 && y_range_ > 1e-4) {
+  if (x_range_ > 1e-4 || y_range_ > 1e-4) {
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     double y_mid = y_min_ + 0.5 * y_range_;
     double x_mid = x_min_ + 0.5 * x_range_;
@@ -610,11 +628,8 @@ void MolDraw2D::calculateScale(int width, int height) {
     mid.y += y_offset_;
     x_trans_ = (width / 2 - mid.x) / scale_;
     y_trans_ = (mid.y - height / 2) / scale_;
-    // std::cerr << " mid: " << mid << " " << scale_ << "    " << x_trans_ <<
-    // "-"
-    //           << y_trans_ << std::endl;
   } else {
-    scale_ = 0.;
+    scale_ = 1;
     x_trans_ = 0.;
     y_trans_ = 0.;
   }
@@ -1189,9 +1204,16 @@ void MolDraw2D::adjustBondEndForLabel(int atnum, const Point2D &nbr_cds,
   double label_width, label_height;
   getStringSize(atom_syms_[activeMolIdx_][atnum].first, label_width,
                 label_height);
-
-  double lw2 = label_width / 2.0;
-  double lh2 = label_height / 2.0;
+  double additional_width = 0.0;
+  double additional_height = 0.0;
+  if (drawOptions().additionalAtomLabelPadding > 0.0) {
+    double M_width, M_height;
+    getStringSize("M", M_width, M_height);
+    additional_width = M_width * drawOptions().additionalAtomLabelPadding;
+    additional_height = M_height * drawOptions().additionalAtomLabelPadding;
+  }
+  double lw2 = label_width / 2.0 + additional_width;
+  double lh2 = label_height / 2.0 + additional_height;
 
   double x_offset = 0.0, y_offset = 0.0;
   if (fabs(nbr_cds.y - cds.y) < 1.0e-5) {
@@ -1264,6 +1286,8 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
     // specified labels are trump: no matter what else happens we will show
     // them.
     symbol = drawOptions().atomLabels.find(atom.getIdx())->second;
+  } else if (atom.hasProp(common_properties::atomLabel)) {
+    symbol = atom.getProp<std::string>(common_properties::atomLabel);
   } else if (drawOptions().dummiesAreAttachments && atom.getAtomicNum() == 0 &&
              atom.getDegree() == 1) {
     symbol = "";

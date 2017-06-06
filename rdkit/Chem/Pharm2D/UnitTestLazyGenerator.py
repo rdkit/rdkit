@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2006  greg Landrum and Rational Discovery LLC
 #
@@ -12,61 +11,72 @@
 
 """
 import unittest
+
 from rdkit import Chem
-from rdkit.Chem.Pharm2D import SigFactory,LazyGenerator
+from rdkit.Chem.Pharm2D import SigFactory
 
-class TestCase(unittest.TestCase):
-  def setUp(self):
-    self.factory = SigFactory.SigFactory()
-    self.factory.SetPatternsFromSmarts(['O','N'])
-    self.factory.SetBins([(0,2),(2,5),(5,8)])
-    self.factory.SetMinCount(2)
-    self.factory.SetMaxCount(3)
+try:
+  from rdkit.Chem.Pharm2D import LazyGenerator
+except NotImplementedError:
+  LazyGenerator = None
 
-  def test1(self):
-    """ simple tests
 
-    """
+class TestCase(unittest.TestCase):  # pragma: nocover
+
+  def getFactory(self):
+    factory = SigFactory.SigFactory()
+    factory.SetPatternsFromSmarts(['O', 'N'])
+    factory.SetBins([(0, 2), (2, 5), (5, 8)])
+    factory.SetMinCount(2)
+    factory.SetMaxCount(3)
+    return factory
+
+  def test_NotImplemented(self):
+    self.assertIsNone(LazyGenerator, 'Review LazyGenerator unit tests')
+
+  @unittest.skipIf(LazyGenerator is None, 'LazyGenerator implementation incomplete')
+  def test1_simple(self):
     mol = Chem.MolFromSmiles('OCC(=O)CCCN')
-    sig = self.factory.GetSignature()
-    assert sig.GetSize()==105,'bad signature size: %d'%(sig.GetSize())
+    factory = self.getFactory()
+    sig = factory.GetSignature()
+    assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
     sig.SetIncludeBondOrder(0)
-    gen = LazyGenerator.Generator(sig,mol)
-    assert len(gen) == sig.GetSize(),'length mismatch %d!=%d'%(len(gen),sig.GetSize())
-    
-    tgt = (1,5,48)
-    for bit in tgt:
-      assert gen[bit],'bit %d not properly set'%(bit)
-      assert gen.GetBit(bit),'bit %d not properly set'%(bit)
-      assert not gen[bit+50],'bit %d improperly set'%(bit+100)
-    
-    sig = self.factory.GetSignature()
-    assert sig.GetSize()==105,'bad signature size: %d'%(sig.GetSize())
-    sig.SetIncludeBondOrder(1)
-    gen = LazyGenerator.Generator(sig,mol)
-    assert len(gen) == sig.GetSize(),'length mismatch %d!=%d'%(len(gen),sig.GetSize())
+    gen = LazyGenerator.Generator(sig, mol)
+    assert len(gen) == sig.GetSize(), 'length mismatch %d!=%d' % (len(gen), sig.GetSize())
 
-    tgt = (1,4,5,45)
+    tgt = (1, 5, 48)
     for bit in tgt:
-      assert gen[bit],'bit %d not properly set'%(bit)
-      assert gen.GetBit(bit),'bit %d not properly set'%(bit)
-      assert not gen[bit+50],'bit %d improperly set'%(bit+100)
+      assert gen[bit], 'bit %d not properly set' % (bit)
+      assert gen.GetBit(bit), 'bit %d not properly set' % (bit)
+      assert not gen[bit + 50], 'bit %d improperly set' % (bit + 100)
+
+    sig = factory.GetSignature()
+    assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
+    sig.SetIncludeBondOrder(1)
+    gen = LazyGenerator.Generator(sig, mol)
+    assert len(gen) == sig.GetSize(), 'length mismatch %d!=%d' % (len(gen), sig.GetSize())
+
+    tgt = (1, 4, 5, 45)
+    for bit in tgt:
+      assert gen[bit], 'bit %d not properly set' % (bit)
+      assert gen.GetBit(bit), 'bit %d not properly set' % (bit)
+      assert not gen[bit + 50], 'bit %d improperly set' % (bit + 100)
 
     try:
-      gen[sig.GetSize()+1]
+      gen[sig.GetSize() + 1]
     except IndexError:
       ok = 1
     else:
       ok = 0
-    assert ok,'accessing bogus bit did not fail'
+    assert ok, 'accessing bogus bit did not fail'
     try:
       gen[-1]
     except IndexError:
       ok = 1
     else:
       ok = 0
-    assert ok,'accessing bogus bit did not fail'
+    assert ok, 'accessing bogus bit did not fail'
 
-if __name__ == '__main__':
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
-

@@ -8,99 +8,106 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-"""unit testing code for the Smiles file handling stuff
-
 """
-import unittest,sys,os
-from rdkit import RDConfig
+unit testing code for the Smiles file handling stuff
+"""
+import unittest
+
 from rdkit import Chem
 from rdkit.six import next
+from rdkit import RDLogger
+
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
-    self.smis = ['CC','CCC','CCCCC','CCCCCC','CCCCCCC','CC','CCCCOC']
+    self.smis = ['CC', 'CCC', 'CCCCC', 'CCCCCC', 'CCCCCCC', 'CC', 'CCCCOC']
+    self.nMolecules = len(self.smis)
 
-  def test1LazyReader(self):
-    " tests lazy reads """
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis),',',0,-1,0)
+  def tearDown(self):
+    RDLogger.EnableLog('rdApp.error')
+
+  def assertMolecule(self, mol, i, msg=''):
+    """ Assert that we have a valid molecule """
+    self.assertIsNotNone(mol, '{0}read {1} failed'.format(msg, i))
+    self.assertGreater(mol.GetNumAtoms(), 0, '{0}no atoms in mol {1}'.format(msg, i))
+
+  def test_SmilesReaderIndex(self):
+    # tests lazy reads
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, 0)
     for i in range(4):
-      m = next(supp)
-      assert m,'read %d failed'%i
-      assert m.GetNumAtoms(),'no atoms in mol %d'%i
-    i = len(supp)-1
-    m = supp[i]
-    assert m,'read %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
+      self.assertMolecule(next(supp), i)
 
-    ms = [x for x in supp]
-    for i in range(len(supp)):
-      m = ms[i]
-      if m:
-        ms[i] = Chem.MolToSmiles(m)
+    i = len(supp) - 1
+    self.assertMolecule(supp[i], i)
 
-    
-    l = len(supp)
-    assert l == len(self.smis),'bad supplier length: %d'%(l)
+    # Use in a list comprehension
+    ms = [Chem.MolToSmiles(mol) for mol in supp]
+    self.assertEqual(ms, self.smis)
 
-    i = len(self.smis)-3
-    m = supp[i-1]
-    assert m,'back index %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
+    self.assertEqual(len(supp), self.nMolecules, 'bad supplier length')
 
-    with self.assertRaisesRegexp(Exception, ""):
-      m = supp[len(self.smis)] # out of bound read must fail
+    # Despite iterating through the whole supplier, we can still access by index
+    i = self.nMolecules - 3
+    self.assertMolecule(supp[i - 1], i, msg='back index: ')
 
-  def test2LazyIter(self):
-    " tests lazy reads using the iterator interface "
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis),',',0,-1,0)
+    with self.assertRaises(IndexError):
+      _ = supp[self.nMolecules]  # out of bound read must fail
+
+    # and we can access with negative numbers
+    mol1 = supp[len(supp) - 1]
+    mol2 = supp[-1]
+    self.assertEqual(Chem.MolToSmiles(mol1), Chem.MolToSmiles(mol2))
+
+  def test_SmilesReaderIterator(self):
+    # tests lazy reads using the iterator interface "
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, 0)
 
     nDone = 0
     for mol in supp:
-      assert mol,'read %d failed'%nDone
-      assert mol.GetNumAtoms(),'no atoms in mol %d'%nDone
+      self.assertMolecule(mol, nDone)
       nDone += 1
-    assert nDone==len(self.smis),'bad number of molecules'   
+    self.assertEqual(nDone, self.nMolecules, 'bad number of molecules')
 
-    l = len(supp)
-    assert l == len(self.smis),'bad supplier length: %d'%(l)
+    self.assertEqual(len(supp), self.nMolecules, 'bad supplier length')
 
-    i = len(self.smis)-3
-    m = supp[i-1]
-    assert m,'back index %d failed'%i
-    assert m.GetNumAtoms(),'no atoms in mol %d'%i
+    # Despite iterating through the whole supplier, we can still access by index
+    i = self.nMolecules - 3
+    self.assertMolecule(supp[i - 1], i, msg='back index: ')
 
-    with self.assertRaisesRegexp(Exception, ""):
-      m = supp[len(self.smis)] # out of bound read must not fail
+    with self.assertRaises(IndexError):
+      _ = supp[self.nMolecules]  # out of bound read must not fail
 
+  def test_SmilesReaderBoundaryConditions(self):
+    # Suppress the error message due to the incorrect smiles
+    RDLogger.DisableLog('rdApp.error')
 
-  def test3BoundaryConditions(self):
-    smis = ['CC','CCOC','fail','CCO']
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
+    smis = ['CC', 'CCOC', 'fail', 'CCO']
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
     self.assertEqual(len(supp), 4)
-    self.assertIs(supp[2], None)
-    self.assertTrue(supp[3])
+    self.assertIsNone(supp[2])
+    self.assertIsNotNone(supp[3])
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    self.assertIs(supp[2], None)
-    self.assertTrue(supp[3])
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    self.assertIsNone(supp[2])
+    self.assertIsNotNone(supp[3])
     self.assertEqual(len(supp), 4)
-    with self.assertRaisesRegexp(Exception, ""):
+    with self.assertRaises(IndexError):
       supp[4]
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
     self.assertEqual(len(supp), 4)
-    self.assertTrue(supp[3])
-    with self.assertRaisesRegexp(Exception, ""):
+    self.assertIsNotNone(supp[3])
+    with self.assertRaises(IndexError):
       supp[4]
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
-    with self.assertRaisesRegexp(Exception, ""):
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    with self.assertRaises(IndexError):
       supp[4]
 
     self.assertEqual(len(supp), 4)
-    self.assertTrue(supp[3])
+    self.assertIsNotNone(supp[3])
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
-

@@ -82,7 +82,7 @@ class SmilesWriter : public MolWriter {
       try {
         if (dp_ostream->good())
           dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+      } catch (const std::runtime_error& ) {
       }
     }
   };
@@ -160,7 +160,7 @@ class SDWriter : public MolWriter {
       try {
         if (dp_ostream->good())
           dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+      } catch (const std::runtime_error& ) {
       }
     }
   };
@@ -231,7 +231,7 @@ class TDTWriter : public MolWriter {
       try {
         if (dp_ostream->good())
           dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+      } catch (const std::runtime_error& ) {
       }
     }
   };
@@ -295,7 +295,7 @@ class PDBWriter : public MolWriter {
       try {
         if (dp_ostream->good())
           dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+      } catch (const std::runtime_error& ) {
       }
     }
   };

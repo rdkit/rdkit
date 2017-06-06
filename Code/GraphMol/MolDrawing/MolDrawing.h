@@ -14,8 +14,11 @@
 #define _RD_MOLDRAWING_H_
 
 #include <vector>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>

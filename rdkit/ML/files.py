@@ -1,11 +1,13 @@
 # copyright 2000 greg landrum
-
 """ Generic file manipulation stuff
 
 """
 from __future__ import print_function
+
+import re
+
 import numpy
-import string,re
+
 
 class ReFile:
   """convenience class for dealing with files with comments
@@ -15,6 +17,7 @@ class ReFile:
 
   anything following a comment character on a line is stripped off
   """
+
   def readline(self):
     """ read the next line and return it.
 
@@ -26,7 +29,7 @@ class ReFile:
       inLine = self.inFile.readline()
       if inLine == '':
         return ''
-      result = string.strip(self.regExp.split(inLine)[0])
+      result = self.regExp.split(inLine)[0].strip()
     return result
 
   def readlines(self):
@@ -38,7 +41,7 @@ class ReFile:
     res = []
     inLines = self.inFile.readlines()
     for line in inLines:
-      result = string.strip(self.regExp.split(line)[0])
+      result = self.regExp.split(line)[0].strip()
       if result != '':
         res.append(result)
 
@@ -49,15 +52,15 @@ class ReFile:
 
     """
     self.inFile.seek(0)
-    
-  def __init__(self,fileName,mode='r',comment=r'#',trailer=r'\n'):
+
+  def __init__(self, fileName, mode='r', comment=r'#', trailer=r'\n'):
     if trailer is not None and trailer != '':
       comment = comment + r'|' + trailer
     self.regExp = re.compile(comment)
-    self.inFile = open(fileName,mode)
-    
+    self.inFile = open(fileName, mode)
 
-def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
+
+def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   """ read in the data file and return a tuple of two Numeric arrays:
   (independant variables, dependant variables).
 
@@ -76,7 +79,7 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
    a tuple of two Numeric arrays:
 
     (independant variables, dependant variables).
-  
+
   """
   inFile = ReFile(fileName)
   dataLines = inFile.readlines()
@@ -86,24 +89,23 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
     _convfunc = float
   else:
     _convfunc = int
-    
-  nIndVars = len(string.split(dataLines[0]))-1
-  indVarMat = numpy.zeros((nPts,nIndVars),dataType)
-  depVarVect = numpy.zeros(nPts,dataType)
+
+  nIndVars = len(dataLines[0].split()) - 1
+  indVarMat = numpy.zeros((nPts, nIndVars), dataType)
+  depVarVect = numpy.zeros(nPts, dataType)
   for i in range(nPts):
-    splitLine = string.split(dataLines[i])
+    splitLine = dataLines[i].split()
     depVarVect[i] = _convfunc(splitLine[depVarCol])
     del splitLine[depVarCol]
-    indVarMat[i,:] = map(_convfunc,splitLine)
+    indVarMat[i, :] = map(_convfunc, splitLine)
 
-  return indVarMat,depVarVect
+  return indVarMat, depVarVect
 
 
 if __name__ == '__main__':
   import sys
 
   fileN = sys.argv[1]
-  iV,dV = ReadDataFile(fileN)
+  iV, dV = ReadDataFile(fileN)
   print('iV:', iV)
   print('dV:', dV)
-  

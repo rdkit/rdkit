@@ -40,9 +40,12 @@
 #include <RDGeneral/FileParseException.h>
 
 #include <fstream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/tokenizer.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include "ReactionUtils.h"
 
 namespace RDKit {

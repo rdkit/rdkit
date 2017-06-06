@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +12,7 @@
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <sstream>
+#include <set>
 #include <algorithm>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
@@ -402,9 +402,17 @@ void findAtomNeighborsHelper(const ROMol &mol, const Atom *atom,
   }
 }
 
+// conditions for an atom to be a candidate for ring stereochem:
+//   1) two non-ring neighbors that have different ranks
+//   2) one non-ring neighbor and two ring neighbors (the ring neighbors will
+//      have the same rank)
+//   3) four ring neighbors with three different ranks
+//   4) three ring neighbors with two different ranks
+//     example for this last one: C[C@H]1CC2CCCC3CCCC(C1)[C@@H]23
 bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   bool res = false;
+  std::set<unsigned int> nbrRanks;
   if (!atom->getPropIfPresent(common_properties::_ringStereochemCand, res)) {
     const RingInfo *ringInfo = mol.getRingInfo();
     if (ringInfo->isInitialized() && ringInfo->numAtomRings(atom->getIdx())) {
@@ -417,20 +425,17 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
         if (!ringInfo->numBondRings(bond->getIdx())) {
           nonRingNbrs.push_back(bond->getOtherAtom(atom));
         } else {
-          ringNbrs.push_back(bond->getOtherAtom(atom));
+          const Atom *nbr = bond->getOtherAtom(atom);
+          ringNbrs.push_back(nbr);
+          unsigned int rnk = 0;
+          nbr->getPropIfPresent(common_properties::_CIPRank, rnk);
+          nbrRanks.insert(rnk);
         }
         ++beg;
       }
 
       unsigned int rank1 = 0, rank2 = 0;
       switch (nonRingNbrs.size()) {
-        case 0:
-          // don't do spiro:
-          res = false;
-          break;
-        case 1:
-          if (ringNbrs.size() == 2) res = true;
-          break;
         case 2:
           if (nonRingNbrs[0]->getPropIfPresent(common_properties::_CIPRank,
                                                rank1) &&
@@ -441,6 +446,18 @@ bool atomIsCandidateForRingStereochem(const ROMol &mol, const Atom *atom) {
             } else {
               res = true;
             }
+          }
+          break;
+        case 1:
+          if (ringNbrs.size() == 2) res = true;
+          break;
+        case 0:
+          if (ringNbrs.size() == 4 && nbrRanks.size() == 3) {
+            res = true;
+          } else if (ringNbrs.size() == 3 && nbrRanks.size() == 2) {
+            res = true;
+          } else {
+            res = false;
           }
           break;
         default:
@@ -739,7 +756,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
                "bad rank vector size");
   bool assignedABond = false;
   unsigned int unassignedBonds = 0;
-
+  boost::dynamic_bitset<> bondsToClear(mol.getNumBonds());
   // find the double bonds:
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
@@ -811,22 +828,56 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
               endDir = endAtomNeighbors[1].second;
               endNbrAid = endAtomNeighbors[1].first;
             }
-            dblBond->getStereoAtoms().push_back(begNbrAid);
-            dblBond->getStereoAtoms().push_back(endNbrAid);
-            if (hasExplicitUnknownStereo) {
-              dblBond->setStereo(Bond::STEREOANY);
+
+            bool conflictingBegin =
+                (begAtomNeighbors.size() == 2 &&
+                 begAtomNeighbors[0].second == begAtomNeighbors[1].second);
+            bool conflictingEnd =
+                (endAtomNeighbors.size() == 2 &&
+                 endAtomNeighbors[0].second == endAtomNeighbors[1].second);
+            if (conflictingBegin || conflictingEnd) {
+              dblBond->setStereo(Bond::STEREONONE);
+              BOOST_LOG(rdWarningLog) << "Conflicting single bond directions "
+                                         "around double bond at index "
+                                      << dblBond->getIdx() << "." << std::endl;
+              BOOST_LOG(rdWarningLog) << "  BondStereo set to STEREONONE and "
+                                         "single bond directions set to NONE."
+                                      << std::endl;
               assignedABond = true;
-            } else if (begDir == endDir) {
-              // In findAtomNeighborDirHelper, we've set up the
-              // bond directions here so that they correspond to
-              // having both single bonds START at the double bond.
-              // This means that if the single bonds point in the same
-              // direction, the bond is cis, "Z"
-              dblBond->setStereo(Bond::STEREOZ);
-              assignedABond = true;
+              if (conflictingBegin) {
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[0].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(begAtomNeighbors[1].first,
+                                                     begAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
+              if (conflictingEnd) {
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[0].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+                bondsToClear[mol.getBondBetweenAtoms(endAtomNeighbors[1].first,
+                                                     endAtom->getIdx())
+                                 ->getIdx()] = 1;
+              }
             } else {
-              dblBond->setStereo(Bond::STEREOE);
-              assignedABond = true;
+              dblBond->getStereoAtoms().push_back(begNbrAid);
+              dblBond->getStereoAtoms().push_back(endNbrAid);
+              if (hasExplicitUnknownStereo) {
+                dblBond->setStereo(Bond::STEREOANY);
+                assignedABond = true;
+              } else if (begDir == endDir) {
+                // In findAtomNeighborDirHelper, we've set up the
+                // bond directions here so that they correspond to
+                // having both single bonds START at the double bond.
+                // This means that if the single bonds point in the same
+                // direction, the bond is cis, "Z"
+                dblBond->setStereo(Bond::STEREOZ);
+                assignedABond = true;
+              } else {
+                dblBond->setStereo(Bond::STEREOE);
+                assignedABond = true;
+              }
             }
             --unassignedBonds;
           }
@@ -834,6 +885,11 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       }
     }
   }
+
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    if (bondsToClear[i]) mol.getBondWithIdx(i)->setBondDir(Bond::NONE);
+  }
+
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
@@ -1071,26 +1127,8 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
 #endif
 }
 
-// Find bonds than can be cis/trans in a molecule and mark them as "any"
-// - this function finds any double bonds that can potentially be part
-//   of a cis/trans system. No attempt is made here to mark them cis or trans
-//
-// This function is useful in two situations
-//  1) when parsing a mol file; for the bonds marked here, coordinate
-//  informations
-//     on the neighbors can be used to indentify cis or trans states
-//  2) when writing a mol file; bonds that can be cis/trans but not marked as
-//  either
-//     need to be specially marked in the mol file
-//
-//  The CIPranks on the neighboring atoms are check in this function. The
-//  _CIPCode property
-//  if set to any on the double bond.
-//
-// ARGUMENTS:
-//   mol - the molecule of interest
-//   cleanIt - if this option is set to true, any previous marking of _CIPCode
-//               on the bond is cleared - otherwise it is left untouched
+// Find bonds than can be cis/trans in a molecule and mark them as
+// Bond::STEREOANY.
 void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
   // FIX: The earlier thought was to provide an optional argument to ignore or
   // consider
@@ -1131,7 +1169,15 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             // ------------------
             // get the CIP ranking of each atom if we need it:
             if (!cipDone) {
-              Chirality::assignAtomCIPRanks(mol, ranks);
+              if (!begAtom->hasProp(common_properties::_CIPRank)) {
+                Chirality::assignAtomCIPRanks(mol, ranks);
+              } else {
+                // no need to recompute if we don't need to recompute. :-)
+                for (unsigned int ai = 0; ai < mol.getNumAtoms(); ++ai) {
+                  ranks[ai] = mol.getAtomWithIdx(ai)->getProp<unsigned int>(
+                      common_properties::_CIPRank);
+                }
+              }
               cipDone = true;
             }
             // find the neighbors for the begin atom and the endAtom
@@ -1143,9 +1189,22 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
-                // if both of the atoms have 2 neighbors (other than the one
-                // connected
-                // by the double bond) and ....
+// if both of the atoms have 2 neighbors (other than the one
+// connected
+// by the double bond) and ....
+#if 0
+                std::cerr << "Bond: " << dblBond->getIdx() << " "
+                          << begAtom->getIdx() << "=" << endAtom->getIdx()
+                          << std::endl;
+                std::cerr << "   " << begAtomNeighbors[0] << "="
+                          << ranks[begAtomNeighbors[0]] << ":";
+                std::cerr << "   " << begAtomNeighbors[1] << "="
+                          << ranks[begAtomNeighbors[1]] << std::endl;
+                std::cerr << "   " << endAtomNeighbors[0] << "="
+                          << ranks[endAtomNeighbors[0]] << ":";
+                std::cerr << "   " << endAtomNeighbors[1] << "="
+                          << ranks[endAtomNeighbors[1]] << std::endl;
+#endif
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=
@@ -1191,12 +1250,17 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
                 dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
                 dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
               }  // end of different number of neighbors on beg and end atoms
-            }    // end of check that beg and end atoms have at least 1
-                 // neighbor:
-          }      // end of 2 and 3 coordinated atoms only
-        }        // end of we want it or CIP code is not set
-      }          // end of double bond
-    }            // end of for loop over all bonds
+
+              // mark this double bond as a potential stereo bond
+              if (!dblBond->getStereoAtoms().empty()) {
+                dblBond->setStereo(Bond::STEREOANY);
+              }
+            }  // end of check that beg and end atoms have at least 1
+               // neighbor:
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -1236,11 +1300,17 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
     atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     // additional reasons to skip the atom:
-    if (atom->getDegree() < 3 ||        // not enough explicit neighbors
-        atom->getTotalDegree() != 4 ||  // not enough total neighbors
-        atom->getTotalNumHs(true) > 1   // more than two Hs
-        ) {
+    if (atom->getDegree() < 3 || atom->getTotalDegree() > 4) {
+      // not enough explicit neighbors or too many total neighbors
       continue;
+    } else {
+      int anum = atom->getAtomicNum();
+      if (anum != 16 && anum != 34 &&  // S or Se are special
+                                       // (just using the InChI list for now)
+          (atom->getTotalDegree() != 4 ||  // not enough total neighbors
+           atom->getTotalNumHs(true) > 1)) {
+        continue;
+      }
     }
     const RDGeom::Point3D &p0 = conf.getAtomPos(atom->getIdx());
     ROMol::ADJ_ITER nbrIdx, endNbrs;

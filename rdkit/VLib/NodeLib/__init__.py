@@ -1,2 +1,1 @@
-__all__=['SmartsMolFilter','SDSupply','SmartsRemover','SmilesDupeFilter',
-         'SmilesOutput']
+__all__ = ['SmartsMolFilter', 'SDSupply', 'SmartsRemover', 'SmilesDupeFilter', 'SmilesOutput']

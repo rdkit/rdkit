@@ -12,8 +12,10 @@
 
 #include <string>
 #include <iostream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 class RWMol;

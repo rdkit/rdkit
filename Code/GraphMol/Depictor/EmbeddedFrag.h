@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -37,7 +37,8 @@ class EmbeddedAtom {
         CisTransNbr(-1),
         ccw(true),
         rotDir(0),
-        d_density(-1.0) {
+        d_density(-1.0),
+        df_fixed(false) {
     neighs.clear();
   }
 
@@ -49,7 +50,8 @@ class EmbeddedAtom {
         CisTransNbr(-1),
         ccw(true),
         rotDir(0),
-        d_density(-1.0) {
+        d_density(-1.0),
+        df_fixed(false) {
     loc = pos;
   }
 
@@ -64,6 +66,7 @@ class EmbeddedAtom {
     ccw = other.ccw;
     neighs = other.neighs;
     d_density = other.d_density;
+    df_fixed = other.df_fixed;
     return *this;
   }
 
@@ -128,6 +131,10 @@ class EmbeddedAtom {
   // this atom
   // Used in the collision removal code - initialized to -1.0
   double d_density;
+
+  //! if set this atom is fixed: further operations on the fragment may not
+  //! move it.
+  bool df_fixed;
 };
 
 typedef std::map<unsigned int, EmbeddedAtom> INT_EATOM_MAP;

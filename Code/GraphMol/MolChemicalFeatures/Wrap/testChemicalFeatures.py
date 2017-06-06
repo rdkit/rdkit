@@ -1,9 +1,9 @@
 from rdkit import DataStructs
 from rdkit import RDConfig
 from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures,rdDistGeom
+from rdkit.Chem import ChemicalFeatures, rdDistGeom
 from rdkit import Geometry
-import unittest,os
+import unittest, os
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -14,16 +14,20 @@ def lstFeq(l1, l2, tol=1.e-4):
       return 0
   return 1
 
-def feq(v1,v2,tol2=1e-4):
-  return abs(v1-v2)<=tol2
+
+def feq(v1, v2, tol2=1e-4):
+  return abs(v1 - v2) <= tol2
+
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
     pass
 
   def testBasic(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
-                                                             'Code','GraphMol','MolChemicalFeatures','test_data','featDef.txt'))
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
+                   'featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     fNames = cfac.GetFeatureFamilies()
@@ -36,21 +40,18 @@ class TestCase(unittest.TestCase):
 
     self.failUnless(cfac.GetNumMolFeatures(mol) == 3)
     for i in range(cfac.GetNumMolFeatures(mol)):
-      self.failUnless(cfac.GetMolFeature(mol,i))
+      self.failUnless(cfac.GetMolFeature(mol, i))
     # check that the recompute argument works:
-    self.failUnless(cfac.GetMolFeature(mol,0))
+    self.failUnless(cfac.GetMolFeature(mol, 0))
     for i in range(cfac.GetNumMolFeatures(mol)):
-      self.failUnless(cfac.GetMolFeature(mol,i,"",False))
-    self.failUnlessRaises(IndexError,lambda : cfac.GetMolFeature(mol,3))
-
+      self.failUnless(cfac.GetMolFeature(mol, i, "", False))
+    self.failUnlessRaises(IndexError, lambda: cfac.GetMolFeature(mol, 3))
 
     feats = cfac.GetFeaturesForMol(mol)
     self.failUnless(len(feats) == 3)
     fTypes = ['HBondDonor', 'HBondAcceptor', 'HBondAcceptor']
 
-    positions = [[1.3041, -0.6079, 0.0924],
-                 [-0.7066, 0.5994, 0.1824],
-                 [1.3041, -0.6079, 0.0924]]
+    positions = [[1.3041, -0.6079, 0.0924], [-0.7066, 0.5994, 0.1824], [1.3041, -0.6079, 0.0924]]
     targetAids = [[3], [1], [3]]
     i = 0
     for feat in feats:
@@ -65,29 +66,30 @@ class TestCase(unittest.TestCase):
       self.failUnless(ncfac.GetNumFeatureDefs() == 2)
       i += 1
 
-
   def testIncludeOnly(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
-                                                             'Code','GraphMol','MolChemicalFeatures','test_data','featDef.txt'))
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
+                   'featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     mol = Chem.MolFromSmiles("COCN")
     rdDistGeom.EmbedMolecule(mol)
 
-    self.failUnless(cfac.GetNumMolFeatures(mol,includeOnly="HBondAcceptor") == 2)
-    self.failUnless(cfac.GetNumMolFeatures(mol,includeOnly="HBondDonor") == 1)
-    self.failUnless(cfac.GetNumMolFeatures(mol,includeOnly="Bogus") == 0)
+    self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="HBondAcceptor") == 2)
+    self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="HBondDonor") == 1)
+    self.failUnless(cfac.GetNumMolFeatures(mol, includeOnly="Bogus") == 0)
 
-    self.failUnlessRaises(IndexError,lambda : cfac.GetMolFeature(mol,1,includeOnly="HBondDonor"))
-    self.failUnlessRaises(IndexError,lambda : cfac.GetMolFeature(mol,2,includeOnly="HBondAcceptor"))
-    f = cfac.GetMolFeature(mol,0,includeOnly="HBondDonor")
-    self.failUnless(f.GetFamily()=='HBondDonor')
+    self.failUnlessRaises(IndexError, lambda: cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
+    self.failUnlessRaises(IndexError,
+                          lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
+    f = cfac.GetMolFeature(mol, 0, includeOnly="HBondDonor")
+    self.failUnless(f.GetFamily() == 'HBondDonor')
 
-    feats = cfac.GetFeaturesForMol(mol,includeOnly="HBondAcceptor")
+    feats = cfac.GetFeaturesForMol(mol, includeOnly="HBondAcceptor")
     self.failUnless(len(feats) == 2)
-    feats = cfac.GetFeaturesForMol(mol,includeOnly="HBondDonor")
+    feats = cfac.GetFeaturesForMol(mol, includeOnly="HBondDonor")
     self.failUnless(len(feats) == 1)
-    feats = cfac.GetFeaturesForMol(mol,includeOnly="Bogus")
+    feats = cfac.GetFeaturesForMol(mol, includeOnly="Bogus")
     self.failUnless(len(feats) == 0)
 
   def testStringParse(self):
@@ -103,7 +105,6 @@ EndFeature
 """
     cfac = ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock)
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
-
 
   def testStringParse2(self):
     fdefBlock = \
@@ -127,17 +128,16 @@ EndFeature\r
 EndFeature
 """
     self.failUnlessRaises(ValueError,
-                          lambda:ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
     fdefBlock = \
 """DefineFeature HDonor1 [N,O;!H0]
     Family HBondDonor
     Weights 1.0
 """
     self.failUnlessRaises(ValueError,
-                          lambda:ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+                          lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
 
-    self.failUnlessRaises(IOError,
-                          lambda:ChemicalFeatures.BuildFeatureFactory('noSuchFile.txt'))
+    self.failUnlessRaises(IOError, lambda: ChemicalFeatures.BuildFeatureFactory('noSuchFile.txt'))
 
   def testAtomMatch(self):
     fdefBlock = \
@@ -155,15 +155,15 @@ EndFeature
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
     mol = Chem.MolFromSmiles('n1ccccc1')
     feats = cfac.GetFeaturesForMol(mol)
-    self.failUnless(len(feats)==2)
+    self.failUnless(len(feats) == 2)
     m = ChemicalFeatures.GetAtomMatch(feats)
     self.failIf(m)
 
     mol = Chem.MolFromSmiles('c1ccccc1N')
     feats = cfac.GetFeaturesForMol(mol)
-    self.failUnless(len(feats)==2)
+    self.failUnless(len(feats) == 2)
     m = ChemicalFeatures.GetAtomMatch(feats)
-    self.failUnless(len(m)==2)
+    self.failUnless(len(m) == 2)
 
   def testIssue231(self):
     fdefs = """
@@ -186,6 +186,7 @@ EndFeature
     m = None
     for feat in feats:
       feat.GetPos()
+
 
 if __name__ == '__main__':
   unittest.main()

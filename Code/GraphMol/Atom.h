@@ -20,6 +20,7 @@
 #include <boost/foreach.hpp>
 
 // ours
+#include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
@@ -120,7 +121,10 @@ class Atom : public RDProps {
   std::string getSymbol() const;
 
   //! returns a reference to the ROMol that owns this Atom
-  ROMol &getOwningMol() const { return *dp_mol; };
+  ROMol &getOwningMol() const {
+    PRECONDITION(dp_mol, "no owner");
+    return *dp_mol;
+  };
 
   //! returns our index within the ROMol
   unsigned int getIdx() const { return d_index; };

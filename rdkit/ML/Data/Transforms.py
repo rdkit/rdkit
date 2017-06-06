@@ -1,8 +1,7 @@
 #
 #  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
-#  All Rights Reserved 
+#  All Rights Reserved
 #
-import numpy
 
 
 def _CenterTForm(dataSet):
@@ -11,11 +10,13 @@ def _CenterTForm(dataSet):
   """
   pass
 
+
 def _NormalizeTForm(dataSet):
   """ INTERNAL USE ONLY
 
   """
   pass
+
 
 def _StandardTForm(dataSet):
   """ INTERNAL USE ONLY
@@ -23,12 +24,13 @@ def _StandardTForm(dataSet):
   """
   pass
 
+
 _availTransforms = [
-  ('Center',_CenterTForm,'translates so that mean(x)=0'),
-  ('Normalize',_NormalizeTForm,'scales so that dot(x,x)=1'),
-  ('Standardize',_StandardTForm,'scales so that dev(x)=0'),
-  
-  ]
+  ('Center', _CenterTForm, 'translates so that mean(x)=0'),
+  ('Normalize', _NormalizeTForm, 'scales so that dot(x,x)=1'),
+  ('Standardize', _StandardTForm, 'scales so that dev(x)=0'),
+]
+
 
 def GetAvailTransforms():
   """ returns the list of available data transformations
@@ -47,4 +49,3 @@ def GetAvailTransforms():
   """
   global _availTransforms
   return _availTransforms
-

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,19 +8,30 @@
 //  of the RDKit source tree.
 //
 
-#ifndef _RDDEPICTOR_H_
-#define _RDDEPICTOR_H_
+#ifndef RDDEPICTOR_H
+#define RDDEPICTOR_H
 
 #include <RDGeneral/types.h>
-#include <list>
-#include <GraphMol/ROMol.h>
-#include "EmbeddedFrag.h"
+#include <Geometry/point.h>
+#include <boost/smart_ptr.hpp>
 
 namespace RDKit {
 class ROMol;
 }
 
 namespace RDDepict {
+typedef boost::shared_array<double> DOUBLE_SMART_PTR;
+
+class DepictException : public std::exception {
+ public:
+  DepictException(const char *msg) : _msg(msg){};
+  DepictException(const std::string msg) : _msg(msg){};
+  const char *message() const { return _msg.c_str(); };
+  ~DepictException() throw(){};
+
+ private:
+  std::string _msg;
+};
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
 /*!
@@ -114,6 +125,65 @@ unsigned int compute2DCoordsMimicDistMat(
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true);
+
+//! \brief Compute 2D coordinates where a piece of the molecule is
+//   constrained to have the same coordinates as a reference.
+/*!
+  This function generates a depiction for a molecule where a piece of the
+  molecule is constrained to have the same coordinates as a reference.
+
+  This is useful for, for example, generating depictions of SAR data
+  sets so that the cores of the molecules are all oriented the same way.
+
+  ARGUMENTS:
+
+  \param mol -    the molecule to be aligned, this will come back
+                  with a single conformer.
+  \param reference -    a molecule with the reference atoms to align to;
+                        this should have a depiction.
+  \param confId -       (optional) the id of the reference conformation to use
+  \param referencePattern -  (optional) a query molecule to be used to
+                             generate the atom mapping between the molecule
+                             and the reference.
+  \param acceptFailure - (optional) if True, standard depictions will be
+  generated
+                         for molecules that don't have a substructure match to
+  the
+                         reference; if false, throws a DepictException.
+
+*/
+void generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
+    RDKit::ROMol *referencePattern = static_cast<RDKit::ROMol *>(0),
+    bool acceptFailure = false);
+
+//! \brief Generate a 2D depiction for a molecule where all or part of
+//   it mimics the coordinates of a 3D reference structure.
+/*!
+  Generates a depiction for a molecule where a piece of the molecule
+  is constrained to have coordinates similar to those of a 3D reference
+  structure.
+
+  ARGUMENTS:
+  \param mol - the molecule to be aligned, this will come back
+               with a single conformer containing 2D coordinates
+  \param reference - a molecule with the reference atoms to align to.
+                     By default this should be the same as mol, but with
+                     3D coordinates
+  \param confId - (optional) the id of the reference conformation to use
+  \param refPattern - (optional) a query molecule to map a subset of
+                      the reference onto the mol, so that only some of the
+                      atoms are aligned.
+  \param acceptFailure - (optional) if true, standard depictions will be
+  generated
+                         for molecules that don't match the reference or the
+                         referencePattern; if false, throws a DepictException.
+*/
+void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
+                                          const RDKit::ROMol &reference,
+                                          int confId = -1,
+                                          RDKit::ROMol *referencePattern = 0,
+                                          bool acceptFailure = false);
 };
 
 #endif

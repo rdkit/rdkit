@@ -9,6 +9,7 @@
 """
 from rdkit.ML.DecTree import Tree
 
+
 class DecTreeNode(Tree.TreeNode):
   """ This is used to represent decision trees
 
@@ -25,18 +26,20 @@ class DecTreeNode(Tree.TreeNode):
      3) _TrainingExamples_: the list of examples used to train the tree
 
      4) _TestExamples_: the list of examples used to test the tree
-   
+
   """
-  def __init__(self,*args,**kwargs):
-    #apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
+
+  def __init__(self, *args, **kwargs):
+    # apply(Tree.TreeNode.__init__,(self,)+args,kwargs)
     Tree.TreeNode.__init__(self, *args, **kwargs)
     self.examples = []
     self.badExamples = []
     self.trainingExamples = []
     self.testExamples = []
-  def ClassifyExample(self,example,appendExamples=0):
+
+  def ClassifyExample(self, example, appendExamples=0):
     """ Recursively classify an example by running it through the tree
-    
+
       **Arguments**
 
         - example: the example to be classified
@@ -53,7 +56,7 @@ class DecTreeNode(Tree.TreeNode):
         here.  So if you subclass DecTreeNode for your own trees, you'll
         have to either include ClassifyExample or avoid changing the names
         of the instance variables this needs.
-        
+
     """
     if appendExamples:
       self.examples.append(example)
@@ -61,9 +64,9 @@ class DecTreeNode(Tree.TreeNode):
       return self.label
     else:
       val = example[self.label]
-      return self.children[val].ClassifyExample(example,appendExamples)
- 
-  def AddChild(self,name,label=None,data=None,isTerminal=0):
+      return self.children[val].ClassifyExample(example, appendExamples)
+
+  def AddChild(self, name, label=None, data=None, isTerminal=0):
     """ Constructs and adds a child with the specified data to our list
 
       **Arguments**
@@ -80,30 +83,34 @@ class DecTreeNode(Tree.TreeNode):
       **Returns*
 
         the _DecTreeNode_ which is constructed
-        
+
     """
-    child = DecTreeNode(self,name,label,data,level=self.level+1,isTerminal=isTerminal)
+    child = DecTreeNode(self, name, label, data, level=self.level + 1, isTerminal=isTerminal)
     self.children.append(child)
     return child
 
   def GetExamples(self):
     return self.examples
-  def SetExamples(self,examples):
+
+  def SetExamples(self, examples):
     self.examples = examples
 
   def GetBadExamples(self):
     return self.badExamples
-  def SetBadExamples(self,examples):
+
+  def SetBadExamples(self, examples):
     self.badExamples = examples
 
   def GetTrainingExamples(self):
     return self.trainingExamples
-  def SetTrainingExamples(self,examples):
+
+  def SetTrainingExamples(self, examples):
     self.trainingExamples = examples
 
   def GetTestExamples(self):
     return self.testExamples
-  def SetTestExamples(self,examples):
+
+  def SetTestExamples(self, examples):
     self.testExamples = examples
 
   def ClearExamples(self):
@@ -113,4 +120,3 @@ class DecTreeNode(Tree.TreeNode):
     self.testExamples = []
     for child in self.GetChildren():
       child.ClearExamples()
-      

@@ -28,59 +28,67 @@ from collections import defaultdict
 import os.path as op
 
 _fscores = None
-def readFragmentScores(name='fpscores'):
-    import gzip
-    global _fscores
-    # generate the full path filename:
-    if name == "fpscores":
-        name = op.join(op.dirname(__file__), name)
-    _fscores = cPickle.load(gzip.open('%s.pkl.gz'%name))
-    outDict = {}
-    for i in _fscores:
-        for j in range(1,len(i)):
-            outDict[i[j]] = float(i[0])
-    _fscores = outDict
 
-def numBridgeheadsAndSpiro(mol,ri=None):
+
+def readFragmentScores(name='fpscores'):
+  import gzip
+  global _fscores
+  # generate the full path filename:
+  if name == "fpscores":
+    name = op.join(op.dirname(__file__), name)
+  _fscores = cPickle.load(gzip.open('%s.pkl.gz' % name))
+  outDict = {}
+  for i in _fscores:
+    for j in range(1, len(i)):
+      outDict[i[j]] = float(i[0])
+  _fscores = outDict
+
+
+def numBridgeheadsAndSpiro(mol, ri=None):
   nSpiro = rdMolDescriptors.CalcNumSpiroAtoms(mol)
   nBridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
-  return nBridgehead,nSpiro
+  return nBridgehead, nSpiro
+
 
 def calculateScore(m):
-  if _fscores is None: readFragmentScores()
+  if _fscores is None:
+    readFragmentScores()
 
   # fragment score
-  fp = rdMolDescriptors.GetMorganFingerprint(m,2)  #<- 2 is the *radius* of the circular fingerprint
+  fp = rdMolDescriptors.GetMorganFingerprint(m,
+                                             2)  #<- 2 is the *radius* of the circular fingerprint
   fps = fp.GetNonzeroElements()
   score1 = 0.
   nf = 0
-  for bitId,v in iteritems(fps):
+  for bitId, v in iteritems(fps):
     nf += v
     sfp = bitId
-    score1 += _fscores.get(sfp,-4)*v
+    score1 += _fscores.get(sfp, -4) * v
   score1 /= nf
 
   # features score
   nAtoms = m.GetNumAtoms()
-  nChiralCenters = len(Chem.FindMolChiralCenters(m,includeUnassigned=True))
+  nChiralCenters = len(Chem.FindMolChiralCenters(m, includeUnassigned=True))
   ri = m.GetRingInfo()
-  nBridgeheads,nSpiro=numBridgeheadsAndSpiro(m,ri)
-  nMacrocycles=0
+  nBridgeheads, nSpiro = numBridgeheadsAndSpiro(m, ri)
+  nMacrocycles = 0
   for x in ri.AtomRings():
-    if len(x)>8: nMacrocycles+=1
+    if len(x) > 8:
+      nMacrocycles += 1
 
   sizePenalty = nAtoms**1.005 - nAtoms
-  stereoPenalty = math.log10(nChiralCenters+1)
-  spiroPenalty = math.log10(nSpiro+1)
-  bridgePenalty = math.log10(nBridgeheads+1)
+  stereoPenalty = math.log10(nChiralCenters + 1)
+  spiroPenalty = math.log10(nSpiro + 1)
+  bridgePenalty = math.log10(nBridgeheads + 1)
   macrocyclePenalty = 0.
   # ---------------------------------------
   # This differs from the paper, which defines:
   #  macrocyclePenalty = math.log10(nMacrocycles+1)
   # This form generates better results when 2 or more macrocycles are present
-  if nMacrocycles > 0: macrocyclePenalty = math.log10(2)
+  if nMacrocycles > 0:
+    macrocyclePenalty = math.log10(2)
 
-  score2 = 0. -sizePenalty -stereoPenalty -spiroPenalty -bridgePenalty -macrocyclePenalty
+  score2 = 0. - sizePenalty - stereoPenalty - spiroPenalty - bridgePenalty - macrocyclePenalty
 
   # correction for the fingerprint density
   # not in the original publication, added in version 1.1
@@ -96,40 +104,43 @@ def calculateScore(m):
   max = 2.5
   sascore = 11. - (sascore - min + 1) / (max - min) * 9.
   # smooth the 10-end
-  if sascore > 8.: sascore = 8. + math.log(sascore+1.-9.)
-  if sascore > 10.: sascore = 10.0
-  elif sascore < 1.: sascore = 1.0 
+  if sascore > 8.:
+    sascore = 8. + math.log(sascore + 1. - 9.)
+  if sascore > 10.:
+    sascore = 10.0
+  elif sascore < 1.:
+    sascore = 1.0
 
   return sascore
-    
+
 
 def processMols(mols):
   print('smiles\tName\tsa_score')
-  for i,m in enumerate(mols):
+  for i, m in enumerate(mols):
     if m is None:
       continue
- 
+
     s = calculateScore(m)
 
     smiles = Chem.MolToSmiles(m)
-    print(smiles+"\t"+m.GetProp('_Name') + "\t%3f"%s)
+    print(smiles + "\t" + m.GetProp('_Name') + "\t%3f" % s)
 
 
-if __name__=='__main__':
-  import sys,time
+if __name__ == '__main__':
+  import sys, time
 
-  t1=time.time()
+  t1 = time.time()
   readFragmentScores("fpscores")
-  t2=time.time()
+  t2 = time.time()
 
   suppl = Chem.SmilesMolSupplier(sys.argv[1])
-  t3=time.time()
+  t3 = time.time()
   processMols(suppl)
-  t4=time.time()
+  t4 = time.time()
 
-  print('Reading took %.2f seconds. Calculating took %.2f seconds'%((t2-t1),(t4-t3)), file=sys.stderr)
+  print('Reading took %.2f seconds. Calculating took %.2f seconds' % ((t2 - t1), (t4 - t3)),
+        file=sys.stderr)
 
-  
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.

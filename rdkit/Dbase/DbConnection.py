@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
 #
@@ -12,13 +11,12 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import sys,types
+
+from rdkit.Dbase import DbUtils, DbInfo, DbModule
+
 
 class DbError(RuntimeError):
   pass
-  
-from rdkit.Dbase import DbUtils,DbInfo,DbModule
 
 
 class DbConnect(object):
@@ -26,9 +24,10 @@ class DbConnect(object):
     interacting with databases.
 
     It includes some GUI functionality
-    
+
   """
-  def __init__(self,dbName='',tableName='',user='sysdba',password='masterkey'):
+
+  def __init__(self, dbName='', tableName='', user='sysdba', password='masterkey'):
     """ Constructor
 
       **Arguments**  (all optional)
@@ -40,10 +39,9 @@ class DbConnect(object):
         - user: the username for DB access
 
         - password: the password to be used for DB access
-      
 
     """
-    
+
     self.dbName = dbName
     self.tableName = tableName
     self.user = user
@@ -51,30 +49,7 @@ class DbConnect(object):
     self.cn = None
     self.cursor = None
 
-  def UpdateTableNames(self,dlg):
-    """ Modifies a connect dialog to reflect new table names
-
-     **Arguments**
-
-       - dlg: the dialog to be updated
-       
-
-    """
-    self.user = self.userEntry.GetValue()
-    self.password = self.passwdEntry.GetValue()
-    self.dbName = self.dbBrowseButton.GetValue()
-    for i in xrange(self.dbTableChoice.Number()):
-      self.dbTableChoice.Delete(0)
-    
-    names = self.GetTableNames()
-    
-    for name in names:
-      self.dbTableChoice.Append(name)
-    dlg.sizer.Fit(dlg)
-    dlg.sizer.SetSizeHints(dlg)
-    dlg.Refresh()
-                                      
-  def GetTableNames(self,includeViews=0):
+  def GetTableNames(self, includeViews=0):
     """ gets a list of tables available in a database
 
       **Arguments**
@@ -89,13 +64,12 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetTableNames_
-       
 
     """
-    return DbInfo.GetTableNames(self.dbName,self.user,self.password,
-                                 includeViews=includeViews,cn=self.cn)
-    
-  def GetColumnNames(self,table='',join='',what='*',where='',**kwargs):
+    return DbInfo.GetTableNames(self.dbName, self.user, self.password, includeViews=includeViews,
+                                cn=self.cn)
+
+  def GetColumnNames(self, table='', join='', what='*', where='', **kwargs):
     """ gets a list of columns available in the current table
 
       **Returns**
@@ -105,14 +79,13 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetColumnNames_
-       
 
     """
-    if not table: table = self.tableName
-    return DbInfo.GetColumnNames(self.dbName,table,
-                                  self.user,self.password,
-                                  join=join,what=what,cn=self.cn)
-  def GetColumnNamesAndTypes(self,table='',join='',what='*',where='',**kwargs):
+    table = table or self.tableName
+    return DbInfo.GetColumnNames(self.dbName, table, self.user, self.password, join=join, what=what,
+                                 cn=self.cn)
+
+  def GetColumnNamesAndTypes(self, table='', join='', what='*', where='', **kwargs):
     """ gets a list of columns available in the current table along with their types
 
       **Returns**
@@ -126,14 +99,13 @@ class DbConnect(object):
       **Notes**
 
        - this uses _DbInfo.GetColumnNamesAndTypes_
-       
 
     """
-    if not table: table = self.tableName
-    return DbInfo.GetColumnNamesAndTypes(self.dbName,table,
-                                          self.user,self.password,
-                                          join=join,what=what,cn=self.cn)
-  def GetColumns(self,fields,table='',join='',**kwargs):
+    table = table or self.tableName
+    return DbInfo.GetColumnNamesAndTypes(self.dbName, table, self.user, self.password, join=join,
+                                         what=what, cn=self.cn)
+
+  def GetColumns(self, fields, table='', join='', **kwargs):
     """ gets a set of data from a table
 
       **Arguments**
@@ -150,19 +122,17 @@ class DbConnect(object):
         - this uses _DbUtils.GetColumns_
 
     """
-    if not table: table = self.tableName
-    return DbUtils.GetColumns(self.dbName,table,fields,
-                              self.user,self.password,
-                              join=join)
+    table = table or self.tableName
+    return DbUtils.GetColumns(self.dbName, table, fields, self.user, self.password, join=join)
 
-  def GetData(self,table=None,fields='*',where='',removeDups=-1,join='',
-              transform=None,randomAccess=1,**kwargs):
+  def GetData(self, table=None, fields='*', where='', removeDups=-1, join='', transform=None,
+              randomAccess=1, **kwargs):
     """ a more flexible method to get a set of data from a table
 
       **Arguments**
 
        - table: (optional) the table to use
-       
+
        - fields: a string with the names of the fields to be extracted,
          this should be a comma delimited list
 
@@ -178,24 +148,21 @@ class DbConnect(object):
       **Notes**
 
         - this uses _DbUtils.GetData_
-       
 
     """
-    if table is None:
-      table = self.tableName
-    kwargs['forceList'] = kwargs.get('forceList',0)  
-    return DbUtils.GetData(self.dbName,table,fieldString=fields,whereString=where,
-                           user=self.user,password=self.password,removeDups=removeDups,
-                           join=join,cn=self.cn,
-                           transform=transform,randomAccess=randomAccess,**kwargs)
+    table = table or self.tableName
+    kwargs['forceList'] = kwargs.get('forceList', 0)
+    return DbUtils.GetData(self.dbName, table, fieldString=fields, whereString=where,
+                           user=self.user, password=self.password, removeDups=removeDups, join=join,
+                           cn=self.cn, transform=transform, randomAccess=randomAccess, **kwargs)
 
-  def GetDataCount(self,table=None,where='',join='',**kwargs):
+  def GetDataCount(self, table=None, where='', join='', **kwargs):
     """ returns a count of the number of results a query will return
 
       **Arguments**
 
        - table: (optional) the table to use
-       
+
        - where: the SQL where clause to be used with the DB query
 
        - join: the SQL join clause to be used with the DB query
@@ -210,12 +177,10 @@ class DbConnect(object):
         - this uses _DbUtils.GetData_
 
     """
-    if table is None:
-      table = self.tableName
-    return DbUtils.GetData(self.dbName,table,fieldString='count(*)',
-                           whereString=where,cn=self.cn,
-                           user=self.user,password=self.password,join=join,forceList=0)[0][0]
-
+    table = table or self.tableName
+    return DbUtils.GetData(self.dbName, table, fieldString='count(*)', whereString=where,
+                           cn=self.cn, user=self.user, password=self.password, join=join,
+                           forceList=0)[0][0]
 
   def GetCursor(self):
     """ returns a cursor for direct manipulation of the DB
@@ -224,8 +189,8 @@ class DbConnect(object):
     """
     if self.cursor is not None:
       return self.cursor
-      
-    self.cn = DbModule.connect(self.dbName,self.user,self.password)
+
+    self.cn = DbModule.connect(self.dbName, self.user, self.password)
     self.cursor = self.cn.cursor()
     return self.cursor
 
@@ -234,10 +199,11 @@ class DbConnect(object):
 
     """
     self.cursor = None
-    if self.cn is not None: self.cn.close()
+    if self.cn is not None:
+      self.cn.close()
     self.cn = None
 
-  def AddTable(self,tableName,colString):
+  def AddTable(self, tableName, colString):
     """ adds a table to the database
 
     **Arguments**
@@ -251,29 +217,29 @@ class DbConnect(object):
       - if a table named _tableName_ already exists, it will be dropped
 
       - the sqlQuery for addition is: "create table %(tableName) (%(colString))"
-      
 
     """
     c = self.GetCursor()
     try:
-      c.execute('drop table %s cascade'%tableName)
+      c.execute('drop table %s cascade' % tableName)
     except Exception:
       try:
-        c.execute('drop table %s'%tableName)
+        c.execute('drop table %s' % tableName)
       except Exception:
         pass
     self.Commit()
 
-    addStr = 'create table %s (%s)'%(tableName,colString)
+    addStr = 'create table %s (%s)' % (tableName, colString)
     try:
       c.execute(addStr)
     except Exception:
       import traceback
-      print('command failed:',addStr)
+      print('command failed:', addStr)
       traceback.print_exc()
     else:
       self.Commit()
-  def InsertData(self,tableName,vals):
+
+  def InsertData(self, tableName, vals):
     """ inserts data into a table
 
     **Arguments**
@@ -286,12 +252,12 @@ class DbConnect(object):
     c = self.GetCursor()
     if type(vals) != tuple:
       vals = tuple(vals)
-    insTxt = '('+','.join([DbModule.placeHolder]*len(vals))+')'
-    #insTxt = '(%s'%('%s,'*len(vals))
-    #insTxt = insTxt[0:-1]+')'
-    cmd = "insert into %s values %s"%(tableName,insTxt)
+    insTxt = '(' + ','.join([DbModule.placeHolder] * len(vals)) + ')'
+    # insTxt = '(%s'%('%s,'*len(vals))
+    # insTxt = insTxt[0:-1]+')'
+    cmd = "insert into %s values %s" % (tableName, insTxt)
     try:
-      c.execute(cmd,vals)
+      c.execute(cmd, vals)
     except Exception:
       import traceback
       print('insert failed:')
@@ -299,8 +265,8 @@ class DbConnect(object):
       print('the error was:')
       traceback.print_exc()
       raise DbError("Insert Failed")
-    
-  def InsertColumnData(self,tableName,columnName,value,where):
+
+  def InsertColumnData(self, tableName, columnName, value, where):
     """ inserts data into a particular column of the table
 
     **Arguments**
@@ -315,11 +281,10 @@ class DbConnect(object):
 
     """
     c = self.GetCursor()
-    cmd = "update %s set %s=%s where %s"%(tableName,columnName,
-                                          DbModule.placeHolder,where)
-    c.execute(cmd,(value,))
-    
-  def AddColumn(self,tableName,colName,colType):
+    cmd = "update %s set %s=%s where %s" % (tableName, columnName, DbModule.placeHolder, where)
+    c.execute(cmd, (value, ))
+
+  def AddColumn(self, tableName, colName, colType):
     """ adds a column to a table
 
     **Arguments**
@@ -333,14 +298,12 @@ class DbConnect(object):
     """
     c = self.GetCursor()
     try:
-      c.execute("alter table %s add %s %s"%(tableName,colName,colType))
+      c.execute("alter table %s add %s %s" % (tableName, colName, colType))
     except Exception:
       print('AddColumn failed')
 
   def Commit(self):
     """ commits the current transaction
-    
 
     """
     self.cn.commit()
-    

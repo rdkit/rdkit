@@ -613,7 +613,7 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   // time of this writing (with boost 1.55), the snprintf version runs in 20% of
   // the time.
   char dest[128];
-#ifndef WIN32
+#ifndef _MSC_VER
   snprintf(dest, 128,
            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
            z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
@@ -624,7 +624,7 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   // the format string makes it impossible for this to overflow, I think we're
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
-  sprintf(dest, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
+  sprintf_s(dest, 128, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
           y, z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
           totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
           inversionFlag, exactChangeFlag);
@@ -634,6 +634,28 @@ const std::string GetMolFileAtomLine(const Atom *atom,
 #endif
   return res;
 };
+
+namespace {
+/*
+  If a molecule contains dative bonds the V2000 format should not
+  be used as it doesn't support dative bonds. If a dative bond is
+  detected while writing a V2000 molfile the RequiresV3000Exception
+  is thrown and the V2000 writer will redo the export in V3000 format.
+
+  This is arguably a rather brute-force way of detecting the proper output
+  format, but the only alternatives I (Jan Holst Jensen) had in mind were:
+
+    1) Check all bond types before output. Slow and would affect all
+       V2000 exports.
+    2) Maintain a reference count of dative bonds in molecule. Complex
+       and error-prone.
+*/
+class RequiresV3000Exception : public std::runtime_error {
+public:
+  explicit RequiresV3000Exception()
+      : std::runtime_error("RequiresV3000Exception") {};
+};
+}
 
 int BondGetMolFileSymbol(const Bond *bond) {
   PRECONDITION(bond, "");
@@ -667,6 +689,10 @@ int BondGetMolFileSymbol(const Bond *bond) {
       case Bond::ZERO:
         res = 1;
         break;
+      case Bond::DATIVE:
+        // Dative bonds requires V3000 format. Throw special exception to
+        // force output to be re-done in V3000.
+        throw RequiresV3000Exception();
       default:
         break;
     }
@@ -894,6 +920,7 @@ const std::string GetV3000MolFileAtomLine(const Atom *atom,
 
 int GetV3000BondCode(const Bond *bond) {
   // JHJ: As far as I can tell, the V3000 bond codes are the same as for V2000.
+  //      Except: The dative bond type is only supported in V3000.
   PRECONDITION(bond, "");
   int res = 0;
   // FIX: should eventually recognize queries
@@ -919,6 +946,9 @@ int GetV3000BondCode(const Bond *bond) {
         break;
       case Bond::AROMATIC:
         res = 4;
+        break;
+      case Bond::DATIVE:
+        res = 9;
         break;
       default:
         res = 0;
@@ -983,32 +1013,8 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
 //  gets a mol block as a string
 //
 //------------------------------------------------
-std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
-                          bool kekulize, bool forceV3000) {
-  RDUNUSED_PARAM(includeStereo);
-  RDKit::Utils::LocaleSwitcher switcher;
-  ROMol tromol(mol);
-  RWMol &trwmol = static_cast<RWMol &>(tromol);
-  // NOTE: kekulize the molecule before writing it out
-  // because of the way mol files handle aromaticity
-  if (trwmol.needsUpdatePropertyCache()) {
-    trwmol.updatePropertyCache(false);
-  }
-  if (kekulize) MolOps::Kekulize(trwmol);
-
-#if 0
-    if(includeStereo){
-      // assign "any" status to any stereo bonds that are not 
-      // marked with "E" or "Z" code - these bonds need to be explictly written
-      // out to the mol file
-      MolOps::findPotentialStereoBonds(trwmol);
-      // now assign stereo code if any have been specified by the directions on
-      // single bonds
-      MolOps::assignStereochemistry(trwmol);
-    }
-#endif
-  const RWMol &tmol = const_cast<RWMol &>(trwmol);
-
+std::string outputMolToMolBlock(const RWMol &tmol, int confId,
+                                bool forceV3000) {
   std::string res;
 
   bool isV3000;
@@ -1025,7 +1031,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   nProducts = 0;
   nIntermediates = 0;
 
-  mol.getPropIfPresent(common_properties::_MolFileChiralFlag, chiralFlag);
+  tmol.getPropIfPresent(common_properties::_MolFileChiralFlag, chiralFlag);
 
   const Conformer *conf;
   if (confId < 0 && tmol.getNumConformers() == 0) {
@@ -1126,8 +1132,8 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
     std::stringstream ss;
     //                                           numSgroups (not implemented)
     //                                           | num3DConstraints (not
-    //                                           implemented)
-    //                                           | |
+    //                                           +---------+ |   implemented)
+    //                                                     | |
     ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " 0 0 " << chiralFlag
        << "\n";
     res += ss.str();
@@ -1154,6 +1160,39 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   }
   res += "M  END\n";
   return res;
+}
+
+std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
+                          bool kekulize, bool forceV3000) {
+  RDUNUSED_PARAM(includeStereo);
+  RDKit::Utils::LocaleSwitcher switcher;
+  ROMol tromol(mol);
+  RWMol &trwmol = static_cast<RWMol &>(tromol);
+  // NOTE: kekulize the molecule before writing it out
+  // because of the way mol files handle aromaticity
+  if (trwmol.needsUpdatePropertyCache()) {
+    trwmol.updatePropertyCache(false);
+  }
+  if (kekulize) MolOps::Kekulize(trwmol);
+
+#if 0
+    if(includeStereo){
+      // assign "any" status to any stereo bonds that are not
+      // marked with "E" or "Z" code - these bonds need to be explictly written
+      // out to the mol file
+      MolOps::findPotentialStereoBonds(trwmol);
+      // now assign stereo code if any have been specified by the directions on
+      // single bonds
+      MolOps::assignStereochemistry(trwmol);
+    }
+#endif
+  const RWMol &tmol = const_cast<RWMol &>(trwmol);
+
+  try {
+    return outputMolToMolBlock(tmol, confId, forceV3000);
+  } catch (RequiresV3000Exception) {
+    return outputMolToMolBlock(tmol, confId, true);
+  }
 }
 
 //------------------------------------------------

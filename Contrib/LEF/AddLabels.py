@@ -32,16 +32,16 @@
 from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem import BRICS
-import sys,cPickle,re
+import sys, cPickle, re
 
-inF = file(sys.argv[1],'r')
+inF = file(sys.argv[1], 'r')
 inLs = inF.readlines()
 
-delim=' '
+delim = ' '
 
 # definitions of the functional groups to look for and flag.
 # format is: Name<tab>SMARTS<tab>Note
-fgData="""AcidChloride	C(=O)Cl	Acid Chloride
+fgData = """AcidChloride	C(=O)Cl	Acid Chloride
 CarboxylicAcid	C(=O)[O;H,-]	Carboxylic acid
 SulfonylChloride	[$(S-!@[#6])](=O)(=O)(Cl)	Sulfonyl Chloride
 Amine				[N;!H0;$(N-[#6]);!$(N-[!#6]);!$(N-C=[O,N,S])]	Amine
@@ -50,25 +50,24 @@ Isocyanate			[$(N-!@[#6])](=!@C=!@O)	Isocyanate
 Alcohol				[O;H1;$(O-!@[#6;!$(C=!@[O,N,S])])]	Alcohol
 Aldehyde			[CH;D2;!$(C-[!#6])]=O	Aldehyde
 Halogen				[$([Cl,Br,I]-!@[#6]);!$([Cl,Br,I]-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](=[O,S,N]))]	Halogen"""
-fglines = [re.split(r'\t+',x.strip()) for x in fgData.split('\n')]
+fglines = [re.split(r'\t+', x.strip()) for x in fgData.split('\n')]
 hLabels = [x[0] for x in fglines]
 patts = [Chem.MolFromSmarts(x[1]) for x in fglines]
 
 labels = inLs[0].strip().split(delim) + hLabels + ['HasBRICSBond?']
 print(delim.join(labels))
 for line in inLs[1:]:
-    splitL = line.strip().split(delim)
-    mol = Chem.MolFromSmiles(splitL[1])
-    for fg in patts:
-        if mol.HasSubstructMatch(fg):
-            splitL.append('True')
-        else:
-            splitL.append('False')
-    
-    bricsRes=BRICS.BRICSDecompose(mol)
-    if len(bricsRes)>1:
-        splitL.append('True')
+  splitL = line.strip().split(delim)
+  mol = Chem.MolFromSmiles(splitL[1])
+  for fg in patts:
+    if mol.HasSubstructMatch(fg):
+      splitL.append('True')
     else:
-        splitL.append('False')
-    print(delim.join(splitL))
+      splitL.append('False')
 
+  bricsRes = BRICS.BRICSDecompose(mol)
+  if len(bricsRes) > 1:
+    splitL.append('True')
+  else:
+    splitL.append('False')
+  print(delim.join(splitL))

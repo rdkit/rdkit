@@ -10,6 +10,8 @@
 #ifndef _RDCHEM_INCL_
 #define _RDCHEM_INCL_
 
+#define PY_ARRAY_UNIQUE_SYMBOL rdchem_array_API
+
 namespace RDKit {
 class ConformerException;
 }

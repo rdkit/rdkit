@@ -14,22 +14,20 @@
   **NOTE**: the two functions defined here have been moved to ML.Data.Stats
 
 """
+
 from __future__ import print_function
+
+import sys
+
+from rdkit.ML import files
 from rdkit.ML.Data import Stats
 
 FormCovarianceMatrix = Stats.FormCovarianceMatrix
 PrincipalComponents = Stats.PrincipalComponents
 
 if __name__ == '__main__':
-  import sys
-  import files
-
   fileN = sys.argv[1]
-  iV,dV = files.ReadDataFile(fileN)
-  eVals,eVects=PrincipalComponents(iV)
+  iV, dV = files.ReadDataFile(fileN)
+  eVals, eVects = PrincipalComponents(iV)
   print('eVals: ', eVals)
   print('eVects:', eVects)
-  
-
-  
-

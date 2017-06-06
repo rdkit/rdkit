@@ -5,25 +5,29 @@
 """ Various bits and pieces for calculating Molecular descriptors
 
 """
-from rdkit import RDConfig
-from rdkit.ML.Descriptors import Descriptors
-from rdkit.Chem import Descriptors as DescriptorsMod
 
-from rdkit.RDLogger import logger
-logger = logger()
 import re
+
+from rdkit.Chem import Descriptors as DescriptorsMod
+from rdkit.ML.Descriptors import Descriptors
+from rdkit.RDLogger import logger
+from rdkit.six.moves import cPickle
+
+logger = logger()
+
 
 class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
   """ used for calculating descriptors for molecules
 
   """
-  def __init__(self,simpleList,*args,**kwargs):
+
+  def __init__(self, simpleList, *args, **kwargs):
     """ Constructor
 
       **Arguments**
 
         - simpleList: list of simple descriptors to be calculated
-              (see below for format) 
+              (see below for format)
 
       **Note**
 
@@ -41,46 +45,45 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """ returns a tuple of the versions of the descriptor calculators
 
     """
-    self.descriptorVersions=[]
+    self.descriptorVersions = []
     for nm in self.simpleList:
-      vers='N/A'
-      if hasattr(DescriptorsMod,nm):
-        fn = getattr(DescriptorsMod,nm)
-        if hasattr(fn,'version'):
+      vers = 'N/A'
+      if hasattr(DescriptorsMod, nm):
+        fn = getattr(DescriptorsMod, nm)
+        if hasattr(fn, 'version'):
           vers = fn.version
       self.descriptorVersions.append(vers)
-  
-  def SaveState(self,fileName):
+
+  def SaveState(self, fileName):
     """ Writes this calculator off to a file so that it can be easily loaded later
 
      **Arguments**
 
        - fileName: the name of the file to be written
-       
+
     """
-    from rdkit.six.moves import cPickle
     try:
-      f = open(fileName,'wb+')
+      f = open(fileName, 'wb+')
     except Exception:
-      logger.error('cannot open output file %s for writing'%(fileName))
+      logger.error('cannot open output file %s for writing' % (fileName))
       return
-    cPickle.dump(self,f)
+    cPickle.dump(self, f)
     f.close()
 
-  def CalcDescriptors(self,mol,*args,**kwargs):
+  def CalcDescriptors(self, mol, *args, **kwargs):
     """ calculates all descriptors for a given molecule
 
       **Arguments**
 
         - mol: the molecule to be used
 
-      **Returns**  
+      **Returns**
         a tuple of all descriptor values
 
     """
-    res = [-666]*len(self.simpleList)
-    for i,nm in enumerate(self.simpleList):
-      fn = getattr(DescriptorsMod,nm,lambda x:777)
+    res = [-666] * len(self.simpleList)
+    for i, nm in enumerate(self.simpleList):
+      fn = getattr(DescriptorsMod, nm, lambda x: 777)
       try:
         res[i] = fn(mol)
       except Exception:
@@ -100,10 +103,10 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = []
     for nm in self.simpleList:
-      fn = getattr(DescriptorsMod,nm,lambda x:777)
-      if hasattr(fn,'__doc__') and fn.__doc__:
+      fn = getattr(DescriptorsMod, nm, lambda x: 777)
+      if hasattr(fn, '__doc__') and fn.__doc__:
         doc = fn.__doc__.split('\n\n')[0].strip()
-        doc = re.sub('\ *\n\ *',' ',doc)
+        doc = re.sub('\ *\n\ *', ' ', doc)
       else:
         doc = 'N/A'
       res.append(doc)
@@ -115,13 +118,12 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = []
     for nm in self.simpleList:
-      fn = getattr(DescriptorsMod,nm,lambda x:777)
+      fn = getattr(DescriptorsMod, nm, lambda x: 777)
       res.append(fn)
-    return tuple(res)  
-    
+    return tuple(res)
+
   def GetDescriptorVersions(self):
     """ returns a tuple of the versions of the descriptor calculators
 
     """
-    return tuple(self.descriptorVersions)  
-    
+    return tuple(self.descriptorVersions)

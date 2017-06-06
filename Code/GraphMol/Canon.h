@@ -10,8 +10,10 @@
 #ifndef _RD_CANON_H_
 #define _RD_CANON_H_
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/tuple/tuple.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 class ROMol;

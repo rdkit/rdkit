@@ -1,28 +1,28 @@
 #
 #  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
-
 """ Informational Entropy functions
 
   The definitions used are the same as those in Tom Mitchell's
   book "Machine Learning"
-  
+
 """
-import numpy
 import math
 
-from rdkit.six.moves import xrange
+import numpy
+
 
 # try to get the C versions of these routines
 try:
   import rdkit.ML.InfoTheory.rdInfoTheory as cEntropy
 except ImportError:
-  hascEntropy=0
+  hascEntropy = 0
 else:
-  hascEntropy=1
+  hascEntropy = 1
 
 # it's pretty obvious what this is for ;-)
 _log2 = math.log(2)
+
 
 def PyInfoEntropy(results):
   """ Calculates the informational entropy of a set of results.
@@ -44,9 +44,9 @@ def PyInfoEntropy(results):
   if nInstances == 0:
     # to return zero or one... that is the question
     return 0
-  probs = results/nInstances
+  probs = results / nInstances
 
-  #-------
+  # -------
   #  NOTE: this is a little hack to allow the use of Numeric
   #   functionality to calculate the informational entropy.
   #    The problem is that the system log function pitches a fit
@@ -56,12 +56,12 @@ def PyInfoEntropy(results):
   # Here's the risky (but marginally faster way to do it:
   #    add a small number to probs and hope it doesn't screw
   #    things up too much.
-  #t = probs+1e-10
+  # t = probs+1e-10
 
   # Here's a perfectly safe approach that's a little bit more obfuscated
   #  and a tiny bit slower
-  t = numpy.choose(numpy.greater(probs,0.0),(1,probs))
-  return sum(-probs*numpy.log(t)/_log2)
+  t = numpy.choose(numpy.greater(probs, 0.0), (1, probs))
+  return sum(-probs * numpy.log(t) / _log2)
 
 
 def PyInfoGain(varMat):
@@ -79,15 +79,15 @@ def PyInfoGain(varMat):
 
       The expected information gain
   """
-  variableRes = numpy.sum(varMat,1) # indexed by variable, Sv in Mitchell's notation
-  overallRes = numpy.sum(varMat,0) # indexed by result, S in Mitchell's notation
+  variableRes = numpy.sum(varMat, 1)  # indexed by variable, Sv in Mitchell's notation
+  overallRes = numpy.sum(varMat, 0)  # indexed by result, S in Mitchell's notation
 
   term2 = 0
-  for i in xrange(len(variableRes)):
-    term2 = term2 + variableRes[i] * InfoEntropy(varMat[i]) 
+  for i in range(len(variableRes)):
+    term2 = term2 + variableRes[i] * InfoEntropy(varMat[i])
   tSum = sum(overallRes)
   if tSum != 0.0:
-    term2 = 1./tSum * term2
+    term2 = 1. / tSum * term2
     gain = InfoEntropy(overallRes) - term2
   else:
     gain = 0

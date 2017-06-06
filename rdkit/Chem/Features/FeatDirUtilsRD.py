@@ -19,11 +19,12 @@ import math
 # with combicode the caller needs to make sure the atom IDs from combicode
 # are corrected before feeding them in here.
 
-def cross(v1,v2):
-  res = numpy.array([ v1[1]*v2[2] - v1[2]*v2[1],
-                -v1[0]*v2[2] + v1[2]*v2[0],
-                v1[0]*v2[1] - v1[1]*v2[0]],numpy.double)
+
+def cross(v1, v2):
+  res = numpy.array([v1[1] * v2[2] - v1[2] * v2[1], -v1[0] * v2[2] + v1[2] * v2[0],
+                     v1[0] * v2[1] - v1[1] * v2[0]], numpy.double)
   return res
+
 
 def findNeighbors(atomId, adjMat):
   """
@@ -34,12 +35,13 @@ def findNeighbors(atomId, adjMat):
   adjMat - adjacency matrix for the compound
   """
   nbrs = []
-  for i,nid in enumerate(adjMat[atomId]):
-    if nid >= 1 :
+  for i, nid in enumerate(adjMat[atomId]):
+    if nid >= 1:
       nbrs.append(i)
   return nbrs
 
-def _findAvgVec(conf, center, nbrs) :
+
+def _findAvgVec(conf, center, nbrs):
   # find the average of the normalized vectors going from the center atoms to the
   # neighbors
   # the average vector is also normalized
@@ -49,13 +51,14 @@ def _findAvgVec(conf, center, nbrs) :
     pt = conf.GetAtomPosition(nid)
     pt -= center
     pt.Normalize()
-    if (avgVec == 0) :
+    if (avgVec == 0):
       avgVec = pt
-    else :
+    else:
       avgVec += pt
 
   avgVec.Normalize()
   return avgVec
+
 
 def GetAromaticFeatVects(conf, featAtoms, featLoc, scale=1.5):
   """
@@ -68,51 +71,49 @@ def GetAromaticFeatVects(conf, featAtoms, featLoc, scale=1.5):
      scale - the size of the direction vector
   """
   dirType = 'linear'
-  head = featLoc 
+  head = featLoc
   ats = [conf.GetAtomPosition(x) for x in featAtoms]
-  
+
   p0 = ats[0]
   p1 = ats[1]
-  v1 = p0-head
-  v2 = p1-head
+  v1 = p0 - head
+  v2 = p1 - head
   norm1 = v1.CrossProduct(v2)
   norm1.Normalize()
   norm1 *= scale
   #norm2 = norm1
-  norm2 = head-norm1
+  norm2 = head - norm1
   norm1 += head
-  return ( (head,norm1),(head,norm2) ), dirType
+  return ((head, norm1), (head, norm2)), dirType
 
-def ArbAxisRotation(theta,ax,pt):
-  theta = math.pi*theta/180
+
+def ArbAxisRotation(theta, ax, pt):
+  theta = math.pi * theta / 180
   c = math.cos(theta)
   s = math.sin(theta)
-  t = 1-c
+  t = 1 - c
   X = ax.x
   Y = ax.y
   Z = ax.z
-  mat = [ [t*X*X+c, t*X*Y+s*Z, t*X*Z-s*Y],
-          [t*X*Y-s*Z,t*Y*Y+c,t*Y*Z+s*X],
-          [t*X*Z+s*Y,t*Y*Z-s*X,t*Z*Z+c] ]
+  mat = [[t * X * X + c, t * X * Y + s * Z, t * X * Z - s * Y],
+         [t * X * Y - s * Z, t * Y * Y + c, t * Y * Z + s * X],
+         [t * X * Z + s * Y, t * Y * Z - s * X, t * Z * Z + c]]
   mat = numpy.array(mat)
-  if isinstance(pt,Geometry.Point3D):
-    pt = numpy.array((pt.x,pt.y,pt.z))
-    tmp = numpy.dot(mat,pt)
-    res=Geometry.Point3D(tmp[0],tmp[1],tmp[2])
-  elif isinstance(pt,list) or isinstance(pt,tuple):
+  if isinstance(pt, Geometry.Point3D):
+    pt = numpy.array((pt.x, pt.y, pt.z))
+    tmp = numpy.dot(mat, pt)
+    res = Geometry.Point3D(tmp[0], tmp[1], tmp[2])
+  elif isinstance(pt, list) or isinstance(pt, tuple):
     pts = pt
     res = []
     for pt in pts:
-      pt = numpy.array((pt.x,pt.y,pt.z))
-      tmp = numpy.dot(mat,pt)
-      res.append(Geometry.Point3D(tmp[0],tmp[1],tmp[2]))
+      pt = numpy.array((pt.x, pt.y, pt.z))
+      tmp = numpy.dot(mat, pt)
+      res.append(Geometry.Point3D(tmp[0], tmp[1], tmp[2]))
   else:
-    res=None
+    res = None
   return res
-      
-      
 
- 
 
 def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
   """
@@ -135,20 +136,20 @@ def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
   mol = conf.GetOwningMol()
   nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
   hydrogens = []
-  tmp=[]
+  tmp = []
   while len(nbrs):
     nbr = nbrs.pop()
-    if nbr.GetAtomicNum()==1:
+    if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
     else:
       tmp.append(nbr)
   nbrs = tmp
   assert len(nbrs) == 2
-  
-  bvec = _findAvgVec(conf, cpt, nbrs)
-  bvec *= (-1.0*scale)
 
-  if (mol.GetAtomWithIdx(aid).GetAtomicNum()==8):
+  bvec = _findAvgVec(conf, cpt, nbrs)
+  bvec *= (-1.0 * scale)
+
+  if (mol.GetAtomWithIdx(aid).GetAtomicNum() == 8):
     # assume sp3
     # we will create two vectors by rotating bvec by half the tetrahedral angle in either directions
     v1 = conf.GetAtomPosition(nbrs[0].GetIdx())
@@ -161,24 +162,27 @@ def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
     bv1 += cpt
     bv2 = ArbAxisRotation(-54.5, rotAxis, bvec)
     bv2 += cpt
-    return ((cpt, bv1), (cpt, bv2),), 'linear'
-  else :
+    return ((cpt, bv1),
+            (cpt, bv2), ), 'linear'
+  else:
     bvec += cpt
-    return ((cpt, bvec),), 'linear'
+    return ((cpt, bvec), ), 'linear'
 
-def _GetTetrahedralFeatVect(conf,aid,scale):
+
+def _GetTetrahedralFeatVect(conf, aid, scale):
   mol = conf.GetOwningMol()
 
   cpt = conf.GetAtomPosition(aid)
   nbrs = mol.GetAtomWithIdx(aid).GetNeighbors()
-  if not _checkPlanarity(conf,cpt,nbrs,tol=0.1):
-    bvec = _findAvgVec(conf, cpt, nbrs) 
-    bvec *= (-1.0*scale)
+  if not _checkPlanarity(conf, cpt, nbrs, tol=0.1):
+    bvec = _findAvgVec(conf, cpt, nbrs)
+    bvec *= (-1.0 * scale)
     bvec += cpt
-    res = ((cpt,bvec),)
+    res = ((cpt, bvec), )
   else:
     res = ()
   return res
+
 
 def GetDonor3FeatVects(conf, featAtoms, scale=1.5):
   """
@@ -195,8 +199,9 @@ def GetDonor3FeatVects(conf, featAtoms, scale=1.5):
   assert len(featAtoms) == 1
   aid = featAtoms[0]
 
-  tfv = _GetTetrahedralFeatVect(conf,aid,scale)
+  tfv = _GetTetrahedralFeatVect(conf, aid, scale)
   return tfv, 'linear'
+
 
 def GetAcceptor3FeatVects(conf, featAtoms, scale=1.5):
   """
@@ -212,8 +217,9 @@ def GetAcceptor3FeatVects(conf, featAtoms, scale=1.5):
   """
   assert len(featAtoms) == 1
   aid = featAtoms[0]
-  tfv = _GetTetrahedralFeatVect(conf,aid,scale)
+  tfv = _GetTetrahedralFeatVect(conf, aid, scale)
   return tfv, 'linear'
+
 
 def _findHydAtoms(nbrs, atomNames):
   hAtoms = []
@@ -221,6 +227,7 @@ def _findHydAtoms(nbrs, atomNames):
     if atomNames[nid] == 'H':
       hAtoms.append(nid)
   return hAtoms
+
 
 def _checkPlanarity(conf, cpt, nbrs, tol=1.0e-3):
   assert len(nbrs) == 3
@@ -232,12 +239,13 @@ def _checkPlanarity(conf, cpt, nbrs, tol=1.0e-3):
   v3 -= cpt
   normal = v1.CrossProduct(v2)
   dotP = abs(v3.DotProduct(normal))
-  if (dotP <= tol) :
+  if (dotP <= tol):
     return 1
-  else :
+  else:
     return 0
-  
-def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
+
+
+def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
   """
   Get the direction vectors for Donor of type 2
 
@@ -262,23 +270,23 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
   assert len(nbrs) >= 2
 
   hydrogens = []
-  tmp=[]
+  tmp = []
   while len(nbrs):
     nbr = nbrs.pop()
-    if nbr.GetAtomicNum()==1:
+    if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
     else:
       tmp.append(nbr)
   nbrs = tmp
-      
+
   if len(nbrs) == 2:
     # there should be no hydrogens in this case
     assert len(hydrogens) == 0
     # in this case the direction is the opposite of the average vector of the two neighbors
     bvec = _findAvgVec(conf, cpt, nbrs)
-    bvec *= (-1.0*scale)
+    bvec *= (-1.0 * scale)
     bvec += cpt
-    return ((cpt, bvec),), 'linear'
+    return ((cpt, bvec), ), 'linear'
   elif len(nbrs) == 3:
     assert len(hydrogens) == 1
     # this is a little more tricky we have to check if the hydrogen is in the plane of the
@@ -293,15 +301,16 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
     bvec += cpt
     if _checkPlanarity(conf, cpt, nbrs):
       # only the hydrogen atom direction needs to be used
-      return ((cpt, bvec),), 'linear'
-    else :
+      return ((cpt, bvec), ), 'linear'
+    else:
       # we have a non-planar configuration - we will assume sp3 and compute a second direction vector
       ovec = _findAvgVec(conf, cpt, nbrs)
-      ovec *= (-1.0*scale)
+      ovec *= (-1.0 * scale)
       ovec += cpt
-      return ((cpt, bvec), (cpt, ovec),), 'linear'
+      return ((cpt, bvec),
+              (cpt, ovec), ), 'linear'
 
-  elif len(nbrs) >= 4 :
+  elif len(nbrs) >= 4:
     # in this case we should have two or more hydrogens we will simple use there directions
     res = []
     for hid in hydrogens:
@@ -313,7 +322,8 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
       res.append((cpt, bvec))
     return tuple(res), 'linear'
 
-def GetDonor1FeatVects(conf, featAtoms, scale=1.5) :
+
+def GetDonor1FeatVects(conf, featAtoms, scale=1.5):
   """
   Get the direction vectors for Donor of type 1
 
@@ -334,7 +344,7 @@ def GetDonor1FeatVects(conf, featAtoms, scale=1.5) :
   # find the neighboring heavy atom
   hnbr = -1
   for nbr in nbrs:
-    if nbr.GetAtomicNum()!=1:
+    if nbr.GetAtomicNum() != 1:
       hnbr = nbr.GetIdx()
       break
 
@@ -342,11 +352,12 @@ def GetDonor1FeatVects(conf, featAtoms, scale=1.5) :
   v1 = conf.GetAtomPosition(hnbr)
   v1 -= cpt
   v1.Normalize()
-  v1 *= (-1.0*scale)
+  v1 *= (-1.0 * scale)
   v1 += cpt
-  return ((cpt, v1),), 'cone'
+  return ((cpt, v1), ), 'cone'
 
-def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
+
+def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5):
   """
   Get the direction vectors for Acceptor of type 1
 
@@ -367,29 +378,29 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
   aid = featAtoms[0]
   mol = conf.GetOwningMol()
   nbrs = mol.GetAtomWithIdx(aid).GetNeighbors()
-  
+
   cpt = conf.GetAtomPosition(aid)
-  
+
   # find the adjacent heavy atom
   heavyAt = -1
   for nbr in nbrs:
-    if nbr.GetAtomicNum()!=1:
+    if nbr.GetAtomicNum() != 1:
       heavyAt = nbr
       break
 
-  singleBnd = mol.GetBondBetweenAtoms(aid,heavyAt.GetIdx()).GetBondType() > Chem.BondType.SINGLE
+  singleBnd = mol.GetBondBetweenAtoms(aid, heavyAt.GetIdx()).GetBondType() > Chem.BondType.SINGLE
 
   # special scale - if the heavy atom is a sulfur (we should proabably check phosphorous as well)
-  sulfur = heavyAt.GetAtomicNum()==16
-    
+  sulfur = heavyAt.GetAtomicNum() == 16
+
   if singleBnd or sulfur:
     v1 = conf.GetAtomPosition(heavyAt.GetIdx())
     v1 -= cpt
     v1.Normalize()
-    v1 *= (-1.0*scale)
+    v1 *= (-1.0 * scale)
     v1 += cpt
-    return ((cpt, v1),), 'cone'
-  else :
+    return ((cpt, v1), ), 'cone'
+  else:
     # ok in this case we will assume that
     # heavy atom is sp2 hybridized and the direction vectors (two of them)
     # are in the same plane, we will find this plane by looking for one
@@ -400,7 +411,7 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
       if nbr.GetIdx() != aid:
         hvNbr = nbr
         break
-      
+
     pt1 = conf.GetAtomPosition(hvNbr.GetIdx())
     v1 = conf.GetAtomPosition(heavyAt.GetIdx())
     pt1 -= v1
@@ -415,5 +426,5 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
     bv2.Normalize()
     bv2 *= scale
     bv2 += cpt
-    return ((cpt, bv1), (cpt, bv2),), 'linear'
-  
+    return ((cpt, bv1),
+            (cpt, bv2), ), 'linear'

@@ -8,7 +8,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-
 """ command line utility for growing composite models
 
 **Usage**
@@ -56,7 +55,7 @@
      the filenames.
 
   - -L *limit*: provide an (integer) limit on individual model complexity
-  
+
   - -d *database name*: instead of reading the data from a QDAT file,
      pull it from a database.  In this case, the _filename_ argument
      provides the name of the database table containing the data set.
@@ -74,7 +73,7 @@
 
   - -D: show a detailed breakdown of the composite model performance
      across the training and, when appropriate, hold-out sets.
-     
+
   - -t *threshold value*: use high-confidence predictions for the final
      analysis of the hold-out data.
 
@@ -94,21 +93,26 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+
+import sys
+import time
+
 import numpy
-from rdkit.ML.Data import DataUtils,SplitData
-from rdkit.ML import ScreenComposite,BuildComposite
-from rdkit.ML.Composite import AdjustComposite
+
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
+from rdkit.ML import ScreenComposite, BuildComposite
+from rdkit.ML.Composite import AdjustComposite
+from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.six.moves import cPickle
-import sys,time,types
 
 _runDetails = CompositeRun.CompositeRun()
 
-__VERSION_STRING="0.5.0"
+__VERSION_STRING = "0.5.0"
 
 _verbose = 1
+
+
 def message(msg):
   """ emits messages to _sys.stdout_
     override this in modules which import this one to redirect output
@@ -118,10 +122,11 @@ def message(msg):
       - msg: the string to be displayed
 
   """
-  if _verbose: sys.stdout.write('%s\n'%(msg))
-  
-def GrowIt(details,composite,progressCallback=None,
-           saveIt=1,setDescNames=0,data=None):
+  if _verbose:
+    sys.stdout.write('%s\n' % (msg))
+
+
+def GrowIt(details, composite, progressCallback=None, saveIt=1, setDescNames=0, data=None):
   """ does the actual work of building a composite model
 
     **Arguments**
@@ -130,7 +135,7 @@ def GrowIt(details,composite,progressCallback=None,
         (options, parameters, etc.) about the run
 
       - composite: the composite model to grow
-      
+
       - progressCallback: (optional) a function which is called with a single
         argument (the number of models built so far) after each model is built.
 
@@ -145,7 +150,7 @@ def GrowIt(details,composite,progressCallback=None,
 
       - data: (optional) the data set to be used.  If this is not provided, the
         data set described in details will be used.
-        
+
     **Returns**
 
       the enlarged composite model
@@ -164,29 +169,28 @@ def GrowIt(details,composite,progressCallback=None,
       details.tableName = fName
       data = details.GetDataSet()
     else:
-      data = DataUtils.DBToQuantData(details.dbName,fName,quantName=details.qTableName,
-                                     user=details.dbUser,password=details.dbPassword)
+      data = DataUtils.DBToQuantData(  # Function no longer defined
+        details.dbName, fName, quantName=details.qTableName, user=details.dbUser,
+        password=details.dbPassword)
 
-  nExamples = data.GetNPts()
   seed = composite._randomSeed
   DataUtils.InitRandomNumbers(seed)
-  testExamples = [] 
   if details.shuffleActivities == 1:
-    DataUtils.RandomizeActivities(data,shuffle=1,runDetails=details)
+    DataUtils.RandomizeActivities(data, shuffle=1, runDetails=details)
   elif details.randomActivities == 1:
-    DataUtils.RandomizeActivities(data,shuffle=0,runDetails=details)
+    DataUtils.RandomizeActivities(data, shuffle=0, runDetails=details)
 
   namedExamples = data.GetNamedData()
   trainExamples = namedExamples
   nExamples = len(trainExamples)
-  message('Training with %d examples'%(nExamples))
-  message('\t%d descriptors'%(len(trainExamples[0])-2))
+  message('Training with %d examples' % (nExamples))
+  message('\t%d descriptors' % (len(trainExamples[0]) - 2))
   nVars = data.GetNVars()
   nPossibleVals = composite.nPossibleVals
-  attrs = range(1,nVars+1)
+  attrs = list(range(1, nVars + 1))
 
   if details.useTrees:
-    from rdkit.ML.DecTree import CrossValidate,PruneTree
+    from rdkit.ML.DecTree import CrossValidate, PruneTree
     if details.qBounds != []:
       from rdkit.ML.DecTree import BuildQuantTree
       builder = BuildQuantTree.QuantTreeBoot
@@ -198,27 +202,21 @@ def GrowIt(details,composite,progressCallback=None,
 
     if setDescNames:
       composite.SetInputOrder(data.GetVarNames())
-    composite.Grow(trainExamples,attrs,[0]+nPossibleVals,
-                   buildDriver=driver,
-                   pruner=pruner,
-                   nTries=details.nModels,pruneIt=details.pruneIt,
-                   lessGreedy=details.lessGreedy,needsQuantization=0,
-                   treeBuilder=builder,nQuantBounds=details.qBounds,
-                   startAt=details.startAt,
-                   maxDepth=details.limitDepth,
-                   progressCallback=progressCallback,
-                   silent=not _verbose)
-
+    composite.Grow(trainExamples, attrs, [0] + nPossibleVals, buildDriver=driver, pruner=pruner,
+                   nTries=details.nModels, pruneIt=details.pruneIt, lessGreedy=details.lessGreedy,
+                   needsQuantization=0, treeBuilder=builder, nQuantBounds=details.qBounds,
+                   startAt=details.startAt, maxDepth=details.limitDepth,
+                   progressCallback=progressCallback, silent=not _verbose)
 
   else:
     from rdkit.ML.Neural import CrossValidate
     driver = CrossValidate.CrossValidationDriver
-    composite.Grow(trainExamples,attrs,[0]+nPossibleVals,nTries=details.nModels,
-                   buildDriver=driver,needsQuantization=0)
-    
+    composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
+                   buildDriver=driver, needsQuantization=0)
+
   composite.AverageErrors()
   composite.SortModels()
-  modelList,counts,avgErrs = composite.GetAllData()
+  modelList, counts, avgErrs = composite.GetAllData()
   counts = numpy.array(counts)
   avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
@@ -227,58 +225,62 @@ def GrowIt(details,composite,progressCallback=None,
     modelList[i].NameModel(composite._varNames)
 
   # do final statistics
-  weightedErrs = counts*avgErrs
-  averageErr = sum(weightedErrs)/sum(counts)
+  weightedErrs = counts * avgErrs
+  averageErr = sum(weightedErrs) / sum(counts)
   devs = (avgErrs - averageErr)
   devs = devs * counts
-  devs = numpy.sqrt(devs*devs)
-  avgDev = sum(devs)/sum(counts)
+  devs = numpy.sqrt(devs * devs)
+  avgDev = sum(devs) / sum(counts)
   if _verbose:
-    message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f'%(100.*averageErr,100.*avgDev))
-  
+    message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f' %
+            (100. * averageErr, 100. * avgDev))
+
   if details.bayesModel:
-    composite.Train(trainExamples,verbose=0)
+    composite.Train(trainExamples, verbose=0)
 
   badExamples = []
   if not details.detailedRes:
     if _verbose:
       message('Testing all examples')
-    wrong = BuildComposite.testall(composite,namedExamples,badExamples)
+    wrong = BuildComposite.testall(composite, namedExamples, badExamples)
     if _verbose:
-      message('%d examples (%% %5.2f) were misclassified'%(len(wrong),100.*float(len(wrong))/float(len(namedExamples))))
-    _runDetails.overall_error = float(len(wrong))/len(namedExamples)
+      message('%d examples (%% %5.2f) were misclassified' %
+              (len(wrong), 100. * float(len(wrong)) / float(len(namedExamples))))
+    _runDetails.overall_error = float(len(wrong)) / len(namedExamples)
 
   if details.detailedRes:
     if _verbose:
       message('\nEntire data set:')
-    resTup = ScreenComposite.ShowVoteResults(range(data.GetNPts()),data,composite,
-                                             nPossibleVals[-1],details.threshold)
-    nGood,nBad,nSkip,avgGood,avgBad,avgSkip,voteTab = resTup
+    resTup = ScreenComposite.ShowVoteResults(
+      range(data.GetNPts()), data, composite, nPossibleVals[-1], details.threshold)
+    nGood, nBad, _, avgGood, avgBad, _, voteTab = resTup
     nPts = len(namedExamples)
-    nClass = nGood+nBad
+    nClass = nGood + nBad
     _runDetails.overall_error = float(nBad) / nClass
     _runDetails.overall_correct_conf = avgGood
     _runDetails.overall_incorrect_conf = avgBad
     _runDetails.overall_result_matrix = repr(voteTab)
-    nRej = nClass-nPts
+    nRej = nClass - nPts
     if nRej > 0:
-      _runDetails.overall_fraction_dropped = float(nRej)/nPts
-      
+      _runDetails.overall_fraction_dropped = float(nRej) / nPts
+
   return composite
+
 
 def GetComposites(details):
   res = []
   if details.persistTblName and details.inNote:
-    conn = DbConnect(details.dbName,details.persistTblName)
-    mdls = conn.GetData(fields='MODEL',where="where note='%s'"%(details.inNote))
+    conn = DbConnect(details.dbName, details.persistTblName)
+    mdls = conn.GetData(fields='MODEL', where="where note='%s'" % (details.inNote))
     for row in mdls:
       rawD = row[0]
       res.append(cPickle.loads(str(rawD)))
   elif details.composFileName:
-    res.append(cPickle.load(open(details.composFileName,'rb')))
+    res.append(cPickle.load(open(details.composFileName, 'rb')))
   return res
 
-def BalanceComposite(details,composite,data1=None,data2=None):
+
+def BalanceComposite(details, composite, data1=None, data2=None):
   """ balances the composite using the parameters provided in details
 
    **Arguments**
@@ -318,24 +320,22 @@ def BalanceComposite(details,composite,data1=None,data2=None):
   details.randomSeed = composite._randomSeed
   DataUtils.InitRandomNumbers(details.randomSeed)
   if details.shuffleActivities == 1:
-    DataUtils.RandomizeActivities(data1,shuffle=1,runDetails=details)
+    DataUtils.RandomizeActivities(data1, shuffle=1, runDetails=details)
   elif details.randomActivities == 1:
-    DataUtils.RandomizeActivities(data1,shuffle=0,runDetails=details)
+    DataUtils.RandomizeActivities(data1, shuffle=0, runDetails=details)
   namedExamples = data1.GetNamedData()
   if details.balDoHoldout or details.balDoTrain:
-    trainIdx,testIdx = SplitData.SplitIndices(len(namedExamples),details.splitFrac,
-                                              silent=1)
+    trainIdx, testIdx = SplitData.SplitIndices(len(namedExamples), details.splitFrac, silent=1)
     trainExamples = [namedExamples[x] for x in trainIdx]
     testExamples = [namedExamples[x] for x in testIdx]
     if details.filterFrac != 0.0:
-      trainIdx,temp = DataUtils.FilterData(trainExamples,details.filterVal,
-                                           details.filterFrac,-1,
-                                           indicesOnly=1)
+      trainIdx, temp = DataUtils.FilterData(trainExamples, details.filterVal, details.filterFrac,
+                                            -1, indicesOnly=1)
       tmp = [trainExamples[x] for x in trainIdx]
       testExamples += [trainExamples[x] for x in temp]
       trainExamples = tmp
     if details.balDoHoldout:
-      testExamples,trainExamples = trainExamples,testExamples
+      testExamples, trainExamples = trainExamples, testExamples
   else:
     trainExamples = namedExamples
   dataSet1 = trainExamples
@@ -354,9 +354,9 @@ def BalanceComposite(details,composite,data1=None,data2=None):
   details.randomSeed = composite._randomSeed
   DataUtils.InitRandomNumbers(details.randomSeed)
   if details.shuffleActivities == 1:
-    DataUtils.RandomizeActivities(data2,shuffle=1,runDetails=details)
+    DataUtils.RandomizeActivities(data2, shuffle=1, runDetails=details)
   elif details.randomActivities == 1:
-    DataUtils.RandomizeActivities(data2,shuffle=0,runDetails=details)
+    DataUtils.RandomizeActivities(data2, shuffle=0, runDetails=details)
   dataSet2 = data2.GetNamedData()
   cols2 = [x.upper() for x in data2.GetVarNames()]
   data2 = None
@@ -364,33 +364,33 @@ def BalanceComposite(details,composite,data1=None,data2=None):
   # and balance it:
   res = []
   weights = details.balWeight
-  if type(weights) not in (types.TupleType,types.ListType):
-    weights = (weights,)
+  if not isinstance(weights, (tuple, list)):
+    weights = (weights, )
   for weight in weights:
-    message("\tBalancing with Weight: %.4f"%(weight))
-    res.append(AdjustComposite.BalanceComposite(composite,dataSet1,dataSet2,
-                                                weight,
-                                                details.balCnt,
-                                                names1=cols1,names2=cols2))
+    message("\tBalancing with Weight: %.4f" % (weight))
+    res.append(
+      AdjustComposite.BalanceComposite(composite, dataSet1, dataSet2, weight, details.balCnt,
+                                       names1=cols1, names2=cols2))
   return res
+
 
 def ShowVersion(includeArgs=0):
   """ prints the version number
 
   """
-  print('This is GrowComposite.py version %s'%(__VERSION_STRING))
+  print('This is GrowComposite.py version %s' % (__VERSION_STRING))
   if includeArgs:
-    import sys
     print('command line was:')
     print(' '.join(sys.argv))
+
 
 def Usage():
   """ provides a list of arguments for when this is used from the command line
 
   """
-  import sys
   print(__doc__)
   sys.exit(-1)
+
 
 def SetDefaults(runDetails=None):
   """  initializes a details object with default values
@@ -406,8 +406,10 @@ def SetDefaults(runDetails=None):
 
 
   """
-  if runDetails is None: runDetails = _runDetails
+  if runDetails is None:
+    runDetails = _runDetails
   return CompositeRun.SetDefaults(runDetails)
+
 
 def ParseArgs(runDetails):
   """ parses command line arguments and updates _runDetails_
@@ -418,44 +420,50 @@ def ParseArgs(runDetails):
 
   """
   import getopt
-  args,extra = getopt.getopt(sys.argv[1:],'P:o:n:p:b:sf:F:v:hlgd:rSTt:Q:q:DVG:L:C:N:',
-                             ['inNote=','outNote=','balTable=','balWeight=','balCnt=',
-                              'balH','balT','balDb=',])
-  runDetails.inNote=''
-  runDetails.composFileName=''
-  runDetails.balTable=''
-  runDetails.balWeight=(0.5,)
-  runDetails.balCnt=0
-  runDetails.balDoHoldout=0
-  runDetails.balDoTrain=0
-  runDetails.balDb=''
-  for arg,val in args:
+  args, extra = getopt.getopt(sys.argv[1:], 'P:o:n:p:b:sf:F:v:hlgd:rSTt:Q:q:DVG:L:C:N:',
+                              ['inNote=',
+                               'outNote=',
+                               'balTable=',
+                               'balWeight=',
+                               'balCnt=',
+                               'balH',
+                               'balT',
+                               'balDb=', ])
+  runDetails.inNote = ''
+  runDetails.composFileName = ''
+  runDetails.balTable = ''
+  runDetails.balWeight = (0.5, )
+  runDetails.balCnt = 0
+  runDetails.balDoHoldout = 0
+  runDetails.balDoTrain = 0
+  runDetails.balDb = ''
+  for arg, val in args:
     if arg == '-n':
       runDetails.nModels = int(val)
     elif arg == '-C':
-      runDetails.composFileName=val
-    elif arg=='--balTable':
-      runDetails.balTable=val
-    elif arg=='--balWeight':
-      runDetails.balWeight=eval(val)
-      if type(runDetails.balWeight) not in (types.TupleType,types.ListType):
-        runDetails.balWeight=(runDetails.balWeight,)
-    elif arg=='--balCnt':
-      runDetails.balCnt=int(val)
-    elif arg=='--balH':
-      runDetails.balDoHoldout=1
-    elif arg=='--balT':
-      runDetails.balDoTrain=1
-    elif arg=='--balDb':
-      runDetails.balDb=val
+      runDetails.composFileName = val
+    elif arg == '--balTable':
+      runDetails.balTable = val
+    elif arg == '--balWeight':
+      runDetails.balWeight = eval(val)
+      if not isinstance(runDetails.balWeight, (tuple, list)):
+        runDetails.balWeight = (runDetails.balWeight, )
+    elif arg == '--balCnt':
+      runDetails.balCnt = int(val)
+    elif arg == '--balH':
+      runDetails.balDoHoldout = 1
+    elif arg == '--balT':
+      runDetails.balDoTrain = 1
+    elif arg == '--balDb':
+      runDetails.balDb = val
     elif arg == '--inNote':
-      runDetails.inNote=val
-    elif arg == '-N' or arg=='--outNote':
-      runDetails.note=val
+      runDetails.inNote = val
+    elif arg == '-N' or arg == '--outNote':
+      runDetails.note = val
     elif arg == '-o':
       runDetails.outName = val
     elif arg == '-p':
-      runDetails.persistTblName=val
+      runDetails.persistTblName = val
     elif arg == '-r':
       runDetails.randomActivities = 1
     elif arg == '-S':
@@ -465,38 +473,42 @@ def ParseArgs(runDetails):
     elif arg == '-l':
       runDetails.lockRandom = 1
     elif arg == '-g':
-      runDetails.lessGreedy=1
+      runDetails.lessGreedy = 1
     elif arg == '-G':
       runDetails.startAt = int(val)
     elif arg == '-d':
-      runDetails.dbName=val
+      runDetails.dbName = val
     elif arg == '-T':
       runDetails.useTrees = 0
     elif arg == '-t':
-      runDetails.threshold=float(val)
+      runDetails.threshold = float(val)
     elif arg == '-D':
       runDetails.detailedRes = 1
     elif arg == '-L':
       runDetails.limitDepth = int(val)
     elif arg == '-q':
       qBounds = eval(val)
-      assert type(qBounds) in (types.TupleType,types.ListType),'bad argument type for -q, specify a list as a string'
-      runDetails.qBoundCount=val
+      assert isinstance(qBounds,
+                        (tuple, list)), 'bad argument type for -q, specify a list as a string'
+      runDetails.qBoundCount = val
       runDetails.qBounds = qBounds
     elif arg == '-Q':
       qBounds = eval(val)
-      assert type(qBounds) in [type([]),type(())],'bad argument type for -Q, specify a list as a string'
-      runDetails.activityBounds=qBounds
-      runDetails.activityBoundsVals=val
+      assert type(qBounds) in [type([]), type(
+        ())], 'bad argument type for -Q, specify a list as a string'
+      runDetails.activityBounds = qBounds
+      runDetails.activityBoundsVals = val
     elif arg == '-V':
       ShowVersion()
       sys.exit(0)
     else:
-      print('bad argument:',arg,file=sys.stderr)
+      print('bad argument:', arg, file=sys.stderr)
       Usage()
-  runDetails.tableName=extra[0]
+  runDetails.tableName = extra[0]
   if not runDetails.balDb:
-    runDetails.balDb=runDetails.dbName
+    runDetails.balDb = runDetails.dbName
+
+
 if __name__ == '__main__':
   if len(sys.argv) < 2:
     Usage()
@@ -509,60 +521,62 @@ if __name__ == '__main__':
 
   initModels = GetComposites(_runDetails)
   nModels = len(initModels)
-  if nModels>1:
+  if nModels > 1:
     for i in range(nModels):
-      sys.stderr.write('---------------------------------\n\tDoing %d of %d\n---------------------------------\n'%(i+1,nModels))
-      composite = GrowIt(_runDetails,initModels[i],setDescNames=1)
+      sys.stderr.write(
+        '---------------------------------\n\tDoing %d of %d\n---------------------------------\n' %
+        (i + 1, nModels))
+      composite = GrowIt(_runDetails, initModels[i], setDescNames=1)
       if _runDetails.balTable and _runDetails.balCnt:
-        composites = BalanceComposite(_runDetails,composite)
+        composites = BalanceComposite(_runDetails, composite)
       else:
-        composites=[composite]
+        composites = [composite]
       for mdl in composites:
         mdl.ClearModelExamples()
       if _runDetails.outName:
         nWeights = len(_runDetails.balWeight)
-        if nWeights==1:
+        if nWeights == 1:
           outName = _runDetails.outName
           composites[0].Pickle(outName)
         else:
           for i in range(nWeights):
-            weight = int(100*_runDetails.balWeight[i])
+            weight = int(100 * _runDetails.balWeight[i])
             model = composites[i]
-            outName = '%s.%d.pkl'%(_runDetails.outName.split('.pkl')[0],weight)
+            outName = '%s.%d.pkl' % (_runDetails.outName.split('.pkl')[0], weight)
             model.Pickle(outName)
       if _runDetails.persistTblName and _runDetails.dbName:
-        message('Updating results table %s:%s'%(_runDetails.dbName,_runDetails.persistTblName))
-        if(len(_runDetails.balWeight))>1:
+        message('Updating results table %s:%s' % (_runDetails.dbName, _runDetails.persistTblName))
+        if (len(_runDetails.balWeight)) > 1:
           message('WARNING: updating results table with models having different weights')
         # save the composite
         for i in range(len(composites)):
           _runDetails.model = cPickle.dumps(composites[i])
-          _runDetails.Store(db=_runDetails.dbName,table=_runDetails.persistTblName)
-  elif nModels==1:
-    composite = GrowIt(_runDetails,initModels[0],setDescNames=1)
+          _runDetails.Store(db=_runDetails.dbName, table=_runDetails.persistTblName)
+  elif nModels == 1:
+    composite = GrowIt(_runDetails, initModels[0], setDescNames=1)
     if _runDetails.balTable and _runDetails.balCnt:
-      composites = BalanceComposite(_runDetails,composite)
+      composites = BalanceComposite(_runDetails, composite)
     else:
-      composites=[composite]
+      composites = [composite]
     for mdl in composites:
       mdl.ClearModelExamples()
     if _runDetails.outName:
       nWeights = len(_runDetails.balWeight)
-      if nWeights==1:
+      if nWeights == 1:
         outName = _runDetails.outName
         composites[0].Pickle(outName)
       else:
         for i in range(nWeights):
-          weight = int(100*_runDetails.balWeight[i])
+          weight = int(100 * _runDetails.balWeight[i])
           model = composites[i]
-          outName = '%s.%d.pkl'%(_runDetails.outName.split('.pkl')[0],weight)
+          outName = '%s.%d.pkl' % (_runDetails.outName.split('.pkl')[0], weight)
           model.Pickle(outName)
     if _runDetails.persistTblName and _runDetails.dbName:
-      message('Updating results table %s:%s'%(_runDetails.dbName,_runDetails.persistTblName))
-      if(len(composites))>1:
+      message('Updating results table %s:%s' % (_runDetails.dbName, _runDetails.persistTblName))
+      if (len(composites)) > 1:
         message('WARNING: updating results table with models having different weights')
       for i in range(len(composites)):
         _runDetails.model = cPickle.dumps(composites[i])
-        _runDetails.Store(db=_runDetails.dbName,table=_runDetails.persistTblName)
+        _runDetails.Store(db=_runDetails.dbName, table=_runDetails.persistTblName)
   else:
     message("No models found")

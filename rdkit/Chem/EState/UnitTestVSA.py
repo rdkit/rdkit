@@ -12,50 +12,44 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest,os
+
+import os
+import unittest
+
 from rdkit import Chem
 from rdkit.Chem.EState import EState_VSA
-import os.path
 
-def feq(n1,n2,tol=1e-4):
-  return abs(n1-n2)<=tol
 
 class TestCase(unittest.TestCase):
-  def setUp(self):
-    if doLong:
-      print('\n%s: '%self.shortDescription(), end='')
+
+  @staticmethod
+  def referenceData():
+    filename = os.sep.join(
+      [os.path.dirname(os.path.abspath(__file__)), 'test_data', 'EState_VSA.csv'])
+    with open(filename) as fin:
+      header = fin.readline()
+      header = [s.strip() for s in header.split(',')][1:]
+
+      funcEstates = dict((k, getattr(EState_VSA, k)) for k in header)
+      yield funcEstates
+
+      for line in fin:
+        line = [s.strip() for s in line.split(',')]
+        smiles = line.pop(0)
+        mol = Chem.MolFromSmiles(smiles)
+        data = dict((k, float(v)) for k, v in zip(header, line))
+        yield smiles, mol, data
+
   def test1(self):
-    inName = os.path.join(RDConfig.RDCodeDir,'Chem','EState','test_data',
-                          'EState_VSA.csv')
-    with open(inName,'r') as inF:
-      inL = inF.readline()
-    names = [x.strip() for x in inL.split(',')[1:]]
-    suppl = Chem.SmilesMolSupplier(inName,delimiter=',',nameColumn=-1)
-    for mol in suppl:
-      self.assertTrue(mol)
-      smi = Chem.MolToSmiles(mol)
-      for name in names:
-        prop = float(mol.GetProp(name))
-        func = getattr(EState_VSA,name)
-        v = func(mol)
-        self.assertTrue(feq(v,prop),'%s: %.4f!=%.4f'%(smi,v,prop))
+    referenceData = self.referenceData()
+    funcEstates = next(referenceData)
+    for smiles, mol, data in referenceData:
+      for name in funcEstates:
+        calc = funcEstates[name](mol)
+        exp = data[name]
+        self.assertAlmostEqual(calc, exp, delta=1e-4,
+                               msg='{0}: {1:.4f}!={2:.4f}'.format(smiles, calc, exp))
 
-        
-if __name__ == '__main__':
-  import sys,getopt,re
-  doLong=0
-  if len(sys.argv) >1:
-    args,extras=getopt.getopt(sys.argv[1:],'l')
-    for arg,val in args:
-      if arg=='-l':
-        doLong=1
-      sys.argv.remove('-l')
-  if doLong:
-    for methName in dir(TestCase):
-      if re.match('_test',methName):
-        newName = re.sub('_test','test',methName)
-        exec('TestCase.%s = TestCase.%s'%(newName,methName))
-        
+
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()
-

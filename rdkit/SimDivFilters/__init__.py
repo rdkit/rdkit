@@ -7,5 +7,4 @@ try:
   from rdkit.SimDivFilters import rdSimDivPickers
   from rdkit.SimDivFilters.rdSimDivPickers import *
 except ImportError:
-  import traceback
-  rdSimDivPickers=None
+  rdSimDivPickers = None

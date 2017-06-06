@@ -2,21 +2,20 @@
 from __future__ import print_function
 import pidtest
 
+
 def testLatin1Chars(can):
-    curx,cury = 10,20
-    can.drawString("hola Málaga amigos niños", curx,cury)
-    cury = cury + 20
-    can.drawString("Como estan?", curx, cury)
+  curx, cury = 10, 20
+  can.drawString("hola Mï¿½laga amigos niï¿½os", curx, cury)
+  cury = cury + 20
+  can.drawString("Como estan?", curx, cury)
 
-    can.flush()
-    can.clear()  # get our next page ???
-    curx,cury = 10,20
-    can.drawString("hola Málaga amigos niños: Page 2", curx,cury)
+  can.flush()
+  can.clear()  # get our next page ???
+  curx, cury = 10, 20
+  can.drawString("hola Mï¿½laga amigos niï¿½os: Page 2", curx, cury)
 
-    str = "sometextÄËÖ with ácënts"
-    print(len("ÄËÖ"))
-    pidtest.CenterAndBox(can, str, y=150)
+  str = "sometextï¿½ï¿½ï¿½ with ï¿½cï¿½nts"
+  print(len("ï¿½ï¿½ï¿½"))
+  pidtest.CenterAndBox(can, str, y=150)
 
-    can.flush()
-
-
+  can.flush()

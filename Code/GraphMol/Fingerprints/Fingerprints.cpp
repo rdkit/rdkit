@@ -184,7 +184,8 @@ void buildDefaultRDKitFingerprintAtomInvariants(const ROMol &mol,
   for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
       atomIt!=mol.endAtoms();
       ++atomIt){
-    unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 | (*atomIt)->getIsAromatic();
+    unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 |
+       static_cast<unsigned int>((*atomIt)->getIsAromatic());
     lAtomInvariants.push_back(aHash);
   }
 }
@@ -454,7 +455,7 @@ ExplicitBitVect *RDKFingerprintMol(
         // finally, we will add the number of distinct atoms in the path at the
         // end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(atomsInPath.count());
+        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
         seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
       } else {
         seed = bondHashes[0];
@@ -847,7 +848,7 @@ ExplicitBitVect *LayeredFingerprintMol(
         // finally, we will add the number of distinct atoms in the path at the
         // end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        layerIt->push_back(atomsInPath.count());
+        layerIt->push_back(static_cast<unsigned int>(atomsInPath.count()));
 
         layerIt->push_back(l + 1);
 
@@ -943,7 +944,7 @@ ExplicitBitVect *LayeredFingerprintMol(
 
           // finally, we will add the number of distinct atoms in the path at the end
           // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-          bondHashes.push_back(atomsInPath.count());
+          bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
           seed= gboost::hash_range(bondHashes.begin(),bondHashes.end());
         }
         else {

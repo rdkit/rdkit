@@ -194,7 +194,7 @@ struct atom_wrapper {
              "Returns the total number of implicit Hs on the atom.\n")
 
         .def("GetExplicitValence", &Atom::getExplicitValence,
-             "Returns the number of explicit Hs on the atom.\n")
+             "Returns the explicit valence of the atom.\n")
         .def("GetImplicitValence", &Atom::getImplicitValence,
              "Returns the number of implicit Hs on the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence,
@@ -233,7 +233,7 @@ struct atom_wrapper {
 
         .def("GetOwningMol", &Atom::getOwningMol,
              "Returns the Mol that owns this atom.\n",
-             python::return_value_policy<python::reference_existing_object>())
+             python::return_internal_reference<>())
 
         .def("GetNeighbors", AtomGetNeighbors,
              "Returns a read-only sequence of the atom's neighbors\n")
@@ -396,11 +396,13 @@ struct atom_wrapper {
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")
         .def("SetAtomMapNum", &Atom::setAtomMapNum,
-             (python::arg("self"), python::arg("mapno"), python::arg("strict") = false),
+             (python::arg("self"), python::arg("mapno"),
+              python::arg("strict") = false),
              "Sets the atoms map number, a value of 0 clears the atom map");
-    
+
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)
+        .value("S", Atom::S)
         .value("SP", Atom::SP)
         .value("SP2", Atom::SP2)
         .value("SP3", Atom::SP3)
@@ -433,38 +435,41 @@ These cannot currently be constructed directly from Python\n";
               python::arg("maintainOrder") = true),
              "combines the query from other with ours");
 
-    python::def("GetAtomRLabel", getAtomRLabel,
-        (python::arg("atom")),
+    python::def(
+        "GetAtomRLabel", getAtomRLabel, (python::arg("atom")),
         "Returns the atom's MDL AtomRLabel (this is an integer from 0 to 99)");
     python::def("SetAtomRLabel", setAtomRLabel,
-        (python::arg("atom"), python::arg("rlabel")),
-        "Sets the atom's MDL RLabel (this is an integer from 0 to 99).\nSetting to 0 clears the rlabel.");
-    
-    python::def("GetAtomAlias", getAtomAlias,
-        (python::arg("atom")),
-        "Returns the atom's MDL alias text");
+                (python::arg("atom"), python::arg("rlabel")),
+                "Sets the atom's MDL RLabel (this is an integer from 0 to "
+                "99).\nSetting to 0 clears the rlabel.");
+
+    python::def("GetAtomAlias", getAtomAlias, (python::arg("atom")),
+                "Returns the atom's MDL alias text");
     python::def("SetAtomAlias", setAtomAlias,
-        (python::arg("atom"), python::arg("rlabel")),
-        "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.");
-    python::def("GetAtomValue", getAtomValue,
-        (python::arg("atom")),
-        "Returns the atom's MDL alias text");
+                (python::arg("atom"), python::arg("rlabel")),
+                "Sets the atom's MDL alias text.\nSetting to an empty string "
+                "clears the alias.");
+    python::def("GetAtomValue", getAtomValue, (python::arg("atom")),
+                "Returns the atom's MDL alias text");
     python::def("SetAtomValue", setAtomValue,
-        (python::arg("atom"), python::arg("rlabel")),
-        "Sets the atom's MDL alias text.\nSetting to an empty string clears the alias.");
+                (python::arg("atom"), python::arg("rlabel")),
+                "Sets the atom's MDL alias text.\nSetting to an empty string "
+                "clears the alias.");
 
     python::def("GetSupplementalSmilesLabel", getSupplementalSmilesLabel,
-        (python::arg("atom")),
-        "Gets the supplemental smiles label on an atom, returns an empty string if not present.");
-    python::def("SetSupplementalSmilesLabel", setSupplementalSmilesLabel,
+                (python::arg("atom")),
+                "Gets the supplemental smiles label on an atom, returns an "
+                "empty string if not present.");
+    python::def(
+        "SetSupplementalSmilesLabel", setSupplementalSmilesLabel,
         (python::arg("atom"), python::arg("label")),
-        "Sets a supplemental label on an atom that is written to the smiles string.\n" \
-        ">>> m = Chem.MolFromSmiles(\"C\")\n"                           \
-        ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n" \
-        ">>> Chem.MolToSmiles(m)\n"                                     \
+        "Sets a supplemental label on an atom that is written to the smiles "
+        "string.\n"
+        ">>> m = Chem.MolFromSmiles(\"C\")\n"
+        ">>> Chem.SetSupplementalSmilesLabel(m.GetAtomWithIdx(0), '<xxx>')\n"
+        ">>> Chem.MolToSmiles(m)\n"
         "'C<xxx>'\n");
   }
-  
 };
 }  // end of namespace
 void wrap_atom() { RDKit::atom_wrapper::wrap(); }

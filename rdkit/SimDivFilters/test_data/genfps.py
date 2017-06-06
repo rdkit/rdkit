@@ -1,25 +1,26 @@
 from __future__ import print_function
+
+from rdkit import Chem
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.six.moves import cPickle
-from rdkit import Chem
+from six.moves import cPickle
+
 
 if RDConfig.usePgSQL:
-  dbName="::RDTests"
+  dbName = "::RDTests"
 else:
-  dbName="data.sqlt"
+  dbName = "data.sqlt"
 
-molTblName =  'simple_mols1'
+molTblName = 'simple_mols1'
 fpTblName = 'simple_mols1_fp'
-conn = DbConnect(dbName,molTblName)
-conn.AddTable(fpTblName,'id varchar(10),autofragmentfp %s'%DbModule.binaryTypeName)
+conn = DbConnect(dbName, molTblName)
+conn.AddTable(fpTblName, 'id varchar(10),autofragmentfp %s' % DbModule.binaryTypeName)
 d = conn.GetData()
-for smi,id in d:
-  print(repr(id),repr(smi))
+for smi, ID in d:
+  print(repr(ID), repr(smi))
   mol = Chem.MolFromSmiles(smi)
   fp = Chem.RDKFingerprint(mol)
   pkl = cPickle.dumps(fp)
-  conn.InsertData(fpTblName,(id,DbModule.binaryHolder(pkl)))
+  conn.InsertData(fpTblName, (ID, DbModule.binaryHolder(pkl)))
 conn.Commit()
-

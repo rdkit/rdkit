@@ -52,6 +52,7 @@ struct FilterMatch {
   boost::shared_ptr<FilterMatcherBase> filterMatch;
   MatchVectType atomPairs;
 
+  FilterMatch() : filterMatch(), atomPairs() {}
   FilterMatch(boost::shared_ptr<FilterMatcherBase> filter,
               MatchVectType atomPairs)
       : filterMatch(filter), atomPairs(atomPairs) {}
@@ -59,10 +60,16 @@ struct FilterMatch {
   FilterMatch(const FilterMatch &rhs)
       : filterMatch(rhs.filterMatch), atomPairs(rhs.atomPairs) {}
 
-  bool operator==(const FilterMatch &rhs) {
+  bool operator==(const FilterMatch &rhs) const {
     return (filterMatch.get() == rhs.filterMatch.get() &&
             atomPairs == rhs.atomPairs);
   }
+  
+  bool operator!=(const FilterMatch &rhs) const {
+    return !(filterMatch.get() == rhs.filterMatch.get() &&
+             atomPairs == rhs.atomPairs);
+  }
+
 };
 
 extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
@@ -109,10 +116,19 @@ class FilterMatcherBase
   virtual bool hasMatch(const ROMol &mol) const = 0;
 
   //------------------------------------
-  //! Clone
+  //! Clone - deprecated
   //  Clones the current FilterMatcherBase into one that
   //   can be passed around safely.
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const = 0;
+  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+    BOOST_LOG(rdWarningLog) << "FilterMatcherBase::Clone is deprecated, use copy instead" << std::endl;
+    return copy();
+  }
+  
+  //------------------------------------
+  //! copy
+  //  copies the current FilterMatcherBase into one that
+  //   can be passed around safely.
+  virtual boost::shared_ptr<FilterMatcherBase> copy() const = 0;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION

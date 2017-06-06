@@ -15,10 +15,12 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <vector>
 #include <algorithm>
 #include <iostream>

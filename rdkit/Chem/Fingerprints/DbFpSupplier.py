@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
@@ -9,25 +8,23 @@
 #  of the RDKit source tree.
 #
 """ Supplies a class for working with fingerprints from databases
-#DOC 
+#DOC
 
 """
-from rdkit import RDConfig
-from rdkit.VLib.Node import VLibNode
 from rdkit import DataStructs
 from rdkit import six
+from rdkit.VLib.Node import VLibNode
 from rdkit.six.moves import cPickle
-import sys
-def warning(msg,dest=sys.stderr):
-  dest.write(msg)
-  
+
+
 class DbFpSupplier(VLibNode):
   """
     new fps come back with all additional fields from the
     database set in a "_fieldsFromDb" data member
-  
+
   """
-  def __init__(self,dbResults,fpColName='AutoFragmentFp',usePickles=True):
+
+  def __init__(self, dbResults, fpColName='AutoFragmentFp', usePickles=True):
     """
 
       DbResults should be a subclass of Dbase.DbResultSet.DbResultBase
@@ -39,27 +36,27 @@ class DbFpSupplier(VLibNode):
     self._fpColName = fpColName.upper()
     self._colNames = [x.upper() for x in self._data.GetColumnNames()]
     if self._fpColName not in self._colNames:
-      raise ValueError('fp column name "%s" not found in result set: %s'%(self._fpColName,str(self._colNames)))
+      raise ValueError('fp column name "%s" not found in result set: %s' %
+                       (self._fpColName, str(self._colNames)))
     self.fpCol = self._colNames.index(self._fpColName)
     del self._colNames[self.fpCol]
     self._colNames = tuple(self._colNames)
-    self._numProcessed=0
-
+    self._numProcessed = 0
 
   def GetColumnNames(self):
     return self._colNames
 
-  def _BuildFp(self,data):
+  def _BuildFp(self, data):
     data = list(data)
     if six.PY3:
-      pkl = bytes(data[self.fpCol],encoding='Latin1')
+      pkl = bytes(data[self.fpCol], encoding='Latin1')
     else:
       pkl = str(data[self.fpCol])
     del data[self.fpCol]
-    self._numProcessed+=1;
+    self._numProcessed += 1
     try:
       if self._usePickles:
-        newFp = cPickle.loads(pkl,encoding='bytes')          
+        newFp = cPickle.loads(pkl, encoding='bytes')
       else:
         newFp = DataStructs.ExplicitBitVect(pkl)
     except Exception:
@@ -76,13 +73,13 @@ class DbFpSupplier(VLibNode):
       raise StopIteration
     return itm
 
-  __next__ = next # py3
+  __next__ = next  # py3
 
-  
+
 class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
-  >>> import os.path
+  >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
@@ -96,8 +93,9 @@ class ForwardDbFpSupplier(DbFpSupplier):
   12
 
   """
-  def __init__(self,*args,**kwargs):
-    DbFpSupplier.__init__(self,*args,**kwargs)
+
+  def __init__(self, *args, **kwargs):
+    DbFpSupplier.__init__(self, *args, **kwargs)
     self.reset()
 
   def reset(self):
@@ -105,13 +103,13 @@ class ForwardDbFpSupplier(DbFpSupplier):
     self._dataIter = iter(self._data)
 
   def NextItem(self):
-    """ 
+    """
 
       NOTE: this has side effects
 
     """
     try:
-      d = self._dataIter.next()
+      d = next(self._dataIter)
     except StopIteration:
       d = None
     if d is not None:
@@ -120,9 +118,11 @@ class ForwardDbFpSupplier(DbFpSupplier):
       newFp = None
     return newFp
 
-class RandomAccessDbFpSupplier(DbFpSupplier):  
+
+class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
   >>> import os.path
+  >>> from rdkit import RDConfig
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
@@ -136,7 +136,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   128
   >>> fp.GetNumOnBits()
   54
-  
+
   a standard loop over the fingerprints:
   >>> fps = []
   >>> for fp in suppl:
@@ -152,14 +152,15 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   12
 
   """
-  def __init__(self,*args,**kwargs):
-    DbFpSupplier.__init__(self,*args,**kwargs)
+
+  def __init__(self, *args, **kwargs):
+    DbFpSupplier.__init__(self, *args, **kwargs)
     self.reset()
-    
+
   def __len__(self):
     return len(self._data)
-  
-  def __getitem__(self,idx):
+
+  def __getitem__(self, idx):
     newD = self._data[idx]
     return self._BuildFp(newD)
 
@@ -174,18 +175,16 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
     return res
 
 
-
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
-  
 
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

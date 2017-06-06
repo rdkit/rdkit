@@ -88,6 +88,31 @@ public class FilterCatalogTests extends GraphMolTest {
                              "doi:10.1021/jm901137j.");
                 assertEquals(source, "PAINS filters (family A)");
                 assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+
+                FilterMatch_Vect fmatches = entry.getFilterMatches(mol);
+                assertEquals(1, fmatches.size());
+                Match_Vect mv = fmatches.get(0).getAtomMatches();
+                
+                assertEquals(0, mv.get(0).getFirst());
+                assertEquals(23, mv.get(0).getSecond());
+                assertEquals(1, mv.get(1).getFirst());
+                assertEquals(22, mv.get(1).getSecond());
+                assertEquals(2, mv.get(2).getFirst());
+                assertEquals(20, mv.get(2).getSecond());
+                assertEquals(3, mv.get(3).getFirst());
+                assertEquals(19, mv.get(3).getSecond());
+                assertEquals(4, mv.get(4).getFirst());
+                assertEquals(25, mv.get(4).getSecond());
+                assertEquals(5, mv.get(5).getFirst());
+                assertEquals(24, mv.get(5).getSecond());
+                assertEquals(6, mv.get(6).getFirst());
+                assertEquals(18, mv.get(6).getSecond());
+                assertEquals(7, mv.get(7).getFirst());
+                assertEquals(17, mv.get(7).getSecond());
+                assertEquals(8, mv.get(8).getFirst());
+                assertEquals(16, mv.get(8).getSecond());
+                assertEquals(9, mv.get(9).getFirst());
+                assertEquals(21, mv.get(9).getSecond());
             }
             
             if (catalog.canSerialize()) {
@@ -119,6 +144,7 @@ public class FilterCatalogTests extends GraphMolTest {
             catalog.addEntry(entry);
             entry = catalog.getFirstMatch(mol);
             assertEquals(entry.getDescription(),"hzone_phenol_A(479)");
+            
         }
 
 	public static void main(String args[]) {

@@ -75,7 +75,7 @@ boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract,
       }
     }
   }
-  POSTCONDITION(code < (1 << (codeSize + (includeChirality ? 2 : 0))),
+  POSTCONDITION(code < static_cast<boost::uint32_t>(1 << (codeSize + (includeChirality ? 2 : 0))),
                 "code exceeds number of bits");
   return code;
 };

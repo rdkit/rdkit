@@ -33,32 +33,32 @@ from __future__ import print_function
 from rdkit import Chem
 from rdkit.Chem.Fraggle import FraggleSim
 
-if __name__ =='__main__':
-    import sys,re
-    if (len(sys.argv) >= 2):
-        print("Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n")
-        print("USAGE: ./fraggle.py <file_of_smiles")
-        print("Format of smiles file: SMILES ID (space or comma separated)")
-        print("Output: whole mol smiles,ID,fraggle split smiles\n")
-        sys.exit(1)
+if __name__ == '__main__':
+  import sys, re
+  if (len(sys.argv) >= 2):
+    print(
+      "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n")
+    print("USAGE: ./fraggle.py <file_of_smiles")
+    print("Format of smiles file: SMILES ID (space or comma separated)")
+    print("Output: whole mol smiles,ID,fraggle split smiles\n")
+    sys.exit(1)
 
-    #read the STDIN
-    for line in sys.stdin:
-        line = line.rstrip()
-        smi,id_ = re.split('\s|,',line)
-        #print smi,id_
+  #read the STDIN
+  for line in sys.stdin:
+    line = line.rstrip()
+    smi, id_ = re.split('\s|,', line)
+    #print smi,id_
 
-        mol = Chem.MolFromSmiles(smi)
+    mol = Chem.MolFromSmiles(smi)
 
-        if mol is None:
-            sys.stderr.write("Can't generate mol for: %s\n" % (smi) )
-            continue
+    if mol is None:
+      sys.stderr.write("Can't generate mol for: %s\n" % (smi))
+      continue
 
-        out_fragments = FraggleSim.generate_fraggle_fragmentation(mol)
-        #print out the unique fragments
-        for x in out_fragments:
-            #cansmi
-            temp = Chem.MolFromSmiles(x)
+    out_fragments = FraggleSim.generate_fraggle_fragmentation(mol)
+    #print out the unique fragments
+    for x in out_fragments:
+      #cansmi
+      temp = Chem.MolFromSmiles(x)
 
-            print("%s,%s,%s" % (smi,id_,Chem.MolToSmiles(temp)))
-
+      print("%s,%s,%s" % (smi, id_, Chem.MolToSmiles(temp)))

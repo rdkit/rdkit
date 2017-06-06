@@ -169,7 +169,7 @@ std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,
     }
   }
 
-  unsigned int count = v.size();
+  unsigned int count = rdcast<unsigned int>(v.size());
   if (count == 0) return "";
 
   std::sort(v.begin(), v.end());

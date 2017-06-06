@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2002-2008 greg Landrum and Rational Discovery LLC
 #
@@ -34,51 +33,55 @@
 
 """
 from __future__ import print_function
-from rdkit.Chem.Pharm2D import Utils,SigFactory
+
+from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger
+
 logger = logger()
 
 _verbose = 0
 
-def _ShortestPathsMatch(match,featureSet,sig,dMat,sigFactory):
+
+def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
   """  Internal use only
 
   """
   if _verbose:
-    print('match:',match)
+    print('match:', match)
   nPts = len(match)
-  distsToCheck =  Utils.nPointDistDict[nPts]
+  distsToCheck = Utils.nPointDistDict[nPts]
   nDists = len(distsToCheck)
-  dist = [0]*nDists
+  dist = [0] * nDists
   bins = sigFactory.GetBins()
-  minD,maxD = bins[0][0],bins[-1][1]
-  
+  minD, maxD = bins[0][0], bins[-1][1]
+
   for i in range(nDists):
-    pt0,pt1 = distsToCheck[i]
-    minSeen=maxD
+    pt0, pt1 = distsToCheck[i]
+    minSeen = maxD
     for idx1 in match[pt0]:
       for idx2 in match[pt1]:
-        minSeen=min(minSeen, dMat[idx1,idx2])
-        if minSeen==0 or minSeen<minD: return
+        minSeen = min(minSeen, dMat[idx1, idx2])
+        if minSeen == 0 or minSeen < minD:
+          return
     # FIX: this won't be an int if we're using the bond order.
     d = int(minSeen)
     # do a quick distance filter
     if d == 0 or d < minD or d >= maxD:
       return
     dist[i] = d
-    
-  idx = sigFactory.GetBitIdx(featureSet,dist,sortIndices=False)
+
+  idx = sigFactory.GetBitIdx(featureSet, dist, sortIndices=False)
   if _verbose:
-    print('\t',dist,minD,maxD,idx)
+    print('\t', dist, minD, maxD, idx)
 
   if sigFactory.useCounts:
-    sig[idx] = sig[idx]+1
+    sig[idx] = sig[idx] + 1
   else:
     sig.SetBit(idx)
   return idx
-  
 
-def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None,bitInfo=None):
+
+def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   """ generates a 2D fingerprint for a molecule using the
    parameters in _sig_
 
@@ -98,66 +101,67 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None,bitInfo=None):
      - bitInfo: (optional) used to return the atoms involved in the bits
 
   """
-  if not isinstance(sigFactory,SigFactory.SigFactory):
+  if not isinstance(sigFactory, SigFactory.SigFactory):
     raise ValueError('bad factory')
-  featFamilies=sigFactory.GetFeatFamilies()
+  featFamilies = sigFactory.GetFeatFamilies()
   if _verbose:
-    print('* feat famillies:',featFamilies)
+    print('* feat famillies:', featFamilies)
   nFeats = len(featFamilies)
   minCount = sigFactory.minPointCount
   maxCount = sigFactory.maxPointCount
-  if maxCount>3:
-    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\nSetting maxCount to 3.')
-    maxCount=3
+  if maxCount > 3:
+    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\n' +
+                   'Setting maxCount to 3.')
+    maxCount = 3
 
   # generate the molecule's distance matrix, if required
   if dMat is None:
     from rdkit import Chem
     useBO = sigFactory.includeBondOrder
-    dMat = Chem.GetDistanceMatrix(mol,useBO)
+    dMat = Chem.GetDistanceMatrix(mol, useBO)
 
   # generate the permutations, if required
   if perms is None:
     perms = []
-    for count in range(minCount,maxCount+1):
-      perms += Utils.GetIndexCombinations(nFeats,count)
+    for count in range(minCount, maxCount + 1):
+      perms += Utils.GetIndexCombinations(nFeats, count)
 
   # generate the matches:
   featMatches = sigFactory.GetMolFeats(mol)
   if _verbose:
-    print('  featMatches:',featMatches)
+    print('  featMatches:', featMatches)
 
   sig = sigFactory.GetSignature()
   for perm in perms:
     # the permutation is a combination of feature indices
     #   defining the feature set for a proto-pharmacophore
-    featClasses=[0]
-    for i in range(1,len(perm)):
-      if perm[i]==perm[i-1]:
+    featClasses = [0]
+    for i in range(1, len(perm)):
+      if perm[i] == perm[i - 1]:
         featClasses.append(featClasses[-1])
       else:
-        featClasses.append(featClasses[-1]+1)
-    
+        featClasses.append(featClasses[-1] + 1)
+
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
     matchPerms = [featMatches[x] for x in perm]
     if _verbose:
-      print('\n->Perm: %s'%(str(perm)))
-      print('    matchPerms: %s'%(str(matchPerms)))
-    
+      print('\n->Perm: %s' % (str(perm)))
+      print('    matchPerms: %s' % (str(matchPerms)))
+
     # Get all unique combinations of those possible matches:
-    matchesToMap=Utils.GetUniqueCombinations(matchPerms,featClasses)
-    for i,entry in enumerate(matchesToMap):
+    matchesToMap = Utils.GetUniqueCombinations(matchPerms, featClasses)
+    for i, entry in enumerate(matchesToMap):
       entry = [x[1] for x in entry]
-      matchesToMap[i]=entry
+      matchesToMap[i] = entry
     if _verbose:
-      print('    mtM:',matchesToMap)
-    
+      print('    mtM:', matchesToMap)
+
     for match in matchesToMap:
       if sigFactory.shortestPathsOnly:
-        idx=_ShortestPathsMatch(match,perm,sig,dMat,sigFactory)
+        idx = _ShortestPathsMatch(match, perm, sig, dMat, sigFactory)
         if idx is not None and bitInfo is not None:
-          l = bitInfo.get(idx,[])
+          l = bitInfo.get(idx, [])
           l.append(match)
           bitInfo[idx] = l
   return sig
