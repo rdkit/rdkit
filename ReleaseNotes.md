@@ -1,3 +1,24 @@
+# Release_2017.03.2
+(Changes relative to Release_2017.03.1)
+
+## Acknowledgements:
+Peter Gedeck, Jameed Hussain, Brian Kelley, Matthew O'Meara, Steve Wilkins
+
+## Bug Fixes:
+  - MMP code not including molecules with no cuts
+ (github issue #1406 from greglandrum)
+  - Fixes PandasTools to also work with pandas 0.20
+ (github pull #1410 from bp-kelley)
+  - csharp input files out of date
+ (github issue #1413 from greglandrum)
+  - MaxMinPicker picking non-existent element
+ (github issue #1421 from greglandrum)
+  - _isCallable clashes with Celery
+ (github issue #1434 from momeara)
+  - Impossible to build the RDKit from source without Python installed
+ (github issue #1435 from greglandrum)
+
+
 # Release_2017.03.1
 (Changes relative to Release_2016.09.1)
 
