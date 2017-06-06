@@ -66,36 +66,40 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
     w[5 * numAtoms + i] = ws[i];
   }
 
-  /*
-                              for (unsigned int i = 0; i < numAtoms; i++) {
-                                for (unsigned int t = 0; t < 6; ++t) {
-                                  wmean[t] += w[t][i] / (double) numAtoms;
-                                }
-                              }
 
-                              std::vector<double> squaresumdiff(6,0.0);
-                              for (unsigned int i = 0; i < numAtoms; i++) {
-                                for (unsigned int t = 0; t < 6; ++t) {
-                                  squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
-                                }
-                              }
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    for (unsigned int t = 0; t < 6; ++t) {
+      wmean[t] += w[t][i] / (double) numAtoms;
+    }
+  }
+
+ /*
+
+  std::vector<double> squaresumdiff(6,0.0);
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    for (unsigned int t = 0; t < 6; ++t) {
+      squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
+    }
+  }
+
   */
 
   std::vector<double> TDBmat(48, 0.0);
+  std::vector<double> TDBmatC(48, 0.0);
+
   // double TDBmatM[6][8] = { {0.0} };
   // double TDBmatG[6][8] = { {0.0} };
-  // double TDBmatC[6][8] = { {0.0} };
 
   for (unsigned int k = 0; k < 8; k++) {
     int maxkVertexPairs = 0;
-    for (unsigned int i = 0; i < numAtoms - 1; ++i) {
+    for (unsigned int i = 0; i < numAtoms; ++i) {
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
         if (dist[j * numAtoms + i] == k + 1) {
           for (unsigned int t = 0; t < 6; ++t) {
             //  TDBmatM[t][k] += (w[t][i]-wmean[t]) * (w[t][j]-wmean[t]);
             //  TDBmatG[t][k] += (w[t][i] - w[t][j]) * (w[t][i] - w[t][j]);
             TDBmat[t * 8 + k] += w[t * numAtoms + i] * w[t * numAtoms + j];
-            //  TDBmatC[t][k] += abs(w[t][i]-wmean[t]) * abs(w[t][j]-wmean[t]);
+            TDBmatC[t * 8 +k] += fabs(w[t * numAtoms + i]-wmean[t]) * fabs(w[t * numAtoms + j]-wmean[t]);
           }
           maxkVertexPairs += 1;
         }
@@ -109,10 +113,10 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
         // TDBmatG[t][k]/squaresumdiff[t]/maxkVertexPairs/2/(numAtoms-1);
         // TDBmatM[t][k] =
         // TDBmatM[t][k]/squaresumdiff[t]/maxkVertexPairs/(numAtoms);
-        // TDBmatC[t][k] = TDBmatC[t][k];
+
       } else {
         TDBmat[t * 8 + k] = 0.0;
-        //  TDBmatC[t][k] =  0.0;
+        TDBmatC[t * 8 + k] =  0.0;
         //  TDBmatM[t][k] =  0.0;
         //  TDBmatG[t][k] =  0.0;
       }
@@ -120,20 +124,15 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
   }
 
   // update the Output vector!
-  for (unsigned int j = 0; j < 6; ++j) {
-    for (unsigned int i = 0; i < 8; ++i) {
-      res[j * 8 + i] = round(1000 * TDBmat[i + j * 8]) / 1000;
+  for (unsigned int t = 0; t < 6; ++t) {
+    for (unsigned int k = 0; k < 8; ++k) {
+      res[t * 8 + k] = round(1000 * TDBmat[k + t * 8]) / 1000;
+      res[t * 8 + k +48] = round(1000 * TDBmatC[k + t * 8]) / 1000;
+
     }
   }
 
   /*
-       for (unsigned int j = 0; j < 6; ++j) {
-       for (unsigned int i = 0; i < 8; ++i) {
-           res[j * 8 + i+48] = TDBmatC[j][i];
-     }
-   }
-
-
    for (unsigned int j = 0; j < 6; ++j) {
        for (unsigned int i = 0; i < 8; ++i) {
          res[j * 8 + i+96] = TDBmatM[j][i];
@@ -145,8 +144,10 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
          res[j * 8 + i+144] = TDBmatG[j][i];
        }
    }
+  */
 
 TDBmat.clear();
+TDBmatC.clear();
 wp.clear();
 wm.clear();
 wv.clear();
@@ -156,7 +157,6 @@ ws.clear();
 w.clear();
 wmean.clear();
 
-*/
 }
 
 void Get2Dauto(double* dist, int numAtoms, const ROMol& mol,
@@ -171,7 +171,7 @@ void AUTOCORR2D(const ROMol& mol, std::vector<double>& result) {
   double* dist = MolOps::getDistanceMat(mol, false);  // topological matrix
 
   result.clear();
-  result.resize(48);
+  result.resize(96);
 
   Get2Dauto(dist, numAtoms, mol, result);
 }
