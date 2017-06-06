@@ -36,7 +36,7 @@ def load_tests(loader, tests, ignore):
 class TestCase(unittest.TestCase):
 
   def testGithub1287(self):
-    smis = ('CCC', )
+    smis = ('CCC',)
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
@@ -75,7 +75,7 @@ class TestCase(unittest.TestCase):
                                ("[H-1]", "H-"),
                                ("[CH2]", "CH2"),
                                ("[He-2]", "He-2"),
-                               ("[U+3]", "U+3"), ):
+                               ("[U+3]", "U+3"),):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
       self.assertEqual(actual, expected)
@@ -119,17 +119,28 @@ class TestCase(unittest.TestCase):
          292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750])
     fn = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
-    vs = np.zeros((42, ), np.int32)
+    vs = np.zeros((42,), np.int32)
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs == tgt))
 
   def test_FpDensityMorgan(self):
+    m = Chem.MolFromSmiles('C')
+    self.assertEqual(Descriptors.FpDensityMorgan2(m), 1)
+    m = Chem.MolFromSmiles('CC')
+    self.assertEqual(Descriptors.FpDensityMorgan2(m), 1)
+    m = Chem.MolFromSmiles('CCC')
+    self.assertEqual(Descriptors.FpDensityMorgan2(m), 4.0 / 3)
+    m = Chem.MolFromSmiles('C' * 10)
+    self.assertEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 10)
+    m = Chem.MolFromSmiles('C' * 100)
+    self.assertEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 100)
+
     m = Chem.MolFromSmiles('CCCc1ccccc1')
     fpd1 = Descriptors.FpDensityMorgan1(m)
     fpd2 = Descriptors.FpDensityMorgan2(m)
     fpd3 = Descriptors.FpDensityMorgan3(m)
-    self.assertAlmostEqual(fpd1, 2.0)
+    self.assertAlmostEqual(fpd1, 10.0 / 9)
     self.assertLess(fpd1, fpd2)
     self.assertLess(fpd2, fpd3)
 

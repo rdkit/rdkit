@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (c) 2009, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2009-2017, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Created by Greg Landrum, Nov 2008
 """
 
 QED stands for quantitative estimation of drug-likeness and the concept was for the first time
@@ -55,21 +53,20 @@ History:
   2012-04 Adapted to internal RDkit implementation
   2013-05 moved to rdkit.Chem.QED
 """
-# __all__ = ['weights_max', 'weights_mean', 'weights_none', 'default']
+from collections import namedtuple
+import math
 
-
-# RDKit
+from rdkit import Chem
 from rdkit.Chem import Lipinski, MolSurf, Crippen
 from rdkit.Chem import rdMolDescriptors as rdmd
-from rdkit import Chem
 
-# General
-from collections import namedtuple
-from copy import deepcopy
-from math import exp, log
 
 QEDproperties = namedtuple('QEDproperties', 'MW,ALOGP,HBA,HBD,PSA,ROTB,AROM,ALERTS')
+ADSparameter = namedtuple('ADSparameter', 'A,B,C,D,E,F,DMAX')
 
+WEIGHT_MAX = QEDproperties(0.50, 0.25, 0.00, 0.50, 0.00, 0.50, 0.25, 1.00)
+WEIGHT_MEAN = QEDproperties(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95)
+WEIGHT_NONE = QEDproperties(1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00)
 
 AliphaticRings = Chem.MolFromSmarts('[$([A;R][!a])]')
 
@@ -87,31 +84,29 @@ AcceptorSmarts = [
   '[NH0;X1;v3]',
   '[$([N;+0;X3;v3]);!$(N[C,S]=O)]'
 ]
-Acceptors = []
-for hba in AcceptorSmarts:
-  Acceptors.append(Chem.MolFromSmarts(hba))
+Acceptors = [Chem.MolFromSmarts(hba) for hba in AcceptorSmarts]
 
 #
 StructuralAlertSmarts = [
   '*1[O,S,N]*1',
   '[S,C](=[O,S])[F,Br,Cl,I]',
   '[CX4][Cl,Br,I]',
-  '[C,c]S(=O)(=O)O[C,c]',
-  '[$([CH]),$(CC)]#CC(=O)[C,c]',
-  '[$([CH]),$(CC)]#CC(=O)O[C,c]',
+  '[#6]S(=O)(=O)O[#6]',
+  '[$([CH]),$(CC)]#CC(=O)[#6]',
+  '[$([CH]),$(CC)]#CC(=O)O[#6]',
   'n[OH]',
-  '[$([CH]),$(CC)]#CS(=O)(=O)[C,c]',
+  '[$([CH]),$(CC)]#CS(=O)(=O)[#6]',
   'C=C(C=O)C=O',
   'n1c([F,Cl,Br,I])cccc1',
   '[CH1](=O)',
-  '[O,o][O,o]',
+  '[#8][#8]',
   '[C;!R]=[N;!R]',
   '[N!R]=[N!R]',
   '[#6](=O)[#6](=O)',
-  '[S,s][S,s]',
-  '[N,n][NH2]',
+  '[#16][#16]',
+  '[#7][NH2]',
   'C(=O)N[NH2]',
-  '[C,c]=S',
+  '[#6]=S',
   '[$([CH2]),$([CH][CX4]),$(C([CX4])[CX4])]=[$([CH2]),$([CH][CX4]),$(C([CX4])[CX4])]',
   'C1(=[O,N])C=CC(=[O,N])C=C1',
   'C1(=[O,N])C(=[O,N])C=CC=C1',
@@ -119,7 +114,8 @@ StructuralAlertSmarts = [
   'a31a(a2a(aa1)aaaa2)aaaa3',
   'a1aa2a3a(a1)A=AA=A3=AA=A2',
   'c1cc([NH2])ccc1',
-  '[Hg,Fe,As,Sb,Zn,Se,se,Te,B,Si,Na,Ca,Ge,Ag,Mg,K,Ba,Sr,Be,Ti,Mo,Mn,Ru,Pd,Ni,Cu,Au,Cd,Al,Ga,Sn,Rh,Tl,Bi,Nb,Li,Pb,Hf,Ho]',
+  '[Hg,Fe,As,Sb,Zn,Se,se,Te,B,Si,Na,Ca,Ge,Ag,Mg,K,Ba,Sr,Be,Ti,Mo,Mn,Ru,Pd,Ni,Cu,Au,Cd,' +
+  'Al,Ga,Sn,Rh,Tl,Bi,Nb,Li,Pb,Hf,Ho]',
   'I',
   'OS(=O)(=O)[O-]',
   '[N+](=O)[O-]',
@@ -138,9 +134,9 @@ StructuralAlertSmarts = [
   'C#C',
   '[OR2,NR2]@[CR2]@[CR2]@[OR2,NR2]@[CR2]@[CR2]@[OR2,NR2]',
   '[$([N+R]),$([n+R]),$([N+]=C)][O-]',
-  '[C,c]=N[OH]',
-  '[C,c]=NOC=O',
-  '[C,c](=O)[CX4,CR0X3,O][C,c](=O)',
+  '[#6]=N[OH]',
+  '[#6]=NOC=O',
+  '[#6](=O)[CX4,CR0X3,O][#6](=O)',
   'c1ccc2c(c1)ccc(=O)o2',
   '[O+,o+,S+,s+]',
   'N=C=O',
@@ -197,65 +193,79 @@ StructuralAlertSmarts = [
   '[R0;D2][R0;D2][R0;D2][R0;D2]',
   '[cR,CR]~C(=O)NC(=O)~[cR,CR]',
   'C=!@CC=[O,S]',
-  '[#6,#8,#16][C,c](=O)O[C,c]',
-  'c[C;R0](=[O,S])[C,c]',
+  '[#6,#8,#16][#6](=O)O[#6]',
+  'c[C;R0](=[O,S])[#6]',
   'c[SX2][C;!R]',
   'C=C=C',
   'c1nc([F,Cl,Br,I,S])ncc1',
   'c1ncnc([F,Cl,Br,I,S])c1',
   'c1nc(c2c(n1)nc(n2)[F,Cl,Br,I])',
-  '[C,c]S(=O)(=O)c1ccc(cc1)F',
+  '[#6]S(=O)(=O)c1ccc(cc1)F',
   '[15N]',
   '[13C]',
   '[18O]',
   '[34S]'
-  ]
-StructuralAlerts = []
-for smarts in StructuralAlertSmarts:
-  StructuralAlerts.append(Chem.MolFromSmarts(smarts))
+]
 
-# ADS parameters for the 8 molecular properties: [row][column]
-#   rows[8]:   MW, ALOGP, HBA, HBD, PSA, ROTB, AROM, ALERTS
-#   columns[7]: A, B, C, D, E, F, DMAX
-pads = [  [2.817065973, 392.5754953, 290.7489764, 2.419764353, 49.22325677, 65.37051707, 104.9805561],
-      [3.172690585, 137.8624751, 2.534937431, 4.581497897, 0.822739154, 0.576295591, 131.3186604],
-      [2.948620388, 160.4605972, 3.615294657, 4.435986202, 0.290141953, 1.300669958, 148.7763046],
-      [1.618662227, 1010.051101, 0.985094388, 0.000000001, 0.713820843, 0.920922555, 258.1632616],
-      [1.876861559, 125.2232657, 62.90773554, 87.83366614, 12.01999824, 28.51324732, 104.5686167],
-      [0.010000000, 272.4121427, 2.558379970, 1.565547684, 1.271567166, 2.758063707, 105.4420403],
-      [3.217788970, 957.7374108, 2.274627939, 0.000000001, 1.317690384, 0.375760881, 312.3372610],
-      [0.010000000, 1199.094025, -0.09002883, 0.000000001, 0.185904477, 0.875193782, 417.7253140]    ]
+StructuralAlerts = [Chem.MolFromSmarts(smarts) for smarts in StructuralAlertSmarts]
+
+adsParameters = {
+  'MW': ADSparameter(A=2.817065973, B=392.5754953, C=290.7489764, D=2.419764353, E=49.22325677,
+                     F=65.37051707, DMAX=104.9805561),
+  'ALOGP': ADSparameter(A=3.172690585, B=137.8624751, C=2.534937431, D=4.581497897, E=0.822739154,
+                        F=0.576295591, DMAX=131.3186604),
+  'HBA': ADSparameter(A=2.948620388, B=160.4605972, C=3.615294657, D=4.435986202, E=0.290141953,
+                      F=1.300669958, DMAX=148.7763046),
+  'HBD': ADSparameter(A=1.618662227, B=1010.051101, C=0.985094388, D=0.000000001, E=0.713820843,
+                      F=0.920922555, DMAX=258.1632616),
+  'PSA': ADSparameter(A=1.876861559, B=125.2232657, C=62.90773554, D=87.83366614, E=12.01999824,
+                      F=28.51324732, DMAX=104.5686167),
+  'ROTB': ADSparameter(A=0.010000000, B=272.4121427, C=2.558379970, D=1.565547684, E=1.271567166,
+                       F=2.758063707, DMAX=105.4420403),
+  'AROM': ADSparameter(A=3.217788970, B=957.7374108, C=2.274627939, D=0.000000001, E=1.317690384,
+                       F=0.375760881, DMAX=312.3372610),
+  'ALERTS': ADSparameter(A=0.010000000, B=1199.094025, C=-0.09002883, D=0.000000001, E=0.185904477,
+                         F=0.875193782, DMAX=417.7253140),
+}
 
 
-def ads(x, a, b, c, d, e, f, dmax):  # pylint: disable=R0913
+def ads(x, adsParameter):
   """ ADS function """
-  return ((a + (b / (1 + exp(-1 * (x - c + d / 2) / e)) * (1 - 1 / (1 + exp(-1 * (x - c - d / 2) / f))))) / dmax)
+  p = adsParameter
+  exp1 = 1 + math.exp(-1 * (x - p.C + p.D / 2) / p.E)
+  exp2 = 1 + math.exp(-1 * (x - p.C - p.D / 2) / p.F)
+  dx = p.A + p.B / exp1 * (1 - 1 / exp2)
+  return dx / p.DMAX
 
 
 def properties(mol):
   """
   Calculates the properties that are required to calculate the QED descriptor.
   """
-  matches = []
-  if (mol is None):
-    raise TypeError('You need to provide a mol argument.')
-  x = [0] * 8
-  x[0] = rdmd._CalcMolWt(mol)  # MW
-  x[1] = Crippen.MolLogP(mol)  # ALOGP
-  for hbaPattern in Acceptors:  # HBA
-    if (mol.HasSubstructMatch(hbaPattern)):
-      matches = mol.GetSubstructMatches(hbaPattern)
-      x[2] += len(matches)
-  x[3] = Lipinski.NumHDonors(mol)  # HBD
-  x[4] = MolSurf.TPSA(mol)  # PSA
-  x[5] = Lipinski.NumRotatableBonds(mol) # ROTB
-  x[6] = Chem.GetSSSR(Chem.DeleteSubstructs(deepcopy(mol), AliphaticRings))  # AROM
-  for alert in StructuralAlerts:  # ALERTS
-    if (mol.HasSubstructMatch(alert)): x[7] += 1
-  return QEDproperties(*x)
+  if mol is None:
+    raise ValueError('You need to provide a mol argument.')
+  mol = Chem.RemoveHs(mol)
+  qedProperties = QEDproperties(
+    MW=rdmd._CalcMolWt(mol),
+    ALOGP=Crippen.MolLogP(mol),
+    HBA=sum(len(mol.GetSubstructMatches(pattern)) for pattern in Acceptors
+            if mol.HasSubstructMatch(pattern)),
+    HBD=Lipinski.NumHDonors(mol),
+    PSA=MolSurf.TPSA(mol),
+    ROTB=Lipinski.NumRotatableBonds(mol),
+    AROM=Chem.GetSSSR(Chem.DeleteSubstructs(Chem.Mol(mol), AliphaticRings)),
+    ALERTS=sum(1 for alert in StructuralAlerts if mol.HasSubstructMatch(alert)),
+  )
+  # The replacement
+  # AROM=Lipinski.NumAromaticRings(mol),
+  # is not identical. The expression above tends to count more rings
+  # N1C2=CC=CC=C2SC3=C1C=CC4=C3C=CC=C4
+  # OC1=C(O)C=C2C(=C1)OC3=CC(=O)C(=CC3=C2C4=CC=CC=C4)O
+  # CC(C)C1=CC2=C(C)C=CC2=C(C)C=C1  uses 2, should be 0 ?
+  return qedProperties
 
-def qed(m=None, w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
-        p=None):
+
+def qed(mol, w=WEIGHT_MEAN, qedProperties=None):
   """ Calculate the weighted sum of ADS mapped properties
 
   some examples from the QED paper, reference values from Peter G's original implementation
@@ -269,37 +279,32 @@ def qed(m=None, w=(0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95),
   >>> qed(m)
   0.234...
   """
-  if p is None:
-      p = properties(m)
-  d = [0.00] * 8
-  for i in range(0, 8):
-    d[i] = ads(p[i], pads[i][0], pads[i][1], pads[i][2], pads[i][3], pads[i][4], pads[i][5], pads[i][6])
-  t = 0.0
-  for i in range(0, 8):
-    t += w[i] * log(d[i])
-  return (exp(t / sum(w)))
+  if qedProperties is None:
+      qedProperties = properties(mol)
+  d = [ads(pi, adsParameters[name]) for name, pi in qedProperties._asdict().items()]
+  t = sum(wi * math.log(di) for wi, di in zip(w, d))
+  return math.exp(t / sum(w))
 
 
 def weights_max(mol):
   """
   Calculates the QED descriptor using maximal descriptor weights.
   """
-  props = properties(mol)
-  return qed(mol, w=[0.50, 0.25, 0.00, 0.50, 0.00, 0.50, 0.25, 1.00])
+  return qed(mol, w=WEIGHT_MAX)
 
 
 def weights_mean(mol):
   """
   Calculates the QED descriptor using average descriptor weights.
   """
-  props = properties(mol)
-  return qed(mol, w=[0.66, 0.46, 0.05, 0.61, 0.06, 0.65, 0.48, 0.95])
+  return qed(mol, w=WEIGHT_MEAN)
+
 
 def weights_none(mol):
   """
   Calculates the QED descriptor using unit weights.
   """
-  return qed(mol, w=[1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00])
+  return qed(mol, w=WEIGHT_NONE)
 
 
 def default(mol):

@@ -10,7 +10,7 @@ from rdkit import RDConfig
 from rdkit.Chem import QED
 
 
-doLong = False
+doLong = True
 TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
 dataNCI200 = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'NCI_200_qed.csv')
 dataRegression = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'Regression_qed.csv')
@@ -31,10 +31,9 @@ class TestCase(unittest.TestCase):
       # Check that adding hydrogens will not change the result
       # This is currently not the case. Hydrogens change the number of rotatable bonds and the
       # number of alerts.
-      if False:
-        mol = Chem.AddHs(d.mol)
-        self.assertAlmostEqual(QED.qed(mol), d.expected,
-                               msg='QED not equal to expected in line {}'.format(d.lineNo))
+      mol = Chem.AddHs(d.mol)
+      self.assertAlmostEqual(QED.qed(mol), d.expected,
+                             msg='QED not equal to expected in line {}'.format(d.lineNo))
 
   def testRegression(self):
     if not doLong:
@@ -55,16 +54,29 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(p.AROM, 1)
     self.assertAlmostEqual(p.ALERTS, 3)
 
-    if False:
-      p = QED.properties(Chem.AddHs(m))
-      self.assertAlmostEqual(p.MW, 337.456)
-      self.assertAlmostEqual(p.ALOGP, -0.55833)
-      self.assertAlmostEqual(p.HBA, 6)
-      self.assertAlmostEqual(p.HBD, 5)
-      self.assertAlmostEqual(p.PSA, 173.33)
-      self.assertAlmostEqual(p.ROTB, 7)
-      self.assertAlmostEqual(p.AROM, 1)
-      self.assertAlmostEqual(p.ALERTS, 3)
+    p = QED.properties(Chem.AddHs(m))
+    self.assertAlmostEqual(p.MW, 337.456)
+    self.assertAlmostEqual(p.ALOGP, -0.55833)
+    self.assertAlmostEqual(p.HBA, 6)
+    self.assertAlmostEqual(p.HBD, 5)
+    self.assertAlmostEqual(p.PSA, 173.33)
+    self.assertAlmostEqual(p.ROTB, 7)
+    self.assertAlmostEqual(p.AROM, 1)
+    self.assertAlmostEqual(p.ALERTS, 3)
+
+  def test_examples(self):
+    # Paroxetine 0.935
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('c1cc2OCOc2cc1OCC1CNCCC1c1ccc(F)cc1')), 0.934,
+                           places=3)
+    # Leflunomide 0.929
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('C1=NOC(C)=C1C(=O)Nc1ccc(cc1)C(F)(F)F')),
+                           0.911, places=3)
+    # Clomipramine 0.779
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CN(C)CCCN1c2ccccc2CCc2ccc(Cl)cc21')),
+                           0.818, places=3)
+    # Tegaserod 0.213
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CCCCCNC(=N)NN=CC1=CNc2ccc(CO)cc21')),
+                           0.235, places=3)
 
 
 def readTestData(filename):

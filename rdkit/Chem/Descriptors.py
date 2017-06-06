@@ -189,7 +189,7 @@ def _FingerprintDensity(mol, func, *args, **kwargs):
   if hasattr(fp, 'GetNumOnBits'):
     val = fp.GetNumOnBits()
   else:
-    val = fp.GetTotalVal()
+    val = len(fp.GetNonzeroElements())
   return float(val) / mol.GetNumHeavyAtoms()
 
 
