@@ -493,6 +493,7 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
                          spacing, confIds);
 
   ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
+  MolOps::findSSSR(*tmol);
 
   if (needs_scale_ &&
       (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
