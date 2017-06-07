@@ -66,23 +66,22 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
     w[5 * numAtoms + i] = ws[i];
   }
 
-
   for (unsigned int i = 0; i < numAtoms; i++) {
     for (unsigned int t = 0; t < 6; ++t) {
-      wmean[t] += w[t][i] / (double) numAtoms;
+      wmean[t] += w[t * numAtoms + i] / (double)numAtoms;
     }
   }
 
- /*
+  /*
 
-  std::vector<double> squaresumdiff(6,0.0);
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    for (unsigned int t = 0; t < 6; ++t) {
-      squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
-    }
-  }
+   std::vector<double> squaresumdiff(6,0.0);
+   for (unsigned int i = 0; i < numAtoms; i++) {
+     for (unsigned int t = 0; t < 6; ++t) {
+       squaresumdiff[t]+=(w[t][i]-wmean[t])*(w[t][i]-wmean[t]);
+     }
+   }
 
-  */
+   */
 
   std::vector<double> TDBmat(48, 0.0);
   std::vector<double> TDBmatC(48, 0.0);
@@ -99,7 +98,8 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
             //  TDBmatM[t][k] += (w[t][i]-wmean[t]) * (w[t][j]-wmean[t]);
             //  TDBmatG[t][k] += (w[t][i] - w[t][j]) * (w[t][i] - w[t][j]);
             TDBmat[t * 8 + k] += w[t * numAtoms + i] * w[t * numAtoms + j];
-            TDBmatC[t * 8 +k] += fabs(w[t * numAtoms + i]-wmean[t]) * fabs(w[t * numAtoms + j]-wmean[t]);
+            TDBmatC[t * 8 + k] += fabs(w[t * numAtoms + i] - wmean[t]) *
+                                  fabs(w[t * numAtoms + j] - wmean[t]);
           }
           maxkVertexPairs += 1;
         }
@@ -116,7 +116,7 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
 
       } else {
         TDBmat[t * 8 + k] = 0.0;
-        TDBmatC[t * 8 + k] =  0.0;
+        TDBmatC[t * 8 + k] = 0.0;
         //  TDBmatM[t][k] =  0.0;
         //  TDBmatG[t][k] =  0.0;
       }
@@ -127,8 +127,7 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
   for (unsigned int t = 0; t < 6; ++t) {
     for (unsigned int k = 0; k < 8; ++k) {
       res[t * 8 + k] = round(1000 * TDBmat[k + t * 8]) / 1000;
-      res[t * 8 + k +48] = round(1000 * TDBmatC[k + t * 8]) / 1000;
-
+      res[t * 8 + k + 48] = round(1000 * TDBmatC[k + t * 8]) / 1000;
     }
   }
 
@@ -146,17 +145,16 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
    }
   */
 
-TDBmat.clear();
-TDBmatC.clear();
-wp.clear();
-wm.clear();
-wv.clear();
-wi.clear();
-we.clear();
-ws.clear();
-w.clear();
-wmean.clear();
-
+  TDBmat.clear();
+  TDBmatC.clear();
+  wp.clear();
+  wm.clear();
+  wv.clear();
+  wi.clear();
+  we.clear();
+  ws.clear();
+  w.clear();
+  wmean.clear();
 }
 
 void Get2Dauto(double* dist, int numAtoms, const ROMol& mol,
