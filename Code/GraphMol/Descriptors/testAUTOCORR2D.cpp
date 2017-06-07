@@ -65,7 +65,7 @@ void testautocorrelation() {
 
     TEST_ASSERT(inm == nm);
 
-    for (int i = 0; i < 48; i++) {
+    for (int i = 0; i < 96; i++) {
       double ref = atof(myrow[i + 1].c_str());
 
       if (abs(ref - res2d[i]) > 0.05) {
