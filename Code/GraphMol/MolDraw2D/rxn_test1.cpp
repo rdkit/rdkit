@@ -205,10 +205,48 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
   std::cout << " Done" << std::endl;
 }
 
+void test3() {
+  std::cout << " ----------------- Test 3: some examples from SMARTS "
+               "in testing"
+            << std::endl;
+  {  // from the reaction role assignment paper
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    std::string nameBase = "rxn_test3_1";
+    bool useSmiles = false;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    drawit(rxn, nameBase, true);
+    delete rxn;
+  }
+  {  // from the reaction role assignment paper
+    std::string smiles =
+        "[CH3:16][CH2:15][c:14]1[c:7]([cH:6][c:5]([cH:22][c:17]1[O:18][CH2:19]["
+        "CH:20]=[CH2:21])[O:4][CH2:3][CH:2]=[CH2:1])[CH2:8][CH2:9][O:10][CH2:"
+        "11][CH2:12][O:13]C2CCCCO2.CO.C1COCCO1.C(=O)(O)[O-].O.[Na+].Cl>>[CH3:"
+        "16][CH2:15][c:14]1[c:7]([cH:6][c:5]([cH:22][c:17]1[O:18][CH2:19][CH:"
+        "20]=[CH2:21])[O:4][CH2:3][CH:2]=[CH2:1])[CH2:8][CH2:9][O:10][CH2:11]["
+        "CH2:12][OH:13]";
+    std::string nameBase = "rxn_test3_2";
+    bool useSmiles = false;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    drawit(rxn, nameBase, true);
+    delete rxn;
+  }
+  std::cout << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
   test1();
   test2();
+  test3();
 #endif
 }
