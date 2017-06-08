@@ -37,13 +37,14 @@ import re
 import unittest
 
 from rdkit import RDConfig
-from rdkit.Chem import rdDepictor
 from rdkit import RDLogger
-from rdkit.six.moves.cPickle import loads
 from rdkit.Chem import ForwardSDMolSupplier, SanitizeMol
-from rdkit.Chem import MolFromSmiles, MolToSmiles
-from rdkit.Chem import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem import INCHI_AVAILABLE
+from rdkit.Chem import MolFromMolBlock, MolToMolBlock
+from rdkit.Chem import MolFromSmiles, MolToSmiles
+from rdkit.Chem import rdDepictor
+from rdkit.six.moves.cPickle import loads
+
 if INCHI_AVAILABLE:
   from rdkit.Chem import InchiReadWriteError
   from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey
@@ -261,6 +262,11 @@ class TestCase(unittest.TestCase):
   def test3InchiKey(self):
     inchi = 'InChI=1S/C9H12/c1-2-6-9-7-4-3-5-8-9/h3-5,7-8H,2,6H2,1H3'
     self.assertEqual(InchiToInchiKey(inchi), 'ODLMAHJVESYWTB-UHFFFAOYSA-N')
+
+    inchi = 'thisIsNotCorrect'
+    RDLogger.DisableLog('rdApp.error')
+    self.assertEqual(InchiToInchiKey(inchi), None)
+    RDLogger.EnableLog('rdApp.error')
 
 
 if __name__ == '__main__':  # pragma: nocover
