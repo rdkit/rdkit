@@ -155,6 +155,28 @@ class TestCase(unittest.TestCase):
                          highlightBonds=(0, 2, 4, 6, 8, 10))
     self._testMolToImage(mol=Chem.MolFromSmiles('c1ccccc1c1ccc(cc1)c1ccc(cc1)c1ccc(cc1)'))
 
+  def testGenericLabel(self):
+    from rdkit.Chem.Draw import patchLabels
+    mol = Chem.MolFromSmiles('CCC')
+    atom = mol.GetAtomWithIdx(0)
+    atom.SetProp('drawlabel', 'X')
+    self._testMolToImage(mol=mol, showImage=True, kekulize=True)
+
+    heteroatom = Chem.MolFromSmarts('[#7,#8,#15,#16]')  # .GetAtomWithIdx(0)
+    halogen = Chem.MolFromSmarts('[#9,#17,#35,#53]')  # .GetAtomWithIdx(0)
+    mol = Chem.MolFromSmarts('[#7,#8,#15,#16]=C(CC1=CC([#9,#17,#35,#53])=CC=C1)[#7,#8,#15,#16]')
+    for match in mol.GetSubstructMatches(heteroatom):
+      print(match)
+      mol.GetAtomWithIdx(match[0]).SetProp('drawlabel', 'Q')
+    for match in mol.GetSubstructMatches(halogen):
+      print(match)
+      mol.GetAtomWithIdx(match[0]).SetProp('drawlabel', 'X')
+    self._testMolToImage(mol=mol, showImage=True, kekulize=True)
+    
+    img = Draw.MolToImage(mol, size=(300, 300))
+    img.show()
+
+
   def testGithubIssue86(self):
     # Assert that drawing code doesn't modify wedge bonds
     mol = Chem.MolFromSmiles('F[C@H](Cl)Br')

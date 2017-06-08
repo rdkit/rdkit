@@ -117,14 +117,11 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
       nPts = len(suppl)
     else:
       nPts = -1
+  progress = ReportProgress(reportFreq, nPts)
   for i, mol in enumerate(suppl):
     if i == nPts:
       break
-    if i and not i % reportFreq:
-      if nPts > -1:
-        message('Done %d of %d, %d paths\n' % (i, nPts, catalog.GetFPLength()))
-      else:
-        message('Done %d, %d paths\n' % (i, catalog.GetFPLength()))
+    progress('{0} paths'.format(catalog.GetFPLength()))
     fgen.AddFragsFromMol(mol, catalog)
   return catalog
 
@@ -169,10 +166,9 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
   fpgen = FragmentCatalog.FragFPGenerator()
   suppl.reset()
-  i = 1
-  for mol in suppl:
-    if i and not i % reportFreq:
-      message('Done %d.\n' % (i))
+  progress = ReportProgress(reportFreq)
+  for i, mol in enumerate(suppl, 1):
+    progress()
     if mol:
       if not acts:
         act = int(mol.GetProp(actName))
@@ -187,7 +183,6 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
         resTbl[id_ - 1, 1, act] += 1
     else:
       obls.append([])
-    i += 1
   return resTbl, obls
 
 
@@ -229,14 +224,15 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
   if not actName and not acts:
     actName = suppl[0].GetPropNames()[-1]
   suppl.reset()
+
+  progress = ReportProgress(reportFreq, nPts, start=1)
   for i in range(1, nPts + 1):
     mol = next(suppl)
     if not acts:
       act = int(mol.GetProp(actName))
     else:
       act = acts[i - 1]
-    if i and not i % reportFreq:
-      message('Done %d of %d\n' % (i, nPts))
+    progress()
     ids = set()
     for id_ in bitLists[i - 1]:
       ids.add(id_ - 1)
@@ -275,9 +271,9 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
     ranker.SetBiasList(biasList)
   else:
     ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
-  i = 0
   fps = []
-  for mol in suppl:
+  progress = ReportProgress(reportFreq, nMols)
+  for i, mol in enumerate(suppl, 0):
     if not acts:
       try:
         act = int(mol.GetProp(actName))
@@ -287,14 +283,9 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
         raise KeyError(actName)
     else:
       act = acts[i]
-    if i and not i % reportFreq:
-      if nMols > 0:
-        message('Done %d of %d.\n' % (i, nMols))
-      else:
-        message('Done %d.\n' % (i))
+    progress()
     fp = fpgen.GetFPForMol(mol, catalog)
     ranker.AccumulateVotes(fp, act)
-    i += 1
     if collectFps:
       fps.append(fp)
   gains = ranker.GetTopN(topN)
@@ -323,6 +314,7 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
     ranker.SetBiasList(biasList)
   else:
     ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
+  progress = ReportProgress(reportFreq, nMols)
   for i, mol in enumerate(suppl):
     if not acts:
       try:
@@ -333,15 +325,34 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
         raise KeyError(actName)
     else:
       act = acts[i]
-    if i and not i % reportFreq:
-      if nMols > 0:
-        message('Done %d of %d.\n' % (i, nMols))
-      else:
-        message('Done %d.\n' % (i))
+    progress()
     fp = fps[i]
     ranker.AccumulateVotes(fp, act)
   gains = ranker.GetTopN(topN)
   return gains
+
+
+class ReportProgress(object):
+  """ Print progress messages """
+
+  def __init__(self, reportFreq, nobjects=-1, start=0):
+    if nobjects > 0:
+      self.fmt = 'Done {0.count} of {0.nobjects}.\n'
+      self.fmtMsg = 'Done {0.count} of {0.nobjects}, {1}.\n'
+    else:
+      self.fmt = 'Done {0.count}.\n'
+      self.fmtMsg = 'Done {0.count}, {1}.\n'
+    self.count = start
+    self.reportFreq = reportFreq
+    self.nobjects = nobjects
+
+  def __call__(self, msg=None):
+    if self.count and not self.count % self.reportFreq:
+      if msg is None:
+        message(self.fmt.format(self))
+      else:
+        message(self.fmtMsg.format(self, msg))
+    self.count += 1
 
 
 def OutputGainsData(outF, gains, cat, nActs=2):
