@@ -267,6 +267,7 @@ class Default(object):
   matchValences = False
   ringMatchesRingOnly = False
   completeRingsOnly = False
+  matchFormalCharge = False
 
 ####### Atom type and bond type information #####
 
@@ -567,7 +568,8 @@ def get_canonical_bondtypes(rdmol, bonds, atom_smarts_types, bond_smarts_types):
 
 
 def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matchValences,
-                       ringMatchesRingOnly=Default.ringMatchesRingOnly):
+                       ringMatchesRingOnly=Default.ringMatchesRingOnly,
+                       matchFormalCharge=Default.matchFormalCharge):
   atoms = list(rdmol.GetAtoms())
   atom_smarts_types = atom_typer(atoms)
 
@@ -581,6 +583,19 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matc
         atom_smarts_type += ";" + valence_str
       else:
         atom_smarts_type += valence_str
+      new_atom_smarts_types.append(atom_smarts_type)
+    atom_smarts_types = new_atom_smarts_types
+
+  # Get the charge information, if requested
+  if matchFormalCharge:
+    new_atom_smarts_types = []
+    for (atom, atom_smarts_type) in zip(atoms, atom_smarts_types):
+      formalCharge = atom.GetFormalCharge()
+      charge_str = '%+d' % atom.GetFormalCharge()
+      if "," in atom_smarts_type:
+        atom_smarts_type += ";" + charge_str
+      else:
+        atom_smarts_type += charge_str
       new_atom_smarts_types.append(atom_smarts_type)
     atom_smarts_types = new_atom_smarts_types
 
@@ -642,11 +657,12 @@ def get_specified_types(rdmol, atom_types, ringMatchesRingOnly):
 
 
 def convert_input_to_typed_molecules(mols, atom_typer, bond_typer, matchValences,
-                                     ringMatchesRingOnly):
+                                     ringMatchesRingOnly, matchFormalCharge):
   typed_mols = []
   for molno, rdmol in enumerate(mols):
     typed_mol = get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=matchValences,
-                                   ringMatchesRingOnly=ringMatchesRingOnly)
+                                   ringMatchesRingOnly=ringMatchesRingOnly,
+                                   matchFormalCharge=matchFormalCharge)
     typed_mols.append(typed_mol)
 
   return typed_mols
@@ -2184,6 +2200,7 @@ def fmcs(mols,
          bondCompare=Default.bondCompare,
          threshold=1.0,
          matchValences=Default.matchValences,
+         matchFormalCharge=Default.matchFormalCharge,
          ringMatchesRingOnly=False,
          completeRingsOnly=False,
          timeout=Default.timeout,
@@ -2218,9 +2235,9 @@ def fmcs(mols,
     raise ValueError("Unknown bondCompare option %r" % (bondCompare, ))
 
   # Make copies of all of the molecules so I can edit without worrying about the original
-  typed_mols = convert_input_to_typed_molecules(mols, atom_typer, bond_typer,
-                                                matchValences=matchValences,
-                                                ringMatchesRingOnly=ringMatchesRingOnly)
+  typed_mols = convert_input_to_typed_molecules(
+    mols, atom_typer, bond_typer, matchValences=matchValences,
+    ringMatchesRingOnly=ringMatchesRingOnly, matchFormalCharge=matchFormalCharge)
   bondtype_counts = get_canonical_bondtype_counts(typed_mols)
   supported_bondtypes = set()
   for bondtype, count_list in bondtype_counts.items():
@@ -2730,6 +2747,7 @@ def main(args=None):
              threshold=args.threshold,
              #matchValences = args.matchValences,
              matchValences=False,  # Do I really want to support this?
+             matchFormalCharge=Default.matchFormalCharge,  #me neither
              ringMatchesRingOnly=args.ringMatchesRingOnly,
              completeRingsOnly=args.completeRingsOnly,
              timeout=args.timeout,

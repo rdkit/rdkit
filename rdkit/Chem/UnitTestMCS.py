@@ -202,6 +202,24 @@ class TestValences(MCSTestCase):
                        atomCompare=rdFMCS.AtomCompare.CompareAny)
 
 
+formalCharge_mols = load_smiles("""
+[C-]CC[C+]
+[C-]CCC
+""")
+
+
+class TestFormalCharges(MCSTestCase):
+
+  def test_formalCharge_compare_default(self):
+    # match 'CCCC'
+    self.assert_search(formalCharge_mols, numAtoms=4, numBonds=3, smarts='[#6]-[#6]-[#6]-[#6]')
+
+  def test_formalCharge_compare_formalCharge(self):
+    # match '[C-]CC'
+    self.assert_search(formalCharge_mols, numAtoms=3, numBonds=2, smarts='[#6-1]-[#6+0]-[#6+0]',
+                       matchFormalCharge=True)
+
+
 ring_mols = load_smiles("""
 C12CCCC(N2)CCCC1 6-and-7-bridge-rings-with-N
 C1CCCCN1 6-ring
