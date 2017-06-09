@@ -109,7 +109,57 @@ namespace RDKit {
         }
 
 
-        bool IsClose2(double a, double b, unsigned int n) {
+      int countZeros(std::string ta)
+      { 
+          int nbzero=0;
+                for (unsigned int i = 0; i < ta.length(); i++) {
+            if (ta[i]!='0') {
+          break;
+        }
+        nbzero=nbzero+1;
+          }
+
+          return nbzero;
+      }
+
+    bool IsClose2(double a, double b, unsigned int n) {
+            bool isclose=false;
+
+              std::string sa,sb;
+              std::string ta,tb;
+              std::stringstream outa,outb;
+              outa << a;
+              sa = outa.str();
+              outb << b;
+              sb = outb.str();
+              ta = sa.substr(sa.find(".")+1);
+
+              tb = sb.substr(sb.find(".")+1);
+
+              // same number of digits!
+	     if (countZeros(ta) == countZeros(tb)) {
+          if (ta.length() > tb.length()) {
+            tb+='0';
+          }
+          if (ta.length() < tb.length()) {
+            ta+='0';
+          }
+	      }
+	   // std::cout << tb << ":"<<  atoi(tb.c_str()) << ":" << countZeros(ta) << "\n";	 
+	   // std::cout << ta << ":"<<  atoi(ta.c_str()) << ":" << countZeros(ta) << "\n";	 
+
+        if (ta.length() == tb.length()) {
+                // last digit +/-1 deviation only!)
+            if (abs(atoi(ta.c_str())-atoi(tb.c_str()))<2) {
+                  //std::cout << a << "," << b << " ta:"  << ta << "," << "tb:" << tb<< "\n";
+                  isclose=true;
+            }
+          }
+          return isclose;
+        }
+
+      
+        bool IsClose3(double a, double b, unsigned int n) {
               bool isclose=false;
               std::string sa,sb;
               std::string ta,tb;
