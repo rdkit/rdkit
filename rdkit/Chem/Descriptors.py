@@ -7,14 +7,21 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import collections
+
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges, rdMolDescriptors
+import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
+from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex,
+                                      MaxAbsEStateIndex, MinAbsEStateIndex)
+from rdkit.Chem.QED import qed
 
 
 def _isCallable(thing):
-  return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
-              hasattr(thing,'__call__')
+  return (hasattr(collections, 'Callable') and isinstance(thing, collections.Callable)) or \
+              hasattr(thing, '__call__')
+
 
 _descList = []
 
@@ -55,7 +62,6 @@ def _setupDescriptors(namespace):
   descList = _descList
 
 
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 MolWt = lambda *x, **y: _rdMolDescriptors._CalcMolWt(*x, **y)
 MolWt.version = _rdMolDescriptors._CalcMolWt_version
 MolWt.__doc__ = """The average molecular weight of the molecule
@@ -180,9 +186,6 @@ def MinAbsPartialCharge(mol, force=False):
 
 MinAbsPartialCharge.version = "1.0.0"
 
-from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
-from rdkit.Chem.QED import qed
-
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
   fp = func(*((mol,) + args), **kwargs)
@@ -196,6 +199,9 @@ def _FingerprintDensity(mol, func, *args, **kwargs):
 FpDensityMorgan1 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
 FpDensityMorgan2 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
 FpDensityMorgan3 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
 _setupDescriptors(locals())
 

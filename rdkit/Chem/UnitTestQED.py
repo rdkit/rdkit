@@ -10,7 +10,7 @@ from rdkit import RDConfig
 from rdkit.Chem import QED
 
 
-doLong = True
+doLong = False
 TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
 dataNCI200 = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'NCI_200_qed.csv')
 dataRegression = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'Regression_qed.csv')
@@ -23,6 +23,10 @@ def load_tests(loader, tests, ignore):
 
 
 class TestCase(unittest.TestCase):
+
+  def testQED(self):
+    self.assertEqual(QED.qed.version, '1.1.0',
+                     msg='QED version has changed. Update the regression tests if required.')
 
   def testNCI200(self):
     for d in readTestData(dataNCI200):

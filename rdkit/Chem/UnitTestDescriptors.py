@@ -125,16 +125,20 @@ class TestCase(unittest.TestCase):
     self.assertFalse(False in (vs == tgt))
 
   def test_FpDensityMorgan(self):
+    self.assertEqual(Descriptors.FpDensityMorgan1.version, '1.0.0')
+    self.assertEqual(Descriptors.FpDensityMorgan2.version, '1.0.0')
+    self.assertEqual(Descriptors.FpDensityMorgan3.version, '1.0.0')
+
     m = Chem.MolFromSmiles('C')
-    self.assertEqual(Descriptors.FpDensityMorgan2(m), 1)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 1)
     m = Chem.MolFromSmiles('CC')
-    self.assertEqual(Descriptors.FpDensityMorgan2(m), 1)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 1)
     m = Chem.MolFromSmiles('CCC')
-    self.assertEqual(Descriptors.FpDensityMorgan2(m), 4.0 / 3)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 4.0 / 3)
     m = Chem.MolFromSmiles('C' * 10)
-    self.assertEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 10)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 10)
     m = Chem.MolFromSmiles('C' * 100)
-    self.assertEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 100)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 100)
 
     m = Chem.MolFromSmiles('CCCc1ccccc1')
     fpd1 = Descriptors.FpDensityMorgan1(m)

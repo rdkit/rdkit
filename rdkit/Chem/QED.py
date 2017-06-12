@@ -57,8 +57,9 @@ from collections import namedtuple
 import math
 
 from rdkit import Chem
-from rdkit.Chem import Lipinski, MolSurf, Crippen
+from rdkit.Chem import MolSurf, Crippen
 from rdkit.Chem import rdMolDescriptors as rdmd
+from rdkit.Chem.ChemUtils.DescriptorUtilities import setDescriptorVersion
 
 
 QEDproperties = namedtuple('QEDproperties', 'MW,ALOGP,HBA,HBD,PSA,ROTB,AROM,ALERTS')
@@ -250,9 +251,9 @@ def properties(mol):
     ALOGP=Crippen.MolLogP(mol),
     HBA=sum(len(mol.GetSubstructMatches(pattern)) for pattern in Acceptors
             if mol.HasSubstructMatch(pattern)),
-    HBD=Lipinski.NumHDonors(mol),
+    HBD=rdmd.CalcNumHBD(mol),
     PSA=MolSurf.TPSA(mol),
-    ROTB=Lipinski.NumRotatableBonds(mol),
+    ROTB=rdmd.CalcNumRotatableBonds(mol),
     AROM=Chem.GetSSSR(Chem.DeleteSubstructs(Chem.Mol(mol), AliphaticRings)),
     ALERTS=sum(1 for alert in StructuralAlerts if mol.HasSubstructMatch(alert)),
   )
@@ -265,6 +266,7 @@ def properties(mol):
   return qedProperties
 
 
+@setDescriptorVersion(version='1.1.0')
 def qed(mol, w=WEIGHT_MEAN, qedProperties=None):
   """ Calculate the weighted sum of ADS mapped properties
 
