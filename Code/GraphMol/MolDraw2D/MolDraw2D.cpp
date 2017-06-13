@@ -479,10 +479,12 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 
   arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
 }
+
 }
 
 void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
                              bool highlightByReactant,
+                             const std::vector<DrawColour>* highlightColorsReactants,
                              const std::vector<int> *confIds) {
   ChemicalReaction nrxn(rxn);
   double spacing = 1.0;
@@ -528,13 +530,10 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
   std::vector<int> *bond_highlights = NULL;
   std::map<int, DrawColour> *bond_highlight_colors = NULL;
   if (highlightByReactant) {
-    // FIX: these really should be defined elsewhere
-    std::vector<DrawColour> highlightColors;
-    highlightColors.push_back(DrawColour(.9, .6, .6));
-    highlightColors.push_back(DrawColour(.6, .6, .9));
-    highlightColors.push_back(DrawColour(.8, .8, .3));
-    highlightColors.push_back(DrawColour(.8, .6, .8));
-
+    const std::vector<DrawColour>* colors = &drawOptions().highlightColourPalette;
+    if(highlightColorsReactants){
+      colors = highlightColorsReactants;
+    }
     std::vector<int> atomfragmap;
     MolOps::getMolFrags(*tmol, atomfragmap);
 
@@ -550,8 +549,8 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
           atom->getAtomMapNum()) {
         atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
         atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] =
-            highlightColors[atomfragmap[aidx] % highlightColors.size()];
+        (*atom_highlight_colors)[aidx] = (*colors)[atomfragmap[aidx]%colors->size()];
+
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
@@ -579,8 +578,8 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
               atommap_fragmap.end()) {
         atom_highlights->push_back(aidx);
         (*atom_highlight_colors)[aidx] =
-            highlightColors[atommap_fragmap[atom->getAtomMapNum()] %
-                            highlightColors.size()];
+            (*colors)[atommap_fragmap[atom->getAtomMapNum()]%colors->size()];
+
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
         // (and thus already covered) neighbors
