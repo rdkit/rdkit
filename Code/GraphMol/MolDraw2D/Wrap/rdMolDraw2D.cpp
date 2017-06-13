@@ -62,7 +62,34 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
   }
   return res;
 }
+
+void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
+  res.clear();
+  python::list tList = python::extract<python::list>(pyo);
+  for (unsigned int i = 0;
+       i < python::extract<unsigned int>(tList.attr("__len__")()); ++i) {
+    python::tuple tpl = python::extract<python::tuple>(tList[i]);
+    float r = python::extract<float>(tpl[0]);
+    if (r > 1 || r < 0) {
+      throw ValueErrorException(
+          "RGB color value needs to be between 0 and 1.");
+    }
+    float g = python::extract<float>(tpl[1]);
+    if (g > 1 || g < 0) {
+      throw ValueErrorException(
+          "RGB color value needs to be between 0 and 1.");
+    }
+    float b = python::extract<float>(tpl[2]);
+    if (b > 1 || b < 0) {
+      throw ValueErrorException(
+          "RGB color value needs to be between 0 and 1.");
+    }
+    DrawColour clr(r, g, b);
+    res.push_back(clr);
+  }
 }
+}
+
 void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atoms,
                          python::object highlight_atom_map,
@@ -198,10 +225,18 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
 }
 
 void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
-                        bool highlightByReactant, python::object pconfIds) {
+                        bool highlightByReactant, python::object phighlightColorsReactants,
+                        python::object pconfIds) {
+
+  rdk_auto_ptr<std::vector<DrawColour> > highlightColorsReactants;
+  if(phighlightColorsReactants){
+    highlightColorsReactants.reset(new std::vector<DrawColour>);
+    pyListToColourVec(phighlightColorsReactants, *highlightColorsReactants);
+  }
+
   rdk_auto_ptr<std::vector<int> > confIds = pythonObjectToVect<int>(pconfIds);
 
-  self.drawReaction(rxn, highlightByReactant, confIds.get());
+  self.drawReaction(rxn, highlightByReactant, highlightColorsReactants.get(), confIds.get());
 }
 
 #ifdef RDK_CAIRO_BUILD
@@ -300,6 +335,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("DrawReaction", RDKit::drawReactionHelper,
            (python::arg("self"), python::arg("rxn"),
             python::arg("highlightByReactant") = false,
+            python::arg("highlightColorsReactants") = python::object(),
             python::arg("confIds") = python::object()),
            "renders a reaction\n")
       .def("Width", &RDKit::MolDraw2D::width,

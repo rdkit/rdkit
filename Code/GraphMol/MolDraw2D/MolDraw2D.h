@@ -66,6 +66,9 @@ struct MolDrawOptions {
   std::vector<std::vector<int> > atomRegions;  // regions
   DrawColour
       symbolColour;  // color to be used for the symbols and arrows in reactions
+  std::vector<DrawColour> highlightColourPalette; // defining 10 default colors
+                                                 // for highlighting atoms and bonds
+                                                 //or reactants in a reactions
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -82,7 +85,19 @@ struct MolDrawOptions {
         multipleBondOffset(0.15),
         padding(0.05),
         additionalAtomLabelPadding(0.0),
-        symbolColour(0, 0, 0){};
+        symbolColour(0, 0, 0){
+    highlightColourPalette.push_back(DrawColour(1., 1., .67)); // popcorn yellow
+    highlightColourPalette.push_back(DrawColour(1., .8, .6)); // sand
+    highlightColourPalette.push_back(DrawColour(1., .71, .76)); // light pink
+    highlightColourPalette.push_back(DrawColour(.8, 1., .8)); // offwhitegreen
+    highlightColourPalette.push_back(DrawColour(.87, .63, .87)); // plum
+    highlightColourPalette.push_back(DrawColour(.76, .94, .96)); // pastel blue
+    highlightColourPalette.push_back(DrawColour(.67, .67, 1.)); // periwinkle
+    highlightColourPalette.push_back(DrawColour(.64, .76, .34)); // avocado
+    highlightColourPalette.push_back(DrawColour(.56, .93, .56)); // light green
+    highlightColourPalette.push_back(DrawColour(.20, .63, .79)); // peacock
+  };
+
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
@@ -198,13 +213,16 @@ class MolDraw2D {
   /*!
     \param rxn                 : the reaction to draw
     \param highlightByReactant : (optional) if this is set, atoms and bonds will
-    be highlighted baesed on which reactant they come from. Atom map numbers
+    be highlighted based on which reactant they come from. Atom map numbers
     will not be shown.
+    \param highlightColorsReactants : (optional) provide a vector of colors for the
+    reactant highlighting.
     \param confIds   : (optional) vector of confIds to use for rendering. These
     are numbered by reactants, then agents, then products.
   */
   virtual void drawReaction(const ChemicalReaction &rxn,
                             bool highlightByReactant = false,
+                            const std::vector<DrawColour>* highlightColorsReactants = NULL,
                             const std::vector<int> *confIds = NULL);
 
   //! \name Transformations

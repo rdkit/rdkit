@@ -39,7 +39,8 @@ using namespace RDKit;
 
 namespace {
 void drawit(ChemicalReaction *rxn, std::string nameBase,
-            bool highlight_map = false) {
+            bool highlight_map = false,
+            const std::vector<DrawColour>* highlight_colors = NULL) {
   double panex = 200, paney = 150;
   double width = panex * (rxn->getNumReactantTemplates() +
                           rxn->getNumProductTemplates() + 1);
@@ -47,7 +48,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
 #ifdef RDK_CAIRO_BUILD
   {
     MolDraw2DCairo drawer(width, height);
-    drawer.drawReaction(*rxn, highlight_map);
+    drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
     drawer.writeDrawingText(nameBase + ".png");
   }
@@ -55,7 +56,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
   {
     std::ofstream outs((nameBase + ".svg").c_str());
     MolDraw2DSVG drawer(width, height, outs);
-    drawer.drawReaction(*rxn, highlight_map);
+    drawer.drawReaction(*rxn, highlight_map, highlight_colors);
     drawer.finishDrawing();
     outs.flush();
   }
@@ -205,10 +206,36 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
   std::cout << " Done" << std::endl;
 }
 
+void test3() {
+  std::cout << " ----------------- Test 3: test reactant highlighting"
+            << std::endl;
+  {  // from the reaction role assignment paper
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    std::string nameBase = "rxn_test3_1";
+    bool useSmiles = true;
+    ChemicalReaction *rxn =
+        RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
+    TEST_ASSERT(rxn);
+    std::vector<DrawColour> highlight_colors;
+    highlight_colors.push_back(DrawColour(1., 1., .67));
+    highlight_colors.push_back(DrawColour(1., .71, .76));
+    highlight_colors.push_back(DrawColour(.8, 1., .8));
+    highlight_colors.push_back(DrawColour(.67, .67, 1.));
+    drawit(rxn, nameBase, true, &highlight_colors);
+    delete rxn;
+  }
+  std::cout << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
   test1();
   test2();
+  test3();
 #endif
 }
