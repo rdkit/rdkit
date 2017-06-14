@@ -205,8 +205,8 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
   std::cout << " Done" << std::endl;
 }
 
-void test3() {
-  std::cout << " ----------------- Test 3: some examples from SMARTS "
+void test4() {
+  std::cout << " ----------------- Test 4: some examples from SMARTS "
                "in testing"
             << std::endl;
   {  // from the reaction role assignment paper
@@ -247,6 +247,6 @@ int main() {
 #if 1
   test1();
   test2();
-  test3();
+  test4();
 #endif
 }
