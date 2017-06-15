@@ -456,7 +456,7 @@ translate
 
     # save() will now become part of the spec.
     file = file or self.filename
-    fileobj = getFileObject(file)
+    fileobj = getFileObject(file, 'w')
     fileobj.write(linesep.join(self.code))
     # here's a hack. we might want to be able to add more after saving so
     # preserve the current code ???
