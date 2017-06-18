@@ -28,6 +28,8 @@ addons:
  apt:
   packages:
     - build-essential
+    - openjdk-7-jdk
+    - swig
     - libjpeg-dev
 
 install:
