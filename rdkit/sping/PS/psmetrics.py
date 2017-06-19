@@ -226,5 +226,10 @@ def stringwidth(text, font, encoding):
       raise KeyError("Improper encoding {0} or font name {1}".format(encoding, font))
   w = 0
   for char in text:
-    w = w + widths[ord(char)]
+    chr_idx = ord(char)
+    if chr_idx < len(widths):
+      chr_width = widths[chr_idx]
+    else:
+      chr_width = max(widths)
+    w = w + chr_width
   return w
