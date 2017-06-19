@@ -6,6 +6,9 @@
 /.project
 /.pydevproject
 
+#- IDEA files
+/.idea
+
 #- Binary files
 __pycache__/
 *.so
