@@ -28,9 +28,13 @@ void testGETAWAY() {
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
   std::string fName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/GETAWAY.out";
+      pathName + "/Code/GraphMol/Descriptors/test_data/GETAWAY.new.out";
 
   std::ifstream instrm(fName.c_str());
+
+  // std::string ofName =
+  //     pathName + "/Code/GraphMol/Descriptors/test_data/GETAWAY.new.out";
+  // std::ofstream outstrm(ofName.c_str());
 
   std::string line;
   std::vector<std::vector<std::string> > data;
@@ -64,9 +68,10 @@ void testGETAWAY() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
     // std::cout <<  "\n";
-    int numAtoms = m->getNumAtoms();
-    std::cout << "number of Atoms : " << numAtoms << "\n";
+    // int numAtoms = m->getNumAtoms();
+    // std::cout << "number of Atoms : " << numAtoms << "\n";
 
+    // outstrm << nm << "\t";
     for (int i = 0; i < 273; i++) {
       double ref = atof(myrow[i + 1].c_str());
 
@@ -84,11 +89,14 @@ void testGETAWAY() {
                     << std::endl;
         }
       }
+      // if (i != 0) outstrm << "\t";
+      // outstrm << dgetaway[i];
       TEST_ASSERT(fabs(ref - dgetaway[i]) < 0.05);
     }
-
+    // outstrm << "\n";
     delete m;
     ++nDone;
+    // if (nDone > 50) break;
   }
 
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
