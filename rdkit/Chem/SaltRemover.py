@@ -122,6 +122,8 @@ class SaltRemover(object):
               salt = _smartsFromSmartsLine(line)
             elif self.defnFormat == InputFormat.SMILES:
               salt = Chem.MolFromSmiles(line)
+            else:
+              raise ValueError('Unsupported format for supplier.')
             if salt is None:
               raise ValueError(line)
             self.salts.append(salt)
@@ -220,6 +222,19 @@ class SaltRemover(object):
     >>> len(deleted)
     1
     >>> deleted[0].GetNumAtoms()
+    1
+    >>> Chem.MolToSmiles(deleted[0])
+    'Cl'
+
+    Multiple occurrences of 'Cl' and without tuple destructuring
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl')
+    >>> tup = remover.StripMolWithDeleted(mol)
+
+    >>> tup.mol.GetNumAtoms()
+    4
+    >>> len(tup.deleted)
+    1
+    >>> tup.deleted[0].GetNumAtoms()
     1
     >>> Chem.MolToSmiles(deleted[0])
     'Cl'
