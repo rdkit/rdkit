@@ -151,58 +151,41 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
     }
   }
 
+// we should take into account also atoms that are in the axis too!!! which is not trivial 
+// to define but it may explain the difference with dragon
   for (int i = 0; i < 3; i++) {
     double ns = 0.0;
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
-        // if (j==k) continue;
-        if (std::abs(Scores(j, i) + Scores(k, i)) < th and
-            (std::abs(Scores(j, i)) >= th or std::abs(Scores(k, i)) >= th)) {
-          // those that are close opposite & not close to the axis!
-          ns += 2;  // check only once the symetric none null we need to add +2!
-                    // (reduce the loop duration)
-          break;
-        }
-      }
-    }
-
-    // for all atoms close to the axis we need to add +1!
-    for (int j = 0; j < numAtoms; j++) {
-      if (std::abs(Scores(j, i)) < th) {
-        ns++;  // atom close to the the axis are symetric!
-      }
-    }
-
     double na = 0.0;
-    na = (double)nAT - ns;
-
+    for (int j = 0; j < numAtoms; j++) {
+       bool amatch = false;
+       for (int k = 0; k < numAtoms; k++) {
+	   if (j==k) {
+             continue;
+           }
+	   if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
+		  // those that are close opposite & not close to the axis!
+	          ns += 1;  // check only once the symetric none null we need to add +2!
+		            // (reduce the loop duration)
+		  amatch = true;
+		  break;
+            }
+        }
+        if (!amatch) {
+	        na +=1;
+        }
+    }
     gamma[i] = 0.0;
-    if (ns > 0) {
-      gamma[i] = (ns / nAT) * log(ns / nAT) / log(2) +
-                 (na / nAT) * log(1.0 / nAT) / log(2);  // log2 base used
-      gamma[i] = 1.0 / (1.0 - gamma[i]);
-    }
-    // trick to have the WHIM value always set ns to one if there is no symetry
-    // on the axis!
+    double gammainv=1.0;
     if (ns == 0) {
-      ns = 1;
-      na = nAT - ns;
-      gamma[i] = (ns / nAT) * log(ns / nAT) / log(2) +
-                 (na / nAT) * log(1.0 / nAT) / log(2);  // log2 base used
-      gamma[i] = 1.0 / (1.0 - gamma[i]);
+      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2);  
     }
+    if (ns > 0) {
+      gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2) +
+                       (na / nAT) * log(1.0 / nAT) / log(2));   
+    }
+  gamma[i]=1.0/gammainv;
   }
-
-  // case of complete symetry of two Components than there are set to 1!
-  /*if (SingVal[0]==SingVal[1]) {
-    gamma[0]=1;
-    gamma[1]=1;
-  }
-  if (SingVal[1]==SingVal[2]) {
-    gamma[1]=1;
-    gamma[2]=1;
-  }
-  */
+  
   w[14] = gamma[0];  // G1
   w[15] = gamma[1];  // G2
   w[16] = gamma[2];  // G3
