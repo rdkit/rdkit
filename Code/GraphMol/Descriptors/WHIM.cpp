@@ -150,10 +150,11 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
                             3);  // round the matrix! same as eigen tolerance !
     }
   }
-
-// we should take into account also atoms that are in the axis too!!! which is not trivial 
-// to define but it may explain the difference with dragon
+  
+	  
+// we should take into account atoms that are in the axis too!!! which is not trivial
   for (int i = 0; i < 3; i++) {
+    double Symetric[2*numAtoms];
     double ns = 0.0;
     double na = 0.0;
     for (int j = 0; j < numAtoms; j++) {
@@ -167,13 +168,28 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
 	          ns += 1;  // check only once the symetric none null we need to add +2!
 		            // (reduce the loop duration)
 		  amatch = true;
+		  Symetric[j]=1.0;
+		  Symetric[j+numAtoms]=2.0;
+		  Symetric[k]=1.0;
+		  Symetric[k+numAtoms]=2.0;
 		  break;
             }
         }
         if (!amatch) {
-	        na +=1;
+	 na +=1;
+         Symetric[j]=0.0;
+         Symetric[j+numAtoms]=std::abs(Scores(j, i));
         }
     }
+    // take into account the atoms close to the axis
+    for (int aj = 0; aj < numAtoms; aj++) {
+	if (Symetric[aj+numAtoms]<th and Symetric[aj]<1.0) {
+		ns +=1;
+		na -=1;	
+	}
+    }
+
+	  
     gamma[i] = 0.0;
     double gammainv=1.0;
     if (ns == 0) {
