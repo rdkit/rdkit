@@ -112,9 +112,9 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 
-python::list calcWHIMs(const RDKit::ROMol &mol, int confId) {
+python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh) {
   std::vector<double> res;
-  RDKit::Descriptors::WHIM(mol, res, confId);
+  RDKit::Descriptors::WHIM(mol, res, confId, thresh);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
@@ -1497,7 +1497,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
   docString = "Returns the WHIM descriptors vector";
   python::def("CalcWHIM", calcWHIMs,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("thresh") = 0.001),
               docString.c_str());
 
   python::scope().attr("_CalcGETAWAY_version") =
