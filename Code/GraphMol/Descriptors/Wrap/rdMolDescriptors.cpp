@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2007-2011 Greg Landrum
+//  Copyright (C) 2007-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -154,6 +153,14 @@ python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   return pyres;
 }
 #endif
+
+python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol) {
+  std::vector<double> res;
+  RDKit::Descriptors::AUTOCORR2D(mol, res);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
 
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -359,8 +366,9 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
+      for (std::vector<std::pair<boost::uint32_t,
+                                 boost::uint32_t> >::const_iterator vIt =
+               v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -441,8 +449,9 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
-               const_iterator vIt = v.begin();
+      for (std::vector<std::pair<boost::uint32_t,
+                                 boost::uint32_t> >::const_iterator vIt =
+               v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -1596,4 +1605,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
 
 #endif
+
+  python::scope().attr("_CalcAUTOCORR2D_version") =
+      RDKit::Descriptors::AUTOCORR2DVersion;
+  docString = "Returns 2D Autocorrelation descriptors vector";
+  python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
+              docString.c_str());
 }
