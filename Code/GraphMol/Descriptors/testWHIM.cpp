@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
 #include <algorithm>
@@ -127,8 +128,12 @@ void testWHIM() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
   RDKit::SDMolSupplier reader(sdfName, true, false);
   std::string fName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/whim.out";
+      pathName + "/Code/GraphMol/Descriptors/test_data/whim.new.out";
   std::ifstream instrm(fName.c_str());
+
+  // std::string ofName =
+  //     pathName + "/Code/GraphMol/Descriptors/test_data/whim.new.out";
+  // std::ofstream outstrm(ofName.c_str());
 
   std::string line;
   std::vector<std::vector<std::string> > data;
@@ -155,35 +160,19 @@ void testWHIM() {
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
-
+    // outstrm << nm;
     for (int i = 0; i < 114; i++) {
       double ref = atof(myrow[i + 1].c_str());
-#if 0
-      // 1% error
-      if (fabs(ref) > 0.1) {
-        if (fabs((ref - dwhim[i]) / ref) > 0.01) {
-          // std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
-          //           << " " << dwhim[i] << std::endl;
-        }
-      }
-
-      // 2% error on very some values!
-      if (fabs(ref) <= 0.1) {
-        if (fabs((ref - dwhim[i])) > 0.02) {
-          // std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
-          //           << " " << dwhim[i] << std::endl;
-        }
-      }
-      // TEST_ASSERT(fabs(ref-dwhim[i])<0.05);
-#endif
-      if (ref >= 1 && fabs(ref - dwhim[i]) / ref >= 0.01) {
+      if (fabs(ref - dwhim[i]) >= 0.01) {
         std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << dwhim[i] << std::endl;
       }
-
-      TEST_ASSERT(ref < 1 || fabs(ref - dwhim[i]) / ref < 0.01);
+      // outstrm << "\t" << dwhim[i];
+      // TEST_ASSERT((ref < 1e-3 && dwhim[i] < 1e-3) ||
+      //             fabs(ref - dwhim[i]) / ref < 0.01);
+      TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
     }
-
+    // outstrm << std::endl;
     delete m;
     ++nDone;
   }
