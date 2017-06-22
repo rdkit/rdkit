@@ -25,6 +25,9 @@ class Color:
   def __rmul__(self, x):
     return Color(self.red * x, self.green * x, self.blue * x)
 
+  def __truediv__(self, x):
+    return Color(self.red / x, self.green / x, self.blue / x)
+
   def __div__(self, x):
     return Color(self.red / x, self.green / x, self.blue / x)
 
