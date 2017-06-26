@@ -1,6 +1,11 @@
 **Description:**
 
-- RDkit Version:
+<!-- Please provide information about your setup -->
+<!-- To get the RDKit version use the following commands:
+import rdkit
+rdkit.__version__
+-->
+- RDKit Version:
 - Platform:
 
 <!-- Please describe your problem as detailed as necessary -->
