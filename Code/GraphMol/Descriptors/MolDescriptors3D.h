@@ -12,6 +12,10 @@
 #define RD_MOLDESCRIPTORS3D_H_SEPT2016
 
 #include <GraphMol/Descriptors/PBF.h>
+#include <GraphMol/Descriptors/RDF.h>
+#include <GraphMol/Descriptors/MORSE.h>
+#include <GraphMol/Descriptors/WHIM.h>
+#include <GraphMol/Descriptors/GETAWAY.h>
+#include <GraphMol/Descriptors/AUTOCORR3D.h>
 #include <GraphMol/Descriptors/PMI.h>
-
 #endif

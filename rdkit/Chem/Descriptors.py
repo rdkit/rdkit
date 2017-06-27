@@ -28,7 +28,7 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen
+  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
   from rdkit.Chem.EState import EState_VSA
   mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
