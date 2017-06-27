@@ -55,7 +55,10 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          _ = fn(m)
+          v = fn(m)
+        except RuntimeError:
+          # 3D descriptors fail since the mol has no conformers
+          pass
         except Exception:
           import traceback
           traceback.print_exc()
