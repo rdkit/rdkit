@@ -579,6 +579,11 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
       res << "+" << qatom->getFormalCharge();
     }
   }
+  int mapNum;
+  if (qatom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
+    res << ":";
+    res << mapNum;
+  }
   res << "]";
   return res.str();
 }
