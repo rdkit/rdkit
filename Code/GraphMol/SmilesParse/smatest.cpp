@@ -2053,14 +2053,25 @@ void testGithub1472() {
 
     delete p;
   }
-  { // confirm ordering
+  { // isotopes also weren't being written
     ROMol *p;
-    std::string smi = "[CH3-:1]";
+    std::string smi = "[3*]";
     p = SmilesToMol(smi);
     TEST_ASSERT(p);
     std::string asma = SmartsWrite::GetAtomSmarts(
         static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[#6H3-:1]");
+    TEST_ASSERT(asma == "[3*]");
+
+    delete p;
+  }
+  { // confirm ordering
+    ROMol *p;
+    std::string smi = "[13CH3-:1]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[13#6H3-:1]");
 
     delete p;
   }

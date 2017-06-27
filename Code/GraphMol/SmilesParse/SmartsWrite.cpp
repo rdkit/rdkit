@@ -556,6 +556,12 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
   PRECONDITION(!qatom->hasQuery(), "atom should not have query");
   std::stringstream res;
   res << "[";
+
+  int isotope = qatom->getIsotope();
+  if(isotope){
+    res<<isotope;
+  }
+  
   if (SmilesWrite::inOrganicSubset(qatom->getAtomicNum())) {
     res << "#" << qatom->getAtomicNum();
   } else {
