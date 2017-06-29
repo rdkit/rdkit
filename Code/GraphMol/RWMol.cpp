@@ -138,7 +138,7 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   if (preserveProps) {
     const bool replaceExistingData = false;
-    atom_p->updateProps(*d_graph[vd].get());
+    atom_p->updateProps(*d_graph[vd].get(), replaceExistingData);
   }
   d_graph[vd].reset(atom_p);
   // FIX: do something about bookmarks
