@@ -63,7 +63,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             isMapped(mol.getAtomWithIdx(i)))) {
         QueryAtom *qa = new QueryAtom();
         qa->setQuery(makeAtomNullQuery());
-        mol.replaceAtom(i, qa);
+        const bool updateLabel = false;
+        const bool preserveProps = true;
+        mol.replaceAtom(i, qa, updateLabel, preserveProps);
         delete qa;
       }
     }
@@ -76,7 +78,8 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             ringInfo->numBondRings(i))) {
         QueryBond *qb = new QueryBond();
         qb->setQuery(makeBondNullQuery());
-        mol.replaceBond(i, qb);
+        const bool preserveProps = true;        
+        mol.replaceBond(i, qb, preserveProps);
         delete qb;
       }
     }
@@ -91,7 +94,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
         !at->getIsotope()) {
       QueryAtom *qa = new QueryAtom();
       qa->setQuery(makeAtomNullQuery());
-      mol.replaceAtom(i, qa);
+      const bool updateLabel = false;
+      const bool preserveProps = true;
+      mol.replaceAtom(i, qa, updateLabel, preserveProps);
       delete qa;
       at = mol.getAtomWithIdx(i);
     }  // end of makeDummiesQueries
@@ -104,7 +109,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
-        mol.replaceAtom(i, qa);
+        const bool updateLabel = false;        
+        const bool preserveProps = true;
+        mol.replaceAtom(i, qa, updateLabel, preserveProps);
         delete qa;
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);
@@ -124,7 +131,9 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
-        mol.replaceAtom(i, qa);
+        const bool updateLabel = false;
+        const bool preserveProps = true;
+        mol.replaceAtom(i, qa, updateLabel, preserveProps);
         delete qa;
         qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
         at = static_cast<Atom *>(qa);

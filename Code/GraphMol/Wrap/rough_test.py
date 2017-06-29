@@ -3502,6 +3502,15 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
 
+  def testAdjustQueryPropertiesgithubIssue1474(self):
+    core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
+    core.GetAtomWithIdx(0).SetProp('foo','bar')
+    core.GetAtomWithIdx(1).SetProp('foo','bar')
+
+    ap = Chem.AdjustQueryProperties(core)
+    self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
+    self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
+    
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
