@@ -241,12 +241,14 @@ void test4() {
         "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
         "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
         "[N:13]=[N+:14]=[N-:15]";
-    std::string nameBase = "rxn_test3_1";
+    std::string nameBase = "rxn_test4_1";
     bool useSmiles = false;
     ChemicalReaction *rxn =
         RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
     TEST_ASSERT(rxn);
+    std::cerr << "draw!" << std::endl;
     drawit(rxn, nameBase, true);
+    std::cerr << " done" << std::endl;
     delete rxn;
   }
   {  // from the reaction role assignment paper
@@ -257,7 +259,7 @@ void test4() {
         "16][CH2:15][c:14]1[c:7]([cH:6][c:5]([cH:22][c:17]1[O:18][CH2:19][CH:"
         "20]=[CH2:21])[O:4][CH2:3][CH:2]=[CH2:1])[CH2:8][CH2:9][O:10][CH2:11]["
         "CH2:12][OH:13]";
-    std::string nameBase = "rxn_test3_2";
+    std::string nameBase = "rxn_test4_2";
     bool useSmiles = false;
     ChemicalReaction *rxn =
         RxnSmartsToChemicalReaction(smiles, NULL, useSmiles);
@@ -274,6 +276,6 @@ int main() {
   test1();
   test2();
   test3();
-// test4();
+  test4();
 #endif
 }

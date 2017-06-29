@@ -364,10 +364,18 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
     MolOps::sanitizeMol(mol);
   } catch (const MolSanitizeException &e) {
     mol.updatePropertyCache(false);
+    try {
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch (const const MolSanitizeException &e) {
+      // don't need to do anything
+    }
+    MolOps::setHybridization(mol);
   }
+
   const bool canonOrient = true;
   RDDepict::compute2DCoords(mol, NULL, canonOrient);
-  MolDraw2DUtils::prepareMolForDrawing(mol);
+  MolDraw2DUtils::prepareMolForDrawing(
+      mol, false);  // don't kekulize, we just did that
   double minX = 1e8;
   double maxX = -1e8;
   double vShift = 0;
@@ -479,18 +487,16 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
 
   arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
 }
-
 }
 
-void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
-                             bool highlightByReactant,
-                             const std::vector<DrawColour>* highlightColorsReactants,
-                             const std::vector<int> *confIds) {
+void MolDraw2D::drawReaction(
+    const ChemicalReaction &rxn, bool highlightByReactant,
+    const std::vector<DrawColour> *highlightColorsReactants,
+    const std::vector<int> *confIds) {
   ChemicalReaction nrxn(rxn);
   double spacing = 1.0;
   Point2D arrowBegin, arrowEnd;
   std::vector<double> plusLocs;
-
   get2DCoordsForReaction(nrxn, drawOptions(), arrowBegin, arrowEnd, plusLocs,
                          spacing, confIds);
 
@@ -530,8 +536,9 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
   std::vector<int> *bond_highlights = NULL;
   std::map<int, DrawColour> *bond_highlight_colors = NULL;
   if (highlightByReactant) {
-    const std::vector<DrawColour>* colors = &drawOptions().highlightColourPalette;
-    if(highlightColorsReactants){
+    const std::vector<DrawColour> *colors =
+        &drawOptions().highlightColourPalette;
+    if (highlightColorsReactants) {
       colors = highlightColorsReactants;
     }
     std::vector<int> atomfragmap;
@@ -549,7 +556,8 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
           atom->getAtomMapNum()) {
         atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
         atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] = (*colors)[atomfragmap[aidx]%colors->size()];
+        (*atom_highlight_colors)[aidx] =
+            (*colors)[atomfragmap[aidx] % colors->size()];
 
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
@@ -578,7 +586,7 @@ void MolDraw2D::drawReaction(const ChemicalReaction &rxn,
               atommap_fragmap.end()) {
         atom_highlights->push_back(aidx);
         (*atom_highlight_colors)[aidx] =
-            (*colors)[atommap_fragmap[atom->getAtomMapNum()]%colors->size()];
+            (*colors)[atommap_fragmap[atom->getAtomMapNum()] % colors->size()];
 
         atom->setAtomMapNum(0);
         // add highlighted bonds to lower-numbered
