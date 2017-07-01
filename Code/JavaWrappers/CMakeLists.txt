@@ -2,6 +2,8 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${RDKit_CodeDir})
+include_directories(${Boost_INCLUDE_DIRS})
 
 SET(CMAKE_SWIG_FLAGS "")
 
