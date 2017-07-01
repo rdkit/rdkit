@@ -229,7 +229,10 @@ endif(APPLE)
 target_include_directories(rdkit_base SYSTEM INTERFACE ${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-target_include_directories(rdkit_base INTERFACE $<BUILD_INTERFACE:${RDKit_CodeDir}>)
+target_include_directories(rdkit_base INTERFACE
+                           $<BUILD_INTERFACE:${RDKit_CodeDir}>
+                           $<INSTALL_INTERFACE:${RDKit_HdrDir}>
+                           )
 
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
