@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0.2)
 if(CMAKE_MAJOR_VERSION EQUAL 2 AND ((CMAKE_MINOR_VERSION EQUAL 8 AND CMAKE_PATCH_VERSION GREATER 1) OR CMAKE_MINOR_VERSION GREATER 8))
   cmake_policy(SET CMP0015 OLD)
 endif()
@@ -15,6 +15,8 @@ enable_testing()
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
+
+add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -106,6 +108,8 @@ endif(MINGW)
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
 install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir})
+install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
+        COMPONENT dev )
 
 # create and install package configuration and version files
 configure_file (

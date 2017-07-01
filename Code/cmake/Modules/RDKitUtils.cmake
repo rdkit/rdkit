@@ -61,7 +61,7 @@ macro(rdkit_library)
 
       endif(RDK_INSTALL_STATIC_LIBS)
     IF(RDKLIB_LINK_LIBRARIES)
-      target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
+      target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
   endif(MSVC)
   if(WIN32)
@@ -78,6 +78,7 @@ macro(rdkit_library)
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
+  target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
 endmacro(rdkit_library)
 
 macro(rdkit_headers)

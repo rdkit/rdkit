@@ -28,7 +28,7 @@ if(MINGW)
   endif()
 endif(MINGW)
 
-target_link_libraries(RDGeneral ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL})
+target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL})
 
 rdkit_headers(Exceptions.h
               BadFileException.h
