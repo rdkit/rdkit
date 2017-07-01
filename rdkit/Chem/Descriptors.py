@@ -7,21 +7,28 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import collections
+
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges, rdMolDescriptors
+import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
+from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex,
+                                      MaxAbsEStateIndex, MinAbsEStateIndex)
+from rdkit.Chem.QED import qed
 
 
 def _isCallable(thing):
-  return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
-              hasattr(thing,'__call__')
+  return (hasattr(collections, 'Callable') and isinstance(thing, collections.Callable)) or \
+              hasattr(thing, '__call__')
+
 
 _descList = []
 
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen
+  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
   from rdkit.Chem.EState import EState_VSA
   mods = [GraphDescriptors, MolSurf, EState_VSA, Lipinski, Crippen, Fragments]
 
@@ -48,6 +55,8 @@ def _setupDescriptors(namespace):
         # filter out python reference implementations:
         if name[:2] == 'py' and name[2:] in tmp:
           continue
+        if name == 'print_function':
+          continue
         thing = getattr(mod, name)
         if _isCallable(thing):
           namespace[name] = thing
@@ -55,7 +64,6 @@ def _setupDescriptors(namespace):
   descList = _descList
 
 
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 MolWt = lambda *x, **y: _rdMolDescriptors._CalcMolWt(*x, **y)
 MolWt.version = _rdMolDescriptors._CalcMolWt_version
 MolWt.__doc__ = """The average molecular weight of the molecule
@@ -180,7 +188,22 @@ def MinAbsPartialCharge(mol, force=False):
 
 MinAbsPartialCharge.version = "1.0.0"
 
-from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
+
+def _FingerprintDensity(mol, func, *args, **kwargs):
+  fp = func(*((mol,) + args), **kwargs)
+  if hasattr(fp, 'GetNumOnBits'):
+    val = fp.GetNumOnBits()
+  else:
+    val = len(fp.GetNonzeroElements())
+  return float(val) / mol.GetNumHeavyAtoms()
+
+
+FpDensityMorgan1 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
+FpDensityMorgan2 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
+FpDensityMorgan3 = lambda x: _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
+_du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
 _setupDescriptors(locals())
 
@@ -210,16 +233,16 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     raise NotImplementedError("Please implement the __call__ method")
 
 
-  #------------------------------------
-  #
-  #  doctest boilerplate
-  #
-def _test():
-  import doctest, sys
-  return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
-
-
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed, tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

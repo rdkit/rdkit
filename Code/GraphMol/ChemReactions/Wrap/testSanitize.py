@@ -204,6 +204,30 @@ $MOL
 M  END'''),
 ]
 
+unused_rlabel_in_product = """$RXN
+bug.rxn
+  ChemDraw06121709062D
+
+  1  1
+$MOL
+
+
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.1604    0.3798    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1604   -0.3798    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0
+  1  2  1  0        0
+M  END
+$MOL
+
+
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -1.2690   -1.3345    0.0000 R   0  0  0  0  0  0  0  0  0  1  0  0
+    1.2690    1.3345    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0        0
+M  END
+"""
 good_res = (0,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
 bad_res = (3,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
 
@@ -232,7 +256,13 @@ class TestCase(unittest.TestCase) :
                 print ("$RXN Failed")
                 if status == "fail":
                     continue
+                raise
                 
+    def test_unused_rlabel_in_product(self):
+        rxn = AllChem.ReactionFromRxnBlock(unused_rlabel_in_product)
+        # test was for a seg fault
+        rdChemReactions.SanitizeRxn(rxn)
+
 
 
 if __name__ == '__main__':

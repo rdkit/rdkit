@@ -456,8 +456,8 @@ translate
 
     # save() will now become part of the spec.
     file = file or self.filename
-    fileobj = getFileObject(file)
-    fileobj.write(self.code.join(linesep))
+    fileobj = getFileObject(file, 'w')
+    fileobj.write(linesep.join(self.code))
     # here's a hack. we might want to be able to add more after saving so
     # preserve the current code ???
     preserveCode = self.code
@@ -475,7 +475,7 @@ translate
 
     self.psEndDocument()  # depends on _inDocumentFlag :(
 
-    fileobj.write(finalizationCode.join(linesep))
+    fileobj.write(linesep.join(finalizationCode))
     #  fileobj.close()  ### avoid this for now
     ## clean up my mess: This is not a good way to do things FIXME!!! ???
     self.code = preserveCode
