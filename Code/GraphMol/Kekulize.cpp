@@ -514,20 +514,33 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
 
   // first find the all the simple rings in the molecule that are not
   // completely composed of dummy atoms
-  VECT_INT_VECT allrings;
-  if (mol.getRingInfo()->isInitialized()) {
-    allrings = mol.getRingInfo()->atomRings();
-  } else {
-    MolOps::findSSSR(mol, allrings);
-  }
   VECT_INT_VECT arings;
-  arings.reserve(allrings.size());
-  BOOST_FOREACH (INT_VECT &ring, allrings) {
-    BOOST_FOREACH (int ai, ring) {
-      if (mol.getAtomWithIdx(ai)->getAtomicNum()) {
-        arings.push_back(ring);
-        break;
+  boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
+  for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
+       ++atit) {
+    if (!(*atit)->getAtomicNum()) dummyAts[(*atit)->getIdx()] = 1;
+  }
+  if (dummyAts.any()) {
+    VECT_INT_VECT allrings;
+    if (mol.getRingInfo()->isInitialized()) {
+      allrings = mol.getRingInfo()->atomRings();
+    } else {
+      MolOps::findSSSR(mol, allrings);
+    }
+    arings.reserve(allrings.size());
+    BOOST_FOREACH (INT_VECT &ring, allrings) {
+      BOOST_FOREACH (int ai, ring) {
+        if (!dummyAts[ai]) {
+          arings.push_back(ring);
+          break;
+        }
       }
+    }
+  } else {
+    if (mol.getRingInfo()->isInitialized()) {
+      arings = mol.getRingInfo()->atomRings();
+    } else {
+      MolOps::findSSSR(mol, arings);
     }
   }
 
