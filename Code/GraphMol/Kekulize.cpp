@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -512,17 +512,41 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   //       - getBondType return aromatic
   // - all aromatic atoms return true for "getIsAromatic"
 
-  // first find the all the simple rings in the molecule
+  // first find the all the simple rings in the molecule that are not
+  // completely composed of dummy atoms
   VECT_INT_VECT arings;
-  if (mol.getRingInfo()->isInitialized()) {
-    arings = mol.getRingInfo()->atomRings();
+  boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
+  for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
+       ++atit) {
+    if (!(*atit)->getAtomicNum()) dummyAts[(*atit)->getIdx()] = 1;
+  }
+  if (dummyAts.any()) {
+    VECT_INT_VECT allrings;
+    if (mol.getRingInfo()->isInitialized()) {
+      allrings = mol.getRingInfo()->atomRings();
+    } else {
+      MolOps::findSSSR(mol, allrings);
+    }
+    arings.reserve(allrings.size());
+    BOOST_FOREACH (INT_VECT &ring, allrings) {
+      BOOST_FOREACH (int ai, ring) {
+        if (!dummyAts[ai]) {
+          arings.push_back(ring);
+          break;
+        }
+      }
+    }
   } else {
-    MolOps::findSSSR(mol, arings);
+    if (mol.getRingInfo()->isInitialized()) {
+      arings = mol.getRingInfo()->atomRings();
+    } else {
+      MolOps::findSSSR(mol, arings);
+    }
   }
 
   VECT_INT_VECT brings;
-  brings = mol.getRingInfo()->bondRings();
-  // RingUtils::convertToBonds(arings, brings, mol);
+  // brings = mol.getRingInfo()->bondRings();
+  RingUtils::convertToBonds(arings, brings, mol);
 
   // make a the neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least
