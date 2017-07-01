@@ -4236,6 +4236,32 @@ CAS<~>
     mol.RemoveBond(bond.GetBeginAtomIdx(),bond.GetEndAtomIdx())
     self.assertRaises(RuntimeError,next,bonds)
 
+  def testGithub1478(self):
+    data = """
+  MJ150720
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -0.4242   -1.4883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -1.0758    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -0.2508    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901    1.3990    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  7  6  4  0  0  0  0
+  8  7  4  0  0  0  0
+  6  5  4  0  0  0  0
+  5  4  4  0  0  0  0
+  5  2  1  0  0  0  0
+  4  3  4  0  0  0  0
+  8  3  4  0  0  0  0
+  2  1  2  0  0  0  0
+M  END
+"""
+    pattern = Chem.MolFromMolBlock(data)
+    m = Chem.MolFromSmiles("c1ccccc1C=O")
+    self.assertTrue(m.HasSubstructMatch(pattern))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
