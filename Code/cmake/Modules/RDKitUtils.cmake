@@ -38,7 +38,8 @@ macro(rdkit_library)
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
-    target_link_libraries(${RDKLIB_NAME} ${Boost_SYSTEM_LIBRARY} )
+    target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
+    target_link_libraries(${RDKLIB_NAME} PUBLIC ${Boost_SYSTEM_LIBRARY} )
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT dev )
@@ -48,11 +49,13 @@ macro(rdkit_library)
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+      target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT runtime )
       if(RDK_INSTALL_STATIC_LIBS)
         add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                 COMPONENT dev )
@@ -78,7 +81,6 @@ macro(rdkit_library)
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
-  target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
 endmacro(rdkit_library)
 
 macro(rdkit_headers)
