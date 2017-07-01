@@ -154,11 +154,7 @@ Here things are more difficult. Check this wiki page for information: https://co
 ##### Installing prerequisites from source
 
 -   Required packages:
-  -   cmake. You need version 2.6 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
-
-         > **note**
-         >
-         > It seems that v2.8 is a better bet than v2.6. It might be worth compiling your own copy of v2.8 even if v2.6 is already installed.
+  -   cmake. You need version 3.1 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
 
   - The following are required if you are planning on using the Python wrappers
       -   The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
