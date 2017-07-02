@@ -636,6 +636,16 @@ void MolDraw2D::calculateScale(int width, int height) {
 }
 
 // ****************************************************************************
+  void MolDraw2D::setHighlightColour(float r, float g, float b) {
+    options_.highlightColour = DrawColour(r, g, b);
+  }
+  
+// ****************************************************************************
+  void MolDraw2D::setBackgroundColour(float r, float g, float b) {
+    options_.backgroundColour = DrawColour(r, g, b);
+  }
+  
+// ****************************************************************************
 // establishes whether to put string draw mode into super- or sub-script
 // mode based on contents of instring from i onwards. Increments i appropriately
 // and returns true or false depending on whether it did something or not.

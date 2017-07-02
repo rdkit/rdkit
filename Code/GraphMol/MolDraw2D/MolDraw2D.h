@@ -168,6 +168,9 @@ class MolDraw2D {
   virtual void setColour(const DrawColour &col) { curr_colour_ = col; }
   virtual DrawColour colour() const { return curr_colour_; }
 
+  virtual void setHighlightColour(float r, float g, float b);
+  virtual void setBackgroundColour(float r, float g, float b);
+
   virtual void setDash(const DashPattern &patt) { curr_dash_ = patt; }
   virtual const DashPattern &dash() const { return curr_dash_; }
 
