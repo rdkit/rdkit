@@ -27,6 +27,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
   endif()
 
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses")
+     endif()
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
                 GraphMol RDGeneral Depictor SubstructMatch SmilesParse
                 ${RDKit_THREAD_LIBS})
