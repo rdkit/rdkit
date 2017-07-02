@@ -26,6 +26,7 @@ class TestCase(unittest.TestCase):
     'Descriptors','test_data')
     self.suppl = Chem.SDMolSupplier(os.path.join(self.dataDir,'PBF_egfr.sdf'),removeHs=False)
 
+  @unittest.skipIf(not haveDescrs3D,"3d descriptors not present")    
   def test1AUTOCORR2D(self):
       # not really a 3D descriptor, but this was added at the same time
       with open(os.path.join(self.dataDir,'auto2D.out')) as refFile:
