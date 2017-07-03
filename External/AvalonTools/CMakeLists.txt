@@ -80,6 +80,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_definitions(-D_GNU_SOURCE=1)
 endif()
 
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
+     endif()
+
+
 rdkit_library(avalon_clib ${avalon_clib_srcs})
 
 
