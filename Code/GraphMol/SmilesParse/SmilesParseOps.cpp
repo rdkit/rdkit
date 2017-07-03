@@ -28,16 +28,17 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   // and is currently degree two (protects against C1CN[C@](O)(N)1)
   if (atom->getIdx() != mp->getNumAtoms(true) - 1 && atom->getDegree() == 2 &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) ) {
+       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
     atom->invertChirality();
   }
 }
 
 void ReportParseError(const char *message, bool throwIt) {
-  if (!throwIt)
+  if (!throwIt) {
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
-  else
+  } else {
     throw SmilesParseException(message);
+  }
 }
 
 void CleanupAfterParseError(RWMol *mol) {
@@ -218,7 +219,7 @@ void _invChiralRingAtomWithHs(Atom *atom) {
 typedef std::pair<size_t, size_t> SIZET_PAIR;
 typedef std::pair<int, int> INT_PAIR;
 template <typename T>
-bool operator<(const std::pair<T,T> &p1, const std::pair<T,T> &p2) {
+bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
   return p1.first < p2.first;
 }
 namespace {
