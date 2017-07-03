@@ -84,11 +84,9 @@ void disable_logs(const std::string &arg);
 namespace RDLog {
 std::ostream &toStream(std::ostream &);
 }
-#define BOOST_LOG(__arg__)                                         \
-  if ((!__arg__) || (!__arg__->dp_dest) || !(__arg__->df_enabled)) \
-    ;                                                              \
-  else                                                             \
-  RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)     \
+#define BOOST_LOG(__arg__)                                      \
+  if ((__arg__) && (__arg__->dp_dest) && (__arg__->df_enabled)) \
+  RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
 extern boost::logging::rdLogger *rdAppLog;
