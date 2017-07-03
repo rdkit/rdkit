@@ -178,25 +178,26 @@ RWMol *toMol(const std::string &inp,
   return res;
 }
 
-RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) {
+RWMol *SmilesToMol(const std::string &smiles,
+                   const SmilesParserParams &params) {
   yysmiles_debug = params.debugParse;
 
   std::string lsmiles = "", name = "", cxPart = "";
-  if(params.parseName && !params.allowCXSMILES){
+  if (params.parseName && !params.allowCXSMILES) {
     std::vector<std::string> tokens;
     boost::split(tokens, smiles, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     lsmiles = tokens[0];
-    if(tokens.size()>1) name = tokens[1];
+    if (tokens.size() > 1) name = tokens[1];
   } else if (params.allowCXSMILES) {
     size_t sidx = smiles.find_first_of(" \t");
-    if (sidx != std::string::npos && sidx != 0)  {
+    if (sidx != std::string::npos && sidx != 0) {
       lsmiles = smiles.substr(0, sidx);
       cxPart = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx));
     }
   }
 
-  if(lsmiles=="") {
+  if (lsmiles == "") {
     lsmiles = smiles;
   }
   // strip any leading/trailing whitespace:
@@ -220,13 +221,13 @@ RWMol *SmilesToMol(const std::string &smiles, const SmilesParserParams &params) 
   } else {
     res = toMol(lsmiles, smiles_parse, lsmiles);
   }
-  if ( res && (params.sanitize || params.removeHs)) {
+  if (res && (params.sanitize || params.removeHs)) {
     try {
-      if(params.removeHs) {
-        bool implicitOnly=false,updateExplicitCount=true;
+      if (params.removeHs) {
+        bool implicitOnly = false, updateExplicitCount = true;
         MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
-          params.sanitize);
-      } else if(params.sanitize) {
+                         params.sanitize);
+      } else if (params.sanitize) {
         MolOps::sanitizeMol(*res);
       }
     } catch (...) {
