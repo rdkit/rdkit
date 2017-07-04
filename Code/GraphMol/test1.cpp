@@ -1338,6 +1338,26 @@ void testGithub1041() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub1453() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test github1453: RWMol.clear() should reset the numBonds count."
+      << std::endl;
+
+  RWMol m2;
+
+  m2.addAtom(new Atom(6));
+  m2.addAtom(new Atom(6));
+  m2.addBond(0, 1, Bond::TRIPLE);
+  TEST_ASSERT(m2.getNumAtoms() == 2);
+  TEST_ASSERT(m2.getNumBonds() == 1);
+  m2.clear();
+  TEST_ASSERT(m2.getNumAtoms() == 0);
+  TEST_ASSERT(m2.getNumBonds() == 0);
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1365,6 +1385,8 @@ int main() {
   testGithub608();
   testGithub381();
   testGithub1041();
+  testGithub1041();
+  testGithub1453();
 
   return 0;
 }

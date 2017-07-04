@@ -1187,6 +1187,7 @@ static const char *LookupHELMPeptideMonomer(const char *ptr) {
       break;
     case 'D':
       if (ptr[1] == '\0') return "ASP";
+      break;
     case 'E':
       if (ptr[1] == '\0') return "GLU";
       break;

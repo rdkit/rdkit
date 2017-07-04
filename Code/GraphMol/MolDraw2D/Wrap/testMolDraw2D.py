@@ -204,7 +204,7 @@ M  END""")
     self.assertTrue(txt.find("<svg:svg") != -1)
     self.assertTrue(txt.find("</svg:svg>") != -1)
     #print(txt,file=open('blah2.svg','w+'))
-    
+
   def testReaction3(self):
     rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
     colors=[(0.3,0.7,0.9),(0.9,0.7,0.9),(0.6,0.9,0.3),(0.9,0.9,0.1)]
@@ -214,7 +214,7 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<svg:svg") != -1)
     self.assertTrue(txt.find("</svg:svg>") != -1)
-    
+
   def testReaction4(self):
     rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
     colors=[(100,155,245),(0,45,155)]

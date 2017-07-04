@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2011  greg Landrum
+#  Copyright (C) 2011-2017  greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -50,8 +50,11 @@ class TestCase(unittest.TestCase):
     self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
   def _testMolToFile(self):
-    _, fn = tempfile.mkstemp(suffix='.png')
     try:
+      fhdl, fn = tempfile.mkstemp(suffix='.png')
+      # mkstemp returns a file handle that we don't need; close it
+      os.close(fhdl)
+      fhdl = None
       self.assertEqual(os.path.getsize(fn), 0)
       Draw.MolToFile(self.mol, fn)
       self.assertNotEqual(os.path.getsize(fn), 0)

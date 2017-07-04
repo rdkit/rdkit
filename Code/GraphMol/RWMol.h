@@ -226,7 +226,7 @@ class RWMol : public ROMol {
     dp_props.reset();
     STR_VECT computed;
     dp_props.setVal(RDKit::detail::computedPropName, computed);
-
+    numBonds = 0;
     if (dp_ringInfo) dp_ringInfo->reset();
   };
 

@@ -11,32 +11,38 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, os.path
+
 import io
-from rdkit.six.moves import cPickle
-from rdkit import Chem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import Lipinski
+import os.path
+import unittest
+import doctest
+
 import numpy as np
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.Chem import AllChem
+from rdkit.Chem import Descriptors
+from rdkit.Chem import Lipinski
+from rdkit.Chem import rdMolDescriptors
+from rdkit.six.moves import cPickle
 
 
-def feq(n1, n2, tol=1e-4):
-  return abs(n1 - n2) <= tol
+def load_tests(loader, tests, ignore):
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(Descriptors, optionflags=doctest.ELLIPSIS))
+  return tests
 
 
 class TestCase(unittest.TestCase):
 
   def testGithub1287(self):
-    smis = ('CCC', )
+    smis = ('CCC',)
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          v = fn(m)
+          _ = fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
@@ -50,6 +56,9 @@ class TestCase(unittest.TestCase):
       for nm, fn in Descriptors._descList:
         try:
           v = fn(m)
+        except RuntimeError:
+          # 3D descriptors fail since the mol has no conformers
+          pass
         except Exception:
           import traceback
           traceback.print_exc()
@@ -69,7 +78,7 @@ class TestCase(unittest.TestCase):
                                ("[H-1]", "H-"),
                                ("[CH2]", "CH2"),
                                ("[He-2]", "He-2"),
-                               ("[U+3]", "U+3"), ):
+                               ("[U+3]", "U+3"),):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
       self.assertEqual(actual, expected)
@@ -113,11 +122,35 @@ class TestCase(unittest.TestCase):
          292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750])
     fn = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
-    vs = np.zeros((42, ), np.int32)
+    vs = np.zeros((42,), np.int32)
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
     self.assertFalse(False in (vs == tgt))
 
-# - - - - -
+  def test_FpDensityMorgan(self):
+    self.assertEqual(Descriptors.FpDensityMorgan1.version, '1.0.0')
+    self.assertEqual(Descriptors.FpDensityMorgan2.version, '1.0.0')
+    self.assertEqual(Descriptors.FpDensityMorgan3.version, '1.0.0')
+
+    m = Chem.MolFromSmiles('C')
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 1)
+    m = Chem.MolFromSmiles('CC')
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 1)
+    m = Chem.MolFromSmiles('CCC')
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 4.0 / 3)
+    m = Chem.MolFromSmiles('C' * 10)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 10)
+    m = Chem.MolFromSmiles('C' * 100)
+    self.assertAlmostEqual(Descriptors.FpDensityMorgan2(m), 8.0 / 100)
+
+    m = Chem.MolFromSmiles('CCCc1ccccc1')
+    fpd1 = Descriptors.FpDensityMorgan1(m)
+    fpd2 = Descriptors.FpDensityMorgan2(m)
+    fpd3 = Descriptors.FpDensityMorgan3(m)
+    self.assertAlmostEqual(fpd1, 10.0 / 9)
+    self.assertLess(fpd1, fpd2)
+    self.assertLess(fpd2, fpd3)
+
+
 if __name__ == '__main__':
   unittest.main()
