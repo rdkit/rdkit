@@ -837,6 +837,19 @@ void testGithub781() {
     delete m;
   }
   {
+    std::string smiles = "O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>OH</svg:tspan>") == std::string::npos);
+    delete m;
+  }
+  {
     std::string smiles = "[C]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
