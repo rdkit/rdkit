@@ -366,7 +366,7 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
     mol.updatePropertyCache(false);
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const const MolSanitizeException &e) {
+    } catch (const MolSanitizeException &e) {
       // don't need to do anything
     }
     MolOps::setHybridization(mol);
