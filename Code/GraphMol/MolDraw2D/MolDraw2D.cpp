@@ -16,6 +16,9 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/Depictor/RDDepictor.h>
+#include <Geometry/point.h>
 
 #include <cstdlib>
 #include <limits>
@@ -351,6 +354,303 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
     setColour(odc);
     setFontSize(o_font_size);
   }
+}
+
+namespace {
+void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
+                    double &minY, int confId, bool shiftAgents,
+                    double coordScale) {
+  try {
+    MolOps::sanitizeMol(mol);
+  } catch (const MolSanitizeException &e) {
+    mol.updatePropertyCache(false);
+    try {
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch (const MolSanitizeException &e) {
+      // don't need to do anything
+    }
+    MolOps::setHybridization(mol);
+  }
+
+  const bool canonOrient = true;
+  RDDepict::compute2DCoords(mol, NULL, canonOrient);
+  MolDraw2DUtils::prepareMolForDrawing(
+      mol, false);  // don't kekulize, we just did that
+  double minX = 1e8;
+  double maxX = -1e8;
+  double vShift = 0;
+  if (shiftAgents) {
+    vShift = 1.1 * maxY / 2;
+  }
+
+  Conformer &conf = mol.getConformer(confId);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = conf.getAtomPos(i);
+    p *= coordScale;
+    minX = std::min(minX, conf.getAtomPos(i).x);
+  }
+  offset += abs(minX);
+  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+    RDGeom::Point3D &p = conf.getAtomPos(i);
+    p.y += vShift;
+    if (!shiftAgents) {
+      maxY = std::max(p.y, maxY);
+      minY = std::min(p.y, minY);
+    }
+    p.x += offset;
+    maxX = std::max(p.x, maxX);
+  }
+  offset = maxX + spacing;
+}
+void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
+                            Point2D &arrowBegin, Point2D &arrowEnd,
+                            std::vector<double> &plusLocs, double spacing,
+                            const std::vector<int> *confIds) {
+  plusLocs.resize(0);
+  double maxY = -1e8, minY = 1e8;
+  double offset = 0.0;
+
+  // reactants
+  for (unsigned int midx = 0; midx < rxn.getNumReactantTemplates(); ++midx) {
+    // add space for the "+" if required
+    if (midx > 0) {
+      plusLocs.push_back(offset);
+      offset += spacing;
+    }
+    ROMOL_SPTR reactant = rxn.getReactants()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[midx];
+    get2DCoordsMol(*(RWMol *)reactant.get(), offset, spacing, maxY, minY, cid,
+                   false, 1.0);
+  }
+  arrowBegin.x = offset;
+
+  offset += spacing;
+
+  double begAgentOffset = offset;
+
+  // we need to do the products now so that we know the full y range.
+  // these will have the wrong X coordinates, but we'll fix that later.
+  offset = 0;
+  for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
+    // add space for the "+" if required
+    if (midx > 0) {
+      plusLocs.push_back(offset);
+      offset += spacing;
+    }
+    ROMOL_SPTR product = rxn.getProducts()[midx];
+    int cid = -1;
+    if (confIds)
+      cid = (*confIds)[rxn.getNumReactantTemplates() +
+                       rxn.getNumAgentTemplates() + midx];
+    get2DCoordsMol(*(RWMol *)product.get(), offset, spacing, maxY, minY, cid,
+                   false, 1.0);
+  }
+
+  offset = begAgentOffset;
+  // agents
+  for (unsigned int midx = 0; midx < rxn.getNumAgentTemplates(); ++midx) {
+    ROMOL_SPTR agent = rxn.getAgents()[midx];
+    int cid = -1;
+    if (confIds) cid = (*confIds)[rxn.getNumReactantTemplates() + midx];
+    get2DCoordsMol(*(RWMol *)agent.get(), offset, spacing, maxY, minY, cid,
+                   true, 0.45);
+  }
+  if (rxn.getNumAgentTemplates()) {
+    arrowEnd.x = offset;  //- spacing;
+  } else {
+    arrowEnd.x = offset + 3 * spacing;
+  }
+  offset = arrowEnd.x + 1.5 * spacing;
+
+  // now translate the products over
+  for (unsigned int midx = 0; midx < rxn.getNumProductTemplates(); ++midx) {
+    ROMOL_SPTR product = rxn.getProducts()[midx];
+    int cid = -1;
+    if (confIds)
+      cid = (*confIds)[rxn.getNumReactantTemplates() +
+                       rxn.getNumAgentTemplates() + midx];
+    Conformer &conf = product->getConformer(cid);
+    for (unsigned int aidx = 0; aidx < product->getNumAtoms(); ++aidx) {
+      conf.getAtomPos(aidx).x += offset;
+    }
+  }
+
+  // fix the plus signs too
+  unsigned int startP = 0;
+  if (rxn.getNumReactantTemplates() > 1) {
+    startP = rxn.getNumReactantTemplates() - 1;
+  }
+  for (unsigned int pidx = startP; pidx < plusLocs.size(); ++pidx) {
+    plusLocs[pidx] += offset;
+  }
+
+  arrowBegin.y = arrowEnd.y = minY + (maxY - minY) / 2;
+}
+}
+
+void MolDraw2D::drawReaction(
+    const ChemicalReaction &rxn, bool highlightByReactant,
+    const std::vector<DrawColour> *highlightColorsReactants,
+    const std::vector<int> *confIds) {
+  ChemicalReaction nrxn(rxn);
+  double spacing = 1.0;
+  Point2D arrowBegin, arrowEnd;
+  std::vector<double> plusLocs;
+  get2DCoordsForReaction(nrxn, drawOptions(), arrowBegin, arrowEnd, plusLocs,
+                         spacing, confIds);
+
+  ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
+  MolOps::findSSSR(*tmol);
+
+  if (needs_scale_ &&
+      (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
+    // drawMolecule() will figure out the scaling so that the molecule
+    // fits the drawing pane. In order to ensure that we have space for the
+    // arrow, we need to figoure out the scaling on our own.
+    RWMol tmol2;
+    tmol2.addAtom(new Atom(0), true, true);
+    tmol2.addAtom(new Atom(0), true, true);
+    tmol2.addConformer(new Conformer(2), true);
+    tmol2.getConformer().getAtomPos(0) =
+        RDGeom::Point3D(arrowBegin.x, arrowBegin.y, 0);
+    tmol2.getConformer().getAtomPos(1) =
+        RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
+
+    tmol2.insertMol(*tmol);
+    at_cds_.push_back(std::vector<Point2D>());
+    atomic_nums_.push_back(std::vector<int>());
+    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+    activeMolIdx_++;
+    extractAtomCoords(tmol2, 0, true);
+    calculateScale();
+    needs_scale_ = false;
+    activeMolIdx_--;
+    at_cds_.pop_back();
+    atomic_nums_.pop_back();
+    atom_syms_.pop_back();
+  }
+
+  std::vector<int> *atom_highlights = NULL;
+  std::map<int, DrawColour> *atom_highlight_colors = NULL;
+  std::vector<int> *bond_highlights = NULL;
+  std::map<int, DrawColour> *bond_highlight_colors = NULL;
+  if (highlightByReactant) {
+    const std::vector<DrawColour> *colors =
+        &drawOptions().highlightColourPalette;
+    if (highlightColorsReactants) {
+      colors = highlightColorsReactants;
+    }
+    std::vector<int> atomfragmap;
+    MolOps::getMolFrags(*tmol, atomfragmap);
+
+    atom_highlights = new std::vector<int>();
+    atom_highlight_colors = new std::map<int, DrawColour>();
+    bond_highlights = new std::vector<int>();
+    bond_highlight_colors = new std::map<int, DrawColour>();
+    std::map<int, int> atommap_fragmap;
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
+          atom->getAtomMapNum()) {
+        atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            (*colors)[atomfragmap[aidx] % colors->size()];
+
+        atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        ROMol::ADJ_ITER nbrIdx, endNbrs;
+        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
+        while (nbrIdx != endNbrs) {
+          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
+          if (nbr->getIdx() < aidx &&
+              atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+          ++nbrIdx;
+        }
+      }
+    }
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 2 &&
+          atom->getAtomMapNum() &&
+          atommap_fragmap.find(atom->getAtomMapNum()) !=
+              atommap_fragmap.end()) {
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            (*colors)[atommap_fragmap[atom->getAtomMapNum()] % colors->size()];
+
+        atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        ROMol::ADJ_ITER nbrIdx, endNbrs;
+        boost::tie(nbrIdx, endNbrs) = tmol->getAtomNeighbors(atom);
+        while (nbrIdx != endNbrs) {
+          const ATOM_SPTR nbr = (*tmol)[*nbrIdx];
+          if (nbr->getIdx() < aidx &&
+              (*atom_highlight_colors)[nbr->getIdx()] ==
+                  (*atom_highlight_colors)[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+          ++nbrIdx;
+        }
+      }
+    }
+  }
+
+  drawMolecule(*tmol, "", atom_highlights, bond_highlights,
+               atom_highlight_colors, bond_highlight_colors);
+
+  delete tmol;
+  delete atom_highlights;
+  delete atom_highlight_colors;
+  delete bond_highlights;
+  delete bond_highlight_colors;
+
+  double o_font_size = fontSize();
+  setFontSize(2 * options_.legendFontSize / scale_);
+  DrawColour odc = colour();
+  setColour(options_.symbolColour);
+
+  // now add the symbols
+  BOOST_FOREACH (double plusLoc, plusLocs) {
+    Point2D loc(plusLoc, arrowBegin.y);
+    drawString("+", loc);
+  }
+
+  // The arrow:
+  {
+    Point2D arrowBegin_canvas = getDrawCoords(arrowBegin);
+    Point2D arrowEnd_canvas = getDrawCoords(arrowEnd);
+
+    double arrowStart = arrowBegin_canvas.x;
+    double arrowEnd = arrowEnd_canvas.x;
+    double headx = 0.05 * (arrowEnd - arrowStart);
+    double heady = 2 * headx / 3;
+    Point2D loc1 =
+        getAtomCoords(std::make_pair(arrowStart, arrowBegin_canvas.y));
+    Point2D loc2 = getAtomCoords(std::make_pair(arrowEnd, arrowBegin_canvas.y));
+    drawLine(loc1, loc2);
+    loc1 = getAtomCoords(
+        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y + heady));
+    drawLine(loc1, loc2);
+    loc1 = getAtomCoords(
+        std::make_pair(arrowEnd - headx, arrowBegin_canvas.y - heady));
+    drawLine(loc1, loc2);
+  }
+  setColour(odc);
+  setFontSize(o_font_size);
 }
 
 void MolDraw2D::drawMolecules(
@@ -1309,6 +1609,18 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
       if (num_h > 1) {
         // put the number as a subscript
         h += string("<sub>") + lexical_cast<string>(num_h) + string("</sub>");
+      }
+      // last check: degree zero atoms from the last three periods should have
+      // the Hs first
+      if (!atom.getDegree()) {
+        static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
+        std::vector<int> HsListedFirst(
+            HsListedFirstSrc,
+            HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
+        if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
+                      atom.getAtomicNum()) != HsListedFirst.end()) {
+          orient = MolDraw2D::W;
+        }
       }
       if (orient == MolDraw2D::W) {
         preText.push_back(h);
