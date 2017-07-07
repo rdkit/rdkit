@@ -2,6 +2,30 @@
 (Changes relative to Release_2017.03.1)
 
 ## Acknowledgements:
+Francois Berenger, Brian Cole, Brian Kelley, John Mayfield, Noel O'Boyle,
+Matt Swain
+
+## Bug Fixes:
+  - Fix cxsmiles parse on VS2008
+ (github pull #1415 from mcs07)
+  - SanitizeRxn fails with a runtime exception when unused Rlabels are in product
+ (github issue #1448 from bp-kelley)
+  - String module conversion bug
+ (github pull #1452 from coleb)
+  - GetConformerRMS() documentation is misleading
+ (github pull #1459 from greglandrum)
+  - MolToSmarts does not include atom-map or isotope info for molecules built from SMILES
+ (github issue #1472 from greglandrum)
+  - Fixes lookup for HELM Monomer 'D'
+ (github pull #1477 from bp-kelley)
+  - Aromatic rings composed solely of dummy atoms should not be kekulized
+ (github issue #1478 from bp-kelley)
+
+
+# Release_2017.03.2
+(Changes relative to Release_2017.03.1)
+
+## Acknowledgements:
 Peter Gedeck, Jameed Hussain, Brian Kelley, Matthew O'Meara, Steve Wilkins
 
 ## Bug Fixes:
