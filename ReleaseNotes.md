@@ -20,6 +20,8 @@ Matt Swain
  (github pull #1477 from bp-kelley)
   - Aromatic rings composed solely of dummy atoms should not be kekulized
  (github issue #1478 from bp-kelley)
+  - Unicode problem with pidPS tests on Mac
+ (github issue #1490 from greglandrum)
 
 
 # Release_2017.03.2
