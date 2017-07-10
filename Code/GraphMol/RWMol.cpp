@@ -127,7 +127,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   return rdcast<unsigned int>(which);
 }
 
-void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
+void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
+                        bool preserveProps) {
   RDUNUSED_PARAM(updateLabel);
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
   URANGE_CHECK(idx, getNumAtoms() - 1);
@@ -135,11 +136,15 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
   atom_p->setOwningMol(this);
   atom_p->setIdx(idx);
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
+  if (preserveProps) {
+    const bool replaceExistingData = false;
+    atom_p->updateProps(*d_graph[vd].get(), replaceExistingData);
+  }
   d_graph[vd].reset(atom_p);
   // FIX: do something about bookmarks
 };
 
-void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
+void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds() - 1);
   BOND_ITER_PAIR bIter = getEdges();
@@ -150,6 +155,11 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
   bond_p->setIdx(idx);
   bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
   bond_p->setEndAtomIdx(obond->getEndAtomIdx());
+  if (preserveProps) {
+    const bool replaceExistingData = false;
+    bond_p->updateProps( *d_graph[*(bIter.first)].get(), replaceExistingData );
+  }
+
   d_graph[*(bIter.first)].reset(bond_p);
   // FIX: do something about bookmarks
 };
