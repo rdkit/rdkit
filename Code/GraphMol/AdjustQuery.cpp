@@ -118,7 +118,15 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       } else {
         qa = static_cast<QueryAtom *>(at);
       }
-      qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
+      if (params.adjustDegree == 2) {
+        ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
+        tmp->setVal(qa->getTotalDegree() - qa->getTotalNumHs(true));
+        tmp->setDataFunc(queryAtomHeavyAtomDegree);
+        tmp->setDescription("queryAtomHeavyDegree");
+        qa->expandQuery(tmp);
+      } else {
+        qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
+      }
     }  // end of adjust degree
     if (params.adjustRingCount &&
         !((params.adjustRingCountFlags & ADJUST_IGNORECHAINS) && !nRings) &&
