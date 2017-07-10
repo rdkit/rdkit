@@ -123,7 +123,7 @@ void testRGroupOnlyMatching() {
   BOOST_LOG(rdInfoLog) << "test rgroup decomp rgroup only matching" << std::endl;
 
   RWMol *core = SmilesToMol("c1ccccc1[1*]");
-  RGroupDecompositionParameters params(RGroupLabels::IsotopeLabels);
+  RGroupDecompositionParameters params(IsotopeLabels);
   params.onlyMatchAtRGroups = true;
 
   RGroupDecomposition decomp(*core, params);
@@ -168,7 +168,7 @@ void testRingMatching() {
   BOOST_LOG(rdInfoLog) << "test rgroup decomp ring matching" << std::endl;
 
   RWMol *core = SmilesToMol("c1ccc[1*]1");
-  RGroupDecompositionParameters params(RGroupLabels::IsotopeLabels);
+  RGroupDecompositionParameters params(IsotopeLabels);
   
   RGroupDecomposition decomp(*core, params);
   for(int i=0; i<3; ++i) {
