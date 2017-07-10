@@ -247,8 +247,14 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     return addAtom(atom, true, false);
   };
-  void ReplaceAtom(unsigned int idx, Atom *atom) { replaceAtom(idx, atom); };
-  void ReplaceBond(unsigned int idx, Bond *bond) { replaceBond(idx, bond); };
+  void ReplaceAtom(unsigned int idx, Atom *atom, bool updateLabel, bool preserveProps) {
+    PRECONDITION(atom, "bad atom");
+    replaceAtom(idx, atom, updateLabel, preserveProps);
+  };
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+    PRECONDITION(bond, "bad bond");
+    replaceBond(idx, bond, preserveProps);
+  };
   ROMol *GetMol() const {
     auto *res = new ROMol(*this);
     return res;
@@ -688,20 +694,25 @@ struct mol_wrapper {
              "Remove the specified bond from the molecule")
 
         .def("AddBond", &ReadWriteMol::AddBond,
-             (python::arg("mol"), python::arg("beginAtomIdx"),
+             (python::arg("beginAtomIdx"),
               python::arg("endAtomIdx"),
               python::arg("order") = Bond::UNSPECIFIED),
              "add a bond, returns the new number of bonds")
 
         .def("AddAtom", &ReadWriteMol::AddAtom,
-             (python::arg("mol"), python::arg("atom")),
+             (python::arg("atom")),
              "add an atom, returns the index of the newly added atom")
         .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom,
-             (python::arg("mol"), python::arg("index"), python::arg("newAtom")),
-             "replaces the specified atom with the provided one")
+             (python::arg("index"), python::arg("newAtom"),
+              python::arg("updateLabel")=false, python::arg("preserveProps")=false),
+             "replaces the specified atom with the provided one\n"
+             "If updateLabel is True, the new atom becomes the active atom\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
-             (python::arg("mol"), python::arg("index"), python::arg("newBond")),
-             "replaces the specified bond with the provided one")
+             (python::arg("index"), python::arg("newBond"),
+              python::arg("preserveProps")=false),
+             "replaces the specified bond with the provided one.\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new bond")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());

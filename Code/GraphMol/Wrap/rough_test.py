@@ -2235,6 +2235,39 @@ CAS<~>
       # confirm that an RWMol can be constructed without arguments
       m = Chem.RWMol()
 
+    # test replaceAtom/Bond preserving properties
+    mol = Chem.MolFromSmiles('C1CCC1')
+    mol2 = Chem.MolFromSmiles('C1CCC1')
+    mol.GetAtomWithIdx(0).SetProp("foo", "bar")
+    mol.GetBondWithIdx(0).SetProp("foo", "bar")
+    newBond = mol2.GetBondWithIdx(0)
+    self.assertTrue(type(mol) == Chem.Mol)
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      newAt = Chem.Atom(8)
+      rwmol.ReplaceAtom(0, newAt)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1COC1')
+      self.assertFalse(rwmol.GetMol().GetAtomWithIdx(0).HasProp("foo"))
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      newAt = Chem.Atom(8)
+      rwmol.ReplaceAtom(0, newAt, preserveProps=True)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1COC1')
+      self.assertTrue(rwmol.GetMol().GetAtomWithIdx(0).HasProp("foo"))
+      self.assertEqual(rwmol.GetMol().GetAtomWithIdx(0).GetProp("foo"), "bar")
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.ReplaceBond(0, newBond)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1CCC1')      
+      self.assertFalse(rwmol.GetMol().GetBondWithIdx(0).HasProp("foo"))
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.ReplaceBond(0, newBond, preserveProps=True)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1CCC1')      
+      self.assertTrue(rwmol.GetMol().GetBondWithIdx(0).HasProp("foo"))
+      self.assertEqual(rwmol.GetMol().GetBondWithIdx(0).GetProp("foo"), "bar")
+      
+
   def test47SmartsPieces(self):
     """ test the GetAtomSmarts and GetBondSmarts functions
 
@@ -3502,6 +3535,15 @@ CAS<~>
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
 
+  def testAdjustQueryPropertiesgithubIssue1474(self):
+    core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
+    core.GetAtomWithIdx(0).SetProp('foo','bar')
+    core.GetAtomWithIdx(1).SetProp('foo','bar')
+
+    ap = Chem.AdjustQueryProperties(core)
+    self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
+    self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
+    
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
