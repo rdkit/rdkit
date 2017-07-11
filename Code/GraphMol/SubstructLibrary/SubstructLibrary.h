@@ -191,19 +191,24 @@ public:
      usage.
 */
 class SubstructLibrary {
-  MolHolderBase *mols;
+  boost::shared_ptr<MolHolderBase> molholder;
+  boost::shared_ptr<FPHolderBase> fpholder;
+  MolHolderBase *mols; // used for a small optimization
   FPHolderBase *fps;
 public:
-  SubstructLibrary() : mols( new MolHolder ), fps(0) { }
-  SubstructLibrary( MolHolderBase *molecules, FPHolderBase *fingerprints=0 ) :
-      mols(molecules), fps(fingerprints) {
+  SubstructLibrary() : molholder( new MolHolder ), fpholder() {}
+  
+  SubstructLibrary( boost::shared_ptr<MolHolderBase> molecules ) :
+       molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {
+  }
+
+  SubstructLibrary( boost::shared_ptr<MolHolderBase>  molecules,
+                    boost::shared_ptr<FPHolderBase> fingerprints ) :
+       molholder(molecules), fpholder(fingerprints),
+       mols(molholder.get()), fps(fpholder.get()) {
   }
       
-  virtual ~SubstructLibrary() {
-    delete mols;
-    delete fps;
-  }
-  
+
   //!Get the underlying molecule holder implementation
         MolHolderBase & getMolHolder() { return *mols; }
   const MolHolderBase & getMolecules() const { return *mols; }
@@ -211,9 +216,9 @@ public:
   //!Get the underlying fingerprint implementation.
   /*! Throws a value error if no fingerprints have been set */
   FPHolderBase & getFingerprints() {
-           PRECONDITION(fps, "No fingerprints set in library");
-           return *fps;
-         }
+    PRECONDITION(fps, "No fingerprints set in library");
+    return *fps;
+  }
   const FPHolderBase & getFingerprints() const {
     PRECONDITION(fps, "No fingerprints set in library");
     return *fps;
@@ -237,7 +242,7 @@ public:
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
-    \param endIdx      Ending idx (non-inclusive) of the search.
+    \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all [default -1]
   */  
@@ -256,7 +261,7 @@ public:
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
-    \param endIdx      Ending idx (non-inclusive) of the search.
+    \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
   */    
   unsigned int countMatches(const ROMol &query,
@@ -272,7 +277,7 @@ public:
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
-    \param endIdx      Ending idx (non-inclusive) of the search.
+    \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
   */      
   bool hasMatch(const ROMol &query,
@@ -283,7 +288,7 @@ public:
   /*!
     \param idx       Index of the molecule in the library
   */
-  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     return mols->getMol(idx);
   }
 
@@ -296,8 +301,8 @@ public:
   }
 
   //! return the number of molecules in the library
-  virtual unsigned int size() const {
-    return rdcast<unsigned int>(mols->size());
+  unsigned int size() const {
+    return rdcast<unsigned int>(molholder->size());
   }
 };
 }

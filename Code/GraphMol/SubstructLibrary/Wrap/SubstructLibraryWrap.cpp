@@ -63,29 +63,29 @@ struct substructlibrary_wrapper {
                "  NOTE: molecule indices start at 0\n")
           .def("__len__", &MolHolderBase::size);
 
-      python::class_<MolHolder, MolHolder*, MolHolder&, python::bases<MolHolderBase> >(
+      python::class_<MolHolder, boost::shared_ptr<MolHolder>, python::bases<MolHolderBase> >(
           "MolHolder", MolHolderDoc, python::init<>());
 
-      python::class_<CachedMolHolder, python::bases<MolHolderBase > >(
+      python::class_<CachedMolHolder, boost::shared_ptr<CachedMolHolder>, python::bases<MolHolderBase > >(
           "CachedMolHolder", CachedMolHolderDoc, python::init<>());
 
-      python::class_<CachedSmilesMolHolder, python::bases<MolHolderBase > >(
+      python::class_<CachedSmilesMolHolder, boost::shared_ptr<CachedSmilesMolHolder>, python::bases<MolHolderBase > >(
           "CachedSmilesMolHolder", CachedSmilesMolHolderDoc, python::init<>());
 
-      python::class_<FPHolderBase, boost::noncopyable>(
+      python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>, boost::noncopyable>(
           "FPHolderBase", "", python::no_init)
           .def("AddMol", &FPHolderBase::addMol,
                "Adds molecle to the fingerprint database")
           .def("PassesFilter", &FPHolderBase::passesFilter);
       
-      python::class_<PatternHolder, PatternHolder*, PatternHolder&, python::bases<FPHolderBase> >(
+      python::class_<PatternHolder, boost::shared_ptr<PatternHolder>, python::bases<FPHolderBase> >(
           "PatternHolder", PatternHolderDoc, python::init<>());
       
       python::class_<SubstructLibrary, SubstructLibrary *,
                      const SubstructLibrary *>(
                          "SubstructLibrary", SubstructLibraryDoc, python::init<>())
-          .def(python::init<MolHolderBase *>())          
-          .def(python::init<MolHolderBase *, FPHolderBase *>())
+          .def(python::init<boost::shared_ptr<MolHolderBase> >())          
+          .def(python::init<boost::shared_ptr<MolHolderBase>, boost::shared_ptr<FPHolderBase> >())
           
           .def("AddMol",  &SubstructLibrary::addMol,
                (python::arg("mol")),
