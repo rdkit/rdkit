@@ -216,24 +216,36 @@ class SubstructLibrary {
         mols(molholder.get()),
         fps(fpholder.get()) {}
 
-  //! Get the underlying molecule holder implementation
-  MolHolderBase &getMolHolder() { return *mols; }
-  const MolHolderBase &getMolecules() const { return *mols; }
-
-  //! Get the underlying fingerprint implementation.
+  //!Get the underlying molecule holder implementation
+  MolHolderBase & getMolHolder() {
+    PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
+    return *mols;
+  }
+  
+  const MolHolderBase & getMolecules() const {
+    PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
+    return *mols;
+  }
+  
+  //!Get the underlying fingerprint implementation.
   /*! Throws a value error if no fingerprints have been set */
-  FPHolderBase &getFingerprints() {
-    PRECONDITION(fps, "No fingerprints set in library");
+  FPHolderBase & getFingerprints() {
+    if (!fps)
+      throw ValueErrorException("Substruct Library does not have fingerprints");
     return *fps;
   }
-  const FPHolderBase &getFingerprints() const {
-    PRECONDITION(fps, "No fingerprints set in library");
+  
+  const FPHolderBase & getFingerprints() const {
+    if (!fps)
+      throw ValueErrorException("Substruct Library does not have fingerprints");
     return *fps;
   }
 
   //! Add a molecule to the library
   /*!
     \param mol Molecule to add
+
+    returns index for the molecule in the library
   */
   unsigned int addMol(const ROMol &mol);
 
