@@ -53,10 +53,10 @@ class MolHolderBase {
 
   //! Add a new molecule to the substructure search library
   //!  Returns the molecules index in the library
-  virtual unsigned int addMol(const ROMol &m) = 0;
+  virtual unsigned int addMol( const ROMol &m ) = 0;
 
+  // implementations should throw IndexError on out of range
   virtual boost::shared_ptr<ROMol> getMol(unsigned int) const = 0;
-  // throws IndexError?
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
@@ -79,7 +79,8 @@ class MolHolder : public MolHolderBase {
   }
 
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
-    // throws IndexError?
+    if(idx >= mols.size())
+      throw IndexErrorException(idx);
     return mols[idx];
   }
 
@@ -109,7 +110,8 @@ class CachedMolHolder : public MolHolderBase {
   }
 
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
-    // throws IndexError?
+    if(idx >= mols.size())
+      throw IndexErrorException(idx);
     boost::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
     return mol;
@@ -142,7 +144,9 @@ class CachedSmilesMolHolder : public MolHolderBase {
   }
 
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
-    // throws IndexError?
+    if(idx >= mols.size())
+      throw IndexErrorException(idx);
+    
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
     return mol;
   }
@@ -256,13 +260,14 @@ class SubstructLibrary {
     \param maxResults  Maximum results to return, -1 means return all [default
     -1]
   */
-  std::vector<unsigned int> getMatches(const ROMol &query, int numThreads = -1,
-                                       int maxResults = -1);
-  //! Get the matching indices for the query between the given indices
+  std::vector<unsigned int> getMatches(const ROMol &query,
+                                       int numThreads=-1,
+                                       int maxResults=-1);
+  //!Get the matching indices for the query between the given indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
-    \param endIdx      Ending idx (inclusive) of the search.
+    \param endIdx      Ending idx (non-inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all [default
     -1]
@@ -282,7 +287,7 @@ class SubstructLibrary {
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
-    \param endIdx      Ending idx (inclusive) of the search.
+    \param endIdx      Ending idx (non-inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
   */
   unsigned int countMatches(const ROMol &query, unsigned int startIdx,
@@ -310,14 +315,16 @@ class SubstructLibrary {
     \param idx       Index of the molecule in the library
   */
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+    // expects implementation to throw IndexError if out of range    
     return mols->getMol(idx);
   }
 
   //! Returns the molecule at the given index
   /*!
     \param idx       Index of the molecule in the library
-  */
-  boost::shared_ptr<ROMol> operator[](unsigned int idx) {
+  */  
+  boost::shared_ptr<ROMol> operator[] (unsigned int idx) {
+    // expects implementation to throw IndexError if out of range
     return mols->getMol(idx);
   }
 
