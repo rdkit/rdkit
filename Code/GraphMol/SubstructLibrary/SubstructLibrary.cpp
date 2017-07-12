@@ -45,7 +45,7 @@ struct Bits {
     if(fps) {
       queryBits = fps->makeQueryBits(m);
     } else
-      queryBits = 0;
+      queryBits = NULL;
   }
 
   bool check(unsigned int idx) const {
