@@ -109,6 +109,13 @@ class CachedMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
+  //! Adds a pickled binary molecule, no validity checking of the input
+  //!  is done.
+  unsigned int addBinary(const std::string &pickle) {
+    mols.push_back( pickle );
+    return size()-1;
+  }
+  
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if(idx >= mols.size())
       throw IndexErrorException(idx);
@@ -143,6 +150,13 @@ class CachedSmilesMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
+  //! Add a trusted smiles to the dataset, no validation is done
+  //! to the inputs.
+  unsigned int addTrustedSmiles( const std::string &smiles ) {
+    mols.push_back(smiles);
+    return size() - 1;
+  }
+  
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     if(idx >= mols.size())
       throw IndexErrorException(idx);
