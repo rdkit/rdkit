@@ -160,31 +160,36 @@ class CachedSmilesMolHolder : public MolHolderBase {
 class FPHolderBase {
   std::vector<ExplicitBitVect *> fps;
 
- public:
-  virtual ~FPHolderBase() {
-    for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
-  }
+public:
+ virtual ~FPHolderBase() {
+   for(size_t i=0;i<fps.size();++i)
+     delete fps[i];
+   
+ }
 
-  //! Add a molecule to the fingerprinter
-  unsigned int addMol(const ROMol &m) {
-    fps.push_back(getQueryBits(m));
-    return rdcast<unsigned int>(fps.size() - 1);
-  }
+ //! Add a molecule to the fingerprinter
+ unsigned int addMol( const ROMol &m) {
+   fps.push_back(makeQueryBits(m));
+   return rdcast<unsigned int>(fps.size() - 1);
+ }
 
-  //! Return false if a substructure search can never match the molecule
-  bool passesFilter(unsigned int idx, const ExplicitBitVect &query) const {
-    PRECONDITION(idx < fps.size(),
-                 "idx out of range in PatternHolder::passesFilter");
-    return AllProbeBitsMatch(query, *fps[idx]);
-  }
+ //! Return false if a substructure search can never match the molecule
+ bool passesFilter(unsigned int idx, const ExplicitBitVect &query) const {
+   if(idx >= fps.size())
+     throw IndexErrorException(idx);
 
-  virtual ExplicitBitVect *getQueryBits(const ROMol &m) const = 0;
+   return AllProbeBitsMatch(query, *fps[idx]);
+ }
+
+ //! make the query vector
+ //!  Caller owns the vector!
+ virtual ExplicitBitVect *makeQueryBits(const ROMol &m) const = 0;
 };
 
 //! Uses the pattern fingerprinter to rule out matches
 class PatternHolder : public FPHolderBase {
- public:
-  virtual ExplicitBitVect *getQueryBits(const ROMol &m) const {
+public:
+  virtual ExplicitBitVect *makeQueryBits(const ROMol &m) const {
     return PatternFingerprintMol(m, 2048);
   }
 };

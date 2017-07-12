@@ -39,9 +39,11 @@ struct Bits {
   const ExplicitBitVect *queryBits;
   const FPHolderBase *fps;
 
-  Bits(const FPHolderBase *fps, const ROMol &m) : fps(fps) {
-    if (fps) {
-      queryBits = fps->getQueryBits(m);
+  Bits(const FPHolderBase *fps, const ROMol &m) :
+      fps(fps)
+  {
+    if(fps) {
+      queryBits = fps->makeQueryBits(m);
     } else
       queryBits = 0;
   }
