@@ -60,10 +60,7 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
   unsigned int size = mols->addMol(m);
   if (fps) {
     unsigned int fpsize = fps->addMol(m);
-    if (size != fpsize) {
-      std::cerr << "opps:" << size << " " << fpsize << std::endl;
-    }
-    CHECK_INVARIANT(size == fpsize,
+    CHECK_INVARIANT(size==fpsize,
                     "#mols different than #fingerprints in SubstructLibrary");
   }
   return size;
