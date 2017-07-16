@@ -64,14 +64,18 @@ void test1() {
   {
     ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
     runTest(ssslib, *query, 1);
+#ifdef RDK_TEST_MULTITHREADED
     runTest(ssslib, *query, -1);
+#endif
     delete query;
   }
 
   {
     ROMol *query = SmartsToMol("[$([O,S]-[!$(*=O)])]");
     runTest(ssslib, *query, 1);
+#ifdef RDK_TEST_MULTITHREADED
     runTest(ssslib, *query, -1);
+#endif
     delete query;
   }
 
@@ -105,7 +109,9 @@ void test2() {
   {
     ROMol *query = SmartsToMol("[#6]([#6])[!#6]");
     runTest(ssslib, *query, 1);
+#ifdef RDK_TEST_MULTITHREADED
     runTest(ssslib, *query, -1);
+#endif
     delete query;
   }
 
