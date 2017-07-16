@@ -48,15 +48,15 @@ namespace RDKit {
   provides an API for adding and getting molecules from a set.
  */
 class MolHolderBase {
-public:
+ public:
   virtual ~MolHolderBase() {}
 
   //! Add a new molecule to the substructure search library
   //!  Returns the molecules index in the library
-  virtual unsigned int addMol( const ROMol &m ) = 0;
-  
+  virtual unsigned int addMol(const ROMol &m) = 0;
+
   virtual boost::shared_ptr<ROMol> getMol(unsigned int) const = 0;
-     // throws IndexError?
+  // throws IndexError?
 
   //! Get the current library size
   virtual unsigned int size() const = 0;
@@ -67,23 +67,25 @@ public:
     This is currently one of the faster implementations.
     However it is very memory intensive.
 */
-class MolHolder: public MolHolderBase {
+class MolHolder : public MolHolderBase {
   std::vector<boost::shared_ptr<ROMol> > mols;
-public:
+
+ public:
   MolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol( const ROMol &m ) {
-    mols.push_back( boost::make_shared<ROMol>(m) );
-    return size()-1;
+  virtual unsigned int addMol(const ROMol &m) {
+    mols.push_back(boost::make_shared<ROMol>(m));
+    return size() - 1;
   }
-    
+
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // throws IndexError?
     return mols[idx];
   }
-  
-  virtual unsigned int size() const { return rdcast<unsigned int>(mols.size()); }
 
+  virtual unsigned int size() const {
+    return rdcast<unsigned int>(mols.size());
+  }
 };
 
 //! Concrete class that holds binary cached molecules in memory
@@ -94,15 +96,16 @@ public:
 
   See RDKit::FPHolder
 */
-class CachedMolHolder: public MolHolderBase {
+class CachedMolHolder : public MolHolderBase {
   std::vector<std::string> mols;
-public:
+
+ public:
   CachedMolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol( const ROMol &m ) {
-    mols.push_back( std::string() );
+  virtual unsigned int addMol(const ROMol &m) {
+    mols.push_back(std::string());
     MolPickler::pickleMol(m, mols.back());
-    return size()-1;
+    return size() - 1;
   }
 
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
@@ -111,8 +114,10 @@ public:
     MolPickler::molFromPickle(mols[idx], mol.get());
     return mol;
   }
-  
-  virtual unsigned int size() const { return rdcast<unsigned int>(mols.size()); }
+
+  virtual unsigned int size() const {
+    return rdcast<unsigned int>(mols.size());
+  }
 };
 
 //! Concrete class that holds smiles strings in memory
@@ -124,59 +129,57 @@ public:
 
     See RDKit::FPHolder
 */
-class CachedSmilesMolHolder: public MolHolderBase {
+class CachedSmilesMolHolder : public MolHolderBase {
   std::vector<std::string> mols;
-public:
+
+ public:
   CachedSmilesMolHolder() : MolHolderBase(), mols() {}
 
-  virtual unsigned int addMol( const ROMol &m ) {
-
+  virtual unsigned int addMol(const ROMol &m) {
     bool doIsomericSmiles = true;
     mols.push_back(MolToSmiles(m, doIsomericSmiles));
-    return size()-1;
+    return size() - 1;
   }
-  
+
   virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
     // throws IndexError?
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
     return mol;
   }
-  
-  virtual unsigned int size() const { return rdcast<unsigned int>(mols.size()); }
 
+  virtual unsigned int size() const {
+    return rdcast<unsigned int>(mols.size());
+  }
 };
-
 
 //! Base FPI for the fingerprinter used to rule out impossible matches
 class FPHolderBase {
   std::vector<ExplicitBitVect *> fps;
 
-public:
- virtual ~FPHolderBase() {
-   for(size_t i=0;i<fps.size();++i)
-     delete fps[i];
-   
- }
+ public:
+  virtual ~FPHolderBase() {
+    for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
+  }
 
- //! Add a molecule to the fingerprinter
- unsigned int addMol( const ROMol &m) {
-   fps.push_back(getQueryBits(m));
-   return rdcast<unsigned int>(fps.size() - 1);
- }
+  //! Add a molecule to the fingerprinter
+  unsigned int addMol(const ROMol &m) {
+    fps.push_back(getQueryBits(m));
+    return rdcast<unsigned int>(fps.size() - 1);
+  }
 
- //! Return false if a substructure search can never match the molecule
- bool passesFilter(unsigned int idx, const ExplicitBitVect &query) const {
-   PRECONDITION(idx < fps.size(), "idx out of range in PatternHolder::passesFilter");
-   return AllProbeBitsMatch(query, *fps[idx]);
- }
- 
- virtual ExplicitBitVect *getQueryBits(const ROMol &m) const = 0;
- 
+  //! Return false if a substructure search can never match the molecule
+  bool passesFilter(unsigned int idx, const ExplicitBitVect &query) const {
+    PRECONDITION(idx < fps.size(),
+                 "idx out of range in PatternHolder::passesFilter");
+    return AllProbeBitsMatch(query, *fps[idx]);
+  }
+
+  virtual ExplicitBitVect *getQueryBits(const ROMol &m) const = 0;
 };
 
 //! Uses the pattern fingerprinter to rule out matches
 class PatternHolder : public FPHolderBase {
-public:
+ public:
   virtual ExplicitBitVect *getQueryBits(const ROMol &m) const {
     return PatternFingerprintMol(m, 2048);
   }
@@ -193,96 +196,102 @@ public:
 class SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
   boost::shared_ptr<FPHolderBase> fpholder;
-  MolHolderBase *mols; // used for a small optimization
+  MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps;
-public:
-  SubstructLibrary() : molholder( new MolHolder ), fpholder() {}
-  
-  SubstructLibrary( boost::shared_ptr<MolHolderBase> molecules ) :
-       molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {
-  }
 
-  SubstructLibrary( boost::shared_ptr<MolHolderBase>  molecules,
-                    boost::shared_ptr<FPHolderBase> fingerprints ) :
-       molholder(molecules), fpholder(fingerprints),
-       mols(molholder.get()), fps(fpholder.get()) {
-  }
-      
+ public:
+  SubstructLibrary()
+      : molholder(new MolHolder),
+        fpholder(),
+        mols(molholder.get()),
+        fps(NULL) {}
 
-  //!Get the underlying molecule holder implementation
-        MolHolderBase & getMolHolder() { return *mols; }
-  const MolHolderBase & getMolecules() const { return *mols; }
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
+      : molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {}
 
-  //!Get the underlying fingerprint implementation.
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
+                   boost::shared_ptr<FPHolderBase> fingerprints)
+      : molholder(molecules),
+        fpholder(fingerprints),
+        mols(molholder.get()),
+        fps(fpholder.get()) {}
+
+  //! Get the underlying molecule holder implementation
+  MolHolderBase &getMolHolder() { return *mols; }
+  const MolHolderBase &getMolecules() const { return *mols; }
+
+  //! Get the underlying fingerprint implementation.
   /*! Throws a value error if no fingerprints have been set */
-  FPHolderBase & getFingerprints() {
+  FPHolderBase &getFingerprints() {
     PRECONDITION(fps, "No fingerprints set in library");
     return *fps;
   }
-  const FPHolderBase & getFingerprints() const {
+  const FPHolderBase &getFingerprints() const {
     PRECONDITION(fps, "No fingerprints set in library");
     return *fps;
   }
 
-  //!Add a molecule to the library
+  //! Add a molecule to the library
   /*!
     \param mol Molecule to add
   */
   unsigned int addMol(const ROMol &mol);
 
-  //!Get the matching indices for the query
+  //! Get the matching indices for the query
   /*!
     \param query       Query to match against molecules
     \param numThreads  If -1 use all available processors [default -1]
-    \param maxResults  Maximum results to return, -1 means return all [default -1]    
+    \param maxResults  Maximum results to return, -1 means return all [default
+    -1]
   */
-  std::vector<unsigned int> getMatches(const ROMol &query, int numThreads=-1,
-                                       int maxResults=-1);
-  //!Get the matching indices for the query between the given indices
+  std::vector<unsigned int> getMatches(const ROMol &query, int numThreads = -1,
+                                       int maxResults = -1);
+  //! Get the matching indices for the query between the given indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
-    \param maxResults  Maximum results to return, -1 means return all [default -1]
-  */  
+    \param maxResults  Maximum results to return, -1 means return all [default
+    -1]
+  */
   std::vector<unsigned int> getMatches(const ROMol &query,
-                                       unsigned int startIdx, unsigned int endIdx,
-                                       int numThreads=-1,
-                                       int maxResults=-1);
+                                       unsigned int startIdx,
+                                       unsigned int endIdx, int numThreads = -1,
+                                       int maxResults = -1);
 
-  //!Return the number of matches for the query
+  //! Return the number of matches for the query
   /*!
     \param query       Query to match against molecules
     \param numThreads  If -1 use all available processors [default -1]
-  */  
-  unsigned int countMatches(const ROMol &query, int numThreads=-1);
-  //!Return the number of matches for the query between the given indices
+  */
+  unsigned int countMatches(const ROMol &query, int numThreads = -1);
+  //! Return the number of matches for the query between the given indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
-  */    
-  unsigned int countMatches(const ROMol &query,
-                            unsigned int startIdx, unsigned int endIdx, int numThreads=-1);
+  */
+  unsigned int countMatches(const ROMol &query, unsigned int startIdx,
+                            unsigned int endIdx, int numThreads = -1);
 
   //! Returns true if any match exists for the query
   /*!
     \param query       Query to match against molecules
     \param numThreads  If -1 use all available processors [default -1]
-  */  
-  bool hasMatch(const ROMol &query, int numThreads=-1);
-  //! Returns true if any match exists for the query between the specified indices
+  */
+  bool hasMatch(const ROMol &query, int numThreads = -1);
+  //! Returns true if any match exists for the query between the specified
+  //! indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (inclusive) of the search.
     \param numThreads  If -1 use all available processors [default -1]
-  */      
-  bool hasMatch(const ROMol &query,
-                unsigned int startIdx, unsigned int endIdx, int numThreads=-1);
-
+  */
+  bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
+                int numThreads = -1);
 
   //! Returns the molecule at the given index
   /*!
@@ -295,15 +304,13 @@ public:
   //! Returns the molecule at the given index
   /*!
     \param idx       Index of the molecule in the library
-  */  
-  boost::shared_ptr<ROMol> operator[] (unsigned int idx) {
+  */
+  boost::shared_ptr<ROMol> operator[](unsigned int idx) {
     return mols->getMol(idx);
   }
 
   //! return the number of molecules in the library
-  unsigned int size() const {
-    return rdcast<unsigned int>(molholder->size());
-  }
+  unsigned int size() const { return rdcast<unsigned int>(molholder->size()); }
 };
 }
 

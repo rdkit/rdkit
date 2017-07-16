@@ -8,7 +8,7 @@ rdkit_headers(SubstructLibrary.h
 
 add_subdirectory(Wrap)
 
-#rdkit_test(substructLibraryTest substructLibraryTest.cpp
-#           LINK_LIBRARIES SubstructLibrary Fingerprints
-#           SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral
-#           ${Boost_SERIALIZATION_LIBRARY})
+rdkit_test(substructLibraryTest substructLibraryTest.cpp
+           LINK_LIBRARIES SubstructLibrary Fingerprints
+           SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral
+           ${Boost_SERIALIZATION_LIBRARY})
