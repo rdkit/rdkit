@@ -571,7 +571,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
     }
     double* Bimat = GetGeodesicMatrix(dist, i, numAtoms);
     Map<MatrixXd> Bj(Bimat, numAtoms, numAtoms);
-    if (i > 0 and i < 9) {  // use Bj
+    if (i > 0 && i < 9) {  // use Bj
       for (int j = 0; j < numAtoms - 1; j++) {
         for (int k = j + 1; k < numAtoms; k++) {
           if (Bj(j, k) == 1) {
@@ -672,7 +672,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
     Rkmaxs = 0;
 
     // from 1 to 8
-    if (i > 0 and i < 9) {
+    if (i > 0 && i < 9) {
       for (int j = 0; j < numAtoms - 1; j++) {
         for (int k = j + 1; k < numAtoms; k++) {
           if (Bj(j, k) == 1) {
