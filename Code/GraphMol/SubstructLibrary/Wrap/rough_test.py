@@ -72,7 +72,7 @@ class TestCase(unittest.TestCase):
         
         res = slib.GetMatches(m, maxResults=100);
         self.assertEqual(len(res), 100)
-        self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=99)), 100)
+        self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=100)), 100)
         
         self.assertTrue(slib.HasMatch(m))
         self.assertEqual(slib.CountMatches(m), 100)
@@ -107,8 +107,8 @@ class TestCase(unittest.TestCase):
         res = slib.GetMatches(m, maxResults=100);
         self.assertEqual(len(res), 100)
         
-        self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=49*2)), 50)
-        self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=49*2+1)), 50)
+        self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=50*2)), 50)
+        self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=50*2+1)), 50)
         
         self.assertTrue(slib.HasMatch(m))
         self.assertTrue(slib.HasMatch(m2))
