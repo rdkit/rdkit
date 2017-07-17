@@ -93,8 +93,12 @@ struct substructlibrary_wrapper {
 
 
           .def("GetMatches", (std::vector<unsigned int> (SubstructLibrary::*)(
-              const ROMol &, int, int)) &SubstructLibrary::getMatches,
-               (python::arg("query"), python::arg("numThreads")=-1,
+              const ROMol &, bool, bool, bool, int, int)) &SubstructLibrary::getMatches,
+               (python::arg("query"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,
+                python::arg("numThreads")=-1,
                 python::arg("maxResults")=1000),
                "Get the matches for the query.\n\n"
                " Arguments:\n"
@@ -104,11 +108,14 @@ struct substructlibrary_wrapper {
 
 
           .def("GetMatches", (std::vector<unsigned int> (SubstructLibrary::*)(
-              const ROMol &, unsigned int, unsigned int,
+              const ROMol &, unsigned int, unsigned int, bool, bool, bool, 
               int, int)) &SubstructLibrary::getMatches,
                (python::arg("query"),
                 python::arg("startIdx"),
                 python::arg("endIdx"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,                
                 python::arg("numThreads")=-1,
                 python::arg("maxResults")=1000),
                "Get the matches for the query.\n\n"
@@ -120,8 +127,12 @@ struct substructlibrary_wrapper {
                "  - maxResults: maximum number of results to return")
 
           .def("CountMatches", (unsigned int (SubstructLibrary::*)(
-              const ROMol &, int)) &SubstructLibrary::countMatches,
-               (python::arg("query"), python::arg("numThreads")=-1,
+              const ROMol &, bool, bool, bool, int)) &SubstructLibrary::countMatches,
+               (python::arg("query"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,                
+                python::arg("numThreads")=-1,
                 python::arg("maxResults")=1000),
                "Get the matches for the query.\n\n"
                " Arguments:\n"
@@ -131,10 +142,14 @@ struct substructlibrary_wrapper {
 
           .def("CountMatches", (unsigned int (SubstructLibrary::*)(
               const ROMol &, unsigned int, unsigned int,
+              bool,bool,bool,
               int)) &SubstructLibrary::countMatches,
                (python::arg("query"),
                 python::arg("startIdx"),
                 python::arg("endIdx"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,                
                 python::arg("numThreads")=-1),
                "Get the matches for the query.\n\n"
                " Arguments:\n"
@@ -144,8 +159,12 @@ struct substructlibrary_wrapper {
                "  - numThreads: number of threads to use, -1 means all threads\n")
 
           .def("HasMatch", (bool (SubstructLibrary::*)(
-              const ROMol &, int)) &SubstructLibrary::hasMatch,
-               (python::arg("query"), python::arg("numThreads")=-1),
+              const ROMol &, bool, bool, bool, int)) &SubstructLibrary::hasMatch,
+               (python::arg("query"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,                
+                python::arg("numThreads")=-1),
                "Get the matches for the query.\n\n"
                " Arguments:\n"
                "  - query:      substructure query\n"
@@ -153,10 +172,14 @@ struct substructlibrary_wrapper {
 
           .def("HasMatch", (bool (SubstructLibrary::*)(
               const ROMol &, unsigned int, unsigned int,
+              bool, bool, bool, 
               int)) &SubstructLibrary::hasMatch,
                (python::arg("query"),
                 python::arg("startIdx"),
                 python::arg("endIdx"),
+                python::arg("recursionPossible")=true,
+                python::arg("useChirality")=true,
+                python::arg("useQueryQueryMatches")=false,                
                 python::arg("numThreads")=-1),
                "Get the matches for the query.\n\n"
                " Arguments:\n"

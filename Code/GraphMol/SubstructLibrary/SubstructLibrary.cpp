@@ -38,9 +38,18 @@ namespace RDKit {
 struct Bits {
   const ExplicitBitVect *queryBits;
   const FPHolderBase *fps;
+  bool recursionPossible;
+  bool useChirality;
+  bool useQueryQueryMatches;
 
-  Bits(const FPHolderBase *fps, const ROMol &m) :
-      fps(fps)
+  Bits(const FPHolderBase *fps, const ROMol &m,
+       bool recursionPossible,
+       bool useChirality,
+       bool useQueryQueryMatches) :
+      fps(fps),
+      recursionPossible(recursionPossible),
+      useChirality(useChirality),
+      useQueryQueryMatches(useQueryQueryMatches)
   {
     if(fps) {
       queryBits = fps->makeQueryBits(m);
@@ -114,10 +123,16 @@ void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
   }
 }
 
-std::vector<unsigned int> internalGetMatches(
-    const ROMol &query, MolHolderBase &mols, const FPHolderBase *fps,
-    unsigned int startIdx, unsigned int endIdx, int numThreads = -1,
-    int maxResults = 1000) {
+std::vector<unsigned int> internalGetMatches(const ROMol &query,
+                MolHolderBase &mols,
+                const FPHolderBase *fps,
+                unsigned int startIdx, unsigned int endIdx,
+                bool recursionPossible,
+                bool useChirality,
+                bool useQueryQueryMatches,                
+                int numThreads=-1,
+                int maxResults=1000)
+{
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
   if (numThreads == -1)
@@ -131,10 +146,9 @@ std::vector<unsigned int> internalGetMatches(
   std::vector<std::vector<unsigned int> > internal_results(numThreads);
 
   // needed because boost::thread can only handle 10 arguments
-  Bits bits(fps, query);
-
-  for (int thread_group_idx = 0; thread_group_idx < numThreads;
-       ++thread_group_idx) {
+  Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
+  
+  for(int thread_group_idx=0; thread_group_idx < numThreads; ++thread_group_idx) {
     // need to use boost::ref otherwise things are passed by value
     thread_group.add_thread(new boost::thread(
         SubSearcher, boost::ref(query), bits, boost::ref(mols),
@@ -159,9 +173,15 @@ std::vector<unsigned int> internalGetMatches(
   return results;
 }
 
-int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
-                         const FPHolderBase *fps, unsigned int startIdx,
-                         unsigned int endIdx, int numThreads = -1) {
+int internalMatchCounter(const ROMol &query,
+                         MolHolderBase &mols,
+                         const FPHolderBase *fps,
+                         unsigned int startIdx, unsigned int endIdx,
+                         bool recursionPossible,
+                         bool useChirality,
+                         bool useQueryQueryMatches,                                         
+                         int numThreads=-1)
+{
   PRECONDITION(startIdx < mols.size(), "startIdx out of bounds");
   PRECONDITION(endIdx > startIdx, "endIdx > startIdx");
 
@@ -175,9 +195,8 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
   boost::thread_group thread_group;
   boost::atomic<int> counter(0);
 
-  Bits bits(fps, query);
-  for (int thread_group_idx = 0; thread_group_idx < numThreads;
-       ++thread_group_idx) {
+  Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
+  for(int thread_group_idx=0; thread_group_idx < numThreads; ++thread_group_idx) {
     // need to use boost::ref otherwise things are passed by value
     thread_group.add_thread(new boost::thread(
         SubSearchMatchCounter, boost::ref(query), bits, boost::ref(mols),
@@ -190,40 +209,67 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
 }
 
 std::vector<unsigned int> SubstructLibrary::getMatches(const ROMol &query,
+                                                       bool recursionPossible,
+                                                       bool useChirality,
+                                                       bool useQueryQueryMatches,
                                                        int numThreads,
                                                        int maxResults) {
-  return getMatches(query, 0, mols->size(), numThreads, maxResults);
+  return getMatches(query, 0, mols->size(), recursionPossible, useChirality, useQueryQueryMatches,
+                    numThreads, maxResults);
 }
 
 std::vector<unsigned int> SubstructLibrary::getMatches(const ROMol &query,
-                                                       unsigned int startIdx,
-                                                       unsigned int endIdx,
-                                                       int numThreads,
-                                                       int maxResults) {
-  return internalGetMatches(query, *mols, fps, startIdx, endIdx, numThreads,
-                            maxResults);
+                                                       unsigned int startIdx, unsigned int endIdx,
+                                                       bool recursionPossible,
+                                                       bool useChirality,
+                                                       bool useQueryQueryMatches,
+                                                       int numThreads, int maxResults) {
+  return internalGetMatches(query, *mols, fps, startIdx, endIdx,
+                            recursionPossible, useChirality, useQueryQueryMatches,
+                            numThreads, maxResults);
 }
 
 unsigned int SubstructLibrary::countMatches(const ROMol &query,
-                                            int numThreads) {
-  return countMatches(query, 0, mols->size(), numThreads);
+                                            bool recursionPossible,
+                                            bool useChirality,
+                                            bool useQueryQueryMatches,
+                                            int numThreads)
+{
+  return countMatches(query, 0, mols->size(),
+                      recursionPossible, useChirality, useQueryQueryMatches,
+                      numThreads);
 }
 
 unsigned int SubstructLibrary::countMatches(const ROMol &query,
                                             unsigned int startIdx,
                                             unsigned int endIdx,
+                                            bool recursionPossible,
+                                            bool useChirality,
+                                            bool useQueryQueryMatches,                                            
                                             int numThreads) {
-  return internalMatchCounter(query, *mols, fps, startIdx, endIdx, numThreads);
+  return internalMatchCounter(query, *mols, fps, startIdx, endIdx,
+                              recursionPossible, useChirality, useQueryQueryMatches,
+                              numThreads);
 }
-
-bool SubstructLibrary::hasMatch(const ROMol &query, int numThreads) {
+  
+bool SubstructLibrary::hasMatch(const ROMol &query,
+                                bool recursionPossible,
+                                bool useChirality,
+                                bool useQueryQueryMatches,                                
+                                int numThreads) {
   const int maxResults = 1;
-  return getMatches(query, numThreads, maxResults).size() > 0;
+  return getMatches(query,
+                    recursionPossible, useChirality, useQueryQueryMatches,
+                    numThreads, maxResults).size() > 0;
 }
 
 bool SubstructLibrary::hasMatch(const ROMol &query, unsigned int startIdx,
-                                unsigned int endIdx, int numThreads) {
+                                unsigned int endIdx, bool recursionPossible,
+                                bool useChirality, bool useQueryQueryMatches,
+                                int numThreads) {
   const int maxResults = 1;
-  return getMatches(query, startIdx, endIdx, numThreads, maxResults).size() > 0;
+  return getMatches(query, startIdx, endIdx,
+                    recursionPossible, useChirality, useQueryQueryMatches,
+                    numThreads, maxResults).size() > 0;
 }
 }

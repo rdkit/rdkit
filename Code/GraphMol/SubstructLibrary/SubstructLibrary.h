@@ -174,10 +174,9 @@ class CachedSmilesMolHolder : public MolHolderBase {
 class FPHolderBase {
   std::vector<ExplicitBitVect *> fps;
 
-public:
- virtual ~FPHolderBase() {
-   for(size_t i=0;i<fps.size();++i)
-     delete fps[i];
+ public:
+  virtual ~FPHolderBase() {
+    for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
    
  }
 
@@ -275,11 +274,18 @@ class SubstructLibrary {
   //! Get the matching indices for the query
   /*!
     \param query       Query to match against molecules
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all [default
     -1]
   */
   std::vector<unsigned int> getMatches(const ROMol &query,
+                                       bool recursionPossible=true,
+                                       bool useChirality=true,
+                                       bool useQueryQueryMatches=false,
                                        int numThreads=-1,
                                        int maxResults=-1);
   //!Get the matching indices for the query between the given indices
@@ -287,47 +293,85 @@ class SubstructLibrary {
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (non-inclusive) of the search.
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all [default
     -1]
   */
   std::vector<unsigned int> getMatches(const ROMol &query,
-                                       unsigned int startIdx,
-                                       unsigned int endIdx, int numThreads = -1,
-                                       int maxResults = -1);
+                                       unsigned int startIdx, unsigned int endIdx,
+                                       bool recursionPossible=true,
+                                       bool useChirality=true,
+                                       bool useQueryQueryMatches=false,
+                                       int numThreads=-1,
+                                       int maxResults=-1);
 
   //! Return the number of matches for the query
   /*!
     \param query       Query to match against molecules
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
-  */
-  unsigned int countMatches(const ROMol &query, int numThreads = -1);
-  //! Return the number of matches for the query between the given indices
+  */  
+  unsigned int countMatches(const ROMol &query,
+                            bool recursionPossible=true,
+                            bool useChirality=true,
+                            bool useQueryQueryMatches=false,
+                            int numThreads=-1);
+  //!Return the number of matches for the query between the given indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (non-inclusive) of the search.
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
-  */
-  unsigned int countMatches(const ROMol &query, unsigned int startIdx,
-                            unsigned int endIdx, int numThreads = -1);
+  */    
+  unsigned int countMatches(const ROMol &query,
+                            unsigned int startIdx, unsigned int endIdx,
+                            bool recursionPossible=true,
+                            bool useChirality=true,
+                            bool useQueryQueryMatches=false,                            
+                            int numThreads=-1);
 
   //! Returns true if any match exists for the query
   /*!
     \param query       Query to match against molecules
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
-  */
-  bool hasMatch(const ROMol &query, int numThreads = -1);
-  //! Returns true if any match exists for the query between the specified
-  //! indices
+  */  
+  bool hasMatch(const ROMol &query,
+                bool recursionPossible=true,
+                bool useChirality=true,
+                bool useQueryQueryMatches=false,
+                int numThreads=-1);
+  //! Returns true if any match exists for the query between the specified indices
   /*!
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (inclusive) of the search.
+    \param recursionPossible  flags whether or not recursive matches are allowed [ default true ]
+    \param useChirality  use atomic CIP codes as part of the comparison [ default true ] 
+    \param useQueryQueryMatches  if set, the contents of atom and bond queries [ default false ]
+                                 will be used as part of the matching    
     \param numThreads  If -1 use all available processors [default -1]
-  */
-  bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-                int numThreads = -1);
+  */      
+  bool hasMatch(const ROMol &query,
+                unsigned int startIdx, unsigned int endIdx,
+                bool recursionPossible=true,
+                bool useChirality=true,
+                bool useQueryQueryMatches=false,                
+                int numThreads=-1);
 
   //! Returns the molecule at the given index
   /*!
