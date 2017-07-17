@@ -77,11 +77,16 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
 
 namespace {
 
-// end is inclusive here
-void SubSearcher(const ROMol &in_query, const Bits &bits,
-                 const MolHolderBase &mols, std::vector<unsigned int> &idxs,
-                 unsigned int start, unsigned int end, unsigned int numThreads,
-                 boost::atomic<int> &counter, const int maxResults) {
+// end is exclusive here
+void SubSearcher(const ROMol &in_query,
+                 const Bits &bits,
+                 const MolHolderBase& mols,
+                 std::vector<unsigned int> &idxs,
+                 unsigned int start,
+                 unsigned int end,
+                 unsigned int numThreads,
+                 boost::atomic<int> &counter,
+                 const int maxResults) {
   ROMol query(in_query);
   MatchVectType matchVect;
   const bool recursionPossible = true;
@@ -89,12 +94,12 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
   const bool useQueryQueryMatches = false;
   for(unsigned int idx=start; idx<end; idx+=numThreads) {
     if(!bits.check(idx)) continue;
-    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
-    const ROMol *mol = m.get();
-    if (SubstructMatch(*mol, query, matchVect, recursionPossible, useChirality,
-                       useQueryQueryMatches)) {
-      // this is squishy and not really atomic when adding to idxs
-      //  It's okay if we get one or two extra, we can fix it on the way out
+    const ROMol *mol = mols.getMol(idx).get();
+    if (SubstructMatch(*mol, query, matchVect,
+                        recursionPossible, useChirality, useQueryQueryMatches)) {
+      // this is squishy when updating the counter.  While incrementing is atomic
+      // several substructure runs can update the counter beyond the maxResults
+      //  This okay: if we get one or two extra, we can fix it on the way out
       if (maxResults != -1 && counter >= maxResults) break;
       idxs.push_back(idx);
       if (maxResults != -1) counter++;
