@@ -67,10 +67,18 @@ struct substructlibrary_wrapper {
           "MolHolder", MolHolderDoc, python::init<>());
 
       python::class_<CachedMolHolder, boost::shared_ptr<CachedMolHolder>, python::bases<MolHolderBase > >(
-          "CachedMolHolder", CachedMolHolderDoc, python::init<>());
+          "CachedMolHolder", CachedMolHolderDoc, python::init<>())
+          .def("AddBinary", &CachedMolHolder::addBinary,
+               (python::args("pickle")),
+               "Add a binary pickle to the molecule holder, no checking is done on the input data");
+          
 
       python::class_<CachedSmilesMolHolder, boost::shared_ptr<CachedSmilesMolHolder>, python::bases<MolHolderBase > >(
-          "CachedSmilesMolHolder", CachedSmilesMolHolderDoc, python::init<>());
+          "CachedSmilesMolHolder", CachedSmilesMolHolderDoc, python::init<>())
+          .def("AddTrustedSmiles", &CachedSmilesMolHolder::addTrustedSmiles,
+               (python::args("smiles")),
+               "Add a trusted smiles string to the molecule holder, no checking is done on the input data");
+               
 
       python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>, boost::noncopyable>(
           "FPHolderBase", "", python::no_init)
