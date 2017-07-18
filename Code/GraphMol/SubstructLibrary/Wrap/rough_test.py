@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2017  Novartis Institute of BioMedical Research
 #         All Rights Reserved
 #
@@ -29,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-""" This is a rough coverage test of the python wrapper for FilterCatalogs
+""" This is a rough coverage test of the python wrapper for the SubstructLibrary
 
 it is intended to be shallow but broad.
 """
