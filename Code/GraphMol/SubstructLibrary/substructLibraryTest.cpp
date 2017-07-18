@@ -164,10 +164,10 @@ void test4() {
   SubstructLibrary ssslib(holder);
   
   for(int i=0;i<10;++i) {
-    holder->addTrustedSmiles("C1CCO[C@@](N)(O)1");
-    holder->addTrustedSmiles("C1CCO[C@](N)(O)1");
-    holder->addTrustedSmiles("C1CCO[C@@](O)(N)1");
-    holder->addTrustedSmiles("C1CCO[C@](O)(N)1");
+    holder->addSmiles("C1CCO[C@@](N)(O)1");
+    holder->addSmiles("C1CCO[C@](N)(O)1");
+    holder->addSmiles("C1CCO[C@@](O)(N)1");
+    holder->addSmiles("C1CCO[C@](O)(N)1");
   }
 
   ROMol *query = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");

@@ -38,12 +38,108 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-const char * MolHolderBaseDoc = "";
-const char * MolHolderDoc = "";
-const char * CachedMolHolderDoc = "";
-const char * CachedSmilesMolHolderDoc = "";
-const char * PatternHolderDoc = "";
-const char * SubstructLibraryDoc = "";
+const char * MolHolderBaseDoc = "Base class for holding molecules used in the Substructure Library.\n" \
+    "Instantiations of this class are passed into the SubstructureLibrary.\n" \
+    "The API is quite simple: \n" \
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n" \
+    "  GetMol(idx) -> return the molecule at index idx\n";
+
+const char * MolHolderDoc = "Holds raw in-memory molecules\n" \
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n" \
+    "  GetMol(idx) -> return the molecule at index idx\n";
+
+const char * CachedMolHolderDoc = "Holds molecules in their binary representation.\n" \
+    "This allows more molecules to be held in memory at a time\n" \
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n" \
+    "  AddBinary(data) -> adds a picked molecule molecule to the molecule holder, returns index of molecule\n" \
+    "                     The data is stored as-is, no checking is done for validity.\n" \
+    "  GetMol(idx) -> return the molecule at index idx\n";
+
+const char * CachedSmilesMolHolderDoc = "Holds molecules as smiles string\n" \
+    "This allows more molecules to be held in memory at a time\n" \
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n" \
+    "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, returns index of molecule\n" \
+    "                       The smiles is stored as-is, no checking is done for validity.\n" \
+    "  GetMol(idx) -> return the molecule at index idx\n";
+
+const char * CachedTrustedSmilesMolHolderDoc = "Holds molecules as trusted smiles string\n" \
+    "This allows more molecules to be held in memory at a time and avoids RDKit sanitization\n" \
+    "overhead\n" \
+    "See: http://rdkit.blogspot.com/2016/09/avoiding-unnecessary-work-and.html\n" \
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n" \
+    "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, returns index of molecule\n" \
+    "                       The smiles is stored as-is, no checking is done for validity.\n" \
+    "  GetMol(idx) -> return the molecule at index idx\n";
+
+const char * PatternHolderDoc = "Holds fingerprints used for filtering of molecules.";
+const char * SubstructLibraryDoc = "SubstructLibrary: This provides a simple API for substructure searching large datasets\n" \
+    "The SubstructLibrary takes full advantage of available threads during the search operation.\n" \
+    "Basic operation is simple\n" \
+    ">>> from __future__ import print_function\n" \
+    ">>> import os\n" \
+    ">>> from rdkit import Chem, RDConfig\n" \
+    ">>> from rdkit.Chem import rdSubstructLibrary\n" \
+    ">>> library = rdSubstructLibrary.SubstructLibrary()\n" \
+    ">>> for mol in Chem.SDMolSupplier(os.path.join(RDConfig.RDDataDir, \n" \
+    "...                               'NCI', 'first_200.props.sdf')):\n" \
+    "...   idx = library.AddMol(mol)\n" \
+    ">>> core = Chem.MolFromSmarts('CCCCOC')\n"  \
+    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> len(indices)\n" \
+    "11\n" \
+    "\n" \    
+    "\n" \
+    "Substructure matching options can be sent into GetMatches:\n" \
+    ">>> indices = library.GetMatches(core, useChirality=False) \n" \
+    ">>> len(indices)\n" \
+    "11\n" \
+    "\n" \
+    "Controlling the number of threads or the maximum number of matches returned:\n" \
+    "is also available (the default is to run on all cores)\n"     \
+    ">>> indices = library.GetMatches(core, numThreads=2, maxResults=10) \n" \
+    ">>> len(indices)\n" \
+    "10\n" \
+    "\n" \
+    "Working on larger datasets:\n" \
+    "\n" \
+    "Molecules are fairly large objects and will limit the number that can be kept in memory.\n" \
+    "To assist this we supply three other molecule holders:\n" \
+    "  CachedMolHolder - stores molecules as their pickled representation\n"     \
+    "  CachedSmilesMolHolder - stores molecules internally as smiles strings\n" \
+    "  CachedTrustedSmilesMolHolder = excepts (and stores) molecules as trusted smiles strings\n" \
+    "\n" \
+    "Using Pattern fingerprints as a pre-filter:" \
+    "\n" \
+    "Pattern fingerprints provide an easy way to indicate whether the substructure search should be\n" \
+    "be done at all.  This is particulary useful with the Binary and Smiles based molecule holders\n" \
+    "as they have an expensive molecule creation step in addition to the substructure searching step\n "
+    "\n" \
+    ">>> library = rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.CachedSmilesMolHolder(), \n" \
+    "...                                               rdSubstructLibrary.PatternHolder())\n" \
+    ">>> for mol in Chem.SDMolSupplier(os.path.join(RDConfig.RDDataDir, \n" \
+    "...                               'NCI', 'first_200.props.sdf')):\n" \
+    "...   idx = library.AddMol(mol)\n" \
+    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> len(indices)\n" \
+    "11\n" \
+    "\n"                                             \
+    "This (obviously) takes longer to initialize.  However, both the molecule and pattern\n" \
+    "holders can be populated with raw data, a simple example is below:\n" \
+    ">>> import csv\n" \
+    ">>> molholder = rdSubstructLibrary.CachedSmilesMolHolder()\n" \
+    ">>> pattern_holder = rdSubstructLibrary.PatternHolder()\n"      \
+    ">>> for i, row in enumerate(csv.reader(open(os.path.join(RDConfig.RDDataDir, \n" \
+    "...                               'NCI', 'first_200.tpsa.csv')))):\n" \
+    "...   if i:\n" \
+    "...     idx = molholder.AddSmiles(row[0])\n" \
+    "...     idx2 = pattern_holder.AddFingerprint(\n" \
+    "...         pattern_holder.MakeFingerprint(Chem.MolFromSmiles(row[0])))\n" \
+    "...     assert idx==idx2\n" \
+    ">>> library = rdSubstructLibrary.SubstructLibrary(molholder,pattern_holder)\n" \
+    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> len(indices)\n" \
+    "11\n" \
+    "";
 
 struct substructlibrary_wrapper {
     static void wrap() {
@@ -75,16 +171,32 @@ struct substructlibrary_wrapper {
 
       python::class_<CachedSmilesMolHolder, boost::shared_ptr<CachedSmilesMolHolder>, python::bases<MolHolderBase > >(
           "CachedSmilesMolHolder", CachedSmilesMolHolderDoc, python::init<>())
-          .def("AddTrustedSmiles", &CachedSmilesMolHolder::addTrustedSmiles,
+          .def("AddSmiles", &CachedSmilesMolHolder::addSmiles,
                (python::args("smiles")),
                "Add a trusted smiles string to the molecule holder, no checking is done on the input data");
                
+      python::class_<CachedTrustedSmilesMolHolder, boost::shared_ptr<CachedTrustedSmilesMolHolder>, python::bases<MolHolderBase > >(
+          "CachedTrustedSmilesMolHolder", CachedTrustedSmilesMolHolderDoc, python::init<>())
+          .def("AddSmiles", &CachedTrustedSmilesMolHolder::addSmiles,
+               (python::args("smiles")),
+               "Add a trusted smiles string to the molecule holder, no checking is done on the input data");
 
       python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>, boost::noncopyable>(
           "FPHolderBase", "", python::no_init)
           .def("AddMol", &FPHolderBase::addMol,
-               "Adds molecle to the fingerprint database")
-          .def("PassesFilter", &FPHolderBase::passesFilter);
+               "Adds a molecule to the fingerprint database, returns the index of the new pattern")
+          .def("AddFingerprint", &FPHolderBase::addFingerprint,
+               "Adds a raw bit vector to the fingerprint database, returns the index of the supplied pattern")
+          .def("GetFingerprint", &FPHolderBase::getFingerprint,
+               python::return_value_policy<python::reference_existing_object>(),
+               "Return the bit vector at the specified index")
+          .def("PassesFilter", &FPHolderBase::passesFilter,
+               (python::args("idx"), python::args("query")),
+               "Returns True if the specified index passes the filter supplied by the query bit vector")
+          .def("MakeFingerprint", &FPHolderBase::makeFingerprint,
+               (python::arg("mol")),
+               python::return_value_policy<python::manage_new_object>(),
+               "Compute the query bits for the holder");
       
       python::class_<PatternHolder, boost::shared_ptr<PatternHolder>, python::bases<FPHolderBase> >(
           "PatternHolder", PatternHolderDoc, python::init<>());

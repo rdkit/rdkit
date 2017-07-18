@@ -52,7 +52,7 @@ struct Bits {
       useQueryQueryMatches(useQueryQueryMatches)
   {
     if(fps) {
-      queryBits = fps->makeQueryBits(m);
+      queryBits = fps->makeFingerprint(m);
     } else
       queryBits = NULL;
   }

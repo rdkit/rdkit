@@ -44,6 +44,9 @@ from rdkit import Chem
 from rdkit.Chem import rdSubstructLibrary
 import time
 
+def load_tests(loader, tests, ignore):
+  tests.addTests(doctest.DocTestSuite(rdSubstructLibrary))
+  return tests
 
 def makeStereoExamples():
   el = "NO"
@@ -138,7 +141,8 @@ class TestCase(unittest.TestCase):
     for holderCls in [
         rdSubstructLibrary.MolHolder,
         rdSubstructLibrary.CachedMolHolder,
-        rdSubstructLibrary.CachedSmilesMolHolder
+        rdSubstructLibrary.CachedSmilesMolHolder,
+        rdSubstructLibrary.CachedTrustedSmilesMolHolder,
     ]:
       holder = holderCls()
       slib = rdSubstructLibrary.SubstructLibrary(holder, None)
@@ -174,7 +178,7 @@ class TestCase(unittest.TestCase):
     slib = rdSubstructLibrary.SubstructLibrary(holder, None)
 
     for mol in mols:
-      holder.AddTrustedSmiles(Chem.MolToSmiles(mol, isomericSmiles=True))
+      holder.AddSmiles(Chem.MolToSmiles(mol, isomericSmiles=True))
 
     core = Chem.MolFromSmarts("C-1-C-C-O-C(-*)(-*)1")          
     res = slib.GetMatches(core)
@@ -198,6 +202,36 @@ class TestCase(unittest.TestCase):
                      len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
 
+  def testTrustedSmilesCache(self):
+    mols = makeStereoExamples() * 10
+    holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+
+    slib = rdSubstructLibrary.SubstructLibrary(holder, None)
+
+    for mol in mols:
+      holder.AddSmiles(Chem.MolToSmiles(mol, isomericSmiles=True))
+
+    core = Chem.MolFromSmarts("C-1-C-C-O-C(-*)(-*)1")          
+    res = slib.GetMatches(core)
+    self.assertEqual(len(res),
+                     len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
+
+    core = Chem.MolFromSmarts("C-1-C-C-O-C(-[O])(-[N])1")
+    core.SetProp("core", "core")
+    res = slib.GetMatches(core, useChirality=False)
+    self.assertEqual(len(res),
+                     len([x for x in mols if x.HasSubstructMatch(core, useChirality=False)]))
+
+    core = Chem.MolFromSmarts("C-1-C-C-O-[C@@](-[O])(-[N])1")          
+    res = slib.GetMatches(core, useChirality=False)
+    self.assertEqual(len(res),
+                     len([x for x in mols if x.HasSubstructMatch(core, useChirality=False)]))
+
+    core = Chem.MolFromSmarts("C-1-C-C-O-[C@@](-[O])(-[N])1")          
+    res = slib.GetMatches(core)
+    self.assertEqual(len(res),
+                     len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
+    
   def testBinaryCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedMolHolder()

@@ -150,9 +150,9 @@ class CachedSmilesMolHolder : public MolHolderBase {
     return size() - 1;
   }
 
-  //! Add a trusted smiles to the dataset, no validation is done
+  //! Add a smiles to the dataset, no validation is done
   //! to the inputs.
-  unsigned int addTrustedSmiles( const std::string &smiles ) {
+  unsigned int addSmiles( const std::string &smiles ) {
     mols.push_back(smiles);
     return size() - 1;
   }
@@ -170,6 +170,53 @@ class CachedSmilesMolHolder : public MolHolderBase {
   }
 };
 
+//! Concrete class that holds trusted smiles strings in memory
+/*!
+    A trusted smiles is essentially a smiles string that
+    RDKit has generated.  This indicates that fewer
+    sanitization steps are required.  See
+    http://rdkit.blogspot.com/2016/09/avoiding-unnecessary-work-and.html
+    
+    This implementation uses quite a bit less memory than the
+    cached binary or uncached implementation.  However, due to the
+    reduced speed it should be used in conjunction with a pattern
+    fingerprinter.
+
+    See RDKit::FPHolder
+*/
+class CachedTrustedSmilesMolHolder : public MolHolderBase {
+  std::vector<std::string> mols;
+
+ public:
+  CachedTrustedSmilesMolHolder() : MolHolderBase(), mols() {}
+
+  virtual unsigned int addMol(const ROMol &m) {
+    bool doIsomericSmiles = true;
+    mols.push_back(MolToSmiles(m, doIsomericSmiles));
+    return size() - 1;
+  }
+
+  //! Add a smiles to the dataset, no validation is done
+  //! to the inputs.
+  unsigned int addSmiles( const std::string &smiles ) {
+    mols.push_back(smiles);
+    return size() - 1;
+  }
+  
+  virtual boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+    if(idx >= mols.size())
+      throw IndexErrorException(idx);
+
+    RWMol *m = SmilesToMol(mols[idx], 0, false);
+    m->updatePropertyCache();
+    return boost::shared_ptr<ROMol>(m);
+  }
+
+  virtual unsigned int size() const {
+    return rdcast<unsigned int>(mols.size());
+  }
+};
+
 //! Base FPI for the fingerprinter used to rule out impossible matches
 class FPHolderBase {
   std::vector<ExplicitBitVect *> fps;
@@ -180,9 +227,15 @@ class FPHolderBase {
    
  }
 
- //! Add a molecule to the fingerprinter
+ //! Adds a molecule to the fingerprinter
  unsigned int addMol( const ROMol &m) {
-   fps.push_back(makeQueryBits(m));
+   fps.push_back(makeFingerprint(m));
+   return rdcast<unsigned int>(fps.size() - 1);
+ }
+
+ //! Adds a raw bit vector to the fingerprinter
+ unsigned int addFingerprint( const ExplicitBitVect &v ) {
+   fps.push_back( new ExplicitBitVect(v) );
    return rdcast<unsigned int>(fps.size() - 1);
  }
 
@@ -194,15 +247,23 @@ class FPHolderBase {
    return AllProbeBitsMatch(query, *fps[idx]);
  }
 
+ //! Get the bit vector at the specified index (throws IndexError if out of range)
+ const ExplicitBitVect &getFingerprint(unsigned int idx) const {
+   if(idx >= fps.size())
+     throw IndexErrorException(idx);
+   return *fps[idx];
+ }
+ 
  //! make the query vector
  //!  Caller owns the vector!
- virtual ExplicitBitVect *makeQueryBits(const ROMol &m) const = 0;
+ virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const = 0;
 };
 
 //! Uses the pattern fingerprinter to rule out matches
 class PatternHolder : public FPHolderBase {
 public:
-  virtual ExplicitBitVect *makeQueryBits(const ROMol &m) const {
+  //! Caller owns the vector!
+  virtual ExplicitBitVect *makeFingerprint(const ROMol &m) const {
     return PatternFingerprintMol(m, 2048);
   }
 };
@@ -226,7 +287,7 @@ class SubstructLibrary {
       : molholder(new MolHolder),
         fpholder(),
         mols(molholder.get()),
-        fps(NULL) {}
+      fps(NULL) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(molecules), fpholder(), mols(molholder.get()), fps(0) {}
