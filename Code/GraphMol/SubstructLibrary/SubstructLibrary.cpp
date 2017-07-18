@@ -89,14 +89,14 @@ void SubSearcher(const ROMol &in_query,
                  const int maxResults) {
   ROMol query(in_query);
   MatchVectType matchVect;
-  const bool recursionPossible = true;
-  const bool useChirality = true;
-  const bool useQueryQueryMatches = false;
   for(unsigned int idx=start; idx<end; idx+=numThreads) {
     if(!bits.check(idx)) continue;
-    const ROMol *mol = mols.getMol(idx).get();
+    // need shared_ptr as it (may) controls the lifespan of the
+    //  returned molecule!
+    const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
+    const ROMol *mol = m.get();
     if (SubstructMatch(*mol, query, matchVect,
-                        recursionPossible, useChirality, useQueryQueryMatches)) {
+                        bits.recursionPossible, bits.useChirality, bits.useQueryQueryMatches)) {
       // this is squishy when updating the counter.  While incrementing is atomic
       // several substructure runs can update the counter beyond the maxResults
       //  This okay: if we get one or two extra, we can fix it on the way out
@@ -114,15 +114,15 @@ void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
                            boost::atomic<int> &counter) {
   ROMol query(in_query);
   MatchVectType matchVect;
-  const bool recursionPossible = true;
-  const bool useChirality = true;
-  const bool useQueryQueryMatches = false;
   for(unsigned int idx=start; idx<end; idx+=numThreads) {
     if(!bits.check(idx)) continue;
+    // need shared_ptr as it (may) controls the lifespan of the
+    //  returned molecule!    
     const boost::shared_ptr<ROMol> &m = mols.getMol(idx);
     const ROMol *mol = m.get();
-    if (SubstructMatch(*mol, query, matchVect, recursionPossible, useChirality,
-                       useQueryQueryMatches)) {
+    if (SubstructMatch(*mol, query, matchVect,
+                       bits.recursionPossible, bits.useChirality,
+                       bits.useQueryQueryMatches)) {
       counter++;
     }
   }
@@ -144,8 +144,11 @@ std::vector<unsigned int> internalGetMatches(const ROMol &query,
     numThreads = (int)getNumThreadsToUse(numThreads);
   else
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
-  endIdx = std::min(mols.size(), endIdx);
 
+
+  endIdx = std::min(mols.size(), endIdx);
+  if (endIdx < numThreads) numThreads = endIdx;
+  
   boost::thread_group thread_group;
   boost::atomic<int> counter(0);
   std::vector<std::vector<unsigned int> > internal_results(numThreads);
@@ -196,6 +199,8 @@ int internalMatchCounter(const ROMol &query,
     numThreads = (int)getNumThreadsToUse(numThreads);
   else
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
+
+  if (endIdx < numThreads) numThreads = endIdx;
 
   boost::thread_group thread_group;
   boost::atomic<int> counter(0);
