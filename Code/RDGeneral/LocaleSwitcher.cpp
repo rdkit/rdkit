@@ -32,10 +32,8 @@
 
 // LocaleSwitcher Dependencies
 #include <clocale>
-#ifndef _WIN32
-#include <string>
-#else
-#include <locale.h>
+#ifdef __clang__
+#include <xlocale.h>
 #endif
 
 #ifdef RDK_THREADSAFE_SSS
