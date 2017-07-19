@@ -77,6 +77,8 @@ add_subdirectory(StructChecker)
 add_subdirectory(ReducedGraphs)
 add_subdirectory(Trajectory)
 
+add_subdirectory(SubstructLibrary)
+
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
 endif()
