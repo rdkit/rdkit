@@ -38,7 +38,8 @@ macro(rdkit_library)
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
-    target_link_libraries(${RDKLIB_NAME} ${Boost_SYSTEM_LIBRARY} )
+    target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
+    target_link_libraries(${RDKLIB_NAME} PUBLIC ${Boost_SYSTEM_LIBRARY} )
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT dev )
@@ -48,11 +49,22 @@ macro(rdkit_library)
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+      target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT runtime )
       if(RDK_INSTALL_STATIC_LIBS)
         add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
+        foreach(RDKLIB_LINK_LIBRARY ${RDKLIB_LINK_LIBRARIES})
+          set(STATIC_LIB ${RDKLIB_LINK_LIBRARY}_static)
+          # if the static variant exist, link against it, otherwise link against the unmodified name (-> boost, etc)
+          if (TARGET ${STATIC_LIB})
+            target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${STATIC_LIB})
+          else()
+            target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${RDKLIB_LINK_LIBRARY})
+          endif()
+        endforeach()
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                 COMPONENT dev )
@@ -61,7 +73,7 @@ macro(rdkit_library)
 
       endif(RDK_INSTALL_STATIC_LIBS)
     IF(RDKLIB_LINK_LIBRARIES)
-      target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
+      target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
   endif(MSVC)
   if(WIN32)

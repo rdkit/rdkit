@@ -1606,5 +1606,5 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
               docString.c_str());
 
-#endif  
+#endif
 }
