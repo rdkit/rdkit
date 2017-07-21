@@ -6,6 +6,9 @@
 /.project
 /.pydevproject
 
+#- CLion files
+/cmake-build-*
+
 #- IDEA files
 /.idea
 

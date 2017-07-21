@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 if(CMAKE_MAJOR_VERSION EQUAL 2 AND ((CMAKE_MINOR_VERSION EQUAL 8 AND CMAKE_PATCH_VERSION GREATER 1) OR CMAKE_MINOR_VERSION GREATER 8))
   cmake_policy(SET CMP0015 OLD)
 endif()
@@ -15,6 +15,8 @@ enable_testing()
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
+
+add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -103,18 +105,20 @@ if(RDK_BUILD_SWIG_WRAPPERS)
 endif(RDK_BUILD_SWIG_WRAPPERS)
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
-  ADD_DEFINITIONS("-DRDK_32BIT_BUILD")
+  target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
 else()
-  ADD_DEFINITIONS("-DRDK_64BIT_BUILD")
+  target_compile_definitions(rdkit_base INTERFACE "-DRDK_64BIT_BUILD")
 endif()
 
 if(MINGW)
-  ADD_DEFINITIONS("-DBOOST_SYSTEM_NO_DEPRECATED")
+  target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
 install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir})
+install(TARGETS rdkit_base EXPORT ${RDKit_EXPORTED_TARGETS}
+        COMPONENT dev )
 
 # create and install package configuration and version files
 configure_file (
@@ -133,7 +137,7 @@ install(FILES
 # extra boost versions
 if(MSVC)
   SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
-  ADD_DEFINITIONS("-DBOOST_ALL_NO_LIB")
+  target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
 endif(MSVC)
 
 if(RDK_BUILD_INCHI_SUPPORT)
@@ -149,12 +153,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
   find_package(PythonLibs)
   if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
-    include_directories(${PYTHON_INCLUDE_PATH})
+    target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_PATH})
   else(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
-    include_directories(${PYTHON_INCLUDE_DIR})
+    target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
   endif(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
   find_package(NumPy REQUIRED)
-  include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
+  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
 
   if(PYTHON_VERSION_MAJOR EQUAL 3)
     # Find boost-python3 using name specified as command line option then fall back to commonly used names
@@ -231,10 +235,13 @@ if(APPLE)
   endif()
 endif(APPLE)
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+target_include_directories(rdkit_base SYSTEM INTERFACE ${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-include_directories(${RDKit_CodeDir})
+target_include_directories(rdkit_base INTERFACE
+                           $<BUILD_INTERFACE:${RDKit_CodeDir}>
+                           $<INSTALL_INTERFACE:${RDKit_HdrDir}>
+                           )
 
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
@@ -244,8 +251,8 @@ string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 if(RDK_BUILD_DESCRIPTORS3D)
   find_package(Eigen3)
   if(EIGEN3_FOUND)
-    ADD_DEFINITIONS("-DRDK_HAS_EIGEN3" "-DRDK_BUILD_DESCRIPTORS3D")
-    include_directories(${EIGEN3_INCLUDE_DIR})
+    target_compile_definitions(rdkit_base INTERFACE "-DRDK_HAS_EIGEN3" "-DRDK_BUILD_DESCRIPTORS3D")
+    target_include_directories(rdkit_base INTERFACE ${EIGEN3_INCLUDE_DIR})
   else(EIGEN3_FOUND)
     message("Eigen3 not found, disabling the Descriptors3D build.")
     set(RDK_BUILD_DESCRIPTORS3D OFF)
@@ -259,10 +266,10 @@ if(RDK_BUILD_THREADSAFE_SSS)
   find_package(Boost 1.39.0 COMPONENTS thread system)
   if(Boost_THREAD_FOUND AND Boost_SYSTEM_FOUND)
     set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-    ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS -DBOOST_ALL_NO_LIB")
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_THREADSAFE_SSS -DBOOST_ALL_NO_LIB)
     set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
     if(RDK_TEST_MULTITHREADED)
-      ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
+      target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
     endif()
   else()
     message("Boost thread or system not found. Disabling RDK_BUILD_THREADSAFE_SSS.")
@@ -360,13 +367,13 @@ endif(NOT RDK_INSTALL_INTREE)
 
 if (RDK_SQUASH_MVC_SECURE_WARNINGS)
   MESSAGE("== Squashing MSVC Security warnings (do not use during development)")
-  ADD_DEFINITIONS("-D_SCL_SECURE_NO_WARNINGS")
-  ADD_DEFINITIONS("/wd4996")
+  target_compile_definitions(rdkit_base INTERFACE "-D_SCL_SECURE_NO_WARNINGS")
+  target_compile_definitions(rdkit_base INTERFACE "/wd4996")
 endif(RDK_SQUASH_MVC_SECURE_WARNINGS)
 
 if(RDK_USE_STRICT_ROTOR_DEFINITION)
     MESSAGE("== Using strict rotor definition")
-    ADD_DEFINITIONS("-DRDK_USE_STRICT_ROTOR_DEFINITION")
+    target_compile_definitions(rdkit_base INTERFACE "-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
 
 add_subdirectory(External)
