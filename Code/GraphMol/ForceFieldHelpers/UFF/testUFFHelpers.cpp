@@ -220,6 +220,11 @@ void testUFFBuilder1() {
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol->getNumAtoms());
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&((conf->getAtomPos(i))));
+  }
+  
   UFF::Tools::addBonds(*mol, types, field);
 
   TEST_ASSERT(field->contribs().size() == 3);
@@ -260,6 +265,11 @@ void testUFFBuilder1() {
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol->getNumAtoms());
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf2->getAtomPos(i)));
+  }
+  
   UFF::Tools::addBonds(*mol, types, field);
 
   TEST_ASSERT(field->contribs().size() == 3);
@@ -288,6 +298,11 @@ void testUFFBuilder1() {
   TEST_ASSERT(types.size() == mol->getNumAtoms());
 
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf3->getAtomPos(i)));
+  }
+  
   UFF::Tools::addBonds(*mol, types, field);
 
   TEST_ASSERT(field->contribs().size() == 1);
@@ -310,8 +325,15 @@ void testUFFBuilder1() {
   boost::tie(types, foundAll) = UFF::getAtomTypes(*mol2);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol2->getNumAtoms());
+  Conformer *conf4 = new Conformer(mol2->getNumAtoms());
+  cid = static_cast<int>(mol2->addConformer(conf4, true));
 
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol2->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf4->getAtomPos(i)));
+  }
+  
   UFF::Tools::addBonds(*mol2, types, field);
   TEST_ASSERT(field->contribs().size() == 5);
 
@@ -448,10 +470,36 @@ void testUFFBuilder2() {
     RWMol *mol = MolFileToMol(pathName + "/small1.mol", false);
     TEST_ASSERT(mol);
     MolOps::sanitizeMol(*mol);
+
+    UFF::AtomicParamVect types;
+    bool foundAll;
+    boost::shared_array<boost::uint8_t> nbrMat;
+    boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
+    
+    ForceFields::ForceField *field;
+    field = new ForceFields::ForceField();
+
+    // add the atomic positions:
+    for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+      field->positions().push_back(&((mol->getConformer().getAtomPos(i))));
+    }
+    
+    UFF::Tools::addBonds(*mol, types, field);
+    nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
+    UFF::Tools::addAngles(*mol, types, field);
+    UFF::Tools::addTorsions(*mol, types, field);
+    // std::cout << field->contribs().size() << std::endl;
+    UFF::Tools::addNonbonded(*mol, 0, types, field, nbrMat);
+    delete field;
+
+    field = UFF::constructForceField(*mol);
+    field->initialize();
+    field->minimize();
+    delete field;
+        
     RWMol *mol2 = new RWMol(*mol);
 
-    ForceFields::ForceField *field;
-    field = UFF::constructForceField(*mol);
+    field = UFF::constructForceField(*mol2);
     TEST_ASSERT(field);
     field->initialize();
     int needMore = field->minimize();
@@ -788,6 +836,11 @@ void testSFIssue1653802() {
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol->getNumAtoms());
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&((mol->getConformer().getAtomPos(i))));
+  }
+  
   UFF::Tools::addBonds(*mol, types, field);
   TEST_ASSERT(field->contribs().size() == 8);
 

@@ -131,7 +131,7 @@ void recurseOverReactantCombinations(
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
     VectMatchVectType combination) {
   unsigned int nReactants = matchesByReactant.size();
-  URANGE_CHECK(level, nReactants - 1);
+  URANGE_CHECK(level + 1, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
   for (VectMatchVectType::const_iterator reactIt =
            matchesByReactant[level].begin();
