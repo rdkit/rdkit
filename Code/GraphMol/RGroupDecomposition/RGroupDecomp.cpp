@@ -94,12 +94,11 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     mols.push_back( ROMOL_SPTR(new ROMol(*alignCore)) );
     MCSResult res = findMCS(mols);
     if(res.isCompleted()) {
-      const ROMol*m = (const ROMol*)SmartsToMol(res.SmartsString);
+      RWMol *m = SmartsToMol(res.SmartsString);
       if(m) {
         MatchVectType match1;
         MatchVectType match2;
         
-        RWMol* m = SmartsToMol(res.SmartsString.c_str());
         bool target_matched1 = SubstructMatch(core, *m, match1);
         bool target_matched2 = SubstructMatch(*alignCore, *m, match2);
         CHECK_INVARIANT(match1.size() == match2.size(),
