@@ -96,7 +96,7 @@ public:
 
     for(RGroupRows::const_iterator it=groups.begin();
         it != groups.end();
-        ++it, ++i) {
+        ++it) {
       python::dict dict;
       const RGroupRow &side_chains = *(it);
       for(RGroupRow::const_iterator sit = side_chains.begin();
