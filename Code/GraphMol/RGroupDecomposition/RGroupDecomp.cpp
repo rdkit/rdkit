@@ -78,7 +78,7 @@ bool setLabel(Atom *atom, int label, std::set<int> &labels, int &maxLabel,
 
 bool hasDummy(const RWMol &core) {
   for (RWMol::ConstAtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
-       atIt++) {
+       ++atIt) {
     if((*atIt)->getAtomicNum() == 0) return true;
   }
   return false;
@@ -127,7 +127,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   int maxLabel = 0;
   int nextOffset = 0;
   for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
-       atIt++) {
+       ++atIt) {
     Atom *atom = *atIt;
     if (atom->hasProp(RLABEL)) continue;
     
@@ -155,7 +155,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
   std::map<int, int> labels;
   for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
-       atIt++) {
+       ++atIt) {
     Atom *atom = *atIt;
     int rlabel;
     if(atom->getPropIfPresent(RLABEL, rlabel)) {
@@ -506,7 +506,7 @@ struct RGroupDecompData {
     std::map<int, std::vector<int> > bondsToCore;
     
     for (RWMol::AtomIterator atIt = mol.beginAtoms();
-         atIt != mol.endAtoms(); atIt++) {
+         atIt != mol.endAtoms(); ++atIt) {
       Atom *atom = *atIt;
       
       if (atom->hasProp(RLABEL)) {
@@ -597,7 +597,7 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom*,Atom*> > atomsToAdd; // adds -R if necessary
 
     for (RWMol::AtomIterator atIt = mol.beginAtoms();
-         atIt != mol.endAtoms(); atIt++) {
+         atIt != mol.endAtoms(); ++atIt) {
       Atom *atom = *atIt;
       if (atom->hasProp(SIDECHAIN_RLABELS)) {
         atom->setIsotope(0);
@@ -829,7 +829,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         std::vector<int> attachments;
         boost::shared_ptr<ROMol> &newMol = fragments[i];
         for (ROMol::AtomIterator atIt = newMol->beginAtoms();
-             atIt != newMol->endAtoms(); atIt++) {
+             atIt != newMol->endAtoms(); ++atIt) {
           Atom *tmp = *atIt;
           unsigned int elno = tmp->getAtomicNum();
           if (elno == 0) {
@@ -864,7 +864,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             RWMol newCore(mol);
             
             for (MatchVectType::const_iterator mvit = tmatches[match_idx].begin();
-                 mvit != tmatches[match_idx].end(); mvit++) {
+                 mvit != tmatches[match_idx].end(); ++mvit) {
               const Atom *coreAtm = core->getAtomWithIdx(mvit->first);
               Atom *newCoreAtm = newCore.getAtomWithIdx(mvit->second);
               int rlabel;
