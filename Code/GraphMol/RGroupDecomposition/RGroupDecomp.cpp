@@ -250,8 +250,8 @@ namespace {
 struct RGroupMatch {
   size_t core_idx;
   std::map<int, RGroupData> rgroups;
-  RGroupMatch( size_t core_idx, const std::map<int, RGroupData> &rgroups ) :
-      core_idx(core_idx), rgroups(rgroups) {
+  RGroupMatch( size_t core_index, const std::map<int, RGroupData> &input_rgroups ) :
+      core_idx(core_index), rgroups(input_rgroups) {
   }
 
 };
@@ -261,8 +261,8 @@ struct CartesianProduct {
   std::vector<size_t> sizes;
   size_t maxPermutations;
   size_t permutationCount;
-  CartesianProduct(const std::vector<size_t> &sizes)
-      : permutation(sizes.size(), 0), sizes(sizes), permutationCount(0) {
+  CartesianProduct(const std::vector<size_t> &inputSizes)
+      : permutation(sizes.size(), 0), sizes(inputSizes), permutationCount(0) {
     maxPermutations = 1;
     for (size_t i = 0; i < sizes.size(); ++i)
       maxPermutations *= sizes[i];  // may overflow....
@@ -382,6 +382,7 @@ double score(const std::vector<size_t> &permutation,
 
 }
 
+const unsigned int EMPTY_CORE_LABEL=-100000;
 
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
@@ -403,14 +404,14 @@ struct RGroupDecompData {
   
   RGroupDecompData(const RWMol &inputCore,
                    const RGroupDecompositionParameters &inputParams) :
-      cores(), newCores(), newCoreLabel(-100000), params(inputParams) {
+      cores(), newCores(), newCoreLabel(EMPTY_CORE_LABEL), params(inputParams) {
     cores[0] = inputCore;
     prepareCores();
   }
 
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                    const RGroupDecompositionParameters &inputParams) :
-      cores(), newCores(), newCoreLabel(-100000), params(inputParams) {
+      cores(), newCores(), newCoreLabel(EMPTY_CORE_LABEL), params(inputParams) {
     
     for(size_t i=0;i<inputCores.size(); ++i) {
       cores[i] = *inputCores[i].get();
