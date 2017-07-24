@@ -93,7 +93,7 @@ public:
   python::list GetRGroupsAsRows() {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
-    unsigned int i=0;
+
     for(RGroupRows::const_iterator it=groups.begin();
         it != groups.end();
         ++it, ++i) {
