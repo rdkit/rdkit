@@ -122,46 +122,47 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
     }
   }
-  
+
   std::set<int> foundLabels;
+  
   int maxLabel = 0;
   int nextOffset = 0;
+  std::map<int, int> atomToLabel;
+    
   for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
        ++atIt) {
     Atom *atom = *atIt;
-    if (atom->hasProp(RLABEL)) continue;
+    bool found = false;
     
-    if (labels & IsotopeLabels) {
+    if (atom->hasProp(RLABEL))
+      found = true;
+    
+    if (!found && (labels & IsotopeLabels)) {
       if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels, maxLabel,
                    relabel, "IsotopeLabels"))
-        continue;
+        found=true;
     }
 
-    if (labels & AtomMapLabels) {
+    if (!found && (labels & AtomMapLabels)) {
       if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
                    maxLabel, relabel, "AtomMapLabels"))
-        continue;
+        found=true;
     }
 
-    if (labels & AtomIndexLabels) {
+    if (!found && (labels & AtomIndexLabels)) {
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, "IndexLabels"))
         nextOffset++;
-        continue;
+        found=true;
+    }
+    
+    int rlabel;
+    if(atom->getPropIfPresent(RLABEL, rlabel)) {
+      atomToLabel[atom->getIdx()] = rlabel;
     }
   }
 
   indexOffset -= nextOffset;
-
-  std::map<int, int> labels;
-  for (RWMol::AtomIterator atIt = core.beginAtoms(); atIt != core.endAtoms();
-       ++atIt) {
-    Atom *atom = *atIt;
-    int rlabel;
-    if(atom->getPropIfPresent(RLABEL, rlabel)) {
-      labels[atom->getIdx()] = rlabel;
-    }
-  }
 
   MolOps::AdjustQueryParameters adjustParams;
   adjustParams.makeDummiesQueries = true;
@@ -169,7 +170,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       MolOps::AdjustDegree::HeavyDegree : MolOps::AdjustDegree::NoAdjust;
   adjustQueryProperties(core, &adjustParams);
   
-  for(std::map<int,int>::iterator it=labels.begin(); it!=labels.end(); ++it)
+  for(std::map<int,int>::iterator it=atomToLabel.begin(); it!=atomToLabel.end(); ++it)
     core.getAtomWithIdx(it->first)->setProp(RLABEL, it->second);
 
   return true;
