@@ -431,10 +431,17 @@ struct RGroupDecompData {
   
   void setRlabel(Atom *atom, int rlabel) {
     // XXX Fix me - use parameters to decide what to do.  Currenty does everything
-    atom->setAtomMapNum(rlabel);
-    std::string dLabel = "R" + boost::lexical_cast<std::string>(rlabel);
-    atom->setProp(common_properties::dummyLabel, dLabel);
-    setAtomRLabel(atom, rlabel);
+    if (params.rgroupLabelling & AtomMap)
+      atom->setAtomMapNum(rlabel);
+    
+    if (params.rgroupLabelling & MDLRGroup) {
+      std::string dLabel = "R" + boost::lexical_cast<std::string>(rlabel);
+      atom->setProp(common_properties::dummyLabel, dLabel);
+      setAtomRLabel(atom, rlabel);
+    }
+    
+    if (params.rgroupLabelling & Isotope)
+      atom->setIsotope(rlabel);
   }
   
   void prune() {  // prune all but the current "best" permutation of matches

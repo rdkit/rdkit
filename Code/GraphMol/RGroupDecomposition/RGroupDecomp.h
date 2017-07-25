@@ -39,7 +39,7 @@ typedef enum  {
 } RGroupMatching;
 
 typedef enum  {
-  AtomNum     = 0x01,
+  AtomMap     = 0x01,
   Isotope     = 0x02,
   MDLRGroup   = 0x04,
 } RGroupLabelling;
@@ -50,19 +50,19 @@ typedef enum  {
 } RGroupCoreAlignment;
 
 struct RGroupDecompositionParameters {
-  RGroupLabels labels;
-  RGroupMatching matchingStrategy;
-  RGroupLabelling rgroupLabelling;
-  RGroupCoreAlignment alignment;
+  unsigned int labels;
+  unsigned int matchingStrategy;
+  unsigned int rgroupLabelling;
+  unsigned int alignment;
   
   unsigned int chunkSize;
   bool onlyMatchAtRGroups;
   bool removeAllHydrogenRGroups;
 
- RGroupDecompositionParameters(RGroupLabels labels=AutoDetect,
-                               RGroupMatching strategy=GreedyChunks,
-                               RGroupLabelling labelling=MDLRGroup,
-                               RGroupCoreAlignment alignment=MCS,
+ RGroupDecompositionParameters(unsigned int labels=AutoDetect,
+                               unsigned int strategy=GreedyChunks,
+                               unsigned int labelling=AtomMap | MDLRGroup,
+                               unsigned int alignment=MCS,
                                unsigned int chunkSize=5,
                                bool matchOnlyAtRGroups=false,
                                bool removeHydrogenOnlyGroups=true) :
@@ -76,26 +76,26 @@ struct RGroupDecompositionParameters {
     indexOffset(-1) {
   }
   bool prepareCore(RWMol &, const RWMol *alignCore);
-  void SetRGroupLabels(RGroupLabels rgroupLabels) {
+  void SetRGroupLabels(unsigned int rgroupLabels) {
     labels = rgroupLabels;
   }
-  void SetRGroupLabelling(RGroupLabelling labelling) {
+  void SetRGroupLabelling(unsigned int labelling) {
     rgroupLabelling = labelling;
   }
-  void SetRGroupMatching(RGroupMatching matching) {
+  void SetRGroupMatching(unsigned int matching) {
     matchingStrategy = matching;
   }
-  void SetRGroupCoreAlignment(RGroupCoreAlignment coreAlignment) {
+  void SetRGroupCoreAlignment(unsigned int coreAlignment) {
     alignment = coreAlignment;
   }
   void SetChunkSize(unsigned int size) { chunkSize = size; }
   void SetOnlyMatchAtRGroups(bool matchAtRGroups) { onlyMatchAtRGroups = matchAtRGroups; }
   void SetRemoveRGroupsThatAreAllHydrogen( bool remove ) { removeAllHydrogenRGroups = remove; }
 
-  RGroupLabels GetRGroupLabels() const { return labels; }
-  RGroupMatching GetRGroupLabelling() const { return matchingStrategy; }
-  RGroupLabelling GetRGroupMatching() const { return rgroupLabelling; }
-  RGroupCoreAlignment GetRGroupCoreAlignment() const { return alignment; }
+  unsigned int GetRGroupLabels() const { return labels; }
+  unsigned int GetRGroupLabelling() const { return matchingStrategy; }
+  unsigned int GetRGroupMatching() const { return rgroupLabelling; }
+  unsigned int GetRGroupCoreAlignment() const { return alignment; }
   unsigned int  GetChunkSize() const { return chunkSize; }
   bool GetOnlyMatchAtRGroups() const { return onlyMatchAtRGroups; }
   bool GetRemoveRGroupsThatAreAllHydrogen() const { return removeAllHydrogenRGroups; }

@@ -152,7 +152,7 @@ struct rgroupdecomp_wrapper {
         .export_values();
 
     python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")
-        .value("AtomNum", RDKit::AtomNum)
+        .value("AtomMap", RDKit::AtomMap)
         .value("Isotope", RDKit::Isotope)
         .value("MDLRGroup", RDKit::MDLRGroup)
         .export_values();
