@@ -139,8 +139,8 @@ def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
 def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
   """ Returns the RMS between two conformations.
   By default, the conformers will be aligned to the first conformer
-  of the molecule (i.e. the reference) before RMS calculation and,
-  as a side-effect, will be left in the aligned state.
+  before the RMS calculation and, as a side-effect, the second will be left
+  in the aligned state.
 
   Arguments:
     - mol:        the molecule
@@ -149,8 +149,8 @@ def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
     - atomIds:    (optional) list of atom ids to use a points for
                   alingment - defaults to all atoms
     - prealigned: (optional) by default the conformers are assumed
-                  be unaligned and will therefore be aligned to the
-                  first conformer
+                  be unaligned and the second conformer be aligned
+                  to the first
 
   """
   # align the conformers if necessary
@@ -185,12 +185,14 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
                   be unaligned and will therefore be aligned to the
                   first conformer
 
-  Note that the returned RMS matrix is symmetrically, i.e. it is the
+  Note that the returned RMS matrix is symmetrical, i.e. it is the
   lower half of the matrix, e.g. for 5 conformers:
   rmsmatrix = [ a,
                 b, c,
                 d, e, f,
                 g, h, i, j]
+  where a is the RMS between conformers 0 and 1, b is the RMS between
+  conformers 0 and 2, etc.
   This way it can be directly used as distance matrix in e.g. Butina
   clustering.
 

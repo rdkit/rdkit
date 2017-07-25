@@ -427,7 +427,7 @@ class PDFPage(PDFObject):
 
   def setStream(self, data):
     if isinstance(data, (list, tuple)):
-      data = LINEEND.join(data, LINEEND)
+      data = LINEEND.join(data)
     self.stream.setStream(data)
 
 

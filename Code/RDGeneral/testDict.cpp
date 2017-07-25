@@ -569,6 +569,72 @@ void testConstReturns() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testUpdate() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing dict update." << std::endl;
+
+  {
+    Dict d;
+    std::string sv;
+    sv = "1.3";
+    d.setVal("foo", sv);
+    double dv = 3.0;
+    d.setVal("foo2", dv);
+    std::vector<int> f;
+    f.push_back(1);
+    f.push_back(2);
+    d.setVal("foo3", f);
+    
+    Dict d2;
+    d2.update(d);
+    TEST_ASSERT(d.getVal<std::string>("foo") == d2.getVal<std::string>("foo"));
+    TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
+  }
+  
+  {
+    Dict d;
+    std::string sv;
+    sv = "1.3";
+    d.setVal("foo", sv);
+    double dv = 3.0;
+    d.setVal("foo2", dv);
+    std::vector<int> f;
+    f.push_back(1);
+    f.push_back(2);
+    d.setVal("foo3", f);
+    
+    Dict d2;
+    d2.update(d, false);
+    TEST_ASSERT(d.getVal<std::string>("foo") == d2.getVal<std::string>("foo"));
+    TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
+  }
+
+  {
+    Dict d;
+    std::string sv;
+    sv = "1.3";
+    d.setVal("foo", sv);
+    double dv = 3.0;
+    d.setVal("foo2", dv);
+    std::vector<int> f;
+    f.push_back(1);
+    f.push_back(2);
+    d.setVal("foo3", f);
+    
+    Dict d2;
+    d2.setVal("foo", 1);
+    d2.update(d, true);
+    TEST_ASSERT(1 == d2.getVal<int>("foo"));
+    TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
+  }
+  
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  
+}
+
 int main() {
   RDLog::InitLogs();
   testGithub940();
@@ -662,6 +728,6 @@ int main() {
   testVectToString();
 #endif
   testConstReturns();
-  
+  testUpdate();
   return 0;
 }

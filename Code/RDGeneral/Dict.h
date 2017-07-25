@@ -63,6 +63,21 @@ public:
     reset(); // to clear pointers if necessary
   }
 
+  void update(const Dict &other, bool preserveExisting=false) {
+    if(!preserveExisting) {
+      *this = other;
+    }
+    else {
+      for (size_t i=0; i< other._data.size(); ++i) {
+        const Pair & pair = other._data[i];
+        if(!hasVal(pair.key)) {
+          _data.push_back(pair);
+          copy_rdvalue(_data.back().val, pair.val);
+        }
+      }
+    }
+  }
+  
   Dict &operator=(const Dict &other) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {

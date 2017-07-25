@@ -52,11 +52,18 @@ class EditableMol : boost::noncopyable {
     PRECONDITION(atom, "bad atom");
     return dp_mol->addAtom(atom, true, false);
   };
-  void ReplaceAtom(unsigned int idx, Atom *atom) {
+  void ReplaceAtom(unsigned int idx, Atom *atom,
+                   bool updateLabels, bool preserveProps) {
     PRECONDITION(dp_mol, "no molecule");
     PRECONDITION(atom, "bad atom");
-    dp_mol->replaceAtom(idx, atom);
+    dp_mol->replaceAtom(idx, atom, updateLabels, preserveProps);
   };
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+    PRECONDITION(dp_mol, "no molecule");
+    PRECONDITION(bond, "bad bond");
+    dp_mol->replaceBond(idx, bond, preserveProps);
+  };
+  
   ROMol *GetMol() const {
     PRECONDITION(dp_mol, "no molecule");
     ROMol *res = new ROMol(*dp_mol);
@@ -97,17 +104,27 @@ struct EditableMol_wrapper {
              "Remove the specified bond from the molecule")
 
         .def("AddBond", &EditableMol::AddBond,
-             (python::arg("mol"), python::arg("beginAtomIdx"),
+             (python::arg("beginAtomIdx"),
               python::arg("endAtomIdx"),
               python::arg("order") = Bond::UNSPECIFIED),
              "add a bond, returns the index of the newly added bond")
 
         .def("AddAtom", &EditableMol::AddAtom,
-             (python::arg("mol"), python::arg("atom")),
+             (python::arg("atom")),
              "add an atom, returns the index of the newly added atom")
+        
         .def("ReplaceAtom", &EditableMol::ReplaceAtom,
-             (python::arg("mol"), python::arg("index"), python::arg("newAtom")),
-             "replaces the specified atom with the provided one")
+             (python::arg("index"), python::arg("newAtom"),
+              python::arg("updateLabel")=false, python::arg("preserveProps")=false),
+             "replaces the specified atom with the provided one\n"
+             "If updateLabel is True, the new atom becomes the active atom\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new atom")
+        .def("ReplaceBond", &EditableMol::ReplaceBond,
+             (python::arg("index"), python::arg("newBond"),
+              python::arg("preserveProps")=false),
+             "replaces the specified bond with the provided one.\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new bond")
+        
         .def("GetMol", &EditableMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());
