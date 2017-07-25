@@ -262,7 +262,7 @@ struct CartesianProduct {
   size_t maxPermutations;
   size_t permutationCount;
   CartesianProduct(const std::vector<size_t> &inputSizes)
-      : permutation(sizes.size(), 0), sizes(inputSizes), permutationCount(0) {
+      : permutation(inputSizes.size(), 0), sizes(inputSizes), permutationCount(0) {
     maxPermutations = 1;
     for (size_t i = 0; i < sizes.size(); ++i)
       maxPermutations *= sizes[i];  // may overflow....
