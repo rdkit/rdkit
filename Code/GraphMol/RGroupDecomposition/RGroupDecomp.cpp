@@ -330,24 +330,28 @@ double score(const std::vector<size_t> &permutation,
           }
       }
     }
-    // scoring system is the max # of matches per label
-    //  I.e. if we have 5 matches and 3 non-matches, the score for the
-    //  label is 5./8.
-    double tempScore = 1.;
-    int maxMatches = 0;
-    std::string m;
+    
+    // get the counts for each rgroup found and sort in reverse order
+    std::vector<int> equivalentRGroupCount;
+    
     for (std::map<std::string, int>::const_iterator it = matchSet.begin();
          it != matchSet.end(); ++it) {
-      if (it->second > maxMatches) {
-        tempScore *= it->second/(double)matches.size();
-        maxMatches = it->second;
-        m = it->first;
-      }
+      equivalentRGroupCount.push_back(it->second);
     }
-#ifdef DEBUG                                  
-    std::cerr << "Max Matches :" << maxMatches << " at rgroup " << m << std::endl;
-#endif    
+    std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
+              std::greater<int>());
+    
+    double tempScore = 1.;
+    // score the sets from the largest to the smallest
+    //  each smaller set gets penalized (i+1) below
+    //  1.0 is the perfect score
+    for(size_t i=0; i<equivalentRGroupCount.size(); ++i) {
+      tempScore *= equivalentRGroupCount[i]/( (i+1) * (double)matches.size());
+    }
+
     // overweight linkers with the same attachments points....
+    //  because these belong to 2 rgroups we really want these to stay
+    //  ** this heuristic really should be taken care of above **
     int maxLinkerMatches = 0;
     for (std::map<std::set<int>, int>::const_iterator it = linkerMatchSet.begin();
          it != linkerMatchSet.end(); ++it) {
@@ -363,7 +367,6 @@ double score(const std::vector<size_t> &permutation,
     double linkerIncrement = 1.0; // no change in score
     if(maxLinkerMatches) {
       linkerIncrement = (double)(maxLinkerMatches) / (double)matches.size();
-    } else if(!maxMatches) { // nothing happens
     } else {
       increment = tempScore;
     }
