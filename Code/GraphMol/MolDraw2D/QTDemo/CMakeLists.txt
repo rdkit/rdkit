@@ -13,7 +13,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 include_directories(
-  ${Boost_INCLUDE_DIRS}
   ${RDKIT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR} )
 
@@ -32,7 +31,7 @@ set( RDKitSV_INCS MolDisplay2DWidget.H
   QTGet2Strings.H
   QT4SelectItems.H )
 
-set( LIBS ${Boost_LIBRARIES}
+set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
   ${RDKit_THREAD_LIBS}
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib

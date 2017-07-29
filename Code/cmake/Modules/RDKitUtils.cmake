@@ -125,7 +125,7 @@ else(WIN32)
                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
 endif(WIN32)
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                          ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
+                          ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES} )
 
     INSTALL(TARGETS ${RDKPY_NAME}
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})

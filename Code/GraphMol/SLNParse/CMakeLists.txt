@@ -6,9 +6,8 @@ else(RDK_USE_FLEXBISON)
   set(BISON_EXECUTABLE "")
 endif(RDK_USE_FLEXBISON)
 
-set(T_LIBS ${Boost_LIBRARIES})
 find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
-set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+list(APPEND Boost_IMPORTED_LIBRARIES "Boost::regex")
 
 if(MSVC)
   ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
@@ -49,7 +48,7 @@ endif(BISON_EXECUTABLE)
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp 
               ${BISON_OUTPUT_FILES} ${FLEX_OUTPUT_FILES}
-              LINK_LIBRARIES GraphMol ${Boost_REGEX_LIBRARY} )
+              LINK_LIBRARIES GraphMol Boost::regex )
 
 rdkit_headers(SLNAttribs.h
               SLNParse.h
@@ -57,7 +56,7 @@ rdkit_headers(SLNAttribs.h
 
 rdkit_test(testSLNParse test.cpp 
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
-GraphMol RDGeometryLib RDGeneral  ${Boost_REGEX_LIBRARY}
+GraphMol RDGeometryLib RDGeneral
 )
 
 add_subdirectory(Wrap)

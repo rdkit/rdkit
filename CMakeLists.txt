@@ -163,15 +163,18 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
       find_package(Boost 1.45.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
       if(Boost_FOUND)
+        list(APPEND Boost_IMPORTED_LIBRARIES "Boost::${Boost_Python_Lib}")
         break()
       endif()
     endforeach()
     # If boost-python3 not found, just find boost-python and hope that it is compatible with python3
     if(NOT Boost_FOUND)
       find_package(Boost 1.45.0 COMPONENTS python REQUIRED)
+      list(APPEND Boost_IMPORTED_LIBRARIES "Boost::python")
     endif()
   else(PYTHON_VERSION_MAJOR EQUAL 3)
      find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
+     list(APPEND Boost_IMPORTED_LIBRARIES "Boost::python")
   endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
 
@@ -207,13 +210,8 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 if(APPLE)
-  # always required
-  set(T_LIBS ${Boost_LIBRARIES})
   find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
-
-  # reset boost libraries so python is still there
-  #  if it had been found before
-  set(Boost_LIBRARIES ${T_LIBS})
+  list(APPEND Boost_IMPORTED_LIBRARIES "Boost::regex")
 
   MESSAGE("== OSX: CHECKING for libc++")
   execute_process( COMMAND /usr/bin/otool "-L" "${Boost_REGEX_LIBRARY_RELEASE}"
@@ -232,8 +230,8 @@ if(APPLE)
   endif()
 endif(APPLE)
 
-target_include_directories(rdkit_base SYSTEM INTERFACE ${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
+# set the boost include directories
+target_link_libraries(rdkit_base INTERFACE Boost::boost)
 
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
@@ -259,12 +257,12 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 find_package (Threads)
 if(RDK_BUILD_THREADSAFE_SSS)
-  set(T_LIBS ${Boost_LIBRARIES})
   find_package(Boost 1.39.0 COMPONENTS thread system)
   if(Boost_THREAD_FOUND AND Boost_SYSTEM_FOUND)
-    set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+    list(APPEND Boost_IMPORTED_LIBRARIES "Boost::thread")
+    list(APPEND Boost_IMPORTED_LIBRARIES "Boost::system")
     target_compile_definitions(rdkit_base INTERFACE -DRDK_THREADSAFE_SSS -DBOOST_ALL_NO_LIB)
-    set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    set(RDKit_THREAD_LIBS Boost::thread Boost::system ${CMAKE_THREAD_LIBS_INIT})
     if(RDK_TEST_MULTITHREADED)
       target_compile_definitions(rdkit_base INTERFACE "-DRDK_TEST_MULTITHREADED")
     endif()
@@ -283,10 +281,9 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    set(T_LIBS ${Boost_LIBRARIES})
     find_package(Boost 1.39.0 COMPONENTS serialization)
     if (Boost_SERIALIZATION_LIBRARY)
-      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
+      list(APPEND Boost_IMPORTED_LIBRARIES "Boost::serialization")
     endif()
 endif()
 
