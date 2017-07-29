@@ -21,14 +21,11 @@ RDGeometryLib
   ${RDKit_THREAD_LIBS} )
 
 if(RDK_BUILD_QT_SUPPORT)
-  #find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-  find_package(Qt5Widgets REQUIRED)
-  find_package(Qt5OpenGL REQUIRED)
+  find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 
   target_sources(MolDraw2D PRIVATE MolDraw2DQt.cpp)
-  target_include_directories(MolDraw2D PUBLIC ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS})
   target_compile_options(MolDraw2D PRIVATE "-std=c++11")
-  target_link_libraries(MolDraw2D PUBLIC ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES})
+  target_link_libraries(MolDraw2D PUBLIC Qt5::Widgets Qt5::OpenGL)
   rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D)
 endif(RDK_BUILD_QT_SUPPORT)
 
