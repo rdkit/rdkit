@@ -4,7 +4,7 @@ Derived by Malitha Humayun Kabir from Greg Landrum's code as a part of GSoC 2017
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Acknowledgement: Peter Gedeck's suggestions helped to improve many lines of codes
-Date: 30th July 2017
+Date: 31th July 2017
 Email# malitha12345@gmail.com
 """
 
@@ -65,7 +65,7 @@ class MolViewState(object):
             self.uid = uid
             
         self.moldict = molecules
-
+        
         # These should have reasonable initial values
         self.rdkit_mol_select = set()
         self.rdkit_conf_select = set()
@@ -79,7 +79,7 @@ class MolViewState(object):
             self.rdkit_mol_select.add(selectMol)
         else:
             self.rdkit_mol_select = {selectMol}
-    
+        
     def selectConformations(self, selectAllConfs, selectMultiConfs, selectConf):
         """ For all selected molecules, select either all conformations or add selectConf or show only selectConf """
         for mol in self.selectedMolecules:
@@ -121,6 +121,166 @@ class MolViewState(object):
         """ Return the number of conformations - use the first selected molecule to determine """
         nconfIds = self.selectedMolecules[0].GetNumConformers()
         return list(range(nconfIds))
+    @property
+    def getPropPrecalculated(self):
+        """ Return the precalculated properties """
+        if len(self.selectedMolNames) == 1:
+            mol = self.moldict[list(self.selectedMolNames)[0]]
+            if len(mol.GetPropNames()) == 0:
+                return 'Not found'
+            else:
+                prop = [(prop,mol.GetProp(prop)) for prop in mol.GetPropNames()]
+                return dict(prop)
+        else:
+            return None
+    @property
+    def getPropRDKit(self):
+        """ Return the RDKit calculated properties """
+        if len(self.selectedMolNames) == 1:
+            mol = self.moldict[list(self.selectedMolNames)[0]]
+            prop = list()
+            for prop_name in PROP_RDKIT:
+                calculator = Descriptors.__dict__[prop_name]
+                prop.append((prop_name,calculator(mol)))
+            return dict(prop)
+        else:
+            return None
+    
+    
+def handleMolAndConf(molViewState):
+    """ Handles molecules and conformers in update3D function """
+    uid = molViewState.uid
+    molViewState.selectMolecules(globals()['selectAllMols_'+uid].value, 
+                                 globals()['selectMultiMols_'+uid].value,
+                                 globals()['molId_'+uid].value)
+    sMolNames = molViewState.selectedMolNames
+    globals()['selected_mols_view_'+uid].value = ', '.join(sMolNames)
+    molViewState.selectConformations(globals()['selectAllConfs_'+uid].value, 
+                                     globals()['selectMultiConfs_'+uid].value,
+                                     globals()['confId_'+uid].value)
+    globals()['confId_'+uid].options = molViewState.allConfIds
+    sConfIds = molViewState.selectedConfIds
+    globals()['selected_confs_view_'+uid].value = ', '.join([str(x) for x in sConfIds])
+    return molViewState
+    
+def handleProperty(molViewState):
+    """ Handles property in update3D function """
+    # For retrieving precalculated property
+    uid = molViewState.uid
+    preCalcProp = molViewState.getPropPrecalculated
+    if isinstance(preCalcProp, dict):
+        try:
+            globals()['prop_precalc_wg_'+uid].options = preCalcProp.keys()
+            prop=globals()['prop_precalc_wg_'+uid].value
+            globals()['prop_precalc_view_'+uid].value = prop + ' : ' + str(preCalcProp[prop])
+        except:
+            pass
+    elif preCalcProp == 'Not found':
+        try:
+            globals()['prop_precalc_view_'+uid].value = 'No precalculated property found!'
+        except:
+            pass
+    else:
+        try:
+            globals()['prop_precalc_view_'+uid].value = 'Single molecule selection required!'
+        except:
+            pass
+        
+    # For retrieving rdkit calculated property
+    propRDKit = molViewState.getPropRDKit
+    if isinstance(propRDKit, dict):
+        try:
+            prop=globals()['prop_calc_wg_'+uid].value
+            globals()['prop_calc_view_'+uid].value = prop + ' : ' + str(propRDKit[prop])
+        except:
+            pass
+    else:
+        try:
+            globals()['prop_calc_view_'+uid].value = 'Single molecule selection required!'
+        except:
+            pass
+    return 'done'
+    
+def handleLigandStyle(uid, view):
+    """ Handles ligand drawing style and color in update3D function """
+    try:
+        drawAs=globals()['drawAs_wg_'+uid].value
+    except:
+        drawAs = globals()['drawAs_no_wg_'+uid]
+    
+    try:
+        color=globals()['colorScheme_'+uid].value
+    except:
+        color = 'default'
+        
+    if drawAs == 'surface':
+        view.addSurface('SES', {});
+    elif drawAs == 'ballstick':
+        view.setStyle({},{'stick':{'radius':'0.2','colorscheme': color},
+                          'sphere':{'radius':'0.4', 'colorscheme': color}
+                         }
+                     );
+    else:
+        view.setStyle({},{drawAs:{'colorscheme': color}})
+            
+    return view
+    
+
+def handleLigandLabeling(molViewState, view):
+    """ Handles ligand labeling (conf label and atom label) in update3D function """
+    uid = molViewState.uid
+    sMolNames = molViewState.selectedMolNames
+    sConfIds = molViewState.selectedConfIds
+    if len(sMolNames)==1 and len(sConfIds)==1:
+        mol = molViewState.moldict[list(sMolNames)[0]]
+        confId=globals()['confId_'+uid].value
+        sconf = mol.GetConformer(confId)
+        xyz = sconf.GetPositions()
+        try:
+            if globals()['confLabel_'+uid].value:
+                label = list(sMolNames)[0] + ':' + str(confId)
+                view.addLabel(label, {'backgroundColor':'gray', 'fontColor':'white',
+                                      'showBackground':'true', 'alignment':'bottomCenter'})
+            if globals()['atomLabel_'+uid].value:
+                labels=list()
+                for i in list(range(sconf.GetNumAtoms())):
+                    perAtomLabel = mol.GetAtomWithIdx(i).GetSymbol()+str(mol.GetAtomWithIdx(i).GetIdx())
+                    labels.append(perAtomLabel)
+                
+                for j in range(sconf.GetNumAtoms()):
+                    view.addLabel(labels[j], {'inFront' : 'false', 
+                                              'fontSize' : '12',
+                                              'fontColor':'gray',
+                                              'showBackground':'false',
+                                              'position' : {'x' : xyz[j][0], 'y' : xyz[j][1], 'z' : xyz[j][2]}
+                                             })
+        except:
+            pass
+    return view
+    
+def handleProteinStyle(uid, view, pModelNum):
+    """ Handles protein drawing style in update3D function """
+    try:
+        pStyle=globals()['pStyle_wg_'+uid].value
+    except:
+        pStyle = globals()['pStyle_no_wg_'+uid]
+        
+    if pStyle == 'cartoon':
+        try:
+            # helicesAsTubes variable is possible only if useDrawAs is True
+            helicesAsTubes = globals()['pStyle_tube_wg_'+uid].value
+            if helicesAsTubes:
+                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
+                                                              'arrows': 'true', 'tubes' : 'true'}})
+            else:
+                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
+        except:
+            view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
+    elif pStyle == 'surface':
+        view.addSurface('SES', {'model':pModelNum});
+    elif pStyle == 'line':
+        view.setStyle({'model':pModelNum},{'line':{}});
+    return view
     
     
 def update3D(model_id):
@@ -136,25 +296,15 @@ def update3D(model_id):
         view.removeAllSurfaces()
         view.removeAllLabels()
         
-        
         uid = globals()['ipy_wgs'][model_id]
         molViewState  = globals()['mol_views'][uid]
         
-        molViewState.selectMolecules(globals()['selectAllMols_'+uid].value, 
-                                     globals()['selectMultiMols_'+uid].value,
-                                     globals()['molId_'+uid].value)
         
-        sMolNames = molViewState.selectedMolNames
-        globals()['selected_mols_view_'+uid].value = ', '.join(sMolNames)
+        # handling mol and conf
+        molViewState = handleMolAndConf(molViewState)
         
-        molViewState.selectConformations(globals()['selectAllConfs_'+uid].value, 
-                                         globals()['selectMultiConfs_'+uid].value,
-                                         globals()['confId_'+uid].value)
-        
-        globals()['confId_'+uid].options = molViewState.allConfIds
-        
-        sConfIds = molViewState.selectedConfIds
-        globals()['selected_confs_view_'+uid].value = ', '.join([str(x) for x in sConfIds])
+        # handling properties
+        handleProperty(molViewState)
         
         # Add models (molecules/conformations) to viewer
         pModelNum = 0
@@ -162,135 +312,24 @@ def update3D(model_id):
             pModelNum = pModelNum+1
             globals()['view_'+uid].addModel(model, 'sdf')
             
+        # Ligand Drawing style and colors
+        view=handleLigandStyle(uid, view)
+        # Ligand labeling
+        view = handleLigandLabeling(molViewState, view)
         
-        
-        if len(sMolNames)==1:
-            mol = molViewState.moldict[list(sMolNames)[0]]
-            # For precalculated property
-            try:
-                precalculatedPropNames=list(mol.GetPropNames())
-                if len(all_prop_from_mol)>0:
-                    globals()['prop_precalc_wg_'+uid].options=precalculatedPropNames
-                    prop_name=globals()['prop_precalc_wg_'+uid].value
-                    prop_str = prop_name + ' : ' + str(mol.GetProp(prop_name))
-                    globals()['prop_precalc_view_'+uid].value = prop_str
-                else:
-                    globals()['prop_precalc_view_'+uid].value = 'No precalculated property found!'
-            except:
-                pass
+        # Add model (protein) to viewer
+        if 'protein_'+uid in globals():
+            # Show protein if visibitity is true
+            if globals()['proteinVisible_'+uid].value:
+                pdb = Chem.MolToPDBBlock(globals()['protein_'+uid])
+                view.addModel(pdb,'pdb')
+                # Protein Drawing style and colors
+                view = handleProteinStyle(uid, view, pModelNum)
                 
-            # For calculating rdkit supported property
-            try:
-                prop_name=globals()['prop_calc_wg_'+uid].value
-                calculator = Descriptors.__dict__[prop_name]
-                prop_str = prop_name + ' : ' + str(calculator(mol))
-                globals()['prop_calc_view_'+uid].value = prop_str
-            except:
-                pass
-        elif len(sMolNames)>1:
-            try:
-                globals()['prop_precalc_view_'+uid].value = 'single molecule selection required!'
-                globals()['prop_calc_view_'+uid].value = 'single molecule selection required!'
-            except:
-                pass
-                
-                
-        try:
-            drawAs=globals()['drawAs_wg_'+uid].value
-        except:
-            drawAs = globals()['drawAs_no_wg_'+uid]
-        
-        try:
-            ligand_color=globals()['colorScheme_'+uid].value
-        except:
-            ligand_color = 'default'
-            
-            
-        if drawAs == 'surface':
-            view.addSurface('SES', {});
-        elif drawAs == 'ballstick':
-            view.setStyle({},{'stick':{'radius':'0.2','colorscheme': ligand_color},
-                              'sphere':{'radius':'0.4', 'colorscheme': ligand_color}});
-        else:
-            view.setStyle({},{drawAs:{'colorscheme': ligand_color}})
-            
-            
-        if len(sMolNames)==1 and len(sConfIds)==1:
-            mol = molViewState.moldict[list(sMolNames)[0]]
-            confId=globals()['confId_'+uid].value
-            sconf = mol.GetConformer(confId)
-            xyz = sconf.GetPositions()
-            OwningMol = sconf.GetOwningMol()
-            
-            try:
-                labelConf=globals()['confLabel_'+uid].value
-                labelAtom=globals()['atomLabel_'+uid].value
-                if labelConf:
-                    if type(molDictKey) != 'str':
-                        molDictKey = str(molDictKey)
-                    label = molDictKey + ':' + str(confId)
-                    view.addLabel(label, {'backgroundColor':'gray', 'fontColor':'white',
-                                          'showBackground':'true', 'alignment':'bottomCenter'})
-                    
-                if labelAtom:
-                    label_create=[OwningMol.GetAtomWithIdx(i).GetSymbol()+
-                                  str(OwningMol.GetAtomWithIdx(i).GetIdx()+1) 
-                                  for i in range(sconf.GetNumAtoms())
-                                 ]
-                    i = None
-                    for i in range(sconf.GetNumAtoms()):
-                        view.addLabel(label_create[i], {'inFront' : 'false', 
-                                                        'fontSize' : '12',
-                                                        'fontColor':'gray',
-                                                        'showBackground':'false',
-                                                        'position' : {'x' : xyz[i][0],
-                                                                      'y' : xyz[i][1],
-                                                                      'z' : xyz[i][2]
-                                                                   }
-                                                       })
-            except:
-                pass
-                
-        
-        # Add protein in viewer
-        try:
-            pVisibility = globals()['proteinVisible_'+uid].value
-            
-            if pVisibility:
-                try:
-                    pStyle=globals()['pStyle_wg_'+uid].value
-                except:
-                    pStyle = globals()['pStyle_no_wg_'+uid]
-                    
-                if 'protein_'+uid in globals():
-                    pdb = Chem.MolToPDBBlock(globals()['protein_'+uid])
-                    globals()['view_'+uid].addModel(pdb,'pdb')
-                    
-                    if pStyle == 'cartoon':
-                        try:
-                            # helicesAsTubes variable is possible only if useDrawAs is True
-                            helicesAsTubes = globals()['pStyle_tube_wg_'+uid].value
-                            if helicesAsTubes:
-                                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
-                                                                               'arrows': 'true',
-                                                                               'tubes' : 'true'}})
-                            else:
-                                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
-                                                                              'arrows': 'true'}})
-                        except:
-                            view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
-                                                                          'arrows': 'true'}})
-                    elif pStyle == 'surface':
-                        view.addSurface('SES', {'model':pModelNum});
-                    elif pStyle == 'line':
-                        view.setStyle({'model':pModelNum},{'line':{}});
-        except:
-            pass
-        
-        
         # zoomTo does not work well for surface and label... so, zoomTo should not be default settings
         #view.zoomTo()
         view.setBackgroundColor(globals()['background_'+uid].value)
+        
         display(view.update())
         
     
@@ -313,7 +352,7 @@ def handle_zoomTo_button(b):
     display(globals()['view_'+uid].update())
     
     
-def ChangeActiveLigand(uid, molId, confId, keepExistingModels = False):
+def ChangeActiveLigand(uid, molId, confId, keepExistingModels = True):
     """This function handles ligand select through python code
     uid : string 
     molId : string 
@@ -370,27 +409,19 @@ def ShowConformers3D(uid = None,
     globals()['mol_views'][molViewState.uid] = molViewState
     
     uid = molViewState.uid
-    keys=molViewState.moldict.keys()
-    
-    wgListBox=list()
-    itemLayout=Layout(display='flex_box', flex_flow='row', justify_content='space-between')
-    
     
     # Required global objects
     globals()['rdkit_3dviewer_start_button_clicked_'+uid] = False
     globals()['drawAs_no_wg_'+uid] = drawAs
     globals()['pStyle_no_wg_'+uid] = pStyle
     
-    
-    if 'ipy_wgs' not in globals():
-        globals()['ipy_wgs'] = dict()
-    
+    keys=molViewState.moldict.keys()
     
     # Right hand panel (widgets)
     
-    itemLayout=Layout(display='flex_box', flex_flow='row', justify_content='space-between')
-    
     wgListBox=list()
+    
+    itemLayout=Layout(display='flex', flex_flow='row', justify_content='space-between')
     
     wgListBox.append(Box([Label(value='uid'), HTML(description='', value=str(uid))], layout=itemLayout))
     
@@ -399,10 +430,6 @@ def ShowConformers3D(uid = None,
         #print 'adding protein'
         globals()['protein_'+uid] = protein
     
-    
-    # molecules and conformers
-    globals()['moldict_'+uid] = moldict
-    keys=list(globals()['moldict_'+uid].keys())
     
     # Users are expected to have keys int. 
     # If keys are not str then still the rendering is possible but ChangeActiveLigand() wont't work currently
@@ -497,7 +524,7 @@ def ShowConformers3D(uid = None,
             wgListBox.append(Box([Label(value='pStyle'),globals()['pStyle_wg_'+uid]], layout=itemLayout))
             rdkitWG[globals()['pStyle_wg_'+uid]._model_id] = uid
             globals()['pStyle_wg_'+uid].observe(handle_change, names='value')
-
+            
             globals()['pStyle_tube_wg_'+uid] = Checkbox(description='helicesAsTubes', value=False)
             wgListBox.append(Box([Label(value=''),globals()['pStyle_tube_wg_'+uid]], layout=itemLayout))
             rdkitWG[globals()['pStyle_tube_wg_'+uid]._model_id] = uid
