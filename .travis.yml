@@ -3,7 +3,9 @@ language: python
 python:
  # We don't actually use the Travis Python, but this keeps it organized.
  - "2.7"
- - "3.4"
+ - "3.6"
+ 
+ dist: trusty
 
 # switch to new infrastructure
 sudo: false
@@ -36,7 +38,7 @@ install:
  - conda install -q numpy pillow pandas # matplotlib
 
  # install the conda boost packages from the RDKit binstar channel.
- - conda install -q -c rdkit boost=1.55.0
+ - conda install -q -c rdkit boost=1.56.0
  # install eigen from conda-forge
  - conda install -q -c conda-forge eigen
 
