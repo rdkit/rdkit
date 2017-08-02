@@ -21,7 +21,7 @@ rdkit_python_extension(rdqueries
                        GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
-find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
+find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
 set(rdmolfiles_sources rdmolfiles.cpp
                        ForwardSDMolSupplier.cpp
                        SDMolSupplier.cpp TDTMolSupplier.cpp
