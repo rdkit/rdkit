@@ -50,58 +50,43 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
-
 class RGroupDecompositionHelper {
-  RGroupDecomposition * decomp;
+  RGroupDecomposition *decomp;
 
-public:  
+ public:
   ~RGroupDecompositionHelper() { delete decomp; }
 
-  RGroupDecompositionHelper(const ROMol &core,
-                            const RGroupDecompositionParameters &params=RGroupDecompositionParameters()) : decomp(new RGroupDecomposition(core, params)) {}
-
-  RGroupDecompositionHelper(python::tuple cores,
-                            const RGroupDecompositionParameters &params=RGroupDecompositionParameters()) {
-    MOL_SPTR_VECT coreMols;
-    unsigned int len1 =
-        python::extract<unsigned int>(cores.attr("__len__")());
-    coreMols.resize(len1);
-    for (unsigned int i = 0; i < len1; ++i) {
-      coreMols[i] = python::extract<ROMOL_SPTR>(cores[i]);
-      if (!coreMols[i]) throw_value_error("reaction called with None reactants");
+  RGroupDecompositionHelper(python::object cores,
+                            const RGroupDecompositionParameters &params =
+                                RGroupDecompositionParameters()) {
+    python::extract<ROMol> isROMol(cores);
+    if (isROMol.check()) {
+      decomp = new RGroupDecomposition(isROMol(), params);
+    } else {
+      MOL_SPTR_VECT coreMols;
+      python::stl_input_iterator<ROMOL_SPTR> iter(cores), end;
+      while (iter != end) {
+        if (!*iter) throw_value_error("reaction called with None reactants");
+        coreMols.push_back(*iter);
+        ++iter;
+      }
+      decomp = new RGroupDecomposition(coreMols, params);
     }
-    decomp = new RGroupDecomposition(coreMols, params);
   }
 
-  RGroupDecompositionHelper(python::list cores,
-                            const RGroupDecompositionParameters &params=RGroupDecompositionParameters()) {
-    MOL_SPTR_VECT coreMols;
-    unsigned int len1 =
-        python::extract<unsigned int>(cores.attr("__len__")());
-    coreMols.resize(len1);
-    for (unsigned int i = 0; i < len1; ++i) {
-      coreMols[i] = python::extract<ROMOL_SPTR>(cores[i]);
-      if (!coreMols[i]) throw_value_error("reaction called with None reactants");
-    }
-    decomp = new RGroupDecomposition(coreMols, params);
-  }
-
-  int  Add(const ROMol &mol) { return decomp->add(mol); }
+  int Add(const ROMol &mol) { return decomp->add(mol); }
   bool Process() { return decomp->process(); }
-    
 
   python::list GetRGroupsAsRows() {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
 
-    for(RGroupRows::const_iterator it=groups.begin();
-        it != groups.end();
-        ++it) {
+    for (RGroupRows::const_iterator it = groups.begin(); it != groups.end();
+         ++it) {
       python::dict dict;
       const RGroupRow &side_chains = *(it);
-      for(RGroupRow::const_iterator sit = side_chains.begin();
-          sit != side_chains.end();
-          ++sit) {
+      for (RGroupRow::const_iterator sit = side_chains.begin();
+           sit != side_chains.end(); ++sit) {
         dict[sit->first] = sit->second;
       }
       result.append(dict);
@@ -111,31 +96,28 @@ public:
 
   python::dict GetRGroupsAsColumn() {
     python::dict result;
-    
+
     RGroupColumns groups = decomp->getRGroupsAsColumns();
-    
-    for(RGroupColumns::const_iterator it=groups.begin();
-        it != groups.end();
-        ++it) {
+
+    for (RGroupColumns::const_iterator it = groups.begin(); it != groups.end();
+         ++it) {
       python::list col;
-      
-      for(RGroupColumn::const_iterator cit = it->second.begin();
-          cit != it->second.end();
-          ++cit) {
-        col.append( *cit );
+
+      for (RGroupColumn::const_iterator cit = it->second.begin();
+           cit != it->second.end(); ++cit) {
+        col.append(*cit);
       }
       result[it->first] = col;
     }
     return result;
   }
 };
-  
+
 struct rgroupdecomp_wrapper {
   static void wrap() {
-
     python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
         .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
-    
+
     std::string docString = "";
     python::enum_<RDKit::RGroupLabels>("RGroupLabels")
         .value("IsotopeLabels", RDKit::IsotopeLabels)
@@ -161,41 +143,43 @@ struct rgroupdecomp_wrapper {
         .value("None", RDKit::None)
         .value("MCS", RDKit::MCS)
         .export_values();
-    
-    python::class_<RDKit::RGroupDecompositionParameters>(
-        "RGroupDecompositionParameters",
-        docString.c_str(),
-        python::init<>("Constructor, takes no arguments"))
-        
-        .def(python::init<
-             RGroupLabels,
-             RGroupMatching,
-             RGroupLabelling,
-             RGroupCoreAlignment,
-             unsigned int, bool, bool>())
-        .def("SetRGroupLabels", &RDKit::RGroupDecompositionParameters::SetRGroupLabels)
-        .def("GetRGroupLabels", &RDKit::RGroupDecompositionParameters::GetRGroupLabels)
-        .def("SetRGroupLabelling", &RDKit::RGroupDecompositionParameters::SetRGroupLabelling)
-        .def("GetRGroupLabelling", &RDKit::RGroupDecompositionParameters::GetRGroupLabelling)
-        .def("SetRGroupMatching", &RDKit::RGroupDecompositionParameters::SetRGroupMatching)
-        .def("GetRGroupMatching", &RDKit::RGroupDecompositionParameters::GetRGroupMatching)
-        .def("SetRGroupCoreAlignment", &RDKit::RGroupDecompositionParameters::SetRGroupCoreAlignment)
-        .def("GetRGroupCoreAlignment", &RDKit::RGroupDecompositionParameters::GetRGroupCoreAlignment)
 
-            ;
-    
+    python::class_<RDKit::RGroupDecompositionParameters>(
+        "RGroupDecompositionParameters", docString.c_str(),
+        python::init<>("Constructor, takes no arguments"))
+
+        .def(python::init<RGroupLabels, RGroupMatching, RGroupLabelling,
+                          RGroupCoreAlignment, unsigned int, bool, bool>())
+        .def("SetRGroupLabels",
+             &RDKit::RGroupDecompositionParameters::SetRGroupLabels)
+        .def("GetRGroupLabels",
+             &RDKit::RGroupDecompositionParameters::GetRGroupLabels)
+        .def("SetRGroupLabelling",
+             &RDKit::RGroupDecompositionParameters::SetRGroupLabelling)
+        .def("GetRGroupLabelling",
+             &RDKit::RGroupDecompositionParameters::GetRGroupLabelling)
+        .def("SetRGroupMatching",
+             &RDKit::RGroupDecompositionParameters::SetRGroupMatching)
+        .def("GetRGroupMatching",
+             &RDKit::RGroupDecompositionParameters::GetRGroupMatching)
+        .def("SetRGroupCoreAlignment",
+             &RDKit::RGroupDecompositionParameters::SetRGroupCoreAlignment)
+        .def("GetRGroupCoreAlignment",
+             &RDKit::RGroupDecompositionParameters::GetRGroupCoreAlignment)
+
+        ;
+
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
-        "RGroupDecomposition", 
-        docString.c_str(), 
-        python::init<const ROMol &>("Construct from a Query or Molecule"))
-        .def(python::init<python::tuple>("Construct from a list of cores"))
-        .def(python::init<python::list>("Construct from a list of cores"))
+        "RGroupDecomposition", docString.c_str(),
+        python::init<python::object>(
+            "Construct from a molecule or sequence of molecules"))
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
-             "Process the rgroups (must be done prior to GetRGroupsAsRows/Columns)")
+             "Process the rgroups (must be done prior to "
+             "GetRGroupsAsRows/Columns)")
         .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows)
-        .def("GetRGroupsAsColumns", &RGroupDecompositionHelper::GetRGroupsAsColumn);
-    
+        .def("GetRGroupsAsColumns",
+             &RGroupDecompositionHelper::GetRGroupsAsColumn);
   };
 };
 }
@@ -204,5 +188,4 @@ BOOST_PYTHON_MODULE(rdRGroupDecomposition) {
   python::scope().attr("__doc__") =
       "Module containing RGroupDecomposition classes and functions.";
   RDKit::rgroupdecomp_wrapper::wrap();
-
 }
