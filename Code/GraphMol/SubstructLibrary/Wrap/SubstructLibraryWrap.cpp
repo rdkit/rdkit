@@ -84,10 +84,10 @@ const char * SubstructLibraryDoc = "SubstructLibrary: This provides a simple API
     "...                               'NCI', 'first_200.props.sdf')):\n" \
     "...   idx = library.AddMol(mol)\n" \
     ">>> core = Chem.MolFromSmarts('CCCCOC')\n"  \
-    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> indices = library.GetMatches(core)\n" \
     ">>> len(indices)\n" \
     "11\n" \
-    "\n" \    
+    "\n" \
     "\n" \
     "Substructure matching options can be sent into GetMatches:\n" \
     ">>> indices = library.GetMatches(core, useChirality=False) \n" \
@@ -119,7 +119,7 @@ const char * SubstructLibraryDoc = "SubstructLibrary: This provides a simple API
     ">>> for mol in Chem.SDMolSupplier(os.path.join(RDConfig.RDDataDir, \n" \
     "...                               'NCI', 'first_200.props.sdf')):\n" \
     "...   idx = library.AddMol(mol)\n" \
-    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> indices = library.GetMatches(core)\n" \
     ">>> len(indices)\n" \
     "11\n" \
     "\n"                                             \
@@ -136,7 +136,7 @@ const char * SubstructLibraryDoc = "SubstructLibrary: This provides a simple API
     "...         pattern_holder.MakeFingerprint(Chem.MolFromSmiles(row[0])))\n" \
     "...     assert idx==idx2\n" \
     ">>> library = rdSubstructLibrary.SubstructLibrary(molholder,pattern_holder)\n" \
-    ">>> indices = library.GetMatches(core)\n" \    
+    ">>> indices = library.GetMatches(core)\n" \
     ">>> len(indices)\n" \
     "11\n" \
     "";
