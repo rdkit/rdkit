@@ -4,7 +4,7 @@ Derived by Malitha Humayun Kabir from Greg Landrum's code as a part of GSoC 2017
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Acknowledgement: Peter Gedeck's suggestions helped to improve many lines of codes
-Date: 31th July 2017
+Date: 6th August 2017
 Email# malitha12345@gmail.com
 """
 
@@ -16,7 +16,7 @@ from ipywidgets import Layout, Label, Button, Box, HBox, VBox
 from ipywidgets import Dropdown, SelectMultiple, IntSlider, HTML, Checkbox, Button, Text
 from IPython.display import display
 import time
-
+import sys
 
 ##### Visualization
 
@@ -24,15 +24,16 @@ BGCOLORS_3D = ('0x000000', '0xeeeeee', '0xffffff')
 
 PROP_RDKIT = tuple(sorted(prop for prop, _ in Descriptors._descList))
 
-DRAWING_LIGAND_3D=('line', 'cross', 'stick', 'cartoon', 'sphere', 'surface', 'ballstick')
+DRAWING_LIGAND_3D=('line', 'cross', 'stick', 'sphere', 'surface', 'ballstick')
 
 DRAWING_PROTEIN_3D=('line', 'cartoon', 'surface')
 
-COLOR_SCHEME_3D=('default', 'greenCarbon', 'cyanCarbon', 'magentaCarbon', 
-                 'yellowCarbon', 'whiteCarbon', 'orangeCarbon', 'purpleCarbon', 
-                 'blueCarbon', 'ssPyMOL', 'ssJmol', 'Jmol', 'amino', 
-                 'shapely', 'nucleic', 'chain', 'chainHetatm', 'prop')
+LIGAND_COLOR_SCHEME_3D=('default', 'greenCarbon', 'cyanCarbon', 'magentaCarbon',
+                        'yellowCarbon', 'whiteCarbon', 'orangeCarbon', 'purpleCarbon', 
+                        'blueCarbon', 'ssPyMOL', 'ssJmol', 'Jmol', 'amino', 
+                        'shapely', 'nucleic', 'chain', 'chainHetatm', 'prop')
 
+REPRESENTATION_DEFAULT = {'ligand' : 'stick', 'protein' : 'cartoon'}
 
 # I think this function is not required
 # User should be able to supply appropriate input
@@ -57,14 +58,11 @@ def ProcessMolContainingObj(mol):
     
     
 class MolViewState(object):
-    def __init__(self, molecules, uid):
+    def __init__(self, uid, molecules, protein):
         """ Molecules is dictionary of molecules """
-        if uid is None:
-            self.uid = str(time.time()).replace('.','')
-        else:
-            self.uid = uid
-            
+        self.uid = uid
         self.moldict = molecules
+        self.protein = protein
         
         # These should have reasonable initial values
         self.rdkit_mol_select = set()
@@ -150,67 +148,60 @@ class MolViewState(object):
 def handleMolAndConf(molViewState):
     """ Handles molecules and conformers in update3D function """
     uid = molViewState.uid
-    molViewState.selectMolecules(globals()['selectAllMols_'+uid].value, 
-                                 globals()['selectMultiMols_'+uid].value,
-                                 globals()['molId_'+uid].value)
+    wgData = globals()['wgData'][uid]
+    molViewState.selectMolecules(wgData['selectAllMols'].value, 
+                                 wgData['selectMultiMols'].value,
+                                 wgData['molId'].value)
     sMolNames = molViewState.selectedMolNames
-    globals()['selected_mols_view_'+uid].value = ', '.join(sMolNames)
-    molViewState.selectConformations(globals()['selectAllConfs_'+uid].value, 
-                                     globals()['selectMultiConfs_'+uid].value,
-                                     globals()['confId_'+uid].value)
-    globals()['confId_'+uid].options = molViewState.allConfIds
+    wgData['selected_mols_view'].value = ', '.join(sMolNames)
+    molViewState.selectConformations(wgData['selectAllConfs'].value, 
+                                     wgData['selectMultiConfs'].value,
+                                     wgData['confId'].value)
+    wgData['confId'].options = molViewState.allConfIds
     sConfIds = molViewState.selectedConfIds
-    globals()['selected_confs_view_'+uid].value = ', '.join([str(x) for x in sConfIds])
+    wgData['selected_confs_view'].value = ', '.join([str(x) for x in sConfIds])
     return molViewState
     
 def handleProperty(molViewState):
     """ Handles property in update3D function """
     # For retrieving precalculated property
     uid = molViewState.uid
+    wgData = globals()['wgData'][uid]
     preCalcProp = molViewState.getPropPrecalculated
-    if isinstance(preCalcProp, dict):
-        try:
-            globals()['prop_precalc_wg_'+uid].options = preCalcProp.keys()
-            prop=globals()['prop_precalc_wg_'+uid].value
-            globals()['prop_precalc_view_'+uid].value = prop + ' : ' + str(preCalcProp[prop])
-        except:
-            pass
-    elif preCalcProp == 'Not found':
-        try:
-            globals()['prop_precalc_view_'+uid].value = 'No precalculated property found!'
-        except:
-            pass
-    else:
-        try:
-            globals()['prop_precalc_view_'+uid].value = 'Single molecule selection required!'
-        except:
-            pass
+    if 'prop_precalc_wg' in wgData:
+        if isinstance(preCalcProp, dict):
+            wgData['prop_precalc_wg'].options = preCalcProp.keys()
+            prop=wgData['prop_precalc_wg'].value
+            wgData['prop_precalc_view'].value = prop + ' : ' + str(preCalcProp[prop])
+        elif preCalcProp == 'Not found':
+            wgData['prop_precalc_view'].value = 'No precalculated property found!'
+        else:
+            wgData['prop_precalc_view'].value = 'Single molecule selection required!'
         
     # For retrieving rdkit calculated property
     propRDKit = molViewState.getPropRDKit
-    if isinstance(propRDKit, dict):
-        try:
-            prop=globals()['prop_calc_wg_'+uid].value
-            globals()['prop_calc_view_'+uid].value = prop + ' : ' + str(propRDKit[prop])
-        except:
-            pass
-    else:
-        try:
-            globals()['prop_calc_view_'+uid].value = 'Single molecule selection required!'
-        except:
-            pass
+    if 'prop_calc_wg' in wgData:
+        if isinstance(propRDKit, dict):
+            prop=wgData['prop_calc_wg'].value
+            wgData['prop_calc_view'].value = prop + ' : ' + str(propRDKit[prop])
+        else:
+            wgData['prop_calc_view'].value = 'Single molecule selection required!'
+            
     return 'done'
     
 def handleLigandStyle(uid, view):
     """ Handles ligand drawing style and color in update3D function """
-    try:
-        drawAs=globals()['drawAs_wg_'+uid].value
-    except:
-        drawAs = globals()['drawAs_no_wg_'+uid]
     
-    try:
-        color=globals()['colorScheme_'+uid].value
-    except:
+    wgData = globals()['wgData'][uid]
+    
+    if 'drawAs_wg' in wgData:
+        drawAs=wgData['drawAs_wg'].value
+    else:
+        drawAs = REPRESENTATION_DEFAULT['ligand']
+    
+    if 'colorScheme' in wgData:
+        color=wgData['colorScheme'].value
+    else:
         color = 'default'
         
     if drawAs == 'surface':
@@ -222,26 +213,35 @@ def handleLigandStyle(uid, view):
                      );
     else:
         view.setStyle({},{drawAs:{'colorscheme': color}})
-            
+        
     return view
     
 
 def handleLigandLabeling(molViewState, view):
     """ Handles ligand labeling (conf label and atom label) in update3D function """
+    
     uid = molViewState.uid
+    wgData = globals()['wgData'][uid]
     sMolNames = molViewState.selectedMolNames
     sConfIds = molViewState.selectedConfIds
+    
     if len(sMolNames)==1 and len(sConfIds)==1:
+        
         mol = molViewState.moldict[list(sMolNames)[0]]
-        confId=globals()['confId_'+uid].value
+        confId=wgData['confId'].value
         sconf = mol.GetConformer(confId)
         xyz = sconf.GetPositions()
-        try:
-            if globals()['confLabel_'+uid].value:
+        
+        if 'confLabel' in wgData:
+            
+            if wgData['confLabel'].value:
                 label = list(sMolNames)[0] + ':' + str(confId)
                 view.addLabel(label, {'backgroundColor':'gray', 'fontColor':'white',
                                       'showBackground':'true', 'alignment':'bottomCenter'})
-            if globals()['atomLabel_'+uid].value:
+        
+        if 'atomLabel' in wgData:
+            
+            if wgData['atomLabel'].value:
                 labels=list()
                 for i in list(range(sconf.GetNumAtoms())):
                     perAtomLabel = mol.GetAtomWithIdx(i).GetSymbol()+str(mol.GetAtomWithIdx(i).GetIdx())
@@ -254,32 +254,34 @@ def handleLigandLabeling(molViewState, view):
                                               'showBackground':'false',
                                               'position' : {'x' : xyz[j][0], 'y' : xyz[j][1], 'z' : xyz[j][2]}
                                              })
-        except:
-            pass
+    
     return view
     
-def handleProteinStyle(uid, view, pModelNum):
+def handleProteinStyle(molViewState, view, pModelNum):
     """ Handles protein drawing style in update3D function """
-    try:
-        pStyle=globals()['pStyle_wg_'+uid].value
-    except:
-        pStyle = globals()['pStyle_no_wg_'+uid]
+    uid = molViewState.uid
+    wgData = globals()['wgData'][uid]
+    
+    # 'pStyle_wg' and 'pStyle_tube_wg' rendered as pair
+    if 'pStyle_wg' in wgData:
+        pStyle=wgData['pStyle_wg'].value
+    else:
+        pStyle = REPRESENTATION_DEFAULT['protein']
         
-    if pStyle == 'cartoon':
-        try:
-            # helicesAsTubes variable is possible only if useDrawAs is True
-            helicesAsTubes = globals()['pStyle_tube_wg_'+uid].value
-            if helicesAsTubes:
-                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
-                                                              'arrows': 'true', 'tubes' : 'true'}})
-            else:
-                view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
-        except:
-            view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
-    elif pStyle == 'surface':
+    
+    if pStyle == 'surface':
         view.addSurface('SES', {'model':pModelNum});
     elif pStyle == 'line':
         view.setStyle({'model':pModelNum},{'line':{}});
+    elif pStyle == 'cartoon' and 'pStyle_tube_wg' not in wgData:
+        view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
+    else:
+        if wgData['pStyle_tube_wg'].value:
+            view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
+                                                          'arrows': 'true', 'tubes' : 'true'}})
+        else:
+            view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
+    
     return view
     
     
@@ -287,17 +289,17 @@ def update3D(model_id):
     """ This function invoked whenever user interacts with widgets.
     It runs first time through handle_button() when the start button clicked.
     """
-    uid=globals()['ipy_wgs'][model_id]
+    uid = globals()['wgMIds'][model_id]
+    viewInstantiated = globals()['viewInstantiated'][uid]
+    wgData = globals()['wgData'][uid]
+    molViewState  = globals()['molData'][uid]
     
-    if globals()['rdkit_3dviewer_start_button_clicked_'+uid]:
+    if viewInstantiated:
         
-        view = globals()['view_'+uid]
+        view = wgData['view']
         view.removeAllModels()
         view.removeAllSurfaces()
         view.removeAllLabels()
-        
-        uid = globals()['ipy_wgs'][model_id]
-        molViewState  = globals()['mol_views'][uid]
         
         
         # handling mol and conf
@@ -310,7 +312,7 @@ def update3D(model_id):
         pModelNum = 0
         for model in molViewState.selectedModels:
             pModelNum = pModelNum+1
-            globals()['view_'+uid].addModel(model, 'sdf')
+            view.addModel(model, 'sdf')
             
         # Ligand Drawing style and colors
         view=handleLigandStyle(uid, view)
@@ -318,66 +320,76 @@ def update3D(model_id):
         view = handleLigandLabeling(molViewState, view)
         
         # Add model (protein) to viewer
-        if 'protein_'+uid in globals():
+        if molViewState.protein is not None:
             # Show protein if visibitity is true
-            if globals()['proteinVisible_'+uid].value:
-                pdb = Chem.MolToPDBBlock(globals()['protein_'+uid])
-                view.addModel(pdb,'pdb')
-                # Protein Drawing style and colors
-                view = handleProteinStyle(uid, view, pModelNum)
-                
+            if 'proteinVisible' in wgData:
+                if wgData['proteinVisible'].value:
+                    pdb = Chem.MolToPDBBlock(molViewState.protein)
+                    view.addModel(pdb,'pdb')
+                    view = handleProteinStyle(molViewState, view, pModelNum)
+        
         # zoomTo does not work well for surface and label... so, zoomTo should not be default settings
         #view.zoomTo()
-        view.setBackgroundColor(globals()['background_'+uid].value)
+        view.setBackgroundColor(wgData['background'].value)
         
         display(view.update())
         
     
 def handle_change(change):
     """This function handles all the interactive widgets except buttons and 3Dmol.js viewer"""
-    update3D(change.owner._model_id)
+    update3D(change.owner.model_id)
     
 def handle_start_button(b):
     """This function handles start button."""
     b.icon='check'
     b.description="Done!"
-    uid=globals()['ipy_wgs'][b._model_id]
-    globals()['rdkit_3dviewer_start_button_clicked_'+uid] = True
-    update3D(b._model_id)
+    uid=globals()['wgMIds'][b.model_id]
+    globals()['viewInstantiated'][uid] = True
+    update3D(b.model_id)
     
 def handle_zoomTo_button(b):
     """This function handles zoomTo button"""
-    uid=globals()['ipy_wgs'][b._model_id]
-    globals()['view_'+uid].zoomTo()
-    display(globals()['view_'+uid].update())
+    uid=globals()['wgMIds'][b.model_id]
+    wgData = globals()['wgData'][uid]
+    wgData['view'].zoomTo()
+    display(wgData['view'].update())
     
     
-def ChangeActiveLigand(uid, molId, confId, keepExistingModels = True):
+def ChangeActiveLigand(uid, molId, confId, removeAllModels = False):
     """This function handles ligand select through python code
     uid : string 
     molId : string 
     confId : intiger
-    keepExistingModels : logical (if False - all models are removed - molId and confId associated model rendered)
+    removeAllModels : logical (default False,  if True - all models removed)
     """
-    if type(uid) != 'str':
-        uid = str(uid)
-    if type(molId) != 'str':
-        molId = str(molId)
+    
+    if isinstance(uid, str if sys.version_info[0] >= 3 else basestring) is False:
+        raise TypeError("uid must be a string")
         
-    if globals()['molId_'+uid].value != molId:
-        globals()['molId_'+uid].value = molId
+    try:
+        wgData = globals()['wgData'][uid]
+    except:
+        raise KeyError("invalid uid")
         
-    if globals()['confId_'+uid].value != confId:
-        globals()['confId_'+uid].value = confId
+    if isinstance(molId, str if sys.version_info[0] >= 3 else basestring) is False:
+        raise TypeError("molId must be a string")
+        
+    if molId not in globals()['molData'][uid].moldict:
+        raise KeyError("invalid molId")
+        
+    # To Do: handle invalid confId
     
-    if keepExistingModels is False:
-        globals()['selectMultiMols_'+uid].value=False
-        globals()['selectAllMols_'+uid].value=False
-        globals()['selectMultiConfs_'+uid].value=False
-        globals()['selectAllConfs_'+uid].value=False
+    wgData['molId'].value = molId
+    wgData['confId'].value = confId
     
-    update3D(globals()['molId_'+uid]._model_id)
     
+    if removeAllModels:
+        wgData['selectMultiMols'].value=False
+        wgData['selectAllMols'].value=False
+        wgData['selectMultiConfs'].value=False
+        wgData['selectAllConfs'].value=False
+    
+    update3D(wgData['molId'].model_id)
     
     
 def ShowConformers3D(uid = None,
@@ -397,206 +409,216 @@ def ShowConformers3D(uid = None,
     ** the rest of the arguments are panels (user may or may not need those)
     """
     
-    if 'ipy_wgs' not in globals():
-        globals()['ipy_wgs'] = dict()
+    if uid is None:
+        uid = str(time.time()).replace('.','')
         
-    rdkitWG = globals()['ipy_wgs']
+    if isinstance(uid, str if sys.version_info[0] >= 3 else basestring) is False:
+        raise TypeError("uid must be str")
     
-    if 'mol_views' not in globals():
-        globals()['mol_views'] = dict()
+    if isinstance(moldict, dict) is False:
+        raise TypeError("moldict must be dict")
+    
+    if all(isinstance(key, str if sys.version_info[0] >= 3 else basestring) for key in moldict.keys()) is False:
+        raise TypeError("keys of moldict must be str")
         
-    molViewState = MolViewState(moldict, uid)
-    globals()['mol_views'][molViewState.uid] = molViewState
     
-    uid = molViewState.uid
+    if 'wgMIds' in globals():
+        wgMIds = globals()['wgMIds']
+    else:
+        wgMIds = {}
+        
+    if 'wgData' in globals():
+        wgData = globals()['wgData']
+        wgData[uid] = {}
+    else:
+        wgData = {}
+        wgData[uid] = {}
+        
+    if 'molData' in globals():
+        molData = globals()['molData']
+    else:
+        molData = {}
+        
+    if 'viewInstantiated' in globals():
+        viewInstantiated = globals()['viewInstantiated']
+    else:
+        viewInstantiated = {}
     
-    # Required global objects
-    globals()['rdkit_3dviewer_start_button_clicked_'+uid] = False
-    globals()['drawAs_no_wg_'+uid] = drawAs
-    globals()['pStyle_no_wg_'+uid] = pStyle
+    
+    viewInstantiated[uid] = False
+    
+    molViewState = MolViewState(uid, moldict, protein)
+    molData[uid] = molViewState
     
     keys=molViewState.moldict.keys()
     
+    
     # Right hand panel (widgets)
     
-    wgListBox=list()
+    wgBox=list()
     
     itemLayout=Layout(display='flex', flex_flow='row', justify_content='space-between')
     
-    wgListBox.append(Box([Label(value='uid'), HTML(description='', value=str(uid))], layout=itemLayout))
+    wgBox.append(Box([Label(value='uid'), HTML(description='', value=str(uid))], layout=itemLayout))
     
-    # Add protein
-    if protein is not None:
-        #print 'adding protein'
-        globals()['protein_'+uid] = protein
-    
-    
-    # Users are expected to have keys int. 
-    # If keys are not str then still the rendering is possible but ChangeActiveLigand() wont't work currently
-    if type(keys[0])=='str': 
-        mol_id_ini = keys[0]
-    else:
-        mol_id_ini = str(keys[0])
-        
-    globals()['selected_mols_view_'+uid] = HTML(description='', value=mol_id_ini)
-    globals()['selected_confs_view_'+uid] = HTML(description='', value='0')
-    globals()['molId_'+uid] = Dropdown(description='', options=keys,value=keys[0])
-    globals()['selectMultiMols_'+uid] = Checkbox(description='selectMultiMols', value=False)
-    globals()['selectAllMols_'+uid] = Checkbox(description='selectAllMols', value=False)
-    globals()['confId_'+uid] = Dropdown(description='', options=list(range(9)), value=0)
-    globals()['selectMultiConfs_'+uid] = Checkbox(description='selectMultiConfs', value=False)
-    globals()['selectAllConfs_'+uid] = Checkbox(description='selectAllConfs', value=False)
+    wgData[uid]['selected_mols_view'] = HTML(description='', value=keys[0])
+    wgData[uid]['selected_confs_view'] = HTML(description='', value='0')
+    wgData[uid]['molId'] = Dropdown(description='', options=keys,value=keys[0])
+    wgData[uid]['selectMultiMols'] = Checkbox(description='selectMultiMols', value=False)
+    wgData[uid]['selectAllMols'] = Checkbox(description='selectAllMols', value=False)
+    wgData[uid]['confId'] = Dropdown(description='', options=list(range(9)), value=0)
+    wgData[uid]['selectMultiConfs'] = Checkbox(description='selectMultiConfs', value=False)
+    wgData[uid]['selectAllConfs'] = Checkbox(description='selectAllConfs', value=False)
     
     
-    wgListBox.append(Box([Label(value='Mols'),globals()['selected_mols_view_'+uid]], layout=itemLayout))
-    wgListBox.append(Box([Label(value='Confs'),globals()['selected_confs_view_'+uid]], layout=itemLayout))
+    wgBox.append(Box([Label(value='Mols'),wgData[uid]['selected_mols_view']], layout=itemLayout))
+    wgBox.append(Box([Label(value='Confs'),wgData[uid]['selected_confs_view']], layout=itemLayout))
     
-    wgListBox.append(Box([Label(value='molId'),globals()['molId_'+uid]], layout=itemLayout))
+    wgBox.append(Box([Label(value='molId'),wgData[uid]['molId']], layout=itemLayout))
     
     cbMolSelect=Box([Label(value=''),
-                     HBox([globals()['selectMultiMols_'+uid], 
-                           globals()['selectAllMols_'+uid]])
+                     HBox([wgData[uid]['selectMultiMols'], 
+                           wgData[uid]['selectAllMols']])
                     ], layout=itemLayout)
     
-    wgListBox.append(cbMolSelect)
+    wgBox.append(cbMolSelect)
     
-    wgListBox.append(Box([Label(value='confId'),globals()['confId_'+uid]], layout=itemLayout))
+    wgBox.append(Box([Label(value='confId'),wgData[uid]['confId']], layout=itemLayout))
     
     cbConfSelect=Box([Label(value=''),
-                      HBox([globals()['selectMultiConfs_'+uid], 
-                            globals()['selectAllConfs_'+uid]])
+                      HBox([wgData[uid]['selectMultiConfs'], 
+                            wgData[uid]['selectAllConfs']])
                      ], layout=itemLayout)
     
-    wgListBox.append(cbConfSelect)
+    wgBox.append(cbConfSelect)
     
+    wgData[uid]['molId'].observe(handle_change, names='value')
+    wgData[uid]['selectMultiMols'].observe(handle_change, names='value')
+    wgData[uid]['selectAllMols'].observe(handle_change, names='value')
+    wgData[uid]['confId'].observe(handle_change, names='value')
+    wgData[uid]['selectMultiConfs'].observe(handle_change, names='value')
+    wgData[uid]['selectAllConfs'].observe(handle_change, names='value')
     
+    wgMIds[wgData[uid]['molId'].model_id] = uid
+    wgMIds[wgData[uid]['selectMultiMols'].model_id] = uid
+    wgMIds[wgData[uid]['selectAllMols'].model_id] = uid
+    wgMIds[wgData[uid]['confId'].model_id] = uid
+    wgMIds[wgData[uid]['selectMultiConfs'].model_id] = uid
+    wgMIds[wgData[uid]['selectAllConfs'].model_id] = uid
     
-    rdkitWG[globals()['molId_'+uid]._model_id] = uid
-    rdkitWG[globals()['selectMultiMols_'+uid]._model_id] = uid
-    rdkitWG[globals()['selectAllMols_'+uid]._model_id] = uid
-    rdkitWG[globals()['confId_'+uid]._model_id] = uid
-    rdkitWG[globals()['selectMultiConfs_'+uid]._model_id] = uid
-    rdkitWG[globals()['selectAllConfs_'+uid]._model_id] = uid
-    
-    
-    globals()['molId_'+uid].observe(handle_change, names='value')
-    globals()['selectMultiMols_'+uid].observe(handle_change, names='value')
-    globals()['selectAllMols_'+uid].observe(handle_change, names='value')
-    globals()['confId_'+uid].observe(handle_change, names='value')
-    globals()['selectMultiConfs_'+uid].observe(handle_change, names='value')
-    globals()['selectAllConfs_'+uid].observe(handle_change, names='value')
     
     if protein is not None:
-        globals()['proteinVisible_'+uid] = Checkbox(description='proteinVisible', value=True)
-        wgListBox.append(Box([Label(value=''),globals()['proteinVisible_'+uid]], layout=itemLayout))
-        rdkitWG[globals()['proteinVisible_'+uid]._model_id] = uid
-        globals()['proteinVisible_'+uid].observe(handle_change, names='value')
+        wgData[uid]['proteinVisible'] = Checkbox(description='proteinVisible', value=True)
+        wgBox.append(Box([Label(value=''),wgData[uid]['proteinVisible']], layout=itemLayout))
+        wgMIds[wgData[uid]['proteinVisible'].model_id] = uid
+        wgData[uid]['proteinVisible'].observe(handle_change, names='value')
     
     # prop
     if propPanel is True:
-        globals()['prop_precalc_view_'+uid] = HTML(description='', value='initializing...')
-        globals()['prop_precalc_wg_'+uid] = Dropdown(description='',options=['select'], value='select')
-        globals()['prop_calc_view_'+uid] = HTML(description='', value='initializing...')
-        globals()['prop_calc_wg_'+uid] = Dropdown(description='',options=globals()['PROP_RDKIT'],value='MolLogP')
+        wgData[uid]['prop_precalc_view'] = HTML(description='', value='initializing...')
+        wgData[uid]['prop_precalc_wg'] = Dropdown(description='',options=['select'], value='select')
+        wgData[uid]['prop_calc_view'] = HTML(description='', value='initializing...')
+        wgData[uid]['prop_calc_wg'] = Dropdown(description='',options=PROP_RDKIT,value='MolLogP')
         
-        wgListBox.append(Box([Label(value='calc'),globals()['prop_calc_view_'+uid]], layout=itemLayout))
-        wgListBox.append(Box([Label(value='calc'),globals()['prop_calc_wg_'+uid]], layout=itemLayout))
-        wgListBox.append(Box([Label(value='precalc'),globals()['prop_precalc_view_'+uid]], layout=itemLayout))
-        wgListBox.append(Box([Label(value='precalc'),globals()['prop_precalc_wg_'+uid]], layout=itemLayout))
+        wgBox.append(Box([Label(value='calc'),wgData[uid]['prop_calc_view']], layout=itemLayout))
+        wgBox.append(Box([Label(value='calc'),wgData[uid]['prop_calc_wg']], layout=itemLayout))
+        wgBox.append(Box([Label(value='precalc'),wgData[uid]['prop_precalc_view']], layout=itemLayout))
+        wgBox.append(Box([Label(value='precalc'),wgData[uid]['prop_precalc_wg']], layout=itemLayout))
         
-        rdkitWG[globals()['prop_calc_wg_'+uid]._model_id] = uid
-        rdkitWG[globals()['prop_precalc_wg_'+uid]._model_id] = uid
-        globals()['prop_calc_wg_'+uid].observe(handle_change, names='value')
-        globals()['prop_precalc_wg_'+uid].observe(handle_change, names='value')
+        wgMIds[wgData[uid]['prop_calc_wg'].model_id] = uid
+        wgMIds[wgData[uid]['prop_precalc_wg'].model_id] = uid
+        wgData[uid]['prop_calc_wg'].observe(handle_change, names='value')
+        wgData[uid]['prop_precalc_wg'].observe(handle_change, names='value')
         
         
     # useDrawAs
     if useDrawAs:
         
         if moldict is not None:
-            globals()['drawAs_wg_'+uid] = Dropdown(description='', options=DRAWING_LIGAND_3D, value=drawAs)
-            wgListBox.append(Box([Label(value='drawAs'),globals()['drawAs_wg_'+uid]], layout=itemLayout))
-            rdkitWG[globals()['drawAs_wg_'+uid]._model_id] = uid
-            globals()['drawAs_wg_'+uid].observe(handle_change, names='value')
+            wgData[uid]['drawAs_wg'] = Dropdown(description='', options=DRAWING_LIGAND_3D, value=drawAs)
+            wgBox.append(Box([Label(value='drawAs'),wgData[uid]['drawAs_wg']], layout=itemLayout))
+            wgMIds[wgData[uid]['drawAs_wg'].model_id] = uid
+            wgData[uid]['drawAs_wg'].observe(handle_change, names='value')
 
         if protein is not None:
-            globals()['pStyle_wg_'+uid] = Dropdown(description='', options=DRAWING_PROTEIN_3D, value=pStyle)
-            wgListBox.append(Box([Label(value='pStyle'),globals()['pStyle_wg_'+uid]], layout=itemLayout))
-            rdkitWG[globals()['pStyle_wg_'+uid]._model_id] = uid
-            globals()['pStyle_wg_'+uid].observe(handle_change, names='value')
+            wgData[uid]['pStyle_wg'] = Dropdown(description='', options=DRAWING_PROTEIN_3D, value=pStyle)
+            wgBox.append(Box([Label(value='pStyle'),wgData[uid]['pStyle_wg']], layout=itemLayout))
+            wgMIds[wgData[uid]['pStyle_wg'].model_id] = uid
+            wgData[uid]['pStyle_wg'].observe(handle_change, names='value')
             
-            globals()['pStyle_tube_wg_'+uid] = Checkbox(description='helicesAsTubes', value=False)
-            wgListBox.append(Box([Label(value=''),globals()['pStyle_tube_wg_'+uid]], layout=itemLayout))
-            rdkitWG[globals()['pStyle_tube_wg_'+uid]._model_id] = uid
-            globals()['pStyle_tube_wg_'+uid].observe(handle_change, names='value')
+            wgData[uid]['pStyle_tube_wg'] = Checkbox(description='helicesAsTubes', value=False)
+            wgBox.append(Box([Label(value=''),wgData[uid]['pStyle_tube_wg']], layout=itemLayout))
+            wgMIds[wgData[uid]['pStyle_tube_wg'].model_id] = uid
+            wgData[uid]['pStyle_tube_wg'].observe(handle_change, names='value')
     
     
-    # colors 
+    # colors
     if colorPanel is True:
-        globals()['colorScheme_'+uid] = Dropdown(description='', options=COLOR_SCHEME_3D, value='default')
-        wgListBox.append(Box([Label(value='ligand color'),globals()['colorScheme_'+uid]], layout=itemLayout))
-        rdkitWG[globals()['colorScheme_'+uid]._model_id] = uid
-        globals()['colorScheme_'+uid].observe(handle_change, names='value')
+        wgData[uid]['colorScheme'] = Dropdown(description='', options=LIGAND_COLOR_SCHEME_3D, value='default')
+        wgBox.append(Box([Label(value='ligand color'),wgData[uid]['colorScheme']], layout=itemLayout))
+        wgMIds[wgData[uid]['colorScheme'].model_id] = uid
+        wgData[uid]['colorScheme'].observe(handle_change, names='value')
         
-    
-    
     # labels
     if labelPanel is True:
-        globals()['confLabel_'+uid] = Checkbox(description='confLabel', value=False)
-        globals()['atomLabel_'+uid] = Checkbox(description='atomLabel', value=False)
+        wgData[uid]['confLabel'] = Checkbox(description='confLabel', value=False)
+        wgData[uid]['atomLabel'] = Checkbox(description='atomLabel', value=False)
         
         cbLabel=Box([Label(value=''),
-                     HBox([globals()['confLabel_'+uid], 
-                           globals()['atomLabel_'+uid]])
+                     HBox([wgData[uid]['confLabel'], 
+                           wgData[uid]['atomLabel']])
                     ], layout=itemLayout)
         
-        wgListBox.append(cbLabel)
+        wgBox.append(cbLabel)
         
-        rdkitWG[globals()['confLabel_'+uid]._model_id] = uid
-        rdkitWG[globals()['atomLabel_'+uid]._model_id] = uid
-        globals()['confLabel_'+uid].observe(handle_change, names='value')
-        globals()['atomLabel_'+uid].observe(handle_change, names='value')
+        wgMIds[wgData[uid]['confLabel'].model_id] = uid
+        wgMIds[wgData[uid]['atomLabel'].model_id] = uid
+        wgData[uid]['confLabel'].observe(handle_change, names='value')
+        wgData[uid]['atomLabel'].observe(handle_change, names='value')
     
     
     # background
-    globals()['background_'+uid] = Dropdown(description='', options= BGCOLORS_3D, value=BGCOLORS_3D[0])
-    wgListBox.append(Box([Label(value='background'),globals()['background_'+uid]], layout=itemLayout))
-    rdkitWG[globals()['background_'+uid]._model_id] = uid
-    globals()['background_'+uid].observe(handle_change, names='value')
+    wgData[uid]['background'] = Dropdown(description='', options= BGCOLORS_3D, value=BGCOLORS_3D[0])
+    wgBox.append(Box([Label(value='background'),wgData[uid]['background']], layout=itemLayout))
+    wgData[uid]['background'].observe(handle_change, names='value')
+    wgMIds[wgData[uid]['background'].model_id] = uid
     
     # buttons
-    globals()['start_'+uid] = Button(description="Start!", button_style='success')
-    globals()['zoomTo_'+uid] = Button(description="zoomTo", button_style='success')
-    buttons=Box([Label(value=''),HBox([globals()['zoomTo_'+uid], globals()['start_'+uid]])],layout=itemLayout)
-    rdkitWG[globals()['start_'+uid]._model_id] = uid
-    rdkitWG[globals()['zoomTo_'+uid]._model_id] = uid
-    globals()['start_'+uid].on_click(handle_start_button)
-    globals()['zoomTo_'+uid].on_click(handle_zoomTo_button)
+    wgData[uid]['start'] = Button(description="Start!", button_style='success')
+    wgData[uid]['zoomTo'] = Button(description="zoomTo", button_style='success')
     
-    wgListBox.append(buttons)
+    buttons=Box([Label(value=''),HBox([wgData[uid]['zoomTo'], wgData[uid]['start']])],layout=itemLayout)
+    wgBox.append(buttons)
     
-    globals()['ipy_wgs'] = rdkitWG
+    wgData[uid]['start'].on_click(handle_start_button)
+    wgData[uid]['zoomTo'].on_click(handle_zoomTo_button)
+    wgMIds[wgData[uid]['start'].model_id] = uid
+    wgMIds[wgData[uid]['zoomTo'].model_id] = uid
+    
+    
+    # right panel
+    wgRightBox=VBox(wgBox, layout=Layout(border='solid', width='45%'))
     
     # left panel (container holding table for viewer)
     size = (435, 485)
     viewerLayout=Layout(width=str(size[0]+5)+'px', height=str(size[1]+5)+'px', border='solid')
     wgLeftWidget = HTML('''<table><tr><td id="%s"></td></tr></table>'''%uid, layout=viewerLayout)
     
-    # right panel
-    wgRightBox=VBox(wgListBox, layout=Layout(border='solid', width='45%'))
-    
     # Combining left and right panel
-    all_wg = HBox([wgLeftWidget, wgRightBox])
+    viewer = HBox([wgLeftWidget, wgRightBox])
     
     # displaying everything
-    display(all_wg)
-    
+    display(viewer)
     
     # inserting 3DMol.js viewer in existing container (table)
+    wgData[uid]['view'] = py3Dmol.view(width=size[0],height=size[1])
+    wgData[uid]['view'].setBackgroundColor('0x000000')
+    wgData[uid]['view'].zoomTo()
     
-    globals()['view_'+uid] = py3Dmol.view(width=size[0],height=size[1])
-    globals()['view_'+uid].setBackgroundColor('0x000000')
-    globals()['view_'+uid].zoomTo()
+    globals()['wgMIds'] = wgMIds
+    globals()['wgData'] = wgData
+    globals()['molData'] = molData
+    globals()['viewInstantiated'] = viewInstantiated
     
-    display(globals()['view_'+uid].insert(uid))
+    display(globals()['wgData'][uid]['view'].insert(uid))
     
