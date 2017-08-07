@@ -1,9 +1,4 @@
 
-## for convenience
-#find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME ON)
@@ -18,9 +13,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 include_directories(
-  ${Boost_INCLUDE_DIRS}
-  ${Qt5Widgets_INCLUDE_DIRS}
-  ${Qt5OpenGL_INCLUDE_DIRS}
   ${RDKIT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR} )
 
@@ -39,9 +31,7 @@ set( RDKitSV_INCS MolDisplay2DWidget.H
   QTGet2Strings.H
   QT4SelectItems.H )
 
-set( LIBS ${Qt5Widgets_LIBRARIES}
-  ${Qt5OpenGL_LIBRARIES}
-  ${Boost_LIBRARIES}
+set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
   ${RDKit_THREAD_LIBS}
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
