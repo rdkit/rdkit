@@ -37,6 +37,7 @@ addons:
     - swig
     - libjpeg-dev
     - clang-3.9
+    - libc++-dev
 
 install:
  - conda install -q numpy pillow pandas # matplotlib
