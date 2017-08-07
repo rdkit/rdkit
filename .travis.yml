@@ -46,7 +46,6 @@ install:
  # install eigen from conda-forge
  - conda install -q -c conda-forge eigen
 
-
 before_script:
  # RDKit
  - export RDBASE=`pwd`
@@ -60,7 +59,6 @@ before_script:
  - echo $PY_PREFIX
  - export PY_SP_DIR=$PY_PREFIX/lib/python$TRAVIS_PYTHON_VERSION/site-packages
  - echo $PY_SP_DIR
-
 
 script:
  - cd $RDBASE
