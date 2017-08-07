@@ -253,8 +253,14 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
+namespace AdjustDegree {
+  const unsigned int NoAdjust = 0;
+  const unsigned int TotalDegree = 1;
+  const unsigned int HeavyDegree = 2;
+}
+
 struct AdjustQueryParameters {
-  bool adjustDegree; /**< add degree queries */
+  int adjustDegree; /**< add degree queries 1/true == all 2 == heavy*/
   boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
   boost::uint32_t adjustRingCountFlags;
@@ -268,7 +274,7 @@ struct AdjustQueryParameters {
   boost::uint32_t makeAtomsGenericFlags;
 
   AdjustQueryParameters()
-      : adjustDegree(true),
+      : adjustDegree(AdjustDegree::TotalDegree),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
