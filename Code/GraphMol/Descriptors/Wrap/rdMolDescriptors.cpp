@@ -367,9 +367,8 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -450,9 +449,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -840,6 +838,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("atom"), python::arg("branchSubtract") = 0,
                python::arg("includeChirality") = false),
               docString.c_str());
+  docString =
+      "Returns the atom-pair code (hash) for a pair of atoms separated by a "
+      "certain number of bonds";
+  python::def(
+      "GetAtomPairCode", RDKit::AtomPairs::getAtomPairCode,
+      (python::arg("atom1Code"), python::arg("atom2Code"),
+       python::arg("distance"), python::arg("includeChirality") = false),
+      docString.c_str());
   docString =
       "Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
@@ -1612,5 +1618,5 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
               docString.c_str());
 
-#endif  
+#endif
 }
