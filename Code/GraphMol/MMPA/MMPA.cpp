@@ -295,7 +295,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
     }
   }
   if (!resFound) {
-    std::cerr << "**********************" << std::endl;
+    //std::cerr << "**********************" << std::endl;
     // From rfrag.py
     // now change the labels on sidechains and core
     // to get the new labels, cansmi the dot-disconnected side chains
@@ -320,7 +320,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       MolOps::sanitizeMol(_side_chain);
       const bool doIsomericSmiles = true; // should this be false???
       std::string smiles = MolToSmiles(_side_chain, true);
-      std::cerr << "smiles: " << smiles << std::endl;
+      //std::cerr << "smiles: " << smiles << std::endl;
       const std::vector<unsigned int> &ranks = _side_chain.getProp<
         std::vector<unsigned int> >(
           common_properties::_smilesAtomOutputOrder);
@@ -331,41 +331,17 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
         unsigned int atom_idx = ranks[idx];
         if(oldMaps[atom_idx] >0) {
           const int label = oldMaps[atom_idx];
-          std::cerr << "atom_idx: " << atom_idx << " rank: " << ranks[atom_idx] <<
-              " molAtomMapNumber: " << label << std::endl;
+          //std::cerr << "atom_idx: " << atom_idx << " rank: " << ranks[atom_idx] <<
+          //    " molAtomMapNumber: " << label << std::endl;
           rankedAtoms.push_back(std::make_pair(idx, label));
         }
       }
       std::sort(rankedAtoms.begin(), rankedAtoms.end());
       for(size_t i=0;i<rankedAtoms.size();++i) {
-        std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
-            std::endl;
+        //std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
+        //    std::endl;
         canonicalAtomMaps[rankedAtoms[i].second] = (int)(i+1);
       }
-
-      /*
-      std::vector<unsigned int> ranks(mol.getNumAtoms());
-      const bool breakTies = true;
-      const bool includeChirality = true;
-      const bool includeIsotopes = true;
-      Canon::rankMolAtoms(_side_chain, ranks, breakTies, includeChirality, includeIsotopes);
-      std::vector<std::pair<unsigned int, int> > rankedAtoms;
-      
-      for(size_t atom_idx=0;atom_idx<ranks.size();++atom_idx) {
-        if(oldMaps[atom_idx] >0) {
-          const int label = oldMaps[atom_idx];
-          std::cerr << "atom_idx: " << atom_idx << " rank: " << ranks[atom_idx] <<
-              " molAtomMapNumber: " << label << std::endl;
-          rankedAtoms.push_back(std::make_pair(ranks[atom_idx], label));
-        }
-      }
-      std::sort(rankedAtoms.begin(), rankedAtoms.end());
-      for(size_t i=0;i<rankedAtoms.size();++i) {
-        std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
-            std::endl;
-        canonicalAtomMaps[rankedAtoms[i].second] = (int)(i+1);
-      }
-      */
     }
 
     if( core.get() ) { // remap core if it exists
@@ -373,8 +349,8 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
            ++at) {
         int label = 0;
         if ((*at)->getPropIfPresent(common_properties::molAtomMapNumber, label) ) {
-          std::cerr << "reammping core: " << label << " :" << canonicalAtomMaps[label] <<
-              std::endl;
+          //std::cerr << "remapping core: " << label << " :" << canonicalAtomMaps[label] <<
+          //    std::endl;
           (*at)->setProp(common_properties::molAtomMapNumber, canonicalAtomMaps[label]);
         }
       }
@@ -384,8 +360,8 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
          ++at) {
       int label = 0;
       if ((*at)->getPropIfPresent(common_properties::molAtomMapNumber, label) ) {
-        std::cerr << "reammping side chain: " << label << " :" << 
-         canonicalAtomMaps[label] << std::endl;
+        //std::cerr << "remapping side chain: " << label << " :" << 
+        // canonicalAtomMaps[label] << std::endl;
         (*at)->setProp(common_properties::molAtomMapNumber, canonicalAtomMaps[label]);
       }
     }
