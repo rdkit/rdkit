@@ -33,13 +33,13 @@ class TestCase(unittest.TestCase):
 
     fs = Chem.GetMolFrags(frags[0][1], asMols=True)
     self.assertEqual(len(fs), 2)
-    self.assertEqual(Chem.MolToSmiles(fs[0], True), 'c1ccc([*:2])cc1')
-    self.assertEqual(Chem.MolToSmiles(fs[1], True), 'CO[*:2]')
+    self.assertEqual(Chem.MolToSmiles(fs[0], True), 'c1ccc([*:1])cc1')
+    self.assertEqual(Chem.MolToSmiles(fs[1], True), 'CO[*:1]')
 
     fs = Chem.GetMolFrags(frags[1][1], asMols=True)
     self.assertEqual(len(fs), 2)
-    self.assertEqual(Chem.MolToSmiles(fs[0], True), 'c1ccc(O[*:2])cc1')
-    self.assertEqual(Chem.MolToSmiles(fs[1], True), 'C[*:2]')
+    self.assertEqual(Chem.MolToSmiles(fs[0], True), 'c1ccc(O[*:1])cc1')
+    self.assertEqual(Chem.MolToSmiles(fs[1], True), 'C[*:1]')
 
     fs = Chem.GetMolFrags(frags[2][0], asMols=True)
     self.assertEqual(len(fs), 1)
@@ -63,8 +63,8 @@ class TestCase(unittest.TestCase):
     self.assertNotEqual(frags[1][1], '')
     self.assertNotEqual(frags[2][1], '')
 
-    self.assertEqual(frags[0][1], 'CO[*:2].c1ccc(cc1)[*:2]')
-    self.assertEqual(frags[1][1], 'C[*:2].c1ccc(cc1)O[*:2]')
+    self.assertEqual(frags[0][1], 'CO[*:1].c1ccc(cc1)[*:1]')
+    self.assertEqual(frags[1][1], 'C[*:1].c1ccc(cc1)O[*:1]')
     self.assertEqual(frags[2][0], 'O([*:1])[*:2]')
     self.assertEqual(frags[2][1], 'C[*:1].c1ccc([*:2])cc1')
 
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(frags[0][0], '')
     self.assertNotEqual(frags[0][1], '')
 
-    self.assertEqual(frags[0][1], 'CO[*:2].c1ccc(cc1)[*:2]')
+    self.assertEqual(frags[0][1], 'CO[*:1].c1ccc(cc1)[*:1]')
 
   def test4(self):
     m = Chem.MolFromSmiles('Cc1ccccc1NC(=O)C(C)[NH+]1CCCC1')  # ZINC00000051

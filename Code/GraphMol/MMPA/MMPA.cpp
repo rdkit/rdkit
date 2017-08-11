@@ -303,12 +303,12 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
     // then change the labels accordingly in the core
     std::map<unsigned int, int> canonicalAtomMaps;
     if( side_chains.get() ) {
-      RWMol _side_chain(*(side_chains.get())); // canonicalize the context or the core?
-      std::vector<int> oldMaps(_side_chain.getNumAtoms(), 0);
+      RWMol tmp_side_chain(*(side_chains.get()));
+      std::vector<int> oldMaps(tmp_side_chain.getNumAtoms(), 0);
       
       // clear atom labels (they are used in canonicalization)
       //  and move them to dummy storage
-      for (ROMol::AtomIterator at = _side_chain.beginAtoms(); at != _side_chain.endAtoms();
+      for (ROMol::AtomIterator at = tmp_side_chain.beginAtoms(); at != tmp_side_chain.endAtoms();
            ++at) {
         int label = 0;
         if ((*at)->getPropIfPresent(common_properties::molAtomMapNumber, label) ) {
@@ -317,11 +317,14 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
         }
       }
 
-      MolOps::sanitizeMol(_side_chain);
       const bool doIsomericSmiles = true; // should this be false???
-      std::string smiles = MolToSmiles(_side_chain, true);
+      std::string smiles = MolToSmiles(tmp_side_chain, doIsomericSmiles);
       //std::cerr << "smiles: " << smiles << std::endl;
-      const std::vector<unsigned int> &ranks = _side_chain.getProp<
+
+      // Get the canonical output order and use it to remap
+      //  the atom maps int the side chains
+      //  these will get reapplied to the core (if there is a core)
+      const std::vector<unsigned int> &ranks = tmp_side_chain.getProp<
         std::vector<unsigned int> >(
           common_properties::_smilesAtomOutputOrder);
       
@@ -337,13 +340,17 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
         }
       }
       std::sort(rankedAtoms.begin(), rankedAtoms.end());
+      int nextMap = 0;
       for(size_t i=0;i<rankedAtoms.size();++i) {
-        //std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
-        //    std::endl;
-        canonicalAtomMaps[rankedAtoms[i].second] = (int)(i+1);
+        if(canonicalAtomMaps.find(rankedAtoms[i].second) == canonicalAtomMaps.end()) {
+          //std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
+          //    std::endl;
+          canonicalAtomMaps[rankedAtoms[i].second] = ++nextMap;
+        }
       }
     }
-
+    
+    //std::cerr << "======== Remap core " << std::endl;
     if( core.get() ) { // remap core if it exists
       for (ROMol::AtomIterator at = core->beginAtoms(); at != core->endAtoms();
            ++at) {
@@ -356,6 +363,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR> >&
       }
     }
     
+    //std::cerr << "======== Remap side-chain " << std::endl;
     for (ROMol::AtomIterator at = side_chains->beginAtoms(); at != side_chains->endAtoms();
          ++at) {
       int label = 0;
