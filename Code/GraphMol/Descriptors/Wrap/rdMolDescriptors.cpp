@@ -828,6 +828,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("numTypeBits", RDKit::AtomPairs::numTypeBits)
       .setattr("numPiBits", RDKit::AtomPairs::numPiBits)
       .setattr("numBranchBits", RDKit::AtomPairs::numBranchBits)
+      .setattr("numChiralBits", RDKit::AtomPairs::numChiralBits)
       .setattr("codeSize", RDKit::AtomPairs::codeSize)
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)

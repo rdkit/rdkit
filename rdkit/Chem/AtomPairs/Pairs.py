@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -35,7 +34,7 @@ numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen = 1 << numFpBits
 
 
-def pyScorePair(at1, at2, dist, atomCodes=None):
+def pyScorePair(at1, at2, dist, atomCodes=None, includeChirality=False):
   """ Returns a score for an individual atom pair.
 
   >>> from rdkit import Chem
@@ -57,17 +56,20 @@ def pyScorePair(at1, at2, dist, atomCodes=None):
 
   """
   if not atomCodes:
-    code1 = Utils.GetAtomCode(at1)
-    code2 = Utils.GetAtomCode(at2)
+    code1 = Utils.GetAtomCode(at1,includeChirality = includeChirality)
+    code2 = Utils.GetAtomCode(at2,includeChirality = includeChirality)
   else:
     code1, code2 = atomCodes
   accum = int(dist) % _maxPathLen
   accum |= min(code1, code2) << numPathBits
-  accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits)
+  if not includeChirality:
+      accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits)
+  else:
+      accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits + rdMolDescriptors.AtomPairsParameters.numChiralBits)
   return accum
 
 
-def ExplainPairScore(score):
+def ExplainPairScore(score,includeChirality=False):
   """
   >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('C=CC')
@@ -84,6 +86,10 @@ def ExplainPairScore(score):
   >>> ExplainPairScore(score)
   (('C', 1, 0), 1, ('C', 2, 1))
 
+  We can optionally deal with chirality too
+  >>> m = Chem.MolFromSmiles('C[C@H](F)Cl')
+
+
   """
   codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
   pathMask = (1 << numPathBits) - 1
@@ -94,7 +100,9 @@ def ExplainPairScore(score):
   score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
   code2 = score & codeMask
 
-  res = Utils.ExplainAtomCode(code1), dist, Utils.ExplainAtomCode(code2)
+  res = (Utils.ExplainAtomCode(code1,includeChirality=includeChirality),
+         dist,
+         Utils.ExplainAtomCode(code2,includeChirality=includeChirality))
   return res
 
 
