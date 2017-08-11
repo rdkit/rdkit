@@ -11,6 +11,7 @@
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
+
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
@@ -63,29 +64,29 @@ std::map<int, double> *pyDictToDoubleMap(python::object pyo) {
   return res;
 }
 
+DrawColour pyTupleToDrawColour(const python::tuple tpl) {
+  float r = python::extract<float>(tpl[0]);
+  if (r > 1 || r < 0) {
+    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+  }
+  float g = python::extract<float>(tpl[1]);
+  if (g > 1 || g < 0) {
+    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+  }
+  float b = python::extract<float>(tpl[2]);
+  if (b > 1 || b < 0) {
+    throw ValueErrorException("RGB color value needs to be between 0 and 1.");
+  }
+  DrawColour clr(r, g, b);
+  return clr;
+}
 void pyListToColourVec(python::object pyo, std::vector<DrawColour> &res) {
   res.clear();
   python::list tList = python::extract<python::list>(pyo);
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(tList.attr("__len__")()); ++i) {
     python::tuple tpl = python::extract<python::tuple>(tList[i]);
-    float r = python::extract<float>(tpl[0]);
-    if (r > 1 || r < 0) {
-      throw ValueErrorException(
-          "RGB color value needs to be between 0 and 1.");
-    }
-    float g = python::extract<float>(tpl[1]);
-    if (g > 1 || g < 0) {
-      throw ValueErrorException(
-          "RGB color value needs to be between 0 and 1.");
-    }
-    float b = python::extract<float>(tpl[2]);
-    if (b > 1 || b < 0) {
-      throw ValueErrorException(
-          "RGB color value needs to be between 0 and 1.");
-    }
-    DrawColour clr(r, g, b);
-    res.push_back(clr);
+    res.push_back(pyTupleToDrawColour(tpl));
   }
 }
 }
@@ -225,18 +226,19 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
 }
 
 void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
-                        bool highlightByReactant, python::object phighlightColorsReactants,
+                        bool highlightByReactant,
+                        python::object phighlightColorsReactants,
                         python::object pconfIds) {
-
   rdk_auto_ptr<std::vector<DrawColour> > highlightColorsReactants;
-  if(phighlightColorsReactants){
+  if (phighlightColorsReactants) {
     highlightColorsReactants.reset(new std::vector<DrawColour>);
     pyListToColourVec(phighlightColorsReactants, *highlightColorsReactants);
   }
 
   rdk_auto_ptr<std::vector<int> > confIds = pythonObjectToVect<int>(pconfIds);
 
-  self.drawReaction(rxn, highlightByReactant, highlightColorsReactants.get(), confIds.get());
+  self.drawReaction(rxn, highlightByReactant, highlightColorsReactants.get(),
+                    confIds.get());
 }
 
 #ifdef RDK_CAIRO_BUILD
@@ -255,12 +257,32 @@ ROMol *prepMolForDrawing(const ROMol *m, bool kekulize = true,
                                        forceCoords);
   return static_cast<ROMol *>(res);
 }
+
+python::tuple colourToPyTuple(const DrawColour &clr) {
+  python::list res;
+  res.append(clr.get<0>());
+  res.append(clr.get<1>());
+  res.append(clr.get<2>());
+
+  return python::tuple(res);
+}
+python::object getBgColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.backgroundColour);
+}
+python::object getHighlightColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.highlightColour);
+}
+void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.backgroundColour = pyTupleToDrawColour(tpl);
+}
+void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.highlightColour = pyTupleToDrawColour(tpl);
+}
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::scope().attr("__doc__") =
       "Module containing a C++ implementation of 2D molecule drawing";
-
   std::string docString;
 
   python::class_<std::map<int, std::string> >("IntStringMap")
@@ -272,7 +294,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("dummiesAreAttachments",
                      &RDKit::MolDrawOptions::dummiesAreAttachments)
       .def_readwrite("circleAtoms", &RDKit::MolDrawOptions::circleAtoms)
-      //.def_readwrite("highlightColour",&RDKit::MolDrawOptions::highlightColour)
+      //.def_readwrite("highlightColour",
+      //&RDKit::MolDrawOptions::highlightColour,
+      //               "the highlight colour")
+      .def("getBackgroundColour", &RDKit::getBgColour,
+           "method returning the background colour")
+      .def("getHighlightColour", &RDKit::getHighlightColour,
+           "method returning the highlight colour")
+      .def("setBackgroundColour", &RDKit::setBgColour,
+           "method for setting the background colour")
+      .def("setHighlightColour", &RDKit::setHighlightColour,
+           "method for setting the highlight colour")
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
       .def_readwrite("atomLabelDeuteriumTritium",
@@ -351,18 +383,21 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("DrawString", &RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
-      .def("GetDrawCoords", (RDGeom::Point2D (RDKit::MolDraw2D::*)(
-                                const RDGeom::Point2D &) const) &
-                                RDKit::MolDraw2D::getDrawCoords,
+      .def("GetDrawCoords",
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
+                const) &
+               RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("point")),
            "get the coordinates in drawing space for a particular point in "
            "molecule space")
-      .def("GetDrawCoords", (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
-                                RDKit::MolDraw2D::getDrawCoords,
+      .def("GetDrawCoords",
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(int) const) &
+               RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
-      .def("drawOptions", (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
-                              RDKit::MolDraw2D::drawOptions,
+      .def("drawOptions",
+           (RDKit::MolDrawOptions & (RDKit::MolDraw2D::*)()) &
+               RDKit::MolDraw2D::drawOptions,
            python::return_internal_reference<
                1, python::with_custodian_and_ward_postcall<0, 1> >(),
            "Returns a modifiable version of the current drawing options");
