@@ -60,12 +60,14 @@ def pyScorePair(at1, at2, dist, atomCodes=None, includeChirality=False):
     code2 = Utils.GetAtomCode(at2,includeChirality = includeChirality)
   else:
     code1, code2 = atomCodes
+
+  codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
+  if includeChirality:
+      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+
   accum = int(dist) % _maxPathLen
   accum |= min(code1, code2) << numPathBits
-  if not includeChirality:
-      accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits)
-  else:
-      accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits + rdMolDescriptors.AtomPairsParameters.numChiralBits)
+  accum |= max(code1, code2) << (codeSize + numPathBits)
   return accum
 
 
@@ -88,16 +90,30 @@ def ExplainPairScore(score,includeChirality=False):
 
   We can optionally deal with chirality too
   >>> m = Chem.MolFromSmiles('C[C@H](F)Cl')
-
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
+  >>> ExplainPairScore(score)
+  (('C', 1, 0), 1, ('C', 3, 0))
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1,includeChirality=True)
+  >>> ExplainPairScore(score,includeChirality=True)
+  (('C', 1, 0, ''), 1, ('C', 3, 0, 'R'))
+  >>> m = Chem.MolFromSmiles('F[C@@H](Cl)[C@H](F)Cl')
+  >>> score = pyScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(3),1,includeChirality=True)
+  >>> ExplainPairScore(score,includeChirality=True)
+  (('C', 3, 0, 'R'), 1, ('C', 3, 0, 'S'))
 
   """
-  codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
+  codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
+  if includeChirality:
+      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+
+  codeMask = (1 << codeSize) - 1
+
   pathMask = (1 << numPathBits) - 1
   dist = score & pathMask
 
   score = score >> numPathBits
   code1 = score & codeMask
-  score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
+  score = score >> codeSize
   code2 = score & codeMask
 
   res = (Utils.ExplainAtomCode(code1,includeChirality=includeChirality),
