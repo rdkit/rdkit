@@ -4,7 +4,7 @@ Derived by Malitha Humayun Kabir from Greg Landrum's code as a part of GSoC 2017
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Acknowledgement: Peter Gedeck's suggestions helped to improve many lines of codes
-Date: 6th August 2017
+Date: 13th August 2017
 Email# malitha12345@gmail.com
 """
 
@@ -17,6 +17,8 @@ from ipywidgets import Dropdown, SelectMultiple, IntSlider, HTML, Checkbox, Butt
 from IPython.display import display
 import time
 import sys
+
+PY3 = sys.version_info[0] >= 3
 
 ##### Visualization
 
@@ -34,6 +36,7 @@ LIGAND_COLOR_SCHEME_3D=('default', 'greenCarbon', 'cyanCarbon', 'magentaCarbon',
                         'shapely', 'nucleic', 'chain', 'chainHetatm', 'prop')
 
 REPRESENTATION_DEFAULT = {'ligand' : 'stick', 'protein' : 'cartoon'}
+
 
 # I think this function is not required
 # User should be able to supply appropriate input
@@ -58,10 +61,17 @@ def ProcessMolContainingObj(mol):
     
     
 class MolViewState(object):
-    def __init__(self, uid, molecules, protein):
+    def __init__(self, uid, molecules, protein, calculateProperties = False):
         """ Molecules is dictionary of molecules """
+        if calculateProperties:
+            for i in molecules:
+                mol = molecules[i]
+                for prop_name in PROP_RDKIT:
+                    calculator = Descriptors.__dict__[prop_name]
+                    mol.SetProp(prop_name, str(calculator(mol)))
+                    
         self.uid = uid
-        self.moldict = molecules
+        self.moldict = molecules    
         self.protein = protein
         
         # These should have reasonable initial values
@@ -122,27 +132,15 @@ class MolViewState(object):
     @property
     def getPropPrecalculated(self):
         """ Return the precalculated properties """
-        if len(self.selectedMolNames) == 1:
+        if len(self.selectedMolNames) != 1:
+            return None
+        else:
             mol = self.moldict[list(self.selectedMolNames)[0]]
             if len(mol.GetPropNames()) == 0:
                 return 'Not found'
             else:
-                prop = [(prop,mol.GetProp(prop)) for prop in mol.GetPropNames()]
-                return dict(prop)
-        else:
-            return None
-    @property
-    def getPropRDKit(self):
-        """ Return the RDKit calculated properties """
-        if len(self.selectedMolNames) == 1:
-            mol = self.moldict[list(self.selectedMolNames)[0]]
-            prop = list()
-            for prop_name in PROP_RDKIT:
-                calculator = Descriptors.__dict__[prop_name]
-                prop.append((prop_name,calculator(mol)))
-            return dict(prop)
-        else:
-            return None
+                return {prop: mol.GetProp(prop) for prop in mol.GetPropNames()}
+            
     
     
 def handleMolAndConf(molViewState):
@@ -168,26 +166,16 @@ def handleProperty(molViewState):
     uid = molViewState.uid
     wgData = globals()['wgData'][uid]
     preCalcProp = molViewState.getPropPrecalculated
-    if 'prop_precalc_wg' in wgData:
+    if 'prop_wg' in wgData:
         if isinstance(preCalcProp, dict):
-            wgData['prop_precalc_wg'].options = list(preCalcProp.keys())
-            prop=wgData['prop_precalc_wg'].value
-            wgData['prop_precalc_view'].value = prop + ' : ' + str(preCalcProp[prop])
+            wgData['prop_wg'].options = sorted(list(preCalcProp.keys()))
+            prop=wgData['prop_wg'].value
+            wgData['prop_view'].value = prop + ' : ' + str(preCalcProp[prop])
         elif preCalcProp == 'Not found':
-            wgData['prop_precalc_view'].value = 'No precalculated property found!'
+            wgData['prop_view'].value = 'No precalculated property found!'
         else:
-            wgData['prop_precalc_view'].value = 'Single molecule selection required!'
+            wgData['prop_view'].value = 'Single molecule selection required!'
         
-    # For retrieving rdkit calculated property
-    propRDKit = molViewState.getPropRDKit
-    if 'prop_calc_wg' in wgData:
-        if isinstance(propRDKit, dict):
-            prop=wgData['prop_calc_wg'].value
-            wgData['prop_calc_view'].value = prop + ' : ' + str(propRDKit[prop])
-        else:
-            wgData['prop_calc_view'].value = 'Single molecule selection required!'
-            
-    return 'done'
     
 def handleLigandStyle(uid, view):
     """ Handles ligand drawing style and color in update3D function """
@@ -225,34 +213,30 @@ def handleLigandLabeling(molViewState, view):
     sMolNames = molViewState.selectedMolNames
     sConfIds = molViewState.selectedConfIds
     
-    if len(sMolNames)==1 and len(sConfIds)==1:
-        
-        mol = molViewState.moldict[list(sMolNames)[0]]
-        confId=wgData['confId'].value
-        sconf = mol.GetConformer(confId)
-        xyz = sconf.GetPositions()
-        
+    if not len(sMolNames)==1 and len(sConfIds)==1:
+        return None
+    else:
         if 'confLabel' in wgData:
-            
             if wgData['confLabel'].value:
-                label = list(sMolNames)[0] + ':' + str(confId)
-                view.addLabel(label, {'backgroundColor':'gray', 'fontColor':'white',
-                                      'showBackground':'true', 'alignment':'bottomCenter'})
+                confLabel = list(sMolNames)[0] + ':' + str(wgData['confId'].value)
+                view.addLabel(confLabel, {'backgroundColor':'gray', 'fontColor':'white',
+                                          'showBackground':'true', 'alignment':'bottomCenter'})
         
         if 'atomLabel' in wgData:
             
+            mol = molViewState.moldict[list(sMolNames)[0]]
+            confId=wgData['confId'].value
+            sconf = mol.GetConformer(confId)
+            xyz = sconf.GetPositions()
+            
             if wgData['atomLabel'].value:
-                labels=list()
                 for i in list(range(sconf.GetNumAtoms())):
-                    perAtomLabel = mol.GetAtomWithIdx(i).GetSymbol()+str(mol.GetAtomWithIdx(i).GetIdx())
-                    labels.append(perAtomLabel)
-                
-                for j in range(sconf.GetNumAtoms()):
-                    view.addLabel(labels[j], {'inFront' : 'false', 
+                    atomLabel = '{}{}'.format(mol.GetAtomWithIdx(i).GetSymbol(), i)
+                    view.addLabel(atomLabel, {'inFront' : 'false', 
                                               'fontSize' : '12',
                                               'fontColor':'gray',
                                               'showBackground':'false',
-                                              'position' : {'x' : xyz[j][0], 'y' : xyz[j][1], 'z' : xyz[j][2]}
+                                              'position' : {'x':xyz[i][0], 'y':xyz[i][1], 'z':xyz[i][2]}
                                              })
     
     return view
@@ -262,7 +246,7 @@ def handleProteinStyle(molViewState, view, pModelNum):
     uid = molViewState.uid
     wgData = globals()['wgData'][uid]
     
-    # 'pStyle_wg' and 'pStyle_tube_wg' rendered as pair
+    # 'pStyle_wg' and 'pStyle_helicesAsTubes_wg' rendered as pair
     if 'pStyle_wg' in wgData:
         pStyle=wgData['pStyle_wg'].value
     else:
@@ -273,10 +257,10 @@ def handleProteinStyle(molViewState, view, pModelNum):
         view.addSurface('SES', {'model':pModelNum});
     elif pStyle == 'line':
         view.setStyle({'model':pModelNum},{'line':{}});
-    elif pStyle == 'cartoon' and 'pStyle_tube_wg' not in wgData:
+    elif pStyle == 'cartoon' and 'pStyle_helicesAsTubes_wg' not in wgData:
         view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum', 'arrows': 'true'}})
     else:
-        if wgData['pStyle_tube_wg'].value:
+        if wgData['pStyle_helicesAsTubes_wg'].value:
             view.setStyle({'model':pModelNum},{'cartoon':{'color': 'spectrum',
                                                           'arrows': 'true', 'tubes' : 'true'}})
         else:
@@ -301,7 +285,6 @@ def update3D(model_id):
         view.removeAllSurfaces()
         view.removeAllLabels()
         
-        
         # handling mol and conf
         molViewState = handleMolAndConf(molViewState)
         
@@ -309,9 +292,7 @@ def update3D(model_id):
         handleProperty(molViewState)
         
         # Add models (molecules/conformations) to viewer
-        pModelNum = 0
         for model in molViewState.selectedModels:
-            pModelNum = pModelNum+1
             view.addModel(model, 'sdf')
             
         # Ligand Drawing style and colors
@@ -324,6 +305,7 @@ def update3D(model_id):
             # Show protein if visibitity is true
             if 'proteinVisible' in wgData:
                 if wgData['proteinVisible'].value:
+                    pModelNum = len(list(molViewState.selectedModels))
                     pdb = Chem.MolToPDBBlock(molViewState.protein)
                     view.addModel(pdb,'pdb')
                     view = handleProteinStyle(molViewState, view, pModelNum)
@@ -363,7 +345,7 @@ def ChangeActiveLigand(uid, molId, confId, removeAllModels = False):
     removeAllModels : logical (default False,  if True - all models removed)
     """
     
-    if isinstance(uid, str if sys.version_info[0] >= 3 else basestring) is False:
+    if isinstance(uid, str if PY3 else basestring) is False:
         raise TypeError("uid must be a string")
         
     try:
@@ -371,13 +353,13 @@ def ChangeActiveLigand(uid, molId, confId, removeAllModels = False):
     except:
         raise KeyError("invalid uid")
         
-    if isinstance(molId, str if sys.version_info[0] >= 3 else basestring) is False:
+    if isinstance(molId, str if PY3 else basestring) is False:
         raise TypeError("molId must be a string")
         
     if molId not in globals()['molData'][uid].moldict:
         raise KeyError("invalid molId")
         
-    # To Do: handle invalid confId
+    # TODO: handle invalid confId
     
     wgData['molId'].value = molId
     wgData['confId'].value = confId
@@ -396,7 +378,7 @@ def ShowConformers3D(uid = None,
                      moldict = None, protein = None,
                      useDrawAs = False, 
                      drawAs='stick', pStyle='cartoon',
-                     propPanel = False, 
+                     propPanel = False, calculateProperties = False,
                      colorPanel = False, 
                      labelPanel = False):
     
@@ -412,46 +394,29 @@ def ShowConformers3D(uid = None,
     if uid is None:
         uid = str(time.time()).replace('.','')
         
-    if isinstance(uid, str if sys.version_info[0] >= 3 else basestring) is False:
+    if isinstance(uid, str if PY3 else basestring) is False:
         raise TypeError("uid must be str")
-    
+        
     if isinstance(moldict, dict) is False:
         raise TypeError("moldict must be dict")
-    
-    if all(isinstance(key, str if sys.version_info[0] >= 3 else basestring) for key in moldict.keys()) is False:
+        
+    if all(isinstance(key, str if PY3 else basestring) for key in moldict.keys()) is False:
         raise TypeError("keys of moldict must be str")
         
+    wgMIds = globals().setdefault('wgMIds', {})
     
-    if 'wgMIds' in globals():
-        wgMIds = globals()['wgMIds']
-    else:
-        wgMIds = {}
-        
-    if 'wgData' in globals():
-        wgData = globals()['wgData']
-        wgData[uid] = {}
-    else:
-        wgData = {}
-        wgData[uid] = {}
-        
-    if 'molData' in globals():
-        molData = globals()['molData']
-    else:
-        molData = {}
-        
-    if 'viewInstantiated' in globals():
-        viewInstantiated = globals()['viewInstantiated']
-    else:
-        viewInstantiated = {}
+    wgData = globals().setdefault('wgData', {})
+    wgData[uid] = {}
     
+    molData = globals().setdefault('molData', {})
     
+    viewInstantiated = globals().setdefault('viewInstantiated', {})
     viewInstantiated[uid] = False
     
-    molViewState = MolViewState(uid, moldict, protein)
+    molViewState = MolViewState(uid, moldict, protein, calculateProperties)
     molData[uid] = molViewState
     
     keys = list(molViewState.moldict.keys())
-    
     
     # Right hand panel (widgets)
     
@@ -492,96 +457,57 @@ def ShowConformers3D(uid = None,
     
     wgBox.append(cbConfSelect)
     
-    wgData[uid]['molId'].observe(handle_change, names='value')
-    wgData[uid]['selectMultiMols'].observe(handle_change, names='value')
-    wgData[uid]['selectAllMols'].observe(handle_change, names='value')
-    wgData[uid]['confId'].observe(handle_change, names='value')
-    wgData[uid]['selectMultiConfs'].observe(handle_change, names='value')
-    wgData[uid]['selectAllConfs'].observe(handle_change, names='value')
-    
-    wgMIds[wgData[uid]['molId'].model_id] = uid
-    wgMIds[wgData[uid]['selectMultiMols'].model_id] = uid
-    wgMIds[wgData[uid]['selectAllMols'].model_id] = uid
-    wgMIds[wgData[uid]['confId'].model_id] = uid
-    wgMIds[wgData[uid]['selectMultiConfs'].model_id] = uid
-    wgMIds[wgData[uid]['selectAllConfs'].model_id] = uid
-    
+    widgetsFor3DView = ['molId', 'selectMultiMols', 'selectAllMols', 
+                        'confId', 'selectMultiConfs', 'selectAllConfs']
     
     if protein is not None:
         wgData[uid]['proteinVisible'] = Checkbox(description='proteinVisible', value=True)
         wgBox.append(Box([Label(value=''),wgData[uid]['proteinVisible']], layout=itemLayout))
-        wgMIds[wgData[uid]['proteinVisible'].model_id] = uid
-        wgData[uid]['proteinVisible'].observe(handle_change, names='value')
+        widgetsFor3DView.append('proteinVisible')
     
     # prop
     if propPanel is True:
-        wgData[uid]['prop_precalc_view'] = HTML(description='', value='initializing...')
-        wgData[uid]['prop_precalc_wg'] = Dropdown(description='',options=['select'], value='select')
-        wgData[uid]['prop_calc_view'] = HTML(description='', value='initializing...')
-        wgData[uid]['prop_calc_wg'] = Dropdown(description='',options=PROP_RDKIT,value='MolLogP')
-        
-        wgBox.append(Box([Label(value='calc'),wgData[uid]['prop_calc_view']], layout=itemLayout))
-        wgBox.append(Box([Label(value='calc'),wgData[uid]['prop_calc_wg']], layout=itemLayout))
-        wgBox.append(Box([Label(value='precalc'),wgData[uid]['prop_precalc_view']], layout=itemLayout))
-        wgBox.append(Box([Label(value='precalc'),wgData[uid]['prop_precalc_wg']], layout=itemLayout))
-        
-        wgMIds[wgData[uid]['prop_calc_wg'].model_id] = uid
-        wgMIds[wgData[uid]['prop_precalc_wg'].model_id] = uid
-        wgData[uid]['prop_calc_wg'].observe(handle_change, names='value')
-        wgData[uid]['prop_precalc_wg'].observe(handle_change, names='value')
-        
+        wgData[uid]['prop_view'] = HTML(description='', value='initializing...')
+        wgData[uid]['prop_wg'] = Dropdown(description='',options=['select'], value='select')
+        wgBox.append(Box([Label(value='prop'),wgData[uid]['prop_view']], layout=itemLayout))
+        wgBox.append(Box([Label(value='prop'),wgData[uid]['prop_wg']], layout=itemLayout))
+        widgetsFor3DView.append('prop_wg')
         
     # useDrawAs
     if useDrawAs:
-        
         if moldict is not None:
             wgData[uid]['drawAs_wg'] = Dropdown(description='', options=DRAWING_LIGAND_3D, value=drawAs)
             wgBox.append(Box([Label(value='drawAs'),wgData[uid]['drawAs_wg']], layout=itemLayout))
-            wgMIds[wgData[uid]['drawAs_wg'].model_id] = uid
-            wgData[uid]['drawAs_wg'].observe(handle_change, names='value')
-
+            widgetsFor3DView.append('drawAs_wg')
         if protein is not None:
             wgData[uid]['pStyle_wg'] = Dropdown(description='', options=DRAWING_PROTEIN_3D, value=pStyle)
             wgBox.append(Box([Label(value='pStyle'),wgData[uid]['pStyle_wg']], layout=itemLayout))
-            wgMIds[wgData[uid]['pStyle_wg'].model_id] = uid
-            wgData[uid]['pStyle_wg'].observe(handle_change, names='value')
+            wgData[uid]['pStyle_helicesAsTubes_wg'] = Checkbox(description='helicesAsTubes', value=False)
+            wgBox.append(Box([Label(value=''),wgData[uid]['pStyle_helicesAsTubes_wg']], layout=itemLayout))
+            widgetsFor3DView.extend(['pStyle_wg', 'pStyle_helicesAsTubes_wg'])
             
-            wgData[uid]['pStyle_tube_wg'] = Checkbox(description='helicesAsTubes', value=False)
-            wgBox.append(Box([Label(value=''),wgData[uid]['pStyle_tube_wg']], layout=itemLayout))
-            wgMIds[wgData[uid]['pStyle_tube_wg'].model_id] = uid
-            wgData[uid]['pStyle_tube_wg'].observe(handle_change, names='value')
-    
-    
     # colors
     if colorPanel is True:
         wgData[uid]['colorScheme'] = Dropdown(description='', options=LIGAND_COLOR_SCHEME_3D, value='default')
         wgBox.append(Box([Label(value='ligand color'),wgData[uid]['colorScheme']], layout=itemLayout))
-        wgMIds[wgData[uid]['colorScheme'].model_id] = uid
-        wgData[uid]['colorScheme'].observe(handle_change, names='value')
+        widgetsFor3DView.append('colorScheme')
         
     # labels
     if labelPanel is True:
         wgData[uid]['confLabel'] = Checkbox(description='confLabel', value=False)
         wgData[uid]['atomLabel'] = Checkbox(description='atomLabel', value=False)
-        
-        cbLabel=Box([Label(value=''),
-                     HBox([wgData[uid]['confLabel'], 
-                           wgData[uid]['atomLabel']])
+        cbLabel=Box([Label(value=''), HBox([wgData[uid]['confLabel'], 
+                                            wgData[uid]['atomLabel']
+                                           ])
                     ], layout=itemLayout)
-        
         wgBox.append(cbLabel)
+        widgetsFor3DView.extend(['confLabel', 'atomLabel'])
         
-        wgMIds[wgData[uid]['confLabel'].model_id] = uid
-        wgMIds[wgData[uid]['atomLabel'].model_id] = uid
-        wgData[uid]['confLabel'].observe(handle_change, names='value')
-        wgData[uid]['atomLabel'].observe(handle_change, names='value')
-    
-    
     # background
     wgData[uid]['background'] = Dropdown(description='', options= BGCOLORS_3D, value=BGCOLORS_3D[0])
     wgBox.append(Box([Label(value='background'),wgData[uid]['background']], layout=itemLayout))
-    wgData[uid]['background'].observe(handle_change, names='value')
-    wgMIds[wgData[uid]['background'].model_id] = uid
+    widgetsFor3DView.append('background')
+    
     
     # buttons
     wgData[uid]['start'] = Button(description="Start!", button_style='success')
@@ -590,10 +516,18 @@ def ShowConformers3D(uid = None,
     buttons=Box([Label(value=''),HBox([wgData[uid]['zoomTo'], wgData[uid]['start']])],layout=itemLayout)
     wgBox.append(buttons)
     
+    
+    # Observe and update dict with model_id
     wgData[uid]['start'].on_click(handle_start_button)
     wgData[uid]['zoomTo'].on_click(handle_zoomTo_button)
     wgMIds[wgData[uid]['start'].model_id] = uid
     wgMIds[wgData[uid]['zoomTo'].model_id] = uid
+    
+    wgDataUid = wgData[uid]
+    for i in widgetsFor3DView:
+        selectedWidget = wgDataUid[i]
+        selectedWidget.observe(handle_change, names='value')
+        wgMIds[selectedWidget.model_id] = uid
     
     
     # right panel
