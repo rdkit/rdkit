@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -447,9 +446,17 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     ++origIdx;
     if (atom->getAtomicNum() == 1) {
       bool removeIt = false;
-
       if (atom->hasProp(common_properties::isImplicit)) {
         removeIt = true;
+        if (atom->getDegree() == 1) {
+          // by default we remove implicit Hs, but not if they are
+          // attached to dummy atoms. This was Github #1439
+          ROMol::ADJ_ITER begin, end;
+          boost::tie(begin, end) = mol.getAtomNeighbors(atom);
+          if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
+            removeIt = false;
+          }
+        }
       } else if (!implicitOnly && !atom->getIsotope() &&
                  atom->getDegree() == 1) {
         ROMol::ADJ_ITER begin, end;
