@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2006-2011  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2006-2017  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -450,6 +449,83 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
+
+def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=False):
+    """ generate all possible stereoisomers for a molecule and returns them as a tuple
+
+    Arguments:
+      - m: the molecule to work with
+
+      - tryEmbedding: if set the process attempts to generate a standard RDKit distance geometry
+        conformation for the stereisomer. If this fails, we assume that the stereoisomer is
+        non-physical and don't return it. NOTE that this is computationally expensive and is
+        just a heuristic that could result in stereoisomers being lost.
+
+      - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
+        will not be perturbed
+
+      - verbose: toggles how verbose the output is
+
+    A small example with 3 chiral centers (8 theoretical stereoisomers):
+    >>> from rdkit.Chem import AllChem
+    >>> m = AllChem.MolFromSmiles('OC1OC(C2)(F)C2(Cl)C1')
+    >>> isomers = AllChem.GenerateAllStereoisomers(m)
+    >>> len(isomers)
+    8
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
+    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
+    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
+    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
+    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
+    O[C@H]1C[C@@]2(Cl)C[C@]2(F)O1
+    O[C@H]1C[C@]2(Cl)C[C@@]2(F)O1
+    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
+
+    Because the molecule is constrained, not all of those isomers can
+    actually exist. We can check that:
+    >>> isomers = AllChem.GenerateAllStereoisomers(m,tryEmbedding=True)
+    >>> len(isomers)
+    4
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
+    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
+    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
+    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
+
+    """
+    tm = Mol(m)
+    res = []
+    if onlyUnassigned:
+        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True) if y=='?']
+    else:
+        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True)]
+    nCenters = len(possibleCenters)
+    if not nCenters:
+        return (tm,)
+    bitflag = (1<<nCenters)-1
+    while bitflag>=0:
+        tm = Mol(m)
+        for i in range(nCenters):
+            if bitflag & 1<<i:
+                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CCW)
+            else:
+                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CW)
+        if tryEmbedding:
+            ntm = AddHs(tm)
+            cid = EmbedMolecule(ntm,randomSeed=bitflag)
+        else:
+            cid = 1
+        if cid>= 0:
+            res.append(tm)
+        elif verbose:
+            print("%s    failed to embed"%(MolToSmiles(tm,isomericSmiles=True)))
+        bitflag -= 1
+
+    return tuple(res)
+
 
 
 # ------------------------------------
