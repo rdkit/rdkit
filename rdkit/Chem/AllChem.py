@@ -450,7 +450,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
       raise ValueError("No matching found")
   return mol2
 
-def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=False):
+def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=False,
+            maxNumCenters=10):
     """ generate all possible stereoisomers for a molecule and returns them as a tuple
 
     Arguments:
@@ -512,8 +513,6 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     >>> len(isomers)
     8
 
-
-
     """
     tm = Mol(m)
     res = []
@@ -524,6 +523,8 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     nCenters = len(possibleCenters)
     if not nCenters:
         return (tm,)
+    if nCenters>maxNumCenters:
+        raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,maxNumCenters))
     bitflag = (1<<nCenters)-1
     while bitflag>=0:
         tm = Mol(m)
