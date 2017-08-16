@@ -495,6 +495,25 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
     O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
 
+    By default the code only expands unspecified stereocenters:
+    >>> m = AllChem.MolFromSmiles('O[C@H]1OC(C2)(F)C2(Cl)C1')
+    >>> isomers = AllChem.GenerateAllStereoisomers(m)
+    >>> len(isomers)
+    4
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
+    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
+    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
+    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
+
+    but we can change that behavior:
+    >>> isomers = AllChem.GenerateAllStereoisomers(m, onlyUnassigned=False)
+    >>> len(isomers)
+    8
+
+
+
     """
     tm = Mol(m)
     res = []
