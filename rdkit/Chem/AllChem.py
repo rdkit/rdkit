@@ -547,7 +547,7 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
     >>> isomers = AllChem.GenerateAllStereoisomers(m, randomizeOrderOfCenters=True)
     >>> for isomer in isomers:
-    ...   print(MolToSmiles(isomer,isomericSmiles=True))
+    ...   print(MolToSmiles(isomer,isomericSmiles=True)) # doctest:+SKIP
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
     F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     F[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
