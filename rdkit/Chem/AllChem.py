@@ -565,7 +565,8 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
         possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True)]
     nCenters = len(possibleCenters)
     if not nCenters:
-        return (tm,)
+        yield tm
+        return
     if nCenters>maxNumCenters:
         raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,maxNumCenters))
     if randomizeOrderOfCenters:
