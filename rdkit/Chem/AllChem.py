@@ -451,8 +451,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
   return mol2
 
 def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=False,
-            maxNumCenters=10):
-    """ generate all possible stereoisomers for a molecule and returns them as a tuple
+                             maxNumCenters=10, randomizeOrderOfCenters=False):
+    """ returns a generator that yields all possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
@@ -467,10 +467,17 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
 
       - verbose: toggles how verbose the output is
 
+      - maxNumCenters: the maximum number of stereocenters that can/will be handled.
+        Since every additional stereocenter doubles the number of results
+        (and execution time) it's important to keep an eye on this.
+
+      - randomizeOrderOfCenters: consider the potential stereocenters in random order
+        instead of their order in the molecule
+
     A small example with 3 chiral centers (8 theoretical stereoisomers):
     >>> from rdkit.Chem import AllChem
     >>> m = AllChem.MolFromSmiles('OC1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = AllChem.GenerateAllStereoisomers(m)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m))
     >>> len(isomers)
     8
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -486,7 +493,7 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
-    >>> isomers = AllChem.GenerateAllStereoisomers(m,tryEmbedding=True)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m,tryEmbedding=True))
     >>> len(isomers)
     4
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -498,7 +505,7 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
 
     By default the code only expands unspecified stereocenters:
     >>> m = AllChem.MolFromSmiles('O[C@H]1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = AllChem.GenerateAllStereoisomers(m)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m))
     >>> len(isomers)
     4
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -509,13 +516,49 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
 
     but we can change that behavior:
-    >>> isomers = AllChem.GenerateAllStereoisomers(m, onlyUnassigned=False)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, onlyUnassigned=False))
     >>> len(isomers)
     8
 
+    since the result is a generator, we can allow exploring at least parts of very
+    large result sets:
+    >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
+    >>> isomers = AllChem.GenerateAllStereoisomers(m,maxNumCenters=50)
+    >>> for x in range(5):
+    ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+
+    It's also possible to randomize the order in which sterecenters are considered:
+    >>> m = MolFromSmiles('Br'+'[CH](Cl)'*3+'F')
+    >>> isomers = AllChem.GenerateAllStereoisomers(m)
+    >>> for isomer in isomers:
+    ...   print(MolToSmiles(isomer,isomericSmiles=True))
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
+    F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
+    F[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)Br
+    F[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
+    >>> isomers = AllChem.GenerateAllStereoisomers(m, randomizeOrderOfCenters=True)
+    >>> for isomer in isomers:
+    ...   print(MolToSmiles(isomer,isomericSmiles=True))
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
+    F[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
+    F[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
+    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)Br
+    F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
+
     """
     tm = Mol(m)
-    res = []
     if onlyUnassigned:
         possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True) if y=='?']
     else:
@@ -525,6 +568,10 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
         return (tm,)
     if nCenters>maxNumCenters:
         raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,maxNumCenters))
+    if randomizeOrderOfCenters:
+        import random
+        random.seed(nCenters)
+        random.shuffle(possibleCenters)
     bitflag = (1<<nCenters)-1
     while bitflag>=0:
         tm = Mol(m)
@@ -539,14 +586,10 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
         else:
             cid = 1
         if cid>= 0:
-            res.append(tm)
+            yield tm
         elif verbose:
             print("%s    failed to embed"%(MolToSmiles(tm,isomericSmiles=True)))
         bitflag -= 1
-
-    return tuple(res)
-
-
 
 # ------------------------------------
 #
