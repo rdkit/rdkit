@@ -128,31 +128,43 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
                             bool useQueryQueryMatches = false,
                             unsigned int maxMatches = 1000, int numThreads = 1);
 
+//! \overload
+//! finds the first match in the bundle
 bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
+//! \overload
+//! finds the first match in the bundle
 bool SubstructMatch(const ROMol &bundle, const MolBundle &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
+//! \overload
+//! finds the first match in the bundle
 bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
-// finds all matches in the first element of the bundle that has any matches
+//! \overload
+//! finds all matches in the first element of the bundle that has any matches
 unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,
                             bool useQueryQueryMatches = false,
                             unsigned int maxMatches = 1000);
+
+//! \overload
+//! finds all matches in the first element of the bundle that has any matches
 unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,
                             bool useQueryQueryMatches = false,
                             unsigned int maxMatches = 1000);
+//! \overload
+//! finds all matches in the first element of the bundle that has any matches
 unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,

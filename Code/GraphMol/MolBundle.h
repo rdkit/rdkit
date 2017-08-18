@@ -33,29 +33,27 @@ class ROMol;
 //! MolBundle contains (conceptually) a collection of ROMols with the same
 //! topology
 /*!
-  This is designed for allowing handling of things like enhanced stereochemistr.
-
-
- */
-
+  This is designed to allow handling things like enhanced stereochemistry,
+  but can no doubt be (ab)used in other ways.
+*/
 class MolBundle : public RDProps {
  public:
   MolBundle() : RDProps(){};
 
-  //! copy constructor with a twist
-  /*!
-    \param other     the molecule to be copied
-  */
+  //! copy constructor
   MolBundle(const MolBundle &other) : RDProps(other) { d_mols = other.d_mols; };
-  //! construct from a pickle string
-  // MolBundle(const std::string &binStr);
+  // FIX: need serialization/deserialization
 
   virtual ~MolBundle(){};
 
+  //! returns our molecules
   virtual const std::vector<boost::shared_ptr<ROMol> > &getMols() const {
     return d_mols;
   };
 
+  //! adds a new molecule and returns the total number of molecules
+  //!  enforces that the new molecule has the same number of atoms and bonds
+  //!  as the molecules that are already there.
   unsigned int addMol(boost::shared_ptr<ROMol> nmol) {
     PRECONDITION(nmol.get(), "bad mol pointer");
     if (d_mols.size()) {
@@ -70,11 +68,14 @@ class MolBundle : public RDProps {
     d_mols.push_back(nmol);
     return (d_mols.size());
   }
+  //! returns the number of molecules from the bundle
   unsigned int size() const { return d_mols.size(); };
+  //! returns a particular molecule in the bundle
   const boost::shared_ptr<ROMol> getMol(size_t idx) const {
     if (idx >= d_mols.size()) throw IndexErrorException(idx);
     return d_mols[idx];
   };
+  //! returns a particular molecule from the bundle
   const boost::shared_ptr<ROMol> operator[](size_t idx) const {
     return getMol(idx);
   };
