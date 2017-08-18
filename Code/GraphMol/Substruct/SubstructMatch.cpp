@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
+#include <GraphMol/MolBundle.h>
+
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
@@ -343,6 +345,28 @@ bool SubstructMatch(const ROMol &mol, const ROMol &query,
   return res;
 }
 
+bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    res = SubstructMatch(*bundle[i], query, matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+  }
+  return res;
+}
+
+bool SubstructMatch(const ROMol &mol, const MolBundle &bundle,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    res = SubstructMatch(mol, *bundle[i], matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+  }
+  return res;
+}
+
 // ----------------------------------------------
 //
 // find one match in ResonanceMolSupplier object
@@ -538,8 +562,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           }
         }
         if (!found) {
-          BOOST_LOG(rdErrorLog) << "no match found for queryRootAtom"
-                                << std::endl;
+          BOOST_LOG(rdErrorLog)
+              << "no match found for queryRootAtom" << std::endl;
         }
       }
     }
