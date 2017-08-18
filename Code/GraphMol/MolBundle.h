@@ -24,6 +24,9 @@
 #include <boost/smart_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+// our stuff
+#include <RDGeneral/Exceptions.h>
+
 namespace RDKit {
 class ROMol;
 
@@ -54,15 +57,22 @@ class MolBundle : public RDProps {
   };
 
   unsigned int addMol(boost::shared_ptr<ROMol> nmol) {
+    PRECONDITION(nmol.get(), "bad mol pointer");
     if (d_mols.size()) {
-      // FIX: verify size
+      if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms())
+        throw ValueErrorException(
+            "all molecules in a bundle must have the same number of atoms");
+      // REVIEW: should we allow different numbers of bonds?
+      if (nmol->getNumBonds() != d_mols[0]->getNumBonds())
+        throw ValueErrorException(
+            "all molecules in a bundle must have the same number of atoms");
     }
     d_mols.push_back(nmol);
     return (d_mols.size());
   }
   unsigned int size() const { return d_mols.size(); };
   const boost::shared_ptr<ROMol> getMol(size_t idx) const {
-    PRECONDITION(idx < d_mols.size(), "bad index");
+    if (idx >= d_mols.size()) throw IndexErrorException(idx);
     return d_mols[idx];
   };
   const boost::shared_ptr<ROMol> operator[](size_t idx) const {
