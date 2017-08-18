@@ -132,15 +132,28 @@ bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
-bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
-                    MatchVectType &matchVect, bool recursionPossible = true,
-                    bool useChirality = false,
-                    bool useQueryQueryMatches = false);
 bool SubstructMatch(const ROMol &bundle, const MolBundle &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
+bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
+                    MatchVectType &matchVect, bool recursionPossible = true,
+                    bool useChirality = false,
+                    bool useQueryQueryMatches = false);
+// finds all matches in the first element of the bundle that has any matches
 unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
+                            std::vector<MatchVectType> &matchVect,
+                            bool uniquify = true, bool recursionPossible = true,
+                            bool useChirality = false,
+                            bool useQueryQueryMatches = false,
+                            unsigned int maxMatches = 1000);
+unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matchVect,
+                            bool uniquify = true, bool recursionPossible = true,
+                            bool useChirality = false,
+                            bool useQueryQueryMatches = false,
+                            unsigned int maxMatches = 1000);
+unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,

@@ -367,6 +367,19 @@ bool SubstructMatch(const ROMol &mol, const MolBundle &bundle,
   return res;
 }
 
+bool SubstructMatch(const MolBundle &bundle, const MolBundle &qbundle,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    for (unsigned int j = 0; j < bundle.size() && !res; ++j) {
+      res =
+          SubstructMatch(*bundle[i], *qbundle[j], matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+    }
+  }
+  return res;
+}
 // ----------------------------------------------
 //
 // find one match in ResonanceMolSupplier object
@@ -456,6 +469,48 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
       v->d_mutex.unlock();
   }
 #endif
+  return res;
+}
+
+unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < mol.size() && !res; ++i) {
+    res = SubstructMatch(*mol[i], query, matches, uniquify, recursionPossible,
+                         useChirality, useQueryQueryMatches, maxMatches);
+  }
+  return res;
+}
+
+unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < query.size() && !res; ++i) {
+    res = SubstructMatch(mol, *query[i], matches, uniquify, recursionPossible,
+                         useChirality, useQueryQueryMatches, maxMatches);
+  }
+  return res;
+}
+
+unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < mol.size() && !res; ++i) {
+    for (unsigned int j = 0; j < query.size() && !res; ++j) {
+      res = SubstructMatch(*mol[i], *query[j], matches, uniquify,
+                           recursionPossible, useChirality,
+                           useQueryQueryMatches, maxMatches);
+    }
+  }
   return res;
 }
 
