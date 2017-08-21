@@ -99,7 +99,7 @@ Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
 mol 	the molecule of interest
 cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
 force 	forces the calculation to be repeated even if it has already been done
-stereocentres	optional argument containing a list of stereocentres
+stereocentres	optional argument containing a list of stereocentre atom ID (possible and / or assigned)
 onlyStereoAny	optional argument indicating whether stereocentres should contain only possible stereocentres marked 'STEREOANY' or all stereocentres
 <p>
 @notes
