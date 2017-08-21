@@ -80,7 +80,7 @@ def GetTableNames(dBase, user='sysdba', password='masterkey', includeViews=0, cn
   if not cn:
     try:
       cn = DbModule.connect(dBase, user, password)
-    except Exception:  # pragma: nocover
+    except Exception:
       print('Problems opening database: %s' % (dBase))
       return []
 

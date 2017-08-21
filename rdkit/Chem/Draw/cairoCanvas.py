@@ -1,4 +1,3 @@
-# $Id: cairoCanvas.py 11930 2014-01-24 07:00:08Z landrgr1 $
 #
 #  Copyright (C) 2008 Greg Landrum
 #  Copyright (C) 2009 Uwe Hoffmann
@@ -9,10 +8,16 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-#pylint: disable=F0401,C0324,C0322,W0142
-import sys, os
+import array
+import math
+import os
+import re
+
+from PIL import Image
 
 from rdkit import six
+from rdkit.Chem.Draw.canvasbase import CanvasBase
+
 if not six.PY3:
   bytes = buffer
 
@@ -36,8 +41,8 @@ else:
     else:
       have_cairocffi = True
 have_pango = False
-if not 'RDK_NOPANGO' in os.environ:
-  if (have_cairocffi):
+if 'RDK_NOPANGO' not in os.environ:
+  if have_cairocffi:
     import cffi
     import platform
     ffi = cffi.FFI()
@@ -80,7 +85,7 @@ if not 'RDK_NOPANGO' in os.environ:
         void pango_layout_set_font_description (PangoLayout *layout,
             const PangoFontDescription *desc);
     ''')
-    if (platform.system() == 'Windows'):
+    if platform.system() == 'Windows':
       defaultLibs = {
         'pango_default_lib': 'libpango-1.0-0.dll',
         'pangocairo_default_lib': 'libpangocairo-1.0-0.dll',
@@ -96,7 +101,7 @@ if not 'RDK_NOPANGO' in os.environ:
     for libType in ['pango', 'pangocairo', 'gobject']:
       envVar = 'RDK_' + libType.upper() + '_LIB'
       envVarSet = False
-      if (envVar in os.environ):
+      if envVar in os.environ:
         envVarSet = True
         libName = os.environ[envVar]
       else:
@@ -104,20 +109,19 @@ if not 'RDK_NOPANGO' in os.environ:
       libPath = ctypes.util.find_library(libName)
       exec(libType + ' = None')
       importError = False
-      if (libPath):
+      if libPath:
         try:
-          exec(libType + ' = ffi.dlopen("' \
-            + libPath.replace('\\', '\\\\') + '")')
+          exec(libType + ' = ffi.dlopen("' + libPath.replace('\\', '\\\\') + '")')
         except:
-          if (envVarSet):
+          if envVarSet:
             importError = True
           else:
             pass
       else:
         importError = True
-      if (importError):
-        raise ImportError(envVar + ' set to ' + libName + ' but ' \
-          + libType.upper() + ' library cannot be loaded.')
+      if importError:
+        raise ImportError(envVar + ' set to ' + libName + ' but ' + libType.upper() +
+                          ' library cannot be loaded.')
     have_pango = (pango and pangocairo and gobject)
   else:
     for libType in ['pango', 'pangocairo']:
@@ -127,17 +131,9 @@ if not 'RDK_NOPANGO' in os.environ:
         exec(libType + ' = None')
     have_pango = (pango and pangocairo)
 
-if not hasattr(cairo.ImageSurface,'get_data') and \
-   not hasattr(cairo.ImageSurface,'get_data_as_rgba'):
+if (not hasattr(cairo.ImageSurface, 'get_data') and
+    not hasattr(cairo.ImageSurface, 'get_data_as_rgba')):
   raise ImportError('cairo version too old')
-
-import math
-import rdkit.RDConfig
-import re
-import array
-
-from rdkit.Chem.Draw.canvasbase import CanvasBase
-from PIL import Image
 
 scriptPattern = re.compile(r'\<.+?\>')
 
@@ -297,7 +293,7 @@ class Canvas(CanvasBase):
     # than that w/ default cairo (at least for me)
     pangoCoeff = 0.8
 
-    if (have_cairocffi):
+    if have_cairocffi:
       measureLout = pangocairo.pango_cairo_create_layout(self.ctx._pointer)
       pango.pango_layout_set_alignment(measureLout, pango.PANGO_ALIGN_LEFT)
       pango.pango_layout_set_markup(measureLout, plainText.encode('latin1'), -1)
@@ -326,7 +322,7 @@ class Canvas(CanvasBase):
     # this is a bit kludgy, but empirically we end up with too much
     # vertical padding if we use the text box with super and subscripts
     # for the measurement.
-    if (have_cairocffi):
+    if have_cairocffi:
       iext = ffi.new('PangoRectangle *')
       lext = ffi.new('PangoRectangle *')
       iext2 = ffi.new('PangoRectangle *')
@@ -360,7 +356,7 @@ class Canvas(CanvasBase):
       self.ctx.move_to(dPos[0], dPos[1])
 
     self.ctx.set_source_rgb(*color)
-    if (have_cairocffi):
+    if have_cairocffi:
       pangocairo.pango_cairo_update_layout(self.ctx._pointer, lout)
       pangocairo.pango_cairo_show_layout(self.ctx._pointer, lout)
       gobject.g_object_unref(lout)
@@ -390,7 +386,6 @@ class Canvas(CanvasBase):
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
     if not fill and not stroke:
       return
-    dps = []
     self.ctx.set_source_rgb(*color)
     self.ctx.move_to(ps[0][0], ps[0][1])
     for p in ps[1:]:
@@ -423,8 +418,6 @@ class Canvas(CanvasBase):
                 **kwargs):
     if not fill and not stroke:
       return
-    dps = []
-    #import pdb; pdb.set_trace();
     self.ctx.set_source_rgba(color[0], color[1], color[2], alpha)
     self.ctx.arc(center[0], center[1], radius, 0, 2. * math.pi)
     self.ctx.close_path()

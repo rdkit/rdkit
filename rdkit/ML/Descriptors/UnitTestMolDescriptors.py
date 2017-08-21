@@ -14,7 +14,7 @@ from rdkit import RDConfig
 from rdkit.ML.Descriptors import MoleculeDescriptors, Descriptors
 from rdkit.TestRunner import redirect_stdout
 from rdkit.six import BytesIO, StringIO
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 class TestCase(unittest.TestCase):

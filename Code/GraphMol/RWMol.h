@@ -58,7 +58,7 @@ class RWMol : public ROMol {
     \param updateLabel   (optional) if this is true, the new Atom will be
                          our \c activeAtom
 
-    \return the new number of atoms
+    \return the index of the added atom
 
   */
   unsigned int addAtom(bool updateLabel = true);
@@ -72,7 +72,7 @@ class RWMol : public ROMol {
     atom
                          instead of copying it.
 
-    \return the new number of atoms
+    \return the index of the added atom
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false) {
@@ -103,9 +103,11 @@ class RWMol : public ROMol {
     \param atom         the new atom, which will be copied.
     \param updateLabel   (optional) if this is true, the new Atom will be
                          our \c activeAtom
+    \param preserveProps if true preserve the original atom property data
 
   */
-  void replaceAtom(unsigned int idx, Atom *atom, bool updateLabel = false);
+  void replaceAtom(unsigned int idx, Atom *atom, bool updateLabel = false,
+                   bool preserveProps = false);
   //! returns a pointer to the highest-numbered Atom
   Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms() - 1); };
   //! returns a pointer to the "active" Atom
@@ -211,9 +213,10 @@ class RWMol : public ROMol {
   /*!
     \param idx          the index of the Bond to replace
     \param bond         the new bond, which will be copied.
+    \param preserveProps if true preserve the original bond property data    
 
   */
-  void replaceBond(unsigned int idx, Bond *bond);
+  void replaceBond(unsigned int idx, Bond *bond, bool preserveProps=false);
 
   //@}
 
@@ -226,7 +229,7 @@ class RWMol : public ROMol {
     dp_props.reset();
     STR_VECT computed;
     dp_props.setVal(RDKit::detail::computedPropName, computed);
-
+    numBonds = 0;
     if (dp_ringInfo) dp_ringInfo->reset();
   };
 

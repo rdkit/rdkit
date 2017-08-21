@@ -36,7 +36,7 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
 from rdkit.ML.Data import Stats
 from rdkit.ML.DecTree import TreeUtils, Tree
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 
 
 __VERSION_STRING = "2.2.0"
@@ -83,7 +83,7 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
     if verbose >= 0:
       print('# Average Descriptor Positions')
     retVal = []
-    for k in globalRes.keys():
+    for k in globalRes:
       name = descNames[k]
       if verbose >= 0:
         strRes = ', '.join(['%4.2f' % x for x in globalRes[k]])

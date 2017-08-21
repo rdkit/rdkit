@@ -50,7 +50,7 @@ class VisOpts(object):
   highlightRad = 10
 
 
-def _scaleMetric(val, power=2, min=1e-4):  # @ReservedAssignment
+def _scaleMetric(val, power=2, min=1e-4):
   val = float(val)
   nval = pow(val, power)
   if nval < min:

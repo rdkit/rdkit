@@ -183,7 +183,7 @@ class PDFDocument:
     #way so the system knows it is a PDF file.
     #This supplied by Joe Strout
     if os.name == 'mac':
-      import macfs  #@UnresolvedImport
+      import macfs
       try:
         macfs.FSSpec(filename).SetCreatorType('CARO', 'PDF ')
       except Exception:
@@ -427,7 +427,7 @@ class PDFPage(PDFObject):
 
   def setStream(self, data):
     if isinstance(data, (list, tuple)):
-      data = LINEEND.join(data, LINEEND)
+      data = LINEEND.join(data)
     self.stream.setStream(data)
 
 

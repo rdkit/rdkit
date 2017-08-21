@@ -60,7 +60,7 @@ import numpy
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
 from rdkit.six import integer_types
-from rdkit.six.moves import cPickle  # @UnresolvedImport
+from rdkit.six.moves import cPickle
 from rdkit.utils import fileutils
 
 
@@ -276,7 +276,7 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
   """
   numericTypes = integer_types + (float, numpy.int64, numpy.int32, numpy.int16)
 
-  if not silent:  # pragma: nocover
+  if not silent:
     print('order:', order, len(order))
     print('qB:', qBounds)
     # print('nQB:',nQBounds, len(nQBounds))
@@ -658,7 +658,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
     if runDetails:
       runDetails.randomized = 1
     nPossible = dataSet.GetNPossibleVals()[-1]
-    acts = [random.randint(0, nPossible) for _ in len(examples)]  # @UndefinedVariable
+    acts = [random.randint(0, nPossible) for _ in len(examples)]
   for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]

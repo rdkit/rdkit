@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -98,8 +98,10 @@ class Bond : public RDProps {
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,  // Z double bond
-    STEREOE,  // E double bond
+    STEREOZ,     // Z double bond
+    STEREOE,     // E double bond
+    STEREOCIS,   // cis double bond
+    STEREOTRANS  // trans double bond
   } BondStereo;
 
   Bond();
@@ -275,9 +277,39 @@ class Bond : public RDProps {
   BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); };
 
   //! sets our stereo code
-  void setStereo(BondStereo what) { d_stereo = what; };
+  /*!
+      STEREONONE, STEREOANY, STEREOE and STEREOZ can be set without
+      neighboring atoms specified in getStereoAtoms since they are
+      defined by the topology of the molecular graph. In order to set
+      STEREOCIS or STEREOTRANS the neighboring atoms must be set first
+      (using setStereoBonds()) to know what atoms are being considered.
+
+      <b>Notes:</b>
+        - MolOps::findPotentialStereoBonds can be used to set
+          getStereoAtoms before setting CIS/TRANS
+  */
+  void setStereo(BondStereo what) {
+    PRECONDITION(what <= STEREOE || getStereoAtoms().size() == 2,
+                 "Stereo atoms should be specified before specifying CIS/TRANS "
+                 "bond stereochemistry")
+    d_stereo = what;
+  };
   //! returns our stereo code
   BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
+
+  //! sets the atoms to be considered as reference points for bond stereo
+  /*!
+      These do not necessarily need to be the highest 'ranking' atoms
+      like CIP stereo requires. They can be any arbitrary atoms
+      neighboring the begin and end atoms of this bond
+      respectively. STEREOCIS or STEREOTRANS is then set relative to
+      only these atoms.
+
+      If CIP rankings are desired, use
+      MolOps::findPotentialStereoBonds, but this is a more costly
+      function as it takes the whole molecule topology into account.
+  */
+  void setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx);
 
   //! returns the indices of our stereo atoms
   const INT_VECT &getStereoAtoms() const {

@@ -26,7 +26,7 @@ def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=
 
 
 if __name__ == '__main__':  # pragma: nocover
-  from rdkit.six.moves import cPickle  # @UnresolvedImport
+  from rdkit.six.moves import cPickle
   examples, attrs, nPossibleVals = GenRandomExamples()
   outF = open('random.dat.pkl', 'wb+')
   cPickle.dump(examples, outF)

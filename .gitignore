@@ -6,6 +6,9 @@
 /.project
 /.pydevproject
 
+#- IDEA files
+/.idea
+
 #- Binary files
 __pycache__/
 *.so
@@ -68,8 +71,10 @@ __pycache__/
 /Code/GraphMol/Wrap/test_data/outSmiles.txt
 
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
-
+External/INCHI-API/*
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
+.DS_Store

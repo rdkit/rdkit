@@ -5,7 +5,7 @@
 from rdkit import DataStructs
 from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
 
-if rdsimdiv is None:  # pragma: nocover
+if rdsimdiv is None:
   raise ImportError('rdSimDivPickers not built')
 
 
@@ -16,7 +16,7 @@ class BitClusterer(object):
     from a database or a list of fingerprints
     """
 
-  def __init__(self, idList, nCluster, type=rdsimdiv.ClusterMethod.WARD):  # @ReservedAssignment
+  def __init__(self, idList, nCluster, type=rdsimdiv.ClusterMethod.WARD):
     self._clusters = []
     self._bidList = idList
     # self._matGen = BitCorrelationMatGenerator(idList)

@@ -40,11 +40,13 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
-#include <cmath>
 #include <boost/type_traits.hpp>
 #include <boost/static_assert.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#include <cmath>
 #include "LocaleSwitcher.h"
 
 #define RDVALUE_HASBOOL

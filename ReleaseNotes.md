@@ -1,3 +1,231 @@
+# Release_2017.03.1
+(Changes relative to Release_2016.09.1)
+
+## Important
+- The fix for bug #879 changes the definition of the layered fingerprint.
+  This means that all database columns using layered fingerprints as well as
+  all substructure search indices should be rebuilt.
+- All C++ library names now start with RDKit (see #1349).
+
+## Acknowledgements:
+Brian Cole, David Cosgrove, JW Feng, Berend Huisman, Peter Gedeck, 'i-tub',
+Jan Holst Jensen, Brian Kelley, Rich Lewis, Brian Mack, Eloy Felix Manzanares,
+Stephen Roughley, Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain,
+Paolo Tosco, Riccardo Vianello, Hsiao Yi
+
+## Highlights:
+  - It's now possible (though not the default) to pickle molecule properties
+  with the molecule
+  - There's a new, and still in development, "Getting started in C++" document.
+  - A lot of the Python code has been cleaned up
+
+## New Features and Enhancements:
+  - Add removeHs option to MolFromSmiles()
+ (github issue #554 from greglandrum)
+  - support a fixed bond length in the MolDraw2D code
+ (github issue #565 from greglandrum)
+  - Pattern fingerprint should set bits for single-atom fragments.
+ (github issue #879 from greglandrum)
+  - Reviewed unit tests of rdkit.ML - coverage now 63.1%
+ (github pull #1148 from gedeck)
+  - Reviewed unit tests of rdkit.VLib - coverage now 67.1%
+ (github pull #1149 from gedeck)
+  - Removes exponetial numBonds behavior
+ (github pull #1154 from bp-kelley)
+  - Exposes normalize option to GetFlattenedFunctionalGroupHierarchy
+ (github pull #1165 from bp-kelley)
+  - Expose RWMol.ReplaceBond to Python
+ (github pull #1174 from coleb)
+  - Review of rdkit.Chem.Fraggle code
+ (github pull #1184 from gedeck)
+  - Add support for dative bonds.
+ (github pull #1190 from janholstjensen)
+  - Python 3 compatibility (issue #398)
+ (github pull #1192 from gedeck)
+  - 1194: Review assignments of range in Python code
+ (github pull #1195 from gedeck)
+  - Moved GenerateDepictionMatching[23]DStructure from Allchem.py to C++
+ (github pull #1197 from DavidACosgrove)
+  - Review rdkit.Chem.pharm#D modules
+ (github pull #1201 from gedeck)
+  - Find potential stereo bonds should return any
+ (github pull #1202 from coleb)
+  - Gedeck coverage sim div filters
+ (github pull #1208 from gedeck)
+  - Gedeck review unit test inchi
+ (github pull #1209 from gedeck)
+  - Coverage rdkit.Dbase
+ (github pull #1210 from gedeck)
+  - Coverage rdkit.DataStructs
+ (github pull #1211 from gedeck)
+  - UnitTestPandas works on Python3
+ (github pull #1213 from gedeck)
+  - Cleanup and improvement to test coverage of PandasTools
+ (github pull #1215 from gedeck)
+  - Cleanup of rdkit.Chem.Fingerprints
+ (github pull #1217 from gedeck)
+  - Optimization of UFF and MMFF forcefields
+ (github pull #1218 from ptosco)
+  - Support for ChemAxon Extended SMILES/SMARTS
+ (github issue #1226 from greglandrum)
+  - Improved test coverage for rdkit.Chem.Fingerprints
+ (github pull #1243 from gedeck)
+  - Adding a few tests for coverage utils
+ (github pull #1244 from gedeck)
+  - Make Pandastools modifications to generic RDkit functionality more obvious
+ (github pull #1245 from gedeck)
+  - Rename test file and cleanup
+ (github pull #1246 from gedeck)
+  - Review of rdkit.Chem.MolKey
+ (github pull #1247 from gedeck)
+  - Review tests in rdkit.Chem.SimpleEnum
+ (github pull #1248 from gedeck)
+  - Move execution of DocTests in rdkit.Chem into a UnitTest file
+ (github pull #1256 from gedeck)
+  - Review code in rdkit.Chem.Suppliers
+ (github pull #1258 from gedeck)
+  - Add python wraps
+ (github pull #1259 from eloyfelix)
+  - Rename file UnitTestDocTests in rdkitChem
+ (github pull #1263 from gedeck)
+  - Gedeck rdkit chem unit test surf
+ (github pull #1267 from gedeck)
+  - cleanup rdkit.Chem.Lipinski and rdkit.Chem.GraphDescriptors
+ (github pull #1268 from gedeck)
+  - Address Issue #1214
+ (github pull #1275 from gedeck)
+  - Dev/pickle properties
+ (github pull #1277 from bp-kelley)
+  - Remove unused test boilerplate
+ (github pull #1288 from gedeck)
+  - Refactored the script SDFToCSV
+ (github pull #1289 from gedeck)
+  - Dev/rdmmpa api update
+ (github pull #1291 from bp-kelley)
+  - Fix/rogers fixes
+ (github pull #1293 from bp-kelley)
+  - Remove expected (error) output during unit tests
+ (github pull #1298 from gedeck)
+  - Refactor FeatFinderCLI and add unittests
+ (github pull #1299 from gedeck)
+  - Refactor BuildFragmentCatalog - 1
+ (github pull #1300 from gedeck)
+  - Review of rdkit.Chem code - 1
+ (github pull #1301 from gedeck)
+  - Minor cleanup in rdkit.Chem
+ (github pull #1304 from gedeck)
+  - Start using py3Dmol in the notebook
+ (github pull #1308 from greglandrum)
+  - Add the option to match formal charges to FMCS
+ (github pull #1311 from greglandrum)
+  - Review of rdkit.Chem.Subshape
+ (github pull #1313 from gedeck)
+  - Review rdkit.Chem.UnitTestSuppliers
+ (github pull #1315 from gedeck)
+  - Add cis/trans tags to double bonds
+ (github pull #1316 from greglandrum)
+  - MolDraw2D: make custom atom labels easier
+ (github issue #1322 from greglandrum)
+  - MolDraw2D: allow DrawMolecules() to put all molecules in one pane
+ (github issue #1325 from greglandrum)
+  - Refactoring rdkit.Chem.SATIS
+ (github pull #1329 from gedeck)
+  - Minor cleanup of rdkit.Chem.SaltRemover
+ (github pull #1330 from gedeck)
+  - Review rdkit.chem.FunctionalGroups and rdkit.Chem.UnitTestSuppliers
+ (github pull #1331 from gedeck)
+  - Get the tests working with python 3.6
+ (github pull #1332 from greglandrum)
+  - add "RDKit" to the beginning of all library names
+ (github pull #1349 from greglandrum)
+  - Fix/sanitizerxn merge hs
+ (github pull #1367 from bp-kelley)
+  - Update AllChem.py
+ (github pull #1378 from BerendHuisman)
+
+## New Java Wrapper Features:
+
+## Bug Fixes:
+  - python2 code in python3 install
+ (github issue #1042 from kcamnairb)
+  - Fixes #1162 (resMolSupplierTest failing with boost 1.62)
+ (github pull #1166 from ptosco)
+  - add missing $RDKLIBS to cartridge build
+ (github pull #1167 from rvianello)
+  - Include <boost/cstdint.hpp> for uint64_t
+ (github pull #1168 from mcs07)
+  - replace std::map::at with std::map::find
+ (github pull #1169 from mcs07)
+  - Fix Trajectory GetSnapshot behaviour after Clear
+ (github pull #1172 from mcs07)
+  - Add Contrib dir to RDPaths
+ (github pull #1176 from mcs07)
+  - RDThreads.h: No such file or directory
+ (github issue #1177 from gncs)
+  - this now builds with vs2008
+ (github pull #1178 from greglandrum)
+  - Add information on building RDkit on macOS using conda
+ (github pull #1180 from gedeck)
+  - new sequence capabilities not available from either Python or Java
+ (github issue #1181 from greglandrum)
+  - Gets the reaction sanitization code working correctly on 32bit systems
+ (github pull #1187 from greglandrum)
+  - Adds RDProps to c# wrapper
+ (github pull #1188 from bp-kelley)
+  - fix compatibility with PostgreSQL 9.2
+ (github pull #1189 from greglandrum)
+  - Fixes memory leak in closeCheckMolFiles, fixes valgrind read issue in…
+ (github pull #1200 from bp-kelley)
+  - Support valences of 4 and 6 for Te
+ (github issue #1204 from hsiaoyi0504)
+  - Stereochemistry not output to SMILES when allHsExplicit=True
+ (github issue #1219 from greglandrum)
+  - Remove deprecated string module functions
+ (github pull #1223 from gedeck)
+  - Turns on -fpermissive for gcc >= 6 and boost < 1.62
+ (github pull #1225 from bp-kelley)
+  - all-atom RMSD used to prune conformers in embedding code, docs say heavy-atom RMSD is used
+ (github issue #1227 from greglandrum)
+   - FindPotentialStereoBonds() failure
+ (github issue #1230 from greglandrum)
+  - make the Pandas version checking more robust
+ (github pull #1239 from greglandrum)
+  - Failure to embed larger aromatic rings
+ (github issue #1240 from greglandrum)
+   - fixed build failure on Windows due to missing link to library
+ (github pull #1241 from ptosco)
+  - fixed a test failure on Windows due to CR+LF encoding
+ (github pull #1242 from ptosco)
+  - MolFromMolBlock sanitizing when it should not be
+ (github issue #1251 from greglandrum)
+  - PMI descriptors incorrect
+ (github issue #1262 from greglandrum)
+  - Reactions don't modify isotope unless chemical element is specified for the product
+ (github issue #1266 from i-tub)
+  - Do not include the 3D descriptors in rdkit.Chem.Descriptors.descList
+ (github issue #1287 from greglandrum)
+  - ring stereochemistry perception failing for spiro centers
+ (github issue #1294 from greglandrum)
+  - Property pickling test failing on windows
+ (github issue #1348 from greglandrum)
+  - Fixes overflow error in boost when compiler chooses int for enum type
+ (github pull #1351 from bp-kelley)
+  - Hybridization type of group 1 metals
+ (github issue #1352 from richlewis42)
+  - bad python docs for some distance geometry functions
+ (github issue #1385 from greglandrum)
+  - Bond from reactant not added to product
+ (github issue #1387 from greglandrum)
+  - int32_t with no namespace in MolPickler.h
+ (github issue #1388 from greglandrum)
+
+## Contrib updates:
+  - Chemical reaction role assignment code from Nadine Schneider
+ (github pull #1185 from NadineSchneider)
+
+## Deprecated code (to be removed in a future release):
+- rdkit.Chem.MCS: please use rdkit.Chem.rdFMCS instead
+
 # Release_2016.09.1
 (Changes relative to Release_2016.03.1)
 
@@ -325,6 +553,10 @@ Vianello, Maciek Wojcikowski
 
 ## Deprecated code (to be removed in a future release):
   - rdkit.VLib python module
+  - SanitizeRxn parameters "ChemDrawRxnAdjustParams" has been renamed to
+    "MatchOnlyAtRgroupsAdjustParams".  These settings did not reflect
+    how integrations with SciQuest or the Perkin Elmer ELN behaved and
+    were confusing to users (especially since they were not explicit)
 
 ## Removed code:
 

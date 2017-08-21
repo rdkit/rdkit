@@ -44,7 +44,11 @@
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #pragma GCC diagnostic ignored "-Wreorder"
 #pragma GCC diagnostic ignored "-Wunused"
-#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#if defined(__apple_build_version__)
+# if __apple_build_version__ >= 7000072
+# pragma GCC diagnostic ignored "-Wunused-local-typedef"
+# endif
+#endif
 #elif defined(__ICC) || defined(__INTEL_COMPILER)
 /* Intel ICC/ICPC. ------------------------------------------ */
 
@@ -69,7 +73,9 @@
 
 #elif defined(_MSC_VER)
 /* Microsoft Visual Studio. --------------------------------- */
-#pragma warning(push, 0)
+#pragma warning(push)
+#pragma warning(disable:4996 4267)
+
 #elif defined(__PGI)
 /* Portland Group PGCC/PGCPP. ------------------------------- */
 

@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 #
@@ -20,8 +19,6 @@
 """
 from rdkit import Chem
 from rdkit.Chem.Pharm2D import Utils
-
-import types
 
 
 class MatchError(Exception):
@@ -67,7 +64,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     matchingAtoms = sigFactory.GetMolFeats(mol)
 
   # find the atoms that match each features
-  fams = sigFactory.GetFeatFamilies()
+  # fams = sigFactory.GetFeatFamilies()
   choices = []
   for featIdx in featCombo:
     tmp = matchingAtoms[featIdx]
@@ -87,7 +84,6 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   if dMat is None:
     dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
-  matches = []
   distsToCheck = Utils.nPointDistDict[nPts]
 
   protoPharmacophores = Utils.GetAllCombinations(choices, noDups=1)
@@ -123,32 +119,29 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   return res
 
 
-if __name__ == '__main__':
-  from rdkit import Chem
+def _exampleCode():
+  import os
+  from rdkit import RDConfig
+  from rdkit.Chem import ChemicalFeatures
   from rdkit.Chem.Pharm2D import SigFactory, Generate
 
-  factory = SigFactory.SigFactory()
+  fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Pharm2D', 'test_data', 'BaseFeatures.fdef')
+  featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+  factory = SigFactory.SigFactory(featFactory)
   factory.SetBins([(1, 2), (2, 5), (5, 8)])
-  factory.SetPatternsFromSmarts(['O', 'N'])
-  factory.SetMinCount(2)
-  factory.SetMaxCount(3)
-  sig = factory.GetSignature()
+  factory.Init()
 
   mol = Chem.MolFromSmiles('OCC(=O)CCCN')
-  Generate.Gen2DFingerprint(mol, sig)
+  sig = Generate.Gen2DFingerprint(mol, factory)
   print('onbits:', list(sig.GetOnBits()))
 
   _verbose = 0
   for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig, bit, mol)
+    atoms = GetAtomsMatchingBit(factory, bit, mol)
     print('\tBit %d: ' % (bit), atoms)
 
-  print('--------------------------')
-  sig = factory.GetSignature()
-  sig.SetIncludeBondOrder(1)
-  Generate.Gen2DFingerprint(mol, sig)
-  print('onbits:', list(sig.GetOnBits()))
+  print('finished')
 
-  for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig, bit, mol)
-    print('\tBit %d: ' % (bit), atoms)
+
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

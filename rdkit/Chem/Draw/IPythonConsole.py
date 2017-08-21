@@ -1,32 +1,22 @@
+#
+#  Copyright (C) 2011-2017 Greg Landrum
+#
+#   @@ All Rights Reserved @@
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
+#
 import sys
 import IPython
 
 if IPython.release.version < '0.11':
   raise ImportError('this module requires at least v0.11 of IPython')
-elif IPython.release.version < '2.0':
-  install_nbextension = None
+try:
+  import py3Dmol
+  _canUse3D = True
+except ImportError:
   _canUse3D = False
-else:
-  try:
-    try:
-      from notebook.nbextensions import install_nbextension
-      _canUse3D = True
-    except ImportError:
-      #  Older IPythonVersion location
-      from IPython.html.nbextensions import install_nbextension
-      _canUse3D = True
-  except ImportError:
-    # can't find notebook extensions for integrating javascript
-    #  with Jupyter/IPython, disable widgets.
-    _canUse3D = False
-    sys.stderr.write("*" * 44)
-    sys.stderr.write("\nCannot import nbextensions\n")
-    sys.stderr.write("Current IPython/Jupyter version is %s\n" % IPython.release.version)
-    sys.stderr.write("Disabling 3D rendering\n")
-    sys.stderr.write("*" * 44)
-    sys.stderr.write("\n")
-    import traceback
-    traceback.print_exc()
 
 from rdkit import Chem
 from rdkit.Chem import rdchem, rdChemReactions
@@ -51,53 +41,57 @@ kekulizeStructures = True
 
 ipython_useSVG = False
 ipython_3d = False
-molSize_3d = (450, 450)
-drawing_type_3d = "ball and stick"
-camera_type_3d = "perspective"
-shader_3d = "lambert"
-
+molSize_3d = (400, 400)
+drawing_type_3d = 'stick' # default drawing type for 3d structures
+bgcolor_3d = '0xeeeeee'
 # expose RDLogs to Python StdErr so they are shown
 #  in the IPythonConsole not the server logs.
 Chem.WrapLogs()
 
 
+def addMolToView(mol,view,confId=-1,drawAs=None):
+  if mol.GetNumAtoms()>=999 or drawAs == 'cartoon':
+    # py3DMol is happier with TER and MASTER records present
+    pdb = Chem.MolToPDBBlock(mol,flavor=0x20|0x10)
+    view.addModel(pdb,'pdb')
+  else:
+    # py3Dmol does not currently support v3k mol files, so
+    # we can only provide those with "smaller" molecules
+    mb = Chem.MolToMolBlock(mol,confId=confId)
+    view.addModel(mb,'sdf')
+  if drawAs is None:
+    drawAs = drawing_type_3d
+  view.setStyle({drawAs:{}})
+
+def drawMol3D(m,view=None,confId=-1,drawAs=None,bgColor=None,size=None):
+  if bgColor is None:
+    bgColor = bgcolor_3d
+  if size is None:
+    size=molSize_3d
+  if view is None:
+    view = py3Dmol.view(width=size[0],height=size[1])
+  view.removeAllModels()
+  try:
+    iter(m)
+  except TypeError:
+    addMolToView(m,view,confId,drawAs)
+  else:
+    ms = m
+    for m in ms:
+      addMolToView(m,view,confId,drawAs)
+
+  view.setBackgroundColor(bgColor)
+  view.zoomTo()
+  return view.show()
+
 def _toJSON(mol):
   """For IPython notebook, renders 3D webGL objects."""
-
   if not ipython_3d or not mol.GetNumConformers():
     return None
-
-  try:
-    import imolecule
-  except ImportError:
-    raise ImportError("Cannot import 3D rendering. Please install " "with `pip install imolecule`.")
-
   conf = mol.GetConformer()
   if not conf.Is3D():
     return None
-
-  mol = Chem.Mol(mol)
-  try:
-    Chem.Kekulize(mol)
-  except Exception:
-    mol = Chem.Mol(mol)
-  size = molSize_3d
-
-  # center the molecule:
-  atomps = numpy.array([list(conf.GetAtomPosition(x)) for x in range(mol.GetNumAtoms())])
-  avgP = numpy.average(atomps, 0)
-  atomps -= avgP
-
-  # Convert the relevant parts of the molecule into JSON for rendering
-  atoms = [{"element": atom.GetSymbol(),
-            "location": list(atomps[atom.GetIdx()])} for atom in mol.GetAtoms()]
-  bonds = [{"atoms": [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()],
-            "order": int(bond.GetBondTypeAsDouble())} for bond in mol.GetBonds()]
-  mol = {"atoms": atoms, "bonds": bonds}
-  return imolecule.draw({"atoms": atoms,
-                         "bonds":
-                         bonds}, format="json", size=molSize_3d, drawing_type=drawing_type_3d,
-                        camera_type=camera_type_3d, shader=shader_3d, display_html=False)
+  return drawMol3D(mol).data
 
 
 def _toPNG(mol):

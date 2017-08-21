@@ -127,7 +127,8 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   return rdcast<unsigned int>(which);
 }
 
-void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
+void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
+                        bool preserveProps) {
   RDUNUSED_PARAM(updateLabel);
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
   URANGE_CHECK(idx, getNumAtoms() - 1);
@@ -135,11 +136,15 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel) {
   atom_p->setOwningMol(this);
   atom_p->setIdx(idx);
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
+  if (preserveProps) {
+    const bool replaceExistingData = false;
+    atom_p->updateProps(*d_graph[vd].get(), replaceExistingData);
+  }
   d_graph[vd].reset(atom_p);
   // FIX: do something about bookmarks
 };
 
-void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
+void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
   URANGE_CHECK(idx, getNumBonds() - 1);
   BOND_ITER_PAIR bIter = getEdges();
@@ -150,6 +155,11 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin) {
   bond_p->setIdx(idx);
   bond_p->setBeginAtomIdx(obond->getBeginAtomIdx());
   bond_p->setEndAtomIdx(obond->getEndAtomIdx());
+  if (preserveProps) {
+    const bool replaceExistingData = false;
+    bond_p->updateProps( *d_graph[*(bIter.first)].get(), replaceExistingData );
+  }
+
   d_graph[*(bIter.first)].reset(bond_p);
   // FIX: do something about bookmarks
 };
@@ -284,7 +294,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   MolGraph::edge_descriptor which;
   boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
   d_graph[which].reset(b);
-  //unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
+  // unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
   ++numBonds;
   b->setIdx(numBonds - 1);
   b->setBeginAtomIdx(atomIdx1);
@@ -298,7 +308,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
     dp_ringInfo->reset();
   }
 
-  return numBonds;//res;
+  return numBonds;  // res;
 }
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
@@ -360,10 +370,15 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   dp_ringInfo->reset();
 
   // loop over all bonds with higher indices and update their indices
-  for (unsigned int i = idx + 1; i < getNumBonds(); ++i) {
-    getBondWithIdx(i)->setIdx(i - 1);
+  ROMol::EDGE_ITER firstB, lastB;
+  boost::tie(firstB, lastB) = this->getEdges();
+  while (firstB != lastB) {
+    BOND_SPTR bond = (*this)[*firstB];
+    if (bond->getIdx() > idx) {
+      bond->setIdx(bond->getIdx() - 1);
+    }
+    ++firstB;
   }
-
   bnd->setOwningMol(NULL);
 
   MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);

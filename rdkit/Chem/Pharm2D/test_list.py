@@ -1,10 +1,10 @@
 tests = [
   ("python", "UnitTestMatcher.py", {}),
   ("python", "UnitTestSignature.py", {}),
-  #("python","UnitTestLazyGenerator.py",{}),
+  #   ("python","UnitTestLazyGenerator.py",{}),
+  ("python", "UnitTestGenerate.py", {}),
   ("python", "UnitTestUtils.py", {}),
   ("python", "UnitTestGobbi.py", {}),
-  ("python", "Utils.py", {}),
 ]
 
 longTests = []

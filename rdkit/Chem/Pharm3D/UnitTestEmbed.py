@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2004-2008  greg Landrum and Rational Discovery LLC
 #
@@ -9,31 +8,41 @@
 #  of the RDKit source tree.
 #
 from __future__ import print_function
-from rdkit import RDConfig
-import unittest, sys, os
-import io
-from rdkit.six import PY3
-from rdkit.six.moves import cPickle
-from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures, rdDistGeom
-from rdkit.Chem.Pharm3D import EmbedLib
+
+import doctest
 import gzip
+import io
+import os
+import unittest
+
+from rdkit import Chem
 from rdkit import DistanceGeometry as DG
 from rdkit import Geometry
-import Pharmacophore
-import numpy
+from rdkit import RDConfig
+from rdkit.Chem import ChemicalFeatures, rdDistGeom
+from rdkit.Chem.Pharm3D import EmbedLib
+from rdkit.Chem.Pharm3D import Pharmacophore
+from rdkit.six import PY3
+from rdkit.six.moves import cPickle
 
 
 def feq(n1, n2, tol=1e-5):
   return abs(n1 - n2) <= tol
 
 
+def load_tests(loader, tests, ignore):
+  """ Add the Doctests from the module """
+  tests.addTests(
+    doctest.DocTestSuite(EmbedLib, optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE))
+  return tests
+
+
 class TestCase(unittest.TestCase):
 
   def setUp(self):
     self.dataDir = os.path.join(RDConfig.RDCodeDir, 'Chem/Pharm3D/test_data')
-    self.fdefBlock = \
-                   """DefineFeature HAcceptor1 [N,O;H0]
+    self.fdefBlock = """
+                   DefineFeature HAcceptor1 [N,O;H0]
                       Family HBondAcceptor
                       Weights 1.0
                    EndFeature
@@ -62,7 +71,7 @@ class TestCase(unittest.TestCase):
     self.pcophore.setUpperBound(1, 2, 3.0)
 
   def _matchMol(self, tpl, pcophore, featFactory, downSample):
-    name, molPkl, boundsMat = tpl
+    _, molPkl, boundsMat = tpl
     mol = Chem.Mol(molPkl)
     matched, matches = EmbedLib.MatchPharmacophoreToMol(mol, featFactory, pcophore)
     if matched:
@@ -76,7 +85,7 @@ class TestCase(unittest.TestCase):
 
   def test1SearchFullMat(self):
     inF = gzip.open(os.path.join(self.dataDir, 'cdk2-syn-clip100.pkl.gz'), 'rb')
-    #outF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.new.gz'),'wb+')
+    # outF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.new.gz'),'wb+')
     nDone = 0
     nHits = 0
     while 1:
@@ -84,22 +93,21 @@ class TestCase(unittest.TestCase):
         tpl = cPickle.load(inF, encoding='latin1')
         if PY3:
           tpl = tpl[0], tpl[1].encode('latin1'), tpl[2]
-        #tpl=tpl[0],tpl[1],numpy.array(tpl[2])
-        #cPickle.dump(tpl,outF)
+        # tpl=tpl[0],tpl[1],numpy.array(tpl[2])
+        # cPickle.dump(tpl,outF)
       except Exception:
         break
       if self._matchMol(tpl, self.pcophore, self.featFactory, 0):
         nHits += 1
       nDone += 1
     self.assertEqual(nDone, 100)
-    #print 'nHits:',nHits
+    # print 'nHits:',nHits
     self.assertEqual(nHits, 47)
 
   def test2SearchDownsample(self):
     inF = gzip.open(os.path.join(self.dataDir, 'cdk2-syn-clip100.pkl.gz'), 'rb')
     nDone = 0
     nHits = 0
-    hits = []
     while 1:
       try:
         tpl = cPickle.load(inF, encoding='latin1')
@@ -111,7 +119,7 @@ class TestCase(unittest.TestCase):
         nHits += 1
       nDone += 1
     self.assertEqual(nDone, 100)
-    #print 'nHits:',nHits
+    # print 'nHits:',nHits
     self.assertEqual(nHits, 47)
 
   def test3Embed(self):
@@ -125,7 +133,7 @@ class TestCase(unittest.TestCase):
     nHits = 0
     while 1:
       try:
-        name, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
+        name, molPkl, _ = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
@@ -138,8 +146,8 @@ class TestCase(unittest.TestCase):
       DG.DoTriangleSmoothing(nboundsMat)
       matched, matches = EmbedLib.MatchPharmacophoreToMol(mol, self.featFactory, self.pcophore)
       if matched:
-        failed, bm, match, stats = EmbedLib.MatchPharmacophore(matches, nboundsMat, self.pcophore,
-                                                               useDownsampling=1)
+        failed, _, match, stats = EmbedLib.MatchPharmacophore(matches, nboundsMat, self.pcophore,
+                                                              useDownsampling=1)
         if not failed:
           nHits += 1
 
@@ -148,15 +156,15 @@ class TestCase(unittest.TestCase):
                                       randomSeed=23)
             tgt = testResults[name]
             self.assertEqual(len(tgt), len(stats))
-            print(name)
-            print(','.join(['%.2f' % x for x in stats]))
+            # print(name)
+            # print(','.join(['%.2f' % x for x in stats]))
             # we'll use different tolerances for the different values:
             self.assertTrue(feq(tgt[0], stats[0], 5.0), (tgt[0], stats[0]))
             for i in range(2, len(tgt)):
               self.assertTrue(feq(tgt[i], stats[i], 5.0), (tgt[i], stats[i]))
 
     self.assertEqual(nDone, 100)
-    #print 'nHits:',nHits
+    # print 'nHits:',nHits
     self.assertEqual(nHits, 50)
 
   def test4Search(self):
@@ -188,7 +196,7 @@ class TestCase(unittest.TestCase):
 
     while 1:
       try:
-        name, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
+        _, molPkl, boundsMat = cPickle.load(inF, encoding='latin1')
         if PY3:
           molPkl = bytes(molPkl, encoding='latin1')
       except Exception:
@@ -205,18 +213,16 @@ class TestCase(unittest.TestCase):
         nMatches += 1
         r = EmbedLib.MatchPharmacophore(matches, boundsMat, pcophore, useDownsampling=True,
                                         use2DLimits=True, mol=mol)
-        failed, bm, match, details = r
+        failed = r[0]
         if not failed:
           nHits += 1
 
     self.assertEqual(nDone, 100)
     self.assertEqual(nMatches, 93)
-    #print 'nhits:',nHits
+    # print 'nhits:',nHits
     self.assertEqual(nHits, 67)
 
   def testIssue268(self):
-    from rdkit import RDLogger
-    #RDLogger.EnableLog('rdApp.debug')
     featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(self.dataDir, 'Issue268.fdef'))
     m1 = Chem.MolFromMolFile(os.path.join(self.dataDir, 'Issue268_Mol1.mol'))
     m2 = Chem.MolFromMolFile(os.path.join(self.dataDir, 'Issue268_Mol2.mol'))
@@ -225,12 +231,12 @@ class TestCase(unittest.TestCase):
       inTF.close()
     with io.BytesIO(buf) as inF:
       pcop = cPickle.load(inF, encoding='latin1')
-    #pcop._boundsMat=numpy.array(pcop._boundsMat)
-    #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
-    #cPickle.dump(pcop,file(os.path.join(self.dataDir,
+    # pcop._boundsMat=numpy.array(pcop._boundsMat)
+    # pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
+    # cPickle.dump(pcop,file(os.path.join(self.dataDir,
     #                                    'Issue268_Pcop.new.pkl'),'wb+'))
-    match, mList1 = EmbedLib.MatchFeatsToMol(m1, featFactory, pcop.getFeatures())
-    match, mList2 = EmbedLib.MatchFeatsToMol(m2, featFactory, pcop.getFeatures())
+    _, mList1 = EmbedLib.MatchFeatsToMol(m1, featFactory, pcop.getFeatures())
+    _, mList2 = EmbedLib.MatchFeatsToMol(m2, featFactory, pcop.getFeatures())
     b1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
     b2 = rdDistGeom.GetMoleculeBoundsMatrix(m2)
 
@@ -242,7 +248,6 @@ class TestCase(unittest.TestCase):
     self.assertEqual(
       len(EmbedLib.MatchPharmacophore(mList2, b2, pcop, mol=m2, use2DLimits=True)[2]), 4)
 
-    from rdkit import DistanceGeometry as DG
     self.assertTrue(DG.DoTriangleSmoothing(b1))
     self.assertTrue(DG.DoTriangleSmoothing(b2))
 
@@ -255,5 +260,5 @@ class TestCase(unittest.TestCase):
       len(EmbedLib.MatchPharmacophore(mList2, b2, pcop, mol=m2, use2DLimits=True)[2]), 4)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
   unittest.main()

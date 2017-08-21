@@ -62,7 +62,7 @@ class AtomIterator_ {
   ThisType &operator--();
   ThisType operator--(int);
 
-  // private:
+ private:
   int _pos, _max;
   Mol_ *_mol;
 };

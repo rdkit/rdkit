@@ -1,48 +1,84 @@
-# - Try to find the cairo library
-# Once done this will define
+# Grabbed from here:
+# https://github.com/adobe/webkit/blob/master/Source/cmake/FindCairo.cmake
 #
-#  CAIRO_FOUND - system has cairo
-#  CAIRO_INCLUDE_DIRS - the cairo include directory
-#  CAIRO_LIBRARIES - Link these to use cairo
+# - Try to find Cairo
+# Once done, this will define
 #
-# Define CAIRO_MIN_VERSION for which version desired.
+#  CAIRO_FOUND - system has Cairo
+#  CAIRO_INCLUDE_DIRS - the Cairo include directories
+#  CAIRO_LIBRARIES - link these to use Cairo
 #
-# grabbed from: https://raw.githubusercontent.com/stevedekorte/io/9c76c405746843087bb94e15c3ef12b9edf041af/modules/FindCairo.cmake
+# Copyright (C) 2012 Raphael Kubo da Costa <rakuco@webkit.org>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1.  Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+# 2.  Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND ITS CONTRIBUTORS ``AS
+# IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR ITS
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-INCLUDE(FindPkgConfig)
+FIND_PACKAGE(PkgConfig)
+PKG_CHECK_MODULES(PC_CAIRO cairo) # FIXME: After we require CMake 2.8.2 we can pass QUIET to this call.
 
-IF(Cairo_FIND_REQUIRED)
-	SET(_pkgconfig_REQUIRED "REQUIRED")
-ELSE(Cairo_FIND_REQUIRED)
-	SET(_pkgconfig_REQUIRED "")
-ENDIF(Cairo_FIND_REQUIRED)
+FIND_PATH(CAIRO_INCLUDE_DIRS
+    NAMES cairo.h
+    HINTS ${PC_CAIRO_INCLUDEDIR}
+          ${PC_CAIRO_INCLUDE_DIRS}
+    PATH_SUFFIXES cairo
+)
 
-IF(CAIRO_MIN_VERSION)
-	PKG_SEARCH_MODULE(CAIRO ${_pkgconfig_REQUIRED} cairo>=${CAIRO_MIN_VERSION})
-ELSE(CAIRO_MIN_VERSION)
-	PKG_SEARCH_MODULE(CAIRO ${_pkgconfig_REQUIRED} cairo)
-ENDIF(CAIRO_MIN_VERSION)
+FIND_LIBRARY(CAIRO_LIBRARIES
+    NAMES cairo
+    HINTS ${PC_CAIRO_LIBDIR}
+          ${PC_CAIRO_LIBRARY_DIRS}
+)
 
-IF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
-	FIND_PATH(CAIRO_INCLUDE_DIRS cairo.h)
-	FIND_LIBRARY(CAIRO_LIBRARIES cairo)
+IF (CAIRO_INCLUDE_DIRS)
+    IF (EXISTS "${CAIRO_INCLUDE_DIRS}/cairo-version.h")
+        FILE(READ "${CAIRO_INCLUDE_DIRS}/cairo-version.h" CAIRO_VERSION_CONTENT)
 
-	# Report results
-	IF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
-		SET(CAIRO_FOUND 1)
-		IF(NOT Cairo_FIND_QUIETLY)
-			MESSAGE(STATUS "Found Cairo: ${CAIRO_LIBRARIES}")
-		ENDIF(NOT Cairo_FIND_QUIETLY)
-	ELSE(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)	
-		IF(Cairo_FIND_REQUIRED)
-			MESSAGE(SEND_ERROR "Could not find Cairo")
-		ELSE(Cairo_FIND_REQUIRED)
-			IF(NOT Cairo_FIND_QUIETLY)
-				MESSAGE(STATUS "Could not find Cairo")	
-			ENDIF(NOT Cairo_FIND_QUIETLY)
-		ENDIF(Cairo_FIND_REQUIRED)
-	ENDIF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
-ENDIF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
+        STRING(REGEX MATCH "#define +CAIRO_VERSION_MAJOR +([0-9]+)" _dummy "${CAIRO_VERSION_CONTENT}")
+        SET(CAIRO_VERSION_MAJOR "${CMAKE_MATCH_1}")
 
-# Hide advanced variables from CMake GUIs
-MARK_AS_ADVANCED(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)
+        STRING(REGEX MATCH "#define +CAIRO_VERSION_MINOR +([0-9]+)" _dummy "${CAIRO_VERSION_CONTENT}")
+        SET(CAIRO_VERSION_MINOR "${CMAKE_MATCH_1}")
+
+        STRING(REGEX MATCH "#define +CAIRO_VERSION_MICRO +([0-9]+)" _dummy "${CAIRO_VERSION_CONTENT}")
+        SET(CAIRO_VERSION_MICRO "${CMAKE_MATCH_1}")
+
+        SET(CAIRO_VERSION "${CAIRO_VERSION_MAJOR}.${CAIRO_VERSION_MINOR}.${CAIRO_VERSION_MICRO}")
+    ENDIF ()
+ENDIF ()
+
+# FIXME: Should not be needed anymore once we start depending on CMake 2.8.3
+SET(VERSION_OK TRUE)
+IF (Cairo_FIND_VERSION)
+    IF (Cairo_FIND_VERSION_EXACT)
+        IF ("${Cairo_FIND_VERSION}" VERSION_EQUAL "${CAIRO_VERSION}")
+            # FIXME: Use IF (NOT ...) with CMake 2.8.2+ to get rid of the ELSE block
+        ELSE ()
+            SET(VERSION_OK FALSE)
+        ENDIF ()
+    ELSE ()
+        IF ("${Cairo_FIND_VERSION}" VERSION_GREATER "${CAIRO_VERSION}")
+            SET(VERSION_OK FALSE)
+        ENDIF ()
+    ENDIF ()
+ENDIF ()
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cairo DEFAULT_MSG CAIRO_INCLUDE_DIRS CAIRO_LIBRARIES VERSION_OK)

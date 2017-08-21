@@ -69,7 +69,6 @@ Optional Arguments:
 from __future__ import print_function
 
 import sys
-import traceback
 
 import numpy
 
@@ -79,8 +78,8 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData, Stats
 from rdkit.six import PY3
-from rdkit.six.moves import cPickle  # @UnresolvedImport
-from rdkit.six.moves import input  # @UnresolvedImport
+from rdkit.six.moves import cPickle
+from rdkit.six.moves import input
 
 
 __VERSION_STRING = "2.4.0"
@@ -273,11 +272,12 @@ def MakePlot(details, final, counts, pickVects, nModels, nTrueActs=-1):
 
   if hasattr(details, 'showPlot') and details.showPlot:
     try:
-      from Gnuplot import Gnuplot  # @UnresolvedImport
+      from Gnuplot import Gnuplot
       p = Gnuplot()
       p('load "%s"' % (plotFileName))
       input('press return to continue...\n')
     except Exception:
+      import traceback
       traceback.print_exc()
 
 
@@ -294,6 +294,7 @@ if __name__ == '__main__':
                                  ('thresh=', 'plotFile=', 'showPlot', 'pickleCol=', 'OOB', 'noSort',
                                   'pickBase=', 'doROC', 'rocThresh=', 'enrich='))
   except Exception:
+    import traceback
     traceback.print_exc()
     Usage()
 
@@ -391,6 +392,7 @@ if __name__ == '__main__':
       try:
         models.append(cPickle.loads(str(blob)))
       except Exception:
+        import traceback
         traceback.print_exc()
         print('Model failed')
       else:
@@ -405,6 +407,7 @@ if __name__ == '__main__':
       try:
         model = cPickle.load(open(modelName, 'rb'))
       except Exception:
+        import traceback
         print('problems with model %s:' % modelName)
         traceback.print_exc()
       else:

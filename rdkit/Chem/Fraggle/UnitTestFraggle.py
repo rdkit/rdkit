@@ -15,7 +15,7 @@ from rdkit.Chem.Fraggle import FraggleSim
 from rdkit.Chem.Fraggle.FraggleSim import select_fragments
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(
     doctest.DocTestSuite(FraggleSim, optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE))

@@ -13,14 +13,14 @@ from __future__ import print_function
 import doctest
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from rdkit.VLib.NodeLib import SDSupply, SmartsMolFilter, SmartsRemover
 from rdkit.VLib.NodeLib import SmilesDupeFilter, SmilesOutput, SmilesSupply
 from rdkit.VLib.Supply import SupplyNode
 from rdkit.six import StringIO
 
 
-def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
   tests.addTests(doctest.DocTestSuite(SDSupply, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(SmartsMolFilter, optionflags=doctest.ELLIPSIS))
@@ -33,6 +33,9 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
 
 
 class Test_NodeLib(unittest.TestCase):
+
+  def tearDown(self):
+    RDLogger.EnableLog('rdApp.error')
 
   def test_SmartsMolFilter(self):
     smis = ['C1CCC1', 'C1CCC1C=O', 'CCCC', 'CCC=O', 'CC(=O)C', 'CCN', 'NCCN', 'NCC=O']
@@ -57,7 +60,9 @@ class Test_NodeLib(unittest.TestCase):
 
     self.assertRaises(ValueError, SmartsMolFilter.SmartsFilter, patterns=smas,
                       counts=['notEnough', ])
+    RDLogger.DisableLog('rdApp.error')
     self.assertRaises(ValueError, SmartsMolFilter.SmartsFilter, patterns=['BadSmarts'])
+    RDLogger.EnableLog('rdApp.error')
 
   def test_SmilesOutput(self):
     smis = ['C1CCC1', 'C1CC1', 'C=O', 'CCN']
@@ -77,7 +82,9 @@ class Test_NodeLib(unittest.TestCase):
 
   def test_SmartsRemover(self):
     salts = ['[Cl;H1&X1,-]', '[Na+]', '[O;H2,H1&-,X0&-2]', 'BadSmarts']
+    RDLogger.DisableLog('rdApp.error')
     self.assertRaises(ValueError, SmartsRemover.SmartsRemover, patterns=salts)
+    RDLogger.EnableLog('rdApp.error')
 
   def test_SmilesDupeFilter(self):
     smis = ['C1CCC1', 'CCCC', 'CCCC', 'C1CCC1']
