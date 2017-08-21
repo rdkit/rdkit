@@ -89,7 +89,7 @@ If the conformer provided is not a 3D conformer, nothing will be done.
 */
 public";
 
-%javamethodmodifiers RDKit::MolOps::assignStereochemistry 	( 	ROMol &  	mol, 		bool  	cleanIt = false, 		bool  	force = false	  	) 			"
+%javamethodmodifiers RDKit::MolOps::assignStereochemistry 	( 	ROMol &  	mol, 		bool  	cleanIt = false, 		bool  	force = false,	  	std::vector< int > *  	stereocenters = 0, bool onlyStereoAny=false) 			"
 /**
 <p>
 Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
@@ -99,6 +99,8 @@ Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
 mol 	the molecule of interest
 cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
 force 	forces the calculation to be repeated even if it has already been done
+stereocentres	optional argument containing a list of stereocentres
+onlyStereoAny	optional argument indicating whether stereocentres should contain only possible stereocentres marked 'STEREOANY' or all stereocentres
 <p>
 @notes
 <li>Throughout we assume that we're working with a hydrogen-suppressed graph.
@@ -167,7 +169,7 @@ the number of electrons
 */
 public";
 
-%javamethodmodifiers RDKit::MolOps::findPotentialStereoBonds 	( 	ROMol &  	mol, 		bool  	cleanIt = false	  	) 			"
+%javamethodmodifiers RDKit::MolOps::findPotentialStereoBonds 	( 	ROMol &  	mol, 		bool  	cleanIt = false	  	,	  	std::vector< int > *  	possibleStereobonds = 0) 			"
 /**
 <p>
 finds bonds that could be cis/trans in a molecule and mark them as Bond::STEREOANY
@@ -176,6 +178,7 @@ finds bonds that could be cis/trans in a molecule and mark them as Bond::STEREOA
 @param
 mol 	the molecule of interest
 cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
+possibleStereobonds		Optional list of stereo-bond indices
 <p>
 */
 public";

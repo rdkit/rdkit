@@ -14,8 +14,10 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 
 extern const int ci_LOCAL_INF;
@@ -251,8 +253,14 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
+namespace AdjustDegree {
+  const unsigned int NoAdjust = 0;
+  const unsigned int TotalDegree = 1;
+  const unsigned int HeavyDegree = 2;
+}
+
 struct AdjustQueryParameters {
-  bool adjustDegree; /**< add degree queries */
+  int adjustDegree; /**< add degree queries 1/true == all 2 == heavy*/
   boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
   boost::uint32_t adjustRingCountFlags;
@@ -266,7 +274,7 @@ struct AdjustQueryParameters {
   boost::uint32_t makeAtomsGenericFlags;
 
   AdjustQueryParameters()
-      : adjustDegree(true),
+      : adjustDegree(AdjustDegree::TotalDegree),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
@@ -806,7 +814,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
 
 */
 void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
-                           bool flagPossibleStereoCenters = false);
+                           bool flagPossibleStereoCenters = false, const std::vector<int> *possibleStereocenters=0);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
 //(i.e. Z/E)
 /*!
@@ -837,7 +845,7 @@ void removeStereochemistry(ROMol &mol);
   The CIPranks on the neighboring atoms are checked in this function. The
   _CIPCode property if set to any on the double bond.
 */
-void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false);
+void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false, const std::vector<int> *possibleStereobonds=0);
 //@}
 
 //! returns the number of atoms which have a particular property set
