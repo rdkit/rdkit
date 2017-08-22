@@ -4,21 +4,25 @@ Derived by Malitha Humayun Kabir from Greg Landrum's code as a part of GSoC 2017
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Acknowledgement: Peter Gedeck reviewed and provided advice on restructuring codes and wrote MolViewState class.
-Date: 18th August 2017
+Date: 23rd August 2017
 Email# malitha12345@gmail.com
 """
 
-import py3Dmol
+try:
+    import py3Dmol
+    _canUse3D = True
+except ImportError:
+    _canUse3D = False
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from ipywidgets import Layout, Label, Button, Box, HBox, VBox
-from ipywidgets import Dropdown, SelectMultiple, IntSlider, HTML, Checkbox, Button, Text
+from ipywidgets import Dropdown, HTML, Checkbox, Button
 from IPython.display import display
 from IPython.display import HTML as scriptHTML
 import time
 import sys
-
 
 PY3 = sys.version_info[0] >= 3
 
@@ -120,6 +124,7 @@ class MolViewState(object):
                 self.rdkit_conf_select = {0}
                 
     def selectedIds(self, molAndConfIds = None):
+        """ generate tuple for molecule id and conformer id """
         if molAndConfIds is not None:
             self.idPaired = molAndConfIds
             molIds = []
@@ -218,21 +223,18 @@ class MolView3D(object):
         
         itemLayout=Layout(display='flex', flex_flow='row', justify_content='space-between')
         
+        wgData[uid]['selectedMolsConfsView'] = HTML(description='', value='')
+        wgBox.append(Box([Label(value='ids'),wgData[uid]['selectedMolsConfsView']], layout=itemLayout))
+        
         wgData[uid]['molId'] = Dropdown(description='', options=['select'],value='select')
         wgData[uid]['confId'] = Dropdown(description='', options=['select'], value='select')
         
         if molPanel == 'full':
-            
-            wgData[uid]['selectedMolsConfsView'] = HTML(description='', value='')
-            
             wgData[uid]['selectMultiMols'] = Checkbox(description='selectMultiMols', value=False)
             wgData[uid]['selectAllMols'] = Checkbox(description='selectAllMols', value=False)
             
             wgData[uid]['selectMultiConfs'] = Checkbox(description='selectMultiConfs', value=False)
             wgData[uid]['selectAllConfs'] = Checkbox(description='selectAllConfs', value=False)
-            
-            
-            wgBox.append(Box([Label(value='ids'),wgData[uid]['selectedMolsConfsView']], layout=itemLayout))
             
             wgBox.append(Box([Label(value='molId'),wgData[uid]['molId']], layout=itemLayout))
             
@@ -310,9 +312,9 @@ class MolView3D(object):
         # Observe and update dict with model_id
         wgData[uid]['zoomTo'].on_click(self.handle_zoomTo_button)
         
-        wgDataUid = wgData[uid]
+        
         for i in widgetsFor3DView:
-            selectedWidget = wgDataUid[i]
+            selectedWidget = wgData[uid][i]
             selectedWidget.observe(self.handle_change, names='value')
             
             
@@ -365,10 +367,9 @@ class MolView3D(object):
         wgData['confId'].options = list(range(9))
         wgData['confId'].value=0
         
-        if self.molPanel == 'full':
-            ids = ((keys[0], 0),)
-            wgData['selectedMolsConfsView'].value = ', '.join([str(x) for x in ids])
-            
+        ids = ((keys[0], 0),)
+        wgData['selectedMolsConfsView'].value = ', '.join([str(x) for x in ids])
+        
         self.render3D()
         
     
@@ -407,23 +408,24 @@ class MolView3D(object):
             wgData['selectedMolsConfsView'].value = ', '.join([str(x) for x in self.molViewState.idPaired])
             
         elif molAndConfIds is None and self.molPanel == 'minimal':
+            
             self.molViewState.selectMolecules(False, False, wgData['molId'].value)
             self.molViewState.selectConformations(False, False, wgData['confId'].value)
-            wgData['confId'].options = self.molViewState.allConfIds
-        
-        else:
-            self.molViewState.selectedIds(molAndConfIds)
+            
+            self.molViewState.selectedIds()
             
             wgData['confId'].options = self.molViewState.allConfIds
-            
-            sMolNames = self.molViewState.selectedMolNames
-            sConfIds = self.molViewState.selectedConfIds
             
             wgData['selectedMolsConfsView'].value = ', '.join([str(x) for x in self.molViewState.idPaired])
-        
+            
+        else:
+            self.molViewState.selectedIds(molAndConfIds)
+            wgData['confId'].options = self.molViewState.allConfIds
+            wgData['selectedMolsConfsView'].value = ', '.join([str(x) for x in self.molViewState.idPaired])
+            
         self.render3D()
         
-    def handleProperty(self):
+    def ShowLigandProperty(self):
         """ Handles property in update3D function """
         wgData = globals()['wgData'][self.uid]
         preCalcProp = self.molViewState.getPropPrecalculated
@@ -438,7 +440,7 @@ class MolView3D(object):
                 wgData['prop_view'].value = 'Single molecule selection required!'
                 
     
-    def handleLigandStyle(self, view):
+    def SetLigandStyle(self, view):
         """ Handles ligand drawing style and color in update3D function """
         
         wgData = globals()['wgData'][self.uid]
@@ -456,7 +458,7 @@ class MolView3D(object):
             view.setStyle({},{molStyle:{'colorscheme': color}})
             
     
-    def handleLigandLabeling(self,view):
+    def SetLigandLabel(self,view):
         """ Handles ligand labeling (conf label and atom label) in update3D function """
         
         wgData = globals()['wgData'][self.uid]
@@ -490,7 +492,7 @@ class MolView3D(object):
                                                  })
                         
     
-    def handleProteinStyle(self, view, pModelNum):
+    def SetProteinStyle(self, view, pModelNum):
         """ Handles protein drawing style in update3D function """
         
         wgData = globals()['wgData'][self.uid]
@@ -531,11 +533,11 @@ class MolView3D(object):
             view.addModel(model, 'sdf')
             
         # add style
-        self.handleLigandStyle(view)
+        self.SetLigandStyle(view)
         
         # add label if required
         if self.labelPanel:
-            self.handleLigandLabeling(view)
+            self.SetLigandLabel(view)
             
         # Add model (protein)
         if self.molViewState.protein is not None:
@@ -545,7 +547,7 @@ class MolView3D(object):
                     pModelNum = len(list(self.molViewState.selectedModels))
                     pdb = Chem.MolToPDBBlock(self.molViewState.protein)
                     view.addModel(pdb,'pdb')
-                    self.handleProteinStyle(view, pModelNum)
+                    self.SetProteinStyle(view, pModelNum)
                     
         # zoomTo does not work well for surface and label... so, zoomTo should not be default settings
         if self.onStart:
@@ -553,7 +555,7 @@ class MolView3D(object):
             self.onStart = False
             
         if self.propPanel:
-            self.handleProperty()
+            self.ShowLigandProperty()
             
         display(view.update())
         
