@@ -667,7 +667,7 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
 //   1) are there unassigned stereoatoms
 //   2) did we assign any?
 std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
-                                            bool flagPossibleStereoCenters, UINT_VECT *stereocenters=0, bool onlyStereoAny=false) {
+                                            bool flagPossibleStereoCenters, UINT_VECT *stereocenters, bool onlyStereoAny) {
   PRECONDITION((!ranks.size() || ranks.size() == mol.getNumAtoms()),
                "bad rank vector size");
   bool atomChanged = false;
@@ -970,7 +970,7 @@ namespace MolOps {
          repeat the above steps as necessary
  */
 void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
-                           bool flagPossibleStereoCenters, UINT_VECT *stereocenters, bool onlyStereoAny = false) {
+                           bool flagPossibleStereoCenters, UINT_VECT *stereocenters, bool onlyStereoAny) {
   if (!force && mol.hasProp(common_properties::_StereochemDone)) {
     return;
   }

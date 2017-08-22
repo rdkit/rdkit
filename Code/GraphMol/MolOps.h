@@ -815,7 +815,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
 */
 void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
                            bool flagPossibleStereoCenters = false, const UINT_VECT *stereocenters=0, 
-			   bool onlyStereoAny = false);
+	                       bool onlyStereoAny = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
 //(i.e. Z/E)
 /*!
