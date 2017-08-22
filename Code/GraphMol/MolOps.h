@@ -814,7 +814,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
 
 */
 void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
-                           bool flagPossibleStereoCenters = false, const std::vector<int> *stereocenters=0, 
+                           bool flagPossibleStereoCenters = false, const UINT_VECT *stereocenters=0, 
 			   bool onlyStereoAny = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
 //(i.e. Z/E)
@@ -846,7 +846,7 @@ void removeStereochemistry(ROMol &mol);
   The CIPranks on the neighboring atoms are checked in this function. The
   _CIPCode property if set to any on the double bond.
 */
-void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false, const std::vector<int> *possibleStereobonds=0);
+void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false, const UINT_VECT *possibleStereobonds=0);
 //@}
 
 //! returns the number of atoms which have a particular property set
