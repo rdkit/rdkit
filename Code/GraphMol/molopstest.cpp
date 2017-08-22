@@ -6719,21 +6719,21 @@ void testAssignStereochemistryNewParameters() {
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 
 		UINT_VECT stereos;
-		MolOps::assignStereochemistry(*m, cleanit, force,stereos);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
 		TEST_ASSERT(stereos[1] == 5);
 		TEST_ASSERT(stereos->size() == 2);
 
-		MolOps::assignStereochemistry(*m, cleanit, force, stereos, false);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos, false);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
 		TEST_ASSERT(stereos[1] == 5);
 		TEST_ASSERT(stereos->size() == 2);
 		
-		MolOps::assignStereochemistry(*m, cleanit, force, stereos, true);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos, true);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
