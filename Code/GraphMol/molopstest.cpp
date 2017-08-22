@@ -6719,25 +6719,25 @@ void testAssignStereochemistryNewParameters() {
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 
 		UINT_VECT stereos;
-		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, &stereos);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
 		TEST_ASSERT(stereos[1] == 5);
-		TEST_ASSERT(stereos->size() == 2);
+		TEST_ASSERT(stereos.size() == 2);
 
-		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos, false);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, &stereos, false);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
 		TEST_ASSERT(stereos[1] == 5);
-		TEST_ASSERT(stereos->size() == 2);
+		TEST_ASSERT(stereos.size() == 2);
 		
-		MolOps::assignStereochemistry(*m, cleanit, force, true, stereos, true);
+		MolOps::assignStereochemistry(*m, cleanit, force, true, &stereos, true);
 		TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
 		TEST_ASSERT(m->getAtomWithIdx(5)->getChiralTag() != Atom::CHI_UNSPECIFIED);
 		TEST_ASSERT(stereos[0] == 1);
-		TEST_ASSERT(stereos->size() == 1);
+		TEST_ASSERT(stereos.size() == 1);
 		delete m;
 	}
 	BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -6757,10 +6757,10 @@ void testFindPotentialStereoBondsNewParameters() {
 		TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
 		UINT_VECT stereos;
-		MolOps::findPotentialStereoBonds(*m, true, stereos);
+		MolOps::findPotentialStereoBonds(*m, true, &stereos);
 		TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 		TEST_ASSERT(stereos[0] == 1);
-		TEST_ASSERT(stereos->size() == 1);
+		TEST_ASSERT(stereos.size() == 1);
 		delete m;
 	}
 	BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
