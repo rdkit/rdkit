@@ -503,7 +503,7 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 python::list wrapAssignStereochemistry(ROMol &mol, bool cleanIt, bool force, bool flagPossibleStereoCenters, bool onlyStereoAny) {
 	python::list res;
 	UINT_VECT stereos;
-	MolOps::assignStereochemistry(mol, cleanIt, force, flagPossibleStereoCenters, stereos, onlyStereoAny);
+	MolOps::assignStereochemistry(mol, cleanIt, force, flagPossibleStereoCenters, &stereos, onlyStereoAny);
 	for (unsigned int i = 0; i < stereos.size(); ++i) {
 		res.append(stereos[i]);
 	}
@@ -513,7 +513,7 @@ python::list wrapAssignStereochemistry(ROMol &mol, bool cleanIt, bool force, boo
 python::list wrapFindPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 	python::list res;
 	UINT_VECT bonds;
-	MolOps::findPotentialStereoBonds(mol, cleanIt, bonds);
+	MolOps::findPotentialStereoBonds(mol, cleanIt, &bonds);
 	for (unsigned int i = 0; i < stereos.size(); ++i) {
 		res.append(bonds[i]);
 	}
@@ -1523,7 +1523,7 @@ struct molops_wrapper {
 \n\
   RETURNS:\n\
 \n\
-	A list of chiral centres in the molecule
+	A list of chiral centres in the molecule\n\
 \n";
     python::def("AssignStereochemistry", wrapAssignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
