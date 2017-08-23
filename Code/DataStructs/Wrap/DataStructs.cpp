@@ -14,6 +14,8 @@
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/DiscreteValueVect.h>
+#include <DataStructs/SparseIntVect.h>
+
 #include "DataStructs.h"
 #include <boost/python/numeric.hpp>
 #include <numpy/npy_common.h>
@@ -80,6 +82,22 @@ BOOST_PYTHON_MODULE(cDataStructs) {
       (python::arg("bv"), python::arg("destArray")));
   python::def("ConvertToNumpyArray",
               (void (*)(const RDKit::DiscreteValueVect &,
+                        python::object))convertToNumpyArray,
+              (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::SparseIntVect<boost::int32_t> &,
+                        python::object))convertToNumpyArray,
+              (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::SparseIntVect<boost::int64_t> &,
+                        python::object))convertToNumpyArray,
+              (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::SparseIntVect<boost::uint32_t> &,
+                        python::object))convertToNumpyArray,
+              (python::arg("bv"), python::arg("destArray")));
+  python::def("ConvertToNumpyArray",
+              (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
                         python::object))convertToNumpyArray,
               (python::arg("bv"), python::arg("destArray")));
 }
