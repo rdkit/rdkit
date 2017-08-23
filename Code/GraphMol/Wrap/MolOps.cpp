@@ -514,7 +514,7 @@ python::list wrapFindPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 	python::list res;
 	UINT_VECT bonds;
 	MolOps::findPotentialStereoBonds(mol, cleanIt, &bonds);
-	for (unsigned int i = 0; i < stereos.size(); ++i) {
+	for (unsigned int i = 0; i < bonds.size(); ++i) {
 		res.append(bonds[i]);
 	}
 	return res;
