@@ -500,6 +500,26 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
   return python::tuple(res);
 }
 
+python::list wrapAssignStereochemistry(ROMol &mol, bool cleanIt, bool force, bool flagPossibleStereoCenters, bool onlyStereoAny) {
+	python::list res;
+	UINT_VECT stereos;
+	MolOps::assignStereochemistry(mol, cleanIt, force, flagPossibleStereoCenters, stereos, onlyStereoAny);
+	for (unsigned int i = 0; i < stereos.size(); ++i) {
+		res.append(stereos[i]);
+	}
+	return res;
+}
+
+python::list wrapFindPotentialStereoBonds(ROMol &mol, bool cleanIt) {
+	python::list res;
+	UINT_VECT bonds;
+	MolOps::findPotentialStereoBonds(mol, cleanIt, bonds);
+	for (unsigned int i = 0; i < stereos.size(); ++i) {
+		res.append(bonds[i]);
+	}
+	return res;
+}
+
 ExplicitBitVect *wrapLayeredFingerprint(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize, python::list atomCounts,
@@ -1499,11 +1519,16 @@ struct molops_wrapper {
       been done\n\
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
       atoms that are possible stereocenters\n\
+	- onlyStereoAny (optional)	 the returned list only contains those centred with the _ChiralityPossible property set\n\
+\n\
+  RETURNS:\n\
+\n\
+	A list of chiral centres in the molecule
 \n";
-    python::def("AssignStereochemistry", MolOps::assignStereochemistry,
+    python::def("AssignStereochemistry", wrapAssignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
-                 python::arg("flagPossibleStereoCenters") = false),
+                 python::arg("flagPossibleStereoCenters") = false, python::arg("onlyStereoAny") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1517,8 +1542,12 @@ struct molops_wrapper {
     - mol: the molecule to use\n\
     - cleanIt: (optional) if this option is set to true, any previous marking of _CIPCode\n\
                on the bond is cleared - otherwise it is left untouched\n\
+\n\
+  RETURNS:\n\
+\n\
+	A list of bonds which may be cis/trans\n\
 \n";
-    python::def("FindPotentialStereoBonds", MolOps::findPotentialStereoBonds,
+    python::def("FindPotentialStereoBonds", wrapFindPotentialStereoBonds,
                 (python::arg("mol"), python::arg("cleanIt") = false),
                 docString.c_str());
 
