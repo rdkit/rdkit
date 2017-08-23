@@ -53,7 +53,7 @@ public class AssignChiralityTests extends GraphMolTest {
 			   || at.getChiralTag() == Atom.ChiralType.CHI_TETRAHEDRAL_CW);
 	
 		//Now try new method with default for optional boolean
-		Int_Vect centres = new Int_Vect();
+		UInt_Vect centres = new UInt_Vect();
 		RDKFuncs.assignStereochemistry(m, true, true, true, centres);
 		at=m.getAtomWithIdx(1);
 		assertTrue("Atom 1 is STEREOANY", at.hasProp("_ChiralityPossible") 
@@ -65,7 +65,7 @@ public class AssignChiralityTests extends GraphMolTest {
 		centres.delete();
 		
 		//Now try new method with onlyStereoAny=false
-		centres = new Int_Vect();
+		centres = new UInt_Vect();
 		RDKFuncs.assignStereochemistry(m, true, true, true, centres, false);
 		at = m.getAtomWithIdx(1);
 		assertTrue("Atom 1 is STEREOANY", at.hasProp("_ChiralityPossible") 
@@ -77,7 +77,7 @@ public class AssignChiralityTests extends GraphMolTest {
 		centres.delete();
 		
 		//Now try new method with onlyStereoAny=false
-		centres = new Int_Vect();
+		centres = new UInt_Vect();
 		RDKFuncs.assignStereochemistry(m, true, true, true, centres, true);
 		at = m.getAtomWithIdx(1);
 		assertTrue("Atom 1 is STEREOANY", at.hasProp("_ChiralityPossible") && 
@@ -97,13 +97,13 @@ public class AssignChiralityTests extends GraphMolTest {
 		ROMol m = RWMol.MolFromSmiles("CC=CC");
 		
 		//Old method...
-		RDKFuncs.findPotentialStereoBonds(mol, true);
+		RDKFuncs.findPotentialStereoBonds(m, true);
 		assertTrue("Bond 1 is possible stereo", 
 			   m.getBondWithIdx(1).getStereo() == Bond.BondStereo.STEREONONE);
 		
 		//New method...
 		Int_Vect stereoBonds = new Int_Vect();
-		RDKFuncs.findPotentialStereoBonds(mol, true, stereoBonds);
+		RDKFuncs.findPotentialStereoBonds(m, true, stereoBonds);
 		assertTrue("Bond 1 is possible stereo", 
 			   m.getBondWithIdx(1).getStereo() == Bond.BondStereo.STEREONONE 
 			   && stereoBonds.get(0) == 1 && stereoBonds.size() == 1);

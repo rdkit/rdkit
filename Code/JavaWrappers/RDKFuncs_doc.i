@@ -89,7 +89,7 @@ If the conformer provided is not a 3D conformer, nothing will be done.
 */
 public";
 
-%javamethodmodifiers RDKit::MolOps::assignStereochemistry 	( 	ROMol &  	mol, 		bool  	cleanIt = false, 		bool  	force = false,	  	std::vector< int > *  	stereocenters = 0, bool onlyStereoAny=false) 			"
+%javamethodmodifiers RDKit::MolOps::assignStereochemistry 	( 	ROMol &  	mol, 		bool  	cleanIt = false, 		bool  	force = false, 		UINT_VECT *  	stereocenters = 0, 		bool  	onlyStereoAny = false	  	) 			"
 /**
 <p>
 Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
@@ -169,7 +169,7 @@ the number of electrons
 */
 public";
 
-%javamethodmodifiers RDKit::MolOps::findPotentialStereoBonds 	( 	ROMol &  	mol, 		bool  	cleanIt = false	  	,	  	std::vector< int > *  	possibleStereobonds = 0) 			"
+%javamethodmodifiers RDKit::MolOps::findPotentialStereoBonds 	( 	ROMol &  	mol, 		bool  	cleanIt = false	  	, 		UINT_VECT *  	possibleStereobonds = 0	  	) 			"
 /**
 <p>
 finds bonds that could be cis/trans in a molecule and mark them as Bond::STEREOANY
