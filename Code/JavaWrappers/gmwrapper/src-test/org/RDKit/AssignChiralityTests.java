@@ -102,7 +102,7 @@ public class AssignChiralityTests extends GraphMolTest {
 			   m.getBondWithIdx(1).getStereo() == Bond.BondStereo.STEREONONE);
 		
 		//New method...
-		Int_Vect stereoBonds = new Int_Vect();
+		UInt_Vect stereoBonds = new UInt_Vect();
 		RDKFuncs.findPotentialStereoBonds(m, true, stereoBonds);
 		assertTrue("Bond 1 is possible stereo", 
 			   m.getBondWithIdx(1).getStereo() == Bond.BondStereo.STEREONONE 
