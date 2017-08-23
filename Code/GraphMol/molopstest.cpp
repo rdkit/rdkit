@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -5497,7 +5497,7 @@ void testAdjustQueryProperties() {
     std::string smiles = "C1CCC1[*:1]";
     ROMol *qm = SmilesToMol(smiles);
     qm->getAtomWithIdx(4)->setProp<int>("foo", 2);
-    
+
     TEST_ASSERT(qm);
     TEST_ASSERT(qm->getNumAtoms() == 5);
     ROMol *aqm = MolOps::adjustQueryProperties(*qm);
@@ -6811,6 +6811,25 @@ void testGithub1478() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1439() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 1439: " << std::endl
+      << "RemoveHs() removes H atom attached to dummy if it came from AddHs()"
+      << std::endl;
+  {  // basics
+    std::string smiles = "F";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    m->getAtomWithIdx(0)->setAtomicNum(0);
+    MolOps::removeHs(*m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6912,6 +6931,7 @@ int main() {
 
   testBondSetStereoAtoms();
   testGithub1478();
+  testGithub1439();
 
   return 0;
 }
