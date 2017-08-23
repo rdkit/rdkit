@@ -101,7 +101,7 @@ public class AssignChiralityTests extends GraphMolTest {
 	}
 	
 	public static void main(String args[]) {
-		org.junit.runner.JUnitCore.main("org.RDKit.ChemTests");
+		org.junit.runner.JUnitCore.main("org.RDKit.AssignChiralityTests");
 	}
 
 }
