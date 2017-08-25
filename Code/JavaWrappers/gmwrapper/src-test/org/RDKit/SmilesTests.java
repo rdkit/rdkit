@@ -136,7 +136,31 @@ public class SmilesTests extends GraphMolTest {
             assertEquals("bad smiles: "+nsmi+"!="+expected,nsmi,expected);
 	}
 
-    
+    @Test
+	public void testRankAtoms(){
+	//Need a molecule to canonicalise
+		ROMol mRef = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
+		ROMol mTest = RDKFuncs.MolFromSmiles("C(CO)(C=C)CCC(CC)C#N");
+		//assign the ranks in the reference
+		mRef.MolToSmiles(true);
+
+		//And now using the new method
+		UInt_Vect ranks = new UInt_Vect();
+		mTest.rankMolAtoms(ranks);
+		assertEquals("Wrong size ranks - " + ranks.size() + " != " + 
+				mTest.GetNumAtoms(), ranks.size(), mTest.GetNumAtoms());
+
+		//Anf now compare..
+		for(int i=0; i<mRef.GetNumAtoms()){
+			int refRank=Integer.parseInt(mRef.getAtomWithIdx(i).getProp("_canonicalRankingNumber"));
+			assertEquals("Error in ranking - got " + ranks.get(i) + 
+					" expected " + refRank, refRank,ranks.get(i));
+		}
+		mRef.delete();
+		mTest.delete();
+		ranks.delete();
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SmilesTests");
 	}
