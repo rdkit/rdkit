@@ -428,6 +428,7 @@
                   bool breakTies = true, bool includeChirality = true,
                   bool includeIsotopes = true){
 	Canon::rankMolAtoms(*($self), ranks, breakTies, includeChirality, includeIsotopes);
+  }
 }
 
 
