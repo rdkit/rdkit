@@ -4305,6 +4305,46 @@ M  END
     m = Chem.MolFromSmiles("c1ccccc1C=O")
     self.assertTrue(m.HasSubstructMatch(pattern))
 
+  def testGithub1320(self):
+    import pickle
+    mol = Chem.MolFromSmiles('N[C@@H](C)O')
+    mol2 = pickle.loads(pickle.dumps(mol))
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol2,isomericSmiles=True))
+    Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AtomProps |
+                                    Chem.PropertyPickleOptions.BondProps |
+                                    Chem.PropertyPickleOptions.MolProps |
+                                    Chem.PropertyPickleOptions.PrivateProps |
+                                    Chem.PropertyPickleOptions.ComputedProps  )
+    mol3 = pickle.loads(pickle.dumps(mol))
+
+    for a1, a2 in zip(mol.GetAtoms(), mol3.GetAtoms()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual( c1, c2 )
+
+      assert d1 == d2
+
+    for a1, a2 in zip(mol.GetBonds(), mol3.GetBonds()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual( c1, c2 )
+
+      assert d1 == d2
+      
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol3,isomericSmiles=True))
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
