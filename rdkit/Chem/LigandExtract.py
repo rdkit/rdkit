@@ -13,7 +13,7 @@ from rdkit import Chem
 
 ExtractResult = namedtuple('ExtractResult',('match','rest'))
 def ExtractMolAtomsMatchingQuery(mol,func, confId,sanitize, includeAttachedHs):
-    """ func should take an atom index """
+    """this extracts ligand from mol object (mol object created from pdb file)"""
     
     match = [x for x in range(mol.GetNumAtoms()) if func(x)]
     
@@ -24,26 +24,25 @@ def ExtractMolAtomsMatchingQuery(mol,func, confId,sanitize, includeAttachedHs):
                 if nbr.GetAtomicNum()==1 and nbr.GetIdx() not in match:
                     match.append(nbr.GetIdx())
                     
-    ##### This chunk clones the input molecule and deletes atoms###
     res2 = Chem.RWMol(mol)
     for i in sorted(match, reverse=True):
         res2.RemoveAtom(i)
     if sanitize:
         Chem.SanitizeMol(res2)
-    #### Creating new molecule...
+    
     res = Chem.RWMol()
     
     # start with all atoms and their coordinates:
     # Should probably also handle multiple conformers
-    oconf = mol.GetConformer(confId)
-    nconf = Chem.Conformer(len(match))
-    nconf.SetId(oconf.GetId())
+    oldConf = mol.GetConformer(confId)
+    newConf = Chem.Conformer(len(match))
+    newConf.SetId(oldConf.GetId())
     old_new_map={}
     for i,aid in enumerate(match):
         res.AddAtom(mol.GetAtomWithIdx(aid))
-        nconf.SetAtomPosition(i,oconf.GetAtomPosition(aid))
+        newConf.SetAtomPosition(i,oldConf.GetAtomPosition(aid))
         old_new_map[aid] = i
-    res.AddConformer(nconf)
+    res.AddConformer(newConf)
     
     # bonds:
     for i,aid in enumerate(match):
@@ -59,7 +58,7 @@ def ExtractMolAtomsMatchingQuery(mol,func, confId,sanitize, includeAttachedHs):
     return ExtractResult(res.GetMol(), res2.GetMol())
     
 def ExtractMolFragment(mol, ResName, confId=-1,sanitize=True, includeAttachedHs=True):
-    " see ExtractMolAtomsMatchingQuery() for kwargs "
+    """extracting fragments from mol object"""
     ids=list()
     for Idx in range(mol.GetNumAtoms()-1):
         atom=mol.GetAtomWithIdx(Idx)
