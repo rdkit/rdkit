@@ -151,7 +151,7 @@ public class SmilesTests extends GraphMolTest {
 				mTest.GetNumAtoms(), ranks.size(), mTest.GetNumAtoms());
 
 		//Anf now compare..
-		for(int i=0; i<mRef.GetNumAtoms()){
+		for(int i=0; i<mRef.GetNumAtoms(); i++){
 			int refRank=Integer.parseInt(mRef.getAtomWithIdx(i).getProp("_canonicalRankingNumber"));
 			assertEquals("Error in ranking - got " + ranks.get(i) + 
 					" expected " + refRank, refRank,ranks.get(i));
