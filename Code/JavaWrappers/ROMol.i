@@ -426,7 +426,7 @@
   void rankMolAtoms(UINT_VECT &ranks,
                   bool breakTies = true, bool includeChirality = true,
                   bool includeIsotopes = true){
-	Canon::rankMolAtoms(*($self), ranks, breakTies, includeChirality, includeIsotopes);
+	RDKit::Canon::rankMolAtoms(*($self), ranks, breakTies, includeChirality, includeIsotopes);
   }
 }
 
