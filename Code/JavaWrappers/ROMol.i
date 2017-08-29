@@ -60,7 +60,6 @@
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
-#include <GraphMol/new_canon.h>
 #include <sstream>
 %}
 
