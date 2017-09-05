@@ -450,29 +450,42 @@ def AssignBondOrdersFromTemplate(refmol, mol):
       raise ValueError("No matching found")
   return mol2
 
-def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=False,
-                             maxNumCenters=10, randomizeOrderOfCenters=False):
+class StereoEnumerationOptions(object):
+    """
+          - tryEmbedding: if set the process attempts to generate a standard RDKit distance geometry
+            conformation for the stereisomer. If this fails, we assume that the stereoisomer is
+            non-physical and don't return it. NOTE that this is computationally expensive and is
+            just a heuristic that could result in stereoisomers being lost.
+
+          - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
+            will not be perturbed
+
+          - maxNumCenters: the maximum number of stereocenters that can/will be handled.
+            Since every additional stereocenter doubles the number of results
+            (and execution time) it's important to keep an eye on this.
+
+          - randomizeOrderOfCenters: consider the potential stereocenters in random order
+            instead of their order in the molecule
+
+    """
+    __slots__=('tryEmbedding', 'onlyUnassigned', 'maxNumCenters', 'randomizeOrderOfCenters')
+    def __init__(self, tryEmbedding = False, onlyUnassigned = True,
+                maxNumCenters = 10, randomizeOrderOfCenters = False):
+        self.tryEmbedding = tryEmbedding
+        self.onlyUnassigned = onlyUnassigned
+        self.maxNumCenters = maxNumCenters
+        self.randomizeOrderOfCenters = randomizeOrderOfCenters
+
+
+def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
     """ returns a generator that yields all possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
 
-      - tryEmbedding: if set the process attempts to generate a standard RDKit distance geometry
-        conformation for the stereisomer. If this fails, we assume that the stereoisomer is
-        non-physical and don't return it. NOTE that this is computationally expensive and is
-        just a heuristic that could result in stereoisomers being lost.
-
-      - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
-        will not be perturbed
 
       - verbose: toggles how verbose the output is
 
-      - maxNumCenters: the maximum number of stereocenters that can/will be handled.
-        Since every additional stereocenter doubles the number of results
-        (and execution time) it's important to keep an eye on this.
-
-      - randomizeOrderOfCenters: consider the potential stereocenters in random order
-        instead of their order in the molecule
 
     A small example with 3 chiral centers (8 theoretical stereoisomers):
     >>> from rdkit.Chem import AllChem
@@ -493,7 +506,8 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m,tryEmbedding=True))
+    >>> opts = StereoEnumerationOptions(tryEmbedding=True)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, options=opts))
     >>> len(isomers)
     4
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -516,14 +530,16 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
 
     but we can change that behavior:
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, onlyUnassigned=False))
+    >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
+    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, options=opts))
     >>> len(isomers)
     8
 
     since the result is a generator, we can allow exploring at least parts of very
     large result sets:
     >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
-    >>> isomers = AllChem.GenerateAllStereoisomers(m,maxNumCenters=50)
+    >>> opts = StereoEnumerationOptions(maxNumCenters=50)
+    >>> isomers = AllChem.GenerateAllStereoisomers(m, options=opts)
     >>> for x in range(5):
     ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
@@ -545,7 +561,8 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     F[C@H](Cl)[C@@H](Cl)[C@H](Cl)Br
     F[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
-    >>> isomers = AllChem.GenerateAllStereoisomers(m, randomizeOrderOfCenters=True)
+    >>> opts = StereoEnumerationOptions(randomizeOrderOfCenters=True)
+    >>> isomers = AllChem.GenerateAllStereoisomers(m, options=opts)
     >>> for isomer in isomers:
     ...   print(MolToSmiles(isomer,isomericSmiles=True)) # doctest:+SKIP
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
@@ -559,7 +576,7 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
 
     """
     tm = Mol(m)
-    if onlyUnassigned:
+    if options.onlyUnassigned:
         possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True) if y=='?']
     else:
         possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True)]
@@ -567,9 +584,9 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
     if not nCenters:
         yield tm
         return
-    if nCenters>maxNumCenters:
-        raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,maxNumCenters))
-    if randomizeOrderOfCenters:
+    if nCenters>options.maxNumCenters:
+        raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,options.maxNumCenters))
+    if options.randomizeOrderOfCenters:
         import random
         random.seed(nCenters)
         random.shuffle(possibleCenters)
@@ -581,7 +598,7 @@ def GenerateAllStereoisomers(m,tryEmbedding=False,onlyUnassigned=True, verbose=F
                 tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CCW)
             else:
                 tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CW)
-        if tryEmbedding:
+        if options.tryEmbedding:
             ntm = AddHs(tm)
             cid = EmbedMolecule(ntm,randomSeed=bitflag)
         else:
