@@ -57,3 +57,6 @@ rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse Gra
 rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+
+rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
+           LINK_LIBRARIES FileParsers Depictor GraphMol RDGeneral RDGeometryLib )
