@@ -12,14 +12,6 @@ rdkit_headers(MolDraw2D.h
   DEST GraphMol/MolDraw2D
 )
 
-rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-  MolDraw2DDetails.cpp MolDraw2DUtils.cpp
-  LINK_LIBRARIES
-  ChemReactions FileParsers SmilesParse Depictor MolTransforms RDGeometryLib
-  RDGeneral SubstructMatch Subgraphs GraphMol EigenSolvers
-RDGeometryLib
-  ${RDKit_THREAD_LIBS} )
-
 if(RDK_BUILD_QT_SUPPORT)
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 
@@ -37,12 +29,26 @@ if(RDK_BUILD_CAIRO_SUPPORT)
   rdkit_headers(MolDraw2DCairo.h DEST GraphMol/MolDraw2D)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
+rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
+  ${CAIRODRAW2D_SRC} ${QTDRAW2D_SRC}
+  MolDraw2DDetails.cpp MolDraw2DUtils.cpp
+  LINK_LIBRARIES
+  ChemReactions FileParsers SmilesParse Depictor MolTransforms RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs GraphMol EigenSolvers
+RDGeometryLib
+  ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
 RDGeometryLib
   MolDraw2D ${RDKit_THREAD_LIBS} )
+
+rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
+    ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
+    RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
+  RDGeometryLib
+    MolDraw2D ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
     ChemReactions FileParsers SmilesParse Depictor RDGeometryLib

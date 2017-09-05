@@ -41,6 +41,32 @@ class TestCase(unittest.TestCase):
     self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
+  def testAtomPairTypesChirality(self):
+    mols = [Chem.MolFromSmiles(x) for x in ("CC(F)Cl","C[C@@H](F)Cl","C[C@H](F)Cl")]
+    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
+        rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1)))
+    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)),
+        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1)))
+    self.assertEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
+        rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1)))
+    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
+        rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1),includeChirality=True))
+    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[0].GetAtomWithIdx(1),includeChirality=True),
+        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1),includeChirality=True))
+    self.assertNotEqual(rdMD.GetAtomPairAtomCode(mols[1].GetAtomWithIdx(1),includeChirality=True),
+        rdMD.GetAtomPairAtomCode(mols[2].GetAtomWithIdx(1),includeChirality=True))
+
+    fps = [rdMD.GetAtomPairFingerprint(x) for x in mols]
+    chiralFps = [rdMD.GetAtomPairFingerprint(x,includeChirality=True) for x in mols]
+    for mol,fp,cfp in zip(mols, fps, chiralFps):
+        ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))
+        ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))
+        self.assertTrue(rdMD.GetAtomPairCode(ac0,ac1,1) in fp.GetNonzeroElements())
+        ac0 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0),includeChirality=True)
+        ac1 = rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),includeChirality=True)
+        self.assertFalse(rdMD.GetAtomPairCode(ac0,ac1,1,includeChirality=True) in fp.GetNonzeroElements())
+        self.assertTrue(rdMD.GetAtomPairCode(ac0,ac1,1,includeChirality=True) in cfp.GetNonzeroElements())
+
   def testAtomPairs(self):
     m = Chem.MolFromSmiles('CCC')
     fp1 = rdMD.GetAtomPairFingerprint(m)
@@ -257,7 +283,7 @@ class TestCase(unittest.TestCase):
     m1 = [4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51]
     m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
     self.failUnlessAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
-    
+
   def testUSRCAT(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)

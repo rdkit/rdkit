@@ -1619,6 +1619,18 @@ pair<string, MolDraw2D::OrientType> MolDraw2D::getAtomSymbolAndOrientation(
           orient = MolDraw2D::W;
         }
       }
+      // last check: degree zero atoms from the last three periods should have
+      // the Hs first
+      if (!atom.getDegree()) {
+        static int HsListedFirstSrc[] = {8, 9, 16, 17, 34, 35, 52, 53, 84, 85};
+        std::vector<int> HsListedFirst(
+            HsListedFirstSrc,
+            HsListedFirstSrc + sizeof(HsListedFirstSrc) / sizeof(int));
+        if (std::find(HsListedFirst.begin(), HsListedFirst.end(),
+                      atom.getAtomicNum()) != HsListedFirst.end()) {
+          orient = MolDraw2D::W;
+        }
+      }
       if (orient == MolDraw2D::W) {
         preText.push_back(h);
       } else {

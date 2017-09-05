@@ -58,7 +58,7 @@ class RWMol : public ROMol {
     \param updateLabel   (optional) if this is true, the new Atom will be
                          our \c activeAtom
 
-    \return the new number of atoms
+    \return the index of the added atom
 
   */
   unsigned int addAtom(bool updateLabel = true);
@@ -72,7 +72,7 @@ class RWMol : public ROMol {
     atom
                          instead of copying it.
 
-    \return the new number of atoms
+    \return the index of the added atom
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false) {

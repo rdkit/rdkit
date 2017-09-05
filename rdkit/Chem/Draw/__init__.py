@@ -303,22 +303,24 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
     res.paste(MolToImage(mol, subImgSize, legend=legends[i], **kwargs), (i * subImgSize[0], 0))
   return res
 
-
-def _moltoimg(mol, sz, highlights, legend, **kwargs):
+def _drawerToImage(d2d):
   try:
     import Image
   except ImportError:
     from PIL import Image
+  from io import BytesIO
+  sio = BytesIO(d2d.GetDrawingText())
+  return Image.open(sio)
+
+def _moltoimg(mol, sz, highlights, legend, **kwargs):
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
     img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
   else:
     nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
     d2d.DrawMolecule(nmol, legend=legend, highlightAtoms=highlights)
-    from io import BytesIO
     d2d.FinishDrawing()
-    sio = BytesIO(d2d.GetDrawingText())
-    img = Image.open(sio)
+    img = _drawerToImage(d2d)
   return img
 
 
@@ -407,9 +409,7 @@ def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
                             highlightAtomLists=highlightAtomLists, **kwargs)
 
 
-def ReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
-  """
-  """
+def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
   try:
     import Image
   except ImportError:
@@ -446,6 +446,16 @@ def ReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
     res.paste(nimg, (i * subImgSize[0], 0))
   return res
 
+
+def ReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
+  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      return _legacyReactionToImage(rxn,subImgSize=subImgSize,**kwargs)
+  else:
+      width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
+      d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
+      d.DrawReaction(rxn)
+      d.FinishDrawing()
+      return _drawerToImage(d)
 
 def MolToQPixmap(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                  **kwargs):

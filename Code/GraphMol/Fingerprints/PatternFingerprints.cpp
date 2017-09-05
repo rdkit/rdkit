@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,7 +32,7 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#define VERBOSE_FINGERPRINTING 1
+// #define VERBOSE_FINGERPRINTING 1
 
 namespace {
 class ss_matcher {
@@ -73,7 +72,7 @@ const char *pqs[] = {
     //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
     //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
-    "[D0]",  // special case: single atom fragment
+    "[*]",  // single atom fragment
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",

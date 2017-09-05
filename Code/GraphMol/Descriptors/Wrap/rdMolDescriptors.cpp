@@ -824,6 +824,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("numTypeBits", RDKit::AtomPairs::numTypeBits)
       .setattr("numPiBits", RDKit::AtomPairs::numPiBits)
       .setattr("numBranchBits", RDKit::AtomPairs::numBranchBits)
+      .setattr("numChiralBits", RDKit::AtomPairs::numChiralBits)
       .setattr("codeSize", RDKit::AtomPairs::codeSize)
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)
@@ -834,6 +835,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("atom"), python::arg("branchSubtract") = 0,
                python::arg("includeChirality") = false),
               docString.c_str());
+  docString =
+      "Returns the atom-pair code (hash) for a pair of atoms separated by a "
+      "certain number of bonds";
+  python::def(
+      "GetAtomPairCode", RDKit::AtomPairs::getAtomPairCode,
+      (python::arg("atom1Code"), python::arg("atom2Code"),
+       python::arg("distance"), python::arg("includeChirality") = false),
+      docString.c_str());
   docString =
       "Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,

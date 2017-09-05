@@ -61,5 +61,21 @@
                                         const RDKit::Conformer *conf) {
     RDKit::DetermineBondWedgeState(($self), wedgeBonds, conf);
   }
+  
+  /* Based on corresponding methods in Atom.i */
+   bool IsInRing(){
+    if(!($self)->getOwningMol().getRingInfo()->isInitialized()){
+      RDKit::MolOps::findSSSR(($self)->getOwningMol());
+    }
+    return ($self)->getOwningMol().getRingInfo()->numBondRings(($self)->getIdx())!=0;
+  }
+
+  bool IsInRingSize(int size){
+    if(!($self)->getOwningMol().getRingInfo()->isInitialized()){
+      RDKit::MolOps::findSSSR(($self)->getOwningMol());
+    }
+    return ($self)->getOwningMol().getRingInfo()->isBondInRingOfSize(($self)->getIdx(),size);
+  }
+
 }
 
