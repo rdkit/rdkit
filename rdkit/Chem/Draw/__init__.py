@@ -323,6 +323,23 @@ def _moltoimg(mol, sz, highlights, legend, **kwargs):
     img = _drawerToImage(d2d)
   return img
 
+def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
+  try:
+    mol.GetAtomWithIdx(0).GetExplicitValence()
+  except RuntimeError:
+    mol.UpdatePropertyCache(False)
+
+  try:
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+  except ValueError:  # <- can happen on a kekulization failure
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
+  d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+  d2d.FinishDrawing()
+  svg = d2d.GetDrawingText()
+  return svg.replace("svg:", "")
+
+
 
 def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
                      highlightAtomLists=None, **kwargs):

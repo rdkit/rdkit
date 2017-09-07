@@ -130,20 +130,8 @@ def _toSVG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-  try:
-    mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
-    mol.UpdatePropertyCache(False)
 
-  try:
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
-  d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
-  d2d.DrawMolecule(mc, highlightAtoms=highlightAtoms)
-  d2d.FinishDrawing()
-  svg = d2d.GetDrawingText()
-  return svg.replace("svg:", "")
+  return Draw._moltoSVG(mol,molSize,highlightAtoms,"",kekulizeStructures)
 
 
 def _toReactionPNG(rxn):
