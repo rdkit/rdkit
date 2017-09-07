@@ -239,5 +239,45 @@ M  END""")
     self.assertTrue(txt.find("stroke:#000000")>=0)
     self.assertTrue(txt.find("stroke:#00CC00")==-1)
 
+  def testUpdatePalette(self):
+    m = Chem.MolFromSmiles('CCOCNCCl')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().updateAtomPalette({6:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")==-1)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
+
+
+  def testSetPalette(self):
+    m = Chem.MolFromSmiles('CCOCNCCl')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().setAtomPalette({-1:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")==-1)
+    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
+
+
 if __name__ == "__main__":
   unittest.main()
