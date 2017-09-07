@@ -278,6 +278,16 @@ M  END""")
     self.assertTrue(txt.find("stroke:#00CC00")==-1)
     self.assertTrue(txt.find("stroke:#FFFF00")>=0)
 
+    # try a palette that doesn't have a default:
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().setAtomPalette({0:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+    self.assertTrue(txt.find("stroke:#FFFF00")==-1)
+
 
 if __name__ == "__main__":
   unittest.main()

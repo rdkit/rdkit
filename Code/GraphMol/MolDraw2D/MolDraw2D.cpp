@@ -1069,10 +1069,18 @@ DrawColour MolDraw2D::getColour(
 
 // ****************************************************************************
 DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
-  DrawColour res = drawOptions().atomColourPalette[-1];
+  DrawColour res;
   if (drawOptions().atomColourPalette.find(atomic_num) !=
       drawOptions().atomColourPalette.end()) {
     res = drawOptions().atomColourPalette[atomic_num];
+  } else if (atomic_num != -1 &&
+             drawOptions().atomColourPalette.find(-1) !=
+                 drawOptions().atomColourPalette.end()) {
+    // if -1 is in the palette, we use that for undefined colors
+    res = drawOptions().atomColourPalette[-1];
+  } else {
+    // if all else fails, default to black:
+    res = DrawColour(0, 0, 0);
   }
   return res;
 }
