@@ -54,6 +54,11 @@ inline void assignDefaultPalette(ColourPalette &palette) {
   palette[53] = DrawColour(0.63, 0.12, 0.94);
 };
 
+inline void assignBWPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+};
+
 struct MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments;      // draws "breaks" at dummy atoms
