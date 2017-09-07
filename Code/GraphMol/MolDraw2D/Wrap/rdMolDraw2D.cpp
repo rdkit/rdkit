@@ -278,6 +278,12 @@ void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
 void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
 }
+void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
+  assignDefaultPalette(self.atomColourPalette);
+}
+void useBWAtomPalette(RDKit::MolDrawOptions &self) {
+  assignBWPalette(self.atomColourPalette);
+}
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -305,6 +311,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method for setting the background colour")
       .def("setHighlightColour", &RDKit::setHighlightColour,
            "method for setting the highlight colour")
+      .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
+           "use the default colour palette for atoms and bonds")
+      .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
+           "use the black & white palette for atoms and bonds")
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
       .def_readwrite("atomLabelDeuteriumTritium",
