@@ -600,6 +600,7 @@ struct RGroupDecompData {
       mol.addAtom(atomsToAdd[i].second, false, true);
       mol.addBond(atomsToAdd[i].first, atomsToAdd[i].second, Bond::SINGLE);
     }
+    mol.updatePropertyCache(false);  // this was github #1550
   }
 
   void relabelRGroup(RGroupData &rgroup, const std::map<int, int> &mappings) {
@@ -642,6 +643,7 @@ struct RGroupDecompData {
       mol.addAtom(atomsToAdd[i].second, false, true);
       mol.addBond(atomsToAdd[i].first, atomsToAdd[i].second, Bond::SINGLE);
     }
+    mol.updatePropertyCache(false);  // this was github #1550
   }
 
   // relabel the core and sidechains using the specified user labels
