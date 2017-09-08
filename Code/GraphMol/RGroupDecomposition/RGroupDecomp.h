@@ -24,29 +24,29 @@ namespace RDKit {
    \return the set of degenerative points (set<unsigned int>)
 */
 
-typedef enum  {
-  IsotopeLabels          = 0x01,
-  AtomMapLabels          = 0x02,
-  AtomIndexLabels        = 0x04,
+typedef enum {
+  IsotopeLabels = 0x01,
+  AtomMapLabels = 0x02,
+  AtomIndexLabels = 0x04,
   RelabelDuplicateLabels = 0x08,
-  AutoDetect             = 0x0F,
+  AutoDetect = 0x0F,
 } RGroupLabels;
 
-typedef enum  {
-  Greedy        = 0x01,
-  GreedyChunks  = 0x02,
-  Exhaustive    = 0x04, // not really useful for large sets
+typedef enum {
+  Greedy = 0x01,
+  GreedyChunks = 0x02,
+  Exhaustive = 0x04,  // not really useful for large sets
 } RGroupMatching;
 
-typedef enum  {
-  AtomMap     = 0x01,
-  Isotope     = 0x02,
-  MDLRGroup   = 0x04,
+typedef enum {
+  AtomMap = 0x01,
+  Isotope = 0x02,
+  MDLRGroup = 0x04,
 } RGroupLabelling;
 
-typedef enum  {
-  None    = 0x0,
-  MCS     = 0x01,
+typedef enum {
+  None = 0x0,
+  MCS = 0x01,
 } RGroupCoreAlignment;
 
 struct RGroupDecompositionParameters {
@@ -54,59 +54,65 @@ struct RGroupDecompositionParameters {
   unsigned int matchingStrategy;
   unsigned int rgroupLabelling;
   unsigned int alignment;
-  
+
   unsigned int chunkSize;
   bool onlyMatchAtRGroups;
   bool removeAllHydrogenRGroups;
+  bool removeHydrogensPostMatch;
 
- RGroupDecompositionParameters(unsigned int labels=AutoDetect,
-                               unsigned int strategy=GreedyChunks,
-                               unsigned int labelling=AtomMap | MDLRGroup,
-                               unsigned int alignment=MCS,
-                               unsigned int chunkSize=5,
-                               bool matchOnlyAtRGroups=false,
-                               bool removeHydrogenOnlyGroups=true) :
-  labels(labels),
-    matchingStrategy(strategy),
-    rgroupLabelling(labelling),
-    alignment(alignment),
-    chunkSize(chunkSize),
-    onlyMatchAtRGroups(matchOnlyAtRGroups),
-    removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
-    indexOffset(-1) {
-  }
+  RGroupDecompositionParameters(unsigned int labels = AutoDetect,
+                                unsigned int strategy = GreedyChunks,
+                                unsigned int labelling = AtomMap | MDLRGroup,
+                                unsigned int alignment = MCS,
+                                unsigned int chunkSize = 5,
+                                bool matchOnlyAtRGroups = false,
+                                bool removeHydrogenOnlyGroups = true,
+                                bool removeHydrogensPostMatch = false)
+      : labels(labels),
+        matchingStrategy(strategy),
+        rgroupLabelling(labelling),
+        alignment(alignment),
+        chunkSize(chunkSize),
+        onlyMatchAtRGroups(matchOnlyAtRGroups),
+        removeAllHydrogenRGroups(removeHydrogenOnlyGroups),
+        removeHydrogensPostMatch(removeHydrogensPostMatch),
+        indexOffset(-1) {}
   bool prepareCore(RWMol &, const RWMol *alignCore);
-  void SetRGroupLabels(unsigned int rgroupLabels) {
-    labels = rgroupLabels;
-  }
+  void SetRGroupLabels(unsigned int rgroupLabels) { labels = rgroupLabels; }
   void SetRGroupLabelling(unsigned int labelling) {
     rgroupLabelling = labelling;
   }
-  void SetRGroupMatching(unsigned int matching) {
-    matchingStrategy = matching;
-  }
+  void SetRGroupMatching(unsigned int matching) { matchingStrategy = matching; }
   void SetRGroupCoreAlignment(unsigned int coreAlignment) {
     alignment = coreAlignment;
   }
   void SetChunkSize(unsigned int size) { chunkSize = size; }
-  void SetOnlyMatchAtRGroups(bool matchAtRGroups) { onlyMatchAtRGroups = matchAtRGroups; }
-  void SetRemoveRGroupsThatAreAllHydrogen( bool remove ) { removeAllHydrogenRGroups = remove; }
+  void SetOnlyMatchAtRGroups(bool matchAtRGroups) {
+    onlyMatchAtRGroups = matchAtRGroups;
+  }
+  void SetRemoveRGroupsThatAreAllHydrogen(bool remove) {
+    removeAllHydrogenRGroups = remove;
+  }
+  void SetRemoveHydrogensPostMatch(bool remove) {
+    removeHydrogensPostMatch = remove;
+  }
 
   unsigned int GetRGroupLabels() const { return labels; }
   unsigned int GetRGroupLabelling() const { return matchingStrategy; }
   unsigned int GetRGroupMatching() const { return rgroupLabelling; }
   unsigned int GetRGroupCoreAlignment() const { return alignment; }
-  unsigned int  GetChunkSize() const { return chunkSize; }
+  unsigned int GetChunkSize() const { return chunkSize; }
   bool GetOnlyMatchAtRGroups() const { return onlyMatchAtRGroups; }
-  bool GetRemoveRGroupsThatAreAllHydrogen() const { return removeAllHydrogenRGroups; }
-
-  
+  bool GetRemoveRGroupsThatAreAllHydrogen() const {
+    return removeAllHydrogenRGroups;
+  }
+  bool GetRemoveHydrogensPostMatch() const { return removeHydrogensPostMatch; }
 
  private:
   int indexOffset;
 };
 
-typedef std::map<std::string,  boost::shared_ptr<ROMol> >  RGroupRow;
+typedef std::map<std::string, boost::shared_ptr<ROMol> > RGroupRow;
 typedef std::vector<boost::shared_ptr<ROMol> > RGroupColumn;
 
 typedef std::vector<RGroupRow> RGroupRows;
@@ -114,27 +120,29 @@ typedef std::map<std::string, RGroupColumn> RGroupColumns;
 
 struct RGroupDecompData;
 class RGroupDecomposition {
-  RGroupDecompData *data; // implementation details
-  RGroupDecomposition(const RGroupDecomposition &);             // no copy construct
-  RGroupDecomposition& operator=(const RGroupDecomposition&);   // Prevent assignment
+  RGroupDecompData *data;                            // implementation details
+  RGroupDecomposition(const RGroupDecomposition &);  // no copy construct
+  RGroupDecomposition &operator=(
+      const RGroupDecomposition &);  // Prevent assignment
 
-public:
+ public:
   RGroupDecomposition(const ROMol &core,
-                      const RGroupDecompositionParameters &params=RGroupDecompositionParameters());
+                      const RGroupDecompositionParameters &params =
+                          RGroupDecompositionParameters());
   RGroupDecomposition(const std::vector<ROMOL_SPTR> &cores,
-                      const RGroupDecompositionParameters &params=RGroupDecompositionParameters());
-  
- ~RGroupDecomposition();
- 
-  int  add(const ROMol &mol);
+                      const RGroupDecompositionParameters &params =
+                          RGroupDecompositionParameters());
+
+  ~RGroupDecomposition();
+
+  int add(const ROMol &mol);
   bool process();
-    
+
   //! return rgroups in row order group[row][attachment_point] = ROMol
   RGroupRows getRGroupsAsRows() const;
   //! return rgroups in column order group[attachment_point][row] = ROMol
   RGroupColumns getRGroupsAsColumns() const;
 };
-
 }
 
 #endif
