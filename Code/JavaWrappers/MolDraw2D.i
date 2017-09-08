@@ -42,9 +42,9 @@
 #include <utility>
 %}
 
-%template(INT_STRING_MAP) std::map< int, std::string >;
-%template(INT_DRAWCOLOUR_MAP) std::map< int, RDKit::DrawColour >;
-%template(INT_DOUBLE_MAP) std::map< int, double >;
+%template(Int_String_Map) std::map< int, std::string >;
+%template(Int_DrawColour_Map) std::map< int, RDKit::DrawColour >;
+%template(Int_Double_Map) std::map< int, double >;
 %template(DrawColour) boost::tuple<float,float,float>;
 %template(Float_Pair) std::pair<float,float>;
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;

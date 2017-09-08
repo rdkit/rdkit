@@ -36,7 +36,28 @@ using RDGeom::Point2D;
 namespace RDKit {
 
 typedef boost::tuple<float, float, float> DrawColour;
+typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<unsigned int> DashPattern;
+
+inline void assignDefaultPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+  palette[0] = DrawColour(0.5, 0.5, 0.5);
+  palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
+  palette[7] = DrawColour(0.0, 0.0, 1.0);
+  palette[8] = DrawColour(1.0, 0.0, 0.0);
+  palette[9] = DrawColour(0.2, 0.8, 0.8);
+  palette[15] = DrawColour(1.0, 0.5, 0.0);
+  palette[16] = DrawColour(0.8, 0.8, 0.0);
+  palette[17] = DrawColour(0.0, 0.802, 0.0);
+  palette[35] = DrawColour(0.5, 0.3, 0.1);
+  palette[53] = DrawColour(0.63, 0.12, 0.94);
+};
+
+inline void assignBWPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+};
 
 struct MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
@@ -66,9 +87,12 @@ struct MolDrawOptions {
   std::vector<std::vector<int> > atomRegions;  // regions
   DrawColour
       symbolColour;  // color to be used for the symbols and arrows in reactions
-  std::vector<DrawColour> highlightColourPalette; // defining 10 default colors
-                                                 // for highlighting atoms and bonds
-                                                 //or reactants in a reactions
+  std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
+  // for highlighting atoms and bonds
+  // or reactants in a reactions
+  ColourPalette atomColourPalette;  // the palette used to assign
+                                    // colors to atoms based on
+                                    // atomic number. -1 is the default value
 
   MolDrawOptions()
       : atomLabelDeuteriumTritium(false),
@@ -85,19 +109,20 @@ struct MolDrawOptions {
         multipleBondOffset(0.15),
         padding(0.05),
         additionalAtomLabelPadding(0.0),
-        symbolColour(0, 0, 0){
-    highlightColourPalette.push_back(DrawColour(1., 1., .67)); // popcorn yellow
-    highlightColourPalette.push_back(DrawColour(1., .8, .6)); // sand
-    highlightColourPalette.push_back(DrawColour(1., .71, .76)); // light pink
-    highlightColourPalette.push_back(DrawColour(.8, 1., .8)); // offwhitegreen
-    highlightColourPalette.push_back(DrawColour(.87, .63, .87)); // plum
-    highlightColourPalette.push_back(DrawColour(.76, .94, .96)); // pastel blue
-    highlightColourPalette.push_back(DrawColour(.67, .67, 1.)); // periwinkle
-    highlightColourPalette.push_back(DrawColour(.64, .76, .34)); // avocado
-    highlightColourPalette.push_back(DrawColour(.56, .93, .56)); // light green
-    highlightColourPalette.push_back(DrawColour(.20, .63, .79)); // peacock
+        symbolColour(0, 0, 0) {
+    highlightColourPalette.push_back(
+        DrawColour(1., 1., .67));                              // popcorn yellow
+    highlightColourPalette.push_back(DrawColour(1., .8, .6));  // sand
+    highlightColourPalette.push_back(DrawColour(1., .71, .76));  // light pink
+    highlightColourPalette.push_back(DrawColour(.8, 1., .8));  // offwhitegreen
+    highlightColourPalette.push_back(DrawColour(.87, .63, .87));  // plum
+    highlightColourPalette.push_back(DrawColour(.76, .94, .96));  // pastel blue
+    highlightColourPalette.push_back(DrawColour(.67, .67, 1.));   // periwinkle
+    highlightColourPalette.push_back(DrawColour(.64, .76, .34));  // avocado
+    highlightColourPalette.push_back(DrawColour(.56, .93, .56));  // light green
+    highlightColourPalette.push_back(DrawColour(.20, .63, .79));  // peacock
+    assignDefaultPalette(atomColourPalette);
   };
-
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
@@ -215,15 +240,16 @@ class MolDraw2D {
     \param highlightByReactant : (optional) if this is set, atoms and bonds will
     be highlighted based on which reactant they come from. Atom map numbers
     will not be shown.
-    \param highlightColorsReactants : (optional) provide a vector of colors for the
+    \param highlightColorsReactants : (optional) provide a vector of colors for
+    the
     reactant highlighting.
     \param confIds   : (optional) vector of confIds to use for rendering. These
     are numbered by reactants, then agents, then products.
   */
-  virtual void drawReaction(const ChemicalReaction &rxn,
-                            bool highlightByReactant = false,
-                            const std::vector<DrawColour>* highlightColorsReactants = NULL,
-                            const std::vector<int> *confIds = NULL);
+  virtual void drawReaction(
+      const ChemicalReaction &rxn, bool highlightByReactant = false,
+      const std::vector<DrawColour> *highlightColorsReactants = NULL,
+      const std::vector<int> *confIds = NULL);
 
   //! \name Transformations
   //@{
