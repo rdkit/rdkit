@@ -303,12 +303,12 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
     res.paste(MolToImage(mol, subImgSize, legend=legends[i], **kwargs), (i * subImgSize[0], 0))
   return res
 
+from io import BytesIO
 def _drawerToImage(d2d):
   try:
     import Image
   except ImportError:
     from PIL import Image
-  from io import BytesIO
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
