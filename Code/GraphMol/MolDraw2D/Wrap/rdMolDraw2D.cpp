@@ -23,6 +23,8 @@
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
 
+#include "tuple_converter.h"
+
 namespace python = boost::python;
 
 namespace RDKit {
@@ -297,7 +299,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::scope().attr("__doc__") =
       "Module containing a C++ implementation of 2D molecule drawing";
   std::string docString;
-
+  boost::python::register_tuple< RDKit::DrawColour >();
+ 
   python::class_<std::map<int, std::string> >("IntStringMap")
       .def(python::map_indexing_suite<std::map<int, std::string>, true>());
 
@@ -354,7 +357,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("additionalAtomLabelPadding",
                      &RDKit::MolDrawOptions::additionalAtomLabelPadding,
                      "additional padding to leave around atom labels. "
-                     "Expressed as a fraction of the font size.");
+                     "Expressed as a fraction of the font size.")
+      .def_readwrite("backgroundColour",
+                     &RDKit::MolDrawOptions::backgroundColour,
+                     "the background colour of the rendering")
+      ;
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)

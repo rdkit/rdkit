@@ -33,6 +33,21 @@ class TestCase(unittest.TestCase):
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("foolabel") != -1)
 
+  def test2b(self):
+    m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
+    AllChem.Compute2DCoords(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    do = d.drawOptions()
+    do.atomLabels[3] = 'foolabel'
+    self.assertEqual(do.backgroundColour, (1., 1., 1.))
+    do.backgroundColour = (0.5, 0.5, 0.5)
+    self.assertEqual(do.backgroundColour, (0.5, 0.5, 0.5))
+    
+    d.DrawMolecule(m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("foolabel") != -1)
+    
   def testGithubIssue571(self):
     if not hasattr(Draw, 'MolDraw2DCairo'):
       return

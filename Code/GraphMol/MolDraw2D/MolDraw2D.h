@@ -103,7 +103,7 @@ struct MolDrawOptions {
         flagCloseContactsDist(3),
         includeAtomTags(false),
         clearBackground(true),
-        backgroundColour(1, 1, 1),
+        backgroundColour(1.f, 1.f, 1.f),
         legendFontSize(12),
         legendColour(0, 0, 0),
         multipleBondOffset(0.15),
