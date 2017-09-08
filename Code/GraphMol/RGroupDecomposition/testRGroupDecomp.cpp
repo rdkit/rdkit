@@ -338,6 +338,9 @@ void testGithub1550() {
   RWMol *coreRes = (RWMol *)groups["Core"][0].get();
   TEST_ASSERT(coreRes->getNumAtoms() == 14);
   MolOps::Kekulize(*coreRes);
+  RWMol *rg2 = (RWMol *)groups["R2"][0].get();
+  TEST_ASSERT(rg2->getNumAtoms() == 12);
+  MolOps::Kekulize(*rg2);
 }
 
 int main() {
