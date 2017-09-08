@@ -38,7 +38,7 @@ from IPython.display import SVG
 molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True
-
+highlightByReactant = False
 ipython_useSVG = False
 ipython_3d = False
 molSize_3d = (400, 400)
@@ -148,11 +148,18 @@ def _toSVG(mol):
 
 def _toReactionPNG(rxn):
   rc = copy.deepcopy(rxn)
-  img = Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]))
+  img = Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]),
+                             highlightByReactant=highlightByReactant)
   bio = BytesIO()
   img.save(bio, format='PNG')
   return bio.getvalue()
 
+def _toReactionSVG(rxn):
+  if not ipython_useSVG:
+    return None
+  rc = copy.deepcopy(rxn)
+  return Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]),
+                              useSVG=True,highlightByReactant=highlightByReactant)
 
 def _GetSubstructMatch(mol, query, **kwargs):
   res = mol.__GetSubstructMatch(query, **kwargs)
@@ -205,6 +212,7 @@ def InstallIPythonRenderer():
   if _canUse3D:
     rdchem.Mol._repr_html_ = _toJSON
   rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
+  rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
   if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
     rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
   rdchem.Mol.GetSubstructMatch = _GetSubstructMatch

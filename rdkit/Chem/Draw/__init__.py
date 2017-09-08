@@ -447,15 +447,21 @@ def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
   return res
 
 
-def ReactionToImage(rxn, subImgSize=(200, 200), **kwargs):
-  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, **kwargs):
+  if not useSVG and not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
       return _legacyReactionToImage(rxn,subImgSize=subImgSize,**kwargs)
   else:
       width = subImgSize[0] * (rxn.GetNumReactantTemplates() + rxn.GetNumProductTemplates() + 1)
-      d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
-      d.DrawReaction(rxn)
+      if useSVG:
+          d = rdMolDraw2D.MolDraw2DSVG(width, subImgSize[1])
+      else:
+          d = rdMolDraw2D.MolDraw2DCairo(width, subImgSize[1])
+      d.DrawReaction(rxn,**kwargs)
       d.FinishDrawing()
-      return _drawerToImage(d)
+      if useSVG:
+          return d.GetDrawingText().replace('svg:', '')
+      else:
+          return _drawerToImage(d)
 
 def MolToQPixmap(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                  **kwargs):
