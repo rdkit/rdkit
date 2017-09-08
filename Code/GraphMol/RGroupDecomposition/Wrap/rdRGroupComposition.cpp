@@ -150,42 +150,24 @@ struct rgroupdecomp_wrapper {
 
         .def(python::init<RGroupLabels, RGroupMatching, RGroupLabelling,
                           RGroupCoreAlignment, unsigned int, bool, bool>())
-        .def("SetRGroupLabels",
-             &RDKit::RGroupDecompositionParameters::SetRGroupLabels)
-        .def("GetRGroupLabels",
-             &RDKit::RGroupDecompositionParameters::GetRGroupLabels)
-        .def("SetRGroupLabelling",
-             &RDKit::RGroupDecompositionParameters::SetRGroupLabelling)
-        .def("GetRGroupLabelling",
-             &RDKit::RGroupDecompositionParameters::GetRGroupLabelling)
-        .def("SetRGroupMatching",
-             &RDKit::RGroupDecompositionParameters::SetRGroupMatching)
-        .def("GetRGroupMatching",
-             &RDKit::RGroupDecompositionParameters::GetRGroupMatching)
-        .def("SetRGroupCoreAlignment",
-             &RDKit::RGroupDecompositionParameters::SetRGroupCoreAlignment)
-        .def("GetRGroupCoreAlignment",
-             &RDKit::RGroupDecompositionParameters::GetRGroupCoreAlignment)
-        .def("SetChunkSize",
-             &RDKit::RGroupDecompositionParameters::SetChunkSize)
-        .def("GetChunkSize",
-             &RDKit::RGroupDecompositionParameters::GetChunkSize)
-        .def("SetOnlyMatchAtRGroups",
-             &RDKit::RGroupDecompositionParameters::SetOnlyMatchAtRGroups)
-        .def("GetOnlyMatchAtRGroups",
-             &RDKit::RGroupDecompositionParameters::GetOnlyMatchAtRGroups)
-        .def("SetRemoveRGroupsThatAreAllHydrogen",
-             &RDKit::RGroupDecompositionParameters::
-                 SetRemoveRGroupsThatAreAllHydrogen)
-        .def("GetRemoveRGroupsThatAreAllHydrogen",
-             &RDKit::RGroupDecompositionParameters::
-                 GetRemoveRGroupsThatAreAllHydrogen)
-        .def("SetRemoveHydrogensPostMatch",
-             &RDKit::RGroupDecompositionParameters::SetRemoveHydrogensPostMatch)
-        .def("GetRemoveHydrogensPostMatch",
-             &RDKit::RGroupDecompositionParameters::GetRemoveHydrogensPostMatch)
-
-        ;
+        .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
+        .def_readwrite("matchingStrategy",
+                       &RDKit::RGroupDecompositionParameters::matchingStrategy)
+        .def_readwrite("rgroupLabelling",
+                       &RDKit::RGroupDecompositionParameters::rgroupLabelling)
+        .def_readwrite("alignment",
+                       &RDKit::RGroupDecompositionParameters::alignment)
+        .def_readwrite("chunkSize",
+                       &RDKit::RGroupDecompositionParameters::chunkSize)
+        .def_readwrite(
+            "onlyMatchAtRGroups",
+            &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
+        .def_readwrite(
+            "removeAllHydrogenRGroups",
+            &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
+        .def_readwrite(
+            "removeHydrogensPostMatch",
+            &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
