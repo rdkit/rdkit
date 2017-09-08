@@ -166,6 +166,24 @@ struct rgroupdecomp_wrapper {
              &RDKit::RGroupDecompositionParameters::SetRGroupCoreAlignment)
         .def("GetRGroupCoreAlignment",
              &RDKit::RGroupDecompositionParameters::GetRGroupCoreAlignment)
+        .def("SetChunkSize",
+             &RDKit::RGroupDecompositionParameters::SetChunkSize)
+        .def("GetChunkSize",
+             &RDKit::RGroupDecompositionParameters::GetChunkSize)
+        .def("SetOnlyMatchAtRGroups",
+             &RDKit::RGroupDecompositionParameters::SetOnlyMatchAtRGroups)
+        .def("GetOnlyMatchAtRGroups",
+             &RDKit::RGroupDecompositionParameters::GetOnlyMatchAtRGroups)
+        .def("SetRemoveRGroupsThatAreAllHydrogen",
+             &RDKit::RGroupDecompositionParameters::
+                 SetRemoveRGroupsThatAreAllHydrogen)
+        .def("GetRemoveRGroupsThatAreAllHydrogen",
+             &RDKit::RGroupDecompositionParameters::
+                 GetRemoveRGroupsThatAreAllHydrogen)
+        .def("SetRemoveHydrogensPostMatch",
+             &RDKit::RGroupDecompositionParameters::SetRemoveHydrogensPostMatch)
+        .def("GetRemoveHydrogensPostMatch",
+             &RDKit::RGroupDecompositionParameters::GetRemoveHydrogensPostMatch)
 
         ;
 
@@ -173,6 +191,10 @@ struct rgroupdecomp_wrapper {
         "RGroupDecomposition", docString.c_str(),
         python::init<python::object>(
             "Construct from a molecule or sequence of molecules"))
+        .def(
+            python::init<python::object, const RGroupDecompositionParameters &>(
+                "Construct from a molecule or sequence of molecules and a "
+                "parameters object"))
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "

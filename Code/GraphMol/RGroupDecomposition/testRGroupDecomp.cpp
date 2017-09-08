@@ -312,18 +312,101 @@ void testMultiCore() {
   }
 }
 
+void testGithub1550() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "test Github #1550: Kekulization error from R-group decomposition"
+      << std::endl;
+
+  RWMol *core = SmilesToMol("O=c1oc2ccccc2cc1");
+  RGroupDecompositionParameters params;
+
+  RGroupDecomposition decomp(*core, params);
+  const char *smilesData[3] = {"O=c1cc(Cn2ccnc2)c2ccc(Oc3ccccc3)cc2o1",
+                               "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
+                               "COc1ccc2c(Cn3cncn3)cc(=O)oc2c1"};
+  for (int i = 0; i < 3; ++i) {
+    ROMol *mol = SmilesToMol(smilesData[i]);
+    int res = decomp.add(*mol);
+    delete mol;
+    TEST_ASSERT(res == i);
+  }
+
+  decomp.process();
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  RWMol *coreRes = (RWMol *)groups["Core"][0].get();
+  TEST_ASSERT(coreRes->getNumAtoms() == 14);
+  MolOps::Kekulize(*coreRes);
+  RWMol *rg2 = (RWMol *)groups["R2"][0].get();
+  TEST_ASSERT(rg2->getNumAtoms() == 12);
+  MolOps::Kekulize(*rg2);
+}
+
+void testRemoveHs() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test remove sidechain Hs" << std::endl;
+
+  RWMol *core = SmilesToMol("O=c1oc2ccccc2cc1");
+
+  {
+    RGroupDecompositionParameters params;
+    RGroupDecomposition decomp(*core, params);
+    const char *smilesData[3] = {"O=c1cc(Cn2ccnc2)c2ccc(Oc3ccccc3)cc2o1",
+                                 "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
+                                 "COc1ccc2c(Cn3cncn3)cc(=O)oc2c1"};
+    for (int i = 0; i < 3; ++i) {
+      ROMol *mol = SmilesToMol(smilesData[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
+    }
+
+    decomp.process();
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    RWMol *rg2 = (RWMol *)groups["R2"][0].get();
+    TEST_ASSERT(rg2->getNumAtoms() == 12);
+  }
+  {
+    RGroupDecompositionParameters params;
+    params.removeHydrogensPostMatch = true;
+    RGroupDecomposition decomp(*core, params);
+    const char *smilesData[3] = {"O=c1cc(Cn2ccnc2)c2ccc(Oc3ccccc3)cc2o1",
+                                 "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
+                                 "COc1ccc2c(Cn3cncn3)cc(=O)oc2c1"};
+    for (int i = 0; i < 3; ++i) {
+      ROMol *mol = SmilesToMol(smilesData[i]);
+      int res = decomp.add(*mol);
+      delete mol;
+      TEST_ASSERT(res == i);
+    }
+
+    decomp.process();
+    RGroupColumns groups = decomp.getRGroupsAsColumns();
+    RWMol *rg2 = (RWMol *)groups["R2"][0].get();
+    TEST_ASSERT(rg2->getNumAtoms() == 7);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
-
+  BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
+#if 1
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
   testRingMatching2();
   testRingMatching3();
   testMultiCore();
+#endif
+  testGithub1550();
+  testRemoveHs();
+
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
   return 0;
 }
