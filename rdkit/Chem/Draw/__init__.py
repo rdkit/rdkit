@@ -312,15 +312,22 @@ def _drawerToImage(d2d):
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
-def _moltoimg(mol, sz, highlights, legend, **kwargs):
+def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
     img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    if returnPNG:
+      bio = BytesIO()
+      img.save(bio, format='PNG')
+      img = bio.getvalue()
   else:
     nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
     d2d.DrawMolecule(nmol, legend=legend, highlightAtoms=highlights)
     d2d.FinishDrawing()
-    img = _drawerToImage(d2d)
+    if returnPNG:
+        img = d2d.GetDrawingText()
+    else:
+        img = _drawerToImage(d2d)
   return img
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):

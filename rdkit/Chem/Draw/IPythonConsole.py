@@ -104,23 +104,11 @@ def _toPNG(mol):
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
-  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    mc = copy.deepcopy(mol)
-    try:
-      img = Draw.MolToImage(mc, size=molSize, kekulize=kekulizeStructures,
-                            highlightAtoms=highlightAtoms)
-    except ValueError:  # <- can happen on a kekulization failure
-      mc = copy.deepcopy(mol)
-      img = Draw.MolToImage(mc, size=molSize, kekulize=False, highlightAtoms=highlightAtoms)
-    bio = BytesIO()
-    img.save(bio, format='PNG')
-    return bio.getvalue()
-  else:
+  try:
     nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
-    d2d = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
-    d2d.DrawMolecule(nmol, highlightAtoms=highlightAtoms)
-    d2d.FinishDrawing()
-    return d2d.GetDrawingText()
+  except ValueError:
+    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  return Draw._moltoimg(nmol,molSize,highlightAtoms,"",returnPNG=True)
 
 
 def _toSVG(mol):
