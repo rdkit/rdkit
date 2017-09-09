@@ -254,9 +254,9 @@ typedef enum {
 } AdjustQueryWhichFlags;
 
 namespace AdjustDegree {
-  const unsigned int NoAdjust = 0;
-  const unsigned int TotalDegree = 1;
-  const unsigned int HeavyDegree = 2;
+const unsigned int NoAdjust = 0;
+const unsigned int TotalDegree = 1;
+const unsigned int HeavyDegree = 2;
 }
 
 struct AdjustQueryParameters {
@@ -796,6 +796,15 @@ void cleanupChirality(RWMol &mol);
 */
 void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
                              bool replaceExistingTags = true);
+
+//! \brief Uses a conformer to assign directionality to the single bonds
+//!   around double bonds
+/*!
+
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+*/
+void detectBondStereoChemistry(ROMol &mol, int confId = -1);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!

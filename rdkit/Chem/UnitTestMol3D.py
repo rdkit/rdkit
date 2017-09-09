@@ -176,7 +176,7 @@ class TestCase(unittest.TestCase):
     newmol.AddConformer(newconf)
 
     Chem.SanitizeMol(newmol)
-    Chem.DetectBondStereoChemistry(newmol, newconf)
+    Chem.DetectBondStereoChemistry(newmol, newmol.GetConformer())
 
     # these aren't necessary for this specific test case, but are for
     # a more general conversion routine, so would like to see them
