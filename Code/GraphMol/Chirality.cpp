@@ -1780,6 +1780,16 @@ void detectBondStereoChemistry(ROMol &mol, int confId) {
   if (resetRings) mol.getRingInfo()->reset();
 }
 
+void assignStereochemistryFrom3D(ROMol &mol, int confId,
+                                 bool replaceExistingTags) {
+  detectBondStereoChemistry(mol, confId);
+  assignChiralTypesFrom3D(mol, confId, replaceExistingTags);
+  bool force = true;
+  bool flagPossibleStereoCenters = true;
+  assignStereochemistry(mol, replaceExistingTags, force,
+                        flagPossibleStereoCenters);
+}
+
 void removeStereochemistry(ROMol &mol) {
   if (mol.hasProp(common_properties::_StereochemDone)) {
     mol.clearProp(common_properties::_StereochemDone);
