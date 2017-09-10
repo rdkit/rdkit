@@ -78,6 +78,29 @@ class QueryAtom : public Atom {
 
 };  // end o' class
 
+namespace detail {
+inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
+  std::string res = "";
+  if (q) {
+    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    res += q->getFullDescription() + "\n";
+    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
+         ci != q->endChildren(); ++ci) {
+      res += qhelper((*ci).get(), depth + 1);
+    }
+  }
+  return res;
+}
+}  // end of detail namespace
+inline std::string describeQuery(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string res = "";
+  if (atom->hasQuery()) {
+    res = detail::qhelper(atom->getQuery(), 0);
+  }
+  return res;
+}
+
 };  // end o' namespace
 
 #endif
