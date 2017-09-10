@@ -817,7 +817,7 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId = -1,
   \param mol                  the molecule of interest
   \param confId               the conformer to use
 */
-void detectBondStereoChemistry(ROMol &mol, int confId = -1);
+void detectBondStereochemistry(ROMol &mol, int confId = -1);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!

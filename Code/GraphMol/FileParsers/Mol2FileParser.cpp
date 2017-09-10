@@ -960,10 +960,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
         MolOps::sanitizeMol(*res);
       }
 
-      // call detectBondStereoChemistry after sanitization "because we need
+      // call detectBondStereochemistry after sanitization "because we need
       // the ring information".  Also this will set the E/Z labels on the bond.
       // Similar in spirit to what happens in MolFileParser
-      MolOps::detectBondStereoChemistry(*res);
+      MolOps::detectBondStereochemistry(*res);
 
     } catch (MolSanitizeException &se) {
       BOOST_LOG(rdWarningLog) << "sanitise ";

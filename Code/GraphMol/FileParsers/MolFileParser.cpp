@@ -2549,9 +2549,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         // single bond dir flags:
         ClearSingleBondDirFlags(*res);
 
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry
+        // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
         // here after sanitization because we need the ring information:
-        MolOps::detectBondStereoChemistry(*res);
+        MolOps::detectBondStereochemistry(*res);
       } catch (...) {
         delete res;
         res = NULL;
@@ -2561,7 +2561,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     } else {
       // we still need to do something about double bond stereochemistry
       // (was github issue 337)
-      MolOps::detectBondStereoChemistry(*res);
+      MolOps::detectBondStereochemistry(*res);
     }
 
     if (res->hasProp(common_properties::_NeedsQueryScan)) {

@@ -1663,7 +1663,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer &conf,
 
 }  // end of anonymous namespace
 
-void detectBondStereoChemistry(ROMol &mol, int confId) {
+void detectBondStereochemistry(ROMol &mol, int confId) {
   if (!mol.getNumConformers()) return;
   const Conformer &conf = mol.getConformer(confId);
 
@@ -1782,7 +1782,7 @@ void detectBondStereoChemistry(ROMol &mol, int confId) {
 
 void assignStereochemistryFrom3D(ROMol &mol, int confId,
                                  bool replaceExistingTags) {
-  detectBondStereoChemistry(mol, confId);
+  detectBondStereochemistry(mol, confId);
   assignChiralTypesFrom3D(mol, confId, replaceExistingTags);
   bool force = true;
   bool flagPossibleStereoCenters = true;

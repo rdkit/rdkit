@@ -688,6 +688,6 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   PRECONDITION(&(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
-  MolOps::detectBondStereoChemistry(mol, conf->getId());
+  MolOps::detectBondStereochemistry(mol, conf->getId());
 }
 }

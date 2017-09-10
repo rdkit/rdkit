@@ -822,7 +822,7 @@ struct molops_wrapper {
     - mol: the molecule to be modified\n\
     - confId: Conformer to use for the coordinates\n\
 \n";
-    python::def("DetectBondStereoChemistry", MolOps::detectBondStereoChemistry,
+    python::def("DetectBondStereochemistry", MolOps::detectBondStereochemistry,
                 (python::arg("mol"), python::arg("confId") = -1),
                 docString.c_str());
 
