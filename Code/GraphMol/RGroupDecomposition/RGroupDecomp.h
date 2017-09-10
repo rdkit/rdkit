@@ -143,6 +143,19 @@ class RGroupDecomposition {
   //! return rgroups in column order group[attachment_point][row] = ROMol
   RGroupColumns getRGroupsAsColumns() const;
 };
+
+unsigned int RGroupDecompose(RGroupRows &rows,
+                             const std::vector<ROMOL_SPTR> &cores,
+                             const std::vector<ROMOL_SPTR> &mols,
+                             std::vector<unsigned int> *unmatched = 0,
+                             const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
+
+unsigned int RGroupDecompose(RGroupColumns &rows,
+                             const std::vector<ROMOL_SPTR> &cores,
+                             const std::vector<ROMOL_SPTR> &mols,
+                             std::vector<unsigned int> *unmatched = 0,
+                             const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
+                        
 }
 
 #endif

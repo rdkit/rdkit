@@ -210,6 +210,7 @@ struct RGroupData {
       delete m;
     }
     smiles = getSmiles();
+    combinedMol->setProp(common_properties::internalRgroupSmiles, smiles);
   }
 
   std::map<int, int> getNumBondsToRlabels() const {
@@ -650,6 +651,9 @@ struct RGroupDecompData {
       MolOps::removeHs(mol, implicitOnly, updateExplicitCount, sanitize);
     }
     mol.updatePropertyCache(false);  // this was github #1550
+    mol.setProp<std::string>(common_properties::rgroupSmiles,
+                             MolToSmiles(mol, true));
+
   }
 
   // relabel the core and sidechains using the specified user labels
@@ -1021,4 +1025,45 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   }
   return groups;
 }
+
+namespace {
+std::vector<unsigned int> Decomp(RGroupDecomposition &decomp,
+                                 const std::vector<ROMOL_SPTR> &mols) {
+  std::vector<unsigned int> unmatched;
+  for(size_t i=0; i<mols.size(); ++i) {
+    int v = decomp.add(*mols[i].get());
+    if (v == -1)
+      unmatched.push_back(i);
+  }
+  decomp.process();
+  return unmatched;
+}
+}
+unsigned int RGroupDecompose(RGroupRows &rows,
+                             const std::vector<ROMOL_SPTR> &cores,
+                             const std::vector<ROMOL_SPTR> &mols,
+                             std::vector<unsigned int> *unmatchedIndices,
+                             const RGroupDecompositionParameters &options) {
+  RGroupDecomposition decomp(cores, options);
+  std::vector<unsigned int> unmatched = Decomp(decomp, mols);
+  if(unmatchedIndices)
+    *unmatchedIndices = unmatched;
+  rows = decomp.getRGroupsAsRows();
+  return mols.size() - unmatched.size();
+}
+
+unsigned int RGroupDecompose(RGroupColumns &columns,
+                             const std::vector<ROMOL_SPTR> &cores,
+                             const std::vector<ROMOL_SPTR> &mols,
+                             std::vector<unsigned int> *unmatchedIndices,
+                             const RGroupDecompositionParameters &options)
+{
+  RGroupDecomposition decomp(cores, options);
+  std::vector<unsigned int> unmatched = Decomp(decomp, mols);
+  if(unmatchedIndices)
+    *unmatchedIndices = unmatched;
+  columns = decomp.getRGroupsAsColumns();
+  return mols.size() - unmatched.size();
+}
+
 }

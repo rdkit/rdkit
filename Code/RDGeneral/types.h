@@ -163,6 +163,8 @@ extern const std::string Discrims; // FragCatalog Entry
 extern const std::string DistanceMatrix_Paths; // boost::shared_array<double>
                                                //  - note, confusing creation of names in
                                                //  - getDistanceMat
+extern const std::string internalRgroupSmiles;
+extern const std::string rgroupSmiles;
 
 }  // end common_properties
 #ifndef WIN32

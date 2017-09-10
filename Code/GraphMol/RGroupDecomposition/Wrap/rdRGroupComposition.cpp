@@ -77,7 +77,7 @@ class RGroupDecompositionHelper {
   int Add(const ROMol &mol) { return decomp->add(mol); }
   bool Process() { return decomp->process(); }
 
-  python::list GetRGroupsAsRows() {
+  python::list GetRGroupsAsRows(bool asSmiles=false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
 
@@ -87,14 +87,18 @@ class RGroupDecompositionHelper {
       const RGroupRow &side_chains = *(it);
       for (RGroupRow::const_iterator sit = side_chains.begin();
            sit != side_chains.end(); ++sit) {
-        dict[sit->first] = sit->second;
+        if (asSmiles) {
+          dict[sit->first] = sit->second->getProp<std::string>(common_properties::rgroupSmiles);
+        } else {
+          dict[sit->first] = sit->second;
+        }
       }
       result.append(dict);
     }
     return result;
   }
 
-  python::dict GetRGroupsAsColumn() {
+  python::dict GetRGroupsAsColumn(bool asSmiles=false) {
     python::dict result;
 
     RGroupColumns groups = decomp->getRGroupsAsColumns();
@@ -105,13 +109,45 @@ class RGroupDecompositionHelper {
 
       for (RGroupColumn::const_iterator cit = it->second.begin();
            cit != it->second.end(); ++cit) {
-        col.append(*cit);
+        if (asSmiles) {
+          col.append((*cit)->getProp<std::string>(common_properties::rgroupSmiles));
+        } else {
+          col.append(*cit);
+        }
       }
       result[it->first] = col;
     }
     return result;
   }
+
+  
 };
+
+python::object RGroupDecomp(python::object cores,
+                            python::object mols,
+                            bool asSmiles = false,
+                            bool asRows = true,
+                            const RGroupDecompositionParameters &options = RGroupDecompositionParameters()
+                            ) {
+  RGroupDecompositionHelper decomp(cores, options);
+  python::list unmatched;
+  unsigned int count = 0;
+
+  python::stl_input_iterator<ROMOL_SPTR> iter(mols), end;
+  while (iter != end) {
+    if (!*iter) throw_value_error("reaction called with None reactants");
+    decomp.Add(*(*iter));
+    ++iter;
+  }
+
+  decomp.Process();
+  if ( asRows ) {
+    return make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched);
+  } else {
+    return make_tuple(decomp.GetRGroupsAsColumn(asSmiles), unmatched);
+  }
+}
+
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
