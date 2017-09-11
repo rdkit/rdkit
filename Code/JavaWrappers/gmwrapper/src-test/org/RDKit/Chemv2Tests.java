@@ -182,6 +182,42 @@ public class Chemv2Tests extends GraphMolTest {
       assertTrue(svg.indexOf("<svg:svg")>-1);
       assertTrue(svg.indexOf("</svg:svg>")>-1);
   }
+  @Test
+  public void testMolDraw2DHighlight() {
+      RWMol m = RWMol.MolFromSmiles("CCCCCOC");
+      RDKFuncs.prepareMolForDrawing(m);
+      Int_Vect hats = new Int_Vect();
+      hats.add(0);
+      hats.add(1);
+      hats.add(2);
+
+      Int_Vect hbs = new Int_Vect();
+      hbs.add(0);
+      hbs.add(1);
+      hbs.add(2);
+
+      ColourPalette atCs = new ColourPalette();
+      atCs.set(0,new DrawColour(1,1,0));
+      atCs.set(1,new DrawColour(1,0,1));
+      atCs.set(2,new DrawColour(0,1,1));
+      ColourPalette bCs = new ColourPalette();
+
+
+      MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
+      drawer.drawMolecule(m,"THE_LEGEND",hats,hbs,atCs,bCs);
+      drawer.finishDrawing();
+      String svg=drawer.getDrawingText();
+      //System.out.print(svg);
+      assertTrue(svg.indexOf("<svg:svg")>-1);
+      assertTrue(svg.indexOf("</svg:svg>")>-1);
+      assertTrue(svg.indexOf("THE_LEGEND")>-1);
+      assertTrue(svg.indexOf("fill:#FFFF00;")>-1);
+      assertTrue(svg.indexOf("fill:#FF00FF;")>-1);
+      assertTrue(svg.indexOf("fill:#00FFFF;")>-1);
+      // default line color:
+      assertTrue(svg.indexOf("stroke:#FF7F7F;")>-1);
+
+  }
 
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
