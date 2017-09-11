@@ -1087,7 +1087,11 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     }
     
     for(size_t idx=0;idx<it->second.size();++idx) {
-      if (!it->second[idx]->hasProp(common_properties::rgroupSmiles)) {
+      if(!it->second[idx].get()) {
+        it->second[idx] = boost::make_shared<RWMol>();
+        it->second[idx]->setProp(common_properties::rgroupSmiles, "");
+      }
+      else if (!it->second[idx]->hasProp(common_properties::rgroupSmiles)) {
         it->second[idx]->setProp(common_properties::rgroupSmiles, "");
       }
     }
