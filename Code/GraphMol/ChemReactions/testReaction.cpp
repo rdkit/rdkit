@@ -6485,6 +6485,51 @@ void test69Github1387() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void test70Github1544() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Tests github1544: ChemicalReaction code not calling "
+                          "setNoImplicit() when H counts are set"
+                       << std::endl;
+  {
+    const std::string smarts = "[CH3:1]>>[CH2:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("Cc1ccccc1")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNoImplicit());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "[CH2]c1ccccc1");
+    }
+    delete rxn;
+  }
+  {  // test that the change also works when the degree on the atom changes
+    const std::string smarts = "[CH3:1][*:2]>>[CH2:1].[*:2]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("Cc1ccccc1")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNoImplicit());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "[CH2]");
+      TEST_ASSERT(MolToSmiles(*prods[0][1]) == "c1ccccc1");
+    }
+    delete rxn;
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6567,6 +6612,7 @@ int main() {
 #endif
 
   test69Github1387();
+  test70Github1544();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

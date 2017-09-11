@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_SUBSTRUCTMATCH_H__
-#define _RD_SUBSTRUCTMATCH_H__
+#ifndef RD_SUBSTRUCTMATCH_H
+#define RD_SUBSTRUCTMATCH_H
 
 // std bits
 #include <vector>
@@ -18,6 +18,7 @@ class ROMol;
 class Atom;
 class Bond;
 class ResonanceMolSupplier;
+class MolBundle;
 
 //! \brief used to return matches from substructure searching,
 //!   The format is (queryAtomIdx, molAtomIdx)
@@ -126,6 +127,51 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
                             bool useChirality = false,
                             bool useQueryQueryMatches = false,
                             unsigned int maxMatches = 1000, int numThreads = 1);
+
+//! \overload
+//! finds the first match in the bundle
+bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
+                    MatchVectType &matchVect, bool recursionPossible = true,
+                    bool useChirality = false,
+                    bool useQueryQueryMatches = false);
+//! \overload
+//! finds the first match in the bundle
+bool SubstructMatch(const ROMol &bundle, const MolBundle &query,
+                    MatchVectType &matchVect, bool recursionPossible = true,
+                    bool useChirality = false,
+                    bool useQueryQueryMatches = false);
+//! \overload
+//! finds the first match in the bundle
+bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
+                    MatchVectType &matchVect, bool recursionPossible = true,
+                    bool useChirality = false,
+                    bool useQueryQueryMatches = false);
+//! \overload
+//! finds all matches in the first molecule of the bundle that matches the query
+unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
+                            std::vector<MatchVectType> &matchVect,
+                            bool uniquify = true, bool recursionPossible = true,
+                            bool useChirality = false,
+                            bool useQueryQueryMatches = false,
+                            unsigned int maxMatches = 1000);
+
+//! \overload
+//! finds all matches in the first molecule of the bundle that matches
+unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matchVect,
+                            bool uniquify = true, bool recursionPossible = true,
+                            bool useChirality = false,
+                            bool useQueryQueryMatches = false,
+                            unsigned int maxMatches = 1000);
+//! \overload
+//! finds all matches against the first molecule of the query bundle that
+//! matches
+unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matchVect,
+                            bool uniquify = true, bool recursionPossible = true,
+                            bool useChirality = false,
+                            bool useQueryQueryMatches = false,
+                            unsigned int maxMatches = 1000);
 }
 
 #endif

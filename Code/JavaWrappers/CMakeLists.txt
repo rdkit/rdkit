@@ -5,53 +5,32 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(CMAKE_SWIG_FLAGS "")
 
-if(WIN32)
-	set(RDKit_Wrapper_Libs
-        FilterCatalog
-        Catalogs
-        ${Boost_SERIALIZATION_LIBRARY}
-        FMCS MolDraw2D
-        FileParsers SmilesParse
-	Depictor SubstructMatch ChemReactions Fingerprints ChemTransforms
-        Descriptors MolTransforms  PartialCharges
-	Subgraphs GraphMol DataStructs Trajectory
-	DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
-	EigenSolvers
-	Optimizer
-	MolAlign
-	Alignment
-        SimDivPickers
-	RDGeometryLib RDGeneral )
-        if(RDK_BUILD_INCHI_SUPPORT)
-          set(RDKit_Wrapper_Libs RDInchiLib Inchi ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILD_INCHI_SUPPORT)
-        if(RDK_BUILD_AVALON_SUPPORT)
-          set(RDKit_Wrapper_Libs AvalonLib  avalon_clib ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILD_AVALON_SUPPORT)
-else()
-	set(RDKit_Wrapper_Libs
-        Catalogs_static
-        FilterCatalog_static
-        ${Boost_SERIALIZATION_LIBRARY}
-        FMCS_static MolDraw2D_static
-        FileParsers_static SmilesParse_static
-	Depictor_static SubstructMatch_static ChemReactions_static Fingerprints_static ChemTransforms_static
-	Subgraphs_static GraphMol_static DataStructs_static Trajectory_static Descriptors_static
-  PartialCharges_static MolTransforms_static DistGeomHelpers_static DistGeometry_static
-  ForceFieldHelpers_static ForceField_static
-	EigenSolvers_static
-	Optimizer_static
-	MolAlign_static
-	Alignment_static
-        SimDivPickers_static
-	RDGeometryLib_static RDGeneral_static )
-        if(RDK_BUILD_INCHI_SUPPORT)
-          set(RDKit_Wrapper_Libs RDInchiLib_static Inchi_static ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILD_INCHI_SUPPORT)
-        if(RDK_BUILD_AVALON_SUPPORT)
-          set(RDKit_Wrapper_Libs AvalonLib_static  avalon_clib_static ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILD_AVALON_SUPPORT)
+
+set(swigRDKitLibSuffix "")
+if(RDK_SWIG_STATIC AND (NOT MSVC))
+  set(swigRDKitLibSuffix "_static")
 endif()
+set(swigRDKitLibList "")
+if(RDK_BUILD_AVALON_SUPPORT)
+  set(swigRDKitLibList "${swigRDKitLibList}AvalonLib;avalon_clib;")
+endif(RDK_BUILD_AVALON_SUPPORT)
+if(RDK_BUILD_INCHI_SUPPORT)
+  set(swigRDKitLibList "${swigRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
+endif(RDK_BUILD_INCHI_SUPPORT)
+set(swigRDKitLibList "${swigRDKitLibList}"
+"FilterCatalog;Catalogs;FMCS;MolDraw2D;FileParsers;SmilesParse;"
+"Depictor;SubstructMatch;ChemReactions;Fingerprints;ChemTransforms;"
+"Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
+"PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
+"ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
+"Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
+)
+foreach(swigRDKitLib ${swigRDKitLibList})
+  set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")
+endforeach()
+set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY}")
+
+set(RDKit_Wrapper_Libs ${swigRDKitLibs})
 
 if(RDK_BUILD_SWIG_JAVA_WRAPPER)
 add_subdirectory(gmwrapper)

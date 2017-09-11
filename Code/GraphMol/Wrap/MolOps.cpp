@@ -803,7 +803,8 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Assign stereochemistry to bonds based on coordinates.\n\
+        "Assign stereochemistry to bonds based on coordinates and a conformer.\n\
+        DEPRECATED: Please use the version that takes a conformer ID instead.\n\
         \n\
   ARGUMENTS:\n\
   \n\
@@ -812,6 +813,17 @@ struct molops_wrapper {
 \n";
     python::def("DetectBondStereoChemistry", DetectBondStereoChemistry,
                 (python::arg("mol"), python::arg("conformer")),
+                docString.c_str());
+    docString =
+        "Assign stereochemistry to bonds based on coordinates.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+    - confId: Conformer to use for the coordinates\n\
+\n";
+    python::def("DetectBondStereochemistry", MolOps::detectBondStereochemistry,
+                (python::arg("mol"), python::arg("confId") = -1),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

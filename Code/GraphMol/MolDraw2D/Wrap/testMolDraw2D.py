@@ -185,6 +185,109 @@ M  END""")
         self.assertAlmostEqual(dpos1.x,dpos2.x,6)
         self.assertAlmostEqual(dpos1.y,dpos2.y,6)
 
+  def testReaction1(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    d = Draw.MolDraw2DSVG(900, 300)
+    d.DrawReaction(rxn)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<svg:svg") != -1)
+    self.assertTrue(txt.find("</svg:svg>") != -1)
+    #print(txt,file=open('blah1.svg','w+'))
+
+  def testReaction2(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    d = Draw.MolDraw2DSVG(900, 300)
+    d.DrawReaction(rxn,highlightByReactant=True)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<svg:svg") != -1)
+    self.assertTrue(txt.find("</svg:svg>") != -1)
+    #print(txt,file=open('blah2.svg','w+'))
+
+  def testReaction3(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    colors=[(0.3,0.7,0.9),(0.9,0.7,0.9),(0.6,0.9,0.3),(0.9,0.9,0.1)]
+    d = Draw.MolDraw2DSVG(900, 300)
+    d.DrawReaction(rxn,highlightByReactant=True,highlightColorsReactants=colors)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("<svg:svg") != -1)
+    self.assertTrue(txt.find("</svg:svg>") != -1)
+
+  def testReaction4(self):
+    rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
+    colors=[(100,155,245),(0,45,155)]
+    d = Draw.MolDraw2DSVG(900, 300)
+    self.assertRaises(ValueError, d.DrawReaction, rxn, True, colors)
+
+  def testBWDrawing(self):
+    m = Chem.MolFromSmiles('CCOCNCCl')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().useBWAtomPalette()
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+
+  def testUpdatePalette(self):
+    m = Chem.MolFromSmiles('CCOCNCCl')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().updateAtomPalette({6:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")==-1)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
+
+
+  def testSetPalette(self):
+    m = Chem.MolFromSmiles('CCOCNCCl')
+    dm = Draw.PrepareMolForDrawing(m)
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")>=0)
+
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().setAtomPalette({-1:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")==-1)
+    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+    self.assertTrue(txt.find("stroke:#FFFF00")>=0)
+
+    # try a palette that doesn't have a default:
+    d = Draw.MolDraw2DSVG(300, 300)
+    d.drawOptions().setAtomPalette({0:(1,1,0)})
+    d.DrawMolecule(dm)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertTrue(txt.find("stroke:#000000")>=0)
+    self.assertTrue(txt.find("stroke:#00CC00")==-1)
+    self.assertTrue(txt.find("stroke:#FFFF00")==-1)
+
 
 if __name__ == "__main__":
   unittest.main()

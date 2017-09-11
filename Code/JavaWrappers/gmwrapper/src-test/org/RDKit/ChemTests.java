@@ -53,6 +53,22 @@ public class ChemTests extends GraphMolTest {
 		}
 	}
 
+	@Test
+	public void testBondRings() {
+		ROMol m = RWMol.MolFromSmiles("OC1C(O)C2C1C(O)C2O");
+		//Test with an acyclic bond
+		Bond bd=m.getBondWithIdx(0);
+		assertFalse("bond 0 improperly in 4-membered ring", bd.IsInRingSize(4));
+		assertFalse("bond 0 improperly in 5-membered ring", bd.IsInRingSize(5));
+		assertFalse("bond 0 improperly in ring",bd.IsInRing());
+		
+		//Now witha bond in a 4-mr
+		bd=m.getBondWithIdx(1);
+		assertTrue("bond 1 not in ring of size 4", bd.IsInRingSize(4));
+		assertFalse("bond 1 improperly in 5-membered ring", bd.IsInRingSize(5));
+		assertTrue("bond 1 not in ring",bd.IsInRing());
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.ChemTests");
 	}

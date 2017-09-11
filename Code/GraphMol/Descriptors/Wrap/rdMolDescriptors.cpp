@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2007-2011 Greg Landrum
+//  Copyright (C) 2007-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -110,6 +109,59 @@ python::tuple calcCrippenDescriptors(const RDKit::ROMol &mol,
   RDKit::Descriptors::calcCrippenDescriptors(mol, logp, mr, includeHs, force);
   return python::make_tuple(logp, mr);
 }
+
+#ifdef RDK_BUILD_DESCRIPTORS3D
+
+python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh) {
+  std::vector<double> res;
+  RDKit::Descriptors::WHIM(mol, res, confId, thresh);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId,
+                          double precision) {
+  std::vector<double> res;
+  RDKit::Descriptors::GETAWAY(mol, res, confId, precision);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::RDF(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcMORSEs(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::MORSE(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
+  std::vector<double> res;
+  RDKit::Descriptors::AUTOCORR3D(mol, res, confId);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol) {
+  std::vector<double> res;
+  RDKit::Descriptors::AUTOCORR2D(mol, res);
+  python::list pyres;
+  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  return pyres;
+}
+
+#endif
 
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -315,9 +367,8 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -398,9 +449,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -667,6 +717,7 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
   return pyres;
 }
+
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
@@ -777,6 +828,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("numTypeBits", RDKit::AtomPairs::numTypeBits)
       .setattr("numPiBits", RDKit::AtomPairs::numPiBits)
       .setattr("numBranchBits", RDKit::AtomPairs::numBranchBits)
+      .setattr("numChiralBits", RDKit::AtomPairs::numChiralBits)
       .setattr("codeSize", RDKit::AtomPairs::codeSize)
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)
@@ -787,6 +839,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("atom"), python::arg("branchSubtract") = 0,
                python::arg("includeChirality") = false),
               docString.c_str());
+  docString =
+      "Returns the atom-pair code (hash) for a pair of atoms separated by a "
+      "certain number of bonds";
+  python::def(
+      "GetAtomPairCode", RDKit::AtomPairs::getAtomPairCode,
+      (python::arg("atom1Code"), python::arg("atom2Code"),
+       python::arg("distance"), python::arg("includeChirality") = false),
+      docString.c_str());
   docString =
       "Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
@@ -1442,6 +1502,42 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
+  python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
+  docString = "Returns the WHIM descriptors vector";
+  python::def("CalcWHIM", calcWHIMs,
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("thresh") = 0.001),
+              docString.c_str());
+
+  python::scope().attr("_CalcGETAWAY_version") =
+      RDKit::Descriptors::GETAWAYVersion;
+  docString = "Returns the GETAWAY descriptors vector";
+  python::def("CalcGETAWAY", calcGETAWAYs,
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("precision") = 2),
+              docString.c_str());
+
+  python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
+  docString = "Returns radial distribution fonction descriptors (RDF)";
+  python::def("CalcRDF", calcRDFs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
+  docString =
+      "Returns Molecule Representation of Structures based on Electron "
+      "diffraction descriptors";
+  python::def("CalcMORSE", calcMORSEs,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  python::scope().attr("_CalcAUTOCORR3D_version") =
+      RDKit::Descriptors::AUTOCORR3DVersion;
+  docString = "Returns 3D Autocorrelation descriptors vector";
+  python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
   python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
   docString =
       "Returns the PBF (plane of best fit) descriptor "
@@ -1515,6 +1611,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "";
   python::def("CalcSpherocityIndex", RDKit::Descriptors::spherocityIndex,
               (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  python::scope().attr("_CalcAUTOCORR2D_version") =
+      RDKit::Descriptors::AUTOCORR2DVersion;
+  docString = "Returns 2D Autocorrelation descriptors vector";
+  python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
               docString.c_str());
 
 #endif

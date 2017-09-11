@@ -2026,6 +2026,60 @@ void testGithub1338() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1472() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1472: MolToSmarts does not include atom map info for molecules built from SMILES"
+      << std::endl;
+  { // worked all along
+    ROMol *p;
+    std::string smi = "[*:1]";
+    p = SmartsToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[*:1]");
+
+    delete p;
+  }
+  { // this was the problem
+    ROMol *p;
+    std::string smi = "[*:1]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[*:1]");
+
+    delete p;
+  }
+  { // isotopes also weren't being written
+    ROMol *p;
+    std::string smi = "[3*]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[3*]");
+
+    delete p;
+  }
+  { // confirm ordering
+    ROMol *p;
+    std::string smi = "[13CH3-:1]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[13#6H3-:1]");
+
+    delete p;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2068,6 +2122,7 @@ int main(int argc, char *argv[]) {
   testGithub893();
   testTransuranic();
   testGithub1338();
+  testGithub1472();
 
   return 0;
 }

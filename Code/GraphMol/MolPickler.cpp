@@ -881,15 +881,6 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, ENDPROPS);
   }
 
-  if (propertyFlags & PicklerOps::QueryAtomData) {
-    streamWrite(ss, BEGINQUERYATOMDATA);
-    for (ROMol::ConstAtomIterator atIt = mol->beginAtoms();
-         atIt != mol->endAtoms(); ++atIt) {
-      _pickleQueryAtomData(ss, *atIt);
-    }
-    streamWrite(ss, ENDPROPS);
-  }
-
   streamWrite(ss, ENDMOL);
 }
 
@@ -1179,21 +1170,6 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
     unsigned int tmpuint;
     streamRead(ss, tmpuint, version);
     atom->setIsotope(tmpuint);
-  }
-}
-
-void MolPickler::_pickleQueryAtomData(std::ostream &ss, const Atom *atom) {
-  if (atom->hasQuery()) {
-    std::stringstream tss(std::ios_base::binary | std::ios_base::out |
-                          std::ios_base::in);
-
-    int32_t propFlags = _pickleAtomData(tss, atom);
-    streamWrite(ss, propFlags);
-    ss.write(tss.str().c_str(), tss.str().size());
-  } else {
-    // not a query so do nothing
-    int32_t propFlags = 0;
-    streamWrite(ss, propFlags);
   }
 }
 
