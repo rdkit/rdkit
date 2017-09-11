@@ -1361,6 +1361,96 @@ void testDativeMatch() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithubIssue1489() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing Github #1389: Substructure matching "
+                           "with chirality failure when query is built from "
+                           "SMARTS"
+                        << std::endl;
+#if 1
+  {
+    std::string smi1 = "CCC[C@@H]1CN(CCC)CCN1";
+    std::string smi2 = "CCC[C@H]1CN(CCC)CCN1";
+    ROMol *mol1 = SmilesToMol(smi1);
+    TEST_ASSERT(mol1);
+    ROMol *mol2 = SmilesToMol(smi2);
+    TEST_ASSERT(mol2);
+
+    bool recursionPossible = true;
+    bool useChirality = true;
+
+    MatchVectType match;
+    // make sure self-matches work
+    TEST_ASSERT(
+        SubstructMatch(*mol1, *mol1, match, recursionPossible, useChirality));
+    TEST_ASSERT(
+        SubstructMatch(*mol2, *mol2, match, recursionPossible, useChirality));
+
+    // check matches using the molecules from smiles:
+    TEST_ASSERT(
+        !SubstructMatch(*mol1, *mol2, match, recursionPossible, useChirality));
+    TEST_ASSERT(SubstructMatch(*mol1, *mol2, match, recursionPossible, false));
+
+    {
+      ROMol *qmol1 = SmartsToMol(smi1);
+
+      qmol1->updatePropertyCache();
+      TEST_ASSERT(qmol1);
+      TEST_ASSERT(
+          SubstructMatch(*mol1, *qmol1, match, recursionPossible, false));
+      TEST_ASSERT(SubstructMatch(*mol1, *qmol1, match, recursionPossible,
+                                 useChirality));
+      TEST_ASSERT(
+          SubstructMatch(*mol2, *qmol1, match, recursionPossible, false));
+      TEST_ASSERT(!SubstructMatch(*mol2, *qmol1, match, recursionPossible,
+                                  useChirality));
+      delete qmol1;
+    }
+    delete mol1;
+    delete mol2;
+  }
+#endif
+  {
+    std::string smi1 = "F([C@@H](Cl)Br)";
+    ROMol *mol1 = SmilesToMol(smi1);
+    TEST_ASSERT(mol1);
+
+    bool recursionPossible = true;
+    bool useChirality = true;
+
+    MatchVectType match;
+    // make sure self-matches work
+    TEST_ASSERT(
+        SubstructMatch(*mol1, *mol1, match, recursionPossible, useChirality));
+    {
+      ROMol *qmol1 = SmartsToMol(smi1);
+
+      qmol1->updatePropertyCache();
+      TEST_ASSERT(qmol1);
+      TEST_ASSERT(
+          SubstructMatch(*mol1, *qmol1, match, recursionPossible, false));
+      TEST_ASSERT(SubstructMatch(*mol1, *qmol1, match, recursionPossible,
+                                 useChirality));
+      delete qmol1;
+    }
+    {
+      std::string smi2 = "F([C@H](Br)Cl)";
+      ROMol *qmol1 = SmartsToMol(smi2);
+
+      qmol1->updatePropertyCache();
+      TEST_ASSERT(qmol1);
+      TEST_ASSERT(
+          SubstructMatch(*mol1, *qmol1, match, recursionPossible, false));
+      TEST_ASSERT(SubstructMatch(*mol1, *qmol1, match, recursionPossible,
+                                 useChirality));
+      delete qmol1;
+    }
+    delete mol1;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 #if 1
   test1();
@@ -1380,8 +1470,8 @@ int main(int argc, char *argv[]) {
   testGitHubIssue688();
   testDativeMatch();
   testCisTransMatch();
-
-#endif
   testCisTransMatch2();
+#endif
+  testGithubIssue1489();
   return 0;
 }

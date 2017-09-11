@@ -7,8 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_SUBSTRUCTMATCH_H__
-#define _RD_SUBSTRUCTMATCH_H__
+#ifndef RD_SUBSTRUCTMATCH_H
+#define RD_SUBSTRUCTMATCH_H
 
 // std bits
 #include <vector>
