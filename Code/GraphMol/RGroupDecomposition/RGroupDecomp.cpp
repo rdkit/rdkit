@@ -222,7 +222,6 @@ struct RGroupData {
       delete m;
     }
     smiles = getSmiles();
-    PRECONDITION(combinedMol->hasProp("idx"), "NO IDX");
     combinedMol->setProp(common_properties::internalRgroupSmiles, smiles);
   }
 
@@ -274,30 +273,6 @@ struct RGroupMatch {
   RGroupMatch(size_t core_index, const R_DECOMP &input_rgroups)
       : core_idx(core_index), rgroups(input_rgroups) {}
 
-  /*
-  bool check() const {
-    for(R_DECOMP::const_iterator rgroup = rgroups.begin();
-        rgroup != rgroups.end();
-        ++rgroup) {
-      std::cerr << "== Checking rgroupmatch:" << rgroup->first << " " <<
-          "idx: " << rgroup->second->combinedMol->getProp<int>("idx") <<
-          " numatoms:" << rgroup->second->combinedMol->getNumAtoms() <<
-          " has smiles " << (int)rgroup->second->combinedMol->hasProp(common_properties::rgroupSmiles) <<
-          " labelled: " << rgroup->second->labelled <<
-          " count:" << rgroup->second->count <<
-          std::endl;
-      if(!rgroup->second->combinedMol->hasProp(common_properties::rgroupSmiles)) {
-        std::cerr << "Check failed: No smiles:" << rgroup->second->count << std::endl;
-        return false;
-      }
-      if(!rgroup->second->labelled) {
-        std::cerr << "Check failed: Unlabelled rgroup: " << rgroup->second->count << std::endl;
-        return false;
-      }
-    }
-    return true;
-  }
-  */
 };
 
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
@@ -650,8 +625,6 @@ struct RGroupDecompData {
       mol.addBond(atomsToAdd[i].first, atomsToAdd[i].second, Bond::SINGLE);
     }
     mol.updatePropertyCache(false);  // this was github #1550
-    mol.setProp<std::string>(common_properties::rgroupSmiles,
-                             MolToSmiles(mol,true));
   }
 
   void relabelRGroup(RGroupData &rgroup, const std::map<int, int> &mappings) {
@@ -659,7 +632,6 @@ struct RGroupDecompData {
 
     RWMol &mol = *rgroup.combinedMol.get();
     if (rgroup.combinedMol->hasProp(done)) {
-      PRECONDITION(mol.hasProp(common_properties::rgroupSmiles), "Must have smiles");
       rgroup.labelled = true;
       return;
     }
@@ -707,8 +679,6 @@ struct RGroupDecompData {
     }
     
     mol.updatePropertyCache(false);  // this was github #1550
-    mol.setProp<std::string>(common_properties::rgroupSmiles,
-                             MolToSmiles(mol, true));
     rgroup.labelled = true;
   }
 
@@ -1089,10 +1059,6 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     for(size_t idx=0;idx<it->second.size();++idx) {
       if(!it->second[idx].get()) {
         it->second[idx] = boost::make_shared<RWMol>();
-        it->second[idx]->setProp(common_properties::rgroupSmiles, "");
-      }
-      else if (!it->second[idx]->hasProp(common_properties::rgroupSmiles)) {
-        it->second[idx]->setProp(common_properties::rgroupSmiles, "");
       }
     }
   }

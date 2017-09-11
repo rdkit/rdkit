@@ -39,7 +39,7 @@
 #include <math.h>
 
 #include <RDGeneral/Exceptions.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <RDBoost/Wrap.h>
@@ -88,8 +88,7 @@ class RGroupDecompositionHelper {
       for (RGroupRow::const_iterator sit = side_chains.begin();
            sit != side_chains.end(); ++sit) {
         if (asSmiles) {
-          PRECONDITION(sit->second->hasProp(common_properties::rgroupSmiles), "rows: no cached rgroup smiles");
-          dict[sit->first] = sit->second->getProp<std::string>(common_properties::rgroupSmiles);
+          dict[sit->first] = MolToSmiles(*sit->second, true);
         } else {
           dict[sit->first] = sit->second;
         }
@@ -111,10 +110,7 @@ class RGroupDecompositionHelper {
       for (RGroupColumn::const_iterator cit = it->second.begin();
            cit != it->second.end(); ++cit) {
         if (asSmiles) {
-          //std::cerr << "--> checking " << (*cit)->getProp<int>("idx") << std::endl;
-          //PRECONDITION((*cit)->hasProp(common_properties::rgroupSmiles),
-          //             "columns: No cached rgroup smiles!")
-          col.append((*cit)->getProp<std::string>(common_properties::rgroupSmiles));
+          col.append(MolToSmiles(**cit,true));
         } else {
           col.append(*cit);
         }
