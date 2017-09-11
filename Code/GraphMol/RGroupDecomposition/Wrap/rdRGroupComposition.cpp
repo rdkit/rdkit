@@ -88,6 +88,7 @@ class RGroupDecompositionHelper {
       for (RGroupRow::const_iterator sit = side_chains.begin();
            sit != side_chains.end(); ++sit) {
         if (asSmiles) {
+          PRECONDITION(sit->second->hasProp(common_properties::rgroupSmiles), "rows: no cached rgroup smiles");
           dict[sit->first] = sit->second->getProp<std::string>(common_properties::rgroupSmiles);
         } else {
           dict[sit->first] = sit->second;
@@ -110,6 +111,9 @@ class RGroupDecompositionHelper {
       for (RGroupColumn::const_iterator cit = it->second.begin();
            cit != it->second.end(); ++cit) {
         if (asSmiles) {
+          //std::cerr << "--> checking " << (*cit)->getProp<int>("idx") << std::endl;
+          //PRECONDITION((*cit)->hasProp(common_properties::rgroupSmiles),
+          //             "columns: No cached rgroup smiles!")
           col.append((*cit)->getProp<std::string>(common_properties::rgroupSmiles));
         } else {
           col.append(*cit);
@@ -131,7 +135,6 @@ python::object RGroupDecomp(python::object cores,
                             ) {
   RGroupDecompositionHelper decomp(cores, options);
   python::list unmatched;
-  unsigned int count = 0;
 
   python::stl_input_iterator<ROMOL_SPTR> iter(mols), end;
   while (iter != end) {
@@ -235,10 +238,20 @@ struct rgroupdecomp_wrapper {
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
              "GetRGroupsAsRows/Columns)")
-        .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows)
+        .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows,
+             python::arg("asSmiles")=false)
         .def("GetRGroupsAsColumns",
-             &RGroupDecompositionHelper::GetRGroupsAsColumn);
-  };
+             &RGroupDecompositionHelper::GetRGroupsAsColumn,
+             python::arg("asSmiles")=false);
+    docString = "...";
+    python::def(
+        "RGroupDecomp", RDKit::RGroupDecomp,
+        (python::arg("cores"), python::arg("mols"),
+         python::arg("asSmiles") = false,
+         python::arg("asRows") = true,
+         python::arg("options") = RGroupDecompositionParameters()),
+        docString.c_str());
+  };  
 };
 }
 

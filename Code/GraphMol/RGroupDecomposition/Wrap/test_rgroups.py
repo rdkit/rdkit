@@ -37,7 +37,7 @@ from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import RGroupDecomposition, RGroupDecompositionParameters
+from rdkit.Chem.rdRGroupDecomposition import RGroupDecomp, RGroupDecomposition, RGroupDecompositionParameters
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
@@ -112,12 +112,23 @@ C1CCO[C@@](S)(P)1
         core = Chem.MolFromSmarts("C1CCOC1")
         rgroups = RGroupDecomposition(core)
         for m in mols:
-            print (m, Chem.MolToSmiles(m))
             rgroups.Add(m)
         rgroups.Process()
         columns = rgroups.GetRGroupsAsColumns()
+        data = {}
         for k,v in columns.items():
-            print("%s:%s"%(k, " ".join([Chem.MolToSmiles(m,True) for m in v])))
+            data[k] = [Chem.MolToSmiles(m,True) for m in v]
+
+        rgroups2,unmatched = RGroupDecomp([core], mols)
+        columns2,unmatched = RGroupDecomp([core], mols, asRows=False)
+        data2 = {}
+        for k,v in columns2.items():
+            data2[k] = [Chem.MolToSmiles(m,True) for m in v]
+
+        self.assertEqual(data, data2)
+        columns3, unmatched = RGroupDecomp([core], mols, asRows=False, asSmiles=True)
+        self.assertEqual(data, columns3)
+        
 
     def test_h_options(self):
         core = Chem.MolFromSmiles("O=c1oc2ccccc2cc1")
