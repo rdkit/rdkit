@@ -52,8 +52,8 @@ BondStretchContrib::BondStretchContrib(ForceField *owner,
                                        const unsigned int idx2,
                                        const MMFFBond *mmffBondParams) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1 + 1, owner->positions().size());
-  URANGE_CHECK(idx2 + 1, owner->positions().size());
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_at1Idx = idx1;

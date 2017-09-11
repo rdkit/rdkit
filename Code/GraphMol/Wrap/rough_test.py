@@ -3996,7 +3996,7 @@ CAS<~>
       if platform.system() == 'Windows':
         details = details.replace('\\', '/')
       self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
-      self.assertTrue("Failed Expression: 4 <= 1" in details)
+      self.assertTrue("Failed Expression: 3 < 1" in details)
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 

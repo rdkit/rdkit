@@ -92,8 +92,8 @@ ForceField::ForceField(const ForceField &other)
 
 double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
   PRECONDITION(df_init, "not initialized");
-  URANGE_CHECK(i + 1, d_numPoints);
-  URANGE_CHECK(j + 1, d_numPoints);
+  URANGE_CHECK(i, d_numPoints);
+  URANGE_CHECK(j, d_numPoints);
   if (j < i) {
     int tmp = j;
     j = i;
@@ -133,8 +133,8 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
 
 double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
   PRECONDITION(df_init, "not initialized");
-  URANGE_CHECK(i + 1, d_numPoints);
-  URANGE_CHECK(j + 1, d_numPoints);
+  URANGE_CHECK(i, d_numPoints);
+  URANGE_CHECK(j, d_numPoints);
   if (j < i) {
     int tmp = j;
     j = i;

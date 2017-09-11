@@ -82,12 +82,12 @@ unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what + 1, getOwningMol().getNumAtoms());
+  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
   d_beginAtomIdx = what;
 };
 
 void Bond::setEndAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what + 1, getOwningMol().getNumAtoms());
+  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
   d_endAtomIdx = what;
 };
 
