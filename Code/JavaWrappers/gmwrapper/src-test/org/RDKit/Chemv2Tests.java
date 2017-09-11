@@ -200,15 +200,17 @@ public class Chemv2Tests extends GraphMolTest {
       atCs.set(0,new DrawColour(1,1,0));
       atCs.set(1,new DrawColour(1,0,1));
       atCs.set(2,new DrawColour(0,1,1));
+      ColourPalette bCs = new ColourPalette();
 
 
       MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
-      drawer.drawMolecule(m,hats,hbs,atCs);
+      drawer.drawMolecule(m,"THE_LEGEND",hats,hbs,atCs,bCs);
       drawer.finishDrawing();
       String svg=drawer.getDrawingText();
       //System.out.print(svg);
       assertTrue(svg.indexOf("<svg:svg")>-1);
       assertTrue(svg.indexOf("</svg:svg>")>-1);
+      assertTrue(svg.indexOf("THE_LEGEND")>-1);
       assertTrue(svg.indexOf("fill:#FFFF00;")>-1);
       assertTrue(svg.indexOf("fill:#FF00FF;")>-1);
       assertTrue(svg.indexOf("fill:#00FFFF;")>-1);
