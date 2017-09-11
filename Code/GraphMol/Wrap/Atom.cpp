@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -28,27 +27,7 @@
 
 namespace python = boost::python;
 namespace RDKit {
-namespace {
-std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
-  std::string res = "";
-  if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
-    res += q->getFullDescription() + "\n";
-    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
-         ci != q->endChildren(); ++ci) {
-      res += qhelper((*ci).get(), depth + 1);
-    }
-  }
-  return res;
-}
-}  // end of local namespace
-std::string describeQuery(const Atom *atom) {
-  std::string res = "";
-  if (atom->hasQuery()) {
-    res = qhelper(atom->getQuery(), 0);
-  }
-  return res;
-}
+
 void expandQuery(QueryAtom *self, const QueryAtom *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
   if (other->hasQuery()) {

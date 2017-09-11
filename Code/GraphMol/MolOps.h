@@ -253,8 +253,14 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
+namespace AdjustDegree {
+const unsigned int NoAdjust = 0;
+const unsigned int TotalDegree = 1;
+const unsigned int HeavyDegree = 2;
+}
+
 struct AdjustQueryParameters {
-  bool adjustDegree; /**< add degree queries */
+  int adjustDegree; /**< add degree queries 1/true == all 2 == heavy*/
   boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
   boost::uint32_t adjustRingCountFlags;
@@ -268,7 +274,7 @@ struct AdjustQueryParameters {
   boost::uint32_t makeAtomsGenericFlags;
 
   AdjustQueryParameters()
-      : adjustDegree(true),
+      : adjustDegree(AdjustDegree::TotalDegree),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
@@ -790,6 +796,28 @@ void cleanupChirality(RWMol &mol);
 */
 void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
                              bool replaceExistingTags = true);
+
+//! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms and
+//! stereo flags to its bonds
+/*!
+
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+  \param replaceExistingTags  if this flag is true, any existing info about
+                              stereochemistry will be replaced
+
+*/
+void assignStereochemistryFrom3D(ROMol &mol, int confId = -1,
+                                 bool replaceExistingTags = true);
+
+//! \brief Uses a conformer to assign directionality to the single bonds
+//!   around double bonds
+/*!
+
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+*/
+void detectBondStereochemistry(ROMol &mol, int confId = -1);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!

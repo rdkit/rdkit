@@ -1959,9 +1959,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         bond->setIsAromatic(true);
         break;
       case 9:
-         bond = new Bond(Bond::DATIVE);
-         break;
-     case 0:
+        bond = new Bond(Bond::DATIVE);
+        break;
+      case 0:
         bond = new Bond(Bond::UNSPECIFIED);
         BOOST_LOG(rdWarningLog)
             << "bond with order 0 found on line " << line
@@ -2549,9 +2549,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         // single bond dir flags:
         ClearSingleBondDirFlags(*res);
 
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry
+        // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
         // here after sanitization because we need the ring information:
-        DetectBondStereoChemistry(*res, &conf);
+        MolOps::detectBondStereochemistry(*res);
       } catch (...) {
         delete res;
         res = NULL;
@@ -2561,7 +2561,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     } else {
       // we still need to do something about double bond stereochemistry
       // (was github issue 337)
-      DetectBondStereoChemistry(*res, &conf);
+      MolOps::detectBondStereochemistry(*res);
     }
 
     if (res->hasProp(common_properties::_NeedsQueryScan)) {
