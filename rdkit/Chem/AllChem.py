@@ -464,21 +464,16 @@ class StereoEnumerationOptions(object):
             Since every additional stereocenter doubles the number of results
             (and execution time) it's important to keep an eye on this.
 
-          - randomizeOrderOfCenters: consider the potential stereocenters in random order
-            instead of their order in the molecule
-
     """
-    __slots__=('tryEmbedding', 'onlyUnassigned', 'maxNumCenters', 'randomizeOrderOfCenters')
+    __slots__=('tryEmbedding', 'onlyUnassigned', 'maxNumCenters')
     def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                maxNumCenters = 10, randomizeOrderOfCenters = False):
+                maxNumCenters = 10):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
         self.maxNumCenters = maxNumCenters
-        self.randomizeOrderOfCenters = randomizeOrderOfCenters
 
-
-def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
-    """ returns a generator that yields all possible stereoisomers for a molecule
+def GenerateStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
+    """ returns a generator that yields possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
@@ -490,7 +485,7 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
     A small example with 3 chiral centers (8 theoretical stereoisomers):
     >>> from rdkit.Chem import AllChem
     >>> m = AllChem.MolFromSmiles('OC1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m))
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
     >>> len(isomers)
     8
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -507,7 +502,7 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
     >>> opts = StereoEnumerationOptions(tryEmbedding=True)
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, options=opts))
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
     >>> len(isomers)
     4
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -519,7 +514,7 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
 
     By default the code only expands unspecified stereocenters:
     >>> m = AllChem.MolFromSmiles('O[C@H]1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m))
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
     >>> len(isomers)
     4
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
@@ -531,7 +526,7 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
 
     but we can change that behavior:
     >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
-    >>> isomers = tuple(AllChem.GenerateAllStereoisomers(m, options=opts))
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
     >>> len(isomers)
     8
 
@@ -539,7 +534,7 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
     large result sets:
     >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
     >>> opts = StereoEnumerationOptions(maxNumCenters=50)
-    >>> isomers = AllChem.GenerateAllStereoisomers(m, options=opts)
+    >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
     >>> for x in range(5):
     ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
@@ -547,32 +542,6 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-
-    It's also possible to randomize the order in which sterecenters are considered:
-    >>> m = MolFromSmiles('Br'+'[CH](Cl)'*3+'F')
-    >>> isomers = AllChem.GenerateAllStereoisomers(m)
-    >>> for isomer in isomers:
-    ...   print(MolToSmiles(isomer,isomericSmiles=True))
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
-    F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
-    F[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)Br
-    F[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
-    >>> opts = StereoEnumerationOptions(randomizeOrderOfCenters=True)
-    >>> isomers = AllChem.GenerateAllStereoisomers(m, options=opts)
-    >>> for isomer in isomers:
-    ...   print(MolToSmiles(isomer,isomericSmiles=True)) # doctest:+SKIP
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-    F[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
-    F[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
-    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)Br
-    F[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
 
     """
     tm = Mol(m)
@@ -586,10 +555,6 @@ def GenerateAllStereoisomers(m,options=StereoEnumerationOptions(),verbose=False)
         return
     if nCenters>options.maxNumCenters:
         raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,options.maxNumCenters))
-    if options.randomizeOrderOfCenters:
-        import random
-        random.seed(nCenters)
-        random.shuffle(possibleCenters)
     bitflag = (1<<nCenters)-1
     while bitflag>=0:
         tm = Mol(m)
