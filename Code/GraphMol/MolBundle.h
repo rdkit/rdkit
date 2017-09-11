@@ -54,7 +54,7 @@ class MolBundle : public RDProps {
   //! adds a new molecule and returns the total number of molecules
   //!  enforces that the new molecule has the same number of atoms and bonds
   //!  as the molecules that are already there.
-  unsigned int addMol(boost::shared_ptr<ROMol> nmol) {
+  virtual size_t addMol(boost::shared_ptr<ROMol> nmol) {
     PRECONDITION(nmol.get(), "bad mol pointer");
     if (d_mols.size()) {
       if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms())
@@ -63,20 +63,20 @@ class MolBundle : public RDProps {
       // REVIEW: should we allow different numbers of bonds?
       if (nmol->getNumBonds() != d_mols[0]->getNumBonds())
         throw ValueErrorException(
-            "all molecules in a bundle must have the same number of atoms");
+            "all molecules in a bundle must have the same number of bonds");
     }
     d_mols.push_back(nmol);
     return (d_mols.size());
   }
   //! returns the number of molecules from the bundle
-  unsigned int size() const { return d_mols.size(); };
+  virtual size_t size() const { return d_mols.size(); };
   //! returns a particular molecule in the bundle
-  const boost::shared_ptr<ROMol> getMol(size_t idx) const {
+  virtual const boost::shared_ptr<ROMol> getMol(size_t idx) const {
     if (idx >= d_mols.size()) throw IndexErrorException(idx);
     return d_mols[idx];
   };
   //! returns a particular molecule from the bundle
-  const boost::shared_ptr<ROMol> operator[](size_t idx) const {
+  virtual const boost::shared_ptr<ROMol> operator[](size_t idx) const {
     return getMol(idx);
   };
 

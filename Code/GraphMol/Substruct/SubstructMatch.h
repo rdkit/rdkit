@@ -147,7 +147,7 @@ bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
 //! \overload
-//! finds all matches in the first element of the bundle that has any matches
+//! finds all matches in the first molecule of the bundle that matches the query
 unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
@@ -156,7 +156,7 @@ unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
                             unsigned int maxMatches = 1000);
 
 //! \overload
-//! finds all matches in the first element of the bundle that has any matches
+//! finds all matches in the first molecule of the bundle that matches
 unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
@@ -164,7 +164,8 @@ unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
                             bool useQueryQueryMatches = false,
                             unsigned int maxMatches = 1000);
 //! \overload
-//! finds all matches in the first element of the bundle that has any matches
+//! finds all matches against the first molecule of the query bundle that
+//! matches
 unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
