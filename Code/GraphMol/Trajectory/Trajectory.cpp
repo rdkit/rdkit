@@ -24,7 +24,7 @@ RDGeom::Point2D Snapshot::getPoint2D(unsigned int pointNum) const {
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() == 2, "d_dimension must be == 2");
   PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
-  URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
+  URANGE_CHECK(pointNum, d_trajectory->numPoints());
   unsigned int i = pointNum * d_trajectory->dimension();
   return RDGeom::Point2D(d_pos[i], d_pos[i + 1]);
 }
@@ -34,7 +34,7 @@ RDGeom::Point3D Snapshot::getPoint3D(unsigned int pointNum) const {
   PRECONDITION(d_trajectory, "d_trajectory must not be NULL");
   PRECONDITION(d_trajectory->dimension() >= 2, "d_dimension must be >= 2");
   PRECONDITION(d_trajectory->numPoints(), "d_numPoints must be > 0");
-  URANGE_CHECK(pointNum, d_trajectory->numPoints() - 1);
+  URANGE_CHECK(pointNum, d_trajectory->numPoints());
   unsigned int i = pointNum * d_trajectory->dimension();
   return (RDGeom::Point3D(d_pos[i], d_pos[i + 1],
           (d_trajectory->dimension() == 3) ? d_pos[i + 2] : 0.0));
@@ -65,19 +65,19 @@ unsigned int Trajectory::addSnapshot(const Snapshot &s) {
 }
 
 const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
-  URANGE_CHECK(snapshotNum + 1, d_snapshotVect->size());
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size());
   return (*d_snapshotVect)[snapshotNum];
 }
 
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
-  URANGE_CHECK(snapshotNum, d_snapshotVect->size());
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size()+1);
   s.d_trajectory = this;
   return (d_snapshotVect->insert(d_snapshotVect->begin() + snapshotNum,
           s) - d_snapshotVect->begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
-  URANGE_CHECK(snapshotNum + 1, d_snapshotVect->size());
+  URANGE_CHECK(snapshotNum, d_snapshotVect->size());
   return (d_snapshotVect->erase(d_snapshotVect->begin() + snapshotNum) - d_snapshotVect->begin());
 }
 

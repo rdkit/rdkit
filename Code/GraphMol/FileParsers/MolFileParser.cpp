@@ -168,7 +168,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     throw FileParseException(errout.str());
   }
 
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   QueryAtom a(*(mol->getAtomWithIdx(idx)));
 
   ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
@@ -785,7 +785,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   QueryAtom *a = 0;
 
   int nQueries;
@@ -972,7 +972,7 @@ void ParseAtomAlias(RWMol *mol, std::string text, const std::string &nextLine,
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::molFileAlias, nextLine);
 };
@@ -991,7 +991,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::molFileValue,
               text.substr(7, text.length() - 7));

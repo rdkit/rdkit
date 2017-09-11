@@ -57,10 +57,10 @@ TorsionAngleContribM6::TorsionAngleContribM6(
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),
                "degenerate points");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
-  URANGE_CHECK(idx3, owner->positions().size() - 1);
-  URANGE_CHECK(idx4, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
+  URANGE_CHECK(idx3, owner->positions().size());
+  URANGE_CHECK(idx4, owner->positions().size());
 };
 
 double TorsionAngleContribM6::getEnergy(double *pos) const {

@@ -162,6 +162,11 @@ void testMMFFBuilder1() {
   TEST_ASSERT(mmffMolProperties);
   TEST_ASSERT(mmffMolProperties->isValid());
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf->getAtomPos(i)));
+  }
+
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
   TEST_ASSERT(field->contribs().size() == 3);
@@ -207,6 +212,11 @@ void testMMFFBuilder1() {
   TEST_ASSERT(mmffMolProperties);
   TEST_ASSERT(mmffMolProperties->isValid());
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf2->getAtomPos(i)));
+  }
+
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
   TEST_ASSERT(field->contribs().size() == 3);
@@ -240,6 +250,11 @@ void testMMFFBuilder1() {
   TEST_ASSERT(mmffMolProperties->isValid());
 
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf3->getAtomPos(i)));
+  }
+
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
   TEST_ASSERT(field->contribs().size() == 1);
@@ -259,6 +274,9 @@ void testMMFFBuilder1() {
 
   mol2 = MolOps::addHs(*mol);
   TEST_ASSERT(mol2->getNumAtoms() == 6);
+  Conformer *conf4 = new Conformer(mol2->getNumAtoms());
+  cid = static_cast<int>(mol2->addConformer(conf4, true));
+
   delete field;
   delete mmffMolProperties;
 
@@ -267,6 +285,11 @@ void testMMFFBuilder1() {
   TEST_ASSERT(mmffMolProperties->isValid());
 
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol2->getNumAtoms(); ++i) {
+    field->positions().push_back(&(conf4->getAtomPos(i)));
+  }
+
   MMFF::Tools::addBonds(*mol2, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 5);
 
@@ -535,9 +558,14 @@ void testSFIssue1653802() {
   MMFF::MMFFMolProperties *mmffMolProperties =
       new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
-
+  
   boost::shared_array<boost::uint8_t> nbrMat;
   field = new ForceFields::ForceField();
+  // add the atomic positions:
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    field->positions().push_back(&((mol->getConformer().getAtomPos(i))));
+  }
+  
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 8);
 

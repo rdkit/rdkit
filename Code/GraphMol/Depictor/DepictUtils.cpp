@@ -366,7 +366,7 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
                           RDKit::INT_VECT &aids, RDKit::INT_VECT &bids) {
   CHECK_INVARIANT(mol, "");
   unsigned int na = mol->getNumAtoms();
-  URANGE_CHECK(aid, na - 1);
+  URANGE_CHECK(aid, na);
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));

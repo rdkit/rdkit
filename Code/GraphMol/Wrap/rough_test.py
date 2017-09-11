@@ -3996,7 +3996,7 @@ CAS<~>
       if platform.system() == 'Windows':
         details = details.replace('\\', '/')
       self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
-      self.assertTrue("Failed Expression: 3 <= 0" in details)
+      self.assertTrue("Failed Expression: 3 < 1" in details)
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 
@@ -4360,6 +4360,15 @@ M  END
                        "CN[C@@H](C)C(=O)N[C@H](C(=O)N1C[C@@H](Oc2ccccc2)C[C@H]1C(=O)N[C@@H]1CCCc2ccccc21)C1CCCCC1"),
                                       True))
 
+  def testGithub1461(self):
+    # this is simple, it should throw a precondition and not seg fault
+    m = Chem.RWMol()
+    try:
+      m.AddBond(0,1,Chem.BondType.SINGLE)
+      self.assertFalse(True) # shouldn't get here
+    except RuntimeError:
+      pass
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

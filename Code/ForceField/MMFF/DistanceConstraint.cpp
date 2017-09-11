@@ -21,8 +21,8 @@ DistanceConstraintContrib::DistanceConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, double minLen,
     double maxLen, double forceConst) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
   PRECONDITION(maxLen >= minLen, "bad bounds");
 
   dp_forceField = owner;
@@ -38,8 +38,8 @@ DistanceConstraintContrib::DistanceConstraintContrib(
     double minLen, double maxLen, double forceConst) {
   PRECONDITION(owner, "bad owner");
   const RDGeom::PointPtrVect &pos = owner->positions();
-  URANGE_CHECK(idx1, pos.size() - 1);
-  URANGE_CHECK(idx2, pos.size() - 1);
+  URANGE_CHECK(idx1, pos.size());
+  URANGE_CHECK(idx2, pos.size());
   PRECONDITION(maxLen >= minLen, "bad bounds");
 
   double dist = 0.0;
