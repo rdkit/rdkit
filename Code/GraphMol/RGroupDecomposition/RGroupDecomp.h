@@ -78,35 +78,6 @@ struct RGroupDecompositionParameters {
         removeHydrogensPostMatch(removeHydrogensPostMatch),
         indexOffset(-1) {}
   bool prepareCore(RWMol &, const RWMol *alignCore);
-  void SetRGroupLabels(unsigned int rgroupLabels) { labels = rgroupLabels; }
-  void SetRGroupLabelling(unsigned int labelling) {
-    rgroupLabelling = labelling;
-  }
-  void SetRGroupMatching(unsigned int matching) { matchingStrategy = matching; }
-  void SetRGroupCoreAlignment(unsigned int coreAlignment) {
-    alignment = coreAlignment;
-  }
-  void SetChunkSize(unsigned int size) { chunkSize = size; }
-  void SetOnlyMatchAtRGroups(bool matchAtRGroups) {
-    onlyMatchAtRGroups = matchAtRGroups;
-  }
-  void SetRemoveRGroupsThatAreAllHydrogen(bool remove) {
-    removeAllHydrogenRGroups = remove;
-  }
-  void SetRemoveHydrogensPostMatch(bool remove) {
-    removeHydrogensPostMatch = remove;
-  }
-
-  unsigned int GetRGroupLabels() const { return labels; }
-  unsigned int GetRGroupLabelling() const { return matchingStrategy; }
-  unsigned int GetRGroupMatching() const { return rgroupLabelling; }
-  unsigned int GetRGroupCoreAlignment() const { return alignment; }
-  unsigned int GetChunkSize() const { return chunkSize; }
-  bool GetOnlyMatchAtRGroups() const { return onlyMatchAtRGroups; }
-  bool GetRemoveRGroupsThatAreAllHydrogen() const {
-    return removeAllHydrogenRGroups;
-  }
-  bool GetRemoveHydrogensPostMatch() const { return removeHydrogensPostMatch; }
 
  private:
   int indexOffset;

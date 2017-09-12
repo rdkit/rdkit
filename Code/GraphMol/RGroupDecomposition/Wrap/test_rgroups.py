@@ -144,7 +144,7 @@ C1CCO[C@@](S)(P)1
         columns = rgd.GetRGroupsAsColumns()
         self.assertEqual(columns['R2'][0].GetNumAtoms(),12)
 
-        params.SetRemoveHydrogensPostMatch(True)
+        params.removeHydrogensPostMatch = True
         rgd = RGroupDecomposition(core,params)
         for smi in smiles:
             m = Chem.MolFromSmiles(smi)
