@@ -1078,9 +1078,9 @@ std::vector<unsigned int> Decomp(RGroupDecomposition &decomp,
   return unmatched;
 }
 }
-unsigned int RGroupDecompose(RGroupRows &rows,
-                             const std::vector<ROMOL_SPTR> &cores,
+unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
+                             RGroupRows &rows,
                              std::vector<unsigned int> *unmatchedIndices,
                              const RGroupDecompositionParameters &options) {
   RGroupDecomposition decomp(cores, options);
@@ -1091,9 +1091,9 @@ unsigned int RGroupDecompose(RGroupRows &rows,
   return mols.size() - unmatched.size();
 }
 
-unsigned int RGroupDecompose(RGroupColumns &columns,
-                             const std::vector<ROMOL_SPTR> &cores,
+unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
+                             RGroupColumns &columns,
                              std::vector<unsigned int> *unmatchedIndices,
                              const RGroupDecompositionParameters &options)
 {

@@ -37,7 +37,7 @@ from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import RGroupDecomp, RGroupDecomposition, RGroupDecompositionParameters
+from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecomposition, RGroupDecompositionParameters
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
@@ -119,14 +119,14 @@ C1CCO[C@@](S)(P)1
         for k,v in columns.items():
             data[k] = [Chem.MolToSmiles(m,True) for m in v]
 
-        rgroups2,unmatched = RGroupDecomp([core], mols)
-        columns2,unmatched = RGroupDecomp([core], mols, asRows=False)
+        rgroups2,unmatched = RGroupDecompose([core], mols)
+        columns2,unmatched = RGroupDecompose([core], mols, asRows=False)
         data2 = {}
         for k,v in columns2.items():
             data2[k] = [Chem.MolToSmiles(m,True) for m in v]
 
         self.assertEqual(data, data2)
-        columns3, unmatched = RGroupDecomp([core], mols, asRows=False, asSmiles=True)
+        columns3, unmatched = RGroupDecompose([core], mols, asRows=False, asSmiles=True)
         self.assertEqual(data, columns3)
         
 
@@ -153,6 +153,18 @@ C1CCO[C@@](S)(P)1
         columns = rgd.GetRGroupsAsColumns()
         self.assertEqual(columns['R2'][0].GetNumAtoms(),7)
 
+    def test_unmatched(self):
+        cores = [Chem.MolFromSmiles("N")]
+        mols = [Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("N"),
+                Chem.MolFromSmiles("CC")]
+
+        res, unmatched = RGroupDecompose(cores, mols)
+        self.assertEquals(len(res), 1)
+        self.assertEquals(unmatched, [0,1,2,4])
+        
 
 if __name__ == '__main__':
   unittest.main()

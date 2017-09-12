@@ -144,15 +144,15 @@ class RGroupDecomposition {
   RGroupColumns getRGroupsAsColumns() const;
 };
 
-unsigned int RGroupDecompose(RGroupRows &rows,
-                             const std::vector<ROMOL_SPTR> &cores,
+unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
+                             RGroupRows &rows,
                              std::vector<unsigned int> *unmatched = 0,
                              const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
 
-unsigned int RGroupDecompose(RGroupColumns &rows,
-                             const std::vector<ROMOL_SPTR> &cores,
+unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
+                             RGroupColumns &columns,
                              std::vector<unsigned int> *unmatched = 0,
                              const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
                         
