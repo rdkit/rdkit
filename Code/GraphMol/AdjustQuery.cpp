@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015 Greg Landrum
+//  Copyright (c) 2015-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -141,11 +141,8 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       } else {
         qa = static_cast<QueryAtom *>(at);
       }
-      ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
-      tmp->setVal(qa->getTotalDegree() - qa->getTotalNumHs(true));
-      tmp->setDataFunc(queryAtomHeavyAtomDegree);
-      tmp->setDescription("queryAtomHeavyDegree");
-      qa->expandQuery(tmp);
+      qa->expandQuery(makeAtomHeavyAtomDegreeQuery(qa->getTotalDegree() -
+                                                   qa->getTotalNumHs(true)));
     }  // end of adjust heavy degree
     if (params.adjustRingCount &&
         !((params.adjustRingCountFlags & ADJUST_IGNORECHAINS) && !nRings) &&
