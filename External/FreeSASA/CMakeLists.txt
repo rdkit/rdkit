@@ -11,15 +11,14 @@ endif()
 if(needDownload)
   # don't actually use the md5 here
   if(MSVC)
-    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/windows.tar.gz"
-          "${CMAKE_CURRENT_SOURCE_DIR}/windows.tar.gz"
+    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
+          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
           "")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-      ${CMAKE_CURRENT_SOURCE_DIR}/windows.tar.gz
+      ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/freesasa-msvc-fixes ${CMAKE_CURRENT_SOURCE_DIR}/freesasa-master)
-    set(FREESASA_SRC_DIR "freesasa-master")
-    set(FREESASA_GETLINE "getline.c")
+      set(FREESASA_SRC_DIR "freesasa-master")
+      set(FREESASA_GETLINE "getline.c")
   else()
     downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
@@ -43,6 +42,7 @@ macro(use_c99)
 endmacro(use_c99)
 
 use_c99()
+file(COPY freesasa.c DESTINATION ${FREESASA_SRC_DIR}/src/)
 
 set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/classifier.c
@@ -52,7 +52,9 @@ set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/coord.c
     ${FREESASA_SRC_DIR}/src/freesasa.c
     ${FREESASA_SRC_DIR}/src/lexer.c
+    ${FREESASA_SRC_DIR}/src/log.c
     ${FREESASA_SRC_DIR}/src/nb.c
+    ${FREESASA_SRC_DIR}/src/node.c
     ${FREESASA_SRC_DIR}/src/parser.c
     ${FREESASA_SRC_DIR}/src/pdb.c
     ${FREESASA_SRC_DIR}/src/rsa.c

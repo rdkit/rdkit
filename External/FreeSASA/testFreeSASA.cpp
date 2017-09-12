@@ -392,8 +392,8 @@ void testPDB() {
   sasa = FreeSASA::calcSASA(*mnoh, radii, opts);
   TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
-  const QueryAtom *apolar = FreeSASA::makeAPolarAtomQuery();
-  const QueryAtom *polar = FreeSASA::makePolarAtomQuery();
+  const QueryAtom *apolar = FreeSASA::makeFreeSasaAPolarAtomQuery();
+  const QueryAtom *polar = FreeSASA::makeFreeSasaPolarAtomQuery();
 
   double apolard = FreeSASA::calcSASA(*mnoh, radii, apolar, opts);
   double polard = FreeSASA::calcSASA(*mnoh, radii, polar, opts);

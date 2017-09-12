@@ -79,7 +79,7 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
   bool success = true;
   for (ROMol::AtomIterator at = mol.beginAtoms(); at != mol.endAtoms(); ++at) {
     Atom *atom = *at;
-    int cls = -1;
+    freesasa_atom_class cls = FREESASA_ATOM_UNKNOWN;
     std::string classification = "Unclassified";
     double radius = 0.0;
 
@@ -90,30 +90,26 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
 
       if (info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
         res_name = ((AtomPDBResidueInfo *)info)->getResidueName().c_str();
-        radius = classifier->radius(res_name, atom_name, classifier);
+        radius = freesasa_classifier_radius(classifier, res_name, atom_name);
 
         if (radius == 0.0) {
           BOOST_LOG(rdWarningLog) << "Atom " << atom->getIdx()
                                   << " has zero radius" << std::endl;
         }
 
-        cls = classifier->sasa_class(res_name, atom_name, classifier);
-        if (cls == FREESASA_FAIL) {
-          std::string err = boost::str(
-              boost::format("Atom %d% failed classification") % atom->getIdx());
-          throw ValueErrorException(err);
-        } else if (cls == FREESASA_WARN) {
+        cls = freesasa_classifier_class(classifier, res_name, atom_name);
+        if (cls == FREESASA_ATOM_UNKNOWN) {
           BOOST_LOG(rdWarningLog) << "Atom " << atom->getIdx()
                                   << " could not be classified" << std::endl;
           success = false;
         } else {
-          classification = classifier->class2str(cls, classifier);
+          classification = freesasa_classifier_class2str(cls);
         }
       }
     }
 
     radii.push_back(radius);
-    atom->setProp(common_properties::Atom::SASAClass, cls);
+    atom->setProp<int>(common_properties::Atom::SASAClass, (int)cls);
     atom->setProp(common_properties::Atom::SASAClassName, classification);
   }
 
