@@ -3,6 +3,7 @@ Originally written by Greg Landrum and updated by Malitha Humayun Kabir as a par
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Date: 28th July 2017
+Date of resubmission: 12th September 2017
 Email# malitha12345@gmail.com
 """
 
