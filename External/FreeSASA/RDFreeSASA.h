@@ -59,25 +59,32 @@ struct SASAOpts {
   SASAOpts() : d_alg(LeeRichards), d_classifier(Protor) {}
 };
 
-// Classify atoms using standard freesaa classifiers
-//  Classes end up in atom.getProp(common_properties::Atom::FreeSASAClass)
-//  returns false if no atoms could be classified
+//! Classify atoms using standard freesaa classifiers
+/*!
+    FreeSASA identified Classes end up in atom.getProp(common_properties::Atom::FreeSASAClass)
+       returns false if no atoms could be classified
+*/       
 bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
                    const SASAOpts &opts = SASAOpts());
 
-// calculate all atom contributions
-//  data is stored in atom.getProp(common_properites::Atom::SASA);
+//! calculate all atom contributions
+/*!
+  SASA data is stored in atom.getProp(common_properites::Atom::SASA);
+*/
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 const SASAOpts &opts = SASAOpts());
 
-// calculate all atom contributions
-//  data is stored in atom.getProp(common_properites::Atom::SASA);
+//! calculate all atom contributions
+/*!
+  SASA data is stored in atom.getProp(common_properites::Atom::SASA);
+*/
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 int confIdx, const SASAOpts &opts = SASAOpts());
 
-// calculate all atom contributions from the specified query
-//  data is stored in atom.getProp(common_properites::Atom::SASA);
-
+//! calculate all atom contributions from the specified query
+/*!
+  SASA  data is stored in atom.getProp(common_properites::Atom::SASA)
+ */
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 const RDKit::QueryAtom *query,
                 const SASAOpts &opts = SASAOpts());
@@ -87,8 +94,18 @@ double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 int confIdx,
                 const SASAOpts &opts = SASAOpts());
 
-const RDKit::QueryAtom * makeAPolarAtomQuery();
-const RDKit::QueryAtom * makePolarAtomQuery();
+//! Make a query atom returning the FreeSASA supplied apolar atom classification
+/*!
+    These are atoms that have the "SASAClassName" property set to "Apolar"
+    after calling classifyAtoms.
+*/
+const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery();
+//! Make a query atom returning the FreeSASA supplied polar atom classification
+/*!
+    These are atoms that have the "SASAClassName" property set to "Polar"
+    after calling classifyAtoms.
+*/
+const RDKit::QueryAtom * makeFreeSasaPolarAtomQuery();
 
 }
 

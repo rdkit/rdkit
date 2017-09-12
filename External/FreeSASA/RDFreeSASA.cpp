@@ -192,13 +192,13 @@ double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
   return total;
 }
 
-const RDKit::QueryAtom * makeAPolarAtomQuery() {
+const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery() {
   QueryAtom *qa = new QueryAtom;
   qa->setQuery(makePropQuery<Atom, std::string>("SASAClassName", "Apolar"));
   return qa;
 }
 
-const RDKit::QueryAtom * makePolarAtomQuery() {
+const RDKit::QueryAtom * makeFreeSasaPolarAtomQuery() {
   QueryAtom *qa = new QueryAtom;
   qa->setQuery(makePropQuery<Atom, std::string>("SASAClassName", "Polar"));
   return qa;
