@@ -167,15 +167,15 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
 
   MolOps::AdjustQueryParameters adjustParams;
   adjustParams.makeDummiesQueries = true;
-  adjustParams.adjustDegree = onlyMatchAtRGroups
-                                  ? MolOps::AdjustDegree::HeavyDegree
-                                  : MolOps::AdjustDegree::NoAdjust;
+  adjustParams.adjustDegree = false;
+  adjustParams.adjustHeavyDegree = onlyMatchAtRGroups;
+  // if (onlyMatchAtRGroups)
+  //   adjustParams.adjustDegreeFlags |= MolOps::ADJUST_IGNOREHS;
   adjustQueryProperties(core, &adjustParams);
 
   for (std::map<int, int>::iterator it = atomToLabel.begin();
        it != atomToLabel.end(); ++it)
     core.getAtomWithIdx(it->first)->setProp(RLABEL, it->second);
-
   return true;
 }
 
@@ -920,8 +920,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
   if (potentialMatches.size() == 0) {
-    BOOST_LOG(rdWarningLog) << "No attachment points in side chains"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "No attachment points in side chains" << std::endl;
 
     return -1;
   }

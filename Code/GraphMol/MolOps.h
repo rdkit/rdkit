@@ -253,14 +253,8 @@ typedef enum {
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
 
-namespace AdjustDegree {
-const unsigned int NoAdjust = 0;
-const unsigned int TotalDegree = 1;
-const unsigned int HeavyDegree = 2;
-}
-
 struct AdjustQueryParameters {
-  int adjustDegree; /**< add degree queries 1/true == all 2 == heavy*/
+  bool adjustDegree; /**< add degree queries */
   boost::uint32_t adjustDegreeFlags;
   bool adjustRingCount; /**< add ring-count queries */
   boost::uint32_t adjustRingCountFlags;
@@ -272,9 +266,12 @@ struct AdjustQueryParameters {
   boost::uint32_t makeBondsGenericFlags;
   bool makeAtomsGeneric; /**< convert atoms to generic queries (any atoms) */
   boost::uint32_t makeAtomsGenericFlags;
+  bool adjustHeavyDegree; /**< adjust the heavy-atom degree instead of overall
+                             degree */
+  boost::uint32_t adjustHeavyDegreeFlags;
 
   AdjustQueryParameters()
-      : adjustDegree(AdjustDegree::TotalDegree),
+      : adjustDegree(true),
         adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
         adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
@@ -283,7 +280,9 @@ struct AdjustQueryParameters {
         makeBondsGeneric(false),
         makeBondsGenericFlags(ADJUST_IGNORENONE),
         makeAtomsGeneric(false),
-        makeAtomsGenericFlags(ADJUST_IGNORENONE) {}
+        makeAtomsGenericFlags(ADJUST_IGNORENONE),
+        adjustHeavyDegree(false),
+        adjustHeavyDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!

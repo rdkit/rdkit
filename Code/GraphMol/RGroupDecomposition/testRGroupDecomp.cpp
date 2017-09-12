@@ -128,6 +128,7 @@ void testRGroupOnlyMatching() {
     ROMol *mol = SmilesToMol(matchRGroupOnlyData[i]);
     int res = decomp.add(*mol);
     if (i < 4) {
+      std::cerr << i << " " << res << std::endl;
       TEST_ASSERT(res == i);
     } else {
       TEST_ASSERT(res == -1);
