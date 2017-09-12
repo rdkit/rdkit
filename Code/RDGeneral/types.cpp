@@ -97,7 +97,7 @@ const std::string origNoImplicit = "origNoImplicit";
 const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
-
+const std::string internalRgroupSmiles = "internalRgroupSmiles";
 }  // end common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

@@ -269,10 +269,10 @@ const char *coreSmi[] = {
     "C1CCOC(Cl)CC1", "C1CC(Cl)OCCC1", "C1CCOC(I)CC1", "C1CC(I)OCCC1"};
 
 const char *coreSmiRes[] = {
-    "Core:C1CCC([*:1])N([*:2])CC1 R1:Cl[*:1].[H][*:1] R2:[H][*:2]",
-    "Core:C1CCC([*:1])N([*:2])CC1 R1:Cl[*:1].[H][*:1] R2:[H][*:2]",
-    "Core:C1CCC([*:1])N([*:2])CC1 R1:I[*:1].[H][*:1] R2:[H][*:2]",
-    "Core:C1CCC([*:1])N([*:2])CC1 R1:I[*:1].[H][*:1] R2:[H][*:2]",
+    "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+    "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+    "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
+    "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
     "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
     "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
     "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
