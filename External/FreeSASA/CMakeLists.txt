@@ -42,8 +42,8 @@ macro(use_c99)
 endmacro(use_c99)
 
 use_c99()
-message("Copying freesasa.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
-file(COPY freesasa.c DESTINATION ${FREESASA_SRC_DIR}/src/)
+message("Copying freesasa2.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
+file(COPY freesasa2.c DESTINATION ${FREESASA_SRC_DIR}/src/)
 
 set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/classifier.c
