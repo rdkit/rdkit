@@ -42,6 +42,7 @@ macro(use_c99)
 endmacro(use_c99)
 
 use_c99()
+message("Copying freesasa.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
 file(COPY freesasa.c DESTINATION ${FREESASA_SRC_DIR}/src/)
 
 set (freesasa_clib_srcs
@@ -50,7 +51,7 @@ set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/classifier_oons.c
     ${FREESASA_SRC_DIR}/src/classifier_protor.c
     ${FREESASA_SRC_DIR}/src/coord.c
-    ${FREESASA_SRC_DIR}/src/freesasa.c
+    ${FREESASA_SRC_DIR}/src/freesasa2.c
     ${FREESASA_SRC_DIR}/src/lexer.c
     ${FREESASA_SRC_DIR}/src/log.c
     ${FREESASA_SRC_DIR}/src/nb.c
@@ -67,6 +68,8 @@ set (freesasa_clib_srcs
     )
 
 add_definitions(-DUSE_THREADS=0)
+add_definitions(-DUSE_JSON=0)
+add_definitions(-DUSE_XML=0)
 rdkit_library(freesasa_clib ${freesasa_clib_srcs})
 include_directories("${FREESASA_SRC_DIR}/src")
 
