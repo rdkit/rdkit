@@ -20,7 +20,7 @@ if(needDownload)
       set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-master")
       set(FREESASA_GETLINE "getline.c")
   else()
-    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
+    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/windows.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
           "")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
