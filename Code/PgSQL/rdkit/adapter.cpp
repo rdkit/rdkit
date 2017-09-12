@@ -646,6 +646,7 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
   p.adjustDegree = pt.get("adjustDegree", p.adjustDegree);
+  p.adjustHeavyDegree = pt.get("adjustHeavyDegree", p.adjustHeavyDegree);
   p.adjustRingCount = pt.get("adjustRingCount", p.adjustRingCount);
   p.makeDummiesQueries = pt.get("makeDummiesQueries", p.makeDummiesQueries);
   p.aromatizeIfPossible = pt.get("aromatizeIfPossible", p.aromatizeIfPossible);
@@ -654,6 +655,9 @@ void parseAdjustQueryParameters(MolOps::AdjustQueryParameters &p,
   std::string which;
   which = boost::to_upper_copy<std::string>(pt.get("adjustDegreeFlags", ""));
   if (which != "") p.adjustDegreeFlags = parseWhichString(which);
+  which =
+      boost::to_upper_copy<std::string>(pt.get("adjustHeavyDegreeFlags", ""));
+  if (which != "") p.adjustHeavyDegreeFlags = parseWhichString(which);
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingCountFlags", ""));
   if (which != "") p.adjustRingCountFlags = parseWhichString(which);
   which =

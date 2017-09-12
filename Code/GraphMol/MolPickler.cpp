@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -70,7 +69,7 @@ void propmutex_create() {
   boost::mutex::scoped_lock test_lock(mutex);
 }
 
-boost::mutex& GetPropMutex() {
+boost::mutex &GetPropMutex() {
 #ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
   static boost::once_flag flag;
 #else
@@ -91,12 +90,11 @@ unsigned int MolPickler::getDefaultPickleProperties() {
 }
 
 void MolPickler::setDefaultPickleProperties(unsigned int props) {
-#ifdef RDK_THREADSAFE_SSS  
+#ifdef RDK_THREADSAFE_SSS
   boost::mutex::scoped_lock lock(GetPropMutex());
 #endif
   defaultProperties = props;
 }
-
 
 namespace {
 using namespace Queries;
@@ -246,6 +244,8 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     query->setDataFunc(queryAtomExplicitDegree);
   } else if (descr == "AtomTotalDegree") {
     query->setDataFunc(queryAtomTotalDegree);
+  } else if (descr == "AtomHeavyAtomDegree") {
+    query->setDataFunc(queryAtomHeavyAtomDegree);
   } else if (descr == "AtomHCount") {
     query->setDataFunc(queryAtomHCount);
   } else if (descr == "AtomImplicitHCount") {
@@ -753,11 +753,11 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
-                            << majorVersion << "." << minorVersion << ")"
-                            << "that is higher than our version ("
-                            << versionMajor << "." << versionMinor
-                            << ").\nThis probably won't work." << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Depickling from a version number (" << majorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
   }
   majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
   if (majorVersion == 1) {

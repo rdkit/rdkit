@@ -5785,6 +5785,38 @@ void testAdjustQueryProperties() {
     delete qm;
   }
 
+  {  // heavy atom degree
+    std::string smiles = "C1CC(*)C1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms() == 6);
+    MolOps::AdjustQueryParameters params;
+    params.adjustDegree = false;
+    params.adjustHeavyDegree = true;
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm, &params);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms() == 6);
+    {
+      smiles = "C1CC(C)C1(C)";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    {
+      smiles = "C1CC([2H])C1(C)";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(!SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    delete qm;
+    delete aqm;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -6618,11 +6650,15 @@ void testGithubIssue908() {
                        << std::endl;
   {
     std::string mb =
-        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n "
+        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 "
+        "V2000\n "
         "  -0.0000   -1.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  "
-        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0 "
-        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  "
-        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0 "
+        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  "
+        "0 "
+        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0 "
+        " "
+        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  "
+        "0 "
         " 0  0\n  2  1  1  1\n  2  3  1  0\n  2  4  1  0\nM  END\n";
     RWMol *m = MolBlockToMol(mb);
     TEST_ASSERT(m);

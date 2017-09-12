@@ -269,6 +269,14 @@ T *makeAtomTotalDegreeQuery(int what, const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what);
 
+//! returns a Query for matching heavy atom degree
+template <class T>
+T *makeAtomHeavyAtomDegreeQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomHeavyAtomDegree, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHeavyAtomDegreeQuery(int what);
+
 //! returns a Query for matching hydrogen count
 template <class T>
 T *makeAtomHCountQuery(int what, const std::string &descr) {
