@@ -234,6 +234,13 @@ ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what) {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomHeavyAtomDegreeQuery(int what) {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomHeavyAtomDegree);
+  res->setDescription("AtomHeavyAtomDegree");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what) {
   ATOM_EQUALS_QUERY *res =
       makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomHCount);
@@ -332,12 +339,14 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery() {
 
 ATOM_OR_QUERY *makeQAtomQuery() {
   ATOM_OR_QUERY *res = new ATOM_OR_QUERY;
-  res->setDescription("AtomOr"); // FIX: we really should label this more descriptively so that it can be output more cleanly
+  res->setDescription("AtomOr");  // FIX: we really should label this more
+                                  // descriptively so that it can be output more
+                                  // cleanly
   res->setNegation(true);
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
   return res;
 }
 ATOM_EQUALS_QUERY *makeQHAtomQuery() {
@@ -359,85 +368,86 @@ ATOM_OR_QUERY *makeXAtomQuery() {
   ATOM_OR_QUERY *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(9)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(17)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(35)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(53)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(85)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(9)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(17)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(35)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(53)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(85)));
   return res;
 }
 ATOM_OR_QUERY *makeXHAtomQuery() {
   ATOM_OR_QUERY *res = makeXAtomQuery();
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
   return res;
 }
 
 ATOM_OR_QUERY *makeMAtomQuery() {
-  // using the definition from Marvin Sketch, which produces the following SMARTS:
+  // using the definition from Marvin Sketch, which produces the following
+  // SMARTS:
   // !#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(1)));
   return res;
 }
 ATOM_OR_QUERY *makeMHAtomQuery() {
-  // using the definition from Marvin Sketch, which produces the following SMARTS:
+  // using the definition from Marvin Sketch, which produces the following
+  // SMARTS:
   // !#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->setNegation(true);
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(2)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(2)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(5)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(5)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(6)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(7)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(7)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(8)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(8)));
   res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(9)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(10)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(14)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(15)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(16)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(17)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(18)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(33)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(34)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(35)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(36)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(52)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(53)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(54)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(85)));
-  res->addChild(
-    Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(86)));
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(9)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(10)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(14)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(15)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(16)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(17)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(18)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(33)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(34)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(35)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(36)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(52)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(53)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(54)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(85)));
+  res->addChild(Queries::Query<int, Atom const *, true>::CHILD_TYPE(
+      makeAtomNumQuery(86)));
   return res;
 }
-
 
 ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what) {
   ATOM_EQUALS_QUERY *res;
@@ -448,11 +458,10 @@ ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what) {
 
 ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery() {
   ATOM_EQUALS_QUERY *res =
-    makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasRingBond);
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasRingBond);
   res->setDescription("AtomHasRingBond");
   return res;
 }
-
 
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
