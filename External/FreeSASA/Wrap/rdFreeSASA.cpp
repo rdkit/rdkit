@@ -63,16 +63,24 @@ python::object classifyAtomsHelper(RDKit::ROMol &mol,
 double calcSASAHelper(const RDKit::ROMol &mol,
                       python::object radii,
                       int confIdx,
-                      //                      const RDKit::QueryAtom *query,
+                      const RDKit::Atom *query,
                       const FreeSASA::SASAOpts &opts) {
+  const RDKit::QueryAtom* atom = NULL;
+  if (query) {
+    atom = dynamic_cast<const RDKit::QueryAtom*>(query);
+    if (!atom) {
+      throw ValueErrorException("Query is not a query atom!");
+    }
+  }
+  
   std::vector<double> vradii;
-  const RDKit::QueryAtom *query = 0;
+
   unsigned int sz = python::extract<unsigned int>(radii.attr("__len__")());
   for (unsigned int i = 0; i < sz; ++i) {
     vradii.push_back(python::extract<double>(radii[i])());
   }
 
-  return FreeSASA::calcSASA(mol, vradii, confIdx, query, opts);
+  return FreeSASA::calcSASA(mol, vradii, confIdx, atom, opts);
 }
 }
 
@@ -112,9 +120,14 @@ struct freesasa_wrapper {
                 (python::arg("mol"),
                  python::arg("radii"),
                  python::arg("confIdx")=-1,
-                 //python::arg("query")=NULL,
+                 python::arg("query")=python::object(),
                  python::arg("opts")=FreeSASA::SASAOpts()));
-    
+
+
+    python::def("MakeFreeSasaAPolarAtomQuery", FreeSASA::makeFreeSasaAPolarAtomQuery,
+                python::return_value_policy<python::manage_new_object>());
+    python::def("MakeFreeSasaPolarAtomQuery", FreeSASA::makeFreeSasaPolarAtomQuery,
+                python::return_value_policy<python::manage_new_object>());
   }
 };
 }
