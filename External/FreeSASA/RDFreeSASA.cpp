@@ -116,13 +116,11 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
   return success;
 }
 
-double calcSASA(const ROMol &mol, const std::vector<double> &radii,
-                const SASAOpts &opts) {
-  return calcSASA(mol, radii, -1, opts);
-}
-
-double calcSASA(const ROMol &mol, const std::vector<double> &radii, int confIdx,
-                const SASAOpts &opts) {
+namespace {
+double internalCalcSASA(const ROMol &mol,
+                        const std::vector<double> &radii,
+                        int confIdx,
+                        const SASAOpts &opts) {
   PRECONDITION(mol.getNumConformers(), "No conformers in molecule");
   PRECONDITION(confIdx < rdcast<int>(mol.getNumConformers()),
                "Conformer index out of range");
@@ -167,25 +165,23 @@ double calcSASA(const ROMol &mol, const std::vector<double> &radii, int confIdx,
   freesasa_result_free(res);
   return sasa;
 }
-
-double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                const RDKit::QueryAtom *query,
-                const SASAOpts &opts) {
-  return calcSASA(mol, radii, query, -1, opts);
 }
 
-double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                const RDKit::QueryAtom *query,
+double calcSASA(const RDKit::ROMol &mol,
+                const std::vector<double> &radii,
                 int confIdx,
-                const SASAOpts &opts) {
-  calcSASA(mol, radii, confIdx, opts);
-  double total = 0.0f;
-  for (ROMol::ConstQueryAtomIterator at = mol.beginQueryAtoms(query);
-       at != mol.endQueryAtoms(); ++at) {
-    const Atom *atom = *at;
-    total += atom->getProp<double>("SASA");
+                const RDKit::QueryAtom *query,
+                const SASAOpts &opts){
+  double result = internalCalcSASA(mol, radii, confIdx, opts);
+  if(query) {
+    result = 0.0f;
+    for (ROMol::ConstQueryAtomIterator at = mol.beginQueryAtoms(query);
+         at != mol.endQueryAtoms(); ++at) {
+      const Atom *atom = *at;
+      result += atom->getProp<double>("SASA");
+    }
   }
-  return total;
+  return result;
 }
 
 const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery() {

@@ -56,7 +56,7 @@ struct SASAOpts {
   Algorithm d_alg;
   Classifier d_classifier;
   Classes d_classes;
-  SASAOpts() : d_alg(LeeRichards), d_classifier(Protor) {}
+   SASAOpts() : d_alg(LeeRichards), d_classifier(Protor), d_classes(Unclassified) {}
 };
 
 //! Classify atoms using standard freesaa classifiers
@@ -70,29 +70,18 @@ bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
 //! calculate all atom contributions
 /*!
   SASA data is stored in atom.getProp(common_properites::Atom::SASA);
+ARGUMENTS:
+  - mol: Molecule to analyze
+  - radii: vector of radii where radii[idx] is the radius for atom with index idx
+  - confIdx: specify the conformation [default -1]
+  - query: query to limit the number of atoms to the ones matching the query
+  - opts: SASAOpts class specifying options.
 */
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
+                int confIdx=-1,
+                const RDKit::QueryAtom *query=NULL,
                 const SASAOpts &opts = SASAOpts());
 
-//! calculate all atom contributions
-/*!
-  SASA data is stored in atom.getProp(common_properites::Atom::SASA);
-*/
-double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                int confIdx, const SASAOpts &opts = SASAOpts());
-
-//! calculate all atom contributions from the specified query
-/*!
-  SASA  data is stored in atom.getProp(common_properites::Atom::SASA)
- */
-double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                const RDKit::QueryAtom *query,
-                const SASAOpts &opts = SASAOpts());
-
-double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                const RDKit::QueryAtom *query,
-                int confIdx,
-                const SASAOpts &opts = SASAOpts());
 
 //! Make a query atom returning the FreeSASA supplied apolar atom classification
 /*!
