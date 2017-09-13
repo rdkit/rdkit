@@ -55,8 +55,8 @@ struct SASAOpts {
 
   Algorithm d_alg;
   Classifier d_classifier;
-  Classes d_classes;
-   SASAOpts() : d_alg(LeeRichards), d_classifier(Protor), d_classes(Unclassified) {}
+  SASAOpts() : d_alg(LeeRichards), d_classifier(Protor) {}
+  SASAOpts(Algorithm alg, Classifier cls) : d_alg(alg), d_classifier(cls) {}
 };
 
 //! Classify atoms using standard freesaa classifiers
@@ -65,7 +65,7 @@ struct SASAOpts {
        returns false if no atoms could be classified
 */       
 bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
-                   const SASAOpts &opts = SASAOpts());
+                   const FreeSASA::SASAOpts &opts = SASAOpts());
 
 //! calculate all atom contributions
 /*!

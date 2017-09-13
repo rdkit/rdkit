@@ -81,4 +81,6 @@ rdkit_test(testFreeSASALib testFreeSASA.cpp
            LINK_LIBRARIES FreeSASALib freesasa_clib FileParsers SmilesParse
                           GraphMol DataStructs RDGeometryLib RDGeneral)
 
+add_subdirectory(Wrap)
+
 endif(RDK_BUILD_FREESASA_SUPPORT)
