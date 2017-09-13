@@ -11,6 +11,7 @@ endif()
 if(needDownload)
   # don't actually use the md5 here
   if(MSVC)
+    message("Downloading WINDOWS FREESASA source")
     downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/windows.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
           "")
