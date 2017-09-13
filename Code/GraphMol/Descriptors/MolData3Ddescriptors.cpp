@@ -120,7 +120,7 @@ std::vector<double> MolData3Ddescriptors::GetIState(const RDKit::ROMol& mol) {
     const RDKit::Atom* atom = mol.getAtomWithIdx(i);
     int atNum = atom->getAtomicNum();
     int degree = atom->getDegree();  // number of substituants (heavy of not?)
-    if (degree > 0 and atNum > 1) {
+    if (degree > 0 && atNum > 1) {
       int h = atom->getTotalNumHs(
           true);  // caution getTotalNumHs(true) to count h !!!!
       int dv = RDKit::PeriodicTable::getTable()->getNouterElecs(atNum) -
@@ -145,7 +145,7 @@ std::vector<double> MolData3Ddescriptors::GetIStateDrag(
     const RDKit::Atom* atom = mol.getAtomWithIdx(i);
     int atNum = atom->getAtomicNum();
     int degree = atom->getDegree();  // number of substituants
-    if (degree > 0 and atNum > 1) {
+    if (degree > 0 && atNum > 1) {
       int h = atom->getTotalNumHs(true);
       int Zv = RDKit::PeriodicTable::getTable()->getNouterElecs(
           atNum);                  // number of valence (explicit with Hs)
@@ -170,11 +170,7 @@ std::vector<double> MolData3Ddescriptors::GetEState(const RDKit::ROMol& mol) {
 
   double tmp, p;
   double* dist = RDKit::MolOps::getDistanceMat(mol, false, false);
-  double accum[numAtoms];
-
-  for (int i = 0; i < numAtoms; i++) {
-    accum[i] = 0.0;
-  }
+  std::vector<double> accum(numAtoms, 0.0);
 
   for (int i = 0; i < numAtoms; i++) {
     for (int j = i + 1; j < numAtoms; j++) {
@@ -203,11 +199,7 @@ std::vector<double> MolData3Ddescriptors::GetEState2(const RDKit::ROMol& mol) {
   // in WHIM definition it's write:
   double tmp, p, d;
   double* dist = RDKit::MolOps::getDistanceMat(mol, false, false);
-  double accum[numAtoms];
-
-  for (int i = 0; i < numAtoms; i++) {
-    accum[i] = 0.0;
-  }
+  std::vector<double> accum(numAtoms, 0.0);
 
   for (int i = 0; i < numAtoms; i++) {
     for (int j = i + 1; j < numAtoms; j++) {

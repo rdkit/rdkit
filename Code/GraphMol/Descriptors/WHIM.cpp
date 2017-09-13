@@ -154,42 +154,40 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
 	  
 // we should take into account atoms that are in the axis too!!! which is not trivial
   for (int i = 0; i < 3; i++) {
-    double Symetric[2*numAtoms];
+    std::vector<double> Symetric(2*numAtoms, 0.0);
     double ns = 0.0;
     double na = 0.0;
     for (int j = 0; j < numAtoms; j++) {
-       bool amatch = false;
-       for (int k = 0; k < numAtoms; k++) {
-	   if (j==k) {
-             continue;
-           }
-	   if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
-		  // those that are close opposite & not close to the axis!
-	          ns += 1;  // check only once the symetric none null we need to add +2!
-		            // (reduce the loop duration)
-		  amatch = true;
-		  Symetric[j]=1.0;
-		  Symetric[j+numAtoms]=2.0;
-		  Symetric[k]=1.0;
-		  Symetric[k+numAtoms]=2.0;
-		  break;
-            }
+      bool amatch = false;
+      for (int k = 0; k < numAtoms; k++) {
+	      if (j==k) {
+          continue;
         }
-        if (!amatch) {
-	 na +=1;
-         Symetric[j]=0.0;
-         Symetric[j+numAtoms]=std::abs(Scores(j, i));
+	      if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
+		      // those that are close opposite & not close to the axis!
+	        ns += 1;  // check only once the symetric none null we need to add +2!
+		      // (reduce the loop duration)
+		      amatch = true;
+		      Symetric[j]=1.0;
+		      Symetric[j+numAtoms]=2.0;
+		      Symetric[k]=1.0;
+		      Symetric[k+numAtoms]=2.0;
+		      break;
         }
+      }
+      if (!amatch) {
+        na +=1;
+        Symetric[j]=0.0;
+        Symetric[j+numAtoms]=std::abs(Scores(j, i));
+      }
     }
     // take into account the atoms close to the axis
     for (int aj = 0; aj < numAtoms; aj++) {
-	if (Symetric[aj+numAtoms]<th and Symetric[aj]<1.0) {
-		ns +=1;
-		na -=1;	
-	}
+	    if (Symetric[aj+numAtoms]<th && Symetric[aj]<1.0) {
+		    ns +=1;
+        na -=1;	
+      }
     }
-
-	  
     gamma[i] = 0.0;
     double gammainv=1.0;
     if (ns == 0) {
@@ -199,9 +197,8 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
       gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2) +
                        (na / nAT) * log(1.0 / nAT) / log(2));   
     }
-  gamma[i]=1.0/gammainv;
+    gamma[i]=1.0/gammainv;
   }
-  
   w[14] = gamma[0];  // G1
   w[15] = gamma[1];  // G2
   w[16] = gamma[2];  // G3
@@ -212,7 +209,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
 }
 
 void GetWHIMs(const Conformer &conf, std::vector<double> &result,
-              double Vpoints[], double th) {
+              double *Vpoints, double th) {
   std::vector<double> wu(18);
   std::vector<double> wm(18);
   std::vector<double> wv(18);
@@ -274,7 +271,7 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
              double th) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double Vpoints[3 * numAtoms];
+  double *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;
@@ -284,6 +281,7 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
 
   std::vector<double> w(126);
   GetWHIMs(conf, w, Vpoints, th);
+  delete [] Vpoints;
 
   // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2
   // E3

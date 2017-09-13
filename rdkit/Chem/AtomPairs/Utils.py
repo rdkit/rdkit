@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2004-2006 Rational Discovery LLC
+#  Copyright (C) 2004-2017 Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -14,7 +13,7 @@ from rdkit.Chem import rdMolDescriptors
 import math
 
 
-def ExplainAtomCode(code, branchSubtract=0):
+def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
   """
 
   **Arguments**:
@@ -25,6 +24,8 @@ def ExplainAtomCode(code, branchSubtract=0):
       the number of neighbors before integrating it into the code.
       This is used by the topological torsions code.
 
+    - includeChirality: (optional) Determines whether or not chirality
+      was included when generating the atom code.
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
   >>> code = GetAtomCode(m.GetAtomWithIdx(0))
@@ -43,10 +44,36 @@ def ExplainAtomCode(code, branchSubtract=0):
   >>> ExplainAtomCode(code)
   ('O', 1, 0)
 
+  we can do chirality too, that returns an extra element in the tuple:
+  >>> m = Chem.MolFromSmiles('C[C@H](F)Cl')
+  >>> code = GetAtomCode(m.GetAtomWithIdx(1))
+  >>> ExplainAtomCode(code)
+  ('C', 3, 0)
+  >>> code = GetAtomCode(m.GetAtomWithIdx(1),includeChirality=True)
+  >>> ExplainAtomCode(code,includeChirality=True)
+  ('C', 3, 0, 'R')
+
+  note that if we don't ask for chirality, we get the right answer even if
+  the atom code was calculated with chirality:
+  >>> ExplainAtomCode(code)
+  ('C', 3, 0)
+
+  non-chiral atoms return '' in the 4th field:
+  >>> code = GetAtomCode(m.GetAtomWithIdx(0),includeChirality=True)
+  >>> ExplainAtomCode(code,includeChirality=True)
+  ('C', 1, 0, '')
+
+  Obviously switching the chirality changes the results:
+  >>> m = Chem.MolFromSmiles('C[C@@H](F)Cl')
+  >>> code = GetAtomCode(m.GetAtomWithIdx(1),includeChirality=True)
+  >>> ExplainAtomCode(code,includeChirality=True)
+  ('C', 3, 0, 'S')
+
   """
   typeMask = (1 << rdMolDescriptors.AtomPairsParameters.numTypeBits) - 1
   branchMask = (1 << rdMolDescriptors.AtomPairsParameters.numBranchBits) - 1
   piMask = (1 << rdMolDescriptors.AtomPairsParameters.numPiBits) - 1
+  chiMask = (1 << rdMolDescriptors.AtomPairsParameters.numChiralBits) - 1
 
   nBranch = int(code & branchMask)
   code = code >> rdMolDescriptors.AtomPairsParameters.numBranchBits
@@ -60,11 +87,16 @@ def ExplainAtomCode(code, branchSubtract=0):
     atomSymbol = Chem.GetPeriodicTable().GetElementSymbol(atomNum)
   else:
     atomSymbol = 'X'
-  return (atomSymbol, nBranch, nPi)
 
+  if not includeChirality:
+      return (atomSymbol, nBranch, nPi)
+  else:
+      code = code >> rdMolDescriptors.AtomPairsParameters.numTypeBits
+      chiDict = {0:'',1:'R',2:'S'}
+      chiCode = int(code & chiMask)
+      return (atomSymbol, nBranch, nPi, chiDict[chiCode])
 
 GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode
-
 
 def NumPiElectrons(atom):
   """ Returns the number of electrons an atom is using for pi bonding

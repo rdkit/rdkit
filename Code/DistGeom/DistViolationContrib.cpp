@@ -20,8 +20,8 @@ DistViolationContrib::DistViolationContrib(ForceFields::ForceField *owner,
                                            double ub, double lb,
                                            double weight) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_end1Idx = idx1;

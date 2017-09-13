@@ -42,7 +42,7 @@ void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
 
   // finally make sure all the class ID in d_biasList are within range
   for (bi = d_biasList.begin(); bi != d_biasList.end(); bi++) {
-    URANGE_CHECK(static_cast<unsigned int>(*bi), d_classes - 1);
+    URANGE_CHECK(static_cast<unsigned int>(*bi), d_classes);
   }
 }
 
@@ -115,7 +115,7 @@ double InfoBitRanker::BiasInfoEntropyGain(RDKit::USHORT *resMat) const {
 
 void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv,
                                     unsigned int label) {
-  URANGE_CHECK(label, d_classes - 1);
+  URANGE_CHECK(label, d_classes);
   CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
   d_nInst += 1;
@@ -129,7 +129,7 @@ void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv,
 
 void InfoBitRanker::accumulateVotes(const SparseBitVect &bv,
                                     unsigned int label) {
-  URANGE_CHECK(label, d_classes - 1);
+  URANGE_CHECK(label, d_classes);
   CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
   d_nInst += 1;

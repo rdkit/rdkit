@@ -190,16 +190,31 @@ class TestCase(unittest.TestCase):
 
   def test9ToNumpy(self):
     import numpy
-    bv = DataStructs.ExplicitBitVect(32)
-    bv.SetBit(0)
-    bv.SetBit(1)
-    bv.SetBit(17)
-    bv.SetBit(23)
-    bv.SetBit(31)
-    arr = numpy.zeros((3, ), 'i')
-    DataStructs.ConvertToNumpyArray(bv, arr)
-    for i in range(bv.GetNumBits()):
-      self.assertEqual(bv[i], arr[i])
+    for typ in (DataStructs.ExplicitBitVect,):
+        bv = typ(32)
+        bv.SetBit(0)
+        bv.SetBit(1)
+        bv.SetBit(17)
+        bv.SetBit(23)
+        bv.SetBit(31)
+        arr = numpy.zeros((32, ), 'i')
+        DataStructs.ConvertToNumpyArray(bv, arr)
+        for i in range(bv.GetNumBits()):
+          self.assertEqual(bv[i], arr[i])
+
+    for typ in (DataStructs.IntSparseIntVect,
+        DataStructs.LongSparseIntVect, DataStructs.UIntSparseIntVect,
+        DataStructs.ULongSparseIntVect):
+        iv = typ(32)
+        iv[0] = 1
+        iv[1] = 1
+        iv[17] = 1
+        iv[23] = 1
+        iv[31] = 1
+        arr = numpy.zeros((32, ), 'i')
+        DataStructs.ConvertToNumpyArray(iv, arr)
+        for i in range(iv.GetLength()):
+          self.assertEqual(iv[i], arr[i])
 
   def test10BulkOps2(self):
     nbits = 10000

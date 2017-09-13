@@ -146,7 +146,7 @@ unsigned int ROMol::getNumHeavyAtoms() const {
 
 Atom *ROMol::getAtomWithIdx(unsigned int idx) {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
-  URANGE_CHECK(idx, getNumAtoms() - 1);
+  URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   Atom *res = d_graph[vd].get();
@@ -156,7 +156,7 @@ Atom *ROMol::getAtomWithIdx(unsigned int idx) {
 
 const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
-  URANGE_CHECK(idx, getNumAtoms() - 1);
+  URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   const Atom *res = d_graph[vd].get();
@@ -244,7 +244,7 @@ unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
 
 Bond *ROMol::getBondWithIdx(unsigned int idx) {
   PRECONDITION(getNumBonds() > 0, "no bonds");
-  URANGE_CHECK(idx, getNumBonds() - 1);
+  URANGE_CHECK(idx, getNumBonds());
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
@@ -256,7 +256,7 @@ Bond *ROMol::getBondWithIdx(unsigned int idx) {
 
 const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
   PRECONDITION(getNumBonds() > 0, "no bonds");
-  URANGE_CHECK(idx, getNumBonds() - 1);
+  URANGE_CHECK(idx, getNumBonds());
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
@@ -267,8 +267,8 @@ const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
 }
 
 Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
-  URANGE_CHECK(idx1, getNumAtoms() - 1);
-  URANGE_CHECK(idx2, getNumAtoms() - 1);
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
   Bond *res = 0;
 
   MolGraph::edge_descriptor edge;
@@ -283,8 +283,8 @@ Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
 
 const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
                                        unsigned int idx2) const {
-  URANGE_CHECK(idx1, getNumAtoms() - 1);
-  URANGE_CHECK(idx2, getNumAtoms() - 1);
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
   const Bond *res = 0;
 
   MolGraph::edge_descriptor edge;
@@ -341,8 +341,8 @@ unsigned int ROMol::addAtom(Atom::ATOM_SPTR atom_sp, bool updateLabel) {
 }
 unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   PRECONDITION(bond_pin, "null bond passed in");
-  URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms() - 1);
-  URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms() - 1);
+  URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms());
+  URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms());
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
   PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),

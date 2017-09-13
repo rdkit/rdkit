@@ -96,8 +96,8 @@ VdWContrib::VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                        const MMFFVdWRijstarEps *mmffVdWConstants) {
   PRECONDITION(owner, "bad owner");
   PRECONDITION(mmffVdWConstants, "bad MMFFVdW parameters");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_at1Idx = idx1;
@@ -153,8 +153,8 @@ EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                        double chargeTerm, boost::uint8_t dielModel,
                        bool is1_4) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_at1Idx = idx1;

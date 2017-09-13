@@ -26,6 +26,8 @@ typedef RINGINVAR_SET::const_iterator RINGINVAR_SET_CI;
 typedef std::vector<boost::uint32_t> RINGINVAR_VECT;
 
 namespace RingUtils {
+const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
+
 using namespace RDKit;
 
 boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
@@ -645,6 +647,14 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
   int curr = -1;
   unsigned int curSize = UINT_MAX;
   while (bfsq.size() > 0) {
+    if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
+      std::string msg =
+          "Maximum BFS search size exceeded.\nThis is likely due to a highly "
+          "symmetric fused ring system.";
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw ValueErrorException(msg);
+    }
+
     curr = bfsq.front();
     bfsq.pop_front();
 
@@ -737,6 +747,13 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
   tv.push_back(startAtomIdx);
   bfsq.push_back(tv);
   while (!bfsq.empty()) {
+    if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
+      std::string msg =
+          "Maximum BFS search size exceeded.\nThis is likely due to a highly "
+          "symmetric fused ring system.";
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw ValueErrorException(msg);
+    }
     tv = bfsq.front();
     bfsq.pop_front();
 
@@ -884,8 +901,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     VECT_INT_VECT fragRes;
     curFrag = frags[fi];
 
-    if (curFrag.size() < 3)
-      continue;
+    if (curFrag.size() < 3) continue;
 
     // the following is the list of atoms that are useful in the next round of
     // trimming
@@ -907,13 +923,14 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     }
 
     // check to see if this fragment can even have a possible ring
-    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0, "fragment graph has a dangling degree");
+    CHECK_INVARIANT(bndcnt_with_zero_order_bonds % 2 == 0,
+                    "fragment graph has a dangling degree");
     bndcnt_with_zero_order_bonds = bndcnt_with_zero_order_bonds / 2;
     int num_possible_rings = bndcnt_with_zero_order_bonds - curFrag.size() + 1;
-    if (num_possible_rings < 1)
-      continue;
+    if (num_possible_rings < 1) continue;
 
-    CHECK_INVARIANT(nbnds % 2 == 0, "fragment graph problem when including zero-order bonds");
+    CHECK_INVARIANT(nbnds % 2 == 0,
+                    "fragment graph problem when including zero-order bonds");
     nbnds = nbnds / 2;
 
     boost::dynamic_bitset<> doneAts(nats);

@@ -152,7 +152,6 @@ python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
-#endif
 
 python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol) {
   std::vector<double> res;
@@ -161,6 +160,8 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol) {
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
+
+#endif
 
 RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
@@ -366,9 +367,8 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -449,9 +449,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
       const std::vector<std::pair<boost::uint32_t, boost::uint32_t> > &v =
           iter->second;
       python::list localL;
-      for (std::vector<std::pair<boost::uint32_t,
-                                 boost::uint32_t> >::const_iterator vIt =
-               v.begin();
+      for (std::vector<std::pair<boost::uint32_t, boost::uint32_t> >::
+               const_iterator vIt = v.begin();
            vIt != v.end(); ++vIt) {
         localL.append(python::make_tuple(vIt->first, vIt->second));
       }
@@ -829,6 +828,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .setattr("numTypeBits", RDKit::AtomPairs::numTypeBits)
       .setattr("numPiBits", RDKit::AtomPairs::numPiBits)
       .setattr("numBranchBits", RDKit::AtomPairs::numBranchBits)
+      .setattr("numChiralBits", RDKit::AtomPairs::numChiralBits)
       .setattr("codeSize", RDKit::AtomPairs::codeSize)
       .setattr("atomTypes", atomPairTypes)
       .setattr("numPathBits", RDKit::AtomPairs::numPathBits)
@@ -839,6 +839,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("atom"), python::arg("branchSubtract") = 0,
                python::arg("includeChirality") = false),
               docString.c_str());
+  docString =
+      "Returns the atom-pair code (hash) for a pair of atoms separated by a "
+      "certain number of bonds";
+  python::def(
+      "GetAtomPairCode", RDKit::AtomPairs::getAtomPairCode,
+      (python::arg("atom1Code"), python::arg("atom2Code"),
+       python::arg("distance"), python::arg("includeChirality") = false),
+      docString.c_str());
   docString =
       "Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
@@ -1605,11 +1613,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
-#endif
-
   python::scope().attr("_CalcAUTOCORR2D_version") =
       RDKit::Descriptors::AUTOCORR2DVersion;
   docString = "Returns 2D Autocorrelation descriptors vector";
   python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
               docString.c_str());
+
+#endif
 }

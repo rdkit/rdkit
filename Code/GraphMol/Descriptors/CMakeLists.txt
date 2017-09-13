@@ -29,21 +29,21 @@ LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs Subs
 
 if(RDK_BUILD_DESCRIPTORS3D)
   rdkit_test(testPBF testPBF.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
  rdkit_test(testRDF testRDF.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
  rdkit_test(testMORSE testMORSE.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 rdkit_test(test3D test3D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(testWHIM testWHIM.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(testGETAWAY testGETAWAY.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(testAUTOCORR3D testAUTOCORR3D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
   rdkit_test(testAUTOCORR2D testAUTOCORR2D.cpp
-LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 

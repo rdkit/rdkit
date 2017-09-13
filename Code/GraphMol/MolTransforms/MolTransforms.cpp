@@ -402,8 +402,8 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
 double getBondLength(const Conformer &conf, unsigned int iAtomId,
                      unsigned int jAtomId) {
   const RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
 
   return (pos[iAtomId] - pos[jAtomId]).length();
 }
@@ -411,8 +411,8 @@ double getBondLength(const Conformer &conf, unsigned int iAtomId,
 void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
                    double value) {
   RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bond = mol.getBondBetweenAtoms(iAtomId, jAtomId);
   if (!bond) throw ValueErrorException("atoms i and j must be bonded");
@@ -436,9 +436,9 @@ void setBondLength(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
 double getAngleRad(const Conformer &conf, unsigned int iAtomId,
                    unsigned int jAtomId, unsigned int kAtomId) {
   const RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
-  URANGE_CHECK(kAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
+  URANGE_CHECK(kAtomId, pos.size());
   RDGeom::Point3D rJI = pos[iAtomId] - pos[jAtomId];
   double rJISqLength = rJI.lengthSq();
   if (rJISqLength <= 1.e-16)
@@ -453,9 +453,9 @@ double getAngleRad(const Conformer &conf, unsigned int iAtomId,
 void setAngleRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
                  unsigned int kAtomId, double value) {
   RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
-  URANGE_CHECK(kAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
+  URANGE_CHECK(kAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bondJI = mol.getBondBetweenAtoms(jAtomId, iAtomId);
   if (!bondJI) throw ValueErrorException("atoms i and j must be bonded");
@@ -501,10 +501,10 @@ double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
                       unsigned int jAtomId, unsigned int kAtomId,
                       unsigned int lAtomId) {
   const RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
-  URANGE_CHECK(kAtomId, pos.size() - 1);
-  URANGE_CHECK(lAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
+  URANGE_CHECK(kAtomId, pos.size());
+  URANGE_CHECK(lAtomId, pos.size());
   RDGeom::Point3D rIJ = pos[jAtomId] - pos[iAtomId];
   double rIJSqLength = rIJ.lengthSq();
   if (rIJSqLength <= 1.e-16)
@@ -531,10 +531,10 @@ double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
 void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
                     unsigned int kAtomId, unsigned int lAtomId, double value) {
   RDGeom::POINT3D_VECT &pos = conf.getPositions();
-  URANGE_CHECK(iAtomId, pos.size() - 1);
-  URANGE_CHECK(jAtomId, pos.size() - 1);
-  URANGE_CHECK(kAtomId, pos.size() - 1);
-  URANGE_CHECK(lAtomId, pos.size() - 1);
+  URANGE_CHECK(iAtomId, pos.size());
+  URANGE_CHECK(jAtomId, pos.size());
+  URANGE_CHECK(kAtomId, pos.size());
+  URANGE_CHECK(lAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
   Bond *bondIJ = mol.getBondBetweenAtoms(iAtomId, jAtomId);
   if (!bondIJ) throw ValueErrorException("atoms i and j must be bonded");
