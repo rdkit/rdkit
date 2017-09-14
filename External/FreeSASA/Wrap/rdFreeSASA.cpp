@@ -108,26 +108,61 @@ struct freesasa_wrapper {
     python::class_<FreeSASA::SASAOpts>("SASAOpts", docString.c_str(),
                                        python::init<>("Constructor takes no arguments"))
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
-             FreeSASA::SASAOpts::Classifier>());
+             FreeSASA::SASAOpts::Classifier>())
+        .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
+        .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
+        ;
 
-             
+    
+    docString = "Classify the atoms in the molecule returning their radii if possible.\n"
+        "ARGUMENTS:\n"
+        "   - mol: molecule to classify\n"
+        "   - options: FreeSASA options class specifying the classsification method.\n"
+        "               Current classifiers are Protor, NACCESS and OONS\n"
+        "               classification is stored as atom property 'SASAClass' for the integer value\n"
+        "                and 'SASAClassName' for the string name of the class, Polar, APolar...\n"
+        "\n"
+        "RETURNS:\n"
+        "  list of radii where radii[atom.GetIdx()] is the radii of the atom.\n"
+        "  If classification fails, NONE is returned\n";
+    
     python::def("classifyAtoms", classifyAtomsHelper,
                 (python::arg("mol"),
-                 python::arg("options") = FreeSASA::SASAOpts()));
+                 python::arg("options") = FreeSASA::SASAOpts()),
+                docString.c_str());
     
+    docString = "Compute the Solvent Accessible Surface Area using the FreeSASA library\n"
+        "ARGUMENTS:\n"
+        "  - mol: The molecule to compute.\n"
+        "  - radii:  A list of atom raddii where radii[atom.GetIdx()] is the radius of the atom\n"
+        "            These can be passed in or calculated with classifyAtoms for some proteins\n"
+        "  - confIdx: Specify the conformer to use for the 3D geometry  [default -1]\n"
+        "  - query: Pass along a query atom to compute the SASA for a subset of atoms.\n"
+        "           precanned query atoms can be made with MakeFreeSasaPolarAtomQuery and\n"
+        "           MakeFreeSasaAPolarAtomQuery for classified polar and apolar atoms respectively.\n"
+        "  - opts: a SASAOpts class specifying the algorithm to use\n"
+        "\n"
+        "RETURNS:\n"
+        "The computed solvent accessible surface area.\n";
 
     python::def("CalcSASA", calcSASAHelper,
                 (python::arg("mol"),
                  python::arg("radii"),
                  python::arg("confIdx")=-1,
                  python::arg("query")=python::object(),
-                 python::arg("opts")=FreeSASA::SASAOpts()));
+                 python::arg("opts")=FreeSASA::SASAOpts()),
+                docString.c_str());
 
 
     python::def("MakeFreeSasaAPolarAtomQuery", FreeSASA::makeFreeSasaAPolarAtomQuery,
-                python::return_value_policy<python::manage_new_object>());
+                python::return_value_policy<python::manage_new_object>(),
+                "Returns an APolar atom query for use with CalcSASA.  An apolar atom has the SASAClass\n"
+                "and SASAClassName set to the APOLAR class.  (see classifyAtoms)");
+
     python::def("MakeFreeSasaPolarAtomQuery", FreeSASA::makeFreeSasaPolarAtomQuery,
-                python::return_value_policy<python::manage_new_object>());
+                python::return_value_policy<python::manage_new_object>(),
+                "Returns a polar atom query for use with CalcSASA.  An polar atom has the SASAClass\n"
+                "and SASAClassName set to the POLAR class.  (see classifyAtoms)");
   }
 };
 }

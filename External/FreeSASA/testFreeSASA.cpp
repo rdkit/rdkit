@@ -375,7 +375,7 @@ void testPDB() {
   }
 
   FreeSASA::SASAOpts opts;
-  opts.d_alg = FreeSASA::SASAOpts::ShrakeRupley;
+  opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
 
   double sasa = FreeSASA::calcSASA(*m, radii, -1, NULL, opts);
   TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
