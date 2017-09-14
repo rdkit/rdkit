@@ -303,7 +303,7 @@ struct RDValue {
 //   copy act's like a move for better value semantics.
 //  Containers may need to copy though.
 inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
-  dest.destroy();
+  // dest.destroy();
   dest.type = src.type;
   switch (src.type) {
     case RDTypeTag::StringTag:
