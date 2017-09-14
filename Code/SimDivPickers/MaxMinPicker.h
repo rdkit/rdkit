@@ -8,8 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_MAXMINPICKER_H__
-#define __RD_MAXMINPICKER_H__
+#ifndef RD_MAXMINPICKER_H
+#define RD_MAXMINPICKER_H
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
@@ -126,9 +126,9 @@ class MaxMinPicker : public DistPicker {
 };
 
 struct MaxMinPickInfo {
-  double dist_bound;	// distance to closest reference
-  unsigned int picks;	// number of references considered
-  unsigned int next;	// singly linked list of candidates
+  double dist_bound;   // distance to closest reference
+  unsigned int picks;  // number of references considered
+  unsigned int next;   // singly linked list of candidates
 };
 
 // we implement this here in order to allow arbitrary functors without link
@@ -143,10 +143,10 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
 
   RDKit::INT_VECT picks;
 
-  unsigned int memsize = (unsigned int)(poolSize*sizeof(MaxMinPickInfo));
-  MaxMinPickInfo *pinfo = (MaxMinPickInfo*)malloc(memsize);
+  unsigned int memsize = (unsigned int)(poolSize * sizeof(MaxMinPickInfo));
+  MaxMinPickInfo *pinfo = (MaxMinPickInfo *)malloc(memsize);
   if (!pinfo) return picks;
-  memset(pinfo,0,memsize);
+  memset(pinfo, 0, memsize);
 
   picks.reserve(pickSize);
   unsigned int picked = 0;  // picks.size()
@@ -159,7 +159,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &, distrib_type> source_type;
     rng_type generator(42u);
-    distrib_type dist(0, poolSize-1);
+    distrib_type dist(0, poolSize - 1);
     source_type randomSource(generator, dist);
     if (seed > 0) generator.seed(static_cast<rng_type::result_type>(seed));
 
@@ -169,7 +169,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     // and remove it from the pool
     pinfo[pick].picks = 1;
     picked = 1;
-    
+
   } else {
     for (RDKit::INT_VECT::const_iterator pIdx = firstPicks.begin();
          pIdx != firstPicks.end(); ++pIdx) {
@@ -211,7 +211,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     pinfo[poolIdx].picks = 1;
     prev = &pinfo[poolIdx].next;
   } while (*prev != 0);
-    
+
   // now pick 1 compound at a time
   while (picked < pickSize) {
     unsigned int *pick_prev = 0;
@@ -229,8 +229,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
           pi++;
           if (dist <= minTOi) {
             minTOi = dist;
-            if (minTOi <= maxOFmin)
-              break;
+            if (minTOi <= maxOFmin) break;
           }
         }
         pinfo[poolIdx].dist_bound = minTOi;
