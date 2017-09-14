@@ -441,8 +441,10 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             bool includeChirality,
                             const std::vector<std::string> *atomSymbols) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    basicInitCanonAtom(mol, atoms[i], i);
-    atoms[i].degree = 0;
+    atoms[i].atom = mol.getAtomWithIdx(i);
+    atoms[i].index = i;
+    atoms[i].degree = atoms[i].atom->getDegree();
+    atoms[i].nbrIds = (int *)calloc(atoms[i].degree, sizeof(int));
     if (atomSymbols) {
       atoms[i].p_symbol = &(*atomSymbols)[i];
     } else {
@@ -451,6 +453,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
     advancedInitCanonAtom(mol, atoms[i], i);
     atoms[i].bonds.reserve(atoms[i].degree);
     getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality);
+    atoms[i].degree = 0;
   }
 }
 
@@ -557,9 +560,19 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   for (ROMol::ConstBondIterator bI = mol.beginBonds(); bI != mol.endBonds();
        ++bI) {
     if (!bondsInPlay[(*bI)->getIdx()]) continue;
-    atoms[(*bI)->getBeginAtomIdx()].degree++;
-    atoms[(*bI)->getEndAtomIdx()].degree++;
+    Canon::canon_atom &begAt = atoms[(*bI)->getBeginAtomIdx()];
+    Canon::canon_atom &endAt = atoms[(*bI)->getEndAtomIdx()];
+    begAt.nbrIds[begAt.degree] = (*bI)->getEndAtomIdx();
+    endAt.nbrIds[endAt.degree] = (*bI)->getBeginAtomIdx();
+    begAt.degree++;
+    endAt.degree++;
   }
+  for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
+    if (!atomsInPlay[i]) continue;
+    atoms[i].totalNumHs +=
+        (mol.getAtomWithIdx(i)->getDegree() - atoms[i].degree);
+  }
+
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
