@@ -640,7 +640,7 @@ void testUpdate() {
 int main() {
   RDLog::InitLogs();
 
-#if 0
+#if 1
   testRDAny();
   Dict d;
   INT_VECT fooV;
