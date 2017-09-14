@@ -3,6 +3,7 @@ Originally written by Greg Landrum and updated by Malitha Humayun Kabir as a par
 Project : RDKit - 3Dmol.js integration
 Mentors: Paul Czodrowski and Greg Landrum
 Date: 28th July 2017
+Date of resubmission: 12th September 2017
 Email# malitha12345@gmail.com
 """
 
@@ -29,7 +30,7 @@ def ExtractMolAtomsMatchingQuery(mol,func, confId,sanitize, includeAttachedHs):
         res2.RemoveAtom(i)
     if sanitize:
         Chem.SanitizeMol(res2)
-    
+        
     res = Chem.RWMol()
     
     # start with all atoms and their coordinates:
@@ -65,8 +66,4 @@ def ExtractMolFragment(mol, ResName, confId=-1,sanitize=True, includeAttachedHs=
         if atom.GetPDBResidueInfo().GetResidueName() == ResName:
             ids.append(atom.GetIdx())
     return ExtractMolAtomsMatchingQuery(mol, lambda x,y = ids : x in y, confId,sanitize, includeAttachedHs)
-    
-    
-    
-    
     
