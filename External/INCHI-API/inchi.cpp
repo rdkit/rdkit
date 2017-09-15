@@ -433,8 +433,11 @@ bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
   // and we don't want to mess with that.
   // this was github #1572
 
-  Atom* target2 = findAlternatingBonds(
-      mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1, NULL, stack, _visited);
+  std::stack<Bond*> stack2;
+  std::set<int> _visited2;
+  Atom* target2 =
+      findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
+                           NULL, stack2, _visited2);
   if (target2 == NULL) {
     target->setFormalCharge(-1);
     target->calcExplicitValence(false);
