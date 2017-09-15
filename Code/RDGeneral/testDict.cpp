@@ -608,7 +608,7 @@ void testUpdate() {
       Dict d2;
       d2.setVal("foo", 1);
       d2.update(d, true);
-      TEST_ASSERT(1 == d2.getVal<int>("foo"));
+      TEST_ASSERT(d2.getVal<std::string>("foo") == "1.3");
       TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
       TEST_ASSERT(d.getVal<std::vector<int> >("foo3") ==
                   d2.getVal<std::vector<int> >("foo3"));

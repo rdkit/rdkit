@@ -70,10 +70,21 @@ class Dict {
       if (other._hasNonPodData) _hasNonPodData = true;
       for (size_t i = 0; i < other._data.size(); ++i) {
         const Pair &pair = other._data[i];
-        if (!hasVal(pair.key)) {
-          // need to create blank
+        Pair *target = 0;
+        for (size_t i = 0; i < _data.size(); ++i) {
+          if (_data[i].key == pair.key) {
+            target = &_data[i];
+            break;
+          }
+        }
+
+        if (!target) {
+          // need to create blank entry and copy
           _data.push_back(Pair(pair.key));
           copy_rdvalue(_data.back().val, pair.val);
+        } else {
+          // just copy
+          copy_rdvalue(target->val, pair.val);
         }
       }
     }
