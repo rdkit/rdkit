@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -78,6 +77,7 @@
 #endif
 #include <RDGeneral/BoostEndInclude.h>
 
+//#define DEBUG 1
 namespace RDKit {
 namespace {
 /* assignBondDirs
@@ -426,11 +426,25 @@ bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
       mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1, NULL, stack, _visited);
   if (target == NULL) return false;
 
-  target->setFormalCharge(-1);
-  target->calcExplicitValence(false);
-  stack.top()->setBondType(Bond::SINGLE);
-  atom->setFormalCharge(1);
-  atom->calcExplicitValence(false);
+  // we are double bonded to a neighboring N. Check to see if we are also
+  // double bonded to an O. If so, we don't want to mess with the other N
+  // this occurs because the InChI code produces this structure:
+  //  CN(=O)=N(=O)C
+  // and we don't want to mess with that.
+  // this was github #1572
+
+  std::stack<Bond*> stack2;
+  std::set<int> _visited2;
+  Atom* target2 =
+      findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
+                           NULL, stack2, _visited2);
+  if (target2 == NULL) {
+    target->setFormalCharge(-1);
+    target->calcExplicitValence(false);
+    stack.top()->setBondType(Bond::SINGLE);
+    atom->setFormalCharge(1);
+    atom->calcExplicitValence(false);
+  }
   return true;
 }
 
@@ -1233,9 +1247,10 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
         unsigned int aid = m->addAtom(atom, false, true);
         indexToAtomIndexMapping.push_back(aid);
 #ifdef DEBUG
-        BOOST_LOG(rdWarningLog) << "adding " << aid << ":"
-                                << atom->getAtomicNum() << ":"
-                                << (int)inchiAtom->num_iso_H[0] << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "adding " << aid << ":" << atom->getAtomicNum() << ":"
+            << (int)inchiAtom->num_iso_H[0]
+            << " charge: " << (int)inchiAtom->charge << std::endl;
 #endif
       }
 
