@@ -69,6 +69,52 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
+double getBestRMS(ROMol& probeMol, ROMol& refMol,
+                  int probeId, int refId,
+                  const std::vector<MatchVectType>& map,
+                  int maxMatches)
+{
+  std::vector<MatchVectType> matches = map;
+  if (matches.empty()) {
+    bool uniquify = false;
+    bool recursionPossible = true;
+    bool useChirality = false;
+    bool useQueryQueryMatches = false;
+
+    SubstructMatch(refMol, probeMol, matches, uniquify,
+                   recursionPossible, useChirality,
+                   useQueryQueryMatches, maxMatches);
+
+    if (matches.empty()) {
+      throw MolAlignException(
+          "No sub-structure match found between the reference and probe mol");
+    }
+
+    if (matches.size() > 1e6) {
+      std::string name;
+      probeMol.getPropIfPresent(common_properties::_Name, name);
+      std::cerr << "Warning in " << __FUNCTION__ << ": " << matches.size()
+                << " matches detected for molecule " << name << ", this may "
+                << "lead to a performance slowdown.\n";
+    }
+  }
+
+  double bestRMS = 1.e300;
+  MatchVectType& bestMatch = matches[0];
+  for (size_t i = 0; i < matches.size(); ++i) {
+    double rms = alignMol(probeMol, refMol, probeId, refId, &matches[i]);
+    if (rms < bestRMS) {
+      bestRMS = rms;
+      bestMatch = matches[i];
+    }
+  }
+
+  // Perform a final alignment to the best alignment...
+  if (&bestMatch != &matches.back())
+    alignMol(probeMol, refMol, probeId, refId, &bestMatch);
+  return bestRMS;
+}
+
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                         const std::vector<unsigned int> *atomIds = 0) {
   unsigned int na = conf.getNumAtoms();
