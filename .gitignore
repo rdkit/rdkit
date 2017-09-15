@@ -74,7 +74,6 @@ __pycache__/
 /Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
-External/INCHI-API/*
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
