@@ -33,27 +33,26 @@ typedef std::vector<std::string> STR_VECT;
 //!  The actual storage is done using \c RDValue objects.
 //!
 class Dict {
-public:  
+ public:
   struct Pair {
     std::string key;
     RDValue val;
 
-   Pair() : key(), val() {}
-   Pair(const std::string &s) : key(s), val() {}
-   Pair(const std::string &s, const RDValue &v) : key(s), val(v) {
-   }
+    Pair() : key(), val() {}
+    Pair(const std::string &s) : key(s), val() {}
+    Pair(const std::string &s, const RDValue &v) : key(s), val(v) {}
   };
 
   typedef std::vector<Pair> DataType;
 
-  Dict() : _data(), _hasNonPodData(false) {  };
+  Dict() : _data(), _hasNonPodData(false){};
 
   Dict(const Dict &other) : _data(other._data) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
-      for (size_t i=0; i< _data.size(); ++i) {
+      for (size_t i = 0; i < _data.size(); ++i) {
         _data[i].key = other._data[i].key;
         copy_rdvalue(_data[i].val, other._data[i].val);
       }
@@ -61,18 +60,17 @@ public:
   }
 
   ~Dict() {
-    reset(); // to clear pointers if necessary
+    reset();  // to clear pointers if necessary
   }
 
-  void update(const Dict &other, bool preserveExisting=false) {
-    if(!preserveExisting) {
+  void update(const Dict &other, bool preserveExisting = false) {
+    if (!preserveExisting) {
       *this = other;
-    }
-    else {
-      for (size_t i=0; i< other._data.size(); ++i) {
-        const Pair & pair = other._data[i];
-        if(!hasVal(pair.key)) {
-
+    } else {
+      if (other._hasNonPodData) _hasNonPodData = true;
+      for (size_t i = 0; i < other._data.size(); ++i) {
+        const Pair &pair = other._data[i];
+        if (!hasVal(pair.key)) {
           // need to create blank
           _data.push_back(Pair(pair.key));
           copy_rdvalue(_data.back().val, pair.val);
@@ -80,13 +78,13 @@ public:
       }
     }
   }
-  
+
   Dict &operator=(const Dict &other) {
     _hasNonPodData = other._hasNonPodData;
     if (_hasNonPodData) {
       std::vector<Pair> data(other._data.size());
       _data.swap(data);
-      for (size_t i=0; i< _data.size(); ++i) {
+      for (size_t i = 0; i < _data.size(); ++i) {
         _data[i].key = other._data[i].key;
         copy_rdvalue(_data[i].val, other._data[i].val);
       }
@@ -99,15 +97,15 @@ public:
   //----------------------------------------------------------
   //! \brief Access to the underlying data.
   const DataType &getData() const { return _data; }
-        DataType &getData()       { return _data; }
-  
+  DataType &getData() { return _data; }
+
   //----------------------------------------------------------
 
   //! \brief Returns whether or not the dictionary contains a particular
   //!        key.
   bool hasVal(const std::string &what) const {
-    for(size_t i=0 ; i< _data.size(); ++i) {
-      if (_data[i].key == what ) return true;
+    for (size_t i = 0; i < _data.size(); ++i) {
+      if (_data[i].key == what) return true;
     }
     return false;
   };
@@ -146,7 +144,7 @@ public:
   //! \overload
   template <typename T>
   T getVal(const std::string &what) const {
-    for(size_t i=0; i< _data.size(); ++i) {
+    for (size_t i = 0; i < _data.size(); ++i) {
       if (_data[i].key == what) {
         return from_rdvalue<T>(_data[i].val);
       }
@@ -174,7 +172,7 @@ public:
 
   template <typename T>
   bool getValIfPresent(const std::string &what, T &res) const {
-    for(size_t i=0; i< _data.size(); ++i) {
+    for (size_t i = 0; i < _data.size(); ++i) {
       if (_data[i].key == what) {
         res = from_rdvalue<T>(_data[i].val);
         return true;
@@ -182,7 +180,6 @@ public:
     }
     return false;
   };
-
 
   //! \overload
   bool getValIfPresent(const std::string &what, std::string &res) const;
@@ -203,7 +200,7 @@ public:
   template <typename T>
   void setVal(const std::string &what, T &val) {
     _hasNonPodData = true;
-    for(size_t i=0; i< _data.size(); ++i) {
+    for (size_t i = 0; i < _data.size(); ++i) {
       if (_data[i].key == what) {
         RDValue::cleanup_rdvalue(_data[i].val);
         _data[i].val = val;
@@ -216,7 +213,7 @@ public:
   template <typename T>
   void setPODVal(const std::string &what, T val) {
     // don't change the hasNonPodData status
-    for(size_t i=0; i< _data.size(); ++i) {
+    for (size_t i = 0; i < _data.size(); ++i) {
       if (_data[i].key == what) {
         RDValue::cleanup_rdvalue(_data[i].val);
         _data[i].val = val;
@@ -226,21 +223,13 @@ public:
     _data.push_back(Pair(what, val));
   };
 
-  void setVal(const std::string &what, bool val) {
-    setPODVal(what, val);
-  }
+  void setVal(const std::string &what, bool val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, double val) {
-    setPODVal(what, val);
-  }
+  void setVal(const std::string &what, double val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, float val) {
-    setPODVal(what, val);
-  }
+  void setVal(const std::string &what, float val) { setPODVal(what, val); }
 
-  void setVal(const std::string &what, int val) {
-    setPODVal(what, val);
-  }
+  void setVal(const std::string &what, int val) { setPODVal(what, val); }
 
   void setVal(const std::string &what, unsigned int val) {
     setPODVal(what, val);
@@ -264,7 +253,7 @@ public:
         a KeyErrorException will be thrown.
   */
   void clearVal(const std::string &what) {
-    for(DataType::iterator it = _data.begin(); it < _data.end() ; ++it) {
+    for (DataType::iterator it = _data.begin(); it < _data.end(); ++it) {
       if (it->key == what) {
         if (_hasNonPodData) {
           RDValue::cleanup_rdvalue(it->val);
@@ -281,7 +270,7 @@ public:
   //!
   void reset() {
     if (_hasNonPodData) {
-      for (size_t i=0; i< _data.size(); ++i) {
+      for (size_t i = 0; i < _data.size(); ++i) {
         RDValue::cleanup_rdvalue(_data[i].val);
       }
     }
@@ -316,9 +305,9 @@ public:
   };
   */
  private:
-  DataType _data;  //!< the actual dictionary
-  bool     _hasNonPodData; // if true, need a deep copy
-                           //  (copy_rdvalue)
+  DataType _data;       //!< the actual dictionary
+  bool _hasNonPodData;  // if true, need a deep copy
+                        //  (copy_rdvalue)
 };
 }
 #endif

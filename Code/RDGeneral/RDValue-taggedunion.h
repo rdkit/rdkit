@@ -303,7 +303,7 @@ struct RDValue {
 //   copy act's like a move for better value semantics.
 //  Containers may need to copy though.
 inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
-  if (&dest == &src) // don't copy over yourself
+  if (&dest == &src)  // don't copy over yourself
     return;
   dest.destroy();
   dest.type = src.type;
