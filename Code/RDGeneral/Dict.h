@@ -39,6 +39,7 @@ public:
     RDValue val;
 
    Pair() : key(), val() {}
+   Pair(const std::string &s) : key(s), val() {}
    Pair(const std::string &s, const RDValue &v) : key(s), val(v) {
    }
   };
@@ -71,7 +72,9 @@ public:
       for (size_t i=0; i< other._data.size(); ++i) {
         const Pair & pair = other._data[i];
         if(!hasVal(pair.key)) {
-          _data.push_back(pair);
+
+          // need to create blank
+          _data.push_back(Pair(pair.key));
           copy_rdvalue(_data.back().val, pair.val);
         }
       }
