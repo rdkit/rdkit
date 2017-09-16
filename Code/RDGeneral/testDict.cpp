@@ -56,19 +56,16 @@ void testGithub940() {
 
 void testRDAny() {
   std::cerr << "Testing RDValue" << std::endl;
-  {
-    RDAny v(-2147450880);
-  }
-  
+  { RDAny v(-2147450880); }
+
   {
     int vi = 0;
     RDValue v(0);
-    for (int i=0; i<100; ++i) {
-        vi += i;
-        v = rdvalue_cast<int>(v) + i;
-        TEST_ASSERT(vi == rdvalue_cast<int>(v));
-      }
-               
+    for (int i = 0; i < 100; ++i) {
+      vi += i;
+      v = rdvalue_cast<int>(v) + i;
+      TEST_ASSERT(vi == rdvalue_cast<int>(v));
+    }
   }
   std::cerr << "Testing RDAny" << std::endl;
   {
@@ -77,8 +74,7 @@ void testRDAny() {
     TEST_ASSERT(rdany_cast<int>(a) == 1);
     TEST_ASSERT(rdany_cast<int>(b) == 1);
   }
-  
-  
+
   {
     RDAny a(1);
     RDAny b = a;
@@ -96,18 +92,18 @@ void testRDAny() {
     bool a = true;
     RDValue v(a);
     TEST_ASSERT(rdvalue_cast<bool>(v) == true);
-    v = (int) 10;
+    v = (int)10;
     TEST_ASSERT(rdvalue_cast<int>(v) == 10);
   }
-  
+
   {
     Dict d;
-    bool a=true;
+    bool a = true;
     d.setVal("foo", a);
     d.getVal<bool>("foo");
   }
 
-  { // tests computed props
+  {  // tests computed props
     STR_VECT computed;
     Dict d;
     d.setVal(RDKit::detail::computedPropName, computed);
@@ -119,13 +115,13 @@ void testRDAny() {
     computed2 = d2.getVal<STR_VECT>(RDKit::detail::computedPropName);
     TEST_ASSERT(computed2[0] == "foo");
   }
-  
+
   {
     Dict d;
-    //int v=1;
-    //d.setVal("foo", v);
-    //TEST_ASSERT(d.getVal<int>("foo") == 1, "bad getval");
-    
+    // int v=1;
+    // d.setVal("foo", v);
+    // TEST_ASSERT(d.getVal<int>("foo") == 1, "bad getval");
+
     std::vector<int> fooV;
     fooV.resize(3);
     fooV[0] = 1;
@@ -139,7 +135,7 @@ void testRDAny() {
       fooV2 = rdany_cast<std::vector<int> >(a);
       TEST_ASSERT(fooV == fooV2);
     }
-    
+
     {
       std::vector<int> fooV2;
       std::cerr << "dict set int vect" << std::endl;
@@ -149,38 +145,35 @@ void testRDAny() {
       TEST_ASSERT(fooV == fooV2);
     }
   }
-  
+
   {
     std::vector<int> v;
-    for(int i=0;i<4;++i)
-      v.push_back(i);
+    for (int i = 0; i < 4; ++i) v.push_back(i);
 
     RDAny foo(v);
     RDAny bar = foo;
     RDAny baz(foo);
-    
-    for(int i=0;i<4;++i) { 
+
+    for (int i = 0; i < 4; ++i) {
       TEST_ASSERT(rdany_cast<std::vector<int> >(foo)[i] == i);
       TEST_ASSERT(rdany_cast<std::vector<int> >(bar)[i] == i);
       TEST_ASSERT(rdany_cast<std::vector<int> >(baz)[i] == i);
     }
-    
   }
-  
+
   {
     std::vector<double> v;
-    for(double i=0;i<4;++i)
-      v.push_back(i);
+    for (double i = 0; i < 4; ++i) v.push_back(i);
 
     RDAny foo(v);
 
-    for(int i=0;i<4;++i) { 
+    for (int i = 0; i < 4; ++i) {
       TEST_ASSERT(rdany_cast<std::vector<double> >(foo)[i] == i);
     }
-    
+
     RDAny b = foo;
 
-    for(int i=0;i<4;++i) { 
+    for (int i = 0; i < 4; ++i) {
       TEST_ASSERT(rdany_cast<std::vector<double> >(b)[i] == i);
     }
   }
@@ -188,112 +181,120 @@ void testRDAny() {
   {
     std::clock_t clock1 = std::clock();
     boost::any v;
-    for(int i=0;i<loops;++i) {
+    for (int i = 0; i < loops; ++i) {
       v = i;
     }
     std::clock_t clock2 = std::clock();
 
-    std::cout << "static boost any:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "static boost any:"
+              << (double)(clock2 - clock1) / CLOCKS_PER_SEC << " s"
+              << std::endl;
   }
   {
     std::clock_t clock1 = std::clock();
-    boost::any *v=0, *vv;
-    for(int i=0;i<loops;++i) {
-      vv = new boost::any(v?boost::any_cast<int>(*v) + i: i);
+    boost::any *v = 0, *vv;
+    for (int i = 0; i < loops; ++i) {
+      vv = new boost::any(v ? boost::any_cast<int>(*v) + i : i);
       delete v;
       v = vv;
     }
     delete vv;
     std::clock_t clock2 = std::clock();
 
-    std::cout << "dynamic boost any:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "dynamic boost any:"
+              << (double)(clock2 - clock1) / CLOCKS_PER_SEC << " s"
+              << std::endl;
   }
 
   {
     std::clock_t clock1 = std::clock();
     RDAny v;
-    for(int i=0;i<loops;++i) {
+    for (int i = 0; i < loops; ++i) {
       v = i;
     }
     std::clock_t clock2 = std::clock();
 
-    std::cout << "static RDAny:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "static RDAny:" << (double)(clock2 - clock1) / CLOCKS_PER_SEC
+              << " s" << std::endl;
   }
 
   {
     std::clock_t clock1 = std::clock();
-    RDAny *v=0, *vv;
-    for(int i=0;i<loops;++i) {
-      vv = new RDAny(v ?rdany_cast<int>(*v) + i : i);
+    RDAny *v = 0, *vv;
+    for (int i = 0; i < loops; ++i) {
+      vv = new RDAny(v ? rdany_cast<int>(*v) + i : i);
       delete v;
       v = vv;
     }
     delete vv;
     std::clock_t clock2 = std::clock();
 
-    std::cout << "dynamic RDAny:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "dynamic RDAny:" << (double)(clock2 - clock1) / CLOCKS_PER_SEC
+              << " s" << std::endl;
   }
 
   {
     std::clock_t clock1 = std::clock();
     RDValue v;
-    for(int i=0;i<loops;++i) {
+    for (int i = 0; i < loops; ++i) {
       v = i;
     }
     std::clock_t clock2 = std::clock();
 
-    std::cout << "static RDValue:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "static RDValue:" << (double)(clock2 - clock1) / CLOCKS_PER_SEC
+              << " s" << std::endl;
   }
 
   {
     std::clock_t clock1 = std::clock();
     RDValue v(0);
-    for(int i=0;i<loops;++i) {
+    for (int i = 0; i < loops; ++i) {
       v = RDValue(rdvalue_cast<int>(v) + i);
     }
 
     std::clock_t clock2 = std::clock();
 
-    std::cout << "dynamic RDValue:" << (double)(clock2-clock1)/CLOCKS_PER_SEC << " s" << std::endl;
+    std::cout << "dynamic RDValue:"
+              << (double)(clock2 - clock1) / CLOCKS_PER_SEC << " s"
+              << std::endl;
   }
-  
-  { // checks replacement with vector
+
+  {  // checks replacement with vector
     RDAny vv(2.0);
     TEST_ASSERT(rdany_cast<double>(vv) == 2.0);
-    
-    
+
     std::vector<int> vect;
     vect.push_back(1);
     vv = vect;
     TEST_ASSERT(rdany_cast<std::vector<int> >(vv)[0] == 1);
-    
+
     // tests copy
     RDAny vvv(vv);
-    
-    TEST_ASSERT(rdany_cast<std::vector<int> >(vvv)[0] == 1);    
+
+    TEST_ASSERT(rdany_cast<std::vector<int> >(vvv)[0] == 1);
   }
 
   {
     // Checks fallback to Any
-    std::vector<std::pair<int,int> > pvect;
-    pvect.push_back(std::make_pair<int,int>(2,2));
+    std::vector<std::pair<int, int> > pvect;
+    pvect.push_back(std::make_pair<int, int>(2, 2));
     boost::any any1(pvect);
-    boost::any_cast<std::vector<std::pair<int,int> > >(any1);
-    boost::any_cast<std::vector<std::pair<int,int> > &>(any1);    
-    boost::any_cast<const std::vector<std::pair<int,int> > &>(any1);
-    
+    boost::any_cast<std::vector<std::pair<int, int> > >(any1);
+    boost::any_cast<std::vector<std::pair<int, int> > &>(any1);
+    boost::any_cast<const std::vector<std::pair<int, int> > &>(any1);
+
     RDAny vv(pvect);
-    boost::any &any = rdany_cast<boost::any&>(vv);
-    boost::any_cast<std::vector<std::pair<int,int> > >(any);
-    boost::any_cast<std::vector<std::pair<int,int> > &>(any);    
-    boost::any_cast<const std::vector<std::pair<int,int> > &>(any);
-    
-    const std::vector<std::pair<int,int> > &pv = rdany_cast<std::vector<std::pair<int, int> > >(vv);
+    boost::any &any = rdany_cast<boost::any &>(vv);
+    boost::any_cast<std::vector<std::pair<int, int> > >(any);
+    boost::any_cast<std::vector<std::pair<int, int> > &>(any);
+    boost::any_cast<const std::vector<std::pair<int, int> > &>(any);
+
+    const std::vector<std::pair<int, int> > &pv =
+        rdany_cast<std::vector<std::pair<int, int> > >(vv);
     TEST_ASSERT(pv[0].first == 2);
     RDAny vvv(vv);
-    TEST_ASSERT((rdany_cast<std::vector<std::pair<int, int> > >(vvv)[0].first ==
-                 2));
-    
+    TEST_ASSERT(
+        (rdany_cast<std::vector<std::pair<int, int> > >(vvv)[0].first == 2));
   }
 
   {
@@ -309,16 +310,16 @@ void testRDAny() {
 #endif
     } catch (boost::bad_any_cast &e) {
     }
-    
+
     TEST_ASSERT((*rdany_cast<std::vector<int> *>(vv))[0] == 100);
-    TEST_ASSERT((*rdany_cast<std::vector<int> *>((const RDAny&)vv))[0] == 100);
+    TEST_ASSERT((*rdany_cast<std::vector<int> *>((const RDAny &)vv))[0] == 100);
     delete p;
 
-    std::map<int,int> *m = new std::map<int,int>();
+    std::map<int, int> *m = new std::map<int, int>();
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks
-    std::map<int,int> *anym = rdany_cast<std::map<int,int> *>(mv);
+    std::map<int, int> *anym = rdany_cast<std::map<int, int> *>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
     delete anym;
   }
@@ -330,23 +331,22 @@ void testRDAny() {
     p->push_back(100);
     RDAny v(p);
     RDAny vv(v);
-    TEST_ASSERT((*rdany_cast<vptr>(v))[0] == 100);    
+    TEST_ASSERT((*rdany_cast<vptr>(v))[0] == 100);
     TEST_ASSERT((*rdany_cast<vptr>(vv))[0] == 100);
-    TEST_ASSERT((*rdany_cast<vptr>((const RDAny&)vv))[0] == 100);
+    TEST_ASSERT((*rdany_cast<vptr>((const RDAny &)vv))[0] == 100);
 
-    typedef boost::shared_ptr<std::map<int,int> > mptr;
-    mptr m(new std::map<int,int>());
+    typedef boost::shared_ptr<std::map<int, int> > mptr;
+    mptr m(new std::map<int, int>());
     (*m)[0] = 1;
     RDAny mv(m);
     // leaks
     mptr anym = rdany_cast<mptr>(mv);
     TEST_ASSERT(anym->find(0) != anym->end());
 
-    RDAny any3(boost::shared_ptr<Foo>( new Foo ));
+    RDAny any3(boost::shared_ptr<Foo>(new Foo));
     TEST_ASSERT(any3.m_value.getTag() == RDTypeTag::AnyTag);
   }
 }
-
 
 class DictCon {
  public:
@@ -439,7 +439,7 @@ void testVectToString() {
     std::cerr << sv << std::endl;
     TEST_ASSERT(sv == "[10001,0,]");
   }
-  
+
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -472,19 +472,19 @@ void testConstReturns() {
     d.setVal("foo",v);
 
     double ls=0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;    
+    BOOST_LOG(rdErrorLog) << "copy" << std::endl;
     for(int i=0;i<100000000;++i){
       std::string nv=d.getVal<std::string>("foo");
       ls+= nv.size();
     }
     BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
     ls=0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;    
+    BOOST_LOG(rdErrorLog) << "ref" << std::endl;
     for(int i=0;i<100000000;++i){
       const std::string &nv=d.getVal<std::string>("foo");
       ls+= nv.size();
     }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;    
+    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
     //std::string nv=d.getVal<std::string>("foo");
   }
 #else
@@ -584,34 +584,16 @@ void testUpdate() {
     f.push_back(1);
     f.push_back(2);
     d.setVal("foo3", f);
-    
+
     Dict d2;
     d2.update(d);
     TEST_ASSERT(d.getVal<std::string>("foo") == d2.getVal<std::string>("foo"));
     TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
-    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
-  }
-  
-  {
-    Dict d;
-    std::string sv;
-    sv = "1.3";
-    d.setVal("foo", sv);
-    double dv = 3.0;
-    d.setVal("foo2", dv);
-    std::vector<int> f;
-    f.push_back(1);
-    f.push_back(2);
-    d.setVal("foo3", f);
-    
-    Dict d2;
-    d2.update(d, false);
-    TEST_ASSERT(d.getVal<std::string>("foo") == d2.getVal<std::string>("foo"));
-    TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
-    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
+    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") ==
+                d2.getVal<std::vector<int> >("foo3"));
   }
 
-  {
+  {  // a few tests to make sure copying/updating with nonPOD data is ok
     Dict d;
     std::string sv;
     sv = "1.3";
@@ -622,26 +604,41 @@ void testUpdate() {
     f.push_back(1);
     f.push_back(2);
     d.setVal("foo3", f);
-    
-    Dict d2;
-    d2.setVal("foo", 1);
-    d2.update(d, true);
-    TEST_ASSERT(1 == d2.getVal<int>("foo"));
-    TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
-    TEST_ASSERT(d.getVal<std::vector<int> >("foo3") == d2.getVal<std::vector<int> >("foo3"));
+    {
+      Dict d2;
+      d2.setVal("foo", 1);
+      d2.update(d, true);
+      TEST_ASSERT(d2.getVal<std::string>("foo") == "1.3");
+      TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+      TEST_ASSERT(d.getVal<std::vector<int> >("foo3") ==
+                  d2.getVal<std::vector<int> >("foo3"));
+    }
+
+    {
+      Dict d2 = d;
+      d2.setVal("foo", 1);
+      TEST_ASSERT(1 == d2.getVal<int>("foo"));
+      TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+      TEST_ASSERT(d.getVal<std::vector<int> >("foo3") ==
+                  d2.getVal<std::vector<int> >("foo3"));
+    }
+
+    {
+      Dict d2(d);
+      TEST_ASSERT(d.getVal<double>("foo2") == d2.getVal<double>("foo2"));
+      TEST_ASSERT(d.getVal<std::vector<int> >("foo3") ==
+                  d2.getVal<std::vector<int> >("foo3"));
+    }
   }
-  
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-  
 }
 
 int main() {
   RDLog::InitLogs();
   testGithub940();
-  testRDAny();
-    testRDAny();
 
 #if 1
+  testRDAny();
   Dict d;
   INT_VECT fooV;
   fooV.resize(3);
