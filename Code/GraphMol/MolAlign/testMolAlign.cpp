@@ -66,6 +66,23 @@ void test1MolAlign() {
   delete m3;
 }
 
+void test1GetBestRMS() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+    rdbase + "/Code/GraphMol/MolAlign/test_data/probe_mol.sdf";
+  SDMolSupplier supplier(fname, true, false);
+  ROMol *m1 = supplier[1];
+  ROMol *m2 = supplier[2];
+
+  // alignMol() would return this for the rms: 2.50561
+  // But the best rms is: 2.43449
+  double rmsd = MolAlign::getBestRMS(*m1, *m2);
+
+  TEST_ASSERT(RDKit::feq(rmsd, 2.43449));
+  delete m1;
+  delete m2;
+}
+
 void test1MolWithQueryAlign() {
   // identical to test1MolAlign except we replace one atom with a QueryAtom instead
 
@@ -88,7 +105,7 @@ void test1MolWithQueryAlign() {
 
   std::string fname3 =
       rdbase + "/Code/GraphMol/MolAlign/test_data/1oir_trans.mol";
-  
+
   RWMol *m3 = new RWMol(*MolFileToMol(fname3));
   m3->replaceAtom(0, new QueryAtom(5));
 
@@ -114,7 +131,7 @@ void test1MolWithQueryAlign() {
   // provide an atom mapping
   delete m1;
   delete m2;
-  delete m3;  
+  delete m3;
 
 }
 
@@ -883,6 +900,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1GetBestRMS \n\n";
+  test1GetBestRMS();
 
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolWithQueryAlign \n\n";

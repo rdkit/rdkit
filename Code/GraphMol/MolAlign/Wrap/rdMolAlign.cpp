@@ -47,6 +47,17 @@ MatchVectType *_translateAtomMap(python::object atomMap) {
   return aMap;
 }
 
+std::vector<MatchVectType> _translateAtomMapVector(python::object atomMapVec) {
+  std::vector<MatchVectType> aMapVec;
+  PySequenceHolder<python::object> aMapVecSeq(atomMapVec);
+  for (size_t i = 0; i < aMapVecSeq.size(); ++i) {
+    MatchVectType* aMap = _translateAtomMap(aMapVecSeq[i]);
+    aMapVec.push_back(*aMap);
+    delete aMap;
+  }
+  return aMapVec;
+}
+
 RDNumeric::DoubleVector *_translateWeights(python::object weights) {
   PySequenceHolder<double> wts(weights);
   unsigned int nwts = wts.size();
@@ -193,6 +204,21 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   }
   if (wtsVec) {
     delete wtsVec;
+  }
+  return rmsd;
+}
+
+double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId,
+                  int refId, python::object map, int maxMatches) {
+  std::vector<MatchVectType> aMapVec;
+  if (map != python::object())
+    aMapVec = _translateAtomMapVector(map);
+
+  double rmsd;
+  {
+    NOGIL gil;
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId,
+                                aMapVec, maxMatches);
   }
   return rmsd;
 }
@@ -635,6 +661,39 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("weights") = python::list(), python::arg("reflect") = false,
        python::arg("maxIters") = 50),
       docString.c_str());
+
+  docString =
+      "Returns the optimal RMS for aligning two molecules, taking\n\
+       symmetry into account. As a side-effect, the probe molecule is\n\
+       left in the aligned state.\n\
+      \n\
+       Note:\n\
+       This function will attempt to align all permutations of matching atom\n\
+       orders in both molecules, for some molecules it will lead to\n\
+       'combinatorial explosion' especially if hydrogens are present.\n\
+       Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing\n\
+       the atom order.\n\
+      \n\
+       ARGUMENTS\n\
+        - prbMol:      the molecule to be aligned to the reference\n\
+        - refMol:      the reference molecule\n\
+        - prbId:       (optional) probe conformation to use\n\
+        - refId:       (optional) reference conformation to use\n\
+        - map:         (optional) a list of lists of (probeAtomId,refAtomId)\n\
+                       tuples with the atom-atom mappings of the two\n\
+                       molecules. If not provided, these will be generated\n\
+                       using a substructure search.\n\
+        - maxMatches:  (optional) if map isn't specified, this will be\n\
+                       the max number of matches found in a SubstructMatch()\n\
+       \n\
+      RETURNS\n\
+      The best RMSD found\n\
+    \n";
+  python::def(
+      "GetBestRMS", RDKit::GetBestRMS,
+      (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
+       python::arg("refId") = -1, python::arg("map") = python::object(),
+       python::arg("maxMatches") = 1000000), docString.c_str());
 
   docString =
       "Alignment conformations in a molecule to each other\n\
