@@ -35,7 +35,6 @@
 //
 
 #include "FileParsers.h"
-#include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/StreamOps.h>
@@ -205,7 +204,8 @@ void guessFormalCharges(RWMol *res) {
         res->getProp(common_properties::_Name, nm);
         BOOST_LOG(rdWarningLog)
             << nm << ": warning - aromatic N with 3 aromatic bonds - "
-                     "skipping charge guess for this atom" << std::endl;
+                     "skipping charge guess for this atom"
+            << std::endl;
         continue;
       }
 
@@ -736,7 +736,8 @@ void ParseMol2AtomBlock(std::istream *inStream, RWMol *res, unsigned int nAtoms,
     res->getProp(common_properties::_Name, nm);
     BOOST_LOG(rdWarningLog) << nm << ": Warning - no explicit hydrogens in "
                                      "mol2 file but needed for formal charge "
-                                     "estimation." << std::endl;
+                                     "estimation."
+                            << std::endl;
   }
   // create conformer based on 3DPoints and add to RWMol
   Conformer *conf = new Conformer(nAtoms - nLP);
@@ -959,11 +960,10 @@ RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
         MolOps::sanitizeMol(*res);
       }
 
-      // call DetectBondStereoChemistry after sanitization "because we need
+      // call detectBondStereochemistry after sanitization "because we need
       // the ring information".  Also this will set the E/Z labels on the bond.
       // Similar in spirit to what happens in MolFileParser
-      const Conformer &conf = res->getConformer();
-      DetectBondStereoChemistry(*res, &conf);
+      MolOps::detectBondStereochemistry(*res);
 
     } catch (MolSanitizeException &se) {
       BOOST_LOG(rdWarningLog) << "sanitise ";

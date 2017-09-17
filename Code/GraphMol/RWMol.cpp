@@ -131,7 +131,7 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
                         bool preserveProps) {
   RDUNUSED_PARAM(updateLabel);
   PRECONDITION(atom_pin, "bad atom passed to replaceAtom");
-  URANGE_CHECK(idx, getNumAtoms() - 1);
+  URANGE_CHECK(idx, getNumAtoms());
   Atom *atom_p = atom_pin->copy();
   atom_p->setOwningMol(this);
   atom_p->setIdx(idx);
@@ -146,7 +146,7 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
 
 void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   PRECONDITION(bond_pin, "bad bond passed to replaceBond");
-  URANGE_CHECK(idx, getNumBonds() - 1);
+  URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
   BOND_SPTR obond = d_graph[*(bIter.first)];
@@ -271,8 +271,8 @@ void RWMol::removeAtom(Atom *atom) {
 
 unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
                             Bond::BondType bondType) {
-  URANGE_CHECK(atomIdx1, getNumAtoms() - 1);
-  URANGE_CHECK(atomIdx2, getNumAtoms() - 1);
+  URANGE_CHECK(atomIdx1, getNumAtoms());
+  URANGE_CHECK(atomIdx2, getNumAtoms());
   PRECONDITION(atomIdx1 != atomIdx2, "attempt to add self-bond");
   PRECONDITION(!(boost::edge(atomIdx1, atomIdx2, d_graph).second),
                "bond already exists");
@@ -322,8 +322,8 @@ unsigned int RWMol::addBond(Atom::ATOM_SPTR atom1, Atom::ATOM_SPTR atom2,
 }
 
 void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
-  URANGE_CHECK(aid1, getNumAtoms() - 1);
-  URANGE_CHECK(aid2, getNumAtoms() - 1);
+  URANGE_CHECK(aid1, getNumAtoms());
+  URANGE_CHECK(aid2, getNumAtoms());
   Bond *bnd = getBondBetweenAtoms(aid1, aid2);
   if (!bnd) return;
   unsigned int idx = bnd->getIdx();
@@ -388,7 +388,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
 }
 
 Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {
-  URANGE_CHECK(atomIdx1, getNumAtoms() - 1);
+  URANGE_CHECK(atomIdx1, getNumAtoms());
 
   Bond *b = new Bond(bondType);
   b->setOwningMol(this);
@@ -399,7 +399,7 @@ Bond *RWMol::createPartialBond(unsigned int atomIdx1, Bond::BondType bondType) {
 unsigned int RWMol::finishPartialBond(unsigned int atomIdx2, int bondBookmark,
                                       Bond::BondType bondType) {
   PRECONDITION(hasBondBookmark(bondBookmark), "no such partial bond");
-  URANGE_CHECK(atomIdx2, getNumAtoms() - 1);
+  URANGE_CHECK(atomIdx2, getNumAtoms());
 
   Bond *bsp = getBondWithBookmark(bondBookmark);
   if (bondType == Bond::UNSPECIFIED) {

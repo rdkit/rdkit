@@ -27,7 +27,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 namespace {
-void pyDictToColourMap(python::object pyo, std::map<int, DrawColour> &res) {
+void pyDictToColourMap(python::object pyo, ColourPalette &res) {
   python::dict tDict = python::extract<python::dict>(pyo);
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(tDict.keys().attr("__len__")()); ++i) {
@@ -39,10 +39,10 @@ void pyDictToColourMap(python::object pyo, std::map<int, DrawColour> &res) {
     res[python::extract<int>(tDict.keys()[i])] = clr;
   }
 }
-std::map<int, DrawColour> *pyDictToColourMap(python::object pyo) {
-  std::map<int, DrawColour> *res = NULL;
+ColourPalette *pyDictToColourMap(python::object pyo) {
+  ColourPalette *res = NULL;
   if (pyo) {
-    res = new std::map<int, DrawColour>;
+    res = new ColourPalette;
     pyDictToColourMap(pyo, *res);
   }
   return res;
@@ -98,7 +98,7 @@ void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          std::string legend) {
   rdk_auto_ptr<std::vector<int> > highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
-  std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
+  ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
   self.drawMolecule(mol, legend, highlightAtoms.get(), ham, har, confId);
@@ -118,8 +118,8 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   rdk_auto_ptr<std::vector<int> > highlightBonds =
       pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
   // FIX: support these
-  std::map<int, DrawColour> *ham = pyDictToColourMap(highlight_atom_map);
-  std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
+  ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
+  ColourPalette *hbm = pyDictToColourMap(highlight_bond_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
 
   self.drawMolecule(mol, legend, highlightAtoms.get(), highlightBonds.get(),
@@ -165,7 +165,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     }
   }
 
-  rdk_auto_ptr<std::vector<std::map<int, DrawColour> > > highlightAtomMap;
+  rdk_auto_ptr<std::vector<ColourPalette> > highlightAtomMap;
   if (highlight_atom_map) {
     if (python::extract<unsigned int>(highlight_atom_map.attr("__len__")()) !=
         nThere) {
@@ -173,12 +173,12 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
           "If highlightAtomMap is provided it must be the same length as the "
           "molecule list.");
     }
-    highlightAtomMap.reset(new std::vector<std::map<int, DrawColour> >(nThere));
+    highlightAtomMap.reset(new std::vector<ColourPalette>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
       pyDictToColourMap(highlight_atom_map[i], (*highlightAtomMap)[i]);
     }
   }
-  rdk_auto_ptr<std::vector<std::map<int, DrawColour> > > highlightBondMap;
+  rdk_auto_ptr<std::vector<ColourPalette> > highlightBondMap;
   if (highlight_bond_map) {
     if (python::extract<unsigned int>(highlight_bond_map.attr("__len__")()) !=
         nThere) {
@@ -186,7 +186,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
           "If highlightBondMap is provided it must be the same length as the "
           "molecule list.");
     }
-    highlightBondMap.reset(new std::vector<std::map<int, DrawColour> >(nThere));
+    highlightBondMap.reset(new std::vector<ColourPalette>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
       pyDictToColourMap(highlight_bond_map[i], (*highlightBondMap)[i]);
     }
@@ -278,6 +278,19 @@ void setBgColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
 void setHighlightColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
 }
+void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
+  assignDefaultPalette(self.atomColourPalette);
+}
+void useBWAtomPalette(RDKit::MolDrawOptions &self) {
+  assignBWPalette(self.atomColourPalette);
+}
+void updateAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
+  pyDictToColourMap(cmap, self.atomColourPalette);
+}
+void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
+  self.atomColourPalette.clear();
+  updateAtomPalette(self, cmap);
+}
 }
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -305,6 +318,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "method for setting the background colour")
       .def("setHighlightColour", &RDKit::setHighlightColour,
            "method for setting the highlight colour")
+      .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
+           "use the default colour palette for atoms and bonds")
+      .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
+           "use the black & white palette for atoms and bonds")
+      .def("updateAtomPalette", &RDKit::updateAtomPalette,
+           "updates the palette for atoms and bonds from a dictionary mapping "
+           "ints to 3-tuples")
+      .def(
+          "setAtomPalette", &RDKit::setAtomPalette,
+          "sets the palette for atoms and bonds from a dictionary mapping ints "
+          "to 3-tuples")
       .def_readwrite("atomLabels", &RDKit::MolDrawOptions::atomLabels,
                      "maps indices to atom labels")
       .def_readwrite("atomLabelDeuteriumTritium",

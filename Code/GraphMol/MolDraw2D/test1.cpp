@@ -2013,6 +2013,44 @@ void testGithub565() {
   std::cerr << " Done" << std::endl;
 }
 
+void test14BWPalette() {
+  std::cout << " ----------------- Testing use of a black & white palette"
+            << std::endl;
+  {
+    std::string smiles = "CNC(Cl)C(=O)O";
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {  // start with color
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") != std::string::npos);
+
+      std::ofstream outs("test14_1.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // now B&W
+      MolDraw2DSVG drawer(200, 200);
+      assignBWPalette(drawer.drawOptions().atomColourPalette);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") == std::string::npos);
+
+      std::ofstream outs("test14_2.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -2046,4 +2084,5 @@ int main() {
   testGithub1271();
   testGithub1322();
   testGithub565();
+  test14BWPalette();
 }

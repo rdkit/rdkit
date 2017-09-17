@@ -1,8 +1,5 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
-# $Id$
 #
-#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2017  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -13,7 +10,7 @@
 """ A module for molecules and stuff
 
  see Chem/index.html in the doc tree for documentation
- 
+
 """
 from rdkit import rdBase
 from rdkit import RDConfig
@@ -72,7 +69,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False):
     >>> mol = Chem.MolFromSmiles('[C@@H](Cl)(F)Br')
     >>> FindMolChiralCenters(mol)
     [(0, 'S')]
-  
+
     >>> FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
     []
 
@@ -90,7 +87,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False):
     [(2, '?'), (6, '?')]
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1C[C@H](C)C(C)[C@H](C)C1'),includeUnassigned=True)
     [(2, 'S'), (4, '?'), (6, 'R')]
-    
+
   """
   AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
   centers = []

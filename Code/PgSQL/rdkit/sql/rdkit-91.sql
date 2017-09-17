@@ -322,3 +322,6 @@ select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adju
 select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS"}');
 select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"IGNORERINGS|IGNORECHAINS"}');
 select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"bogus"}');
+select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
+select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegree":false}');
+select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegree":false,"adjustHeavyDegree":true}');

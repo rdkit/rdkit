@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015 Greg Landrum
+//  Copyright (c) 2015-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -78,7 +78,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             ringInfo->numBondRings(i))) {
         QueryBond *qb = new QueryBond();
         qb->setQuery(makeBondNullQuery());
-        const bool preserveProps = true;        
+        const bool preserveProps = true;
         mol.replaceBond(i, qb, preserveProps);
         delete qb;
       }
@@ -109,7 +109,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);
-        const bool updateLabel = false;        
+        const bool updateLabel = false;
         const bool preserveProps = true;
         mol.replaceAtom(i, qa, updateLabel, preserveProps);
         delete qa;
@@ -118,24 +118,40 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       } else {
         qa = static_cast<QueryAtom *>(at);
       }
-      if (params.adjustDegree == 2) {
-        ATOM_EQUALS_QUERY *tmp = new ATOM_EQUALS_QUERY;
-        tmp->setVal(qa->getTotalDegree() - qa->getTotalNumHs(true));
-        tmp->setDataFunc(queryAtomHeavyAtomDegree);
-        tmp->setDescription("queryAtomHeavyDegree");
-        qa->expandQuery(tmp);
-      } else {
-        qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
-      }
+      qa->expandQuery(makeAtomExplicitDegreeQuery(qa->getDegree()));
     }  // end of adjust degree
+    if (params.adjustHeavyDegree &&
+        !((params.adjustHeavyDegreeFlags & ADJUST_IGNORECHAINS) && !nRings) &&
+        !((params.adjustHeavyDegreeFlags & ADJUST_IGNORERINGS) && nRings) &&
+        !((params.adjustHeavyDegreeFlags & ADJUST_IGNOREDUMMIES) &&
+          !atomicNum) &&
+        !((params.adjustHeavyDegreeFlags & ADJUST_IGNORENONDUMMIES) &&
+          atomicNum) &&
+        !((params.adjustHeavyDegreeFlags & ADJUST_IGNOREMAPPED) &&
+          isMapped(at))) {
+      QueryAtom *qa;
+      if (!at->hasQuery()) {
+        qa = new QueryAtom(*at);
+        const bool updateLabel = false;
+        const bool preserveProps = true;
+        mol.replaceAtom(i, qa, updateLabel, preserveProps);
+        delete qa;
+        qa = static_cast<QueryAtom *>(mol.getAtomWithIdx(i));
+        at = static_cast<Atom *>(qa);
+      } else {
+        qa = static_cast<QueryAtom *>(at);
+      }
+      qa->expandQuery(makeAtomHeavyAtomDegreeQuery(qa->getTotalDegree() -
+                                                   qa->getTotalNumHs(true)));
+    }  // end of adjust heavy degree
     if (params.adjustRingCount &&
         !((params.adjustRingCountFlags & ADJUST_IGNORECHAINS) && !nRings) &&
         !((params.adjustRingCountFlags & ADJUST_IGNORERINGS) && nRings) &&
         !((params.adjustRingCountFlags & ADJUST_IGNOREDUMMIES) && !atomicNum) &&
         !((params.adjustRingCountFlags & ADJUST_IGNORENONDUMMIES) &&
-          !((params.adjustRingCountFlags & ADJUST_IGNOREMAPPED) &&
-            isMapped(at)) &&
-          atomicNum)) {
+          atomicNum) &&
+        !((params.adjustRingCountFlags & ADJUST_IGNOREMAPPED) &&
+          isMapped(at))) {
       QueryAtom *qa;
       if (!at->hasQuery()) {
         qa = new QueryAtom(*at);

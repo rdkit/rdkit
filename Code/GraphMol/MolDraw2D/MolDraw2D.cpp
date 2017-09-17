@@ -1069,46 +1069,19 @@ DrawColour MolDraw2D::getColour(
 
 // ****************************************************************************
 DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
-  // RGB values taken from Qt's QColor. The seem to work pretty well on my
-  // machine. Using them as fractions of 255, as that's the way Cairo does it.
-  DrawColour res(0., 0., 0.);  // default to black
-
-  switch (atomic_num) {
-    case 0:
-      res = DrawColour(0.5, 0.5, 0.5);
-      break;
-    case 1:  // Hs and Carbons are the same colour
-    case 6:
-      res = DrawColour(0.0, 0.0, 0.0);
-      break;
-    case 7:
-      res = DrawColour(0.0, 0.0, 1.0);
-      break;
-    case 8:
-      res = DrawColour(1.0, 0.0, 0.0);
-      break;
-    case 9:
-      res = DrawColour(0.2, 0.8, 0.8);
-      break;
-    case 15:
-      res = DrawColour(1.0, 0.5, 0.0);
-      break;
-    case 16:
-      res = DrawColour(0.8, 0.8, 0.0);
-      break;
-    case 17:
-      res = DrawColour(0.0, 0.802, 0.0);
-      break;
-    case 35:
-      res = DrawColour(0.5, 0.3, 0.1);
-      break;
-    case 53:
-      res = DrawColour(0.63, 0.12, 0.94);
-      break;
-    default:
-      break;
+  DrawColour res;
+  if (drawOptions().atomColourPalette.find(atomic_num) !=
+      drawOptions().atomColourPalette.end()) {
+    res = drawOptions().atomColourPalette[atomic_num];
+  } else if (atomic_num != -1 &&
+             drawOptions().atomColourPalette.find(-1) !=
+                 drawOptions().atomColourPalette.end()) {
+    // if -1 is in the palette, we use that for undefined colors
+    res = drawOptions().atomColourPalette[-1];
+  } else {
+    // if all else fails, default to black:
+    res = DrawColour(0, 0, 0);
   }
-
   return res;
 }
 

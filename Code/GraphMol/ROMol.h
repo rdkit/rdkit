@@ -42,11 +42,8 @@ typedef boost::shared_ptr<Atom> ATOM_SPTR;
 typedef boost::shared_ptr<Bond> BOND_SPTR;
 
 //! This is the BGL type used to store the topology:
-typedef boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::undirectedS,
-    ATOM_SPTR, BOND_SPTR>
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
+                              ATOM_SPTR, BOND_SPTR>
     MolGraph;
 class MolPickler;
 class RWMol;
@@ -191,7 +188,8 @@ class ROMol : public RDProps {
     only
          the specified conformer from \c other.
   */
-  ROMol(const ROMol &other, bool quickCopy = false, int confId = -1) : RDProps() {
+  ROMol(const ROMol &other, bool quickCopy = false, int confId = -1)
+      : RDProps() {
     dp_ringInfo = 0;
     initFromOther(other, quickCopy, confId);
     numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
@@ -596,12 +594,10 @@ class ROMol : public RDProps {
   ROMol &operator=(
       const ROMol &);  // disable assignment, RWMol's support assignment
 
-protected:
-  unsigned int numBonds;  
+ protected:
+  unsigned int numBonds;
 #ifndef WIN32
-private:
-
-
+ private:
 #endif
   void initMol();
   virtual void destroy();

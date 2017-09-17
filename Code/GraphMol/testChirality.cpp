@@ -21,6 +21,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 
 #include <iostream>
 
@@ -2373,6 +2374,62 @@ void testGithub1423() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+namespace {
+void stereochemTester(RWMol *m, std::string expectedCIP,
+                      Bond::BondStereo expectedStereo) {
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 9)
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+  // the mol file parser assigned bond dirs, get rid of them
+  for (ROMol::BondIterator bIt = m->beginBonds(); bIt != m->endBonds(); ++bIt) {
+    (*bIt)->setBondDir(Bond::NONE);
+  }
+  MolOps::assignStereochemistryFrom3D(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                  common_properties::_CIPCode) == expectedCIP);
+  TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == expectedStereo);
+}
+}
+void testAssignStereochemistryFrom3D() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing assignStereochemistryFrom3D" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  {
+    SDMolSupplier suppl(pathName + "stereochem.sdf", false);  // don't sanitize
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-Z");
+      stereochemTester(m, "R", Bond::STEREOZ);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-E");
+      stereochemTester(m, "R", Bond::STEREOE);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-Z");
+      stereochemTester(m, "S", Bond::STEREOZ);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-E");
+      stereochemTester(m, "S", Bond::STEREOE);
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2400,5 +2457,6 @@ int main() {
   testGithub1294();
 #endif
   testGithub1423();
+  testAssignStereochemistryFrom3D();
   return 0;
 }

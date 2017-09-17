@@ -39,7 +39,7 @@
 #include <math.h>
 
 #include <RDGeneral/Exceptions.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <RDBoost/Wrap.h>
@@ -77,7 +77,7 @@ class RGroupDecompositionHelper {
   int Add(const ROMol &mol) { return decomp->add(mol); }
   bool Process() { return decomp->process(); }
 
-  python::list GetRGroupsAsRows() {
+  python::list GetRGroupsAsRows(bool asSmiles=false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
 
@@ -87,14 +87,18 @@ class RGroupDecompositionHelper {
       const RGroupRow &side_chains = *(it);
       for (RGroupRow::const_iterator sit = side_chains.begin();
            sit != side_chains.end(); ++sit) {
-        dict[sit->first] = sit->second;
+        if (asSmiles) {
+          dict[sit->first] = MolToSmiles(*sit->second, true);
+        } else {
+          dict[sit->first] = sit->second;
+        }
       }
       result.append(dict);
     }
     return result;
   }
 
-  python::dict GetRGroupsAsColumn() {
+  python::dict GetRGroupsAsColumn(bool asSmiles=false) {
     python::dict result;
 
     RGroupColumns groups = decomp->getRGroupsAsColumns();
@@ -105,13 +109,48 @@ class RGroupDecompositionHelper {
 
       for (RGroupColumn::const_iterator cit = it->second.begin();
            cit != it->second.end(); ++cit) {
-        col.append(*cit);
+        if (asSmiles) {
+          col.append(MolToSmiles(**cit,true));
+        } else {
+          col.append(*cit);
+        }
       }
       result[it->first] = col;
     }
     return result;
   }
+
+  
 };
+
+python::object RGroupDecomp(python::object cores,
+                            python::object mols,
+                            bool asSmiles = false,
+                            bool asRows = true,
+                            const RGroupDecompositionParameters &options = RGroupDecompositionParameters()
+                            ) {
+  RGroupDecompositionHelper decomp(cores, options);
+  python::list unmatched;
+
+  python::stl_input_iterator<ROMOL_SPTR> iter(mols), end;
+  unsigned int idx=0;
+  while (iter != end) {
+    if (!*iter) throw_value_error("reaction called with None reactants");
+    if(decomp.Add(*(*iter)) == -1) {
+      unmatched.append(idx);
+    }
+    ++iter;
+    ++idx;
+  }
+
+  decomp.Process();
+  if ( asRows ) {
+    return make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched);
+  } else {
+    return make_tuple(decomp.GetRGroupsAsColumn(asSmiles), unmatched);
+  }
+}
+
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
@@ -144,43 +183,107 @@ struct rgroupdecomp_wrapper {
         .value("MCS", RDKit::MCS)
         .export_values();
 
+    docString = "RGroupDecompositionParameters controls how the RGroupDecomposition sets labelling and matches structures\n"
+        "  OPTIONS:\n"
+        "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None or RGroupCoreAlignment.MCS\n"
+        "                           If set to MCS, cores labels are mapped to each other using their\n"
+        "                           Maximum common substructure overlap.\n"
+        "    - RGroupLabels: optionally set where the rgroup labels to use are encoded.\n"
+        "                     RroupLabels.IsotopeLabels - labels are stored on isotopes\n"
+        "                     RroupLabels.AtomMapLabels - labels are stored on atommaps\n"
+        "                     RroupLabels.AtomIndexLabels - use the atom index as the label\n"
+        "                     RGroupLabels.RelabelDuplicateLabels - fix any duplicate labels\n"
+        "                     RGroupLabels.AutoDetect - auto detect the label [default]\n"
+        "       Note: in all cases, any rgroups found on unlabelled atoms will be automatically\n"
+        "              labelled.\n"
+        "    - RGroupLabelling: choose where the rlabels are stored on the decomposition\n"
+        "                        RGroupLabels.AtomMap - store rgroups as atom maps (for smiles)\n"
+        "                        RGroupLabels.Isotope - stroe rgroups on the isotope\n"
+        "                        RGroupLabels.MDLRGroup - store rgroups as mdl rgroups (for molblocks)\n"
+        "                       default: AtomMap | MDLRGroup\n"
+        "    - matchOnlyAtRGroups: only allow rgroup decomposition at the specified rgroups\n"
+        "    - setRemoveRGroupsThatAreAllHydrogen: remove all rgroups that only have hydrogens\n"
+        "    - removeHydrogensPostMatch: remove all hydrogens from the output molecules\n";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
         python::init<>("Constructor, takes no arguments"))
 
         .def(python::init<RGroupLabels, RGroupMatching, RGroupLabelling,
                           RGroupCoreAlignment, unsigned int, bool, bool>())
-        .def("SetRGroupLabels",
-             &RDKit::RGroupDecompositionParameters::SetRGroupLabels)
-        .def("GetRGroupLabels",
-             &RDKit::RGroupDecompositionParameters::GetRGroupLabels)
-        .def("SetRGroupLabelling",
-             &RDKit::RGroupDecompositionParameters::SetRGroupLabelling)
-        .def("GetRGroupLabelling",
-             &RDKit::RGroupDecompositionParameters::GetRGroupLabelling)
-        .def("SetRGroupMatching",
-             &RDKit::RGroupDecompositionParameters::SetRGroupMatching)
-        .def("GetRGroupMatching",
-             &RDKit::RGroupDecompositionParameters::GetRGroupMatching)
-        .def("SetRGroupCoreAlignment",
-             &RDKit::RGroupDecompositionParameters::SetRGroupCoreAlignment)
-        .def("GetRGroupCoreAlignment",
-             &RDKit::RGroupDecompositionParameters::GetRGroupCoreAlignment)
-
-        ;
+        .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
+        .def_readwrite("matchingStrategy",
+                       &RDKit::RGroupDecompositionParameters::matchingStrategy)
+        .def_readwrite("rgroupLabelling",
+                       &RDKit::RGroupDecompositionParameters::rgroupLabelling)
+        .def_readwrite("alignment",
+                       &RDKit::RGroupDecompositionParameters::alignment)
+        .def_readwrite("chunkSize",
+                       &RDKit::RGroupDecompositionParameters::chunkSize)
+        .def_readwrite(
+            "onlyMatchAtRGroups",
+            &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
+        .def_readwrite(
+            "removeAllHydrogenRGroups",
+            &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
+        .def_readwrite(
+            "removeHydrogensPostMatch",
+            &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
         python::init<python::object>(
             "Construct from a molecule or sequence of molecules"))
+        .def(
+            python::init<python::object, const RGroupDecompositionParameters &>(
+                "Construct from a molecule or sequence of molecules and a "
+                "parameters object"))
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
              "GetRGroupsAsRows/Columns)")
-        .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows)
+        .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows,
+             python::arg("asSmiles")=false,
+             "Return the rgroups as rows (note: can be fed directrly into a pandas datatable)\n"
+             "  ARGUMENTS:\n"
+             "   - asSmiles: if True return smiles strings, otherwise return molecules [default: False]\n"
+             "    Row structure:\n"
+             "       rows[idx] = {rgroup_label: molecule_or_smiles}\n"
+             )
         .def("GetRGroupsAsColumns",
-             &RGroupDecompositionHelper::GetRGroupsAsColumn);
-  };
+             &RGroupDecompositionHelper::GetRGroupsAsColumn,
+             python::arg("asSmiles")=false,
+             "Return the rgroups as columns (note: can be fed directrly into a pandas datatable)\n"
+             "  ARGUMENTS:\n"
+             "   - asSmiles: if True return smiles strings, otherwise return molecules [default: False]\n"
+             "    Column structure:\n"
+             "       columns[rgroup_label] = [ mols_or_smiles ]\n"             
+             );
+    
+    docString = "Decompose a collecion of molecules into their Rgroups\n"
+        "  ARGUMENTS:\n"
+        "    - cores: a set of cores from most to least specific.\n"
+        "             See RGroupDecompositionParameters for more details\n"
+        "             on how the cores can be labelled\n"
+        "    - mols: the molecules to be decomposed\n"
+        "    - asSmiles: if True return smiles strings, otherwise return molecules [default: False]\n"
+        "    - asRows: return the results as rows (default) otherwise return columns\n"
+        "\n"
+        "  RETURNS: row_or_column_results, unmatched\n"
+        "\n"
+        "    Row structure:\n"
+        "       rows[idx] = {rgroup_label: molecule_or_smiles}\n"
+        "    Column structure:\n"
+        "       columns[rgroup_label] = [ mols_or_smiles ]\n"
+        "\n"
+        "    unmatched is a vector of indices in the input mols that were not matched.\n";
+    python::def(
+        "RGroupDecompose", RDKit::RGroupDecomp,
+        (python::arg("cores"), python::arg("mols"),
+         python::arg("asSmiles") = false,
+         python::arg("asRows") = true,
+         python::arg("options") = RGroupDecompositionParameters()),
+        docString.c_str());
+  };  
 };
 }
 
