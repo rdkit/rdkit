@@ -352,10 +352,6 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
                      highlightAtomLists=None, **kwargs):
   """ returns a PIL Image of the grid
   """
-  try:
-    import Image
-  except ImportError:
-    from PIL import Image
   if legends is None:
     legends = [''] * len(mols)
 
@@ -363,16 +359,28 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   if len(mols) % molsPerRow:
     nRows += 1
 
-  res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
-  for i, mol in enumerate(mols):
-    row = i // molsPerRow
-    col = i % molsPerRow
-    highlights = None
-    if highlightAtomLists and highlightAtomLists[i]:
-      highlights = highlightAtomLists[i]
-    if mol is not None:
-      img = _moltoimg(mol, subImgSize, highlights, legends[i], **kwargs)
-      res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
+  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
+    res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
+    for i, mol in enumerate(mols):
+      row = i // molsPerRow
+      col = i % molsPerRow
+      highlights = None
+      if highlightAtomLists and highlightAtomLists[i]:
+        highlights = highlightAtomLists[i]
+      if mol is not None:
+        img = _moltoimg(mol, subImgSize, highlights, legends[i], **kwargs)
+        res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
+  else:
+    fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+    d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
+    d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,**kwargs)
+    d2d.FinishDrawing()
+    res = _drawerToImage(d2d)
+
   return res
 
 
