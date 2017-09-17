@@ -27,6 +27,7 @@ import copy
 import os
 import json
 import uuid
+import warnings
 import numpy
 try:
   import Image
@@ -166,7 +167,7 @@ def display_pil_image(img):
 _MolsToGridImageSaved = None
 
 
-def ShowMols(mols, **kwargs):
+def ShowMols(mols, maxMols=50, **kwargs):
   global _MolsToGridImageSaved
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
@@ -174,6 +175,13 @@ def ShowMols(mols, **kwargs):
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
+  if len(mols)>maxMols:
+    warnings.warn("Truncating the list of molecules to be displayed to %d. Change the maxMols value to display more."%(maxMols))
+    mols = mols[:maxMols]
+    for prop in ('legends','highlightAtoms','highlightBonds'):
+      if prop in kwargs:
+        kwargs[prop] = kwargs[prop][:maxMols]
+      
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
