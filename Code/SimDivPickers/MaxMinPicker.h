@@ -1,5 +1,6 @@
 //
 //  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2017 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_MAXMINPICKER_H__
-#define __RD_MAXMINPICKER_H__
+#ifndef RD_MAXMINPICKER_H
+#define RD_MAXMINPICKER_H
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
@@ -110,6 +111,7 @@ class MaxMinPicker : public DistPicker {
                        unsigned int pickSize, RDKit::INT_VECT firstPicks,
                        int seed = -1) const {
     CHECK_INVARIANT(distMat, "Invalid Distance Matrix");
+    if (!poolSize) throw ValueErrorException("empty pool to pick from");
     if (poolSize < pickSize)
       throw ValueErrorException("pickSize cannot be larger than the poolSize");
     distmatFunctor functor(distMat);
@@ -123,6 +125,13 @@ class MaxMinPicker : public DistPicker {
     return pick(distMat, poolSize, pickSize, iv);
   }
 };
+
+struct MaxMinPickInfo {
+  double dist_bound;   // distance to closest reference
+  unsigned int picks;  // number of references considered
+  unsigned int next;   // singly linked list of candidates
+};
+
 // we implement this here in order to allow arbitrary functors without link
 // errors
 template <typename T>
@@ -130,74 +139,120 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize,
                                        RDKit::INT_VECT firstPicks,
                                        int seed) const {
+  if (!poolSize) throw ValueErrorException("empty pool to pick from");
+
   if (poolSize < pickSize)
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
 
-  RDKit::INT_LIST pool;
-
   RDKit::INT_VECT picks;
+
+  unsigned int memsize = (unsigned int)(poolSize * sizeof(MaxMinPickInfo));
+  MaxMinPickInfo *pinfo = new MaxMinPickInfo[memsize];
+  if (!pinfo) return picks;
+  memset(pinfo, 0, memsize);
+
   picks.reserve(pickSize);
-  unsigned int pick = 0;
-
-  // enter the pool into a list so that we can pick out of it easily
-  for (unsigned int i = 0; i < poolSize; i++) {
-    pool.push_back(i);
-  }
-
-  // get a seeded random number generator:
-  typedef boost::mt19937 rng_type;
-  typedef boost::uniform_int<> distrib_type;
-  typedef boost::variate_generator<rng_type &, distrib_type> source_type;
-  rng_type generator(42u);
-  distrib_type dist(0, poolSize-1);
-  source_type randomSource(generator, dist);
-  if (seed > 0) generator.seed(static_cast<rng_type::result_type>(seed));
+  unsigned int picked = 0;  // picks.size()
+  unsigned int pick;
 
   // pick the first entry
-  if (!firstPicks.size()) {
+  if (firstPicks.empty()) {
+    // get a seeded random number generator:
+    typedef boost::mt19937 rng_type;
+    typedef boost::uniform_int<> distrib_type;
+    typedef boost::variate_generator<rng_type &, distrib_type> source_type;
+    rng_type generator(42u);
+    distrib_type dist(0, poolSize - 1);
+    source_type randomSource(generator, dist);
+    if (seed > 0) generator.seed(static_cast<rng_type::result_type>(seed));
+
     pick = randomSource();
     // add the pick to the picks
     picks.push_back(pick);
     // and remove it from the pool
-    pool.remove(pick);
+    pinfo[pick].picks = 1;
+    picked = 1;
+
   } else {
     for (RDKit::INT_VECT::const_iterator pIdx = firstPicks.begin();
          pIdx != firstPicks.end(); ++pIdx) {
       pick = static_cast<unsigned int>(*pIdx);
-      if (pick >= poolSize)
+      if (pick >= poolSize) {
+        delete[] pinfo;
         throw ValueErrorException("pick index was larger than the poolSize");
+      }
       picks.push_back(pick);
-      pool.remove(pick);
+      pinfo[pick].picks = 1;
+      picked++;
     }
   }
+
+  if (picked >= pickSize) {
+    delete[] pinfo;
+    return picks;
+  }
+
+  unsigned int pool_list = 0;
+  unsigned int *prev = &pool_list;
+  // enter the pool into a list so that we can pick out of it easily
+  for (unsigned int i = 0; i < poolSize; i++)
+    if (pinfo[i].picks == 0) {
+      *prev = i;
+      prev = &pinfo[i].next;
+    }
+  *prev = 0;
+
+  unsigned int poolIdx;
+  unsigned int pickIdx;
+
+  // First pass initialize dist_bound
+  prev = &pool_list;
+  pickIdx = picks[0];
+  do {
+    poolIdx = *prev;
+    pinfo[poolIdx].dist_bound = func(poolIdx, pickIdx);
+    pinfo[poolIdx].picks = 1;
+    prev = &pinfo[poolIdx].next;
+  } while (*prev != 0);
+
   // now pick 1 compound at a time
-  while (picks.size() < pickSize) {
+  while (picked < pickSize) {
+    unsigned int *pick_prev = 0;
     double maxOFmin = -1.0;
-    RDKit::INT_LIST_I plri = pool.end();
-    for (RDKit::INT_LIST_I pli = pool.begin(); pli != pool.end(); ++pli) {
-      unsigned int poolIdx = (*pli);
-      double minTOi = RDKit::MAX_DOUBLE;
-      for (RDKit::INT_VECT_CI pi = picks.begin(); pi != picks.end(); ++pi) {
-        unsigned int pickIdx = (*pi);
-        CHECK_INVARIANT(poolIdx != pickIdx, "");
-        double dist = func(poolIdx, pickIdx);
-        if (dist <= minTOi) {
-          minTOi = dist;
+    prev = &pool_list;
+    do {
+      poolIdx = *prev;
+      double minTOi = pinfo[poolIdx].dist_bound;
+      if (minTOi > maxOFmin) {
+        unsigned int pi = pinfo[poolIdx].picks;
+        while (pi < picked) {
+          unsigned int picki = picks[pi];
+          CHECK_INVARIANT(poolIdx != picki, "pool index != pick index");
+          double dist = func(poolIdx, picki);
+          pi++;
+          if (dist <= minTOi) {
+            minTOi = dist;
+            if (minTOi <= maxOFmin) break;
+          }
+        }
+        pinfo[poolIdx].dist_bound = minTOi;
+        pinfo[poolIdx].picks = pi;
+        if (minTOi > maxOFmin) {
+          maxOFmin = minTOi;
+          pick_prev = prev;
+          pick = poolIdx;
         }
       }
-      if (minTOi > maxOFmin ||
-          (RDKit::feq(minTOi, maxOFmin) && poolIdx < pick)) {
-        maxOFmin = minTOi;
-        pick = poolIdx;
-        plri = pli;
-      }
-    }
+      prev = &pinfo[poolIdx].next;
+    } while (*prev != 0);
 
-    // now add the new pick to  picks and remove it from the pool
+    // now add the new pick to picks and remove it from the pool
+    *pick_prev = pinfo[pick].next;
     picks.push_back(pick);
-    CHECK_INVARIANT(plri != pool.end(), "");
-    pool.erase(plri);
+    picked++;
   }
+
+  delete[] pinfo;
   return picks;
 }
 };
