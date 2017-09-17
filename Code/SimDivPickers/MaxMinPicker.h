@@ -111,6 +111,7 @@ class MaxMinPicker : public DistPicker {
                        unsigned int pickSize, RDKit::INT_VECT firstPicks,
                        int seed = -1) const {
     CHECK_INVARIANT(distMat, "Invalid Distance Matrix");
+    if (!poolSize) throw ValueErrorException("empty pool to pick from");
     if (poolSize < pickSize)
       throw ValueErrorException("pickSize cannot be larger than the poolSize");
     distmatFunctor functor(distMat);
@@ -138,13 +139,15 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize,
                                        RDKit::INT_VECT firstPicks,
                                        int seed) const {
+  if (!poolSize) throw ValueErrorException("empty pool to pick from");
+
   if (poolSize < pickSize)
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
 
   RDKit::INT_VECT picks;
 
   unsigned int memsize = (unsigned int)(poolSize * sizeof(MaxMinPickInfo));
-  MaxMinPickInfo *pinfo = (MaxMinPickInfo *)malloc(memsize);
+  MaxMinPickInfo *pinfo = new MaxMinPickInfo[memsize];
   if (!pinfo) return picks;
   memset(pinfo, 0, memsize);
 
@@ -175,7 +178,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
          pIdx != firstPicks.end(); ++pIdx) {
       pick = static_cast<unsigned int>(*pIdx);
       if (pick >= poolSize) {
-        free(pinfo);
+        delete[] pinfo;
         throw ValueErrorException("pick index was larger than the poolSize");
       }
       picks.push_back(pick);
@@ -185,7 +188,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   }
 
   if (picked >= pickSize) {
-    free(pinfo);
+    delete[] pinfo;
     return picks;
   }
 
@@ -223,9 +226,9 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
       if (minTOi > maxOFmin) {
         unsigned int pi = pinfo[poolIdx].picks;
         while (pi < picked) {
-          unsigned int pickIdx = picks[pi];
-          CHECK_INVARIANT(poolIdx != pickIdx, "");
-          double dist = func(poolIdx, pickIdx);
+          unsigned int picki = picks[pi];
+          CHECK_INVARIANT(poolIdx != picki, "pool index != pick index");
+          double dist = func(poolIdx, picki);
           pi++;
           if (dist <= minTOi) {
             minTOi = dist;
@@ -249,7 +252,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     picked++;
   }
 
-  free(pinfo);
+  delete[] pinfo;
   return picks;
 }
 };

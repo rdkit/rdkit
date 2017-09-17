@@ -69,7 +69,11 @@ class pyobjFunctor {
 RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 int poolSize, int pickSize,
                                 python::object firstPicks, int seed,
-                                bool useCache) {
+                                python::object useCache) {
+  if (useCache != python::object()) {
+    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
+                            << std::endl;
+  }
   RDKit::INT_VECT firstPickVect;
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
@@ -115,7 +119,11 @@ class pyBVFunctor {
 RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       int poolSize, int pickSize,
                                       python::object firstPicks, int seed,
-                                      bool useCache) {
+                                      python::object useCache) {
+  if (useCache != python::object()) {
+    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
+                            << std::endl;
+  }
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
@@ -159,7 +167,8 @@ struct MaxMin_wrap {
              (python::arg("self"), python::arg("distFunc"),
               python::arg("poolSize"), python::arg("pickSize"),
               python::arg("firstPicks") = python::tuple(),
-              python::arg("seed") = -1, python::arg("useCache") = false),
+              python::arg("seed") = -1,
+              python::arg("useCache") = python::object()),
              "Pick a subset of items from a pool of items using the MaxMin "
              "Algorithm\n"
              "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), "
@@ -182,7 +191,8 @@ struct MaxMin_wrap {
              (python::arg("self"), python::arg("objects"),
               python::arg("poolSize"), python::arg("pickSize"),
               python::arg("firstPicks") = python::tuple(),
-              python::arg("seed") = -1, python::arg("useCache") = false),
+              python::arg("seed") = -1,
+              python::arg("useCache") = python::object()),
              "Pick a subset of items from a pool of bit vectors using the "
              "MaxMin Algorithm\n"
              "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), "
