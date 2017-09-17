@@ -380,12 +380,8 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
                    stripSVGNamespace=True, **kwargs):
   """ returns an SVG of the grid
   """
-  matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>', re.DOTALL)
   if legends is None:
     legends = [''] * len(mols)
-  hdr = ''
-  ftr = '</svg:svg>'
-  rect = ''
 
   nRows = len(mols) // molsPerRow
   if len(mols) % molsPerRow:
@@ -394,30 +390,11 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   blocks = [''] * (nRows * molsPerRow)
 
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
-  for i, mol in enumerate(mols):
-    highlights = None
-    if highlightAtomLists and highlightAtomLists[i]:
-      highlights = highlightAtomLists[i]
-    if mol is not None:
-      nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
-      d2d = rdMolDraw2D.MolDraw2DSVG(subImgSize[0], subImgSize[1])
-      d2d.DrawMolecule(nmol, legend=legends[i], highlightAtoms=highlights)
-      d2d.FinishDrawing()
-      txt = d2d.GetDrawingText()
-      h, r, b = matcher.match(txt).groups()
-      if not hdr:
-        hdr = h.replace("width='%dpx' height='%dpx' >" % subImgSize,
-                        "width='%dpx' height='%dpx' >" % fullSize)
-      if not rect:
-        rect = r
-      blocks[i] = b
-  for i, elem in enumerate(blocks):
-    row = i // molsPerRow
-    col = i % molsPerRow
-    elem = rect + elem
-    blocks[i] = '<g transform="translate(%d,%d)" >%s</g>' % (col * subImgSize[0],
-                                                             row * subImgSize[1], elem)
-  res = hdr + '\n'.join(blocks) + ftr
+
+  d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
+  d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,**kwargs)
+  d2d.FinishDrawing()
+  res = d2d.GetDrawingText()
   if stripSVGNamespace:
     res = res.replace('svg:', '')
   return res
