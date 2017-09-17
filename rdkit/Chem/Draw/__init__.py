@@ -313,16 +313,24 @@ def _drawerToImage(d2d):
   return Image.open(sio)
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
+  try:
+    mol.GetAtomWithIdx(0).GetExplicitValence()
+  except RuntimeError:
+    mol.UpdatePropertyCache(False)
+
+  try:
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
+  except ValueError:  # <- can happen on a kekulization failure
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    img = MolToImage(mc, sz, legend=legend, highlightAtoms=highlights, **kwargs)
     if returnPNG:
       bio = BytesIO()
       img.save(bio, format='PNG')
       img = bio.getvalue()
   else:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
-    d2d.DrawMolecule(nmol, legend=legend, highlightAtoms=highlights)
+    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
     d2d.FinishDrawing()
     if returnPNG:
         img = d2d.GetDrawingText()
@@ -349,7 +357,7 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
 
 
 def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                     highlightAtomLists=None, **kwargs):
+                     highlightAtomLists=None, highlightBondLists=None, **kwargs):
   """ returns a PIL Image of the grid
   """
   if legends is None:
@@ -377,14 +385,16 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   else:
     fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
     d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
-    d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,**kwargs)
+    d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,
+                      highlightBonds=highlightBondLists,**kwargs)
     d2d.FinishDrawing()
     res = _drawerToImage(d2d)
 
   return res
 
 
-def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
+def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
+                   highlightAtomLists=None, highlightBondLists=None,
                    stripSVGNamespace=True, **kwargs):
   """ returns an SVG of the grid
   """
@@ -400,7 +410,8 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
 
   d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
-  d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,**kwargs)
+  d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,
+                    highlightBonds=highlightBondLists,**kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
   if stripSVGNamespace:
@@ -409,13 +420,25 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
 
 
 def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                    highlightAtomLists=None, useSVG=False, **kwargs):
+                    highlightAtomLists=None, highlightBondLists=None,
+                    useSVG=False, **kwargs):
+  if legends and len(legends)>len(mols):
+    legends = legends[:len(mols)]
+  if highlightAtomLists and len(highlightAtomLists)>len(mols):
+    highlightAtomLists = highlightAtomLists[:len(mols)]
+  if highlightBondLists and len(highlightBondLists)>len(mols):
+    highlightBondLists = highlightBondLists[:len(mols)]
+
   if useSVG:
     return _MolsToGridSVG(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                          highlightAtomLists=highlightAtomLists, **kwargs)
+                          highlightAtomLists=highlightAtomLists,
+                          highlightBondLists=highlightBondLists,
+                          **kwargs)
   else:
     return _MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                            highlightAtomLists=highlightAtomLists, **kwargs)
+                            highlightAtomLists=highlightAtomLists,
+                            highlightBondLists=highlightBondLists,
+                            **kwargs)
 
 
 def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):

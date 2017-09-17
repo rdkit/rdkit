@@ -100,16 +100,7 @@ def _toPNG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-  try:
-    mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
-    mol.UpdatePropertyCache(False)
-
-  try:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
-  except ValueError:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
-  return Draw._moltoimg(nmol,molSize,highlightAtoms,"",returnPNG=True)
+  return Draw._moltoimg(mol,molSize,highlightAtoms,"",returnPNG=True)
 
 
 def _toSVG(mol):
@@ -181,7 +172,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     for prop in ('legends','highlightAtoms','highlightBonds'):
       if prop in kwargs:
         kwargs[prop] = kwargs[prop][:maxMols]
-      
+
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
