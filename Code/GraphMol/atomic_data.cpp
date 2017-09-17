@@ -138,10 +138,18 @@ const std::string periodicTableAtomData =
 111	Rg	1.21	0	1.7	281	2	281	281.16537	-1 \n \
 112	Cn	1.22	0	1.7	285	2	285	285.17411	-1 \n"
     // added from BODR 30.10.2016
-    "113	Uut	1.36	0	1.7	285	2	285	284.17808	-1 \n \
-114	Fl	1.43	0	1.7	289	2	289	289.18728	-1 \n \
-115	Uup	1.62	0	1.7	289	2	289	288.19249	-1 \n \
-116	Lv	1.75	0	1.7	290	2	290	292.19979	-1 \n";
+    // atomic mass data from NIST
+    // we leave Uut and Uup in here for backwards
+    // compatibility
+    "113	Nh	1.36	0	1.7	284	2	284	284.17873	-1 \n \
+113	Uut	1.36	0	1.7	284	2	284	284.17873	-1 \n \
+114	Fl	1.43	0	1.7	289	2	289	289.19042	-1 \n \
+115	Mc	1.62	0	1.7	288	2	288	288.19274	-1 \n \
+115	Uup	1.62	0	1.7	288	2	288	288.19274	-1 \n \
+116	Lv	1.75	0	1.7	293	2	293	293.20449	-1 \n \
+117	Ts	1.65	0	1.7	292	2	292	292.20746	-1 \n \
+118	Og	1.57	0	1.7	294	2	294	294.21392	-1 \n \
+";
 
 atomicData::atomicData(const std::string &dataLine) {
   boost::char_separator<char> spaceSep(" \t");

@@ -279,6 +279,10 @@ s		    {	yylval->atom = new Atom( 16 );
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
 
+%{
+  // The next block is a workaround for a pathlogy in the SMILES produced
+  // by some Biovia tools
+%}
 <IN_ATOM_STATE>\'Rf\'	{ yylval->atom = new Atom(104); return ATOM_TOKEN; }
 <IN_ATOM_STATE>\'Db\'	{ yylval->atom = new Atom(105); return ATOM_TOKEN; }
 <IN_ATOM_STATE>\'Sg\'	{ yylval->atom = new Atom(106); return ATOM_TOKEN; }
