@@ -362,8 +362,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 153
-#define YY_END_OF_BUFFER 154
+#define YY_NUM_RULES 181
+#define YY_END_OF_BUFFER 182
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -371,28 +371,35 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[190] =
+static yyconst flex_int16_t yy_accept[246] =
     {   0,
-        0,    0,    0,    0,  154,  152,  151,  135,  148,  143,
-      144,  133,  142,  141,  147,  140,  149,  150,  152,    6,
-      112,  113,  118,  122,  121,  114,  115,  116,  117,  145,
-      139,  123,  124,  125,  126,  127,  128,  138,  134,  152,
-      112,  113,  152,  152,  118,  152,  122,  121,   16,  152,
-      152,  114,  115,  116,  152,  117,  152,   87,   20,   69,
-      152,   35,  152,  146,  152,  128,  152,  136,  137,    0,
-        0,    0,    0,    0,    0,  120,  119,  139,   84,   43,
-       13,   90,   15,   30,   80,   74,   51,    9,  102,   78,
-       92,   17,   44,   53,   93,   91,  107,   23,   21,   50,
+        0,    0,    0,    0,  182,  180,  179,  162,  176,  171,
+      172,  144,  170,  169,  175,  168,  177,  178,  163,  180,
+      161,    6,  123,  124,  129,  133,  132,  125,  126,  127,
+      128,  173,  167,  134,  135,  136,  137,  138,  139,  166,
+      180,  145,  180,  123,  124,  180,  180,  129,  180,  133,
+      132,   16,  180,  180,  125,  126,  127,  180,  128,  180,
+       87,   20,   69,  180,   35,  180,  174,  180,  139,  180,
+      164,  165,    0,    0,    0,    0,    0,    0,  131,  130,
+      167,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,   84,   43,   13,   90,   15,   30,   80,
 
-       26,  100,  105,   61,   63,   94,   58,   24,  109,   95,
-       82,   28,   59,   29,    7,   67,   75,   62,  103,   45,
-       72,   32,   52,    8,   98,   66,  111,   96,   12,   22,
-       38,  104,   11,   37,   55,   10,   25,   97,   88,   71,
-       86,   77,   42,   56,   79,   54,   73,   89,   83,   33,
-       70,   99,  106,   41,   81,   40,   47,   18,   31,  101,
-       14,   57,   46,   34,   68,   60,   39,   48,   85,   19,
-       76,   64,    0,   49,   65,   27,   36,  130,  131,  129,
-      132,    2,    4,    5,    3,    1,  110,  108,    0
+       74,   51,    9,  102,   78,   92,   17,   44,   53,   93,
+       91,  107,   24,   21,   50,   26,  100,  105,   61,   63,
+       94,   58,   23,  109,   95,   82,   28,   59,   29,    7,
+       67,   75,   62,  103,   45,   72,   32,   52,    8,   98,
+       66,  111,  110,   96,   12,   22,   38,  104,   11,   37,
+       55,   10,  108,   25,   97,   88,  113,   71,   86,   77,
+       42,   56,   79,   54,   73,   89,   83,   33,   70,   99,
+      106,   41,   81,   40,   47,   18,   31,  101,   14,   57,
+       46,   34,   68,   60,   39,   48,   85,   19,   76,   64,
+      112,    0,   49,   65,   27,   36,  141,  142,  140,  143,
+
+        2,    4,    5,    3,    1,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      116,  120,  114,  122,  119,  118,  121,  117,  115,  149,
+      154,  147,  152,  156,  150,  158,  157,  151,  155,  160,
+      146,  153,  148,  159,    0
     } ;
 
 static yyconst YY_CHAR yy_ec[256] =
@@ -400,17 +407,17 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    2,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    3,    1,    1,    4,    1,    5,    1,    3,    6,
-        7,    8,    9,    1,   10,   11,   12,   13,   14,   14,
-       14,   14,   14,   14,   14,   14,   14,   15,    1,   16,
-        4,   17,    1,   18,   19,   20,   21,   22,   23,   24,
-       25,   26,   27,    1,   28,   29,   30,   31,   32,   33,
-       34,   35,   36,   37,   38,   39,   40,   41,   42,   43,
-       44,   45,   46,    1,    1,    1,   47,   48,   49,   50,
+        1,    3,    1,    1,    4,    1,    5,    1,    6,    7,
+        8,    9,   10,    1,   11,   12,   13,   14,   15,   15,
+       15,   15,   15,   15,   15,   15,   15,   16,    1,   17,
+       18,   19,    1,   20,   21,   22,   23,   24,   25,   26,
+       27,   28,   29,    1,   30,   31,   32,   33,   34,   35,
+       36,   37,   38,   39,   40,   41,   42,   43,   44,   45,
+       46,   47,   48,    1,    1,    1,   49,   50,   51,   52,
 
-       51,   52,   53,   54,   55,    1,   56,   57,   58,   59,
-       60,   61,    1,   62,   63,   64,   65,   66,    1,    1,
-       67,    1,    1,    1,    1,   68,    1,    1,    1,    1,
+       53,   54,   55,   56,   57,    1,   58,   59,   60,   61,
+       62,   63,   64,   65,   66,   67,   68,   69,    1,    1,
+       70,    1,    1,    1,    1,   71,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -427,7 +434,7 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst YY_CHAR yy_meta[69] =
+static yyconst YY_CHAR yy_meta[72] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -435,98 +442,119 @@ static yyconst YY_CHAR yy_meta[69] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1
     } ;
 
-static yyconst flex_uint16_t yy_base[190] =
+static yyconst flex_uint16_t yy_base[246] =
     {   0,
-        0,    0,   54,    0,  184,  256,  256,  256,  256,  256,
-      256,  256,  256,  162,  256,  256,  256,  256,  166,   95,
-      113,  108,  256,  256,  256,  256,  256,  256,  256,  256,
-      111,  256,  256,  256,  256,  256,  256,  256,  256,   71,
-       57,   90,   40,   60,   48,  107,  108,   84,   89,  115,
-      114,  135,   82,  141,  160,  169,  185,   79,  256,  256,
-       88,   90,  104,  256,   58,   75,   65,  256,  256,  218,
-       80,   69,   46,   37,   44,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
+        0,    0,   66,    0,  242,  312,  312,  312,  312,  312,
+      312,  312,  312,  222,  312,  312,  312,  312,  312,  228,
+      312,  113,  172,  177,  312,  312,  312,  312,  312,  312,
+      312,  312,  188,  312,  312,  312,  312,  312,  312,  312,
+      131,  312,   62,  118,  135,   70,    8,   78,   26,  124,
+       16,  169,  142,  153,  169,   57,  178,  198,  207,  220,
+      165,  312,  312,  176,  174,   19,  312,  157,   88,  164,
+      312,  312,  272,  185,  178,  184,  173,  178,  312,  312,
+      312,  146,  137,   36,  134,  126,  116,   75,  126,  126,
+       70,  125,  107,  312,  312,  312,  312,  312,  312,  312,
 
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  108,  256,  256,  256,  256,  256,  256,  256,
-      256,  256,  256,  256,  256,  256,  256,  256,  256
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  234,  312,  312,  312,  312,  312,  312,  312,  312,
+
+      312,  312,  312,  312,  312,  166,  160,  155,  154,  152,
+      150,  144,  143,  142,  140,  138,  133,  112,   79,   77,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312,  312,  312,  312,  312,  312,
+      312,  312,  312,  312,  312
     } ;
 
-static yyconst flex_int16_t yy_def[190] =
+static yyconst flex_int16_t yy_def[246] =
     {   0,
-      189,    1,    1,    3,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
+      245,    1,    1,    3,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
 
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,    0
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,    0
     } ;
 
-static yyconst flex_uint16_t yy_nxt[325] =
+static yyconst flex_uint16_t yy_nxt[384] =
     {   0,
-        6,    7,    6,    8,    9,   10,   11,   12,   13,   14,
-       15,   16,   17,   18,    8,   19,    6,   20,    6,   21,
-       22,    6,    6,   23,    6,   24,   25,    6,    6,    6,
-       26,   27,   28,    6,    6,   29,    6,    6,    6,    6,
-        6,    6,    6,   30,   31,    6,    6,   32,   33,    6,
-        6,    6,    6,    6,    6,    6,    6,    6,   34,   35,
-       36,    6,   37,    6,    6,    6,    6,   38,   39,  186,
-      185,  184,   40,   41,   42,   43,   44,   45,   46,   47,
-       48,   49,   50,   51,   52,   53,   54,  102,   55,   56,
-       57,   58,   59,   60,   61,   62,   63,   70,  108,   64,
+        6,    7,    6,    8,    9,    6,   10,   11,   12,   13,
+       14,   15,   16,   17,   18,   19,   20,   21,    6,   22,
+        6,   23,   24,    6,    6,   25,    6,   26,   27,    6,
+        6,    6,   28,   29,   30,    6,    6,   31,    6,    6,
+        6,    6,    6,    6,    6,   32,   33,    6,    6,   34,
+       35,    6,    6,    6,    6,    6,    6,    6,    6,    6,
+       36,   37,   38,    6,    6,   39,    6,    6,    6,    6,
+       40,   41,  120,  121,  127,  122,  135,  128,  129,  195,
+      136,   42,  244,  196,  243,  208,   43,   44,   45,   46,
+       47,   48,   49,   50,   51,   52,   53,   54,   55,   56,
 
-       65,  183,  103,   87,  109,  110,  104,   88,  182,  111,
-       89,   90,   91,   71,   72,  181,   66,   67,   76,   79,
-      178,  105,  106,   80,  107,  179,   73,   81,   82,  180,
-       74,   75,   83,   84,   85,   86,   92,  175,  174,   93,
-       94,   95,  120,  173,  140,  121,   77,   96,   97,   98,
-      122,   99,  100,  112,  101,   78,  113,  114,  115,  116,
-      117,  123,  176,  128,   77,  177,  129,  118,  187,  124,
-      119,  188,  130,  131,   76,   69,  125,  132,   68,  126,
-      127,  133,  134,  189,  135,  136,  189,  141,  142,  137,
-      143,  189,  189,  189,  138,  139,  189,  189,  144,  189,
+       57,  209,   58,   59,   60,   61,   62,   63,   64,   65,
+       66,  157,   94,   67,   68,   73,   95,  242,   73,  117,
+       96,   97,  158,  217,  218,  213,   98,   99,  100,  101,
+      123,   69,   70,   74,   75,  118,  124,  125,  241,  119,
+      198,  214,  126,  240,  199,  239,   76,  238,  237,  236,
+       77,   78,   82,   83,   84,  235,   85,  234,   86,  233,
+      232,   87,   88,   89,   90,  231,  102,   91,   92,   93,
+      103,  230,  220,  104,  105,  106,  130,  131,  132,  219,
+      216,  215,   79,  107,  212,  133,  108,  109,  110,  134,
+      138,  211,  210,   80,  111,  112,  113,  207,  139,  114,
 
-      145,  189,  146,  189,  147,  148,  149,  150,  189,  189,
-      151,  152,  153,  154,  189,  189,  157,  158,  155,  159,
-       70,  160,  189,  161,  156,  189,  162,  163,  189,  189,
-      164,  165,  166,  167,  189,  168,   71,   72,  169,  170,
-      189,  171,  172,  189,  189,  189,  189,  189,  189,   73,
-      189,  189,  189,   74,   75,    5,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
+      115,  206,  116,  143,  144,  205,  140,  145,  204,  141,
+      142,  203,  202,  146,  147,  201,  200,  149,  150,  148,
+      151,  152,  197,  194,  153,  154,  159,  160,  193,  161,
+      155,  156,  192,  137,   81,   80,   79,  162,   72,  163,
+       71,  245,  164,  245,  165,  166,  167,  168,  245,  245,
+      169,  170,  171,  172,  245,  245,  175,  176,  173,  177,
+      245,  178,  245,  179,  245,  174,  180,  181,  183,  184,
+      185,  182,  186,  245,   73,  187,  188,   73,  189,  190,
+      245,  245,  245,  221,  245,  191,  245,  245,  245,  222,
+      245,  245,   74,   75,  223,  224,  225,  226,  245,  227,
 
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189
+      228,  229,  245,  245,  245,   76,  245,  245,  245,   77,
+       78,    5,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245
     } ;
 
-static yyconst flex_int16_t yy_chk[325] =
+static yyconst flex_int16_t yy_chk[384] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -534,36 +562,42 @@ static yyconst flex_int16_t yy_chk[325] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    3,   75,
-       74,   73,    3,    3,    3,    3,    3,    3,    3,    3,
-        3,    3,    3,    3,    3,    3,    3,   43,    3,    3,
-        3,    3,    3,    3,    3,    3,    3,   20,   45,    3,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    3,   47,   47,   49,   47,   51,   49,   49,   66,
+       51,    3,  220,   66,  219,   84,    3,    3,    3,    3,
+        3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
 
-        3,   72,   43,   41,   45,   45,   43,   41,   71,   45,
-       41,   41,   41,   20,   20,   67,    3,    3,   41,   40,
-       65,   44,   44,   40,   44,   66,   20,   40,   40,   66,
-       20,   20,   40,   40,   40,   40,   42,   62,   61,   42,
-       42,   42,   48,   58,   53,   48,   42,   42,   42,   42,
-       49,   42,   42,   46,   42,   31,   46,   46,   47,   47,
-       47,   50,   63,   51,   22,   63,   51,   47,  173,   50,
-       47,  173,   51,   51,   21,   19,   50,   51,   14,   50,
-       50,   52,   52,    5,   52,   52,    0,   54,   54,   52,
-       54,    0,    0,    0,   52,   52,    0,    0,   54,    0,
+        3,   84,    3,    3,    3,    3,    3,    3,    3,    3,
+        3,   56,   43,    3,    3,   22,   43,  218,   22,   46,
+       43,   43,   56,   91,   91,   88,   43,   43,   43,   43,
+       48,    3,    3,   22,   22,   46,   48,   48,  217,   46,
+       69,   88,   48,  216,   69,  215,   22,  214,  213,  212,
+       22,   22,   41,   41,   41,  211,   41,  210,   41,  209,
+      208,   41,   41,   41,   41,  207,   44,   41,   41,   41,
+       44,  206,   93,   44,   44,   44,   50,   50,   50,   92,
+       90,   89,   44,   45,   87,   50,   45,   45,   45,   50,
+       53,   86,   85,   45,   45,   45,   45,   83,   53,   45,
 
-       54,    0,   54,    0,   54,   54,   55,   55,    0,    0,
-       55,   55,   55,   55,    0,    0,   56,   56,   55,   56,
-       70,   56,    0,   56,   55,    0,   56,   56,    0,    0,
-       56,   57,   57,   57,    0,   57,   70,   70,   57,   57,
-        0,   57,   57,    0,    0,    0,    0,    0,    0,   70,
-        0,    0,    0,   70,   70,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
+       45,   82,   45,   54,   54,   78,   53,   54,   77,   53,
+       53,   76,   75,   54,   54,   74,   70,   55,   55,   54,
+       55,   55,   68,   65,   55,   55,   57,   57,   64,   57,
+       55,   55,   61,   52,   33,   24,   23,   57,   20,   57,
+       14,    5,   57,    0,   57,   57,   58,   58,    0,    0,
+       58,   58,   58,   58,    0,    0,   59,   59,   58,   59,
+        0,   59,    0,   59,    0,   58,   59,   59,   60,   60,
+       60,   59,   60,    0,   73,   60,   60,   73,   60,   60,
+        0,    0,    0,  192,    0,   60,    0,    0,    0,  192,
+        0,    0,   73,   73,  192,  192,  192,  192,    0,  192,
 
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189,  189,  189,  189,  189,  189,  189,
-      189,  189,  189,  189
+      192,  192,    0,    0,    0,   73,    0,    0,    0,   73,
+       73,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
+      245,  245,  245
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -653,7 +687,7 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 
 }
 
-#line 657 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 691 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -932,7 +966,7 @@ YY_DECL
 #line 86 "smiles.ll"
 
 
-#line 936 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 970 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -959,13 +993,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 190 )
+				if ( yy_current_state >= 246 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 256 );
+		while ( yy_base[yy_current_state] != 312 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -1008,360 +1042,725 @@ YY_RULE_SETUP
 { return AT_TOKEN; }
 	YY_BREAK
 case 7:
-#line 98 "smiles.ll"
+YY_RULE_SETUP
+#line 97 "smiles.ll"
+{ yylval->atom = new Atom(2); return ATOM_TOKEN; }
+	YY_BREAK
 case 8:
-#line 99 "smiles.ll"
+YY_RULE_SETUP
+#line 98 "smiles.ll"
+{ yylval->atom = new Atom(3); return ATOM_TOKEN; }
+	YY_BREAK
 case 9:
-#line 100 "smiles.ll"
+YY_RULE_SETUP
+#line 99 "smiles.ll"
+{ yylval->atom = new Atom(4); return ATOM_TOKEN; }
+	YY_BREAK
 case 10:
-#line 101 "smiles.ll"
+YY_RULE_SETUP
+#line 100 "smiles.ll"
+{ yylval->atom = new Atom(10); return ATOM_TOKEN; }
+	YY_BREAK
 case 11:
-#line 102 "smiles.ll"
+YY_RULE_SETUP
+#line 101 "smiles.ll"
+{ yylval->atom = new Atom(11); return ATOM_TOKEN; }
+	YY_BREAK
 case 12:
-#line 103 "smiles.ll"
+YY_RULE_SETUP
+#line 102 "smiles.ll"
+{ yylval->atom = new Atom(12); return ATOM_TOKEN; }
+	YY_BREAK
 case 13:
-#line 104 "smiles.ll"
+YY_RULE_SETUP
+#line 103 "smiles.ll"
+{ yylval->atom = new Atom(13); return ATOM_TOKEN; }
+	YY_BREAK
 case 14:
-#line 105 "smiles.ll"
+YY_RULE_SETUP
+#line 104 "smiles.ll"
+{ yylval->atom = new Atom(14); return ATOM_TOKEN; }
+	YY_BREAK
 case 15:
-#line 106 "smiles.ll"
+YY_RULE_SETUP
+#line 105 "smiles.ll"
+{ yylval->atom = new Atom(18); return ATOM_TOKEN; }
+	YY_BREAK
 case 16:
-#line 107 "smiles.ll"
+YY_RULE_SETUP
+#line 106 "smiles.ll"
+{ yylval->atom = new Atom(19); return ATOM_TOKEN; }
+	YY_BREAK
 case 17:
-#line 108 "smiles.ll"
+YY_RULE_SETUP
+#line 107 "smiles.ll"
+{ yylval->atom = new Atom(20); return ATOM_TOKEN; }
+	YY_BREAK
 case 18:
-#line 109 "smiles.ll"
+YY_RULE_SETUP
+#line 108 "smiles.ll"
+{ yylval->atom = new Atom(21); return ATOM_TOKEN; }
+	YY_BREAK
 case 19:
-#line 110 "smiles.ll"
+YY_RULE_SETUP
+#line 109 "smiles.ll"
+{ yylval->atom = new Atom(22); return ATOM_TOKEN; }
+	YY_BREAK
 case 20:
-#line 111 "smiles.ll"
+YY_RULE_SETUP
+#line 110 "smiles.ll"
+{ yylval->atom = new Atom(23); return ATOM_TOKEN; }
+	YY_BREAK
 case 21:
-#line 112 "smiles.ll"
+YY_RULE_SETUP
+#line 111 "smiles.ll"
+{ yylval->atom = new Atom(24); return ATOM_TOKEN; }
+	YY_BREAK
 case 22:
-#line 113 "smiles.ll"
+YY_RULE_SETUP
+#line 112 "smiles.ll"
+{ yylval->atom = new Atom(25); return ATOM_TOKEN; }
+	YY_BREAK
 case 23:
-#line 114 "smiles.ll"
+YY_RULE_SETUP
+#line 113 "smiles.ll"
+{ yylval->atom = new Atom(26); return ATOM_TOKEN; }
+	YY_BREAK
 case 24:
-#line 115 "smiles.ll"
+YY_RULE_SETUP
+#line 114 "smiles.ll"
+{ yylval->atom = new Atom(27); return ATOM_TOKEN; }
+	YY_BREAK
 case 25:
-#line 116 "smiles.ll"
+YY_RULE_SETUP
+#line 115 "smiles.ll"
+{ yylval->atom = new Atom(28); return ATOM_TOKEN; }
+	YY_BREAK
 case 26:
-#line 117 "smiles.ll"
+YY_RULE_SETUP
+#line 116 "smiles.ll"
+{ yylval->atom = new Atom(29); return ATOM_TOKEN; }
+	YY_BREAK
 case 27:
-#line 118 "smiles.ll"
+YY_RULE_SETUP
+#line 117 "smiles.ll"
+{ yylval->atom = new Atom(30); return ATOM_TOKEN; }
+	YY_BREAK
 case 28:
-#line 119 "smiles.ll"
+YY_RULE_SETUP
+#line 118 "smiles.ll"
+{ yylval->atom = new Atom(31); return ATOM_TOKEN; }
+	YY_BREAK
 case 29:
-#line 120 "smiles.ll"
+YY_RULE_SETUP
+#line 119 "smiles.ll"
+{ yylval->atom = new Atom(32); return ATOM_TOKEN; }
+	YY_BREAK
 case 30:
-#line 121 "smiles.ll"
+YY_RULE_SETUP
+#line 120 "smiles.ll"
+{ yylval->atom = new Atom(33); return ATOM_TOKEN; }
+	YY_BREAK
 case 31:
-#line 122 "smiles.ll"
+YY_RULE_SETUP
+#line 121 "smiles.ll"
+{ yylval->atom = new Atom(34); return ATOM_TOKEN; }
+	YY_BREAK
 case 32:
-#line 123 "smiles.ll"
+YY_RULE_SETUP
+#line 122 "smiles.ll"
+{ yylval->atom = new Atom(36); return ATOM_TOKEN; }
+	YY_BREAK
 case 33:
-#line 124 "smiles.ll"
+YY_RULE_SETUP
+#line 123 "smiles.ll"
+{ yylval->atom = new Atom(37); return ATOM_TOKEN; }
+	YY_BREAK
 case 34:
-#line 125 "smiles.ll"
+YY_RULE_SETUP
+#line 124 "smiles.ll"
+{ yylval->atom = new Atom(38); return ATOM_TOKEN; }
+	YY_BREAK
 case 35:
-#line 126 "smiles.ll"
+YY_RULE_SETUP
+#line 125 "smiles.ll"
+{ yylval->atom = new Atom(39); return ATOM_TOKEN; }
+	YY_BREAK
 case 36:
-#line 127 "smiles.ll"
+YY_RULE_SETUP
+#line 126 "smiles.ll"
+{ yylval->atom = new Atom(40); return ATOM_TOKEN; }
+	YY_BREAK
 case 37:
-#line 128 "smiles.ll"
+YY_RULE_SETUP
+#line 127 "smiles.ll"
+{ yylval->atom = new Atom(41); return ATOM_TOKEN; }
+	YY_BREAK
 case 38:
-#line 129 "smiles.ll"
+YY_RULE_SETUP
+#line 128 "smiles.ll"
+{ yylval->atom = new Atom(42); return ATOM_TOKEN; }
+	YY_BREAK
 case 39:
-#line 130 "smiles.ll"
+YY_RULE_SETUP
+#line 129 "smiles.ll"
+{ yylval->atom = new Atom(43); return ATOM_TOKEN; }
+	YY_BREAK
 case 40:
-#line 131 "smiles.ll"
+YY_RULE_SETUP
+#line 130 "smiles.ll"
+{ yylval->atom = new Atom(44); return ATOM_TOKEN; }
+	YY_BREAK
 case 41:
-#line 132 "smiles.ll"
+YY_RULE_SETUP
+#line 131 "smiles.ll"
+{ yylval->atom = new Atom(45); return ATOM_TOKEN; }
+	YY_BREAK
 case 42:
-#line 133 "smiles.ll"
+YY_RULE_SETUP
+#line 132 "smiles.ll"
+{ yylval->atom = new Atom(46); return ATOM_TOKEN; }
+	YY_BREAK
 case 43:
-#line 134 "smiles.ll"
+YY_RULE_SETUP
+#line 133 "smiles.ll"
+{ yylval->atom = new Atom(47); return ATOM_TOKEN; }
+	YY_BREAK
 case 44:
-#line 135 "smiles.ll"
+YY_RULE_SETUP
+#line 134 "smiles.ll"
+{ yylval->atom = new Atom(48); return ATOM_TOKEN; }
+	YY_BREAK
 case 45:
-#line 136 "smiles.ll"
+YY_RULE_SETUP
+#line 135 "smiles.ll"
+{ yylval->atom = new Atom(49); return ATOM_TOKEN; }
+	YY_BREAK
 case 46:
-#line 137 "smiles.ll"
+YY_RULE_SETUP
+#line 136 "smiles.ll"
+{ yylval->atom = new Atom(50); return ATOM_TOKEN; }
+	YY_BREAK
 case 47:
-#line 138 "smiles.ll"
+YY_RULE_SETUP
+#line 137 "smiles.ll"
+{ yylval->atom = new Atom(51); return ATOM_TOKEN; }
+	YY_BREAK
 case 48:
-#line 139 "smiles.ll"
+YY_RULE_SETUP
+#line 138 "smiles.ll"
+{ yylval->atom = new Atom(52); return ATOM_TOKEN; }
+	YY_BREAK
 case 49:
-#line 140 "smiles.ll"
+YY_RULE_SETUP
+#line 139 "smiles.ll"
+{ yylval->atom = new Atom(54); return ATOM_TOKEN; }
+	YY_BREAK
 case 50:
-#line 141 "smiles.ll"
+YY_RULE_SETUP
+#line 140 "smiles.ll"
+{ yylval->atom = new Atom(55); return ATOM_TOKEN; }
+	YY_BREAK
 case 51:
-#line 142 "smiles.ll"
+YY_RULE_SETUP
+#line 141 "smiles.ll"
+{ yylval->atom = new Atom(56); return ATOM_TOKEN; }
+	YY_BREAK
 case 52:
-#line 143 "smiles.ll"
+YY_RULE_SETUP
+#line 142 "smiles.ll"
+{ yylval->atom = new Atom(57); return ATOM_TOKEN; }
+	YY_BREAK
 case 53:
-#line 144 "smiles.ll"
+YY_RULE_SETUP
+#line 143 "smiles.ll"
+{ yylval->atom = new Atom(58); return ATOM_TOKEN; }
+	YY_BREAK
 case 54:
-#line 145 "smiles.ll"
+YY_RULE_SETUP
+#line 144 "smiles.ll"
+{ yylval->atom = new Atom(59); return ATOM_TOKEN; }
+	YY_BREAK
 case 55:
-#line 146 "smiles.ll"
+YY_RULE_SETUP
+#line 145 "smiles.ll"
+{ yylval->atom = new Atom(60); return ATOM_TOKEN; }
+	YY_BREAK
 case 56:
-#line 147 "smiles.ll"
+YY_RULE_SETUP
+#line 146 "smiles.ll"
+{ yylval->atom = new Atom(61); return ATOM_TOKEN; }
+	YY_BREAK
 case 57:
-#line 148 "smiles.ll"
+YY_RULE_SETUP
+#line 147 "smiles.ll"
+{ yylval->atom = new Atom(62); return ATOM_TOKEN; }
+	YY_BREAK
 case 58:
-#line 149 "smiles.ll"
+YY_RULE_SETUP
+#line 148 "smiles.ll"
+{ yylval->atom = new Atom(63); return ATOM_TOKEN; }
+	YY_BREAK
 case 59:
-#line 150 "smiles.ll"
+YY_RULE_SETUP
+#line 149 "smiles.ll"
+{ yylval->atom = new Atom(64); return ATOM_TOKEN; }
+	YY_BREAK
 case 60:
-#line 151 "smiles.ll"
+YY_RULE_SETUP
+#line 150 "smiles.ll"
+{ yylval->atom = new Atom(65); return ATOM_TOKEN; }
+	YY_BREAK
 case 61:
-#line 152 "smiles.ll"
+YY_RULE_SETUP
+#line 151 "smiles.ll"
+{ yylval->atom = new Atom(66); return ATOM_TOKEN; }
+	YY_BREAK
 case 62:
-#line 153 "smiles.ll"
+YY_RULE_SETUP
+#line 152 "smiles.ll"
+{ yylval->atom = new Atom(67); return ATOM_TOKEN; }
+	YY_BREAK
 case 63:
-#line 154 "smiles.ll"
+YY_RULE_SETUP
+#line 153 "smiles.ll"
+{ yylval->atom = new Atom(68); return ATOM_TOKEN; }
+	YY_BREAK
 case 64:
-#line 155 "smiles.ll"
+YY_RULE_SETUP
+#line 154 "smiles.ll"
+{ yylval->atom = new Atom(69); return ATOM_TOKEN; }
+	YY_BREAK
 case 65:
-#line 156 "smiles.ll"
+YY_RULE_SETUP
+#line 155 "smiles.ll"
+{ yylval->atom = new Atom(70); return ATOM_TOKEN; }
+	YY_BREAK
 case 66:
-#line 157 "smiles.ll"
+YY_RULE_SETUP
+#line 156 "smiles.ll"
+{ yylval->atom = new Atom(71); return ATOM_TOKEN; }
+	YY_BREAK
 case 67:
-#line 158 "smiles.ll"
+YY_RULE_SETUP
+#line 157 "smiles.ll"
+{ yylval->atom = new Atom(72); return ATOM_TOKEN; }
+	YY_BREAK
 case 68:
-#line 159 "smiles.ll"
+YY_RULE_SETUP
+#line 158 "smiles.ll"
+{ yylval->atom = new Atom(73); return ATOM_TOKEN; }
+	YY_BREAK
 case 69:
-#line 160 "smiles.ll"
+YY_RULE_SETUP
+#line 159 "smiles.ll"
+{ yylval->atom = new Atom(74); return ATOM_TOKEN; }
+	YY_BREAK
 case 70:
-#line 161 "smiles.ll"
+YY_RULE_SETUP
+#line 160 "smiles.ll"
+{ yylval->atom = new Atom(75); return ATOM_TOKEN; }
+	YY_BREAK
 case 71:
-#line 162 "smiles.ll"
+YY_RULE_SETUP
+#line 161 "smiles.ll"
+{ yylval->atom = new Atom(76); return ATOM_TOKEN; }
+	YY_BREAK
 case 72:
-#line 163 "smiles.ll"
+YY_RULE_SETUP
+#line 162 "smiles.ll"
+{ yylval->atom = new Atom(77); return ATOM_TOKEN; }
+	YY_BREAK
 case 73:
-#line 164 "smiles.ll"
+YY_RULE_SETUP
+#line 163 "smiles.ll"
+{ yylval->atom = new Atom(78); return ATOM_TOKEN; }
+	YY_BREAK
 case 74:
-#line 165 "smiles.ll"
+YY_RULE_SETUP
+#line 164 "smiles.ll"
+{ yylval->atom = new Atom(79); return ATOM_TOKEN; }
+	YY_BREAK
 case 75:
-#line 166 "smiles.ll"
+YY_RULE_SETUP
+#line 165 "smiles.ll"
+{ yylval->atom = new Atom(80); return ATOM_TOKEN; }
+	YY_BREAK
 case 76:
-#line 167 "smiles.ll"
+YY_RULE_SETUP
+#line 166 "smiles.ll"
+{ yylval->atom = new Atom(81); return ATOM_TOKEN; }
+	YY_BREAK
 case 77:
-#line 168 "smiles.ll"
+YY_RULE_SETUP
+#line 167 "smiles.ll"
+{ yylval->atom = new Atom(82); return ATOM_TOKEN; }
+	YY_BREAK
 case 78:
-#line 169 "smiles.ll"
+YY_RULE_SETUP
+#line 168 "smiles.ll"
+{ yylval->atom = new Atom(83); return ATOM_TOKEN; }
+	YY_BREAK
 case 79:
-#line 170 "smiles.ll"
+YY_RULE_SETUP
+#line 169 "smiles.ll"
+{ yylval->atom = new Atom(84); return ATOM_TOKEN; }
+	YY_BREAK
 case 80:
-#line 171 "smiles.ll"
+YY_RULE_SETUP
+#line 170 "smiles.ll"
+{ yylval->atom = new Atom(85); return ATOM_TOKEN; }
+	YY_BREAK
 case 81:
-#line 172 "smiles.ll"
+YY_RULE_SETUP
+#line 171 "smiles.ll"
+{ yylval->atom = new Atom(86); return ATOM_TOKEN; }
+	YY_BREAK
 case 82:
-#line 173 "smiles.ll"
+YY_RULE_SETUP
+#line 172 "smiles.ll"
+{ yylval->atom = new Atom(87); return ATOM_TOKEN; }
+	YY_BREAK
 case 83:
-#line 174 "smiles.ll"
+YY_RULE_SETUP
+#line 173 "smiles.ll"
+{ yylval->atom = new Atom(88); return ATOM_TOKEN; }
+	YY_BREAK
 case 84:
-#line 175 "smiles.ll"
+YY_RULE_SETUP
+#line 174 "smiles.ll"
+{ yylval->atom = new Atom(89); return ATOM_TOKEN; }
+	YY_BREAK
 case 85:
-#line 176 "smiles.ll"
+YY_RULE_SETUP
+#line 175 "smiles.ll"
+{ yylval->atom = new Atom(90); return ATOM_TOKEN; }
+	YY_BREAK
 case 86:
-#line 177 "smiles.ll"
+YY_RULE_SETUP
+#line 176 "smiles.ll"
+{ yylval->atom = new Atom(91); return ATOM_TOKEN; }
+	YY_BREAK
 case 87:
-#line 178 "smiles.ll"
+YY_RULE_SETUP
+#line 177 "smiles.ll"
+{ yylval->atom = new Atom(92); return ATOM_TOKEN; }
+	YY_BREAK
 case 88:
-#line 179 "smiles.ll"
+YY_RULE_SETUP
+#line 178 "smiles.ll"
+{ yylval->atom = new Atom(93); return ATOM_TOKEN; }
+	YY_BREAK
 case 89:
-#line 180 "smiles.ll"
+YY_RULE_SETUP
+#line 179 "smiles.ll"
+{ yylval->atom = new Atom(94); return ATOM_TOKEN; }
+	YY_BREAK
 case 90:
-#line 181 "smiles.ll"
+YY_RULE_SETUP
+#line 180 "smiles.ll"
+{ yylval->atom = new Atom(95); return ATOM_TOKEN; }
+	YY_BREAK
 case 91:
-#line 182 "smiles.ll"
+YY_RULE_SETUP
+#line 181 "smiles.ll"
+{ yylval->atom = new Atom(96); return ATOM_TOKEN; }
+	YY_BREAK
 case 92:
-#line 183 "smiles.ll"
+YY_RULE_SETUP
+#line 182 "smiles.ll"
+{ yylval->atom = new Atom(97); return ATOM_TOKEN; }
+	YY_BREAK
 case 93:
-#line 184 "smiles.ll"
+YY_RULE_SETUP
+#line 183 "smiles.ll"
+{ yylval->atom = new Atom(98); return ATOM_TOKEN; }
+	YY_BREAK
 case 94:
-#line 185 "smiles.ll"
+YY_RULE_SETUP
+#line 184 "smiles.ll"
+{ yylval->atom = new Atom(99); return ATOM_TOKEN; }
+	YY_BREAK
 case 95:
-#line 186 "smiles.ll"
+YY_RULE_SETUP
+#line 185 "smiles.ll"
+{ yylval->atom = new Atom(100); return ATOM_TOKEN; }
+	YY_BREAK
 case 96:
-#line 187 "smiles.ll"
+YY_RULE_SETUP
+#line 186 "smiles.ll"
+{ yylval->atom = new Atom(101); return ATOM_TOKEN; }
+	YY_BREAK
 case 97:
-#line 188 "smiles.ll"
+YY_RULE_SETUP
+#line 187 "smiles.ll"
+{ yylval->atom = new Atom(102); return ATOM_TOKEN; }
+	YY_BREAK
 case 98:
-#line 189 "smiles.ll"
+YY_RULE_SETUP
+#line 188 "smiles.ll"
+{ yylval->atom = new Atom(103); return ATOM_TOKEN; }
+	YY_BREAK
 case 99:
-#line 190 "smiles.ll"
+YY_RULE_SETUP
+#line 189 "smiles.ll"
+{ yylval->atom = new Atom(104); return ATOM_TOKEN; }
+	YY_BREAK
 case 100:
-#line 191 "smiles.ll"
+YY_RULE_SETUP
+#line 190 "smiles.ll"
+{ yylval->atom = new Atom(105); return ATOM_TOKEN; }
+	YY_BREAK
 case 101:
-#line 192 "smiles.ll"
+YY_RULE_SETUP
+#line 191 "smiles.ll"
+{ yylval->atom = new Atom(106); return ATOM_TOKEN; }
+	YY_BREAK
 case 102:
-#line 193 "smiles.ll"
+YY_RULE_SETUP
+#line 192 "smiles.ll"
+{ yylval->atom = new Atom(107); return ATOM_TOKEN; }
+	YY_BREAK
 case 103:
-#line 194 "smiles.ll"
+YY_RULE_SETUP
+#line 193 "smiles.ll"
+{ yylval->atom = new Atom(108); return ATOM_TOKEN; }
+	YY_BREAK
 case 104:
-#line 195 "smiles.ll"
+YY_RULE_SETUP
+#line 194 "smiles.ll"
+{ yylval->atom = new Atom(109); return ATOM_TOKEN; }
+	YY_BREAK
 case 105:
-#line 196 "smiles.ll"
+YY_RULE_SETUP
+#line 195 "smiles.ll"
+{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
+	YY_BREAK
 case 106:
-#line 197 "smiles.ll"
+YY_RULE_SETUP
+#line 196 "smiles.ll"
+{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
+	YY_BREAK
 case 107:
-#line 198 "smiles.ll"
+YY_RULE_SETUP
+#line 197 "smiles.ll"
+{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
+	YY_BREAK
 case 108:
-#line 199 "smiles.ll"
+YY_RULE_SETUP
+#line 198 "smiles.ll"
+{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
+	YY_BREAK
 case 109:
-#line 200 "smiles.ll"
+YY_RULE_SETUP
+#line 199 "smiles.ll"
+{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
+	YY_BREAK
 case 110:
-#line 201 "smiles.ll"
+YY_RULE_SETUP
+#line 200 "smiles.ll"
+{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
+	YY_BREAK
 case 111:
 YY_RULE_SETUP
 #line 201 "smiles.ll"
-{   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ATOM_TOKEN;
-			}
+{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 204 "smiles.ll"
-{ yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
+#line 202 "smiles.ll"
+{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 205 "smiles.ll"
-{ yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
+#line 203 "smiles.ll"
+{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 206 "smiles.ll"
-{ yylval->atom = new Atom(7);return ORGANIC_ATOM_TOKEN; }
+#line 205 "smiles.ll"
+{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 207 "smiles.ll"
-{ yylval->atom = new Atom(8);return ORGANIC_ATOM_TOKEN; }
+#line 206 "smiles.ll"
+{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 208 "smiles.ll"
-{ yylval->atom = new Atom(15);return ORGANIC_ATOM_TOKEN; }
+#line 207 "smiles.ll"
+{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 209 "smiles.ll"
-{ yylval->atom = new Atom(16);return ORGANIC_ATOM_TOKEN; }
+#line 208 "smiles.ll"
+{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 210 "smiles.ll"
-{ yylval->atom = new Atom(9);return ORGANIC_ATOM_TOKEN; }
+#line 209 "smiles.ll"
+{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 211 "smiles.ll"
-{ yylval->atom = new Atom(17);return ORGANIC_ATOM_TOKEN; }
+#line 210 "smiles.ll"
+{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 212 "smiles.ll"
-{ yylval->atom = new Atom(35);return ORGANIC_ATOM_TOKEN; }
+#line 211 "smiles.ll"
+{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 213 "smiles.ll"
-{ yylval->atom = new Atom(53);return ORGANIC_ATOM_TOKEN; }
+#line 212 "smiles.ll"
+{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
+#line 213 "smiles.ll"
+{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
+	YY_BREAK
+case 123:
+YY_RULE_SETUP
 #line 215 "smiles.ll"
+{ yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 124:
+YY_RULE_SETUP
+#line 216 "smiles.ll"
+{ yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 125:
+YY_RULE_SETUP
+#line 217 "smiles.ll"
+{ yylval->atom = new Atom(7);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 126:
+YY_RULE_SETUP
+#line 218 "smiles.ll"
+{ yylval->atom = new Atom(8);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 127:
+YY_RULE_SETUP
+#line 219 "smiles.ll"
+{ yylval->atom = new Atom(15);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 128:
+YY_RULE_SETUP
+#line 220 "smiles.ll"
+{ yylval->atom = new Atom(16);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 129:
+YY_RULE_SETUP
+#line 221 "smiles.ll"
+{ yylval->atom = new Atom(9);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 130:
+YY_RULE_SETUP
+#line 222 "smiles.ll"
+{ yylval->atom = new Atom(17);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 131:
+YY_RULE_SETUP
+#line 223 "smiles.ll"
+{ yylval->atom = new Atom(35);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 132:
+YY_RULE_SETUP
+#line 224 "smiles.ll"
+{ yylval->atom = new Atom(53);return ORGANIC_ATOM_TOKEN; }
+	YY_BREAK
+case 133:
+YY_RULE_SETUP
+#line 226 "smiles.ll"
 {
 				return H_TOKEN;
 			}
 	YY_BREAK
-case 123:
+case 134:
 YY_RULE_SETUP
-#line 219 "smiles.ll"
+#line 230 "smiles.ll"
 {	yylval->atom = new Atom ( 5 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 124:
+case 135:
 YY_RULE_SETUP
-#line 223 "smiles.ll"
+#line 234 "smiles.ll"
 {	yylval->atom = new Atom ( 6 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 125:
+case 136:
 YY_RULE_SETUP
-#line 227 "smiles.ll"
+#line 238 "smiles.ll"
 {	yylval->atom = new Atom( 7 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 126:
+case 137:
 YY_RULE_SETUP
-#line 231 "smiles.ll"
+#line 242 "smiles.ll"
 {	yylval->atom = new Atom( 8 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 127:
+case 138:
 YY_RULE_SETUP
-#line 235 "smiles.ll"
+#line 246 "smiles.ll"
 {	yylval->atom = new Atom( 15 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 128:
+case 139:
 YY_RULE_SETUP
-#line 239 "smiles.ll"
+#line 250 "smiles.ll"
 {	yylval->atom = new Atom( 16 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 129:
+case 140:
 YY_RULE_SETUP
-#line 244 "smiles.ll"
+#line 255 "smiles.ll"
 {	yylval->atom = new Atom( 14 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 130:
+case 141:
 YY_RULE_SETUP
-#line 248 "smiles.ll"
+#line 259 "smiles.ll"
 {	yylval->atom = new Atom( 33 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 131:
+case 142:
 YY_RULE_SETUP
-#line 252 "smiles.ll"
+#line 263 "smiles.ll"
 {	yylval->atom = new Atom( 34 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 132:
+case 143:
 YY_RULE_SETUP
-#line 256 "smiles.ll"
+#line 267 "smiles.ll"
 {	yylval->atom = new Atom( 52 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 133:
+case 144:
 YY_RULE_SETUP
-#line 261 "smiles.ll"
+#line 272 "smiles.ll"
 {   yylval->atom = new Atom( 0 );
 		            yylval->atom->setProp(common_properties::dummyLabel,
                                                         std::string("*"));
@@ -1370,143 +1769,214 @@ YY_RULE_SETUP
 				return ORGANIC_ATOM_TOKEN;
 			}
 	YY_BREAK
-case 134:
+case 145:
 YY_RULE_SETUP
-#line 269 "smiles.ll"
+#line 280 "smiles.ll"
 { return COLON_TOKEN; }
 	YY_BREAK
-case 135:
+
+  // The next block is a workaround for a pathlogy in the SMILES produced
+  // by some Biovia tools
+
+case 146:
 YY_RULE_SETUP
-#line 271 "smiles.ll"
-{
-              yylval->bond = new Bond();
-              Bond::BondType bt=Bond::UNSPECIFIED;
-              switch(yytext[0]){
-	      case '=':
-		bt = Bond::DOUBLE;
-		break;
-	      case '#':
-		bt = Bond::TRIPLE;
-		break;
-	      case ':':
-		bt = Bond::AROMATIC;
-                yylval->bond->setIsAromatic(true);
-		break;
-        default:
-          CHECK_INVARIANT(0,"cannot get here");
-	      }
-	      yylval->bond->setBondType(bt);
-	return BOND_TOKEN; }
+#line 286 "smiles.ll"
+{ yylval->atom = new Atom(104); return ATOM_TOKEN; }
 	YY_BREAK
-case 136:
+case 147:
+YY_RULE_SETUP
+#line 287 "smiles.ll"
+{ yylval->atom = new Atom(105); return ATOM_TOKEN; }
+	YY_BREAK
+case 148:
+YY_RULE_SETUP
+#line 288 "smiles.ll"
+{ yylval->atom = new Atom(106); return ATOM_TOKEN; }
+	YY_BREAK
+case 149:
+YY_RULE_SETUP
+#line 289 "smiles.ll"
+{ yylval->atom = new Atom(107); return ATOM_TOKEN; }
+	YY_BREAK
+case 150:
 YY_RULE_SETUP
 #line 290 "smiles.ll"
-{
-    yylval->bond = new Bond(Bond::DATIVER);
-    return BOND_TOKEN;
-}
+{ yylval->atom = new Atom(108); return ATOM_TOKEN; }
 	YY_BREAK
-case 137:
+case 151:
+YY_RULE_SETUP
+#line 291 "smiles.ll"
+{ yylval->atom = new Atom(109); return ATOM_TOKEN; }
+	YY_BREAK
+case 152:
+YY_RULE_SETUP
+#line 292 "smiles.ll"
+{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
+	YY_BREAK
+case 153:
+YY_RULE_SETUP
+#line 293 "smiles.ll"
+{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
+	YY_BREAK
+case 154:
 YY_RULE_SETUP
 #line 294 "smiles.ll"
-{
-    yylval->bond = new Bond(Bond::DATIVEL);
-    return BOND_TOKEN;
-}
+{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
 	YY_BREAK
-case 138:
+case 155:
+YY_RULE_SETUP
+#line 295 "smiles.ll"
+{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
+	YY_BREAK
+case 156:
+YY_RULE_SETUP
+#line 296 "smiles.ll"
+{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
+	YY_BREAK
+case 157:
+YY_RULE_SETUP
+#line 297 "smiles.ll"
+{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
+	YY_BREAK
+case 158:
+YY_RULE_SETUP
+#line 298 "smiles.ll"
+{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
+	YY_BREAK
+case 159:
 YY_RULE_SETUP
 #line 299 "smiles.ll"
-{ yylval->bond = new QueryBond();
-	yylval->bond->setQuery(makeBondNullQuery());
-	return BOND_TOKEN;  }
+{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
-case 139:
+case 160:
 YY_RULE_SETUP
-#line 303 "smiles.ll"
+#line 300 "smiles.ll"
+{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
+	YY_BREAK
+case 161:
+YY_RULE_SETUP
+#line 302 "smiles.ll"
+{ yylval->bond = new Bond(Bond::DOUBLE);
+	  return BOND_TOKEN; }
+	YY_BREAK
+case 162:
+YY_RULE_SETUP
+#line 304 "smiles.ll"
+{ yylval->bond = new Bond(Bond::TRIPLE);
+	  return BOND_TOKEN; }
+	YY_BREAK
+case 163:
+YY_RULE_SETUP
+#line 306 "smiles.ll"
+{ yylval->bond = new Bond(Bond::AROMATIC);
+	  yylval->bond->setIsAromatic(true);
+	  return BOND_TOKEN; }
+	YY_BREAK
+case 164:
+YY_RULE_SETUP
+#line 309 "smiles.ll"
+{ yylval->bond = new Bond(Bond::DATIVER);
+	  return BOND_TOKEN; }
+	YY_BREAK
+case 165:
+YY_RULE_SETUP
+#line 311 "smiles.ll"
+{ yylval->bond = new Bond(Bond::DATIVEL);
+	  return BOND_TOKEN; }
+	YY_BREAK
+case 166:
+YY_RULE_SETUP
+#line 313 "smiles.ll"
+{ yylval->bond = new QueryBond();
+	  yylval->bond->setQuery(makeBondNullQuery());
+	  return BOND_TOKEN;  }
+	YY_BREAK
+case 167:
+YY_RULE_SETUP
+#line 317 "smiles.ll"
 { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
-case 140:
+case 168:
 YY_RULE_SETUP
-#line 307 "smiles.ll"
+#line 321 "smiles.ll"
 { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
-case 141:
+case 169:
 YY_RULE_SETUP
-#line 311 "smiles.ll"
+#line 325 "smiles.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
-case 142:
-YY_RULE_SETUP
-#line 313 "smiles.ll"
-{ return PLUS_TOKEN; }
-	YY_BREAK
-case 143:
-YY_RULE_SETUP
-#line 315 "smiles.ll"
-{ return GROUP_OPEN_TOKEN; }
-	YY_BREAK
-case 144:
-YY_RULE_SETUP
-#line 316 "smiles.ll"
-{ return GROUP_CLOSE_TOKEN; }
-	YY_BREAK
-case 145:
-YY_RULE_SETUP
-#line 319 "smiles.ll"
-{ BEGIN IN_ATOM_STATE; return ATOM_OPEN_TOKEN; }
-	YY_BREAK
-case 146:
-YY_RULE_SETUP
-#line 320 "smiles.ll"
-{ BEGIN INITIAL; return ATOM_CLOSE_TOKEN; }
-	YY_BREAK
-case 147:
-YY_RULE_SETUP
-#line 322 "smiles.ll"
-{ return SEPARATOR_TOKEN; }
-	YY_BREAK
-case 148:
-YY_RULE_SETUP
-#line 324 "smiles.ll"
-{ return PERCENT_TOKEN; }
-	YY_BREAK
-case 149:
-YY_RULE_SETUP
-#line 326 "smiles.ll"
-{ yylval->ival = 0; return ZERO_TOKEN; }
-	YY_BREAK
-case 150:
+case 170:
 YY_RULE_SETUP
 #line 327 "smiles.ll"
+{ return PLUS_TOKEN; }
+	YY_BREAK
+case 171:
+YY_RULE_SETUP
+#line 329 "smiles.ll"
+{ return GROUP_OPEN_TOKEN; }
+	YY_BREAK
+case 172:
+YY_RULE_SETUP
+#line 330 "smiles.ll"
+{ return GROUP_CLOSE_TOKEN; }
+	YY_BREAK
+case 173:
+YY_RULE_SETUP
+#line 333 "smiles.ll"
+{ BEGIN IN_ATOM_STATE; return ATOM_OPEN_TOKEN; }
+	YY_BREAK
+case 174:
+YY_RULE_SETUP
+#line 334 "smiles.ll"
+{ BEGIN INITIAL; return ATOM_CLOSE_TOKEN; }
+	YY_BREAK
+case 175:
+YY_RULE_SETUP
+#line 336 "smiles.ll"
+{ return SEPARATOR_TOKEN; }
+	YY_BREAK
+case 176:
+YY_RULE_SETUP
+#line 338 "smiles.ll"
+{ return PERCENT_TOKEN; }
+	YY_BREAK
+case 177:
+YY_RULE_SETUP
+#line 340 "smiles.ll"
+{ yylval->ival = 0; return ZERO_TOKEN; }
+	YY_BREAK
+case 178:
+YY_RULE_SETUP
+#line 341 "smiles.ll"
 { yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
 	YY_BREAK
-case 151:
-/* rule 151 can match eol */
+case 179:
+/* rule 179 can match eol */
 YY_RULE_SETUP
-#line 331 "smiles.ll"
+#line 345 "smiles.ll"
 return 0;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
-#line 333 "smiles.ll"
+#line 347 "smiles.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
-case 152:
+case 180:
 YY_RULE_SETUP
-#line 334 "smiles.ll"
+#line 348 "smiles.ll"
 return yytext[0];
 	YY_BREAK
-case 153:
+case 181:
 YY_RULE_SETUP
-#line 336 "smiles.ll"
+#line 350 "smiles.ll"
 ECHO;
 	YY_BREAK
-#line 1510 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
+#line 1980 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1799,7 +2269,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 190 )
+			if ( yy_current_state >= 246 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1828,11 +2298,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 190 )
+		if ( yy_current_state >= 246 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 189);
+	yy_is_jam = (yy_current_state == 245);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2685,7 +3155,7 @@ void yysmiles_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 336 "smiles.ll"
+#line 350 "smiles.ll"
 
 
 
