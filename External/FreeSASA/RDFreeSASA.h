@@ -53,29 +53,40 @@ struct SASAOpts {
   enum Classifier { Protor = 0, NACCESS = 1, OONS = 2 };
   enum Classes { Unclassified = 0, APolar = 1, Polar = 2 };
 
-  Algorithm d_alg;
-  Classifier d_classifier;
-  SASAOpts() : d_alg(LeeRichards), d_classifier(Protor) {}
-  SASAOpts(Algorithm alg, Classifier cls) : d_alg(alg), d_classifier(cls) {}
+  Algorithm algorithm;
+  Classifier classifier;
+  SASAOpts() : algorithm(LeeRichards), classifier(Protor) {}
+  SASAOpts(Algorithm alg, Classifier cls) : algorithm(alg), classifier(cls) {}
 };
 
 //! Classify atoms using standard freesaa classifiers
 /*!
-    FreeSASA identified Classes end up in atom.getProp(common_properties::Atom::FreeSASAClass)
-       returns false if no atoms could be classified
+  Note:
+
+    FreeSASA identified Classes end up in atom.getProp<int>(common_properties::Atom::SASAClassName)
+    FreeSASA Class names end up in atom.getProp<string>(common_properties::Atom::SASAClassName)
+  
+    \param mol:    Molecule to analyze
+    \param radii   output vector of radii where radii[idx] is the radius for atom with index idx
+    \return false if no atoms could be classified
 */       
 bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
                    const FreeSASA::SASAOpts &opts = SASAOpts());
 
-//! calculate all atom contributions
+//! calculate the Solvent Accessible Surface Area using the FreeSASA library.
 /*!
-  SASA data is stored in atom.getProp(common_properites::Atom::SASA);
-ARGUMENTS:
-  - mol: Molecule to analyze
-  - radii: vector of radii where radii[idx] is the radius for atom with index idx
-  - confIdx: specify the conformation [default -1]
-  - query: query to limit the number of atoms to the ones matching the query
-  - opts: SASAOpts class specifying options.
+  SASA atom contribution data is stored in atom.getProp(common_properites::Atom::SASA);
+
+  \param mol:    Molecule to analyze
+  \param radii   vector of radii where radii[idx] is the radius for atom with index idx
+                 These can be passed in or calculated with classifyAtoms for some proteins.
+  \param confIdx specify the conformation [default -1]
+  \param query    query atom to limit the number of atoms to the ones matching the query
+                  precanned query atoms can be made with makeFreeSasaPolarAtomQuery and
+                  makeFreeSasaAPolarAtomQuery for classified polar and apolar atoms respectively.
+
+  \param opts     SASAOpts class specifying options.
+  \return the requested solvent accessible surface area
 */
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
                 int confIdx=-1,
@@ -87,12 +98,15 @@ double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
 /*!
     These are atoms that have the "SASAClassName" property set to "Apolar"
     after calling classifyAtoms.
+
+    \return QueryAtom pointer
 */
 const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery();
 //! Make a query atom returning the FreeSASA supplied polar atom classification
 /*!
     These are atoms that have the "SASAClassName" property set to "Polar"
     after calling classifyAtoms.
+    \return QueryAtom pointer
 */
 const RDKit::QueryAtom * makeFreeSasaPolarAtomQuery();
 

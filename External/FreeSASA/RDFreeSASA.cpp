@@ -61,7 +61,7 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
                    const SASAOpts &opts) {
   radii.clear();
   const freesasa_classifier *classifier = 0;
-  switch (opts.d_classifier) {
+  switch (opts.classifier) {
     case SASAOpts::Protor:
       classifier = &freesasa_protor_classifier;
       break;
@@ -128,7 +128,7 @@ double internalCalcSASA(const ROMol &mol,
 
   freesasa_parameters params = freesasa_default_parameters;
   params.n_threads = 1;
-  switch (opts.d_alg) {
+  switch (opts.algorithm) {
     case SASAOpts::LeeRichards:
       params.alg = FREESASA_LEE_RICHARDS;
       break;
