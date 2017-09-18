@@ -312,14 +312,24 @@ def _drawerToImage(d2d):
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
+def _okToKekulizeMol(mol,kekulize):
+  if kekulize:
+    for bond in mol.GetBonds():
+      if bond.GetIsAromatic() and bond.HasQuery():
+        return False
+    return True
+  return kekulize
+
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
   try:
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
+  kekulize=_okToKekulizeMol(mol,kwargs.get('kekulize', True))
+
   try:
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
@@ -343,6 +353,8 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
     mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
+
+  kekulize=_okToKekulizeMol(mol,kekulize)
 
   try:
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)

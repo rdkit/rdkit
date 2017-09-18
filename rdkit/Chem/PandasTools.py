@@ -251,14 +251,10 @@ def PrintAsBase64PNGString(x, renderer=None):
     highlightAtoms = x.__sssAtoms
   else:
     highlightAtoms = []
-  try:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(x, kekulize=True)
-  except ValueError:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(x, kekulize=False)
   if molRepresentation.lower() == 'svg':
-    return _get_svg_image(nmol, highlightAtoms=highlightAtoms, size=molSize)
+    return _get_svg_image(x, highlightAtoms=highlightAtoms, size=molSize, kekulize=True)
   else:
-    data = Draw._moltoimg(nmol,molSize,highlightAtoms,"",returnPNG=True)
+    data = Draw._moltoimg(x,molSize,highlightAtoms,"",returnPNG=True, kekulize=True)
     return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 

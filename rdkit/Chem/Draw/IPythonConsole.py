@@ -100,7 +100,9 @@ def _toPNG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-  return Draw._moltoimg(mol,molSize,highlightAtoms,"",returnPNG=True)
+  kekulize=kekulizeStructures
+  return Draw._moltoimg(mol,molSize,highlightAtoms,"",returnPNG=True,
+                        kekulize=kekulize)
 
 
 def _toSVG(mol):
@@ -110,8 +112,7 @@ def _toSVG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-
-  return Draw._moltoSVG(mol,molSize,highlightAtoms,"",kekulizeStructures)
+  return Draw._moltoSVG(mol,molSize,highlightAtoms,"",kekulize)
 
 
 def _toReactionPNG(rxn):
