@@ -207,8 +207,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 32)
     try:
       smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
-      self.fail('This is expected to fail with a python OverflowError exception')
-    except OverflowError:
+      self.fail('This is expected to fail otherwise python will throw an OverflowError exception')
+    except ValueError:
       pass
 
   def testGenerateStereoisomersRandomSeeding(self):

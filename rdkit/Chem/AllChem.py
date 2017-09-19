@@ -569,6 +569,9 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
     F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     F[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
     F[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+
+    However, there is currently a maximum of only 62 undefined stereo
+    centers supported.
     """
     tm = Mol(m)
     flippers = _getFlippers(tm, options)
@@ -576,6 +579,9 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
     if not nCenters:
         yield tm
         return
+
+    if nCenters > 62:
+      raise ValueError('Maximum number of stereo centers is 62, found %u' % nCenters)
 
     if (options.maxIsomers == 0 or
         2**nCenters <= options.maxIsomers):
