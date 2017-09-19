@@ -15,56 +15,13 @@
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolBundle.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/iterator_next.h>
 
+#include "substructmethods.h"
 namespace python = boost::python;
 
 namespace RDKit {
-PyObject *convertMatches(MatchVectType &matches);
-
-template <typename T1, typename T2>
-bool HasSubstructMatch(const T1 &mol, const T2 &query,
-                       bool recursionPossible = true, bool useChirality = false,
-                       bool useQueryQueryMatches = false) {
-  NOGIL gil;
-  MatchVectType res;
-  return SubstructMatch(mol, query, res, recursionPossible, useChirality,
-                        useQueryQueryMatches);
-}
-
-template <typename T1, typename T2>
-PyObject *GetSubstructMatch(const T1 &mol, const T2 &query,
-                            bool useChirality = false,
-                            bool useQueryQueryMatches = false) {
-  MatchVectType matches;
-  {
-    NOGIL gil;
-    SubstructMatch(mol, query, matches, true, useChirality,
-                   useQueryQueryMatches);
-  }
-  return convertMatches(matches);
-}
-
-template <typename T1, typename T2>
-PyObject *GetSubstructMatches(const T1 &mol, const T2 &query,
-                              bool uniquify = true, bool useChirality = false,
-                              bool useQueryQueryMatches = false,
-                              unsigned int maxMatches = 1000) {
-  std::vector<MatchVectType> matches;
-  int matched;
-  {
-    NOGIL gil;
-    matched = SubstructMatch(mol, query, matches, uniquify, true, useChirality,
-                             useQueryQueryMatches, maxMatches);
-  }
-  PyObject *res = PyTuple_New(matched);
-  for (int idx = 0; idx < matched; idx++) {
-    PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
-  }
-  return res;
-}
 
 std::string molBundleClassDoc =
     "A class for storing gropus of related molecules.\n\
