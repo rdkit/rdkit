@@ -190,6 +190,15 @@ class TestCase(unittest.TestCase):
     self.assertBondStereoRoundTrips('cis.sdf')
     self.assertBondStereoRoundTrips('trans.sdf')
 
+  def testGenerateStereoisomersBasic(self):
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
+    assert len(smiles) == 4
+
+  def testGenerateStereoisomersLargeRandomSample(self):
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 31) # can't push over 64 centers, will throw Python overflow error
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
+    assert len(smiles) == 1024
 
 if __name__ == '__main__':
   unittest.main()
