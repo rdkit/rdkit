@@ -24,7 +24,7 @@ namespace python = boost::python;
 namespace RDKit {
 PyObject *convertMatches(MatchVectType &matches);
 
-template <typename T1, T2>
+template <typename T1, typename T2>
 bool HasSubstructMatch(const T1 &mol, const T2 &query,
                        bool recursionPossible = true, bool useChirality = false,
                        bool useQueryQueryMatches = false) {
@@ -34,7 +34,8 @@ bool HasSubstructMatch(const T1 &mol, const T2 &query,
                         useQueryQueryMatches);
 }
 
-PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,
+template <typename T1, typename T2>
+PyObject *GetSubstructMatch(const T1 &mol, const T2 &query,
                             bool useChirality = false,
                             bool useQueryQueryMatches = false) {
   MatchVectType matches;
@@ -46,7 +47,8 @@ PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,
   return convertMatches(matches);
 }
 
-PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,
+template <typename T1, typename T2>
+PyObject *GetSubstructMatches(const T1 &mol, const T2 &query,
                               bool uniquify = true, bool useChirality = false,
                               bool useQueryQueryMatches = false,
                               unsigned int maxMatches = 1000) {
@@ -63,6 +65,7 @@ PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,
   }
   return res;
 }
+
 std::string molBundleClassDoc =
     "A class for storing gropus of related molecules.\n\
     Here related means that the molecules have to have the same number of atoms.\n\
@@ -73,9 +76,9 @@ struct molbundle_wrap {
         "MolBundle", molBundleClassDoc.c_str(), python::init<>())
         .def("__getitem__", &MolBundle::getMol)
         .def("__len__", &MolBundle::size)
-        .def("addMol", &MolBundle::addMol)
-        .def("getMol", &MolBundle::getMol)
-        .def("size", &MolBundle::size)
+        .def("AddMol", &MolBundle::addMol)
+        .def("GetMol", &MolBundle::getMol)
+        .def("Size", &MolBundle::size)
 #if 0
         .def("reset", &ResonanceMolSupplier::reset,
              "Resets our position in the resonance structure supplier to the "
@@ -178,7 +181,9 @@ struct molbundle_wrap {
 #endif
 
         // substructures
-        .def("HasSubstructMatch", HasSubstructMatch,
+        .def("HasSubstructMatch",
+             (bool (*)(const MolBundle &m, const ROMol &query, bool, bool,
+                       bool))HasSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("recursionPossible") = true,
               python::arg("useChirality") = false,
@@ -192,7 +197,9 @@ struct molbundle_wrap {
              "matching\n\n"
              "    - useQueryQueryMatches: use query-query matching logic\n\n"
              "  RETURNS: True or False\n")
-        .def("GetSubstructMatch", GetSubstructMatch,
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const MolBundle &m, const ROMol &query, bool,
+                             bool)) GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),
@@ -212,8 +219,9 @@ struct molbundle_wrap {
              "atom in\n"
              "         this molecule that matches the first atom in the "
              "query.\n")
-
-        .def("GetSubstructMatches", GetSubstructMatches,
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const MolBundle &m, const ROMol &query, bool, bool,
+                             bool, unsigned int)) GetSubstructMatches,
              (python::arg("self"), python::arg("query"),
               python::arg("uniquify") = true,
               python::arg("useChirality") = false,
@@ -248,8 +256,82 @@ struct molbundle_wrap {
              "atom in\n"
              "         this molecule that matches the first atom in the "
              "query.\n")
+        .def("HasSubstructMatch",
+             (bool (*)(const MolBundle &m, const MolBundle &query, bool, bool,
+                       bool))HasSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("recursionPossible") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false),
+             "Queries whether or not the molecule contains a particular "
+             "substructure.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a Molecule\n\n"
+             "    - recursionPossible: (optional)\n\n"
+             "    - useChirality: enables the use of stereochemistry in the "
+             "matching\n\n"
+             "    - useQueryQueryMatches: use query-query matching logic\n\n"
+             "  RETURNS: True or False\n")
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const MolBundle &m, const MolBundle &query, bool,
+                             bool)) GetSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false),
+             "Returns the indices of the molecule's atoms that match a "
+             "substructure query.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a Molecule\n\n"
+             "    - useChirality: enables the use of stereochemistry in the "
+             "matching\n\n"
+             "    - useQueryQueryMatches: use query-query matching logic\n\n"
+             "  RETURNS: a tuple of integers\n\n"
+             "  NOTES:\n"
+             "     - only a single match is returned\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
+             "query.\n")
 
-        ;
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const MolBundle &m, const MolBundle &query, bool,
+                             bool, bool, unsigned int)) GetSubstructMatches,
+             (python::arg("self"), python::arg("query"),
+              python::arg("uniquify") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("maxMatches") = 1000),
+             "Returns tuples of the indices of the molecule's atoms that "
+             "match "
+             "a substructure query.\n\n"
+             "  ARGUMENTS:\n"
+             "    - query: a Molecule.\n"
+             "    - uniquify: (optional) determines whether or not the "
+             "matches "
+             "are uniquified.\n"
+             "                Defaults to 1.\n\n"
+             "    - useChirality: enables the use of stereochemistry in the "
+             "matching\n\n"
+             "    - useQueryQueryMatches: use query-query matching logic\n\n"
+             "    - maxMatches: The maximum number of matches that will be "
+             "returned.\n"
+             "                  In high-symmetry cases with medium-sized "
+             "molecules, it is\n"
+             "                  very easy to end up with a combinatorial "
+             "explosion in the\n"
+             "                  number of possible matches. This argument "
+             "prevents that from\n"
+             "                  having unintended consequences\n\n"
+             "  RETURNS: a tuple of tuples of integers\n\n"
+             "  NOTE:\n"
+             "     - the ordering of the indices corresponds to the atom "
+             "ordering\n"
+             "         in the query. For example, the first index is for the "
+             "atom in\n"
+             "         this molecule that matches the first atom in the "
+             "query.\n");
   };
 };
 }
