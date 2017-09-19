@@ -214,13 +214,13 @@ class TestCase(unittest.TestCase):
   def testGenerateStereoisomersRandomSeeding(self):
     opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=3)
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
-    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts)]
-    assert smiles == ['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl']
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts))
+    assert smiles == set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl'])
 
     opts = AllChem.StereoEnumerationOptions(rand=0xDEADBEEF)
     mol = Chem.MolFromSmiles('c1ccc2c(c1)C(=O)N(C2=O)C3CCC(=O)NC3=O')
-    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts)]
-    assert smiles == ['O=C1CC[C@@H](N2C(=O)c3ccccc3C2=O)C(=O)N1', 'O=C1CC[C@H](N2C(=O)c3ccccc3C2=O)C(=O)N1']
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts))
+    assert smiles == set(['O=C1CC[C@@H](N2C(=O)c3ccccc3C2=O)C(=O)N1', 'O=C1CC[C@H](N2C(=O)c3ccccc3C2=O)C(=O)N1'])
 
     class DeterministicRandom(random.Random):
       def __init__(self):
