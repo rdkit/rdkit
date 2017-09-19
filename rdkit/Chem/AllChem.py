@@ -11,6 +11,7 @@
 
 """
 import sys
+import six
 import random
 import warnings
 from collections import namedtuple
@@ -478,58 +479,76 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
       - m: the molecule to work with
       - verbose: toggles how verbose the output is
 
-
-    A small example with 3 chiral centers (8 theoretical stereoisomers):
+    A small example with 3 chiral atoms and 1 chiral bond (16 theoretical stereoisomers):
     >>> from rdkit.Chem import AllChem
-    >>> m = AllChem.MolFromSmiles('OC1OC(C2)(F)C2(Cl)C1')
+    >>> m = AllChem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
     >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
     >>> len(isomers)
-    8
+    16
     >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
     ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
+    ...
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
-    >>> opts = StereoEnumerationOptions(tryEmbedding=True)
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
-    >>> len(isomers)
-    4
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
-    ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
-
-    By default the code only expands unspecified stereocenters:
-    >>> m = AllChem.MolFromSmiles('O[C@H]1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
-    >>> len(isomers)
-    4
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
-    ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-
-    but we can change that behavior:
-    >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
+    >>> opts = AllChem.StereoEnumerationOptions(tryEmbedding=True)
     >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
     >>> len(isomers)
     8
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    ...
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
 
-    since the result is a generator, we can allow exploring at least parts of very
+    By default the code only expands unspecified stereocenters:
+    >>> m = AllChem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
+    >>> len(isomers)
+    8
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    ...
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
+
+    But we can change that behavior:
+    >>> opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False)
+    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
+    >>> len(isomers)
+    16
+
+    Since the result is a generator, we can allow exploring at least parts of very
     large result sets:
-    >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
+    >>> m = AllChem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
     >>> opts = StereoEnumerationOptions(maxIsomers=0)
     >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
     >>> for x in range(5):
@@ -540,6 +559,16 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
 
+    Or randomly sample a small subset:
+    >>> m = AllChem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
+    >>> opts = AllChem.StereoEnumerationOptions(maxIsomers=3)
+    >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
+    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    ...
+    F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
+    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
+    F[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     """
     tm = Mol(m)
     flippers = _getFlippers(tm, options)
@@ -548,15 +577,9 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
         yield tm
         return
 
-    # this sillyness is to deal with Python 3 getting rid of xrange
-    # and range slurping up 2**N memory in Python 2
-    range_func = range
-    if sys.version_info.major < 3:
-        range_func = xrange
-
     if (options.maxIsomers == 0 or
         2**nCenters <= options.maxIsomers):
-        samples = range_func(2**nCenters)
+        samples = six.moves.range(2**nCenters)
     else:
         if options.rand is None:
             # deterministic random seed invariant to input atom order
@@ -567,10 +590,12 @@ def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
             # can inherit from this class to pick up utility methods
             rand = options.rand
         else:
-            rand = random.Random(self.rand)
+            rand = random.Random(options.rand)
 
-        # randomly sample from the population of isomers
-        samples = rand.sample(range_func(2**nCenters), k=options.maxIsomers)
+        # Randomly sample from the population of isomers. Note, Python
+        # 2 range will slurp up 2**N memory, use six to use xrange
+        # there
+        samples = rand.sample(six.moves.range(2**nCenters), k=options.maxIsomers)
 
     for bitflag in samples:
         for i in range(nCenters):
