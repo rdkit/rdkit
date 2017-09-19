@@ -1087,8 +1087,8 @@ std::string smis[] = {
     "C12C3C4C5C6C7C8C1C1C9C5C5C%10C2C2C%11C%12C%13C3C3C7C%10C7C4C%11C1C3C(C5C8%"
     "12)C(C62)C7C9%13",  // does not initially work
     // drawn examples first reviewer
-    "C12C3C4C1CC5C46C7C5C1C57C6C53C1C2",
-    "C1C2C3C4CC5C6C1C17C8C61C5C48C3C27", "EOS"};
+    "C12C3C4C1CC5C46C7C5C1C57C6C53C1C2", "C1C2C3C4CC5C6C1C17C8C61C5C48C3C27",
+    "EOS"};
 
 void test7() {
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;
@@ -1459,6 +1459,35 @@ void test12() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1567() {
+  BOOST_LOG(rdInfoLog)
+      << "testing github #1567: Non-canonical result from MolFragmentToSmiles()"
+      << std::endl;
+  {
+    ROMol *m1 = SmilesToMol("CC1CN(Cc2cccc(C)c2)C1");
+    TEST_ASSERT(m1);
+    int m1Ats_a[6] = {1, 12, 3, 4, 5, 11};
+    std::vector<int> m1Ats(m1Ats_a, m1Ats_a + 6);
+    int m1Bnds_a[5] = {12, 11, 3, 4, 13};
+    std::vector<int> m1Bnds(m1Bnds_a, m1Bnds_a + 5);
+    std::string smi1 = MolFragmentToSmiles(*m1, m1Ats, &m1Bnds);
+
+    ROMol *m2 = SmilesToMol("CN(CCC)Cc1cccc(C)c1");
+    TEST_ASSERT(m2);
+    int m2Ats_a[6] = {3, 2, 1, 5, 6, 12};
+    std::vector<int> m2Ats(m2Ats_a, m2Ats_a + 6);
+    int m2Bnds_a[5] = {2, 1, 4, 5, 12};
+    std::vector<int> m2Bnds(m2Bnds_a, m2Bnds_a + 5);
+    std::string smi2 = MolFragmentToSmiles(*m2, m2Ats, &m2Bnds);
+
+    TEST_ASSERT(smi1 == smi2);
+
+    delete m1;
+    delete m2;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1476,6 +1505,7 @@ int main() {
   test7();
   test8();
 #endif
+  testGithub1567();
 
   return 0;
 }
