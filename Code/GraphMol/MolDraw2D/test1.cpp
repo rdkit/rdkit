@@ -837,6 +837,19 @@ void testGithub781() {
     delete m;
   }
   {
+    std::string smiles = "O";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg:tspan>OH</svg:tspan>") == std::string::npos);
+    delete m;
+  }
+  {
     std::string smiles = "[C]";
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
@@ -1651,6 +1664,25 @@ void test12DrawMols() {
     outs.flush();
   }
 
+  {  // github #1325: multiple molecules in one pane
+    MolDraw2DSVG drawer(300, 300, 300, 300);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_3.svg");
+    outs << text;
+    outs.flush();
+  }
+
+  {  // github #1325: multiple molecules in one pane
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_4.svg");
+    outs << text;
+    outs.flush();
+  }
   {
     mols[2] = NULL;
     mols[4] = NULL;
@@ -1893,6 +1925,132 @@ M  END";
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub1322() {
+  std::cout << " ----------------- Testing github 1322: add custom atom labels"
+            << std::endl;
+  {
+    std::string smiles = "CCC[Se]";  // made up
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      TEST_ASSERT(text.find("Se") != std::string::npos);
+    }
+    {
+      m1->getAtomWithIdx(3)->setProp(common_properties::atomLabel,
+                                     "customlabel");
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test1322_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("Se") == std::string::npos);
+      TEST_ASSERT(text.find("customlabel") != std::string::npos);
+    }
+    delete m1;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void testGithub565() {
+  std::cout << " ----------------- Testing github 565: support a fixed bond "
+               "length in the MolDraw2D code"
+            << std::endl;
+  {
+    std::string smiles = "CCCCC";
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    Point2D minV, maxV;
+    const Conformer &cnf = m1->getConformer();
+    minV.x = maxV.x = cnf.getAtomPos(0).x;
+    minV.y = maxV.y = cnf.getAtomPos(0).y;
+    for (unsigned int i = 1; i < m1->getNumAtoms(); i++) {
+      minV.x = std::min(minV.x, cnf.getAtomPos(i).x);
+      minV.y = std::min(minV.y, cnf.getAtomPos(i).y);
+      maxV.x = std::max(maxV.x, cnf.getAtomPos(i).x);
+      maxV.y = std::max(maxV.y, cnf.getAtomPos(i).y);
+    }
+
+    {
+      unsigned int dpa = 100;
+      unsigned int w = dpa * (maxV.x - minV.x);
+      unsigned int h = dpa * (maxV.y - minV.y);
+
+      MolDraw2DSVG drawer(w, h);
+      drawer.setScale(w, h, minV, maxV);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test565_1.svg");
+      outs << text;
+      outs.flush();
+    }
+    {
+      unsigned int dpa = 50;
+      unsigned int w = dpa * (maxV.x - minV.x);
+      unsigned int h = dpa * (maxV.y - minV.y);
+
+      MolDraw2DSVG drawer(w, h);
+      drawer.setScale(w, h, minV, maxV);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test565_2.svg");
+      outs << text;
+      outs.flush();
+    }
+    delete m1;
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void test14BWPalette() {
+  std::cout << " ----------------- Testing use of a black & white palette"
+            << std::endl;
+  {
+    std::string smiles = "CNC(Cl)C(=O)O";
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {  // start with color
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") != std::string::npos);
+
+      std::ofstream outs("test14_1.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // now B&W
+      MolDraw2DSVG drawer(200, 200);
+      assignBWPalette(drawer.drawOptions().atomColourPalette);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") == std::string::npos);
+
+      std::ofstream outs("test14_2.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1924,4 +2082,7 @@ int main() {
   testGithub1035();
 #endif
   testGithub1271();
+  testGithub1322();
+  testGithub565();
+  test14BWPalette();
 }

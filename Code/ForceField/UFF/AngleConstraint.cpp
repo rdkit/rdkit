@@ -41,9 +41,9 @@ AngleConstraintContrib::AngleConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     double minAngleDeg, double maxAngleDeg, double forceConst) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
-  URANGE_CHECK(idx3, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
+  URANGE_CHECK(idx3, owner->positions().size());
   PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
   _pretreatAngles(minAngleDeg, maxAngleDeg);
 
@@ -61,9 +61,9 @@ AngleConstraintContrib::AngleConstraintContrib(
     bool relative, double minAngleDeg, double maxAngleDeg, double forceConst) {
   PRECONDITION(owner, "bad owner");
   const RDGeom::PointPtrVect &pos = owner->positions();
-  URANGE_CHECK(idx1, pos.size() - 1);
-  URANGE_CHECK(idx2, pos.size() - 1);
-  URANGE_CHECK(idx3, pos.size() - 1);
+  URANGE_CHECK(idx1, pos.size());
+  URANGE_CHECK(idx2, pos.size());
+  URANGE_CHECK(idx3, pos.size());
   PRECONDITION(maxAngleDeg >= minAngleDeg, "allowedDeltaDeg must be >= 0.0");
 
   double angle = 0.0;

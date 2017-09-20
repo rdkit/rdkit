@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2015 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
+#include <GraphMol/MolBundle.h>
+
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
@@ -55,8 +57,9 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               std::vector<MatchVectType> *matches,
                               unsigned int bi, unsigned int ei);
 
-typedef std::list<std::pair<MolGraph::vertex_descriptor,
-                            MolGraph::vertex_descriptor> > ssPairType;
+typedef std::list<
+    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor> >
+    ssPairType;
 
 class MolMatchFinalCheckFunctor {
  public:
@@ -144,8 +147,7 @@ class MolMatchFinalCheckFunctor {
     for (unsigned int i = 0; i < d_query.getNumBonds(); ++i) {
       const Bond *qBnd = d_query.getBondWithIdx(i);
       if (qBnd->getBondType() != Bond::DOUBLE ||
-          (qBnd->getStereo() != Bond::STEREOZ &&
-           qBnd->getStereo() != Bond::STEREOE))
+          qBnd->getStereo() <= Bond::STEREOANY)
         continue;
 
       // don't think this can actually happen, but check to be sure:
@@ -159,8 +161,7 @@ class MolMatchFinalCheckFunctor {
           c2[qMap[qBnd->getBeginAtomIdx()]], c2[qMap[qBnd->getEndAtomIdx()]]);
       CHECK_INVARIANT(mBnd, "Matching bond not found");
       if (mBnd->getBondType() != Bond::DOUBLE ||
-          (mBnd->getStereo() != Bond::STEREOZ &&
-           mBnd->getStereo() != Bond::STEREOE))
+          qBnd->getStereo() <= Bond::STEREOANY)
         continue;
       // don't think this can actually happen, but check to be sure:
       if (mBnd->getStereoAtoms().size() != 2) continue;
@@ -180,9 +181,10 @@ class MolMatchFinalCheckFunctor {
         if (c2[qMap[qBnd->getStereoAtoms()[1]]] == mBnd->getStereoAtoms()[0])
           end2Matches = 1;
       }
-      // std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" -
-      // "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<"
-      // "<<end2Matches<<std::endl;
+      // std::cerr << "  bnd: " << qBnd->getIdx() << ":" << qBnd->getStereo()
+      //           << " - " << mBnd->getIdx() << ":" << mBnd->getStereo()
+      //           << "  --  " << end1Matches << " " << end2Matches <<
+      //           std::endl;
       if (mBnd->getStereo() == qBnd->getStereo() &&
           (end1Matches + end2Matches) == 1)
         return false;
@@ -242,12 +244,10 @@ class BondLabelFunctor {
     if (df_useChirality) {
       const BOND_SPTR qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
-          (qBnd->getStereo() == Bond::STEREOZ ||
-           qBnd->getStereo() == Bond::STEREOE)) {
+          qBnd->getStereo() > Bond::STEREOANY) {
         const BOND_SPTR mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
-            !(mBnd->getStereo() == Bond::STEREOZ ||
-              mBnd->getStereo() == Bond::STEREOE))
+            mBnd->getStereo() <= Bond::STEREOANY)
           return false;
       }
     }
@@ -345,6 +345,41 @@ bool SubstructMatch(const ROMol &mol, const ROMol &query,
   return res;
 }
 
+bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    res = SubstructMatch(*bundle[i], query, matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+  }
+  return res;
+}
+
+bool SubstructMatch(const ROMol &mol, const MolBundle &bundle,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    res = SubstructMatch(mol, *bundle[i], matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+  }
+  return res;
+}
+
+bool SubstructMatch(const MolBundle &bundle, const MolBundle &qbundle,
+                    MatchVectType &matchVect, bool recursionPossible,
+                    bool useChirality, bool useQueryQueryMatches) {
+  bool res = false;
+  for (unsigned int i = 0; i < bundle.size() && !res; ++i) {
+    for (unsigned int j = 0; j < bundle.size() && !res; ++j) {
+      res =
+          SubstructMatch(*bundle[i], *qbundle[j], matchVect, recursionPossible,
+                         useChirality, useQueryQueryMatches);
+    }
+  }
+  return res;
+}
 // ----------------------------------------------
 //
 // find one match in ResonanceMolSupplier object
@@ -437,6 +472,48 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
   return res;
 }
 
+unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < mol.size() && !res; ++i) {
+    res = SubstructMatch(*mol[i], query, matches, uniquify, recursionPossible,
+                         useChirality, useQueryQueryMatches, maxMatches);
+  }
+  return res;
+}
+
+unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < query.size() && !res; ++i) {
+    res = SubstructMatch(mol, *query[i], matches, uniquify, recursionPossible,
+                         useChirality, useQueryQueryMatches, maxMatches);
+  }
+  return res;
+}
+
+unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
+                            std::vector<MatchVectType> &matches, bool uniquify,
+                            bool recursionPossible, bool useChirality,
+                            bool useQueryQueryMatches,
+                            unsigned int maxMatches) {
+  unsigned int res = 0;
+  for (unsigned int i = 0; i < mol.size() && !res; ++i) {
+    for (unsigned int j = 0; j < query.size() && !res; ++j) {
+      res = SubstructMatch(*mol[i], *query[j], matches, uniquify,
+                           recursionPossible, useChirality,
+                           useQueryQueryMatches, maxMatches);
+    }
+  }
+  return res;
+}
+
 // ----------------------------------------------
 //
 // find all matches in a ResonanceMolSupplier object
@@ -451,8 +528,9 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
                             int numThreads) {
   matches.clear();
   detail::ResSubstructMatchHelperArgs_ args = {
-      resMolSupplier, query, uniquify, recursionPossible, useChirality,
-      useQueryQueryMatches, maxMatches};
+      resMolSupplier,    query,        uniquify,
+      recursionPossible, useChirality, useQueryQueryMatches,
+      maxMatches};
   unsigned int nt =
       std::min(resMolSupplier.length(), getNumThreadsToUse(numThreads));
   if (nt == 1)
@@ -539,8 +617,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           }
         }
         if (!found) {
-          BOOST_LOG(rdErrorLog) << "no match found for queryRootAtom"
-                                << std::endl;
+          BOOST_LOG(rdErrorLog)
+              << "no match found for queryRootAtom" << std::endl;
         }
       }
     }

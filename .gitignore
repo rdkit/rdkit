@@ -6,6 +6,9 @@
 /.project
 /.pydevproject
 
+#- IDEA files
+/.idea
+
 #- Binary files
 __pycache__/
 *.so
@@ -68,9 +71,13 @@ __pycache__/
 /Code/GraphMol/Wrap/test_data/outSmiles.txt
 
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/test_data/prop.pkl
 
 /Projects/DbCLI/testData/bzr/
-
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
+<<<<<<< HEAD
 .DS_Store
+=======
+.DS_Store
+>>>>>>> 4862c920a536fb015a99851355dbd16d4a5d4d3e

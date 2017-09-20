@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rational Discovery LLC
+#  Copyright (C) 2003-2017  Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -12,6 +11,7 @@
 
 """
 import os
+import tempfile
 import unittest
 
 from rdkit import Chem, RDLogger
@@ -21,15 +21,7 @@ from rdkit.six import next
 
 class TestCase(unittest.TestCase):
 
-  def setUp(self):
-    self._files = []
-
   def tearDown(self):
-    for fileN in self._files:
-      try:
-        os.unlink(fileN)
-      except OSError:
-        pass
     RDLogger.EnableLog('rdApp.error')
 
   def test1SDSupplier(self):
@@ -37,61 +29,53 @@ class TestCase(unittest.TestCase):
 
     suppl = Chem.SDMolSupplier(fileN)
     ms = [x for x in suppl]
-    assert len(ms) == 10
+    self.assertEqual(len(ms), 10)
 
     # test repeating:
     ms = [x for x in suppl]
-    assert len(ms) == 10
+    self.assertEqual(len(ms), 10)
+
     # test reset:
     suppl.reset()
     m = next(suppl)
-    assert m.GetProp('_Name') == '48'
-    assert m.GetProp('NSC') == '48'
-    assert m.GetProp('CAS_RN') == '15716-70-8'
+    self.assertEqual(m.GetProp('_Name'), '48')
+    self.assertEqual(m.GetProp('NSC'), '48')
+    self.assertEqual(m.GetProp('CAS_RN'), '15716-70-8')
     m = next(suppl)
-    assert m.GetProp('_Name') == '78'
-    assert m.GetProp('NSC') == '78'
-    assert m.GetProp('CAS_RN') == '6290-84-2'
+    self.assertEqual(m.GetProp('_Name'), '78')
+    self.assertEqual(m.GetProp('NSC'), '78')
+    self.assertEqual(m.GetProp('CAS_RN'), '6290-84-2')
 
     suppl.reset()
     for _ in range(10):
       m = next(suppl)
-    try:
+
+    with self.assertRaises(StopIteration):
       m = next(suppl)
-    except StopIteration:
-      ok = 1
-    else:
-      ok = 0
-    assert ok
 
   def test2SmilesSupplier(self):
     fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib', 'test_data', 'pgp_20.txt')
 
     suppl = Chem.SmilesMolSupplier(fileN, delimiter='\t', smilesColumn=2, nameColumn=1, titleLine=1)
     ms = [x for x in suppl]
-    assert len(ms) == 20
+    self.assertEqual(len(ms), 20)
 
     # test repeating:
     ms = [x for x in suppl]
-    assert len(ms) == 20
+    self.assertEqual(len(ms), 20)
     # test reset:
     suppl.reset()
     m = next(suppl)
-    assert m.GetProp('_Name') == 'ALDOSTERONE'
-    assert m.GetProp('ID') == 'RD-PGP-0001'
+    self.assertEqual(m.GetProp('_Name'), 'ALDOSTERONE')
+    self.assertEqual(m.GetProp('ID'), 'RD-PGP-0001')
     m = next(suppl)
-    assert m.GetProp('_Name') == 'AMIODARONE'
-    assert m.GetProp('ID') == 'RD-PGP-0002'
+    self.assertEqual(m.GetProp('_Name'), 'AMIODARONE')
+    self.assertEqual(m.GetProp('ID'), 'RD-PGP-0002')
     suppl.reset()
     for _ in range(20):
       m = next(suppl)
-    try:
+    with self.assertRaises(StopIteration):
       m = next(suppl)
-    except StopIteration:
-      ok = 1
-    else:
-      ok = 0
-    assert ok
 
   def test3SmilesSupplier(self):
     txt = """C1CC1,1
@@ -101,16 +85,19 @@ CCOC,5
 """
     RDLogger.DisableLog('rdApp.error')
 
-    import tempfile
     fileN = tempfile.mktemp('.csv')
-    with open(fileN, 'w+') as f:
-      f.write(txt)
-    self._files.append(fileN)
-    suppl = Chem.SmilesMolSupplier(fileN, delimiter=',', smilesColumn=0, nameColumn=1, titleLine=0)
-    ms = [x for x in suppl]
-    while ms.count(None):
-      ms.remove(None)
-    assert len(ms) == 3
+    try:
+      with open(fileN, 'w+') as f:
+        f.write(txt)
+      suppl = Chem.SmilesMolSupplier(fileN, delimiter=',', smilesColumn=0, nameColumn=1,
+                                     titleLine=0)
+      ms = [x for x in suppl]
+      suppl = None
+      while ms.count(None):
+        ms.remove(None)
+      self.assertEqual(len(ms), 3)
+    finally:
+      os.unlink(fileN)
 
 
 if __name__ == '__main__':

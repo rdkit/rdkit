@@ -50,7 +50,7 @@ const RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) const {
   if (dp_mol) {
     PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
   }
-  URANGE_CHECK(atomId, d_positions.size() - 1);
+  URANGE_CHECK(atomId, d_positions.size());
   return d_positions[atomId];
 }
 
@@ -58,7 +58,7 @@ RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) {
   if (dp_mol) {
     PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
   }
-  URANGE_CHECK(atomId, d_positions.size() - 1);
+  URANGE_CHECK(atomId, d_positions.size());
   return d_positions[atomId];
 }
 }

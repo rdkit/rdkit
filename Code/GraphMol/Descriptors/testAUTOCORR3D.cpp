@@ -1,4 +1,4 @@
-//
+//  Created by Guillaume GODIN
 //  Copyright (C) 2012-2016 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -17,53 +17,72 @@
 #include <fstream>
 #include <sstream>
 
-
 #include <GraphMol/Descriptors/AUTOCORR3D.h>
 
 void testautocorrelation() {
-  std::cout << "=>start test rdf\n";
+  std::cout << "=>start test autocorr3D\n";
 
   std::string pathName = getenv("RDBASE");
+
+  // std::cout << "Path: " << pathName << "\n";
+
   std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/chlorobenzene.sdf";
+      pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
- 
+
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/auto3D_dragon.out";
+
+  std::ifstream instrm(fName.c_str());
+
+  std::string line;
+  std::vector<std::vector<std::string> > data;
+
+  while (std::getline(instrm, line)) {
+    std::string phrase;
+    std::vector<std::string> row;
+    std::stringstream ss(line);
+    while (std::getline(ss, phrase, '\t')) {
+      row.push_back(phrase);
+    }
+
+    data.push_back(row);
+  }
+
   int nDone = 0;
   while (!reader.atEnd()) {
-    ++nDone;
-
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
-    m->getProp("_Name",nm);
+    m->getProp("_Name", nm);
 
+    std::vector<double> da3d;
 
-    std::vector<double> dwhim;
-//for (int i=1;i<11;i++) {
- // std::cout << "i:" << 0.005*i << "\n";
-    dwhim = RDKit::Descriptors::AUTOCORR3D(*m, -1);
+    RDKit::Descriptors::AUTOCORR3D(*m, da3d, -1);
 
+    std::vector<std::string> myrow = data[nDone];
+    std::string inm = myrow[0];
 
-    for (int j=0;j<80;j++) {
-      std::cout << dwhim[j] << ",";
-     }
-    std::cout << "\n";
+    TEST_ASSERT(inm == nm);
 
-//}
-
-       
-    std::cout << "=>read molecule: " << nDone  << std::endl;
-
+    for (int i = 0; i < 80; i++) {
+      double ref = atof(myrow[i + 1].c_str());
+      if (fabs(ref - da3d[i]) > 0.0015) {
+        std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
+                  << " " << da3d[i] << std::endl;
+      }
+      TEST_ASSERT(fabs(ref - da3d[i]) < 0.0015);
+    }
     delete m;
+    ++nDone;
   }
 
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
+                        << std::endl;
 }
-
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   testautocorrelation();
-
 }

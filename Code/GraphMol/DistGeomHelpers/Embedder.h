@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#ifndef _RD_EMBEDDER_H_
-#define _RD_EMBEDDER_H_
+#ifndef RD_EMBEDDER_H_GUARD
+#define RD_EMBEDDER_H_GUARD
 
 #include <map>
 #include <Geometry/point.h>
@@ -94,6 +94,8 @@ namespace DGeomHelpers {
   \param basinThresh    set the basin threshold for the DGeom force field,
                         (this shouldn't normally be altered in client code).
 
+  \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
+
   \return ID of the conformations added to the molecule, -1 if the emdedding
   failed
 */
@@ -107,7 +109,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
                   bool enforceChirality = true,
                   bool useExpTorsionAnglePrefs = false,
                   bool useBasicKnowledge = false, bool verbose = false,
-                  double basinThresh = 5.0);
+                  double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 
 //*! Embed multiple conformations for a molecule
 /*!
@@ -196,20 +198,20 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
   \param basinThresh    set the basin threshold for the DGeom force field,
                         (this shouldn't normally be altered in client code).
 
+  \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
+
 */
-void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs = 10,
-                        int numThreads = 1, unsigned int maxIterations = 30,
-                        int seed = -1, bool clearConfs = true,
-                        bool useRandomCoords = false, double boxSizeMult = 2.0,
-                        bool randNegEig = true, unsigned int numZeroFail = 1,
-                        double pruneRmsThresh = -1.0,
-                        const std::map<int, RDGeom::Point3D> *coordMap = 0,
-                        double optimizerForceTol = 1e-3,
-                        bool ignoreSmoothingFailures = false,
-                        bool enforceChirality = true,
-                        bool useExpTorsionAnglePrefs = false,
-                        bool useBasicKnowledge = false, bool verbose = false,
-                        double basinThresh = 5.0);
+void EmbedMultipleConfs(
+    ROMol &mol, INT_VECT &res, unsigned int numConfs = 10, int numThreads = 1,
+    unsigned int maxIterations = 30, int seed = -1, bool clearConfs = true,
+    bool useRandomCoords = false, double boxSizeMult = 2.0,
+    bool randNegEig = true, unsigned int numZeroFail = 1,
+    double pruneRmsThresh = -1.0,
+    const std::map<int, RDGeom::Point3D> *coordMap = 0,
+    double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
+    bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
+    bool useBasicKnowledge = false, bool verbose = false,
+    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 //! \overload
 INT_VECT EmbedMultipleConfs(
     ROMol &mol, unsigned int numConfs = 10, unsigned int maxIterations = 30,
@@ -220,7 +222,7 @@ INT_VECT EmbedMultipleConfs(
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
-    double basinThresh = 5.0);
+    double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 
 //! Parameter object for controlling embedding
 /*!
@@ -294,6 +296,8 @@ INT_VECT EmbedMultipleConfs(
 
   basinThresh    set the basin threshold for the DGeom force field,
                  (this shouldn't normally be altered in client code).
+
+  onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
 */
 struct EmbedParameters {
   unsigned int maxIterations;
@@ -313,6 +317,7 @@ struct EmbedParameters {
   bool verbose;
   double basinThresh;
   double pruneRmsThresh;
+  bool onlyHeavyAtomsForRMS;
   EmbedParameters()
       : maxIterations(0),
         numThreads(1),
@@ -330,7 +335,8 @@ struct EmbedParameters {
         useBasicKnowledge(false),
         verbose(false),
         basinThresh(5.0),
-        pruneRmsThresh(-1.0){};
+        pruneRmsThresh(-1.0),
+        onlyHeavyAtomsForRMS(false){};
   EmbedParameters(unsigned int maxIterations, int numThreads, int randomSeed,
                   bool clearConfs, bool useRandomCoords, double boxSizeMult,
                   bool randNegEig, unsigned int numZeroFail,
@@ -338,7 +344,7 @@ struct EmbedParameters {
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
                   bool useBasicKnowledge, bool verbose, double basinThresh,
-                  double pruneRmsThresh)
+                  double pruneRmsThresh, bool onlyHeavyAtomsForRMS)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -355,7 +361,8 @@ struct EmbedParameters {
         useBasicKnowledge(useBasicKnowledge),
         verbose(verbose),
         basinThresh(basinThresh),
-        pruneRmsThresh(pruneRmsThresh){};
+        pruneRmsThresh(pruneRmsThresh),
+        onlyHeavyAtomsForRMS(onlyHeavyAtomsForRMS){};
 };
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
@@ -372,7 +379,7 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
       params.numZeroFail, params.coordMap, params.optimizerForceTol,
       params.ignoreSmoothingFailures, params.enforceChirality,
       params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
-      params.basinThresh);
+      params.basinThresh, params.onlyHeavyAtomsForRMS);
 }
 inline void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                const EmbedParameters &params) {
@@ -383,7 +390,7 @@ inline void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       params.pruneRmsThresh, params.coordMap, params.optimizerForceTol,
       params.ignoreSmoothingFailures, params.enforceChirality,
       params.useExpTorsionAnglePrefs, params.useBasicKnowledge, params.verbose,
-      params.basinThresh);
+      params.basinThresh, params.onlyHeavyAtomsForRMS);
 }
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    const EmbedParameters &params) {

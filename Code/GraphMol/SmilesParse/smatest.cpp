@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1865,6 +1864,222 @@ void testGithub893() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1338() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1338: SMARTS proton query parsed incorrectly"
+      << std::endl;
+  {  // this worked all along
+    RWMol *p;
+    std::string sma = "[#1+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {  // make sure we aren't breaking anything else
+    RWMol *p;
+    std::string sma = "[H2]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 0);
+    delete p;
+  }
+  {  // this was the problem
+    RWMol *p;
+    std::string sma = "[H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {  // this was the problem
+    RWMol *p;
+    std::string sma = "[H]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[2H]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[2H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[2H:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 2);
+    TEST_ASSERT(
+        p->getAtomWithIdx(0)->hasProp(common_properties::molAtomMapNumber));
+    TEST_ASSERT(p->getAtomWithIdx(0)->getProp<int>(
+                    common_properties::molAtomMapNumber) == 3);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[H:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[H+:3]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getAtomicNum() == 1);
+    delete p;
+  }
+
+  // -- a series around Hs following other symbols:
+  {
+    RWMol *p;
+    std::string sma = "[NH1+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&H1&+]");
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[N;H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&H1&+]");
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[N;H]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&H1]");
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[NH+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&H1&+]");
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[NH]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&H1]");
+    delete p;
+  }
+  {
+    RWMol *p;
+    std::string sma = "[N;2H+]";
+    p = SmartsToMol(sma);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    // std::cerr << "  SMA: " << asma << std::endl;
+    TEST_ASSERT(asma == "[N&2*&H1&+]");
+    delete p;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub1472() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1472: MolToSmarts does not include atom map info for molecules built from SMILES"
+      << std::endl;
+  { // worked all along
+    ROMol *p;
+    std::string smi = "[*:1]";
+    p = SmartsToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[*:1]");
+
+    delete p;
+  }
+  { // this was the problem
+    ROMol *p;
+    std::string smi = "[*:1]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[*:1]");
+
+    delete p;
+  }
+  { // isotopes also weren't being written
+    ROMol *p;
+    std::string smi = "[3*]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[3*]");
+
+    delete p;
+  }
+  { // confirm ordering
+    ROMol *p;
+    std::string smi = "[13CH3-:1]";
+    p = SmilesToMol(smi);
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[13#6H3-:1]");
+
+    delete p;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -1906,6 +2121,8 @@ int main(int argc, char *argv[]) {
   testGithub766();
   testGithub893();
   testTransuranic();
+  testGithub1338();
+  testGithub1472();
 
   return 0;
 }

@@ -107,7 +107,6 @@ from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.six import BytesIO, string_types, PY3
-from rdkit.six.moves import cStringIO as StringIO
 
 try:
   import pandas as pd
@@ -149,9 +148,12 @@ except Exception as e:
 
 if pd:
   try:
-    from pandas.formats import format as fmt
-  except ImportError:
-    from pandas.core import format as fmt  # older versions
+    from pandas.io.formats import format as fmt
+  except:
+    try:
+      from pandas.formats import format as fmt
+    except ImportError:
+      from pandas.core import format as fmt  # older versions
 else:
   fmt = 'Pandas not available'
 
@@ -482,7 +484,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
 
   c = 1
   for _, row in frame.iterrows():
-    image_data = StringIO()
+    image_data = BytesIO()
     img = Draw.MolToImage(row[molCol], size=size)
     img.save(image_data, format='PNG')
 
@@ -579,16 +581,35 @@ def _runDoctests(verbose=None):  # pragma: nocover
   import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE,
                               verbose=verbose)
-  sys.exit(failed)
-
+  if(failed):
+    sys.exit(failed)
 
 if __name__ == '__main__':  # pragma: nocover
+  import unittest
+  try:
+    import xlsxwriter
+  except ImportError:
+    print('not there')
+    xlsxwriter = None
+  class TestCase(unittest.TestCase):
+    @unittest.skipIf(xlsxwriter is None,'xlsxwriter not installed')
+    def testGithub1507(self):
+      import os
+      from rdkit import RDConfig
+      sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
+      frame = LoadSDF(sdfFile)
+      SaveXlsxFromFrame(frame,'foo.xlsx')
+
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)
   elif _getPandasVersion() < (0, 10):
     print("pandas installation >=0.10 not found, skipping tests", file=sys.stderr)
   else:
-    _runDoctests()
+    _runDoctests();
+    unittest.main()
+
+
+
 
 # $Id$
 #

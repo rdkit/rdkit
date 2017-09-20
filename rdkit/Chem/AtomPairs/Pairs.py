@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -35,7 +34,7 @@ numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen = 1 << numFpBits
 
 
-def pyScorePair(at1, at2, dist, atomCodes=None):
+def pyScorePair(at1, at2, dist, atomCodes=None, includeChirality=False):
   """ Returns a score for an individual atom pair.
 
   >>> from rdkit import Chem
@@ -57,17 +56,22 @@ def pyScorePair(at1, at2, dist, atomCodes=None):
 
   """
   if not atomCodes:
-    code1 = Utils.GetAtomCode(at1)
-    code2 = Utils.GetAtomCode(at2)
+    code1 = Utils.GetAtomCode(at1,includeChirality = includeChirality)
+    code2 = Utils.GetAtomCode(at2,includeChirality = includeChirality)
   else:
     code1, code2 = atomCodes
+
+  codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
+  if includeChirality:
+      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+
   accum = int(dist) % _maxPathLen
   accum |= min(code1, code2) << numPathBits
-  accum |= max(code1, code2) << (rdMolDescriptors.AtomPairsParameters.codeSize + numPathBits)
+  accum |= max(code1, code2) << (codeSize + numPathBits)
   return accum
 
 
-def ExplainPairScore(score):
+def ExplainPairScore(score,includeChirality=False):
   """
   >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('C=CC')
@@ -84,17 +88,37 @@ def ExplainPairScore(score):
   >>> ExplainPairScore(score)
   (('C', 1, 0), 1, ('C', 2, 1))
 
+  We can optionally deal with chirality too
+  >>> m = Chem.MolFromSmiles('C[C@H](F)Cl')
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
+  >>> ExplainPairScore(score)
+  (('C', 1, 0), 1, ('C', 3, 0))
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1,includeChirality=True)
+  >>> ExplainPairScore(score,includeChirality=True)
+  (('C', 1, 0, ''), 1, ('C', 3, 0, 'R'))
+  >>> m = Chem.MolFromSmiles('F[C@@H](Cl)[C@H](F)Cl')
+  >>> score = pyScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(3),1,includeChirality=True)
+  >>> ExplainPairScore(score,includeChirality=True)
+  (('C', 3, 0, 'R'), 1, ('C', 3, 0, 'S'))
+
   """
-  codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
+  codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
+  if includeChirality:
+      codeSize += rdMolDescriptors.AtomPairsParameters.numChiralBits
+
+  codeMask = (1 << codeSize) - 1
+
   pathMask = (1 << numPathBits) - 1
   dist = score & pathMask
 
   score = score >> numPathBits
   code1 = score & codeMask
-  score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
+  score = score >> codeSize
   code2 = score & codeMask
 
-  res = Utils.ExplainAtomCode(code1), dist, Utils.ExplainAtomCode(code2)
+  res = (Utils.ExplainAtomCode(code1,includeChirality=includeChirality),
+         dist,
+         Utils.ExplainAtomCode(code2,includeChirality=includeChirality))
   return res
 
 

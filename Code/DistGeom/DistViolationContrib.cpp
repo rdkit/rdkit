@@ -20,8 +20,8 @@ DistViolationContrib::DistViolationContrib(ForceFields::ForceField *owner,
                                            double ub, double lb,
                                            double weight) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_end1Idx = idx1;
@@ -49,6 +49,12 @@ double DistViolationContrib::getEnergy(double *pos) const {
   } else {
     res = 0;
   }
+  // if (res > 0.1) {
+  //   std::cerr << "dvc:getEnergy: " << this->d_end1Idx << "-" <<
+  //   this->d_end2Idx
+  //             << ": " << d_lb << "-" << d_ub << " " << d << " => " << res
+  //             << std::endl;
+  // }
   return res;
 }
 

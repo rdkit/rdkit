@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -102,6 +101,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
     CHECK_INVARIANT(aid < na, "");
     EmbeddedAtom eatom(aid, cri->second);
     eatom.neighs.clear();
+    eatom.df_fixed = true;
     d_eatoms[aid] = eatom;
     d_done = false;
   }
@@ -285,7 +285,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   eeatm.loc = RDGeom::Point2D(BOND_LEN, 0.0);
   eeatm.nbr1 = begAtm;
   eeatm.CisTransNbr = nbrAtms[1];
-  if (stype == RDKit::Bond::STEREOZ) {
+  if (stype == RDKit::Bond::STEREOZ || stype == RDKit::Bond::STEREOCIS) {
     eeatm.normal = RDGeom::Point2D(0.0, -1.0);
     eeatm.ccw = true;
   } else {
@@ -1406,12 +1406,15 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
           (!(dp_mol->getRingInfo()->numAtomRings(caid)))) {
         RDKit::INT_VECT aids, bids;
         getNbrAtomAndBondIds(caid, dp_mol, aids, bids);
-        // make sure all the atoms in aids are in this embeddedfrag
+        // make sure all the atoms in aids are in this embeddedfrag and can be
+        // perturbed
         bool allin = true;
         for (RDKit::INT_VECT_CI ivci = aids.begin(); ivci != aids.end();
              ivci++) {
-          if (d_eatoms.find(*ivci) == d_eatoms.end()) {
+          INT_EATOM_MAP_I nbrIter = d_eatoms.find(*ivci);
+          if (nbrIter == d_eatoms.end() || nbrIter->second.df_fixed) {
             allin = false;
+            break;
           }
         }
         if (allin) {
@@ -1677,16 +1680,36 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   endSideAids.clear();
   _recurseAtomOneSide(endAid, begAid, dp_mol, endSideAids);
 
-  // noew we have the molecule split into two groups of atoms
-  // atom on the side of endAid and the rest.
-  // we will flip the side that is smaller
-  int nats = d_eatoms.size();
-  int nEndSide = endSideAids.size();
-  bool endSideFlip = true;
-  if ((nats - nEndSide) < nEndSide) {
-    endSideFlip = false;
+  // look for fixed atoms in the fragment:
+  unsigned int nEndAtomsFixed = 0;
+  unsigned int nAtomsFixed = 0;
+  for (INT_EATOM_MAP_I efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
+    if (efi->second.df_fixed) ++nAtomsFixed;
   }
-
+  // if there are fixed atoms, look at the atoms on the "end side"
+  if (nAtomsFixed) {
+    BOOST_FOREACH (int endAtomId, endSideAids) {
+      if (d_eatoms[endAtomId].df_fixed) ++nEndAtomsFixed;
+    }
+  }
+  // std::cerr << "  FLIP: " << nAtomsFixed << " " << nEndAtomsFixed <<
+  // std::endl;
+  // now we have the molecule split into two groups of atoms
+  // atom on the side of endAid and the rest.
+  // we will flip the side that is smaller, assuming that there
+  // are no fixed atoms there
+  bool endSideFlip = true;
+  if (nEndAtomsFixed) {
+    endSideFlip = false;
+    // if there are fixed atoms on both sides, just return
+    if (nAtomsFixed > endSideFlip) return;
+  } else {
+    int nats = d_eatoms.size();
+    int nEndSide = endSideAids.size();
+    if ((nats - nEndSide) < nEndSide) {
+      endSideFlip = false;
+    }
+  }
   for (INT_EATOM_MAP_I efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
     RDKit::INT_VECT_CI fii = std::find(endSideAids.begin(), endSideAids.end(),
                                        static_cast<int>(efi->first));
@@ -1759,18 +1782,20 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
   PRECONDITION(dmat, "");
   unsigned int deg1 = getHeavyDegree(dp_mol->getAtomWithIdx(aid1));
   unsigned int deg2 = getHeavyDegree(dp_mol->getAtomWithIdx(aid2));
-  if ((deg1 > 1) && (deg2 > 1)) {
+  bool fixed1 = d_eatoms[aid1].df_fixed;
+  bool fixed2 = d_eatoms[aid2].df_fixed;
+  if ((deg1 > 1 || fixed1) && (deg2 > 1 || fixed2)) {
     return;
   }
   unsigned int aidA;
   unsigned int aidB;
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   int type = 0;
-  if ((deg1 == 1) && (deg2 == 1)) {
+  if ((deg1 == 1 && !fixed1) && (deg2 == 1 && !fixed2)) {
     aidA = _findDeg1Neighbor(dp_mol, aid1);
     aidB = _findDeg1Neighbor(dp_mol, aid2);
     type = 1;
-  } else if ((deg1 == 1) && (deg2 > 1)) {
+  } else if ((deg1 == 1 && !fixed1) && (deg2 > 1 || fixed2)) {
     aidA = _findDeg1Neighbor(dp_mol, aid1);
     aidB = _findClosestNeighbor(dp_mol, dmat, aidA, aid2);
     type = 2;
@@ -1780,10 +1805,8 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
     type = 3;
   }
 
-  // std::cerr<<" openAngles: "<<aid1<<"-"<<aidA<<"-"<<aidB<<"-"<<aid2<<"  type:
-  // "<<type<<std::endl;
-  // std::cerr<<"             len: "<<(d_eatoms[aid1].loc -
-  // d_eatoms[aid2].loc).length()<<std::endl;
+  // std::cerr << " openAngles: " << aid1 << "-" << aidA << "-" << aidB << "-"
+  //           << aid2 << "  type:" << type << std::endl;
 
   RDGeom::Point2D v2 = d_eatoms[aid1].loc - d_eatoms[aidA].loc;
   RDGeom::Point2D v1 = d_eatoms[aidB].loc - d_eatoms[aidA].loc;
@@ -1928,20 +1951,28 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
     // we will use the one with the smallest degree
     int aid1 = cAids.first;
     int aid2 = cAids.second;
+    bool fixed1 = d_eatoms[aid1].df_fixed;
+    bool fixed2 = d_eatoms[aid2].df_fixed;
+    if (fixed1 && fixed2) {
+      // both atoms are fixed, so there's nothing
+      // we can do about this collision.
+      colls.erase(colls.begin());
+      ncols = colls.size();
+      ++iter;
+      continue;
+    }
     int deg1 = dp_mol->getAtomWithIdx(aid1)->getDegree();
     int deg2 = dp_mol->getAtomWithIdx(aid2)->getDegree();
-    if (deg2 > deg1) {
+    if (fixed1 || (deg2 > deg1 && !fixed2)) {
       // reverse the order
-      int temp = aid1;
-      aid1 = aid2;
-      aid2 = temp;
-      temp = deg1;
-      deg1 = deg2;
-      deg2 = temp;
+      std::swap(deg1, deg2);
+      std::swap(aid1, aid2);
+      std::swap(fixed1, fixed2);
     }
     // now find the path between the two ends
     RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
-    // std::cerr<<" collide! "<<aid1<<" "<<aid2<<" "<<path.size()<<std::endl;
+    // std::cerr << " collide! " << aid1 << " " << aid2 << " " << path.size()
+    //           << std::endl;
     if (!path.size()) {
       // there's no path between the ends, so there's nothing
       // we can really do about this collision.
@@ -1959,18 +1990,18 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
           int aidA = _findDeg1Neighbor(dp_mol, aid1);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
-          // std::cerr<<"  >>> "<<aid1<<" "<<loc.length()<<std::endl;
+          // std::cerr << "  >>> " << aid1 << " " << loc.length() << std::endl;
           if (loc.length() > .75) {
             loc += d_eatoms[aidA].loc;
             d_eatoms[aid1].loc = loc;
           }
         }
-        if (deg2 == 1) {
+        if (deg2 == 1 && !fixed2) {
           RDGeom::Point2D loc = d_eatoms[aid2].loc;
           int aidA = _findDeg1Neighbor(dp_mol, aid2);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
-          // std::cerr<<"  >>> "<<aid2<<" "<<loc.length()<<std::endl;
+          // std::cerr << "  >>> " << aid2 << " " << loc.length() << std::endl;
           if (loc.length() > .75) {
             loc += d_eatoms[aidA].loc;
             d_eatoms[aid2].loc = loc;
@@ -1994,6 +2025,7 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
         RDKit::INT_VECT_CI rpi;
         RDGeom::INT_POINT2D_MAP moveMap;
         for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
+          if (d_eatoms[*rpi].df_fixed) continue;
           RDGeom::Point2D move;
           move = d_eatoms[nbrMap[*rpi][0]].loc;
           move += d_eatoms[nbrMap[*rpi][1]].loc;

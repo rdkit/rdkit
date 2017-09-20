@@ -14,10 +14,10 @@ ChiralViolationContrib::ChiralViolationContrib(ForceFields::ForceField *owner,
   PRECONDITION(owner, "bad owner");
   PRECONDITION(cset, "bad chiral set")
 
-  URANGE_CHECK(cset->d_idx1, owner->positions().size() - 1);
-  URANGE_CHECK(cset->d_idx2, owner->positions().size() - 1);
-  URANGE_CHECK(cset->d_idx3, owner->positions().size() - 1);
-  URANGE_CHECK(cset->d_idx4, owner->positions().size() - 1);
+  URANGE_CHECK(cset->d_idx1, owner->positions().size());
+  URANGE_CHECK(cset->d_idx2, owner->positions().size());
+  URANGE_CHECK(cset->d_idx3, owner->positions().size());
+  URANGE_CHECK(cset->d_idx4, owner->positions().size());
 
   dp_forceField = owner;
 

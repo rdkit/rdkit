@@ -183,6 +183,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
+%shared_ptr(RDKit::FilterCatalogEntry);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);
@@ -198,6 +199,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../types.i"
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
+%include "../Dict.i"
 %include "../RDProps.i"
 %include "../ROMol.i"
 %include "../RWMol.i"
@@ -211,6 +213,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
 %include "../SmilesParse.i"
@@ -234,6 +237,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolTransforms.i"
 %include "../FMCS.i"
 %include "../MolDraw2D.i"
+%include "../FilterCatalog.i"
+%include "../Trajectory.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR

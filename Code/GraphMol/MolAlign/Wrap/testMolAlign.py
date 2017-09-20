@@ -466,6 +466,18 @@ class TestCase(unittest.TestCase):
                                             )
       self.failUnlessEqual(len(algs), nConfs)
 
+  def test17GetBestRMS(self):
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign',
+                       'test_data', 'probe_mol.sdf')
+    molS = Chem.SDMolSupplier(sdf, True, False)
+    mol1 = molS[1]
+    mol2 = molS[2]
+
+    # AlignMol() would return this for the rms: 2.50561
+    # But the best rms is: 2.43449
+    rmsd = rdMolAlign.GetBestRMS(mol1, mol2);
+
+    self.failUnlessAlmostEqual(rmsd, 2.43449209)
 
 if __name__ == '__main__':
   print("Testing MolAlign Wrappers")

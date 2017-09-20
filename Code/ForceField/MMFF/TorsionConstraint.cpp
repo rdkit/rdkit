@@ -37,10 +37,10 @@ TorsionConstraintContrib::TorsionConstraintContrib(
     unsigned int idx4, double minDihedralDeg, double maxDihedralDeg,
     double forceConst) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
-  URANGE_CHECK(idx3, owner->positions().size() - 1);
-  URANGE_CHECK(idx4, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
+  URANGE_CHECK(idx3, owner->positions().size());
+  URANGE_CHECK(idx4, owner->positions().size());
   PRECONDITION((!(maxDihedralDeg < minDihedralDeg)) &&
                    ((maxDihedralDeg - minDihedralDeg) < 360.0),
                "bad bounds");
@@ -62,10 +62,10 @@ TorsionConstraintContrib::TorsionConstraintContrib(
     double maxDihedralDeg, double forceConst) {
   PRECONDITION(owner, "bad owner");
   const RDGeom::PointPtrVect &pos = owner->positions();
-  URANGE_CHECK(idx1, pos.size() - 1);
-  URANGE_CHECK(idx2, pos.size() - 1);
-  URANGE_CHECK(idx3, pos.size() - 1);
-  URANGE_CHECK(idx4, pos.size() - 1);
+  URANGE_CHECK(idx1, pos.size());
+  URANGE_CHECK(idx2, pos.size());
+  URANGE_CHECK(idx3, pos.size());
+  URANGE_CHECK(idx4, pos.size());
   PRECONDITION((!(maxDihedralDeg < minDihedralDeg)) &&
                    ((maxDihedralDeg - minDihedralDeg) < 360.0),
                "bad bounds");

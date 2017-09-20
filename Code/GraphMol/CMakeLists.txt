@@ -1,14 +1,14 @@
-rdkit_library(GraphMol 
-              Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp 
-              MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp 
-              atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp 
-              AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
-              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp 
+rdkit_library(GraphMol
+              Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
+              MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
+              atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
+              AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
+              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp
               new_canon.cpp
-              SHARED 
-              LINK_LIBRARIES RDGeometryLib RDGeneral 
+              SHARED
+              LINK_LIBRARIES RDGeometryLib RDGeneral
                  ${RDKit_THREAD_LIBS})
 
 target_link_libraries(GraphMol ${RDKit_THREAD_LIBS})
@@ -39,6 +39,7 @@ rdkit_headers(Atom.h
               SanitException.h
               MonomerInfo.h
               new_canon.h
+              MolBundle.h
               DEST GraphMol)
 
 add_subdirectory(Depictor)
@@ -77,6 +78,9 @@ add_subdirectory(StructChecker)
 add_subdirectory(ReducedGraphs)
 add_subdirectory(Trajectory)
 
+add_subdirectory(SubstructLibrary)
+add_subdirectory(RGroupDecomposition)
+
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
 endif()
@@ -89,19 +93,19 @@ rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeom
 
 rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolMolOpsTest molopstest.cpp 
+rdkit_test(graphmolMolOpsTest molopstest.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmoltestCanon testCanon.cpp  
+rdkit_test(graphmoltestCanon testCanon.cpp
            LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmoltestChirality testChirality.cpp  
+rdkit_test(graphmoltestChirality testChirality.cpp
            LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmoltestPickler testPickler.cpp  
+rdkit_test(graphmoltestPickler testPickler.cpp
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp  
+rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
@@ -115,3 +119,6 @@ rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDG
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
            LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+
+rdkit_test(molBundleTest testMolBundle.cpp
+          LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)

@@ -1636,6 +1636,256 @@ M  END
     self.assertDoesNotHaveDoubleBondStereo("C=C")
     self.assertDoesNotHaveDoubleBondStereo("C1CCCCC1C(C1CCCCC1)=CC1CCCCC1")
 
+  def assertDoubleBondStereo(self, smi, stereo):
+    mol = Chem.MolFromSmiles(smi)
+
+    bond = mol.GetBondWithIdx(1)
+    self.assertEquals(bond.GetBondType(), Chem.BondType.DOUBLE)
+    self.assertEquals(bond.GetStereo(), stereo)
+    self.assertEquals(list(bond.GetStereoAtoms()), [0, 3])
+
+  def allStereoBonds(self, bonds):
+    for bond in bonds:
+      self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+
+  def testBondSetStereo(self):
+    for testAssignStereo in [False, True]:
+      mol = Chem.MolFromSmiles("FC=CF")
+      Chem.FindPotentialStereoBonds(mol)
+
+      for bond in mol.GetBonds():
+        if (bond.GetBondType() == Chem.BondType.DOUBLE and
+            bond.GetStereo() == Chem.BondStereo.STEREOANY):
+          break
+      self.assertEquals(bond.GetBondType(), Chem.BondType.DOUBLE)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOANY)
+      self.assertEquals(list(bond.GetStereoAtoms()), [0, 3])
+
+      bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOTRANS)
+      if testAssignStereo: # should be invariant of Chem.AssignStereochemistry being called
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEquals(smi, "F/C=C/F")
+      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
+
+      bond.SetStereo(Chem.BondStereo.STEREOCIS)
+      self.assertEquals(bond.GetStereo(), Chem.BondStereo.STEREOCIS)
+      if testAssignStereo:
+        Chem.AssignStereochemistry(mol, force=True)
+      smi = Chem.MolToSmiles(mol, isomericSmiles=True)
+      self.allStereoBonds([bond])
+      self.assertEquals(smi, "F/C=C\F")
+      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
+
+  def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
+    if not bonds:
+      yield done_bonds, Chem.Mol(mol)
+      return
+
+    bond = bonds[0]
+    child_bonds = bonds[1:]
+    self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOTRANS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOE], child_bonds):
+      yield isomer
+
+    self.assertEquals(len(list(bond.GetStereoAtoms())), 2)
+    bond.SetStereo(Chem.BondStereo.STEREOCIS)
+    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOZ], child_bonds):
+      yield isomer
+
+  def testBondSetStereoDifficultCase(self):
+    unspec_smiles = "CCC=CC(CO)=C(C)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      self.allStereoBonds(stereo_bonds)
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      self.allStereoBonds(stereo_bonds)
+
+      self.assertNotIn(isosmi, isomers)
+      isomers.add(isosmi)
+
+      isomol = Chem.MolFromSmiles(isosmi)
+      round_trip_stereo = [b.GetStereo() for b in isomol.GetBonds() if b.GetStereo() != Chem.BondStereo.STEREONONE]
+
+      self.assertEquals(bond_stereo, round_trip_stereo)
+
+    self.assertEqual(len(isomers), 4)
+
+
+  def getNumUnspecifiedBondStereo(self, smi):
+    mol = Chem.MolFromSmiles(smi)
+    Chem.FindPotentialStereoBonds(mol)
+
+    count = 0
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        count += 1
+
+    return count
+
+  def testBondSetStereoReallyDifficultCase(self):
+    # this one is much trickier because a double bond can gain and
+    # lose it's stereochemistry based upon whether 2 other double
+    # bonds have the same or different stereo chemistry.
+
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+    Chem.FindPotentialStereoBonds(mol)
+
+    stereo_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetStereo() == Chem.BondStereo.STEREOANY:
+        stereo_bonds.append(bond)
+
+    self.assertEquals(len(stereo_bonds), 2)
+
+    isomers = set()
+    for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
+      isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+      isomers.add(isosmi)
+
+    self.assertEquals(len(isomers), 3)
+
+    # one of these then gains a new stereo bond due to the
+    # introduction of a new symmetry
+    counts = {}
+    for isosmi in isomers:
+      num_unspecified = self.getNumUnspecifiedBondStereo(isosmi)
+      counts[num_unspecified] = counts.get(num_unspecified, 0) + 1
+
+    # 2 of the isomers don't have any unspecified bond stereo centers
+    # left, 1 does
+    self.assertEquals(counts, {0 : 2, 1 : 1})
+
+  def assertBondSetStereoIsAlwaysEquivalent(self, all_smiles, desired_stereo, bond_idx):
+    refSmiles = None
+    for smi in all_smiles:
+      mol = Chem.MolFromSmiles(smi)
+
+      doubleBond = None
+      for bond in mol.GetBonds():
+        if bond.GetBondType() == Chem.BondType.DOUBLE:
+          doubleBond = bond
+
+      self.assertTrue(doubleBond is not None)
+
+      Chem.FindPotentialStereoBonds(mol)
+      doubleBond.SetStereo(desired_stereo)
+
+      isosmi = Chem.MolToSmiles(mol, isomericSmiles=True)
+
+      if refSmiles is None:
+        refSmiles = isosmi
+
+      self.assertEquals(refSmiles, isosmi)
+
+  def testBondSetStereoAllHalogens(self):
+    # can't get much more brutal than this test
+    from itertools import combinations, permutations
+    halogens = ['F', 'Cl', 'Br', 'I']
+
+    # binary double bond stereo
+    for unique_set in combinations(halogens, 2):
+      all_smiles = []
+      for fmt in ['%sC=C%s', 'C(%s)=C%s']:
+        for ordering in permutations(unique_set):
+          all_smiles.append(fmt % ordering)
+
+      #print(fmt, all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+    # tertiary double bond stereo
+    for unique_set in combinations(halogens, 3):
+      for mono_side in unique_set:
+        halogens_left = list(unique_set)
+        halogens_left.remove(mono_side)
+        for binary_side in combinations(halogens_left, 2):
+          all_smiles = []
+
+          for binary_side_permutation in permutations(binary_side):
+            all_smiles.append('%sC=C(%s)%s' % ((mono_side,) + binary_side_permutation))
+            all_smiles.append('C(%s)=C(%s)%s' % ((mono_side,) + binary_side_permutation))
+
+            all_smiles.append('%sC(%s)=C%s' % (binary_side_permutation + (mono_side,)))
+            all_smiles.append('C(%s)(%s)=C%s' % (binary_side_permutation + (mono_side,)))
+
+          #print(all_smiles)
+          for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+            self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+
+    # quaternary double bond stereo
+    for unique_ordering in permutations(halogens):
+      left_side = unique_ordering[:2]
+      rght_side = unique_ordering[2:]
+
+      all_smiles = []
+      for left_side_permutation in permutations(left_side):
+        for rght_side_permutation in permutations(rght_side):
+          for smifmt in ['%sC(%s)=C(%s)%s', 'C(%s)(%s)=C(%s)%s']:
+            all_smiles.append(smifmt % (left_side_permutation + rght_side_permutation))
+
+      #print(all_smiles)
+      for desired_stereo in [Chem.BondStereo.STEREOTRANS, Chem.BondStereo.STEREOCIS]:
+        self.assertBondSetStereoIsAlwaysEquivalent(all_smiles, desired_stereo, 1)
+
+  def testBondSetStereoAtoms(self):
+    # use this difficult molecule that only generates 4 isomers, but
+    # assume all double bonds are stereo!
+    unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
+    mol = Chem.MolFromSmiles(unspec_smiles)
+
+    def getNbr(atom, exclude):
+      for nbr in atom.GetNeighbors():
+        if nbr.GetIdx() not in exclude:
+          return nbr
+      raise ValueError("No neighbor found!")
+
+    double_bonds = []
+    for bond in mol.GetBonds():
+      if bond.GetBondType() == 2:
+        double_bonds.append(bond)
+
+        exclude = {bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()}
+        bgnNbr = getNbr(bond.GetBeginAtom(), exclude)
+        endNbr = getNbr(bond.GetEndAtom(), exclude)
+
+        bond.SetStereoAtoms(bgnNbr.GetIdx(), endNbr.GetIdx())
+
+    self.assertEquals(len(double_bonds), 3)
+
+    import itertools
+    stereos = [Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ]
+    isomers = set()
+    for stereo_config in itertools.product(stereos, repeat=len(double_bonds)):
+      for bond, stereo in zip(double_bonds, stereo_config):
+        bond.SetStereo(stereo)
+      smi = Chem.MolToSmiles(mol, True)
+      isomers.add(smi)
+
+    # the dependent double bond stereo isn't picked up by this, should it?
+    self.assertEquals(len(isomers), 6)
+
+    # round tripping them through one more time does pick up the dependency, so meh?
+    round_trip_isomers = set()
+    for smi in isomers:
+      isosmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), True)
+      round_trip_isomers.add(isosmi)
+
+    self.assertEquals(len(round_trip_isomers), 4)
+
   def test36SubstructMatchStr(self):
     """ test the _SubstructMatchStr function """
     query = Chem.MolFromSmarts('[n,p]1ccccc1')
@@ -1984,6 +2234,39 @@ CAS<~>
 
       # confirm that an RWMol can be constructed without arguments
       m = Chem.RWMol()
+
+    # test replaceAtom/Bond preserving properties
+    mol = Chem.MolFromSmiles('C1CCC1')
+    mol2 = Chem.MolFromSmiles('C1CCC1')
+    mol.GetAtomWithIdx(0).SetProp("foo", "bar")
+    mol.GetBondWithIdx(0).SetProp("foo", "bar")
+    newBond = mol2.GetBondWithIdx(0)
+    self.assertTrue(type(mol) == Chem.Mol)
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      newAt = Chem.Atom(8)
+      rwmol.ReplaceAtom(0, newAt)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1COC1')
+      self.assertFalse(rwmol.GetMol().GetAtomWithIdx(0).HasProp("foo"))
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      newAt = Chem.Atom(8)
+      rwmol.ReplaceAtom(0, newAt, preserveProps=True)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1COC1')
+      self.assertTrue(rwmol.GetMol().GetAtomWithIdx(0).HasProp("foo"))
+      self.assertEqual(rwmol.GetMol().GetAtomWithIdx(0).GetProp("foo"), "bar")
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.ReplaceBond(0, newBond)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1CCC1')
+      self.assertFalse(rwmol.GetMol().GetBondWithIdx(0).HasProp("foo"))
+
+    for rwmol in [Chem.EditableMol(mol), Chem.RWMol(mol)]:
+      rwmol.ReplaceBond(0, newBond, preserveProps=True)
+      self.assertTrue(Chem.MolToSmiles(rwmol.GetMol()) == 'C1CCC1')
+      self.assertTrue(rwmol.GetMol().GetBondWithIdx(0).HasProp("foo"))
+      self.assertEqual(rwmol.GetMol().GetBondWithIdx(0).GetProp("foo"), "bar")
+
 
   def test47SmartsPieces(self):
     """ test the GetAtomSmarts and GetBondSmarts functions
@@ -2975,10 +3258,10 @@ CAS<~>
     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
     self.assertEquals(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
-      [0, 6, 0, 6, -1, -1, -1, -1])
+      [4, 6, 4, 6, -1, -1, -1, -1])
     self.assertEquals(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
-      [-1, -1, -1, -1, 0, 6, 0, 6])
+      [-1, -1, -1, -1, 4, 6, 4, 6])
 
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
@@ -3251,6 +3534,15 @@ CAS<~>
     qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am),'[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+
+  def testAdjustQueryPropertiesgithubIssue1474(self):
+    core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
+    core.GetAtomWithIdx(0).SetProp('foo','bar')
+    core.GetAtomWithIdx(1).SetProp('foo','bar')
+
+    ap = Chem.AdjustQueryProperties(core)
+    self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
+    self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -3704,7 +3996,7 @@ CAS<~>
       if platform.system() == 'Windows':
         details = details.replace('\\', '/')
       self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
-      self.assertTrue("Failed Expression: 3 <= 0" in details)
+      self.assertTrue("Failed Expression: 3 < 1" in details)
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 
@@ -3951,7 +4243,7 @@ CAS<~>
     for atom in m2.GetAtoms():
       self.assertFalse(atom.HasProp("_foo"))
       self.assertFalse(atom.HasProp("foo"))
-    
+
     Chem.SetDefaultPickleProperties( Chem.PropertyPickleOptions.MolProps |
                                      Chem.PropertyPickleOptions.PrivateProps)
     pkl = cPickle.dumps(m)
@@ -3964,6 +4256,118 @@ CAS<~>
       self.assertFalse(atom.HasProp("_foo"))
       self.assertFalse(atom.HasProp("foo"))
 
+  def testGithub1352(self):
+    self.assertTrue('SP' in Chem.HybridizationType.names)
+    self.assertTrue('S' in Chem.HybridizationType.names)
+    m = Chem.MolFromSmiles('CC(=O)O.[Na]')
+    self.assertEqual(m.GetAtomWithIdx(0).GetHybridization().name,'SP3')
+    self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name,'S')
+
+  def testGithub1366(self):
+    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.RWMol(mol)
+    ats = iter(mol.GetAtoms())
+    atom = next(ats)
+    mol.RemoveAtom(atom.GetIdx())
+    self.assertRaises(RuntimeError,next,ats)
+
+    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.RWMol(mol)
+    bonds = iter(mol.GetBonds())
+    bond = next(bonds)
+    mol.RemoveBond(bond.GetBeginAtomIdx(),bond.GetEndAtomIdx())
+    self.assertRaises(RuntimeError,next,bonds)
+
+  def testGithub1478(self):
+    data = """
+  MJ150720
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -0.4242   -1.4883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -1.0758    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -0.2508    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901    1.3990    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  7  6  4  0  0  0  0
+  8  7  4  0  0  0  0
+  6  5  4  0  0  0  0
+  5  4  4  0  0  0  0
+  5  2  1  0  0  0  0
+  4  3  4  0  0  0  0
+  8  3  4  0  0  0  0
+  2  1  2  0  0  0  0
+M  END
+"""
+    pattern = Chem.MolFromMolBlock(data)
+    m = Chem.MolFromSmiles("c1ccccc1C=O")
+    self.assertTrue(m.HasSubstructMatch(pattern))
+
+  def testGithub1320(self):
+    import pickle
+    mol = Chem.MolFromSmiles('N[C@@H](C)O')
+    mol2 = pickle.loads(pickle.dumps(mol))
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol2,isomericSmiles=True))
+    Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AtomProps |
+                                    Chem.PropertyPickleOptions.BondProps |
+                                    Chem.PropertyPickleOptions.MolProps |
+                                    Chem.PropertyPickleOptions.PrivateProps |
+                                    Chem.PropertyPickleOptions.ComputedProps  )
+    mol3 = pickle.loads(pickle.dumps(mol))
+
+    for a1, a2 in zip(mol.GetAtoms(), mol3.GetAtoms()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual( c1, c2 )
+
+      assert d1 == d2
+
+    for a1, a2 in zip(mol.GetBonds(), mol3.GetBonds()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual( c1, c2 )
+
+      assert d1 == d2
+
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol3,isomericSmiles=True))
+
+  def testOldPropPickles(self):
+    data = 'crdkit.Chem.rdchem\nMol\np0\n(S\'\\xef\\xbe\\xad\\xde\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00)\\x00\\x00\\x00-\\x00\\x00\\x00\\x80\\x01\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x07\\x00`\\x00\\x00\\x00\\x02\\x01\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00(\\x00\\x00\\x00\\x03\\x03\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06\\x00`\\x00\\x00\\x00\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x0b\\x00\\x01\\x00\\x01\\x02\\x00\\x02\\x03\\x00\\x02\\x04\\x00\\x04\\x05(\\x02\\x04\\x06 \\x06\\x07\\x00\\x07\\x08\\x00\\x08\\t(\\x02\\x08\\n \\n\\x0b\\x00\\x0b\\x0c\\x00\\x0c\\r\\x00\\r\\x0e \\x0e\\x0fh\\x0c\\x0f\\x10h\\x0c\\x10\\x11h\\x0c\\x11\\x12h\\x0c\\x12\\x13h\\x0c\\x0c\\x14\\x00\\x14\\x15\\x00\\x15\\x16\\x00\\x16\\x17(\\x02\\x16\\x18 \\x18\\x19\\x00\\x19\\x1a\\x00\\x1a\\x1b\\x00\\x1b\\x1c\\x00\\x1c\\x1d\\x00\\x1d\\x1eh\\x0c\\x1e\\x1fh\\x0c\\x1f h\\x0c !h\\x0c!"h\\x0c\\x07#\\x00#$\\x00$%\\x00%&\\x00&\\\'\\x00\\\'(\\x00\\x15\\n\\x00"\\x19\\x00(#\\x00\\x13\\x0eh\\x0c"\\x1dh\\x0c\\x14\\x05\\x05\\x0b\\n\\x15\\x14\\x0c\\x06\\x0f\\x10\\x11\\x12\\x13\\x0e\\x06\\x1a\\x1b\\x1c\\x1d"\\x19\\x06\\x1e\\x1f !"\\x1d\\x06$%&\\\'(#\\x17\\x00\\x00\\x00\\x00\\x12\\x03\\x00\\x00\\x00\\x07\\x00\\x00\\x00numArom\\x01\\x02\\x00\\x00\\x00\\x0f\\x00\\x00\\x00_StereochemDone\\x01\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00foo\\x00\\x03\\x00\\x00\\x00bar\\x13:\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x12\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x000\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1d\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x001\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x15\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x002\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x00\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x003\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1a\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x004\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02"\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x005\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x006\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x16\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x007\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x008\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02$\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x009\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02 \\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0010\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x13\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0011\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x18\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0012\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02!\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0013\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x19\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0014\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0015\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0016\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x08\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0017\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0018\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0019\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x07\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0020\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x17\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0021\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0022\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02#\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0023\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0024\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x14\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00R\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0025\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x06\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0026\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x03\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0027\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x05\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0028\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x10\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0029\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0030\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\t\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0031\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\n\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0032\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\r\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0033\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x11\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0034\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0035\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0036\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0037\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x01\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0038\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0039\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0040\\x13\\x16\'\np1\ntp2\nRp3\n.'
+    from rdkit.six.moves import cPickle
+    # bonds were broken in v1
+    m2 = cPickle.loads(data.encode("utf-8"), encoding='bytes')
+
+    self.assertEqual(m2.GetProp("foo"),"bar")
+    for atom in m2.GetAtoms():
+      self.assertEqual(atom.GetProp("myidx"), str(atom.GetIdx()))
+
+    self.assertEqual(Chem.MolToSmiles(m2, True),
+                     Chem.MolToSmiles(Chem.MolFromSmiles(
+                       "CN[C@@H](C)C(=O)N[C@H](C(=O)N1C[C@@H](Oc2ccccc2)C[C@H]1C(=O)N[C@@H]1CCCc2ccccc21)C1CCCCC1"),
+                                      True))
+
+  def testGithub1461(self):
+    # this is simple, it should throw a precondition and not seg fault
+    m = Chem.RWMol()
+    try:
+      m.AddBond(0,1,Chem.BondType.SINGLE)
+      self.assertFalse(True) # shouldn't get here
+    except RuntimeError:
+      pass
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
@@ -3976,4 +4380,3 @@ if __name__ == '__main__':
     runner.run(suite)
   else:
     unittest.main()
-

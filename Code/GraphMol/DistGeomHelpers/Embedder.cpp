@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,6 +34,8 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 
+//#define DEBUG_EMBEDDING 1
+
 #define ERROR_TOL 0.00001
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
@@ -66,7 +68,8 @@ const EmbedParameters KDG(0,      // maxIterations
                           true,   // useBasicKnowledge
                           false,  // verbose
                           5.0,    // basinThresh
-                          -1.0    // pruneRmsThresh
+                          -1.0,   // pruneRmsThresh
+                          true    // onlyHeavyAtomsForRMS
                           );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
@@ -86,7 +89,8 @@ const EmbedParameters ETDG(0,      // maxIterations
                            false,  // useBasicKnowledge
                            false,  // verbose
                            5.0,    // basinThresh
-                           -1.0    // pruneRmsThresh
+                           -1.0,   // pruneRmsThresh
+                           true    // onlyHeavyAtomsForRMS
                            );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,      // maxIterations
@@ -105,7 +109,8 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             true,   // useBasicKnowledge
                             false,  // verbose
                             5.0,    // basinThresh
-                            -1.0    // pruneRmsThresh
+                            -1.0,   // pruneRmsThresh
+                            true    // onlyHeavyAtomsForRMS
                             );
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
@@ -223,10 +228,12 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
       double d2 = (p0 - p1).length();  // distance
       double lb = mmat.getLowerBound(a1, a2);
       double ub = mmat.getUpperBound(a1, a2);  // bounds
-      if (((d2 < lb) && (fabs(d2 - lb) > 0.17)) ||
-          ((d2 > ub) && (fabs(d2 - ub) > 0.17))) {
-        // std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
-        // << " " << fabs(d2-lb) << " " << fabs(d2-ub) << std::endl;
+      if (((d2 < lb) && (fabs(d2 - lb) > 0.1 * ub)) ||
+          ((d2 > ub) && (fabs(d2 - ub) > 0.1 * ub))) {
+#ifdef DEBUG_EMBEDDING
+        std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
+                  << " " << fabs(d2 - lb) << " " << fabs(d2 - ub) << std::endl;
+#endif
         return false;
       }
     }
@@ -289,8 +296,12 @@ bool _minimizeWithExpTorsions(
                                                      improperAtoms, atomNums);
     field2->initialize();
     // check if the energy is low enough
-    double planarityTolerance = 0.5;
+    double planarityTolerance = 0.7;
     if (field2->calcEnergy() > improperAtoms.size() * planarityTolerance) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << "   planar fail: " << field2->calcEnergy() << " "
+                << improperAtoms.size() * planarityTolerance << std::endl;
+#endif
       planar = false;
     }
     delete field2;
@@ -388,12 +399,21 @@ bool _embedPoints(
       }
       std::vector<double> e_contribs;
       double local_e = field->calcEnergy(&e_contribs);
-      // if (e_contribs.size()) {
-      //   std::cerr << "        check: " << local_e / nat << " "
-      //             << *(std::max_element(e_contribs.begin(),
-      //             e_contribs.end()))
-      //             << std::endl;
-      // }
+// if (e_contribs.size()) {
+//   std::cerr << "        check: " << local_e / nat << " "
+//             << *(std::max_element(e_contribs.begin(),
+//             e_contribs.end()))
+//             << std::endl;
+// }
+
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " Energy : " << local_e / nat << " "
+                << *(std::max_element(e_contribs.begin(), e_contribs.end()))
+                << std::endl;
+// std::copy(e_contribs.begin(), e_contribs.end(),
+//           std::ostream_iterator<double>(std::cerr, " "));
+// std::cerr << std::endl;
+#endif
 
       // check that neither the energy nor any of the contributions to it are
       // too high (this is part of github #971)
@@ -499,6 +519,11 @@ bool _embedPoints(
         if (atomsToCheck.size() > 0) {
           if (!_boundsFulfilled(atomsToCheck, *mmat, *positions)) {
             gotCoords = false;
+
+#ifdef DEBUG_EMBEDDING
+            std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: " << iter
+                      << std::endl;
+#endif
           }
         }
 
@@ -510,7 +535,7 @@ bool _embedPoints(
             // four points. That is also a fail.
             if (!_centerInVolume(chiralSet, *positions)) {
 #ifdef DEBUG_EMBEDDING
-              std::cerr << " fail3! (" << chiralSet->d_idx0
+              std::cerr << " fail3b! (" << chiralSet->d_idx0
                         << ") iter: " << iter << std::endl;
 #endif
               gotCoords = false;
@@ -600,19 +625,23 @@ void _findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
   }      // for loop over atoms
 }  // end of _findChiralSets
 
-void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts,
-                        const Conformer &conf) {
+void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
+                        const ROMol &mol, bool onlyHeavyAtomsForRMS) {
   unsigned int na = conf.getNumAtoms();
   pts.clear();
   unsigned int ai;
   pts.reserve(na);
   for (ai = 0; ai < na; ++ai) {
+    // FIX: should we include D and T here?
+    if (onlyHeavyAtomsForRMS && mol.getAtomWithIdx(ai)->getAtomicNum() == 1) {
+      continue;
+    }
     pts.push_back(&conf.getAtomPos(ai));
   }
 }
 
 bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
-                        double threshold) {
+                        double threshold, bool onlyHeavyAtomsForRMS) {
   // NOTE: it is tempting to use some triangle inequality to prune
   // conformations here but some basic testing has shown very
   // little advantage and given that the time for pruning fades in
@@ -621,7 +650,7 @@ bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
   ROMol::ConstConformerIterator confi;
 
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
-  _fillAtomPositions(refPoints, conf);
+  _fillAtomPositions(refPoints, conf, mol, onlyHeavyAtomsForRMS);
 
   bool res = true;
   unsigned int na = conf.getNumAtoms();
@@ -630,7 +659,7 @@ bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
   RDGeom::Transform3D trans;
   double ssr;
   for (confi = mol.beginConformers(); confi != mol.endConformers(); confi++) {
-    _fillAtomPositions(prbPoints, *(*confi));
+    _fillAtomPositions(prbPoints, *(*confi), mol, onlyHeavyAtomsForRMS);
     ssr = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints, trans);
     if (ssr < ssrThres) {
       res = false;
@@ -646,13 +675,14 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations, int seed,
                   const std::map<int, RDGeom::Point3D> *coordMap,
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useBasicKnowledge, bool verbose, double basinThresh) {
+                  bool useBasicKnowledge, bool verbose, double basinThresh,
+                  bool onlyHeavyAtomsForRMS) {
   INT_VECT confIds;
-  EmbedMultipleConfs(mol, confIds, 1, 1, maxIterations, seed, clearConfs,
-                     useRandomCoords, boxSizeMult, randNegEig, numZeroFail,
-                     -1.0, coordMap, optimizerForceTol, ignoreSmoothingFailures,
-                     enforceChirality, useExpTorsionAnglePrefs,
-                     useBasicKnowledge, verbose, basinThresh);
+  EmbedMultipleConfs(
+      mol, confIds, 1, 1, maxIterations, seed, clearConfs, useRandomCoords,
+      boxSizeMult, randNegEig, numZeroFail, -1.0, coordMap, optimizerForceTol,
+      ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
+      useBasicKnowledge, verbose, basinThresh, onlyHeavyAtomsForRMS);
 
   int res;
   if (confIds.size()) {
@@ -785,7 +815,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         double optimizerForceTol, bool ignoreSmoothingFailures,
                         bool enforceChirality, bool useExpTorsionAnglePrefs,
                         bool useBasicKnowledge, bool verbose,
-                        double basinThresh) {
+                        double basinThresh, bool onlyHeavyAtomsForRMS) {
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
@@ -941,7 +971,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       // check if we are pruning away conformations and
       // a closeby conformation has already been chosen :
       if (pruneRmsThresh > 0.0 &&
-          !_isConfFarFromRest(mol, *conf, pruneRmsThresh)) {
+          !_isConfFarFromRest(mol, *conf, pruneRmsThresh,
+                              onlyHeavyAtomsForRMS)) {
         delete conf;
       } else {
         int confId = (int)mol.addConformer(conf, true);
@@ -960,13 +991,14 @@ INT_VECT EmbedMultipleConfs(
     const std::map<int, RDGeom::Point3D> *coordMap, double optimizerForceTol,
     bool ignoreSmoothingFailures, bool enforceChirality,
     bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
-    double basinThresh) {
+    double basinThresh, bool onlyHeavyAtomsForRMS) {
   INT_VECT res;
-  EmbedMultipleConfs(
-      mol, res, numConfs, 1, maxIterations, seed, clearConfs, useRandomCoords,
-      boxSizeMult, randNegEig, numZeroFail, pruneRmsThresh, coordMap,
-      optimizerForceTol, ignoreSmoothingFailures, enforceChirality,
-      useExpTorsionAnglePrefs, useBasicKnowledge, verbose, basinThresh);
+  EmbedMultipleConfs(mol, res, numConfs, 1, maxIterations, seed, clearConfs,
+                     useRandomCoords, boxSizeMult, randNegEig, numZeroFail,
+                     pruneRmsThresh, coordMap, optimizerForceTol,
+                     ignoreSmoothingFailures, enforceChirality,
+                     useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+                     basinThresh, onlyHeavyAtomsForRMS);
   return res;
 }
 }  // end of namespace DGeomHelpers

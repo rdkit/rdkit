@@ -334,8 +334,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   */
   void addEdge(unsigned int id1, unsigned int id2) {
     unsigned int nents = getNumEntries();
-    URANGE_CHECK(id1, nents - 1);
-    URANGE_CHECK(id2, nents - 1);
+    URANGE_CHECK(id1, nents);
+    URANGE_CHECK(id2, nents);
     // FIX: if we boost::setS for the edgeList BGL will
     // do the checking for duplicity (parallel edges)
     // But for reasons unknown setS results in compile
@@ -352,7 +352,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns a pointer to our entry with a particular index
   const entryType *getEntryWithIdx(unsigned int idx) const {
-    URANGE_CHECK(idx, getNumEntries() - 1);
+    URANGE_CHECK(idx, getNumEntries());
     int vd = static_cast<int>(boost::vertex(idx, d_graph));
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
@@ -362,7 +362,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns a pointer to our entry with a particular bit ID
   const entryType *getEntryWithBitId(unsigned int idx) const {
-    URANGE_CHECK(idx, this->getFPLength() - 1);
+    URANGE_CHECK(idx, this->getFPLength());
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
     const entryType *res = NULL;
@@ -379,7 +379,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns the index of the entry with a particular bit ID
   int getIdOfEntryWithBitId(unsigned int idx) const {
-    URANGE_CHECK(idx, this->getFPLength() - 1);
+    URANGE_CHECK(idx, this->getFPLength());
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
     int res = -1;

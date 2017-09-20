@@ -204,7 +204,7 @@ void fixRGroups(ChemicalReaction &rxn) {
   if (!reactantAtomsToFix.size() && !productAtomsToFix.size())
     return;
 
-  if( reactantAtomsToFix.size() != productAtomsToFix.size() ) {
+  if( reactantAtomsToFix.size() > productAtomsToFix.size() ) {
     std::ostringstream str;
     str << "Mismatched rlabels: " <<
         reactantAtomsToFix.size() << " unmapped reactant rlabels," << 
@@ -255,7 +255,6 @@ void fixRGroups(ChemicalReaction &rxn) {
 
 // if we have query atoms without rlabels, make proper rlabels if possible
 //  ensure that every rlabel in the reactant has one in the product
-
 void fixAtomMaps(ChemicalReaction &rxn) {
   int max_atom_map = getMaxProp<int>(
       rxn,
@@ -324,15 +323,67 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
 }
 
 void fixHs(ChemicalReaction &rxn) {
+  {
+    //  if mapped Hydrogens in reactants area mapped to heavy atoms
+    //   keep mappings, in all other cases remove them.
+    //   this allows us to merge query hydrogens atoms 
+
+    std::map<int, bool> mappedToNonHeavyProductAtom;
+
+    for(MOL_SPTR_VECT::iterator it = rxn.beginProductTemplates();
+        it != rxn.endProductTemplates();
+        ++it) {
+      int atomMap = 0;
+      for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+           atIt != (*it)->endAtoms();
+           ++atIt) {
+        Atom *atom = (*atIt);
+        if (atom->getAtomicNum() != 1) { // hydrogen
+          if (atom->getPropIfPresent(common_properties::molAtomMapNumber, atomMap)) {
+            if(atomMap) {
+              mappedToNonHeavyProductAtom[atomMap] = true;
+            }
+          }
+        }
+      }
+    }
+
+    for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
+        it != rxn.endReactantTemplates();
+        ++it) {
+      int atomMap = 0;
+      for (ROMol::AtomIterator atIt = (*it)->beginAtoms();
+           atIt != (*it)->endAtoms();
+           ++atIt) {
+        Atom *atom = (*atIt);
+        if (atom->getAtomicNum() == 1) { // hydrogen
+          if (atom->getPropIfPresent(common_properties::molAtomMapNumber, atomMap)) {
+            if(atomMap) {
+              if(mappedToNonHeavyProductAtom.find(atomMap) ==
+                 mappedToNonHeavyProductAtom.end()) {
+                atom->clearProp(common_properties::molAtomMapNumber);
+              } else {
+                BOOST_LOG(rdWarningLog) <<
+                    "Reaction has explicit hydrogens, reactants will need explicit hydrogens (addHs)"
+                                        << std::endl;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   const bool mergeUnmappedOnly = true;
   for(MOL_SPTR_VECT::iterator it = rxn.beginReactantTemplates();
       it != rxn.endReactantTemplates();
       ++it) {
     RWMol * rw = dynamic_cast<RWMol*>(it->get());
-    if (rw)
+    if (rw) {
       MolOps::mergeQueryHs(*rw, mergeUnmappedOnly);
+    }
     else
-      PRECONDITION(rw, "Oops, not really a RWMol?");    
+      PRECONDITION(rw, "Oops, not really an RWMol?");    
   }
 }
 

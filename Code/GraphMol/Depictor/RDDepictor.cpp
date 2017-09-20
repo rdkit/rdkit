@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +9,8 @@
 //
 
 #include "RDDepictor.h"
+#include "EmbeddedFrag.h"
+
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
@@ -148,6 +149,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
   ++eri;
   while (eri != efrags.end()) {
     bool xshift = true;
+
     if (xmax + xmin > ymax + ymin) {
       xshift = false;
     }
@@ -185,7 +187,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
   // first find all the rings
   RDKit::MolOps::symmetrizeSSSR(mol, arings);
 
-  // do stereochemistry 
+  // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
 
   efrags.clear();
@@ -310,7 +312,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // perform random sampling here to improve the density
   for (eri = efrags.begin(); eri != efrags.end(); eri++) {
     // either sample the 2D space by randomly flipping rotatable
-    // bonds in the structure or flip onyl bonds along the shortest
+    // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
       eri->randomSampleFlipsAndPermutations(
@@ -431,118 +433,119 @@ unsigned int compute2DCoordsMimicDistMat(
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
 //   constrained to have the same coordinates as a reference.
-void generateDepictionMatching2DStructure( RDKit::ROMol &mol ,
-					   const RDKit::ROMol &reference ,
-					   int confId ,
-					   RDKit::ROMol *referencePattern ,
-					   bool acceptFailure ) {
-
+void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
+                                          const RDKit::ROMol &reference,
+                                          int confId,
+                                          RDKit::ROMol *referencePattern,
+                                          bool acceptFailure) {
   std::vector<int> refMatch;
   RDKit::MatchVectType matchVect;
-  if( referencePattern ) {
-    if( reference.getNumAtoms( true ) != referencePattern->getNumAtoms( true ) ) {
-      throw RDDepict::DepictException( "When a pattern is provided, it must have the same number of atoms as the reference" );
+  if (referencePattern) {
+    if (reference.getNumAtoms(true) != referencePattern->getNumAtoms(true)) {
+      throw RDDepict::DepictException(
+          "When a pattern is provided, it must have the same number of atoms "
+          "as the reference");
     }
     RDKit::MatchVectType refMatchVect;
-    RDKit::SubstructMatch( reference , *referencePattern , refMatchVect );
-    if( refMatchVect.empty() ) {
-      throw RDDepict::DepictException( "Reference pattern does not map to reference." );
+    RDKit::SubstructMatch(reference, *referencePattern, refMatchVect);
+    if (refMatchVect.empty()) {
+      throw RDDepict::DepictException(
+          "Reference pattern does not map to reference.");
     }
-    refMatch.reserve( refMatchVect.size() );
-    for( size_t i = 0 ; i < refMatchVect.size() ; ++i ) {
-      refMatch.push_back( refMatchVect[i].second );
+    refMatch.reserve(refMatchVect.size());
+    for (size_t i = 0; i < refMatchVect.size(); ++i) {
+      refMatch.push_back(refMatchVect[i].second);
     }
-    RDKit::SubstructMatch( mol , *referencePattern , matchVect );
+    RDKit::SubstructMatch(mol, *referencePattern, matchVect);
   } else {
-    refMatch.reserve( reference.getNumAtoms( true ) );
-    for( unsigned int i = 0 ; i < reference.getNumAtoms( true ) ; ++i ) {
-      refMatch.push_back( i );
+    refMatch.reserve(reference.getNumAtoms(true));
+    for (unsigned int i = 0; i < reference.getNumAtoms(true); ++i) {
+      refMatch.push_back(i);
     }
-    RDKit::SubstructMatch( mol , reference , matchVect );
+    RDKit::SubstructMatch(mol, reference, matchVect);
   }
 
   RDGeom::INT_POINT2D_MAP coordMap;
-  if( matchVect.empty() ) {
-    if( !acceptFailure ) {
-      throw RDDepict::DepictException( "Substructure match with reference not found." );
+  if (matchVect.empty()) {
+    if (!acceptFailure) {
+      throw RDDepict::DepictException(
+          "Substructure match with reference not found.");
     }
   } else {
-    const RDKit::Conformer &conf = reference.getConformer( confId );
-    for( RDKit::MatchVectType::const_iterator mv = matchVect.begin() ;
-	 mv != matchVect.end() ; ++mv ) {
-      RDGeom::Point3D pt3 = conf.getAtomPos( refMatch[mv->first] );
-      RDGeom::Point2D pt2( pt3.x , pt3.y );
+    const RDKit::Conformer &conf = reference.getConformer(confId);
+    for (RDKit::MatchVectType::const_iterator mv = matchVect.begin();
+         mv != matchVect.end(); ++mv) {
+      RDGeom::Point3D pt3 = conf.getAtomPos(refMatch[mv->first]);
+      RDGeom::Point2D pt2(pt3.x, pt3.y);
       coordMap[mv->second] = pt2;
     }
   }
-  RDDepict::compute2DCoords( mol , &coordMap , false /* canonOrient */ ,
-			     true /* clearConfs */ );
-
+  RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
+                            true /* clearConfs */);
 }
-  
+
 //! \brief Generate a 2D depiction for a molecule where all or part of
 //   it mimics the coordinates of a 3D reference structure.
-void generateDepictionMatching3DStructure( RDKit::ROMol &mol ,
-					   const RDKit::ROMol &reference ,
-					   int confId ,
-					   RDKit::ROMol *referencePattern ,
-					   bool acceptFailure ) {
-
+void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
+                                          const RDKit::ROMol &reference,
+                                          int confId,
+                                          RDKit::ROMol *referencePattern,
+                                          bool acceptFailure) {
   unsigned int num_ats = mol.getNumAtoms();
-  if( !referencePattern && reference.getNumAtoms() < num_ats ) {
-    if( acceptFailure ) {
-      RDDepict::compute2DCoords( mol );
+  if (!referencePattern && reference.getNumAtoms() < num_ats) {
+    if (acceptFailure) {
+      RDDepict::compute2DCoords(mol);
       return;
     } else {
-      throw RDDepict::DepictException( "Reference molecule not compatible with target molecule." );
-    }    
+      throw RDDepict::DepictException(
+          "Reference molecule not compatible with target molecule.");
+    }
   }
 
-  std::vector<int> mol_to_ref( num_ats , -1 );
-  if( referencePattern && referencePattern->getNumAtoms() ) {
-    RDKit::MatchVectType molMatchVect , refMatchVect;
-    RDKit::SubstructMatch( mol , *referencePattern , molMatchVect );
-    RDKit::SubstructMatch( reference , *referencePattern , refMatchVect );
-    if( molMatchVect.empty() || refMatchVect.empty() ) {
-      if( acceptFailure ) {
-	RDDepict::compute2DCoords( mol );
-	return;
+  std::vector<int> mol_to_ref(num_ats, -1);
+  if (referencePattern && referencePattern->getNumAtoms()) {
+    RDKit::MatchVectType molMatchVect, refMatchVect;
+    RDKit::SubstructMatch(mol, *referencePattern, molMatchVect);
+    RDKit::SubstructMatch(reference, *referencePattern, refMatchVect);
+    if (molMatchVect.empty() || refMatchVect.empty()) {
+      if (acceptFailure) {
+        RDDepict::compute2DCoords(mol);
+        return;
       } else {
-	throw RDDepict::DepictException( "Reference pattern didn't match molecule or reference." );
+        throw RDDepict::DepictException(
+            "Reference pattern didn't match molecule or reference.");
       }
     }
-    for( size_t i = 0 ; i < molMatchVect.size() ; ++i ) {
+    for (size_t i = 0; i < molMatchVect.size(); ++i) {
       mol_to_ref[molMatchVect[i].second] = refMatchVect[i].second;
     }
-    
+
   } else {
-    for( unsigned int i = 0 ; i < num_ats ; ++i ) {
+    for (unsigned int i = 0; i < num_ats; ++i) {
       mol_to_ref[i] = i;
     }
   }
-  
-  const RDKit::Conformer &conf = reference.getConformer( confId );
+
+  const RDKit::Conformer &conf = reference.getConformer(confId);
   // the distance matrix is a triangular representation
-  RDDepict::DOUBLE_SMART_PTR dmat( new double[num_ats * ( num_ats - 1 ) / 2] );
+  RDDepict::DOUBLE_SMART_PTR dmat(new double[num_ats * (num_ats - 1) / 2]);
   // negative distances are ignored, so initialise to -1.0 so subset by
   // referencePattern works.
-  std::fill( dmat.get() , dmat.get() + num_ats * ( num_ats - 1 ) / 2 , -1.0 );
-  for( unsigned int i = 0 ; i < num_ats ; ++i ) {
-    if( -1 == mol_to_ref[i] ) {
+  std::fill(dmat.get(), dmat.get() + num_ats * (num_ats - 1) / 2, -1.0);
+  for (unsigned int i = 0; i < num_ats; ++i) {
+    if (-1 == mol_to_ref[i]) {
       continue;
     }
-    RDGeom::Point3D cds_i = conf.getAtomPos( i );
-    for( unsigned int j = i + 1 ; j < num_ats ; ++j ) {
-      if( -1 == mol_to_ref[j] ) {
-	continue;
+    RDGeom::Point3D cds_i = conf.getAtomPos(i);
+    for (unsigned int j = i + 1; j < num_ats; ++j) {
+      if (-1 == mol_to_ref[j]) {
+        continue;
       }
-      RDGeom::Point3D cds_j = conf.getAtomPos( mol_to_ref[j] );
-      dmat[( j * ( j - 1 ) / 2 ) + i] = (cds_i - cds_j).length();
+      RDGeom::Point3D cds_j = conf.getAtomPos(mol_to_ref[j]);
+      dmat[(j * (j - 1) / 2) + i] = (cds_i - cds_j).length();
     }
   }
 
-  RDDepict::compute2DCoordsMimicDistMat( mol , &dmat );
-
+  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat);
 }
-
 }

@@ -231,6 +231,13 @@ inline void streamWrite(std::ostream &ss, const std::string &what) {
   ss.write(what.c_str(), sizeof(char) * l);
 };
 
+template<typename T>
+void streamWriteVec(std::ostream &ss, const T &val) {
+  streamWrite(ss, static_cast<boost::uint64_t>(val.size()));
+  for(size_t i=0;i<val.size();++i)
+    streamWrite(ss, val[i]);
+}
+
 //! does a binary read of an object from a stream
 template <typename T>
 void streamRead(std::istream &ss, T &loc) {
@@ -258,6 +265,25 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
 };
 
 
+template<class T>
+void streamReadVec(std::istream &ss, T &val) {
+  boost::uint64_t size;
+  streamRead(ss, size);
+  val.resize(size);
+
+  for(size_t i=0;i<size;++i)
+    streamRead(ss, val[i]);
+}
+
+inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val, int version) {
+  boost::uint64_t size;
+  streamRead(ss, size);
+  val.resize(size);
+
+  for(size_t i=0;i<size;++i)
+    streamRead(ss, val[i], version);
+}
+
 //! grabs the next line from an instream and returns it.
 inline std::string getLine(std::istream *inStream) {
   std::string res;
@@ -281,6 +307,12 @@ namespace DTags {
   const unsigned char BoolTag = 3;
   const unsigned char FloatTag = 4;
   const unsigned char DoubleTag = 5;
+  const unsigned char VecStringTag = 6;
+  const unsigned char VecIntTag = 7;
+  const unsigned char VecUIntTag = 8;
+  const unsigned char VecBoolTag = 9;
+  const unsigned char VecFloatTag = 10;
+  const unsigned char VecDoubleTag = 11;
   const unsigned char EndTag = 0xFF;
 }
 
@@ -292,6 +324,13 @@ inline bool isSerializable(const Dict::Pair &pair) {
     case RDTypeTag::BoolTag:
     case RDTypeTag::FloatTag:
     case RDTypeTag::DoubleTag:
+
+    case RDTypeTag::VecStringTag:
+    case RDTypeTag::VecIntTag:
+    case RDTypeTag::VecUnsignedIntTag:
+    case RDTypeTag::VecFloatTag:
+    case RDTypeTag::VecDoubleTag:
+      
       return true;
     default:
       return false;
@@ -299,17 +338,9 @@ inline bool isSerializable(const Dict::Pair &pair) {
 }
 
 inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
-  switch (pair.val.getTag()) {
-    case RDTypeTag::StringTag:
-    case RDTypeTag::IntTag:
-    case RDTypeTag::UnsignedIntTag:
-    case RDTypeTag::BoolTag:
-    case RDTypeTag::FloatTag:
-    case RDTypeTag::DoubleTag:
-      break;
-    default:
-      return false;
-  }
+  if (!isSerializable(pair))
+    return false;
+
 
   streamWrite(ss, pair.key);
   switch (pair.val.getTag()) {
@@ -336,6 +367,27 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair) {
     case RDTypeTag::DoubleTag:
       streamWrite(ss, DTags::DoubleTag);
       streamWrite(ss, rdvalue_cast<double>(pair.val));
+      break;
+
+    case RDTypeTag::VecStringTag:
+      streamWrite(ss, DTags::VecStringTag);
+      streamWriteVec(ss, rdvalue_cast<std::vector<std::string> >(pair.val));
+      break;
+    case RDTypeTag::VecDoubleTag:
+      streamWrite(ss, DTags::VecDoubleTag);
+      streamWriteVec(ss, rdvalue_cast<std::vector<double> >(pair.val));
+      break;
+    case RDTypeTag::VecFloatTag:
+      streamWrite(ss, DTags::VecFloatTag);
+      streamWriteVec(ss, rdvalue_cast<std::vector<float> >(pair.val));
+      break;
+    case RDTypeTag::VecIntTag:
+      streamWrite(ss, DTags::VecIntTag);
+      streamWriteVec(ss, rdvalue_cast<std::vector<int> >(pair.val));
+      break;
+    case RDTypeTag::VecUnsignedIntTag:
+      streamWrite(ss, DTags::VecUIntTag);
+      streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int> >(pair.val));
       break;
     default:
       std::cerr << "Failed to write " << pair.key << std::endl;
@@ -365,12 +417,14 @@ inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
   for(Dict::DataType::const_iterator it = dict.getData().begin();
       it != dict.getData().end();
       ++it) {
-    if(isSerializable(*it) && propnames.find(it->key) != propnames.end()) {
-      // note - not all properties are serializable, this may be
-      //  a null op
-      if(streamWriteProp(ss, *it)) {
-        writtenCount++;
-      }
+    if(propnames.find(it->key) != propnames.end()) {
+      if(isSerializable(*it)) { 
+        // note - not all properties are serializable, this may be
+        //  a null op
+        if(streamWriteProp(ss, *it)) {
+          writtenCount++;
+        }
+      } 
     }
   }
   POSTCONDITION(count==writtenCount, "Estimated property count not equal to written");
@@ -384,12 +438,28 @@ void readRDValue(std::istream &ss, RDValue &value) {
   value = v;
 }
 
+template<class T>
+void readRDVecValue(std::istream &ss, RDValue &value) {
+  std::vector<T> v;
+  streamReadVec(ss, v);
+  value = v;
+}
+
 inline void readRDValueString(std::istream &ss, RDValue &value) {
   std::string v;
   int version=0;
   streamRead(ss, v, version);
   value = v;
 }
+
+
+inline void readRDStringVecValue(std::istream &ss, RDValue &value) {
+  std::vector<std::string> v;
+  int version=0;
+  streamReadStringVec(ss, v, version);
+  value = v;
+}
+
 
 inline bool streamReadProp(std::istream &ss, Dict::Pair &pair) {
   int version=0;
@@ -404,6 +474,13 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair) {
     case DTags::BoolTag: readRDValue<bool>(ss, pair.val); break;
     case DTags::FloatTag: readRDValue<float>(ss, pair.val); break;
     case DTags::DoubleTag: readRDValue<double>(ss, pair.val); break;
+
+    case DTags::VecStringTag: readRDStringVecValue(ss, pair.val); break;
+    case DTags::VecIntTag: readRDVecValue<int>(ss, pair.val); break;
+    case DTags::VecUIntTag: readRDVecValue<unsigned int>(ss, pair.val); break;
+    case DTags::VecFloatTag: readRDVecValue<float>(ss, pair.val); break;
+    case DTags::VecDoubleTag: readRDVecValue<double>(ss, pair.val); break;
+
     default:
       return false;
   }

@@ -21,6 +21,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 
 #include <iostream>
 
@@ -2287,6 +2288,148 @@ void testGithub1294() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1423() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 1423: Generate a warning for "
+                          "conflicting bond directions"
+                       << std::endl;
+
+  {  // this one is ok:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(/F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+    TEST_ASSERT(warns.str() == "");
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // this one has a conflict:
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
+
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+  {  // from the question that prompted this
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "CCCO\\C(=C/c1ccccc1)/C(\\OCC)=C\\c1ccccc1";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(15)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C(\\F)=C/[C@H](F)C=C(F)C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+
+  {  // a problem that came up during testing
+    std::stringstream warns;
+    rdWarningLog->SetTee(warns);
+    std::string smi = "C/C1=C/C=C=C=C2C(=C([Si](C)(C)C)\\C=C/1)C(=O)c1ccccc12";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(warns.str() != "");
+    TEST_ASSERT(warns.str().find("BondStereo set to STEREONONE") !=
+                std::string::npos);
+    delete m;
+    rdWarningLog->ClearTee();
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+namespace {
+void stereochemTester(RWMol *m, std::string expectedCIP,
+                      Bond::BondStereo expectedStereo) {
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 9)
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
+  // the mol file parser assigned bond dirs, get rid of them
+  for (ROMol::BondIterator bIt = m->beginBonds(); bIt != m->endBonds(); ++bIt) {
+    (*bIt)->setBondDir(Bond::NONE);
+  }
+  MolOps::assignStereochemistryFrom3D(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                  common_properties::_CIPCode) == expectedCIP);
+  TEST_ASSERT(m->getBondWithIdx(3)->getStereo() == expectedStereo);
+}
+}
+void testAssignStereochemistryFrom3D() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing assignStereochemistryFrom3D" << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  {
+    SDMolSupplier suppl(pathName + "stereochem.sdf", false);  // don't sanitize
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-Z");
+      stereochemTester(m, "R", Bond::STEREOZ);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "R-E");
+      stereochemTester(m, "R", Bond::STEREOE);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-Z");
+      stereochemTester(m, "S", Bond::STEREOZ);
+      delete m;
+    }
+    {
+      RWMol *m = (RWMol *)suppl.next();
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) == "S-E");
+      stereochemTester(m, "S", Bond::STEREOE);
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2311,7 +2454,9 @@ int main() {
   testIssue2705543();
   testGithub553();
   testGithub803();
-#endif
   testGithub1294();
+#endif
+  testGithub1423();
+  testAssignStereochemistryFrom3D();
   return 0;
 }

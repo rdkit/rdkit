@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -3375,6 +3374,90 @@ void testGitHubIssue874() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue879() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Github #879: Pattern fingerprint should set bits "
+                           "for single-atom fragments."
+                        << std::endl;
+  {
+    std::string smiles = "Cl";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 1);
+
+    ExplicitBitVect *bv = PatternFingerprintMol(*m1, 2048);
+    TEST_ASSERT(bv);
+    TEST_ASSERT(bv->getNumOnBits() == 2);
+    delete bv;
+    delete m1;
+  }
+  {
+    std::string smiles = "Cl.[Na]";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 2);
+
+    ExplicitBitVect *bv = PatternFingerprintMol(*m1, 2048);
+    TEST_ASSERT(bv);
+    TEST_ASSERT(bv->getNumOnBits() == 4);
+    delete bv;
+    delete m1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testGitHubIssue1496() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Github #1496: Pattern fingerprint setting bad bits "
+                           "for degree zero atoms"
+                        << std::endl;
+  {
+    std::string smiles = "C";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 1);
+    ExplicitBitVect *bv1 = PatternFingerprintMol(*m1, 2048);
+    TEST_ASSERT(bv1);
+
+    std::string smarts = "[#6]";
+    ROMol *m2 = SmartsToMol(smarts);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getNumAtoms() == 1);
+    ExplicitBitVect *bv2 = PatternFingerprintMol(*m2, 2048);
+    TEST_ASSERT(bv2);
+    TEST_ASSERT(bv1->getNumOnBits() >= bv2->getNumOnBits())
+    TEST_ASSERT(AllProbeBitsMatch(*bv2, *bv1));
+
+    delete m1;
+    delete bv1;
+    delete m2;
+    delete bv2;
+  }
+  {
+    std::string smiles = "CC";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 2);
+    ExplicitBitVect *bv1 = PatternFingerprintMol(*m1, 2048);
+    TEST_ASSERT(bv1);
+
+    std::string smarts = "[#6]";
+    ROMol *m2 = SmartsToMol(smarts);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getNumAtoms() == 1);
+    ExplicitBitVect *bv2 = PatternFingerprintMol(*m2, 2048);
+    TEST_ASSERT(bv2);
+    TEST_ASSERT(bv1->getNumOnBits() > bv2->getNumOnBits())
+    TEST_ASSERT(AllProbeBitsMatch(*bv2, *bv1));
+
+    delete m1;
+    delete bv1;
+    delete m2;
+    delete bv2;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3426,8 +3509,10 @@ int main(int argc, char *argv[]) {
   testGitHubIssue811();
   testRDKFPUnfolded();
   testRDKFPBitInfo();
-#endif
   testGitHubIssue874();
+  testGitHubIssue879();
+#endif
+  testGitHubIssue1496();
 
   return 0;
 }

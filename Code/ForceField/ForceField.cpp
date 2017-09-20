@@ -92,8 +92,8 @@ ForceField::ForceField(const ForceField &other)
 
 double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
   PRECONDITION(df_init, "not initialized");
-  URANGE_CHECK(i, d_numPoints - 1);
-  URANGE_CHECK(j, d_numPoints - 1);
+  URANGE_CHECK(i, d_numPoints);
+  URANGE_CHECK(j, d_numPoints);
   if (j < i) {
     int tmp = j;
     j = i;
@@ -133,8 +133,8 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
 
 double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
   PRECONDITION(df_init, "not initialized");
-  URANGE_CHECK(i, d_numPoints - 1);
-  URANGE_CHECK(j, d_numPoints - 1);
+  URANGE_CHECK(i, d_numPoints);
+  URANGE_CHECK(j, d_numPoints);
   if (j < i) {
     int tmp = j;
     j = i;
@@ -228,7 +228,9 @@ double ForceField::calcEnergy(std::vector<double> *contribs) const {
        contrib != d_contribs.end(); contrib++) {
     double e = (*contrib)->getEnergy(pos);
     res += e;
-    if (contribs) contribs->push_back(e);
+    if (contribs) {
+      contribs->push_back(e);
+    }
   }
   delete[] pos;
   return res;

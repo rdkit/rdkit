@@ -207,7 +207,7 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(len(conn.GetColumnNames(table=newTblName)), 3)
     conn.AddColumn(newTblName, 'val3', 'int')
-    #     conn.Commit()
+    conn.Commit()
     self.assertEqual(len(conn.GetColumnNames(table=newTblName)), 4)
     d = conn.GetColumns('id,val3', table=newTblName)
     self.assertEqual(len(d), 10)

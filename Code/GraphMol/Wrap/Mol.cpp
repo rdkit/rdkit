@@ -1,6 +1,5 @@
-// $Id$
-//
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -190,19 +189,20 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 // FIX: we should eventually figure out how to do iterators properly
 AtomIterSeq *MolGetAtoms(ROMol *mol) {
-  AtomIterSeq *res = new AtomIterSeq(mol->beginAtoms(), mol->endAtoms());
+  AtomIterSeq *res = new AtomIterSeq(mol->beginAtoms(), mol->endAtoms(),
+                                     AtomCountFunctor(*mol));
   return res;
 }
 QueryAtomIterSeq *MolGetAromaticAtoms(ROMol *mol) {
   QueryAtom *qa = new QueryAtom();
   qa->setQuery(makeAtomAromaticQuery());
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol->beginQueryAtoms(qa), mol->endQueryAtoms());
+  QueryAtomIterSeq *res = new QueryAtomIterSeq(
+      mol->beginQueryAtoms(qa), mol->endQueryAtoms(), AtomCountFunctor(*mol));
   return res;
 }
 QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol, QueryAtom *qa) {
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol->beginQueryAtoms(qa), mol->endQueryAtoms());
+  QueryAtomIterSeq *res = new QueryAtomIterSeq(
+      mol->beginQueryAtoms(qa), mol->endQueryAtoms(), AtomCountFunctor(*mol));
   return res;
 }
 
@@ -212,7 +212,8 @@ QueryAtomIterSeq *MolGetQueryAtoms(ROMol *mol, QueryAtom *qa) {
 //  return res;
 //}
 BondIterSeq *MolGetBonds(ROMol *mol) {
-  BondIterSeq *res = new BondIterSeq(mol->beginBonds(), mol->endBonds());
+  BondIterSeq *res = new BondIterSeq(mol->beginBonds(), mol->endBonds(),
+                                     BondCountFunctor(*mol));
   return res;
 }
 
@@ -246,8 +247,14 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     return addAtom(atom, true, false);
   };
-  void ReplaceAtom(unsigned int idx, Atom *atom) { replaceAtom(idx, atom); };
-  void ReplaceBond(unsigned int idx, Bond *bond) { replaceBond(idx, bond); };
+  void ReplaceAtom(unsigned int idx, Atom *atom, bool updateLabel, bool preserveProps) {
+    PRECONDITION(atom, "bad atom");
+    replaceAtom(idx, atom, updateLabel, preserveProps);
+  };
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+    PRECONDITION(bond, "bad bond");
+    replaceBond(idx, bond, preserveProps);
+  };
   ROMol *GetMol() const {
     ROMol *res = new ROMol(*this);
     return res;
@@ -281,7 +288,8 @@ struct mol_wrapper {
     python::register_exception_translator<ConformerException>(
         &rdExceptionTranslator);
 
-    python::enum_<RDKit::PicklerOps::PropertyPickleOptions>("PropertyPickleOptions")
+    python::enum_<RDKit::PicklerOps::PropertyPickleOptions>(
+        "PropertyPickleOptions")
         .value("NoProps", RDKit::PicklerOps::NoProps)
         .value("MolProps", RDKit::PicklerOps::MolProps)
         .value("AtomProps", RDKit::PicklerOps::AtomProps)
@@ -293,11 +301,13 @@ struct mol_wrapper {
         .export_values();
     ;
 
-    python::def("GetDefaultPickleProperties", MolPickler::getDefaultPickleProperties,
+    python::def("GetDefaultPickleProperties",
+                MolPickler::getDefaultPickleProperties,
                 "Get the current global mol pickler options.");
-    python::def("SetDefaultPickleProperties", MolPickler::setDefaultPickleProperties,
+    python::def("SetDefaultPickleProperties",
+                MolPickler::setDefaultPickleProperties,
                 "Set the current global mol pickler options.");
-    
+
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
         python::init<>("Constructor, takes no arguments"))
@@ -644,8 +654,9 @@ struct mol_wrapper {
              "Returns a binary string representation of the molecule.\n")
         .def("ToBinary", MolToBinaryWithProps,
              (python::arg("mol"), python::arg("propertyFlags")),
-             "Returns a binary string representation of the molecule pickling the "
-              "specified properties.\n")
+             "Returns a binary string representation of the molecule pickling "
+             "the "
+             "specified properties.\n")
 
         .def("GetRingInfo", &ROMol::getRingInfo,
              python::return_value_policy<python::reference_existing_object>(),
@@ -683,20 +694,25 @@ struct mol_wrapper {
              "Remove the specified bond from the molecule")
 
         .def("AddBond", &ReadWriteMol::AddBond,
-             (python::arg("mol"), python::arg("beginAtomIdx"),
+             (python::arg("beginAtomIdx"),
               python::arg("endAtomIdx"),
               python::arg("order") = Bond::UNSPECIFIED),
              "add a bond, returns the new number of bonds")
 
         .def("AddAtom", &ReadWriteMol::AddAtom,
-             (python::arg("mol"), python::arg("atom")),
+             (python::arg("atom")),
              "add an atom, returns the index of the newly added atom")
         .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom,
-             (python::arg("mol"), python::arg("index"), python::arg("newAtom")),
-             "replaces the specified atom with the provided one")
+             (python::arg("index"), python::arg("newAtom"),
+              python::arg("updateLabel")=false, python::arg("preserveProps")=false),
+             "replaces the specified atom with the provided one\n"
+             "If updateLabel is True, the new atom becomes the active atom\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
-             (python::arg("mol"), python::arg("index"), python::arg("newBond")),
-             "replaces the specified bond with the provided one")
+             (python::arg("index"), python::arg("newBond"),
+              python::arg("preserveProps")=false),
+             "replaces the specified bond with the provided one.\n"
+             "If preserveProps is True preserve keep the existing props unless explicit set on the new bond")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());

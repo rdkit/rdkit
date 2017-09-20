@@ -803,7 +803,8 @@ struct molops_wrapper {
 
     // ------------------------------------------------------------------------
     docString =
-        "Assign stereochemistry to bonds based on coordinates.\n\
+        "Assign stereochemistry to bonds based on coordinates and a conformer.\n\
+        DEPRECATED: Please use the version that takes a conformer ID instead.\n\
         \n\
   ARGUMENTS:\n\
   \n\
@@ -812,6 +813,17 @@ struct molops_wrapper {
 \n";
     python::def("DetectBondStereoChemistry", DetectBondStereoChemistry,
                 (python::arg("mol"), python::arg("conformer")),
+                docString.c_str());
+    docString =
+        "Assign stereochemistry to bonds based on coordinates.\n\
+        \n\
+  ARGUMENTS:\n\
+  \n\
+    - mol: the molecule to be modified\n\
+    - confId: Conformer to use for the coordinates\n\
+\n";
+    python::def("DetectBondStereochemistry", MolOps::detectBondStereochemistry,
+                (python::arg("mol"), python::arg("confId") = -1),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -938,7 +950,7 @@ struct molops_wrapper {
     - The original molecule is *not* modified.\n\
 \n";
     python::def("RemoveHs",
-                (ROMol * (*)(const ROMol &, bool, bool, bool))MolOps::removeHs,
+                (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
                  python::arg("updateExplicitCount") = false,
                  python::arg("sanitize") = true),
@@ -1950,7 +1962,7 @@ EXAMPLES:\n\
 \n\
 \n";
     python::def("ReplaceCore", (ROMol * (*)(const ROMol &, const ROMol &, bool,
-                                            bool, bool, bool))replaceCore,
+                                            bool, bool, bool)) replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,
@@ -2069,6 +2081,8 @@ EXAMPLES:\n\
 Attributes:\n\
   - adjustDegree: \n\
       modified atoms have an explicit-degree query added based on their degree in the query \n\
+  - adjustHeavyDegree: \n\
+      modified atoms have a heavy-atom-degree query added based on their degree in the query \n\
   - adjustDegreeFlags: \n\
       controls which atoms have a degree query added \n\
   - adjustRingCount: \n\
@@ -2101,6 +2115,10 @@ A note on the flags controlling which atoms/bonds are modified: \n\
                        &MolOps::AdjustQueryParameters::adjustDegree)
         .def_readwrite("adjustDegreeFlags",
                        &MolOps::AdjustQueryParameters::adjustDegreeFlags)
+        .def_readwrite("adjustHeavyDegree",
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegree)
+        .def_readwrite("adjustHeavyDegreeFlags",
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags)
         .def_readwrite("adjustRingCount",
                        &MolOps::AdjustQueryParameters::adjustRingCount)
         .def_readwrite("adjustRingCountFlags",

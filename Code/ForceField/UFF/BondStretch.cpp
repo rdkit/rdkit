@@ -54,8 +54,8 @@ BondStretchContrib::BondStretchContrib(ForceField *owner, unsigned int idx1,
   PRECONDITION(owner, "bad owner");
   PRECONDITION(end1Params, "bad params pointer");
   PRECONDITION(end2Params, "bad params pointer");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
 
   dp_forceField = owner;
   d_end1Idx = idx1;
