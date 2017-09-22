@@ -4,10 +4,11 @@ import doctest
 from rdkit import Chem
 from rdkit.Chem import MCS, FragmentMatcher, MACCSkeys, Descriptors, TemplateAlign
 from rdkit.Chem import Recap, BRICS, AllChem, PropertyMol, SaltRemover
-
+from rdkit.Chem import EnumerateStereoisomers
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
   """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(EnumerateStereoisomers, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(MCS, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(FragmentMatcher, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(MACCSkeys, optionflags=doctest.ELLIPSIS))
