@@ -244,7 +244,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
-    setFillPolys(false);
+    setFillPolys(drawOptions().fillHighlights);
     while (this_at != end_at) {
       int this_idx = mol[*this_at]->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
@@ -714,13 +714,24 @@ void MolDraw2D::drawMolecules(
     int col = 0;
     if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
+
+    vector<int> *lhighlight_bonds = NULL;
+    if (highlight_bonds) {
+      lhighlight_bonds = new std::vector<int>((*highlight_bonds)[i]);
+    } else if (drawOptions().continuousHighlight && highlight_atoms) {
+      lhighlight_bonds = new vector<int>();
+      getBondHighlightsForAtoms(tmols[i], (*highlight_atoms)[i],
+                                *lhighlight_bonds);
+    };
+
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : NULL,
-                 highlight_bonds ? &(*highlight_bonds)[i] : NULL,
+                 lhighlight_bonds,
                  highlight_atom_maps ? &(*highlight_atom_maps)[i] : NULL,
                  highlight_bond_maps ? &(*highlight_bond_maps)[i] : NULL,
                  highlight_radii ? &(*highlight_radii)[i] : NULL,
                  confIds ? (*confIds)[i] : -1);
+    delete lhighlight_bonds;
   }
 };
 

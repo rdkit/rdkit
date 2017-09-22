@@ -437,7 +437,7 @@ std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles, bool doKekule,
 #ifdef VERBOSE_CANON
     for (unsigned int tmpI = 0; tmpI < ranks.size(); tmpI++) {
       std::cout << tmpI << " " << ranks[tmpI] << " "
-                << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
+                << *(tmol->getAtomWithIdx(tmpI)) << std::endl;
     }
 #endif
 
@@ -627,6 +627,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   if (canonical) {
     Canon::rankFragmentAtoms(tmol, ranks, atomsInPlay, bondsInPlay, atomSymbols,
                              true, doIsomericSmiles, doIsomericSmiles);
+    // std::cerr << "RANKS: ";
+    // std::copy(ranks.begin(), ranks.end(),
+    //           std::ostream_iterator<int>(std::cerr, " "));
+    // std::cerr << std::endl;
     // MolOps::rankAtomsInFragment(tmol,ranks,atomsInPlay,bondsInPlay,atomSymbols,bondSymbols);
   } else {
     for (unsigned int i = 0; i < tmol.getNumAtoms(); ++i) ranks[i] = i;
