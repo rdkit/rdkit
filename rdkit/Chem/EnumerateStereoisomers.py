@@ -1,4 +1,5 @@
 import six
+import random
 from rdkit import Chem
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 
@@ -33,9 +34,9 @@ class _BondFlipper(object):
 
     def flip(self, flag):
         if flag:
-            self.bond.SetStereo(BondStereo.STEREOCIS)
+            self.bond.SetStereo(Chem.BondStereo.STEREOCIS)
         else:
-            self.bond.SetStereo(BondStereo.STEREOTRANS)
+            self.bond.SetStereo(Chem.BondStereo.STEREOTRANS)
 
 class _AtomFlipper(object):
     def __init__(self, atom):
@@ -83,7 +84,7 @@ class _UniqueRandomBitsGenerator(object):
 
     def __iter__(self):
         while len(self.already_seen) < self.maxIsomers:
-            bits = self.rand.getrandbits()
+            bits = self.rand.getrandbits(self.nCenters)
             if bits in self.already_seen:
                 continue
 
@@ -98,12 +99,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       - verbose: toggles how verbose the output is
 
     A small example with 3 chiral atoms and 1 chiral bond (16 theoretical stereoisomers):
-    >>> from rdkit.Chem import AllChem
-    >>> m = AllChem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
+    >>> from rdkit import Chem
+    >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
+    >>> m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+    >>> isomers = tuple(EnumerateStereoisomers(m))
     >>> len(isomers)
     16
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    >>> for smi in sorted(Chem.MolToSmiles(x, isomericSmiles=True) for x in isomers):
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
@@ -125,11 +127,11 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
-    >>> opts = AllChem.StereoEnumerationOptions(tryEmbedding=True)
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
+    >>> opts = StereoEnumerationOptions(tryEmbedding=True)
+    >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
     >>> len(isomers)
     8
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    >>> for smi in sorted(Chem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
     ...     print(smi)
     ...
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
@@ -142,11 +144,11 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
 
     By default the code only expands unspecified stereocenters:
-    >>> m = AllChem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
+    >>> m = Chem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
+    >>> isomers = tuple(EnumerateStereoisomers(m))
     >>> len(isomers)
     8
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    >>> for smi in sorted(Chem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
@@ -159,18 +161,18 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
 
     But we can change that behavior:
-    >>> opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False)
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
+    >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
+    >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
     >>> len(isomers)
     16
 
     Since the result is a generator, we can allow exploring at least parts of very
     large result sets:
-    >>> m = AllChem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
+    >>> m = Chem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
     >>> opts = StereoEnumerationOptions(maxIsomers=0)
-    >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
+    >>> isomers = EnumerateStereoisomers(m, options=opts)
     >>> for x in range(5):
-    ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
+    ...   print(Chem.MolToSmiles(next(isomers),isomericSmiles=True))
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
@@ -178,16 +180,17 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
 
     Or randomly sample a small subset:
-    >>> m = AllChem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
-    >>> opts = AllChem.StereoEnumerationOptions(maxIsomers=3)
-    >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    >>> m = Chem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
+    >>> opts = StereoEnumerationOptions(maxIsomers=3)
+    >>> isomers = EnumerateStereoisomers(m, options=opts)
+    >>> for smi in sorted(Chem.MolToSmiles(x, isomericSmiles=True) for x in isomers):
     ...     print(smi)
     ...
+    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     F[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)Br
     F[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
     """
+
     tm = Chem.Mol(m)
     flippers = _getFlippers(tm, options)
     nCenters = len(flippers)
