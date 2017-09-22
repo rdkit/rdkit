@@ -194,10 +194,10 @@ def _get_image(x):
     pd.set_option("display.max_colwidth", len(s) + 1000)
   return s
 
+from IPython.display import SVG
 
 def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
   """ mol rendered as SVG """
-  from IPython.display import SVG
   from rdkit.Chem import rdDepictor
   from rdkit.Chem.Draw import rdMolDraw2D
   try:
@@ -252,7 +252,8 @@ def PrintAsBase64PNGString(x, renderer=None):
   else:
     highlightAtoms = []
   if molRepresentation.lower() == 'svg':
-    return _get_svg_image(x, highlightAtoms=highlightAtoms, size=molSize, kekulize=True)
+    svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
+    return SVG(svg).data
   else:
     data = Draw._moltoimg(x,molSize,highlightAtoms,"",returnPNG=True, kekulize=True)
     return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
