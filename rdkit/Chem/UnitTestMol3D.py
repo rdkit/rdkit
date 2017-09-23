@@ -209,6 +209,22 @@ class TestCase(unittest.TestCase):
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
     assert len(smiles) == 13
 
+  def testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
+    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=8)
+    isomers = set()
+    for x in AllChem.EnumerateStereoisomers(m, options=opts):
+      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+    self.assertEqual(len(isomers), 8)
+
+  def testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(self):
+    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=1024)
+    isomers = set()
+    for x in AllChem.EnumerateStereoisomers(m, options=opts):
+      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+    self.assertEqual(len(isomers), 8)
+
   def testEnumerateStereoisomersRandomSeeding(self):
     opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=3)
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
@@ -236,4 +252,4 @@ class TestCase(unittest.TestCase):
     assert smiles == ['CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C']
 
 if __name__ == '__main__':
-  unittest.main(verbosity=3)
+  unittest.main()

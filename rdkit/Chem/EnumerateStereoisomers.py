@@ -83,7 +83,10 @@ class _UniqueRandomBitsGenerator(object):
         self.already_seen = set()
 
     def __iter__(self):
-        while len(self.already_seen) < self.maxIsomers:
+        # note: important that this is not 'while True' otherwise it
+        # would be possible to have an infinite loop caused by all
+        # isomers failing the embedding process
+        while len(self.already_seen) < 2**self.nCenters:
             bits = self.rand.getrandbits(self.nCenters)
             if bits in self.already_seen:
                 continue
@@ -215,6 +218,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
         bitsource = _UniqueRandomBitsGenerator(nCenters, options.maxIsomers, rand)
 
+    numIsomers = 0
     for bitflag in bitsource:
         for i in range(nCenters):
             flag = bool(bitflag & (1 << i))
@@ -227,12 +231,15 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
             if cid >= 0:
                 conf = Chem.Conformer(isomer.GetNumAtoms())
                 for aid in range(isomer.GetNumAtoms()):
-                    conf.SetAtomPosition(aid,ntm.GetConformer().GetAtomPosition(aid))
+                    conf.SetAtomPosition(aid, ntm.GetConformer().GetAtomPosition(aid))
                 isomer.AddConformer(conf)
         else:
             cid = 1
         if cid >= 0:
             yield isomer
+            numIsomers += 1
+            if options.maxIsomers != 0 and numIsomers >= options.maxIsomers:
+                break
         elif verbose:
             print("%s    failed to embed" % (Chem.MolToSmiles(isomer, isomericSmiles=True)))
 
