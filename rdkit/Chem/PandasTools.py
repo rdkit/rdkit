@@ -247,12 +247,12 @@ def _molge(x, y):
 def PrintAsBase64PNGString(x, renderer=None):
   '''returns the molecules as base64 encoded PNG image
   '''
-  from IPython.display import SVG
   if highlightSubstructures and hasattr(x, '__sssAtoms'):
     highlightAtoms = x.__sssAtoms
   else:
     highlightAtoms = []
   if molRepresentation.lower() == 'svg':
+    from IPython.display import SVG
     svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
     return SVG(svg).data
   else:
