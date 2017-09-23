@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2016, Guillaume GODIN
+//  Copyright (c) 2017, Guillaume GODIN
+//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -12,10 +13,6 @@
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Institue of Cancer Research.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -83,7 +80,7 @@ double getAtomtype(const RDKit::ROMol mol, const RDKit::Atom *atom) {
 
 double* getEEMMatrix(RDKit::ROMol mol, double * dist3D, int n) {
   int sizeArray = (n+1) * (n+1);
-  double* EEM = new double[sizeArray];
+  double* EEM = new double[sizeArray](); // declaration to set all elements to zeros!
   #define IDX(x, y) (x * (n+1) + y)
     /* Fill the full n * n block */
     for(long int i = 0; i < n; i++) {
@@ -113,8 +110,6 @@ double* getEEMMatrix(RDKit::ROMol mol, double * dist3D, int n) {
         EEM[IDX(i, n)] = -1.0; // row
 
     }
-    /* Set the bottom right element to zero */
-    EEM[(n+1)*(n+1)+n] = 0.0;
     #undef IDX
     return EEM;
 }
@@ -144,66 +139,94 @@ double* getBVector(RDKit::ROMol mol, int n) {
 
 
 
+JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
+  JacobiSVD<MatrixXd> *svd =
+      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
+  return svd;
+}
 
-
+double* retreiveVect(VectorXd matrix) {
+  double* arrayd = matrix.data();
+  return arrayd;
+}
 
 /* Calculate charges for a particular kappa_data structure */
-std::vector<double>  calculate_charges(RDKit::ROMol mol, double * dist3D, int numAtoms) {
-        double * A = getEEMMatrix(mol,dist3D,numAtoms);
-        double * b = getBVector(mol,  numAtoms);
+std::vector<double> calculate_charges(RDKit::ROMol mol, double * dist3D, int numAtoms) {
+        double * A = new double[(numAtoms+1)*(numAtoms+1)];
+        A = getEEMMatrix(mol,dist3D,numAtoms);
+        double * b = new double[numAtoms+1];
+        b = getBVector(mol,  numAtoms);
 
-        Map<MatrixXd> AM(A, numAtoms+1, numAtoms+1);
-        Map<VectorXd> bv(b, numAtoms+1);
+        MatrixXd AM = Map<MatrixXd>(A, numAtoms+1, numAtoms+1);
+        VectorXd bv = Map<VectorXd>(b, numAtoms+1);
+
+    
+        // all methods failed over 139 molecules in the test script ... can be a parameter issue or a AM, bv definition issue need to check what is wrong in my code ;-)
         VectorXd Res(numAtoms+1);
-        Res =  AM.jacobiSvd(ComputeThinU | ComputeThinV).solve(bv); // SDV linear equation solver
+        // this is one way to do so but not so stable ?
+        LDLT<MatrixXd> ldlt(AM);
+        Res = ldlt.solve(bv);
+        // can also work ... (AM.transpose() * AM).ldlt().solve(AM.transpose() * bv)
 
-        std::vector<double> charges;
-        charges.resize(Res.size());
-        VectorXd::Map(&charges[0], Res.size()) = Res;
+        // another to solve linear system of equations
+        //FullPivLU<MatrixXd> lu(AM);
+        //Res = lu.solve(bv);
+        //ColPivHouseholderQR<MatrixXd> qr(AM); // 2 errors with kekulized molecule
+        //Res = qr.solve(bv);
+    
+    
+        // SVD method
+        //JacobiSVD<MatrixXd> *svd = getSVD(AM);
+        //Res = svd->solve(bv);
 
-        for(int j = 0; j < numAtoms; j++) {
-            std::cout << charges[j] <<  ", ";
-        }
-        std::cout << "\n";
+        std::vector<double> charges(Res.data(), Res.data() + Res.size());
 
-   free(A);
-   free(b);
+    
+    for(long int aix = 0; aix < numAtoms; aix++) {
+        mol.getAtomWithIdx(aix)->setProp("_EEMCharge", charges[aix], true);
 
+    }
+    
+       delete[] A;
+       delete[] b;
 
     return charges;
-
 }
 
 
-
-void getEEMs(const ROMol &mol, std::vector<double> &result, int numAtoms) {
-  std::vector<double> wu(numAtoms);
-
-  int confId=-1;
+void getEEMs(const ROMol &mol, std::vector<double> &result, int numAtoms, int confId) {
   // 3D distance matrix
-  double * dist3D = RDKit::MolOps::get3DDistanceMat(mol, confId, false, true);
-
-  wu = calculate_charges(mol, dist3D, numAtoms);
+  double * dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
+  std::vector<double> charges = calculate_charges(mol, dist3D, numAtoms);
 
   result.clear();
   result.resize(numAtoms);
 
   for (int i = 0; i < numAtoms; i++) {
-    result[i] = wu[i];
+    result[i] = charges[i];
   }
-  wu.clear();
 }
 
 
 }  // end of anonymous namespace
 
-void EEM(const ROMol &mol, std::vector<double> &res) {
+void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
   res.clear();
   res.resize(numAtoms);
-  getEEMs(mol, res, numAtoms);//, confId);
+    
+  // cast ROMol to RWMol
+  RWMol &wmol = static_cast<RWMol &>(mol);
+    
+  // kekulize
+  MolOps::Kekulize(wmol, true);
+    
+  // recast to ROMol
+  ROMol *remol = static_cast<ROMol *>(&wmol);
+    
+  getEEMs(*remol, res, numAtoms, confId);
 }
 }  // end of Descriptors namespace
 }  // end of RDKit namespace

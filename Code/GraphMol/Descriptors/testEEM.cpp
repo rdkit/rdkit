@@ -29,18 +29,67 @@ void testEEM() {
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/eem.out";
+
+  std::ifstream instrm(fName.c_str());
+
   std::string line;
+  std::vector<std::vector<std::string> > data;
+
+  while (std::getline(instrm, line)) {
+    std::string phrase;
+    std::vector<std::string> row;
+    std::stringstream ss(line);
+    while (std::getline(ss, phrase, ',')) {
+      row.push_back(phrase);
+    }
+    data.push_back(row);
+  }
+
+
   int nDone = 0;
+  int errorMols = 0;
   while (!reader.atEnd()) {
     RDKit::ROMol *m = reader.next();
+    TEST_ASSERT(m);
+    std::string nm;
+    m->getProp("_Name", nm);
+    int errorAtoms = 0;
+
+    std::vector<std::string> myrow = data[nDone];
+    std::string inm = myrow[0];
+
+    TEST_ASSERT(inm == nm);
+
     int confId=-1;
     std::vector<double> charges;
 
-    RDKit::Descriptors::EEM(*m, charges);
+    RDKit::Descriptors::EEM(*m, charges, confId);
+    int numAtoms = m->getNumAtoms();
+
+    for (int i = 0; i < numAtoms; i++) {
+      double ref = atof(myrow[i + 2].c_str());
+      if(fabs(ref - charges[i]) >= 0.01) {
+
+         //std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "\n";
+             ++errorAtoms;
+           }
+
+      //TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
+    }
+
+    if(errorAtoms>0) {
+      std::cout << inm << "\n";
+      ++errorMols;
+    }
 
     delete m;
+    //break;
     ++nDone;
   }
+    std::cout << "Errors:" <<  errorMols << "\n";
+
 
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
                         << std::endl;

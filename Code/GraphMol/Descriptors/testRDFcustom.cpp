@@ -12,6 +12,8 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
+#include "GraphMol/PartialCharges/GasteigerCharges.h"
+#include "GraphMol/PartialCharges/GasteigerParams.h"
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -27,7 +29,7 @@ void testRDF() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/RDF.out";
+  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/RDFcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
@@ -38,7 +40,7 @@ void testRDF() {
     std::string phrase;
     std::vector<std::string> row;
     std::stringstream ss(line);
-    while (std::getline(ss, phrase, '\t')) {
+    while (std::getline(ss, phrase, ',')) {
       row.push_back(phrase);
     }
 
@@ -53,37 +55,29 @@ void testRDF() {
     m->getProp("_Name", nm);
 
     std::vector<double> drdf;
+    std::vector<double> charges(m->getNumAtoms(), 0);
+    RDKit::computeGasteigerCharges(*m, charges, 12, true);
 
-    RDKit::Descriptors::RDF(*m, drdf, -1);
+    const std::string atomprop = "_GasteigerCharge";
+    RDKit::Descriptors::RDF(*m, drdf, -1, atomprop);
 
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
+      
+    //std::cerr << inm << ",";
     for (int i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-
-      if (fabs(ref) > 1) {
-        if (fabs((ref - drdf[i]) / ref) > 0.02) {
-          std::cerr << "value mismatch: pos" << i << " " << inm
-                    << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
-        }
-      }
-
-      if (fabs(ref) <= 1) {
-        if (fabs((ref - drdf[i])) > 0.02) {
-          std::cerr << "value mismatch: pos" << i << " " << inm
-                    << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
-        }
-      }
-      // FIX: this tolerance seems too high
-      if (ref > 0.5 && fabs(ref - drdf[i]) / ref >= 0.02) {
-        std::cerr << "value mismatch: pos" << i << " " << inm
-                  << " dragon: " << ref << " rdkit: " << drdf[i] << " "
-                  << fabs(ref - drdf[i]) / ref << std::endl;
-      }
-      TEST_ASSERT(ref < 0.5 || fabs(ref - drdf[i]) / ref < 0.02);
+        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+        //if (fabs(ref - drdf[i]) > 0.01) {
+        //  std::cerr << "pos" << i << " " << inm
+        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+        //}
+      
+      TEST_ASSERT(fabs(ref - drdf[i]) < 0.001);
     }
+    //std::cerr << "\n";
 
     delete m;
     ++nDone;

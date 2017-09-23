@@ -1,5 +1,6 @@
 //
 //  Copyright (c) 2017, Guillaume GODIN
+//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -12,10 +13,6 @@
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Institue of Cancer Research.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -28,10 +25,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-//
-//
-// Created by Guillaume GODIN, 2017
 
 
 #ifndef EEMRDKIT_H_SEPT2017
@@ -42,7 +35,7 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string EEMVersion = "1.0.0";
-	void EEM(const ROMol &, std::vector<double> &res);
+	void EEM(ROMol &mol, std::vector<double> &res, int confId);
 }
 }
 #endif
