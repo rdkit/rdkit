@@ -246,10 +246,30 @@ class TestCase(unittest.TestCase):
         return c
 
     rand = DeterministicRandom()
-    opts = opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
+    opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
     mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
     smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
     assert smiles == ['CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C']
+
+  def testEnumerateStereoisomersOnlyUnassigned(self):
+    # shouldn't enumerate anything
+    fully_assigned = Chem.MolFromSmiles('C/C(F)=C/[C@@H](C)Cl')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(fully_assigned))
+    self.assertEquals(smiles, set(['C/C(F)=C/[C@@H](C)Cl']))
+
+    # should only enuemrate the bond stereo
+    partially_assigned = Chem.MolFromSmiles('CC(F)=C[C@@H](C)Cl')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(partially_assigned))
+    self.assertEquals(smiles, set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl']))
+
+    # should enumerate everything
+    opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(fully_assigned, opts))
+    self.assertEquals(smiles, set(['C/C(F)=C\\[C@@H](C)Cl',
+                                   'C/C(F)=C\\[C@H](C)Cl',
+                                   'C/C(F)=C/[C@H](C)Cl',
+                                   'C/C(F)=C/[C@@H](C)Cl',]))
+
 
 if __name__ == '__main__':
   unittest.main()
