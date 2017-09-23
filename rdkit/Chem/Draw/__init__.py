@@ -397,7 +397,7 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   else:
     fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
     d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
-    d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,
+    d2d.DrawMolecules(list(mols),legends=legends,highlightAtoms=highlightAtomLists,
                       highlightBonds=highlightBondLists,**kwargs)
     d2d.FinishDrawing()
     res = _drawerToImage(d2d)
