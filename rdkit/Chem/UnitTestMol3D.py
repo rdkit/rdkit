@@ -191,49 +191,49 @@ class TestCase(unittest.TestCase):
     self.assertBondStereoRoundTrips('cis.sdf')
     self.assertBondStereoRoundTrips('trans.sdf')
 
-  def testGenerateStereoisomersBasic(self):
+  def testEnumerateStereoisomersBasic(self):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
-    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
     assert len(smiles) == 4
 
-  def testGenerateStereoisomersLargeRandomSample(self):
+  def testEnumerateStereoisomersLargeRandomSample(self):
     # near max number of stereo centers allowed
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 31)
-    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
     assert len(smiles) == 1024
 
-  def testGenerateStereoisomersTooManyCenters(self):
+  def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
     # can't push over 64 centers, will throw Python overflow error
-    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 32)
-    try:
-      smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol))
-      self.fail('This is expected to fail otherwise python will throw an OverflowError exception')
-    except ValueError:
-      pass
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 101)
+    opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=13)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    assert len(smiles) == 13
 
-  def testGenerateStereoisomersRandomSeeding(self):
+  def testEnumerateStereoisomersRandomSeeding(self):
     opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=3)
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
-    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts))
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
     assert smiles == set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl'])
 
     opts = AllChem.StereoEnumerationOptions(rand=0xDEADBEEF)
     mol = Chem.MolFromSmiles('c1ccc2c(c1)C(=O)N(C2=O)C3CCC(=O)NC3=O')
-    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts))
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
     assert smiles == set(['O=C1CC[C@@H](N2C(=O)c3ccccc3C2=O)C(=O)N1', 'O=C1CC[C@H](N2C(=O)c3ccccc3C2=O)C(=O)N1'])
 
     class DeterministicRandom(random.Random):
       def __init__(self):
         random.Random.__init__(self)
-      def sample(self, values, k):
-        assert k <= len(values)
-        return list(values)[:k]
+        self.count = 0
+      def getrandbits(self, n_bits):
+        c = self.count
+        self.count += 1
+        return c
 
     rand = DeterministicRandom()
     opts = opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
     mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
-    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.GenerateStereoisomers(mol, opts)]
+    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
     assert smiles == ['CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C']
 
 if __name__ == '__main__':
-  unittest.main()
+  unittest.main(verbosity=3)
