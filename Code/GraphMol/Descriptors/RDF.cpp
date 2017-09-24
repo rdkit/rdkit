@@ -117,8 +117,8 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   R1.insert(R1.end(), R3.begin(), R3.end());
   R1.insert(R1.end(), R4.begin(), R4.end());
   R1.insert(R1.end(), R5.begin(), R5.end());
-  R1.insert(R1.end(), R6.begin(), R6.end());  //
-  R1.insert(R1.end(), R7.begin(), R7.end());  // 180 -210
+  R1.insert(R1.end(), R6.begin(), R6.end());
+  R1.insert(R1.end(), R7.begin(), R7.end());
 
   res = R1;
 }
@@ -127,20 +127,18 @@ void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
                     std::vector<double>& res, const std::string customAtomPropName) {
         
         int numAtoms = conf.getNumAtoms();
-        int confId = conf.getId();
-        
+
         std::vector<double> R = getG(30);
         std::vector<double> R1(30);
         std::vector<double> customAtomArray = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
-    
-    
+
         double p;
         for (int i = 0; i < R.size(); i++) {
             double res = 0.0;
             for (int j = 0; j < numAtoms - 1; j++) {
                 for (int k = j + 1; k < numAtoms; k++) {
                     p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-                    res += customAtomArray[j] * customAtomArray[k] * p;                              // "m"
+                    res += customAtomArray[j] * customAtomArray[k] * p; // "custom"
                 }
             }
             R1[i] = round(1000 * res) / 1000;
@@ -157,7 +155,7 @@ void GetRDF(double* dist3D, const ROMol& mol, const Conformer& conf,
     
 void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
                 std::vector<double>& res,  const std::string customAtomPropName) {
-        getRDFDescCustom(dist3D, mol, conf, res,customAtomPropName);
+        getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
 

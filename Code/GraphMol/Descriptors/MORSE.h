@@ -39,7 +39,8 @@ namespace RDKit {
   class ROMol;
   namespace Descriptors {
     const std::string MORSEVersion = "1.0.0";
-    void MORSE(const ROMol&, std::vector<double> &res , int confId=-1);
+    void MORSE(const ROMol&, std::vector<double> &res , int confId=-1,
+               const std::string customAtomPropName="");
 
   }
 }
