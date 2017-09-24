@@ -10,6 +10,8 @@
 """ Import all RDKit chemistry modules
 
 """
+import sys
+import random
 import warnings
 from collections import namedtuple
 
@@ -404,6 +406,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
       raise ValueError("No matching found")
   return mol2
 
+
 class StereoEnumerationOptions(object):
     """
           - tryEmbedding: if set the process attempts to generate a standard RDKit distance geometry
@@ -414,25 +417,65 @@ class StereoEnumerationOptions(object):
           - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
             will not be perturbed
 
-          - maxNumCenters: the maximum number of stereocenters that can/will be handled.
-            Since every additional stereocenter doubles the number of results
-            (and execution time) it's important to keep an eye on this.
-
+          - maxIsomers: the maximum number of isomers to yield, if the
+            number of possible isomers is greater than maxIsomers, a
+            random subset will be yielded. If 0, all isomers are
+            yielded. Since every additional stereo center doubles the
+            number of results (and execution time) it's important to
+            keep an eye on this.
     """
-    __slots__=('tryEmbedding', 'onlyUnassigned', 'maxNumCenters')
+    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'maxIsomers', 'rand')
     def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                maxNumCenters = 10):
+                 maxIsomers = 1024, rand = None):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
-        self.maxNumCenters = maxNumCenters
+        self.maxIsomers = maxIsomers
+        self.rand = rand
 
-def GenerateStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
+class _BondFlipper(object):
+    def __init__(self, bond):
+        self.bond = bond
+
+    def flip(self, flag):
+        if flag:
+            self.bond.SetStereo(BondStereo.STEREOCIS)
+        else:
+            self.bond.SetStereo(BondStereo.STEREOTRANS)
+
+class _AtomFlipper(object):
+    def __init__(self, atom):
+        self.atom = atom
+
+    def flip(self, flag):
+        if flag:
+            self.atom.SetChiralTag(rdchem.ChiralType.CHI_TETRAHEDRAL_CW)
+        else:
+            self.atom.SetChiralTag(rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+def _getFlippers(mol, options):
+    FindPotentialStereoBonds(mol)
+
+    flippers = []
+    for atom in mol.GetAtoms():
+        if atom.HasProp("_ChiralityPossible"):
+            if (not options.onlyUnassigned or
+                atom.GetChiralTag() == rdchem.ChiralType.CHI_UNSPECIFIED):
+                flippers.append(_AtomFlipper(atom))
+
+    for bond in mol.GetBonds():
+        bstereo = bond.GetStereo()
+        if bstereo != rdchem.BondStereo.STEREONONE:
+            if (not options.onlyUnassigned or
+                bstereo == rdchem.BondStereo.STEREOANY):
+                flippers.append(_BondFlipper(bond))
+
+    return flippers
+
+def GenerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
     """ returns a generator that yields possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
-
-
       - verbose: toggles how verbose the output is
 
 
@@ -487,7 +530,7 @@ def GenerateStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
     since the result is a generator, we can allow exploring at least parts of very
     large result sets:
     >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
-    >>> opts = StereoEnumerationOptions(maxNumCenters=50)
+    >>> opts = StereoEnumerationOptions(maxIsomers=0)
     >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
     >>> for x in range(5):
     ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
@@ -499,34 +542,52 @@ def GenerateStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
 
     """
     tm = Mol(m)
-    if options.onlyUnassigned:
-        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True) if y=='?']
-    else:
-        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True)]
-    nCenters = len(possibleCenters)
+    flippers = _getFlippers(tm, options)
+    nCenters = len(flippers)
     if not nCenters:
         yield tm
         return
-    if nCenters>options.maxNumCenters:
-        raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,options.maxNumCenters))
-    bitflag = (1<<nCenters)-1
-    while bitflag>=0:
-        tm = Mol(m)
+
+    # this sillyness is to deal with Python 3 getting rid of xrange
+    # and range slurping up 2**N memory in Python 2
+    range_func = range
+    if sys.version_info.major < 3:
+        range_func = xrange
+
+    if (options.maxIsomers == 0 or
+        2**nCenters <= options.maxIsomers):
+        samples = range_func(2**nCenters)
+    else:
+        if options.rand is None:
+            # deterministic random seed invariant to input atom order
+            seed = hash(tuple(sorted([(a.GetDegree(), a.GetAtomicNum()) for a in tm.GetAtoms()])))
+            rand = random.Random(seed)
+        elif isinstance(options.rand, random.Random):
+            # other implementations of Python random number generators
+            # can inherit from this class to pick up utility methods
+            rand = options.rand
+        else:
+            rand = random.Random(self.rand)
+
+        # randomly sample from the population of isomers
+        samples = rand.sample(range_func(2**nCenters), k=options.maxIsomers)
+
+    for bitflag in samples:
         for i in range(nCenters):
-            if bitflag & 1<<i:
-                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CCW)
-            else:
-                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CW)
+            flag = bool(bitflag & (1 << i))
+            flippers[i].flip(flag)
+
+        isomer = Mol(tm)
         if options.tryEmbedding:
-            ntm = AddHs(tm)
-            cid = EmbedMolecule(ntm,randomSeed=bitflag)
+            ntm = AddHs(isomer)
+            cid = EmbedMolecule(ntm, randomSeed=bitflag)
         else:
             cid = 1
-        if cid>= 0:
-            yield tm
+        if cid >= 0:
+            yield isomer
         elif verbose:
-            print("%s    failed to embed"%(MolToSmiles(tm,isomericSmiles=True)))
-        bitflag -= 1
+            print("%s    failed to embed" % (MolToSmiles(isomer, isomericSmiles=True)))
+
 
 # ------------------------------------
 #

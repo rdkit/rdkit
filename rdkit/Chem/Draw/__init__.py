@@ -303,35 +303,75 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
     res.paste(MolToImage(mol, subImgSize, legend=legends[i], **kwargs), (i * subImgSize[0], 0))
   return res
 
+from io import BytesIO
 def _drawerToImage(d2d):
   try:
     import Image
   except ImportError:
     from PIL import Image
-  from io import BytesIO
   sio = BytesIO(d2d.GetDrawingText())
   return Image.open(sio)
 
-def _moltoimg(mol, sz, highlights, legend, **kwargs):
+def _okToKekulizeMol(mol,kekulize):
+  if kekulize:
+    for bond in mol.GetBonds():
+      if bond.GetIsAromatic() and bond.HasQuery():
+        return False
+    return True
+  return kekulize
+
+def _moltoimg(mol, sz, highlights, legend, returnPNG=False, **kwargs):
+  try:
+    mol.GetAtomWithIdx(0).GetExplicitValence()
+  except RuntimeError:
+    mol.UpdatePropertyCache(False)
+
+  kekulize=_okToKekulizeMol(mol,kwargs.get('kekulize', True))
+
+  try:
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol,kekulize=kekulize)
+  except ValueError:  # <- can happen on a kekulization failure
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    img = MolToImage(mol, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    img = MolToImage(mc, sz, legend=legend, highlightAtoms=highlights, **kwargs)
+    if returnPNG:
+      bio = BytesIO()
+      img.save(bio, format='PNG')
+      img = bio.getvalue()
   else:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
-    d2d.DrawMolecule(nmol, legend=legend, highlightAtoms=highlights)
+    d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
     d2d.FinishDrawing()
-    img = _drawerToImage(d2d)
+    if returnPNG:
+        img = d2d.GetDrawingText()
+    else:
+        img = _drawerToImage(d2d)
   return img
+
+def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
+  try:
+    mol.GetAtomWithIdx(0).GetExplicitValence()
+  except RuntimeError:
+    mol.UpdatePropertyCache(False)
+
+  kekulize=_okToKekulizeMol(mol,kekulize)
+
+  try:
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+  except ValueError:  # <- can happen on a kekulization failure
+    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
+  d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
+  d2d.FinishDrawing()
+  svg = d2d.GetDrawingText()
+  return svg.replace("svg:", "")
+
 
 
 def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                     highlightAtomLists=None, **kwargs):
+                     highlightAtomLists=None, highlightBondLists=None, **kwargs):
   """ returns a PIL Image of the grid
   """
-  try:
-    import Image
-  except ImportError:
-    from PIL import Image
   if legends is None:
     legends = [''] * len(mols)
 
@@ -339,29 +379,39 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   if len(mols) % molsPerRow:
     nRows += 1
 
-  res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
-  for i, mol in enumerate(mols):
-    row = i // molsPerRow
-    col = i % molsPerRow
-    highlights = None
-    if highlightAtomLists and highlightAtomLists[i]:
-      highlights = highlightAtomLists[i]
-    if mol is not None:
-      img = _moltoimg(mol, subImgSize, highlights, legends[i], **kwargs)
-      res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
+  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
+    res = Image.new("RGBA", (molsPerRow * subImgSize[0], nRows * subImgSize[1]), (255, 255, 255, 0))
+    for i, mol in enumerate(mols):
+      row = i // molsPerRow
+      col = i % molsPerRow
+      highlights = None
+      if highlightAtomLists and highlightAtomLists[i]:
+        highlights = highlightAtomLists[i]
+      if mol is not None:
+        img = _moltoimg(mol, subImgSize, highlights, legends[i], **kwargs)
+        res.paste(img, (col * subImgSize[0], row * subImgSize[1]))
+  else:
+    fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
+    d2d = rdMolDraw2D.MolDraw2DCairo(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
+    d2d.DrawMolecules(list(mols),legends=legends,highlightAtoms=highlightAtomLists,
+                      highlightBonds=highlightBondLists,**kwargs)
+    d2d.FinishDrawing()
+    res = _drawerToImage(d2d)
+
   return res
 
 
-def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
+def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
+                   highlightAtomLists=None, highlightBondLists=None,
                    stripSVGNamespace=True, **kwargs):
   """ returns an SVG of the grid
   """
-  matcher = re.compile(r'^(<.*>\n)(<svg:rect .*</svg\:rect>\n)(.*)</svg\:svg>', re.DOTALL)
   if legends is None:
     legends = [''] * len(mols)
-  hdr = ''
-  ftr = '</svg:svg>'
-  rect = ''
 
   nRows = len(mols) // molsPerRow
   if len(mols) % molsPerRow:
@@ -370,43 +420,37 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   blocks = [''] * (nRows * molsPerRow)
 
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
-  for i, mol in enumerate(mols):
-    highlights = None
-    if highlightAtomLists and highlightAtomLists[i]:
-      highlights = highlightAtomLists[i]
-    if mol is not None:
-      nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kwargs.get('kekulize', True))
-      d2d = rdMolDraw2D.MolDraw2DSVG(subImgSize[0], subImgSize[1])
-      d2d.DrawMolecule(nmol, legend=legends[i], highlightAtoms=highlights)
-      d2d.FinishDrawing()
-      txt = d2d.GetDrawingText()
-      h, r, b = matcher.match(txt).groups()
-      if not hdr:
-        hdr = h.replace("width='%dpx' height='%dpx' >" % subImgSize,
-                        "width='%dpx' height='%dpx' >" % fullSize)
-      if not rect:
-        rect = r
-      blocks[i] = b
-  for i, elem in enumerate(blocks):
-    row = i // molsPerRow
-    col = i % molsPerRow
-    elem = rect + elem
-    blocks[i] = '<g transform="translate(%d,%d)" >%s</g>' % (col * subImgSize[0],
-                                                             row * subImgSize[1], elem)
-  res = hdr + '\n'.join(blocks) + ftr
+
+  d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0],fullSize[1],subImgSize[0], subImgSize[1])
+  d2d.DrawMolecules(mols,legends=legends,highlightAtoms=highlightAtomLists,
+                    highlightBonds=highlightBondLists,**kwargs)
+  d2d.FinishDrawing()
+  res = d2d.GetDrawingText()
   if stripSVGNamespace:
     res = res.replace('svg:', '')
   return res
 
 
 def MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                    highlightAtomLists=None, useSVG=False, **kwargs):
+                    highlightAtomLists=None, highlightBondLists=None,
+                    useSVG=False, **kwargs):
+  if legends and len(legends)>len(mols):
+    legends = legends[:len(mols)]
+  if highlightAtomLists and len(highlightAtomLists)>len(mols):
+    highlightAtomLists = highlightAtomLists[:len(mols)]
+  if highlightBondLists and len(highlightBondLists)>len(mols):
+    highlightBondLists = highlightBondLists[:len(mols)]
+
   if useSVG:
     return _MolsToGridSVG(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                          highlightAtomLists=highlightAtomLists, **kwargs)
+                          highlightAtomLists=highlightAtomLists,
+                          highlightBondLists=highlightBondLists,
+                          **kwargs)
   else:
     return _MolsToGridImage(mols, molsPerRow=molsPerRow, subImgSize=subImgSize, legends=legends,
-                            highlightAtomLists=highlightAtomLists, **kwargs)
+                            highlightAtomLists=highlightAtomLists,
+                            highlightBondLists=highlightBondLists,
+                            **kwargs)
 
 
 def _legacyReactionToImage(rxn, subImgSize=(200, 200), **kwargs):

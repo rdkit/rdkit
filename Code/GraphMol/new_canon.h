@@ -289,6 +289,7 @@ class AtomCompareFunctor {
       else
         return 0;
     }
+
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
@@ -350,6 +351,7 @@ class AtomCompareFunctor {
       else if (ivi > ivj)
         return 1;
     }
+
     if (df_useChiralityRings) {
       // ring stereochemistry
       ivi = getAtomRingNbrCode(i);
