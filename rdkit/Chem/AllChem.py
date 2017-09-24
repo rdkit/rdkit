@@ -11,8 +11,6 @@
 
 """
 import sys
-import six
-import random
 import warnings
 from collections import namedtuple
 
