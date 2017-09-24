@@ -194,20 +194,30 @@ class TestCase(unittest.TestCase):
   def testEnumerateStereoisomersBasic(self):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
-    assert len(smiles) == 4
+    self.assertEqual(len(smiles), 4)
 
   def testEnumerateStereoisomersLargeRandomSample(self):
     # near max number of stereo centers allowed
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 31)
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
-    assert len(smiles) == 1024
+    self.assertEqual(len(smiles), 1024)
 
   def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
-    # can't push over 64 centers, will throw Python overflow error
+    # insanely large numbers of isomers aren't a problem
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 101)
     opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=13)
     smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
-    assert len(smiles) == 13
+    self.assertEqual(len(smiles), 13)
+
+  def testEnumerateStereoisomersRandomSamplingShouldBeDeterministicAndPortable(self):
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C=C(Br)C(I)N')
+    opts = AllChem.StereoEnumerationOptions(maxIsomers=2)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    expected = set([
+        'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@@H](N)I',
+        'C/C(F)=C/[C@H](Cl)/C=C(\\Br)[C@H](N)I',
+        ])
+    self.assertEqual(smiles, expected)
 
   def testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
     m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
