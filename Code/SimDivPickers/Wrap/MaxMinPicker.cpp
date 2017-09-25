@@ -86,8 +86,8 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 python::object firstPicks, int seed,
                                 python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
   }
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
@@ -142,8 +142,8 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       python::object firstPicks, int seed,
                                       python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
   }
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
@@ -262,6 +262,8 @@ struct MaxMin_wrap {
              "should not.\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
+             "  - threshold: stop picking when the distance goes below this "
+             "value\n"
              "  - firstPicks: (optional) the first items to be picked (seeds "
              "the list)\n"
              "  - seed: (optional) seed for the random number generator\n")
@@ -281,6 +283,8 @@ struct MaxMin_wrap {
              "from.\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
+             "  - threshold: stop picking when the distance goes below this "
+             "value\n"
              "  - firstPicks: (optional) the first items to be picked (seeds "
              "the list)\n"
              "  - seed: (optional) seed for the random number generator\n");
