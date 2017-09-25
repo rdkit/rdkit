@@ -10,6 +10,6 @@ rdkit_test(testMMFFForceField testMMFFForceField.cpp
     LINK_LIBRARIES 
     DistGeomHelpers DistGeometry ForceFieldHelpers ForceField 
     FileParsers MolTransforms SmilesParse SubstructMatch MolAlign
-    Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral)
+    Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 endif(RDK_TEST_MMFF_COMPLIANCE)
 

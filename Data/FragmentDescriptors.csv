@@ -33,7 +33,7 @@ fr_NH1	"Number of Secondary amines"	[NH1,nH1]	"[NH1] or [nH1]"
 fr_NH0	"Number of Tertiary amines"	[NH0,nH0]	"[NH0] or [nH0]"	
 fr_Ar_N	"Number of aromatic nitrogens"	n	n	
 fr_Ar_NH	"Number of aromatic amines"	[nH]
-fr_aniline	"Number of anilines"	c-[NX3]
+fr_aniline	"Number of anilines"	c-[NX3;!$(N=*)]
 fr_Imine	"Number of Imines"	[Nv3](=C)-[#6]	[Nv3](=C)-[#6]	"Aliphatic.  Excludes aromatic sp2 nitrogens."
 fr_nitrile	"Number of nitriles"	[NX1]#[CX2]	C#N	
 fr_hdrzine	"Number of hydrazine groups"	[NX3]-[NX3]	[NX3]-[NX3]	"Includes primary, secondary hydrazines, carbazides, cyclic hydrazines.  Excludes hydrazones"

@@ -12,8 +12,12 @@ from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 
-def AlignMolToTemplate2D(mol,template,match=None,clearConfs=False,
-                         templateConfId=-1,):
+
+def AlignMolToTemplate2D(mol,
+                         template,
+                         match=None,
+                         clearConfs=False,
+                         templateConfId=-1, ):
   """
    Arguments:
 
@@ -74,14 +78,14 @@ def AlignMolToTemplate2D(mol,template,match=None,clearConfs=False,
   if not match:
     match = mol.GetSubstructMatch(template)
   if not match:
-    raise ValueError,'no match between mol and template'
-  
+    raise ValueError('no match between mol and template')
+
   atomMap = {}
   templateConf = template.GetConformer(templateConfId)
-  for i,idx in enumerate(match):
+  for i, idx in enumerate(match):
     p = templateConf.GetAtomPosition(i)
-    atomMap[idx] = Geometry.Point2D(p.x,p.y)
-  molConfId = rdDepictor.Compute2DCoords(mol,clearConfs=clearConfs,coordMap=atomMap)
+    atomMap[idx] = Geometry.Point2D(p.x, p.y)
+  molConfId = rdDepictor.Compute2DCoords(mol, clearConfs=clearConfs, coordMap=atomMap)
   return molConfId
 
 
@@ -90,11 +94,11 @@ def AlignMolToTemplate2D(mol,template,match=None,clearConfs=False,
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)

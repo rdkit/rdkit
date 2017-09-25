@@ -10,10 +10,11 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
+#include <RDBoost/iterator_next.h>
 #include <string>
 
-//ours
+// ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
@@ -22,22 +23,17 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  
-  SmilesMolSupplier *SmilesSupplierFromText(std::string text,
-				      std::string delimiter=" ",
-				      int smilesColumn=0,
-				      int nameColumn=1, 
-				      bool titleLine=true,		   
-				      bool sanitize=true){
-    SmilesMolSupplier *res=new SmilesMolSupplier();
-    res->setData(text,delimiter,smilesColumn,
-		 nameColumn,titleLine,
-		 sanitize);
-    return res;
-  }
 
+SmilesMolSupplier *SmilesSupplierFromText(
+    std::string text, std::string delimiter = " ", int smilesColumn = 0,
+    int nameColumn = 1, bool titleLine = true, bool sanitize = true) {
+  SmilesMolSupplier *res = new SmilesMolSupplier();
+  res->setData(text, delimiter, smilesColumn, nameColumn, titleLine, sanitize);
+  return res;
+}
 
-  std::string smilesMolSupplierClassDoc="A class which supplies molecules from a text file.\n \
+std::string smilesMolSupplierClassDoc =
+    "A class which supplies molecules from a text file.\n \
 \n \
   Usage examples:\n \
 \n \
@@ -67,7 +63,8 @@ namespace RDKit {
   are accessible using the mol.GetProp(propName) method.\n\
 \n";
 
-  std::string smsDocStr="Constructor\n \n \
+std::string smsDocStr =
+    "Constructor\n \n \
   ARGUMENTS: \n \
 \n \
     - fileName: name of the file to be read\n \
@@ -86,48 +83,47 @@ namespace RDKit {
     - sanitize: (optional) toggles sanitization of molecules as they are read.\n \
       Defaults to 1.\n \
 \n";
-  struct smimolsup_wrap {
-    static void wrap() {
-      python::class_<SmilesMolSupplier,boost::noncopyable>("SmilesMolSupplier",
-			  smilesMolSupplierClassDoc.c_str(),
-			  python::init<std::string, std::string, int, int, bool, bool>(
-					   (python::arg("data"),
-					    python::arg("delimiter")=" ",
-					    python::arg("smilesColumn")=0,
-					    python::arg("nameColumn")=1,
-					    python::arg("titleLine")=true,
-					    python::arg("sanitize")=true),smsDocStr.c_str()))
-	.def(python::init<>())
-	.def("__iter__", (SmilesMolSupplier *(*)(SmilesMolSupplier *))&MolSupplIter,
-	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
-	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
-	     python::return_value_policy<python::manage_new_object>())
-	.def("__getitem__", (ROMol *(*)(SmilesMolSupplier *,int))&MolSupplGetItem,
-	     python::return_value_policy<python::manage_new_object>())
-	.def("reset", &SmilesMolSupplier::reset,
-	     "Resets our position in the file to the beginning.\n")
-	.def("__len__", &SmilesMolSupplier::length)
-	.def("SetData", &SmilesMolSupplier::setData,
-	     "Sets the text to be parsed",
-	     (python::arg("self"),python::arg("data"),python::arg("delimiter")=" ",
-	      python::arg("smilesColumn")=0,python::arg("nameColumn")=1,python::arg("titleLine")=true,
-	      python::arg("sanitize")=true))
-	.def("GetItemText", &SmilesMolSupplier::getItemText,
-	     "returns the text for an item",
-	     (python::arg("self"),python::arg("index")))
-	;
+struct smimolsup_wrap {
+  static void wrap() {
+    python::class_<SmilesMolSupplier, boost::noncopyable>(
+        "SmilesMolSupplier", smilesMolSupplierClassDoc.c_str(),
+        python::init<std::string, std::string, int, int, bool, bool>(
+            (python::arg("data"), python::arg("delimiter") = " ",
+             python::arg("smilesColumn") = 0, python::arg("nameColumn") = 1,
+             python::arg("titleLine") = true, python::arg("sanitize") = true),
+            smsDocStr.c_str()))
+        .def(python::init<>())
+        .def("__iter__",
+             (SmilesMolSupplier * (*)(SmilesMolSupplier *)) & MolSupplIter,
+             python::return_internal_reference<1>())
+        .def(NEXT_METHOD, (ROMol * (*)(SmilesMolSupplier *)) & MolSupplNext,
+             "Returns the next molecule in the file.  Raises _StopIteration_ "
+             "on EOF.\n",
+             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__",
+             (ROMol * (*)(SmilesMolSupplier *, int)) & MolSupplGetItem,
+             python::return_value_policy<python::manage_new_object>())
+        .def("reset", &SmilesMolSupplier::reset,
+             "Resets our position in the file to the beginning.\n")
+        .def("__len__", &SmilesMolSupplier::length)
+        .def("SetData", &SmilesMolSupplier::setData,
+             "Sets the text to be parsed",
+             (python::arg("self"), python::arg("data"),
+              python::arg("delimiter") = " ", python::arg("smilesColumn") = 0,
+              python::arg("nameColumn") = 1, python::arg("titleLine") = true,
+              python::arg("sanitize") = true))
+        .def("GetItemText", &SmilesMolSupplier::getItemText,
+             "returns the text for an item",
+             (python::arg("self"), python::arg("index")));
 
-      python::def("SmilesMolSupplierFromText",SmilesSupplierFromText,
-		  (python::arg("text"),python::arg("delimiter")=" ",
-		   python::arg("smilesColumn")=0,python::arg("nameColumn")=1,python::arg("titleLine")=true,
-		   python::arg("sanitize")=true),
-		  python::return_value_policy<python::manage_new_object>());
-
-    }
-  };
+    python::def(
+        "SmilesMolSupplierFromText", SmilesSupplierFromText,
+        (python::arg("text"), python::arg("delimiter") = " ",
+         python::arg("smilesColumn") = 0, python::arg("nameColumn") = 1,
+         python::arg("titleLine") = true, python::arg("sanitize") = true),
+        python::return_value_policy<python::manage_new_object>());
+  }
+};
 }
 
-void wrap_smisupplier() {
-  RDKit::smimolsup_wrap::wrap();
-}
+void wrap_smisupplier() { RDKit::smimolsup_wrap::wrap(); }

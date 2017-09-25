@@ -6,6 +6,7 @@ rdkit_python_extension(rdSimDivPickers
 hc DataStructs
 RDGeneral RDBoost)
 
+add_pytest(pySimDivPickers ${CMAKE_CURRENT_SOURCE_DIR}/testPickers.py)
 
 
 

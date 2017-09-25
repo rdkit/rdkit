@@ -37,6 +37,7 @@
 #include <vector>
 
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 %}
@@ -45,10 +46,19 @@
 %include <GraphMol/ChemReactions/ReactionParser.h>
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &,bool);
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &);
+%ignore RDKit::isMoleculeReactantOfReaction(const ChemicalReaction &r,const ROMol &,
+                                            unsigned int &);
+%ignore RDKit::isMoleculeProductOfReaction(const ChemicalReaction &r,const ROMol &,
+                                            unsigned int &);
+
+%newobject ReactionFromSmarts;
+%newobject ReactionFromRxnBlock;
+%newobject ReactionFromRxnFile;
+%newobject ReduceProductToSideChains;
 
 %extend RDKit::ChemicalReaction {
-static RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
-  RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma);
+static RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma,bool useSmiles=false){
+  RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma,0,useSmiles);
   if(res) res->initReactantMatchers();
   return res;
 };
@@ -67,6 +77,17 @@ static std::string ReactionToSmarts(ChemicalReaction &rxn) {
 }
 static std::string ReactionToRxnBlock (const ChemicalReaction &rxn) {
   return RDKit::ChemicalReactionToRxnBlock(rxn);
+};
+/*
+static RDKit::ROMol *ReduceProductToSideChains(RDKit::ROMOL_SPTR product,
+                                               bool addDummyAtoms=true) {
+  return RDKit::reduceProductToSideChains(product, addDummyAtoms);
+};
+*/
+static RDKit::ROMol *ReduceProductToSideChains(RDKit::ROMol *product,
+                                               bool addDummyAtoms=true) {
+  RDKit::ROMOL_SPTR mol(new RDKit::ROMol(*product));
+  return RDKit::reduceProductToSideChains(mol, addDummyAtoms);
 };
 void compute2DCoordsForReaction(double spacing,
                                   bool updateProps,

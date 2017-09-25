@@ -48,7 +48,7 @@ public class ChemTransformsTests extends GraphMolTest {
                 ROMol nmol=RDKFuncs.fragmentOnBRICSBonds(mol);
 		assertEquals( 8,mol.getNumAtoms());
 		assertEquals( 10,nmol.getNumAtoms());
-                assertEquals("[3*]OC.[16*]c1ccccc1",nmol.MolToSmiles(true));
+                assertEquals("[16*]c1ccccc1.[3*]OC",nmol.MolToSmiles(true));
 
 	}
 	@Test 
@@ -57,7 +57,7 @@ public class ChemTransformsTests extends GraphMolTest {
                 ROMol nmol=RDKFuncs.fragmentOnBRICSBonds(mol);
 		assertEquals( 5,mol.getNumAtoms());
 		assertEquals( 7,nmol.getNumAtoms());
-                assertEquals("[7*]=CC.[7*]=C(C)O",nmol.MolToSmiles(true));
+                assertEquals("[7*]=C(C)O.[7*]=CC",nmol.MolToSmiles(true));
 
 	}
 	@Test 
@@ -66,7 +66,7 @@ public class ChemTransformsTests extends GraphMolTest {
                 ROMol nmol=RDKFuncs.fragmentOnBRICSBonds(mol);
 		assertEquals( 14,mol.getNumAtoms());
 		assertEquals( 20,nmol.getNumAtoms());
-                assertEquals("[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1",nmol.MolToSmiles(true));
+                assertEquals("[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O",nmol.MolToSmiles(true));
 
 	}
 

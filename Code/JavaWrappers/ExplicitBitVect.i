@@ -42,6 +42,7 @@
 
 %ignore ExplicitBitVect::dp_bits;
 %ignore ExplicitBitVect::getOnBits (IntVect& v) const;
+%ignore ExplicitBitVect::ExplicitBitVect(unsigned int,bool);
 %include <DataStructs/ExplicitBitVect.h>
 %newobject ExplicitBitVect::getOnBits;
 %extend ExplicitBitVect {

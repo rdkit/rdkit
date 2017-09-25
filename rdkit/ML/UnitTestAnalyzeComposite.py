@@ -11,49 +11,51 @@
 """unit testing code for the AnalyzeComposite functionality
 
 """
-from rdkit import RDConfig
-import unittest,os
-from rdkit.ML import AnalyzeComposite
-import cPickle as pickle
+import os
+import unittest
 
-def feq(a,b,tol=1e-4):
-  if abs(a-b)>tol: return 0
-  else: return 1
+from rdkit import RDConfig
+from rdkit.ML import AnalyzeComposite
+from rdkit.six.moves import cPickle as pickle
+
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
-    self.baseDir = os.path.join(RDConfig.RDCodeDir,'ML','test_data')
+    self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
+
   def test1_Issue163(self):
-    name1 = os.path.join(self.baseDir,'humanoral.1.pkl')
+    name1 = os.path.join(self.baseDir, 'humanoral.1.pkl')
     try:
-      c1 = pickle.load(open(name1,'rb'))
-    except:
+      with open(name1, 'rb') as pklF:
+        c1 = pickle.load(pklF)
+    except Exception:
       c1 = None
-    self.failUnless(c1)
-    name2 = os.path.join(self.baseDir,'humanoral.2.pkl')
+    self.assertTrue(c1)
+    name2 = os.path.join(self.baseDir, 'humanoral.2.pkl')
     try:
-      c2 = pickle.load(open(name2,'rb'))
-    except:
+      with open(name2, 'rb') as pklF:
+        c2 = pickle.load(pklF)
+    except Exception:
       c2 = None
-    self.failUnless(c2)
+    self.assertTrue(c2)
 
     try:
-      res = AnalyzeComposite.ProcessIt([c1,c2],verbose=-1)
-    except:
+      res = sorted(AnalyzeComposite.ProcessIt([c1, c2], verbose=-1))
+    except Exception:
       import traceback
       traceback.print_exc()
-      ok=0
+      ok = 0
     else:
-      ok=1
-    self.failUnless(ok)
+      ok = 1
+    self.assertTrue(ok)
 
-    self.failUnless(res[0][0]=='BALABANJ')
-    self.failUnless(res[1][0]=='BERTZCT')
-    self.failUnless(res[-1][0]=='FR_ALLYLIC_OXID')
+    self.assertEqual(res[0][0],'BALABANJ')
+    self.assertEqual(res[1][0],'BERTZCT')
+    self.assertEqual(res[-1][0],'VSA_ESTATE9')
     for entry in res:
-      self.failUnless(len(entry)==5)
-    
-if __name__ == '__main__':
-  unittest.main()
+      self.assertEqual(len(entry),5)
 
+
+if __name__ == '__main__':  # pragma: nocover
+  unittest.main()

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2011-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -61,15 +60,36 @@ namespace {
 }
 
 BOOST_PYTHON_MODULE(rdinchi) {
-  std::string docString = "return a ROMol for a InChI string";
+  std::string docString = "return a ROMol for a InChI string\n\
+  Returns:\n\
+    a tuple with:\n\
+      - the molecule\n\
+      - the return code from the InChI conversion\n\
+      - a string with any messages from the InChI conversion\n\
+      - a string with any log messages from the InChI conversion\n";
   boost::python::def("InchiToMol", InchiToMol,
                      (boost::python::arg("inchi"),
                       boost::python::arg("sanitize")=true,
                       boost::python::arg("removeHs")=true),
                      docString.c_str()
                      );
-  docString = "return the InChI for a ROMol molecule. If options is an empty"
-    "string, standard InChI string is returned";
+  docString = "return the InChI for a ROMol molecule.\n\
+\n\
+  Arguments:\n\
+    - mol: the molecule to use.\n\
+    - options: the InChI generation options.\n\
+      Options should be prefixed with either a - or a /\n\
+      Available options are explained in the InChI technical FAQ:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      and the User Guide:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+  Returns:\n\
+    a tuple with:\n\
+      - the InChI\n\
+      - the return code from the InChI conversion\n\
+      - a string with any messages from the InChI conversion\n\
+      - a string with any log messages from the InChI conversion\n\
+      - a string with the InChI AuxInfo\n";
   boost::python::def("MolToInchi", MolToInchi,
                      (boost::python::arg("mol"),
                       boost::python::arg("options")=std::string()),

@@ -15,59 +15,62 @@
 
 namespace RDKit {
 
-  const std::string &MolChemicalFeature::getFamily() const {
-    return dp_def->getFamily(); //return d_family;
-  };
+const std::string &MolChemicalFeature::getFamily() const {
+  return dp_def->getFamily();  // return d_family;
+};
 
-  const std::string &MolChemicalFeature::getType() const {
-    return dp_def->getType(); //return d_type;
-  };
+const std::string &MolChemicalFeature::getType() const {
+  return dp_def->getType();  // return d_type;
+};
 
-  void MolChemicalFeature::setActiveConformer(int confId) {
-    PRECONDITION(dp_mol,"bad molecule");
-    d_activeConf = confId;
+void MolChemicalFeature::setActiveConformer(int confId) {
+  PRECONDITION(dp_mol, "bad molecule");
+  d_activeConf = confId;
+}
+
+RDGeom::Point3D MolChemicalFeature::getPos() const {
+  return this->getPos(d_activeConf);
+}
+
+RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
+  PRECONDITION(dp_mol, "bad molecule");
+  PRECONDITION(dp_mol->getNumConformers(), "molecule has no conformers");
+  if (confId == -1) confId = (*dp_mol->beginConformers())->getId();
+
+  // -------------
+  // Check to see if we've got the value cached:
+  PointCacheType::const_iterator cacheIt = d_locs.find(confId);
+  if (cacheIt != d_locs.end()) {
+    return cacheIt->second;
   }
 
-  RDGeom::Point3D MolChemicalFeature::getPos() const {
-    return this->getPos(d_activeConf);
+  // --------------
+  // Nope, we have to figure it out on our own:
+  RDGeom::Point3D res(0, 0, 0);
+  bool setNeg1 = false;
+  RDUNUSED_PARAM(setNeg1);
+  if (confId == -1) {
+    setNeg1 = true;
   }
 
-  RDGeom::Point3D MolChemicalFeature::getPos(int confId) const {
-    PRECONDITION(dp_mol,"bad molecule");
-    if(confId==-1) confId = (*dp_mol->beginConformers())->getId();
-
-    // ------------- 
-    // Check to see if we've got the value cached:
-    PointCacheType::const_iterator cacheIt=d_locs.find(confId);
-    if(cacheIt != d_locs.end()) {
-      return cacheIt->second;
+  if (d_atoms.size() == 1) {
+    res = dp_mol->getConformer(confId).getAtomPos((*d_atoms.begin())->getIdx());
+  } else {
+    PRECONDITION(dp_def, "bad definition");
+    PRECONDITION(dp_def->getNumWeights() == this->getNumAtoms(),
+                 "weight/atom mismatch");
+    std::vector<double>::const_iterator weightIt = dp_def->beginWeights();
+    const Conformer &conf = dp_mol->getConformer(confId);
+    for (AtomPtrContainer::const_iterator atomIt = d_atoms.begin();
+         atomIt != d_atoms.end(); atomIt++, weightIt++) {
+      const Atom *atom = *atomIt;
+      RDGeom::Point3D p = conf.getAtomPos(atom->getIdx());
+      p *= *weightIt;
+      res += p;
     }
-
-    // --------------
-    // Nope, we have to figure it out on our own:
-    RDGeom::Point3D res(0,0,0);
-    bool setNeg1=false;
-    if(confId==-1){
-      setNeg1=true;
-    }
-    
-    if(d_atoms.size()==1){
-      res=dp_mol->getConformer(confId).getAtomPos((*d_atoms.begin())->getIdx());
-    }else{
-      PRECONDITION(dp_def,"bad definition");
-      PRECONDITION(dp_def->getNumWeights()==this->getNumAtoms(),"weight/atom mismatch");
-      std::vector<double>::const_iterator weightIt=dp_def->beginWeights();
-      const Conformer &conf=dp_mol->getConformer(confId);
-      for(AtomPtrContainer::const_iterator atomIt=d_atoms.begin();
-	  atomIt!=d_atoms.end();atomIt++,weightIt++){
-	const Atom *atom=*atomIt;
-	RDGeom::Point3D p=conf.getAtomPos(atom->getIdx());
-	p *= *weightIt;
-	res += p;
-      }
-    }
-    d_locs[confId]=res;
-
-    return res;
   }
+  d_locs[confId] = res;
+
+  return res;
+}
 }

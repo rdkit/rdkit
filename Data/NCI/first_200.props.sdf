@@ -69,6 +69,9 @@ CC1=CC(=O)C=CC1=O
 >  <NUM_ROTATABLEBONDS>  (1) 
 0
 
+>  <NUM_ROTATABLEBONDS_O>  (1) 
+0
+
 >  <P1>  (1) 
 0.73
 
@@ -172,6 +175,9 @@ S(Sc1nc2ccccc2s1)c3nc4ccccc4s3
 >  <NUM_ROTATABLEBONDS>  (2) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (2) 
+3
+
 >  <SMILES>  (2) 
 S(Sc1nc2ccccc2s1)c3nc4ccccc4s3
 
@@ -258,6 +264,9 @@ Oc1c(Cl)cc(cc1[N+](=O)[O-])[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (3) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (3) 
+2
+
 >  <SMILES>  (3) 
 Oc1c(Cl)cc(cc1[N+](=O)[O-])[N+](=O)[O-]
 
@@ -332,6 +341,9 @@ U7RG1e2AAkUriFEIrPU6BFH82KHU8mGPJZhiwVYYEnY.2;2048;134;256;107;1
 1
 
 >  <NUM_ROTATABLEBONDS>  (4) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (4) 
 1
 
 >  <SMILES>  (4) 
@@ -425,6 +437,9 @@ Nc1ccc2C(=O)c3ccccc3C(=O)c2c1
 3
 
 >  <NUM_ROTATABLEBONDS>  (5) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (5) 
 0
 
 >  <SMILES>  (5) 
@@ -541,6 +556,9 @@ OC(=O)c1ccccc1c2c3ccc(O)c(Br)c3oc4c(Br)c(=O)ccc24
 >  <NUM_ROTATABLEBONDS>  (6) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (6) 
+2
+
 >  <SMILES>  (6) 
 OC(=O)c1ccccc1c2c3ccc(O)c(Br)c3oc4c(Br)c(=O)ccc24
 
@@ -629,6 +647,9 @@ CN(C)C1=C(Cl)C(=O)c2ccccc2C1=O
 2
 
 >  <NUM_ROTATABLEBONDS>  (7) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (7) 
 1
 
 >  <SMILES>  (7) 
@@ -731,6 +752,9 @@ Cc1ccc2C(=O)c3ccccc3C(=O)c2c1[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (8) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (8) 
+1
+
 >  <SMILES>  (8) 
 Cc1ccc2C(=O)c3ccccc3C(=O)c2c1[N+](=O)[O-]
 
@@ -801,6 +825,9 @@ CC(=NO)C(=NO)C
 0
 
 >  <NUM_ROTATABLEBONDS>  (9) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (9) 
 1
 
 >  <SMILES>  (9) 
@@ -900,6 +927,9 @@ c1ccc(cc1)P(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (10) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (10) 
+3
+
 >  <P1>  (10) 
 5.69
 
@@ -990,6 +1020,9 @@ CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C
 1
 
 >  <NUM_ROTATABLEBONDS>  (11) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (11) 
 2
 
 >  <SMILES>  (11) 
@@ -1076,6 +1109,9 @@ CC1=NN(C(=O)C1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (12) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (12) 
+1
+
 >  <SMILES>  (12) 
 CC1=NN(C(=O)C1)c2ccccc2
 
@@ -1158,6 +1194,9 @@ Nc1ccnc2cc(Cl)ccc12
 >  <NUM_ROTATABLEBONDS>  (13) 
 0
 
+>  <NUM_ROTATABLEBONDS_O>  (13) 
+0
+
 >  <SMILES>  (13) 
 Nc1ccnc2cc(Cl)ccc12
 
@@ -1237,6 +1276,9 @@ CCCCCCC1CCCCN1
 1
 
 >  <NUM_ROTATABLEBONDS>  (14) 
+5
+
+>  <NUM_ROTATABLEBONDS_O>  (14) 
 5
 
 >  <SMILES>  (14) 
@@ -1330,6 +1372,9 @@ O=Cc1c2ccccc2cc3ccccc13
 >  <NUM_ROTATABLEBONDS>  (15) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (15) 
+1
+
 >  <P1>  (15) 
 3.77
 
@@ -1404,6 +1449,9 @@ BrN1C(=O)CCC1=O
 1
 
 >  <NUM_ROTATABLEBONDS>  (16) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (16) 
 0
 
 >  <SMILES>  (16) 
@@ -1507,6 +1555,9 @@ CCCCCCCCCCCCCCCc1cc(O)ccc1N
 1
 
 >  <NUM_ROTATABLEBONDS>  (17) 
+14
+
+>  <NUM_ROTATABLEBONDS_O>  (17) 
 14
 
 >  <SMILES>  (17) 
@@ -1625,6 +1676,9 @@ C(COc1ccccc1c2ccccc2)Oc3ccccc3c4ccccc4
 >  <NUM_ROTATABLEBONDS>  (18) 
 7
 
+>  <NUM_ROTATABLEBONDS_O>  (18) 
+7
+
 >  <SMILES>  (18) 
 C(COc1ccccc1c2ccccc2)Oc3ccccc3c4ccccc4
 
@@ -1693,6 +1747,9 @@ CCCCSCC
 0
 
 >  <NUM_ROTATABLEBONDS>  (19) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (19) 
 4
 
 >  <SMILES>  (19) 
@@ -1781,6 +1838,9 @@ CC(=O)Nc1ccc2c(O)ccnc2n1
 2
 
 >  <NUM_ROTATABLEBONDS>  (20) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (20) 
 2
 
 >  <SMILES>  (20) 
@@ -1865,6 +1925,9 @@ Cc1cc(O)nc2nc(N)ccc12
 2
 
 >  <NUM_ROTATABLEBONDS>  (21) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (21) 
 0
 
 >  <SMILES>  (21) 
@@ -1957,6 +2020,9 @@ CCOC(=O)c1cnc2nc(N)ccc2c1O
 2
 
 >  <NUM_ROTATABLEBONDS>  (22) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (22) 
 3
 
 >  <SMILES>  (22) 
@@ -2047,6 +2113,9 @@ Cc1ccnc(N=Cc2ccccc2)c1
 >  <NUM_ROTATABLEBONDS>  (23) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (23) 
+2
+
 >  <SMILES>  (23) 
 Cc1ccnc(N=Cc2ccccc2)c1
 
@@ -2125,6 +2194,9 @@ C[N+](C)(C)Cc1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (24) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (24) 
 2
 
 >  <SMILES>  (24) 
@@ -2207,6 +2279,9 @@ C[N+](C)(C)C(=O)c1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (25) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (25) 
 2
 
 >  <SMILES>  (25) 
@@ -2312,6 +2387,9 @@ ICCC(c1ccccc1)(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (26) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (26) 
+5
+
 >  <SMILES>  (26) 
 ICCC(c1ccccc1)(c2ccccc2)c3ccccc3
 
@@ -2396,6 +2474,9 @@ Cc1cc(C)c(C[N+](C)(C)C)c(C)c1
 1
 
 >  <NUM_ROTATABLEBONDS>  (27) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (27) 
 2
 
 >  <SMILES>  (27) 
@@ -2488,6 +2569,9 @@ CC(O)(CC(=O)O)c1ccc(cc1)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (28) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (28) 
+4
+
 >  <SMILES>  (28) 
 CC(O)(CC(=O)O)c1ccc(cc1)[N+](=O)[O-]
 
@@ -2578,6 +2662,9 @@ Cc1ccc(cc1)C(=O)c2ccc(Cl)cc2
 >  <NUM_ROTATABLEBONDS>  (29) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (29) 
+2
+
 >  <SMILES>  (29) 
 Cc1ccc(cc1)C(=O)c2ccc(Cl)cc2
 
@@ -2655,6 +2742,9 @@ ON=Cc1ccc(O)cc1
 >  <NUM_ROTATABLEBONDS>  (30) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (30) 
+1
+
 >  <SMILES>  (30) 
 ON=Cc1ccc(O)cc1
 
@@ -2730,6 +2820,9 @@ Cc1cc(C)c(N)c(C)c1
 1
 
 >  <NUM_ROTATABLEBONDS>  (31) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (31) 
 0
 
 >  <SMILES>  (31) 
@@ -2827,6 +2920,9 @@ Cc1ccc(cc1)C(=O)c2ccc(cc2)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (32) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (32) 
+3
+
 >  <SMILES>  (32) 
 Cc1ccc(cc1)C(=O)c2ccc(cc2)[N+](=O)[O-]
 
@@ -2915,6 +3011,9 @@ CC(O)(c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (33) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (33) 
+2
+
 >  <SMILES>  (33) 
 CC(O)(c1ccccc1)c2ccccc2
 
@@ -2995,6 +3094,9 @@ ON=Cc1cccc(c1)[N+](=O)[O-]
 1
 
 >  <NUM_ROTATABLEBONDS>  (34) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (34) 
 2
 
 >  <SMILES>  (34) 
@@ -3086,6 +3188,9 @@ Oc1c(cnc2cc(Cl)ccc12)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (35) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (35) 
+1
+
 >  <SMILES>  (35) 
 Oc1c(cnc2cc(Cl)ccc12)[N+](=O)[O-]
 
@@ -3168,6 +3273,9 @@ Cc1cnc2cccc(C)c2c1Cl
 2
 
 >  <NUM_ROTATABLEBONDS>  (36) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (36) 
 0
 
 >  <SMILES>  (36) 
@@ -3270,6 +3378,9 @@ CCC(CC)(C(OC(=O)N)c1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (37) 
+6
+
+>  <NUM_ROTATABLEBONDS_O>  (37) 
 7
 
 >  <SMILES>  (37) 
@@ -3368,6 +3479,9 @@ ON=C(Cc1ccccc1)C(C#N)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (38) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (38) 
+4
+
 >  <SMILES>  (38) 
 ON=C(Cc1ccccc1)C(C#N)c2ccccc2
 
@@ -3454,6 +3568,9 @@ OC(Cc1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (39) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (39) 
 3
 
 >  <SMILES>  (39) 
@@ -3548,6 +3665,9 @@ COc1ccc(Cc2ccc(OC)cc2)cc1
 >  <NUM_ROTATABLEBONDS>  (40) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (40) 
+4
+
 >  <SMILES>  (40) 
 COc1ccc(Cc2ccc(OC)cc2)cc1
 
@@ -3640,6 +3760,9 @@ CN(C)C(c1ccccc1)c2ccccc2C
 >  <NUM_ROTATABLEBONDS>  (41) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (41) 
+3
+
 >  <SMILES>  (41) 
 CN(C)C(c1ccccc1)c2ccccc2C
 
@@ -3726,6 +3849,9 @@ COc1cc([N+](=O)[O-])c(N)c(c1)[N+](=O)[O-]
 1
 
 >  <NUM_ROTATABLEBONDS>  (42) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (42) 
 3
 
 >  <SMILES>  (42) 
@@ -3816,6 +3942,9 @@ NN=C(c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (43) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (43) 
+2
+
 >  <P1>  (43) 
 2.79
 
@@ -3896,6 +4025,9 @@ COc1ccc(C=NO)cc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (44) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (44) 
 2
 
 >  <SMILES>  (44) 
@@ -4012,6 +4144,9 @@ N(=C(c1ccccc1)c2ccccc2)C(c3ccccc3)c4ccccc4
 >  <NUM_ROTATABLEBONDS>  (45) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (45) 
+5
+
 >  <SMILES>  (45) 
 N(=C(c1ccccc1)c2ccccc2)C(c3ccccc3)c4ccccc4
 
@@ -4111,6 +4246,9 @@ N(=C(c1ccccc1)c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (46) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (46) 
+3
+
 >  <SMILES>  (46) 
 N(=C(c1ccccc1)c2ccccc2)c3ccccc3
 
@@ -4204,6 +4342,9 @@ Cc1nc2ccccc2c(O)c1c3ccccc3
 3
 
 >  <NUM_ROTATABLEBONDS>  (47) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (47) 
 1
 
 >  <SMILES>  (47) 
@@ -4303,6 +4444,9 @@ CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(=[O+]2)CC
 >  <NUM_ROTATABLEBONDS>  (48) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (48) 
+4
+
 >  <SMILES>  (48) 
 CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(=[O+]2)CC
 
@@ -4395,6 +4539,9 @@ OC(=O)C(Cc1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (49) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (49) 
+4
+
 >  <SMILES>  (49) 
 OC(=O)C(Cc1ccccc1)c2ccccc2
 
@@ -4470,6 +4617,9 @@ CCc1cnc(C)cc1N
 1
 
 >  <NUM_ROTATABLEBONDS>  (50) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (50) 
 1
 
 >  <SMILES>  (50) 
@@ -4580,6 +4730,9 @@ Cc1nc2ccccc2c(Oc3ccccc3)c1c4ccccc4
 >  <NUM_ROTATABLEBONDS>  (51) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (51) 
+3
+
 >  <SMILES>  (51) 
 Cc1nc2ccccc2c(Oc3ccccc3)c1c4ccccc4
 
@@ -4683,6 +4836,9 @@ N#CC(C(c1ccccc1)c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (52) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (52) 
+4
+
 >  <SMILES>  (52) 
 N#CC(C(c1ccccc1)c2ccccc2)c3ccccc3
 
@@ -4751,6 +4907,9 @@ CC(C#N)N(C)C
 0
 
 >  <NUM_ROTATABLEBONDS>  (53) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (53) 
 1
 
 >  <SMILES>  (53) 
@@ -4835,6 +4994,9 @@ CC(=O)C1Cc2ccccc2C1=O
 2
 
 >  <NUM_ROTATABLEBONDS>  (54) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (54) 
 1
 
 >  <SMILES>  (54) 
@@ -4925,6 +5087,9 @@ O=S(Cc1ccccc1)Cc2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (55) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (55) 
 4
 
 >  <P1>  (55) 
@@ -5024,6 +5189,9 @@ CC(c1ccccc1)C(C)(C#N)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (56) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (56) 
+3
+
 >  <SMILES>  (56) 
 CC(c1ccccc1)C(C)(C#N)c2ccccc2
 
@@ -5104,6 +5272,9 @@ Cc1nc(O)nc2CCCCc12
 2
 
 >  <NUM_ROTATABLEBONDS>  (57) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (57) 
 0
 
 >  <SMILES>  (57) 
@@ -5220,6 +5391,9 @@ N(C(c1ccccc1)c2ccccc2)C(c3ccccc3)c4ccccc4
 >  <NUM_ROTATABLEBONDS>  (58) 
 6
 
+>  <NUM_ROTATABLEBONDS_O>  (58) 
+6
+
 >  <SMILES>  (58) 
 N(C(c1ccccc1)c2ccccc2)C(c3ccccc3)c4ccccc4
 
@@ -5313,6 +5487,9 @@ Oc1nnc(c2ccccc2)c3ccccc13
 >  <NUM_ROTATABLEBONDS>  (59) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (59) 
+1
+
 >  <SMILES>  (59) 
 Oc1nnc(c2ccccc2)c3ccccc13
 
@@ -5392,6 +5569,9 @@ CC(C)(C(=O)N)c1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (60) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (60) 
 2
 
 >  <SMILES>  (60) 
@@ -5497,6 +5677,9 @@ OC(=O)C(c1ccccc1)(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (61) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (61) 
+4
+
 >  <SMILES>  (61) 
 OC(=O)C(c1ccccc1)(c2ccccc2)c3ccccc3
 
@@ -5587,6 +5770,9 @@ CCC[N+](CCC)(CCC)Cc1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (62) 
+8
+
+>  <NUM_ROTATABLEBONDS_O>  (62) 
 8
 
 >  <SMILES>  (62) 
@@ -5681,6 +5867,9 @@ Cc1cc(C)c(CC(=O)c2ccccc2)c(C)c1
 2
 
 >  <NUM_ROTATABLEBONDS>  (63) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (63) 
 3
 
 >  <SMILES>  (63) 
@@ -5782,6 +5971,9 @@ COC(c1ccccc1)(c2ccccc2)c3ccccc3
 3
 
 >  <NUM_ROTATABLEBONDS>  (64) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (64) 
 4
 
 >  <SMILES>  (64) 
@@ -5892,6 +6084,9 @@ CCC(CC)(CC)C(OC(=O)c1ccccc1C(=O)O)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (65) 
+8
+
+>  <NUM_ROTATABLEBONDS_O>  (65) 
 9
 
 >  <SMILES>  (65) 
@@ -5999,6 +6194,9 @@ CC(=O)C(Cc1ccccc1)(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (66) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (66) 
+5
+
 >  <SMILES>  (66) 
 CC(=O)C(Cc1ccccc1)(c2ccccc2)c3ccccc3
 
@@ -6089,6 +6287,9 @@ O=S(=O)(Cc1ccccc1)Cc2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (67) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (67) 
 4
 
 >  <SMILES>  (67) 
@@ -6187,6 +6388,9 @@ CC(C)(C)OC(=O)C(c1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (68) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (68) 
 5
 
 >  <SMILES>  (68) 
@@ -6292,6 +6496,9 @@ N#CC(Cc1ccccc1)(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (69) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (69) 
+4
+
 >  <SMILES>  (69) 
 N#CC(Cc1ccccc1)(c2ccccc2)c3ccccc3
 
@@ -6378,6 +6585,9 @@ CC(=Cc1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (70) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (70) 
 2
 
 >  <SMILES>  (70) 
@@ -6468,6 +6678,9 @@ N#CC(Cc1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (71) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (71) 
 3
 
 >  <SMILES>  (71) 
@@ -6566,6 +6779,9 @@ CC(O)(C(C(=O)O)c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (72) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (72) 
+4
+
 >  <SMILES>  (72) 
 CC(O)(C(C(=O)O)c1ccccc1)c2ccccc2
 
@@ -6660,6 +6876,9 @@ CC(C(C(=O)O)c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (73) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (73) 
+4
+
 >  <SMILES>  (73) 
 CC(C(C(=O)O)c1ccccc1)c2ccccc2
 
@@ -6735,6 +6954,9 @@ ON=Cc1ccc(Cl)cc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (74) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (74) 
 1
 
 >  <P1>  (74) 
@@ -6826,6 +7048,9 @@ COC(c1ccccc1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (75) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (75) 
 3
 
 >  <SMILES>  (75) 
@@ -6929,6 +7154,9 @@ O=C(NC(c1ccccc1)c2ccccc2)c3ccccc3
 3
 
 >  <NUM_ROTATABLEBONDS>  (76) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (76) 
 5
 
 >  <SMILES>  (76) 
@@ -7022,6 +7250,9 @@ C[N+](C)(Cc1ccccc1)Cc2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (77) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (77) 
 4
 
 >  <SMILES>  (77) 
@@ -7165,6 +7396,9 @@ C1C(=[O+][Cu]2([O+]=C(CC(=[O+]2)c3ccccc3)C=Cc4ccccc4)[O+]=C1c5ccccc5)C=Cc6ccccc6
 >  <NUM_ROTATABLEBONDS>  (78) 
 6
 
+>  <NUM_ROTATABLEBONDS_O>  (78) 
+6
+
 >  <SMILES>  (78) 
 C1C(=[O+][Cu]2([O+]=C(CC(=[O+]2)c3ccccc3)C=Cc4ccccc4)[O+]=C1c5ccccc5)C=Cc6ccccc6
 
@@ -7245,6 +7479,9 @@ ON=Cc1ccc2OCOc2c1
 2
 
 >  <NUM_ROTATABLEBONDS>  (79) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (79) 
 1
 
 >  <SMILES>  (79) 
@@ -7342,6 +7579,9 @@ CCOC(=O)C(NC(=O)c1ccccc1)C(=O)OCC
 1
 
 >  <NUM_ROTATABLEBONDS>  (80) 
+6
+
+>  <NUM_ROTATABLEBONDS_O>  (80) 
 9
 
 >  <SMILES>  (80) 
@@ -7415,6 +7655,9 @@ Nc1ccc(Cl)nc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (81) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (81) 
 0
 
 >  <SMILES>  (81) 
@@ -7514,6 +7757,9 @@ C1CCN(CC1)C(c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (82) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (82) 
+3
+
 >  <SMILES>  (82) 
 C1CCN(CC1)C(c2ccccc2)c3ccccc3
 
@@ -7606,6 +7852,9 @@ CCOC(=O)c1cnc2c(C)c(Cl)ccc2c1O
 2
 
 >  <NUM_ROTATABLEBONDS>  (83) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (83) 
 3
 
 >  <SMILES>  (83) 
@@ -7693,6 +7942,9 @@ CCN(CC)C(=O)C=Cc1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (84) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (84) 
 5
 
 >  <SMILES>  (84) 
@@ -7781,6 +8033,9 @@ C[N+](C)(C)Cc1ccc(cc1)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (85) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (85) 
+3
+
 >  <SMILES>  (85) 
 C[N+](C)(C)Cc1ccc(cc1)[N+](=O)[O-]
 
@@ -7865,6 +8120,9 @@ C[N+](C)(C)Cc1cccc(c1)[N+](=O)[O-]
 1
 
 >  <NUM_ROTATABLEBONDS>  (86) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (86) 
 3
 
 >  <SMILES>  (86) 
@@ -7970,6 +8228,9 @@ O=C(CC(N1CCCCC1)c2ccccc2)c3ccccc3
 >  <NUM_ROTATABLEBONDS>  (87) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (87) 
+5
+
 >  <SMILES>  (87) 
 O=C(CC(N1CCCCC1)c2ccccc2)c3ccccc3
 
@@ -8064,6 +8325,9 @@ COC(N(C)C)(c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (88) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (88) 
+4
+
 >  <SMILES>  (88) 
 COC(N(C)C)(c1ccccc1)c2ccccc2
 
@@ -8147,6 +8411,9 @@ CN(C)CCC(=O)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (89) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (89) 
+4
+
 >  <SMILES>  (89) 
 CN(C)CCC(=O)c1ccccc1
 
@@ -8225,6 +8492,9 @@ CCCCN(CCCC)C(=O)C
 0
 
 >  <NUM_ROTATABLEBONDS>  (90) 
+6
+
+>  <NUM_ROTATABLEBONDS_O>  (90) 
 7
 
 >  <SMILES>  (90) 
@@ -8300,6 +8570,9 @@ Cc1ccccc1CO
 1
 
 >  <NUM_ROTATABLEBONDS>  (91) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (91) 
 1
 
 >  <SMILES>  (91) 
@@ -8378,6 +8651,9 @@ CCN(CC)CCC(=O)OC
 0
 
 >  <NUM_ROTATABLEBONDS>  (92) 
+5
+
+>  <NUM_ROTATABLEBONDS_O>  (92) 
 6
 
 >  <SMILES>  (92) 
@@ -8468,6 +8744,9 @@ ClC(Cc1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (93) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (93) 
+3
+
 >  <SMILES>  (93) 
 ClC(Cc1ccccc1)c2ccccc2
 
@@ -8544,6 +8823,9 @@ CC(C)CC(=O)CC(=O)C
 >  <NUM_ROTATABLEBONDS>  (94) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (94) 
+4
+
 >  <SMILES>  (94) 
 CC(C)CC(=O)CC(=O)C
 
@@ -8616,6 +8898,9 @@ CCN(CC)CCC#N
 0
 
 >  <NUM_ROTATABLEBONDS>  (95) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (95) 
 4
 
 >  <SMILES>  (95) 
@@ -8695,6 +8980,9 @@ COc1ccc(CC#N)cc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (96) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (96) 
 2
 
 >  <SMILES>  (96) 
@@ -8785,6 +9073,9 @@ CN(Cc1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (97) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (97) 
+3
+
 >  <P1>  (97) 
 4.22
 
@@ -8869,6 +9160,9 @@ COc1ccc(cc1)C(C)(C)C#N
 1
 
 >  <NUM_ROTATABLEBONDS>  (98) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (98) 
 2
 
 >  <SMILES>  (98) 
@@ -8967,6 +9261,9 @@ CCC(CC)(C(O)c1ccccc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (99) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (99) 
+5
+
 >  <SMILES>  (99) 
 CCC(CC)(C(O)c1ccccc1)c2ccccc2
 
@@ -9059,6 +9356,9 @@ CC(=Cc1ccccc1)OC(=O)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (100) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (100) 
 4
 
 >  <SMILES>  (100) 
@@ -9131,6 +9431,9 @@ CCN(CC)C(=O)C
 0
 
 >  <NUM_ROTATABLEBONDS>  (101) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (101) 
 3
 
 >  <P1>  (101) 
@@ -9230,6 +9533,9 @@ CCCCOC(N1CCCCC1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (102) 
 6
 
+>  <NUM_ROTATABLEBONDS_O>  (102) 
+6
+
 >  <SMILES>  (102) 
 CCCCOC(N1CCCCC1)c2ccccc2
 
@@ -9312,6 +9618,9 @@ CCCCCCCCN(CC)CC
 >  <NUM_ROTATABLEBONDS>  (103) 
 9
 
+>  <NUM_ROTATABLEBONDS_O>  (103) 
+9
+
 >  <SMILES>  (103) 
 CCCCCCCCN(CC)CC
 
@@ -9391,6 +9700,9 @@ CCOC(C)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (104) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (104) 
+3
+
 >  <SMILES>  (104) 
 CCOC(C)c1ccccc1
 
@@ -9463,6 +9775,9 @@ CCN(CC)C(=O)CC
 0
 
 >  <NUM_ROTATABLEBONDS>  (105) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (105) 
 4
 
 >  <SMILES>  (105) 
@@ -9556,6 +9871,9 @@ CCCCOC(OCCCC)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (106) 
 9
 
+>  <NUM_ROTATABLEBONDS_O>  (106) 
+9
+
 >  <SMILES>  (106) 
 CCCCOC(OCCCC)c1ccccc1
 
@@ -9633,6 +9951,9 @@ C[Si](C)(C)Cc1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (107) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (107) 
 2
 
 >  <P1>  (107) 
@@ -9742,6 +10063,9 @@ CCN(CC)CCCCCCNc1ccnc2cc(Cl)ccc12
 >  <NUM_ROTATABLEBONDS>  (108) 
 10
 
+>  <NUM_ROTATABLEBONDS_O>  (108) 
+10
+
 >  <SMILES>  (108) 
 CCN(CC)CCCCCCNc1ccnc2cc(Cl)ccc12
 
@@ -9821,6 +10145,9 @@ CC(=O)c1cc(C)c(O)c(C)c1
 1
 
 >  <NUM_ROTATABLEBONDS>  (109) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (109) 
 1
 
 >  <SMILES>  (109) 
@@ -9916,6 +10243,9 @@ CCOC(=O)c1ccc(cc1)S(=O)(=O)N(CC)CC
 1
 
 >  <NUM_ROTATABLEBONDS>  (110) 
+6
+
+>  <NUM_ROTATABLEBONDS_O>  (110) 
 7
 
 >  <SMILES>  (110) 
@@ -9991,6 +10321,9 @@ CC(=O)c1ccncc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (111) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (111) 
 1
 
 >  <P1>  (111) 
@@ -10084,6 +10417,9 @@ Cc1cc(C)c(C[N+](C)(C)C)c(C)c1C
 >  <NUM_ROTATABLEBONDS>  (112) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (112) 
+2
+
 >  <SMILES>  (112) 
 Cc1cc(C)c(C[N+](C)(C)C)c(C)c1C
 
@@ -10154,6 +10490,9 @@ OCC(F)(F)C(F)F
 0
 
 >  <NUM_ROTATABLEBONDS>  (113) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (113) 
 2
 
 >  <SMILES>  (113) 
@@ -10238,6 +10577,9 @@ OCC(F)(F)C(F)(F)C(F)(F)C(F)F
 0
 
 >  <NUM_ROTATABLEBONDS>  (114) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (114) 
 4
 
 >  <SMILES>  (114) 
@@ -10334,6 +10676,9 @@ OCC(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)F
 0
 
 >  <NUM_ROTATABLEBONDS>  (115) 
+6
+
+>  <NUM_ROTATABLEBONDS_O>  (115) 
 6
 
 >  <SMILES>  (115) 
@@ -10460,6 +10805,9 @@ FC(F)C(F)(F)C(F)(F)C(F)(F)COC(=O)CCCC(=O)OCC(F)(F)C(F)(F)C(F)(F)C(F)F
 0
 
 >  <NUM_ROTATABLEBONDS>  (116) 
+14
+
+>  <NUM_ROTATABLEBONDS_O>  (116) 
 16
 
 >  <SMILES>  (116) 
@@ -10588,6 +10936,9 @@ CC(CC(=O)OCC(F)(F)C(F)(F)C(F)(F)C(F)F)CC(=O)OCC(F)(F)C(F)(F)C(F)(F)C(F)F
 0
 
 >  <NUM_ROTATABLEBONDS>  (117) 
+14
+
+>  <NUM_ROTATABLEBONDS_O>  (117) 
 16
 
 >  <SMILES>  (117) 
@@ -10746,6 +11097,9 @@ CC(C)(C)O[Si](OCC(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C(F)F)(OCC(F)(F)C(F)(F)C(F)(F
 0
 
 >  <NUM_ROTATABLEBONDS>  (118) 
+18
+
+>  <NUM_ROTATABLEBONDS_O>  (118) 
 20
 
 >  <SMILES>  (118) 
@@ -10879,6 +11233,9 @@ FC(F)C(F)(F)C(F)(F)C(F)(F)COC(=O)c1ccccc1C(=O)OCC(F)(F)C(F)(F)C(F)(F)C(F)F
 1
 
 >  <NUM_ROTATABLEBONDS>  (119) 
+12
+
+>  <NUM_ROTATABLEBONDS_O>  (119) 
 14
 
 >  <SMILES>  (119) 
@@ -10970,6 +11327,9 @@ CN1c2ccccc2Sc3ccccc13
 >  <NUM_ROTATABLEBONDS>  (120) 
 0
 
+>  <NUM_ROTATABLEBONDS_O>  (120) 
+0
+
 >  <SMILES>  (120) 
 CN1c2ccccc2Sc3ccccc13
 
@@ -11059,6 +11419,9 @@ CCN1c2ccccc2Sc3ccccc13
 3
 
 >  <NUM_ROTATABLEBONDS>  (121) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (121) 
 1
 
 >  <SMILES>  (121) 
@@ -11161,6 +11524,9 @@ CCN1c2ccccc2S(=O)c3cc(ccc13)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (122) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (122) 
+2
+
 >  <SMILES>  (122) 
 CCN1c2ccccc2S(=O)c3cc(ccc13)[N+](=O)[O-]
 
@@ -11250,6 +11616,9 @@ CN1c2ccccc2S(=O)c3ccccc13
 3
 
 >  <NUM_ROTATABLEBONDS>  (123) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (123) 
 0
 
 >  <SMILES>  (123) 
@@ -11345,6 +11714,9 @@ ClCC(=O)c1ccc2Sc3ccccc3Nc2c1
 3
 
 >  <NUM_ROTATABLEBONDS>  (124) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (124) 
 2
 
 >  <SMILES>  (124) 
@@ -11455,6 +11827,9 @@ CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c3ccccc13
 >  <NUM_ROTATABLEBONDS>  (125) 
 6
 
+>  <NUM_ROTATABLEBONDS_O>  (125) 
+6
+
 >  <SMILES>  (125) 
 CC[N+]([O-])(CC)CCCN1c2ccccc2S(=O)c3ccccc13
 
@@ -11548,6 +11923,9 @@ COC(=O)c1cccc2Sc3ccccc3Nc12
 3
 
 >  <NUM_ROTATABLEBONDS>  (126) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (126) 
 2
 
 >  <SMILES>  (126) 
@@ -11649,6 +12027,9 @@ CC(=O)N1c2ccccc2Sc3ccc(cc13)C(=O)CCl
 3
 
 >  <NUM_ROTATABLEBONDS>  (127) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (127) 
 3
 
 >  <SMILES>  (127) 
@@ -11751,6 +12132,9 @@ CC(=O)N1c2ccccc2Sc3c1ccc4ccccc34
 4
 
 >  <NUM_ROTATABLEBONDS>  (128) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (128) 
 1
 
 >  <SMILES>  (128) 
@@ -11851,6 +12235,9 @@ c1ccc(cc1)c2nc3cc4ccccc4cc3s2
 >  <NUM_ROTATABLEBONDS>  (129) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (129) 
+1
+
 >  <SMILES>  (129) 
 c1ccc(cc1)c2nc3cc4ccccc4cc3s2
 
@@ -11929,6 +12316,9 @@ O=C1CSc2ccccc2N1
 2
 
 >  <NUM_ROTATABLEBONDS>  (130) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (130) 
 0
 
 >  <SMILES>  (130) 
@@ -12017,6 +12407,9 @@ C1CN(CCO1)[Se][Se]N2CCOCC2
 >  <NUM_ROTATABLEBONDS>  (131) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (131) 
+3
+
 >  <SMILES>  (131) 
 C1CN(CCO1)[Se][Se]N2CCOCC2
 
@@ -12085,6 +12478,9 @@ CCN(CC)N=O
 0
 
 >  <NUM_ROTATABLEBONDS>  (132) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (132) 
 3
 
 >  <P1>  (132) 
@@ -12162,6 +12558,9 @@ CCCN(CCC)N=O
 0
 
 >  <NUM_ROTATABLEBONDS>  (133) 
+5
+
+>  <NUM_ROTATABLEBONDS_O>  (133) 
 5
 
 >  <P1>  (133) 
@@ -12245,6 +12644,9 @@ CC(C)CN(CC(C)C)N=O
 >  <NUM_ROTATABLEBONDS>  (134) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (134) 
+5
+
 >  <P1>  (134) 
 2.29
 
@@ -12320,6 +12722,9 @@ CCCCN(CC)N=O
 0
 
 >  <NUM_ROTATABLEBONDS>  (135) 
+5
+
+>  <NUM_ROTATABLEBONDS_O>  (135) 
 5
 
 >  <P1>  (135) 
@@ -12419,6 +12824,9 @@ CCCCC(CC)CN(CC(CC)CCCC)N=O
 >  <NUM_ROTATABLEBONDS>  (136) 
 13
 
+>  <NUM_ROTATABLEBONDS_O>  (136) 
+13
+
 >  <SMILES>  (136) 
 CCCCC(CC)CN(CC(CC)CCCC)N=O
 
@@ -12496,6 +12904,9 @@ CN(N=O)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (137) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (137) 
+2
+
 >  <SMILES>  (137) 
 CN(N=O)c1ccccc1
 
@@ -12567,6 +12978,9 @@ O=NN1CCCCC1
 1
 
 >  <NUM_ROTATABLEBONDS>  (138) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (138) 
 1
 
 >  <P1>  (138) 
@@ -12643,6 +13057,9 @@ O=NN1CCOCC1
 1
 
 >  <NUM_ROTATABLEBONDS>  (139) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (139) 
 1
 
 >  <P1>  (139) 
@@ -12734,6 +13151,9 @@ CCCCOC(=O)C=CC(=O)OCCCC
 0
 
 >  <NUM_ROTATABLEBONDS>  (140) 
+8
+
+>  <NUM_ROTATABLEBONDS_O>  (140) 
 10
 
 >  <SMILES>  (140) 
@@ -12800,6 +13220,9 @@ OC(=O)CBr
 0
 
 >  <NUM_ROTATABLEBONDS>  (141) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (141) 
 1
 
 >  <P1>  (141) 
@@ -12869,6 +13292,9 @@ OC(=O)CCl
 0
 
 >  <NUM_ROTATABLEBONDS>  (142) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (142) 
 1
 
 >  <P1>  (142) 
@@ -12957,6 +13383,9 @@ OC(=O)C=CC(=O)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (143) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (143) 
+3
+
 >  <P1>  (143) 
 1.53
 
@@ -13035,6 +13464,9 @@ Nc1ccccc1C(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (144) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (144) 
 1
 
 >  <P1>  (144) 
@@ -13117,6 +13549,9 @@ OP(=O)(O)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (145) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (145) 
+1
+
 >  <P1>  (145) 
 0.54
 
@@ -13197,6 +13632,9 @@ OS(=O)(=O)c1ccccc1
 >  <NUM_ROTATABLEBONDS>  (146) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (146) 
+1
+
 >  <SMILES>  (146) 
 OS(=O)(=O)c1ccccc1
 
@@ -13274,6 +13712,9 @@ Nc1ccccc1S(=O)(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (147) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (147) 
 1
 
 >  <SMILES>  (147) 
@@ -13368,6 +13809,9 @@ OS(=O)(=O)c1cc([N+](=O)[O-])c(Cl)c(c1)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (148) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (148) 
+3
+
 >  <SMILES>  (148) 
 OS(=O)(=O)c1cc([N+](=O)[O-])c(Cl)c(c1)[N+](=O)[O-]
 
@@ -13441,6 +13885,9 @@ OC(=O)c1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (149) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (149) 
 1
 
 >  <P1>  (149) 
@@ -13528,6 +13975,9 @@ OC(=O)c1ccc(cc1Cl)[N+](=O)[O-]
 1
 
 >  <NUM_ROTATABLEBONDS>  (150) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (150) 
 2
 
 >  <SMILES>  (150) 
@@ -13621,6 +14071,9 @@ CCCCC(=Cc1cc(Cl)c(O)c(Cl)c1)C(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (151) 
+5
+
+>  <NUM_ROTATABLEBONDS_O>  (151) 
 5
 
 >  <SMILES>  (151) 
@@ -13723,6 +14176,9 @@ OC(=O)C(=Cc1cc(I)c(O)c(I)c1)Cc2ccccc2
 >  <NUM_ROTATABLEBONDS>  (152) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (152) 
+4
+
 >  <SMILES>  (152) 
 OC(=O)C(=Cc1cc(I)c(O)c(I)c1)Cc2ccccc2
 
@@ -13816,6 +14272,9 @@ CCCCC(=Cc1cc(I)c(O)c(I)c1)C(=O)O
 >  <NUM_ROTATABLEBONDS>  (153) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (153) 
+5
+
 >  <SMILES>  (153) 
 CCCCC(=Cc1cc(I)c(O)c(I)c1)C(=O)O
 
@@ -13907,6 +14366,9 @@ CCCCCCC(=Cc1ccc(O)cc1)C(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (154) 
+7
+
+>  <NUM_ROTATABLEBONDS_O>  (154) 
 7
 
 >  <SMILES>  (154) 
@@ -14009,6 +14471,9 @@ OC(=O)C(=Cc1cc(Br)c(O)c(Br)c1)c2ccc(I)cc2
 >  <NUM_ROTATABLEBONDS>  (155) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (155) 
+3
+
 >  <SMILES>  (155) 
 OC(=O)C(=Cc1cc(Br)c(O)c(Br)c1)c2ccc(I)cc2
 
@@ -14107,6 +14572,9 @@ OC(=O)C(=Cc1cc(Cl)c(O)c(Cl)c1)c2ccc(I)cc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (156) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (156) 
 3
 
 >  <SMILES>  (156) 
@@ -14209,6 +14677,9 @@ OC(=O)C(=Cc1cc(I)c(O)c(I)c1)c2ccc(I)cc2
 >  <NUM_ROTATABLEBONDS>  (157) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (157) 
+3
+
 >  <SMILES>  (157) 
 OC(=O)C(=Cc1cc(I)c(O)c(I)c1)c2ccc(I)cc2
 
@@ -14290,6 +14761,9 @@ CC(=Cc1ccc(O)cc1)C(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (158) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (158) 
 2
 
 >  <SMILES>  (158) 
@@ -14390,6 +14864,9 @@ OC(=O)C(=Cc1cc(Br)cc(Br)c1O)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (159) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (159) 
+3
+
 >  <SMILES>  (159) 
 OC(=O)C(=Cc1cc(Br)cc(Br)c1O)c2ccccc2
 
@@ -14486,6 +14963,9 @@ OC(=O)C(=Cc1cc(Br)c(O)c(Br)c1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (160) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (160) 
 3
 
 >  <SMILES>  (160) 
@@ -14586,6 +15066,9 @@ OC(=O)C(=Cc1cc(Cl)c(O)c(Cl)c1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (161) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (161) 
+3
+
 >  <SMILES>  (161) 
 OC(=O)C(=Cc1cc(Cl)c(O)c(Cl)c1)c2ccccc2
 
@@ -14678,6 +15161,9 @@ OC(=O)C(=Cc1cccc(O)c1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (162) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (162) 
 3
 
 >  <SMILES>  (162) 
@@ -14786,6 +15272,9 @@ Nc1ccc(C=Cc2ccc(N)cc2S(=O)(=O)O)c(c1)S(=O)(=O)O
 >  <NUM_ROTATABLEBONDS>  (163) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (163) 
+4
+
 >  <SMILES>  (163) 
 Nc1ccc(C=Cc2ccc(N)cc2S(=O)(=O)O)c(c1)S(=O)(=O)O
 
@@ -14860,6 +15349,9 @@ OS(=O)(=O)CCS(=O)(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (164) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (164) 
 3
 
 >  <SMILES>  (164) 
@@ -14945,6 +15437,9 @@ OC1OC(C(O)C(O)C1O)C(=O)O
 >  <NUM_ROTATABLEBONDS>  (165) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (165) 
+1
+
 >  <P1>  (165) 
 -2.57
 
@@ -15012,6 +15507,9 @@ OCC(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (166) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (166) 
 1
 
 >  <P1>  (166) 
@@ -15087,6 +15585,9 @@ CC(C)C(Br)C(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (167) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (167) 
 2
 
 >  <SMILES>  (167) 
@@ -15175,6 +15676,9 @@ Nc1ccc(c2ccccc12)S(=O)(=O)O
 2
 
 >  <NUM_ROTATABLEBONDS>  (168) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (168) 
 1
 
 >  <SMILES>  (168) 
@@ -15288,6 +15792,9 @@ CCOC(=O)N(c1ccccc1)c2ccc3c(O)cc(cc3c2)S(=O)(=O)O
 3
 
 >  <NUM_ROTATABLEBONDS>  (169) 
+4
+
+>  <NUM_ROTATABLEBONDS_O>  (169) 
 6
 
 >  <SMILES>  (169) 
@@ -15379,6 +15886,9 @@ CCOP(=O)(Nc1cccc(Cl)c1)OCC
 >  <NUM_ROTATABLEBONDS>  (170) 
 6
 
+>  <NUM_ROTATABLEBONDS_O>  (170) 
+6
+
 >  <SMILES>  (170) 
 CCOP(=O)(Nc1cccc(Cl)c1)OCC
 
@@ -15454,6 +15964,9 @@ OC(=O)c1ccccn1
 >  <NUM_ROTATABLEBONDS>  (171) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (171) 
+1
+
 >  <SMILES>  (171) 
 OC(=O)c1ccccn1
 
@@ -15520,6 +16033,9 @@ CC(Br)C(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (172) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (172) 
 1
 
 >  <P1>  (172) 
@@ -15593,6 +16109,9 @@ CC(Cl)C(=O)O
 >  <NUM_ROTATABLEBONDS>  (173) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (173) 
+1
+
 >  <SMILES>  (173) 
 CC(Cl)C(=O)O
 
@@ -15659,6 +16178,9 @@ OC(=O)CCCl
 0
 
 >  <NUM_ROTATABLEBONDS>  (174) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (174) 
 2
 
 >  <P1>  (174) 
@@ -15732,6 +16254,9 @@ OC(=O)C(Br)CBr
 0
 
 >  <NUM_ROTATABLEBONDS>  (175) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (175) 
 2
 
 >  <SMILES>  (175) 
@@ -15815,6 +16340,9 @@ OC(=O)c1cccc(n1)C(=O)O
 >  <NUM_ROTATABLEBONDS>  (176) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (176) 
+2
+
 >  <SMILES>  (176) 
 OC(=O)c1cccc(n1)C(=O)O
 
@@ -15894,6 +16422,9 @@ OC(=O)c1ccc(nc1)C(=O)O
 1
 
 >  <NUM_ROTATABLEBONDS>  (177) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (177) 
 2
 
 >  <SMILES>  (177) 
@@ -15977,6 +16508,9 @@ OC(=O)c1ccncc1C(=O)O
 >  <NUM_ROTATABLEBONDS>  (178) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (178) 
+2
+
 >  <SMILES>  (178) 
 OC(=O)c1ccncc1C(=O)O
 
@@ -16043,6 +16577,9 @@ CC(=O)C(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (179) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (179) 
 1
 
 >  <SMILES>  (179) 
@@ -16120,6 +16657,9 @@ OC(=O)c1ccccc1O
 1
 
 >  <NUM_ROTATABLEBONDS>  (180) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (180) 
 1
 
 >  <P1>  (180) 
@@ -16215,6 +16755,9 @@ OC(=O)c1cc(cc([N+](=O)[O-])c1O)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (181) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (181) 
+3
+
 >  <SMILES>  (181) 
 OC(=O)c1cc(cc([N+](=O)[O-])c1O)[N+](=O)[O-]
 
@@ -16297,6 +16840,9 @@ OC(=O)c1cccc([N+](=O)[O-])c1O
 1
 
 >  <NUM_ROTATABLEBONDS>  (182) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (182) 
 2
 
 >  <SMILES>  (182) 
@@ -16383,6 +16929,9 @@ OC(=O)c1cc(ccc1O)[N+](=O)[O-]
 >  <NUM_ROTATABLEBONDS>  (183) 
 2
 
+>  <NUM_ROTATABLEBONDS_O>  (183) 
+2
+
 >  <SMILES>  (183) 
 OC(=O)c1cc(ccc1O)[N+](=O)[O-]
 
@@ -16453,6 +17002,9 @@ CCCC(Br)C(=O)O
 0
 
 >  <NUM_ROTATABLEBONDS>  (184) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (184) 
 3
 
 >  <SMILES>  (184) 
@@ -16553,6 +17105,9 @@ CC1CC(C)C(=O)C(C1)C(O)CC2CC(=O)NC(=O)C2
 >  <NUM_ROTATABLEBONDS>  (185) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (185) 
+3
+
 >  <P1>  (185) 
 0.55
 
@@ -16650,6 +17205,9 @@ CC1OC=C2C(=C(C(=O)O)C(=O)C(=C2C1C)C)O
 >  <NUM_ROTATABLEBONDS>  (186) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (186) 
+1
+
 >  <SMILES>  (186) 
 CC1OC=C2C(=C(C(=O)O)C(=O)C(=C2C1C)C)O
 
@@ -16720,6 +17278,9 @@ CCCCOC(=O)N
 0
 
 >  <NUM_ROTATABLEBONDS>  (187) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (187) 
 4
 
 >  <P1>  (187) 
@@ -16808,6 +17369,9 @@ Cc1ccccc1NC(=O)OCCCl
 1
 
 >  <NUM_ROTATABLEBONDS>  (188) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (188) 
 5
 
 >  <SMILES>  (188) 
@@ -16891,6 +17455,9 @@ ClCCOC(=O)Nc1ccccc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (189) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (189) 
 5
 
 >  <SMILES>  (189) 
@@ -16965,6 +17532,9 @@ CCOC(=O)NCC=C
 0
 
 >  <NUM_ROTATABLEBONDS>  (190) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (190) 
 5
 
 >  <SMILES>  (190) 
@@ -17038,6 +17608,9 @@ Cc1ccc(S)cc1
 1
 
 >  <NUM_ROTATABLEBONDS>  (191) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (191) 
 0
 
 >  <SMILES>  (191) 
@@ -17151,6 +17724,9 @@ na;fingerprint;4.71;SMILES;2048,64,0.30,0/7
 >  <NUM_ROTATABLEBONDS>  (192) 
 7
 
+>  <NUM_ROTATABLEBONDS_O>  (192) 
+7
+
 >  <SMILES>  (192) 
 [O-][N+](=O)c1ccc(SSc2ccc(cc2[N+](=O)[O-])[N+](=O)[O-])c(c1)[N+](=O)[O-]
 
@@ -17235,6 +17811,9 @@ OC1(CCCC1)C#CC2(O)CCCC2
 2
 
 >  <NUM_ROTATABLEBONDS>  (193) 
+0
+
+>  <NUM_ROTATABLEBONDS_O>  (193) 
 0
 
 >  <SMILES>  (193) 
@@ -17351,6 +17930,9 @@ O=C(c1ccccc1)C(c2ccccc2)(c3ccccc3)c4ccccc4
 >  <NUM_ROTATABLEBONDS>  (194) 
 5
 
+>  <NUM_ROTATABLEBONDS_O>  (194) 
+5
+
 >  <SMILES>  (194) 
 O=C(c1ccccc1)C(c2ccccc2)(c3ccccc3)c4ccccc4
 
@@ -17417,6 +17999,9 @@ CNCC(=O)N
 0
 
 >  <NUM_ROTATABLEBONDS>  (195) 
+2
+
+>  <NUM_ROTATABLEBONDS_O>  (195) 
 2
 
 >  <SMILES>  (195) 
@@ -17509,6 +18094,9 @@ O=C(C=Cc1cccnc1)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (196) 
 3
 
+>  <NUM_ROTATABLEBONDS_O>  (196) 
+3
+
 >  <SMILES>  (196) 
 O=C(C=Cc1cccnc1)c2ccccc2
 
@@ -17597,6 +18185,9 @@ O=C(C=Cc1ccccn1)c2ccccc2
 2
 
 >  <NUM_ROTATABLEBONDS>  (197) 
+3
+
+>  <NUM_ROTATABLEBONDS_O>  (197) 
 3
 
 >  <SMILES>  (197) 
@@ -17693,6 +18284,9 @@ CC(C(O)c1ccccn1)C(=O)c2ccccc2
 >  <NUM_ROTATABLEBONDS>  (198) 
 4
 
+>  <NUM_ROTATABLEBONDS_O>  (198) 
+4
+
 >  <SMILES>  (198) 
 CC(C(O)c1ccccn1)C(=O)c2ccccc2
 
@@ -17780,6 +18374,9 @@ CCC(C)(O)C#CC1(O)CCCCC1C
 >  <NUM_ROTATABLEBONDS>  (199) 
 1
 
+>  <NUM_ROTATABLEBONDS_O>  (199) 
+1
+
 >  <SMILES>  (199) 
 CCC(C)(O)C#CC1(O)CCCCC1C
 
@@ -17859,6 +18456,9 @@ CC(=O)Nc1cc(C)cc(C)c1
 1
 
 >  <NUM_ROTATABLEBONDS>  (200) 
+1
+
+>  <NUM_ROTATABLEBONDS_O>  (200) 
 2
 
 >  <P1>  (200) 

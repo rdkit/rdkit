@@ -1,21 +1,21 @@
-// $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2015, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
-//       products derived from this software without specific prior written permission.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -29,209 +29,257 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef _RDKIT_H_
-#define _RDKIT_H_
+#ifndef RDKIT_H_PSQL
+#define RDKIT_H_PSQL
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "postgres.h"
+#include <postgres.h>
 
-  typedef bytea Mol;
+typedef bytea Mol;
 
-#define DatumGetMolP(x)         ((Mol*)PG_DETOAST_DATUM(x))
-#define DatumGetMolPCopy(x)     ((Mol*)PG_DETOAST_DATUM_COPY(x))
-#define MolPGetDatum(x)         (PointerGetDatum(x))
+#define DatumGetMolP(x) ((Mol *)PG_DETOAST_DATUM(x))
+#define DatumGetMolPCopy(x) ((Mol *)PG_DETOAST_DATUM_COPY(x))
+#define MolPGetDatum(x) (PointerGetDatum(x))
 
-#define PG_GETARG_MOL_P(x)      DatumGetMolP(PG_GETARG_DATUM(x))
+#define PG_GETARG_MOL_P(x) DatumGetMolP(PG_GETARG_DATUM(x))
 #define PG_GETARG_MOL_P_COPY(x) DatumGetMolPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_MOL_P(x)      PG_RETURN_DATUM(MolPGetDatum(x))
+#define PG_RETURN_MOL_P(x) PG_RETURN_DATUM(MolPGetDatum(x))
 
-  typedef bytea BitmapFingerPrint;
+typedef bytea Bfp;
 
-#define DatumGetBitmapFingerPrintP(x)           ((BitmapFingerPrint*)PG_DETOAST_DATUM(x))
-#define DatumGetBitmapFingerPrintPCopy(x)       ((BitmapFingerPrint*)PG_DETOAST_DATUM_COPY(x))
-#define BitmapFingerPrintPGetDatum(x)           (PointerGetDatum(x))
+typedef struct {
+  char vl_len_[4];
+  uint16 weight;
+  uint8 fp[FLEXIBLE_ARRAY_MEMBER];
+} BfpSignature;
 
-#define PG_GETARG_BITMAPFINGERPRINT_P(x)        DatumGetBitmapFingerPrintP(PG_GETARG_DATUM(x))
-#define PG_GETARG_BITMAPFINGERPRINT_P_COPY(x) DatumGetBitmapFingerPrintPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_BITMAPFINGERPRINT_P(x)        PG_RETURN_DATUM(BitmapFingerPrintPGetDatum(x))
+#define DatumGetBfpP(x) ((Bfp *)PG_DETOAST_DATUM(x))
+#define DatumGetBfpPCopy(x) ((Bfp *)PG_DETOAST_DATUM_COPY(x))
+#define BfpPGetDatum(x) (PointerGetDatum(x))
 
-  typedef bytea SparseFingerPrint;
+#define PG_GETARG_BFP_P(x) DatumGetBfpP(PG_GETARG_DATUM(x))
+#define PG_GETARG_BFP_P_COPY(x) DatumGetBfpPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_BFP_P(x) PG_RETURN_DATUM(BfpPGetDatum(x))
 
-#define DatumGetSparseFingerPrintP(x)           ((SparseFingerPrint*)PG_DETOAST_DATUM(x))
-#define DatumGetSparseFingerPrintPCopy(x)       ((SparseFingerPrint*)PG_DETOAST_DATUM_COPY(x))
-#define SparseFingerPrintPGetDatum(x)           (PointerGetDatum(x))
+#define BFP_SIGLEN(x) (VARSIZE(x) - VARHDRSZ)
 
-#define PG_GETARG_SPARSEFINGERPRINT_P(x)        DatumGetSparseFingerPrintP(PG_GETARG_DATUM(x))
-#define PG_GETARG_SPARSEFINGERPRINT_P_COPY(x) DatumGetSparseFingerPrintPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_SPARSEFINGERPRINT_P(x)        PG_RETURN_DATUM(SparseFingerPrintPGetDatum(x))
+typedef bytea Sfp;
 
-  /*
-   * GUC
-   */
-  extern double getTanimotoLimit(void);
-  extern double getDiceLimit(void);
-  extern bool getDoChiralSSS(void);
+#define DatumGetSfpP(x) ((Sfp *)PG_DETOAST_DATUM(x))
+#define DatumGetSfpPCopy(x) ((Sfp *)PG_DETOAST_DATUM_COPY(x))
+#define SfpPGetDatum(x) (PointerGetDatum(x))
 
-  /*
-   * From/to C/C++
-   */
+#define PG_GETARG_SFP_P(x) DatumGetSfpP(PG_GETARG_DATUM(x))
+#define PG_GETARG_SFP_P_COPY(x) DatumGetSfpPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_SFP_P(x) PG_RETURN_DATUM(SfpPGetDatum(x))
 
-  /* RDKit::ROMol */
-  typedef void * CROMol; 
-  void    freeCROMol(CROMol data);
+typedef bytea Reaction;
 
-  CROMol constructROMol(Mol* data); 
-  Mol * deconstructROMol(CROMol data); 
+#define DatumGetReactionP(x) ((Reaction *)PG_DETOAST_DATUM(x))
+#define DatumGetReactionPCopy(x) ((Reaction *)PG_DETOAST_DATUM_COPY(x))
+#define ReactionPGetDatum(x) (PointerGetDatum(x))
 
-  CROMol parseMolBlob(char *data,int len);
-  char *makeMolBlob(CROMol data, int *len);
-  CROMol parseMolText(char *data,bool asSmarts,bool warnOnFail);
-  CROMol parseMolCTAB(char *data,bool keepConformer,bool warnOnFail);
-  char *makeMolText(CROMol data, int *len,bool asSmarts);
-  bool isValidSmiles(char *data);
-  bool isValidSmarts(char *data);
-  bool isValidCTAB(char *data);
-  bool isValidMolBlob(char *data,int len);
+#define PG_GETARG_REACTION_P(x) DatumGetReactionP(PG_GETARG_DATUM(x))
+#define PG_GETARG_REACTION_P_COPY(x) DatumGetReactionPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_REACTION_P(x) PG_RETURN_DATUM(ReactionPGetDatum(x))
 
-  int molcmp(CROMol i, CROMol a);
+/*
+ * From/to C/C++
+ */
 
-  int MolSubstruct(CROMol i, CROMol a);
-  int MolSubstructCount(CROMol i, CROMol a,bool uniquify);
+/* RDKit::ROMol */
+typedef void *CROMol;
+void freeCROMol(CROMol data);
 
-  bytea *makeMolSign(CROMol data);
+CROMol constructROMol(Mol *data);
+Mol *deconstructROMol(CROMol data);
 
-  double MolAMW(CROMol i);
-  double MolLogP(CROMol i);
-  int MolHBA(CROMol i);
-  int MolHBD(CROMol i);
-  int MolNumAtoms(CROMol i);
-  int MolNumHeavyAtoms(CROMol i);
-  int MolNumRotatableBonds(CROMol i);
-  int MolNumHeteroatoms(CROMol i);
-  int MolNumRings(CROMol i);
-  int MolNumAromaticRings(CROMol i);
-  int MolNumAliphaticRings(CROMol i);
-  int MolNumSaturatedRings(CROMol i);
-  int MolNumAromaticHeterocycles(CROMol i);
-  int MolNumAliphaticHeterocycles(CROMol i);
-  int MolNumSaturatedHeterocycles(CROMol i);
-  int MolNumAromaticCarbocycles(CROMol i);
-  int MolNumAliphaticCarbocycles(CROMol i);
-  int MolNumSaturatedCarbocycles(CROMol i);
+CROMol parseMolBlob(char *data, int len);
+char *makeMolBlob(CROMol data, int *len);
+CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery);
+CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
+                    bool asQuery);
+char *makeMolText(CROMol data, int *len, bool asSmarts);
+char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing);
+bool isValidSmiles(char *data);
+bool isValidSmarts(char *data);
+bool isValidCTAB(char *data);
+bool isValidMolBlob(char *data, int len);
 
-  double MolFractionCSP3(CROMol i);
-  double MolTPSA(CROMol i);
-  double MolChi0v(CROMol i);
-  double MolChi1v(CROMol i);
-  double MolChi2v(CROMol i);
-  double MolChi3v(CROMol i);
-  double MolChi4v(CROMol i);
-  double MolChi0n(CROMol i);
-  double MolChi1n(CROMol i);
-  double MolChi2n(CROMol i);
-  double MolChi3n(CROMol i);
-  double MolChi4n(CROMol i);
-  double MolKappa1(CROMol i);
-  double MolKappa2(CROMol i);
-  double MolKappa3(CROMol i);
+int molcmp(CROMol i, CROMol a);
 
-  const char *MolInchi(CROMol i);
-  const char *MolInchiKey(CROMol i);
-  CROMol MolMurckoScaffold(CROMol i);
+int MolSubstruct(CROMol i, CROMol a);
+int MolSubstructCount(CROMol i, CROMol a, bool uniquify);
 
+bytea *makeMolSignature(CROMol data);
 
-  /* ExplicitBitVect */
-  typedef void * MolBitmapFingerPrint;
-  void    freeMolBitmapFingerPrint(MolBitmapFingerPrint data);
+double MolAMW(CROMol i);
+double MolLogP(CROMol i);
+int MolHBA(CROMol i);
+int MolHBD(CROMol i);
+int MolNumAtoms(CROMol i);
+int MolNumHeavyAtoms(CROMol i);
+int MolNumRotatableBonds(CROMol i);
+int MolNumHeteroatoms(CROMol i);
+int MolNumRings(CROMol i);
+int MolNumAromaticRings(CROMol i);
+int MolNumAliphaticRings(CROMol i);
+int MolNumSaturatedRings(CROMol i);
+int MolNumAromaticHeterocycles(CROMol i);
+int MolNumAliphaticHeterocycles(CROMol i);
+int MolNumSaturatedHeterocycles(CROMol i);
+int MolNumAromaticCarbocycles(CROMol i);
+int MolNumAliphaticCarbocycles(CROMol i);
+int MolNumSaturatedCarbocycles(CROMol i);
+int MolNumHeterocycles(CROMol i);
 
-  MolBitmapFingerPrint constructMolBitmapFingerPrint(BitmapFingerPrint *data);
-  BitmapFingerPrint * deconstructMolBitmapFingerPrint(MolBitmapFingerPrint data);
-  bytea * makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data);
+double MolFractionCSP3(CROMol i);
+double MolTPSA(CROMol i);
+double MolChi0v(CROMol i);
+double MolChi1v(CROMol i);
+double MolChi2v(CROMol i);
+double MolChi3v(CROMol i);
+double MolChi4v(CROMol i);
+double MolChi0n(CROMol i);
+double MolChi1n(CROMol i);
+double MolChi2n(CROMol i);
+double MolChi3n(CROMol i);
+double MolChi4n(CROMol i);
+double MolKappa1(CROMol i);
+double MolKappa2(CROMol i);
+double MolKappa3(CROMol i);
 
-  int MolBitmapFingerPrintSize(MolBitmapFingerPrint a);
+int MolNumSpiroAtoms(CROMol i);
+int MolNumBridgeheadAtoms(CROMol i);
 
-  double calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
-  double calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b);
-  double calcBitmapTverskySml(MolBitmapFingerPrint a, MolBitmapFingerPrint b,float ca, float cb);
+char *makeMolFormulaText(CROMol data, int *len, bool separateIsotopes,
+                         bool abbreviateHIsotopes);
 
-  /* SparseIntVect<boost::int32_t> */
-  typedef void * MolSparseFingerPrint;
-  void    freeMolSparseFingerPrint(MolSparseFingerPrint data);
+const char *MolInchi(CROMol i, const char *opts);
+const char *MolInchiKey(CROMol i, const char *opts);
+CROMol MolMurckoScaffold(CROMol i);
 
-  MolSparseFingerPrint constructMolSparseFingerPrint(SparseFingerPrint *data);
-  SparseFingerPrint * deconstructMolSparseFingerPrint(MolSparseFingerPrint data);
-  bytea * makeSignatureSparseFingerPrint(MolSparseFingerPrint data, int numBits);
-  bytea * makeLowSparseFingerPrint(MolSparseFingerPrint data, int numInts);
+CROMol MolAdjustQueryProperties(CROMol m, const char *params);
+char *MolGetSVG(CROMol i, unsigned int w, unsigned int h, const char *legend,
+                const char *params);
 
-  double calcSparseTanimotoSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
-  double calcSparseDiceSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
-  double calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned int szb);
-  bool calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt);
-  bool calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt);
-  MolSparseFingerPrint  addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
-  MolSparseFingerPrint  subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
+/* ExplicitBitVect */
+typedef void *CBfp;
+void freeCBfp(CBfp data);
 
+CBfp constructCBfp(Bfp *data);
+Bfp *deconstructCBfp(CBfp data);
+BfpSignature *makeBfpSignature(CBfp data);
 
-  void countOverlapValues(bytea * sign, MolSparseFingerPrint data, int numBits,
-                          int * sum, int * overlapSum, int * overlapN);
-  void countLowOverlapValues(bytea * sign, MolSparseFingerPrint data, int numInts,
-                             int * querySum, int *keySum, int * overlapUp, int * overlapDown);
-  /*
-   * Various mol -> fp transformation
-   */
+int CBfpSize(CBfp a);
 
-  MolBitmapFingerPrint makeLayeredBFP(CROMol data);
-  MolBitmapFingerPrint makeRDKitBFP(CROMol data);
-  MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius);
-  MolSparseFingerPrint makeMorganSFP(CROMol data, int radius);
-  MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius);
-  MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius);
-  MolSparseFingerPrint makeAtomPairSFP(CROMol data);
-  MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data);
-  MolBitmapFingerPrint makeAtomPairBFP(CROMol data);
-  MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data);
-  MolBitmapFingerPrint makeMACCSBFP(CROMol data);
+double calcBitmapTanimotoSml(CBfp a, CBfp b);
+double calcBitmapDiceSml(CBfp a, CBfp b);
+double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb);
 
-  /*
-   * Indexes
-   */
+/* SparseIntVect<boost::int32_t> */
+typedef void *CSfp;
+void freeCSfp(CSfp data);
 
-#define NUMBITS                                 (2048)
-#define NUMRANGE                                (120)
+CSfp constructCSfp(Sfp *data);
+Sfp *deconstructCSfp(CSfp data);
+bytea *makeSfpSignature(CSfp data, int numBits);
+bytea *makeLowSparseFingerPrint(CSfp data, int numInts);
 
-#define INTRANGEMAX                             (0xff)
-  typedef struct IntRange {
-    uint8           low;
-    uint8           high;
-  } IntRange;
+double calcSparseTanimotoSml(CSfp a, CSfp b);
+double calcSparseDiceSml(CSfp a, CSfp b);
+double calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b,
+                               unsigned int szb);
+bool calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt);
+bool calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt);
+CSfp addSFP(CSfp a, CSfp b);
+CSfp subtractSFP(CSfp a, CSfp b);
 
-#define RDKitTanimotoStrategy   (1)
-#define RDKitDiceStrategy       (2)
-#if PG_VERSION_NUM >= 90100
-#define RDKitOrderByTanimotoStrategy   (3)
-#define RDKitOrderByDiceStrategy       (4)
-#endif
-#define RDKitContains                   (3)
-#define RDKitContained                  (4)
-#define RDKitEquals                     (6)
+void countOverlapValues(bytea *sign, CSfp data, int numBits, int *sum,
+                        int *overlapSum, int *overlapN);
+void countLowOverlapValues(bytea *sign, CSfp data, int numInts, int *querySum,
+                           int *keySum, int *overlapUp, int *overlapDown);
+/*
+ * Various mol -> fp transformation
+ */
 
-  bool calcConsistency(bool isLeaf, uint16 strategy, 
-                       double nCommonUp, double nCommonDown, double nKey, double nQuery);
+CBfp makeLayeredBFP(CROMol data);
+CBfp makeRDKitBFP(CROMol data);
+CBfp makeMorganBFP(CROMol data, int radius);
+CSfp makeMorganSFP(CROMol data, int radius);
+CBfp makeFeatMorganBFP(CROMol data, int radius);
+CSfp makeFeatMorganSFP(CROMol data, int radius);
+CSfp makeAtomPairSFP(CROMol data);
+CSfp makeTopologicalTorsionSFP(CROMol data);
+CBfp makeAtomPairBFP(CROMol data);
+CBfp makeTopologicalTorsionBFP(CROMol data);
+CBfp makeMACCSBFP(CROMol data);
+CBfp makeAvalonBFP(CROMol data, bool isQuery, unsigned int bitFlags);
 
+/*
+ * Indexes
+ */
 
-  /*
-   *  Cache subsystem. Moleculas and fingerprints I/O is extremely expensive.
-   */
-  struct MemoryContextData; /* forward declaration to prevent conflicts with C++ */
-  void* SearchMolCache( void *cache, struct MemoryContextData * ctx, Datum a, 
-                        Mol **m, CROMol *mol, bytea **sign);
-  void* SearchBitmapFPCache( void *cache, struct MemoryContextData * ctx, Datum a, 
-                             BitmapFingerPrint **f, MolBitmapFingerPrint *fp, bytea **val);
-  void* SearchSparseFPCache( void *cache, struct MemoryContextData * ctx, Datum a, 
-                             SparseFingerPrint **f, MolSparseFingerPrint *fp, bytea **val);
+#define NUMBITS (2048)
+#define NUMRANGE (120)
+
+#define INTRANGEMAX (0xff)
+typedef struct IntRange {
+  uint8 low;
+  uint8 high;
+} IntRange;
+
+#define RDKitTanimotoStrategy (1)
+#define RDKitDiceStrategy (2)
+#define RDKitOrderByTanimotoStrategy (3)
+#define RDKitOrderByDiceStrategy (4)
+#define RDKitContains (3)
+#define RDKitContained (4)
+#define RDKitEquals (6)
+#define RDKitSmaller (7)
+#define RDKitGreater (8)
+
+bool calcConsistency(bool isLeaf, uint16 strategy, double nCommonUp,
+                     double nCommonDown, double nKey, double nQuery);
+
+/* Chemical Reactions
+ * RDKit::ChemicalReaction */
+typedef void *CChemicalReaction;
+
+void freeChemReaction(CChemicalReaction data);
+
+CChemicalReaction constructChemReact(Reaction *data);
+Reaction *deconstructChemReact(CChemicalReaction data);
+
+CChemicalReaction parseChemReactBlob(char *data, int len);
+CChemicalReaction parseChemReactText(char *data, bool asSmarts,
+                                     bool warnOnFail);
+CChemicalReaction parseChemReactCTAB(char *data, bool warnOnFail);
+char *makeChemReactBlob(CChemicalReaction data, int *len);
+char *makeChemReactText(CChemicalReaction data, int *len, bool asSmarts);
+char *makeCTABChemReact(CChemicalReaction data, int *len);
+
+int ChemReactNumReactants(CChemicalReaction rxn);
+int ChemReactNumProducts(CChemicalReaction rxn);
+int ChemReactNumAgents(CChemicalReaction rxn);
+
+/* Reaction substructure search */
+bytea *makeReactionSign(CChemicalReaction data);
+int ReactionSubstruct(CChemicalReaction rxn, CChemicalReaction rxn2);
+int reactioncmp(CChemicalReaction rxn, CChemicalReaction rxn2);
+CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType);
+
+/* Reaction difference fingerprint */
+CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size, int fpType);
+
+char *computeMolHash(CROMol data, int *len);
+
+char *findMCSsmiles(char *smiles, char *params);
+void *addMol2list(void *lst, Mol *mol);
+char *findMCS(void *lst, char *params);
 
 #ifdef __cplusplus
 }

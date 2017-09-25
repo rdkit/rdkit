@@ -1,3 +1,3 @@
 # simple __init__.py
 
-from pidSVG import *
+from .pidSVG import *

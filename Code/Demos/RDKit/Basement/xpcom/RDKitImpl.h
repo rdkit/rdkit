@@ -3,18 +3,17 @@
 #include "IRDKit.h"
 
 /* Header file */
-class RDKitImpl : public IRDKit
-{
-public:
+class RDKitImpl : public IRDKit {
+ public:
   NS_DECL_ISUPPORTS
   NS_DECL_IRDKIT
 
   RDKitImpl();
 
-private:
+ private:
   ~RDKitImpl();
 
-protected:
+ protected:
   /* additional members */
 };
 #endif

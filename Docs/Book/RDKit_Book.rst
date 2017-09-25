@@ -20,7 +20,6 @@ The rules are relatively straightforward.
 Aromaticity is a property of atoms and bonds in rings.
 An aromatic bond must be between aromatic atoms, but a bond between aromatic atoms does not need to be aromatic.
 
-
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
 .. image:: images/picture_9.png
@@ -69,11 +68,11 @@ Notice that exocyclic bonds to electronegative atoms “steal” the valence ele
 The use of fused rings for aromaticity can lead to situations where individual rings are not aromatic, but the fused system is.
 An example of this is azulene:
 
-.. image:: images/picture_8.png 
+.. image:: images/picture_8.png
 
 An extreme example, demonstrating both fused rings and the influence of exocyclic double bonds:
 
-.. image:: images/picture_7.png 
+.. image:: images/picture_7.png
 
 >>> m=Chem.MolFromSmiles('O=C1C=CC(=O)C2=C1OC=CO2')
 >>> m.GetAtomWithIdx(6).GetIsAromatic()
@@ -82,6 +81,31 @@ True
 True
 >>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
 False
+
+A special case, heteroatoms with radicals are not considered candidates for aromaticity:
+
+.. image:: images/picture_10.png
+
+>>> m = Chem.MolFromSmiles('C1=C[N]C=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetIsAromatic()
+False
+>>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
+1
+
+Carbons with radicals, however, are still considered:
+
+.. image:: images/picture_11.png
+
+>>> m = Chem.MolFromSmiles('C1=[C]NC=C1')
+>>> m.GetAtomWithIdx(0).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetIsAromatic()
+True
+>>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
+1
+
 
 **Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
@@ -283,10 +307,6 @@ the information to be preserved. You can help by providing mapping
 information:
 
 
-
-
-
-
 Rules and caveats
 -----------------
 
@@ -294,13 +314,13 @@ Rules and caveats
    So do [C,N,O:1] or [C;R:1].
 
 2. Don't forget that unspecified bonds in SMARTS are either single or aromatic.
-   Bond orders in product templates are assigned when the product template itself is constructed and it's not always possible to tell if the bond should be single or aromatic: 
+   Bond orders in product templates are assigned when the product template itself is constructed and it's not always possible to tell if the bond should be single or aromatic:
 
 >>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1][#6:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C1NCCCC1'),))[0]]
 ['C1CCCCC1']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
-['c1cccc-c1']
+['c1ccccc-1']
 
   So if you want to copy the bond order from the reactant, use an “Any” bond:
 
@@ -322,11 +342,11 @@ Chemical Features
 
 Chemical features are defined by a Feature Type and a Feature Family.
 The Feature Family is a general classification of the feature (such as "Hydrogen-bond Donor" or "Aromatic") while the Feature Type provides additional, higher-resolution, information about features.
-Pharmacophore matching is done using Feature Family's. Each feature type contains the following pieces of information: 
+Pharmacophore matching is done using Feature Family's. Each feature type contains the following pieces of information:
 
 - A SMARTS pattern that describes atoms (one or more) matching the feature type.
 - Weights used to determine the feature's position based on the positions of its defining atoms.
-  
+
 
 
 Syntax of the FDef file
@@ -338,13 +358,13 @@ AtomType definitions
 
 An AtomType definition allows you to assign a shorthand name to be used in place of a SMARTS string defining an atom query.
 This allows FDef files to be made much more readable.
-For example, defining a non-polar carbon atom like this:: 
+For example, defining a non-polar carbon atom like this::
 
   AtomType Carbon_NonPolar [C&!$(C=[O,N,P,S])&!$(C#N)]
 
 creates a new name that can be used anywhere else in the FDef file that it would be useful to use this SMARTS.
 To reference an AtomType, just include its name in curly brackets.
-For example, this excerpt from an FDef file defines another atom type - Hphobe - which references the Carbon_NonPolar definition:: 
+For example, this excerpt from an FDef file defines another atom type - Hphobe - which references the Carbon_NonPolar definition::
 
   AtomType Carbon_NonPolar [C&!$(C=[O,N,P,S])&!$(C#N)]
   AtomType Hphobe [{Carbon_NonPolar},c,s,S&H0&v2,F,Cl,Br,I]
@@ -353,7 +373,7 @@ Note that ``{Carbon_NonPolar}`` is used in the new AtomType definition without a
 
 
 Repeating an AtomType results in the two definitions being combined using the SMARTS "," (or) operator.
-Here's an example:: 
+Here's an example::
 
   AtomType d1 [N&!H0]
   AtomType d1 [O&!H0]
@@ -376,7 +396,7 @@ It is also possible to define negative AtomType queries::
   AtomType d1 [N,O,S]
   AtomType !d1 [H0]
 
-The negative query gets combined with the first to produce a definition identical to this:: 
+The negative query gets combined with the first to produce a definition identical to this::
 
   AtomType d1 [!H0;N,O,S]
 
@@ -387,7 +407,7 @@ Note that the negative AtomType is added to the beginning of the query.
 Feature definitions
 -------------------
 
-A feature definition is more complex than an AtomType definition and stretches across multiple lines:: 
+A feature definition is more complex than an AtomType definition and stretches across multiple lines::
 
   DefineFeature HDonor1 [N,O;!H0]
   Family HBondDonor
@@ -408,16 +428,16 @@ Additional syntax notes:
 ------------------------
 
 - Any line that begins with a # symbol is considered a comment and will be ignored.
-- A backslash character, \, at the end of a line is a continuation character, it indicates that the data from that line is continued on the next line of the file.  Blank space at the beginning of these additional lines is ignored. For example, this AtomType definition:: 
+- A backslash character, \, at the end of a line is a continuation character, it indicates that the data from that line is continued on the next line of the file.  Blank space at the beginning of these additional lines is ignored. For example, this AtomType definition::
 
     AtomType tButylAtom [$([C;!R](-[CH3])(-[CH3])(-[CH3])),\
     $([CH3](-[C;!R](-[CH3])(-[CH3])))]
 
-  is exactly equivalent to this one:: 
+  is exactly equivalent to this one::
 
     AtomType tButylAtom [$([C;!R](-[CH3])(-[CH3])(-[CH3])),$([CH3](-[C;!R](-[CH3])(-[CH3])))]
 
-  (though the first form is much easier to read!) 
+  (though the first form is much easier to read!)
 
 
 Atom weights and feature locations
@@ -427,7 +447,7 @@ Atom weights and feature locations
 Frequently Asked Question(s)
 ============================
 
-- What happens if a Feature Type is repeated in the file? Here's an example:: 
+- What happens if a Feature Type is repeated in the file? Here's an example::
 
     DefineFeature HDonor1 [O&!H0]
     Family HBondDonor
@@ -440,7 +460,7 @@ Frequently Asked Question(s)
     EndFeature
 
   In this case both definitions of the HDonor1 feature type will be active.
-  This is functionally identical to:: 
+  This is functionally identical to::
 
     DefineFeature HDonor1 [O,N;!H0]
     Family HBondDonor
@@ -448,7 +468,7 @@ Frequently Asked Question(s)
     EndFeature
 
   **However** the formulation of this feature definition with a duplicated feature type is considerably less efficient and more confusing than the simpler combined definition.
-  
+
 
 
 Representation of Pharmacophore Fingerprints
@@ -475,7 +495,7 @@ case when the query molecule is derived from a mol block or SMILES.
 
 The general rule used in the RDKit is that if you
 don't specify a property in the query, then it's not used as part of
-the matching criteria and that Hs are ignored. 
+the matching criteria and that Hs are ignored.
 This leads to the following behavior:
 
 +----------+---------+-------+
@@ -505,18 +525,244 @@ This leads to the following behavior:
 +----------+---------+-------+
 | OCO      | C       | Yes   |
 +----------+---------+-------+
-| OCO      | [CH]    | Yes   |
+| OCO      | [CH]    | No    |
 +----------+---------+-------+
-| OCO      | [CH2]   | Yes   |
+| OCO      | [CH2]   | No    |
 +----------+---------+-------+
-| OCO      | [CH3]   | Yes   |
+| OCO      | [CH3]   | No    |
++----------+---------+-------+
+| OCO      | O[CH3]  | Yes   |
 +----------+---------+-------+
 | O[CH2]O  | C       | Yes   |
 +----------+---------+-------+
-| O[CH2]O  | [CH2]   | Yes   |
+| O[CH2]O  | [CH2]   | No    |
 +----------+---------+-------+
 
+Demonstrated here:
 
+>>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+True
+>>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+True
+>>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
+False
+>>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
+True
+>>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
+True
+>>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
+True
+>>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+True
+>>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
+True
+>>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
+True
+>>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
+False
+>>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
+True
+>>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('C'))
+True
+>>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH]'))
+False
+>>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
+False
+>>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH3]'))
+False
+>>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('O[CH3]'))
+True
+>>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('C'))
+True
+>>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
+False
+
+
+Molecular Sanitization
+**********************
+
+The molecule parsing functions all, by default, perform a "sanitization"
+operation on the molecules read. The idea is to generate useful computed
+properties (like hybridization, ring membership, etc.) for the rest of the code
+and to ensure that the molecules are "reasonable": that they can be represented
+with octet-complete Lewis dot structures.
+
+Here are the steps involved, in order.
+
+  1. ``clearComputedProps``: removes any computed properties that already exist
+      on the molecule and its atoms and bonds. This step is always performed.
+
+  2. ``cleanUp``: standardizes a small number of non-standard valence states.
+     The clean up operations are:
+
+      - Neutral 5 valent Ns with double bonds to Os are converted
+        to the zwitterionic form.
+        Example: ``N(=O)=O -> [N+](=O)O-]``
+
+      - Neutral 5 valent Ns with triple bonds to another N are converted
+        to the zwitterionic form.
+        Example: ``C-N=N#N -> C-N=[N+]=[N-]``
+
+      - Neutral 5 valent phosphorus with one double bond to an O and another to
+        either a C or a P are converted to the zwitterionic form.
+        Example: ``C=P(=O)O -> C=[P+]([O-])O``
+
+      - Neutral Cl, Br, or I with exclusively O neighbors, and a valence of 3,
+        5, or 7, are converted to the zwitterionic form. This covers things
+        like chlorous acid, chloric acid, and perchloric acid.
+        Example: ``O=Cl(=O)O -> [O-][Cl+2][O-]O``
+
+     This step should not generate execptions.
+
+  3. ``updatePropertyCache``: calculates the explicit and implicit valences on
+     all atoms. This generates exceptions for atoms in higher-than-allowed
+     valence states. This step is always performed, but if it is "skipped"
+     the test for non-standard valences will not be carried out.
+
+  4. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+     algorithm (discussed in the Getting Started document).
+
+  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+     exception if a ring cannot be kekulized or if aromatic bonds are found
+     outside of rings.
+
+  6. ``assignRadicals``: determines the number of radical electrons (if any) on
+     each atom.
+
+  7. ``setAromaticity``: identifies the aromatic rings and ring systems
+     (see above), sets the aromatic flag on atoms and bonds, sets bond orders
+     to aromatic.
+
+  8. ``setConjugation``: identifies which bonds are conjugated
+
+  9. ``setHybridization``: calculates the hybridization state of each atom
+
+  10. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
+      hybridized.
+
+  11. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
+      This is typically needed for heteroatoms in aromatic rings. The classic
+      example is the nitrogen atom in pyrrole.
+
+The individual steps can be toggled on or off when calling
+``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
+
+Implementation Details
+**********************
+
+"Magic" Property Values
+=======================
+
+The following property values are regularly used in the RDKit codebase and may be useful to client code.
+
+ROMol  (Mol in Python)
+------------------------
+
++------------------------+---------------------------------------------------+
+| Property Name          | Use                                               |
++========================+===================================================+
+| MolFileComments        |   Read from/written to the comment line of CTABs. |
++------------------------+---------------------------------------------------+
+| MolFileInfo            |   Read from/written to the info line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _MolFileChiralFlag     |   Read from/written to the chiral flag of CTABs.  |
++------------------------+---------------------------------------------------+
+| _Name                  |   Read from/written to the name line of CTABs.    |
++------------------------+---------------------------------------------------+
+| _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
++------------------------+---------------------------------------------------+
+
+Atom
+----
+
++------------------------+-------------------------------------------------------------------------------------------------+
+| Property Name          | Use                                                                                             |
++========================+=================================================================================================+
+| _CIPCode               | the CIP code (R or S) of the atom                                                               |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _CIPRank               | the integer CIP rank of the atom                                                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ChiralityPossible     | set if an atom is a possible chiral center                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _MolFileRLabel         | integer R group label for an atom, read from/written to CTABs.                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _ReactionDegreeChanged | set on an atom in a product template of a reaction if its degree changes in the reaction        |
++------------------------+-------------------------------------------------------------------------------------------------+
+| _protected             | atoms with this property set will not be considered as matching reactant queries in reactions   |
++------------------------+-------------------------------------------------------------------------------------------------+
+| dummyLabel             | (on dummy atoms) read from/written to CTABs as the atom symbol                                  |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molAtomMapNumber       | the atom map number for an atom, read from/written to SMILES and CTABs                          |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molfileAlias           | the mol file alias for an atom (follows A tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileValue           | the mol file value for an atom (follows V tags), read from/written to CTABs                     |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molFileInversionFlag   | used to flag whether stereochemistry at an atom changes in a reaction,                          |
+|                        | read from/written to CTABs, determined automatically from SMILES                                |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnComponent        | which component of a reaction an atom belongs to, read from/written to CTABs                    |
++------------------------+-------------------------------------------------------------------------------------------------+
+| molRxnRole             | which role an atom plays in a reaction (1=Reactant, 2=Product, 3=Agent),                        |
+|                        | read from/written to CTABs                                                                      |
++------------------------+-------------------------------------------------------------------------------------------------+
+| smilesSymbol           | determines the symbol that will be written to a SMILES for the atom                             |
++------------------------+-------------------------------------------------------------------------------------------------+
+
+Thread safety and the RDKit
+===========================
+
+While writing the RDKit, we did attempt to ensure that the code would
+work in a multi-threaded environment by avoiding use of global
+variables, etc. However, making code thread safe is not a completely
+trivial thing, so there are no doubt some gaps. This section describes
+which pieces of the code base have explicitly been tested for thread safety.
+
+**Note:** With the exception of the small number of methods/functions
+  that take a ``numThreads`` argument, this section does not apply to
+  using the RDKit from Python threads. Boost.Python ensures that only
+  one thread is calling into the C++ code at any point. To get
+  concurrent execution in Python, use the multiprocessing module or
+  one of the other standard python approaches for this .
+
+What has been tested
+--------------------
+
+  - Reading molecules from SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Generating 2D coordinates
+  - Generating 3D conformations with the distance geometry code
+  - Optimizing molecules with UFF or MMFF
+  - Generating fingerprints
+  - The descriptor calculators in $RDBASE/Code/GraphMol/Descriptors
+  - Substructure searching (Note: if a query molecule contains
+    recursive queries, it may not be safe to use it concurrently on
+    multiple threads, see below)
+  - The Subgraph code
+  - The ChemTransforms code
+  - The chemical reactions code
+  - The Open3DAlign code
+  - The MolDraw2D drawing code
+
+Known Problems
+--------------
+
+  - InChI generation and (probably) parsing. This seems to be a
+    limitation of the IUPAC InChI code. In order to allow the code to
+    be used in a multi-threaded environment, a mutex is used to ensure
+    that only one thread is using the IUPAC code at a time. This is
+    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
+    option enabled.
+  - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
+    their internal state when a molecule is read. It is not safe to
+    use one supplier on more than one thread.
+  - Substructure searching using query molecules that include
+    recursive queries. The recursive queries modify their internal
+    state when a search is run, so it's not safe to use the same query
+    concurrently on multiple threads. If the code is built using the
+    ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
+    we provide), a mutex is used to ensure that only one thread is
+    using a given recursive query at a time.
 
 
 .. rubric:: Footnotes
@@ -532,12 +778,11 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2013 by Greg Landrum
+This document is copyright (C) 2007-2016 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
-To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
+To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 
 The intent of this license is similar to that of the RDKit itself.
 In simple words: “Do whatever you want with it, but please give us some credit.”
-

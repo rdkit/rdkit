@@ -32,48 +32,44 @@
 //        15 P            32 g            49 x
 //        16 Q            33 h            50 y
 
-const int MaxLineLength=72;
-
-char *Base64Encode(const char *inText,const unsigned int inLen){
-  return Base64Encode((const unsigned char *)inText,inLen);
+char *Base64Encode(const char *inText, const unsigned int inLen) {
+  return Base64Encode((const unsigned char *)inText, inLen);
 }
-  
 
-char *Base64Encode(const unsigned char *inText,const unsigned int inLen){
+char *Base64Encode(const unsigned char *inText, const unsigned int inLen) {
   // Notes:
   //   - whoever calls us is responsible for free'ing the result we return
   //   - we cheat and don't worry about breaking lines
-  static unsigned char transTable[64]={'A','B','C','D','E','F','G','H',
-                                       'I','J','K','L','M','N','O','P',
-                                       'Q','R','S','T','U','V','W','X',
-                                       'Y','Z','a','b','c','d','e','f',
-                                       'g','h','i','j','k','l','m','n',
-                                       'o','p','q','r','s','t','u','v',
-                                       'w','x','y','z','0','1','2','3',
-                                       '4','5','6','7','8','9','+','/'};
-  
+  static unsigned char transTable[64] = {
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+
   char *res;
   int resSize;
-  resSize = (4*inLen)/3;
-  while(resSize % 4) resSize++;
-  res = new char[resSize+1];
+  resSize = (4 * inLen) / 3;
+  while (resSize % 4) resSize++;
+  res = new char[resSize + 1];
   unsigned int i = 0;
   int pos = 0;
-  while(i < inLen){
-    res[pos++]= transTable[inText[i]>>2];
-    if( i+1 < inLen){
-      res[pos++]= transTable[((inText[i]&3)<<4)|(inText[i+1]>>4)];
-      if(i+2 < inLen){
-        res[pos++] = transTable[((inText[i+1]&0xF)<<2)|(inText[i+2]>>6)];
-        res[pos++] = transTable[inText[i+2]&0x3F];
+  while (i < inLen) {
+    res[pos++] = transTable[inText[i] >> 2];
+    if (i + 1 < inLen) {
+      res[pos++] = transTable[((inText[i] & 3) << 4) | (inText[i + 1] >> 4)];
+      if (i + 2 < inLen) {
+        res[pos++] =
+            transTable[((inText[i + 1] & 0xF) << 2) | (inText[i + 2] >> 6)];
+        res[pos++] = transTable[inText[i + 2] & 0x3F];
       } else {
         // single padding
-        res[pos++] = transTable[((inText[i+1]&0xF)<<2)];
+        res[pos++] = transTable[((inText[i + 1] & 0xF) << 2)];
         res[pos++] = '=';
       }
     } else {
       // double padding
-      res[pos++] = transTable[((inText[i]&3)<<4)];
+      res[pos++] = transTable[((inText[i] & 3) << 4)];
       res[pos++] = '=';
       res[pos++] = '=';
     }
@@ -83,7 +79,7 @@ char *Base64Encode(const unsigned char *inText,const unsigned int inLen){
   return res;
 }
 
-char *Base64Decode(const char *inText,unsigned int *size){
+char *Base64Decode(const char *inText, unsigned int *size) {
   // Notes:
   //   - whoever calls us is responsible for free'ing the result we return
 
@@ -92,34 +88,34 @@ char *Base64Decode(const char *inText,unsigned int *size){
 
   int i;
   // FIX: we don't really need to build this table here
-  for(i= 0;i<255;i++){
-    transTable[i]= 0x80;
+  for (i = 0; i < 255; i++) {
+    transTable[i] = 0x80;
   }
-  for(i='A';i<='Z';i++) transTable[i] = (unsigned char)i-'A';
-  for(i='a';i<='z';i++) transTable[i] = (unsigned char)i-'a'+26;
-  for(i='0';i<='9';i++) transTable[i] = (unsigned char)i-'0'+52;
-  transTable[static_cast<int>('+')]=62;
-  transTable[static_cast<int>('/')]=63;
+  for (i = 'A'; i <= 'Z'; i++) transTable[i] = (unsigned char)i - 'A';
+  for (i = 'a'; i <= 'z'; i++) transTable[i] = (unsigned char)i - 'a' + 26;
+  for (i = '0'; i <= '9'; i++) transTable[i] = (unsigned char)i - '0' + 52;
+  transTable[static_cast<int>('+')] = 62;
+  transTable[static_cast<int>('/')] = 63;
 
-  int outLen = 3*inLen/4;
+  int outLen = 3 * inLen / 4;
   char *res = new char[outLen];
-  res[outLen-1]=0;
+  res[outLen - 1] = 0;
   int pos = 0;
   i = 0;
   // decode 4 bytes at a time
   unsigned char block[4];
-  int nInBlock=0;
-  while(i < inLen){
+  int nInBlock = 0;
+  while (i < inLen) {
     unsigned char c = inText[i];
-    
+
     // above we set 0x80 as the junk marker in the translation table
-    if ( !(transTable[c]&0x80) ){
+    if (!(transTable[c] & 0x80)) {
       block[nInBlock++] = transTable[c];
-      if( nInBlock == 4 ) {
+      if (nInBlock == 4) {
         // finished a block
-        res[pos++] = (block[0]<<2)|(block[1]>>4);
-        res[pos++] = (block[1]<<4)|(block[2]>>2);
-        res[pos++] = (block[2]<<6)|block[3];
+        res[pos++] = (block[0] << 2) | (block[1] >> 4);
+        res[pos++] = (block[1] << 4) | (block[2] >> 2);
+        res[pos++] = (block[2] << 6) | block[3];
         nInBlock = 0;
       }
     }
@@ -128,11 +124,11 @@ char *Base64Decode(const char *inText,unsigned int *size){
 
   // okay, now there can be 2 or 3 chars remaining to be processed
   //  (before the padding)
-  if(nInBlock>1){
-    res[pos++] = (block[0]<<2)|(block[1]>>4);
-    if(nInBlock > 2){
-      res[pos++] = (block[1]<<4)|(block[2]>>2);
-      res[pos] = (block[2]<<6);
+  if (nInBlock > 1) {
+    res[pos++] = (block[0] << 2) | (block[1] >> 4);
+    if (nInBlock > 2) {
+      res[pos++] = (block[1] << 4) | (block[2] >> 2);
+      res[pos] = (block[2] << 6);
     }
   }
   *size = pos;

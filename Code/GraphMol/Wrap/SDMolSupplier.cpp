@@ -10,31 +10,36 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <string>
 
-//ours
+// ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/PySequenceHolder.h>
+#include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
 
 namespace python = boost::python;
 
 namespace RDKit {
-  void setStreamIndices(SDMolSupplier &self,python::object arg){
-    std::vector<std::streampos> loc;
-    PySequenceHolder<int> seq(arg);
-    loc.reserve(seq.size());
-    for(unsigned int i=0;i<seq.size();++i){
-      loc.push_back(static_cast<std::streampos>(seq[i]));
-    }
-    self.setStreamIndices(loc);
+void setDataHelper(SDMolSupplier &self, const std::string &text, bool sanitize,
+                   bool removeHs, bool strictParsing) {
+  self.setData(text, sanitize, removeHs, strictParsing);
+}
+void setStreamIndices(SDMolSupplier &self, python::object arg) {
+  std::vector<std::streampos> loc;
+  PySequenceHolder<int> seq(arg);
+  loc.reserve(seq.size());
+  for (unsigned int i = 0; i < seq.size(); ++i) {
+    loc.push_back(static_cast<std::streampos>(seq[i]));
   }
+  self.setStreamIndices(loc);
+}
 
-
-  std::string sdMolSupplierClassDoc="A class which supplies molecules from an SD file.\n \
+std::string sdMolSupplierClassDoc =
+    "A class which supplies molecules from an SD file.\n \
 \n \
   Usage examples:\n \
 \n \
@@ -68,42 +73,42 @@ namespace RDKit {
   Properties in the SD file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
 \n";
-  struct sdmolsup_wrap {
-    static void wrap() {
-      python::class_<SDMolSupplier,boost::noncopyable>("SDMolSupplier",
-						       sdMolSupplierClassDoc.c_str(),
-						       python::init<>())
-	.def(python::init<std::string,bool,bool,bool>((python::arg("fileName"),
-                                                       python::arg("sanitize")=true,
-                                                       python::arg("removeHs")=true,
-                                                       python::arg("strictParsing")=true)))
-	.def("__iter__", (SDMolSupplier *(*)(SDMolSupplier *))&MolSupplIter,
-	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
-	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
-	     python::return_value_policy<python::manage_new_object>())
-	.def("__getitem__", (ROMol *(*)(SDMolSupplier *,int))&MolSupplGetItem,
-	     python::return_value_policy<python::manage_new_object>())
-	.def("reset", &SDMolSupplier::reset,
-	     "Resets our position in the file to the beginning.\n")
-	.def("__len__", &SDMolSupplier::length)
-	.def("SetData", &SDMolSupplier::setData,
-	     "Sets the text to be parsed",
-	     (python::arg("self"),python::arg("data"),python::arg("sanitize")=true,
-              python::arg("removeHs")=true))
-	.def("_SetStreamIndices", setStreamIndices,
-	     "Sets the locations of mol beginnings in the input stream. Be *very* careful with this method.",
-	     (python::arg("self"),python::arg("locs")))
-	.def("GetItemText", &SDMolSupplier::getItemText,
-	     "returns the text for an item",
-	     (python::arg("self"),python::arg("index")))
-	.def("atEnd", &SDMolSupplier::atEnd,
-	     "Returns whether or not we have hit EOF.\n")
-	;
-    };
+struct sdmolsup_wrap {
+  static void wrap() {
+    python::class_<SDMolSupplier, boost::noncopyable>(
+        "SDMolSupplier", sdMolSupplierClassDoc.c_str(), python::init<>())
+        .def(python::init<std::string, bool, bool, bool>(
+            (python::arg("fileName"), python::arg("sanitize") = true,
+             python::arg("removeHs") = true,
+             python::arg("strictParsing") = true)))
+        .def("__iter__", (SDMolSupplier * (*)(SDMolSupplier *)) & MolSupplIter,
+             python::return_internal_reference<1>())
+        .def(NEXT_METHOD, (ROMol * (*)(SDMolSupplier *)) &
+                              MolSupplNextAcceptNullLastMolecule,
+             "Returns the next molecule in the file.  Raises _StopIteration_ "
+             "on EOF.\n",
+             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__",
+             (ROMol * (*)(SDMolSupplier *, int)) & MolSupplGetItem,
+             python::return_value_policy<python::manage_new_object>())
+        .def("reset", &SDMolSupplier::reset,
+             "Resets our position in the file to the beginning.\n")
+        .def("__len__", &SDMolSupplier::length)
+        .def("SetData", setDataHelper, "Sets the text to be parsed",
+             (python::arg("self"), python::arg("data"),
+              python::arg("sanitize") = true, python::arg("removeHs") = true,
+              python::arg("strictParsing") = true))
+        .def("_SetStreamIndices", setStreamIndices,
+             "Sets the locations of mol beginnings in the input stream. Be "
+             "*very* careful with this method.",
+             (python::arg("self"), python::arg("locs")))
+        .def("GetItemText", &SDMolSupplier::getItemText,
+             "returns the text for an item",
+             (python::arg("self"), python::arg("index")))
+        .def("atEnd", &SDMolSupplier::atEnd,
+             "Returns whether or not we have hit EOF.\n");
   };
+};
 }
 
-void wrap_sdsupplier() {
-  RDKit::sdmolsup_wrap::wrap();
-}
+void wrap_sdsupplier() { RDKit::sdmolsup_wrap::wrap(); }

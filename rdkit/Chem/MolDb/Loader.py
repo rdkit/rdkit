@@ -10,6 +10,6 @@
 try:
   import sqlalchemy
 except ImportError:
-  from Loader_orig import *
+  from rdkit.Chem.MolDb.Loader_orig import *
 else:
-  from Loader_sa import *
+  from rdkit.Chem.MolDb.Loader_sa import *

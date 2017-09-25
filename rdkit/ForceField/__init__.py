@@ -1,1 +1,1 @@
-from rdForceField import *
+from rdkit.ForceField.rdForceField import *

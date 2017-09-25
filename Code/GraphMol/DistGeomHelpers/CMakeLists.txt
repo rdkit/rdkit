@@ -7,7 +7,7 @@ rdkit_headers(BoundsMatrixBuilder.h
 
 rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral )
+           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
 add_subdirectory(Wrap)
 

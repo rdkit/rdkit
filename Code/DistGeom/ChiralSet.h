@@ -16,41 +16,42 @@
 
 namespace DistGeom {
 
-  /*! \brief Class used to store a quartet of points and chiral volume bounds on them
-   * 
-   */
-  class ChiralSet {
-  public:
+/*! \brief Class used to store a quartet of points and chiral volume bounds on
+ *them
+ *
+ */
+class ChiralSet {
+ public:
+  unsigned int d_idx0;  // the centroid
+  unsigned int d_idx1;
+  unsigned int d_idx2;
+  unsigned int d_idx3;
+  unsigned int d_idx4;
+  double d_volumeLowerBound;
+  double d_volumeUpperBound;
 
-    unsigned int d_idx1;
-    unsigned int d_idx2;
-    unsigned int d_idx3;
-    unsigned int d_idx4;
-    double d_volumeLowerBound;
-    double d_volumeUpperBound;
+  ChiralSet(unsigned int pid0, unsigned int pid1, unsigned int pid2,
+            unsigned int pid3, unsigned int pid4, double lowerVolBound,
+            double upperVolBound)
+      : d_idx0(pid0),
+        d_idx1(pid1),
+        d_idx2(pid2),
+        d_idx3(pid3),
+        d_idx4(pid4),
+        d_volumeLowerBound(lowerVolBound),
+        d_volumeUpperBound(upperVolBound) {
+    CHECK_INVARIANT(lowerVolBound <= upperVolBound, "Inconsistent bounds\n");
+    d_volumeLowerBound = lowerVolBound;
+    d_volumeUpperBound = upperVolBound;
+  }
 
-    ChiralSet(unsigned int pid1, unsigned int pid2, 
-              unsigned int pid3, unsigned int pid4, 
-              double lowerVolBound, double upperVolBound) :
-      d_idx1(pid1), d_idx2(pid2), d_idx3(pid3), d_idx4(pid4),
-      d_volumeLowerBound(lowerVolBound),d_volumeUpperBound(upperVolBound) {
-      CHECK_INVARIANT(lowerVolBound <= upperVolBound, "Inconsistent bounds\n");
-      d_volumeLowerBound = lowerVolBound;
-      d_volumeUpperBound = upperVolBound;
-    }
-    
-    inline double getUpperVolumeBound() const {
-      return d_volumeUpperBound;
-    }
-    
-    inline double getLowerVolumeBound() const {
-      return d_volumeLowerBound;
-    }
-  };
- 
-  typedef boost::shared_ptr<ChiralSet> ChiralSetPtr;
-  typedef std::vector<ChiralSetPtr> VECT_CHIRALSET;
+  inline double getUpperVolumeBound() const { return d_volumeUpperBound; }
 
-}  
+  inline double getLowerVolumeBound() const { return d_volumeLowerBound; }
+};
+
+typedef boost::shared_ptr<ChiralSet> ChiralSetPtr;
+typedef std::vector<ChiralSetPtr> VECT_CHIRALSET;
+}
 
 #endif

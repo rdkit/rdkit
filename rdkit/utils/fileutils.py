@@ -5,13 +5,13 @@
 """ utility functions to help work with files
 
 """
-import string
-import exceptions
 
-class NoMatchFoundError(exceptions.RuntimeError):
+
+class NoMatchFoundError(RuntimeError):
   pass
 
-def MoveToMatchingLine(inFile,matchStr,fullMatch=0):
+
+def MoveToMatchingLine(inFile, matchStr, fullMatch=0):
   """ skip forward in a file until a given string is found
 
      **Arguments**
@@ -35,7 +35,7 @@ def MoveToMatchingLine(inFile,matchStr,fullMatch=0):
   inLine = inFile.readline()
   matched = 0
   while not matched and inLine:
-    idx = string.find(inLine,matchStr)
+    idx = inLine.find(matchStr)
     if (fullMatch and idx == 0) or (not fullMatch and idx > -1):
       matched = 1
     else:
@@ -43,9 +43,4 @@ def MoveToMatchingLine(inFile,matchStr,fullMatch=0):
   if matched:
     return inLine
   else:
-    raise NoMatchFoundError,matchStr
-      
-    
-      
-      
-      
+    raise NoMatchFoundError(matchStr)

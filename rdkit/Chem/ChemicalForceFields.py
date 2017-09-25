@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2006  greg Landrum and Rational Discovery LLC
 #
@@ -8,5 +7,5 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit.ForceField import *
 from rdkit.Chem.rdForceFieldHelpers import *
+from rdkit.ForceField import *

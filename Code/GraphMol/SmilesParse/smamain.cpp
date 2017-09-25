@@ -1,6 +1,7 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery
+//  LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,37 +17,34 @@
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-  int i=0;
+  int i = 0;
   Mol *mol;
-	
-  if(argc < 2){
+
+  if (argc < 2) {
     return 1;
   } else {
-
     string sma;
     bool debugParse = false;
-    int startP=1;
-    if(argc>2){
+    int startP = 1;
+    if (argc > 2) {
       string arg(argv[1]);
-      if(arg=="-d"){
-	debugParse = true;
-	startP = 2;
+      if (arg == "-d") {
+        debugParse = true;
+        startP = 2;
       }
     }
 
-    while(startP<argc){
+    while (startP < argc) {
       sma = argv[startP++];
       std::cout << "In SMARTS: " << sma << std::endl;
-      mol = SmartsToMol(sma,debugParse);
-      if(!mol){
-	BOOST_LOG(rdErrorLog) << "FAILED PARSE: " << sma << std::endl;
+      mol = SmartsToMol(sma, debugParse);
+      if (!mol) {
+        BOOST_LOG(rdErrorLog) << "FAILED PARSE: " << sma << std::endl;
       }
     }
-  }	
-  
+  }
+
   return 1;
 }

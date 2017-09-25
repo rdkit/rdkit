@@ -21,5 +21,4 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 
-
 #endif

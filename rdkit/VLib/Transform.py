@@ -3,9 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
-
+from rdkit import six
 from rdkit.VLib.Node import VLibNode
+
 
 class TransformNode(VLibNode):
   """ base class for nodes which filter their input
@@ -45,12 +45,12 @@ class TransformNode(VLibNode):
     [(1, 1), (2, 2), (3, 3), (3, 1)]
 
   """
-  def __init__(self,func=None,**kwargs):
-    VLibNode.__init__(self,**kwargs)
+
+  def __init__(self, func=None, **kwargs):
+    VLibNode.__init__(self, **kwargs)
     self._func = func
 
   def next(self):
-    done = 0
     parent = self.GetParents()[0]
     args = []
     try:
@@ -60,24 +60,26 @@ class TransformNode(VLibNode):
       raise StopIteration
     args = tuple(args)
     if self._func is not None:
-      res = apply(self._func,args)
+      res = self._func(*args)
     else:
       res = args
-    return res  
+    return res
 
 
-  
-#------------------------------------
+if six.PY3:
+  TransformNode.__next__ = TransformNode.next
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
-  
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

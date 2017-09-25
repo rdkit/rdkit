@@ -30,22 +30,24 @@
 #include <string>
 
 using namespace RDKit;
-namespace io=boost::iostreams;
+namespace io = boost::iostreams;
 
-void test1(){
+void test1() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing basic reading from compressed streams" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing basic reading from compressed streams"
+                       << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/triazine.mol.gz";
+  std::string fname2 =
+      rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/triazine.mol.gz";
   RWMol *m;
-  
+
   io::filtering_istream inStrm;
   inStrm.push(io::gzip_decompressor());
   inStrm.push(io::file_source(fname2));
   TEST_ASSERT(inStrm.is_complete());
-  unsigned int lineNo=0;
-  m = MolDataStreamToMol(inStrm,lineNo);
+  unsigned int lineNo = 0;
+  m = MolDataStreamToMol(inStrm, lineNo);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(6));
 
@@ -55,17 +57,19 @@ void test1(){
 #endif
 }
 
-void test2(){
+void test2() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing to, then reading from compressed streams" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing writing to, then reading from compressed streams"
+      << std::endl;
 
-  std::string smiles="C1CCCC1";
-  std::string buff,molBlock;
+  std::string smiles = "C1CCCC1";
+  std::string buff, molBlock;
   RWMol *m;
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
-  m->setProp("_Name","monkey");
+  m->setProp(common_properties::_Name, "monkey");
   io::filtering_ostream outStrm;
   outStrm.push(io::gzip_compressor());
   outStrm.push(io::back_inserter(buff));
@@ -74,15 +78,15 @@ void test2(){
   molBlock = MolToMolBlock(*m);
   outStrm << molBlock;
   outStrm.reset();
-  
+
   delete m;
   io::filtering_istream inStrm;
   inStrm.push(io::gzip_decompressor());
   inStrm.push(boost::make_iterator_range(buff));
   TEST_ASSERT(inStrm.is_complete());
 
-  unsigned int lineNo=0;
-  m = MolDataStreamToMol(inStrm,lineNo);
+  unsigned int lineNo = 0;
+  m = MolDataStreamToMol(inStrm, lineNo);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
 
@@ -92,102 +96,104 @@ void test2(){
 #endif
 }
 
-
-void test3(){
+void test3() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing pickles to a file then reading them back" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing writing pickles to a file then reading them back"
+      << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdb";
 
-  std::string smiles,buff;
+  std::string smiles, buff;
   RWMol *m;
 
   std::vector<unsigned int> filePs;
   io::filtering_ostream outStrm;
-  outStrm.push(io::file_sink(fname2,std::ios_base::out|std::ios_base::binary));
+  outStrm.push(
+      io::file_sink(fname2, std::ios_base::out | std::ios_base::binary));
   TEST_ASSERT(outStrm.is_complete());
-  
-  smiles="C1CCC1";
+
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
-  
-  MolPickler::pickleMol(*m,outStrm);
+
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
 
-  smiles="C1CCC1";
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(0);
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="C1CCCC1";
+
+  smiles = "C1CCCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="c1ccccc1";
+
+  smiles = "c1ccccc1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(6));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="c1ccccc1CC(=O)O";
+
+  smiles = "c1ccccc1CC(=O)O";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(9));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
 
   outStrm.flush();
   outStrm.reset();
-  
+
   io::filtering_istream inStrm;
-  inStrm.push(io::file_source(fname2,std::ios_base::in|std::ios_base::binary));
+  inStrm.push(
+      io::file_source(fname2, std::ios_base::in | std::ios_base::binary));
   TEST_ASSERT(inStrm.is_complete());
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(5));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(6));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
-
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 #else
@@ -195,9 +201,10 @@ void test3(){
 #endif
 }
 
-void test4(){
+void test4() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing pickles to a single compressed file then reading them back" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing writing pickles to a single compressed file "
+                          "then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdz";
 
@@ -206,89 +213,89 @@ void test4(){
 
   io::filtering_ostream outStrm;
   outStrm.push(io::gzip_compressor());
-  outStrm.push(io::file_sink(fname2,std::ios_base::out|std::ios_base::binary));
+  outStrm.push(
+      io::file_sink(fname2, std::ios_base::out | std::ios_base::binary));
   TEST_ASSERT(outStrm.is_complete());
-  
-  smiles="C1CCC1";
+
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
-  
-  MolPickler::pickleMol(*m,outStrm);
+
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
 
-  smiles="C1CCC1";
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
   RDDepict::compute2DCoords(*m);
 
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="C1CCCC1";
+
+  smiles = "C1CCCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
   RDDepict::compute2DCoords(*m);
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="c1ccccc1";
+
+  smiles = "c1ccccc1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(6));
   RDDepict::compute2DCoords(*m);
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
-  
-  smiles="c1ccccc1CC(=O)O";
+
+  smiles = "c1ccccc1CC(=O)O";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(9));
   RDDepict::compute2DCoords(*m);
-  MolPickler::pickleMol(*m,outStrm);
+  MolPickler::pickleMol(*m, outStrm);
   delete m;
 
   io::flush(outStrm);
   outStrm.pop();
 
-  
   io::filtering_istream inStrm;
   inStrm.push(io::gzip_decompressor());
-  inStrm.push(io::file_source(fname2,std::ios_base::in|std::ios_base::binary));
+  inStrm.push(
+      io::file_source(fname2, std::ios_base::in | std::ios_base::binary));
   TEST_ASSERT(inStrm.is_complete());
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(5));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(6));
   delete m;
 
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(inStrm,*m);
+  MolPickler::molFromPickle(inStrm, *m);
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
-
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 #else
@@ -296,107 +303,106 @@ void test4(){
 #endif
 }
 
-void test5(){
+void test5() {
 #ifdef SUPPORT_COMPRESSED_IO
-  BOOST_LOG(rdInfoLog) << "testing writing compressed pickles to a single file then reading them back" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing writing compressed pickles to a single file "
+                          "then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/tmp.rdz";
 
-  std::string smiles,buff;
+  std::string smiles, buff;
   RWMol *m;
   std::vector<unsigned int> filePs;
 
   io::filtering_ostream outStrm;
-  outStrm.push(io::file_sink(fname2,std::ios_base::out|std::ios_base::binary));
+  outStrm.push(
+      io::file_sink(fname2, std::ios_base::out | std::ios_base::binary));
   TEST_ASSERT(outStrm.is_complete());
-  
-  smiles="C1CCC1";
+
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
 
-
   io::filtering_ostream *tmpStrm;
-  tmpStrm=new io::filtering_ostream();
+  tmpStrm = new io::filtering_ostream();
   tmpStrm->push(io::gzip_compressor());
   tmpStrm->push(io::back_inserter(buff));
-  
-  
+
   filePs.push_back(0);
-  MolPickler::pickleMol(*m,*tmpStrm);
+  MolPickler::pickleMol(*m, *tmpStrm);
   delete m;
   tmpStrm->reset();
 
-  outStrm<<buff.size();
-  outStrm<<buff;
-  std::cerr<<"sz: " <<buff.size()<<" "<<outStrm.tellp() <<std::endl;
-  buff="";
+  outStrm << buff.size();
+  outStrm << buff;
+  std::cerr << "sz: " << buff.size() << " " << outStrm.tellp() << std::endl;
+  buff = "";
   tmpStrm->push(io::gzip_compressor());
   tmpStrm->push(io::back_inserter(buff));
-  
-  smiles="C1CCC1";
+
+  smiles = "C1CCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(4));
   RDDepict::compute2DCoords(*m);
 
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,*tmpStrm);
+  MolPickler::pickleMol(*m, *tmpStrm);
   delete m;
   tmpStrm->reset();
-  outStrm<<buff.size();
-  outStrm<<buff;
-  std::cerr<<"sz: " <<buff.size()<<" "<<outStrm.tellp() <<std::endl;
-  buff="";
+  outStrm << buff.size();
+  outStrm << buff;
+  std::cerr << "sz: " << buff.size() << " " << outStrm.tellp() << std::endl;
+  buff = "";
   tmpStrm->push(io::gzip_compressor());
   tmpStrm->push(io::back_inserter(buff));
 
-  smiles="C1CCCC1";
+  smiles = "C1CCCC1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(5));
   RDDepict::compute2DCoords(*m);
 
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,*tmpStrm);
+  MolPickler::pickleMol(*m, *tmpStrm);
   delete m;
   tmpStrm->reset();
-  outStrm<<buff.size();
-  outStrm<<buff;
-  std::cerr<<"sz: " <<buff.size()<<" "<<outStrm.tellp() <<std::endl;
-  buff="";
+  outStrm << buff.size();
+  outStrm << buff;
+  std::cerr << "sz: " << buff.size() << " " << outStrm.tellp() << std::endl;
+  buff = "";
   tmpStrm->push(io::gzip_compressor());
   tmpStrm->push(io::back_inserter(buff));
 
-
-  smiles="c1ccccc1";
+  smiles = "c1ccccc1";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(6));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,*tmpStrm);
+  MolPickler::pickleMol(*m, *tmpStrm);
   delete m;
   tmpStrm->reset();
-  outStrm<<buff.size();
-  outStrm<<buff;
-  std::cerr<<"sz: " <<buff.size()<<" "<<outStrm.tellp() <<std::endl;
-  buff="";
+  outStrm << buff.size();
+  outStrm << buff;
+  std::cerr << "sz: " << buff.size() << " " << outStrm.tellp() << std::endl;
+  buff = "";
   tmpStrm->push(io::gzip_compressor());
   tmpStrm->push(io::back_inserter(buff));
-  
-  smiles="c1ccccc1CC(=O)O";
+
+  smiles = "c1ccccc1CC(=O)O";
   m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms(9));
   RDDepict::compute2DCoords(*m);
   filePs.push_back(outStrm.tellp());
-  MolPickler::pickleMol(*m,*tmpStrm);
+  MolPickler::pickleMol(*m, *tmpStrm);
   delete m;
   tmpStrm->reset();
-  outStrm<<buff.size();
-  outStrm<<buff;
-  std::cerr<<"sz: " <<buff.size()<<" "<<outStrm.tellp() <<std::endl;
+  outStrm << buff.size();
+  outStrm << buff;
+  std::cerr << "sz: " << buff.size() << " " << outStrm.tellp() << std::endl;
 
   delete tmpStrm;
   io::flush(outStrm);
@@ -406,80 +412,81 @@ void test5(){
   io::filtering_istream inStrm;
   unsigned int sz;
   char *charArr;
-  
-  inStrm.push(io::file_source(fname2,std::ios_base::in|std::ios_base::binary));
+
+  inStrm.push(
+      io::file_source(fname2, std::ios_base::in | std::ios_base::binary));
   TEST_ASSERT(inStrm.is_complete());
 
-  inStrm>>sz;
+  inStrm >> sz;
   charArr = new char[sz];
-  inStrm.read(charArr,sz);
+  inStrm.read(charArr, sz);
   buff = "";
-  buff.append(charArr,sz);
+  buff.append(charArr, sz);
   tmpIStrm.push(io::gzip_decompressor());
   tmpIStrm.push(boost::make_iterator_range(buff));
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(tmpIStrm,*m);
+  MolPickler::molFromPickle(tmpIStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
-  inStrm>>sz;
-  delete [] charArr;
+  inStrm >> sz;
+  delete[] charArr;
   charArr = new char[sz];
-  inStrm.read(charArr,sz);
+  inStrm.read(charArr, sz);
   buff = "";
-  buff.append(charArr,sz);
+  buff.append(charArr, sz);
   tmpIStrm.reset();
   tmpIStrm.push(io::gzip_decompressor());
   tmpIStrm.push(boost::make_iterator_range(buff));
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(tmpIStrm,*m);
+  MolPickler::molFromPickle(tmpIStrm, *m);
   TEST_ASSERT(m->getNumAtoms(4));
   delete m;
 
-  inStrm>>sz;
-  delete [] charArr;
+  inStrm >> sz;
+  delete[] charArr;
   charArr = new char[sz];
-  inStrm.read(charArr,sz);
+  inStrm.read(charArr, sz);
   buff = "";
-  buff.append(charArr,sz);
+  buff.append(charArr, sz);
   tmpIStrm.reset();
   tmpIStrm.push(io::gzip_decompressor());
   tmpIStrm.push(boost::make_iterator_range(buff));
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(tmpIStrm,*m);
+  MolPickler::molFromPickle(tmpIStrm, *m);
   TEST_ASSERT(m->getNumAtoms(5));
   delete m;
 
-  inStrm>>sz;
-  delete [] charArr;
+  inStrm >> sz;
+  delete[] charArr;
   charArr = new char[sz];
-  inStrm.read(charArr,sz);
+  inStrm.read(charArr, sz);
   buff = "";
-  buff.append(charArr,sz);
+  buff.append(charArr, sz);
   tmpIStrm.reset();
   tmpIStrm.push(io::gzip_decompressor());
   tmpIStrm.push(boost::make_iterator_range(buff));
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(tmpIStrm,*m);
+  MolPickler::molFromPickle(tmpIStrm, *m);
   TEST_ASSERT(m->getNumAtoms(6));
   delete m;
 
-  inStrm>>sz;
-  delete [] charArr;
+  inStrm >> sz;
+  delete[] charArr;
   charArr = new char[sz];
-  inStrm.read(charArr,sz);
+  inStrm.read(charArr, sz);
   buff = "";
-  buff.append(charArr,sz);
+  buff.append(charArr, sz);
   tmpIStrm.reset();
   tmpIStrm.push(io::gzip_decompressor());
   tmpIStrm.push(boost::make_iterator_range(buff));
   m = new RWMol();
   TEST_ASSERT(m);
-  MolPickler::molFromPickle(tmpIStrm,*m);
+  MolPickler::molFromPickle(tmpIStrm, *m);
   TEST_ASSERT(m->getNumAtoms(9));
   delete m;
 
@@ -489,8 +496,7 @@ void test5(){
 #endif
 }
 
-
-int main(int argc,char *argv[]){
+int main(int argc, char *argv[]) {
   RDLog::InitLogs();
 #if 1
   test1();

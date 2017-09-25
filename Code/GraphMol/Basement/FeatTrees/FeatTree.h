@@ -17,49 +17,44 @@
 #include <set>
 
 namespace RDKit {
-  class ROMol;
+class ROMol;
 
-  namespace FeatTrees {
-    typedef std::set<unsigned int> UINT_SET;
+namespace FeatTrees {
+typedef std::set<unsigned int> UINT_SET;
 
-    // Each node of the feature tree topology contains:
-    //   - a record of the atom indices that are lumped into
-    //     that node
-    struct FeatTreeNode_t {
-      enum { num=1027 };
-      typedef boost::vertex_property_tag kind;
-    };
-    typedef boost::property<FeatTreeNode_t,UINT_SET> FeatTreeNode;
+// Each node of the feature tree topology contains:
+//   - a record of the atom indices that are lumped into
+//     that node
+struct FeatTreeNode_t {
+  enum { num = 1027 };
+  typedef boost::vertex_property_tag kind;
+};
+typedef boost::property<FeatTreeNode_t, UINT_SET> FeatTreeNode;
 
-    // Each edge of the feature tree topology contains:
-    //   - an indicator of the number of rings at the ends
-    //     (0, 1, or 2)
-    struct FeatTreeEdge_t {
-      enum { num=1028 };
-      typedef boost::edge_property_tag kind;
-    };
-    typedef boost::property<FeatTreeEdge_t,unsigned int> FeatTreeEdge;
+// Each edge of the feature tree topology contains:
+//   - an indicator of the number of rings at the ends
+//     (0, 1, or 2)
+struct FeatTreeEdge_t {
+  enum { num = 1028 };
+  typedef boost::edge_property_tag kind;
+};
+typedef boost::property<FeatTreeEdge_t, unsigned int> FeatTreeEdge;
 
-    typedef boost::adjacency_list < boost::vecS, boost::vecS,
-				    boost::undirectedS,
-				    FeatTreeNode,
-				    FeatTreeEdge > FeatTreeGraph;
-    typedef boost::shared_ptr<FeatTreeGraph> FeatTreeGraphSPtr;
-    
-    typedef boost::property_map<FeatTreeGraph,FeatTreeEdge_t>::type FeatTreeEdgePMap;
-    typedef boost::property_map<FeatTreeGraph,FeatTreeNode_t>::type FeatTreeNodePMap;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
+                              FeatTreeNode, FeatTreeEdge> FeatTreeGraph;
+typedef boost::shared_ptr<FeatTreeGraph> FeatTreeGraphSPtr;
 
+typedef boost::property_map<FeatTreeGraph, FeatTreeEdge_t>::type
+    FeatTreeEdgePMap;
+typedef boost::property_map<FeatTreeGraph, FeatTreeNode_t>::type
+    FeatTreeNodePMap;
 
-    /*!
+/*!
 
-    */
-    FeatTreeGraphSPtr molToBaseTree(const ROMol &mol);
+*/
+FeatTreeGraphSPtr molToBaseTree(const ROMol &mol);
 
-    void baseTreeToFeatTree(FeatTreeGraph &baseTree);
-
-    
-  }
-
-  
+void baseTreeToFeatTree(FeatTreeGraph &baseTree);
+}
 }
 #endif

@@ -38,8 +38,25 @@
 
 %{
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/Resonance.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 %}
 
 
-%include <GraphMol/FileParsers/MolSupplier.h>
+%newobject RDKit::ForwardSDMolSupplier::next;
+%newobject RDKit::ResonanceMolSupplier::next;
+%newobject RDKit::SDMolSupplier::next;
+%newobject RDKit::SmilesMolSupplier::next;
+%newobject RDKit::TDTMolSupplier::next;
+%newobject RDKit::PDBMolSupplier::next;
 
+%include <GraphMol/FileParsers/MolSupplier.h>
+%include <GraphMol/Resonance.h>
+
+%extend RDKit::ResonanceMolSupplier {
+  std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,bool uniquify=false, bool useChirality=false, int numThreads=1){
+    std::vector<RDKit::MatchVectType> mv;
+    SubstructMatch(*($self),query,mv,uniquify,true,useChirality,false,1000,numThreads);
+    return mv;
+  }
+}

@@ -9,19 +9,21 @@
 //  of the RDKit source tree.
 //
 #define NO_IMPORT_ARRAY
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <string>
 
-//ours
+// ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/iterator_next.h>
 #include "MolSupplier.h"
 
 namespace python = boost::python;
 
 namespace RDKit {
-  
-  std::string tdtMolSupplierClassDoc="A class which supplies molecules from a TDT file.\n \
+
+std::string tdtMolSupplierClassDoc =
+    "A class which supplies molecules from a TDT file.\n \
 \n \
   Usage examples:\n \
 \n \
@@ -49,42 +51,36 @@ namespace RDKit {
   Properties in the file are used to set properties on each molecule.\n\
   The properties are accessible using the mol.GetProp(propName) method.\n\
 \n";
-  struct tdtmolsup_wrap {
-    static void wrap() {
-      python::class_<TDTMolSupplier,boost::noncopyable>("TDTMolSupplier",
-							tdtMolSupplierClassDoc.c_str(),
-							python::init<>())
-	.def(python::init<std::string,std::string,int,int,bool>((python::arg("fileName"),
-								 python::arg("nameRecord")="",
-								 python::arg("confId2D")=-1,
-								 python::arg("confId3D")=-1,
-								 python::arg("sanitize")=true)))
-	.def("__iter__", (TDTMolSupplier *(*)(TDTMolSupplier *))&MolSupplIter,
-	     python::return_internal_reference<1>() )
-        .def("next", (ROMol *(*)(TDTMolSupplier *))&MolSupplNext,
-             "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
-	     python::return_value_policy<python::manage_new_object>())
-	.def("__getitem__", (ROMol *(*)(TDTMolSupplier *,int))&MolSupplGetItem,
-	     python::return_value_policy<python::manage_new_object>())
-	.def("reset", &TDTMolSupplier::reset,
-	     "Resets our position in the file to the beginning.\n")
-	.def("__len__", &TDTMolSupplier::length)
-	.def("SetData", &TDTMolSupplier::setData,
-	     "Sets the text to be parsed",
-	     (python::arg("self"),
-	      python::arg("data"),
-	      python::arg("nameRecord")="",
-	      python::arg("confId2D")=-1,
-	      python::arg("confId3D")=-1,
-	      python::arg("sanitize")=true))
-	.def("GetItemText", &TDTMolSupplier::getItemText,
-	     "returns the text for an item",
-	     (python::arg("self"),python::arg("index")))
-        ;
-    };
+struct tdtmolsup_wrap {
+  static void wrap() {
+    python::class_<TDTMolSupplier, boost::noncopyable>(
+        "TDTMolSupplier", tdtMolSupplierClassDoc.c_str(), python::init<>())
+        .def(python::init<std::string, std::string, int, int, bool>(
+            (python::arg("fileName"), python::arg("nameRecord") = "",
+             python::arg("confId2D") = -1, python::arg("confId3D") = -1,
+             python::arg("sanitize") = true)))
+        .def("__iter__",
+             (TDTMolSupplier * (*)(TDTMolSupplier *)) & MolSupplIter,
+             python::return_internal_reference<1>())
+        .def(NEXT_METHOD, (ROMol * (*)(TDTMolSupplier *)) & MolSupplNext,
+             "Returns the next molecule in the file.  Raises _StopIteration_ "
+             "on EOF.\n",
+             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__",
+             (ROMol * (*)(TDTMolSupplier *, int)) & MolSupplGetItem,
+             python::return_value_policy<python::manage_new_object>())
+        .def("reset", &TDTMolSupplier::reset,
+             "Resets our position in the file to the beginning.\n")
+        .def("__len__", &TDTMolSupplier::length)
+        .def("SetData", &TDTMolSupplier::setData, "Sets the text to be parsed",
+             (python::arg("self"), python::arg("data"),
+              python::arg("nameRecord") = "", python::arg("confId2D") = -1,
+              python::arg("confId3D") = -1, python::arg("sanitize") = true))
+        .def("GetItemText", &TDTMolSupplier::getItemText,
+             "returns the text for an item",
+             (python::arg("self"), python::arg("index")));
   };
+};
 }
 
-void wrap_tdtsupplier() {
-  RDKit::tdtmolsup_wrap::wrap();
-}
+void wrap_tdtsupplier() { RDKit::tdtmolsup_wrap::wrap(); }

@@ -101,6 +101,9 @@ C20H20ClN3O3
 >  <NumAliphaticCarbocycles>
 0
 
+>  <NumHeterocycles>
+2
+
 $$$$
 6603155
   Mrv0541 02141312522D          
@@ -196,6 +199,9 @@ C16H21ClN4OS
 >  <NumAliphaticCarbocycles>
 1
 
+>  <NumHeterocycles>
+2
+
 $$$$
 6603129
   Mrv0541 02141312522D          
@@ -282,6 +288,9 @@ C15H14ClN3
 
 >  <NumAliphaticCarbocycles>
 0
+
+>  <NumHeterocycles>
+1
 
 $$$$
 6603036
@@ -403,6 +412,9 @@ C28H37ClN2O4
 >  <NumAliphaticCarbocycles>
 0
 
+>  <NumHeterocycles>
+2
+
 $$$$
 
   Mrv0541 02151305162D          
@@ -480,6 +492,9 @@ M  END
 1
 
 >  <NumAliphaticCarbocycles>
+1
+
+>  <NumHeterocycles>
 1
 
 $$$$

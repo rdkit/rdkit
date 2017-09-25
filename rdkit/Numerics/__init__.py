@@ -1,4 +1,4 @@
 """ A module for Numerics stuff	
  
 """
-import rdAlignment as Alignment
+from rdkit.Numerics import rdAlignment as Alignment

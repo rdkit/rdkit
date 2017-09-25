@@ -1,1 +1,1 @@
-from DistGeom import *
+from rdkit.DistanceGeometry.DistGeom import *

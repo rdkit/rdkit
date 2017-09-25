@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2011-2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +29,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef __RDKIT_INCHI_30JUNE2011__
-#define __RDKIT_INCHI_30JUNE2011__
+#ifndef RDKIT_INCHI_30JUNE2011
+#define RDKIT_INCHI_30JUNE2011
 #include <GraphMol/RDKitBase.h>
 #include <string>
 namespace RDKit {
@@ -60,6 +59,10 @@ namespace RDKit {
    * \param options An null-terminated character string of space-deliminated
    * InChI options that is passed to InChI API as is (except that / is naively
    * converted to - to non-Windows platforms and - is converted to / on Windows)
+   * Available options are explained in the InChI technical FAQ:
+   * http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14
+   * and the User Guide:
+   * http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf
    */
   std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                          const char *options=NULL);

@@ -11,69 +11,70 @@
 """ Interface to the C++ Murtagh hierarchic clustering code
 
 """
-from rdkit.ML.Cluster import Clusters
-from rdkit.ML.Cluster.Clustering import MurtaghCluster,MurtaghDistCluster
 import numpy
 
+from rdkit.ML.Cluster import Clusters
+from rdkit.ML.Cluster.Clustering import MurtaghCluster, MurtaghDistCluster
 
 # constants to select the clustering algorithm
-WARDS=1
-SLINK=2
-CLINK=3
-UPGMA=4
-MCQUITTY=5
-GOWER=6
-CENTROID=7
+WARDS = 1
+SLINK = 2
+CLINK = 3
+UPGMA = 4
+MCQUITTY = 5
+GOWER = 6
+CENTROID = 7
 
 # descriptions of the methods:
 methods = [
-  ("Ward's Minimum Variance",WARDS,"Ward's Minimum Variance"),
-  ('Average Linkage',UPGMA,'Group Average Linkage (UPGMA)'),
-  ('Single Linkage',SLINK,'Single Linkage (SLINK)'),
-  ('Complete Linkage',CLINK,'Complete Linkage (CLINK)'),
-#  ("McQuitty",MCQUITTY,"McQuitty's method"),
-#  ("Gower",GOWER,"Gower's median method"),
-  ("Centroid",CENTROID,"Centroid method"),
-  ]
+  ("Ward's Minimum Variance", WARDS, "Ward's Minimum Variance"),
+  ('Average Linkage', UPGMA, 'Group Average Linkage (UPGMA)'),
+  ('Single Linkage', SLINK, 'Single Linkage (SLINK)'),
+  ('Complete Linkage', CLINK, 'Complete Linkage (CLINK)'),
+  #  ("McQuitty",MCQUITTY,"McQuitty's method"),
+  #  ("Gower",GOWER,"Gower's median method"),
+  ("Centroid", CENTROID, "Centroid method"),
+]
 
-def _LookupDist(dists,i,j,n):
+
+def _LookupDist(dists, i, j, n):
   """ *Internal Use Only*
 
    returns the distance between points i and j in the symmetric
    distance matrix _dists_
 
   """
-  if i==j: return 0.0
-  if i > j: i,j=j,i
-  return dists[j*(j-1)/2+i]
+  if i == j:
+    return 0.0
+  if i > j:
+    i, j = j, i
+  return dists[j * (j - 1) / 2 + i]
 
-  
-  
-def _ToClusters(data,nPts,ia,ib,crit,isDistData=0):
+
+def _ToClusters(data, nPts, ia, ib, crit, isDistData=0):
   """ *Internal Use Only*
 
     Converts the results of the Murtagh clustering code into
     a cluster tree, which is returned in a single-entry list
 
   """
-  cs = [None]*nPts
+  cs = [None] * nPts
   for i in range(nPts):
-    cs[i] = Clusters.Cluster(metric=0.0,data=i,index=(i+1))
+    cs[i] = Clusters.Cluster(metric=0.0, data=i, index=(i + 1))
 
-  nClus = len(ia)-1
+  nClus = len(ia) - 1
   for i in range(nClus):
-    idx1 = ia[i]-1
-    idx2 = ib[i]-1
+    idx1 = ia[i] - 1
+    idx2 = ib[i] - 1
     c1 = cs[idx1]
     c2 = cs[idx2]
-    newClust = Clusters.Cluster(metric=crit[i],children=[c1,c2],
-                                index=nPts+i+1)
+    newClust = Clusters.Cluster(metric=crit[i], children=[c1, c2], index=nPts + i + 1)
     cs[idx1] = newClust
-    
-  return [newClust]
-  
 
-def ClusterData(data,nPts,method,isDistData=0):
+  return [newClust]
+
+
+def ClusterData(data, nPts, method, isDistData=0):
   """  clusters the data points passed in and returns the cluster tree
 
     **Arguments**
@@ -101,10 +102,9 @@ def ClusterData(data,nPts,method,isDistData=0):
   data = numpy.array(data)
   if not isDistData:
     sz = data.shape[1]
-    ia,ib,crit = MurtaghCluster(data,nPts,sz,method)
+    ia, ib, crit = MurtaghCluster(data, nPts, sz, method)
   else:
-    ia,ib,crit = MurtaghDistCluster(data,nPts,method)
-  c = _ToClusters(data,nPts,ia,ib,crit,isDistData=isDistData)
-  
-  return c
+    ia, ib, crit = MurtaghDistCluster(data, nPts, method)
+  c = _ToClusters(data, nPts, ia, ib, crit, isDistData=isDistData)
 
+  return c

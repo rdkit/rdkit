@@ -12,8 +12,4 @@
 
 #include "Catalog.h"
 
-namespace RDCatalog {
-
-
-}
-    
+namespace RDCatalog {}

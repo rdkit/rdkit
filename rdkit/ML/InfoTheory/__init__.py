@@ -1,4 +1,4 @@
 """ Information Theory functionality
 
 """
-from rdInfoTheory import *
+from rdkit.ML.InfoTheory.rdInfoTheory import *

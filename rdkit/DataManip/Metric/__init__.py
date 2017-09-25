@@ -9,4 +9,4 @@
 #  of the RDKit source tree.
 #
 from rdkit import rdBase
-from rdMetricMatrixCalc import *
+from rdkit.DataManip.Metric.rdMetricMatrixCalc import *

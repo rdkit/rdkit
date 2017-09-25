@@ -163,6 +163,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
   if colorMap is None:
     PiYG_cmap = cm.get_cmap('PiYG',2)
     colorMap = LinearSegmentedColormap.from_list('PiWG', [PiYG_cmap(0), (1.0, 1.0, 1.0), PiYG_cmap(1)], N=255)
+
   fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower',
                      extent=(0, 1, 0, 1), vmin=-maxScale, vmax=maxScale)
   # contour lines

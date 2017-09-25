@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -54,6 +54,11 @@
 %include <DistGeom/DistGeomUtils.h>
 %include <DistGeom/TriangleSmooth.h>
 
+
+%ignore RDKit::DGeomHelpers::EmbedMolecule;
+%ignore RDKit::DGeomHelpers::EmbedMultipleConfs;
+%include <GraphMol/DistGeomHelpers/Embedder.h>
+
 // A class to hang special distance geometry methods on.
 %inline {
   namespace DistGeom {
@@ -69,39 +74,70 @@
         unsigned int numZeroFail=1,
         const std::map<int,RDGeom::Point3D> *coordMap=0,
         double optimizerForceTol=1e-3,
+        bool ignoreSmoothingFailures=false,
+        bool enforceChirality=true,
+        bool useExpTorsionAnglePrefs=false,
+        bool useBasicKnowledge=false,
+        bool verbose=false,
         double basinThresh=5.0) {
-        
-        return RDKit::DGeomHelpers::EmbedMolecule(mol, 
-          maxIterations, seed, 
-          clearConfs, 
+
+        return RDKit::DGeomHelpers::EmbedMolecule(mol,
+          maxIterations, seed,
+          clearConfs,
           useRandomCoords, boxSizeMult,
-          randNegEig, 
-          numZeroFail, 
-          coordMap, 
-          optimizerForceTol, 
+          randNegEig,
+          numZeroFail,
+          coordMap,
+          optimizerForceTol,
+          ignoreSmoothingFailures,
+          enforceChirality,
+          useExpTorsionAnglePrefs,
+          useBasicKnowledge,
+          verbose,
           basinThresh);
+      }
+
+      static int EmbedMolecule(RDKit::ROMol &mol,const RDKit::DGeomHelpers::EmbedParameters &params) {
+        return RDKit::DGeomHelpers::EmbedMolecule(mol,params);
       }
 
       static RDKit::INT_VECT EmbedMultipleConfs(RDKit::ROMol &mol,
         unsigned int numConfs=10,
-        unsigned int maxIterations=30, 
-        int seed=-1, bool clearConfs=true, 
+        unsigned int maxIterations=30,
+        int seed=-1, bool clearConfs=true,
       	bool useRandomCoords=false,double boxSizeMult=2.0,
         bool randNegEig=true, unsigned int numZeroFail=1,
         double pruneRmsThresh=-1.0,
         const std::map<int,RDGeom::Point3D> *coordMap=0,
-        double optimizerForceTol=1e-3,double basinThresh=5.0) {
+        double optimizerForceTol=1e-3,
+        bool ignoreSmoothingFailures=false,
+        bool enforceChirality=true,
+        bool useExpTorsionAnglePrefs=false,
+        bool useBasicKnowledge=false,
+        bool verbose=false,
+        double basinThresh=5.0) {
 
         return RDKit::DGeomHelpers::EmbedMultipleConfs(mol,
           numConfs,
-          maxIterations, 
-          seed, clearConfs, 
+          maxIterations,
+          seed, clearConfs,
           useRandomCoords,boxSizeMult,
           randNegEig, numZeroFail,
-          pruneRmsThresh, 
+          pruneRmsThresh,
           coordMap,
-          optimizerForceTol, basinThresh);
-      }    
+          optimizerForceTol,
+          ignoreSmoothingFailures,
+          enforceChirality,
+          useExpTorsionAnglePrefs,
+          useBasicKnowledge,
+          verbose,
+          basinThresh);
+      }
+      static RDKit::INT_VECT EmbedMultipleConfs(RDKit::ROMol &mol,
+                                                unsigned int numConfs,
+                                                const RDKit::DGeomHelpers::EmbedParameters &params) {
+        return RDKit::DGeomHelpers::EmbedMultipleConfs(mol, numConfs, params);
+      }
 
       static void SetTopolBounds(RDKit::ROMol &mol,
         DistGeom::BoundsMatrix* mmat,
@@ -123,17 +159,15 @@
           weightFourthDim,
           extraWeights,
           basinSizeTol);
-      } 
+      }
 
       // This is hard to override in Java, so do it here.
-      static bool ComputeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
-        std::vector<RDGeom::Point3D *> &positions, bool randNegEig=false, 
+      static bool ComputeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
+        std::vector<RDGeom::Point3D *> &positions, bool randNegEig=false,
         unsigned int numZeroFail=2) {
-        
+
         return DistGeom::computeInitialCoords(distmat, (RDGeom::PointPtrVect &) positions, randNegEig, numZeroFail);
       }
     };
   }
 }
-
-

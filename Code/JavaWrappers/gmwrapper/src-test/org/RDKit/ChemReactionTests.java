@@ -66,7 +66,7 @@ public class ChemReactionTests extends GraphMolTest {
 		rxn.addReactantTemplate(r1);
 		assertEquals( 1,rxn.getNumReactantTemplates() );
 
-		r1 = RWMol.MolFromSmarts("[N:3]");
+		r1 = RWMol.MolFromSmarts("[N;!$(N-C=O):3]");
 		rxn.addReactantTemplate(r1);
 		assertEquals( 2,rxn.getNumReactantTemplates() );
 
@@ -85,6 +85,10 @@ public class ChemReactionTests extends GraphMolTest {
 		assertEquals( 1,prods.size() );
 		assertEquals( 1,prods.get(0).size() );
 		assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                assertEquals( true, RDKFuncs.isMoleculeReactantOfReaction(rxn,reacts.get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeReactantOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( true, RDKFuncs.isMoleculeProductOfReaction(rxn,prods.get(0).get(0)) );
+                assertEquals( false, RDKFuncs.isMoleculeProductOfReaction(rxn,reacts.get(0)) );
 	}
 
 	@Test
@@ -364,7 +368,7 @@ public class ChemReactionTests extends GraphMolTest {
 	public void test10DotSeparation() {
 		ROMol mol = RWMol.MolFromSmiles("C1ON1");
 		ChemicalReaction rxn = 
-			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1");
+			ChemicalReaction.ReactionFromSmarts("[C:1]1[O:2][N:3]1>>([C:1]1[O:2].[N:3]1)");
 		ROMol_Vect reactants = new ROMol_Vect();
 		reactants.add(mol);
 		ROMol_Vect_Vect products = rxn.runReactants(reactants);
@@ -375,7 +379,6 @@ public class ChemReactionTests extends GraphMolTest {
 			assertEquals( 2,products.get(prodSet).get(0).getNumBonds() );
 		}
 	}
-
 	@Test
 	public void test11ImplicitProperties() {
 		ROMol mol = RWMol.MolFromSmiles("CCO");
@@ -416,8 +419,75 @@ public class ChemReactionTests extends GraphMolTest {
 		}
 	}
 
-	public static void main(String args[]) {
-		org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
+
+    // @Test
+	public void test99MemoryLeak() {
+		ChemicalReaction rxn = 
+			ChemicalReaction.ReactionFromSmarts("[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]");
+		assertNotNull(rxn );;
+		assertEquals( 2,rxn.getNumReactantTemplates() );
+		assertEquals( 1,rxn.getNumProductTemplates() );
+		assertTrue(rxn.getImplicitPropertiesFlag());
+
+		ROMol_Vect reacts = new ROMol_Vect();
+		for (String react : new String[] {"C(=O)O","N"})
+			reacts.add(RWMol.MolFromSmiles(react));		
+		// Do not need the initReactantMatchers call here
+                for(Integer i=0;i<1000000;i++){
+                    ROMol_Vect_Vect prods = rxn.runReactants(reacts);;
+                    assertEquals( 1,prods.size() );
+                    assertEquals( 1,prods.get(0).size() );
+                    assertEquals( 3,prods.get(0).get(0).getNumAtoms() );
+                    //prods.get(0).get(0).delete();
+                    //prods.get(0).delete();
+                    //prods.delete();
+                }
+
 	}
 
+        @Test
+        public void test100RunSingleReactant() {
+          ChemicalReaction rxn = 
+              ChemicalReaction.ReactionFromSmarts("[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]");
+          
+          ROMol reag1 = RWMol.MolFromSmiles("C=CCN=C=S");
+          ROMol reag2 = RWMol.MolFromSmiles("NCc1ncc(Cl)cc1Br");
+          
+          ROMol_Vect_Vect prods0 = rxn.runReactant(reag1, 0);
+          ROMol expected_result0 = RWMol.MolFromSmiles("C=CCNC(N)=S");
+          ROMol expected_sidechain0 = RWMol.MolFromSmiles("[1*:1]=S.[3*:3]CC=C");
+          
+          assertEquals( 1, prods0.size() );
+          assertEquals( 1, prods0.get(0).size() );
+          
+          assertEquals( 1, prods0.size() );
+          assertEquals( 1, prods0.get(0).size() );    
+          assertEquals( expected_result0.MolToSmiles(), prods0.get(0).get(0).MolToSmiles() );
+          assertEquals( expected_sidechain0.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(prods0.get(0).get(0)).MolToSmiles());
+              
+          ROMol_Vect_Vect prods1 = rxn.runReactant(reag2, 1);
+          ROMol expected_result1 = RWMol.MolFromSmiles("NCNCc1ncc(Cl)cc1Br");
+          ROMol expected_sidechain1 = RWMol.MolFromSmiles("[2*:2]Cc1ncc(Cl)cc1Br");
+          ROMol expected_sidechain1_nodummies = RWMol.MolFromSmiles("Cc1ncc(Cl)cc1Br");
+          
+          assertEquals( 1, prods1.size() );
+          assertEquals( 1, prods1.get(0).size() );
+          
+          assertEquals( 1, prods1.size() );
+          assertEquals( 1, prods1.get(0).size() );    
+          assertEquals( expected_result1.MolToSmiles(), prods1.get(0).get(0).MolToSmiles() );
+          assertEquals( expected_sidechain1.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(prods1.get(0).get(0)).MolToSmiles());
+          assertEquals( expected_sidechain1_nodummies.MolToSmiles(),
+                        ChemicalReaction.ReduceProductToSideChains(
+                            prods1.get(0).get(0),false).MolToSmiles());
+          
+          
+        }
+  
+        public static void main(String args[]) {
+          org.junit.runner.JUnitCore.main("org.RDKit.ChemReactionTests");
+        }
+  
 }

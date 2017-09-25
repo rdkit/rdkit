@@ -58,10 +58,9 @@
 #endif
 %include <GraphMol/Atom.h>
 
-/* For the time being, assume all properties will be strings */
-%template(setProp)  RDKit::Atom::setProp<std::string>;
-
 %newobject RDKit::Atom::getProp;
+%newobject RDKit::Atom::getBonds;
+
 %extend RDKit::Atom {
   std::string getProp(const std::string key){
     std::string res;

@@ -1,34 +1,72 @@
-contrib/rdkit is a PostgreSQL contribution module, which implements 
+PgSQL/rdkit is a PostgreSQL contribution module, which implements 
 *mol* datatype to describe molecules and *fp* datatype for fingerprints,  
 basic comparison operations, similarity operation (tanimoto, dice) and  index 
 support (using GiST indexing framework).
 
-Compatibility: PostgreSQL 8.4+
+Compatibility: PostgreSQL 9.1+
  If using PostgreSQL packages from your linux distribution, be sure
  that you have the -devel package installed.
 
 Installation:
+if PostgreSQL is installed in a location where CMake is unable to find it,
+either set the environment variable PostgreSQL_ROOT or add a
+"-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
+PostgreSQL root directory, e.g. C:\Program Files\PostgreSQL\9.5
+Under Linux, if you install PostgreSQL using the RHEL/CentOS RPMs provided by
+the PostgreSQL RPM Building Project
+(http://yum.postgresql.org/repopackages.php),
+PostgreSQL lives under /usr/pgsql-9.x, and the
+include files are located under a path that the current FindPostgreSQL.cmake
+module is unable to find without a little help. Therefore, you will need to
+add a "-DPostgreSQL_TYPE_INCLUDE_DIR" switch pointing to the location of the
+"server" include directory. E.g., for PostgreSQL 9.5 the CMake PostgreSQL-
+related switches would be:
+-DPostgreSQL_ROOT=/usr/pgsql-9.5
+-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/pgsql-9.5/include/server
 
- Module assumes that the RDKit is installed in $RDBASE and that $BOOSTHOME
- points to the directory where boost is installed.
- (check Makefile).
+After building the RDKit, carry out the following steps:
+1) Open a shell (CMD under Windows) with administrator privileges
+2) Stop the PostgreSQL service:
+   "C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files\PostgreSQL\9.5\data" ^
+   -w stop (Windows)
+   service postgresql stop (Linux)
+   
+3) run the "pgsql_install" script:
+   
+   ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.bat (Windows)
+   sh ${CMAKE_BINARY_DIR}/Code/PgSQL/rdkit/pgsql_install.sh (Linux)
+   
+   which will install rdkit.sql91.in, rdkit--3.4.sql,
+   rdkit.control and rdkit.dll into PostgreSQL 
+4) Under Windows, make sure that the Boost DLLs against which the RDKit
+   is built are in the SYSTEM path, or PostgreSQL will fail to create the
+   rdkit extension with a deceptive error message such as:
 
- cd $RDBASE/Code/PgSQL/rdkit
- make && make install && make installcheck 
- 
-For versions of PostgreSQL < 9.1:
- To install rdkit cartridge into the database DB: 
-   psql DB < rdkit.sql
+   ERROR:  could not load library
+   "C:/Program Files/PostgreSQL/9.5/lib/rdkit.dll":
+   The specified module could not be found.
+   Under Linux, make sure to add to the .bashrc of the postgres user
+   an "export LD_LIBRARY_PATH" directive pointing to any dynamic
+   libraries that the postgresql service may need (e.g., Boost or
+   PostgreSQL libraries) which are not in the system ldconfig path
 
- Uninstall cartridge from database DB:
-   psql DB < uninstall_rdkit.sql
+5) Start the PostgreSQL service, e.g.:
+   "C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" ^
+   -N "postgresql-9.5"  -D "C:\Program Files\PostgreSQL\9.5\data" ^
+   -w start (Windows)
+   service postgresql start (Linux)
 
-For versions of PostgreSQL >= 9.1:
- To install rdkit cartridge into the database DB: 
-   psql -c 'CREATE EXTENSION rdkit' DB
+Before running ctest, make sure that your current user has enough
+PostgreSQL privileges to carry out the database operations required by
+the tests. You might need to set the PGPASSWORD environment variable
+in your shell to avoid authentication issues.
 
- Uninstall cartridge from database DB:
-   psql -c 'DROP EXTENSION rdkit CASCADE' DB
+To install the rdkit cartridge into the database DB: 
+ psql -c 'CREATE EXTENSION rdkit' DB
+
+Uninstall cartridge from database DB:
+ psql -c 'DROP EXTENSION rdkit CASCADE' DB
 
 Data types:
 

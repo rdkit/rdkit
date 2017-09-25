@@ -12,69 +12,68 @@
 #include <ForceField/Contrib.h>
 
 namespace ForceFields {
-  namespace UFF {
-    class AtomicParams;
+namespace UFF {
+class AtomicParams;
 
-    //! The bond-stretch term for the Universal Force Field
-    class BondStretchContrib : public ForceFieldContrib {
-    public:
-      BondStretchContrib() : d_end1Idx(-1), d_end2Idx(-1) {};
-      //! Constructor
-      /*!
-	\param owner       pointer to the owning ForceField
-	\param idx1        index of end1 in the ForceField's positions
-	\param idx2        index of end2 in the ForceField's positions
-	\param bondOrder   order of the bond (as a double)
-	\param end1Params  pointer to the parameters for end1
-	\param end2Params  pointer to the parameters for end2
-	
-      */
-      BondStretchContrib(ForceField *owner,unsigned int idx1,unsigned int idx2,
-			 double bondOrder,
-			 const AtomicParams *end1Params,
-			 const AtomicParams *end2Params);
+//! The bond-stretch term for the Universal Force Field
+class BondStretchContrib : public ForceFieldContrib {
+ public:
+  BondStretchContrib() : d_end1Idx(-1), d_end2Idx(-1){};
+  //! Constructor
+  /*!
+    \param owner       pointer to the owning ForceField
+    \param idx1        index of end1 in the ForceField's positions
+    \param idx2        index of end2 in the ForceField's positions
+    \param bondOrder   order of the bond (as a double)
+    \param end1Params  pointer to the parameters for end1
+    \param end2Params  pointer to the parameters for end2
 
-      double getEnergy(double *pos) const;
+  */
+  BondStretchContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
+                     double bondOrder, const AtomicParams *end1Params,
+                     const AtomicParams *end2Params);
 
-      void getGrad(double *pos,double *grad) const;
-    
-    private:
-      int d_end1Idx,d_end2Idx; //!< indices of end points
-      double d_restLen;        //!< rest length of the bond
-      double d_forceConstant;  //!< force constant of the bond
+  double getEnergy(double *pos) const;
 
-    };
-  
-    namespace Utils {
-      //! calculates and returns the UFF rest length for a bond 
-      /*!
+  void getGrad(double *pos, double *grad) const;
 
-	\param bondOrder the order of the bond (as a double)
-	\param end1Params  pointer to the parameters for end1
-	\param end2Params  pointer to the parameters for end2
+  virtual BondStretchContrib *copy() const {
+    return new BondStretchContrib(*this);
+  };
 
-	\return the rest length
+ private:
+  int d_end1Idx, d_end2Idx;  //!< indices of end points
+  double d_restLen;          //!< rest length of the bond
+  double d_forceConstant;    //!< force constant of the bond
+};
 
-      */
-      double calcBondRestLength(double bondOrder,
-				const AtomicParams *end1Params,
-				const AtomicParams *end2Params);
+namespace Utils {
+//! calculates and returns the UFF rest length for a bond
+/*!
 
-      //! calculates and returns the UFF force constant for a bond 
-      /*!
+  \param bondOrder the order of the bond (as a double)
+  \param end1Params  pointer to the parameters for end1
+  \param end2Params  pointer to the parameters for end2
 
-	\param restLength  the rest length of the bond
-	\param end1Params  pointer to the parameters for end1
-	\param end2Params  pointer to the parameters for end2
+  \return the rest length
 
-	\return the force constant
-	
-      */
-      double calcBondForceConstant(double restLength,
-				   const AtomicParams *end1Params,
-				   const AtomicParams *end2Params);
+*/
+double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
+                          const AtomicParams *end2Params);
 
-    }  
-  }
+//! calculates and returns the UFF force constant for a bond
+/*!
+
+  \param restLength  the rest length of the bond
+  \param end1Params  pointer to the parameters for end1
+  \param end2Params  pointer to the parameters for end2
+
+  \return the force constant
+
+*/
+double calcBondForceConstant(double restLength, const AtomicParams *end1Params,
+                             const AtomicParams *end2Params);
+}
+}
 }
 #endif

@@ -2,4 +2,4 @@
  
 """
 from rdkit import DataStructs
-from rdGeometry import *
+from rdkit.Geometry.rdGeometry import *

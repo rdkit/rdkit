@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -32,6 +32,25 @@
 */
 %module RDKFuncs
 
+#if defined(SWIGWORDSIZE64)
+%{
+// There's a problem with SWIG, 64bit windows, and modern VC++ versions
+//   This fine, fine piece of code fixes that.
+//   it's ok to think this is horrible, we won't mind
+#ifdef _MSC_VER
+
+#ifndef LONG_MAX
+#include <limits.h>
+#endif
+
+#if LONG_MAX==INT_MAX
+#define LONG_MAX (INT_MAX+1)
+#endif
+
+#endif
+%}
+#endif
+
 /* Suppress the unimportant warnings */
 #pragma SWIG nowarn=503,516
 
@@ -41,10 +60,19 @@
     #include <boost/shared_array.hpp>
 %}
 // The actual definition isn't in the top level hpp file!
+// The next two lines are to work around a problem caused by the fact that older versions of
+// SWIG don't work with newer versions of boost.
+#define BOOST_NOEXCEPT
+#define BOOST_NO_CXX11_RVALUE_REFERENCES
+#define BOOST_NO_CXX11_NULLPTR
 %include <boost/smart_ptr/shared_array.hpp>
 
 /* Include the base types before anything that will utilize them */
-%include "stdint.i"
+#ifdef SWIGWIN
+%include "../msvc_stdint.i"
+#else
+%include "../stdint.i"
+#endif
 %include "std_string.i"
 %include "std_list.i"
 %include "extend_std_vector.i"
@@ -88,6 +116,7 @@ typedef unsigned long long int	uintmax_t;
 #endif
 
 %shared_ptr(std::exception)
+%shared_ptr(RDKit::RDProps)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -108,6 +137,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
+%shared_ptr(RDKit::FilterCatalogEntry);
 
 /* Some utility classes for passing arrays in and out */
 %array_class(double, Double_Array);
@@ -136,6 +166,9 @@ typedef unsigned long long int	uintmax_t;
 %include "../TDTWriter_doc.i"
 %include "../Transform2D_doc.i"
 %include "../Transform3D_doc.i"
+%include "../FilterCatalog_doc.i"
+%include "../FilterCatalogParams_doc.i"
+%include "../FilterCatalogs_doc.i"
 
 // DO THIS BEFORE ANY OF THE OTHER INCLUDES
 %include "../RDKitExceptions.i"
@@ -145,6 +178,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../types.i"
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
+%include "../Dict.i"
+%include "../RDProps.i"
 %include "../ROMol.i"
 %include "../RWMol.i"
 %include "../Bond.i"
@@ -178,6 +213,11 @@ typedef unsigned long long int	uintmax_t;
 %include "../ForceField.i"
 %include "../ChemTransforms.i"
 %include "../Subgraphs.i"
+%include "../MolTransforms.i"
+%include "../FMCS.i"
+%include "../MolDraw2D.i"
+%include "../FilterCatalog.i"
+%include "../Trajectory.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
@@ -225,6 +265,8 @@ typedef unsigned long long int	uintmax_t;
 
 /* list */
 %template(Int_Vect_List) std::list<std::vector<int> >;
+%template(Int_List) std::list<int>;
+%template(UInt_List) std::list<unsigned int>;
 
 
 /* other */

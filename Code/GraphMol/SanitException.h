@@ -21,18 +21,18 @@
 #include <exception>
 
 namespace RDKit {
-  
-  //! class for flagging sanitization errors
-  class MolSanitizeException : public std::exception {
-    public :
-      MolSanitizeException(const char *msg) : _msg(msg) {};
-      MolSanitizeException(const std::string msg) : _msg(msg) {};
-      const char *message () const { return _msg.c_str(); };
-      ~MolSanitizeException () throw () {};
-    
-    private :
-      std::string _msg;
-  };
+
+//! class for flagging sanitization errors
+class MolSanitizeException : public std::exception {
+ public:
+  MolSanitizeException(const char *msg) : _msg(msg){};
+  MolSanitizeException(const std::string &msg) : _msg(msg){};
+  const char *message() const { return _msg.c_str(); };
+  ~MolSanitizeException() throw(){};
+
+ private:
+  std::string _msg;
+};
 }
 
 #endif

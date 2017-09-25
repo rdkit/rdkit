@@ -13,10 +13,10 @@
 
 #include <cstdio>
 #ifdef WIN32
-#include <io.h> 	 
+#include <io.h>
 #endif
 
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 
@@ -28,17 +28,57 @@ using namespace RDKit;
 
 //static PeriodicTable * gl_ptab = PeriodicTable::getTable();
 
-void setup_smarts_string(const std::string &text,yyscan_t yyscanner){
-  YY_BUFFER_STATE buff=yysmarts__scan_string(text.c_str(),yyscanner);
-  POSTCONDITION(buff,"invalid buffer");
-}
-
 #define YY_FATAL_ERROR(msg) smarts_lexer_error(msg)
 
 void smarts_lexer_error(const char *msg) {
      BOOST_LOG(rdErrorLog) << msg<<std::endl;
      throw ValueErrorException(msg);
 }
+
+size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
+//  YY_BUFFER_STATE buff=yysmarts__scan_string(text.c_str()+pos,yyscanner);
+  // Faster implementation of yysmarts__scan_string that handles trimming
+  YY_BUFFER_STATE b;
+  char *buf;
+  yyconst char * yybytes = text.c_str();
+  yy_size_t _yybytes_len=text.size(), n, start, end;
+  /* Get memory for full buffer, including space for trailing EOB's. */
+  n = _yybytes_len + 2;
+  buf = (char *) yysmarts_alloc(n ,yyscanner );
+  if ( ! buf )
+    smarts_lexer_error( "out of dynamic memory in yysmarts__scan_bytes()" );
+
+  // ltrim
+
+  for(start = 0 ; start < _yybytes_len; ++start) {
+    if (yybytes[start] > 32) break;
+  }
+  for(end = _yybytes_len ; end > start; --end) {
+    if (yybytes[end] > 32) break;
+  }
+
+  _yybytes_len = end-start+1;
+  n = _yybytes_len + 2;
+  memcpy(buf, yybytes+start, _yybytes_len);
+
+
+  buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
+
+  b = yysmarts__scan_buffer(buf,n ,yyscanner);
+  if ( ! b )
+    smarts_lexer_error( "bad buffer in yysmarts__scan_bytes()" );
+
+  /* It's okay to grow etc. this buffer, and we should throw it
+   * away when we're done.
+   */
+  b->yy_is_our_buffer = 1;
+
+
+  POSTCONDITION(b,"invalid buffer");
+  return start;
+
+}
+
 %}
 %option stack
 %s IN_ATOM_STATE
@@ -146,8 +186,21 @@ void smarts_lexer_error(const char *msg) {
 <IN_ATOM_STATE>Fm |
 <IN_ATOM_STATE>Md |
 <IN_ATOM_STATE>No |
-<IN_ATOM_STATE>Lr 	{   yylval->atom = new QueryAtom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ATOM_TOKEN; 
+<IN_ATOM_STATE>Lr |
+<IN_ATOM_STATE>Rf |
+<IN_ATOM_STATE>Db |
+<IN_ATOM_STATE>Sg |
+<IN_ATOM_STATE>Bh |
+<IN_ATOM_STATE>Hs |
+<IN_ATOM_STATE>Mt |
+<IN_ATOM_STATE>Ds |
+<IN_ATOM_STATE>Rg |
+<IN_ATOM_STATE>Cn |
+<IN_ATOM_STATE>Uut |
+<IN_ATOM_STATE>Fl |
+<IN_ATOM_STATE>Uup |
+<IN_ATOM_STATE>Lv	{   yylval->atom = new QueryAtom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
+				return ATOM_TOKEN;
 			}
 <IN_ATOM_STATE>D {
 	yylval->atom = new QueryAtom();
@@ -163,8 +216,8 @@ void smarts_lexer_error(const char *msg) {
 
 <IN_ATOM_STATE>x {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomRingBondCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+	yylval->atom->setQuery(makeAtomHasRingBondQuery());
+	return RINGBOND_ATOM_QUERY_TOKEN;
 }
 
 <IN_ATOM_STATE>v {
@@ -175,8 +228,8 @@ void smarts_lexer_error(const char *msg) {
 
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomImplicitHCountQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+        yylval->atom->setQuery(makeAtomHasImplicitHQuery());
+	return IMPLICIT_H_ATOM_QUERY_TOKEN;
 }
 
 <IN_ATOM_STATE>R {
@@ -215,6 +268,8 @@ Br			{  yylval->ival = 35;  return ORGANIC_ATOM_TOKEN;  }
 I			{  yylval->ival = 53;  return ORGANIC_ATOM_TOKEN;  }
 
 
+b			{  yylval->ival = 5;  return AROMATIC_ATOM_TOKEN;  }
+
 c			{  yylval->ival = 6;  return AROMATIC_ATOM_TOKEN;  }
 
 n			{  yylval->ival = 7;  return AROMATIC_ATOM_TOKEN;  }
@@ -228,6 +283,7 @@ s			{  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
 <IN_ATOM_STATE>se	{  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 
 <IN_ATOM_STATE>te	{  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
+
 
 
 \*			{
@@ -254,10 +310,6 @@ A			{
 
 \_ 			{ return UNDERSCORE_TOKEN; }
 
-\-			{ return MINUS_TOKEN; }
-
-\+			{ return PLUS_TOKEN; }
-
 \#			{ return HASH_TOKEN; }
 
 \=	{ yylval->bond = new QueryBond(Bond::DOUBLE);
@@ -271,11 +323,23 @@ A			{
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
-	
+
 [\/]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 
+\-\> {
+    yylval->bond = new QueryBond(Bond::DATIVER);
+    return BOND_TOKEN;
+}
+\<\- {
+    yylval->bond = new QueryBond(Bond::DATIVEL);
+    return BOND_TOKEN;
+}
+
+\-			{ return MINUS_TOKEN; }
+
+\+			{ return PLUS_TOKEN; }
 
 <IN_ATOM_STATE>\$\(              { yy_push_state(IN_RECURSION_STATE,yyscanner); return BEGIN_RECURSE; }
 
@@ -291,8 +355,8 @@ A			{
 	                   [$(C(=O)[O,N])] lex improperly (no ATOM_CLOSE token is returned).
  			   I am not 100% sure that the approach we're using here will work
                            all the time, but I'm hoping that any problems caused here in
-                           the lexer will get caught in the parser. 
-			  */	
+                           the lexer will get caught in the parser.
+			  */
                           return ATOM_CLOSE_TOKEN; }
 
 \.       	{ return SEPARATOR_TOKEN; }
@@ -343,7 +407,3 @@ A			{
 
 #undef yysmarts_wrap
 int yysmarts_wrap( void ) { return 1; }
-
-
-
-

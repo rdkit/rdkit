@@ -154,6 +154,20 @@ public class SuppliersTests extends GraphMolTest {
 		assertEquals(3, ms.size());
 	}
 
+
+    //@Test
+	public void test10Leak() {
+            File fileN = new File(baseTestPath, "NCI_aids.10.sdf");
+            SDMolSupplier suppl = new SDMolSupplier(fileN.getPath());
+            Integer i;
+            for(i=0;i<1000000;i++){
+                ROMol m=suppl.next();
+                m.delete();
+                suppl.reset();
+                if((i%1000)==0) System.err.printf("Done: %s\n",i);
+            }
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SuppliersTests");
 	}

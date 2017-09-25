@@ -11,10 +11,9 @@
 
   \brief pulls in RWMol and ROMol
 
-*/  
+*/
 #ifndef _GRAPH_MOL_H
 #define _GRAPH_MOL_H
-
 
 #include "ROMol.h"
 #include "RWMol.h"

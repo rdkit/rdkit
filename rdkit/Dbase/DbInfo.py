@@ -8,16 +8,20 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import RDConfig
-import DbModule
+from __future__ import print_function
 import sys
+
+from rdkit import RDConfig
+from rdkit.Dbase import DbModule
+from rdkit import six
+
 sqlTextTypes = DbModule.sqlTextTypes
 sqlIntTypes = DbModule.sqlIntTypes
 sqlFloatTypes = DbModule.sqlFloatTypes
 sqlBinTypes = DbModule.sqlBinTypes
 
 
-def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1',cn=None):
+def GetDbNames(user='sysdba', password='masterkey', dirName='.', dBase='::template1', cn=None):
   """ returns a list of databases that are available
 
     **Arguments**
@@ -34,27 +38,27 @@ def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1
   if DbModule.getDbSql:
     if not cn:
       try:
-        cn = DbModule.connect(dBase,user,password)
-      except:
-        print 'Problems opening database: %s'%(dBase)
+        cn = DbModule.connect(dBase, user, password)
+      except Exception:
+        print('Problems opening database: %s' % (dBase))
         return []
     c = cn.cursor()
     c.execute(DbModule.getDbSql)
     if RDConfig.usePgSQL:
-      names = ['::'+str(x[0]) for x in c.fetchall()]
+      names = ['::' + str(x[0]) for x in c.fetchall()]
     else:
-      names = ['::'+str(x[0]) for x in c.fetchall()]
+      names = ['::' + str(x[0]) for x in c.fetchall()]
     names.remove(dBase)
   elif DbModule.fileWildcard:
-    import os.path,glob
-    names = glob.glob(os.path.join(dirName,DbModule.fileWildcard))
+    import os.path
+    import glob
+    names = glob.glob(os.path.join(dirName, DbModule.fileWildcard))
   else:
     names = []
   return names
 
 
-def GetTableNames(dBase,user='sysdba',password='masterkey',
-                  includeViews=0,cn=None):
+def GetTableNames(dBase, user='sysdba', password='masterkey', includeViews=0, cn=None):
   """ returns a list of tables available in a database
 
     **Arguments**
@@ -75,10 +79,11 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
   """
   if not cn:
     try:
-      cn = DbModule.connect(dBase,user,password)
-    except:
-      print 'Problems opening database: %s'%(dBase)
+      cn = DbModule.connect(dBase, user, password)
+    except Exception:
+      print('Problems opening database: %s' % (dBase))
       return []
+
   c = cn.cursor()
   if not includeViews:
     comm = DbModule.getTablesSql
@@ -91,48 +96,48 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
   return names
 
 
-
 def GetColumnInfoFromCursor(cursor):
-  if cursor is None or cursor.description is None: return []
+  if cursor is None or cursor.description is None:
+    return []
   results = []
   if not RDConfig.useSqlLite:
     for item in cursor.description:
       cName = item[0]
       cType = item[1]
       if cType in sqlTextTypes:
-        typeStr='string'
+        typeStr = 'string'
       elif cType in sqlIntTypes:
-        typeStr='integer'      
+        typeStr = 'integer'
       elif cType in sqlFloatTypes:
-        typeStr='float'
+        typeStr = 'float'
       elif cType in sqlBinTypes:
-        typeStr='binary'
+        typeStr = 'binary'
       else:
-        sys.stderr.write('odd type in col %s: %s\n'%(cName,str(cType)))
-      results.append((cName,typeStr))
+        sys.stderr.write('odd type in col %s: %s\n' % (cName, str(cType)))
+      results.append((cName, typeStr))
   else:
-    import types
     r = cursor.fetchone()
-    if not r: return results
-    for i,v in enumerate(r):
+    if not r:
+      return results
+    for i, v in enumerate(r):
       cName = cursor.description[i][0]
       typ = type(v)
-      if typ in types.StringTypes:
-        typeStr='string'
-      elif typ == types.IntType:
-        typeStr='integer'
-      elif typ == types.FloatType:
-        typeStr='float'
-      elif typ == types.BufferType:
-        typeStr='binary'
+      if isinstance(v, six.string_types):
+        typeStr = 'string'
+      elif typ == int:
+        typeStr = 'integer'
+      elif typ == float:
+        typeStr = 'float'
+      elif (six.PY2 and typ == buffer) or (six.PY3 and typ in (memoryview, bytes)):
+        typeStr = 'binary'
       else:
-        sys.stderr.write('odd type in col %s: %s\n'%(cName,typ))
-      results.append((cName,typeStr))
+        sys.stderr.write('odd type in col %s: %s\n' % (cName, typ))
+      results.append((cName, typeStr))
   return results
-  
-def GetColumnNamesAndTypes(dBase,table,
-                           user='sysdba',password='masterkey',
-                           join='',what='*',cn=None):
+
+
+def GetColumnNamesAndTypes(dBase, table, user='sysdba', password='masterkey', join='', what='*',
+                           cn=None):
   """ gets a list of columns available in a DB table along with their types
 
     **Arguments**
@@ -159,16 +164,16 @@ def GetColumnNamesAndTypes(dBase,table,
 
   """
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
-  cmd = 'select %s from %s'%(what,table)
+  cmd = 'select %s from %s' % (what, table)
   if join:
-    cmd += ' join %s'%(join)
+    cmd += ' join %s' % (join)
   c.execute(cmd)
   return GetColumnInfoFromCursor(c)
 
-def GetColumnNames(dBase,table,user='sysdba',password='masterkey',
-                   join='',what='*',cn=None):
+
+def GetColumnNames(dBase, table, user='sysdba', password='masterkey', join='', what='*', cn=None):
   """ gets a list of columns available in a DB table
 
     **Arguments**
@@ -191,15 +196,15 @@ def GetColumnNames(dBase,table,user='sysdba',password='masterkey',
 
   """
   if not cn:
-    cn = DbModule.connect(dBase,user,password)
+    cn = DbModule.connect(dBase, user, password)
   c = cn.cursor()
-  cmd = 'select %s from %s'%(what,table)
+  cmd = 'select %s from %s' % (what, table)
   if join:
     if join.strip().find('join') != 0:
-      join = 'join %s'%(join)
-    cmd +=' ' + join
+      join = 'join %s' % (join)
+    cmd += ' ' + join
   c.execute(cmd)
   c.fetchone()
   desc = c.description
-  res = map(lambda x:str(x[0]),desc)
+  res = [str(x[0]) for x in desc]
   return res

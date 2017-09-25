@@ -49,6 +49,12 @@ public class LipinskiTests extends GraphMolTest {
 	}
 	@Test
 	public void test1() {
+                // what is the default num rot bonds calculation?
+                String rot_prop = "NUM_ROTATABLEBONDS";
+                if( RDKFuncs.calcNumRotatableBonds(
+                     RWMol.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")) == 2 ) {
+                  rot_prop = "NUM_ROTATABLEBONDS_O";
+                }
 		SDMolSupplier suppl = new SDMolSupplier(dataFile.getPath());
 		int idx = 1;
 		while (!suppl.atEnd()) {
@@ -75,10 +81,29 @@ public class LipinskiTests extends GraphMolTest {
 					calc==orig); 
 
 			calc = RDKFuncs.calcNumRotatableBonds(m);
+			orig = Integer.parseInt(m.getProp(rot_prop));
+			assertTrue("bad num rotatable bonds for mol " + idx + " ("
+					+ m.getProp("SMILES") + "): " + calc + " != " + orig,
+					calc==orig); 
+
+			calc = RDKFuncs.calcNumRotatableBonds(m, false);
+			orig = Integer.parseInt(m.getProp("NUM_ROTATABLEBONDS_O"));
+			assertTrue("bad num rotatable bonds for mol " + idx + " ("
+					+ m.getProp("SMILES") + "): " + calc + " != " + orig,
+					calc==orig);
+
+			calc = RDKFuncs.calcNumRotatableBonds(m, NumRotatableBondsOptions.NonStrict);
+			orig = Integer.parseInt(m.getProp("NUM_ROTATABLEBONDS_O"));
+			assertTrue("bad num rotatable bonds for mol " + idx + " ("
+					+ m.getProp("SMILES") + "): " + calc + " != " + orig,
+					calc==orig); 
+
+			calc = RDKFuncs.calcNumRotatableBonds(m, NumRotatableBondsOptions.Strict);
 			orig = Integer.parseInt(m.getProp("NUM_ROTATABLEBONDS"));
 			assertTrue("bad num rotatable bonds for mol " + idx + " ("
 					+ m.getProp("SMILES") + "): " + calc + " != " + orig,
 					calc==orig); 
+                        
 			idx += 1;
 		}
 	}

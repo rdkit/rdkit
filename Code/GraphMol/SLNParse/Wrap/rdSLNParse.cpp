@@ -2,19 +2,19 @@
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met: 
+// met:
 //
-//     * Redistributions of source code must retain the above copyright 
+//     * Redistributions of source code must retain the above copyright
 //       notice, this list of conditions and the following disclaimer.
 //     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following 
-//       disclaimer in the documentation and/or other materials provided 
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-//       nor the names of its contributors may be used to endorse or promote 
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior
 //       written permission.
 //
@@ -32,44 +32,47 @@
 //
 // Created by Greg Landrum, September 2006
 //
-#include <boost/python.hpp>
+#include <RDBoost/python.h>
 #include <GraphMol/SLNParse/SLNParse.h>
 
 #include <RDBoost/Wrap.h>
-#include <RDBoost/Exceptions.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
 
 namespace python = boost::python;
 
-
-void rdSLNParseExceptionTranslator(RDKit::SLNParseException const& x){
+void rdSLNParseExceptionTranslator(RDKit::SLNParseException const &x) {
   std::ostringstream ss;
   ss << "SLNParseException: " << x.message();
-  PyErr_SetString(PyExc_ValueError,ss.str().c_str());
+  PyErr_SetString(PyExc_ValueError, ss.str().c_str());
 }
 
 namespace RDKit {
-  ROMol *MolFromSLN(std::string sln,bool sanitize=1,bool debugParser=false){
-    RWMol *newM = SLNToMol(sln,sanitize,debugParser);
-    return static_cast<ROMol *>(newM);
-  }
-  ROMol *MolFromQuerySLN(std::string sln,bool mergeHs=1,bool debugParser=false){
-    RWMol *newM = SLNQueryToMol(sln,mergeHs,debugParser);
-    return static_cast<ROMol *>(newM);
-  }
+ROMol *MolFromSLN(std::string sln, bool sanitize = 1,
+                  bool debugParser = false) {
+  RWMol *newM = SLNToMol(sln, sanitize, debugParser);
+  return static_cast<ROMol *>(newM);
+}
+ROMol *MolFromQuerySLN(std::string sln, bool mergeHs = 1,
+                       bool debugParser = false) {
+  RWMol *newM = SLNQueryToMol(sln, mergeHs, debugParser);
+  return static_cast<ROMol *>(newM);
+}
 }
 
 BOOST_PYTHON_MODULE(rdSLNParse) {
   python::scope().attr("__doc__") =
-    "Module containing classes and functions for working with Sybyl line notation (SLN)."
-    ;
+      "Module containing classes and functions for working with Sybyl line "
+      "notation (SLN).";
 
-  python::register_exception_translator<RDKit::SLNParseException>(&rdSLNParseExceptionTranslator);
-    
+  python::register_exception_translator<RDKit::SLNParseException>(
+      &rdSLNParseExceptionTranslator);
+
   std::string docString;
-   
-  docString="Construct a molecule from an SLN string.\n\n\
+
+  docString =
+      "Construct a molecule from an SLN string.\n\n\
     ARGUMENTS:\n\
 \n\
     - SLN: the SLN string\n\
@@ -83,15 +86,15 @@ BOOST_PYTHON_MODULE(rdSLNParse) {
 \n\
   NOTE: the SLN should not contain query information or properties. To build a\n\
     query from SLN, use MolFromQuerySLN.\n\
-\n";  
-  python::def("MolFromSLN",RDKit::MolFromSLN,
-        (python::arg("SLN"),
-         python::arg("sanitize")=true,
-         python::arg("debugParser")=false),
-        docString.c_str(),
-        python::return_value_policy<python::manage_new_object>());
-  
-  docString="Construct a query molecule from an SLN string.\n\n\
+\n";
+  python::def("MolFromSLN", RDKit::MolFromSLN,
+              (python::arg("SLN"), python::arg("sanitize") = true,
+               python::arg("debugParser") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a query molecule from an SLN string.\n\n\
   ARGUMENTS:\n\
 \n\
     - SLN: the SLN string\n\
@@ -102,13 +105,10 @@ BOOST_PYTHON_MODULE(rdSLNParse) {
   RETURNS:\n\
 \n\
     a Mol object suitable for using in substructure queries, None on failure.\n\
-\n";  
-  python::def("MolFromQuerySLN",RDKit::MolFromQuerySLN,
-        (python::arg("SLN"),
-         python::arg("mergeHs")=true,
-         python::arg("debugParser")=false),
-        docString.c_str(),
-        python::return_value_policy<python::manage_new_object>());
-              
+\n";
+  python::def("MolFromQuerySLN", RDKit::MolFromQuerySLN,
+              (python::arg("SLN"), python::arg("mergeHs") = true,
+               python::arg("debugParser") = false),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 }
-              

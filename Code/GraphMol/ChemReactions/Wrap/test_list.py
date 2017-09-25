@@ -2,6 +2,7 @@ import sys
 
 tests=[
   ("python", "testReactionWrapper.py",{}),
+  ("python", "testEnumerations.py",{}),
   ]
 
 longTests=[

@@ -1,28 +1,33 @@
+from __future__ import print_function
 import re
 splitExpr = re.compile('[\t\ ]')
 
-from Chem import rdmol
+from rdkit import Chem
+
 
 def runit(fName):
-  inLines = open(fName,'r').readlines()
+  inLines = open(fName, 'r').readlines()
   nFailed = 0
   nPassed = 0
   nTried = 0
   for line in inLines:
     if len(line):
       smi = splitExpr.split(line)[1]
-      if smi[-1] == '\n': smi = smi[:-1]
-      if smi[-1] == '\r': smi = smi[:-1]
+      if smi[-1] == '\n':
+        smi = smi[:-1]
+      if smi[-1] == '\r':
+        smi = smi[:-1]
       nTried += 1
-      try:
-        m = rdmol.MolFromSmiles(smi)
+      m = Chem.MolFromSmiles(smi)
+      if m:
         nPassed += 1
-      except:
-        print '\t%s failed'%repr(smi)
-        print '\tline: %s'%(repr(line))
+      else:
+        print('\t%s failed' % repr(smi))
+        print('\tline: %s' % (repr(line)))
         nFailed += 1
-      m = None  
-  print '%d of %d passed'%(nPassed,nTried)
+      m = None
+  print('%d of %d passed' % (nPassed, nTried))
+
 
 if __name__ == '__main__':
   import sys

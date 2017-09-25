@@ -3,11 +3,12 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys,os.path
+import sys, os.path
 from rdkit import RDConfig
 from rdkit.VLib.Supply import SupplyNode
 from rdkit import Chem
 from rdkit.Chem.Suppliers import DbMolSupplier
+
 
 class DbMolSupplyNode(SupplyNode):
   """ Supplies molecules from a db result set:
@@ -34,40 +35,39 @@ class DbMolSupplyNode(SupplyNode):
     >>> suppl.reset()
   
   """
-  def __init__(self,dbResults,
-               **kwargs):
-    SupplyNode.__init__(self,**kwargs)
-    self._dbResults = dbResults
-    self._supplier = DbMolSupplier.RandomAccessDbMolSupplier(self._dbResults,
-                                                             **kwargs)
 
+  def __init__(self, dbResults, **kwargs):
+    SupplyNode.__init__(self, **kwargs)
+    self._dbResults = dbResults
+    self._supplier = DbMolSupplier.RandomAccessDbMolSupplier(self._dbResults, **kwargs)
 
   def reset(self):
     SupplyNode.reset(self)
     self._supplier.Reset()
+
   def next(self):
     """
 
     """
     return self._supplier.next()
 
-def GetNode(dbName,tableName):
+
+def GetNode(dbName, tableName):
   from rdkit.Dbase.DbConnection import DbConnect
-  conn = DbConnect(dbName,tableName)
+  conn = DbConnect(dbName, tableName)
   return DbMolSupplyNode(conn.GetData())
-  
+
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

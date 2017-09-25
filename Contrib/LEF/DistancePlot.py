@@ -33,14 +33,14 @@ from rdkit import Chem
 from rdkit import DataStructs
 from CreateFps import GetMolFingerprint
 from rdkit.RDLogger import logger
-logger=logger()
+logger = logger()
 import sys
 
 # maxPathLength is the maximum path length in atoms
 # maxPathLength=6 corresponds to F-FP-5
 # maxPathLength=7 corresponds to F-FP-6
 # maxPathLength=8 corresponds to F-FP-7
-maxPathLength=8
+maxPathLength = 8
 
 # nameField is the name of the property (from the SD file) that has molecule
 # names... If the molecules have names in the first row of the file, use "_Name"
@@ -49,54 +49,53 @@ nameField = 'Compound_orig'
 
 # propField is the name of the property (from the SD file) you want to use
 # as the "activity"
-propField='chemical_shift_1'
+propField = 'chemical_shift_1'
 
 # similarity threshold for a pair to be considered interesting.
 # (i.e. pairs with a similiarity below this value will not be
 # added to the output.
-similarityThreshold=0.5
+similarityThreshold = 0.5
 
-if __name__=='__main__':
-    suppl = Chem.SDMolSupplier(sys.argv[1])
-    outF = file(sys.argv[2],'w+')
+if __name__ == '__main__':
+  suppl = Chem.SDMolSupplier(sys.argv[1])
+  outF = file(sys.argv[2], 'w+')
 
-    data=[]
-    logger.info('reading molecules and generating fingeprints')
-    for i,mol in enumerate(suppl):
-        if not mol:
-            continue
-        smi = Chem.MolToSmiles(mol,True)
-        nm = mol.GetProp(nameField)
-        property = float(mol.GetProp(propField))
-        fp = GetMolFingerprint(mol,maxPathLength)
-        data.append((nm,smi,property,fp))
-        
-    logger.info('  got %d molecules'%len(data))
+  data = []
+  logger.info('reading molecules and generating fingeprints')
+  for i, mol in enumerate(suppl):
+    if not mol:
+      continue
+    smi = Chem.MolToSmiles(mol, True)
+    nm = mol.GetProp(nameField)
+    property = float(mol.GetProp(propField))
+    fp = GetMolFingerprint(mol, maxPathLength)
+    data.append((nm, smi, property, fp))
 
-    logger.info('calculating pairs')
-    pairs = []
-    for i in range(len(data)):
-        for j in range(i+1,len(data)):
-            if DataStructs.DiceSimilarity(data[i][-1],data[j][-1])>similarityThreshold:
-                pairs.append((i,j))
-        if not (i+1)%100:
-            logger.info('Done %d molecules'%(i+1))
-    
-    logger.info('  got %d reasonable pairs'%len(pairs))
+  logger.info('  got %d molecules' % len(data))
 
-    logger.info('creating output file')
-    print >>outF,'nameA|nameB|nameAB|smilesA|smilesB|smilesAB|actA|actB|dAct|dist|disparity'
-    for i,j in pairs:
-        if data[i][2]<data[j][2]:
-            i,j=j,i
-        nmi,smii,propi,fpi=data[i]
-        nmj,smij,propj,fpj=data[j]
-        dAct = propi-propj
-        dist = 1.-DataStructs.DiceSimilarity(fpi,fpj)
-        if dist!=0:
-            disparity=dAct/dist
-        else:
-            disparity=1000
-        print >>outF,'%s|%s|%s_%s|%s|%s|%s.%s|%f|%f|%f|%f|%f'%(nmi,nmj,nmi,nmj,smii,smij,smii,smij,
-                                                               propi,propj,dAct,dist,disparity)
+  logger.info('calculating pairs')
+  pairs = []
+  for i in range(len(data)):
+    for j in range(i + 1, len(data)):
+      if DataStructs.DiceSimilarity(data[i][-1], data[j][-1]) > similarityThreshold:
+        pairs.append((i, j))
+    if not (i + 1) % 100:
+      logger.info('Done %d molecules' % (i + 1))
 
+  logger.info('  got %d reasonable pairs' % len(pairs))
+
+  logger.info('creating output file')
+  print >> outF, 'nameA|nameB|nameAB|smilesA|smilesB|smilesAB|actA|actB|dAct|dist|disparity'
+  for i, j in pairs:
+    if data[i][2] < data[j][2]:
+      i, j = j, i
+    nmi, smii, propi, fpi = data[i]
+    nmj, smij, propj, fpj = data[j]
+    dAct = propi - propj
+    dist = 1. - DataStructs.DiceSimilarity(fpi, fpj)
+    if dist != 0:
+      disparity = dAct / dist
+    else:
+      disparity = 1000
+    print >> outF, '%s|%s|%s_%s|%s|%s|%s.%s|%f|%f|%f|%f|%f' % (
+      nmi, nmj, nmi, nmj, smii, smij, smii, smij, propi, propj, dAct, dist, disparity)

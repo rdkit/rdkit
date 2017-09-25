@@ -16,45 +16,49 @@
 #include <GraphMol/Descriptors/Lipinski.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/MQN.h>
+#include <GraphMol/Descriptors/AUTOCORR2D.h>
 
-namespace RDKit{
-  class ROMol;
-  namespace Descriptors {
-    /*!
-      Calculates a molecule's average molecular weight
+namespace RDKit {
+class ROMol;
+namespace Descriptors {
+/*!
+  Calculates a molecule's average molecular weight
 
-      \param mol        the molecule of interest
-      \param onlyHeavy  (optional) if this is true (the default is false),
-          only heavy atoms will be included in the MW calculation
+  \param mol        the molecule of interest
+  \param onlyHeavy  (optional) if this is true (the default is false),
+      only heavy atoms will be included in the MW calculation
 
-      \return the AMW
-    */
-    double calcAMW(const ROMol &mol,bool onlyHeavy=false);
-    /*!
-      Calculates a molecule's exact molecular weight
+  \return the AMW
+*/
+extern const std::string amwVersion;
+double calcAMW(const ROMol &mol, bool onlyHeavy = false);
+/*!
+  Calculates a molecule's exact molecular weight
 
-      \param mol        the molecule of interest
-      \param onlyHeavy  (optional) if this is true (the default is false),
-          only heavy atoms will be included in the MW calculation
+  \param mol        the molecule of interest
+  \param onlyHeavy  (optional) if this is true (the default is false),
+      only heavy atoms will be included in the MW calculation
 
-      \return the exact MW
-    */
-    double calcExactMW(const ROMol &mol,bool onlyHeavy=false);
-    /*!
-      Calculates a molecule's formula
+  \return the exact MW
+*/
+extern const std::string exactmwVersion;
+double calcExactMW(const ROMol &mol, bool onlyHeavy = false);
+/*!
+  Calculates a molecule's formula
 
-      \param mol        the molecule of interest
-      \param separateIsotopes  if true, isotopes will show up separately in the
-         formula. So C[13CH2]O will give the formula: C[13C]H6O
-      \param abbreviateHIsotopes  if true, 2H and 3H will be represented as
-         D and T instead of [2H] and [3H]. This only applies if \c separateIsotopes
-         is true
+  \param mol        the molecule of interest
+  \param separateIsotopes  if true, isotopes will show up separately in the
+     formula. So C[13CH2]O will give the formula: C[13C]H6O
+  \param abbreviateHIsotopes  if true, 2H and 3H will be represented as
+     D and T instead of [2H] and [3H]. This only applies if \c separateIsotopes
+     is true
 
-      \return the formula as a string
-    */
-    std::string calcMolFormula(const ROMol &mol,bool separateIsotopes=false,bool abbreviateHIsotopes=true);
+  \return the formula as a string
+*/
+std::string calcMolFormula(const ROMol &mol, bool separateIsotopes = false,
+                           bool abbreviateHIsotopes = true);
 
-  } // end of namespace Descriptors
-} //end of namespace RDKit
+}  // end of namespace Descriptors
+}  // end of namespace RDKit
 
 #endif

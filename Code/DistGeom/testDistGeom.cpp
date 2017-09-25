@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 
-
 #include "BoundsMatrix.h"
 #include "TriangleSmooth.h"
 #include <iostream>
@@ -25,20 +24,30 @@ using namespace RDNumeric;
 void test1() {
   // test triangle smoothing
   unsigned int npt = 5;
-  double x= sqrt(3.0); 
-  BoundsMatrix * mmat = new BoundsMatrix(npt);
+  double x = sqrt(3.0);
+  BoundsMatrix *mmat = new BoundsMatrix(npt);
 
-  mmat->setUpperBound(0, 1, 1.0); mmat->setLowerBound(0, 1, 1.0);
-  mmat->setUpperBound(0, 2, x); mmat->setLowerBound(0, 2, x);
-  mmat->setUpperBound(0, 3, 10.0); mmat->setLowerBound(0, 3, 0.0);
-  mmat->setUpperBound(0, 4, 10.0); mmat->setLowerBound(0, 4, 0.0);
-  mmat->setUpperBound(1, 2, 1.0); mmat->setLowerBound(1, 2, 1.0);
-  mmat->setUpperBound(1, 3, x); mmat->setLowerBound(1, 3, x);
-  mmat->setUpperBound(1, 4, 10.0); mmat->setLowerBound(1, 4, 0.0);
-  mmat->setUpperBound(2, 3, 1.0); mmat->setLowerBound(2, 3, 1.0);
-  mmat->setUpperBound(2, 4, x); mmat->setLowerBound(2, 4, x);
-  mmat->setUpperBound(3, 4, 1.0); mmat->setLowerBound(3, 4, 1.0);
-  
+  mmat->setUpperBound(0, 1, 1.0);
+  mmat->setLowerBound(0, 1, 1.0);
+  mmat->setUpperBound(0, 2, x);
+  mmat->setLowerBound(0, 2, x);
+  mmat->setUpperBound(0, 3, 10.0);
+  mmat->setLowerBound(0, 3, 0.0);
+  mmat->setUpperBound(0, 4, 10.0);
+  mmat->setLowerBound(0, 4, 0.0);
+  mmat->setUpperBound(1, 2, 1.0);
+  mmat->setLowerBound(1, 2, 1.0);
+  mmat->setUpperBound(1, 3, x);
+  mmat->setLowerBound(1, 3, x);
+  mmat->setUpperBound(1, 4, 10.0);
+  mmat->setLowerBound(1, 4, 0.0);
+  mmat->setUpperBound(2, 3, 1.0);
+  mmat->setLowerBound(2, 3, 1.0);
+  mmat->setUpperBound(2, 4, x);
+  mmat->setLowerBound(2, 4, x);
+  mmat->setUpperBound(3, 4, 1.0);
+  mmat->setLowerBound(3, 4, 1.0);
+
   BoundsMatPtr mptr(mmat);
 
   triangleSmoothBounds(mptr);
@@ -64,7 +73,11 @@ void test1() {
   CHECK_INVARIANT(RDKit::feq(mmat->getLowerBound(3, 4), 1.0, 0.001), "");
 
   DoubleSymmMatrix dmat(npt, 0.0);
-  pickRandomDistMat(*mmat, dmat, 100);
+  RDKit::rng_type generator(42u);
+  generator.seed(100);
+  RDKit::uniform_double distrib(0, 1.0);
+  RDKit::double_source_type rng(generator, distrib);
+  pickRandomDistMat(*mmat, dmat, rng);
 
   double sumElem = 0.0;
   for (unsigned int i = 0; i < dmat.getDataSize(); i++) {
@@ -75,18 +88,24 @@ void test1() {
 
 void testIssue216() {
   RDNumeric::DoubleSymmMatrix dmat(4);
-  dmat.setVal(0,0, 0.0); dmat.setVal(0,1, 1.0); dmat.setVal(0,2, 1.0); dmat.setVal(0,3, 1.0);
-  dmat.setVal(1,1, 0.0); dmat.setVal(1,2, 1.0); dmat.setVal(1,3, 1.0);
-  dmat.setVal(2,2, 0.0); dmat.setVal(2,3, 1.0);
-  dmat.setVal(3,3, 0.0);
-  
+  dmat.setVal(0, 0, 0.0);
+  dmat.setVal(0, 1, 1.0);
+  dmat.setVal(0, 2, 1.0);
+  dmat.setVal(0, 3, 1.0);
+  dmat.setVal(1, 1, 0.0);
+  dmat.setVal(1, 2, 1.0);
+  dmat.setVal(1, 3, 1.0);
+  dmat.setVal(2, 2, 0.0);
+  dmat.setVal(2, 3, 1.0);
+  dmat.setVal(3, 3, 0.0);
+
   std::cout << dmat;
   RDGeom::PointPtrVect pos;
   for (int i = 0; i < 4; i++) {
     RDGeom::Point3D *pt = new RDGeom::Point3D();
     pos.push_back(pt);
   }
-  
+
   bool gotCoords = DistGeom::computeInitialCoords(dmat, pos);
   CHECK_INVARIANT(gotCoords, "");
 
@@ -107,6 +126,7 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "   testIssue216 \n";
   testIssue216();
-  std::cout << "***********************************************************\n\n";
+  std::cout
+      << "***********************************************************\n\n";
   return 0;
 }

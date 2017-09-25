@@ -155,6 +155,26 @@ public class BasicMolecule2Tests extends GraphMolTest {
 		assertEquals(3,mvv.get(1).get(1).getSecond());
 	}
 
+	@Test public void testSubstruct6() {
+		ROMol p;
+		Match_Vect_Vect mvv;
+		ROMol m2;
+		m2 = RWMol.MolFromSmiles("CC(=O)[O-]");
+    ResonanceMolSupplier rs = new ResonanceMolSupplier(m2);
+		assertEquals(2,rs.length());
+		p = RWMol.MolFromSmarts("C(=O)[O-]");
+		mvv=m2.getSubstructMatches(p);
+		assertEquals(1,mvv.size());
+		assertEquals(3,mvv.get(0).size());
+		mvv=rs.getSubstructMatches(p);
+		assertEquals(2,mvv.size());
+		assertEquals(3,mvv.get(0).size());
+		assertEquals(3,mvv.get(1).size());
+		mvv=rs.getSubstructMatches(p, true);
+		assertEquals(1,mvv.size());
+		assertEquals(3,mvv.get(0).size());
+	}
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.BasicMolecule2Tests");
 	}

@@ -1,1 +1,1 @@
-from pidPDF import *
+from .pidPDF import *

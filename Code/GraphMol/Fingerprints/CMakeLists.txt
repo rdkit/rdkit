@@ -12,6 +12,6 @@ rdkit_headers(AtomPairs.h
 rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES 
            Fingerprints FileParsers SubstructMatch SmilesParse
            Subgraphs GraphMol DataStructs RDGeometryLib
-           RDGeneral  )
+           RDGeneral  ${RDKit_THREAD_LIBS}  )
 
 

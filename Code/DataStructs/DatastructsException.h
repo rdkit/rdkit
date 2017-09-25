@@ -14,13 +14,14 @@
 class DatastructsException : public std::exception {
  public:
   //! construct with an error message
-  DatastructsException(const char *msg) : _msg(msg) {};
+  DatastructsException(const char *msg) : _msg(msg){};
   //! construct with an error message
-  DatastructsException(const std::string msg) : _msg(msg) {};
+  DatastructsException(const std::string &msg) : _msg(msg){};
   //! get the error message
-  const char *message () const { return _msg.c_str(); };
-  ~DatastructsException () throw () {};
-  private:
+  const char *message() const { return _msg.c_str(); };
+  ~DatastructsException() throw(){};
+
+ private:
   std::string _msg;
 };
 
