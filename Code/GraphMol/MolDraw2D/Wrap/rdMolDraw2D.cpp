@@ -336,6 +336,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "labels deuterium as D and tritium as T")
       .def_readwrite("continuousHighlight",
                      &RDKit::MolDrawOptions::continuousHighlight)
+      .def_readwrite("fillHighlights", &RDKit::MolDrawOptions::fillHighlights)
       .def_readwrite("flagCloseContactsDist",
                      &RDKit::MolDrawOptions::flagCloseContactsDist)
       .def_readwrite("atomRegions", &RDKit::MolDrawOptions::atomRegions,
