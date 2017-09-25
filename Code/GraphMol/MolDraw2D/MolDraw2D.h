@@ -66,6 +66,8 @@ struct MolDrawOptions {
   DrawColour highlightColour;      // default highlight color
   bool continuousHighlight;  // highlight by drawing an outline *underneath* the
                              // molecule
+  bool fillHighlights;       // fill the areas used to highlight atoms and atom
+                             // regions
   int flagCloseContactsDist;  // if positive, this will be used as a cutoff (in
                               // pixels) for highlighting close contacts
   bool includeAtomTags;  // toggles inclusion of atom tags in the output. does
@@ -100,6 +102,7 @@ struct MolDrawOptions {
         circleAtoms(true),
         highlightColour(1, .5, .5),
         continuousHighlight(true),
+        fillHighlights(true),
         flagCloseContactsDist(3),
         includeAtomTags(false),
         clearBackground(true),

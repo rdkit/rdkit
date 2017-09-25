@@ -103,6 +103,7 @@ from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
@@ -185,10 +186,8 @@ def patchPandasHeadMethod(self, n=5):
 
 
 def _get_image(x):
-  """displayhook function for PIL Images, rendered as PNG"""
-  bio = BytesIO()
-  x.save(bio, format='PNG')
-  s = b64encode(bio.getvalue()).decode('ascii')
+  """displayhook function for PNG data"""
+  s = b64encode(x).decode('ascii')
   pd.set_option('display.max_columns', len(s) + 1000)
   pd.set_option('display.max_rows', len(s) + 1000)
   if len(s) + 100 > pd.get_option("display.max_colwidth"):
@@ -253,10 +252,12 @@ def PrintAsBase64PNGString(x, renderer=None):
   else:
     highlightAtoms = []
   if molRepresentation.lower() == 'svg':
-    return _get_svg_image(x, highlightAtoms=highlightAtoms, size=molSize)
+    from IPython.display import SVG
+    svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
+    return SVG(svg).data
   else:
-    return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(
-      Draw.MolToImage(x, highlightAtoms=highlightAtoms, size=molSize))
+    data = Draw._moltoimg(x,molSize,highlightAtoms,"",returnPNG=True, kekulize=True)
+    return '<img src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(data)
 
 
 def PrintDefaultMolRep(x):

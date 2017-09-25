@@ -3258,10 +3258,10 @@ CAS<~>
     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
     self.assertEquals(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
-      [0, 6, 0, 6, -1, -1, -1, -1])
+      [4, 6, 4, 6, -1, -1, -1, -1])
     self.assertEquals(
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
-      [-1, -1, -1, -1, 0, 6, 0, 6])
+      [-1, -1, -1, -1, 4, 6, 4, 6])
 
   def test93RWMolsAsROMol(self):
     """ test the RWMol class as a proper ROMol
@@ -4396,7 +4396,6 @@ M  END
     self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)[0]),8)
     self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)[0]),8)
     self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)[0]),8)
-
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
