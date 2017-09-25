@@ -1,3 +1,26 @@
+# Release_2017.09.1
+(Changes relative to Release_2017.03.1)
+
+## Important
+- The fix for bug #1567 changes the way fragment SMILES are canonicalized.
+  MolFragmentToSmiles() and canonicalizeFragment() will now often return
+  different results
+
+## Acknowledgements:
+Brian Cole, Peter Gedeck, Guillaume Godin, Malitha Kabir, Tuomo Kalliokoski,
+Brian Kelley, Noel O'Boyle, Matthew O'Meara, Pavel Polishchuk, Cameron Pye,
+Christian Ribeaud, Stephen Roughley, Patrick Savery, Roger Sayle,
+Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
+'phenethyl', 'xiaotaw'
+
+## Highlights:
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+
+
 # Release_2017.03.1
 (Changes relative to Release_2016.09.1)
 
