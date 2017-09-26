@@ -34,6 +34,7 @@ import copy
 import math
 
 from matplotlib import cm
+from matplotlib.colors import LinearSegmentedColormap
 import numpy
 
 from rdkit import Chem
@@ -118,7 +119,7 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250),
+def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250, 250),
                                 sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
                                 alpha=0.5, **kwargs):
   """
@@ -126,7 +127,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
 
   Parameters:
     mol -- the molecule of interest
-    colorMap -- the matplotlib color map scheme
+    colorMap -- the matplotlib color map scheme, default is custom PiWG color map
     scale -- the scaling: scale < 0 -> the absolute maximum weight is used as maximum scale
                           scale = double -> this is the maximum scale
     size -- the size of the figure
@@ -159,12 +160,22 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(
   else:
     maxScale = scale
   # coloring
+  if colorMap is None:
+    PiYG_cmap = cm.get_cmap('PiYG',2)
+    colorMap = LinearSegmentedColormap.from_list('PiWG', [PiYG_cmap(0), (1.0, 1.0, 1.0), PiYG_cmap(1)], N=255)
+
   fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower',
                      extent=(0, 1, 0, 1), vmin=-maxScale, vmax=maxScale)
   # contour lines
   # only draw them when at least one weight is not zero
   if len([w for w in weights if w != 0.0]):
-    fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
+    contourset = fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
+    for j, c in enumerate(contourset.collections):
+        if contourset.levels[j] == 0.0:
+            c.set_linewidth(0.0)
+        elif contourset.levels[j] < 0:
+            c.set_dashes([(0, (3.0, 3.0))])
+  fig.axes[0].set_axis_off()
   return fig
 
 

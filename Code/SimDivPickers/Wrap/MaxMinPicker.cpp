@@ -66,23 +66,44 @@ class pyobjFunctor {
   python::object dp_obj;
 };
 
-RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
-                                int poolSize, int pickSize,
-                                python::object firstPicks, int seed,
-                                python::object useCache) {
-  if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
-  }
+namespace {
+template <typename T>
+void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
+                      unsigned int pickSize, python::object firstPicks,
+                      int seed, RDKit::INT_VECT &res, double &threshold) {
   RDKit::INT_VECT firstPickVect;
   for (unsigned int i = 0;
        i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
     firstPickVect.push_back(python::extract<int>(firstPicks[i]));
   }
-  RDKit::INT_VECT res;
+  res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, seed,
+                         threshold);
+}
+}  // end of anonymous namespace
+
+RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
+                                int poolSize, int pickSize,
+                                python::object firstPicks, int seed,
+                                python::object useCache) {
+  if (useCache != python::object()) {
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
+  }
   pyobjFunctor functor(distFunc);
-  res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, seed);
+  RDKit::INT_VECT res;
+  double threshold = -1.;
+  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
+                   threshold);
   return res;
+}
+python::tuple LazyMaxMinPicksWithThreshold(
+    MaxMinPicker *picker, python::object distFunc, int poolSize, int pickSize,
+    double threshold, python::object firstPicks, int seed) {
+  pyobjFunctor functor(distFunc);
+  RDKit::INT_VECT res;
+  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
+                   threshold);
+  return python::make_tuple(res, threshold);
 }
 
 // NOTE: TANIMOTO and DICE provably return the same results for the diversity
@@ -121,23 +142,37 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       python::object firstPicks, int seed,
                                       python::object useCache) {
   if (useCache != python::object()) {
-    BOOST_LOG(rdWarningLog) << "the useCache argument is deprecated and ignored"
-                            << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "the useCache argument is deprecated and ignored" << std::endl;
   }
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
-  RDKit::INT_VECT firstPickVect;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
-    firstPickVect.push_back(python::extract<int>(firstPicks[i]));
-  }
-  RDKit::INT_VECT res =
-      picker->lazyPick(functor, poolSize, pickSize, firstPickVect, seed);
+
+  RDKit::INT_VECT res;
+  double threshold = -1.;
+  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
+                   threshold);
   return res;
 }
+
+python::tuple LazyVectorMaxMinPicksWithThreshold(
+    MaxMinPicker *picker, python::object objs, int poolSize, int pickSize,
+    double threshold, python::object firstPicks, int seed) {
+  std::vector<const ExplicitBitVect *> bvs(poolSize);
+  for (int i = 0; i < poolSize; ++i) {
+    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
+  }
+  pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
+
+  RDKit::INT_VECT res;
+  LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
+                   threshold);
+  return python::make_tuple(res, threshold);
+}
+
 }  // end of namespace RDPickers
 
 struct MaxMin_wrap {
@@ -205,7 +240,54 @@ struct MaxMin_wrap {
              "  - firstPicks: (optional) the first items to be picked (seeds "
              "the list)\n"
              "  - seed: (optional) seed for the random number generator\n"
-             "  - useCache: IGNORED.\n");
+             "  - useCache: IGNORED.\n")
+
+        .def("LazyPickWithThreshold", RDPickers::LazyMaxMinPicksWithThreshold,
+             (python::arg("self"), python::arg("distFunc"),
+              python::arg("poolSize"), python::arg("pickSize"),
+              python::arg("threshold"),
+              python::arg("firstPicks") = python::tuple(),
+              python::arg("seed") = -1),
+             "Pick a subset of items from a pool of items using the MaxMin "
+             "Algorithm\n"
+             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), "
+             "598-604 \n"
+             "ARGUMENTS:\n\n"
+             "  - distFunc: a function that should take two indices and return "
+             "the\n"
+             "              distance between those two points.\n"
+             "              NOTE: the implementation caches distance values, "
+             "so the\n"
+             "              client code does not need to do so; indeed, it "
+             "should not.\n"
+             "  - poolSize: number of items in the pool\n"
+             "  - pickSize: number of items to pick from the pool\n"
+             "  - threshold: stop picking when the distance goes below this "
+             "value\n"
+             "  - firstPicks: (optional) the first items to be picked (seeds "
+             "the list)\n"
+             "  - seed: (optional) seed for the random number generator\n")
+        .def("LazyBitVectorPickWithThreshold",
+             RDPickers::LazyVectorMaxMinPicksWithThreshold,
+             (python::arg("self"), python::arg("objects"),
+              python::arg("poolSize"), python::arg("pickSize"),
+              python::arg("threshold"),
+              python::arg("firstPicks") = python::tuple(),
+              python::arg("seed") = -1),
+             "Pick a subset of items from a pool of bit vectors using the "
+             "MaxMin Algorithm\n"
+             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), "
+             "598-604 \n"
+             "ARGUMENTS:\n\n"
+             "  - vectors: a sequence of the bit vectors that should be picked "
+             "from.\n"
+             "  - poolSize: number of items in the pool\n"
+             "  - pickSize: number of items to pick from the pool\n"
+             "  - threshold: stop picking when the distance goes below this "
+             "value\n"
+             "  - firstPicks: (optional) the first items to be picked (seeds "
+             "the list)\n"
+             "  - seed: (optional) seed for the random number generator\n");
   };
 };
 

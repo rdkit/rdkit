@@ -69,9 +69,19 @@ class MaxMinPicker : public DistPicker {
    */
   template <typename T>
   RDKit::INT_VECT lazyPick(T &func, unsigned int poolSize,
+                           unsigned int pickSize) const;
+
+  template <typename T>
+  RDKit::INT_VECT lazyPick(T &func, unsigned int poolSize,
                            unsigned int pickSize,
-                           RDKit::INT_VECT firstPicks = RDKit::INT_VECT(),
+                           const RDKit::INT_VECT &firstPicks,
                            int seed = -1) const;
+
+  template <typename T>
+  RDKit::INT_VECT lazyPick(T &func, unsigned int poolSize,
+                           unsigned int pickSize,
+                           const RDKit::INT_VECT &firstPicks, int seed,
+                           double &threshold) const;
 
   /*! \brief Contains the implementation for the MaxMin diversity picker
    *
@@ -137,8 +147,8 @@ struct MaxMinPickInfo {
 template <typename T>
 RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize,
-                                       RDKit::INT_VECT firstPicks,
-                                       int seed) const {
+                                       const RDKit::INT_VECT &firstPicks,
+                                       int seed, double &threshold) const {
   if (!poolSize) throw ValueErrorException("empty pool to pick from");
 
   if (poolSize < pickSize)
@@ -148,7 +158,10 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
 
   unsigned int memsize = (unsigned int)(poolSize * sizeof(MaxMinPickInfo));
   MaxMinPickInfo *pinfo = new MaxMinPickInfo[memsize];
-  if (!pinfo) return picks;
+  if (!pinfo) {
+    threshold = -1.0;
+    return picks;
+  }
   memset(pinfo, 0, memsize);
 
   picks.reserve(pickSize);
@@ -188,6 +201,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   }
 
   if (picked >= pickSize) {
+    threshold = -1.0;
     delete[] pinfo;
     return picks;
   }
@@ -216,9 +230,11 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   } while (*prev != 0);
 
   // now pick 1 compound at a time
+  double maxOFmin = -1.0;
+  double tmpThreshold = -1.0;
   while (picked < pickSize) {
     unsigned int *pick_prev = 0;
-    double maxOFmin = -1.0;
+    maxOFmin = -1.0;
     prev = &pool_list;
     do {
       poolIdx = *prev;
@@ -246,14 +262,37 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
       prev = &pinfo[poolIdx].next;
     } while (*prev != 0);
 
+    // if the current distance is closer then threshold, we're done
+    if (threshold >= 0.0 && maxOFmin < threshold) break;
+    tmpThreshold = maxOFmin;
     // now add the new pick to picks and remove it from the pool
     *pick_prev = pinfo[pick].next;
     picks.push_back(pick);
     picked++;
   }
 
+  threshold = tmpThreshold;
   delete[] pinfo;
   return picks;
+}
+
+template <typename T>
+RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
+                                       unsigned int pickSize,
+                                       const RDKit::INT_VECT &firstPicks,
+                                       int seed) const {
+  double threshold = -1.0;
+  return MaxMinPicker::lazyPick(func, poolSize, pickSize, firstPicks, seed,
+                                threshold);
+}
+
+template <typename T>
+RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
+                                       unsigned int pickSize) const {
+  RDKit::INT_LIST firstPicks;
+  double threshold = -1.0;
+  return MaxMinPicker::lazyPick(func, poolSize, pickSize, firstPicks, -1,
+                                threshold);
 }
 };
 

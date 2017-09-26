@@ -4369,6 +4369,34 @@ M  END
     except RuntimeError:
       pass
 
+  def testMolBundles1(self):
+    b = Chem.MolBundle()
+    smis = ('CC(Cl)(F)CC(F)(Br)','C[C@](Cl)(F)C[C@H](F)(Br)','C[C@](Cl)(F)C[C@@H](F)(Br)')
+    for smi in smis:
+        b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b),3)
+    self.assertEqual(b.Size(),3)
+    self.assertRaises(IndexError,lambda:b[4])
+    self.assertEqual(Chem.MolToSmiles(b[1],isomericSmiles=True),
+                     Chem.MolToSmiles(Chem.MolFromSmiles(smis[1]),isomericSmiles=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False))
+    self.failIf(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True))
+
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),0)
+
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),0)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)[0]),8)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)[0]),8)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)[0]),8)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

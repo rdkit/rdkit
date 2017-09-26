@@ -51,6 +51,7 @@ void wrap_ringinfo();
 void wrap_EditableMol();
 void wrap_monomerinfo();
 void wrap_resmolsupplier();
+void wrap_molbundle();
 
 struct PySysErrWrite : std::ostream, std::streambuf {
   std::string prefix;
@@ -187,6 +188,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   wrap_ringinfo();
   wrap_monomerinfo();
   wrap_resmolsupplier();
+  wrap_molbundle();
 
   //*********************************************
   //
