@@ -5,6 +5,7 @@
 """
 from rdkit import RDConfig
 import unittest, os
+import random
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import TorsionFingerprints
@@ -189,6 +190,95 @@ class TestCase(unittest.TestCase):
   def testDetectBondStereoChemistry(self):
     self.assertBondStereoRoundTrips('cis.sdf')
     self.assertBondStereoRoundTrips('trans.sdf')
+
+  def testEnumerateStereoisomersBasic(self):
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
+    self.assertEqual(len(smiles), 4)
+
+  def testEnumerateStereoisomersLargeRandomSample(self):
+    # near max number of stereo centers allowed
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 31)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
+    self.assertEqual(len(smiles), 1024)
+
+  def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
+    # insanely large numbers of isomers aren't a problem
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C' * 101)
+    opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=13)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    self.assertEqual(len(smiles), 13)
+
+  def testEnumerateStereoisomersRandomSamplingShouldBeDeterministicAndPortable(self):
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C=C(Br)C(I)N')
+    opts = AllChem.StereoEnumerationOptions(maxIsomers=2)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    expected = set([
+        'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@@H](N)I',
+        'C/C(F)=C/[C@H](Cl)/C=C(\\Br)[C@H](N)I',
+        ])
+    self.assertEqual(smiles, expected)
+
+  def testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
+    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=8)
+    isomers = set()
+    for x in AllChem.EnumerateStereoisomers(m, options=opts):
+      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+    self.assertEqual(len(isomers), 8)
+
+  def testEnumerateStereoisomersTryEmbeddingShouldNotInfiniteLoopWhenMaxIsomersIsLargerThanActual(self):
+    m = Chem.MolFromSmiles('BrC=CC1OC(C2)(F)C2(Cl)C1')
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=1024)
+    isomers = set()
+    for x in AllChem.EnumerateStereoisomers(m, options=opts):
+      isomers.add(Chem.MolToSmiles(x, isomericSmiles=True))
+    self.assertEqual(len(isomers), 8)
+
+  def testEnumerateStereoisomersRandomSeeding(self):
+    opts = AllChem.StereoEnumerationOptions(rand=None, maxIsomers=3)
+    mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    assert smiles == set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl'])
+
+    opts = AllChem.StereoEnumerationOptions(rand=0xDEADBEEF)
+    mol = Chem.MolFromSmiles('c1ccc2c(c1)C(=O)N(C2=O)C3CCC(=O)NC3=O')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    assert smiles == set(['O=C1CC[C@@H](N2C(=O)c3ccccc3C2=O)C(=O)N1', 'O=C1CC[C@H](N2C(=O)c3ccccc3C2=O)C(=O)N1'])
+
+    class DeterministicRandom(random.Random):
+      def __init__(self):
+        random.Random.__init__(self)
+        self.count = 0
+      def getrandbits(self, n_bits):
+        c = self.count
+        self.count += 1
+        return c
+
+    rand = DeterministicRandom()
+    opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
+    mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
+    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
+    assert smiles == ['CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C']
+
+  def testEnumerateStereoisomersOnlyUnassigned(self):
+    # shouldn't enumerate anything
+    fully_assigned = Chem.MolFromSmiles('C/C(F)=C/[C@@H](C)Cl')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(fully_assigned))
+    self.assertEquals(smiles, set(['C/C(F)=C/[C@@H](C)Cl']))
+
+    # should only enuemrate the bond stereo
+    partially_assigned = Chem.MolFromSmiles('CC(F)=C[C@@H](C)Cl')
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(partially_assigned))
+    self.assertEquals(smiles, set(['C/C(F)=C/[C@@H](C)Cl', 'C/C(F)=C\\[C@@H](C)Cl']))
+
+    # should enumerate everything
+    opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(fully_assigned, opts))
+    self.assertEquals(smiles, set(['C/C(F)=C\\[C@@H](C)Cl',
+                                   'C/C(F)=C\\[C@H](C)Cl',
+                                   'C/C(F)=C/[C@H](C)Cl',
+                                   'C/C(F)=C/[C@@H](C)Cl',]))
 
 
 if __name__ == '__main__':
