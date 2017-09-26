@@ -23,21 +23,11 @@
 #include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
+#include "substructmethods.h"
 
 namespace python = boost::python;
 
 namespace RDKit {
-PyObject *convertMatches(MatchVectType &matches);
-PyObject *GetResonanceSubstructMatch(ResonanceMolSupplier &suppl,
-                                     const ROMol &query,
-                                     bool useChirality = false,
-                                     bool useQueryQueryMatches = false) {
-  NOGIL gil;
-  MatchVectType matches;
-  SubstructMatch(suppl, query, matches, true, useChirality,
-                 useQueryQueryMatches);
-  return convertMatches(matches);
-}
 
 PyObject *GetResonanceSubstructMatches(
     ResonanceMolSupplier &suppl, const ROMol &query, bool uniquify = false,
@@ -105,11 +95,13 @@ struct resmolsup_wrap {
         python::init<ROMol &, unsigned int, unsigned int>(
             (python::arg("mol"), python::arg("flags") = 0,
              python::arg("maxStructs") = 1000)))
-        .def("__iter__", (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) &
-                             MolSupplIter,
-             python::return_internal_reference<1>())
-        .def(NEXT_METHOD, (ROMol * (*)(ResonanceMolSupplier *)) &
-                              MolSupplNextAcceptNullLastMolecule,
+        .def(
+            "__iter__",
+            (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
+            python::return_internal_reference<1>())
+        .def(NEXT_METHOD,
+             (ROMol * (*)(ResonanceMolSupplier *)) &
+                 MolSupplNextAcceptNullLastMolecule,
              "Returns the next resonance structure in the supplier. Raises "
              "_StopIteration_ on end.\n",
              python::return_value_policy<python::manage_new_object>())
@@ -136,8 +128,9 @@ struct resmolsup_wrap {
                  ResonanceMolSupplier::getAtomConjGrpIdx,
              "Given an atom index, it returns the index of the conjugated group"
              "the atom belongs to, or -1 if it is not conjugated\n")
-        .def("SetNumThreads", (void (ResonanceMolSupplier::*)(unsigned int)) &
-                                  ResonanceMolSupplier::setNumThreads,
+        .def("SetNumThreads",
+             (void (ResonanceMolSupplier::*)(unsigned int)) &
+                 ResonanceMolSupplier::setNumThreads,
              "Sets the number of threads to be used to enumerate resonance\n"
              "structures (defaults to 1; 0 selects the number of concurrent\n"
              "threads supported by the hardware; negative values are added\n"
@@ -149,7 +142,9 @@ struct resmolsup_wrap {
         .def("GetIsEnumerated", &ResonanceMolSupplier::getIsEnumerated,
              "Returns true if resonance structure enumeration has already "
              "happened\n")
-        .def("GetSubstructMatch", GetResonanceSubstructMatch,
+        .def("GetSubstructMatch",
+             (PyObject * (*)(ResonanceMolSupplier & m, const ROMol &query, bool,
+                             bool)) GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),
