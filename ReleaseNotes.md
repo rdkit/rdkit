@@ -14,6 +14,16 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
 'phenethyl', 'xiaotaw'
 
 ## Highlights:
+- The new R-Group decomposition code provides a flexible and powerful tool for
+  building R-group tables or datasets look in $RDBASE/Docs/Notebooks for
+  example notebooks showing how to use this.
+- Drawing of chemical reactions has been greatly improved and is now done using
+  the C++ rendering code.
+- The MaxMinPicker is dramatically faster.
+- New descriptors: the QED descriptor has been added as have a large collection
+  of new 3D descriptors and implementations of the USR and USRCAT fingerprints.
+
+
 
 ## New Features and Enhancements:
 
