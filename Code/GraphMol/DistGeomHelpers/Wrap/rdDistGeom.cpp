@@ -28,7 +28,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   python::dict &coordMap, double forceTol,
                   bool ignoreSmoothingFailures, bool enforceChirality,
                   bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-                  bool printExpTorsionAngles) {
+				  int ETversion, bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -47,7 +47,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     res = DGeomHelpers::EmbedMolecule(
         mol, maxAttempts, seed, clearConfs, useRandomCoords, boxSizeMult,
         randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge,
+        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, ETversion,
         printExpTorsionAngles);
   }
   return res;
@@ -68,7 +68,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int numZeroFail, double pruneRmsThresh, python::dict &coordMap,
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
     int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-    bool printExpTorsionAngles) {
+	int ETversion, bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -88,7 +88,8 @@ INT_VECT EmbedMultipleConfs(
         mol, res, numConfs, numThreads, maxAttempts, seed, clearConfs,
         useRandomCoords, boxSizeMult, randNegEig, numZeroFail, pruneRmsThresh,
         pMapPtr, forceTol, ignoreSmoothingFailures, enforceChirality,
-        useExpTorsionAnglePrefs, useBasicKnowledge, printExpTorsionAngles);
+        useExpTorsionAnglePrefs, useBasicKnowledge, ETversion,
+		printExpTorsionAngles);
   }
   return res;
 }
@@ -173,6 +174,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+    - ETversion : version of the experimental torsion angles to be used (default: 1)\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
@@ -189,6 +191,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("enforceChirality") = true,
        python::arg("useExpTorsionAnglePrefs") = false,
        python::arg("useBasicKnowledge") = false,
+	   python::arg("ETversion") = 1,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -239,6 +242,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                 If set to zero, the max supported by the system will be used.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+    - ETversion : version of the experimental torsion angles to be used (default: 1)\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
@@ -255,7 +259,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
        python::arg("useExpTorsionAnglePrefs") = false,
        python::arg("useBasicKnowledge") = false,
-       python::arg("printExpTorsionAngles") = false),
+       python::arg("ETversion") = 1,
+	   python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
@@ -306,6 +311,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useBasicKnowledge",
                      &RDKit::DGeomHelpers::EmbedParameters::useBasicKnowledge,
                      "impose basic-knowledge constraints such as flat rings")
+	  .def_readwrite("ETversion",
+				    &RDKit::DGeomHelpers::EmbedParameters::ETversion,
+				    "version of the experimental torsion-angle preferences")
       .def_readwrite("verbose", &RDKit::DGeomHelpers::EmbedParameters::verbose,
                      "be verbose about configuration")
       .def_readwrite("pruneRmsThresh",

@@ -66,6 +66,7 @@ const EmbedParameters KDG(0,      // maxIterations
                           true,   // enforceChirality
                           false,  // useExpTorsionAnglePrefs
                           true,   // useBasicKnowledge
+						  1,     // ETversion
                           false,  // verbose
                           5.0,    // basinThresh
                           -1.0,   // pruneRmsThresh
@@ -87,6 +88,7 @@ const EmbedParameters ETDG(0,      // maxIterations
                            false,  // enforceChirality
                            true,   // useExpTorsionAnglePrefs
                            false,  // useBasicKnowledge
+						   1,     // ETversion
                            false,  // verbose
                            5.0,    // basinThresh
                            -1.0,   // pruneRmsThresh
@@ -107,6 +109,7 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             true,   // enforceChirality
                             true,   // useExpTorsionAnglePrefs
                             true,   // useBasicKnowledge
+							1,     // ETversion
                             false,  // verbose
                             5.0,    // basinThresh
                             -1.0,   // pruneRmsThresh
@@ -675,14 +678,14 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations, int seed,
                   const std::map<int, RDGeom::Point3D> *coordMap,
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useBasicKnowledge, bool verbose, double basinThresh,
-                  bool onlyHeavyAtomsForRMS) {
+                  bool useBasicKnowledge, int ETversion, bool verbose,
+				  double basinThresh, bool onlyHeavyAtomsForRMS) {
   INT_VECT confIds;
   EmbedMultipleConfs(
       mol, confIds, 1, 1, maxIterations, seed, clearConfs, useRandomCoords,
       boxSizeMult, randNegEig, numZeroFail, -1.0, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useBasicKnowledge, verbose, basinThresh, onlyHeavyAtomsForRMS);
+      useBasicKnowledge, ETversion, verbose, basinThresh, onlyHeavyAtomsForRMS);
 
   int res;
   if (confIds.size()) {
@@ -814,10 +817,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         const std::map<int, RDGeom::Point3D> *coordMap,
                         double optimizerForceTol, bool ignoreSmoothingFailures,
                         bool enforceChirality, bool useExpTorsionAnglePrefs,
-                        bool useBasicKnowledge, bool verbose,
+                        bool useBasicKnowledge, int ETversion, bool verbose,
                         double basinThresh, bool onlyHeavyAtomsForRMS) {
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
+  }
+  if (ETversion < 1 || ETversion > 2) {
+      throw ValueErrorException("Only version 1 and 2 of the experimental "
+    		  "torsion-angle preferences (ETversion) supported");
   }
 
   INT_VECT fragMapping;
@@ -861,7 +868,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     if (useExpTorsionAnglePrefs || useBasicKnowledge) {
       ForceFields::CrystalFF::getExperimentalTorsions(
           *piece, expTorsionAtoms, expTorsionAngles, improperAtoms,
-          useExpTorsionAnglePrefs, useBasicKnowledge, verbose);
+          useExpTorsionAnglePrefs, useBasicKnowledge, ETversion, verbose);
       setTopolBounds(*piece, mmat, bonds, angles, true, false);
       for (unsigned int i = 0; i < nAtoms; ++i) {
         atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
@@ -990,14 +997,14 @@ INT_VECT EmbedMultipleConfs(
     unsigned int numZeroFail, double pruneRmsThresh,
     const std::map<int, RDGeom::Point3D> *coordMap, double optimizerForceTol,
     bool ignoreSmoothingFailures, bool enforceChirality,
-    bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
+    bool useExpTorsionAnglePrefs, bool useBasicKnowledge, int ETversion, bool verbose,
     double basinThresh, bool onlyHeavyAtomsForRMS) {
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, 1, maxIterations, seed, clearConfs,
                      useRandomCoords, boxSizeMult, randNegEig, numZeroFail,
                      pruneRmsThresh, coordMap, optimizerForceTol,
                      ignoreSmoothingFailures, enforceChirality,
-                     useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+                     useExpTorsionAnglePrefs, useBasicKnowledge, ETversion, verbose,
                      basinThresh, onlyHeavyAtomsForRMS);
   return res;
 }

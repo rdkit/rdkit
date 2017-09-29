@@ -571,7 +571,7 @@ void testMultipleConfsExpTors() {
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(
       *m, 10, 30, 100, true, false, -1, true, 1, -1.0, 0, 1e-3, false, true,
-      true, true, false);
+      true, true, 1, false);
   INT_VECT_CI ci;
   // SDWriter writer("junk.sdf");
   double energy;
