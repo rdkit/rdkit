@@ -82,7 +82,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 # Config variables:
 set(RDKit_Year "2017")
 set(RDKit_Month "09")
-set(RDKit_Revision "1.dev1")
+set(RDKit_Revision "1.b1")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
@@ -322,7 +322,7 @@ else(RDK_TEST_COVERAGE)
   if (NOT CYGWIN)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-  endif()   
+  endif()
  endif()
  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    # We don't on C_FLAGS warnings to keep Avalon compiling quiet
