@@ -10,6 +10,7 @@
 """ Import all RDKit chemistry modules
 
 """
+import sys
 import warnings
 from collections import namedtuple
 
@@ -34,6 +35,7 @@ from rdkit.Chem.rdShapeHelpers import *
 from rdkit.Chem.rdqueries import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
+from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers
 
 try:
   from rdkit.Chem.rdSLNParse import *
@@ -403,130 +405,6 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
-
-class StereoEnumerationOptions(object):
-    """
-          - tryEmbedding: if set the process attempts to generate a standard RDKit distance geometry
-            conformation for the stereisomer. If this fails, we assume that the stereoisomer is
-            non-physical and don't return it. NOTE that this is computationally expensive and is
-            just a heuristic that could result in stereoisomers being lost.
-
-          - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
-            will not be perturbed
-
-          - maxNumCenters: the maximum number of stereocenters that can/will be handled.
-            Since every additional stereocenter doubles the number of results
-            (and execution time) it's important to keep an eye on this.
-
-    """
-    __slots__=('tryEmbedding', 'onlyUnassigned', 'maxNumCenters')
-    def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                maxNumCenters = 10):
-        self.tryEmbedding = tryEmbedding
-        self.onlyUnassigned = onlyUnassigned
-        self.maxNumCenters = maxNumCenters
-
-def GenerateStereoisomers(m,options=StereoEnumerationOptions(),verbose=False):
-    """ returns a generator that yields possible stereoisomers for a molecule
-
-    Arguments:
-      - m: the molecule to work with
-
-
-      - verbose: toggles how verbose the output is
-
-
-    A small example with 3 chiral centers (8 theoretical stereoisomers):
-    >>> from rdkit.Chem import AllChem
-    >>> m = AllChem.MolFromSmiles('OC1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
-    >>> len(isomers)
-    8
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
-    ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
-
-    Because the molecule is constrained, not all of those isomers can
-    actually exist. We can check that:
-    >>> opts = StereoEnumerationOptions(tryEmbedding=True)
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
-    >>> len(isomers)
-    4
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
-    ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-    O[C@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@H]1C[C@]2(Cl)C[C@]2(F)O1
-
-    By default the code only expands unspecified stereocenters:
-    >>> m = AllChem.MolFromSmiles('O[C@H]1OC(C2)(F)C2(Cl)C1')
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m))
-    >>> len(isomers)
-    4
-    >>> for smi in sorted(AllChem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
-    ...     print(smi)
-    O[C@@H]1C[C@@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@@]2(Cl)C[C@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@@]2(F)O1
-    O[C@@H]1C[C@]2(Cl)C[C@]2(F)O1
-
-    but we can change that behavior:
-    >>> opts = StereoEnumerationOptions(onlyUnassigned=False)
-    >>> isomers = tuple(AllChem.GenerateStereoisomers(m, options=opts))
-    >>> len(isomers)
-    8
-
-    since the result is a generator, we can allow exploring at least parts of very
-    large result sets:
-    >>> m = MolFromSmiles('Br'+'[CH](Cl)'*20+'F')
-    >>> opts = StereoEnumerationOptions(maxNumCenters=50)
-    >>> isomers = AllChem.GenerateStereoisomers(m, options=opts)
-    >>> for x in range(5):
-    ...   print(MolToSmiles(next(isomers),isomericSmiles=True))
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br
-    F[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br
-
-    """
-    tm = Mol(m)
-    if options.onlyUnassigned:
-        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True) if y=='?']
-    else:
-        possibleCenters = [x for x,y in FindMolChiralCenters(tm, force=True, includeUnassigned=True)]
-    nCenters = len(possibleCenters)
-    if not nCenters:
-        yield tm
-        return
-    if nCenters>options.maxNumCenters:
-        raise ValueError("nCenters (%d) larger than maxNumCenters (%d)"%(nCenters,options.maxNumCenters))
-    bitflag = (1<<nCenters)-1
-    while bitflag>=0:
-        tm = Mol(m)
-        for i in range(nCenters):
-            if bitflag & 1<<i:
-                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CCW)
-            else:
-                tm.GetAtomWithIdx(possibleCenters[i]).SetChiralTag(CHI_TETRAHEDRAL_CW)
-        if options.tryEmbedding:
-            ntm = AddHs(tm)
-            cid = EmbedMolecule(ntm,randomSeed=bitflag)
-        else:
-            cid = 1
-        if cid>= 0:
-            yield tm
-        elif verbose:
-            print("%s    failed to embed"%(MolToSmiles(tm,isomericSmiles=True)))
-        bitflag -= 1
 
 # ------------------------------------
 #
