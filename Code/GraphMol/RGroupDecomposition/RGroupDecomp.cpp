@@ -567,7 +567,7 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom *, Atom *> > atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (std::set<int>::iterator it = userLabels.begin();
+    for (std::set<int>::const_iterator it = userLabels.begin();
          it != userLabels.end(); ++it) {
       std::map<int, Atom *>::iterator atm = atoms.find(*it);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
@@ -584,7 +584,7 @@ struct RGroupDecompData {
     }
 
     // Deal with non-user supplied labels
-    for (std::set<int>::iterator it = indexLabels.begin();
+    for (std::set<int>::const_iterator it = indexLabels.begin();
          it != indexLabels.end(); ++it) {
       std::map<int, Atom *>::iterator atm = atoms.find(*it);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
