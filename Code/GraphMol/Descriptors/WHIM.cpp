@@ -49,7 +49,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return round(in * pow(10, factor)) / pow(10, factor);
+  return round(in * pow(10., factor)) / pow(10., factor);
 }
 
 MatrixXd GetCenterMatrix(MatrixXd &Mat) {
@@ -191,11 +191,11 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
     gamma[i] = 0.0;
     double gammainv=1.0;
     if (ns == 0) {
-      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2);  
+      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);  
     }
     if (ns > 0) {
-      gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2) +
-                       (na / nAT) * log(1.0 / nAT) / log(2));   
+      gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2.) +
+                       (na / nAT) * log(1.0 / nAT) / log(2.));   
     }
     gamma[i]=1.0/gammainv;
   }
