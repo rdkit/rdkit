@@ -211,6 +211,12 @@ if(APPLE)
   set(T_LIBS ${Boost_LIBRARIES})
   find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
 
+  if(BOOST_MAJOR_VERSION EQUAL 1 AND BOOST_MINOR_VERSION EQUAL 65)
+        ADD_DEFINITIONS("-DBOOST_NUMPY")
+        MESSAGE("use boost numpy header instead of numeric")
+  endif()
+
+
   # reset boost libraries so python is still there
   #  if it had been found before
   set(Boost_LIBRARIES ${T_LIBS})

@@ -11,7 +11,13 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
+
+#include <RDBoost/python.h>
+#ifdef BOOST_NUMPY
+#include <boost/python/numpy.hpp>
+#else
 #include <boost/python/numeric.hpp>
+#endif
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <map>

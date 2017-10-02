@@ -10,8 +10,12 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmetric_array_API
 #include <RDBoost/python.h>
+#include <RDBoost/python.h>
+#ifdef BOOST_NUMPY
+#include <boost/python/numpy.hpp>
+#else
 #include <boost/python/numeric.hpp>
-
+#endif
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/import_array.h>

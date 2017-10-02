@@ -17,7 +17,12 @@
 #include <DataStructs/SparseIntVect.h>
 
 #include "DataStructs.h"
+#include <RDBoost/python.h>
+#ifdef BOOST_NUMPY
+#include <boost/python/numpy.hpp>
+#else
 #include <boost/python/numeric.hpp>
+#endif
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>
 #include <RDBoost/pyint_api.h>

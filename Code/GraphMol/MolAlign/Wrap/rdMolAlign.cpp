@@ -13,7 +13,12 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
 #include <RDBoost/python.h>
 #include <RDBoost/import_array.h>
+#include <RDBoost/python.h>
+#ifdef BOOST_NUMPY
+#include <boost/python/numpy.hpp>
+#else
 #include <boost/python/numeric.hpp>
+#endif
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
