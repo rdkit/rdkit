@@ -2417,6 +2417,13 @@ CAS<~>
     fs = Chem.GetMolFrags(nm, asMols=True, sanitizeFrags=False)
     self.assertEqual([x.GetNumAtoms(onlyExplicit=False) for x in fs], [4, 2])
 
+    mol = Chem.MolFromSmiles("CC.CCC")
+    fs = Chem.GetMolFrags(mol, asMols=True)
+    self.assertEqual([x.GetNumAtoms() for x in fs], [2, 3])
+    fs = Chem.GetMolFrags(mol, asMols=True, getFragsMolAtomMapping=True)
+    self.assertEqual([x[0].GetNumAtoms(onlyExplicit=True) for i, x in enumerate(fs)],
+      [len(x[1]) for i, x in enumerate(fs)])
+
   def test53Matrices(self):
     """ test adjacency and distance matrices
 

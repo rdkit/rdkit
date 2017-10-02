@@ -476,7 +476,8 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   return PyArray_Return(res);
 }
 
-python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
+python::tuple GetMolFragsWithMapping(const ROMol &mol,
+  bool asMols, bool sanitizeFrags, bool getFragsMolAtomMapping) {
   python::list res;
 
   if (!asMols) {
@@ -491,13 +492,30 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<boost::shared_ptr<ROMol> > frags;
-    frags = MolOps::getMolFrags(mol, sanitizeFrags);
-    for (unsigned int i = 0; i < frags.size(); ++i) {
-      res.append(frags[i]);
+    std::vector<std::vector<int> > fragsMolAtomMapping;
+    std::vector<boost::shared_ptr<ROMol> > molFrags;
+    molFrags = getFragsMolAtomMapping
+      ? MolOps::getMolFrags(mol, sanitizeFrags, NULL, &fragsMolAtomMapping)
+      : MolOps::getMolFrags(mol, sanitizeFrags);
+    for (unsigned int i = 0; i < molFrags.size(); ++i) {
+      if (getFragsMolAtomMapping) {
+        python::list perFragMolAtomMappingTpl;
+        for (unsigned int j = 0; j < fragsMolAtomMapping[i].size(); ++j)
+          perFragMolAtomMappingTpl.append(fragsMolAtomMapping[i][j]);
+        python::list combinedTpl;
+        combinedTpl.append(molFrags[i]);
+        combinedTpl.append(python::tuple(perFragMolAtomMappingTpl));
+        res.append(python::tuple(combinedTpl));
+      }
+      else
+        res.append(molFrags[i]);
     }
   }
   return python::tuple(res);
+}
+
+python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
+  return GetMolFragsWithMapping(mol, asMols, sanitizeFrags, false);
 }
 
 ExplicitBitVect *wrapLayeredFingerprint(
@@ -1428,13 +1446,20 @@ struct molops_wrapper {
       will be returned as molecules instead of atom ids.\n\
     - sanitizeFrags: (optional) if this is provided and true, the fragments\n\
       molecules will be sanitized before returning them.\n\
+    - getFragsMolAtomMapping: (optional) if this is provided and true, the result\n\
+      for the molecule above will be a tuple of tuples in the form:\n\
+      ((frag0, (0, 1, 2, 3)), (frag1, (4, 5)))\n\
+      in which the numFrags tuples contain the respective fragment as mol,\n\
+      followed by the indices of Atoms in that fragment.\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
-           or a tuple of molecules.\n\
+           or a tuple of molecules or a tuple of (mol, (atom indices)) tuples\n\
+           as described under getFragsMolAtomMapping.\n\
 \n";
-    python::def("GetMolFrags", &GetMolFrags,
+    python::def("GetMolFrags", &GetMolFragsWithMapping,
                 (python::arg("mol"), python::arg("asMols") = false,
-                 python::arg("sanitizeFrags") = true),
+                 python::arg("sanitizeFrags") = true,
+                 python::arg("getFragsMolAtomMapping") = false),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
