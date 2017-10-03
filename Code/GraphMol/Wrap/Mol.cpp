@@ -22,6 +22,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
@@ -374,8 +375,8 @@ struct mol_wrapper {
              "    - useQueryQueryMatches: use query-query matching logic\n\n"
              "  RETURNS: True or False\n")
         .def("GetSubstructMatch",
-             (PyObject * (*)(const ROMol &m, const ROMol &query, bool, bool))
-                 GetSubstructMatch,
+             (PyObject * (*)(const ROMol &m, const ROMol &query, bool,
+                             bool))GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),
@@ -398,7 +399,7 @@ struct mol_wrapper {
 
         .def("GetSubstructMatches",
              (PyObject * (*)(const ROMol &m, const ROMol &query, bool, bool,
-                             bool, unsigned int)) GetSubstructMatches,
+                             bool, unsigned int))GetSubstructMatches,
              (python::arg("self"), python::arg("query"),
               python::arg("uniquify") = true,
               python::arg("useChirality") = false,
@@ -433,6 +434,29 @@ struct mol_wrapper {
              "atom in\n"
              "         this molecule that matches the first atom in the "
              "query.\n")
+
+        .def("HasSubstructMatch",
+             (bool (*)(const ROMol &m, const MolBundle &query, bool, bool,
+                       bool))HasSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("recursionPossible") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false))
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const ROMol &m, const MolBundle &query, bool,
+                             bool))GetSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false))
+
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const ROMol &m, const MolBundle &query, bool, bool,
+                             bool, unsigned int))GetSubstructMatches,
+             (python::arg("self"), python::arg("query"),
+              python::arg("uniquify") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("maxMatches") = 1000))
 
         // properties
         .def("SetProp", MolSetProp<std::string>,
