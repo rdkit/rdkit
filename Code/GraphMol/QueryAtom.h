@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,7 +43,10 @@ class QueryAtom : public Atom {
   bool hasQuery() const { return dp_query != 0; };
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) { dp_query = what; }
+  void setQuery(QUERYATOM_QUERY *what) {
+    delete dp_query;
+    dp_query = what;
+  }
   //! returns our current query
   QUERYATOM_QUERY *getQuery() const { return dp_query; };
 
