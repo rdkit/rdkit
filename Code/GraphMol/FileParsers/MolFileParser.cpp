@@ -813,10 +813,8 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     if (!i) {
       a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
       // replace the query:
-      Atom::QUERYATOM_QUERY *oq = a->getQuery();
       a->setAtomicNum(atNum);
       a->setQuery(makeAtomNumQuery(atNum));
-      delete oq;
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
     }
