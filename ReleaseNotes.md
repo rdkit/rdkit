@@ -5,6 +5,10 @@
 - The fix for bug #1567 changes the way fragment SMILES are canonicalized.
   MolFragmentToSmiles() and canonicalizeFragment() will now often return
   different results
+- The fix for bug #1604 changes the behavior of QueryAtom::setQuery(), which
+  now deletes the current query before setting the new value. If you are using
+  QueryAtom::setQuery() from C++ (or possibly Java), be sure that you are not
+  also deleting that memory. 
 
 ## Acknowledgements:
 Brian Cole, Peter Gedeck, Guillaume Godin, Malitha Kabir, Tuomo Kalliokoski,
@@ -22,8 +26,6 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
 - The MaxMinPicker is dramatically faster.
 - New descriptors: the QED descriptor has been added as have a large collection
   of new 3D descriptors and implementations of the USR and USRCAT fingerprints.
-
-
 
 ## New Features and Enhancements:
   - Bring back USR and USRCAT descriptors
@@ -156,7 +158,8 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
  (github issue #1550 from greglandrum)
   - Fixes double free for Dict::update
  (github pull #1571 from bp-kelley)
-
+  - QueryAtom::setQuery() should delete the old query first
+ (github pull #1604 from greglandrum)
 
 
 # Release_2017.03.1
