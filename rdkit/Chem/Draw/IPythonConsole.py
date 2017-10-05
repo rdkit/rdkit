@@ -27,6 +27,7 @@ import copy
 import os
 import json
 import uuid
+import warnings
 import numpy
 try:
   import Image
@@ -38,7 +39,7 @@ from IPython.display import SVG
 molSize = (450, 150)
 highlightSubstructs = True
 kekulizeStructures = True
-
+highlightByReactant = False
 ipython_useSVG = False
 ipython_3d = False
 molSize_3d = (400, 400)
@@ -99,28 +100,9 @@ def _toPNG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-  try:
-    mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
-    mol.UpdatePropertyCache(False)
-
-  if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
-    mc = copy.deepcopy(mol)
-    try:
-      img = Draw.MolToImage(mc, size=molSize, kekulize=kekulizeStructures,
-                            highlightAtoms=highlightAtoms)
-    except ValueError:  # <- can happen on a kekulization failure
-      mc = copy.deepcopy(mol)
-      img = Draw.MolToImage(mc, size=molSize, kekulize=False, highlightAtoms=highlightAtoms)
-    bio = BytesIO()
-    img.save(bio, format='PNG')
-    return bio.getvalue()
-  else:
-    nmol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
-    d2d = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
-    d2d.DrawMolecule(nmol, highlightAtoms=highlightAtoms)
-    d2d.FinishDrawing()
-    return d2d.GetDrawingText()
+  kekulize=kekulizeStructures
+  return Draw._moltoimg(mol,molSize,highlightAtoms,"",returnPNG=True,
+                        kekulize=kekulize)
 
 
 def _toSVG(mol):
@@ -130,29 +112,23 @@ def _toSVG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
-  try:
-    mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
-    mol.UpdatePropertyCache(False)
-
-  try:
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulizeStructures)
-  except ValueError:  # <- can happen on a kekulization failure
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
-  d2d = rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
-  d2d.DrawMolecule(mc, highlightAtoms=highlightAtoms)
-  d2d.FinishDrawing()
-  svg = d2d.GetDrawingText()
-  return svg.replace("svg:", "")
+  return Draw._moltoSVG(mol,molSize,highlightAtoms,"",kekulize)
 
 
 def _toReactionPNG(rxn):
   rc = copy.deepcopy(rxn)
-  img = Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]))
+  img = Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]),
+                             highlightByReactant=highlightByReactant)
   bio = BytesIO()
   img.save(bio, format='PNG')
   return bio.getvalue()
 
+def _toReactionSVG(rxn):
+  if not ipython_useSVG:
+    return None
+  rc = copy.deepcopy(rxn)
+  return Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]),
+                              useSVG=True,highlightByReactant=highlightByReactant)
 
 def _GetSubstructMatch(mol, query, **kwargs):
   res = mol.__GetSubstructMatch(query, **kwargs)
@@ -183,7 +159,7 @@ def display_pil_image(img):
 _MolsToGridImageSaved = None
 
 
-def ShowMols(mols, **kwargs):
+def ShowMols(mols, maxMols=50, **kwargs):
   global _MolsToGridImageSaved
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
@@ -191,6 +167,13 @@ def ShowMols(mols, **kwargs):
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
+  if len(mols)>maxMols:
+    warnings.warn("Truncating the list of molecules to be displayed to %d. Change the maxMols value to display more."%(maxMols))
+    mols = mols[:maxMols]
+    for prop in ('legends','highlightAtoms','highlightBonds'):
+      if prop in kwargs:
+        kwargs[prop] = kwargs[prop][:maxMols]
+
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
@@ -205,6 +188,7 @@ def InstallIPythonRenderer():
   if _canUse3D:
     rdchem.Mol._repr_html_ = _toJSON
   rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
+  rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
   if not hasattr(rdchem.Mol, '__GetSubstructMatch'):
     rdchem.Mol.__GetSubstructMatch = rdchem.Mol.GetSubstructMatch
   rdchem.Mol.GetSubstructMatch = _GetSubstructMatch

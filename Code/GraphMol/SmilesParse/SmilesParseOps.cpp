@@ -233,7 +233,43 @@ bool isUnsaturated(const Atom *atom, const RWMol *mol) {
   }
   return false;
 }
+
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  bool res = false;
+  std::string descr = q->getDescription();
+  if (descr == "AtomAnd") {
+    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI cIt = q->beginChildren();
+         cIt != q->endChildren(); ++cIt) {
+      std::string descr = (*cIt)->getDescription();
+      if (descr == "AtomHCount") {
+        if (!(*cIt)->getNegation() &&
+            ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
+          return true;
+        }
+        return false;
+      } else if (descr == "AtomAnd") {
+        res = hasSingleHQuery((*cIt).get());
+        if (res) return true;
+      }
+    }
+  }
+  return res;
 }
+
+bool atomHasExplicitHs(const Atom *atom) {
+  if (atom->getNumExplicitHs()) return true;
+  if (atom->hasQuery()) {
+    // the SMARTS [C@@H] produces an atom with a H query, but we also
+    // need to treat this like an explicit H for chirality purposes
+    // This was Github #1489
+    bool res = hasSingleHQuery(atom->getQuery());
+    return res;
+  }
+  return false;
+}
+}  // end of anonymous namespace
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
@@ -253,10 +289,10 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
                                   ringClosures);
 
 #if 0
-        std::cout << "CLOSURES: ";
-        std::copy(ringClosures.begin(),ringClosures.end(),
-            std::ostream_iterator<int>(std::cout," "));
-        std::cout << std::endl;
+      std::cout << "CLOSURES: ";
+      std::copy(ringClosures.begin(), ringClosures.end(),
+                std::ostream_iterator<int>(std::cout, " "));
+      std::cout << std::endl;
 #endif
       std::list<SIZET_PAIR> neighbors;
       // push this atom onto the list of neighbors (we'll use this
@@ -333,7 +369,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       if ((*atomIt)->getDegree() == 3 &&
           (((*atomIt)->getNumExplicitHs() &&
             (*atomIt)->hasProp(common_properties::_SmilesStart)) ||
-           (!(*atomIt)->getNumExplicitHs() && ringClosures.size() == 1 &&
+           (!atomHasExplicitHs(*atomIt) && ringClosures.size() == 1 &&
             !isUnsaturated(*atomIt, mol)))) {
         ++nSwaps;
       }

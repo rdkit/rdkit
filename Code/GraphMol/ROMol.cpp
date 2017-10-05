@@ -82,7 +82,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
         this->addConformer(conf);
       }
     }
-    
+
     dp_props = other.dp_props;
 
     // Bookmarks should be copied as well:
@@ -108,7 +108,8 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 void ROMol::initMol() {
   dp_props.reset();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called RDKit::detail::computedPropName
+  // ok every molecule contains a property entry called
+  // RDKit::detail::computedPropName
   // which provides
   //  list of property keys that correspond to value that have been computed
   // this can used to blow out all computed properties while leaving the rest
@@ -145,7 +146,7 @@ unsigned int ROMol::getNumHeavyAtoms() const {
 
 Atom *ROMol::getAtomWithIdx(unsigned int idx) {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
-  URANGE_CHECK(idx, getNumAtoms() - 1);
+  URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   Atom *res = d_graph[vd].get();
@@ -155,7 +156,7 @@ Atom *ROMol::getAtomWithIdx(unsigned int idx) {
 
 const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
   PRECONDITION(getNumAtoms() > 0, "no atoms");
-  URANGE_CHECK(idx, getNumAtoms() - 1);
+  URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   const Atom *res = d_graph[vd].get();
@@ -243,7 +244,7 @@ unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
 
 Bond *ROMol::getBondWithIdx(unsigned int idx) {
   PRECONDITION(getNumBonds() > 0, "no bonds");
-  URANGE_CHECK(idx, getNumBonds() - 1);
+  URANGE_CHECK(idx, getNumBonds());
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
@@ -255,7 +256,7 @@ Bond *ROMol::getBondWithIdx(unsigned int idx) {
 
 const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
   PRECONDITION(getNumBonds() > 0, "no bonds");
-  URANGE_CHECK(idx, getNumBonds() - 1);
+  URANGE_CHECK(idx, getNumBonds());
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
@@ -266,8 +267,8 @@ const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
 }
 
 Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
-  URANGE_CHECK(idx1, getNumAtoms() - 1);
-  URANGE_CHECK(idx2, getNumAtoms() - 1);
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
   Bond *res = nullptr;
 
   MolGraph::edge_descriptor edge;
@@ -282,8 +283,8 @@ Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
 
 const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
                                        unsigned int idx2) const {
-  URANGE_CHECK(idx1, getNumAtoms() - 1);
-  URANGE_CHECK(idx2, getNumAtoms() - 1);
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
   const Bond *res = nullptr;
 
   MolGraph::edge_descriptor edge;
@@ -340,12 +341,13 @@ unsigned int ROMol::addAtom(Atom::ATOM_SPTR atom_sp, bool updateLabel) {
 }
 unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   PRECONDITION(bond_pin, "null bond passed in");
-  URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms() - 1);
-  URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms() - 1);
+  URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms());
+  URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms());
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
   PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph).second),
+                             bond_pin->getEndAtomIdx(), d_graph)
+                     .second),
                "bond already exists");
 
   Bond *bond_p;
@@ -364,7 +366,7 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   numBonds++;
   //  int res = rdcast<int>(boost::num_edges(d_graph));
   bond_p->setIdx(numBonds - 1);
-  return numBonds;//res;
+  return numBonds;  // res;
 }
 unsigned int ROMol::addBond(Bond::BOND_SPTR bsp) { return addBond(bsp.get()); }
 
@@ -472,7 +474,7 @@ void ROMol::clearComputedProps(bool includeRings) const {
   if (includeRings) this->dp_ringInfo->reset();
 
   RDProps::clearComputedProps();
-  
+
   for (ConstAtomIterator atomIt = this->beginAtoms();
        atomIt != this->endAtoms(); ++atomIt) {
     (*atomIt)->clearComputedProps();

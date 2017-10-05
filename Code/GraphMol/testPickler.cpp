@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -833,7 +832,7 @@ void testIssue3496759() {
       if (inl[0] == '#' || inl.size() < 2) continue;
       std::vector<std::string> tokens;
       boost::split(tokens, inl, boost::is_any_of(" \t"));
-      // std::cerr<<"smarts: "<<tokens[0]<<std::endl;
+      // std::cerr << "smarts: " << tokens[0] << std::endl;
       ROMol *m1 = SmartsToMol(tokens[0]);
       TEST_ASSERT(m1);
       std::string smi1 = MolToSmiles(*m1, 1);
@@ -947,8 +946,8 @@ void testAtomResidues() {
     m->addAtom(new Atom(6));
     m->addBond(2, 3, Bond::SINGLE);
 
-    m->getAtomWithIdx(0)
-        ->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
+    m->getAtomWithIdx(0)->setMonomerInfo(
+        new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
     m->getAtomWithIdx(1)->setMonomerInfo(new AtomPDBResidueInfo("Ca", 3));
     MolOps::sanitizeMol(*m);
 
@@ -1017,14 +1016,13 @@ void testGithub713() {
 
 void testPickleProps() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing pickling of properties"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing pickling of properties" << std::endl;
 
   std::vector<double> v;
   v.push_back(1234.);
   v.push_back(444.);
   v.push_back(1123.);
-  
+
   ROMol *m = SmilesToMol("CC");
   m->setProp("double", 1.0);
   m->setProp("int", 100);
@@ -1039,7 +1037,7 @@ void testPickleProps() {
   a->setProp("boolfalse", false);
   a->setProp("dvec", v);
   a->setProp("_private", true);
-  
+
   Bond *b = m->getBondWithIdx(0);
   b->setProp("double", 1.0);
   b->setProp("int", 100);
@@ -1047,7 +1045,7 @@ void testPickleProps() {
   b->setProp("boolfalse", false);
   b->setProp("dvec", v);
   b->setProp("_private", true);
-  
+
   std::string pkl;
   {
     MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
@@ -1126,7 +1124,8 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PicklerOps::AtomProps | PicklerOps::PrivateProps);
+    MolPickler::pickleMol(*m, pkl,
+                          PicklerOps::AtomProps | PicklerOps::PrivateProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));
@@ -1150,7 +1149,7 @@ void testPickleProps() {
 
     delete m2;
   }
-  
+
   {
     MolPickler::pickleMol(*m, pkl, PicklerOps::BondProps);
     RWMol *m2 = new RWMol(pkl);
@@ -1166,7 +1165,7 @@ void testPickleProps() {
     TEST_ASSERT(!a->hasProp("bool"));
     TEST_ASSERT(!a->hasProp("boolfalse"));
     TEST_ASSERT(!a->hasProp("_private"));
-    
+
     b = m2->getBondWithIdx(0);
     TEST_ASSERT(b->getProp<double>("double") == 1.0);
     TEST_ASSERT(b->getProp<int>("int") == 100);
@@ -1177,7 +1176,8 @@ void testPickleProps() {
   }
 
   {
-    MolPickler::pickleMol(*m, pkl, PicklerOps::BondProps | PicklerOps::PrivateProps);
+    MolPickler::pickleMol(*m, pkl,
+                          PicklerOps::BondProps | PicklerOps::PrivateProps);
     RWMol *m2 = new RWMol(pkl);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->hasProp("double"));
@@ -1200,12 +1200,32 @@ void testPickleProps() {
     TEST_ASSERT(b->getProp<bool>("_private") == true);
     delete m2;
   }
-  
+
   delete m;
-  
+
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithub1563() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1563: Add a canned Atom query for heavy atom degree"
+      << std::endl;
+
+  RWMol m;
+  QueryAtom *qa = new QueryAtom();
+  qa->setQuery(makeAtomHeavyAtomDegreeQuery(3));
+  m.addAtom(qa);
+  TEST_ASSERT(m.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+  RWMol nm(m);
+  TEST_ASSERT(nm.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(nm.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
@@ -1239,5 +1259,5 @@ int main(int argc, char *argv[]) {
   testAtomResidues();
   testGithub149();
   testGithub713();
-
+  testGithub1563();
 }

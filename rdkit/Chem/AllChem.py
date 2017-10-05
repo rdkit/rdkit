@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2006-2011  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2006-2017  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -11,6 +10,7 @@
 """ Import all RDKit chemistry modules
 
 """
+import sys
 import warnings
 from collections import namedtuple
 
@@ -35,6 +35,7 @@ from rdkit.Chem.rdShapeHelpers import *
 from rdkit.Chem.rdqueries import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
+from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers
 
 try:
   from rdkit.Chem.rdSLNParse import *
@@ -89,52 +90,6 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   voxels = [1 for x in occVect if x == 3]
   vol = voxelVol * len(voxels)
   return vol
-
-
-def GetBestRMS(ref, probe, refConfId=-1, probeConfId=-1, maps=None):
-  """ Returns the optimal RMS for aligning two molecules, taking
-  symmetry into account. As a side-effect, the probe molecule is
-  left in the aligned state.
-
-  Arguments:
-    - ref: the reference molecule
-    - probe: the molecule to be aligned to the reference
-    - refConfId: (optional) reference conformation to use
-    - probeConfId: (optional) probe conformation to use
-    - maps: (optional) a list of lists of (probeAtomId,refAtomId)
-      tuples with the atom-atom mappings of the two molecules.
-      If not provided, these will be generated using a substructure
-      search.
-
-  Note:
-  This function will attempt to align all permutations of matching atom
-  orders in both molecules, for some molecules it will lead to 'combinatorial
-  explosion' especially if hydrogens are present.
-  Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing the
-  atom order.
-
-  """
-  if not maps:
-    matches = ref.GetSubstructMatches(probe, uniquify=False)
-    if not matches:
-      raise ValueError('mol %s does not match mol %s' % (ref.GetProp('_Name'),
-                                                         probe.GetProp('_Name')))
-    if len(matches) > 1e6:
-      warnings.warn("{} matches detected for molecule {}, this may lead to a performance slowdown.".
-                    format(len(matches), probe.GetProp('_Name')))
-    maps = [list(enumerate(match)) for match in matches]
-  bestRMS = 1000.
-  for amap in maps:
-    rms = AlignMol(probe, ref, probeConfId, refConfId, atomMap=amap)
-    if rms < bestRMS:
-      bestRMS = rms
-      bestMap = amap
-
-  # finally repeate the best alignment :
-  if bestMap != amap:
-    AlignMol(probe, ref, probeConfId, refConfId, atomMap=bestMap)
-  return bestRMS
-
 
 def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
   """ Returns the RMS between two conformations.
@@ -450,7 +405,6 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
-
 
 # ------------------------------------
 #

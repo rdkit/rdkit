@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2017 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,13 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_MOL_FILE_STEREOCHEM_H_
-#define _RD_MOL_FILE_STEREOCHEM_H_
+#ifndef RD_MOL_FILE_STEREOCHEM_H
+#define RD_MOL_FILE_STEREOCHEM_H
 
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
 void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf);
+//! deprecated, please use MolOps::detectBondStereoChemistry instead
 void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf);
 void WedgeMolBonds(ROMol &mol, const Conformer *conf);
 INT_MAP_INT pickBondsToWedge(const ROMol &mol);

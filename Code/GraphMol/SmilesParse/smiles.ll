@@ -94,113 +94,124 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
 @		{ return AT_TOKEN; }
 
 
-<IN_ATOM_STATE>He |
-<IN_ATOM_STATE>Li |
-<IN_ATOM_STATE>Be |
-<IN_ATOM_STATE>Ne |
-<IN_ATOM_STATE>Na |
-<IN_ATOM_STATE>Mg |
-<IN_ATOM_STATE>Al |
-<IN_ATOM_STATE>Si |
-<IN_ATOM_STATE>Ar |
-<IN_ATOM_STATE>K |
-<IN_ATOM_STATE>Ca |
-<IN_ATOM_STATE>Sc |
-<IN_ATOM_STATE>Ti |
-<IN_ATOM_STATE>V |
-<IN_ATOM_STATE>Cr |
-<IN_ATOM_STATE>Mn |
-<IN_ATOM_STATE>Co |
-<IN_ATOM_STATE>Fe |
-<IN_ATOM_STATE>Ni |
-<IN_ATOM_STATE>Cu |
-<IN_ATOM_STATE>Zn |
-<IN_ATOM_STATE>Ga |
-<IN_ATOM_STATE>Ge |
-<IN_ATOM_STATE>As |
-<IN_ATOM_STATE>Se |
-<IN_ATOM_STATE>Kr |
-<IN_ATOM_STATE>Rb |
-<IN_ATOM_STATE>Sr |
-<IN_ATOM_STATE>Y |
-<IN_ATOM_STATE>Zr |
-<IN_ATOM_STATE>Nb |
-<IN_ATOM_STATE>Mo |
-<IN_ATOM_STATE>Tc |
-<IN_ATOM_STATE>Ru |
-<IN_ATOM_STATE>Rh |
-<IN_ATOM_STATE>Pd |
-<IN_ATOM_STATE>Ag |
-<IN_ATOM_STATE>Cd |
-<IN_ATOM_STATE>In |
-<IN_ATOM_STATE>Sn |
-<IN_ATOM_STATE>Sb |
-<IN_ATOM_STATE>Te |
-<IN_ATOM_STATE>Xe |
-<IN_ATOM_STATE>Cs |
-<IN_ATOM_STATE>Ba |
-<IN_ATOM_STATE>La |
-<IN_ATOM_STATE>Ce |
-<IN_ATOM_STATE>Pr |
-<IN_ATOM_STATE>Nd |
-<IN_ATOM_STATE>Pm |
-<IN_ATOM_STATE>Sm |
-<IN_ATOM_STATE>Eu |
-<IN_ATOM_STATE>Gd |
-<IN_ATOM_STATE>Tb |
-<IN_ATOM_STATE>Dy |
-<IN_ATOM_STATE>Ho |
-<IN_ATOM_STATE>Er |
-<IN_ATOM_STATE>Tm |
-<IN_ATOM_STATE>Yb |
-<IN_ATOM_STATE>Lu |
-<IN_ATOM_STATE>Hf |
-<IN_ATOM_STATE>Ta |
-<IN_ATOM_STATE>W |
-<IN_ATOM_STATE>Re |
-<IN_ATOM_STATE>Os |
-<IN_ATOM_STATE>Ir |
-<IN_ATOM_STATE>Pt |
-<IN_ATOM_STATE>Au |
-<IN_ATOM_STATE>Hg |
-<IN_ATOM_STATE>Tl |
-<IN_ATOM_STATE>Pb |
-<IN_ATOM_STATE>Bi |
-<IN_ATOM_STATE>Po |
-<IN_ATOM_STATE>At |
-<IN_ATOM_STATE>Rn |
-<IN_ATOM_STATE>Fr |
-<IN_ATOM_STATE>Ra |
-<IN_ATOM_STATE>Ac |
-<IN_ATOM_STATE>Th |
-<IN_ATOM_STATE>Pa |
-<IN_ATOM_STATE>U |
-<IN_ATOM_STATE>Np |
-<IN_ATOM_STATE>Pu |
-<IN_ATOM_STATE>Am |
-<IN_ATOM_STATE>Cm |
-<IN_ATOM_STATE>Bk |
-<IN_ATOM_STATE>Cf |
-<IN_ATOM_STATE>Es |
-<IN_ATOM_STATE>Fm |
-<IN_ATOM_STATE>Md |
-<IN_ATOM_STATE>No |
-<IN_ATOM_STATE>Lr |
-<IN_ATOM_STATE>Rf |
-<IN_ATOM_STATE>Db |
-<IN_ATOM_STATE>Sg |
-<IN_ATOM_STATE>Bh |
-<IN_ATOM_STATE>Hs |
-<IN_ATOM_STATE>Mt |
-<IN_ATOM_STATE>Ds |
-<IN_ATOM_STATE>Rg |
-<IN_ATOM_STATE>Cn |
-<IN_ATOM_STATE>Uut |
-<IN_ATOM_STATE>Fl |
-<IN_ATOM_STATE>Uup |
-<IN_ATOM_STATE>Lv {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ATOM_TOKEN;
-			}
+<IN_ATOM_STATE>He	{ yylval->atom = new Atom(2); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Li	{ yylval->atom = new Atom(3); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Be	{ yylval->atom = new Atom(4); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ne	{ yylval->atom = new Atom(10); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Na	{ yylval->atom = new Atom(11); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Mg	{ yylval->atom = new Atom(12); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Al	{ yylval->atom = new Atom(13); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Si	{ yylval->atom = new Atom(14); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ar	{ yylval->atom = new Atom(18); return ATOM_TOKEN; }
+<IN_ATOM_STATE>K	{ yylval->atom = new Atom(19); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ca	{ yylval->atom = new Atom(20); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sc	{ yylval->atom = new Atom(21); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ti	{ yylval->atom = new Atom(22); return ATOM_TOKEN; }
+<IN_ATOM_STATE>V	{ yylval->atom = new Atom(23); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cr	{ yylval->atom = new Atom(24); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Mn	{ yylval->atom = new Atom(25); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Fe	{ yylval->atom = new Atom(26); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Co	{ yylval->atom = new Atom(27); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ni	{ yylval->atom = new Atom(28); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cu	{ yylval->atom = new Atom(29); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Zn	{ yylval->atom = new Atom(30); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ga	{ yylval->atom = new Atom(31); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ge	{ yylval->atom = new Atom(32); return ATOM_TOKEN; }
+<IN_ATOM_STATE>As	{ yylval->atom = new Atom(33); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Se	{ yylval->atom = new Atom(34); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Kr	{ yylval->atom = new Atom(36); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Rb	{ yylval->atom = new Atom(37); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sr	{ yylval->atom = new Atom(38); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Y	{ yylval->atom = new Atom(39); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Zr	{ yylval->atom = new Atom(40); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Nb	{ yylval->atom = new Atom(41); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Mo	{ yylval->atom = new Atom(42); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Tc	{ yylval->atom = new Atom(43); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ru	{ yylval->atom = new Atom(44); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Rh	{ yylval->atom = new Atom(45); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pd	{ yylval->atom = new Atom(46); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ag	{ yylval->atom = new Atom(47); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cd	{ yylval->atom = new Atom(48); return ATOM_TOKEN; }
+<IN_ATOM_STATE>In	{ yylval->atom = new Atom(49); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sn	{ yylval->atom = new Atom(50); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sb	{ yylval->atom = new Atom(51); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Te	{ yylval->atom = new Atom(52); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Xe	{ yylval->atom = new Atom(54); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cs	{ yylval->atom = new Atom(55); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ba	{ yylval->atom = new Atom(56); return ATOM_TOKEN; }
+<IN_ATOM_STATE>La	{ yylval->atom = new Atom(57); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ce	{ yylval->atom = new Atom(58); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pr	{ yylval->atom = new Atom(59); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Nd	{ yylval->atom = new Atom(60); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pm	{ yylval->atom = new Atom(61); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sm	{ yylval->atom = new Atom(62); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Eu	{ yylval->atom = new Atom(63); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Gd	{ yylval->atom = new Atom(64); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Tb	{ yylval->atom = new Atom(65); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Dy	{ yylval->atom = new Atom(66); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ho	{ yylval->atom = new Atom(67); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Er	{ yylval->atom = new Atom(68); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Tm	{ yylval->atom = new Atom(69); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Yb	{ yylval->atom = new Atom(70); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Lu	{ yylval->atom = new Atom(71); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Hf	{ yylval->atom = new Atom(72); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ta	{ yylval->atom = new Atom(73); return ATOM_TOKEN; }
+<IN_ATOM_STATE>W	{ yylval->atom = new Atom(74); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Re	{ yylval->atom = new Atom(75); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Os	{ yylval->atom = new Atom(76); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ir	{ yylval->atom = new Atom(77); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pt	{ yylval->atom = new Atom(78); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Au	{ yylval->atom = new Atom(79); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Hg	{ yylval->atom = new Atom(80); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Tl	{ yylval->atom = new Atom(81); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pb	{ yylval->atom = new Atom(82); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Bi	{ yylval->atom = new Atom(83); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Po	{ yylval->atom = new Atom(84); return ATOM_TOKEN; }
+<IN_ATOM_STATE>At	{ yylval->atom = new Atom(85); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Rn	{ yylval->atom = new Atom(86); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Fr	{ yylval->atom = new Atom(87); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ra	{ yylval->atom = new Atom(88); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ac	{ yylval->atom = new Atom(89); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Th	{ yylval->atom = new Atom(90); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pa	{ yylval->atom = new Atom(91); return ATOM_TOKEN; }
+<IN_ATOM_STATE>U	{ yylval->atom = new Atom(92); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Np	{ yylval->atom = new Atom(93); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Pu	{ yylval->atom = new Atom(94); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Am	{ yylval->atom = new Atom(95); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cm	{ yylval->atom = new Atom(96); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Bk	{ yylval->atom = new Atom(97); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cf	{ yylval->atom = new Atom(98); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Es	{ yylval->atom = new Atom(99); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Fm	{ yylval->atom = new Atom(100); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Md	{ yylval->atom = new Atom(101); return ATOM_TOKEN; }
+<IN_ATOM_STATE>No	{ yylval->atom = new Atom(102); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Lr	{ yylval->atom = new Atom(103); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Rf	{ yylval->atom = new Atom(104); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Db	{ yylval->atom = new Atom(105); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Sg	{ yylval->atom = new Atom(106); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Bh	{ yylval->atom = new Atom(107); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Hs	{ yylval->atom = new Atom(108); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Mt	{ yylval->atom = new Atom(109); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ds	{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Rg	{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Cn	{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Nh	{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Fl	{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Mc	{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Lv	{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Ts	{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Og	{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
+
+<IN_ATOM_STATE>Uun	{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uuu	{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uub	{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uut	{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uuq	{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uup	{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uuh	{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uus	{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
+<IN_ATOM_STATE>Uuo	{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
+
 B  { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
 C  { yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
 N  { yylval->atom = new Atom(7);return ORGANIC_ATOM_TOKEN; }
@@ -268,37 +279,40 @@ s		    {	yylval->atom = new Atom( 16 );
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
 
-[\=\#\:] {
-              yylval->bond = new Bond();
-              Bond::BondType bt=Bond::UNSPECIFIED;
-              switch(yytext[0]){
-	      case '=':
-		bt = Bond::DOUBLE;
-		break;
-	      case '#':
-		bt = Bond::TRIPLE;
-		break;
-	      case ':':
-		bt = Bond::AROMATIC;
-                yylval->bond->setIsAromatic(true);
-		break;
-        default:
-          CHECK_INVARIANT(0,"cannot get here");
-	      }
-	      yylval->bond->setBondType(bt);
-	return BOND_TOKEN; }
-\-\> {
-    yylval->bond = new Bond(Bond::DATIVER);
-    return BOND_TOKEN;
-}
-\<\- {
-    yylval->bond = new Bond(Bond::DATIVEL);
-    return BOND_TOKEN;
-}
+%{
+  // The next block is a workaround for a pathlogy in the SMILES produced
+  // by some Biovia tools
+%}
+<IN_ATOM_STATE>\'Rf\'	{ yylval->atom = new Atom(104); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Db\'	{ yylval->atom = new Atom(105); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Sg\'	{ yylval->atom = new Atom(106); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Bh\'	{ yylval->atom = new Atom(107); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Hs\'	{ yylval->atom = new Atom(108); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Mt\'	{ yylval->atom = new Atom(109); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Ds\'	{ yylval->atom = new Atom(110); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Rg\'	{ yylval->atom = new Atom(111); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Cn\'	{ yylval->atom = new Atom(112); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Nh\'	{ yylval->atom = new Atom(113); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Fl\'	{ yylval->atom = new Atom(114); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Mc\'	{ yylval->atom = new Atom(115); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Lv\'	{ yylval->atom = new Atom(116); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Ts\'	{ yylval->atom = new Atom(117); return ATOM_TOKEN; }
+<IN_ATOM_STATE>\'Og\'	{ yylval->atom = new Atom(118); return ATOM_TOKEN; }
 
+\=	{ yylval->bond = new Bond(Bond::DOUBLE);
+	  return BOND_TOKEN; }
+\#	{ yylval->bond = new Bond(Bond::TRIPLE);
+	  return BOND_TOKEN; }
+\:	{ yylval->bond = new Bond(Bond::AROMATIC);
+	  yylval->bond->setIsAromatic(true);
+	  return BOND_TOKEN; }
+\-\>	{ yylval->bond = new Bond(Bond::DATIVER);
+	  return BOND_TOKEN; }
+\<\-	{ yylval->bond = new Bond(Bond::DATIVEL);
+	  return BOND_TOKEN; }
 \~	{ yylval->bond = new QueryBond();
-	yylval->bond->setQuery(makeBondNullQuery());
-	return BOND_TOKEN;  }
+	  yylval->bond->setQuery(makeBondNullQuery());
+	  return BOND_TOKEN;  }
 
 [\\]{1,2}    { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);

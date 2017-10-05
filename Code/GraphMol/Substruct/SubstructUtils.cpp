@@ -30,13 +30,15 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
     res = a1->Match(a2);
   }
   return res;
+  std::cerr << "\t\tatomCompat: " << a1 << " " << a1->getIdx() << "-" << a2
+            << " " << a2->getIdx() << std::endl;
+  std::cerr << "\t\t    " << res << std::endl;
+  return res;
 }
 
 bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
-  // std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 <<
-  // " " << a2->getIdx() << std::endl;
   bool res = a1->Match(a2);
   if (res) {
     std::string s1, s2;
@@ -46,6 +48,9 @@ bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
       res = hascode1 && hascode2 && s1 == s2;
     }
   }
+  std::cerr << "\t\tchiralAtomCompat: " << a1 << " " << a1->getIdx() << "-"
+            << a2 << " " << a2->getIdx() << std::endl;
+  std::cerr << "\t\t    " << res << std::endl;
   return res;
 }
 

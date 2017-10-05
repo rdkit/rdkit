@@ -1,18 +1,18 @@
 #  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written
 #       permission.
 #
@@ -37,7 +37,7 @@ from rdkit.six.moves import cPickle
 
 from rdkit import rdBase
 from rdkit import Chem
-from rdkit.Chem.rdRGroupDecomposition import RGroupDecomposition
+from rdkit.Chem.rdRGroupDecomposition import RGroupDecompose, RGroupDecomposition, RGroupDecompositionParameters
 from collections import OrderedDict
 
 class TestCase(unittest.TestCase) :
@@ -112,12 +112,59 @@ C1CCO[C@@](S)(P)1
         core = Chem.MolFromSmarts("C1CCOC1")
         rgroups = RGroupDecomposition(core)
         for m in mols:
-            print (m, Chem.MolToSmiles(m))
             rgroups.Add(m)
         rgroups.Process()
         columns = rgroups.GetRGroupsAsColumns()
+        data = {}
         for k,v in columns.items():
-            print("%s:%s"%(k, " ".join([Chem.MolToSmiles(m,True) for m in v])))
-            
+            data[k] = [Chem.MolToSmiles(m,True) for m in v]
+
+        rgroups2,unmatched = RGroupDecompose([core], mols)
+        columns2,unmatched = RGroupDecompose([core], mols, asRows=False)
+        data2 = {}
+        for k,v in columns2.items():
+            data2[k] = [Chem.MolToSmiles(m,True) for m in v]
+
+        self.assertEqual(data, data2)
+        columns3, unmatched = RGroupDecompose([core], mols, asRows=False, asSmiles=True)
+        self.assertEqual(data, columns3)
+        
+
+    def test_h_options(self):
+        core = Chem.MolFromSmiles("O=c1oc2ccccc2cc1")
+        smiles = ("O=c1cc(Cn2ccnc2)c2ccc(Oc3ccccc3)cc2o1",
+                  "O=c1oc2ccccc2c(Cn2ccnc2)c1-c1ccccc1",
+                  "COc1ccc2c(Cn3cncn3)cc(=O)oc2c1")
+        params = RGroupDecompositionParameters()
+        rgd = RGroupDecomposition(core,params)
+        for smi in smiles:
+            m = Chem.MolFromSmiles(smi)
+            rgd.Add(m)
+        rgd.Process()
+        columns = rgd.GetRGroupsAsColumns()
+        self.assertEqual(columns['R2'][0].GetNumAtoms(),12)
+
+        params.removeHydrogensPostMatch = True
+        rgd = RGroupDecomposition(core,params)
+        for smi in smiles:
+            m = Chem.MolFromSmiles(smi)
+            rgd.Add(m)
+        rgd.Process()
+        columns = rgd.GetRGroupsAsColumns()
+        self.assertEqual(columns['R2'][0].GetNumAtoms(),7)
+
+    def test_unmatched(self):
+        cores = [Chem.MolFromSmiles("N")]
+        mols = [Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("CC"),
+                Chem.MolFromSmiles("N"),
+                Chem.MolFromSmiles("CC")]
+
+        res, unmatched = RGroupDecompose(cores, mols)
+        self.assertEquals(len(res), 1)
+        self.assertEquals(unmatched, [0,1,2,4])
+        
+
 if __name__ == '__main__':
   unittest.main()

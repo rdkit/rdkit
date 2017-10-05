@@ -222,6 +222,43 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
+  def testBitVectorMaxMin3(self):
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+                         'chembl_cyps.head.fps')
+    fps = []
+    with open(fname) as infil:
+      for line in infil:
+          fp = DataStructs.CreateFromFPSText(line.strip())
+          fps.append(fp)
+    mmp =rdSimDivPickers.MaxMinPicker()
+    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20))
+    self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,\
+                          881,516,497,412,718,869,407])
+
+    ids=list(mmp.LazyBitVectorPick(fps,len(fps),20,firstPicks=[374,720,690,339,875]))
+    self.assertEqual(ids,[374,720,690,339,875,842,404,725,120,385,115,868,630,\
+                          881,516,497,412,718,869,407])
+
+  def testBitVectorMaxMin4(self):
+    # threshold tests
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+                         'chembl_cyps.head.fps')
+    fps = []
+    with open(fname) as infil:
+      for line in infil:
+          fp = DataStructs.CreateFromFPSText(line.strip())
+          fps.append(fp)
+    mmp =rdSimDivPickers.MaxMinPicker()
+    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,-1.0)
+    self.assertEqual(list(ids),[374,720,690,339,875,842,404,725,120,385,115,868,630,\
+                          881,516,497,412,718,869,407])
+
+    self.assertAlmostEqual(threshold,0.8977,4)
+
+    ids,threshold=mmp.LazyBitVectorPickWithThreshold(fps,len(fps),20,0.91)
+    self.assertEqual(list(ids),[374,720,690,339,875,842,404,725,120,385,115,868,630])
+    self.assertTrue(threshold>=0.91)
+
 
 if __name__ == '__main__':
   unittest.main()

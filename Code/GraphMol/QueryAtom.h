@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,7 +43,10 @@ class QueryAtom : public Atom {
   bool hasQuery() const { return dp_query != 0; };
 
   //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) { dp_query = what; }
+  void setQuery(QUERYATOM_QUERY *what) {
+    delete dp_query;
+    dp_query = what;
+  }
   //! returns our current query
   QUERYATOM_QUERY *getQuery() const { return dp_query; };
 
@@ -77,6 +80,29 @@ class QueryAtom : public Atom {
   QUERYATOM_QUERY *dp_query;
 
 };  // end o' class
+
+namespace detail {
+inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
+  std::string res = "";
+  if (q) {
+    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    res += q->getFullDescription() + "\n";
+    for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
+         ci != q->endChildren(); ++ci) {
+      res += qhelper((*ci).get(), depth + 1);
+    }
+  }
+  return res;
+}
+}  // end of detail namespace
+inline std::string describeQuery(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string res = "";
+  if (atom->hasQuery()) {
+    res = detail::qhelper(atom->getQuery(), 0);
+  }
+  return res;
+}
 
 };  // end o' namespace
 

@@ -66,8 +66,26 @@ void test1MolAlign() {
   delete m3;
 }
 
+void test1GetBestRMS() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/MolAlign/test_data/probe_mol.sdf";
+  SDMolSupplier supplier(fname, true, false);
+  ROMol *m1 = supplier[1];
+  ROMol *m2 = supplier[2];
+
+  // alignMol() would return this for the rms: 2.50561
+  // But the best rms is: 2.43449
+  double rmsd = MolAlign::getBestRMS(*m1, *m2);
+
+  TEST_ASSERT(RDKit::feq(rmsd, 2.43449));
+  delete m1;
+  delete m2;
+}
+
 void test1MolWithQueryAlign() {
-  // identical to test1MolAlign except we replace one atom with a QueryAtom instead
+  // identical to test1MolAlign except we replace one atom with a QueryAtom
+  // instead
 
   std::string rdbase = getenv("RDBASE");
   std::string fname1 = rdbase + "/Code/GraphMol/MolAlign/test_data/1oir.mol";
@@ -114,8 +132,7 @@ void test1MolWithQueryAlign() {
   // provide an atom mapping
   delete m1;
   delete m2;
-  delete m3;  
-
+  delete m3;
 }
 
 void test2AtomMap() {
@@ -384,8 +401,9 @@ void testMMFFO3AConstraints() {
   TEST_ASSERT(o3a);
   o3a->align();
   delete o3a;
-  double d = (m2.getConformer().getAtomPos(cIdx) -
-              m1->getConformer().getAtomPos(cIdx)).length();
+  double d =
+      (m2.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
+          .length();
   TEST_ASSERT(feq(d, 0.0, 1));
   MatchVectType constraintMap;
   constraintMap.push_back(std::make_pair(cIdx, nIdx));
@@ -436,8 +454,9 @@ void testCrippenO3AConstraints() {
   TEST_ASSERT(o3a);
   o3a->align();
   delete o3a;
-  double d = (m2.getConformer().getAtomPos(cIdx) -
-              m1->getConformer().getAtomPos(cIdx)).length();
+  double d =
+      (m2.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
+          .length();
   TEST_ASSERT(feq(d, 0.0, 1));
   MatchVectType constraintMap;
   constraintMap.push_back(std::make_pair(cIdx, nIdx));
@@ -510,7 +529,8 @@ void testMMFFO3AConstraintsAndLocalOnly() {
     o3a->align();
     delete o3a;
     double d = (prbMol->getConformer().getAtomPos(prbOIdx) -
-                refMol->getConformer().getAtomPos(refSIdx)).length();
+                refMol->getConformer().getAtomPos(refSIdx))
+                   .length();
     TEST_ASSERT(feq(d, distOS[i], 0.1));
   }
 }
@@ -561,7 +581,8 @@ void testCrippenO3AConstraintsAndLocalOnly() {
     o3a->align();
     delete o3a;
     double d = (prbMol->getConformer().getAtomPos(prbOIdx) -
-                refMol->getConformer().getAtomPos(refSIdx)).length();
+                refMol->getConformer().getAtomPos(refSIdx))
+                   .length();
     TEST_ASSERT(feq(d, distOS[i], 0.1));
   }
 }
@@ -768,7 +789,7 @@ void testGetO3AForProbeConfs() {
   MMFF::MMFFMolProperties refMP(*refMol);
   MMFF::MMFFMolProperties prbMP(*prbMol);
 
-  std::vector<std::pair<double, double> > oscores;
+  std::vector<std::pair<double, double>> oscores;
   for (unsigned int i = 0; i < prbMol->getNumConformers(); ++i) {
     MolAlign::O3A o3a(*prbMol, *refMol, &prbMP, &refMP, MolAlign::O3A::MMFF94,
                       i);
@@ -778,7 +799,7 @@ void testGetO3AForProbeConfs() {
   }
 
   {
-    std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+    std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
     MolAlign::getO3AForProbeConfs(*prbMol, *refMol, &prbMP, &refMP, o3s);
     TEST_ASSERT(o3s.size() == prbMol->getNumConformers());
     for (unsigned int i = 0; i < prbMol->getNumConformers(); ++i) {
@@ -796,7 +817,7 @@ void testGetO3AForProbeConfs() {
       }
     }
 
-    std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+    std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
     MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 4);
     TEST_ASSERT(o3s.size() == prbMol2.getNumConformers());
     for (unsigned int i = 0; i < prbMol2.getNumConformers(); ++i) {
@@ -846,7 +867,7 @@ void testO3AMultiThreadBug() {
 
       MMFF::MMFFMolProperties prbMP(prbMol);
 
-      std::vector<std::pair<double, double> > oscores;
+      std::vector<std::pair<double, double>> oscores;
       for (unsigned int i = 0; i < prbMol.getNumConformers(); ++i) {
         MolAlign::O3A o3a(prbMol, *refMol, &prbMP, &refMP,
                           MolAlign::O3A::MMFF94, i);
@@ -856,7 +877,7 @@ void testO3AMultiThreadBug() {
       }
 
       ROMol prbMol2 = *mol;
-      std::vector<boost::shared_ptr<MolAlign::O3A> > o3s;
+      std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
       MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 0);
       TEST_ASSERT(o3s.size() == prbMol2.getNumConformers());
       for (unsigned int i = 0; i < prbMol2.getNumConformers(); ++i) {
@@ -883,6 +904,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolAlign \n\n";
   test1MolAlign();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t test1GetBestRMS \n\n";
+  test1GetBestRMS();
 
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test1MolWithQueryAlign \n\n";

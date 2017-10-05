@@ -131,7 +131,7 @@ void recurseOverReactantCombinations(
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
     VectMatchVectType combination) {
   unsigned int nReactants = matchesByReactant.size();
-  URANGE_CHECK(level, nReactants - 1);
+  URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
   for (auto reactIt = matchesByReactant[level].begin();
        reactIt != matchesByReactant[level].end(); ++reactIt) {
@@ -164,8 +164,8 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
   if (!prodAtom->hasProp(common_properties::_ReactionDegreeChanged)) {
     if (!prodAtom->hasProp(common_properties::_QueryHCount)) {
       prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
+      prodAtom->setNoImplicit(reactAtom->getNoImplicit());
     }
-    prodAtom->setNoImplicit(reactAtom->getNoImplicit());
   }
 }
 
@@ -221,6 +221,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     }
     if (newAtom->getPropIfPresent(common_properties::_QueryHCount, val)) {
       newAtom->setNumExplicitHs(val);
+      newAtom->setNoImplicit(true);  // this was github #1544
     }
     if (newAtom->getPropIfPresent(common_properties::_QueryMass, val)) {
       // FIX: technically should do something with this
@@ -1063,13 +1064,15 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (nbr->hasProp(REACT_ATOM_IDX)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.push_back(RGroup(
-                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType(),
+                nbr,
+                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                    ->getBondType(),
                 nbr->getProp<int>(OLD_MAPNO)));
           } else {
             bonds_to_product.push_back(RGroup(
-                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType()));
+                nbr,
+                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                    ->getBondType()));
           }
         }
 

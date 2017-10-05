@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2013,6 +2013,101 @@ void testGithub565() {
   std::cerr << " Done" << std::endl;
 }
 
+void test14BWPalette() {
+  std::cout << " ----------------- Testing use of a black & white palette"
+            << std::endl;
+  {
+    std::string smiles = "CNC(Cl)C(=O)O";
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    {  // start with color
+      MolDraw2DSVG drawer(200, 200);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") != std::string::npos);
+
+      std::ofstream outs("test14_1.svg");
+      outs << text;
+      outs.flush();
+    }
+    {  // now B&W
+      MolDraw2DSVG drawer(200, 200);
+      assignBWPalette(drawer.drawOptions().atomColourPalette);
+      drawer.drawMolecule(*m1, "m1");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+
+      TEST_ASSERT(text.find("stroke:#00CC00") == std::string::npos);
+
+      std::ofstream outs("test14_2.svg");
+      outs << text;
+      outs.flush();
+    }
+  }
+  std::cerr << " Done" << std::endl;
+}
+
+void test15ContinuousHighlightingWithGrid() {
+  std::cerr << " ----------------- Testing use of continuous highlighting with "
+               "drawMolecules"
+            << std::endl;
+
+  {
+    std::string smiles =
+        "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
+    RWMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    smiles = "NC(=O)[C@H](Cl)Sc1ncns1";  // made up
+    RWMol *m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    std::vector<ROMol *> mols;
+    mols.push_back(m1);
+    mols.push_back(m2);
+    std::vector<std::vector<int> > atHighlights(2);
+    atHighlights[0].push_back(0);
+    atHighlights[0].push_back(1);
+    atHighlights[0].push_back(2);
+    atHighlights[0].push_back(6);
+
+    atHighlights[1].push_back(0);
+    atHighlights[1].push_back(1);
+    atHighlights[1].push_back(2);
+    atHighlights[1].push_back(6);
+
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().continuousHighlight = false;
+      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test15_1.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") ==
+                  std::string::npos);
+    }
+
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("test15_2.svg");
+      outs << text;
+      outs.flush();
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:8px;") !=
+                  std::string::npos);
+    }
+  }
+
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -2046,4 +2141,6 @@ int main() {
   testGithub1271();
   testGithub1322();
   testGithub565();
+  test14BWPalette();
+  test15ContinuousHighlightingWithGrid();
 }

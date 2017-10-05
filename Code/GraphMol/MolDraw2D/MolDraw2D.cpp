@@ -177,7 +177,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              int confId) {
   at_cds_.push_back(std::vector<Point2D>());
   atomic_nums_.push_back(std::vector<int>());
-  atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+  atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
   activeMolIdx_++;
 
   if (!activeMolIdx_) {  // on the first pass we need to do some work
@@ -242,7 +242,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   } else if (drawOptions().circleAtoms && highlight_atoms) {
     ROMol::VERTEX_ITER this_at, end_at;
     boost::tie(this_at, end_at) = mol.getVertices();
-    setFillPolys(false);
+    setFillPolys(drawOptions().fillHighlights);
     while (this_at != end_at) {
       int this_idx = mol[*this_at]->getIdx();
       if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
@@ -518,7 +518,7 @@ void MolDraw2D::drawReaction(
     tmol2.insertMol(*tmol);
     at_cds_.push_back(std::vector<Point2D>());
     atomic_nums_.push_back(std::vector<int>());
-    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType> >());
+    atom_syms_.push_back(std::vector<std::pair<std::string, OrientType>>());
     activeMolIdx_++;
     extractAtomCoords(tmol2, 0, true);
     calculateScale();
@@ -653,11 +653,11 @@ void MolDraw2D::drawReaction(
 
 void MolDraw2D::drawMolecules(
     const std::vector<ROMol *> &mols, const std::vector<std::string> *legends,
-    const std::vector<std::vector<int> > *highlight_atoms,
-    const std::vector<std::vector<int> > *highlight_bonds,
-    const std::vector<std::map<int, DrawColour> > *highlight_atom_maps,
-    const std::vector<std::map<int, DrawColour> > *highlight_bond_maps,
-    const std::vector<std::map<int, double> > *highlight_radii,
+    const std::vector<std::vector<int>> *highlight_atoms,
+    const std::vector<std::vector<int>> *highlight_bonds,
+    const std::vector<std::map<int, DrawColour>> *highlight_atom_maps,
+    const std::vector<std::map<int, DrawColour>> *highlight_bond_maps,
+    const std::vector<std::map<int, double>> *highlight_radii,
     const std::vector<int> *confIds) {
   PRECONDITION(!legends || legends->size() == mols.size(), "bad size");
   PRECONDITION(!highlight_atoms || highlight_atoms->size() == mols.size(),
@@ -712,13 +712,24 @@ void MolDraw2D::drawMolecules(
     int col = 0;
     if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
+
+    vector<int> *lhighlight_bonds = NULL;
+    if (highlight_bonds) {
+      lhighlight_bonds = new std::vector<int>((*highlight_bonds)[i]);
+    } else if (drawOptions().continuousHighlight && highlight_atoms) {
+      lhighlight_bonds = new vector<int>();
+      getBondHighlightsForAtoms(tmols[i], (*highlight_atoms)[i],
+                                *lhighlight_bonds);
+    };
+
     drawMolecule(tmols[i], legends ? (*legends)[i] : "",
                  highlight_atoms ? &(*highlight_atoms)[i] : nullptr,
-                 highlight_bonds ? &(*highlight_bonds)[i] : nullptr,
+                 lhighlight_bonds,
                  highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr,
                  highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr,
                  highlight_radii ? &(*highlight_radii)[i] : nullptr,
                  confIds ? (*confIds)[i] : -1);
+    delete lhighlight_bonds;
   }
 };
 
@@ -1066,46 +1077,19 @@ DrawColour MolDraw2D::getColour(
 
 // ****************************************************************************
 DrawColour MolDraw2D::getColourByAtomicNum(int atomic_num) {
-  // RGB values taken from Qt's QColor. The seem to work pretty well on my
-  // machine. Using them as fractions of 255, as that's the way Cairo does it.
-  DrawColour res(0., 0., 0.);  // default to black
-
-  switch (atomic_num) {
-    case 0:
-      res = DrawColour(0.5, 0.5, 0.5);
-      break;
-    case 1:  // Hs and Carbons are the same colour
-    case 6:
-      res = DrawColour(0.0, 0.0, 0.0);
-      break;
-    case 7:
-      res = DrawColour(0.0, 0.0, 1.0);
-      break;
-    case 8:
-      res = DrawColour(1.0, 0.0, 0.0);
-      break;
-    case 9:
-      res = DrawColour(0.2, 0.8, 0.8);
-      break;
-    case 15:
-      res = DrawColour(1.0, 0.5, 0.0);
-      break;
-    case 16:
-      res = DrawColour(0.8, 0.8, 0.0);
-      break;
-    case 17:
-      res = DrawColour(0.0, 0.802, 0.0);
-      break;
-    case 35:
-      res = DrawColour(0.5, 0.3, 0.1);
-      break;
-    case 53:
-      res = DrawColour(0.63, 0.12, 0.94);
-      break;
-    default:
-      break;
+  DrawColour res;
+  if (drawOptions().atomColourPalette.find(atomic_num) !=
+      drawOptions().atomColourPalette.end()) {
+    res = drawOptions().atomColourPalette[atomic_num];
+  } else if (atomic_num != -1 &&
+             drawOptions().atomColourPalette.find(-1) !=
+                 drawOptions().atomColourPalette.end()) {
+    // if -1 is in the palette, we use that for undefined colors
+    res = drawOptions().atomColourPalette[-1];
+  } else {
+    // if all else fails, default to black:
+    res = DrawColour(0, 0, 0);
   }
-
   return res;
 }
 

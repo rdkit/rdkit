@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2014 Rational Discovery LLC
+//  Copyright (C) 2003-2017 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,31 +21,6 @@
 
 namespace python = boost::python;
 namespace RDKit {
-
-namespace {
-std::string qhelper(Bond::QUERYBOND_QUERY *q, unsigned int depth) {
-  std::ostringstream res;
-
-  if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res << "  ";
-    res << q->getFullDescription();
-    if (q->getNegation()) res << " ! ";
-
-    res << "\n";
-    for (auto ci = q->beginChildren(); ci != q->endChildren(); ++ci) {
-      res << qhelper((*ci).get(), depth + 1);
-    }
-  }
-  return res.str();
-}
-}  // end of local namespace
-std::string describeQuery(const Bond *bond) {
-  std::string res = "";
-  if (bond->hasQuery()) {
-    res = qhelper(bond->getQuery(), 0);
-  }
-  return res;
-}
 
 void expandQuery(QueryBond *self, const QueryBond *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
@@ -347,7 +321,7 @@ struct bond_wrapper {
     bondClassDoc =
         "The class to store QueryBonds.\n\
 These cannot currently be constructed directly from Python\n";
-    python::class_<QueryBond, python::bases<Bond> >(
+    python::class_<QueryBond, python::bases<Bond>>(
         "QueryBond", bondClassDoc.c_str(), python::no_init);
   };
 };

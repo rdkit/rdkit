@@ -3,7 +3,7 @@ rdkit_python_extension(rdRGroupDecomposition
                        DEST Chem 
                        LINK_LIBRARIES
      RGroupDecomposition FMCS ChemTransforms SubstructMatch SmilesParse GraphMol
-     RDGeometryLib RDBoost
+     RDGeneral RDGeometryLib RDBoost
     ${RDKit_THREAD_LIBS})
 
 

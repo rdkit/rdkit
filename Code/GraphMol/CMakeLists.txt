@@ -39,6 +39,7 @@ rdkit_headers(Atom.h
               SanitException.h
               MonomerInfo.h
               new_canon.h
+              MolBundle.h
               DEST GraphMol)
 
 add_subdirectory(Depictor)
@@ -118,3 +119,6 @@ rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol RDG
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
            LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
+
+rdkit_test(molBundleTest testMolBundle.cpp
+          LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)

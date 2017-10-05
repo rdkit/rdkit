@@ -63,17 +63,17 @@ class MMFFMolProperties {
   const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams(
       const ROMol &mol, const Bond *bond);
   boost::uint8_t getMMFFAtomType(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
   };
   double getMMFFFormalCharge(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
   };
   double getMMFFPartialCharge(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge;
   };
@@ -148,12 +148,12 @@ class MMFFMolProperties {
   void setMMFFHeavyAtomType(const RingMembershipSize &rmSize, const Atom *atom);
   void setMMFFHydrogenType(const Atom *atom);
   void setMMFFFormalCharge(const unsigned int idx, const double fChg) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge = fChg;
   };
   void setMMFFPartialCharge(const unsigned int idx, const double pChg) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge = pChg;
   };

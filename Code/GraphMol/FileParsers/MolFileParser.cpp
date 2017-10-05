@@ -168,7 +168,7 @@ void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     throw FileParseException(errout.str());
   }
 
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   QueryAtom a(*(mol->getAtomWithIdx(idx)));
 
   auto *q = new ATOM_OR_QUERY;
@@ -785,7 +785,7 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   QueryAtom *a = nullptr;
 
   int nQueries;
@@ -813,10 +813,8 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     if (!i) {
       a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
       // replace the query:
-      Atom::QUERYATOM_QUERY *oq = a->getQuery();
       a->setAtomicNum(atNum);
       a->setQuery(makeAtomNumQuery(atNum));
-      delete oq;
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
     }
@@ -972,7 +970,7 @@ void ParseAtomAlias(RWMol *mol, std::string text, const std::string &nextLine,
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::molFileAlias, nextLine);
 };
@@ -991,7 +989,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
            << line;
     throw FileParseException(errout.str());
   }
-  URANGE_CHECK(idx, mol->getNumAtoms() - 1);
+  URANGE_CHECK(idx, mol->getNumAtoms());
   Atom *at = mol->getAtomWithIdx(idx);
   at->setProp(common_properties::molFileValue,
               text.substr(7, text.length() - 7));
@@ -1959,9 +1957,9 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         bond->setIsAromatic(true);
         break;
       case 9:
-         bond = new Bond(Bond::DATIVE);
-         break;
-     case 0:
+        bond = new Bond(Bond::DATIVE);
+        break;
+      case 0:
         bond = new Bond(Bond::UNSPECIFIED);
         BOOST_LOG(rdWarningLog)
             << "bond with order 0 found on line " << line
@@ -2549,9 +2547,9 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
         // single bond dir flags:
         ClearSingleBondDirFlags(*res);
 
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry
+        // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
         // here after sanitization because we need the ring information:
-        DetectBondStereoChemistry(*res, &conf);
+        MolOps::detectBondStereochemistry(*res);
       } catch (...) {
         delete res;
         res = nullptr;
@@ -2561,7 +2559,7 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     } else {
       // we still need to do something about double bond stereochemistry
       // (was github issue 337)
-      DetectBondStereoChemistry(*res, &conf);
+      MolOps::detectBondStereochemistry(*res);
     }
 
     if (res->hasProp(common_properties::_NeedsQueryScan)) {

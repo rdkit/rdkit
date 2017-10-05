@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -65,7 +65,7 @@ class QueryBond : public Bond {
   //! replaces our current query with the value passed in
   void setQuery(QUERYBOND_QUERY *what) {
     // free up any existing query (Issue255):
-    if (dp_query) delete dp_query;
+    delete dp_query;
     dp_query = what;
   };
 
@@ -91,6 +91,29 @@ class QueryBond : public Bond {
  protected:
   QUERYBOND_QUERY *dp_query;
 };
+
+namespace detail {
+inline std::string qhelper(Bond::QUERYBOND_QUERY *q, unsigned int depth) {
+  std::string res;
+  if (q) {
+    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    res += q->getFullDescription() + "\n";
+    for (Bond::QUERYBOND_QUERY::CHILD_VECT_CI ci = q->beginChildren();
+         ci != q->endChildren(); ++ci) {
+      res += qhelper((*ci).get(), depth + 1);
+    }
+  }
+  return res;
+}
+}  // end of detail namespace
+inline std::string describeQuery(const Bond *bond) {
+  PRECONDITION(bond, "bad bond");
+  std::string res = "";
+  if (bond->hasQuery()) {
+    res = detail::qhelper(bond->getQuery(), 0);
+  }
+  return res;
+}
 };
 
 #endif

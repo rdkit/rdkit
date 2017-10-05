@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -28,26 +27,6 @@
 
 namespace python = boost::python;
 namespace RDKit {
-namespace {
-std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
-  std::string res = "";
-  if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
-    res += q->getFullDescription() + "\n";
-    for (auto ci = q->beginChildren(); ci != q->endChildren(); ++ci) {
-      res += qhelper((*ci).get(), depth + 1);
-    }
-  }
-  return res;
-}
-}  // end of local namespace
-std::string describeQuery(const Atom *atom) {
-  std::string res = "";
-  if (atom->hasQuery()) {
-    res = qhelper(atom->getQuery(), 0);
-  }
-  return res;
-}
 void expandQuery(QueryAtom *self, const QueryAtom *other,
                  Queries::CompositeQueryType how, bool maintainOrder) {
   if (other->hasQuery()) {
@@ -384,11 +363,11 @@ struct atom_wrapper {
 
         .def("GetMonomerInfo", AtomGetMonomerInfo,
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1> >(),
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("GetPDBResidueInfo", AtomGetPDBResidueInfo,
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1> >(),
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
              "Sets the atom's MonomerInfo object.\n\n")
@@ -426,7 +405,7 @@ struct atom_wrapper {
     atomClassDoc =
         "The class to store QueryAtoms.\n\
 These cannot currently be constructed directly from Python\n";
-    python::class_<QueryAtom, python::bases<Atom> >(
+    python::class_<QueryAtom, python::bases<Atom>>(
         "QueryAtom", atomClassDoc.c_str(), python::no_init)
         .def("ExpandQuery", expandQuery,
              (python::arg("self"), python::arg("other"),

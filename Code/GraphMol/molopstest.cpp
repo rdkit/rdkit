@@ -5784,6 +5784,38 @@ void testAdjustQueryProperties() {
     delete qm;
   }
 
+  {  // heavy atom degree
+    std::string smiles = "C1CC(*)C1*";
+    ROMol *qm = SmartsToMol(smiles);
+    TEST_ASSERT(qm);
+    TEST_ASSERT(qm->getNumAtoms() == 6);
+    MolOps::AdjustQueryParameters params;
+    params.adjustDegree = false;
+    params.adjustHeavyDegree = true;
+    ROMol *aqm = MolOps::adjustQueryProperties(*qm, &params);
+    TEST_ASSERT(aqm);
+    TEST_ASSERT(aqm->getNumAtoms() == 6);
+    {
+      smiles = "C1CC(C)C1(C)";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    {
+      smiles = "C1CC([2H])C1(C)";
+      ROMol *m = SmilesToMol(smiles);
+      TEST_ASSERT(m);
+      MatchVectType match;
+      TEST_ASSERT(SubstructMatch(*m, *qm, match));
+      TEST_ASSERT(!SubstructMatch(*m, *aqm, match));
+      delete m;
+    }
+    delete qm;
+    delete aqm;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -6615,11 +6647,15 @@ void testGithubIssue908() {
                        << std::endl;
   {
     std::string mb =
-        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 V2000\n "
+        "\n     RDKit          2D\n\n  4  3  0  0  0  0  0  0  0  0999 "
+        "V2000\n "
         "  -0.0000   -1.5000    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  "
-        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0 "
-        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0  "
-        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0 "
+        "0\n   -0.0000   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  "
+        "0 "
+        " 0\n    1.2990    0.7500    0.0000 F   0  0  0  0  0  0  0  0  0  0 "
+        " "
+        "0  0\n   -1.2990    0.7500    0.0000 Cl  0  0  0  0  0  0  0  0  0  "
+        "0 "
         " 0  0\n  2  1  1  1\n  2  3  1  0\n  2  4  1  0\nM  END\n";
     RWMol *m = MolBlockToMol(mb);
     TEST_ASSERT(m);
@@ -6827,6 +6863,46 @@ void testGithub1439() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1281() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 1281: " << std::endl
+      << "RDKit gets stuck on PubChem CID 102128817" << std::endl;
+  {  // basics
+    std::string smiles =
+        "COC1=CC=C(C=C1)C2C3=C(C=CC4=CC=CC=C43)OC5=CC6=C(C=C5)C7=NC8=C9C=CC1="
+        "CC9=C(N8)N=C3C4=C5C=CC(=C4)OC4=C(C(C8=C(C=CC9=CC=CC=C98)OC8=CC9=C(C="
+        "C8)C8=NC9=NC9=C%10C=C(C=CC%10=C(N9)N=C9C%10=C(C=C(C=C%10)OC%10=C2C2="
+        "CC=CC=C2C=C%10)C(=N9)NC2=NC(=N8)C8=C2C=C(C=C8)OC2=C(C(C8=C(C=CC9=CC="
+        "CC=C98)OC8=CC9=C(C=C8)C(=NC5=N3)N=C9NC6=N7)C3=CC=C(C=C3)OC)C3=CC=CC="
+        "C3C=C2)OC2=C(C(C3=C(O1)C=CC1=CC=CC=C13)C1=CC=C(C=C1)OC)C1=CC=CC=C1C="
+        "C2)C1=CC=C(C=C1)OC)C1=CC=CC=C1C=C4";
+    {
+      RWMol *m = SmilesToMol(smiles, 0, false);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 204);
+      TEST_ASSERT(m->getNumBonds() == 244);
+      bool ok = false;
+      try {
+        MolOps::findSSSR(*m);
+      } catch (const ValueErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+      delete m;
+    }
+    {
+      bool ok = false;
+      try {
+        RWMol *m = SmilesToMol(smiles);
+      } catch (const ValueErrorException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -6924,11 +7000,11 @@ int main() {
   testGithubIssue1204();
   testPotentialStereoBonds();
   testSetBondStereo();
-#endif
 
   testBondSetStereoAtoms();
   testGithub1478();
   testGithub1439();
-
+#endif
+  testGithub1281();
   return 0;
 }

@@ -26,6 +26,8 @@ typedef RINGINVAR_SET::const_iterator RINGINVAR_SET_CI;
 typedef std::vector<boost::uint32_t> RINGINVAR_VECT;
 
 namespace RingUtils {
+const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
+
 using namespace RDKit;
 
 boost::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
@@ -642,6 +644,14 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
   int curr = -1;
   unsigned int curSize = UINT_MAX;
   while (bfsq.size() > 0) {
+    if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
+      std::string msg =
+          "Maximum BFS search size exceeded.\nThis is likely due to a highly "
+          "symmetric fused ring system.";
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw ValueErrorException(msg);
+    }
+
     curr = bfsq.front();
     bfsq.pop_front();
 
@@ -734,6 +744,13 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
   tv.push_back(startAtomIdx);
   bfsq.push_back(tv);
   while (!bfsq.empty()) {
+    if (bfsq.size() >= RingUtils::MAX_BFSQ_SIZE) {
+      std::string msg =
+          "Maximum BFS search size exceeded.\nThis is likely due to a highly "
+          "symmetric fused ring system.";
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw ValueErrorException(msg);
+    }
     tv = bfsq.front();
     bfsq.pop_front();
 
