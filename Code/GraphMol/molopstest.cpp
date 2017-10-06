@@ -6906,6 +6906,27 @@ void testGithub1281() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1605() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1605: Inappropriate bad valence exception during "
+                          "partial sanitization. "
+                       << std::endl;
+  {
+    std::string smiles = "C1=CC=CC=C1N(=O)=O";
+    {  // easy to test; we shouldn't throw an exception. :-)
+      RWMol *m = SmilesToMol(smiles, 0, false);
+      TEST_ASSERT(m);
+      unsigned int failed;
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
+      TEST_ASSERT(!failed);
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -7007,7 +7028,8 @@ int main() {
   testBondSetStereoAtoms();
   testGithub1478();
   testGithub1439();
-#endif
   testGithub1281();
+#endif
+  testGithub1605();
   return 0;
 }
