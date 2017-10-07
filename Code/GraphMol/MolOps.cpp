@@ -223,10 +223,10 @@ void adjustHs(RWMol &mol) {
   //
   for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
     int origImplicitV = (*ai)->getImplicitValence();
-    (*ai)->calcExplicitValence();
+    (*ai)->calcExplicitValence(false);
     int origExplicitV = (*ai)->getNumExplicitHs();
 
-    int newImplicitV = (*ai)->calcImplicitValence();
+    int newImplicitV = (*ai)->calcImplicitValence(false);
     //
     //  Case 1: The disappearing Hydrogen
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -245,7 +245,7 @@ void adjustHs(RWMol &mol) {
     //    write:
     if (newImplicitV < origImplicitV) {
       (*ai)->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
-      (*ai)->calcExplicitValence();
+      (*ai)->calcExplicitValence(false);
     }
   }
 }
