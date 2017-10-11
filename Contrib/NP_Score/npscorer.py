@@ -21,6 +21,8 @@ import os.path
 
 
 def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):
+  """Reads and returns the scoring model,
+  which has to be passed to the scoring functions."""
   sys.stderr.write("reading NP model ...\n")
   fscore = pickle.load(gzip.open(filename))
   sys.stderr.write("model in\n")
@@ -32,7 +34,7 @@ def scoreMolWConfidence(mol, fscore):
   between 0..1 that descibes how many fragments of the tested molecule
   were found in the model data set (1: all fragments were found).
 
-  Returns tuple(NP Likeness, Confidnce)"""
+  Returns tuple(NP Likeness, Confidence)"""
 
   if mol is None:
     raise ValueError('invalid molecule')
@@ -59,6 +61,9 @@ def scoreMolWConfidence(mol, fscore):
 
 
 def scoreMol(mol, fscore):
+  """Calculates the Natural Product Likeness of a molecule.
+
+  Returns the score as float in the range -5..5."""
   return scoreMolWConfidence(mol, fscore)[0]
 
 def processMols(fscore, suppl):
