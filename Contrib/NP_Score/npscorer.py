@@ -21,70 +21,70 @@ import os.path
 
 
 def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):
-    sys.stderr.write("reading NP model ...\n")
-    fscore = pickle.load(gzip.open(filename))
-    sys.stderr.write("model in\n")
-    return fscore
+  sys.stderr.write("reading NP model ...\n")
+  fscore = pickle.load(gzip.open(filename))
+  sys.stderr.write("model in\n")
+  return fscore
 
 
 def scoreMolWConfidence(mol, fscore):
-    """Next to the NP Likeness Score, this function outputs a confidence value
-    between 0..1 that descibes how many fragments of the tested molecule
-    were found in the model data set (1: all fragments were found).
+  """Next to the NP Likeness Score, this function outputs a confidence value
+  between 0..1 that descibes how many fragments of the tested molecule
+  were found in the model data set (1: all fragments were found).
 
-    Returns tuple(NP Likeness, Confidnce)"""
+  Returns tuple(NP Likeness, Confidnce)"""
 
-    if mol is None:
-        raise ValueError('invalid molecule')
-    fp = rdMolDescriptors.GetMorganFingerprint(mol, 2)
-    bits = fp.GetNonzeroElements()
+  if mol is None:
+    raise ValueError('invalid molecule')
+  fp = rdMolDescriptors.GetMorganFingerprint(mol, 2)
+  bits = fp.GetNonzeroElements()
 
-    # calculating the score
-    score = 0.0
-    bits_found = 0
-    for bit in bits:
-        if bit in fscore:
-            bits_found += 1
-            score += fscore[bit]
+  # calculating the score
+  score = 0.0
+  bits_found = 0
+  for bit in bits:
+    if bit in fscore:
+      bits_found += 1
+      score += fscore[bit]
 
-    score /= float(mol.GetNumAtoms())
-    confidence = round(float(bits_found / len(bits)), 3)
+  score /= float(mol.GetNumAtoms())
+  confidence = round(float(bits_found / len(bits)), 3)
 
-    # preventing score explosion for exotic molecules
-    if score > 4:
-        score = 4. + math.log10(score - 4. + 1.)
-    if score < -4:
-        score = -4. - math.log10(-4. - score + 1.)
-    return score, confidence
+  # preventing score explosion for exotic molecules
+  if score > 4:
+    score = 4. + math.log10(score - 4. + 1.)
+  if score < -4:
+    score = -4. - math.log10(-4. - score + 1.)
+  return score, confidence
 
 
 def scoreMol(mol, fscore):
-    return scoreMolWConfidence(mol, fscore)[0]
+  return scoreMolWConfidence(mol, fscore)[0]
 
 def processMols(fscore, suppl):
-    sys.stderr.write("calculating ...\n")
-    count = {}
-    n = 0
-    for i, m in enumerate(suppl):
-        if m is None:
-            continue
+  sys.stderr.write("calculating ...\n")
+  count = {}
+  n = 0
+  for i, m in enumerate(suppl):
+    if m is None:
+      continue
 
-        n += 1
-        score = "%.3f" % scoreMol(m, fscore)
+    n += 1
+    score = "%.3f" % scoreMol(m, fscore)
 
-        smiles = Chem.MolToSmiles(m, True)
-        name = m.GetProp('_Name')
-        print(smiles + "\t" + name + "\t" + score)
+    smiles = Chem.MolToSmiles(m, True)
+    name = m.GetProp('_Name')
+    print(smiles + "\t" + name + "\t" + score)
 
-    sys.stderr.write("finished, " + str(n) + " molecules processed\n")
+  sys.stderr.write("finished, " + str(n) + " molecules processed\n")
 
 
 if __name__ == '__main__':
 
-    fscore = readNPModel()  # fills fscore
+  fscore = readNPModel()  # fills fscore
 
-    suppl = Chem.SmilesMolSupplier(sys.argv[1], smilesColumn=0, nameColumn=1, titleLine=False)
-    processMols(fscore, suppl)
+  suppl = Chem.SmilesMolSupplier(sys.argv[1], smilesColumn=0, nameColumn=1, titleLine=False)
+  processMols(fscore, suppl)
 
 #
 # Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
