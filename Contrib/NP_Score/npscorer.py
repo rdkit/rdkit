@@ -24,9 +24,9 @@ from collections import namedtuple
 def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):
   """Reads and returns the scoring model,
   which has to be passed to the scoring functions."""
-  sys.stderr.write("reading NP model ...\n")
+  print("reading NP model ...", file=sys.stderr)
   fscore = pickle.load(gzip.open(filename))
-  sys.stderr.write("model in\n")
+  print("model in", file=sys.stderr)
   return fscore
 
 
@@ -70,7 +70,7 @@ def scoreMol(mol, fscore):
 
 
 def processMols(fscore, suppl):
-  sys.stderr.write("calculating ...\n")
+  print("calculating ...", file=sys.stderr)
   count = {}
   n = 0
   for i, m in enumerate(suppl):
@@ -84,7 +84,7 @@ def processMols(fscore, suppl):
     name = m.GetProp('_Name')
     print(smiles + "\t" + name + "\t" + score)
 
-  sys.stderr.write("finished, " + str(n) + " molecules processed\n")
+  print("finished, " + str(n) + " molecules processed", file=sys.stderr)
 
 
 if __name__ == '__main__':
