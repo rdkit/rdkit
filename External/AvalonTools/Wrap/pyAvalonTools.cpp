@@ -23,8 +23,7 @@ RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const RDKit::ROMol &mol,
                                                         unsigned int nBits,
                                                         bool isQuery,
                                                         unsigned int bitFlags) {
-  auto *res =
-      new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+  auto *res = new RDKit::SparseIntVect<boost::uint32_t>(nBits);
   AvalonTools::getAvalonCountFP(mol, *res, nBits, isQuery, bitFlags);
   return res;
 }
@@ -33,8 +32,7 @@ RDKit::SparseIntVect<boost::uint32_t> *getAvalonCountFP(const std::string &data,
                                                         unsigned int nBits,
                                                         bool isQuery,
                                                         unsigned int bitFlags) {
-  auto *res =
-      new RDKit::SparseIntVect<boost::uint32_t>(nBits);
+  auto *res = new RDKit::SparseIntVect<boost::uint32_t>(nBits);
   AvalonTools::getAvalonCountFP(data, isSmiles, *res, nBits, isQuery, bitFlags);
   return res;
 }

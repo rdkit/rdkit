@@ -1331,7 +1331,7 @@ extern "C" CSfp makeAtomPairSFP(CROMol data) {
         RDKit::AtomPairs::getHashedAtomPairFingerprint(
             *mol, getHashedAtomPairFpSize());
     res = new SparseFP(getHashedAtomPairFpSize());
-    for (const auto & iter : afp->getNonzeroElements()) {
+    for (const auto &iter : afp->getNonzeroElements()) {
       res->setVal(iter.first, iter.second);
     }
     delete afp;
@@ -1367,7 +1367,7 @@ extern "C" CSfp makeTopologicalTorsionSFP(CROMol data) {
         RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(
             *mol, getHashedTorsionFpSize());
     res = new SparseFP(getHashedTorsionFpSize());
-    for (const auto & iter : afp->getNonzeroElements()) {
+    for (const auto &iter : afp->getNonzeroElements()) {
       res->setVal(iter.first, iter.second);
     }
     delete afp;

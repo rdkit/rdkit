@@ -240,8 +240,7 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   bool res = false;
   std::string descr = q->getDescription();
   if (descr == "AtomAnd") {
-    for (auto cIt = q->beginChildren();
-         cIt != q->endChildren(); ++cIt) {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
       std::string descr = (*cIt)->getDescription();
       if (descr == "AtomHCount") {
         if (!(*cIt)->getNegation() &&

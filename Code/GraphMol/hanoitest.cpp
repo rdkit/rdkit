@@ -1087,8 +1087,8 @@ std::string smis[] = {
     "C12C3C4C5C6C7C8C1C1C9C5C5C%10C2C2C%11C%12C%13C3C3C7C%10C7C4C%11C1C3C(C5C8%"
     "12)C(C62)C7C9%13",  // does not initially work
     // drawn examples first reviewer
-    "C12C3C4C1CC5C46C7C5C1C57C6C53C1C2", "C1C2C3C4CC5C6C1C17C8C61C5C48C3C27",
-    "EOS"};
+    "C12C3C4C1CC5C46C7C5C1C57C6C53C1C2",
+    "C1C2C3C4CC5C6C1C17C8C61C5C48C3C27", "EOS"};
 
 void test7() {
   BOOST_LOG(rdInfoLog) << "testing stability w.r.t. renumbering." << std::endl;

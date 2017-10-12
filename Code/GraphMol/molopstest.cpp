@@ -6914,9 +6914,8 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(
-          *m, failed,
-          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
+                                          MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }

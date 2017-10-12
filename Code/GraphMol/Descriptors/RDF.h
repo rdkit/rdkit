@@ -3,7 +3,7 @@
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions are
+// modification, are permitted provided that the following conditions are
 // met:
 //
 //     * Redistributions of source code must retain the above copyright
@@ -14,7 +14,8 @@
 //       with the distribution.
 //     * Neither the name of Institue of Cancer Research.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -37,12 +38,11 @@
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
-  class ROMol;
-  namespace Descriptors {
-    const std::string RDFVersion = "1.0.0";
-    void RDF(const ROMol& , std::vector<double> &res, int confId=-1);
-
-  }
+class ROMol;
+namespace Descriptors {
+const std::string RDFVersion = "1.0.0";
+void RDF(const ROMol&, std::vector<double>& res, int confId = -1);
+}
 }
 #endif
 #endif

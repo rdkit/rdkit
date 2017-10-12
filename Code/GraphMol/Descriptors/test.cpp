@@ -2073,7 +2073,7 @@ void testUSRCATDescriptor() {
   std::string fname1 =
       rdbase + "/Code/GraphMol/Descriptors/test_data/cyclohexane.mol";
   mol = MolFileToMol(fname1, true, false, true);
-  std::vector<std::vector<unsigned int> > atomIds;
+  std::vector<std::vector<unsigned int>> atomIds;
   std::vector<double> myUSR(12);
   USRCAT(*mol, myUSR, atomIds);
   for (unsigned int i = 0; i < myUSR.size(); ++i) {

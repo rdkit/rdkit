@@ -1064,15 +1064,13 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (nbr->hasProp(REACT_ATOM_IDX)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.push_back(RGroup(
-                nbr,
-                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                    ->getBondType(),
+                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                         ->getBondType(),
                 nbr->getProp<int>(OLD_MAPNO)));
           } else {
             bonds_to_product.push_back(RGroup(
-                nbr,
-                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                    ->getBondType()));
+                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                         ->getBondType()));
           }
         }
 

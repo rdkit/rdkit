@@ -72,20 +72,18 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
     }
   }
 
-  
-  std::vector<double> squaresumdiff(6,0.0);
+  std::vector<double> squaresumdiff(6, 0.0);
   for (unsigned int i = 0; i < numAtoms; i++) {
-     for (unsigned int t = 0; t < 6; ++t) {
-         squaresumdiff[t] += ( w[t * numAtoms + i]-wmean[t]) * ( w[t * numAtoms + i]-wmean[t]);
-     }
+    for (unsigned int t = 0; t < 6; ++t) {
+      squaresumdiff[t] +=
+          (w[t * numAtoms + i] - wmean[t]) * (w[t * numAtoms + i] - wmean[t]);
+    }
   }
-
 
   std::vector<double> TDBmat(48, 0.0);
   std::vector<double> TDBmatC(48, 0.0);
   std::vector<double> TDBmatM(48, 0.0);
   std::vector<double> TDBmatG(48, 0.0);
-
 
   for (unsigned int k = 0; k < 8; k++) {
     int maxkVertexPairs = 0;
@@ -93,10 +91,11 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
         if (dist[j * numAtoms + i] == k + 1) {
           for (unsigned int t = 0; t < 6; ++t) {
-            
-            TDBmatM[t * 8 + k] += (w[t * numAtoms + i]-wmean[t]) * (w[t * numAtoms + j]-wmean[t]); // ATSC
+            TDBmatM[t * 8 + k] += (w[t * numAtoms + i] - wmean[t]) *
+                                  (w[t * numAtoms + j] - wmean[t]);  // ATSC
 
-            TDBmatG[t * 8 + k] += (w[t * numAtoms + i] - w[t * numAtoms + j]) * (w[t * numAtoms + i] - w[t * numAtoms + j]);
+            TDBmatG[t * 8 + k] += (w[t * numAtoms + i] - w[t * numAtoms + j]) *
+                                  (w[t * numAtoms + i] - w[t * numAtoms + j]);
 
             TDBmat[t * 8 + k] += w[t * numAtoms + i] * w[t * numAtoms + j];
             TDBmatC[t * 8 + k] += fabs(w[t * numAtoms + i] - wmean[t]) *
@@ -110,15 +109,16 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
     for (unsigned int t = 0; t < 6; ++t) {
       if (maxkVertexPairs > 0) {
         TDBmat[t * 8 + k] = log(TDBmat[t * 8 + k] + 1);
-        TDBmatG[t * 8 + k] = TDBmatG[t * 8 + k]/ squaresumdiff[t] / maxkVertexPairs * (numAtoms-1) / 2.0; 
-        TDBmatM[t * 8 + k] = TDBmatM[t * 8 + k]/ squaresumdiff[t] / maxkVertexPairs * numAtoms ;            
- 
+        TDBmatG[t * 8 + k] = TDBmatG[t * 8 + k] / squaresumdiff[t] /
+                             maxkVertexPairs * (numAtoms - 1) / 2.0;
+        TDBmatM[t * 8 + k] =
+            TDBmatM[t * 8 + k] / squaresumdiff[t] / maxkVertexPairs * numAtoms;
+
       } else {
         TDBmat[t * 8 + k] = 0.0;
         TDBmatC[t * 8 + k] = 0.0;
-        TDBmatM[t * 8 + k] =  0.0;
-        TDBmatG[t * 8 + k] =  0.0;
-
+        TDBmatM[t * 8 + k] = 0.0;
+        TDBmatG[t * 8 + k] = 0.0;
       }
     }
   }
@@ -132,8 +132,6 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
       res[t * 8 + k + 144] = round(1000 * TDBmatG[k + t * 8]) / 1000;
     }
   }
-
-
 
   TDBmat.clear();
   TDBmatC.clear();

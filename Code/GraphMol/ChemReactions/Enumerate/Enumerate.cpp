@@ -144,10 +144,9 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
             rxn.runReactant(mol, reactant_idx);
         for (auto &partialProduct : partialProducts) {
           int saneProducts = 0;
-          for (auto & product_idx : partialProduct) {
+          for (auto &product_idx : partialProduct) {
             try {
-              RWMol *m =
-                  dynamic_cast<RWMol *>(product_idx.get());
+              RWMol *m = dynamic_cast<RWMol *>(product_idx.get());
               MolOps::sanitizeMol(*m);
               saneProducts++;
             } catch (...) {

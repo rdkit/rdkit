@@ -227,7 +227,7 @@ std::vector<double> clusterArray2(std::vector<double> data, int precision) {
   // sort the input data descend order!
   std::sort(data.begin(), data.end(), std::greater<double>());
   std::deque<double> B;
-  for (double & i : data) {
+  for (double& i : data) {
     B.push_back(i);
     // std::cout << data[i] << ",";
   }
@@ -997,7 +997,8 @@ void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
   double* dist3D = MolOps::get3DDistanceMat(mol, confId);
 
   double* AdjMat = MolOps::getAdjacencyMatrix(
-      mol, false, 0, false, nullptr);  // false to have only the 1,0 matrix unweighted
+      mol, false, 0, false,
+      nullptr);  // false to have only the 1,0 matrix unweighted
 
   res.clear();
   res.resize(273);

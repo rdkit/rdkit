@@ -50,7 +50,8 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
   Iterator start = first;
   // EFF: there are certainly faster ways to do this
   while (first != last && delims.find_first_of(*first) == std::string::npos) {
-    if (*first == '&' && std::distance(first, last) > 2 && *(first + 1) == '#') {
+    if (*first == '&' && std::distance(first, last) > 2 &&
+        *(first + 1) == '#') {
       // escaped char
       if (start != first) {
         res += std::string(start, first);
@@ -267,8 +268,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       } else {
         if (!parse_atom_labels(first, last, mol)) return false;
       }
-    } else if (length > 9 &&
-               std::string(first, first + 9) == "atomProp:") {
+    } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
       if (!parse_atom_props(first, last, mol)) return false;
     } else if (*first == 'C') {

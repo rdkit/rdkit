@@ -614,8 +614,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           }
         }
         if (!found) {
-          BOOST_LOG(rdErrorLog)
-              << "no match found for queryRootAtom" << std::endl;
+          BOOST_LOG(rdErrorLog) << "no match found for queryRootAtom"
+                                << std::endl;
         }
       }
     }

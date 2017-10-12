@@ -16,7 +16,8 @@
 *       with the distribution.
 *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 *       nor the names of its contributors may be used to endorse or promote
-*       products derived from this software without specific prior written permission.
+*       products derived from this software without specific prior written
+* permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -38,7 +39,7 @@ import org.junit.Test;
 
 public class Chemv2Tests extends GraphMolTest {
 
-	/* Pickling tests skipped for the time being */
+        /* Pickling tests skipped for the time being */
 	@Test
 	public void testBasicStuff() {
 		ROMol m = RWMol.MolFromSmiles("COC(=O)O");
@@ -99,7 +100,7 @@ public class Chemv2Tests extends GraphMolTest {
 		assertEquals("3",v);
 	}
 
-	@Test(expected=KeyErrorException.class)
+        @Test(expected=KeyErrorException.class)
 	public void testDataGetSetFailure() {
 		ROMol m = RWMol.MolFromSmiles("CCOC");
 		m.getProp("monkey");
@@ -143,83 +144,82 @@ public class Chemv2Tests extends GraphMolTest {
 
 	@Test
 	public void testMolDraw2DSVG() {
-  		ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
-  		m.compute2DCoords();
-  		Conformer c = m.getConformer();
-  		m.WedgeMolBonds(c);
-      MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
-      drawer.drawMolecule(m);
-      drawer.finishDrawing();
-      String svg=drawer.getDrawingText();
-      assertTrue(svg.indexOf("<svg:svg")>-1);
-      assertTrue(svg.indexOf("</svg:svg>")>-1);
-  }
-  @Test
-  public void testMolDraw2DSVGSingleAtomMol() {
-      ROMol m = RWMol.MolFromSmiles("C");
-      m.compute2DCoords();
-      Conformer c = m.getConformer();
-      m.WedgeMolBonds(c);
-      MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
-      drawer.drawMolecule(m);
-      drawer.finishDrawing();
-      String svg=drawer.getDrawingText();
-      assertTrue(svg.indexOf("<svg:svg")>-1);
-      assertTrue(svg.indexOf("</svg:svg>")>-1);
-  }
-  @Test
-  public void testPrepareMolForDrawing() {
-      RWMol m = RWMol.MolFromSmiles("c1ccccc1");
-      RDKFuncs.prepareMolForDrawing(m);
-      assertEquals(m.getNumConformers(),1);
-      assertTrue(m.getBondBetweenAtoms(0,1).getBondType()!=Bond.BondType.AROMATIC);
-      assertTrue(m.getBondBetweenAtoms(0,1).getIsAromatic());
+          ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
+          m.compute2DCoords();
+          Conformer c = m.getConformer();
+          m.WedgeMolBonds(c);
+          MolDraw2DSVG drawer = new MolDraw2DSVG(300, 300);
+          drawer.drawMolecule(m);
+          drawer.finishDrawing();
+          String svg = drawer.getDrawingText();
+          assertTrue(svg.indexOf("<svg:svg") > -1);
+          assertTrue(svg.indexOf("</svg:svg>") > -1);
+        }
+        @Test
+        public void testMolDraw2DSVGSingleAtomMol() {
+          ROMol m = RWMol.MolFromSmiles("C");
+          m.compute2DCoords();
+          Conformer c = m.getConformer();
+          m.WedgeMolBonds(c);
+          MolDraw2DSVG drawer = new MolDraw2DSVG(300, 300);
+          drawer.drawMolecule(m);
+          drawer.finishDrawing();
+          String svg = drawer.getDrawingText();
+          assertTrue(svg.indexOf("<svg:svg") > -1);
+          assertTrue(svg.indexOf("</svg:svg>") > -1);
+        }
+        @Test
+        public void testPrepareMolForDrawing() {
+          RWMol m = RWMol.MolFromSmiles("c1ccccc1");
+          RDKFuncs.prepareMolForDrawing(m);
+          assertEquals(m.getNumConformers(), 1);
+          assertTrue(m.getBondBetweenAtoms(0, 1).getBondType() !=
+                     Bond.BondType.AROMATIC);
+          assertTrue(m.getBondBetweenAtoms(0, 1).getIsAromatic());
 
-      MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
-      drawer.drawMolecule(m);
-      drawer.finishDrawing();
-      String svg=drawer.getDrawingText();
-      assertTrue(svg.indexOf("<svg:svg")>-1);
-      assertTrue(svg.indexOf("</svg:svg>")>-1);
-  }
-  @Test
-  public void testMolDraw2DHighlight() {
-      RWMol m = RWMol.MolFromSmiles("CCCCCOC");
-      RDKFuncs.prepareMolForDrawing(m);
-      Int_Vect hats = new Int_Vect();
-      hats.add(0);
-      hats.add(1);
-      hats.add(2);
+          MolDraw2DSVG drawer = new MolDraw2DSVG(300, 300);
+          drawer.drawMolecule(m);
+          drawer.finishDrawing();
+          String svg = drawer.getDrawingText();
+          assertTrue(svg.indexOf("<svg:svg") > -1);
+          assertTrue(svg.indexOf("</svg:svg>") > -1);
+        }
+        @Test
+        public void testMolDraw2DHighlight() {
+          RWMol m = RWMol.MolFromSmiles("CCCCCOC");
+          RDKFuncs.prepareMolForDrawing(m);
+          Int_Vect hats = new Int_Vect();
+          hats.add(0);
+          hats.add(1);
+          hats.add(2);
 
-      Int_Vect hbs = new Int_Vect();
-      hbs.add(0);
-      hbs.add(1);
-      hbs.add(2);
+          Int_Vect hbs = new Int_Vect();
+          hbs.add(0);
+          hbs.add(1);
+          hbs.add(2);
 
-      ColourPalette atCs = new ColourPalette();
-      atCs.set(0,new DrawColour(1,1,0));
-      atCs.set(1,new DrawColour(1,0,1));
-      atCs.set(2,new DrawColour(0,1,1));
-      ColourPalette bCs = new ColourPalette();
+          ColourPalette atCs = new ColourPalette();
+          atCs.set(0, new DrawColour(1, 1, 0));
+          atCs.set(1, new DrawColour(1, 0, 1));
+          atCs.set(2, new DrawColour(0, 1, 1));
+          ColourPalette bCs = new ColourPalette();
 
+          MolDraw2DSVG drawer = new MolDraw2DSVG(300, 300);
+          drawer.drawMolecule(m, "THE_LEGEND", hats, hbs, atCs, bCs);
+          drawer.finishDrawing();
+          String svg = drawer.getDrawingText();
+          // System.out.print(svg);
+          assertTrue(svg.indexOf("<svg:svg") > -1);
+          assertTrue(svg.indexOf("</svg:svg>") > -1);
+          assertTrue(svg.indexOf("THE_LEGEND") > -1);
+          assertTrue(svg.indexOf("fill:#FFFF00;") > -1);
+          assertTrue(svg.indexOf("fill:#FF00FF;") > -1);
+          assertTrue(svg.indexOf("fill:#00FFFF;") > -1);
+          // default line color:
+          assertTrue(svg.indexOf("stroke:#FF7F7F;") > -1);
+        }
 
-      MolDraw2DSVG drawer = new MolDraw2DSVG(300,300);
-      drawer.drawMolecule(m,"THE_LEGEND",hats,hbs,atCs,bCs);
-      drawer.finishDrawing();
-      String svg=drawer.getDrawingText();
-      //System.out.print(svg);
-      assertTrue(svg.indexOf("<svg:svg")>-1);
-      assertTrue(svg.indexOf("</svg:svg>")>-1);
-      assertTrue(svg.indexOf("THE_LEGEND")>-1);
-      assertTrue(svg.indexOf("fill:#FFFF00;")>-1);
-      assertTrue(svg.indexOf("fill:#FF00FF;")>-1);
-      assertTrue(svg.indexOf("fill:#00FFFF;")>-1);
-      // default line color:
-      assertTrue(svg.indexOf("stroke:#FF7F7F;")>-1);
-
-  }
-
-	public static void main(String args[]) {
+        public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
 	}
 

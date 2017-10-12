@@ -157,7 +157,7 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   bond_p->setEndAtomIdx(obond->getEndAtomIdx());
   if (preserveProps) {
     const bool replaceExistingData = false;
-    bond_p->updateProps( *d_graph[*(bIter.first)].get(), replaceExistingData );
+    bond_p->updateProps(*d_graph[*(bIter.first)].get(), replaceExistingData);
   }
 
   d_graph[*(bIter.first)].reset(bond_p);

@@ -47,7 +47,7 @@ class MolBundle : public RDProps {
   virtual ~MolBundle(){};
 
   //! returns our molecules
-  virtual const std::vector<boost::shared_ptr<ROMol> > &getMols() const {
+  virtual const std::vector<boost::shared_ptr<ROMol>> &getMols() const {
     return d_mols;
   };
 
@@ -81,7 +81,7 @@ class MolBundle : public RDProps {
   };
 
  private:
-  std::vector<boost::shared_ptr<ROMol> > d_mols;
+  std::vector<boost::shared_ptr<ROMol>> d_mols;
 };
 
 };  // end of RDKit namespace

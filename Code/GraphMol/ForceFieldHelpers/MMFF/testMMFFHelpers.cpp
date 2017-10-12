@@ -558,14 +558,14 @@ void testSFIssue1653802() {
   MMFF::MMFFMolProperties *mmffMolProperties =
       new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
-  
+
   boost::shared_array<boost::uint8_t> nbrMat;
   field = new ForceFields::ForceField();
   // add the atomic positions:
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
     field->positions().push_back(&((mol->getConformer().getAtomPos(i))));
   }
-  
+
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 8);
 

@@ -1754,7 +1754,7 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
 
   // order the double bonds based on the singleBondCounts of their neighbors:
-  std::vector<std::pair<unsigned int, Bond *> > orderedBondsInPlay;
+  std::vector<std::pair<unsigned int, Bond *>> orderedBondsInPlay;
   for (auto dblBond : bondsInPlay) {
     unsigned int countHere =
         std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
@@ -1770,7 +1770,7 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
 
   // oof, now loop over the double bonds in that order and
   // update their neighbor directionalities:
-  std::vector<std::pair<unsigned int, Bond *> >::reverse_iterator pairIter;
+  std::vector<std::pair<unsigned int, Bond *>>::reverse_iterator pairIter;
   for (pairIter = orderedBondsInPlay.rbegin();
        pairIter != orderedBondsInPlay.rend(); ++pairIter) {
     updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,

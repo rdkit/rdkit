@@ -76,7 +76,7 @@ void USR(const ROMol &mol, std::vector<double> &descriptor, int confId = -1);
 
 */
 void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
-            std::vector<std::vector<unsigned int> > &atomIds, int confId = -1);
+            std::vector<std::vector<unsigned int>> &atomIds, int confId = -1);
 /*!
   Calculates the four distance distributions for the USR descriptor
 
@@ -86,7 +86,7 @@ void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
 
 */
 void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
-                          std::vector<std::vector<double> > &dist,
+                          std::vector<std::vector<double>> &dist,
                           std::vector<RDGeom::Point3D> &points);
 
 /*!
@@ -99,7 +99,7 @@ void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
 */
 void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
                                     const std::vector<RDGeom::Point3D> &points,
-                                    std::vector<std::vector<double> > &dist);
+                                    std::vector<std::vector<double>> &dist);
 
 /*!
   Calculates the USR descriptor from the four distance distributions
@@ -108,7 +108,7 @@ void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
   \param descriptor  storage for the computed USR descriptor
 
 */
-void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
+void calcUSRFromDistributions(const std::vector<std::vector<double>> &dist,
                               std::vector<double> &descriptor);
 
 /*!

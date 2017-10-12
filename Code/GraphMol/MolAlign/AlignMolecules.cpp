@@ -69,11 +69,8 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
-double getBestRMS(ROMol& probeMol, ROMol& refMol,
-                  int probeId, int refId,
-                  const std::vector<MatchVectType>& map,
-                  int maxMatches)
-{
+double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
+                  const std::vector<MatchVectType> &map, int maxMatches) {
   std::vector<MatchVectType> matches = map;
   if (matches.empty()) {
     bool uniquify = false;
@@ -81,9 +78,8 @@ double getBestRMS(ROMol& probeMol, ROMol& refMol,
     bool useChirality = false;
     bool useQueryQueryMatches = false;
 
-    SubstructMatch(refMol, probeMol, matches, uniquify,
-                   recursionPossible, useChirality,
-                   useQueryQueryMatches, maxMatches);
+    SubstructMatch(refMol, probeMol, matches, uniquify, recursionPossible,
+                   useChirality, useQueryQueryMatches, maxMatches);
 
     if (matches.empty()) {
       throw MolAlignException(
@@ -100,8 +96,8 @@ double getBestRMS(ROMol& probeMol, ROMol& refMol,
   }
 
   double bestRMS = 1.e300;
-  MatchVectType& bestMatch = matches[0];
-  for (auto & matche : matches) {
+  MatchVectType &bestMatch = matches[0];
+  for (auto &matche : matches) {
     double rms = alignMol(probeMol, refMol, probeId, refId, &matche);
     if (rms < bestRMS) {
       bestRMS = rms;

@@ -136,7 +136,7 @@ void testWHIM() {
   // std::ofstream outstrm(ofName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;

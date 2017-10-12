@@ -311,7 +311,7 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
     python::list reactantLabels;
     for (auto &label : labels) {
       python::list tmpLabels;
-      for (auto & j : label) {
+      for (auto &j : label) {
         python::list tmpPair;
         tmpPair.append(j.first);
         tmpPair.append(j.second);
@@ -363,7 +363,7 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
   python::list reactantLabels;
   for (auto &label : labels) {
     python::list tmpLabels;
-    for (auto & j : label) {
+    for (auto &j : label) {
       python::list tmpPair;
       tmpPair.append(j.first);
       tmpPair.append(j.second);

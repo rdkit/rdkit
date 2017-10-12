@@ -44,12 +44,13 @@ class MolPicklerException : public std::exception {
 
 namespace PicklerOps {
 typedef enum {
-  NoProps = 0,     // no data pickled
-  MolProps      = BOOST_BINARY(1),  // only public non computed properties
-  AtomProps     = BOOST_BINARY(10),
-  BondProps     = BOOST_BINARY(100),
-  QueryAtomData = BOOST_BINARY(10), // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps  = BOOST_BINARY(10000),
+  NoProps = 0,                 // no data pickled
+  MolProps = BOOST_BINARY(1),  // only public non computed properties
+  AtomProps = BOOST_BINARY(10),
+  BondProps = BOOST_BINARY(100),
+  QueryAtomData = BOOST_BINARY(
+      10),  // n.b. DEPRECATED and set to AtomProps (does the same work)
+  PrivateProps = BOOST_BINARY(10000),
   ComputedProps = BOOST_BINARY(100000),
   AllProps =
       0x7FFFFFFF,  // all data pickled (only 31 bit flags in case enum==int)

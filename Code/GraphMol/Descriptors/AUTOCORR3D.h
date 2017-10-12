@@ -33,7 +33,6 @@
 //
 // Created by Guillaume GODIN, 2016
 
-
 #ifndef AUTOCORR3DRDKIT_H_SEPT2016
 #define AUTOCORR3DRDKIT_H_SEPT2016
 

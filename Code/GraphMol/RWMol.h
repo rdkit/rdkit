@@ -213,10 +213,10 @@ class RWMol : public ROMol {
   /*!
     \param idx          the index of the Bond to replace
     \param bond         the new bond, which will be copied.
-    \param preserveProps if true preserve the original bond property data    
+    \param preserveProps if true preserve the original bond property data
 
   */
-  void replaceBond(unsigned int idx, Bond *bond, bool preserveProps=false);
+  void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false);
 
   //@}
 

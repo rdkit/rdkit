@@ -2067,7 +2067,7 @@ void test15ContinuousHighlightingWithGrid() {
     std::vector<ROMol *> mols;
     mols.push_back(m1);
     mols.push_back(m2);
-    std::vector<std::vector<int> > atHighlights(2);
+    std::vector<std::vector<int>> atHighlights(2);
     atHighlights[0].push_back(0);
     atHighlights[0].push_back(1);
     atHighlights[0].push_back(2);

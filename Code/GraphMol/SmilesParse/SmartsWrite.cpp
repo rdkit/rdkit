@@ -558,10 +558,10 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
   res << "[";
 
   int isotope = qatom->getIsotope();
-  if(isotope){
-    res<<isotope;
+  if (isotope) {
+    res << isotope;
   }
-  
+
   if (SmilesWrite::inOrganicSubset(qatom->getAtomicNum())) {
     res << "#" << qatom->getAtomicNum();
   } else {

@@ -52,7 +52,7 @@ std::vector<MatchVectType> _translateAtomMapVector(python::object atomMapVec) {
   std::vector<MatchVectType> aMapVec;
   PySequenceHolder<python::object> aMapVecSeq(atomMapVec);
   for (size_t i = 0; i < aMapVecSeq.size(); ++i) {
-    MatchVectType* aMap = _translateAtomMap(aMapVecSeq[i]);
+    MatchVectType *aMap = _translateAtomMap(aMapVecSeq[i]);
     aMapVec.push_back(*aMap);
     delete aMap;
   }
@@ -209,17 +209,16 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   return rmsd;
 }
 
-double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId,
-                  int refId, python::object map, int maxMatches) {
+double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
+                  python::object map, int maxMatches) {
   std::vector<MatchVectType> aMapVec;
-  if (map != python::object())
-    aMapVec = _translateAtomMapVector(map);
+  if (map != python::object()) aMapVec = _translateAtomMapVector(map);
 
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId,
-                                aMapVec, maxMatches);
+    rmsd =
+        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches);
   }
   return rmsd;
 }
@@ -686,7 +685,8 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "GetBestRMS", RDKit::GetBestRMS,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
-       python::arg("maxMatches") = 1000000), docString.c_str());
+       python::arg("maxMatches") = 1000000),
+      docString.c_str());
 
   docString =
       "Alignment conformations in a molecule to each other\n\

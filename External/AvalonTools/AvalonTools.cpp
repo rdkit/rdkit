@@ -259,7 +259,7 @@ namespace AvalonTools {
 
   std::string getCanonSmiles(const std::string &data,bool isSmiles,int flags){
     if(flags==-1) flags=DB_STEREO | CENTER_STEREO;
-    char *smiles=nullptr,*canSmiles=nullptr;
+    char *smiles = nullptr, *canSmiles = nullptr;
     if(!isSmiles){
       struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
       if(mp){
@@ -332,7 +332,7 @@ namespace AvalonTools {
     if(!*mpp) return BAD_MOLECULE;
     int res;
     struct reaccs_molecule_t *tmp=*mpp;
-    res = RunStruchk(mpp,nullptr);
+    res = RunStruchk(mpp, nullptr);
     if(*mpp != tmp) {
       FreeMolecule(tmp);
     }
@@ -369,7 +369,7 @@ namespace AvalonTools {
 
   int initCheckMol(const std::string &optString) {
     // n.b. always add a cr to the end for safety
-    auto *optBuffer = new char[optString.size()+2];
+    auto *optBuffer = new char[optString.size() + 2];
     optString.copy(optBuffer, optString.size());
     optBuffer[optString.size()-1] = '\n';
     optBuffer[optString.size()] = '\0';

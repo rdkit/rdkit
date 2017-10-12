@@ -192,8 +192,7 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
       if (tokens.size() > 2) {
         ++idx;
 
-        std::string nameBase =
-            "rxn_test2_2_" + std::to_string(idx);
+        std::string nameBase = "rxn_test2_2_" + std::to_string(idx);
         bool useSmiles = true;
         ChemicalReaction *rxn =
             RxnSmartsToChemicalReaction(tokens[0], nullptr, useSmiles);

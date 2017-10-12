@@ -124,11 +124,10 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   <b>Returns</b>
   Best RMSD value found
 */
-double getBestRMS(ROMol& probeMol, ROMol& refMol,
-                  int probeId = -1, int refId = -1,
-                  const std::vector<MatchVectType>& map =
-                    std::vector<MatchVectType>(),
-                  int maxMatches = 1e6);
+double getBestRMS(
+    ROMol &probeMol, ROMol &refMol, int probeId = -1, int refId = -1,
+    const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
+    int maxMatches = 1e6);
 
 //! Align the conformations of a molecule using a common set of atoms. If
 // the molecules contains queries, then the queries must also match exactly.

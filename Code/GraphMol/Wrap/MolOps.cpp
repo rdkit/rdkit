@@ -484,7 +484,7 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 
     for (auto &frag : frags) {
       python::list tpl;
-      for (int & j : frag) {
+      for (int &j : frag) {
         tpl.append(j);
       }
       res.append(python::tuple(tpl));
@@ -949,7 +949,7 @@ struct molops_wrapper {
     - The original molecule is *not* modified.\n\
 \n";
     python::def("RemoveHs",
-                (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
+                (ROMol * (*)(const ROMol &, bool, bool, bool))MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
                  python::arg("updateExplicitCount") = false,
                  python::arg("sanitize") = true),
@@ -1961,7 +1961,7 @@ EXAMPLES:\n\
 \n\
 \n";
     python::def("ReplaceCore", (ROMol * (*)(const ROMol &, const ROMol &, bool,
-                                            bool, bool, bool)) replaceCore,
+                                            bool, bool, bool))replaceCore,
                 (python::arg("mol"), python::arg("coreQuery"),
                  python::arg("replaceDummies") = true,
                  python::arg("labelByIndex") = false,

@@ -35,16 +35,18 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
-  namespace common_properties {
-    namespace Atom {
-      extern const std::string SASA; // Solvent Accessible Surface Area for atom- double
-      extern const std::string SASAClass;     // Class type, 0,1,2... etc
-      extern const std::string SASAClassName; // Class name, Polar, APolar etc...
-    }
-    namespace Molecule {
-      extern const std::string SASA; // Total Solvent Accessible Surface area for molecule;
-    }
-  }
+namespace common_properties {
+namespace Atom {
+extern const std::string
+    SASA;  // Solvent Accessible Surface Area for atom- double
+extern const std::string SASAClass;      // Class type, 0,1,2... etc
+extern const std::string SASAClassName;  // Class name, Polar, APolar etc...
+}
+namespace Molecule {
+extern const std::string
+    SASA;  // Total Solvent Accessible Surface area for molecule;
+}
+}
 }
 
 namespace FreeSASA {
@@ -63,36 +65,43 @@ struct SASAOpts {
 /*!
   Note:
 
-    FreeSASA identified Classes end up in atom.getProp<int>(common_properties::Atom::SASAClassName)
-    FreeSASA Class names end up in atom.getProp<string>(common_properties::Atom::SASAClassName)
-  
+    FreeSASA identified Classes end up in
+  atom.getProp<int>(common_properties::Atom::SASAClassName)
+    FreeSASA Class names end up in
+  atom.getProp<string>(common_properties::Atom::SASAClassName)
+
     \param mol:    Molecule to analyze
-    \param radii   output vector of radii where radii[idx] is the radius for atom with index idx
+    \param radii   output vector of radii where radii[idx] is the radius for
+  atom with index idx
     \return false if no atoms could be classified
-*/       
+*/
 bool classifyAtoms(RDKit::ROMol &mol, std::vector<double> &radii,
                    const FreeSASA::SASAOpts &opts = SASAOpts());
 
 //! calculate the Solvent Accessible Surface Area using the FreeSASA library.
 /*!
-  SASA atom contribution data is stored in atom.getProp(common_properites::Atom::SASA);
+  SASA atom contribution data is stored in
+  atom.getProp(common_properites::Atom::SASA);
 
   \param mol:    Molecule to analyze
-  \param radii   vector of radii where radii[idx] is the radius for atom with index idx
-                 These can be passed in or calculated with classifyAtoms for some proteins.
+  \param radii   vector of radii where radii[idx] is the radius for atom with
+  index idx
+                 These can be passed in or calculated with classifyAtoms for
+  some proteins.
   \param confIdx specify the conformation [default -1]
-  \param query    query atom to limit the number of atoms to the ones matching the query
-                  precanned query atoms can be made with makeFreeSasaPolarAtomQuery and
-                  makeFreeSasaAPolarAtomQuery for classified polar and apolar atoms respectively.
+  \param query    query atom to limit the number of atoms to the ones matching
+  the query
+                  precanned query atoms can be made with
+  makeFreeSasaPolarAtomQuery and
+                  makeFreeSasaAPolarAtomQuery for classified polar and apolar
+  atoms respectively.
 
   \param opts     SASAOpts class specifying options.
   \return the requested solvent accessible surface area
 */
 double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
-                int confIdx=-1,
-                const RDKit::QueryAtom *query=NULL,
+                int confIdx = -1, const RDKit::QueryAtom *query = NULL,
                 const SASAOpts &opts = SASAOpts());
-
 
 //! Make a query atom returning the FreeSASA supplied apolar atom classification
 /*!
@@ -101,15 +110,14 @@ double calcSASA(const RDKit::ROMol &mol, const std::vector<double> &radii,
 
     \return QueryAtom pointer
 */
-const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery();
+const RDKit::QueryAtom *makeFreeSasaAPolarAtomQuery();
 //! Make a query atom returning the FreeSASA supplied polar atom classification
 /*!
     These are atoms that have the "SASAClassName" property set to "Polar"
     after calling classifyAtoms.
     \return QueryAtom pointer
 */
-const RDKit::QueryAtom * makeFreeSasaPolarAtomQuery();
-
+const RDKit::QueryAtom *makeFreeSasaPolarAtomQuery();
 }
 
 #endif

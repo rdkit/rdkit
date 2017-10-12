@@ -47,9 +47,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   std::ostringstream str;
   int i = 0;
 
-  for (auto
-           rgroups = it->begin();
-       rgroups != it->end(); ++rgroups, ++i) {
+  for (auto rgroups = it->begin(); rgroups != it->end(); ++rgroups, ++i) {
     if (i) str << " ";
     // rlabel:smiles
     str << rgroups->first << ":" << MolToSmiles(*rgroups->second.get(), true);
@@ -67,7 +65,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
 void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
   std::ostringstream str;
 
-  for (const auto & rgroups : *it) {
+  for (const auto &rgroups : *it) {
     // rlabel:smiles
     str << rgroups.first << "\t" << MolToSmiles(*rgroups.second.get(), true)
         << "\t";
@@ -267,19 +265,18 @@ const char *coreSmi[] = {
 
     "C1CCOC(Cl)CC1", "C1CC(Cl)OCCC1", "C1CCOC(I)CC1", "C1CC(I)OCCC1"};
 
-const char *coreSmiRes[] = {
-    "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
-    "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
-    "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
-    "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
-    "Core:C1CCOC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCOC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
-    "Core:C1CCOC([*:1])CC1 R1:I[*:1].[H][*:1]",
-    "Core:C1CCOC([*:1])CC1 R1:I[*:1].[H][*:1]"};
+const char *coreSmiRes[] = {"Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCC([*:2])N([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCC([*:2])N([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCSC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCSC([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCOC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCOC([*:1])CC1 R1:Cl[*:1].[H][*:1]",
+                            "Core:C1CCOC([*:1])CC1 R1:I[*:1].[H][*:1]",
+                            "Core:C1CCOC([*:1])CC1 R1:I[*:1].[H][*:1]"};
 
 void testMultiCore() {
   BOOST_LOG(rdInfoLog)

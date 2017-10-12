@@ -123,15 +123,15 @@ void test3() {
   BOOST_LOG(rdErrorLog) << "    Test3 (stereo options)" << std::endl;
 
   SubstructLibrary ssslib(boost::make_shared<MolHolder>());
-  for(int i=0;i<10;++i) {
+  for (int i = 0; i < 10; ++i) {
     ROMol *m1 = SmilesToMol("C1CCO[C@@](N)(O)1");
     ROMol *m2 = SmilesToMol("C1CCO[C@](N)(O)1");
     ROMol *m3 = SmilesToMol("C1CCO[C@@](O)(N)1");
     ROMol *m4 = SmilesToMol("C1CCO[C@](O)(N)1");
-    ssslib.addMol( *m1 );
-    ssslib.addMol( *m2 );
-    ssslib.addMol( *m3 );
-    ssslib.addMol( *m4 );
+    ssslib.addMol(*m1);
+    ssslib.addMol(*m2);
+    ssslib.addMol(*m3);
+    ssslib.addMol(*m4);
     delete m1;
     delete m2;
     delete m3;
@@ -143,7 +143,7 @@ void test3() {
   TEST_ASSERT(res.size() == 40);
 
   delete query;
-  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1")          ;
+  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
 
   res = ssslib.getMatches(*query, true, true);
   TEST_ASSERT(res.size() == 20);
@@ -153,17 +153,17 @@ void test3() {
 
   delete query;
   BOOST_LOG(rdErrorLog) << "    Done (stereo options)" << std::endl;
-
 }
 
 void test4() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test4 (trusted smiles)" << std::endl;
 
-  boost::shared_ptr<CachedSmilesMolHolder> holder = boost::make_shared<CachedSmilesMolHolder>();
+  boost::shared_ptr<CachedSmilesMolHolder> holder =
+      boost::make_shared<CachedSmilesMolHolder>();
   SubstructLibrary ssslib(holder);
-  
-  for(int i=0;i<10;++i) {
+
+  for (int i = 0; i < 10; ++i) {
     holder->addSmiles("C1CCO[C@@](N)(O)1");
     holder->addSmiles("C1CCO[C@](N)(O)1");
     holder->addSmiles("C1CCO[C@@](O)(N)1");
@@ -175,7 +175,7 @@ void test4() {
   TEST_ASSERT(res.size() == 40);
 
   delete query;
-  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1")          ;
+  query = SmartsToMol("C-1-C-C-O-[C@@](-[O])(-[N])1");
 
   res = ssslib.getMatches(*query, true, true);
   TEST_ASSERT(res.size() == 20);
@@ -185,7 +185,6 @@ void test4() {
 
   delete query;
   BOOST_LOG(rdErrorLog) << "    Done (stereo options)" << std::endl;
-
 }
 
 int main(int argc, char *argv[]) {

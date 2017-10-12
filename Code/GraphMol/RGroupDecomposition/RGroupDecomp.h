@@ -83,8 +83,8 @@ struct RGroupDecompositionParameters {
   int indexOffset;
 };
 
-typedef std::map<std::string, boost::shared_ptr<ROMol> > RGroupRow;
-typedef std::vector<boost::shared_ptr<ROMol> > RGroupColumn;
+typedef std::map<std::string, boost::shared_ptr<ROMol>> RGroupRow;
+typedef std::vector<boost::shared_ptr<ROMol>> RGroupColumn;
 
 typedef std::vector<RGroupRow> RGroupRows;
 typedef std::map<std::string, RGroupColumn> RGroupColumns;
@@ -119,14 +119,15 @@ unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
                              RGroupRows &rows,
                              std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
+                             const RGroupDecompositionParameters &options =
+                                 RGroupDecompositionParameters());
 
 unsigned int RGroupDecompose(const std::vector<ROMOL_SPTR> &cores,
                              const std::vector<ROMOL_SPTR> &mols,
                              RGroupColumns &columns,
                              std::vector<unsigned int> *unmatched = 0,
-                             const RGroupDecompositionParameters &options = RGroupDecompositionParameters());
-                        
+                             const RGroupDecompositionParameters &options =
+                                 RGroupDecompositionParameters());
 }
 
 #endif

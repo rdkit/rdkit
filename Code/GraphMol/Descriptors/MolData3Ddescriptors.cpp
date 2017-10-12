@@ -4,7 +4,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <boost/math/special_functions/round.hpp>
 
-
 #include "GraphMol/PartialCharges/GasteigerCharges.h"
 #include "GraphMol/PartialCharges/GasteigerParams.h"
 
@@ -130,7 +129,8 @@ std::vector<double> MolData3Ddescriptors::GetIState(const RDKit::ROMol& mol) {
       int N = GetPrincipalQuantumNumber(atNum);  // principal quantum number
       double d = (double)degree - h;             // degree-h
       if (d > 0) {
-        Is[i] = boost::math::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
+        Is[i] =
+            boost::math::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
       }
     }
   }
@@ -155,7 +155,8 @@ std::vector<double> MolData3Ddescriptors::GetIStateDrag(
       int N = GetPrincipalQuantumNumber(atNum);  // principal quantum number
       double d = (double)degree - h;             // degree-h
       if (d > 0) {
-        Is[i] = boost::math::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
+        Is[i] =
+            boost::math::round(1000 * (4.0 / (N * N) * dv + 1.0) / d) / 1000;
       }
     }
   }
