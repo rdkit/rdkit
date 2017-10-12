@@ -2081,7 +2081,7 @@ void test15ContinuousHighlightingWithGrid() {
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
       drawer.drawOptions().continuousHighlight = false;
-      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs("test15_1.svg");
@@ -2094,7 +2094,7 @@ void test15ContinuousHighlightingWithGrid() {
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
       drawer.drawOptions().continuousHighlight = true;
-      drawer.drawMolecules(mols, NULL, &atHighlights);
+      drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs("test15_2.svg");

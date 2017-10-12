@@ -60,7 +60,7 @@ using namespace RDKit;
 bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
                    const SASAOpts &opts) {
   radii.clear();
-  const freesasa_classifier *classifier = 0;
+  const freesasa_classifier *classifier = nullptr;
   switch (opts.classifier) {
     case SASAOpts::Protor:
       classifier = &freesasa_protor_classifier;
@@ -86,7 +86,7 @@ bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
     const AtomMonomerInfo *info = atom->getMonomerInfo();
     if (info) {
       const char *atom_name = info->getName().c_str();
-      const char *res_name = 0;
+      const char *res_name = nullptr;
 
       if (info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
         res_name = ((AtomPDBResidueInfo *)info)->getResidueName().c_str();
@@ -185,13 +185,13 @@ double calcSASA(const RDKit::ROMol &mol,
 }
 
 const RDKit::QueryAtom * makeFreeSasaAPolarAtomQuery() {
-  QueryAtom *qa = new QueryAtom;
+  auto *qa = new QueryAtom;
   qa->setQuery(makePropQuery<Atom, std::string>("SASAClassName", "Apolar"));
   return qa;
 }
 
 const RDKit::QueryAtom * makeFreeSasaPolarAtomQuery() {
-  QueryAtom *qa = new QueryAtom;
+  auto *qa = new QueryAtom;
   qa->setQuery(makePropQuery<Atom, std::string>("SASAClassName", "Polar"));
   return qa;
 }

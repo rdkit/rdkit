@@ -142,9 +142,9 @@ bool TransformAugmentedAtoms(
 
   const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
   for (const auto &ring : rings) {
-    for (size_t j = 0; j < ring.size(); j++) {
-      bondInRing[ring[j]] = true;
-      const Bond *bond = mol.getBondWithIdx(ring[j]);
+    for (int j : ring) {
+      bondInRing[j] = true;
+      const Bond *bond = mol.getBondWithIdx(j);
       unsigned a1 = bond->getEndAtomIdx();
       unsigned a2 = bond->getBeginAtomIdx();
       atomInRing[a1] = atomInRing[a2] = true;

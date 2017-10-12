@@ -371,7 +371,7 @@ void get2DCoordsMol(RWMol &mol, double &offset, double spacing, double &maxY,
   }
 
   const bool canonOrient = true;
-  RDDepict::compute2DCoords(mol, NULL, canonOrient);
+  RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   MolDraw2DUtils::prepareMolForDrawing(
       mol, false);  // don't kekulize, we just did that
   double minX = 1e8;
@@ -529,10 +529,10 @@ void MolDraw2D::drawReaction(
     atom_syms_.pop_back();
   }
 
-  std::vector<int> *atom_highlights = NULL;
-  std::map<int, DrawColour> *atom_highlight_colors = NULL;
-  std::vector<int> *bond_highlights = NULL;
-  std::map<int, DrawColour> *bond_highlight_colors = NULL;
+  std::vector<int> *atom_highlights = nullptr;
+  std::map<int, DrawColour> *atom_highlight_colors = nullptr;
+  std::vector<int> *bond_highlights = nullptr;
+  std::map<int, DrawColour> *bond_highlight_colors = nullptr;
   if (highlightByReactant) {
     const std::vector<DrawColour> *colors =
         &drawOptions().highlightColourPalette;
@@ -713,7 +713,7 @@ void MolDraw2D::drawMolecules(
     if (nCols > 1) col = i % nCols;
     setOffset(col * panelWidth(), row * panelHeight());
 
-    vector<int> *lhighlight_bonds = NULL;
+    vector<int> *lhighlight_bonds = nullptr;
     if (highlight_bonds) {
       lhighlight_bonds = new std::vector<int>((*highlight_bonds)[i]);
     } else if (drawOptions().continuousHighlight && highlight_atoms) {

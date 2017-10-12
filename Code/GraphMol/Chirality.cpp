@@ -1421,7 +1421,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer &conf,
   ROMol::OEDGE_ITER beg, end;
   std::vector<Bond *> followupBonds;
 
-  Bond *bond1 = 0, *obond1 = 0;
+  Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
   while (beg != end) {
@@ -1460,7 +1460,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer &conf,
     return;
   }
 
-  Bond *bond2 = 0, *obond2 = 0;
+  Bond *bond2 = nullptr, *obond2 = nullptr;
   boost::tie(beg, end) = mol.getAtomBonds(dblBond->getEndAtom());
   while (beg != end) {
     Bond *tBond = mol[*beg].get();
@@ -1755,8 +1755,7 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
 
   // order the double bonds based on the singleBondCounts of their neighbors:
   std::vector<std::pair<unsigned int, Bond *> > orderedBondsInPlay;
-  for (unsigned int i = 0; i < bondsInPlay.size(); ++i) {
-    Bond *dblBond = bondsInPlay[i];
+  for (auto dblBond : bondsInPlay) {
     unsigned int countHere =
         std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
                         dblBondNbrs[dblBond->getIdx()].end(), 0);

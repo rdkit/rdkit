@@ -54,7 +54,7 @@ struct Bits {
     if(fps) {
       queryBits = fps->makeFingerprint(m);
     } else
-      queryBits = NULL;
+      queryBits = nullptr;
   }
 
   bool check(unsigned int idx) const {

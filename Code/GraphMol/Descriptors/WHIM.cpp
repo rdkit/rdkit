@@ -63,7 +63,7 @@ MatrixXd GetCovMatrix(MatrixXd &X, MatrixXd &Weigth, double weigth) {
 }
 
 JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  JacobiSVD<MatrixXd> *svd =
+  auto *svd =
       new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
   return svd;
 }
@@ -271,7 +271,7 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
              double th) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  double *Vpoints = new double[3 * numAtoms];
+  auto *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;

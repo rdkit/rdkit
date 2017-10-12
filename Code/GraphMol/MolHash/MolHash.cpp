@@ -126,9 +126,9 @@ void fillAtomBondCodes(
     std::map<unsigned, bool> bondsInRing;
     const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
     for (const auto &ring : rings)
-      for (auto b = ring.begin(); b != ring.end(); b++)
-        if (bondsInRing.end() == bondsInRing.find(*b))
-          bondsInRing[(unsigned)*b] = true;
+      for (int b : ring)
+        if (bondsInRing.end() == bondsInRing.find(b))
+          bondsInRing[(unsigned)b] = true;
 
     unsigned n = mol.getNumBonds();
     bondCodes->resize(n);

@@ -39,6 +39,7 @@
 #include <GraphMol/FMCS/FMCS.h>
 #include <boost/scoped_ptr.hpp>
 #include <set>
+#include <utility>
 #include <vector>
 
 //#define DEBUG
@@ -174,9 +175,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   //   adjustParams.adjustDegreeFlags |= MolOps::ADJUST_IGNOREHS;
   adjustQueryProperties(core, &adjustParams);
 
-  for (std::map<int, int>::iterator it = atomToLabel.begin();
-       it != atomToLabel.end(); ++it)
-    core.getAtomWithIdx(it->first)->setProp(RLABEL, it->second);
+  for (auto & it : atomToLabel)
+    core.getAtomWithIdx(it.first)->setProp(RLABEL, it.second);
   return true;
 }
 
@@ -202,8 +202,8 @@ struct RGroupData {
   void add(boost::shared_ptr<ROMol> newMol,
            const std::vector<int> &rlabel_attachments) {
     // some fragments can be add multiple times if they are cyclic
-    for (size_t i = 0; i < mols.size(); ++i) {
-      if (newMol.get() == mols[i].get()) return;
+    for (auto & mol : mols) {
+      if (newMol.get() == mol.get()) return;
     }
 
     labelled = false;
@@ -239,9 +239,9 @@ struct RGroupData {
   }
 
   bool isHydrogen() const {  // is the rgroup all Hs
-    for (size_t i = 0; i < mols.size(); ++i) {
-      for (ROMol::AtomIterator atIt = mols[i]->beginAtoms();
-           atIt != mols[i]->endAtoms(); ++atIt) {
+    for (const auto & mol : mols) {
+      for (ROMol::AtomIterator atIt = mol->beginAtoms();
+           atIt != mol->endAtoms(); ++atIt) {
         if ((*atIt)->getAtomicNum() > 1) return false;
       }
     }
@@ -252,9 +252,8 @@ struct RGroupData {
   std::string getSmiles()
       const {  // compute the canonical smiles for the attachments
     std::string s;
-    for (std::set<std::string>::const_iterator it = smilesSet.begin();
-         it != smilesSet.end(); ++it) {
-      s += *it;
+    for (const auto & it : smilesSet) {
+      s += it;
     }
     return s;
   }
@@ -270,8 +269,8 @@ struct RGroupMatch {
   size_t core_idx; // index of the matching core
   R_DECOMP rgroups; // rlabel->RGroupData mapping
   
-  RGroupMatch(size_t core_index, const R_DECOMP &input_rgroups)
-      : core_idx(core_index), rgroups(input_rgroups) {}
+  RGroupMatch(size_t core_index, R_DECOMP input_rgroups)
+      : core_idx(core_index), rgroups(std::move(input_rgroups)) {}
 
 };
 
@@ -290,8 +289,8 @@ struct CartesianProduct {
         sizes(inputSizes),
         permutationCount(0) {
     maxPermutations = 1;
-    for (size_t i = 0; i < sizes.size(); ++i)
-      maxPermutations *= sizes[i];  // may overflow....
+    for (unsigned long size : sizes)
+      maxPermutations *= size;  // may overflow....
   }
 
   bool next() {
@@ -328,9 +327,8 @@ double score(const std::vector<size_t> &permutation,
   std::cerr << "Scoring permutation " << std::endl;
 #endif
 
-  for (std::set<int>::const_iterator label = labels.begin();
-       label != labels.end(); ++label) {
-    int l = *label;
+  for (int l : labels) {
+    
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
 #endif
@@ -338,7 +336,7 @@ double score(const std::vector<size_t> &permutation,
     std::map<std::set<int>, int> linkerMatchSet;
     // std::map<std::vector<int>, int > attachMatch;
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-      R_DECOMP::const_iterator rg =
+      auto rg =
           matches[m][permutation[m]].rgroups.find(l);
       if (rg != matches[m][permutation[m]].rgroups.end()) {
 #ifdef DEBUG
@@ -435,21 +433,21 @@ struct RGroupDecompData {
   std::map<int, int> finalRlabelMapping;
 
   RGroupDecompData(const RWMol &inputCore,
-                   const RGroupDecompositionParameters &inputParams)
+                   RGroupDecompositionParameters inputParams)
       : cores(),
         newCores(),
         newCoreLabel(EMPTY_CORE_LABEL),
-        params(inputParams) {
+        params(std::move(inputParams)) {
     cores[0] = inputCore;
     prepareCores();
   }
 
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
-                   const RGroupDecompositionParameters &inputParams)
+                   RGroupDecompositionParameters inputParams)
       : cores(),
         newCores(),
         newCoreLabel(EMPTY_CORE_LABEL),
-        params(inputParams) {
+        params(std::move(inputParams)) {
     for (size_t i = 0; i < inputCores.size(); ++i) {
       cores[i] = *inputCores[i].get();
     }
@@ -459,9 +457,9 @@ struct RGroupDecompData {
 
   void prepareCores() {
     size_t idx = 0;
-    for (std::map<int, RWMol>::iterator coreIt = cores.begin();
+    for (auto coreIt = cores.begin();
          coreIt != cores.end(); ++coreIt, ++idx) {
-      RWMol *alignCore = coreIt->first ? &cores[0] : 0;
+      RWMol *alignCore = coreIt->first ? &cores[0] : nullptr;
       params.prepareCore(coreIt->second, alignCore);
       labelledCores[coreIt->first] =
           boost::shared_ptr<RWMol>(new RWMol(coreIt->second));
@@ -474,7 +472,7 @@ struct RGroupDecompData {
     if (params.rgroupLabelling & AtomMap) atom->setAtomMapNum(rlabel);
 
     if (params.rgroupLabelling & MDLRGroup) {
-      std::string dLabel = "R" + boost::lexical_cast<std::string>(rlabel);
+      std::string dLabel = "R" + std::to_string(rlabel);
       atom->setProp(common_properties::dummyLabel, dLabel);
       setAtomRLabel(atom, rlabel);
     }
@@ -506,13 +504,12 @@ struct RGroupDecompData {
 
     if (removeAllHydrogenRGroups) {
       // if a label is all hydrogens, remove it
-      for (std::set<int>::const_iterator lit = labels.begin();
-           lit != labels.end(); ++lit) {
+      for (int label : labels) {
         bool allH = true;
-        for (size_t i = 0; i < result.size(); ++i) {
+        for (auto & i : result) {
           R_DECOMP::const_iterator rgroup =
-              result[i].rgroups.find(*lit);
-          if (rgroup == result[i].rgroups.end() ||
+              i.rgroups.find(label);
+          if (rgroup == i.rgroups.end() ||
               !rgroup->second->isHydrogen()) {
             allH = false;
             break;
@@ -520,8 +517,8 @@ struct RGroupDecompData {
         }
 
         if (allH) {
-          for (size_t i = 0; i < result.size(); ++i) {
-            result[i].rgroups.erase(*lit);
+          for (auto & i : result) {
+            i.rgroups.erase(label);
           }
         }
       }
@@ -567,62 +564,58 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom *, Atom *> > atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (std::set<int>::const_iterator it = userLabels.begin();
-         it != userLabels.end(); ++it) {
-      std::map<int, Atom *>::iterator atm = atoms.find(*it);
+    for (int userLabel : userLabels) {
+      auto atm = atoms.find(userLabel);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
       Atom *atom = atm->second;
-      mappings[*it] = ++count;
+      mappings[userLabel] = ++count;
 
       if (atom->getAtomicNum() == 0) {  // add to existing dummy/rlabel
         setRlabel(atom, count);
       } else {  // adds new rlabel
-        Atom *newAt = new Atom(0);
+        auto *newAt = new Atom(0);
         setRlabel(newAt, count);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
 
     // Deal with non-user supplied labels
-    for (std::set<int>::const_iterator it = indexLabels.begin();
-         it != indexLabels.end(); ++it) {
-      std::map<int, Atom *>::iterator atm = atoms.find(*it);
+    for (int indexLabel : indexLabels) {
+      auto atm = atoms.find(indexLabel);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
 
       Atom *atom = atm->second;
-      mappings[*it] = ++count;
+      mappings[indexLabel] = ++count;
       if (atom->getAtomicNum() == 0) {  // add to dummy
         setRlabel(atom, count);
       } else {
-        Atom *newAt = new Atom(0);
+        auto *newAt = new Atom(0);
         setRlabel(newAt, count);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
 
     // Deal with multiple bonds to the same label
-    for (std::map<int, std::vector<int> >::iterator extraAttachments =
-             extraAtomRLabels.begin();
-         extraAttachments != extraAtomRLabels.end(); ++extraAttachments) {
-      std::map<int, Atom *>::iterator atm = atoms.find(extraAttachments->first);
+    for (auto & extraAtomRLabel : extraAtomRLabels) {
+      auto atm = atoms.find(extraAtomRLabel.first);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
       Atom *atom = atm->second;
 
-      for (size_t i = 0; i < extraAttachments->second.size(); ++i) {
-        extraAttachments->second[i] = ++count;
+      for (size_t i = 0; i < extraAtomRLabel.second.size(); ++i) {
+        extraAtomRLabel.second[i] = ++count;
         // Is this necessary?
         PRECONDITION(
             atom->getAtomicNum() > 1,
             "Multiple attachements to a dummy (or hydrogen) is weird.");
-        Atom *newAt = new Atom(0);
+        auto *newAt = new Atom(0);
         setRlabel(newAt, count);
         atomsToAdd.push_back(std::make_pair(atom, newAt));
       }
     }
 
-    for (size_t i = 0; i < atomsToAdd.size(); ++i) {
-      mol.addAtom(atomsToAdd[i].second, false, true);
-      mol.addBond(atomsToAdd[i].first, atomsToAdd[i].second, Bond::SINGLE);
+    for (auto & i : atomsToAdd) {
+      mol.addAtom(i.second, false, true);
+      mol.addBond(i.first, i.second, Bond::SINGLE);
     }
     mol.updatePropertyCache(false);  // this was github #1550
   }
@@ -650,15 +643,14 @@ struct RGroupDecompData {
             atom->getProp<std::vector<int> >(SIDECHAIN_RLABELS);
         // switch on atom mappings or rlabels....
 
-        for (std::vector<int>::const_iterator rlabel = rlabels.begin();
-             rlabel != rlabels.end(); ++rlabel) {
-          std::map<int, int>::const_iterator label = mappings.find(*rlabel);
+        for (int rlabel : rlabels) {
+          auto label = mappings.find(rlabel);
           PRECONDITION(label != mappings.end(), "Unprocessed mapping");
 
           if (atom->getAtomicNum() == 0) {
             setRlabel(atom, label->second);
           } else {
-            Atom *newAt = new Atom(0);
+            auto *newAt = new Atom(0);
             setRlabel(newAt, label->second);
             atomsToAdd.push_back(std::make_pair(atom, newAt));
           }
@@ -666,9 +658,9 @@ struct RGroupDecompData {
       }
     }
 
-    for (size_t i = 0; i < atomsToAdd.size(); ++i) {
-      mol.addAtom(atomsToAdd[i].second, false, true);
-      mol.addBond(atomsToAdd[i].first, atomsToAdd[i].second, Bond::SINGLE);
+    for (auto & i : atomsToAdd) {
+      mol.addAtom(i.second, false, true);
+      mol.addBond(i.first, i.second, Bond::SINGLE);
     }
     
     if (params.removeHydrogensPostMatch) {
@@ -700,19 +692,17 @@ struct RGroupDecompData {
     //  This vector will hold the extra (new) labels required
     std::map<int, std::vector<int> > extraAtomRLabels;
 
-    for (std::vector<RGroupMatch>::iterator it = best.begin(); it != best.end();
-         ++it) {
-      for (R_DECOMP::iterator rit = it->rgroups.begin();
-           rit != it->rgroups.end(); ++rit) {
+    for (auto & it : best) {
+      for (auto rit = it.rgroups.begin();
+           rit != it.rgroups.end(); ++rit) {
         if (rit->first >= 0) userLabels.insert(rit->first);
         if (rit->first < 0) indexLabels.insert(rit->first);
 
         std::map<int, int> rlabelsUsedInRGroup = rit->second->getNumBondsToRlabels();
-        for (std::map<int, int>::iterator numBondsUsed = rlabelsUsedInRGroup.begin();
-             numBondsUsed != rlabelsUsedInRGroup.end(); ++numBondsUsed) {
+        for (auto & numBondsUsed : rlabelsUsedInRGroup) {
           // Make space for the extra labels
-          if (numBondsUsed->second > 1) {  // multiple
-            extraAtomRLabels[numBondsUsed->first].resize(numBondsUsed->second -
+          if (numBondsUsed.second > 1) {  // multiple
+            extraAtomRLabels[numBondsUsed.first].resize(numBondsUsed.second -
                                                          1);
           }
         }
@@ -729,10 +719,9 @@ struct RGroupDecompData {
                   indexLabels, extraAtomRLabels);
     }
 
-    for (std::vector<RGroupMatch>::iterator it = best.begin(); it != best.end();
-         ++it) {
-      for (R_DECOMP::iterator rit = it->rgroups.begin();
-           rit != it->rgroups.end(); ++rit) {
+    for (auto & it : best) {
+      for (auto rit = it.rgroups.begin();
+           rit != it.rgroups.end(); ++rit) {
         relabelRGroup(*rit->second, finalRlabelMapping);
       }
     }
@@ -811,7 +800,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   MolOps::addHs(mol);
 
   int core_idx = 0;
-  const RWMol *core = 0;
+  const RWMol *core = nullptr;
   std::vector<MatchVectType> tmatches;
 
   // Find the first matching core.
@@ -841,7 +830,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
 
-  if (core == 0) return -1;
+  if (core == nullptr) return -1;
 
   // strategies
   // ==========
@@ -857,13 +846,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   std::vector<RGroupMatch> potentialMatches;
 
-  for (size_t match_idx = 0; match_idx < tmatches.size(); ++match_idx) {
+  for (auto & tmatche : tmatches) {
     boost::scoped_ptr<ROMol> tMol;
     {
       const bool replaceDummies = false;
       const bool labelByIndex = true;
       const bool requireDummyMatch = false;
-      tMol.reset(replaceCore(mol, *core, tmatches[match_idx], replaceDummies,
+      tMol.reset(replaceCore(mol, *core, tmatche, replaceDummies,
                              labelByIndex, requireDummyMatch));
     }
 
@@ -917,8 +906,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             RWMol newCore(mol);
 
             for (MatchVectType::const_iterator mvit =
-                     tmatches[match_idx].begin();
-                 mvit != tmatches[match_idx].end(); ++mvit) {
+                     tmatche.begin();
+                 mvit != tmatche.end(); ++mvit) {
               const Atom *coreAtm = core->getAtomWithIdx(mvit->first);
               Atom *newCoreAtm = newCore.getAtomWithIdx(mvit->second);
               int rlabel;
@@ -935,7 +924,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             if (newCore.getNumAtoms()) {
               std::string newCoreSmi = MolToSmiles(newCore, true);
               // add a new core if possible
-              std::map<std::string, int>::iterator newcore =
+              auto newcore =
                   data->newCores.find(newCoreSmi);
               int core_idx = 0;
               if (newcore == data->newCores.end()) {
@@ -961,8 +950,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   size_t N = 1;
-  for (size_t m = 0; m < data->matches.size(); ++m) {
-    size_t sz = data->matches[m].size();
+  for (auto & matche : data->matches) {
+    size_t sz = matche.size();
     N *= sz;
   }
   // oops, exponential is a pain
@@ -999,7 +988,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
   RGroupRows groups;
 
   int molidx = 0;
-  for (std::vector<RGroupMatch>::iterator it = permutation.begin();
+  for (auto it = permutation.begin();
        it != permutation.end(); ++it, ++molidx) {
     // make a new rgroup entry
     groups.push_back(RGroupRow());
@@ -1015,7 +1004,7 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
       PRECONDITION(realLabel != data->finalRlabelMapping.end(),
                    "unprocessed rlabel, please call process() first.");
       out_rgroups[std::string("R") +
-                  boost::lexical_cast<std::string>(realLabel->second)] =
+                  std::to_string(realLabel->second)] =
           rgroup->second->combinedMol;
     }
   }
@@ -1028,7 +1017,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   RGroupColumns groups;
 
   unsigned int molidx = 0;
-  for (std::vector<RGroupMatch>::iterator it = permutation.begin();
+  for (auto it = permutation.begin();
        it != permutation.end(); ++it, ++molidx) {
     R_DECOMP &in_rgroups = it->rgroups;
     groups["Core"].push_back(data->labelledCores[it->core_idx]);
@@ -1043,22 +1032,21 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
                    "Not done! Call process()");
 
       std::string r = std::string("R") +
-                      boost::lexical_cast<std::string>(realLabel->second);
+                      std::to_string(realLabel->second);
       RGroupColumn &col = groups[r];
       if (molidx && col.size() < (size_t)(molidx - 1)) col.resize(molidx - 1);
       col.push_back(rgroup->second->combinedMol);
     }
   }
   // Now make all columns equal - this adds empty mols...
-  for (std::map<std::string, RGroupColumn>::iterator it = groups.begin();
-       it != groups.end(); ++it) {
-    if (it->second.size() != molidx) {
-      it->second.resize(molidx);
+  for (auto & group : groups) {
+    if (group.second.size() != molidx) {
+      group.second.resize(molidx);
     }
     
-    for(size_t idx=0;idx<it->second.size();++idx) {
-      if(!it->second[idx].get()) {
-        it->second[idx] = boost::make_shared<RWMol>();
+    for(size_t idx=0;idx<group.second.size();++idx) {
+      if(!group.second[idx].get()) {
+        group.second[idx] = boost::make_shared<RWMol>();
       }
     }
   }

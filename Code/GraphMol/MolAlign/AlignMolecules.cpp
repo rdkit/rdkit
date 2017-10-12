@@ -101,11 +101,11 @@ double getBestRMS(ROMol& probeMol, ROMol& refMol,
 
   double bestRMS = 1.e300;
   MatchVectType& bestMatch = matches[0];
-  for (size_t i = 0; i < matches.size(); ++i) {
-    double rms = alignMol(probeMol, refMol, probeId, refId, &matches[i]);
+  for (auto & matche : matches) {
+    double rms = alignMol(probeMol, refMol, probeId, refId, &matche);
     if (rms < bestRMS) {
       bestRMS = rms;
-      bestMatch = matches[i];
+      bestMatch = matche;
     }
   }
 

@@ -106,8 +106,8 @@ bool IsClose(double a, double b, int n) {
 
 int countZeros(std::string ta) {
   int nbzero = 0;
-  for (unsigned int i = 0; i < ta.length(); i++) {
-    if (ta[i] != '0') {
+  for (char i : ta) {
+    if (i != '0') {
       break;
     }
     nbzero = nbzero + 1;
@@ -227,8 +227,8 @@ std::vector<double> clusterArray2(std::vector<double> data, int precision) {
   // sort the input data descend order!
   std::sort(data.begin(), data.end(), std::greater<double>());
   std::deque<double> B;
-  for (unsigned int i = 0; i < data.size(); i++) {
-    B.push_back(data[i]);
+  for (double & i : data) {
+    B.push_back(i);
     // std::cout << data[i] << ",";
   }
   // std::cout << "\n";
@@ -267,7 +267,7 @@ std::vector<double> clusterArray2(std::vector<double> data, int precision) {
 
 double* GetGeodesicMatrix(double* dist, int lag, int numAtoms) {
   int sizeArray = numAtoms * numAtoms;
-  double* Geodesic = new double[sizeArray];
+  auto* Geodesic = new double[sizeArray];
   for (int i = 0; i < sizeArray; i++) {
     if (dist[i] == lag)
       Geodesic[i] = 1;
@@ -401,8 +401,8 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   double numHeavy = heavyLev.size();
   double ITH0 = numHeavy * log(numHeavy) / log(2.0);
   double ITH = ITH0;
-  for (unsigned int j = 0; j < Clus.size(); j++) {
-    ITH -= Clus[j] * log(Clus[j]) / log(2.0);
+  for (double Clu : Clus) {
+    ITH -= Clu * log(Clu) / log(2.0);
   }
   res[0] = roundn(ITH, 3);  // issue somethime with this due to cluster
   double ISH = ITH / ITH0;
@@ -997,7 +997,7 @@ void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
   double* dist3D = MolOps::get3DDistanceMat(mol, confId);
 
   double* AdjMat = MolOps::getAdjacencyMatrix(
-      mol, false, 0, false, 0);  // false to have only the 1,0 matrix unweighted
+      mol, false, 0, false, nullptr);  // false to have only the 1,0 matrix unweighted
 
   res.clear();
   res.resize(273);

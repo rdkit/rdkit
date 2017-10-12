@@ -377,7 +377,7 @@ void testPDB() {
   FreeSASA::SASAOpts opts;
   opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
 
-  double sasa = FreeSASA::calcSASA(*m, radii, -1, NULL, opts);
+  double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
   TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
 
@@ -389,7 +389,7 @@ void testPDB() {
   }
   ROMol *mnoh = MolOps::removeHs(*m);
   FreeSASA::classifyAtoms(*mnoh, radii);
-  sasa = FreeSASA::calcSASA(*mnoh, radii, -1, NULL, opts);
+  sasa = FreeSASA::calcSASA(*mnoh, radii, -1, nullptr, opts);
   TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
   const QueryAtom *apolar = FreeSASA::makeFreeSasaAPolarAtomQuery();

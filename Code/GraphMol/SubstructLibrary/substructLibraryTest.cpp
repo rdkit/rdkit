@@ -51,7 +51,7 @@ void test1() {
   SDMolSupplier suppl(fName);
   SubstructLibrary ssslib;
   while (!suppl.atEnd()) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {
@@ -89,14 +89,14 @@ void test2() {
   std::string fName = getenv("RDBASE");
   fName += "/Data/NCI/first_200.props.sdf";
   SDMolSupplier suppl(fName);
-  MolHolder *mols = new MolHolder();
-  PatternHolder *fps = new PatternHolder();
+  auto *mols = new MolHolder();
+  auto *fps = new PatternHolder();
   boost::shared_ptr<MolHolder> mols_ptr(mols);
   boost::shared_ptr<PatternHolder> fps_ptr(fps);
 
   SubstructLibrary ssslib(mols_ptr, fps_ptr);
   while (!suppl.atEnd()) {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     try {
       mol = suppl.next();
     } catch (...) {

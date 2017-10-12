@@ -456,7 +456,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
       if (atomSymbols) {
         atoms[i].p_symbol = &(*atomSymbols)[i];
       } else {
-        atoms[i].p_symbol = 0;
+        atoms[i].p_symbol = nullptr;
       }
       advancedInitCanonAtom(mol, atoms[i], i);
       atoms[i].bonds.reserve(atoms[i].atom->getDegree());

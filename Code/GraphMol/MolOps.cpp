@@ -494,8 +494,8 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         if (!tmp->getRingInfo()->isInitialized()) {
           tmp->getRingInfo()->initialize();
         }
-        for (unsigned j = 0; j < i.size(); ++j) {
-          aids.push_back(ids[i[j]]);
+        for (int j : i) {
+          aids.push_back(ids[j]);
         }
         INT_VECT bids;
         INT_VECT_CI lastRai;

@@ -60,7 +60,7 @@ VectorXd getEigenVect(std::vector<double> v) {
 
 double* GetGeodesicMatrix(double* dist, int lag, int numAtoms) {
   int sizeArray = numAtoms * numAtoms;
-  double* Geodesic = new double[sizeArray];
+  auto* Geodesic = new double[sizeArray];
   for (int i = 0; i < sizeArray; i++) {
     if (dist[i] == lag)
       Geodesic[i] = 1.0;

@@ -81,16 +81,13 @@ class RGroupDecompositionHelper {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     python::list result;
 
-    for (RGroupRows::const_iterator it = groups.begin(); it != groups.end();
-         ++it) {
+    for (const auto & side_chains : groups) {
       python::dict dict;
-      const RGroupRow &side_chains = *(it);
-      for (RGroupRow::const_iterator sit = side_chains.begin();
-           sit != side_chains.end(); ++sit) {
+      for (const auto & side_chain : side_chains) {
         if (asSmiles) {
-          dict[sit->first] = MolToSmiles(*sit->second, true);
+          dict[side_chain.first] = MolToSmiles(*side_chain.second, true);
         } else {
-          dict[sit->first] = sit->second;
+          dict[side_chain.first] = side_chain.second;
         }
       }
       result.append(dict);
@@ -107,12 +104,11 @@ class RGroupDecompositionHelper {
          ++it) {
       python::list col;
 
-      for (RGroupColumn::const_iterator cit = it->second.begin();
-           cit != it->second.end(); ++cit) {
+      for (const auto & cit : it->second) {
         if (asSmiles) {
-          col.append(MolToSmiles(**cit,true));
+          col.append(MolToSmiles(*cit,true));
         } else {
-          col.append(*cit);
+          col.append(cit);
         }
       }
       result[it->first] = col;

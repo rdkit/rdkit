@@ -311,10 +311,10 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
     python::list reactantLabels;
     for (auto &label : labels) {
       python::list tmpLabels;
-      for (unsigned int j = 0; j < label.size(); ++j) {
+      for (auto & j : label) {
         python::list tmpPair;
-        tmpPair.append(label[j].first);
-        tmpPair.append(label[j].second);
+        tmpPair.append(j.first);
+        tmpPair.append(j.second);
         tmpLabels.append(python::tuple(tmpPair));
       }
       reactantLabels.append(python::tuple(tmpLabels));
@@ -363,10 +363,10 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
   python::list reactantLabels;
   for (auto &label : labels) {
     python::list tmpLabels;
-    for (unsigned int j = 0; j < label.size(); ++j) {
+    for (auto & j : label) {
       python::list tmpPair;
-      tmpPair.append(label[j].first);
-      tmpPair.append(label[j].second);
+      tmpPair.append(j.first);
+      tmpPair.append(j.second);
       tmpLabels.append(python::tuple(tmpPair));
     }
     reactantLabels.append(python::tuple(tmpLabels));

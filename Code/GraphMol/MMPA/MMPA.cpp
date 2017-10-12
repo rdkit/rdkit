@@ -336,11 +336,11 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
       }
       std::sort(rankedAtoms.begin(), rankedAtoms.end());
       int nextMap = 0;
-      for(size_t i=0;i<rankedAtoms.size();++i) {
-        if(canonicalAtomMaps.find(rankedAtoms[i].second) == canonicalAtomMaps.end()) {
+      for(auto & rankedAtom : rankedAtoms) {
+        if(canonicalAtomMaps.find(rankedAtom.second) == canonicalAtomMaps.end()) {
           //std::cerr << "Remapping: " << rankedAtoms[i].second << " " << " to " << (i+1) <<
           //    std::endl;
-          canonicalAtomMaps[rankedAtoms[i].second] = ++nextMap;
+          canonicalAtomMaps[rankedAtom.second] = ++nextMap;
         }
       }
     }

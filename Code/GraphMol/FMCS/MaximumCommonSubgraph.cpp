@@ -265,13 +265,13 @@ struct QueryRings {
       for (unsigned int& BondRing : BondRings) BondRing = 0;
       const RingInfo::VECT_INT_VECT& rings = query->getRingInfo()->bondRings();
       for (const auto& ring : rings)
-        for (auto ri = ring.begin(); ri != ring.end(); ri++) ++BondRings[*ri];
+        for (int ri : ring) ++BondRings[ri];
     }
     {
       for (unsigned int& AtomRing : AtomRings) AtomRing = 0;
       const RingInfo::VECT_INT_VECT& rings = query->getRingInfo()->atomRings();
       for (const auto& ring : rings)
-        for (auto ri = ring.begin(); ri != ring.end(); ri++) ++AtomRings[*ri];
+        for (int ri : ring) ++AtomRings[ri];
     }
   }
 

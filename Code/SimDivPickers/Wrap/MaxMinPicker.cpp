@@ -57,7 +57,7 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
 
 class pyobjFunctor {
  public:
-  pyobjFunctor(python::object obj) : dp_obj(obj) {}
+  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() {}
   double operator()(unsigned int i, unsigned int j) {
     return python::extract<double>(dp_obj(i, j));

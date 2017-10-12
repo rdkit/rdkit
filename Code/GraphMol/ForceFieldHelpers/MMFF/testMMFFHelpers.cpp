@@ -274,7 +274,7 @@ void testMMFFBuilder1() {
 
   mol2 = MolOps::addHs(*mol);
   TEST_ASSERT(mol2->getNumAtoms() == 6);
-  Conformer *conf4 = new Conformer(mol2->getNumAtoms());
+  auto *conf4 = new Conformer(mol2->getNumAtoms());
   cid = static_cast<int>(mol2->addConformer(conf4, true));
 
   delete field;

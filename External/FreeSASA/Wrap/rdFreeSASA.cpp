@@ -53,8 +53,8 @@ python::object classifyAtomsHelper(RDKit::ROMol &mol,
   std::vector<double> radii;
   python::list l;
   if (FreeSASA::classifyAtoms(mol, radii, opts)) {
-    for(size_t i=0;i<radii.size();++i)
-      l.append(radii[i]);
+    for(double & i : radii)
+      l.append(i);
     return l;
   } 
   return l;
@@ -65,7 +65,7 @@ double calcSASAHelper(const RDKit::ROMol &mol,
                       int confIdx,
                       const RDKit::Atom *query,
                       const FreeSASA::SASAOpts &opts) {
-  const RDKit::QueryAtom* atom = NULL;
+  const RDKit::QueryAtom* atom = nullptr;
   if (query) {
     atom = dynamic_cast<const RDKit::QueryAtom*>(query);
     if (!atom) {

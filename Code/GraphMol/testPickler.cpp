@@ -1213,7 +1213,7 @@ void testGithub1563() {
       << std::endl;
 
   RWMol m;
-  QueryAtom *qa = new QueryAtom();
+  auto *qa = new QueryAtom();
   qa->setQuery(makeAtomHeavyAtomDegreeQuery(3));
   m.addAtom(qa);
   TEST_ASSERT(m.getAtomWithIdx(0)->hasQuery());

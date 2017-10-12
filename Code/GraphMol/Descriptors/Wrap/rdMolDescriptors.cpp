@@ -498,7 +498,7 @@ python::list GetUSRDistributions(python::object coords, python::object points) {
   }
   RDGeom::Point3DConstPtrVect c(numCoords);
   for (unsigned int i = 0; i < numCoords; ++i) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D;
+    auto *pt = new RDGeom::Point3D;
     *pt = python::extract<RDGeom::Point3D>(coords[i]);
     c[i] = pt;
   }
@@ -531,7 +531,7 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
   }
   RDGeom::Point3DConstPtrVect c(numCoords);
   for (unsigned int i = 0; i < numCoords; ++i) {
-    RDGeom::Point3D *pt = new RDGeom::Point3D;
+    auto *pt = new RDGeom::Point3D;
     *pt = python::extract<RDGeom::Point3D>(coords[i]);
     c[i] = pt;
   }

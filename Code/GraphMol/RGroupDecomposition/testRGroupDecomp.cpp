@@ -47,7 +47,7 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
   std::ostringstream str;
   int i = 0;
 
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator
+  for (auto
            rgroups = it->begin();
        rgroups != it->end(); ++rgroups, ++i) {
     if (i) str << " ";
@@ -67,11 +67,9 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, std::string expected,
 void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
   std::ostringstream str;
 
-  for (std::map<std::string, boost::shared_ptr<ROMol> >::const_iterator
-           rgroups = it->begin();
-       rgroups != it->end(); ++rgroups) {
+  for (const auto & rgroups : *it) {
     // rlabel:smiles
-    str << rgroups->first << "\t" << MolToSmiles(*rgroups->second.get(), true)
+    str << rgroups.first << "\t" << MolToSmiles(*rgroups.second.get(), true)
         << "\t";
   }
   std::cerr << str.str() << std::endl;

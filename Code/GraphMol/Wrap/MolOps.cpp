@@ -484,8 +484,8 @@ python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 
     for (auto &frag : frags) {
       python::list tpl;
-      for (unsigned int j = 0; j < frag.size(); ++j) {
-        tpl.append(frag[j]);
+      for (int & j : frag) {
+        tpl.append(j);
       }
       res.append(python::tuple(tpl));
     }

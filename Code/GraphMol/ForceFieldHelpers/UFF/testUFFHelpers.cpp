@@ -325,7 +325,7 @@ void testUFFBuilder1() {
   boost::tie(types, foundAll) = UFF::getAtomTypes(*mol2);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size() == mol2->getNumAtoms());
-  Conformer *conf4 = new Conformer(mol2->getNumAtoms());
+  auto *conf4 = new Conformer(mol2->getNumAtoms());
   cid = static_cast<int>(mol2->addConformer(conf4, true));
 
   field = new ForceFields::ForceField();
@@ -497,7 +497,7 @@ void testUFFBuilder2() {
     field->minimize();
     delete field;
 
-    RWMol *mol2 = new RWMol(*mol);
+    auto *mol2 = new RWMol(*mol);
 
     field = UFF::constructForceField(*mol2);
     TEST_ASSERT(field);
