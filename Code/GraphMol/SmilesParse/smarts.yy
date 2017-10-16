@@ -433,17 +433,14 @@ atom_query:	simple_atom
 }
 | RINGSIZE_ATOM_QUERY_TOKEN
 | RINGSIZE_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomMinRingSizeQuery($2));
 }
 | RINGBOND_ATOM_QUERY_TOKEN
 | RINGBOND_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomRingBondCountQuery($2));
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN
 | IMPLICIT_H_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomImplicitHCountQuery($2));
 }
 | simple_atom H_TOKEN number {

@@ -4404,6 +4404,29 @@ M  END
     self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)[0]),8)
     self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)[0]),8)
 
+
+  def testMolBundles2(self):
+    b = Chem.MolBundle()
+    smis = ('Fc1c(Cl)cccc1','Fc1cc(Cl)ccc1','Fc1ccc(Cl)cc1')
+    for smi in smis:
+        b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b),3)
+    self.assertEqual(b.Size(),3)
+    self.failUnless(Chem.MolFromSmiles('Fc1c(Cl)cccc1').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1cc(Cl)ccc1').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1c(Cl)cccc1C').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1cc(Cl)ccc1C').HasSubstructMatch(b))
+    self.failIf(Chem.MolFromSmiles('Fc1c(Br)cccc1').HasSubstructMatch(b))
+
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatch(b)),8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)),1)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)[0]),8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b)),1)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b,uniquify=False)),2)
+
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)),0)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)),0)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

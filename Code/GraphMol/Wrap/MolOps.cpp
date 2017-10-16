@@ -345,7 +345,6 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 
   if (!preserveExistingQuery) {
-    delete oAt->getQuery();
     oAt->setQuery(q);
   } else {
     oAt->expandQuery(q, Queries::COMPOSITE_AND);

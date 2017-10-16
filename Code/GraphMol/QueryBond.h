@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -65,7 +65,7 @@ class QueryBond : public Bond {
   //! replaces our current query with the value passed in
   void setQuery(QUERYBOND_QUERY *what) {
     // free up any existing query (Issue255):
-    if (dp_query) delete dp_query;
+    delete dp_query;
     dp_query = what;
   };
 

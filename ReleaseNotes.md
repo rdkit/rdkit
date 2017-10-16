@@ -1,3 +1,15 @@
+# Release_2018.03.1
+(Changes relative to Release_2017.09.1)
+
+## Acknowledgements:
+
+## Highlights:
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+
 # Release_2017.09.1
 (Changes relative to Release_2017.03.1)
 
@@ -5,13 +17,17 @@
 - The fix for bug #1567 changes the way fragment SMILES are canonicalized.
   MolFragmentToSmiles() and canonicalizeFragment() will now often return
   different results
+- The fix for bug #1604 changes the behavior of QueryAtom::setQuery(), which
+  now deletes the current query before setting the new value. If you are using
+  QueryAtom::setQuery() from C++ (or possibly Java), be sure that you are not
+  also deleting that memory.
 
 ## Acknowledgements:
-Brian Cole, Peter Gedeck, Guillaume Godin, Malitha Kabir, Tuomo Kalliokoski,
-Brian Kelley, Noel O'Boyle, Matthew O'Meara, Pavel Polishchuk, Cameron Pye,
-Christian Ribeaud, Stephen Roughley, Patrick Savery, Roger Sayle,
-Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
-'phenethyl', 'xiaotaw'
+Brian Cole, Peter Gedeck, Guillaume Godin, Jan Halborg Jensen, Malitha Kabir,
+Tuomo Kalliokoski, Brian Kelley, Noel O'Boyle, Matthew O'Meara, Pavel
+Polishchuk, Cameron Pye, Christian Ribeaud, Stephen Roughley, Patrick Savery,
+Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain, Paolo Tosco, Alain
+Vaucher, Sam Webb, 'phenethyl', 'xiaotaw'
 
 ## Highlights:
 - The new R-Group decomposition code provides a flexible and powerful tool for
@@ -22,8 +38,6 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
 - The MaxMinPicker is dramatically faster.
 - New descriptors: the QED descriptor has been added as have a large collection
   of new 3D descriptors and implementations of the USR and USRCAT fingerprints.
-
-
 
 ## New Features and Enhancements:
   - Bring back USR and USRCAT descriptors
@@ -58,6 +72,8 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
  (github pull #1493 from bp-kelley)
   - assorted fixes to get the current master branch to build on Windows
  (github pull #1495 from ptosco)
+  - Support assignment of stereochemistry tags to bonds from 3D structure  
+ (github issue #1497 from gncs)
   - Support black and white molecule drawing
  (github issue #1510 from greglandrum)
   - Missing def_readwrite for backgroundColour in rdMolDraw2D.cpp
@@ -150,13 +166,16 @@ Nadine Schneider, Matt Swain, Paolo Tosco, Alain Vaucher, Sam Webb,
  (github issue #1535 from sroughley)
   - Fixes blanking of non-query atom data when QueryAtomData was being pi…
  (github pull #1541 from bp-kelley)
-  - - Fixes failing build with MSVC
+  - ChemicalReaction code not calling setNoImplicit() when H counts are set.
+ (github issue #1544 from greglandrum)
+  -  Fixes failing build with MSVC
  (github pull #1547 from ptosco)
   - Kekulization error with cores from R-Group Decomposition
  (github issue #1550 from greglandrum)
   - Fixes double free for Dict::update
  (github pull #1571 from bp-kelley)
-
+  - QueryAtom::setQuery() should delete the old query first
+ (github pull #1604 from greglandrum)
 
 
 # Release_2017.03.1
