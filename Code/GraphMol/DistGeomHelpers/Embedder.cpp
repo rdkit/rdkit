@@ -678,7 +678,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations, int seed,
                   const std::map<int, RDGeom::Point3D> *coordMap,
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useBasicKnowledge, int ETversion, bool verbose,
+                  bool useBasicKnowledge, unsigned int ETversion, bool verbose,
 				  double basinThresh, bool onlyHeavyAtomsForRMS) {
   INT_VECT confIds;
   EmbedMultipleConfs(
@@ -817,7 +817,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         const std::map<int, RDGeom::Point3D> *coordMap,
                         double optimizerForceTol, bool ignoreSmoothingFailures,
                         bool enforceChirality, bool useExpTorsionAnglePrefs,
-                        bool useBasicKnowledge, int ETversion, bool verbose,
+                        bool useBasicKnowledge, unsigned int ETversion, bool verbose,
                         double basinThresh, bool onlyHeavyAtomsForRMS) {
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
@@ -997,7 +997,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int numZeroFail, double pruneRmsThresh,
     const std::map<int, RDGeom::Point3D> *coordMap, double optimizerForceTol,
     bool ignoreSmoothingFailures, bool enforceChirality,
-    bool useExpTorsionAnglePrefs, bool useBasicKnowledge, int ETversion, bool verbose,
+    bool useExpTorsionAnglePrefs, bool useBasicKnowledge, unsigned int ETversion, bool verbose,
     double basinThresh, bool onlyHeavyAtomsForRMS) {
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, 1, maxIterations, seed, clearConfs,

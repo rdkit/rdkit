@@ -58,7 +58,7 @@ class ExpTorsionAngleCollection {
  public:
   typedef std::vector<ExpTorsionAngle> ParamsVect;
   static const ExpTorsionAngleCollection *getParams(
-      int version, const std::string &paramData = "");
+		  unsigned int version, const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
@@ -73,7 +73,7 @@ typedef boost::flyweight<
     param_flyweight;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
-    int version, const std::string &paramData) {
+    unsigned int version, const std::string &paramData) {
   std::string params;
   if (paramData == "") {
 	switch (version) {
@@ -83,6 +83,8 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
 	case 2:
 	  params = torsionPreferencesV2;
 	  break;
+	default:
+	  throw ValueErrorException("ETversion must be 1 or 2.");
 	}
   } else {
 	params = paramData;
@@ -136,7 +138,7 @@ void getExperimentalTorsions(
     std::vector<std::pair<std::vector<int>, std::vector<double> > >
         &expTorsionAngles,
     std::vector<std::vector<int> > &improperAtoms, bool useExpTorsions,
-    bool useBasicKnowledge, int version, bool verbose) {
+    bool useBasicKnowledge, unsigned int version, bool verbose) {
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {

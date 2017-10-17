@@ -97,7 +97,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
                   bool enforceChirality = true,
                   bool useExpTorsionAnglePrefs = false,
                   bool useBasicKnowledge = false,
-				  int ETversion = 1, bool verbose = false,
+				  unsigned int ETversion = 1, bool verbose = false,
                   double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 
 //*! Embed multiple conformations for a molecule
@@ -179,7 +179,7 @@ void EmbedMultipleConfs(
     const std::map<int, RDGeom::Point3D> *coordMap = 0,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useBasicKnowledge = false, int ETversion = 1, bool verbose = false,
+    bool useBasicKnowledge = false, unsigned int ETversion = 1, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 //! \overload
 INT_VECT EmbedMultipleConfs(
@@ -190,7 +190,7 @@ INT_VECT EmbedMultipleConfs(
     const std::map<int, RDGeom::Point3D> *coordMap = 0,
     double optimizerForceTol = 1e-3, bool ignoreSmoothingFailures = false,
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
-    bool useBasicKnowledge = false, int ETversion = 1, bool verbose = false,
+    bool useBasicKnowledge = false, unsigned int ETversion = 1, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false);
 
 //! Parameter object for controlling embedding
@@ -285,7 +285,7 @@ struct EmbedParameters {
   bool enforceChirality;
   bool useExpTorsionAnglePrefs;
   bool useBasicKnowledge;
-  int ETversion;
+  unsigned int ETversion;
   bool verbose;
   double basinThresh;
   double pruneRmsThresh;
@@ -316,7 +316,7 @@ struct EmbedParameters {
                   const std::map<int, RDGeom::Point3D> *coordMap,
                   double optimizerForceTol, bool ignoreSmoothingFailures,
                   bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useBasicKnowledge, int ETversion,
+                  bool useBasicKnowledge, unsigned int ETversion,
 				  bool verbose, double basinThresh,
                   double pruneRmsThresh, bool onlyHeavyAtomsForRMS)
       : maxIterations(maxIterations),
