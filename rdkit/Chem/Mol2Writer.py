@@ -8,9 +8,15 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import re
+from rdkit import Chem
+from rdkit.Chem.rdchem import RWMol, Conformer, Atom, BondType
 from rdkit.Chem.rdmolfiles import MolFromSmarts, MolFromMol2Block
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
-from rdkit.Chem.rdmolops import AddHs
+from rdkit.Chem.rdmolops import (AddHs,
+                                 RemoveHs,
+                                 AssignAtomChiralTagsFromStructure,
+                                 SanitizeMol)
 
 
 def _get_positions(mol, confId=-1):
@@ -19,6 +25,94 @@ def _get_positions(mol, confId=-1):
         return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
     return [(0, 0, 0) for i in range(mol.GetNumAtoms())]
 
+
+def MolFromCommonMol2Block(block, sanitize=True, removeHs=True):
+    """Patch MolFromMol2Block to be more flexible and parse mol2 like SD files,
+    thus alowing to read/write mol2 files without infering the non-canonical
+    atom types used by other software.
+    """
+    mol = RWMol()
+    mode = 0 # 0 - meta, 1 - atoms, 2 - bonds, 3 - exit
+    for n, line in enumerate(block.split('\n')):
+        if line.strip() == '':
+            continue
+
+        if line[:1] == '@':
+            rline = line.rstrip()
+            if rline == '@<TRIPOS>MOLECULE':
+                mode = 0
+            elif rline == '@<TRIPOS>ATOM':
+                mode = 1
+            elif rline == '@<TRIPOS>BOND':
+                mode = 2
+            else:
+                mode = 3
+                #break # ???
+            continue
+
+        # 0. Get molecule meta-data
+        if mode == 0:
+            if n == 1:
+                mol.SetProp('_Name', line.rstrip())
+            elif n == 2:
+                nums = line.strip().split()
+                num_atoms = int(nums[0])
+                num_bonds = int(nums[1])
+                conf = Conformer(num_atoms)
+            # n = 3: SMALL/PROTEIN
+            # n = 4: GASTEIGER/USER_CHARGES
+            elif n > 5:
+                raise ValueError('Too many lines in @<TRIPOS>MOLECULE block')
+        # 1. Add atoms
+        elif mode == 1:
+            data = re.split('\s+', line.strip())
+            idx = int(data[0]) - 1
+            symbol = data[1]
+            x, y, z = float(data[2]), float(data[3]), float(data[4])
+            residue = data[5]
+            charge = float(data[6])
+            atom = Atom(symbol)
+            new_idx = mol.AddAtom(atom)
+            assert new_idx == idx
+            conf.SetAtomPosition(idx, (x, y, z))
+        # 2. Add bonds
+        elif mode == 2:
+            data = re.split('\s+', line.strip())
+            idx = int(data[0]) - 1
+            begin_atom = int(data[1]) - 1
+            end_atom = int(data[2]) - 1
+            if data[3] == 'ar':
+                order = BondType.AROMATIC
+            elif data[3] == 'am':
+                order = BondType.SINGLE
+            else:
+                order = BondType.values[int(data[3])]
+            mol.AddBond(begin_atom, end_atom, order)
+
+
+    mol.AddConformer(conf)
+    # 3. Remove Hs, sanitize
+
+    # convert to ROMol
+    mol = mol.GetMol()
+
+    for atom in mol.GetAtoms():
+        atom.UpdatePropertyCache()
+    # There is no such function, just marking it TODO
+    #Chem.DetectAtomStereoChemistry(mol, conf)
+    AssignAtomChiralTagsFromStructure(mol)
+
+    if sanitize:
+        try:
+            if removeHs:
+                mol = RemoveHs(mol)
+            else:
+                SanitizeMol(mol)
+        except:
+            return None
+    Chem.DetectBondStereoChemistry(mol, conf)
+
+    return mol
 
 class Mol2MolSupplier:
     def __init__(self, filename, *args, **kwargs):
@@ -67,7 +161,7 @@ class Mol2Writer:
           ARGUMENTS:
 
             - filename: the file to write or file-like object
-            - args, kwargs: arbitrary arguments to pass to internal MolToMol2Block
+            - args, kwargs: arbitrary arguments to pass to internal MolToCommonMol2Block
 
           RETURNS:
 
@@ -90,7 +184,7 @@ class Mol2Writer:
 
             bool
         """
-        return self.f.write(MolToMol2Block(mol, *self._args, **self._kwargs))
+        return self.f.write(MolToCommonMol2Block(mol, *self._args, **self._kwargs))
 
     def close(self):
         """ Closes file for writing """
@@ -110,11 +204,11 @@ def MolToMol2File(mol, filename, confId=-1, addHs=True):
 
         None
     """
-    block = MolToMol2Block(mol, confId, addHs=addHs)
+    block = MolToCommonMol2Block(mol, confId, addHs=addHs)
     open(filename, "w").writelines(block)
 
 
-def MolToMol2Block(mol, confId=-1, addHs=True, addCharges=True):
+def MolToCommonMol2Block(mol, confId=-1, addHs=True, addCharges=True):
     """Returns a Mol2 string block for a molecule
       ARGUMENTS:
 
@@ -288,4 +382,4 @@ def _amide_bond(bond):
     return False
 
 
-__all__ = ["MolToMol2Block", "MolToMol2File"]
+__all__ = ["MolToCommonMol2Block", "MolToMol2File"]
