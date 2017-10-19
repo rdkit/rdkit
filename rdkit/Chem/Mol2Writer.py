@@ -12,11 +12,12 @@ from rdkit.Chem.rdmolfiles import MolFromSmarts, MolFromMol2Block
 from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 from rdkit.Chem.rdmolops import AddHs
 
-def _get_positions(mol,confId=-1):
+
+def _get_positions(mol, confId=-1):
     if mol.GetNumConformers() > 0:
         conf = mol.GetConformer(confId)
         return [conf.GetAtomPosition(i) for i in range(conf.GetNumAtoms())]
-    return [(0,0,0) for i in range(mol.GetNumAtoms())]
+    return [(0, 0, 0) for i in range(mol.GetNumAtoms())]
 
 
 class Mol2MolSupplier:
@@ -48,7 +49,7 @@ class Mol2MolSupplier:
             if line[:1] == '#':
                 data += line
             elif line[:17] == '@<TRIPOS>MOLECULE':
-                if n>0: #skip `zero` molecule (any preciding comments and spaces)
+                if n > 0:  #skip `zero` molecule (any preciding comments and spaces)
                     yield MolFromMol2Block(block, *self._args, **self._kwargs)
                 n += 1
                 block = data
@@ -58,6 +59,7 @@ class Mol2MolSupplier:
         if block:
             yield MolFromMol2Block(block, *self._args, **self._kwargs)
         f.close()
+
 
 class Mol2Writer:
     def __init__(self, filename, *args, **kwargs):
@@ -95,7 +97,7 @@ class Mol2Writer:
         return self.f.close()
 
 
-def MolToMol2File(mol, filename, confId=-1, addHs = True):
+def MolToMol2File(mol, filename, confId=-1, addHs=True):
     """Writes a Mol2 file for a molecule
       ARGUMENTS:
 
@@ -108,10 +110,11 @@ def MolToMol2File(mol, filename, confId=-1, addHs = True):
 
         None
     """
-    block = MolToMol2Block(mol, confId, addHs = addHs)
+    block = MolToMol2Block(mol, confId, addHs=addHs)
     open(filename, "w").writelines(block)
 
-def MolToMol2Block(mol, confId=-1, addHs = True, addCharges = True):
+
+def MolToMol2Block(mol, confId=-1, addHs=True, addCharges=True):
     """Returns a Mol2 string block for a molecule
       ARGUMENTS:
 
@@ -130,7 +133,7 @@ def MolToMol2Block(mol, confId=-1, addHs = True, addCharges = True):
     # - Atom typing http://www.sdsc.edu/CCMS/Packages/cambridge/pluto/atom_types.html
     #
 
-    confIds = (confId,)
+    confIds = (confId, )
 
     if confId == None:
         confIds = Chem.Mol.GetNumConformers()
@@ -155,28 +158,45 @@ def MolToMol2Block(mol, confId=-1, addHs = True, addCharges = True):
 {}
 {} {} 0 0 0
 SMALL
-GASTEIGER\n\n""".format(mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK", mol.GetNumAtoms(), mol.GetNumBonds())
+GASTEIGER\n\n""".format(
+            mol.GetProp("_Name") if mol.HasProp("_Name") else "UNK",
+            mol.GetNumAtoms(), mol.GetNumBonds())
 
         # FIXME "USER_CHARGES" could become 'Gasteiger charges'
         # FIXME "SMALL" means small molecule but could become "PROTEIN"
 
         pos = _get_positions(mol, confId)
-        atom_lines = ["{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:<5} {} {} {:>7.4f}".format(a.GetIdx()+1,
-                                                                                                         a.GetSymbol(),
-                                                                                                         float(pos[a.GetIdx()][0]), float(pos[a.GetIdx()][1]), float(pos[a.GetIdx()][2]),
-                                                                                                         _sybyl_atom_type(a),
-                                                                                                         1, "UNL",
-                                                                                                         float(a.GetProp('_GasteigerCharge').replace(',','.')) if a.HasProp('_GasteigerCharge') else 0.0) for a in mol.GetAtoms()]
-        atom_lines = ["@<TRIPOS>ATOM"] +  atom_lines
-        atom_lines = "\n".join(atom_lines)+"\n"
+        atom_lines = [
+            "{:>4} {:>4} {:>13.4f} {:>9.4f} {:>9.4f} {:<5} {} {} {:>7.4f}".
+            format(a.GetIdx() + 1,
+                   a.GetSymbol(),
+                   float(pos[a.GetIdx()][0]),
+                   float(pos[a.GetIdx()][1]),
+                   float(pos[a.GetIdx()][2]),
+                   _sybyl_atom_type(a), 1, "UNL",
+                   float(a.GetProp('_GasteigerCharge').replace(',', '.'))
+                   if a.HasProp('_GasteigerCharge') else 0.0)
+            for a in mol.GetAtoms()
+        ]
+        atom_lines = ["@<TRIPOS>ATOM"] + atom_lines
+        atom_lines = "\n".join(atom_lines) + "\n"
 
-        bond_lines = [ "{:>5} {:>5} {:>5} {:>2}".format(bid+1, b.GetBeginAtomIdx()+1, b.GetEndAtomIdx()+1,  "ar" if b.GetBondTypeAsDouble() == 1.5 else "am" if _amide_bond(b) else str(int(b.GetBondTypeAsDouble())) ) for bid, (b) in enumerate(mol.GetBonds()) ]
-        bond_lines = ["@<TRIPOS>BOND"] + bond_lines + [ "\n"]
+        bond_lines = [
+            "{:>5} {:>5} {:>5} {:>2}".format(
+                bid + 1,
+                b.GetBeginAtomIdx() + 1,
+                b.GetEndAtomIdx() + 1, "ar"
+                if b.GetBondTypeAsDouble() == 1.5 else "am"
+                if _amide_bond(b) else str(int(b.GetBondTypeAsDouble())))
+            for bid, (b) in enumerate(mol.GetBonds())
+        ]
+        bond_lines = ["@<TRIPOS>BOND"] + bond_lines + ["\n"]
         bond_lines = "\n".join(bond_lines)
 
         block = molecule + atom_lines + bond_lines
         blocks.append(block)
     return "".join(blocks)
+
 
 def _sybyl_atom_type(atom):
     """ Asign sybyl atom type
@@ -186,7 +206,7 @@ def _sybyl_atom_type(atom):
     sybyl = None
     atom_symbol = atom.GetSymbol()
     atomic_num = atom.GetAtomicNum()
-    hyb = atom.GetHybridization()-1  # -1 since 1 = sp, 2 = sp1 etc
+    hyb = atom.GetHybridization() - 1  # -1 since 1 = sp, 2 = sp1 etc
     hyb = min(hyb, 3)
     degree = atom.GetDegree()
     aromtic = atom.GetIsAromatic()
@@ -243,6 +263,7 @@ def _sybyl_atom_type(atom):
         sybyl = atom_symbol
     return sybyl
 
+
 def _atom_matches_smarts(atom, smarts):
     idx = atom.GetIdx()
     patt = MolFromSmarts(smarts)
@@ -251,14 +272,20 @@ def _atom_matches_smarts(atom, smarts):
             return True
     return False
 
+
 def _amide_bond(bond):
     a1 = bond.GetBeginAtom()
     a2 = bond.GetEndAtom()
-    if a1.GetAtomicNum() == 6 and a2.GetAtomicNum() == 7 or a2.GetAtomicNum() == 6 and a1.GetAtomicNum() == 7:
-        patt = MolFromSmarts('C(=O)-N') # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+    if ((a1.GetAtomicNum() == 6 and
+         a2.GetAtomicNum() == 7 ) or
+        (a2.GetAtomicNum() == 6 and
+         a1.GetAtomicNum() == 7)):
+        # https://github.com/rdkit/rdkit/blob/master/Data/FragmentDescriptors.csv
+        patt = MolFromSmarts('C(=O)-N')
         for m in bond.GetOwningMol().GetSubstructMatches(patt):
             if a1.GetIdx() in m and a2.GetIdx() in m:
                 return True
     return False
+
 
 __all__ = ["MolToMol2Block", "MolToMol2File"]
