@@ -49,9 +49,6 @@ are very small and are not compromising the usefulness of using Qed in your dail
     'Quantifying the chemical beauty of drugs',
     Nature Chemistry, 4, 90-98 [http://dx.doi.org/10.1038/nchem.1243]
 
-History:
-  2012-04 Adapted to internal RDkit implementation
-  2013-05 moved to rdkit.Chem.QED
 """
 from collections import namedtuple
 import math
