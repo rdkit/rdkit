@@ -476,8 +476,8 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
 }
 
 python::tuple GetMolFragsWithMapping(const ROMol &mol,
-  bool asMols, bool sanitizeFrags, python::object &frags = python::object(),
-  python::object &fragsMolAtomMapping = python::object()) {
+  bool asMols, bool sanitizeFrags, python::object frags = python::object(),
+  python::object fragsMolAtomMapping = python::object()) {
   python::list res;
 
   if (!asMols) {
