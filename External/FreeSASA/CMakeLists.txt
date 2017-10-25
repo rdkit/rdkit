@@ -22,13 +22,13 @@ if(needDownload)
       set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-windows")
       set(FREESASA_GETLINE "getline.c")
   else()
-    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/master.tar.gz"
+    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/releases/download/2.0.1/freesasa-2.0.1.tar.gz"
           "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
           "")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
       ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-      set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-master")
+      set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-2.0.1")
       set(FREESASA_GETLINE "")
   endif()
 endif()
