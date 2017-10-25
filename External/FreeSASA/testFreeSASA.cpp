@@ -351,8 +351,7 @@ void testPDB() {
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase +=
-      "/External/FreeSASA/freesasa-master/tests/data/1d3z.pdb";
+  std::string fName = rdbase += "/External/FreeSASA/test_data/1d3z.pdb";
 
   ROMol *m;
   {

@@ -343,14 +343,14 @@ expected = [
 class TestCase(unittest.TestCase) :
     def test_basics(self):
         fname = os.path.join(os.environ["RDBASE"],
-                             "External", "FreeSASA", "freesasa-master", "tests", "data", "1d3z.pdb")
+                             "External", "FreeSASA", "test_data", "1d3z.pdb")
         mol = Chem.MolFromPDBFile(fname)
         radii = rdFreeSASA.classifyAtoms(mol)
         for atom in mol.GetAtoms():
             self.assertEqual( expected[atom.GetIdx()][3], radii[atom.GetIdx()] )
         leeRichards = 5004.79964427
         shrakerupley = 5000.340175
-        
+
         sasa = rdFreeSASA.CalcSASA(mol, radii=radii)
         self.assertTrue( (sasa-leeRichards) < 1e-5 )
 
@@ -360,12 +360,12 @@ class TestCase(unittest.TestCase) :
 
         apolar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaAPolarAtomQuery(), opts=opts);
         polar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaPolarAtomQuery(), opts=opts);
-        
+
         self.assertTrue( (polar + apolar - 5000.340175) < 1e-5 )
 
     def test_opts(self):
         fname = os.path.join(os.environ["RDBASE"],
-                             "External", "FreeSASA", "freesasa-master", "tests", "data", "1d3z.pdb")
+                             "External", "FreeSASA", "test_data", "1d3z.pdb")
         mol = Chem.MolFromPDBFile(fname)
         radii = rdFreeSASA.classifyAtoms(mol)
         for atom in mol.GetAtoms():
