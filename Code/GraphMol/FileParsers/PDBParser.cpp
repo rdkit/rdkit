@@ -296,6 +296,23 @@ static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
       } catch (boost::bad_lexical_cast &) {
         fail = true;
       }
+      // do not make bonds to metals
+      unsigned int elem = amap[src]->getAtomicNum();
+      if((3 <= elem && elem <= 4) ||
+         (11 <= elem && elem <= 13) ||
+         (19 <= elem && elem <= 31) ||
+         (37 <= elem && elem <= 50) ||
+         (55 <= elem && elem <= 84) ||
+         (87 <= elem && elem <= 113))
+        break;
+      elem = amap[dst]->getAtomicNum();
+      if((3 <= elem && elem <= 4) ||
+         (11 <= elem && elem <= 13) ||
+         (19 <= elem && elem <= 31) ||
+         (37 <= elem && elem <= 50) ||
+         (55 <= elem && elem <= 84) ||
+         (87 <= elem && elem <= 113))
+        break;
       if (!fail) {
         Bond *bond =
             mol->getBondBetweenAtoms(amap[src]->getIdx(), amap[dst]->getIdx());
@@ -544,8 +561,8 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
   if (!mol) return (RWMol *)0;
 
   if (proximityBonding) {
-      ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
-      StandardPDBResidueBondOrders(mol);
+    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+    StandardPDBResidueBondOrders(mol);
   }
 
   BasicPDBCleanup(*mol);

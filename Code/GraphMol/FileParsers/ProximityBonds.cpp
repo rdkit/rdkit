@@ -32,6 +32,21 @@ struct ProximityEntry {
 static bool IsBonded(ProximityEntry *p, ProximityEntry *q, unsigned int flags) {
   if (flags & ctdIGNORE_H_H_CONTACTS && p->elem == 1 && q->elem == 1)
     return false;
+  // do not make bonds to metals
+  if((3 <= p->elem && p->elem <= 4) ||
+     (11 <= p->elem && p->elem <= 13) ||
+     (19 <= p->elem && p->elem <= 31) ||
+     (37 <= p->elem && p->elem <= 50) ||
+     (55 <= p->elem && p->elem <= 84) ||
+     (87 <= p->elem && p->elem <= 113))
+    return false;
+  if((3 <= q->elem && q->elem <= 4) ||
+     (11 <= q->elem && q->elem <= 13) ||
+     (19 <= q->elem && q->elem <= 31) ||
+     (37 <= q->elem && q->elem <= 50) ||
+     (55 <= q->elem && q->elem <= 84) ||
+     (87 <= q->elem && q->elem <= 113))
+    return false;
   double dx = (double)p->x - (double)q->x;
   double dist2 = dx * dx;
   if (dist2 > MAXDIST2) return false;
@@ -152,11 +167,46 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
             list = tmpj->next;
           }
         }
-
     int list = hash & HASHMASK;
     tmpi->next = HashTable[list];
     HashTable[list] = i;
     tmpi->hash = hash;
+  }
+  // Cleanup pass
+  for (unsigned int i = 0; i < count; i++) {
+    Atom *atom = mol->getAtomWithIdx(i);
+    unsigned int elem = atom->getAtomicNum();
+    // detect multivalent Hs, which could happen with ConnectTheDots
+    if (elem == 1 && atom->getDegree() > 1) {
+      // cut all but shortest Bond
+      AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+      RDGeom::Point3D p = conf->getAtomPos(i);
+      RDKit::RWMol::ADJ_ITER nbr , end_nbr;
+      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
+      float best = 10000;
+      int best_idx = -1;
+      while( nbr != end_nbr ) {
+        RDGeom::Point3D pn = conf->getAtomPos(*nbr);
+        float d = (p - pn).length();
+        AtomPDBResidueInfo *n_info = (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
+        if(d < best && atom_info->getResidueNumber() == n_info->getResidueNumber()){
+          best = d;
+          best_idx = *nbr;
+        }
+        ++nbr;
+      }
+      // iterate again and remove all but closest
+      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
+      while( nbr != end_nbr ) {
+        if(*nbr == best_idx){
+          Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
+          bond->setBondType(Bond::SINGLE); // make sure this one is single
+        } else {
+          mol->removeBond(i, *nbr);
+        }
+        ++nbr;
+      }
+    }
   }
   free(tmp);
 }
