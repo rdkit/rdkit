@@ -278,6 +278,5 @@ class TestCase(unittest.TestCase):
                                    'C/C(F)=C/[C@H](C)Cl',
                                    'C/C(F)=C/[C@@H](C)Cl',]))
 
-
 if __name__ == '__main__':
   unittest.main()

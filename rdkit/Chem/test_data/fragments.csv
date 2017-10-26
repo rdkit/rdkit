@@ -1,0 +1,15 @@
+SMILES,TITLE
+[*]c1ccccc1,benzene
+[*]c1ccncc1,pyridine
+[*]C1CCCCC1,cyclohexane
+[*]C(=O)O,carboxcyclic acid
+[*]c1ccc2ccccc2c1[*],naphthalene
+[*]n1cccc1,pyrrol
+[nH]1cccc1[*],1H-pyrrol
+o1cccc1[*],furan
+c1ccc2c(c1)[nH]cn2,benzimidazol
+[*]n1nc[nH]c1=O,oxo-triazol
+c1cnn2c1[nH]cc2,imidazo-pyrazole
+c1csc2c1[nH]nc2,thieno-pyrazole
+[*]c1cnn2c1[nH]cc2,imidazo-pyrazole
+[*]c1csc2c1[nH]nc2,thieno-pyrazole
