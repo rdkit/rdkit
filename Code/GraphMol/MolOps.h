@@ -820,11 +820,19 @@ void detectBondStereochemistry(ROMol &mol, int confId = -1);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!
+  Does the CIP stereochemistry assignment for the molecule's atoms
+  (R/S) and double bond (Z/E). Chiral atoms will have a property
+  '_CIPCode' indicating their chiral code.
 
-  \param mol     the molecule of interest
-  \param cleanIt toggles removal of stereo flags from double bonds that can
-                 not have stereochemistry
-  \param force   forces the calculation to be repeated even if it has
+  \param mol     the molecule to use
+  \param cleanIt whether atoms with a chiral specifier that aren't
+                 actually chiral (e.g. atoms with duplicate
+                 substituents or only 2 substituents, etc.) will have
+                 their chiral code set to CHI_UNSPECIFIED. Bonds with
+                 STEREOCIS/STEREOTRANS specified that have duplicate
+                 substituents based upon the CIP atom ranks will be
+                 marked STEREONONE.
+  \param force   causes the calculation to be repeated even if it has
                  already been done
   \param flagPossibleStereoCenters   set the _ChiralityPossible property on
                                      atoms that are possible stereocenters
