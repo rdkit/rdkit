@@ -1014,6 +1014,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       if ((*bondIt)->getBondType() == Bond::DOUBLE) {
         if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
           (*bondIt)->setStereo(Bond::STEREOANY);
+        } else if ((*bondIt)->getStereo() == Bond::STEREOCIS ||
+                   (*bondIt)->getStereo() == Bond::STEREOTRANS) {
+          hasStereoBonds = true;
         } else if ((*bondIt)->getStereo() != Bond::STEREOANY) {
           (*bondIt)->setStereo(Bond::STEREONONE);
           (*bondIt)->getStereoAtoms().clear();
@@ -1040,6 +1043,10 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
           hasStereoBonds = true;
         }
       }
+    }
+    if (!cleanIt && hasStereoBonds) {
+      break; // no reason to keep iterating if we've already
+             // determined there are stereo bonds to consider
     }
   }
   UINT_VECT atomRanks;
@@ -1076,6 +1083,10 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   }
 
   if (cleanIt) {
+    // if the ranks are needed again, this will force them to be
+    // re-calculated based on the stereo calculated above.
+    atomRanks.clear();
+
     for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
       if ((*atIt)->hasProp(common_properties::_ringStereochemCand))
@@ -1091,14 +1102,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       Atom *atom = *atIt;
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !atom->hasProp(common_properties::_CIPCode) &&
-          (possibleSpecialCases[atom->getIdx()] ||
-           atom->hasProp(common_properties::_ringStereoAtoms))) {
-      }
-
-      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-          !atom->hasProp(common_properties::_CIPCode) &&
           (!possibleSpecialCases[atom->getIdx()] ||
            !atom->hasProp(common_properties::_ringStereoAtoms))) {
+
         atom->setChiralTag(Atom::CHI_UNSPECIFIED);
 
         // If the atom has an explicit hydrogen and no charge, that H
@@ -1123,6 +1129,36 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
           (*bondIt)->getBeginAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED &&
           (*bondIt)->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
         (*bondIt)->setBondDir(Bond::NONE);
+      }
+
+      // make sure CIS/TRANS assignments are actually stereo bonds
+      if ((*bondIt)->getBondType() == Bond::DOUBLE) {
+        if ((*bondIt)->getStereo() == Bond::STEREOCIS ||
+            (*bondIt)->getStereo() == Bond::STEREOTRANS) {
+
+          if (!atomRanks.size()) {
+            Chirality::assignAtomCIPRanks(mol, atomRanks);
+          }
+
+          const Atom *begAtom = (*bondIt)->getBeginAtom(),
+                     *endAtom = (*bondIt)->getEndAtom();
+          UINT_VECT begAtomNeighbors, endAtomNeighbors;
+          Chirality::findAtomNeighborsHelper(mol, begAtom, *bondIt,
+                                             begAtomNeighbors);
+          Chirality::findAtomNeighborsHelper(mol, endAtom, *bondIt,
+                                             endAtomNeighbors);
+
+          // Note, this relies on this being a hydrogen-suppressed
+          // graph as the 'Note' in the doc string of this function
+          // indicates is a pre-condition.
+          if ((begAtomNeighbors.size() == 2 &&
+               atomRanks[begAtomNeighbors[0]] == atomRanks[begAtomNeighbors[1]]) ||
+              (endAtomNeighbors.size() == 2 &&
+               atomRanks[endAtomNeighbors[0]] == atomRanks[endAtomNeighbors[1]])) {
+            (*bondIt)->setStereo(Bond::STEREONONE);
+            (*bondIt)->getStereoAtoms().clear();
+          }
+        }
       }
     }
   }

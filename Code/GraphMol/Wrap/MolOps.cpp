@@ -1544,7 +1544,9 @@ struct molops_wrapper {
     - mol: the molecule to use\n\
     - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
       actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
+      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with \n\
+      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP \n\
+      atom ranks will be marked STEREONONE. \n\
     - force: (optional) causes the calculation to be repeated, even if it has already\n\
       been done\n\
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
