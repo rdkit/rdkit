@@ -6530,6 +6530,21 @@ void test70Github1544() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testSanitizeException() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sanitizerxn exception" << std::endl;
+
+  // This is a marvinjs conversion of the following smirks:
+  // {indole}\t[*;Br,I;$(*c1ccccc1)]-[c:1]:[c:2]-[NH2:3].[CH1:5]#[C;$(C-[#6]):4]>>[c:1]1:[c:2]-[N:3]-[C:4]=[C:5]-1\tc1cc(I)c(N)cc1\tCC#C
+  // From Hartenfeller et. al., J. Chem. Inf. Model., 2012, 52 (5), p 1167-1178
+  std::string rxnB = "$RXN\n\n  Marvin       102501170854\n\n  2  1\n$MOL\n\n  Mrv1583 10251708542D          \n\n  4  3  0  0  0  0            999 V2000\n   -4.2429   -0.3572    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0\n   -5.0679   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n   -5.4804    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -6.3054    0.3572    0.0000 N   0  0  0  3  0  0  0  0  0  3  0  0\n  1  2  1  0  0  0  0\n  2  3  4  0  0  0  0\n  3  4  1  0  0  0  0\nM  MRV SMA   1 [*;A]\nM  MRV SMA   4 [#7H2;A:3]\nM  END\n$MOL\n\n  Mrv1583 10251708542D          \n\n  2  1  0  0  0  0            999 V2000\n   -1.6500    0.0000    0.0000 C   0  0  0  2  0  0  0  0  0  5  0  0\n   -2.4750    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  3  0  0  0  0\nM  MRV SMA   1 [#6H1:5]\nM  END\n$MOL\n\n  Mrv1583 10251708542D          \n\n  5  5  0  0  0  0            999 V2000\n    3.3782    0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n    4.0456    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n    3.7907   -0.6348    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    2.9657   -0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n    2.7107    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n  1  2  4  0  0  0  0\n  1  5  1  0  0  0  0\n  2  3  1  0  0  0  0\n  3  4  1  0  0  0  0\n  4  5  2  0  0  0  0\nM  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxnB);
+  RxnOps::sanitizeRxn(*rxn);
+  delete rxn;
+
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6613,7 +6628,7 @@ int main() {
 
   test69Github1387();
   test70Github1544();
-
+  testSanitizeException();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
