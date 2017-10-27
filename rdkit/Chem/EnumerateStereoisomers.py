@@ -20,13 +20,14 @@ class StereoEnumerationOptions(object):
             number of results (and execution time) it's important to
             keep an eye on this.
     """
-    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'maxIsomers', 'rand')
+    __slots__ = ('tryEmbedding', 'onlyUnassigned', 'maxIsomers', 'rand', 'unique')
     def __init__(self, tryEmbedding = False, onlyUnassigned = True,
-                 maxIsomers = 1024, rand = None):
+                 maxIsomers = 1024, rand = None, unique = True):
         self.tryEmbedding = tryEmbedding
         self.onlyUnassigned = onlyUnassigned
         self.maxIsomers = maxIsomers
         self.rand = rand
+        self.unique = unique
 
 class _BondFlipper(object):
     def __init__(self, bond):
@@ -146,6 +147,26 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
 
+    Or we can force the output to only give us unique isomers:
+    >>> m = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
+    >>> opts = StereoEnumerationOptions(unique=True)
+    >>> isomers = tuple(EnumerateStereoisomers(m, options=opts))
+    >>> len(isomers)
+    10
+    >>> for smi in sorted(Chem.MolToSmiles(x,isomericSmiles=True) for x in isomers):
+    ...     print(smi)
+    ...
+    F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@H](F)Cl
+    F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl
+    F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
+
     By default the code only expands unspecified stereocenters:
     >>> m = Chem.MolFromSmiles('BrC=C[C@H]1OC(C2)(F)C2(Cl)C1')
     >>> isomers = tuple(EnumerateStereoisomers(m))
@@ -217,6 +238,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
         bitsource = _UniqueRandomBitsGenerator(nCenters, options.maxIsomers, rand)
 
+    isomersSeen = set()
     numIsomers = 0
     for bitflag in bitsource:
         for i in range(nCenters):
@@ -224,6 +246,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
             flippers[i].flip(flag)
 
         isomer = Chem.Mol(tm)
+        if options.unique:
+            cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
+            if cansmi in isomersSeen:
+                continue
+
+            isomersSeen.add(cansmi)
+
         if options.tryEmbedding:
             ntm = Chem.AddHs(isomer)
             cid = EmbedMolecule(ntm, randomSeed=bitflag)
