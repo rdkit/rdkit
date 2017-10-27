@@ -84,6 +84,11 @@ void testPass() {
     "c1ccccb1",                                            // github 220
     "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
     "C->[Cu]<-C",                                          // dative bonds
+    "C%(1)CC%(1)",          // high ring closures (Github #1624)
+    "C%(10)CC%(10)",        // high ring closures (Github #1624)
+    "C%(100)CC%(100)",      // high ring closures (Github #1624)
+    "C%(1000)CC%(1000)",    // high ring closures (Github #1624)
+    "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
     "EOS"
   };
   while (smis[i] != "EOS") {

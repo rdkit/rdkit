@@ -3952,6 +3952,40 @@ void testSmilesParseParams() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testRingClosureNumberWithBrackets() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing the %(....) notation for SMILES ring closure numbers\n" << std::endl;
+  {
+    const char * benzenes[6] = { "c1ccccc1",
+                                 "c%(1)ccccc%(1)",
+                                 "c%(12)ccccc%(12)",
+                                 "c%(123)ccccc%(123)",
+                                 "c%(1234)ccccc%(1234)",
+                                 "c%(99999)ccccc%(99999)" };
+    for(int i=0; i<6; ++i) {
+      BOOST_LOG(rdInfoLog) << "Test: " << benzenes[i] << " (should be read)" << std::endl;
+      ROMol *m = SmilesToMol(benzenes[i]);
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 6);
+      TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+      std::string benzene = MolToSmiles(*m, false, false, -1, false);
+      TEST_ASSERT(benzene == "c1ccccc1");
+      delete m;
+    }
+
+    const char * not_allowed[2] = { "c%()ccccc%()",
+                                    "c%(100000)ccccc%(100000)" };
+    for(int i=0; i<2; ++i) {
+      BOOST_LOG(rdInfoLog) << "Test: " << not_allowed[i] << " (should NOT be read)" << std::endl;
+      ROMol *m = SmilesToMol(not_allowed[i]);
+      TEST_ASSERT(m==(ROMol*)0);
+      delete m;
+    }
+
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4020,4 +4054,5 @@ int main(int argc, char *argv[]) {
   testDativeBonds();
   testGithub1219();
   testSmilesParseParams();
+  testRingClosureNumberWithBrackets();
 }
