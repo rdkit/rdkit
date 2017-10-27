@@ -341,11 +341,12 @@ std::string FragmentSmilesConstruct(
           }
           ringClosureMap[ringIdx] = closureVal;
         }
-        if (closureVal >= 10) {
-          res << "%";
-        }
-        // std::cerr << " > " << closureVal <<std::endl;
-        res << closureVal;
+        if (closureVal < 10)
+          res << (char)(closureVal + '0');
+        else if (closureVal < 100)
+          res << '%' << closureVal;
+        else // use extension to OpenSMILES
+          res << "%(" << closureVal << ')';
         break;
       case Canon::MOL_STACK_BRANCH_OPEN:
         res << "(";
