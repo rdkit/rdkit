@@ -3028,6 +3028,9 @@ CAS<~>
   def test84PDBBasics(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          '1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN, proximityBonding=False)
+    self.assertEqual(m.GetNumAtoms(), 327)
+    self.assertEqual(m.GetNumBonds(), 3)
     m = Chem.MolFromPDBFile(fileN)
     self.assertTrue(m is not None)
     self.assertEqual(m.GetNumAtoms(), 327)
