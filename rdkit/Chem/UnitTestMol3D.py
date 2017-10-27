@@ -278,5 +278,53 @@ class TestCase(unittest.TestCase):
                                    'C/C(F)=C/[C@H](C)Cl',
                                    'C/C(F)=C/[C@@H](C)Cl',]))
 
+  def testEnumerateStereoisomersOnlyUnique(self):
+    mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
+    opts = AllChem.StereoEnumerationOptions(unique=False)
+    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
+    self.assertEqual(len(smiles), 4)
+    self.assertEqual(len(set(smiles)), 3)
+
+    mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
+    opts = AllChem.StereoEnumerationOptions(unique=True)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    self.assertEqual(smiles, set(['F[C@@H](Cl)[C@@H](F)Cl',
+                                  'F[C@@H](Cl)[C@H](F)Cl',
+                                  'F[C@H](Cl)[C@H](F)Cl']))
+
+
+    mol = Chem.MolFromSmiles('CC=CC=CC')
+    opts = AllChem.StereoEnumerationOptions(unique=False)
+    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
+    self.assertEqual(len(smiles), 4)
+    self.assertEqual(len(set(smiles)), 3)
+
+    mol = Chem.MolFromSmiles('CC=CC=CC')
+    opts = AllChem.StereoEnumerationOptions(unique=True)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    self.assertEqual(smiles, set(['C/C=C/C=C/C',
+                                  'C/C=C\\C=C\\C',
+                                  'C/C=C\\C=C/C']))
+
+    mol = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
+    opts = AllChem.StereoEnumerationOptions(unique=False)
+    smiles = [Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)]
+    self.assertEqual(len(smiles), 16)
+    self.assertEqual(len(set(smiles)), 10)
+
+    mol = Chem.MolFromSmiles('FC(Cl)C=CC=CC(F)Cl')
+    opts = AllChem.StereoEnumerationOptions(unique=True)
+    smiles = set(Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
+    self.assertEqual(smiles, set(['F[C@H](Cl)/C=C\\C=C\\[C@@H](F)Cl',
+                                  'F[C@H](Cl)/C=C/C=C/[C@H](F)Cl',
+                                  'F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl',
+                                  'F[C@H](Cl)/C=C\\C=C/[C@@H](F)Cl',
+                                  'F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl',
+                                  'F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl',
+                                  'F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl',
+                                  'F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl',
+                                  'F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl',
+                                  'F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl']))
+
 if __name__ == '__main__':
   unittest.main()
