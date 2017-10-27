@@ -44,9 +44,10 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
 
   const DashPattern &dashes = dash();
   if (dashes.size()) {
-    double dd[dashes.size()];
+    double *dd = new double[dashes.size()];
     std::copy(dashes.begin(), dashes.end(), dd);
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
+    delete[] dd;
   } else {
     cairo_set_dash(dp_cr, nullptr, 0, 0);
   }
