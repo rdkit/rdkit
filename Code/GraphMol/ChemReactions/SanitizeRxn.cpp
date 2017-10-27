@@ -105,6 +105,7 @@ struct AtomInfo {
     //    std::endl;
   }
 
+
   bool NeedsRLabel() {
     return atom->getAtomicNum() == 0 && rlabel == 0;
   }
@@ -201,10 +202,10 @@ void fixRGroups(ChemicalReaction &rxn) {
 
   if (reactantAtomsToFix.size() > productAtomsToFix.size()) {
     std::ostringstream str;
-    str << "Mismatched rlabels: " <<
-        reactantAtomsToFix.size() << " unmapped reactant rlabels," << 
-        productAtomsToFix.size() << " unmappped product rlabels" ;
-    throw RxnSanitizeException(str.str());
+    str << "Mismatched potential rlabels: " <<
+        reactantAtomsToFix.size() << " unmapped reactant dummy atom rlabels," << 
+        productAtomsToFix.size() << " unmappped product dummy atom rlabels" ;
+    BOOST_LOG(rdWarningLog) <<  str << std::endl;
   }
 
 
@@ -217,8 +218,7 @@ void fixRGroups(ChemicalReaction &rxn) {
     bool found = false;
     unsigned int bestGuess = rat.bestGuessRLabel();
     if (!bestGuess) {
-      throw RxnSanitizeException(makeReactantErrorMessage(
-          "Could not deduce RLabel", rat));
+      continue;
     }
     
     BOOST_FOREACH(AtomInfo &pat, productAtomsToFix) {
@@ -241,8 +241,8 @@ void fixRGroups(ChemicalReaction &rxn) {
     }
     
     if(!found) {
-      throw RxnSanitizeException(makeReactantErrorMessage(
-          "Could not find RLabel mapping", rat));
+      BOOST_LOG(rdWarningLog) << "Could not find RLabel mapping for atom: " <<
+          rat.atom->getIdx() << " in template: " << rat.templateIdx << std::endl;
     }
   }
   return;
