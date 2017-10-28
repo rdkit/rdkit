@@ -3046,6 +3046,28 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetName(), " N  ")
     self.assertEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetResidueName(), "THR")
     self.assertAlmostEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetTempFactor(), 13.79, 2)
+    # test multivalent Hs
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2c92_hypervalentH.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(84)
+    self.assertEqual(atom.GetAtomicNum(), 1)  # is it H
+    self.assertEqual(atom.GetDegree(), 1)  # H should have 1 bond
+    for n in atom.GetNeighbors():  # Check if neighbor is from the same residue
+        self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(),
+                         n.GetPDBResidueInfo().GetResidueName())
+    # test unbinding metals (ZN)
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '1ps3_zn.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(40)
+    self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
+    self.assertEqual(atom.GetDegree(), 0)  # Zn should have no bonds
+    # test metal bonds without proximity bonding
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False, proximityBonding=False)
+    atom = mol.GetAtomWithIdx(40)
+    self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
+    self.assertEqual(atom.GetDegree(), 0)  # Zn should have no bonds
 
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
