@@ -346,6 +346,8 @@ extern const EmbedParameters KDG;
 extern const EmbedParameters ETDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 extern const EmbedParameters ETKDG;
+//! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
+extern const EmbedParameters ETKDGv2;
 
 inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
   return EmbedMolecule(

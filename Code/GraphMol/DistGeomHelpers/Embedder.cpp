@@ -116,6 +116,28 @@ const EmbedParameters ETKDG(0,      // maxIterations
                             true    // onlyHeavyAtomsForRMS
                             );
 
+//! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
+const EmbedParameters ETKDGv2(0,      // maxIterations
+                            1,      // numThreads
+                            -1,     // randomSeed
+                            true,   // clearConfs
+                            false,  // useRandomCoords
+                            2.0,    // boxSizeMult
+                            true,   // randNegEig
+                            1,      // numZeroFail
+                            NULL,   // coordMap
+                            1e-3,   // optimizerForceTol
+                            false,  // ignoreSmoothingFailures
+                            true,   // enforceChirality
+                            true,   // useExpTorsionAnglePrefs
+                            true,   // useBasicKnowledge
+							2,     // ETversion
+                            false,  // verbose
+                            5.0,    // basinThresh
+                            -1.0,   // pruneRmsThresh
+                            true    // onlyHeavyAtomsForRMS
+                            );
+
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
   RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],

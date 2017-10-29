@@ -28,7 +28,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   python::dict &coordMap, double forceTol,
                   bool ignoreSmoothingFailures, bool enforceChirality,
                   bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-				  unsigned int ETversion, bool printExpTorsionAngles) {
+				  bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -47,7 +47,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     res = DGeomHelpers::EmbedMolecule(
         mol, maxAttempts, seed, clearConfs, useRandomCoords, boxSizeMult,
         randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, ETversion,
+        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, 1, // ETversion = 1
         printExpTorsionAngles);
   }
   return res;
@@ -68,7 +68,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int numZeroFail, double pruneRmsThresh, python::dict &coordMap,
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
     int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-	unsigned int ETversion, bool printExpTorsionAngles) {
+	bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -88,7 +88,7 @@ INT_VECT EmbedMultipleConfs(
         mol, res, numConfs, numThreads, maxAttempts, seed, clearConfs,
         useRandomCoords, boxSizeMult, randNegEig, numZeroFail, pruneRmsThresh,
         pMapPtr, forceTol, ignoreSmoothingFailures, enforceChirality,
-        useExpTorsionAnglePrefs, useBasicKnowledge, ETversion,
+        useExpTorsionAnglePrefs, useBasicKnowledge, 1, // ETversion = 1
 		printExpTorsionAngles);
   }
   return res;
@@ -120,8 +120,11 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   return PyArray_Return(res);
 }
-DGeomHelpers::EmbedParameters *getETKDG() {
+DGeomHelpers::EmbedParameters *getETKDG() { // ET version 1
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDG);
+}
+DGeomHelpers::EmbedParameters *getETKDGv2() { // ET version 2
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv2);
 }
 DGeomHelpers::EmbedParameters *getKDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
@@ -174,7 +177,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
-    - ETversion : version of the experimental torsion angles to be used (default: 1)\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
 \n\
  RETURNS:\n\n\
@@ -191,7 +193,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("enforceChirality") = true,
        python::arg("useExpTorsionAnglePrefs") = false,
        python::arg("useBasicKnowledge") = false,
-	   python::arg("ETversion") = 1,
        python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -242,7 +243,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                 If set to zero, the max supported by the system will be used.\n\
     - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
     - useBasicKnowledge : impose basic knowledge such as flat rings\n\
-    - ETversion : version of the experimental torsion angles to be used (default: 1)\n\
     - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
@@ -259,7 +259,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
        python::arg("useExpTorsionAnglePrefs") = false,
        python::arg("useBasicKnowledge") = false,
-       python::arg("ETversion") = 1,
 	   python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
@@ -355,8 +354,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
   python::def("ETKDG", RDKit::getETKDG,
-              "Returns an EmbedParameters object for the ETKDG method.",
+              "Returns an EmbedParameters object for the ETKDG method - version 1.",
               python::return_value_policy<python::manage_new_object>());
+  python::def("ETKDGv2", RDKit::getETKDGv2,
+                "Returns an EmbedParameters object for the ETKDG method - version 2.",
+                python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());

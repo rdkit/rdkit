@@ -1727,6 +1727,27 @@ void testEmbedParameters() {
     delete mol;
   }
   {
+      std::string fname =
+          rdbase +
+          "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+      RWMol *ref = MolFileToMol(fname, true, false);
+      TEST_ASSERT(ref);
+      RWMol *mol = SmilesToMol("OCCC");
+      TEST_ASSERT(mol);
+      MolOps::addHs(*mol);
+      TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
+      DGeomHelpers::EmbedParameters params;
+      params.randomSeed = 42;
+      params.useExpTorsionAnglePrefs = true;
+      params.useBasicKnowledge = true;
+      params.ETversion = 2;
+      DGeomHelpers::EmbedMolecule(*mol, params);
+      compareConfs(ref, mol);
+
+      delete ref;
+      delete mol;
+  }
+  {
     std::string fname =
         rdbase +
         "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
