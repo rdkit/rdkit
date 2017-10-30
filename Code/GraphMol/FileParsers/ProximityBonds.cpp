@@ -177,9 +177,9 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
     Atom *atom = mol->getAtomWithIdx(i);
     unsigned int elem = atom->getAtomicNum();
     // detect multivalent Hs, which could happen with ConnectTheDots
+    AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
     if (elem == 1 && atom->getDegree() > 1) {
       // cut all but shortest Bond
-      AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
       RDGeom::Point3D p = conf->getAtomPos(i);
       RDKit::RWMol::ADJ_ITER nbr , end_nbr;
       boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
@@ -202,6 +202,18 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
           Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
           bond->setBondType(Bond::SINGLE); // make sure this one is single
         } else {
+          mol->removeBond(i, *nbr);
+        }
+        ++nbr;
+      }
+    }
+    // Unbind waters, also allow for Hs in HOH residues
+    if ((elem == 1 || elem == 8) && (atom_info->getResidueName() == "HOH")) {
+      RDKit::RWMol::ADJ_ITER nbr , end_nbr;
+      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
+      while( nbr != end_nbr ) {
+        AtomPDBResidueInfo *n_info = (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
+        if(atom_info->getResidueNumber() != n_info->getResidueNumber()){
           mol->removeBond(i, *nbr);
         }
         ++nbr;
