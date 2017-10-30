@@ -148,8 +148,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - maxAttempts : the maximum number of attempts to try embedding \n\
     - randomSeed : provide a seed for the random number generator \n\
                    so that the same coordinates can be obtained \n\
-                   for a molecule on multiple runs. The default \n\
-                   (-1) uses a random seed \n\
+                   for a molecule on multiple runs. If -1, the \n\
+                   RNG will not be seeded. \n\
     - clearConfs : clear all existing conformations on the molecule\n\
     - useRandomCoords : Start the embedding from random coordinates instead of\n\
                         using eigenvalues of the distance matrix.\n\
@@ -202,8 +202,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - maxAttempts : the maximum number of attempts to try embedding \n\
   - randomSeed : provide a seed for the random number generator \n\
                  so that the same coordinates can be obtained \n\
-                 for a molecule on multiple runs. The default \n\
-                 (-1) uses a random seed \n\
+                 for a molecule on multiple runs. If -1, the \n\
+                 RNG will not be seeded. \n\
   - clearConfs : clear all existing conformations on the molecule\n\
   - useRandomCoords : Start the embedding from random coordinates instead of\n\
                       using eigenvalues of the distance matrix.\n\

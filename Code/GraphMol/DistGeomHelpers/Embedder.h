@@ -44,10 +44,9 @@ namespace DGeomHelpers {
                         not obtained successfully. The default value is 10x the
   number of atoms.
   \param seed           provides a seed for the random number generator (so that
-  the same
-                        coordinates can be obtained for a molecule on multiple
-  runs)
-                        If negative, the RNG will not be seeded.
+                        the same coordinates can be obtained for a
+                        molecule on multiple runs) If -1, the
+                        RNG will not be seeded.
   \param clearConfs     Clear all existing conformations on the molecule
   \param useRandomCoords  Start the embedding from random coordinates instead of
                           using eigenvalues of the distance matrix.
@@ -135,10 +134,9 @@ int EmbedMolecule(ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
                         not obtained successfully. The default value is 10x the
   number of atoms.
   \param seed           provides a seed for the random number generator (so that
-  the same
-                        coordinates can be obtained for a molecule on multiple
-  runs).
-                        If negative, the RNG will not be seeded.
+                        the same coordinates can be obtained for a
+                        molecule on multiple runs) If -1, the
+                        RNG will not be seeded.
   \param clearConfs     Clear all existing conformations on the molecule
   \param useRandomCoords  Start the embedding from random coordinates instead of
                           using eigenvalues of the distance matrix.
@@ -238,9 +236,9 @@ INT_VECT EmbedMultipleConfs(
                  value is 10x the number of atoms.
 
   randomSeed     provides a seed for the random number generator (so that
-                 the same coordinates can be obtained for a molecule on
-                 multiple runs).
-                 If negative, the RNG will not be seeded.
+                 the same coordinates can be obtained for a
+                 molecule on multiple runs) If -1, the
+                 RNG will not be seeded.
 
   clearConfs     Clear all existing conformations on the molecule
 
