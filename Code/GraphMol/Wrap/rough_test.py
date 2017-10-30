@@ -3068,6 +3068,13 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 0)  # Zn should have no bonds
+    # test unbinding HOHs
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2vnf_bindedHOH.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(10)
+    self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
+    self.assertEqual(atom.GetDegree(), 0)  # HOH should have no bonds
 
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
