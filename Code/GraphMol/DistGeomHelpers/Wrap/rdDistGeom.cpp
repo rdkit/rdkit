@@ -28,7 +28,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   python::dict &coordMap, double forceTol,
                   bool ignoreSmoothingFailures, bool enforceChirality,
                   bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-				  bool printExpTorsionAngles) {
+                  bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -41,14 +41,21 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     pMapPtr = &pMap;
   }
 
+  bool verbose = printExpTorsionAngles;
+  int numThreads = 1;
+  double pruneRmsThresh = -1.;
+  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
+  bool onlyHeavyAtomsForRMS = false;
+  DGeomHelpers::EmbedParameters params(
+      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
+      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
+
   int res;
   {
     NOGIL gil;
-    res = DGeomHelpers::EmbedMolecule(
-        mol, maxAttempts, seed, clearConfs, useRandomCoords, boxSizeMult,
-        randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, 1, // ETversion = 1
-        printExpTorsionAngles);
+    res = DGeomHelpers::EmbedMolecule(mol, params);
   }
   return res;
 }
@@ -68,7 +75,7 @@ INT_VECT EmbedMultipleConfs(
     unsigned int numZeroFail, double pruneRmsThresh, python::dict &coordMap,
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
     int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-	bool printExpTorsionAngles) {
+    bool printExpTorsionAngles) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -80,16 +87,19 @@ INT_VECT EmbedMultipleConfs(
   if (nKeys) {
     pMapPtr = &pMap;
   }
+  bool verbose = printExpTorsionAngles;
+  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
+  bool onlyHeavyAtomsForRMS = false;
+  DGeomHelpers::EmbedParameters params(
+      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
+      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
 
   INT_VECT res;
   {
     NOGIL gil;
-    DGeomHelpers::EmbedMultipleConfs(
-        mol, res, numConfs, numThreads, maxAttempts, seed, clearConfs,
-        useRandomCoords, boxSizeMult, randNegEig, numZeroFail, pruneRmsThresh,
-        pMapPtr, forceTol, ignoreSmoothingFailures, enforceChirality,
-        useExpTorsionAnglePrefs, useBasicKnowledge, 1, // ETversion = 1
-		printExpTorsionAngles);
+    DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
   }
   return res;
 }
@@ -120,10 +130,10 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   return PyArray_Return(res);
 }
-DGeomHelpers::EmbedParameters *getETKDG() { // ET version 1
+DGeomHelpers::EmbedParameters *getETKDG() {  // ET version 1
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDG);
 }
-DGeomHelpers::EmbedParameters *getETKDGv2() { // ET version 2
+DGeomHelpers::EmbedParameters *getETKDGv2() {  // ET version 2
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv2);
 }
 DGeomHelpers::EmbedParameters *getKDG() {
@@ -259,7 +269,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("enforceChirality") = true, python::arg("numThreads") = 1,
        python::arg("useExpTorsionAnglePrefs") = false,
        python::arg("useBasicKnowledge") = false,
-	   python::arg("printExpTorsionAngles") = false),
+       python::arg("printExpTorsionAngles") = false),
       docString.c_str());
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
@@ -310,9 +320,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useBasicKnowledge",
                      &RDKit::DGeomHelpers::EmbedParameters::useBasicKnowledge,
                      "impose basic-knowledge constraints such as flat rings")
-	  .def_readwrite("ETversion",
-				    &RDKit::DGeomHelpers::EmbedParameters::ETversion,
-				    "version of the experimental torsion-angle preferences")
+      .def_readwrite("ETversion",
+                     &RDKit::DGeomHelpers::EmbedParameters::ETversion,
+                     "version of the experimental torsion-angle preferences")
       .def_readwrite("verbose", &RDKit::DGeomHelpers::EmbedParameters::verbose,
                      "be verbose about configuration")
       .def_readwrite("pruneRmsThresh",
@@ -353,12 +363,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
-  python::def("ETKDG", RDKit::getETKDG,
-              "Returns an EmbedParameters object for the ETKDG method - version 1.",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("ETKDGv2", RDKit::getETKDGv2,
-                "Returns an EmbedParameters object for the ETKDG method - version 2.",
-                python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETKDG", RDKit::getETKDG,
+      "Returns an EmbedParameters object for the ETKDG method - version 1.",
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETKDGv2", RDKit::getETKDGv2,
+      "Returns an EmbedParameters object for the ETKDG method - version 2.",
+      python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());
