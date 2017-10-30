@@ -76,4 +76,4 @@ __pycache__/
 /Projects/DbCLI/testData/bzr/
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
-.DS_Store
+/cmake-build-debug/*

@@ -1,9 +1,10 @@
 //
-//  Copyright (c) 2016, Guillaume GODIN
+//  Copyright (c) 2017, Guillaume GODIN
+//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions are
+// modification, are permitted provided that the following conditions are
 // met:
 //
 //     * Redistributions of source code must retain the above copyright
@@ -12,9 +13,6 @@
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Institue of Cancer Research.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,22 +25,18 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Created by  MORSE by Guillaume Godin
 
 
-#ifndef MORSERDKIT_H_SEPT2016
-#define MORSERDKIT_H_SEPT2016
+#ifndef EEMRDKIT_H_SEPT2017
+#define EEMRDKIT_H_SEPT2017
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
-  class ROMol;
-  namespace Descriptors {
-    const std::string MORSEVersion = "1.0.0";
-    void MORSE(const ROMol&, std::vector<double> &res , int confId=-1,
-               const std::string customAtomPropName="");
-
-  }
+class ROMol;
+namespace Descriptors {
+const std::string EEMVersion = "1.0.0";
+	void EEM(ROMol &mol, std::vector<double> &res, int confId);
+}
 }
 #endif
 #endif
