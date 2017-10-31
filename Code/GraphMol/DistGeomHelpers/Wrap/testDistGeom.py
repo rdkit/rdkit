@@ -457,6 +457,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
 
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'simple_torsion.etkdg.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.ETKDGv2()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')
 
