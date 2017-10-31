@@ -1,4 +1,4 @@
-import six
+from rdkit import six
 import random
 from rdkit import Chem
 from rdkit.Chem.rdDistGeom import EmbedMolecule
