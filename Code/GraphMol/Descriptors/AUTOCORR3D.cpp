@@ -42,6 +42,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/QR>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace Eigen;
 namespace RDKit {
@@ -117,42 +118,42 @@ void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance,
 
     tmp = Wu.transpose() * RBi * Wu;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[0][i] = dtmp;
 
     tmp = Wm.transpose() * RBi * Wm;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[1][i] = dtmp;
 
     tmp = Wv.transpose() * RBi * Wv;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[2][i] = dtmp;
 
     tmp = We.transpose() * RBi * We;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[3][i] = dtmp;
 
     tmp = Wp.transpose() * RBi * Wp;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[4][i] = dtmp;
 
     tmp = Wi.transpose() * RBi * Wi;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[5][i] = dtmp;
 
     tmp = Ws.transpose() * RBi * Ws;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[6][i] = dtmp;
 
     tmp = Wr.transpose() * RBi * Wr;
     dtmp = (double)tmp(0);
-    if (std::isnan(dtmp)) dtmp = 0.0;
+    if (boost::math::isnan(dtmp)) dtmp = 0.0;
     TDBmat[7][i] = dtmp;
     delete[] Bimat;
   }

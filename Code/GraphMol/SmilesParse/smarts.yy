@@ -433,17 +433,14 @@ atom_query:	simple_atom
 }
 | RINGSIZE_ATOM_QUERY_TOKEN
 | RINGSIZE_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomMinRingSizeQuery($2));
 }
 | RINGBOND_ATOM_QUERY_TOKEN
 | RINGBOND_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomRingBondCountQuery($2));
 }
 | IMPLICIT_H_ATOM_QUERY_TOKEN
 | IMPLICIT_H_ATOM_QUERY_TOKEN number {
-  delete $1->getQuery();
   $1->setQuery(makeAtomImplicitHCountQuery($2));
 }
 | simple_atom H_TOKEN number {
@@ -575,6 +572,11 @@ charge_spec: PLUS_TOKEN PLUS_TOKEN { $$=2; }
 /* --------------------------------------------------------------- */
 ring_number:  digit
 | PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit { $$ = $2*10+$3; }
+| PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN { $$ = $3; }
+| PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN { $$ = $3*10+$4; }
+| PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN { $$ = $3*100+$4*10+$5; }
+| PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN { $$ = $3*1000+$4*100+$5*10+$6; }
+| PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN { $$ = $3*10000+$4*1000+$5*100+$6*10+$7; }
 ;
 
 

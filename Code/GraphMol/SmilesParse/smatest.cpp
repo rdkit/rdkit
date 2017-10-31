@@ -84,6 +84,11 @@ void testPass() {
     "c1ccccb1",                                            // github 220
     "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
     "C->[Cu]<-C",                                          // dative bonds
+    "C%(1)CC%(1)",          // high ring closures (Github #1624)
+    "C%(10)CC%(10)",        // high ring closures (Github #1624)
+    "C%(100)CC%(100)",      // high ring closures (Github #1624)
+    "C%(1000)CC%(1000)",    // high ring closures (Github #1624)
+    "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -2028,10 +2033,10 @@ void testGithub1338() {
 
 void testGithub1472() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
-      << "Testing Github 1472: MolToSmarts does not include atom map info for molecules built from SMILES"
-      << std::endl;
-  { // worked all along
+  BOOST_LOG(rdInfoLog) << "Testing Github 1472: MolToSmarts does not include "
+                          "atom map info for molecules built from SMILES"
+                       << std::endl;
+  {  // worked all along
     ROMol *p;
     std::string smi = "[*:1]";
     p = SmartsToMol(smi);
@@ -2042,7 +2047,7 @@ void testGithub1472() {
 
     delete p;
   }
-  { // this was the problem
+  {  // this was the problem
     ROMol *p;
     std::string smi = "[*:1]";
     p = SmilesToMol(smi);
@@ -2053,7 +2058,7 @@ void testGithub1472() {
 
     delete p;
   }
-  { // isotopes also weren't being written
+  {  // isotopes also weren't being written
     ROMol *p;
     std::string smi = "[3*]";
     p = SmilesToMol(smi);
@@ -2064,7 +2069,7 @@ void testGithub1472() {
 
     delete p;
   }
-  { // confirm ordering
+  {  // confirm ordering
     ROMol *p;
     std::string smi = "[13CH3-:1]";
     p = SmilesToMol(smi);
@@ -2077,8 +2082,6 @@ void testGithub1472() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
-
-
 
 int main(int argc, char *argv[]) {
   (void)argc;

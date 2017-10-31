@@ -351,13 +351,12 @@ void testPDB() {
                        << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName = rdbase +=
-      "/External/FreeSASA/freesasa-master/tests/data/1d3z.pdb";
+  std::string fName = rdbase += "/External/FreeSASA/test_data/1d3z.pdb";
 
   ROMol *m;
   {
-    const bool sanitize=true;
-    const bool removeHs=true;
+    const bool sanitize = true;
+    const bool removeHs = true;
     m = PDBFileToMol(fName, sanitize, removeHs);
   }
 
@@ -369,8 +368,9 @@ void testPDB() {
     TEST_ASSERT(idx == ExpectedProtor1d3z[idx].idx);
     TEST_ASSERT(atom->getProp<int>(common_properties::Atom::SASAClass) ==
                 ExpectedProtor1d3z[idx].cls);
-    TEST_ASSERT(atom->getProp<std::string>(common_properties::Atom::SASAClassName) ==
-                ExpectedProtor1d3z[idx].clsname);
+    TEST_ASSERT(
+        atom->getProp<std::string>(common_properties::Atom::SASAClassName) ==
+        ExpectedProtor1d3z[idx].clsname);
     TEST_ASSERT(radii[idx] == ExpectedProtor1d3z[idx].radius);
   }
 
@@ -380,11 +380,10 @@ void testPDB() {
   double sasa = FreeSASA::calcSASA(*m, radii, -1, NULL, opts);
   TEST_ASSERT(fabs(sasa - 5000.340175) < 1e-5);
 
-
   delete m;
   {
-    const bool sanitize=false;
-    const bool removeHs=false;
+    const bool sanitize = false;
+    const bool removeHs = false;
     m = PDBFileToMol(fName, sanitize, removeHs);
   }
   ROMol *mnoh = MolOps::removeHs(*m);
@@ -401,11 +400,9 @@ void testPDB() {
 
   TEST_ASSERT(fabs(polard + apolard - 5000.340175) < 1e-5);
 
-
   delete m;
   delete mnoh;
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
-
 }
 
 int main() {
