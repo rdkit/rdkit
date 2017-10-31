@@ -52,66 +52,91 @@ typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 
 //! Parameters corresponding to Sereina Riniker's KDG approach
-const EmbedParameters KDG(0,        // maxIterations
-                          1,        // numThreads
-                          -1,       // randomSeed
-                          true,     // clearConfs
-                          false,    // useRandomCoords
-                          2.0,      // boxSizeMult
-                          true,     // randNegEig
-                          1,        // numZeroFail
-                          nullptr,  // coordMap
-                          1e-3,     // optimizerForceTol
-                          false,    // ignoreSmoothingFailures
-                          true,     // enforceChirality
-                          false,    // useExpTorsionAnglePrefs
-                          true,     // useBasicKnowledge
-                          false,    // verbose
-                          5.0,      // basinThresh
-                          -1.0,     // pruneRmsThresh
-                          true      // onlyHeavyAtomsForRMS
+const EmbedParameters KDG(0,      // maxIterations
+                          1,      // numThreads
+                          -1,     // randomSeed
+                          true,   // clearConfs
+                          false,  // useRandomCoords
+                          2.0,    // boxSizeMult
+                          true,   // randNegEig
+                          1,      // numZeroFail
+                          NULL,   // coordMap
+                          1e-3,   // optimizerForceTol
+                          false,  // ignoreSmoothingFailures
+                          true,   // enforceChirality
+                          false,  // useExpTorsionAnglePrefs
+                          true,   // useBasicKnowledge
+                          false,  // verbose
+                          5.0,    // basinThresh
+                          -1.0,   // pruneRmsThresh
+                          true,   // onlyHeavyAtomsForRMS
+                          1       // ETversion
                           );
 
 //! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(0,        // maxIterations
-                           1,        // numThreads
-                           -1,       // randomSeed
-                           true,     // clearConfs
-                           false,    // useRandomCoords
-                           2.0,      // boxSizeMult
-                           true,     // randNegEig
-                           1,        // numZeroFail
-                           nullptr,  // coordMap
-                           1e-3,     // optimizerForceTol
-                           false,    // ignoreSmoothingFailures
-                           false,    // enforceChirality
-                           true,     // useExpTorsionAnglePrefs
-                           false,    // useBasicKnowledge
-                           false,    // verbose
-                           5.0,      // basinThresh
-                           -1.0,     // pruneRmsThresh
-                           true      // onlyHeavyAtomsForRMS
+const EmbedParameters ETDG(0,      // maxIterations
+                           1,      // numThreads
+                           -1,     // randomSeed
+                           true,   // clearConfs
+                           false,  // useRandomCoords
+                           2.0,    // boxSizeMult
+                           true,   // randNegEig
+                           1,      // numZeroFail
+                           NULL,   // coordMap
+                           1e-3,   // optimizerForceTol
+                           false,  // ignoreSmoothingFailures
+                           false,  // enforceChirality
+                           true,   // useExpTorsionAnglePrefs
+                           false,  // useBasicKnowledge
+                           false,  // verbose
+                           5.0,    // basinThresh
+                           -1.0,   // pruneRmsThresh
+                           true,   // onlyHeavyAtomsForRMS
+                           1       // ETversion
                            );
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
-const EmbedParameters ETKDG(0,        // maxIterations
-                            1,        // numThreads
-                            -1,       // randomSeed
-                            true,     // clearConfs
-                            false,    // useRandomCoords
-                            2.0,      // boxSizeMult
-                            true,     // randNegEig
-                            1,        // numZeroFail
-                            nullptr,  // coordMap
-                            1e-3,     // optimizerForceTol
-                            false,    // ignoreSmoothingFailures
-                            true,     // enforceChirality
-                            true,     // useExpTorsionAnglePrefs
-                            true,     // useBasicKnowledge
-                            false,    // verbose
-                            5.0,      // basinThresh
-                            -1.0,     // pruneRmsThresh
-                            true      // onlyHeavyAtomsForRMS
+const EmbedParameters ETKDG(0,      // maxIterations
+                            1,      // numThreads
+                            -1,     // randomSeed
+                            true,   // clearConfs
+                            false,  // useRandomCoords
+                            2.0,    // boxSizeMult
+                            true,   // randNegEig
+                            1,      // numZeroFail
+                            NULL,   // coordMap
+                            1e-3,   // optimizerForceTol
+                            false,  // ignoreSmoothingFailures
+                            true,   // enforceChirality
+                            true,   // useExpTorsionAnglePrefs
+                            true,   // useBasicKnowledge
+                            false,  // verbose
+                            5.0,    // basinThresh
+                            -1.0,   // pruneRmsThresh
+                            true,   // onlyHeavyAtomsForRMS
+                            1       // ETversion
                             );
+
+//! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
+const EmbedParameters ETKDGv2(0,      // maxIterations
+                              1,      // numThreads
+                              -1,     // randomSeed
+                              true,   // clearConfs
+                              false,  // useRandomCoords
+                              2.0,    // boxSizeMult
+                              true,   // randNegEig
+                              1,      // numZeroFail
+                              NULL,   // coordMap
+                              1e-3,   // optimizerForceTol
+                              false,  // ignoreSmoothingFailures
+                              true,   // enforceChirality
+                              true,   // useExpTorsionAnglePrefs
+                              true,   // useBasicKnowledge
+                              false,  // verbose
+                              5.0,    // basinThresh
+                              -1.0,   // pruneRmsThresh
+                              true,   // onlyHeavyAtomsForRMS
+                              2       // ETversion
+                              );
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
@@ -277,7 +302,8 @@ bool _minimizeWithExpTorsions(
 
   // minimize!
   field->initialize();
-  // std::cout << "Field with torsion constraints: " << field->calcEnergy() << "
+  // std::cout << "Field with torsion constraints: " << field->calcEnergy() <<
+  // "
   // " << ERROR_TOL << std::endl;
   if (field->calcEnergy() > ERROR_TOL) {
     // while (needMore) {
@@ -669,30 +695,6 @@ bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
   return res;
 }
 
-int EmbedMolecule(ROMol &mol, unsigned int maxIterations, int seed,
-                  bool clearConfs, bool useRandomCoords, double boxSizeMult,
-                  bool randNegEig, unsigned int numZeroFail,
-                  const std::map<int, RDGeom::Point3D> *coordMap,
-                  double optimizerForceTol, bool ignoreSmoothingFailures,
-                  bool enforceChirality, bool useExpTorsionAnglePrefs,
-                  bool useBasicKnowledge, bool verbose, double basinThresh,
-                  bool onlyHeavyAtomsForRMS) {
-  INT_VECT confIds;
-  EmbedMultipleConfs(
-      mol, confIds, 1, 1, maxIterations, seed, clearConfs, useRandomCoords,
-      boxSizeMult, randNegEig, numZeroFail, -1.0, coordMap, optimizerForceTol,
-      ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
-      useBasicKnowledge, verbose, basinThresh, onlyHeavyAtomsForRMS);
-
-  int res;
-  if (confIds.size()) {
-    res = confIds[0];
-  } else {
-    res = -1;
-  }
-  return res;
-}
-
 void adjustBoundsMatFromCoordMap(
     DistGeom::BoundsMatPtr mmat, unsigned int nAtoms,
     const std::map<int, RDGeom::Point3D> *coordMap) {
@@ -806,25 +808,24 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
 }  // end of namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
-                        int numThreads, unsigned int maxIterations, int seed,
-                        bool clearConfs, bool useRandomCoords,
-                        double boxSizeMult, bool randNegEig,
-                        unsigned int numZeroFail, double pruneRmsThresh,
-                        const std::map<int, RDGeom::Point3D> *coordMap,
-                        double optimizerForceTol, bool ignoreSmoothingFailures,
-                        bool enforceChirality, bool useExpTorsionAnglePrefs,
-                        bool useBasicKnowledge, bool verbose,
-                        double basinThresh, bool onlyHeavyAtomsForRMS) {
+                        const EmbedParameters &params) {
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
+  }
+  if (params.ETversion < 1 || params.ETversion > 2) {
+    throw ValueErrorException(
+        "Only version 1 and 2 of the experimental "
+        "torsion-angle preferences (ETversion) supported");
   }
 
   INT_VECT fragMapping;
   std::vector<ROMOL_SPTR> molFrags =
       MolOps::getMolFrags(mol, true, &fragMapping);
+  const std::map<int, RDGeom::Point3D> *coordMap = params.coordMap;
   if (molFrags.size() > 1 && coordMap) {
     BOOST_LOG(rdWarningLog)
-        << "Constrained conformer generation (via the coordMap argument) does "
+        << "Constrained conformer generation (via the coordMap argument) "
+           "does "
            "not work with molecules that have multiple fragments."
         << std::endl;
     coordMap = nullptr;
@@ -837,7 +838,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   boost::dynamic_bitset<> confsOk(numConfs);
   confsOk.set();
 
-  if (clearConfs) {
+  if (params.clearConfs) {
     res.clear();
     mol.clearConformers();
   }
@@ -857,10 +858,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     std::vector<std::pair<int, int> > bonds;
     std::vector<std::vector<int> > angles;
     std::vector<int> atomNums(nAtoms);
-    if (useExpTorsionAnglePrefs || useBasicKnowledge) {
+    if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
       ForceFields::CrystalFF::getExperimentalTorsions(
           *piece, expTorsionAtoms, expTorsionAngles, improperAtoms,
-          useExpTorsionAnglePrefs, useBasicKnowledge, verbose);
+          params.useExpTorsionAnglePrefs, params.useBasicKnowledge,
+          params.ETversion, params.verbose);
       setTopolBounds(*piece, mmat, bonds, angles, true, false);
       for (unsigned int i = 0; i < nAtoms; ++i) {
         atomNums[i] = (*piece).getAtomWithIdx(i)->getAtomicNum();
@@ -873,7 +875,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       tol = 0.05;
     }
     if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
-      // ok this bound matrix failed to triangle smooth - re-compute the bounds
+      // ok this bound matrix failed to triangle smooth - re-compute the
+      // bounds
       // matrix
       // without 15 bounds and with VDW scaling
       initBoundsMat(mmat);
@@ -886,7 +889,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       // try triangle smoothing again
       if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
         // ok, we're not going to be able to smooth this,
-        if (ignoreSmoothingFailures) {
+        if (params.ignoreSmoothingFailures) {
           // proceed anyway with the more relaxed bounds matrix
           initBoundsMat(mmat);
           setTopolBounds(*piece, mmat, false, true);
@@ -913,18 +916,18 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
 
     MolOps::assignStereochemistry(*piece);
-    _findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
+    _findChiralSets(*piece, chiralCenters, tetrahedralCarbons, params.coordMap);
 
     // if we have any chiral centers or are using random coordinates, we will
     // first embed the molecule in four dimensions, otherwise we will use 3D
     bool fourD = false;
-    if (useRandomCoords || chiralCenters.size() > 0) {
+    if (params.useRandomCoords || chiralCenters.size() > 0) {
       fourD = true;
     }
 #ifdef RDK_THREADSAFE_SSS
     boost::thread_group tg;
 #endif
-    numThreads = getNumThreadsToUse(numThreads);
+    int numThreads = getNumThreadsToUse(params.numThreads);
 
     detail::EmbedArgs eargs = {&confsOk,
                                fourD,
@@ -932,19 +935,19 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                &confs,
                                fragIdx,
                                mmat,
-                               useRandomCoords,
-                               boxSizeMult,
-                               randNegEig,
-                               numZeroFail,
-                               optimizerForceTol,
-                               basinThresh,
-                               seed,
-                               maxIterations,
+                               params.useRandomCoords,
+                               params.boxSizeMult,
+                               params.randNegEig,
+                               params.numZeroFail,
+                               params.optimizerForceTol,
+                               params.basinThresh,
+                               params.randomSeed,
+                               params.maxIterations,
                                &chiralCenters,
                                &tetrahedralCarbons,
-                               enforceChirality,
-                               useExpTorsionAnglePrefs,
-                               useBasicKnowledge,
+                               params.enforceChirality,
+                               params.useExpTorsionAnglePrefs,
+                               params.useBasicKnowledge,
                                &bonds,
                                &angles,
                                &expTorsionAtoms,
@@ -969,9 +972,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     if (confsOk[ci]) {
       // check if we are pruning away conformations and
       // a closeby conformation has already been chosen :
-      if (pruneRmsThresh > 0.0 &&
-          !_isConfFarFromRest(mol, *conf, pruneRmsThresh,
-                              onlyHeavyAtomsForRMS)) {
+      if (params.pruneRmsThresh > 0.0 &&
+          !_isConfFarFromRest(mol, *conf, params.pruneRmsThresh,
+                              params.onlyHeavyAtomsForRMS)) {
         delete conf;
       } else {
         int confId = (int)mol.addConformer(conf, true);
@@ -983,22 +986,5 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 }
 
-INT_VECT EmbedMultipleConfs(
-    ROMol &mol, unsigned int numConfs, unsigned int maxIterations, int seed,
-    bool clearConfs, bool useRandomCoords, double boxSizeMult, bool randNegEig,
-    unsigned int numZeroFail, double pruneRmsThresh,
-    const std::map<int, RDGeom::Point3D> *coordMap, double optimizerForceTol,
-    bool ignoreSmoothingFailures, bool enforceChirality,
-    bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
-    double basinThresh, bool onlyHeavyAtomsForRMS) {
-  INT_VECT res;
-  EmbedMultipleConfs(mol, res, numConfs, 1, maxIterations, seed, clearConfs,
-                     useRandomCoords, boxSizeMult, randNegEig, numZeroFail,
-                     pruneRmsThresh, coordMap, optimizerForceTol,
-                     ignoreSmoothingFailures, enforceChirality,
-                     useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
-                     basinThresh, onlyHeavyAtomsForRMS);
-  return res;
-}
 }  // end of namespace DGeomHelpers
 }  // end of namespace RDKit
