@@ -10,5 +10,5 @@
 #include <boost/cstdint.hpp>
 
 namespace RDKit {
-typedef boost::uint16_t atomindex_t;
+typedef boost::uint32_t atomindex_t;
 }
