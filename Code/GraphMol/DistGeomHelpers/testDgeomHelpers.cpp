@@ -1732,10 +1732,10 @@ void testEmbedParameters() {
   {
     std::string fname =
         rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+        "/Code/GraphMol/DistGeomHelpers/test_data/torsion.etkdg.v2.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
-    RWMol *mol = SmilesToMol("OCCC");
+    RWMol *mol = SmilesToMol("n1cccc(C)c1ON");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
