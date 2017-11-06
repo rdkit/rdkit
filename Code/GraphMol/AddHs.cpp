@@ -11,6 +11,7 @@
 #include <list>
 #include "QueryAtom.h"
 #include "QueryOps.h"
+#include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
@@ -386,6 +387,13 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       mol.addBond(aidx, newIdx, Bond::SINGLE);
       mol.getAtomWithIdx(newIdx)->updatePropertyCache();
       if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
+      AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+      if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+        AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
+                                                             info->getResidueNumber(), info->getChainId(), "",
+                                                             info->getIsHeteroAtom());
+        mol.getAtomWithIdx(newIdx)->setMonomerInfo(newInfo);
+      }
     }
     // clear the local property
     newAt->setNumExplicitHs(0);
@@ -401,6 +409,14 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit, 1);
         mol.getAtomWithIdx(newIdx)->updatePropertyCache();
         if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
+        // add PDBResidueInfo if root atom has it
+        AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+        if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+            AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
+                                                                 info->getResidueNumber(), info->getChainId(), "",
+                                                                 info->getIsHeteroAtom());
+            mol.getAtomWithIdx(newIdx)->setMonomerInfo(newInfo);
+        }
       }
       // be very clear about implicits not being allowed in this representation
       newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
