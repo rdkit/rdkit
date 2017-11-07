@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import re
 from datetime import datetime
@@ -11,7 +12,6 @@ while (i < 2 and have_src_dir):
   i += 1
   src_dir = os.path.dirname(src_dir)
   have_src_dir = os.path.isdir(src_dir)
-  print ('i %d, have_src_dir %s, src_dir %s' % (i, have_src_dir, src_dir))
 if (not have_src_dir):
   raise OSError('Could not find SRC_DIR, got: ' + str(src_dir))
 # parse root CMakeLists.txt and Code/cmake/Modules/RDKitUtils.cmake
@@ -35,7 +35,6 @@ for file in (root_cmakelists_path, rdkitutils_path):
         # extract the var name
         var_name = m.group(1)
         if (var_name in var_set):
-          print ('line: ', line)
           # if the var name is in the vars we want to read
           var_value = m.group(2)
           keepLooping = True
@@ -69,5 +68,5 @@ else:
   # if extracting rdkitVersion somehow failed, use the date
     pkg_version = d
 
-print('pkg_version = ', pkg_version)
+print('rdkitVersion:', pkg_version)
 setup(rdkitVersion = pkg_version)
