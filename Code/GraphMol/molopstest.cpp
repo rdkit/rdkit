@@ -6923,11 +6923,59 @@ void testGithub1605() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1622() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1622: add MDL aromaticity perception"
+                       << std::endl;
+  {  // rings that should be aromatic
+    string aromaticSmis[] = {"C1=CC=CC=C1", "C1=COC=C1", "EOS"};
+    unsigned int i = 0;
+    while (aromaticSmis[i] != "EOS") {
+      string smi = aromaticSmis[i];
+      BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic())
+      delete mol;
+      ++i;
+    }
+  }
+  {  // rings that should not be aromatic
+    string nonaromaticSmis[] = {"C1=C[Se]C=C1", "C1=C[N]C=C1", "EOS"};
+    unsigned int i = 0;
+    while (nonaromaticSmis[i] != "EOS") {
+      string smi = nonaromaticSmis[i];
+      BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(!(mol->getAtomWithIdx(0)->getIsAromatic()))
+
+      delete mol;
+      ++i;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -7025,7 +7073,8 @@ int main() {
   testGithub1478();
   testGithub1439();
   testGithub1281();
-#endif
   testGithub1605();
+#endif
+  testGithub1622();
   return 0;
 }
