@@ -1,5 +1,17 @@
 include(BoostUtils)
-include(RDKitVersion)
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# Mac OS X specific code
+  set(RDKit_VERSION "${RDKit_Year}.${RDKit_Month}")
+ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}")
+if (RDKit_Revision)
+  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}.${RDKit_Revision}")
+  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
+else(RDKit_Revision)
+  set(RDKit_VERSION "${RDKit_VERSION}.0")
+endif(RDKit_Revision)
 
 set(compilerID "${CMAKE_CXX_COMPILER_ID}")
 set(systemAttribute "")
