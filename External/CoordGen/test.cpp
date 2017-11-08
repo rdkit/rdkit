@@ -24,22 +24,18 @@ void addCoordsWithCoordGen(ROMol& mol) {
   sketcherMinimizer minimizer;
   sketcherMinimizerMolecule* min_mol = new sketcherMinimizerMolecule();
 
-  std::vector<sketcherMinimizerAtom*> ats;
-  for (ROMol::AtomIterator atit = mol.beginAtoms(); atit != mol.endAtoms();
-       ++atit) {
-    sketcherMinimizerAtom* atom = new sketcherMinimizerAtom();
+  std::map<unsigned int, sketcherMinimizerAtom*> atomMap;
+  for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
+    auto atom = min_mol->addNewAtom();
     atom->atomicNumber = (*atit)->getAtomicNum();
     atom->charge = (*atit)->getFormalCharge();
-    ats.push_back(atom);
-    min_mol->_atoms.push_back(atom);
+    atomMap[(*atit)->getIdx()] = atom;
   }
-  std::vector<sketcherMinimizerBond*> bnds;
   for (ROMol::BondIterator bndit = mol.beginBonds(); bndit != mol.endBonds();
        ++bndit) {
     Bond* obnd = *bndit;
-    sketcherMinimizerBond* bnd = new sketcherMinimizerBond();
-    bnd->startAtom = ats[obnd->getBeginAtomIdx()];
-    bnd->endAtom = ats[obnd->getEndAtomIdx()];
+    auto bnd = min_mol->addNewBond(atomMap[obnd->getBeginAtomIdx()],
+                                   atomMap[obnd->getEndAtomIdx()]);
     // FIX: This is no doubt wrong
     switch (obnd->getBondType()) {
       case Bond::SINGLE:
@@ -57,9 +53,6 @@ void addCoordsWithCoordGen(ROMol& mol) {
       default:
         BOOST_LOG(rdWarningLog) << "unrecognized bond type";
     }
-
-    bnds.push_back(bnd);
-    min_mol->_bonds.push_back(bnd);
   }
 
   minimizer.initialize(min_mol);
@@ -86,6 +79,8 @@ void test1() {
 
     ROMol* m = SmilesToMol("CC(C)C");
     TEST_ASSERT(m);
+    m->setProp("_Name", "test");
+
     addCoordsWithCoordGen(*m);
     delete m;
   }
