@@ -26,14 +26,14 @@ void addCoordsWithCoordGen(ROMol& mol) {
 
   std::map<unsigned int, sketcherMinimizerAtom*> atomMap;
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
+    auto oatom = *atit;
     auto atom = min_mol->addNewAtom();
-    atom->atomicNumber = (*atit)->getAtomicNum();
-    atom->charge = (*atit)->getFormalCharge();
-    atomMap[(*atit)->getIdx()] = atom;
+    atom->atomicNumber = oatom->getAtomicNum();
+    atom->charge = oatom->getFormalCharge();
+    atomMap[oatom->getIdx()] = atom;
   }
-  for (ROMol::BondIterator bndit = mol.beginBonds(); bndit != mol.endBonds();
-       ++bndit) {
-    Bond* obnd = *bndit;
+  for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
+    auto obnd = *bndit;
     auto bnd = min_mol->addNewBond(atomMap[obnd->getBeginAtomIdx()],
                                    atomMap[obnd->getEndAtomIdx()]);
     // FIX: This is no doubt wrong
