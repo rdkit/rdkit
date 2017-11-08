@@ -28,6 +28,7 @@ void addCoordsWithCoordGen(ROMol& mol) {
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
     auto oatom = *atit;
     auto atom = min_mol->addNewAtom();
+    atom->molecule = min_mol;  // seems like this should be in addNewAtom()
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
     atomMap[oatom->getIdx()] = atom;
@@ -59,9 +60,8 @@ void addCoordsWithCoordGen(ROMol& mol) {
   minimizer.runGenerateCoordinates();
   Conformer* conf = new Conformer(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    conf->setAtomPos(
-        i, RDGeom::Point3D(minimizer._atoms[i]->coordinates.x(),
-                           minimizer._atoms[i]->coordinates.y(), 0.0));
+    conf->setAtomPos(i, RDGeom::Point3D(atomMap[i]->coordinates.x(),
+                                        atomMap[i]->coordinates.y(), 0.0));
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
@@ -75,9 +75,7 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
   {
-    // ROMol* m = SmilesToMol("c1ccncc1");
-
-    ROMol* m = SmilesToMol("CO");
+    ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
 
@@ -88,13 +86,27 @@ void test1() {
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 
-    ROMol* m = SmilesToMol("CC(O)C");
+    ROMol* m = SmilesToMol("ClC(O)(F)C");
     TEST_ASSERT(m);
     m->setProp("_Name", "test2");
 
     addCoordsWithCoordGen(*m);
     delete m;
   }
+
+  {
+    ROMol* m = SmilesToMol(
+        "CC[C@H]1C(=O)N(CC(=O)N([C@H](C(=O)N[C@H](C(=O)N([C@H](C(=O)N[C@H](C(="
+        "O)N[C@@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N([C@H](C(=O)N1)"
+        "[C@@H]([C@H](C)C/C=C/"
+        "C)O)C)C(C)C)C)CC(C)C)C)CC(C)C)C)C)C)CC(C)C)C)C(C)C)CC(C)C)C)C");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "cyclosporine a");
+
+    addCoordsWithCoordGen(*m);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 int main(int argc, char* argv[]) {
