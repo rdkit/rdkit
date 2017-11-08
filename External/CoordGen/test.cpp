@@ -22,7 +22,7 @@ using namespace RDKit;
 
 void addCoordsWithCoordGen(ROMol& mol) {
   sketcherMinimizer minimizer;
-  sketcherMinimizerMolecule* min_mol = new sketcherMinimizerMolecule();
+  auto min_mol = new sketcherMinimizerMolecule();
 
   std::map<unsigned int, sketcherMinimizerAtom*> atomMap;
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
@@ -77,14 +77,24 @@ void test1() {
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 
-    ROMol* m = SmilesToMol("CC(C)C");
+    ROMol* m = SmilesToMol("CO");
     TEST_ASSERT(m);
-    m->setProp("_Name", "test");
+    m->setProp("_Name", "test1");
 
     addCoordsWithCoordGen(*m);
     delete m;
   }
 
+  {
+    // ROMol* m = SmilesToMol("c1ccncc1");
+
+    ROMol* m = SmilesToMol("CC(O)C");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "test2");
+
+    addCoordsWithCoordGen(*m);
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 int main(int argc, char* argv[]) {
