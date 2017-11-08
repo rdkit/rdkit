@@ -17,59 +17,9 @@
 #include <RDGeneral/RDLog.h>
 
 #include "coordgenlibs/sketcherMinimizer.h"
+#include "CoordGen.h"
 
 using namespace RDKit;
-
-void addCoordsWithCoordGen(ROMol& mol) {
-  sketcherMinimizer minimizer;
-  auto min_mol = new sketcherMinimizerMolecule();
-
-  std::map<unsigned int, sketcherMinimizerAtom*> atomMap;
-  for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
-    auto oatom = *atit;
-    auto atom = min_mol->addNewAtom();
-    atom->molecule = min_mol;  // seems like this should be in addNewAtom()
-    atom->atomicNumber = oatom->getAtomicNum();
-    atom->charge = oatom->getFormalCharge();
-    atomMap[oatom->getIdx()] = atom;
-  }
-  for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
-    auto obnd = *bndit;
-    auto bnd = min_mol->addNewBond(atomMap[obnd->getBeginAtomIdx()],
-                                   atomMap[obnd->getEndAtomIdx()]);
-    // FIX: This is no doubt wrong
-    switch (obnd->getBondType()) {
-      case Bond::SINGLE:
-        bnd->bondOrder = 1;
-        break;
-      case Bond::DOUBLE:
-        bnd->bondOrder = 2;
-        break;
-      case Bond::TRIPLE:
-        bnd->bondOrder = 3;
-        break;
-      case Bond::AROMATIC:
-        bnd->bondOrder = 1;
-        break;
-      default:
-        BOOST_LOG(rdWarningLog) << "unrecognized bond type";
-    }
-  }
-
-  minimizer.initialize(min_mol);
-  minimizer.runGenerateCoordinates();
-  Conformer* conf = new Conformer(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    conf->setAtomPos(i, RDGeom::Point3D(atomMap[i]->coordinates.x(),
-                                        atomMap[i]->coordinates.y(), 0.0));
-    // std::cerr << atom->coordinates << std::endl;
-  }
-  conf->set3D(false);
-  mol.clearConformers();
-  mol.addConformer(conf, true);
-  std::string mb = MolToMolBlock(mol);
-  std::cerr << mb << std::endl;
-}
 
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -80,6 +30,8 @@ void test1() {
     m->setProp("_Name", "test1");
 
     addCoordsWithCoordGen(*m);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
     delete m;
   }
 
@@ -91,6 +43,8 @@ void test1() {
     m->setProp("_Name", "test2");
 
     addCoordsWithCoordGen(*m);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
     delete m;
   }
 
@@ -104,6 +58,9 @@ void test1() {
     m->setProp("_Name", "cyclosporine a");
 
     addCoordsWithCoordGen(*m);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+
     delete m;
   }
 

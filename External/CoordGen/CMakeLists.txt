@@ -15,7 +15,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
   #rdkit_library(RDCoordGenLib coordgen.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
   #              GraphMol RDGeneral Depictor SubstructMatch SmilesParse
   #              ${RDKit_THREAD_LIBS})
-  #rdkit_headers(RDCoordGen.h DEST GraphMol)
+  rdkit_headers(CoordGen.h DEST GraphMol)
   #if(RDK_BUILD_PYTHON_WRAPPERS)
   #  add_subdirectory(Wrap)
   #endif(RDK_BUILD_PYTHON_WRAPPERS)
