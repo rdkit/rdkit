@@ -155,20 +155,21 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   # if necessary, align the conformers
   # Note: the reference conformer is always the first one
   rmsvals = []
+  confIds = [conf.GetId() for conf in mol.GetConformers()]
   if not prealigned:
     if atomIds:
       AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
     else:
       AlignMolConformers(mol, RMSlist=rmsvals)
   else:  # already prealigned
-    for i in range(1, mol.GetNumConformers()):
-      rmsvals.append(GetConformerRMS(mol, 0, i, atomIds=atomIds, prealigned=prealigned))
+    for i in range(1, len(confIds)):
+      rmsvals.append(GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned))
   # loop over the conformations (except the reference one)
   cmat = []
-  for i in range(1, mol.GetNumConformers()):
+  for i in range(1, len(confIds)):
     cmat.append(rmsvals[i - 1])
     for j in range(1, i):
-      cmat.append(GetConformerRMS(mol, i, j, atomIds=atomIds, prealigned=True))
+      cmat.append(GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True))
   return cmat
 
 
