@@ -64,6 +64,19 @@ void test1() {
     delete m;
   }
 
+  {
+    // ROMol* m = SmilesToMol("c1ccncc1");
+
+    ROMol* m = SmilesToMol("CCCNC=CNCOC=CC=CC=COC");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "single-double");
+
+    addCoordsWithCoordGen(*m);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 int main(int argc, char* argv[]) {
