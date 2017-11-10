@@ -3782,21 +3782,31 @@ void testGithub786() {
 
 void testGithub1652() {
   BOOST_LOG(rdInfoLog) << "testing github issue 1652: chiral order for "
-                          "ring closure after branch for beginning of the ring"
+                          "ring closure after branch for the first atom in the SMILES string"
                        << std::endl;
   {
-    std::string smiles = "F[C@@]1(C)CCO1";
-    std::cout << "Entering first SmilesToMol" << std::endl;
+    std::string smiles = "Cl[C@](F)1CC[C@H](F)CC1";
     ROMol *m = SmilesToMol(smiles);
-    std::cout << "Exiting first SmilesToMol" << std::endl;
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "[C@](Cl)(F)1CC[C@H](F)CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "F[C@@]1(C)CCO1";
+    ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     std::string csmi = MolToSmiles(*m, true);
     delete m;
 
     smiles = "[C@@](F)1(C)CCO1";
-    std::cout << "Entering second SmilesToMol" << std::endl;
     m = SmilesToMol(smiles);
-    std::cout << "Exiting second SmilesToMol" << std::endl;
     TEST_ASSERT(m);
     std::string csmi2 = MolToSmiles(*m, true);
     TEST_ASSERT(csmi == csmi2);

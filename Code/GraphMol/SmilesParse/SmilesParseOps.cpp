@@ -25,10 +25,12 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   // the stereochem is wrong.
   // detect the branch (= atom isn't the last one)
   // and reverse the stereochem if the atom has chiral stereochemistry
-  // and is currently degree one (the first atom [C@@](F)1(C)CCO1)
-  //                      or two (protects against C1CN[C@](O)(N)1)
+  // and is currently degree one   [C@@](F)1(C)CCO1
+  //     or currently degree two   C1CN[C@](O)(N)1
+  //        and not the first atom [C@](Cl)(F)1CC[C@H](F)CC1
   if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
-      (atom->getDegree() == 1 || atom->getDegree() == 2) &&
+      (atom->getDegree() == 1 ||
+       (atom->getDegree() == 2 && atom->getIdx() != 0)) &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
     atom->invertChirality();
