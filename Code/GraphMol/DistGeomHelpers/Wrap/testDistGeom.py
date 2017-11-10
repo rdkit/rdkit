@@ -457,8 +457,10 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
 
+  def test10ETKDGv2(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('n1cccc(C)c1ON'))
     fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'simple_torsion.etkdg.mol')
+                      'torsion.etkdg.v2.mol')
     ref = Chem.MolFromMolFile(fn, removeHs=False)
     params = rdDistGeom.ETKDGv2()
     params.randomSeed = 42
