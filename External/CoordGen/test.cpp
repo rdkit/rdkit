@@ -29,7 +29,8 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
 
-    addCoordsWithCoordGen(*m);
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers()==1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
@@ -42,7 +43,8 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "test2");
 
-    addCoordsWithCoordGen(*m);
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers()==1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
@@ -57,10 +59,10 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "cyclosporine a");
 
-    addCoordsWithCoordGen(*m);
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers()==1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-
     delete m;
   }
 
@@ -71,7 +73,8 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "single-double");
 
-    addCoordsWithCoordGen(*m);
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers()==1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;

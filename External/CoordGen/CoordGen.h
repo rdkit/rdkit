@@ -13,8 +13,9 @@
 #include "coordgenlibs/sketcherMinimizer.h"
 
 namespace RDKit {
+  namespace CoordGen {
 template <typename T>
-void addCoordsWithCoordGen(T& mol) {
+void addCoords(T& mol) {
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
 
@@ -53,7 +54,7 @@ void addCoordsWithCoordGen(T& mol) {
   minimizer.initialize(min_mol);
   minimizer.runGenerateCoordinates();
   auto conf = new Conformer(mol.getNumAtoms());
-  for (auto i = 0; i < mol.getNumAtoms(); ++i) {
+  for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
     conf->setAtomPos(i, RDGeom::Point3D(atomMap[i]->coordinates.x(),
                                         atomMap[i]->coordinates.y(), 0.0));
     // std::cerr << atom->coordinates << std::endl;
@@ -62,4 +63,5 @@ void addCoordsWithCoordGen(T& mol) {
   mol.clearConformers();
   mol.addConformer(conf, true);
 }
+} // end of namespace CoordGen
 }  // end of namespace RDKit
