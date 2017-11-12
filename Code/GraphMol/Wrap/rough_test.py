@@ -3075,6 +3075,16 @@ CAS<~>
     atom = mol.GetAtomWithIdx(10)
     self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
     self.assertEqual(atom.GetDegree(), 0)  # HOH should have no bonds
+    # test metal bonding in ligand
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2dej_APW.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(6)
+    self.assertEqual(atom.GetAtomicNum(), 12)
+    self.assertEqual(atom.GetDegree(), 2)
+    atom = mol.GetAtomWithIdx(35)
+    self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
+    self.assertEqual(atom.GetDegree(), 0)
 
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
