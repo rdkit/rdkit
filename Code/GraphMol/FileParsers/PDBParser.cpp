@@ -547,10 +547,11 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
 
   if (!mol) return (RWMol *)0;
 
-  if (proximityBonding) {
+  if (proximityBonding)
     ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+  // flavor & 8 doesn't encode double bonds
+  if (proximityBonding || ((flavor & 8) != 0))
     StandardPDBResidueBondOrders(mol);
-  }
 
   BasicPDBCleanup(*mol);
 
