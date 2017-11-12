@@ -23,7 +23,7 @@ PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
-  d_proximityBonding = proximityBonding;
+  df_proximityBonding = proximityBonding;
 }
 
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
@@ -40,7 +40,7 @@ PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
-  d_proximityBonding = proximityBonding;
+  df_proximityBonding = proximityBonding;
 }
 
 void PDBMolSupplier::init() {}
@@ -48,7 +48,7 @@ void PDBMolSupplier::reset() {}
 
 ROMol *PDBMolSupplier::next() {
   return (ROMol *)PDBDataStreamToMol(dp_inStream, df_sanitize, df_removeHs,
-                                     d_flavor, d_proximityBonding);
+                                     d_flavor, df_proximityBonding);
 }
 
 bool PDBMolSupplier::atEnd() {

@@ -346,7 +346,7 @@ class PDBMolSupplier : public MolSupplier {
   virtual bool atEnd();
 
  protected:
-  bool df_sanitize, df_removeHs, d_proximityBonding;
+  bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
 }
