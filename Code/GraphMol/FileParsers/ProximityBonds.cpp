@@ -32,21 +32,6 @@ struct ProximityEntry {
 static bool IsBonded(ProximityEntry *p, ProximityEntry *q, unsigned int flags) {
   if (flags & ctdIGNORE_H_H_CONTACTS && p->elem == 1 && q->elem == 1)
     return false;
-  // do not make bonds to metals
-  if((3 <= p->elem && p->elem <= 4) ||
-     (11 <= p->elem && p->elem <= 13) ||
-     (19 <= p->elem && p->elem <= 31) ||
-     (37 <= p->elem && p->elem <= 50) ||
-     (55 <= p->elem && p->elem <= 84) ||
-     (87 <= p->elem && p->elem <= 113))
-    return false;
-  if((3 <= q->elem && q->elem <= 4) ||
-     (11 <= q->elem && q->elem <= 13) ||
-     (19 <= q->elem && q->elem <= 31) ||
-     (37 <= q->elem && q->elem <= 50) ||
-     (55 <= q->elem && q->elem <= 84) ||
-     (87 <= q->elem && q->elem <= 113))
-    return false;
   double dx = (double)p->x - (double)q->x;
   double dist2 = dx * dx;
   if (dist2 > MAXDIST2) return false;
@@ -60,6 +45,41 @@ static bool IsBonded(ProximityEntry *p, ProximityEntry *q, unsigned int flags) {
 
   double radius = (double)p->r + (double)q->r + EXTDIST;
   return dist2 <= radius * radius;
+}
+
+bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {
+    return p->getResidueNumber() == q->getResidueNumber() &&
+           p->getResidueName() == q->getResidueName() &&
+           p->getChainId() == q->getChainId() &&
+           p->getInsertionCode() == q->getInsertionCode();
+}
+
+
+static bool IsBlacklistedAtom(Atom *atom){
+    // blacklist metals, noble gasses and halogens
+    unsigned int elem = atom->getAtomicNum();
+    // make an inverse query (non-metals and metaloids)
+    if((5 <= elem && elem <= 8) ||
+       (14 <= elem && elem <= 16) ||
+       (32 <= elem && elem <= 34) ||
+       (51 <= elem && elem <= 52))
+        return false;
+    else
+        return true;
+}
+
+bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom) {
+    AtomPDBResidueInfo *beg_info = (AtomPDBResidueInfo *)beg_atom->getMonomerInfo();
+    AtomPDBResidueInfo *end_info = (AtomPDBResidueInfo *)end_atom->getMonomerInfo();
+    if(!SamePDBResidue(beg_info, end_info)){
+        if(IsBlacklistedAtom(beg_atom) || IsBlacklistedAtom(end_atom)){
+            return true;
+        }
+        // Dont make bonds to waters
+        if(beg_info->getResidueName() == "HOH" || beg_info->getResidueName() == "HOH")
+            return true;
+    }
+    return false;
 }
 
 /*
@@ -162,7 +182,8 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
           while (list != -1) {
             ProximityEntry *tmpj = &tmp[list];
             if (tmpj->hash == probe && IsBonded(tmpi, tmpj, flags) &&
-                !mol->getBondBetweenAtoms(tmpi->atm, tmpj->atm))
+                !mol->getBondBetweenAtoms(tmpi->atm, tmpj->atm) &&
+                !IsBlacklistedPair(atom, mol->getAtomWithIdx(tmpj->atm)))
               mol->addBond(tmpi->atm, tmpj->atm, Bond::SINGLE);
             list = tmpj->next;
           }
@@ -207,18 +228,6 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
         ++nbr;
       }
     }
-    // Unbind waters, also allow for Hs in HOH residues
-    if ((elem == 1 || elem == 8) && (atom_info->getResidueName() == "HOH")) {
-      RDKit::RWMol::ADJ_ITER nbr , end_nbr;
-      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
-      while( nbr != end_nbr ) {
-        AtomPDBResidueInfo *n_info = (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
-        if(atom_info->getResidueNumber() != n_info->getResidueNumber()){
-          mol->removeBond(i, *nbr);
-        }
-        ++nbr;
-      }
-    }
   }
   free(tmp);
 }
@@ -227,13 +236,6 @@ void ConnectTheDots(RWMol *mol, unsigned int flags) {
   if (!mol || !mol->getNumConformers()) return;
   // Determine optimal algorithm to use by getNumAtoms()?
   ConnectTheDots_Large(mol, flags);
-}
-
-bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {
-  return p->getResidueNumber() == q->getResidueNumber() &&
-         p->getResidueName() == q->getResidueName() &&
-         p->getChainId() == q->getChainId() &&
-         p->getInsertionCode() == q->getInsertionCode();
 }
 
 // These are macros to allow their use in C++ constants
