@@ -112,6 +112,7 @@ def _toSVG(mol):
     highlightAtoms = mol.__sssAtoms
   else:
     highlightAtoms = []
+  kekulize=kekulizeStructures
   return Draw._moltoSVG(mol,molSize,highlightAtoms,"",kekulize)
 
 
