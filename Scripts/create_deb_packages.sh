@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# create *.deb packages for Ubuntu
+# create binary *.deb packages
 
 #set -x # DEBUG
 
