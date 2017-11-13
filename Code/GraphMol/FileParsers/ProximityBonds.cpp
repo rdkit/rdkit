@@ -57,7 +57,7 @@ bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {
 
 static bool IsBlacklistedAtom(Atom *atom){
     // blacklist metals, noble gasses and halogens
-    unsigned int elem = atom->getAtomicNum();
+    int elem = atom->getAtomicNum();
     // make an inverse query (non-metals and metaloids)
     if((5 <= elem && elem <= 8) ||
        (14 <= elem && elem <= 16) ||
@@ -69,12 +69,19 @@ static bool IsBlacklistedAtom(Atom *atom){
 }
 
 bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom) {
+    PRECONDITION(beg_atom, "empty atom");
+    PRECONDITION(end_atom, "empty atom");
+
     AtomPDBResidueInfo *beg_info = (AtomPDBResidueInfo *)beg_atom->getMonomerInfo();
     AtomPDBResidueInfo *end_info = (AtomPDBResidueInfo *)end_atom->getMonomerInfo();
+    if(!beg_info || beg_info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+      return false;
+    if(!end_info || end_info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+      return false;
+
     if(!SamePDBResidue(beg_info, end_info)){
-        if(IsBlacklistedAtom(beg_atom) || IsBlacklistedAtom(end_atom)){
+        if(IsBlacklistedAtom(beg_atom) || IsBlacklistedAtom(end_atom))
             return true;
-        }
         // Dont make bonds to waters
         if(beg_info->getResidueName() == "HOH" || beg_info->getResidueName() == "HOH")
             return true;
@@ -198,8 +205,8 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
     Atom *atom = mol->getAtomWithIdx(i);
     unsigned int elem = atom->getAtomicNum();
     // detect multivalent Hs, which could happen with ConnectTheDots
-    AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
     if (elem == 1 && atom->getDegree() > 1) {
+      AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
       // cut all but shortest Bond
       RDGeom::Point3D p = conf->getAtomPos(i);
       RDKit::RWMol::ADJ_ITER nbr , end_nbr;
