@@ -238,9 +238,9 @@ INT_VECT EmbedMultipleConfs(
                  value is 10x the number of atoms.
 
   randomSeed     provides a seed for the random number generator (so that
-                 the same coordinates can be obtained for a molecule on
-                 multiple runs).
-                 If negative, the RNG will not be seeded.
+                 the same coordinates can be obtained for a
+                 molecule on multiple runs) If -1, the
+                 RNG will not be seeded.
 
   clearConfs     Clear all existing conformations on the molecule
 

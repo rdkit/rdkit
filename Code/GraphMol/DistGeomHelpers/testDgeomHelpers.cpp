@@ -1952,6 +1952,44 @@ void testGithub1240() {
   }
 }
 
+void testGithubPullRequest1635() {
+  {
+    RWMol *m = SmilesToMol("C1(F)(F)CCC(CC1)COCC(C23CC4CC(C2)CC(C4)C3)N");
+    TEST_ASSERT(m);
+    MolOps::addHs(*m);
+    const int expected_num_atoms = 54;
+    TEST_ASSERT(m->getNumAtoms() == expected_num_atoms);
+
+    RWMol firstMol(*m);
+    RWMol secondMol(*m);
+    delete m;
+
+    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
+    params.randomSeed = MAX_INT; // the largest possible random seed
+
+    INT_VECT firstCids = DGeomHelpers::EmbedMultipleConfs(firstMol, 10, params);
+    INT_VECT secondCids = DGeomHelpers::EmbedMultipleConfs(secondMol, 10, params);
+    TEST_ASSERT(firstCids.size() == 10);
+    TEST_ASSERT(secondCids.size() == 10);
+
+    for (size_t i = 0; i < 10; i++) {
+        TEST_ASSERT(firstCids[i] == secondCids[i]);
+
+        int confIdx = firstCids[i];
+        const Conformer &firstConf = firstMol.getConformer(confIdx);
+        const Conformer &secondConf = secondMol.getConformer(confIdx);
+
+        for (int atomIdx = 0; atomIdx < expected_num_atoms; ++atomIdx) {
+            const RDGeom::Point3D &firstPoint = firstConf.getAtomPos(atomIdx);
+            const RDGeom::Point3D &secondPoint = secondConf.getAtomPos(atomIdx);
+            TEST_ASSERT(firstPoint.x == secondPoint.x);
+            TEST_ASSERT(firstPoint.y == secondPoint.y);
+            TEST_ASSERT(firstPoint.z == secondPoint.z);
+        }
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -2125,6 +2163,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings.\n";
   testGithub1240();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Deterministic with large random seeds\n";
+  testGithubPullRequest1635();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
