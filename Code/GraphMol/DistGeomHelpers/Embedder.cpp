@@ -374,7 +374,8 @@ bool _embedPoints(
   RDKit::double_source_type *rng = 0;
   RDKit::rng_type *generator;
   RDKit::uniform_double *distrib;
-  if (seed > 0) {
+  CHECK_INVARIANT(seed >= -1, "random seed must either be positive, zero, or negative one");
+  if (seed > -1) {
     generator = new RDKit::rng_type(42u);
     generator->seed(seed);
     distrib = new RDKit::uniform_double(0.0, 1.0);
@@ -572,7 +573,7 @@ bool _embedPoints(
       }
     }  // if(gotCoords)
   }    // while
-  if (seed > 0 && rng) {
+  if (seed > -1 && rng) {
     delete rng;
     delete generator;
     delete distrib;
@@ -760,6 +761,17 @@ typedef struct {
   std::vector<std::vector<int> > *improperAtoms;
   std::vector<int> *atomNums;
 } EmbedArgs;
+
+template<class T>
+bool multiplication_overflows_(T a, T b) {
+  // a * b > c if and only if a > c / b
+  if (a == 0 || b == 0)
+    return false;
+  if (a > std::numeric_limits<T>::max() / b)
+    return true;
+  return false;
+}
+
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
   unsigned int nAtoms = eargs->mmat->numRows();
   RDGeom::PointPtrVect positions;
@@ -777,10 +789,38 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
       // sense in embedding this one
       continue;
     }
+
+    CHECK_INVARIANT(eargs->seed >= -1, "random seed must either be positive, zero, or negative one");
+    int new_seed = eargs->seed;
+    if (new_seed > -1) {
+      if (!multiplication_overflows_(rdcast<int>(ci + 1), eargs->seed)) {
+        // old method of computing a new seed
+        new_seed = (ci + 1) * eargs->seed;
+      } else {
+        // If the above simple multiplication will overflow, use a
+        // cheap and easy way to hash the conformer index and seed
+        // together: for N'ary numerical system, where N is the
+        // maximum possible value of the pair of numbers. The
+        // following will generate unique integers:
+        // hash(a, b) = a + b * N
+        size_t big_seed = rdcast<size_t>(eargs->seed);
+        size_t max_val = std::max(ci + 1, big_seed);
+        size_t big_num = big_seed + max_val * (ci + 1);
+        // only grab the first 31 bits xor'd with the next 31 bits to
+        // make sure its positive, careful, the 'ULL' is important
+        // here, 0x7fffffff is the 'int' type because of C default
+        // number semantics and that we definitely don't want!
+        const size_t positive_int_mask = 0x7fffffffULL;
+        size_t folded_num = (big_num & positive_int_mask) ^ (big_num >> 31ULL);
+        new_seed = rdcast<int>(folded_num & positive_int_mask);
+      }
+    }
+    CHECK_INVARIANT(new_seed >= -1, "Something went wrong calculating a new seed");
+
     bool gotCoords = _embedPoints(
         &positions, eargs->mmat, eargs->useRandomCoords, eargs->boxSizeMult,
         eargs->randNegEig, eargs->numZeroFail, eargs->optimizerForceTol,
-        eargs->basinThresh, (ci + 1) * eargs->seed, eargs->maxIterations,
+        eargs->basinThresh, new_seed, eargs->maxIterations,
         eargs->chiralCenters, eargs->tetrahedralCarbons,
         eargs->enforceChirality, eargs->useExpTorsionAnglePrefs,
         eargs->useBasicKnowledge, *eargs->bonds, *eargs->angles,
