@@ -97,17 +97,17 @@ static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanit
 
 static RDKit::RWMOL_SPTR MolFromPDBBlock(std::string molB,
                                          bool sanitize=true,bool removeHs=true,
-                                         unsigned int flavor=0){
+                                         unsigned int flavor=0,bool proximityBonding=true){
   RDKit::RWMol *mol=0;
-  mol=RDKit::PDBBlockToMol(molB,sanitize,removeHs,flavor);
+  mol=RDKit::PDBBlockToMol(molB,sanitize,removeHs,flavor,proximityBonding);
   return RDKit::RWMOL_SPTR(mol);
 }
 
 static RDKit::RWMOL_SPTR MolFromPDBFile(std::string fName,
                                         bool sanitize=true,bool removeHs=true,
-                                        unsigned int flavor=0){
+                                        unsigned int flavor=0,bool proximityBonding=true){
   RDKit::RWMol *mol=0;
-  mol=RDKit::PDBFileToMol(fName,sanitize,removeHs,flavor);
+  mol=RDKit::PDBFileToMol(fName,sanitize,removeHs,flavor,proximityBonding);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromSequence(std::string text,
