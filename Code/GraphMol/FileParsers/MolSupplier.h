@@ -331,9 +331,10 @@ class PDBMolSupplier : public MolSupplier {
  public:
   explicit PDBMolSupplier(std::istream *inStream, bool takeOwnership = true,
                           bool sanitize = true, bool removeHs = true,
-                          unsigned int flavor = 0);
+                          unsigned int flavor = 0, bool proximityBonding = true);
   explicit PDBMolSupplier(const std::string &fname, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0);
+                          bool removeHs = true, unsigned int flavor = 0,
+                          bool proximityBonding = true);
 
   virtual ~PDBMolSupplier() {
     if (df_owner && dp_inStream) delete dp_inStream;
@@ -345,7 +346,7 @@ class PDBMolSupplier : public MolSupplier {
   virtual bool atEnd();
 
  protected:
-  bool df_sanitize, df_removeHs;
+  bool df_sanitize, df_removeHs, df_proximityBonding;
   unsigned int d_flavor;
 };
 }

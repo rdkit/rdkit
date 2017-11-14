@@ -47,6 +47,48 @@ static bool IsBonded(ProximityEntry *p, ProximityEntry *q, unsigned int flags) {
   return dist2 <= radius * radius;
 }
 
+bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {
+    return p->getResidueNumber() == q->getResidueNumber() &&
+           p->getResidueName() == q->getResidueName() &&
+           p->getChainId() == q->getChainId() &&
+           p->getInsertionCode() == q->getInsertionCode();
+}
+
+
+static bool IsBlacklistedAtom(Atom *atom){
+    // blacklist metals, noble gasses and halogens
+    int elem = atom->getAtomicNum();
+    // make an inverse query (non-metals and metaloids)
+    if((5 <= elem && elem <= 8) ||
+       (14 <= elem && elem <= 16) ||
+       (32 <= elem && elem <= 34) ||
+       (51 <= elem && elem <= 52))
+        return false;
+    else
+        return true;
+}
+
+bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom) {
+    PRECONDITION(beg_atom, "empty atom");
+    PRECONDITION(end_atom, "empty atom");
+
+    AtomPDBResidueInfo *beg_info = (AtomPDBResidueInfo *)beg_atom->getMonomerInfo();
+    AtomPDBResidueInfo *end_info = (AtomPDBResidueInfo *)end_atom->getMonomerInfo();
+    if(!beg_info || beg_info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+      return false;
+    if(!end_info || end_info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE)
+      return false;
+
+    if(!SamePDBResidue(beg_info, end_info)){
+        if(IsBlacklistedAtom(beg_atom) || IsBlacklistedAtom(end_atom))
+            return true;
+        // Dont make bonds to waters
+        if(beg_info->getResidueName() == "HOH" || beg_info->getResidueName() == "HOH")
+            return true;
+    }
+    return false;
+}
+
 /*
 static void ConnectTheDots_Small(RWMol *mol)
 {
@@ -147,16 +189,52 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
           while (list != -1) {
             ProximityEntry *tmpj = &tmp[list];
             if (tmpj->hash == probe && IsBonded(tmpi, tmpj, flags) &&
-                !mol->getBondBetweenAtoms(tmpi->atm, tmpj->atm))
+                !mol->getBondBetweenAtoms(tmpi->atm, tmpj->atm) &&
+                !IsBlacklistedPair(atom, mol->getAtomWithIdx(tmpj->atm)))
               mol->addBond(tmpi->atm, tmpj->atm, Bond::SINGLE);
             list = tmpj->next;
           }
         }
-
     int list = hash & HASHMASK;
     tmpi->next = HashTable[list];
     HashTable[list] = i;
     tmpi->hash = hash;
+  }
+  // Cleanup pass
+  for (unsigned int i = 0; i < count; i++) {
+    Atom *atom = mol->getAtomWithIdx(i);
+    unsigned int elem = atom->getAtomicNum();
+    // detect multivalent Hs, which could happen with ConnectTheDots
+    if (elem == 1 && atom->getDegree() > 1) {
+      AtomPDBResidueInfo *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+      // cut all but shortest Bond
+      RDGeom::Point3D p = conf->getAtomPos(i);
+      RDKit::RWMol::ADJ_ITER nbr , end_nbr;
+      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
+      float best = 10000;
+      int best_idx = -1;
+      while( nbr != end_nbr ) {
+        RDGeom::Point3D pn = conf->getAtomPos(*nbr);
+        float d = (p - pn).length();
+        AtomPDBResidueInfo *n_info = (AtomPDBResidueInfo *)(mol->getAtomWithIdx(*nbr)->getMonomerInfo());
+        if(d < best && atom_info->getResidueNumber() == n_info->getResidueNumber()){
+          best = d;
+          best_idx = *nbr;
+        }
+        ++nbr;
+      }
+      // iterate again and remove all but closest
+      boost::tie( nbr , end_nbr ) = mol->getAtomNeighbors( atom );
+      while( nbr != end_nbr ) {
+        if(*nbr == best_idx){
+          Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
+          bond->setBondType(Bond::SINGLE); // make sure this one is single
+        } else {
+          mol->removeBond(i, *nbr);
+        }
+        ++nbr;
+      }
+    }
   }
   free(tmp);
 }
@@ -165,13 +243,6 @@ void ConnectTheDots(RWMol *mol, unsigned int flags) {
   if (!mol || !mol->getNumConformers()) return;
   // Determine optimal algorithm to use by getNumAtoms()?
   ConnectTheDots_Large(mol, flags);
-}
-
-bool SamePDBResidue(AtomPDBResidueInfo *p, AtomPDBResidueInfo *q) {
-  return p->getResidueNumber() == q->getResidueNumber() &&
-         p->getResidueName() == q->getResidueName() &&
-         p->getChainId() == q->getChainId() &&
-         p->getInsertionCode() == q->getInsertionCode();
 }
 
 // These are macros to allow their use in C++ constants

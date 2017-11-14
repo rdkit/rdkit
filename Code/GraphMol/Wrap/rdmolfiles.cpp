@@ -176,10 +176,10 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
 }
 
 ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
-                      unsigned int flavor) {
+                      unsigned int flavor, bool proximityBonding) {
   RWMol *newM = 0;
   try {
-    newM = PDBFileToMol(filename, sanitize, removeHs, flavor);
+    newM = PDBFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.message());
     throw python::error_already_set();
@@ -191,11 +191,11 @@ ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
 }
 
 ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
-                       unsigned int flavor) {
+                       unsigned int flavor, bool proximityBonding) {
   std::istringstream inStream(pyObjectToString(molBlock));
   RWMol *newM = 0;
   try {
-    newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor);
+    newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor, proximityBonding);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
@@ -851,13 +851,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - flavor: (optional) \n\
 \n\
+    - proximityBonding: (optional) toggles automatic proximity bonding\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromPDBFile", RDKit::MolFromPDBFile,
               (python::arg("molFileName"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true, python::arg("flavor") = 0),
+               python::arg("removeHs") = true, python::arg("flavor") = 0,
+               python::arg("proximityBonding") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -876,13 +879,16 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - flavor: (optional) \n\
 \n\
+    - proximityBonding: (optional) toggles automatic proximity bonding\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromPDBBlock", RDKit::MolFromPDBBlock,
               (python::arg("molBlock"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true, python::arg("flavor") = 0),
+               python::arg("removeHs") = true, python::arg("flavor") = 0,
+               python::arg("proximityBonding") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 

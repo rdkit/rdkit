@@ -296,6 +296,10 @@ static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
       } catch (boost::bad_lexical_cast &) {
         fail = true;
       }
+      // do not make bonds to metals, HOHs, etc
+      if(IsBlacklistedPair(amap[src], amap[dst]))
+        break;
+
       if (!fail) {
         Bond *bond =
             mol->getBondBetweenAtoms(amap[src]->getIdx(), amap[dst]->getIdx());
@@ -467,7 +471,7 @@ void BasicPDBCleanup(RWMol &mol) {
 }
 
 RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
-                     unsigned int flavor) {
+                     unsigned int flavor, bool proximityBonding) {
   PRECONDITION(str, "bad char ptr");
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
@@ -543,8 +547,11 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
 
   if (!mol) return (RWMol *)0;
 
-  ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
-  StandardPDBResidueBondOrders(mol);
+  if (proximityBonding)
+    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+  // flavor & 8 doesn't encode double bonds
+  if (proximityBonding || ((flavor & 8) != 0))
+    StandardPDBResidueBondOrders(mol);
 
   BasicPDBCleanup(*mol);
 
@@ -567,12 +574,12 @@ RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
 }
 
 RWMol *PDBBlockToMol(const std::string &str, bool sanitize, bool removeHs,
-                     unsigned int flavor) {
-  return PDBBlockToMol(str.c_str(), sanitize, removeHs, flavor);
+                     unsigned int flavor, bool proximityBonding) {
+  return PDBBlockToMol(str.c_str(), sanitize, removeHs, flavor, proximityBonding);
 }
 
 RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor) {
+                          unsigned int flavor, bool proximityBonding) {
   PRECONDITION(inStream, "bad stream");
   std::string buffer;
   const char *ptr;
@@ -591,15 +598,15 @@ RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
         ptr[3] == 'M' && ptr[4] == 'D' && ptr[5] == 'L')
       break;
   }
-  return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor);
+  return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor, proximityBonding);
 }
 RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor) {
-  return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor);
+                          unsigned int flavor, bool proximityBonding) {
+  return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor, proximityBonding);
 }
 
 RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
-                    unsigned int flavor) {
+                    unsigned int flavor, bool proximityBonding) {
   std::ifstream ifs(fileName.c_str(), std::ios_base::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
@@ -607,6 +614,6 @@ RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
     throw BadFileException(errout.str());
   }
   return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
-                            removeHs, flavor);
+                            removeHs, flavor, proximityBonding);
 }
 }

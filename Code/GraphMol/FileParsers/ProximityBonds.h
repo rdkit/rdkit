@@ -15,8 +15,10 @@ namespace RDKit {
 static unsigned int ctdIGNORE_H_H_CONTACTS = 0x1;
 static unsigned int ctdALL_FLAGS = 0xFFFFFFFF;
 
+bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom);
 void ConnectTheDots(RWMol *mol, unsigned int flags = 0);
 void StandardPDBResidueBondOrders(RWMol *mol);
+
 }
 
 #endif  // _RD_PROXIMITYBONDS_H_
