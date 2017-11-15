@@ -3062,12 +3062,19 @@ CAS<~>
     mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
-    self.assertEqual(atom.GetDegree(), 0)  # Zn should have no bonds
+    self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
+    self.assertEqual(atom.GetExplicitValence(), 0)
+    bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
+    self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
+
     # test metal bonds without proximity bonding
     mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False, proximityBonding=False)
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
-    self.assertEqual(atom.GetDegree(), 0)  # Zn should have no bonds
+    self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
+    self.assertEqual(atom.GetExplicitValence(), 0)
+    bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
+    self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
     # test unbinding HOHs
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          '2vnf_bindedHOH.pdb')

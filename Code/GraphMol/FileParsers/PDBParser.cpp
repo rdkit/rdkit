@@ -296,14 +296,11 @@ static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
       } catch (boost::bad_lexical_cast &) {
         fail = true;
       }
-      // do not make bonds to metals, HOHs, etc
-      if(IsBlacklistedPair(amap[src], amap[dst]))
-        break;
 
       if (!fail) {
         Bond *bond =
             mol->getBondBetweenAtoms(amap[src]->getIdx(), amap[dst]->getIdx());
-        if (bond) {
+        if (bond && bond->getBondType() != Bond::ZERO) {
           // Here we use a single byte bitmap to count duplicates
           // Low nibble counts src < dst, high nibble for src > dst
           int seen = bmap[bond];
@@ -330,14 +327,20 @@ static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
               if ((seen & 0x08) == 0) bond->setBondType(Bond::QUADRUPLE);
             }
           }
-        } else {
-          bond = new Bond(Bond::SINGLE);
+        } else if(!bond) {
+          // Bonds in PDB file are explicit
+          // if they are not sanitize friendly, set their order to zero
+          if(IsBlacklistedPair(amap[src], amap[dst]))
+            bond = new Bond(Bond::ZERO);
+          else
+            bond = new Bond(Bond::SINGLE);
           bond->setOwningMol(mol);
           bond->setBeginAtom(amap[src]);
           bond->setEndAtom(amap[dst]);
           mol->addBond(bond, true);
           bmap[bond] = (src < dst) ? 0x01 : 0x10;
-        }
+        } else
+            break;
       } else
         break;
     }
