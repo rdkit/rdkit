@@ -438,7 +438,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
             current_info = info;
           }
 
-          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", max_serial, "", info->getResidueName(),
                                                                info->getResidueNumber(), info->getChainId(), "",
                                                                info->getIsHeteroAtom());
           mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
