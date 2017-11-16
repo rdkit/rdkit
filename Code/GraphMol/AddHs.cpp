@@ -369,7 +369,20 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     (*cfi)->reserve(nSize);
   }
 
+  // counters for Hs PDBResidueInfo
+  AtomPDBResidueInfo *current_info;
+  int current_h_id = 1;
+  int max_serial = 0;
+
   unsigned int stopIdx = mol.getNumAtoms();
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *) (mol.getAtomWithIdx(aidx)->getMonomerInfo());
+    if (info &&
+        info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
+        info->getSerialNumber() > max_serial) {
+      max_serial = info->getSerialNumber();
+    }
+  }
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
     if (onlyOnAtoms &&
         std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
@@ -387,13 +400,6 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       mol.addBond(aidx, newIdx, Bond::SINGLE);
       mol.getAtomWithIdx(newIdx)->updatePropertyCache();
       if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
-      AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
-      if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
-        AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
-                                                             info->getResidueNumber(), info->getChainId(), "",
-                                                             info->getIsHeteroAtom());
-        mol.getAtomWithIdx(newIdx)->setMonomerInfo(newInfo);
-      }
     }
     // clear the local property
     newAt->setNumExplicitHs(0);
@@ -409,14 +415,6 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         mol.getAtomWithIdx(newIdx)->setProp(common_properties::isImplicit, 1);
         mol.getAtomWithIdx(newIdx)->updatePropertyCache();
         if (addCoords) setHydrogenCoords(&mol, newIdx, aidx);
-        // add PDBResidueInfo if root atom has it
-        AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
-        if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
-            AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
-                                                                 info->getResidueNumber(), info->getChainId(), "",
-                                                                 info->getIsHeteroAtom());
-            mol.getAtomWithIdx(newIdx)->setMonomerInfo(newInfo);
-        }
       }
       // be very clear about implicits not being allowed in this representation
       newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
@@ -425,6 +423,33 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     }
     // update the atom's derived properties (valence count, etc.)
     newAt->updatePropertyCache();
+
+    // take care of AtomPDBResidueInfo for Hs if root atom has it
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+      ROMol::ADJ_ITER begin, end;
+      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
+      while (begin != end) {
+        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
+
+          // the hydrogens have unique names on residue basis (H1, H2, ...)
+          if(!current_info || current_info->getResidueNumber() != info->getResidueNumber() || current_info->getChainId() !=  info->getChainId()) {
+            current_h_id = 1;
+            current_info = info;
+          }
+
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", newIdx, "", info->getResidueName(),
+                                                               info->getResidueNumber(), info->getChainId(), "",
+                                                               info->getIsHeteroAtom());
+          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
+
+          ++max_serial;
+          ++current_h_id;
+        }
+      ++begin;
+      }
+    }
+
   }
 }
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
