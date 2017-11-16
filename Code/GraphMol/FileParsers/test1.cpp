@@ -3750,7 +3750,7 @@ void testPDBFile() {
     ROMol *nm = MolOps::addHs(*m);
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(nm->getAtomWithIdx(nm->getNumAtoms()-1)->getMonomerInfo());
     TEST_ASSERT(info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE);
-    TEST_ASSERT(info->getName() == " H  ");
+    TEST_ASSERT(info->getName() == " H1 ");
     TEST_ASSERT(info->getResidueName() == "ASN");
   }
 

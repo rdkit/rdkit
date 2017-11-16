@@ -15,6 +15,7 @@
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit {
 
@@ -370,8 +371,6 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   }
 
   // counters for Hs PDBResidueInfo
-  AtomPDBResidueInfo *current_info;
-  int current_h_id = 1;
   int max_serial = 0;
 
   unsigned int stopIdx = mol.getNumAtoms();
@@ -425,20 +424,34 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     newAt->updatePropertyCache();
 
     // take care of AtomPDBResidueInfo for Hs if root atom has it
+    AtomPDBResidueInfo *current_info = 0;
+    int current_h_id = 1;
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
     if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
       while (begin != end) {
         if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
-
+          // skip if hyrogen already has PDB info
+          AtomPDBResidueInfo *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)->getMonomerInfo();
+          if (h_info && h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE)
+            continue;
           // the hydrogens have unique names on residue basis (H1, H2, ...)
-          if(!current_info || current_info->getResidueNumber() != info->getResidueNumber() || current_info->getChainId() !=  info->getChainId()) {
+          if(!current_info ||
+              current_info->getResidueNumber() != info->getResidueNumber() ||
+              current_info->getChainId() !=  info->getChainId()) {
             current_h_id = 1;
             current_info = info;
           }
-
-          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(" H  ", max_serial, "", info->getResidueName(),
+          std::string h_label = boost::lexical_cast<std::string>(current_h_id);
+          if (h_label.length() > 3)
+            h_label = h_label.substr(h_label.length()-3, 3);
+          while (h_label.length() < 3)
+            h_label = h_label + " ";
+          h_label = "H" + h_label;
+          // wrap around id to '3H12'
+          h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(h_label, max_serial, "", info->getResidueName(),
                                                                info->getResidueNumber(), info->getChainId(), "",
                                                                info->getIsHeteroAtom());
           mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
