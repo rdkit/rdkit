@@ -40,6 +40,7 @@
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
   * [2015 UGM](https://github.com/rdkit/UGM_2015)
   * [2016 UGM](https://github.com/rdkit/UGM_2016)
+  * [2017 UGM](https://github.com/rdkit/UGM_2017)
 
 ## Documentation
 Available on the [RDKit page](http://www.rdkit.org/docs/index.html)
