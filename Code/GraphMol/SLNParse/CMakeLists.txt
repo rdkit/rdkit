@@ -56,7 +56,7 @@ rdkit_headers(SLNAttribs.h
 
 rdkit_test(testSLNParse test.cpp
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
-GraphMol RDGeometryLib RDGeneral
+GraphMol RDGeometryLib RDGeneral Boost::regex
 )
 
 add_subdirectory(Wrap)

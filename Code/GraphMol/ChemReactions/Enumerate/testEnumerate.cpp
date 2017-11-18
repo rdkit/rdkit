@@ -46,7 +46,7 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
 
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -55,7 +55,7 @@
 
 using namespace RDKit;
 
-#ifdef RDK_USE_BOOST_SERIALIZATION      
+#ifdef RDK_USE_BOOST_SERIALIZATION
 // for each starting point check to see that the archive
 //  starts at the same point
 void pickleTest(EnumerationStrategyBase &en, size_t len) {
@@ -193,10 +193,10 @@ void testEnumerations() {
       TEST_ASSERT(i<=6);
     }
     TEST_ASSERT(i == 6);
-    
+
   }
 
-#ifdef RDK_USE_BOOST_SERIALIZATION    
+#ifdef RDK_USE_BOOST_SERIALIZATION
   {
 
     boost::shared_ptr<EnumerateLibrary> en(
@@ -209,7 +209,7 @@ void testEnumerations() {
     }
 
     en->resetState();
-    
+
     for (size_t i = 0; i < 1000; ++i) {
       // pickle and unpickle
       std::stringstream ss;
@@ -230,7 +230,7 @@ void testEnumerations() {
       copy->resetState();
       for (size_t j = 0; j < 10; ++j) {
         TEST_ASSERT(smir[j] == copy->nextSmiles());
-      }      
+      }
     }
   }
 #endif
@@ -251,7 +251,7 @@ void testInsaneEnumerations() {
   bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCC")));
   std::cerr << "0,0 " << (int)SubstructMatch(*bbs[0][0].get(), *rxn2->getReactants()[0].get(), tvect) << std::endl;
   std::cerr << "0,1 " << (int)SubstructMatch(*bbs[0][1].get(), *rxn2->getReactants()[0].get(), tvect) << std::endl;
-  
+
   bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1")));
   bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1Cl")));
   std::cerr << "1,0 " << (int)SubstructMatch(*bbs[1][0].get(), *rxn2->getReactants()[1].get(), tvect) << std::endl;
@@ -262,7 +262,7 @@ void testInsaneEnumerations() {
   std::cerr << "2,0 " << (int)SubstructMatch(*bbs[2][0].get(), *rxn2->getReactants()[2].get(), tvect) << std::endl;
   std::cerr << "2,1 " << (int)SubstructMatch(*bbs[2][1].get(), *rxn2->getReactants()[2].get(), tvect) << std::endl;
 
-  
+
   {
     ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxndata);
     RxnOps::sanitizeRxn(*rxn, MolOps::AdjustQueryParameters());
@@ -275,7 +275,7 @@ void testInsaneEnumerations() {
     TEST_ASSERT(bbs2[0].size() == 1);
     TEST_ASSERT(bbs2[1].size() == 1);
     TEST_ASSERT(bbs2[2].size() == 1);
-    
+
     delete rxn;
   }
   delete rxn2;
@@ -289,11 +289,10 @@ int main(int argc, char *argv[]) {
       doLong = true;
     }
   }
-
-  /*
+#if 0
     testSamplers();
     testEvenSamplers();
     testEnumerations();
-  */
-  testInsaneEnumerations();
+  //testInsaneEnumerations();
+#endif
 }

@@ -11,7 +11,7 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdreducedgraphs_array_API
 #include <RDBoost/python.h>
-#include <boost/python/numeric.hpp>
+#include <RDBoost/boost_numpy.h>
 
 #include <RDBoost/Wrap.h>
 #include <GraphMol/GraphMol.h>
