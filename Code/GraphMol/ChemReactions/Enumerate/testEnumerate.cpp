@@ -311,7 +311,6 @@ void testInsaneEnumerations() {
   {
     ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxndata);
     RxnOps::sanitizeRxn(*rxn, MolOps::AdjustQueryParameters());
-    std::cerr << ChemicalReactionToRxnBlock(*rxn) << std::endl;
     EnumerationParams ThereCanBeOnlyOne;
     ThereCanBeOnlyOne.reagentMaxMatchCount = 1;
     EnumerationTypes::BBS bbs2 =
