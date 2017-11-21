@@ -310,16 +310,16 @@ public:
      The CachedTrustedSmilesMolHolder is made to add molecules from
      a trusted source.  This makes the basic assumption that RDKit was
      used to sanitize and canonicalize the smiles string.  In practice
-     this is a bit faster than using arbitrary smiles strings since
+     this is considerably faster than using arbitrary smiles strings since
      certain assumptions can be made.
 
      When loading from external data, as opposed to using the "addMol" API,
      care must be taken to ensure that the pattern fingerprints and smiles
      are synchronized.
 
-     Each pattern holder has an API point for making it's fingerprint.  This
+     Each pattern holder has an API point for making its fingerprint.  This
      is useful to ensure that the pattern stored in the database will be
-     compatible with the patterns made when analyzing the queries.
+     compatible with the patterns made when analyzing queries.
      
      \code
      boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
