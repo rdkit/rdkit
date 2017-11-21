@@ -31,6 +31,7 @@
 //
 
 #include <RDGeneral/utils.h>
+#include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -324,6 +325,48 @@ void testInsaneEnumerations() {
   delete rxn2;
 }
 
+void testGithub1657() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github #1657: EnumerateLibrary with "
+                          "initFromString called twice doesn't clear the "
+                          "reaction"
+                       << std::endl;
+  EnumerationTypes::BBS bbs;
+  bbs.resize(2);
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
+
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(
+      "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"
+      "!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:"
+      "2]");
+
+  {  // we'll also test that initFromString() works at all
+    EnumerateLibrary en1(*rxn, bbs);
+    std::stringstream sstr;
+    en1.toStream(sstr);
+    EnumerateLibrary en2;
+    en2.initFromString(sstr.str());
+
+    EnumerateLibrary en3;
+    en3.initFromString(sstr.str());
+    bool ok = false;
+    try {
+      en3.initFromString(sstr.str());
+    } catch (const ValueErrorException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -332,9 +375,11 @@ int main(int argc, char *argv[]) {
       doLong = true;
     }
   }
-
+#if 1
   testSamplers();
   testEvenSamplers();
   testEnumerations();
   testInsaneEnumerations();
+#endif
+  testGithub1657();
 }
