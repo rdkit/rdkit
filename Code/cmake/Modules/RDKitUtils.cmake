@@ -116,7 +116,7 @@ endif(WIN32)
                           ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
 
     INSTALL(TARGETS ${RDKPY_NAME}
-            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})
+            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
 

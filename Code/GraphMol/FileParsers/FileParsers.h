@@ -198,16 +198,21 @@ RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize = true,
                       bool removeHs = true, Mol2Type variant = CORINA);
 
 RWMol *PDBBlockToMol(const char *str, bool sanitize = true,
-                     bool removeHs = true, unsigned int flavor = 0);
+                     bool removeHs = true, unsigned int flavor = 0,
+                     bool proximityBonding = true);
 
 RWMol *PDBBlockToMol(const std::string &str, bool sanitize = true,
-                     bool removeHs = true, unsigned int flavor = 0);
+                     bool removeHs = true, unsigned int flavor = 0,
+                     bool proximityBonding = true);
 RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0);
+                          bool removeHs = true, unsigned int flavor = 0,
+                          bool proximityBonding = true);
 RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize = true,
-                          bool removeHs = true, unsigned int flavor = 0);
+                          bool removeHs = true, unsigned int flavor = 0,
+                          bool proximityBonding = true);
 RWMol *PDBFileToMol(const std::string &fname, bool sanitize = true,
-                    bool removeHs = true, unsigned int flavor = 0);
+                    bool removeHs = true, unsigned int flavor = 0,
+                    bool proximityBonding = true);
 
 // \brief generates an PDB block for a molecule
 /*!

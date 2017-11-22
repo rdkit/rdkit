@@ -41,7 +41,7 @@
 
 namespace RDKit {
 
-//! Base class API for holding molecules so substructure search.
+//! Base class API for holding molecules to substructure search.
 /*!
   This is an API that hides the implementation details used for
   indexing molecules for substructure searching.  It simply
@@ -268,13 +268,81 @@ public:
   }
 };
 
-//! Substtructure Search a library of molecules
+//! Substructure Search a library of molecules
 /*!  This class allows for multithreaded substructure searches os
      large datasets.
 
      The implementations can use fingerprints to speed up searches
      and have molecules cached as binary forms to reduce memory
      usage.
+
+     basic usage:
+     \code
+     SubstructLibrary lib;
+     lib.addMol(mol);
+     std::vector<unsigned int> results = lib.getMatches(query);
+     for(std::vector<unsigned int>::const_iterator matchIndex=results.begin();
+             matchIndex != results.end();
+             ++matchIndex) {
+       boost::shared_ptr<ROMol> match = lib.getMol(*matchIndex);
+     }
+     \endcode
+     
+     Using different mol holders and pattern fingerprints.
+
+     \code
+     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+        boost::make_shared<CachedTrustedSmilesMolHolder>();
+     boost::shared_ptr<PatternHolder> patternHolder = \
+        boost::make_shared<PatternHolder>();
+
+     SubstructLibrary lib(molHolder, patternHolder);
+     lib.addMol(mol);
+     \endcode
+
+     Cached molecule holders create molecules on demand.  There are currently
+     three styles of cached molecules.
+
+       CachedMolHolder: stores molecules in the rdkit binary format.
+       CachedSmilesMolHolder: stores molecules in smiles format.
+       CachedTrustedSmilesMolHolder: stores molecules in smiles format.
+
+     The CachedTrustedSmilesMolHolder is made to add molecules from
+     a trusted source.  This makes the basic assumption that RDKit was
+     used to sanitize and canonicalize the smiles string.  In practice
+     this is considerably faster than using arbitrary smiles strings since
+     certain assumptions can be made.
+
+     When loading from external data, as opposed to using the "addMol" API,
+     care must be taken to ensure that the pattern fingerprints and smiles
+     are synchronized.
+
+     Each pattern holder has an API point for making its fingerprint.  This
+     is useful to ensure that the pattern stored in the database will be
+     compatible with the patterns made when analyzing queries.
+     
+     \code
+     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+         boost::make_shared<CachedTrustedSmilesMolHolder>();
+     boost::shared_ptr<PatternHolder> patternHolder =    \
+         boost::make_shared<PatternHolder>();
+     
+     // the PatternHolder instance is able to make fingerprints.
+     //  These, of course, can be read from a file.  For demonstration
+     //   purposes we construct them here.
+     const std::string trustedSmiles = "c1ccccc1";
+     ROMol *m = SmilesToMol(trustedSmiles);
+     const ExplicitBitVect *bitVector = patternHolder->makeFingerprint(*m);
+     
+     // The trusted smiles and bitVector can be read from any source.
+     //  This is the fastest way to load a substruct library.
+     molHolder->addSmiles( trustedSmiles );
+     patternHolder->addFingerprint( *bitVector );
+     SubstructLibrary lib(molHolder, patternHolder);
+     delete m;
+     delete bitVector;
+     \endcode
+     
 */
 class SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
