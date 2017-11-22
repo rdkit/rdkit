@@ -200,7 +200,7 @@ class ChemicalReaction {
   //! Runs the reaction on a set of reactants
   /*!
 
-    \param reactants: the reactants to be used. The length of this must be equal
+    \param reactants  the reactants to be used. The length of this must be equal
     to
                       this->getNumReactantTemplates()
 
@@ -296,8 +296,8 @@ class ChemicalReaction {
      stop
                 validation)
 
-      \param numWarnings: used to return the number of validation warnings
-      \param numErrors:   used to return the number of validation errors
+      \param numWarnings used to return the number of validation warnings
+      \param numErrors   used to return the number of validation errors
 
       \param silent: If this bool is true, no messages will be logged during the
      validation.
