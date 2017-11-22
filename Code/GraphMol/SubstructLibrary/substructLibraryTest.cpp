@@ -184,9 +184,69 @@ void test4() {
   TEST_ASSERT(res.size() == 40);
 
   delete query;
-  BOOST_LOG(rdErrorLog) << "    Done (stereo options)" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Done (trusted smiles)" << std::endl;
 
 }
+
+/// Tests the code in the docs
+//   to make sure it compiles.
+void docTest() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing C++ docs" << std::endl;
+
+  ROMol *q = SmartsToMol("C-1-C-C-O-C(-[O])(-[N])1");
+  ROMol *m = SmilesToMol("C1CCO[C@@](N)(O)1");
+  ROMol &query = *q;
+  ROMol &mol = *m;
+
+  {
+    SubstructLibrary lib;
+    lib.addMol(mol);
+    std::vector<unsigned int> results = lib.getMatches(query);
+    for(std::vector<unsigned int>::const_iterator matchIndex=results.begin();
+            matchIndex != results.end();
+            ++matchIndex) {
+      boost::shared_ptr<ROMol> match = lib.getMol(*matchIndex);
+    }
+  }
+
+  {
+    boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+        boost::make_shared<CachedTrustedSmilesMolHolder>();
+    boost::shared_ptr<PatternHolder> patternHolder =    \
+        boost::make_shared<PatternHolder>();
+    
+    SubstructLibrary lib(molHolder, patternHolder);
+    lib.addMol(mol);
+  }
+
+  {
+    boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+        boost::make_shared<CachedTrustedSmilesMolHolder>();
+    boost::shared_ptr<PatternHolder> patternHolder =    \
+        boost::make_shared<PatternHolder>();
+    
+    // the PatternHolder instance is able to make fingerprints.
+    //  These, of course, can be read from a file.  For demonstration
+    //   purposes we construct them here.
+    const std::string trustedSmiles = "c1ccccc1";
+    ROMol *m = SmilesToMol(trustedSmiles);
+    const ExplicitBitVect *bitVector = patternHolder->makeFingerprint(*m);
+    
+    // The trusted smiles and bitVector can be read from any source.
+    //  This is the fastest way to load a substruct library.
+    molHolder->addSmiles( trustedSmiles );
+    patternHolder->addFingerprint( *bitVector );
+    SubstructLibrary lib(molHolder, patternHolder);
+    delete m;
+    delete bitVector;
+  }
+  
+  delete q;
+  delete m;
+  BOOST_LOG(rdErrorLog) << "    Done (C++ doc tests)" << std::endl;
+}
+
 
 int main(int argc, char *argv[]) {
 #if 1
@@ -194,6 +254,7 @@ int main(int argc, char *argv[]) {
   test2();
   test3();
   test4();
+  docTest();
 #endif
   return 0;
 }
