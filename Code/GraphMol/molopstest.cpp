@@ -5164,6 +5164,12 @@ void testGithubIssue510() {
   hypervalent_check("F[Sb-](F)(F)(F)(F)F");
   hypervalent_check("F[Bi-](F)(F)(F)(F)F");
 
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  // we also added a valence of 5 for Bi:
+  hypervalent_check("F[Bi-](F)(F)F");
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
