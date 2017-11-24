@@ -116,6 +116,33 @@ class TestCase(unittest.TestCase):
     dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
     self.failUnlessAlmostEqual(dihedral, -120.0, 1)
 
+  def testGetSetDihedralThroughTripleBond(self):
+    file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
+                        'github1262_2.mol')
+
+    m = Chem.MolFromMolFile(file, True, False)
+    conf = m.GetConformer()
+    rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 0.0)
+    dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
+    self.failUnlessAlmostEqual(dihedral, 0.0, 1)
+    dist = rdmt.GetBondLength(conf, 6, 9)
+    rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 120.0)
+    dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
+    self.failUnlessAlmostEqual(dihedral, 120.0, 1)
+    dist2 = rdmt.GetBondLength(conf, 6, 7)
+    self.failUnlessAlmostEqual(dist, dist2, 1)
+    rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 180.0)
+    dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
+    self.failUnlessAlmostEqual(dihedral, 180.0, 1)
+    dist3 = rdmt.GetBondLength(conf, 6, 9)
+    self.failIfAlmostEqual(dist, dist3, 1)
+    exceptionRaised = False
+    try:
+      rdmt.SetDihedralDeg(conf, 6, 0, 3, 9, 0.0)
+    except ValueError:
+      exceptionRaised = True
+    self.failUnless(exceptionRaised)
+
 
 if __name__ == "__main__":
   unittest.main()
