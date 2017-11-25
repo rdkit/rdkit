@@ -20,19 +20,24 @@ if(RDK_BUILD_INCHI_SUPPORT)
   set(swigRDKitLibList "${swigRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 set(swigRDKitLibList "${swigRDKitLibList}"
-"FilterCatalog;Catalogs;FMCS;MolDraw2D;FileParsers;SmilesParse;"
-"Depictor;SubstructMatch;ChemReactions;Fingerprints;ChemTransforms;"
-"Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
-"PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
-"ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
-"Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
+  "FilterCatalog;Catalogs;FMCS;MolDraw2D;FileParsers;SmilesParse;"
+  "Depictor;SubstructMatch;ChemReactions;Fingerprints;ChemTransforms;"
+  "Subgraphs;GraphMol;DataStructs;Trajectory;Descriptors;"
+  "PartialCharges;MolTransforms;DistGeomHelpers;DistGeometry;"
+  "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
+  "Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
 )
+set(swigRDKitLibs "")
 foreach(swigRDKitLib ${swigRDKitLibList})
   set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")
 endforeach()
 set(swigRDKitLibs "${swigRDKitLibs}${Boost_SERIALIZATION_LIBRARY}")
 
 set(RDKit_Wrapper_Libs ${swigRDKitLibs})
+
+message("SUFFIX: ${swigRDKitLibSuffix}")
+message("LIBS: ${RDKit_Wrapper_Libs}")
+
 
 if(RDK_BUILD_SWIG_JAVA_WRAPPER)
 add_subdirectory(gmwrapper)

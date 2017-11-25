@@ -214,22 +214,6 @@ endif(RDK_BUILD_PYTHON_WRAPPERS)
 if(APPLE)
   find_package(Boost 1.56.0 COMPONENTS regex REQUIRED)
   list(APPEND Boost_IMPORTED_LIBRARIES "Boost::regex")
-
-  MESSAGE("== OSX: CHECKING for libc++")
-  execute_process( COMMAND /usr/bin/otool "-L" "${Boost_REGEX_LIBRARY_RELEASE}"
-                   OUTPUT_VARIABLE LIBCPP
-                   ERROR_VARIABLE ERR)
-
-  if(LIBCPP MATCHES ".*libc[+][+].*")
-     MESSAGE("== BOOST USES LIBC++")
-     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
-   else()
-     MESSAGE("== BOOST USES STDLIBC++")
-     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
-     endif()
-     # FOR CXX11 support SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  endif()
 endif(APPLE)
 
 # set the boost include directories
