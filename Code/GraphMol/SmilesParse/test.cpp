@@ -3780,6 +3780,40 @@ void testGithub786() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1652() {
+  BOOST_LOG(rdInfoLog) << "testing github issue 1652: chiral order for "
+                          "ring closure after branch for the first atom in the SMILES string"
+                       << std::endl;
+  {
+    std::string smiles = "Cl[C@](F)1CC[C@H](F)CC1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "[C@](Cl)(F)1CC[C@H](F)CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+  {
+    std::string smiles = "F[C@@]1(C)CCO1";
+    ROMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi = MolToSmiles(*m, true);
+    delete m;
+
+    smiles = "[C@@](F)1(C)CCO1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmi2 = MolToSmiles(*m, true);
+    TEST_ASSERT(csmi == csmi2);
+    delete m;
+  }
+}
+
 void testDativeBonds() {
   BOOST_LOG(rdInfoLog) << "testing dative bond support" << std::endl;
   {
@@ -4036,7 +4070,6 @@ int main(int argc, char *argv[]) {
   testGithub378();
   testGithub389();
   testBug1719046();
-#endif
   testBug1844617();
 #if 1  // POSTPONED during canonicalization rewrite
   // testGithub298();
@@ -4051,4 +4084,6 @@ int main(int argc, char *argv[]) {
   testGithub1219();
   testSmilesParseParams();
   testRingClosureNumberWithBrackets();
+#endif
+  testGithub1652();
 }
