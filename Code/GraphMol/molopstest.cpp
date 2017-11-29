@@ -5145,18 +5145,30 @@ void testGetMolFrags() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace {
+void hypervalent_check(const char *smiles) {
+  RWMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
+  delete m;
+}
+}
 void testGithubIssue510() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
                           "Hexafluorophosphate cannot be handled"
                        << std::endl;
-  {
-    std::string smiles = "F[P-](F)(F)(F)(F)F";
-    RWMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
-    delete m;
-  }
+  hypervalent_check("F[P-](F)(F)(F)(F)F");
+  // test #1668 too, it's the same thing but with As, Sb, and Bi
+  hypervalent_check("F[As-](F)(F)(F)(F)F");
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  // we also added a valence of 5 for Bi:
+  hypervalent_check("F[Bi-](F)(F)F");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
