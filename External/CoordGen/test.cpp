@@ -24,18 +24,18 @@ using namespace RDKit;
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
+#if 0
   {
     ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
 
     CoordGen::addCoords(*m);
-    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
-  }
-
+    }
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 
@@ -44,7 +44,7 @@ void test1() {
     m->setProp("_Name", "test2");
 
     CoordGen::addCoords(*m);
-    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
@@ -60,7 +60,7 @@ void test1() {
     m->setProp("_Name", "cyclosporine a");
 
     CoordGen::addCoords(*m);
-    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
@@ -74,12 +74,24 @@ void test1() {
     m->setProp("_Name", "single-double");
 
     CoordGen::addCoords(*m);
-    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
   }
+#endif
 
+  {
+    ROMol* m = SmilesToMol("O/C=C/C=C/C=C\\C=C/N");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "cis-trans");
+
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 int main(int argc, char* argv[]) {
