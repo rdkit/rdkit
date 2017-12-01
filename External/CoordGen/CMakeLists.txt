@@ -25,10 +25,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs")
     endif()
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(SHA "68fb2083d91a3f1de734e2c4f2f7f2d98e21634d")
+        set(SHA "b843101e9ce4c16a49d19044e823b5500a4eb0af")
         downloadAndCheckMD5("https://codeload.github.com/schrodinger/coordgenlibs/tar.gz/${SHA}"
               "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-              "3e8b644c9a52333cef506724db51ffc1")
+              "")
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
