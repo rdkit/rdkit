@@ -24,7 +24,7 @@ using namespace RDKit;
 void test1() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
-#if 0
+#if 1
   {
     ROMol* m = SmilesToMol("c1cc(CC)cnc1CC(=O)O");
     TEST_ASSERT(m);
@@ -35,7 +35,7 @@ void test1() {
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
     delete m;
-    }
+  }
   {
     // ROMol* m = SmilesToMol("c1ccncc1");
 

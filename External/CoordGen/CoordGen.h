@@ -59,7 +59,8 @@ void addCoords(T& mol) {
   for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
     auto obnd = *bndit;
     if (obnd->getBondType() != Bond::DOUBLE ||
-        obnd->getStereo() < Bond::STEREOE)
+        obnd->getStereo() <= Bond::STEREOANY ||
+        obnd->getStereo() > Bond::STEREOTRANS)
       continue;
 
     sketcherMinimizerBondStereoInfo sinfo;
