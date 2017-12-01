@@ -534,12 +534,8 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   URANGE_CHECK(kAtomId, pos.size());
   URANGE_CHECK(lAtomId, pos.size());
   ROMol &mol = conf.getOwningMol();
-  Bond *bondIJ = mol.getBondBetweenAtoms(iAtomId, jAtomId);
-  if (!bondIJ) throw ValueErrorException("atoms i and j must be bonded");
   Bond *bondJK = mol.getBondBetweenAtoms(jAtomId, kAtomId);
   if (!bondJK) throw ValueErrorException("atoms j and k must be bonded");
-  Bond *bondKL = mol.getBondBetweenAtoms(kAtomId, lAtomId);
-  if (!bondKL) throw ValueErrorException("atoms k and l must be bonded");
 
   if (queryIsBondInRing(bondJK))
     throw ValueErrorException("bond (j,k) must not belong to a ring");
