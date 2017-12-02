@@ -3,7 +3,7 @@
 
 ## Acknowledgements:
 Brian Cole, Brian Kelley, Noel O'Boyle, Pavel Polishchuk, Matt Swain,
-Paolo Tosco
+Paolo Tosco, Hsiao Yi
 
 ## Bug Fixes:
   - Add support for %(NNN) notation for ring closures
@@ -24,6 +24,8 @@ Paolo Tosco
  (github issue #1650 from DrrDom)
   - EnumerateLibrary with initFromString called twice doesn't clear the reaction
  (github issue #1657 from bp-kelley)
+  - Add 2017 UGM into README.md
+ (github pull #1660 from hsiaoyi0504)
   - Use numpy not numeric for boost 1.65+ - fixes #1581
  (github pull #1664 from mcs07)
   - Support valence 7 for As, Sb, and Bi
