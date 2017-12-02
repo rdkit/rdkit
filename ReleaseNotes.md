@@ -1,3 +1,35 @@
+# Release_2017.09.2
+(Changes relative to Release_2017.09.1)
+
+## Acknowledgements:
+Brian Cole, Brian Kelley, Noel O'Boyle, Pavel Polishchuk, Matt Swain,
+Paolo Tosco
+
+## Bug Fixes:
+  - Add support for %(NNN) notation for ring closures
+ (github pull #1624 from baoilleach)
+  - Draw._moltoSVG() raises an exception
+ (github issue #1625 from greglandrum)
+  - MolDrawCairo2D does not build on windows
+ (github issue #1627 from greglandrum)
+  - Enable windows build that uses cairo
+ (github pull #1628 from greglandrum)
+  - Make sure EmbedMultipleConfs is deterministic for very large seeds and a seed of 0
+ (github pull #1635 from coleb)
+  - Fixing bug in IPythonConsole SVG rendering introduced in 1027d4469545653180fff9a38dc8224bd50e8b0d
+ (github pull #1641 from coleb)
+  - changes required to allow replacing the obsolete __conda_version__ in conda-rdkit
+ (github pull #1644 from ptosco)
+  - GetConformerRMSMatrix does not work if some conformers were removed
+ (github issue #1650 from DrrDom)
+  - EnumerateLibrary with initFromString called twice doesn't clear the reaction
+ (github issue #1657 from bp-kelley)
+  - Use numpy not numeric for boost 1.65+ - fixes #1581
+ (github pull #1664 from mcs07)
+  - Support valence 7 for As, Sb, and Bi
+ (github issue #1668 from greglandrum)
+
+
 # Release_2017.09.1
 (Changes relative to Release_2017.03.1)
 
