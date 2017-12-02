@@ -6,6 +6,8 @@ Brian Cole, Brian Kelley, Noel O'Boyle, Pavel Polishchuk, Matt Swain,
 Paolo Tosco, Hsiao Yi
 
 ## Bug Fixes:
+  - switch to using a specific freesasa version
+ (github pull #1619 from greglandrum)
   - Add support for %(NNN) notation for ring closures
  (github pull #1624 from baoilleach)
   - Draw._moltoSVG() raises an exception
