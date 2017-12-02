@@ -14,8 +14,13 @@
 
 namespace RDKit {
 namespace CoordGen {
+
+struct CoordGenParams {
+  RDGeom::INT_POINT2D_MAP* coordMap = nullptr;
+};
+
 template <typename T>
-void addCoords(T& mol) {
+void addCoords(T& mol, const CoordGenParams* params = nullptr) {
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
 
@@ -26,6 +31,15 @@ void addCoords(T& mol) {
     atom->molecule = min_mol;  // seems like this should be in addNewAtom()
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
+
+    if (params && params->coordMap &&
+        params->coordMap->find(oatom->getIdx()) != params->coordMap->end()) {
+      atom->constrained = true;
+      atom->templateCoordinates =
+          sketcherMinimizerPointF((*params->coordMap)[oatom->getIdx()].x,
+                                  (*params->coordMap)[oatom->getIdx()].y);
+    }
+
     ats[oatom->getIdx()] = atom;
   }
 
