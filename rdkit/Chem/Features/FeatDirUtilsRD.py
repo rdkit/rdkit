@@ -270,7 +270,7 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
   assert len(nbrs) >= 2
   
   hydrogens = []
-  heavy=[]
+  heavy = []
   for nbr in nbrs:
     if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
