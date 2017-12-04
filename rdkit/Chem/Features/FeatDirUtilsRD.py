@@ -268,22 +268,20 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
   # find the two atoms that are neighbors of this atoms
   nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
   assert len(nbrs) >= 2
-
+  
   hydrogens = []
-  tmp = []
-  while len(nbrs):
-    nbr = nbrs.pop()
+  heavy=[]
+  for nbr in nbrs:
     if nbr.GetAtomicNum() == 1:
       hydrogens.append(nbr)
     else:
-      tmp.append(nbr)
-  nbrs = tmp
+      heavy.append(nbr) 
 
   if len(nbrs) == 2:
     # there should be no hydrogens in this case
     assert len(hydrogens) == 0
     # in this case the direction is the opposite of the average vector of the two neighbors
-    bvec = _findAvgVec(conf, cpt, nbrs)
+    bvec = _findAvgVec(conf, cpt, heavy)
     bvec *= (-1.0 * scale)
     bvec += cpt
     return ((cpt, bvec), ), 'linear'
@@ -304,7 +302,7 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
       return ((cpt, bvec), ), 'linear'
     else:
       # we have a non-planar configuration - we will assume sp3 and compute a second direction vector
-      ovec = _findAvgVec(conf, cpt, nbrs)
+      ovec = _findAvgVec(conf, cpt, heavy)
       ovec *= (-1.0 * scale)
       ovec += cpt
       return ((cpt, bvec),
