@@ -14,6 +14,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 
 #include <RDGeneral/RDLog.h>
 
@@ -101,7 +102,7 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "test2: using templates" << std::endl;
 
   {
-    ROMol* core = SmilesToMol("C1CONCN1");
+    ROMol* core = SmilesToMol("C1CON1");
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
@@ -110,17 +111,25 @@ void test2() {
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
 
-    ROMol* m = SmilesToMol("C1ONC(CCCCCCCCCC)NC1");
+    ROMol* m = SmilesToMol("C1C(CCC)ON1");
     TEST_ASSERT(m);
     m->setProp("_Name", "core+sidechain");
+
+    MatchVectType mv;
+    SubstructMatch(*m, *core, mv);
 
     CoordGen::addCoords(*m);
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
+    {
+      RDGeom::Transform3D trans;
+      double rms =
+          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
+      std::cerr << " trans: " << trans << std::endl;
+      std::cerr << " rms: " << rms << std::endl;
+    }
 
-    MatchVectType mv;
-    SubstructMatch(*m, *core, mv);
     auto coreConf = core->getConformer();
     RDGeom::INT_POINT2D_MAP coordMap;
     for (unsigned int i = 0; i < mv.size(); ++i) {
@@ -135,7 +144,69 @@ void test2() {
     m->setProp("_Name", "templated");
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
+    {
+      RDGeom::Transform3D trans;
+      double rms =
+          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
+      std::cerr << " trans: " << trans << std::endl;
+      std::cerr << " rms: " << rms << std::endl;
+      TEST_ASSERT(rms < .01);
+    }
+    delete m;
+    delete core;
+  }
 
+  {
+    ROMol* core = SmilesToMol("C1CCCCCONCN1");
+    TEST_ASSERT(core);
+    core->setProp("_Name", "core");
+
+    CoordGen::addCoords(*core);
+    TEST_ASSERT(core->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*core);
+    std::cerr << mb << std::endl;
+
+    ROMol* m = SmilesToMol("C1CCCCONC(CC)NC1");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "core+sidechain");
+
+    MatchVectType mv;
+    SubstructMatch(*m, *core, mv);
+
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    {
+      RDGeom::Transform3D trans;
+      double rms =
+          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
+      std::cerr << " trans: " << trans << std::endl;
+      std::cerr << " rms: " << rms << std::endl;
+    }
+
+    auto coreConf = core->getConformer();
+    RDGeom::INT_POINT2D_MAP coordMap;
+    for (unsigned int i = 0; i < mv.size(); ++i) {
+      coordMap[mv[i].second] =
+          RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
+                          coreConf.getAtomPos(mv[i].first).y);
+    }
+    CoordGen::CoordGenParams params;
+    params.coordMap = &coordMap;
+    CoordGen::addCoords(*m, &params);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    m->setProp("_Name", "templated");
+    mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    {
+      RDGeom::Transform3D trans;
+      double rms =
+          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
+      std::cerr << " trans: " << trans << std::endl;
+      std::cerr << " rms: " << rms << std::endl;
+      TEST_ASSERT(rms < .01);
+    }
     delete m;
     delete core;
   }
