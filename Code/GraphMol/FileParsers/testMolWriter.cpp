@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -82,7 +81,9 @@ void testSmilesWriter() {
 void testSmilesWriter2() {
   {
     std::stringstream ss;
-    SmilesWriter *writer = new SmilesWriter(&ss, " ", "Name", false);
+    bool takeOwnership = false, includeHeader = false, isomericSmiles = false;
+    SmilesWriter *writer = new SmilesWriter(&ss, " ", "Name", takeOwnership,
+                                            includeHeader, isomericSmiles);
     RWMol *mol;
 
     mol = SmilesToMol("c1ccccc1");
@@ -99,8 +100,9 @@ void testSmilesWriter2() {
   }
   {
     std::stringstream ss;
-    SmilesWriter *writer =
-        new SmilesWriter(&ss, " ", "Name", false, false, true);
+    bool takeOwnership = false, includeHeader = false, isomericSmiles = true;
+    SmilesWriter *writer = new SmilesWriter(&ss, " ", "Name", takeOwnership,
+                                            includeHeader, isomericSmiles);
     RWMol *mol;
 
     mol = SmilesToMol("c1ccccc1");

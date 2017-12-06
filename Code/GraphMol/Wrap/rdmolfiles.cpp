@@ -712,7 +712,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
-      the SMILES.  Defaults to false.\n\
+      the SMILES.  Defaults to true.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
@@ -730,7 +730,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToSmiles", RDKit::MolToSmiles,
-      (python::arg("mol"), python::arg("isomericSmiles") = false,
+      (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
        python::arg("allHsExplicit") = false),
@@ -750,7 +750,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
                     in the SMILES. This should have be mol.GetNumBonds() long.\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
-      the SMILES.  Defaults to false.\n\
+      the SMILES.  Defaults to true.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
@@ -770,7 +770,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "MolFragmentToSmiles", MolFragmentToSmilesHelper,
       (python::arg("mol"), python::arg("atomsToUse"),
        python::arg("bondsToUse") = 0, python::arg("atomSymbols") = 0,
-       python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = false,
+       python::arg("bondSymbols") = 0, python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
        python::arg("allHsExplicit") = false),
@@ -782,14 +782,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     - mol: the molecule\n\
     - isomericSmiles: (optional) include information about stereochemistry in\n\
-      the SMARTS.  Defaults to false.\n\
+      the SMARTS.  Defaults to true.\n\
 \n\
   RETURNS:\n\
 \n\
     a string\n\
 \n";
   python::def("MolToSmarts", RDKit::MolToSmarts,
-              (python::arg("mol"), python::arg("isomericSmiles") = false),
+              (python::arg("mol"), python::arg("isomericSmiles") = true),
               docString.c_str());
 
   docString =

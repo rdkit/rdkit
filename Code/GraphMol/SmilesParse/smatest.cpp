@@ -2125,7 +2125,5 @@ int main(int argc, char *argv[]) {
   testGithub893();
   testTransuranic();
   testGithub1338();
-  testGithub1472();
-
   return 0;
 }

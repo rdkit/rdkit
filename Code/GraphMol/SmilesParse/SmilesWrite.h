@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -61,7 +61,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx = -1,
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
  */
-std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = false,
+std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                         bool doKekule = false, int rootedAtAtom = -1,
                         bool canonical = true, bool allBondsExplicit = false,
                         bool allHsExplicit = false);
@@ -94,7 +94,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
                                 const std::vector<int> *bondsToUse = 0,
                                 const std::vector<std::string> *atomSymbols = 0,
                                 const std::vector<std::string> *bondSymbols = 0,
-                                bool doIsomericSmiles = false,
+                                bool doIsomericSmiles = true,
                                 bool doKekule = false, int rootedAtAtom = -1,
                                 bool canonical = true,
                                 bool allBondsExplicit = false,
