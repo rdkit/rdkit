@@ -195,7 +195,8 @@ ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
   std::istringstream inStream(pyObjectToString(molBlock));
   RWMol *newM = nullptr;
   try {
-    newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor, proximityBonding);
+    newM = PDBDataStreamToMol(inStream, sanitize, removeHs, flavor,
+                              proximityBonding);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.message() << std::endl;
   } catch (...) {
@@ -239,16 +240,16 @@ std::string MolFragmentToSmilesHelper(
     python::object atomSymbols, python::object bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
-  rdk_auto_ptr<std::vector<int> > avect =
+  rdk_auto_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  rdk_auto_ptr<std::vector<int> > bvect =
+  rdk_auto_ptr<std::vector<int>> bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  rdk_auto_ptr<std::vector<std::string> > asymbols =
+  rdk_auto_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  rdk_auto_ptr<std::vector<std::string> > bsymbols =
+  rdk_auto_ptr<std::vector<std::string>> bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
@@ -281,16 +282,16 @@ std::vector<int> CanonicalRankAtomsInFragment(const ROMol &mol,
                                               bool breakTies = true)
 
 {
-  rdk_auto_ptr<std::vector<int> > avect =
+  rdk_auto_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
     throw_value_error("atomsToUse must not be empty");
   }
-  rdk_auto_ptr<std::vector<int> > bvect =
+  rdk_auto_ptr<std::vector<int>> bvect =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
-  rdk_auto_ptr<std::vector<std::string> > asymbols =
+  rdk_auto_ptr<std::vector<std::string>> asymbols =
       pythonObjectToVect<std::string>(atomSymbols);
-  rdk_auto_ptr<std::vector<std::string> > bsymbols =
+  rdk_auto_ptr<std::vector<std::string>> bsymbols =
       pythonObjectToVect<std::string>(bondSymbols);
   if (asymbols.get() && asymbols->size() != mol.getNumAtoms()) {
     throw_value_error("length of atom symbol list != number of atoms");
@@ -327,7 +328,7 @@ ROMol *MolFromSmilesHelper(python::object ismiles,
                            const SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
-  return SmilesToMol(smiles,params);
+  return SmilesToMol(smiles, params);
 }
 }
 
@@ -588,7 +589,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a string\n\
 \n";
   python::def("MolToMolBlock", RDKit::MolToMolBlock,
-              (python::arg("mol"), python::arg("includeStereo") = false,
+              (python::arg("mol"), python::arg("includeStereo") = true,
                python::arg("confId") = -1, python::arg("kekulize") = true,
                python::arg("forceV3000") = false),
               docString.c_str());
@@ -614,29 +615,27 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def(
       "MolToMolFile", RDKit::MolToMolFile,
       (python::arg("mol"), python::arg("filename"),
-       python::arg("includeStereo") = false, python::arg("confId") = -1,
+       python::arg("includeStereo") = true, python::arg("confId") = -1,
        python::arg("kekulize") = true, python::arg("forceV3000") = false),
       docString.c_str());
 
   python::class_<RDKit::SmilesParserParams, boost::noncopyable>(
       "SmilesParserParams", "Parameters controlling SMILES Parsing")
-      .def_readwrite("maxIterations",
-                     &RDKit::SmilesParserParams::debugParse,
+      .def_readwrite("maxIterations", &RDKit::SmilesParserParams::debugParse,
                      "controls the amount of debugging information produced")
-     .def_readwrite("parseName",
-                    &RDKit::SmilesParserParams::parseName,
-                    "controls whether or not the molecule name is also parsed")
-      .def_readwrite("allowCXSMILES",
-                     &RDKit::SmilesParserParams::allowCXSMILES,
-                     "controls whether or not the CXSMILES extensions are parsed")
-       .def_readwrite("sanitize",
-                      &RDKit::SmilesParserParams::sanitize,
-                      "controls whether or not the molecule is sanitized before being returned")
-      .def_readwrite("removeHs",
-                     &RDKit::SmilesParserParams::removeHs,
-                     "controls whether or not Hs are removed before the molecule is returned");
-     docString =
-         "Construct a molecule from a SMILES string.\n\n\
+      .def_readwrite("parseName", &RDKit::SmilesParserParams::parseName,
+                     "controls whether or not the molecule name is also parsed")
+      .def_readwrite(
+          "allowCXSMILES", &RDKit::SmilesParserParams::allowCXSMILES,
+          "controls whether or not the CXSMILES extensions are parsed")
+      .def_readwrite("sanitize", &RDKit::SmilesParserParams::sanitize,
+                     "controls whether or not the molecule is sanitized before "
+                     "being returned")
+      .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
+                     "controls whether or not Hs are removed before the "
+                     "molecule is returned");
+  docString =
+      "Construct a molecule from a SMILES string.\n\n\
      ARGUMENTS:\n\
    \n\
        - SMILES: the smiles string\n\
@@ -647,13 +646,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
    \n\
        a Mol object, None on failure.\n\
    \n";
-   python::def("MolFromSmiles",
-               MolFromSmilesHelper,
-               (python::arg("SMILES"), python::arg("params")),
-               docString.c_str(),
-               python::return_value_policy<python::manage_new_object>());
-
-
+  python::def("MolFromSmiles", MolFromSmilesHelper,
+              (python::arg("SMILES"), python::arg("params")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from a SMILES string.\n\n\
