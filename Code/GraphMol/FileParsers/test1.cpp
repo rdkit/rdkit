@@ -4280,7 +4280,7 @@ void testPDBResidues() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false);
 
     TEST_ASSERT(res.size() == 22);
@@ -4306,7 +4306,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
     TEST_ASSERT(res.size() == 1);
@@ -4331,7 +4331,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
     TEST_ASSERT(res.size() == 21);
@@ -4877,6 +4877,27 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolBlockChirality() {
+  BOOST_LOG(rdInfoLog)
+      << "Test automatic generation of coordinates for mol block chirality "
+      << std::endl;
+  {
+    std::string smi = "C[C@H](Cl)Br";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    auto mb = MolToMolBlock(*mol, true);
+    auto mol2 = MolBlockToMol(mb);
+    TEST_ASSERT(mol2);
+    auto csmi1 = MolToSmiles(*mol, true);
+    auto csmi2 = MolToSmiles(*mol2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete mol;
+    delete mol2;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4970,6 +4991,7 @@ void RunTests() {
 #endif
   testGithub1029();
   testGithub1340();
+  testMolBlockChirality();
 }
 
 // must be in German Locale for test...
