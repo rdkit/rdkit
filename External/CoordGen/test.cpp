@@ -138,7 +138,7 @@ void test2() {
                           coreConf.getAtomPos(mv[i].first).y);
     }
     CoordGen::CoordGenParams params;
-    params.coordMap = &coordMap;
+    params.coordMap = coordMap;
     CoordGen::addCoords(*m, &params);
     TEST_ASSERT(m->getNumConformers() == 1);
     m->setProp("_Name", "templated");
@@ -193,7 +193,7 @@ void test2() {
                           coreConf.getAtomPos(mv[i].first).y);
     }
     CoordGen::CoordGenParams params;
-    params.coordMap = &coordMap;
+    params.coordMap = coordMap;
     CoordGen::addCoords(*m, &params);
     TEST_ASSERT(m->getNumConformers() == 1);
     m->setProp("_Name", "templated");
@@ -248,7 +248,7 @@ void test2() {
                           coreConf.getAtomPos(mv[i].first).y);
     }
     CoordGen::CoordGenParams params;
-    params.coordMap = &coordMap;
+    params.coordMap = coordMap;
     CoordGen::addCoords(*m, &params);
     TEST_ASSERT(m->getNumConformers() == 1);
     m->setProp("_Name", "templated");
