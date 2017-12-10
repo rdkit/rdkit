@@ -23,5 +23,5 @@ FastCluster
 
 - $ python fastcluster.py { inputfile } { number of clusters }
 - Example usage
--- $ ptyhon fast cluster.py cdk2.smi 5 # clustering 47 compounds to 5 clusters.
++ $ ptyhon fast cluster.py cdk2.smi 5 # clustering 47 compounds to 5 clusters.
 
