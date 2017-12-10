@@ -47,4 +47,4 @@ molid4 \t point \t clusterID4 \n
 
 ## Memo
 
-- It will need more cpu time compare with directly using bayon. Because this script convet smiles to fingerprint dataset.
+- It will need more cpu time compare with directly using bayon. Because this script convet smiles to fingerprint dataset at first then perform clustering.
