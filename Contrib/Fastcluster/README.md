@@ -2,11 +2,11 @@ FastCluster
 ============
 
 
-## This is simple work flow for clustering molecules
+## This is simple workflow for clustering molecules
 
 - Author: iwatobipen
 - Date: 201712010
-- Current version use Morgan FP rad2 is used for clustering
+- Current version uses Morgan FP; rad2 is used for clustering
 
 ## Requirements
 
@@ -16,7 +16,7 @@ FastCluster
 
 ## Description
 
-- User need to install bayon at frist, and can found tutorial in following URL. https://github.com/fujimizu/bayon/wiki/Tutorial_English
+- Users need to install bayon at first, and can find tutorial at following URL. https://github.com/fujimizu/bayon/wiki/Tutorial_English
 - Also it is needed to install RDKit for parsing SMILES.
 - That's all!
 
@@ -25,7 +25,7 @@ FastCluster
 - input file format is tab delimited text format, "SMILES" \t "ID" \n .....
 - $ python fastcluster.py { inputfile } { number of clusters }
 - Example usage
-- $ ptyhon fast cluster.py cdk2.smi 5 # clustering 47 compounds to 5 clusters.
+- $ ptyhon fastcluster.py cdk2.smi 5 # clustering 47 compounds to 5 clusters.
 ```
 Fastcluster iwatobipen$ python fastcluster.py cdk2.smi 5
 
@@ -46,7 +46,7 @@ cluster_2 \t molid4 \t point \t molid5 \t point ... \n
 ....
 ```
 
-- cluser_parse.tsv is ractangle format of cluster.tsv
+- cluser_parse.tsv is rectangle format of cluster.tsv
 ```
 molid1 \t point \t clusterID1 \n
 molid2 \t point \t clusterID2 \n
@@ -57,4 +57,4 @@ molid4 \t point \t clusterID4 \n
 
 ## Memo
 
-- It will need more cpu time compare with directly using bayon. Because this script convet smiles to fingerprint dataset at first then perform clustering.
+- It will need more cpu time compared with directly using bayon. Because this script converts smiles to fingerprint dataset at first then performs clustering.
