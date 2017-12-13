@@ -3938,13 +3938,14 @@ void testSmilesParseParams() {
   {  // basic name parsing
     std::string smiles = "CCCC the_name";
     ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(!m);
-    {  // no removeHs, no sanitization
+    TEST_ASSERT(m);
+    {  // it's ignored
       SmilesParserParams params;
       m = SmilesToMol(smiles, params);
-      TEST_ASSERT(!m);
+      TEST_ASSERT(m);
+      TEST_ASSERT(!m->hasProp(common_properties::_Name));
     }
-    {  // no removeHs, no sanitization
+    {
       SmilesParserParams params;
       params.parseName = true;
       m = SmilesToMol(smiles, params);

@@ -4252,8 +4252,11 @@ CAS<~>
   def testSmilesParseParams(self):
     smi = "CCC |$foo;;bar$| ourname"
     m = Chem.MolFromSmiles(smi)
-    self.assertTrue(m is None)
+    self.assertTrue(m is not None)
     ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = False
+    m = Chem.MolFromSmiles(smi,ps)
+    self.assertTrue(m is None)
     ps.allowCXSMILES = True
     ps.parseName = True
     m = Chem.MolFromSmiles(smi,ps)
