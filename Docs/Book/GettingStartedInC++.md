@@ -112,7 +112,7 @@ standard also has `shared_ptr` and `scoped_ptr` in the standard
 namespace (essentially, they've adopted the boost libraries).  As I
 discovered the hard way, if you put `using namespace boost` and `using
 namespace std` at the top of your source file (and let's face it, who
-doesn't?), and use the unqualified name `shared_ptr` in your 
+doesn't?), and use the unqualified name `shared_ptr` in your
 code, then, when you start using C++11, you'll have to go all through
 your code explicitly stating whether you're using `std::shared_ptr` or
 `boost::shared_ptr`.  Worth getting in the habit now!
@@ -157,10 +157,10 @@ failure. Obviously, the object must be deleted when finished with to
 prevent memory leaks. In the example above, and henceforth in this
 document, the molecules, apart from mol1, are wrapped in shared
 pointers so that the objects are deleted as soon as the shared pointer
-goes out of scope. 
+goes out of scope.
 
 If the molecule can't be sanitized after SMILES parsing, an
-`RDKit::MolSanitizeException` (derived 
+`RDKit::MolSanitizeException` (derived
 from `std::exception`) is thrown, and an attempt is made to provide
 sensible error messages [(example1)](./C++Examples/example1.cpp):
 
@@ -277,7 +277,7 @@ and a compile-time error will result if you attempt to [(example2)](./C++Example
 
 ```
 error: no match for ‘operator[]’ (operand types are
-‘RDKit::ForwardSDMolSupplier’ and ‘int’) 
+‘RDKit::ForwardSDMolSupplier’ and ‘int’)
    mol = forward_supplier[1];
 ```
 
@@ -297,19 +297,19 @@ std::cout << RDKit::MolToSmiles( *mol ) << std::endl;
 ```
 gives
 ```
-CC(O)c1ccccc1
+C[C@H](O)c1ccccc1
 ```
 and [(example3)](./C++Examples/example3.cpp)
 ```c++
-bool isomeric = true;
+bool isomeric = false;
 std::cout << RDKit::MolToSmiles( *mol , isomeric ) << std::endl;
 ```
 produces
 ```
-C[C@H](O)c1ccccc1
+CC(O)c1ccccc1
 ```
 where the `isomeric` in the second function call specifies that isomeric
-SMILES should be produced.
+SMILES should not be produced.
 Note that the SMILES produced is canonical, so the output should be
 the same no matter how a particular molecule is input.  For example
 [(example3)](./C++Examples/example3.cpp)
@@ -337,11 +337,11 @@ MolOps.h [(example3)](./C++Examples/example3.cpp):
 .
 RDKit::RWMOL_SPTR mol4( new RDKit::RWMol( *mol ) );
 RDKit::MolOps::Kekulize( *mol4 );
-std::cout << RDKit::MolToSmiles( *mol4 ) << std::endl;
+std::cout << RDKit::MolToSmiles( *mol4, true, true ) << std::endl;
 ```
 gives
 ```
-CC(O)C1=CC=CC=C1
+C[C@H](O)C1=CC=CC=C1
 ```
 
 Note: as of March 2017, the SMILES provided when one
@@ -357,15 +357,15 @@ std::cout << RDKit::MolToMolBlock( *mol1 ) << std::endl;
 gives
 ```
 
-    RDKit
-	
+     RDKit          2D
+
   6  6  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  2  0
   2  3  1  0
   3  4  2  0
@@ -377,7 +377,7 @@ M  END
 
 To include names in the mol blocks, set the molecule's “\_Name”
 property [(example3)](./C++Examples/example3.cpp):
-  
+
 ```c++
 mol1 = RDKit::SmilesToMol( "C1CCC1" );
 mol1->setProp( "_Name" , "cyclobutane" );
@@ -386,12 +386,13 @@ std::cout << RDKit::MolToMolBlock( *mol1 ) << std::endl;
 gives
 ```
 cyclobutane
-     RDKit
+     RDKit          2D
+
   4  4  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -404,8 +405,11 @@ ROMol as well as an RWMol, which came as a surprise to me as I had
 assumed a read-only molecule would be less changeable than that.
 
 In order for atom or bond stereochemistry to be recognised correctly by most
-software, it's essential that the Mol block have atomic coordinates.
+software, it's essential that the mol block have atomic coordinates.
 It's also convenient for many reasons, such as drawing the molecules.
+Generating a mol block for a molecule that does not have coordinates will, by
+default, automatically cause coordinates to be generated. These are not,
+however, stored with the molecule.
 
 You can either include 2D coordinates (i.e. a depiction), using the
 function in the RDDepict namespace and declared in RDDepictor.h
@@ -605,7 +609,7 @@ can be selected by index number
 [(example6)](./C++Examples/example6.cpp):
 ```c++
 for( unsigned int i = 0 , is = mol->getNumAtoms() ; i < is ; ++i ) {
-  const RDKit::Atom *atom = mol->getAtomWithIdx( i ); 
+  const RDKit::Atom *atom = mol->getAtomWithIdx( i );
   std::cout << atom->getAtomicNum() << std::endl;
 }
 ```
@@ -742,7 +746,7 @@ for( auto it1 = rings.begin() , it1_end = rings.end() ; it1 != it1_end ; ++it1 )
 gives
 ```
 Number of symmetric SSSR rings : 2
-1 2 3 
+1 2 3
 4 5 2 3
 ```
 As the name suggests, this is a symmetrized SSSR; if you are
@@ -766,7 +770,7 @@ implicit (i.e. not explicitly present in the molecular graph).  When
 it is useful to have the hydrogens explicitly present, for example
 when generating or optimizing the 3D geometry, the
 `RDKit::MolOps::addHs` function can be used
-[(example8)](./C++Examples/example8.cpp). 
+[(example8)](./C++Examples/example8.cpp).
 ```c++
 RDKit::ROMOL_SPTR mol1( RDKit::SmilesToMol( "CCO" ) );
 std::cout << "Number of atoms : " << mol1->getNumAtoms() << std::endl;
@@ -816,7 +820,7 @@ currently has the value 12.
 Note that by default the Kekulize function clears the aromatic flags
 on the atoms and bonds. **This is in contrast to the Python version of
 Kekulize, which preserves the flags by default.**  The behaviour can be
-forced explicitly [(example9.cpp)](./C++Examples/example9.cpp): 
+forced explicitly [(example9.cpp)](./C++Examples/example9.cpp):
 ```c++
 RDKit::RWMOL_SPTR mol1( new RDKit::RWMol( *RDKit::SmilesToMol( "c1ccccc1" ) ) );
 RDKit::MolOps::Kekulize( *mol1 , false );
@@ -923,19 +927,19 @@ methods.  The original method uses distance geometry [[1]](#blaney).
 The algorithm followed is:
 
 1. The molecule's distance bounds matrix is calculated based on the
-   connection table and a set of rules. 
+   connection table and a set of rules.
 
 2. The bounds matrix is smoothed using a triangle-bounds smoothing
-   algorithm. 
+   algorithm.
 
 3. A random distance matrix that satisfies the bounds matrix is
-   generated. 
+   generated.
 
 4. This distance matrix is embedded in 3D dimensions (producing
-   coordinates for each atom). 
+   coordinates for each atom).
 
 5. The resulting coordinates are cleaned up somewhat using a crude
-   force field and the bounds matrix. 
+   force field and the bounds matrix.
 
 Note that the conformations that result from this procedure tend to be
 fairly ugly. They should be cleaned up using a force field.
@@ -1043,7 +1047,7 @@ Note the somewhat inconvenient issue that `EmbedMultipleConfs` returns
 a vector of `ints` for the conformer ids, but `alignMolConformers`
 requires a vector of `unsigned ints`. The reason for this is that
 `EmbedMultipleConfs` uses -1 to denote a failed embedding.  The first
-vector of `unsigned 
+vector of `unsigned
 ints` in the `alignMolConformers` declaration is atom ids, and allows
 the alignment to be performed on just a subset of atoms which can be
 convenient for overlaying a core and seeing how the other bits of the
@@ -1392,7 +1396,7 @@ is. The atom lists from GetSubstructureMatches are guaranteed to be in
 order of the SMARTS, but in this case we’ll get five atoms so we need
 a way of picking out, in the correct order, the four of interest. When
 the SMARTS is parsed, the relevant atoms are assigned an atom map
-number property that we can easily extract: 
+number property that we can easily extract:
 [(example16.cpp)](./C++Examples/example16.cpp):
 ```c++
 RDKit::RWMol *patt1 = RDKit::SmartsToMol( "[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]" );
@@ -1460,14 +1464,14 @@ SSSR count, not the potentially non-unique set of rings.
 ## Footnotes
 1. <a name="blaney"></a>Blaney, J. M.; Dixon, J. S. "Distance Geometry
 in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH:
-New York, 1994. 
+New York, 1994.
 2. <a name="rappe"></a>Rappé, A. K.; Casewit, C. J.; Colwell, K. S.;
 Goddard III, W. A.; Skiff, W. M. "UFF, a full periodic table force
 field for molecular mechanics and molecular dynamics
-simulations". *J. Am. Chem. Soc.* **114**:10024-35 (1992) . 
+simulations". *J. Am. Chem. Soc.* **114**:10024-35 (1992) .
 3. <a name="riniker2"></a>Riniker, S.; Landrum, G. A. "Better Informed
 Distance Geometry: Using What We Know To Improve Conformation
-Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) 
+Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015)
 4. <a name="mmff1"></a>Halgren, T. A. "Merck molecular force
 field. I. Basis, form, scope, parameterization, and performance of
 MMFF94." *J. Comp. Chem.* **17**:490–19 (1996).
@@ -1476,13 +1480,13 @@ field. II. MMFF94 van der Waals and electrostatic parameters for
 intermolecular interactions." *J. Comp. Chem.* **17**:520–52 (1996).
 6. <a name="mmff3"></a>Halgren, T. A. "Merck molecular force
 field. III. Molecular geometries and vibrational frequencies for
-MMFF94." *J. Comp. Chem.* **17**:553–86 (1996). 
+MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
 7. <a name="mmff4"></a>Halgren, T. A. & Nachbar, R. B. "Merck
 molecular force field. IV. conformational energies and geometries
-for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996). 
+for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
 8. <a name="mmffs"></a>Halgren, T. A. "MMFF VI. MMFF94s option for
 energy minimization studies." *J. Comp. Chem.* **20**:720–9
-(1999). 
+(1999).
 9. <a name="guba"></a>Guba, W.; Meyder, A.; Rarey, M.; Hert,
 J. "Torsion Library Reloaded: A New Version of Expert-Derived
 SMARTS Rules for Assessing Conformations of Small
