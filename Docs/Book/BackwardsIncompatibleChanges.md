@@ -10,12 +10,8 @@ In earlier releases, if you wanted to include information about stereochemistry 
 ### `MolToMolBlock()` generates a 2D conformation when the `includeStereo` flag is set
 If you want to capture stereochemistry in Mol blocks, it's necessary to have coordinates in the output. Earlier versions of the RDKit required you to remember to generate coordinates yourself. This is now done by default for molecules that don't have a conformation when `includeStereo` is set.
 
-### The conformation generation code now defaults to use ETKDG
+### The conformation generation code now uses ETKDG by default
 Earlier RDKit releases would, by default, generate conformations using standard distance geometry. The new default is to use Sereina Riniker's ETKDG algorithm, which is a bit slower but which has been shown to generate much better results.
-
-## Footnotes
-
-
 
 ## License
 
