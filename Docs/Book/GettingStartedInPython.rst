@@ -200,7 +200,7 @@ M  END
 <BLANKLINE>
 
 In order for atom or bond stereochemistry to be recognised correctly by most
-software, it's essential that the Mol block have atomic coordinates.
+software, it's essential that the mol block have atomic coordinates.
 It's also convenient for many reasons, such as drawing the molecules.
 Generating a mol block for a molecule that does not have coordinates will, by
 default, automatically cause coordinates to be generated. These are not,
