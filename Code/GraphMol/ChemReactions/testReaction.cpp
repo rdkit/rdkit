@@ -4731,9 +4731,10 @@ void test49ParensInProducts2() {
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 11);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 11);
 
-    smi = "CCCOc1ccn(c1)NC";
-    std::cerr << MolToSmiles(*prods[0][0]) << std::endl;
-    TEST_ASSERT(MolToSmiles(*prods[0][0]) == smi);
+    smi = "CCCOc1ccn(NC)c1";
+    RWMol *p00 = static_cast<RWMol *>(prods[0][0].get());
+    MolOps::sanitizeMol(*p00);
+    TEST_ASSERT(MolToSmiles(*p00) == smi);
 
     delete rxn;
   }
