@@ -139,9 +139,9 @@ For example, for SMILES:
 
 >>> m = Chem.MolFromMolFile('data/chiral.mol')
 >>> Chem.MolToSmiles(m)
-'CC(O)c1ccccc1'
->>> Chem.MolToSmiles(m,isomericSmiles=True)
 'C[C@H](O)c1ccccc1'
+>>> Chem.MolToSmiles(m,isomericSmiles=False)
+'CC(O)c1ccccc1'
 
 Note that the SMILES provided is canonical, so the output should be the same no matter how a particular molecule is input:
 
@@ -156,7 +156,7 @@ If you'd like to have the Kekule form of the SMILES, first Kekulize the molecule
 
 >>> Chem.Kekulize(m)
 >>> Chem.MolToSmiles(m,kekuleSmiles=True)
-'CC(O)C1=CC=CC=C1'
+'C[C@H](O)C1=CC=CC=C1'
 
 Note: as of this writing (Aug 2008), the smiles provided when one requests kekuleSmiles are not canonical.
 The limitation is not in the SMILES generation, but in the kekulization itself.
@@ -166,13 +166,13 @@ MDL Mol blocks are also available:
 >>> m2 = Chem.MolFromSmiles('C1CCC1')
 >>> print(Chem.MolToMolBlock(m2))    # doctest: +NORMALIZE_WHITESPACE
 <BLANKLINE>
-     RDKit
+     RDKit          2D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -185,13 +185,13 @@ To include names in the mol blocks, set the molecule's “_Name” property:
 >>> m2.SetProp("_Name","cyclobutane")
 >>> print(Chem.MolToMolBlock(m2))     # doctest: +NORMALIZE_WHITESPACE
 cyclobutane
-     RDKit
+     RDKit          2D
 <BLANKLINE>
   4  4  0  0  0  0  0  0  0  0999 V2000
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0
   2  3  1  0
   3  4  1  0
@@ -202,8 +202,11 @@ M  END
 In order for atom or bond stereochemistry to be recognised correctly by most
 software, it's essential that the Mol block have atomic coordinates.
 It's also convenient for many reasons, such as drawing the molecules.
-Coordinates can be generated using functionality in the
-:api:`rdkit.Chem.AllChem` module (see the `Chem vs AllChem`_ section for
+Generating a mol block for a molecule that does not have coordinates will, by
+default, automatically cause coordinates to be generated. These are not,
+however, stored with the molecule.
+Coordinates can be generated and stored with the molecule using functionality
+in the :api:`rdkit.Chem.AllChem` module (see the `Chem vs AllChem`_ section for
 more information).
 
 You can either include 2D coordinates (i.e. a depiction):
@@ -577,7 +580,7 @@ Note the calls to `Chem.AddHs()` in the examples above. By default
 RDKit molecules do not have H atoms explicitly present in the graph,
 but they are important for getting realistic geometries, so they
 generally should be added.  They can always be removed afterwards
-if necessary with a call to `Chem.RemoveHs()`. 
+if necessary with a call to `Chem.RemoveHs()`.
 
 With the RDKit, multiple conformers can also be generated using the two
 different embedding methods. In both cases this is simply a matter of
@@ -879,17 +882,12 @@ as well as simple SAR-table transformations like removing side chains:
 >>> core = Chem.MolFromSmiles('c1cncnc1')
 >>> tmp = Chem.ReplaceSidechains(m1,core)
 >>> Chem.MolToSmiles(tmp)
-'[*]c1cncnc1[*]'
+'[1*]c1cncnc1[2*]'
 
 and removing cores:
 
 >>> tmp = Chem.ReplaceCore(m1,core)
 >>> Chem.MolToSmiles(tmp)
-'[*]C(=O)O.[*]CCBr'
-
-To get more detail about the sidechains (e.g. sidechain labels), use isomeric smiles:
-
->>> Chem.MolToSmiles(tmp,True)
 '[1*]CCBr.[2*]C(=O)O'
 
 By default the sidechains are labeled based on the order they are found.
@@ -897,7 +895,7 @@ They can also be labeled according by the number of that core-atom they're attac
 
 >>> m1 = Chem.MolFromSmiles('c1c(CCO)ncnc1C(=O)O')
 >>> tmp=Chem.ReplaceCore(m1,core,labelByIndex=True)
->>> Chem.MolToSmiles(tmp,True)
+>>> Chem.MolToSmiles(tmp)
 '[1*]CCO.[5*]C(=O)O'
 
 :api:`rdkit.Chem.rdmolops.ReplaceCore` returns the sidechains in a single molecule.
@@ -906,9 +904,9 @@ This can be split into separate molecules using :api:`rdkit.Chem.rdmolops.GetMol
 >>> rs = Chem.GetMolFrags(tmp,asMols=True)
 >>> len(rs)
 2
->>> Chem.MolToSmiles(rs[0],True)
+>>> Chem.MolToSmiles(rs[0])
 '[1*]CCO'
->>> Chem.MolToSmiles(rs[1],True)
+>>> Chem.MolToSmiles(rs[1])
 '[5*]C(=O)O'
 
 
@@ -2191,7 +2189,7 @@ More complex transformations can be carried out using the
 The RWMol can be used just like an ROMol:
 
 >>> Chem.MolToSmiles(mw)
-'O=CC1C=CC=CN=1'
+'O=CC1=NC=CC=C1'
 >>> Chem.SanitizeMol(mw)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(mw)
