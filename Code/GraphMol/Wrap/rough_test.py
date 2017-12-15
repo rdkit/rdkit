@@ -4480,6 +4480,34 @@ M  END
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)),0)
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)),0)
 
+
+  def testGithub1622(self):
+      nonaromatics = (
+      "C1=C[Se]C=C1",   # not outside the second rows
+      "C1=C[N]C=C1",    # radicals are not two electron donors
+      "O=C1C=CNC=C1",   # exocyclic double bonds don't steal electrons
+      "C1=CS(=O)C=C1",  # not sure how to classify this example from the
+                        # OEChem docs
+      "C1#CC=CC=C1"     # benzyne
+      )
+      for smi in nonaromatics:
+          m = Chem.MolFromSmiles(smi,sanitize=False)
+          Chem.SanitizeMol(m,Chem.SANITIZE_ALL^Chem.SANITIZE_SETAROMATICITY)
+          Chem.SetAromaticity(m,Chem.AROMATICITY_MDL)
+          self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+      aromatics = (
+      "C1=CC=CC=C1",         # benzene, of course
+      "C1=COC=C1",           # furan
+      "C1=CSC=C1",           # thiophene
+      "C1=CC2=CC=CC=CC2=C1"  # azulene
+      )
+      for smi in aromatics:
+          m = Chem.MolFromSmiles(smi,sanitize=False)
+          Chem.SanitizeMol(m,Chem.SANITIZE_ALL^Chem.SANITIZE_SETAROMATICITY)
+          Chem.SetAromaticity(m,Chem.AROMATICITY_MDL)
+          self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
