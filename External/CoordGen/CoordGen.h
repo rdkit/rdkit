@@ -30,7 +30,7 @@ struct CoordGenParams {
 static CoordGenParams defaultParams;
 
 template <typename T>
-void addCoords(T& mol, const CoordGenParams* params = nullptr) {
+unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   double scaleFactor = defaultParams.coordgenScaling;
   if (params) scaleFactor = params->coordgenScaling;
 
@@ -138,7 +138,7 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
   conf->set3D(false);
   mol.clearConformers();
-  mol.addConformer(conf, true);
+  return (mol.addConformer(conf, true));
 }
 }  // end of namespace CoordGen
 }  // end of namespace RDKit

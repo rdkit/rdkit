@@ -19,7 +19,7 @@
 #include <RDGeneral/RDLog.h>
 
 #include "coordgenlibs/sketcherMinimizer.h"
-#include "CoordGen.h"
+#include <CoordGen/CoordGen.h>
 
 using namespace RDKit;
 
@@ -32,7 +32,7 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "test1");
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -45,7 +45,7 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "test2");
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -61,7 +61,7 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "cyclosporine a");
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -75,7 +75,7 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "single-double");
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -88,7 +88,7 @@ void test1() {
     TEST_ASSERT(m);
     m->setProp("_Name", "cis-trans");
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     auto mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -136,7 +136,7 @@ void test2() {
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
-    CoordGen::addCoords(*core);
+    TEST_ASSERT(CoordGen::addCoords(*core) == 0);
     TEST_ASSERT(core->getNumConformers() == 1);
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
@@ -148,7 +148,7 @@ void test2() {
     MatchVectType mv;
     SubstructMatch(*m, *core, mv);
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -165,7 +165,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
       params.dbg_useFixed = true;
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
       // mb = MolToMolBlock(*m);
@@ -176,7 +176,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
       params.dbg_useFixed = true;
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
       mb = MolToMolBlock(*m);
@@ -192,7 +192,7 @@ void test2() {
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
-    CoordGen::addCoords(*core);
+    TEST_ASSERT(CoordGen::addCoords(*core) == 0);
     TEST_ASSERT(core->getNumConformers() == 1);
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
@@ -204,7 +204,7 @@ void test2() {
     MatchVectType mv;
     SubstructMatch(*m, *core, mv);
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -221,8 +221,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
       params.dbg_useFixed = true;
-
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
       // mb = MolToMolBlock(*m);
@@ -233,7 +232,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
       params.dbg_useFixed = true;
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
       mb = MolToMolBlock(*m);
@@ -250,7 +249,7 @@ void test2() {
     TEST_ASSERT(core);
     core->setProp("_Name", "core");
 
-    CoordGen::addCoords(*core);
+    TEST_ASSERT(CoordGen::addCoords(*core) == 0);
     TEST_ASSERT(core->getNumConformers() == 1);
     auto mb = MolToMolBlock(*core);
     std::cerr << mb << std::endl;
@@ -262,7 +261,7 @@ void test2() {
     MatchVectType mv;
     SubstructMatch(*m, *core, mv);
 
-    CoordGen::addCoords(*m);
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
@@ -280,7 +279,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
       params.dbg_useFixed = true;
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
       // mb = MolToMolBlock(*m);
@@ -291,7 +290,7 @@ void test2() {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
       params.dbg_useFixed = true;
-      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(CoordGen::addCoords(*m, &params) == 0);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
       mb = MolToMolBlock(*m);

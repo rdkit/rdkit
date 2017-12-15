@@ -15,7 +15,7 @@
 #include <boost/python/list.hpp>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
-#include <CoordGen.h>
+#include <CoordGen/CoordGen.h>
 
 namespace python = boost::python;
 
