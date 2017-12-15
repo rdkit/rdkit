@@ -42,7 +42,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     install(TARGETS coordgenlib DESTINATION ${RDKit_LibDir})
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    set(COORDGEN_LIBS coordgenlib maeparser )
+    set(RDK_COORDGEN_LIBS MolAlign coordgenlib maeparser CACHE STRING "the external libraries" FORCE)
     rdkit_headers(CoordGen.h DEST GraphMol)
 
     if(RDK_BUILD_PYTHON_WRAPPERS)
@@ -51,7 +51,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     rdkit_test(testCoordGen test.cpp
       LINK_LIBRARIES
-      ${COORDGEN_LIBS}
+      ${RDK_COORDGEN_LIBS}
       MolAlign FileParsers SmilesParse SubstructMatch GraphMol
       RDGeneral DataStructs RDGeneral RDGeometryLib
       ${RDKit_THREAD_LIBS})

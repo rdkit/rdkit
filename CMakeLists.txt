@@ -69,10 +69,6 @@ if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   endif(NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(RDK_BUILD_COORDGEN_SUPPORT)
-    add_definitions(-DBUILD_COORDGEN_SUPPORT)
-endif()
-
 include(TestBigEndian)
 TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
 
@@ -107,6 +103,14 @@ endif(RDK_INSTALL_INTREE)
 if(RDK_BUILD_SWIG_WRAPPERS)
   set(RDKit_JavaLibDir "${RDKit_ExternalDir}/java_lib")
 endif(RDK_BUILD_SWIG_WRAPPERS)
+
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+    add_definitions(-DBUILD_COORDGEN_SUPPORT)
+    include_directories(${RDKit_ExternalDir})
+endif()
+
+
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
