@@ -10,6 +10,8 @@
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+
 #include "coordgenlibs/sketcherMinimizer.h"
 
 namespace RDKit {
@@ -17,12 +19,22 @@ namespace CoordGen {
 
 struct CoordGenParams {
   RDGeom::INT_POINT2D_MAP coordMap;
+  const ROMol* templateMol = nullptr;
 };
 
 template <typename T>
 void addCoords(T& mol, const CoordGenParams* params = nullptr) {
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
+
+  bool hasTemplateMatch = false;
+  MatchVectType mv;
+  if (params && params->templateMol &&
+      params->templateMol->getNumConformers() == 1) {
+    if (SubstructMatch(mol, *(params->templateMol), mv)) {
+      hasTemplateMatch = true;
+    }
+  }
 
   std::vector<sketcherMinimizerAtom*> ats(mol.getNumAtoms());
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
@@ -32,12 +44,28 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
     if (params &&
-        params->coordMap.find(oatom->getIdx()) != params->coordMap.end()) {
+        (hasTemplateMatch ||
+         params->coordMap.find(oatom->getIdx()) != params->coordMap.end())) {
       atom->constrained = true;
       atom->fixed = true;
-      const RDGeom::Point2D& coords =
-          params->coordMap.find(oatom->getIdx())->second;
-      atom->templateCoordinates = sketcherMinimizerPointF(coords.x, coords.y);
+      RDGeom::Point2D coords;
+      if (hasTemplateMatch) {
+        for (auto& pr : mv) {
+          if (pr.second == static_cast<int>(oatom->getIdx())) {
+            const RDGeom::Point3D& coords =
+                params->templateMol->getConformer().getAtomPos(pr.first);
+            atom->templateCoordinates =
+                sketcherMinimizerPointF(coords.x, coords.y);
+            break;
+          }
+        }
+        coords = params->coordMap.find(oatom->getIdx())->second;
+      } else {
+        ASSERT_INVARIANT(params->coordMap, "bad pointer");
+        const RDGeom::Point2D& coords =
+            params->coordMap.find(oatom->getIdx())->second;
+        atom->templateCoordinates = sketcherMinimizerPointF(coords.x, coords.y);
+      }
     }
     ats[oatom->getIdx()] = atom;
   }

@@ -145,21 +145,33 @@ void test2() {
     std::cerr << mb << std::endl;
     TEST_ASSERT(!compareConfs(m, core, mv));
 
-    auto coreConf = core->getConformer();
-    RDGeom::INT_POINT2D_MAP coordMap;
-    for (unsigned int i = 0; i < mv.size(); ++i) {
-      coordMap[mv[i].second] =
-          RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                          coreConf.getAtomPos(mv[i].first).y);
+    {
+      auto coreConf = core->getConformer();
+      RDGeom::INT_POINT2D_MAP coordMap;
+      for (unsigned int i = 0; i < mv.size(); ++i) {
+        coordMap[mv[i].second] =
+            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
+                            coreConf.getAtomPos(mv[i].first).y);
+      }
+      CoordGen::CoordGenParams params;
+      params.coordMap = coordMap;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      // m->setProp("_Name", "templated");
+      // mb = MolToMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
     }
-    CoordGen::CoordGenParams params;
-    params.coordMap = coordMap;
-    CoordGen::addCoords(*m, &params);
-    TEST_ASSERT(m->getNumConformers() == 1);
-    m->setProp("_Name", "templated");
-    mb = MolToMolBlock(*m);
-    std::cerr << mb << std::endl;
-    TEST_ASSERT(compareConfs(m, core, mv));
+    {
+      CoordGen::CoordGenParams params;
+      params.templateMol = core;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      m->setProp("_Name", "templated");
+      mb = MolToMolBlock(*m);
+      std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
+    }
     delete m;
     delete core;
   }
@@ -187,21 +199,34 @@ void test2() {
     std::cerr << mb << std::endl;
     TEST_ASSERT(!compareConfs(m, core, mv));
 
-    auto coreConf = core->getConformer();
-    RDGeom::INT_POINT2D_MAP coordMap;
-    for (unsigned int i = 0; i < mv.size(); ++i) {
-      coordMap[mv[i].second] =
-          RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                          coreConf.getAtomPos(mv[i].first).y);
+    {
+      auto coreConf = core->getConformer();
+      RDGeom::INT_POINT2D_MAP coordMap;
+      for (unsigned int i = 0; i < mv.size(); ++i) {
+        coordMap[mv[i].second] =
+            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
+                            coreConf.getAtomPos(mv[i].first).y);
+      }
+      CoordGen::CoordGenParams params;
+      params.coordMap = coordMap;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      // m->setProp("_Name", "templated");
+      // mb = MolToMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
     }
-    CoordGen::CoordGenParams params;
-    params.coordMap = coordMap;
-    CoordGen::addCoords(*m, &params);
-    TEST_ASSERT(m->getNumConformers() == 1);
-    m->setProp("_Name", "templated");
-    mb = MolToMolBlock(*m);
-    std::cerr << mb << std::endl;
-    TEST_ASSERT(compareConfs(m, core, mv));
+    {
+      CoordGen::CoordGenParams params;
+      params.templateMol = core;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      m->setProp("_Name", "templated");
+      mb = MolToMolBlock(*m);
+      std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
+    }
+
     delete m;
     delete core;
   }
@@ -229,21 +254,34 @@ void test2() {
     std::cerr << mb << std::endl;
     TEST_ASSERT(!compareConfs(m, core, mv));
 
-    auto coreConf = core->getConformer();
-    RDGeom::INT_POINT2D_MAP coordMap;
-    for (unsigned int i = 0; i < mv.size(); ++i) {
-      coordMap[mv[i].second] =
-          RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
-                          coreConf.getAtomPos(mv[i].first).y);
+    {
+      auto coreConf = core->getConformer();
+      RDGeom::INT_POINT2D_MAP coordMap;
+      for (unsigned int i = 0; i < mv.size(); ++i) {
+        coordMap[mv[i].second] =
+            RDGeom::Point2D(coreConf.getAtomPos(mv[i].first).x,
+                            coreConf.getAtomPos(mv[i].first).y);
+      }
+
+      CoordGen::CoordGenParams params;
+      params.coordMap = coordMap;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      // m->setProp("_Name", "templated");
+      // mb = MolToMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
     }
-    CoordGen::CoordGenParams params;
-    params.coordMap = coordMap;
-    CoordGen::addCoords(*m, &params);
-    TEST_ASSERT(m->getNumConformers() == 1);
-    m->setProp("_Name", "templated");
-    mb = MolToMolBlock(*m);
-    std::cerr << mb << std::endl;
-    TEST_ASSERT(compareConfs(m, core, mv));
+    {
+      CoordGen::CoordGenParams params;
+      params.templateMol = core;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      m->setProp("_Name", "templated");
+      mb = MolToMolBlock(*m);
+      std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv));
+    }
     delete m;
     delete core;
   }

@@ -38,7 +38,10 @@ void addCoordsHelper(ROMol &mol, python::object &params) {
   }
   CoordGen::addCoords(mol, ps);
 }
+void SetTemplateMol(CoordGen::CoordGenParams *self, const ROMol *templ) {
+  self->templateMol = templ;
 }
+}  // end of anonymous namespace
 
 struct coordgen_wrapper {
   static void wrap() {
@@ -46,7 +49,9 @@ struct coordgen_wrapper {
 
     python::class_<CoordGen::CoordGenParams>(
         "CoordGenParams", "Parameters controlling coordinate generation")
-        .def("SetCoordMap", SetCoordMap, "docs");
+        .def("SetCoordMap", SetCoordMap, "docs")
+        .def("SetTemplateMol", SetTemplateMol,
+             python::with_custodian_and_ward<1, 2>(), "docs");
 
     docString =
         "Add 2D coordinates.\n"
