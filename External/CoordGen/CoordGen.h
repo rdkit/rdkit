@@ -20,10 +20,18 @@ namespace CoordGen {
 struct CoordGenParams {
   RDGeom::INT_POINT2D_MAP coordMap;
   const ROMol* templateMol = nullptr;
+  double coordgenScaling = 50.0;  // at the time this was written, coordgen
+                                  // returned coordinates with a single bond
+                                  // length of 50.
 };
+
+static CoordGenParams defaultParams;
 
 template <typename T>
 void addCoords(T& mol, const CoordGenParams* params = nullptr) {
+  double scaleFactor = defaultParams.coordgenScaling;
+  if (params) scaleFactor = params->coordgenScaling;
+
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
 
@@ -54,8 +62,8 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
           if (pr.second == static_cast<int>(oatom->getIdx())) {
             const RDGeom::Point3D& coords =
                 params->templateMol->getConformer().getAtomPos(pr.first);
-            atom->templateCoordinates =
-                sketcherMinimizerPointF(coords.x, coords.y);
+            atom->templateCoordinates = sketcherMinimizerPointF(
+                coords.x * scaleFactor, coords.y * scaleFactor);
             break;
           }
         }
@@ -64,7 +72,8 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
         ASSERT_INVARIANT(params->coordMap, "bad pointer");
         const RDGeom::Point2D& coords =
             params->coordMap.find(oatom->getIdx())->second;
-        atom->templateCoordinates = sketcherMinimizerPointF(coords.x, coords.y);
+        atom->templateCoordinates = sketcherMinimizerPointF(
+            coords.x * scaleFactor, coords.y * scaleFactor);
       }
     }
     ats[oatom->getIdx()] = atom;
@@ -120,8 +129,9 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
   minimizer.runGenerateCoordinates();
   auto conf = new Conformer(mol.getNumAtoms());
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
-    conf->setAtomPos(i, RDGeom::Point3D(ats[i]->coordinates.x(),
-                                        ats[i]->coordinates.y(), 0.0));
+    conf->setAtomPos(
+        i, RDGeom::Point3D(ats[i]->coordinates.x() / scaleFactor,
+                           ats[i]->coordinates.y() / scaleFactor, 0.0));
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);

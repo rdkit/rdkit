@@ -51,7 +51,9 @@ struct coordgen_wrapper {
         "CoordGenParams", "Parameters controlling coordinate generation")
         .def("SetCoordMap", SetCoordMap, "docs")
         .def("SetTemplateMol", SetTemplateMol,
-             python::with_custodian_and_ward<1, 2>(), "docs");
+             python::with_custodian_and_ward<1, 2>(), "docs")
+        .def_readwrite("coordgenScaling",
+                       &CoordGen::CoordGenParams::coordgenScaling);
 
     docString =
         "Add 2D coordinates.\n"
