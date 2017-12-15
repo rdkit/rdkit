@@ -33,6 +33,11 @@ True
 >>> m.GetBondBetweenAtoms(3,6).GetIsAromatic()
 False
 
+The RDKit supports a number of different aromaticity models and allows the user to define their own by providing a function that assigns aromaticity.
+
+The RDKit Aromaticity Model
+---------------------------
+
 A ring, or fused ring system, is considered to be aromatic if it obeys the 4N+2 rule.
 Contributions to the electron count are determined by atom type and environment.
 Some examples:
@@ -105,6 +110,18 @@ True
 True
 >>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
 1
+
+The Simple Aromaticity Model
+----------------------------
+
+This one is quite simple: only five- and six-membered simple rings are considered candidates for aromaticity.
+The same electron-contribution counts listed above are used.
+
+
+The "MDL Aromaticity Model
+----------------------------
+
+some more text
 
 
 **Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
