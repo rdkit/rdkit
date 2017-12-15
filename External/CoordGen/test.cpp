@@ -97,6 +97,27 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+namespace {
+bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
+                  int molConfId = -1, int templateConfId = -1,
+                  double tol = 1e-2) {
+  PRECONDITION(m, "bad pointer");
+  PRECONDITION(templ, "bad pointer");
+  TEST_ASSERT(m->getNumAtoms() >= templ->getNumAtoms());
+  const Conformer& conf1 = m->getConformer(molConfId);
+  const Conformer& conf2 = templ->getConformer(templateConfId);
+  for (unsigned int i = 0; i < templ->getNumAtoms(); i++) {
+    TEST_ASSERT(m->getAtomWithIdx(mv[i].second)->getAtomicNum() ==
+                templ->getAtomWithIdx(mv[i].first)->getAtomicNum());
+
+    RDGeom::Point3D pt1i = conf1.getAtomPos(mv[i].second);
+    RDGeom::Point3D pt2i = conf2.getAtomPos(mv[i].first);
+    if ((pt1i - pt2i).length() >= tol) return false;
+  }
+  return true;
+}
+}
+
 void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "test2: using templates" << std::endl;
@@ -122,13 +143,7 @@ void test2() {
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-    }
+    TEST_ASSERT(!compareConfs(m, core, mv));
 
     auto coreConf = core->getConformer();
     RDGeom::INT_POINT2D_MAP coordMap;
@@ -144,14 +159,7 @@ void test2() {
     m->setProp("_Name", "templated");
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-      TEST_ASSERT(rms < .01);
-    }
+    TEST_ASSERT(compareConfs(m, core, mv));
     delete m;
     delete core;
   }
@@ -177,13 +185,7 @@ void test2() {
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-    }
+    TEST_ASSERT(!compareConfs(m, core, mv));
 
     auto coreConf = core->getConformer();
     RDGeom::INT_POINT2D_MAP coordMap;
@@ -199,14 +201,7 @@ void test2() {
     m->setProp("_Name", "templated");
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-      // TEST_ASSERT(rms < .01);
-    }
+    TEST_ASSERT(compareConfs(m, core, mv));
     delete m;
     delete core;
   }
@@ -232,13 +227,7 @@ void test2() {
     TEST_ASSERT(m->getNumConformers() == 1);
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-    }
+    TEST_ASSERT(!compareConfs(m, core, mv));
 
     auto coreConf = core->getConformer();
     RDGeom::INT_POINT2D_MAP coordMap;
@@ -254,14 +243,7 @@ void test2() {
     m->setProp("_Name", "templated");
     mb = MolToMolBlock(*m);
     std::cerr << mb << std::endl;
-    {
-      RDGeom::Transform3D trans;
-      double rms =
-          MolAlign::getAlignmentTransform(*core, *m, trans, -1, -1, &mv);
-      std::cerr << " trans: " << trans << std::endl;
-      std::cerr << " rms: " << rms << std::endl;
-      // TEST_ASSERT(rms < .01);
-    }
+    TEST_ASSERT(compareConfs(m, core, mv));
     delete m;
     delete core;
   }
