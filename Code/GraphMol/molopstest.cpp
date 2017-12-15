@@ -6953,16 +6953,17 @@ void testGithub1622() {
   }
   {  // rings that should not be aromatic
     string nonaromaticSmis[] = {
-        "C1=C[Se]C=C1",   // not outside the second rows
-        "C1=C[N]C=C1",    // radicals are not two electron donors
-        "O=C1C=CNC=C1",   // exocyclic double bonds don't steal electrons
-        "C1=CS(=O)C=C1",  // not sure how to classify this example from the
-                          // OEChem docs
-        "C1#CC=CC=C1",    // not benzyne
+        "C1=C[Se]C=C1",    // not outside the second rows
+        "C1=C[N]C=C1",     // radicals are not two electron donors
+        "C1(=O)C=CNC=C1",  // exocyclic double bonds don't steal electrons
+        "C1=CS(=O)C=C1",   // not sure how to classify this example from the
+                           // OEChem docs
+        "C1#CC=CC=C1",     // not benzyne
         "EOS"};
     unsigned int i = 0;
     while (nonaromaticSmis[i] != "EOS") {
       string smi = nonaromaticSmis[i];
+      // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);

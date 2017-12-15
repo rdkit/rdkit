@@ -491,7 +491,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   return (true);
 }
 
-ElectronDonorType getAtomDonorTypeArom(const Atom *at) {
+ElectronDonorType getAtomDonorTypeArom(
+    const Atom *at, bool exocyclicBondsStealElectrons = true) {
   PRECONDITION(at, "bad atom");
   if (at->getAtomicNum() == 0) {
     // dummies can be anything:
@@ -526,7 +527,8 @@ ElectronDonorType getAtomDonorTypeArom(const Atom *at) {
       // for aromaticity if this atom is bonded to a more electro
       // negative atom
       const Atom *at2 = mol.getAtomWithIdx(who);
-      if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
+      if (exocyclicBondsStealElectrons &&
+          PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
                                                          at->getAtomicNum())) {
         res = VacantElectronDonorType;
       } else {
@@ -638,8 +640,6 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
   for (VECT_INT_VECT_CI vivi = srings.begin(); vivi != srings.end(); ++vivi) {
-    size_t ringSz = (*vivi).size();
-
     bool allAromatic = true;
     bool allDummy = true;
     for (INT_VECT_CI ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
@@ -660,7 +660,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
-      edon[firstIdx] = getAtomDonorTypeArom(at);
+      edon[firstIdx] = getAtomDonorTypeArom(at, false);
       acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx], false, false);
       if (!acands[firstIdx]) allAromatic = false;
     }
