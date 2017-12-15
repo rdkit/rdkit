@@ -22,10 +22,10 @@ using namespace RDDepict;
 
 namespace python = boost::python;
 
-void rdDepictExceptionTranslator( DepictException const &e ) {
+void rdDepictExceptionTranslator(DepictException const &e) {
   std::ostringstream oss;
   oss << "Depict error: " << e.message();
-  PyErr_SetString( PyExc_ValueError, oss.str().c_str() );
+  PyErr_SetString(PyExc_ValueError, oss.str().c_str());
 }
 
 namespace RDDepict {
@@ -35,7 +35,8 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nFlipsPerSample = 3,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
-                             double bondLength = -1.0) {
+                             double bondLength = -1.0,
+                             bool forceRDKit = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -54,7 +55,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
   unsigned int res;
   res = RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
                                   nFlipsPerSample, nSamples, sampleSeed,
-                                  permuteDeg4Nodes);
+                                  permuteDeg4Nodes, forceRDKit);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -65,7 +66,7 @@ unsigned int Compute2DCoordsMimicDistmat(
     RDKit::ROMol &mol, python::object distMat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    double bondLength = -1.0) {
+    double bondLength = -1.0, bool forceRDKit = false) {
   PyObject *distMatPtr = distMat.ptr();
   if (!PyArray_Check(distMatPtr)) {
     throw_value_error("Argument isn't an array");
@@ -93,42 +94,40 @@ unsigned int Compute2DCoordsMimicDistmat(
   unsigned int res;
   res = RDDepict::compute2DCoordsMimicDistMat(
       mol, &dmat, canonOrient, clearConfs, weightDistMat, nFlipsPerSample,
-      nSamples, sampleSeed, permuteDeg4Nodes);
+      nSamples, sampleSeed, permuteDeg4Nodes, forceRDKit);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
   return res;
 }
 
-  void GenerateDepictionMatching2DStructure( RDKit::ROMol &mol ,
-					     RDKit::ROMol &reference ,
-					     int confId ,
-					     python::object refPatt ,
-					     bool acceptFailure ) {
-    RDKit::ROMol *referencePattern = nullptr;
-    if( refPatt != python::object() ) {
-      referencePattern = python::extract<RDKit::ROMol *>( refPatt );
-    }
-    
-    RDDepict::generateDepictionMatching2DStructure( mol , reference ,
-						    confId , referencePattern ,
-						    acceptFailure );
+void GenerateDepictionMatching2DStructure(RDKit::ROMol &mol,
+                                          RDKit::ROMol &reference, int confId,
+                                          python::object refPatt,
+                                          bool acceptFailure,
+                                          bool forceRDKit = false) {
+  RDKit::ROMol *referencePattern = nullptr;
+  if (refPatt != python::object()) {
+    referencePattern = python::extract<RDKit::ROMol *>(refPatt);
   }
 
-  void GenerateDepictionMatching3DStructure( RDKit::ROMol &mol ,
-					     RDKit::ROMol &reference ,
-					     int confId ,
-					     python::object refPatt ,
-					     bool acceptFailure ) {
-    RDKit::ROMol *referencePattern = nullptr;
-    if( refPatt ) {
-      referencePattern = python::extract<RDKit::ROMol *>( refPatt );
-    }
-    
-    RDDepict::generateDepictionMatching3DStructure( mol , reference ,
-						    confId , referencePattern ,
-						    acceptFailure );
+  RDDepict::generateDepictionMatching2DStructure(
+      mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
+}
+
+void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
+                                          RDKit::ROMol &reference, int confId,
+                                          python::object refPatt,
+                                          bool acceptFailure,
+                                          bool forceRDKit = false) {
+  RDKit::ROMol *referencePattern = nullptr;
+  if (refPatt) {
+    referencePattern = python::extract<RDKit::ROMol *>(refPatt);
   }
+
+  RDDepict::generateDepictionMatching3DStructure(
+      mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
+}
 }
 
 BOOST_PYTHON_MODULE(rdDepictor) {
@@ -209,7 +208,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       docString.c_str());
 
   docString =
-    "Generate a depiction for a molecule where a piece of the \n\
+      "Generate a depiction for a molecule where a piece of the \n\
   molecule is constrained to have the same coordinates as a reference. \n\n\
   This is useful for, for example, generating depictions of SAR data \n\
   sets so that the cores of the molecules are all oriented the same way. \n\
@@ -225,16 +224,16 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   acceptFailure - (optional) if True, standard depictions will be generated \n\
                   for molecules that don't have a substructure match to the \n\
                   reference; if False, throws a DepictException.\n";
-  python::def("GenerateDepictionMatching2DStructure" ,
-	      RDDepict::GenerateDepictionMatching2DStructure,
-	      (python::arg( "mol" ) , python::arg( "reference" ) ,
-	       python::arg( "confId" ) = -1 ,
-	       python::arg( "refPatt" ) = python::object() ,
-	       python::arg( "acceptFailure" ) = false ),
-	       docString.c_str() );
+  python::def(
+      "GenerateDepictionMatching2DStructure",
+      RDDepict::GenerateDepictionMatching2DStructure,
+      (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
+       python::arg("refPatt") = python::object(),
+       python::arg("acceptFailure") = false),
+      docString.c_str());
 
   docString =
-    "Generate a depiction for a molecule where a piece of the molecule \n\
+      "Generate a depiction for a molecule where a piece of the molecule \n\
   is constrained to have coordinates similar to those of a 3D reference \n\
   structure.\n\
   ARGUMENTS: \n\n\
@@ -251,11 +250,11 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                   for molecules that don't match the reference or the\n\
                   referencePattern; if False, throws a DepictException.\n";
 
-  python::def("GenerateDepictionMatching3DStructure" ,
-  	      RDDepict::GenerateDepictionMatching3DStructure,
-  	      (python::arg( "mol" ) , python::arg( "reference" ) ,
-  	       python::arg( "confId" ) = -1 ,
-  	       python::arg( "refPatt" ) = python::object() ,
-  	       python::arg( "acceptFailure" ) = false ),
-  	      docString.c_str() );
+  python::def(
+      "GenerateDepictionMatching3DStructure",
+      RDDepict::GenerateDepictionMatching3DStructure,
+      (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
+       python::arg("refPatt") = python::object(),
+       python::arg("acceptFailure") = false),
+      docString.c_str());
 }
