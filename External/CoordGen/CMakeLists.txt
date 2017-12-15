@@ -43,18 +43,16 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set(COORDGEN_LIBS coordgenlib maeparser )
-  #rdkit_library(RDCoordGenLib coordgen.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
-  #              GraphMol RDGeneral Depictor SubstructMatch SmilesParse
-  #              ${RDKit_THREAD_LIBS})
-  rdkit_headers(CoordGen.h DEST GraphMol)
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_subdirectory(Wrap)
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+    rdkit_headers(CoordGen.h DEST GraphMol)
 
-  rdkit_test(testCoordGen test.cpp
-    LINK_LIBRARIES
-    ${COORDGEN_LIBS}
-    MolAlign FileParsers SmilesParse SubstructMatch GraphMol
-    RDGeneral DataStructs RDGeneral RDGeometryLib
-    ${RDKit_THREAD_LIBS})
+    if(RDK_BUILD_PYTHON_WRAPPERS)
+      add_subdirectory(Wrap)
+    endif(RDK_BUILD_PYTHON_WRAPPERS)
+
+    rdkit_test(testCoordGen test.cpp
+      LINK_LIBRARIES
+      ${COORDGEN_LIBS}
+      MolAlign FileParsers SmilesParse SubstructMatch GraphMol
+      RDGeneral DataStructs RDGeneral RDGeometryLib
+      ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_COORDGEN_SUPPORT)
