@@ -6914,8 +6914,9 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -6927,12 +6928,15 @@ void testGithub1622() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
                           "1622: add MDL aromaticity perception"
                        << std::endl;
-  {  // rings that should be aromatic
-    string aromaticSmis[] = {"C1=CC=CC=C1", "C1=COC=C1", "EOS"};
+  {                                          // rings that should be aromatic
+    string aromaticSmis[] = {"C1=CC=CC=C1",  // benzene, of course
+                             "C1=COC=C1",    // furan
+                             "C1=CSC=C1",    // thiophene
+                             "C1=CC2=CC=CC=CC2=C1",  // azulene
+                             "EOS"};
     unsigned int i = 0;
     while (aromaticSmis[i] != "EOS") {
       string smi = aromaticSmis[i];
-      BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
@@ -6948,11 +6952,17 @@ void testGithub1622() {
     }
   }
   {  // rings that should not be aromatic
-    string nonaromaticSmis[] = {"C1=C[Se]C=C1", "C1=C[N]C=C1", "EOS"};
+    string nonaromaticSmis[] = {
+        "C1=C[Se]C=C1",   // not outside the second rows
+        "C1=C[N]C=C1",    // radicals are not two electron donors
+        "O=C1C=CNC=C1",   // exocyclic double bonds don't steal electrons
+        "C1=CS(=O)C=C1",  // not sure how to classify this example from the
+                          // OEChem docs
+        "C1#CC=CC=C1",    // not benzyne
+        "EOS"};
     unsigned int i = 0;
     while (nonaromaticSmis[i] != "EOS") {
       string smi = nonaromaticSmis[i];
-      BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
@@ -6963,7 +6973,6 @@ void testGithub1622() {
       MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
       MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
       TEST_ASSERT(!(mol->getAtomWithIdx(0)->getIsAromatic()))
-
       delete mol;
       ++i;
     }
@@ -6975,7 +6984,7 @@ int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();

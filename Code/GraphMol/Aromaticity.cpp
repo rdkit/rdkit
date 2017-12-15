@@ -417,7 +417,8 @@ void applyHuckelToFused(
 }
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
-                       bool allowHigherRows = true) {
+                       bool allowHigherRows = true,
+                       bool allowTripleBonds = true) {
   PRECONDITION(at, "bad atom");
   // limit aromaticity to:
   //   - the first two rows of the periodic table
@@ -469,7 +470,10 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
         case Bond::AROMATIC:
           break;
         case Bond::DOUBLE:
+          ++nMult;
+          break;
         case Bond::TRIPLE:
+          if (!allowTripleBonds) return false;
           ++nMult;
           break;
         default:
@@ -657,7 +661,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
       edon[firstIdx] = getAtomDonorTypeArom(at);
-      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx], false);
+      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx], false, false);
       if (!acands[firstIdx]) allAromatic = false;
     }
     if (allAromatic && !allDummy) {
