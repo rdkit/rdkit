@@ -6914,9 +6914,8 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(
-          *m, failed,
-          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
+                                          MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -6928,15 +6927,32 @@ void testGithub1622() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
                           "1622: add MDL aromaticity perception"
                        << std::endl;
-  {                                          // rings that should be aromatic
+  {
+    // rings that should be aromatic
     string aromaticSmis[] = {"C1=CC=CC=C1",  // benzene, of course
-                             "C1=COC=C1",    // furan
-                             "C1=CSC=C1",    // thiophene
-                             "C1=CC2=CC=CC=CC2=C1",  // azulene
+                             // heterocyclics
+                             "N1=CC=CC=C1",  // pyridine
+                             "N1=CC=CC=N1",  // pyridazine
+                             "N1=CC=CN=C1",  // pyrimidine
+                             "N1=CC=NC=C1",  // pyrazine
+                             "N1=CN=CN=C1",  // 1,3,5-triazine
+                             // polycyclic aromatics
+                             "C1=CC2=CC=CC=CC2=C1",            // azulene
+                             "C1=CC=CC2=CC=CC=C12",            // 6-6 fused
+                             "C1=CC2=CC=CC=CC=C12",            // 4-8 fused
+                             "C1=CC=C2C(=C1)N=CC=N2",          // 6-6 with Ns
+                             "C1=CN=CC2C=CC=CC1=2",            // 6-6
+                             "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",  // 6-6-6
+                             "C1=CN=NC2C=CC=CC1=2",            // 6-6 with Ns
+                             // macrocycle aromatics
+                             "C1=CC=CC=CC=CC=C1",              // 10 atoms
+                             "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",  // 18 atoms
+                             "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1",
                              "EOS"};
     unsigned int i = 0;
     while (aromaticSmis[i] != "EOS") {
       string smi = aromaticSmis[i];
+      // std::cerr << smi << std::endl;
       int debugParse = 0;
       bool sanitize = false;
       RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
@@ -6951,14 +6967,32 @@ void testGithub1622() {
       ++i;
     }
   }
-  {  // rings that should not be aromatic
+  {
+    // rings that should not be aromatic
     string nonaromaticSmis[] = {
-        "C1=C[Se]C=C1",    // not outside the second rows
         "C1=C[N]C=C1",     // radicals are not two electron donors
         "C1(=O)C=CNC=C1",  // exocyclic double bonds don't steal electrons
         "C1=CS(=O)C=C1",   // not sure how to classify this example from the
                            // OEChem docs
         "C1#CC=CC=C1",     // not benzyne
+        // five-membered heterocycles
+        "C1=COC=C1",  // furan
+        "C1=CSC=C1",  // thiophene
+        "C1=CNC=C1",  // pyrrole
+        "C1=COC=N1",  // oxazole
+        "C1=CSC=N1",  // thiazole
+        "C1=CNC=N1",  // imidzole
+        "C1=CNN=C1",  // pyrazole
+        "C1=CON=C1",  // isoxazole
+        "C1=CSN=C1",  // isothiazole
+        "C1=CON=N1",  // 1,2,3-oxadiazole
+        "C1=CNN=N1",  // 1,2,3-triazole
+        "N1=CSC=N1",  // 1,3,4-thiadiazole
+        //  outside the second rows
+        "C1=CC=C[Si]=C1", "C1=CC=CC=P1",
+        // 5-membered heterocycles outside the second row
+        "C1=C[Se]C=C1", "C1=C[Te]C=C1",
+
         "EOS"};
     unsigned int i = 0;
     while (nonaromaticSmis[i] != "EOS") {

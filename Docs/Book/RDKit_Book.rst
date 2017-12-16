@@ -121,7 +121,12 @@ The same electron-contribution counts listed above are used.
 The "MDL Aromaticity Model
 ----------------------------
 
-some more text
+This isn't well documented (at least not publicly), so we tried to reproduce what's provided in the oechem documentation (https://docs.eyesopen.com/toolkits/python/oechemtk/aromaticity.html)
+
+- five-membered rings are not aromatic (though they can be part of fused aromatic systems)
+- fused rings (i.e. azulene) can be aromatic
+- atoms outside of the second row are not aromatic
+- exocyclic double bonds do not "steal" electrons
 
 
 **Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.

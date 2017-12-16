@@ -162,7 +162,7 @@ static void applyHuckelToFused(
     const VECT_EDON_TYPE &edon,  // eletron donar state for each atom
     INT_INT_VECT_MAP &ringNeighs,
     int &narom,  // number of aromatic ring so far
-    unsigned int maxNumFusedRings);
+    unsigned int maxNumFusedRings, unsigned int minRingSize);
 
 void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
                         const VECT_INT_VECT &brings, const INT_VECT &ringIds,
@@ -290,15 +290,16 @@ bool incidentMultipleBond(const Atom *at) {
   return at->getExplicitValence() != static_cast<int>(deg);
 }
 
-bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon) {
+bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
+                 unsigned int minRingSize) {
   RDUNUSED_PARAM(mol);
+  if (minRingSize && ring.size() < minRingSize) return false;
   int atlw, atup, rlw, rup, rie;
   bool aromatic = false;
   rlw = 0;
   rup = 0;
-  INT_VECT_CI ivi;
-  for (ivi = ring.begin(); ivi != ring.end(); ivi++) {
-    ElectronDonorType edonType = edon[*ivi];
+  for (auto idx : ring) {
+    ElectronDonorType edonType = edon[idx];
     getMinMaxAtomElecs(edonType, atlw, atup);
     rlw += atlw;
     rup += atup;
@@ -330,7 +331,7 @@ void applyHuckelToFused(
     const VECT_EDON_TYPE &edon,  // eletron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for eac candidate ring
     int &narom,                    // number of aromatic ring so far
-    unsigned int maxNumFusedRings) {
+    unsigned int maxNumFusedRings, unsigned int minRingSize = 0) {
   // this function check huckel rule on a fused system it starts
   // with the individual rings in the system and then proceeds to
   // check for larger system i.e. if we have a 3 ring fused system,
@@ -399,7 +400,7 @@ void applyHuckelToFused(
     INT_VECT unon;
     Union(srings, unon, &exclude);
 
-    if (applyHuckel(mol, unon, edon)) {
+    if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
       markAtomsBondsArom(mol, srings, brings, curRs, doneAtoms);
 
@@ -417,14 +418,16 @@ void applyHuckelToFused(
 }
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
-                       bool allowHigherRows = true,
-                       bool allowTripleBonds = true) {
+                       bool allowThirdRow = true, bool allowTripleBonds = true,
+                       bool allowHigherExceptions = true) {
   PRECONDITION(at, "bad atom");
+  if (!allowThirdRow && at->getAtomicNum() > 10) return false;
+
   // limit aromaticity to:
   //   - the first two rows of the periodic table
   //   - Se and Te
   if (at->getAtomicNum() > 18 &&
-      (!allowHigherRows ||
+      (!allowHigherExceptions ||
        (at->getAtomicNum() != 34 && at->getAtomicNum() != 52))) {
     return false;
   }
@@ -639,11 +642,10 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (VECT_INT_VECT_CI vivi = srings.begin(); vivi != srings.end(); ++vivi) {
+  for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
-    for (INT_VECT_CI ivi = (*vivi).begin(); ivi != (*vivi).end(); ++ivi) {
-      unsigned int firstIdx = (*ivi);
+    for (auto firstIdx : sring) {
       Atom *at = mol.getAtomWithIdx(firstIdx);
 
       if (allDummy && at->getAtomicNum() != 0) {
@@ -654,18 +656,23 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
         if (!acands[firstIdx]) allAromatic = false;
         continue;
       }
-      aseen[*ivi] = 1;
+      aseen[firstIdx] = 1;
 
       // now that the atom is part of ring check if it can donate
       // electron or has empty orbitals. Record the donor type
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
       edon[firstIdx] = getAtomDonorTypeArom(at, false);
-      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx], false, false);
+      bool allowThirdRow = false;
+      bool allowTripleBonds = false;
+      bool allowHigherExceptions = false;
+      acands[firstIdx] =
+          isAtomCandForArom(at, edon[firstIdx], allowThirdRow, allowTripleBonds,
+                            allowHigherExceptions);
       if (!acands[firstIdx]) allAromatic = false;
     }
     if (allAromatic && !allDummy) {
-      cRings.push_back((*vivi));
+      cRings.push_back(sring);
     }
   }
 
@@ -690,7 +697,10 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   while (curr < cnrs) {
     fused.resize(0);
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+    unsigned int maxFused = 6;
+    unsigned int minRingSize = 6;
+    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
+                       maxFused, minRingSize);
 
     int rix;
     for (rix = 0; rix < cnrs; rix++) {
@@ -771,7 +781,10 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     for (unsigned int ri = 0; ri < cRings.size(); ++ri) {
       INT_VECT fused;
       fused.push_back(ri);
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6);
+      unsigned int maxFused = 6;
+      unsigned int minRingSize = 0;
+      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
+                         maxFused, minRingSize);
     }
   } else {
     // make the neighbor map for the rings
