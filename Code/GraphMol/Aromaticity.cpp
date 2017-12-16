@@ -419,8 +419,11 @@ void applyHuckelToFused(
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
                        bool allowThirdRow = true, bool allowTripleBonds = true,
-                       bool allowHigherExceptions = true) {
+                       bool allowHigherExceptions = true,
+                       bool onlyCorN = false) {
   PRECONDITION(at, "bad atom");
+  if (onlyCorN && at->getAtomicNum() != 6 && at->getAtomicNum() != 7)
+    return false;
   if (!allowThirdRow && at->getAtomicNum() > 10) return false;
 
   // limit aromaticity to:
@@ -554,7 +557,8 @@ ElectronDonorType getAtomDonorTypeArom(
       // is more electronegative than the this atom, count one less
       // electron
       const Atom *at2 = mol.getAtomWithIdx(who);
-      if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
+      if (exocyclicBondsStealElectrons &&
+          PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
                                                          at->getAtomicNum())) {
         nelec--;
       }
@@ -663,12 +667,18 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       // information in 'edon' - we will need it when we get to
       // the Huckel rule later
       edon[firstIdx] = getAtomDonorTypeArom(at, false);
+      // we only accept one electron donors?
+      if (edon[firstIdx] != OneElectronDonorType) {
+        allAromatic = false;
+        continue;
+      }
       bool allowThirdRow = false;
       bool allowTripleBonds = false;
       bool allowHigherExceptions = false;
+      bool onlyCorN = true;
       acands[firstIdx] =
           isAtomCandForArom(at, edon[firstIdx], allowThirdRow, allowTripleBonds,
-                            allowHigherExceptions);
+                            allowHigherExceptions, onlyCorN);
       if (!acands[firstIdx]) allAromatic = false;
     }
     if (allAromatic && !allDummy) {

@@ -125,7 +125,8 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 - five-membered rings are not aromatic (though they can be part of fused aromatic systems)
 - fused rings (i.e. azulene) can be aromatic
-- atoms outside of the second row are not aromatic
+- only C and N can be aromatic
+- only one electron donors are accepted
 - exocyclic double bonds do not "steal" electrons
 
 

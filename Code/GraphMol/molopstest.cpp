@@ -7012,6 +7012,37 @@ void testGithub1622() {
       ++i;
     }
   }
+
+  {
+    // ring systems where part is aromatic, part not
+    string mixedaromaticSmis[] = {"O1C=CC2=CC=CC=C12",
+                                  "S1C=CC2=CC=CC=C12",
+                                  "N1C2=CC=CC=C2C2=CC=CC=C12",
+                                  "N1C=CC2=CC=CC=C12",
+                                  "N1C=NC2=CC=CC=C12",
+                                  "N1C=NC2=CN=CN=C12",
+                                  "EOS"};
+    unsigned int i = 0;
+    while (mixedaromaticSmis[i] != "EOS") {
+      string smi = mixedaromaticSmis[i];
+      // std::cerr << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(!(mol->getAtomWithIdx(0)->getIsAromatic()))
+      TEST_ASSERT(
+          (mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getIsAromatic()))
+      delete mol;
+      ++i;
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
