@@ -856,18 +856,10 @@ void testChiralityFrom3D() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 
   // this molecule starts out with incorrect stereochemistry (e.g. the bond
-  // wedging
-  // does not match the 3D structure. Start by verifying that the start position
-  // is bad:
+  // wedging does not match the 3D structure.
+  // This is handled automatically by the mol file parser as of github #1679,
+  // so we don't need to worry about it anymore
   MolOps::assignStereochemistry(*m, true);
-  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "S");
-  // now assign the stereochem based on the 3D structure and check that we get
-  // it
-  // right:
-  MolOps::assignChiralTypesFrom3D(*m, -1, true);
-  MolOps::assignStereochemistry(*m, true, true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");

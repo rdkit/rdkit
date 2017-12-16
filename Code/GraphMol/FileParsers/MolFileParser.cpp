@@ -2531,7 +2531,12 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     //
     const Conformer &conf = res->getConformer();
     if (chiralityPossible) {
-      DetectAtomStereoChemistry(*res, &conf);
+      if (!conf.is3D()) {
+        DetectAtomStereoChemistry(*res, &conf);
+      } else {
+        res->updatePropertyCache(false);
+        MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
+      }
     }
 
     if (sanitize) {
