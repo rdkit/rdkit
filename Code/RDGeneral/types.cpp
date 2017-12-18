@@ -36,6 +36,7 @@ const std::string _CrippenLogP = "_CrippenLogP";
 const std::string _CrippenMR = "_CrippenMR";
 const std::string _MMFFSanitized = "_MMFFSanitized";
 const std::string _MolFileChiralFlag = "_MolFileChiralFlag";
+const std::string MRV_SMA = "MRV SMA";
 const std::string _MolFileRLabel = "_MolFileRLabel";
 const std::string _Name = "_Name";
 const std::string _NeedsQueryScan = "_NeedsQueryScan";

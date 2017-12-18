@@ -765,6 +765,35 @@ void ParseZBOLine(RWMol *mol, const std::string &text, unsigned int line) {
   }
 }
 
+void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int line) {
+  const unsigned int atomNumStart = 10;
+  const unsigned int smartsStart = 15;
+  const unsigned int SMA = 7;
+  // M  MRV SMA   1 [*;A]
+  // 01234567890123456789
+  //           1111111111
+  if (text.substr(SMA, 3) != "SMA") {
+    return;
+  }
+
+  unsigned int idx;
+  std::string idxTxt = text.substr(atomNumStart, smartsStart-atomNumStart);
+  try {
+    idx = FileParserUtils::stripSpacesAndCast<unsigned int>(idxTxt) - 1;
+  } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << idxTxt << " to an atom index on line "
+               << line;
+        throw FileParseException(errout.str());
+  }
+
+  URANGE_CHECK(idx, mol->getNumAtoms());
+  // Should we check the validity of the marvin line here?  Should we automatically
+  //   Add these as recursive smarts?  I tend to think so...
+  std::string sma = text.substr(smartsStart);
+  mol->getAtomWithIdx(idx)->setProp(common_properties::MRV_SMA, sma);
+}
+
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   if (text.size() < 15) {
     std::ostringstream errout;
@@ -1507,10 +1536,15 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
       ParseSGroup2000STYLine(mol, tempStr, line);
     } else if (lineBeg == "M  ZBO")
       ParseZBOLine(mol, tempStr, line);
-    else if (lineBeg == "M  ZCH")
+    else if (lineBeg == "M  ZCH") {
       ParseZCHLine(mol, tempStr, line);
-    else if (lineBeg == "M  HYD")
+    }
+    else if (lineBeg == "M  HYD") {
       ParseHYDLine(mol, tempStr, line);
+    }
+    else if (lineBeg == "M  MRV") {
+      ParseMarvinSmartsLine(mol, tempStr, line);
+    }
     line++;
     tempStr = getLine(inStream);
     lineBeg = tempStr.substr(0, 6);
