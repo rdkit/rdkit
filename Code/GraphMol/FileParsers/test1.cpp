@@ -4876,6 +4876,26 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMarvinSMATag() {
+  BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag "
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName =
+        rdbase + "mrv-sma.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::MRV_SMA) == "[#16;H1]");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(common_properties::MRV_SMA) == "[#7;H2A]");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4966,6 +4986,7 @@ void RunTests() {
 
   testMolFileDativeBonds();
   testGithub1251();
+  testMarvinSMATag();
 #endif
   testGithub1029();
   testGithub1340();
