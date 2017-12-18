@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <Geometry/point.h>
 
+namespace python = boost::python;
 namespace ForceFields {
 class PyForceField {
  public:
@@ -45,10 +46,15 @@ class PyForceField {
     return idx;
   }
 
+  double calcEnergyWithPos(const python::object &pos);
+
   double calcEnergy() {
-    PRECONDITION(this->field, "no force field");
-    return this->field->calcEnergy();
+    return calcEnergyWithPos(python::object());
   }
+
+  PyObject *calcGradWithPos(const python::object &pos);
+
+  PyObject *positions();
 
   int minimize(int maxIts, double forceTol, double energyTol) {
     PRECONDITION(this->field, "no force field");
@@ -61,6 +67,16 @@ class PyForceField {
     PRECONDITION(this->field, "no force field");
     this->field->initialize();
   }
+
+  unsigned int dimension() {
+    PRECONDITION(this->field, "no force field");
+    return this->field->dimension();
+  }  
+
+  unsigned int numPoints() {
+    PRECONDITION(this->field, "no force field");
+    return this->field->numPoints();
+  }  
 
   // private:
   std::vector<boost::shared_ptr<RDGeom::Point3D> > extraPoints;

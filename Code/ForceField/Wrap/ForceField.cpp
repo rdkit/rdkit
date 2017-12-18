@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <boost/shared_array.hpp>
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Exceptions.h>
@@ -130,6 +131,64 @@ PyObject *ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
   return res;
 }
 
+double PyForceField::calcEnergyWithPos(const python::object &pos) {
+  PRECONDITION(this->field, "no force field");
+  if (pos != python::object()) {
+    const python::list &posList = reinterpret_cast<const python::list &>(pos);
+    long int ll = python::len(posList);
+    PRECONDITION(ll == 3 * this->field->numPoints(),
+      "The list must have length equal to 3 * NumPoints()");
+    boost::shared_array<double> c(new double[ll]);
+    for (long int i = 0; i < ll; ++i)
+      c[i] = boost::python::extract<double>(posList[i]);
+    return this->field->calcEnergy(c.get());
+  }
+  else
+    return this->field->calcEnergy();
+}
+
+PyObject *PyForceField::positions() {
+  PRECONDITION(this->field, "no force field");
+  long int s = 3 * this->field->numPoints();
+  PyObject *coordTuple = PyTuple_New(s);
+  const RDGeom::PointPtrVect &p = this->field->positions();
+  int i = 0;
+  PyObject *coordItem;
+  for (RDGeom::PointPtrVect::const_iterator it = p.begin(); it != p.end(); ++it) {
+    coordItem = PyFloat_FromDouble(static_cast<RDGeom::Point3D *>(*it)->x);
+    PyTuple_SetItem(coordTuple, i++, coordItem);
+    coordItem = PyFloat_FromDouble(static_cast<RDGeom::Point3D *>(*it)->y);
+    PyTuple_SetItem(coordTuple, i++, coordItem);
+    coordItem = PyFloat_FromDouble(static_cast<RDGeom::Point3D *>(*it)->z);
+    PyTuple_SetItem(coordTuple, i++, coordItem);
+  }
+  return coordTuple;
+}
+
+PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
+  PRECONDITION(this->field, "no force field");
+  long int s = 3 * this->field->numPoints();
+  boost::shared_array<double> g(new double[s]);
+  std::memset(g.get(), 0, s * sizeof(double));
+  PyObject *gradTuple = PyTuple_New(s);
+  if (pos != python::object()) {
+    const python::list &posList = reinterpret_cast<const python::list &>(pos);
+    long int ll = python::len(posList);
+    PRECONDITION(ll == s, "The list must have length equal to 3 * NumPoints()");
+    boost::shared_array<double> c(new double[ll]);
+    for (long int i = 0; i < ll; ++i)
+      c[i] = boost::python::extract<double>(posList[i]);
+    this->field->calcGrad(c.get(), g.get());
+  }
+  else
+    this->field->calcGrad(g.get());
+  for (long int i = 0; i < s; ++i) {
+    PyObject *coordItem = PyFloat_FromDouble(g[i]);
+    PyTuple_SetItem(gradTuple, i, coordItem);
+  }
+  return gradTuple;
+}
+
 python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
@@ -248,8 +307,23 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField", "A force field", python::no_init)
       .def("CalcEnergy",
-           (double (PyForceField::*)() const) & PyForceField::calcEnergy,
-           "Returns the energy (in kcal/mol) of the current arrangement")
+           (double (PyForceField::*)(const python::object &) const) &PyForceField::calcEnergyWithPos,
+           (python::arg("pos") = python::object()),
+           "Returns the energy (in kcal/mol) of the current arrangement\n"
+           "or of the supplied coordinated array (if any)")
+      .def("CalcGrad", &PyForceField::calcGradWithPos,
+           (python::arg("pos") = python::object()),
+           "Returns a tuple filled with the per-coordinate gradients\n"
+           "of the current arrangement or of the supplied coordinated array (if any)")
+      .def("Positions", &PyForceField::positions,
+           "Returns a tuple filled with the coordinates of the\n"
+           "points the ForceField is handling")
+      .def("Dimension",
+           (unsigned int (PyForceField::*)() const) &PyForceField::dimension,
+           "Returns the dimension of the ForceField")
+      .def("NumPoints",
+           (unsigned int (PyForceField::*)() const) &PyForceField::numPoints,
+           "Returns the number of points the ForceField is handling")
       .def("Minimize", &PyForceField::minimize,
            (python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
             python::arg("energyTol") = 1e-6),
