@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Rings.h>
 #include <RDGeneral/types.h>
 #include <boost/dynamic_bitset.hpp>
@@ -419,8 +420,8 @@ void applyHuckelToFused(
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
                        bool allowThirdRow = true, bool allowTripleBonds = true,
-                       bool allowHigherExceptions = true,
-                       bool onlyCorN = false) {
+                       bool allowHigherExceptions = true, bool onlyCorN = false,
+                       bool allowExocyclicMultipleBonds = true) {
   PRECONDITION(at, "bad atom");
   if (onlyCorN && at->getAtomicNum() != 6 && at->getAtomicNum() != 7)
     return false;
@@ -492,6 +493,20 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
       ++beg;
     }
     if (nMult > 1) return (false);
+  }
+
+  if (!allowExocyclicMultipleBonds) {
+    const ROMol &mol = at->getOwningMol();
+    ROMol::OEDGE_ITER beg, end;
+    boost::tie(beg, end) = mol.getAtomBonds(at);
+    while (beg != end) {
+      const Bond *bnd = mol[*beg].get();
+      if ((bnd->getBondType() == Bond::DOUBLE ||
+           bnd->getBondType() == Bond::TRIPLE) &&
+          !queryIsBondInRing(bnd))
+        return false;
+      ++beg;
+    }
   }
 
   return (true);
@@ -676,9 +691,10 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       bool allowTripleBonds = false;
       bool allowHigherExceptions = false;
       bool onlyCorN = true;
-      acands[firstIdx] =
-          isAtomCandForArom(at, edon[firstIdx], allowThirdRow, allowTripleBonds,
-                            allowHigherExceptions, onlyCorN);
+      bool allowExocyclicMultipleBonds = false;
+      acands[firstIdx] = isAtomCandForArom(
+          at, edon[firstIdx], allowThirdRow, allowTripleBonds,
+          allowHigherExceptions, onlyCorN, allowExocyclicMultipleBonds);
       if (!acands[firstIdx]) allAromatic = false;
     }
     if (allAromatic && !allDummy) {

@@ -6914,8 +6914,9 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -6970,24 +6971,26 @@ void testGithub1622() {
   {
     // rings that should not be aromatic
     string nonaromaticSmis[] = {
-        "C1=C[N]C=C1",     // radicals are not two electron donors
-        "C1(=O)C=CNC=C1",  // exocyclic double bonds don't steal electrons
-        "C1=CS(=O)C=C1",   // not sure how to classify this example from the
-                           // OEChem docs
-        "C1#CC=CC=C1",     // not benzyne
+        "C1=C[N]C=C1",  // radicals are not two electron donors
+        // exocyclic double bonds disqualify us
+        "C1(=O)C=CNC=C1", "C1(=C)C=CC(=C)C=C1", "C1(=O)C=CC(=O)C=C1",
+
+        "C1#CC=CC=C1",  // not benzyne
         // five-membered heterocycles
-        "C1=COC=C1",  // furan
-        "C1=CSC=C1",  // thiophene
-        "C1=CNC=C1",  // pyrrole
-        "C1=COC=N1",  // oxazole
-        "C1=CSC=N1",  // thiazole
-        "C1=CNC=N1",  // imidzole
-        "C1=CNN=C1",  // pyrazole
-        "C1=CON=C1",  // isoxazole
-        "C1=CSN=C1",  // isothiazole
-        "C1=CON=N1",  // 1,2,3-oxadiazole
-        "C1=CNN=N1",  // 1,2,3-triazole
-        "N1=CSC=N1",  // 1,3,4-thiadiazole
+        "C1=COC=C1",      // furan
+        "C1=CSC=C1",      // thiophene
+        "C1=CNC=C1",      // pyrrole
+        "C1=COC=N1",      // oxazole
+        "C1=CSC=N1",      // thiazole
+        "C1=CNC=N1",      // imidzole
+        "C1=CNN=C1",      // pyrazole
+        "C1=CON=C1",      // isoxazole
+        "C1=CSN=C1",      // isothiazole
+        "C1=CON=N1",      // 1,2,3-oxadiazole
+        "C1=CNN=N1",      // 1,2,3-triazole
+        "N1=CSC=N1",      // 1,3,4-thiadiazole
+        "C1=CS(=O)C=C1",  // not sure how to classify this example from the
+                          // OEChem docs
         //  outside the second rows
         "C1=CC=C[Si]=C1", "C1=CC=CC=P1",
         // 5-membered heterocycles outside the second row
@@ -7015,13 +7018,11 @@ void testGithub1622() {
 
   {
     // ring systems where part is aromatic, part not
-    string mixedaromaticSmis[] = {"O1C=CC2=CC=CC=C12",
-                                  "S1C=CC2=CC=CC=C12",
-                                  "N1C2=CC=CC=C2C2=CC=CC=C12",
-                                  "N1C=CC2=CC=CC=C12",
-                                  "N1C=NC2=CC=CC=C12",
-                                  "N1C=NC2=CN=CN=C12",
-                                  "EOS"};
+    string mixedaromaticSmis[] = {
+        "O1C=CC2=CC=CC=C12",         "S1C=CC2=CC=CC=C12",
+        "N1C2=CC=CC=C2C2=CC=CC=C12", "N1C=CC2=CC=CC=C12",
+        "N1C=NC2=CC=CC=C12",         "N1C=NC2=CN=CN=C12",
+        "C1CCCC2=CC3=CCCCC3=CC2=1",  "EOS"};
     unsigned int i = 0;
     while (mixedaromaticSmis[i] != "EOS") {
       string smi = mixedaromaticSmis[i];
