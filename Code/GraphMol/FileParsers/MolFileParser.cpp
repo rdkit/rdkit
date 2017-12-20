@@ -17,6 +17,8 @@
 #include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolFileStereochem.h"
+
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
@@ -791,7 +793,27 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
   // Should we check the validity of the marvin line here?  Should we automatically
   //   Add these as recursive smarts?  I tend to think so...
   std::string sma = text.substr(smartsStart);
-  mol->getAtomWithIdx(idx)->setProp(common_properties::MRV_SMA, sma);
+  Atom * at = mol->getAtomWithIdx(idx);
+  at->setProp(common_properties::MRV_SMA, sma);
+  RWMol *m = 0;
+  try {
+    m = SmartsToMol(sma);
+  } catch(...) {
+  }
+  
+  if (m) {
+    QueryAtom::QUERYATOM_QUERY *query = new RecursiveStructureQuery(m);
+    if (!at->hasQuery()) {
+      QueryAtom qAt(*at);
+      mol->replaceAtom(at->getIdx(), &qAt);
+      at = mol->getAtomWithIdx(at->getIdx());
+    }
+    at->expandQuery(query, Queries::COMPOSITE_AND);
+  } else {
+    BOOST_LOG(rdErrorLog) << " MRV SMA not a valid smarts: " << sma
+                          << " on line: " << line
+                          << std::endl;
+  }
 }
 
 void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
