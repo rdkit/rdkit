@@ -4897,6 +4897,19 @@ void testMarvinSMATag() {
     TEST_ASSERT(sma == "[#6&$([#6&r6]):1](-[#16&$([#16&H1]):2]):[#6&$([#6&r6]):3]-[#7&$([#7&H2&A]):4]");
     delete m;
   }
+
+  {
+    std::string fName =
+        rdbase + "mrv-sma-bad.mol";
+    bool ok = false;
+    try {
+      MolFileToMol(fName, false);
+    } catch( FileParseException &e ) {
+      ok = true;
+      TEST_ASSERT(std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") == e.message());
+    }
+    TEST_ASSERT(ok);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
