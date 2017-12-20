@@ -251,6 +251,88 @@ M  END"""
       pyrroleNIdx = m.GetSubstructMatch(query)[-1]
       self.failUnless(m.GetAtomWithIdx(pyrroleNIdx).GetTotalDegree() == 3)
 
+  def test12(self):
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
+    m = Chem.MolFromMolFile(fName)
+    self.assertIsNotNone(m);
+    ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
+    ff.Initialize()
+    positions = ff.Positions()
+    savedPos = list(positions)
+    e1 = ff.CalcEnergy()
+    ff.Minimize(10000, 1.0e-6, 1.0e-3)
+    e2 = ff.CalcEnergy()
+    self.failUnless(e2 < e1)
+    e3 = ff.CalcEnergy(savedPos)
+    self.assertAlmostEqual(e3, e1, 2);
+
+  def test13(self):
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
+    m = Chem.MolFromMolFile(fName)
+    self.assertIsNotNone(m);
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
+    ff.Initialize()
+    positions = ff.Positions()
+    savedPos = list(positions)
+    e1 = ff.CalcEnergy()
+    ff.Minimize(10000, 1.0e-6, 1.0e-3)
+    e2 = ff.CalcEnergy()
+    self.failUnless(e2 < e1)
+    e3 = ff.CalcEnergy(savedPos)
+    self.assertAlmostEqual(e3, e1, 2);
+
+  def test14(self):
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
+    m = Chem.MolFromMolFile(fName)
+    self.assertIsNotNone(m);
+    ff = ChemicalForceFields.UFFGetMoleculeForceField(m)
+    ff.Initialize()
+    positions = ff.Positions()
+    savedPos = list(positions)
+    grad1 = ff.CalcGrad()
+    for v in grad1:
+      self.assertNotAlmostEqual(v, 0.0, 3)
+    ff.Minimize(10000, 1.0e-6, 1.0e-3)
+    grad2 = ff.CalcGrad()
+    for v in grad2:
+      self.assertAlmostEqual(v, 0.0, 3)
+    ff.Initialize()
+    grad2 = ff.CalcGrad(savedPos)
+    self.assertEqual(len(grad1), len(grad2))
+    for i in range(len(grad1)):
+      self.assertAlmostEqual(grad1[i], grad2[i], 3)
+
+  def test15(self):
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'UFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'Issue239.mol')
+    m = Chem.MolFromMolFile(fName)
+    self.assertIsNotNone(m);
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
+    ff.Initialize()
+    positions = ff.Positions()
+    savedPos = list(positions)
+    grad1 = ff.CalcGrad()
+    for v in grad1:
+      self.assertNotAlmostEqual(v, 0.0, 3)
+    ff.Minimize(10000, 1.0e-6, 1.0e-3)
+    grad2 = ff.CalcGrad()
+    for v in grad2:
+      self.assertAlmostEqual(v, 0.0, 3)
+    ff.Initialize()
+    grad2 = ff.CalcGrad(savedPos)
+    self.assertEqual(len(grad1), len(grad2))
+    for i in range(len(grad1)):
+      self.assertAlmostEqual(grad1[i], grad2[i], 3)
+
 
 if __name__ == '__main__':
   unittest.main()
