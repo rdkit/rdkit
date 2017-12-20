@@ -7,7 +7,7 @@ This release includes a set of changes to make the default arguments to common f
 - The embedding code now uses the ETKDG method by default.
 - MolToMolBlock() will now by default generate a set of 2D coordinates for molecules when the includeStereo option is set to True. The changes are made to a copy of the molecule; the molecule itself will not be modified.
 - The Mol file (and SDF) parser now determines atomic stereochemisty based on the 3D coordinates provided (if 3D coordinates are provided).
-- The SMILES parser now supports CXSMILES by default.
+- The SMILES parser now supports CXSMILES by default (assuming that additional text that looks like CXSMILES extensions is there).
 
 In every case the old behavior can be obtained by providing an optional argument to the function(s) mentioned.
 
