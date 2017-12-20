@@ -118,19 +118,19 @@ This one is quite simple: only five- and six-membered simple rings are considere
 The same electron-contribution counts listed above are used.
 
 
-The "MDL Aromaticity Model
-----------------------------
+The MDL Aromaticity Model
+-------------------------
 
 This isn't well documented (at least not publicly), so we tried to reproduce what's provided in the oechem documentation (https://docs.eyesopen.com/toolkits/python/oechemtk/aromaticity.html)
 
-- five-membered rings are not aromatic (though they can be part of fused aromatic systems)
 - fused rings (i.e. azulene) can be aromatic
+- five-membered rings are not aromatic (though they can be part of fused aromatic systems)
 - only C and N can be aromatic
 - only one electron donors are accepted
-- exocyclic double bonds do not "steal" electrons
+- atoms with exocyclic double bonds are not aromatic
 
 
-**Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+**Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
 
 Ring Finding and SSSR
