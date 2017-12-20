@@ -294,7 +294,7 @@ bool incidentMultipleBond(const Atom *at) {
 bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
                  unsigned int minRingSize) {
   RDUNUSED_PARAM(mol);
-  if (minRingSize && ring.size() < minRingSize) return false;
+  if (ring.size() < minRingSize) return false;
   int atlw, atup, rlw, rup, rie;
   bool aromatic = false;
   rlw = 0;
@@ -687,11 +687,11 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
         allAromatic = false;
         continue;
       }
-      bool allowThirdRow = false;
-      bool allowTripleBonds = false;
-      bool allowHigherExceptions = false;
-      bool onlyCorN = true;
-      bool allowExocyclicMultipleBonds = false;
+      const bool allowThirdRow = false;
+      const bool allowTripleBonds = false;
+      const bool allowHigherExceptions = false;
+      const bool onlyCorN = true;
+      const bool allowExocyclicMultipleBonds = false;
       acands[firstIdx] = isAtomCandForArom(
           at, edon[firstIdx], allowThirdRow, allowTripleBonds,
           allowHigherExceptions, onlyCorN, allowExocyclicMultipleBonds);
@@ -723,8 +723,8 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   while (curr < cnrs) {
     fused.resize(0);
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-    unsigned int maxFused = 6;
-    unsigned int minRingSize = 6;
+    const unsigned int maxFused = 6;
+    const unsigned int minRingSize = 6;
     applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
                        maxFused, minRingSize);
 
@@ -804,11 +804,11 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     // now loop over all the candidate rings and check the
     // huckel rule - skipping fused systems
     INT_INT_VECT_MAP neighMap;
-    for (unsigned int ri = 0; ri < cRings.size(); ++ri) {
+    for (size_t ri = 0; ri < cRings.size(); ++ri) {
       INT_VECT fused;
       fused.push_back(ri);
-      unsigned int maxFused = 6;
-      unsigned int minRingSize = 0;
+      const unsigned int maxFused = 6;
+      const unsigned int minRingSize = 0;
       applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
                          maxFused, minRingSize);
     }
