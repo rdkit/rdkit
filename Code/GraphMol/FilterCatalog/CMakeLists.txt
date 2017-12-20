@@ -39,4 +39,4 @@ add_subdirectory(Wrap)
 
 rdkit_test(filterCatalogTest filtercatalogtest.cpp
            LINK_LIBRARIES FilterCatalog
-           Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral )
+           Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral Boost::serialization)

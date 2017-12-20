@@ -40,14 +40,14 @@ rdkit_headers(Reaction.h
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
 ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 add_subdirectory(Wrap)
