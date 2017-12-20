@@ -703,6 +703,97 @@ void testIssue239() {
 }
 #endif
 
+void testCalcEnergyPassedCoords() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords." << std::endl;
+
+  RWMol *mol;
+  ForceFields::ForceField *field;
+  double e1, e2, e3;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
+  mol = MolFileToMol(pathName + "/Issue239.mol", false);
+  TEST_ASSERT(mol);
+  MolOps::sanitizeMol(*mol);
+
+  field = UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  const RDGeom::PointPtrVect &positions = field->positions();
+  double *savedPos = new double[3 * field->numPoints()];
+  int i = 0;
+  for (RDGeom::PointPtrVect::const_iterator it = positions.begin(); it != positions.end(); ++it) {
+    for (int j = 0; j < 3; ++j)
+      savedPos[i++] = (*(*it))[j];
+  }
+  e1 = field->calcEnergy();
+  field->minimize(10000, 1.0e-6, 1.0e-3);
+  e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  e3 = field->calcEnergy(savedPos);
+  TEST_ASSERT(feq(e3, e1, 0.01));
+
+  delete [] savedPos;
+  delete mol;
+  delete field;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testCalcGrad() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcGrad." << std::endl;
+
+  RWMol *mol;
+  ForceFields::ForceField *field;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
+  mol = MolFileToMol(pathName + "/Issue239.mol", false);
+  TEST_ASSERT(mol);
+  MolOps::sanitizeMol(*mol);
+
+  field = UFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  int l = 3 * field->numPoints();
+  const RDGeom::PointPtrVect &positions = field->positions();
+  double *savedPos = new double[l];
+  double *grad1 = new double[l];
+  double *grad2 = new double[l];
+  int i = 0;
+  for (RDGeom::PointPtrVect::const_iterator it = positions.begin(); it != positions.end(); ++it) {
+    for (int j = 0; j < 3; ++j)
+      savedPos[i++] = (*(*it))[j];
+  }
+  TEST_ASSERT(i == l);
+  
+  std::memset(grad1, 0, l * sizeof(double));
+  field->calcGrad(grad1);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+
+  field->minimize(10000, 1.0e-6, 1.0e-3);
+  std::memset(grad2, 0, l * sizeof(double));
+  field->calcGrad(grad2);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+
+  field->initialize();
+  std::memset(grad2, 0, l * sizeof(double));
+  field->calcGrad(savedPos, grad2);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+
+  delete [] savedPos;
+  delete [] grad1;
+  delete [] grad2;
+  delete mol;
+  delete field;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 void testIssue242() {
 #if 0
 // FIX: Changes to the forcefield (connected to Issue 408) have
@@ -1242,6 +1333,8 @@ int main() {
   testUFFBatch();
   testUFFBuilderSpecialCases();
   testIssue239();
+  testCalcEnergyPassedCoords();
+  testCalcGrad();
   testIssue242();
   testSFIssue1653802();
   testSFIssue2378119();
