@@ -799,6 +799,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
   try {
     m = SmartsToMol(sma);
   } catch(...) {
+    // Is this every used?
   }
   
   if (m) {
@@ -810,9 +811,10 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text, unsigned int lin
     }
     at->expandQuery(query, Queries::COMPOSITE_AND);
   } else {
-    BOOST_LOG(rdErrorLog) << " MRV SMA not a valid smarts: " << sma
-                          << " on line: " << line
-                          << std::endl;
+    std::ostringstream errout;
+    errout << "Cannot parse smarts: '" << sma << "' on line "
+           << line;
+    throw FileParseException(errout.str());
   }
 }
 
