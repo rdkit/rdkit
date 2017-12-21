@@ -1227,6 +1227,7 @@ struct molops_wrapper {
         .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
         .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
+        .value("AROMATICITY_MDL", MolOps::AROMATICITY_MDL)
         .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
         .export_values();
 
