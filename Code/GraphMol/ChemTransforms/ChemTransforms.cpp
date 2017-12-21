@@ -662,13 +662,15 @@ void addRecursiveQueries(
     if (!at->hasProp(propName)) continue;
     std::string pval;
     at->getProp(propName, pval);
+    std::string maybeSmarts = pval; // keep unmodified in case we are a smarts string
     boost::algorithm::to_lower(pval);
     if (reactantLabels != NULL) {
       std::pair<unsigned int, std::string> label(at->getIdx(), pval);
       (*reactantLabels).push_back(label);
     }
 
-    QueryAtom::QUERYATOM_QUERY *qToAdd;
+    QueryAtom::QUERYATOM_QUERY *qToAdd = 0;
+    bool notFound = false;
     if (pval.find(delim) != std::string::npos) {
       boost::tokenizer<boost::char_separator<char> > tokens(pval, sep);
       boost::tokenizer<boost::char_separator<char> >::iterator token;
@@ -677,7 +679,9 @@ void addRecursiveQueries(
         std::map<std::string, ROMOL_SPTR>::const_iterator iter =
             queries.find(*token);
         if (iter == queries.end()) {
-          throw KeyErrorException(pval);
+          delete qToAdd;
+          notFound = true;
+          break;
         }
         RecursiveStructureQuery *tqp =
             new RecursiveStructureQuery(new ROMol(*(iter->second)));
@@ -688,10 +692,26 @@ void addRecursiveQueries(
       std::map<std::string, ROMOL_SPTR>::const_iterator iter =
           queries.find(pval);
       if (iter == queries.end()) {
+        notFound = true;
+      }
+      else {
+        qToAdd = new RecursiveStructureQuery(new ROMol(*(iter->second)));
+      }
+    }
+
+    if (notFound) {
+      // See if we are actually a smarts expression already
+      RWMol *m = 0;
+      try {
+        m = SmartsToMol(maybeSmarts);
+        if (!m)
+          throw KeyErrorException(pval);
+        qToAdd = new RecursiveStructureQuery(m);
+      } catch (...) {
         throw KeyErrorException(pval);
       }
-      qToAdd = new RecursiveStructureQuery(new ROMol(*(iter->second)));
     }
+
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
       static_cast<RWMol &>(mol).replaceAtom(at->getIdx(), &qAt);

@@ -1375,6 +1375,35 @@ void testAddRecursiveQueries() {
     delete mol1;
   }
 
+  // Tests smarts as props
+  {
+    std::string smi1 = "CC";
+    ROMol *mol1 = SmilesToMol(smi1);
+
+    std::map<std::string, ROMOL_SPTR> mp;
+    mol1->getAtomWithIdx(0)->setProp("replaceme", "CO");
+    addRecursiveQueries(*mol1, mp, "replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription() ==
+                "AtomAnd");
+
+    MatchVectType mv;
+    std::string msmi = "CCC";
+    ROMol *mmol = SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(!SubstructMatch(*mmol, *mol1, mv));
+    delete mmol;
+
+    msmi = "CCO";
+    mmol = SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(SubstructMatch(*mmol, *mol1, mv));
+    delete mmol;
+
+    delete mol1;
+    
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
