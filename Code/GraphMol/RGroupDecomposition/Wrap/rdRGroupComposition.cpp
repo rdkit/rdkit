@@ -145,8 +145,15 @@ python::object RGroupDecomp(python::object cores, python::object mols,
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
-    python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
-        .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+    // logic from https://stackoverflow.com/a/13017303
+    boost::python::type_info info =
+        boost::python::type_id<RDKit::MOL_SPTR_VECT>();
+    const boost::python::converter::registration *reg =
+        boost::python::converter::registry::query(info);
+    if (reg == NULL || (*reg).m_to_python == NULL) {
+      python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
+          .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+    }
 
     std::string docString = "";
     python::enum_<RDKit::RGroupLabels>("RGroupLabels")

@@ -304,7 +304,7 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
   }
 
   if (getLabels) {
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(self, queries, propName, &labels);
 
     // transform labels into python::tuple(python::tuple(python::tuple))
@@ -329,18 +329,15 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 python::object PreprocessReaction(ChemicalReaction &reaction,
                                   python::dict queryDict,
                                   std::string propName) {
-
   // transform dictionary into map
   std::map<std::string, ROMOL_SPTR> queries;
-  unsigned int size = python::extract<unsigned int>(queryDict.keys().attr("__len__")());
+  unsigned int size =
+      python::extract<unsigned int>(queryDict.keys().attr("__len__")());
   if (!size) {
     const bool normalized = true;
     queries = GetFlattenedFunctionalGroupHierarchy(normalized);
-  }
-  else {
-    for (unsigned int i = 0;
-         i < size;
-         ++i) {
+  } else {
+    for (unsigned int i = 0; i < size; ++i) {
       ROMol *m = python::extract<ROMol *>(queryDict.values()[i]);
       ROMOL_SPTR nm(new ROMol(*m));
       std::string k = python::extract<std::string>(queryDict.keys()[i]);
@@ -350,13 +347,12 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
 
   unsigned int nReactants = reaction.getNumReactantTemplates();
   unsigned int nProducts = reaction.getNumProductTemplates();
-  unsigned int nWarn,nError;
+  unsigned int nWarn, nError;
   reaction.validate(nWarn, nError);
-  std::vector<
-    std::vector<std::pair<unsigned int,std::string> > > labels;
+  std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
 
   if (!nError) {
-      preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
+    preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
   }
 
   // transform labels into python::tuple(python::tuple(python::tuple))
@@ -373,27 +369,22 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
   }
   return python::make_tuple(nWarn, nError, nReactants, nProducts,
                             python::tuple(reactantLabels));
-
 }
 
 typedef boost::uint64_t sanitize_ops;
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
-    ChemicalReaction &rxn,
-    sanitize_ops sanitizeOps,
-    const MolOps::AdjustQueryParameters &params,
-    bool catchErrors) {
+    ChemicalReaction &rxn, sanitize_ops sanitizeOps,
+    const MolOps::AdjustQueryParameters &params, bool catchErrors) {
   unsigned int operationsThatFailed = 0;
   try {
     RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps, params);
-  } catch(...) {
-    if (!catchErrors)
-      throw;
+  } catch (...) {
+    if (!catchErrors) throw;
   }
   return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
 }
 }
-
 
 void wrap_enumeration();
 
@@ -451,8 +442,15 @@ Sample Usage:\n\
 \n\
 ";
 
-  python::class_<RDKit::MOL_SPTR_VECT>("ROMolList")
-      .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+  // logic from https://stackoverflow.com/a/13017303
+  boost::python::type_info info =
+      boost::python::type_id<RDKit::MOL_SPTR_VECT>();
+  const boost::python::converter::registration *reg =
+      boost::python::converter::registry::query(info);
+  if (reg == NULL || (*reg).m_to_python == NULL) {
+    python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
+        .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+  }
 
   python::class_<RDKit::ChemicalReaction>(
       "ChemicalReaction", docString.c_str(),
@@ -796,39 +794,45 @@ Sample Usage:\n\
   True\n\
 ";
 
-  python::def("PreprocessReaction", RDKit::PreprocessReaction,
-              (python::arg("reaction"),
-               python::arg("queries")=python::dict(),
-               python::arg("propName")=RDKit::common_properties::molFileValue),
-              docString.c_str());
+  python::def(
+      "PreprocessReaction", RDKit::PreprocessReaction,
+      (python::arg("reaction"), python::arg("queries") = python::dict(),
+       python::arg("propName") = RDKit::common_properties::molFileValue),
+      docString.c_str());
 
   python::enum_<RDKit::RxnOps::SanitizeRxnFlags>("SanitizeFlags")
-        .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
-        .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
-        .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
-        .value("SANITIZE_ADJUST_REACTANTS", RDKit::RxnOps::SANITIZE_ADJUST_REACTANTS)
-        .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
-        .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
-        .export_values();
-    ;
+      .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
+      .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
+      .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
+      .value("SANITIZE_ADJUST_REACTANTS",
+             RDKit::RxnOps::SANITIZE_ADJUST_REACTANTS)
+      .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
+      .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
+      .export_values();
+  ;
 
-    python::def("GetDefaultAdjustParams", RDKit::RxnOps::DefaultRxnAdjustParams,
-                "Returns the default adjustment parameters for reactant templates");
+  python::def(
+      "GetDefaultAdjustParams", RDKit::RxnOps::DefaultRxnAdjustParams,
+      "Returns the default adjustment parameters for reactant templates");
 
-    python::def("GetChemDrawRxnAdjustParams", RDKit::RxnOps::ChemDrawRxnAdjustParams,
-                "(deprecated, see MatchOnlyAtRgroupsAdjustParams)\n\tReturns the chemdraw style adjustment parameters for reactant templates");
+  python::def("GetChemDrawRxnAdjustParams",
+              RDKit::RxnOps::ChemDrawRxnAdjustParams,
+              "(deprecated, see MatchOnlyAtRgroupsAdjustParams)\n\tReturns the "
+              "chemdraw style adjustment parameters for reactant templates");
 
-    python::def("MatchOnlyAtRgroupsAdjustParams", RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
-                "Only match at the specified rgroup locations in the reactant templates");
+  python::def(
+      "MatchOnlyAtRgroupsAdjustParams",
+      RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
+      "Only match at the specified rgroup locations in the reactant templates");
 
-    std::string docstring = "feed me";
-    python::def(
-        "SanitizeRxn", RDKit::sanitizeReaction,
-        (python::arg("rxn"), python::arg("sanitizeOps") = rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
-         python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
-         python::arg("catchErrors") = false),
-        docString.c_str());
+  std::string docstring = "feed me";
+  python::def("SanitizeRxn", RDKit::sanitizeReaction,
+              (python::arg("rxn"),
+               python::arg("sanitizeOps") =
+                   rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
+               python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
+               python::arg("catchErrors") = false),
+              docString.c_str());
 
   wrap_enumeration();
-
 }
