@@ -464,7 +464,7 @@ int _pairCompAscending(const INT_PAIR &arg1, const INT_PAIR &arg2) {
 
 template <class T>
 T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
-  int natms = commAtms.size();
+  size_t natms = commAtms.size();
   INT_PAIR_VECT rankAid;
   rankAid.reserve(natms);
   T res;
