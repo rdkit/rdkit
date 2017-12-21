@@ -53,7 +53,10 @@ struct coordgen_wrapper {
         .def("SetTemplateMol", SetTemplateMol,
              python::with_custodian_and_ward<1, 2>(), "docs")
         .def_readwrite("coordgenScaling",
-                       &CoordGen::CoordGenParams::coordgenScaling);
+                       &CoordGen::CoordGenParams::coordgenScaling)
+        .def_readwrite("dbg_useConstrained",
+                       &CoordGen::CoordGenParams::dbg_useConstrained)
+        .def_readwrite("dbg_useFixed", &CoordGen::CoordGenParams::dbg_useFixed);
 
     docString =
         "Add 2D coordinates.\n"

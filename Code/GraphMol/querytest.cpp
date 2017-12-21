@@ -832,10 +832,51 @@ void testNumHeteroatomNeighborQueries() {
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void testAtomQueryFromSmarts() {
+  BOOST_LOG(rdErrorLog)
+      << "---------------------- Testing setting atom queries from SMARTS"
+      << std::endl;
+  {
+    RWMol *m = SmartsToMol("CCC");
+    RWMol *q = SmartsToMol("[C,N,O]");
+
+    if (m->getAtomWithIdx(1)->hasQuery()) {
+      QueryAtom *at = static_cast<QueryAtom *>(m->getAtomWithIdx(1));
+      QueryAtom *qa2 = static_cast<QueryAtom *>(q->getAtomWithIdx(0));
+      at->setQuery(qa2->getQuery()->copy());
+    } else {
+      QueryAtom *at = new QueryAtom();
+      QueryAtom *qa2 = static_cast<QueryAtom *>(q->getAtomWithIdx(0));
+      at->setQuery(qa2->getQuery()->copy());
+      m->replaceAtom(0, at);
+    }
+    delete q;
+
+    {
+      RWMol *m2 = SmilesToMol("CCC");
+      std::vector<MatchVectType> mvv;
+      TEST_ASSERT(SubstructMatch(*m2, *m, mvv));
+      TEST_ASSERT(mvv.size() == 1);
+      TEST_ASSERT(mvv[0].size() == 3);
+      delete m2;
+    }
+    {
+      RWMol *m2 = SmilesToMol("COC");
+      std::vector<MatchVectType> mvv;
+      TEST_ASSERT(SubstructMatch(*m2, *m, mvv));
+      TEST_ASSERT(mvv.size() == 1);
+      TEST_ASSERT(mvv[0].size() == 3);
+      delete m2;
+    }
+    delete m;
+  }
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
+#if 0
   test1();
-#if 1
   test2();
   test3();
   test4();
@@ -848,10 +889,10 @@ int main() {
   testHasPropMatch();
   testHasPropWithValueMatch();
   testHasPropWithDoubleValueMatch();
-#endif
   testExtraAtomQueries();
   testExtraBondQueries();
   testNumHeteroatomNeighborQueries();
+  testAtomQueryFromSmarts();
 
   return 0;
 }

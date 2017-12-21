@@ -21,8 +21,10 @@ struct CoordGenParams {
   RDGeom::INT_POINT2D_MAP coordMap;
   const ROMol* templateMol = nullptr;
   double coordgenScaling = 50.0;  // at the time this was written, coordgen
-                                  // returned coordinates with a single bond
-                                  // length of 50.
+  // returned coordinates with a single bond
+  // length of 50.
+  bool dbg_useConstrained = true;
+  bool dbg_useFixed = false;
 };
 
 static CoordGenParams defaultParams;
@@ -54,8 +56,8 @@ void addCoords(T& mol, const CoordGenParams* params = nullptr) {
     if (params &&
         (hasTemplateMatch ||
          params->coordMap.find(oatom->getIdx()) != params->coordMap.end())) {
-      atom->constrained = true;
-      atom->fixed = true;
+      atom->constrained = params->dbg_useConstrained;
+      atom->fixed = params->dbg_useFixed;
       RDGeom::Point2D coords;
       if (hasTemplateMatch) {
         for (auto& pr : mv) {
