@@ -72,6 +72,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 const DrawColour &col1, const DrawColour &col2,
                                 unsigned int nSegments, double vertOffset) {
   PRECONDITION(nSegments > 1, "too few segments");
+  RDUNUSED_PARAM(col2);
 
   if (nSegments % 2)
     ++nSegments;  // we're going to assume an even number of segments

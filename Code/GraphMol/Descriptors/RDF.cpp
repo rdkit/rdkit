@@ -63,8 +63,7 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   // if (numAtoms < 4) return reserror;
   // if (!conf.is3D()) return reserror;
 
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
+  unsigned int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
   std::vector<double> R1(30);
@@ -83,7 +82,7 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   std::vector<double> IState = prepareIState(mol);
 
   double p;
-  for (int i = 0; i < R.size(); i++) {
+  for (unsigned int i = 0; i < R.size(); i++) {
     double res1 = 0.0;
     double res2 = 0.0;
     double res3 = 0.0;
@@ -92,8 +91,8 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
     double res6 = 0.0;
     double res7 = 0.0;
 
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
+    for (unsigned int j = 0; j < numAtoms - 1; j++) {
+      for (unsigned int k = j + 1; k < numAtoms; k++) {
         p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
         res1 += p;                                                  // "u"
         res2 += Mass[j] * Mass[k] * p;                              // "m"
@@ -161,8 +160,6 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId) {
   // RDF145s RDF150s RDF155s
 
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  int numAtoms = mol.getNumAtoms();
-  // if (numAtoms < 4) return reserror;
 
   const Conformer& conf = mol.getConformer(confId);
   // if (!conf.is3D()) return reserror;
