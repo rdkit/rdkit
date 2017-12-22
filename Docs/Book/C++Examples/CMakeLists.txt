@@ -13,15 +13,21 @@ find_package( Boost COMPONENTS iostreams filesystem system thread)
 
 find_package( Cairo REQUIRED )
 
-find_package( MyRDKit COMPONENTS FileParsers SmilesParse Depictor RDGeometryLib
-  RDGeneral SubstructMatch Subgraphs MolDraw2D FileParsers GraphMol DistGeometry DistGeomHelpers
-  MolAlign Optimizer RDGeometryLib ForceField ForceFieldHelpers Alignment
-  ForceField ForceFieldHelpers MolTransforms EigenSolvers )
+find_package( MyRDKit COMPONENTS ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
+  RDGeneral SubstructMatch Subgraphs MolDraw2D GraphMol DistGeometry DistGeomHelpers
+  MolAlign Optimizer ForceField ForceFieldHelpers Alignment
+  ForceField  MolTransforms EigenSolvers )
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR})
 
-set( LIBS ${RDKIT_LIBRARIES} z )
+find_package (Threads)
+set(RDKit_THREAD_LIBS Threads::Threads)
+list(APPEND Boost_IMPORTED_LIBRARIES Boost::thread Boost::system)
+list(APPEND RDKit_THREAD_LIBS Boost::thread Boost::system)
 
+set( LIBS ${RDKIT_LIBRARIES} Boost::iostreams ${RDKit_THREAD_LIBS} z  )
+
+include_directories(${RDKIT_INCLUDE_DIR})
 foreach( exnum RANGE 1 16 )
   message( "Example : ${exnum}" )
   set( exe "example${exnum}" )

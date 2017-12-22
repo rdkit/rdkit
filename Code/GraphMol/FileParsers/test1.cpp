@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -4280,7 +4280,7 @@ void testPDBResidues() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false);
 
     TEST_ASSERT(res.size() == 22);
@@ -4306,7 +4306,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
     TEST_ASSERT(res.size() == 1);
@@ -4331,7 +4331,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
     TEST_ASSERT(res.size() == 21);
@@ -4877,6 +4877,138 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolBlockChirality() {
+  BOOST_LOG(rdInfoLog)
+      << "Test automatic generation of coordinates for mol block chirality "
+      << std::endl;
+  {
+    std::string smi = "C[C@H](Cl)Br";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    auto mb = MolToMolBlock(*mol, true);
+    auto mol2 = MolBlockToMol(mb);
+    TEST_ASSERT(mol2);
+    auto csmi1 = MolToSmiles(*mol, true);
+    auto csmi2 = MolToSmiles(*mol2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete mol;
+    delete mol2;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testMolBlock3DStereochem() {
+  BOOST_LOG(rdInfoLog)
+      << "Test automatic perception of stereochem from 3D structure "
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName = rdbase + "stereo3d_1.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_2.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_conflict.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_unknown.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") == std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_trans.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F/C=C/F";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_cis.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F/C=C\\F";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") != std::string::npos);
+    TEST_ASSERT(csmi1.find("\\") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+
+  {
+    std::string fName = rdbase + "stereo3d_dblunknown.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "FC=CF";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") == std::string::npos);
+    TEST_ASSERT(csmi1.find("\\") == std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4967,9 +5099,11 @@ void RunTests() {
 
   testMolFileDativeBonds();
   testGithub1251();
-#endif
   testGithub1029();
   testGithub1340();
+#endif
+  testMolBlockChirality();
+  testMolBlock3DStereochem();
 }
 
 // must be in German Locale for test...

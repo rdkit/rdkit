@@ -169,7 +169,11 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    res = SmilesToMol(recs[d_smi], 0, df_sanitize);
+    SmilesParserParams params;
+    params.sanitize = df_sanitize;
+    params.allowCXSMILES = false;
+    params.parseName = false;
+    res = SmilesToMol(recs[d_smi], params);
     if (!res) {
       std::stringstream errout;
       errout << "Cannot create molecule from : '" << recs[d_smi] << "'";

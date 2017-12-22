@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2531,7 +2531,12 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     //
     const Conformer &conf = res->getConformer();
     if (chiralityPossible) {
-      DetectAtomStereoChemistry(*res, &conf);
+      if (!conf.is3D()) {
+        DetectAtomStereoChemistry(*res, &conf);
+      } else {
+        res->updatePropertyCache(false);
+        MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
+      }
     }
 
     if (sanitize) {

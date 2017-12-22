@@ -3737,7 +3737,7 @@ void test38AddRecursiveQueriesToReaction() {
     mp["foo"] = q1;
 
     rxn.initReactantMatchers();
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
     TEST_ASSERT(labels.size() == 2);
     TEST_ASSERT(labels[0][0].second == "foo");
@@ -3774,7 +3774,7 @@ void test38AddRecursiveQueriesToReaction() {
     mp["foo"] = q1;
 
     rxn.initReactantMatchers();
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
     TEST_ASSERT(labels.size() == 2);
     TEST_ASSERT(labels[1][0].second == "foo");
@@ -3806,7 +3806,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3820,7 +3820,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3834,7 +3834,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3862,7 +3862,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(S)Cl");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@H](S)Cl");
@@ -3887,7 +3887,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FCCl");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "FCCl");
@@ -3914,7 +3914,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 2);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "[H]C(N)(F)C(C)=O");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "[H][C@](N)(F)C(C)=O");
@@ -4731,8 +4731,10 @@ void test49ParensInProducts2() {
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 11);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 11);
 
-    smi = "CCCOc1ccn(c1)NC";
-    TEST_ASSERT(MolToSmiles(*prods[0][0]) == smi);
+    smi = "CCCOc1ccn(NC)c1";
+    RWMol *p00 = static_cast<RWMol *>(prods[0][0].get());
+    MolOps::sanitizeMol(*p00);
+    TEST_ASSERT(MolToSmiles(*p00) == smi);
 
     delete rxn;
   }
@@ -6538,12 +6540,31 @@ void testSanitizeException() {
   // This is a marvinjs conversion of the following smirks:
   // {indole}\t[*;Br,I;$(*c1ccccc1)]-[c:1]:[c:2]-[NH2:3].[CH1:5]#[C;$(C-[#6]):4]>>[c:1]1:[c:2]-[N:3]-[C:4]=[C:5]-1\tc1cc(I)c(N)cc1\tCC#C
   // From Hartenfeller et. al., J. Chem. Inf. Model., 2012, 52 (5), p 1167-1178
-  std::string rxnB = "$RXN\n\n  Marvin       102501170854\n\n  2  1\n$MOL\n\n  Mrv1583 10251708542D          \n\n  4  3  0  0  0  0            999 V2000\n   -4.2429   -0.3572    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0\n   -5.0679   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n   -5.4804    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   -6.3054    0.3572    0.0000 N   0  0  0  3  0  0  0  0  0  3  0  0\n  1  2  1  0  0  0  0\n  2  3  4  0  0  0  0\n  3  4  1  0  0  0  0\nM  MRV SMA   1 [*;A]\nM  MRV SMA   4 [#7H2;A:3]\nM  END\n$MOL\n\n  Mrv1583 10251708542D          \n\n  2  1  0  0  0  0            999 V2000\n   -1.6500    0.0000    0.0000 C   0  0  0  2  0  0  0  0  0  5  0  0\n   -2.4750    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n  1  2  3  0  0  0  0\nM  MRV SMA   1 [#6H1:5]\nM  END\n$MOL\n\n  Mrv1583 10251708542D          \n\n  5  5  0  0  0  0            999 V2000\n    3.3782    0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n    4.0456    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n    3.7907   -0.6348    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    2.9657   -0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n    2.7107    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n  1  2  4  0  0  0  0\n  1  5  1  0  0  0  0\n  2  3  1  0  0  0  0\n  3  4  1  0  0  0  0\n  4  5  2  0  0  0  0\nM  END\n";
+  std::string rxnB =
+      "$RXN\n\n  Marvin       102501170854\n\n  2  1\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  4  3  0  0  0  0            999 V2000\n   "
+      "-4.2429   -0.3572    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0\n   "
+      "-5.0679   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n   "
+      "-5.4804    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   "
+      "-6.3054    0.3572    0.0000 N   0  0  0  3  0  0  0  0  0  3  0  0\n  1 "
+      " 2  1  0  0  0  0\n  2  3  4  0  0  0  0\n  3  4  1  0  0  0  0\nM  MRV "
+      "SMA   1 [*;A]\nM  MRV SMA   4 [#7H2;A:3]\nM  END\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  2  1  0  0  0  0            999 V2000\n   "
+      "-1.6500    0.0000    0.0000 C   0  0  0  2  0  0  0  0  0  5  0  0\n   "
+      "-2.4750    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n  1 "
+      " 2  3  0  0  0  0\nM  MRV SMA   1 [#6H1:5]\nM  END\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  5  5  0  0  0  0            999 V2000\n    "
+      "3.3782    0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n    "
+      "4.0456    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n    "
+      "3.7907   -0.6348    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    "
+      "2.9657   -0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n    "
+      "2.7107    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n  1  "
+      "2  4  0  0  0  0\n  1  5  1  0  0  0  0\n  2  3  1  0  0  0  0\n  3  4  "
+      "1  0  0  0  0\n  4  5  2  0  0  0  0\nM  END\n";
 
   ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxnB);
   RxnOps::sanitizeRxn(*rxn);
   delete rxn;
-
 }
 
 int main() {

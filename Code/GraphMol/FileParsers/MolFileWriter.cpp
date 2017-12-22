@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,6 +26,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 namespace RDKit {
 
@@ -275,8 +275,8 @@ const std::string GetMolFileQueryInfo(const RWMol &mol) {
     }
     std::string molFileValue;
     if (!wrote_query &&
-        (*atomIt)
-            ->getPropIfPresent(common_properties::molFileValue, molFileValue))
+        (*atomIt)->getPropIfPresent(common_properties::molFileValue,
+                                    molFileValue))
       ss << "V  " << std::setw(3) << (*atomIt)->getIdx() + 1 << " "
          << molFileValue << std::endl;
   }
@@ -327,8 +327,8 @@ const std::string GetMolFileAliasInfo(const RWMol &mol) {
     std::string lbl;
     if ((*atomIt)->getPropIfPresent(common_properties::molFileAlias, lbl)) {
       if (!lbl.empty())
-        ss << "A  " << std::setw(3) << (*atomIt)->getIdx() + 1 << "\n" << lbl
-           << "\n";
+        ss << "A  " << std::setw(3) << (*atomIt)->getIdx() + 1 << "\n"
+           << lbl << "\n";
     }
   }
   return ss.str();
@@ -479,7 +479,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
 
   const ROMol &mol = atom->getOwningMol();
   RDGeom::Point3D pos = conf->getAtomPos(atom->getIdx());
-  std::vector<std::pair<unsigned int, RDGeom::Point3D> > vs;
+  std::vector<std::pair<unsigned int, RDGeom::Point3D>> vs;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
   while (nbrIdx != endNbrs) {
@@ -622,10 +622,11 @@ const std::string GetMolFileAtomLine(const Atom *atom,
   // the format string makes it impossible for this to overflow, I think we're
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
-  sprintf_s(dest, 128, "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x,
-          y, z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
-          totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
-          inversionFlag, exactChangeFlag);
+  sprintf_s(dest, 128,
+            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+            z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
+            totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
+            inversionFlag, exactChangeFlag);
 
 #endif
   res += dest;
@@ -649,9 +650,9 @@ namespace {
        and error-prone.
 */
 class RequiresV3000Exception : public std::runtime_error {
-public:
+ public:
   explicit RequiresV3000Exception()
-      : std::runtime_error("RequiresV3000Exception") {};
+      : std::runtime_error("RequiresV3000Exception"){};
 };
 }
 
@@ -1173,6 +1174,10 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   }
   if (kekulize) MolOps::Kekulize(trwmol);
 
+  if (includeStereo && !trwmol.getNumConformers()) {
+    // generate coordinates so that the stereo we generate makes sense
+    RDDepict::compute2DCoords(trwmol);
+  }
 #if 0
     if(includeStereo){
       // assign "any" status to any stereo bonds that are not

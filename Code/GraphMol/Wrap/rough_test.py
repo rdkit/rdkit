@@ -4252,8 +4252,11 @@ CAS<~>
   def testSmilesParseParams(self):
     smi = "CCC |$foo;;bar$| ourname"
     m = Chem.MolFromSmiles(smi)
-    self.assertTrue(m is None)
+    self.assertTrue(m is not None)
     ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = False
+    m = Chem.MolFromSmiles(smi,ps)
+    self.assertTrue(m is None)
     ps.allowCXSMILES = True
     ps.parseName = True
     m = Chem.MolFromSmiles(smi,ps)
@@ -4480,7 +4483,6 @@ M  END
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)),0)
     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)),0)
 
-
   def testGithub1622(self):
       nonaromatics = (
       "C1=C[N]C=C1",    # radicals are not two electron donors
@@ -4540,6 +4542,13 @@ M  END
           Chem.SetAromaticity(m,Chem.AROMATICITY_MDL)
           self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
 
+  def testMolBlockChirality(self):
+    m = Chem.MolFromSmiles('C[C@H](Cl)Br')
+    mb = Chem.MolToMolBlock(m)
+    m2 = Chem.MolFromMolBlock(mb)
+    csmi1 = Chem.MolToSmiles(m,isomericSmiles=True)
+    csmi2 = Chem.MolToSmiles(m2,isomericSmiles=True)
+    self.assertEqual(csmi1,csmi2)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
