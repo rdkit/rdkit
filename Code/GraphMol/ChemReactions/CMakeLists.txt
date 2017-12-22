@@ -39,7 +39,8 @@ rdkit_headers(Reaction.h
               DEST GraphMol/ChemReactions)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
-ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+${RDK_COORDGEN_LIBS} ChemReactions ChemTransforms Descriptors Fingerprints
+Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES

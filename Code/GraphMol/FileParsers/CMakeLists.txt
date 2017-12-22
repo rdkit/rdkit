@@ -33,7 +33,8 @@ else()
 endif()
 
 rdkit_test(testMolSupplier testMolSupplier.cpp
-           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib ${link_iostreams})
+           LINK_LIBRARIES ${RDK_COORDGEN_LIBS} FileParsers SmilesParse Depictor SubstructMatch
+	   GraphMol RDGeneral RDGeometryLib ${link_iostreams})
 
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES Depictor FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 

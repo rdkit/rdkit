@@ -10,7 +10,8 @@ rdkit_python_extension(rdmolops
                        rdmolops.cpp MolOps.cpp
                        DEST Chem
                        LINK_LIBRARIES
-                       ChemReactions MolDraw2D Depictor FileParsers SubstructMatch Fingerprints ChemTransforms
+                       ${RDK_COORDGEN_LIBS} ChemReactions MolDraw2D Depictor 
+                       FileParsers SubstructMatch Fingerprints ChemTransforms
                        Catalogs Subgraphs SmilesParse MolTransforms GraphMol EigenSolvers
 RDGeometryLib DataStructs RDGeneral RDBoost  )
 
