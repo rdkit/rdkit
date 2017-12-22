@@ -99,11 +99,20 @@ void test1() {
 
 namespace {
 bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
-                  int molConfId = -1, int templateConfId = -1,
-                  double tol = 1e-2) {
+                  bool alignFirst = false, int molConfId = -1,
+                  int templateConfId = -1, double postol = 1e-2,
+                  double rmstol = 0.1) {
   PRECONDITION(m, "bad pointer");
   PRECONDITION(templ, "bad pointer");
   TEST_ASSERT(m->getNumAtoms() >= templ->getNumAtoms());
+
+  if (alignFirst) {
+    RDGeom::Transform3D trans;
+    double rmsd = MolAlign::getAlignmentTransform(*templ, *m, trans, molConfId,
+                                                  templateConfId, &mv);
+    if (rmsd > rmstol) return false;
+  }
+
   const Conformer& conf1 = m->getConformer(molConfId);
   const Conformer& conf2 = templ->getConformer(templateConfId);
   for (unsigned int i = 0; i < templ->getNumAtoms(); i++) {
@@ -112,7 +121,7 @@ bool compareConfs(const ROMol* m, const ROMol* templ, const MatchVectType& mv,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(mv[i].second);
     RDGeom::Point3D pt2i = conf2.getAtomPos(mv[i].first);
-    if ((pt1i - pt2i).length() >= tol) return false;
+    if ((pt1i - pt2i).length() >= postol) return false;
   }
   return true;
 }
@@ -155,6 +164,7 @@ void test2() {
       }
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
+      params.dbg_useFixed = true;
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
@@ -165,6 +175,7 @@ void test2() {
     {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
+      params.dbg_useFixed = true;
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
@@ -209,6 +220,8 @@ void test2() {
       }
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
+      params.dbg_useFixed = true;
+
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
@@ -219,6 +232,7 @@ void test2() {
     {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
+      params.dbg_useFixed = true;
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
@@ -265,6 +279,7 @@ void test2() {
 
       CoordGen::CoordGenParams params;
       params.coordMap = coordMap;
+      params.dbg_useFixed = true;
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       // m->setProp("_Name", "templated");
@@ -275,12 +290,87 @@ void test2() {
     {
       CoordGen::CoordGenParams params;
       params.templateMol = core;
+      params.dbg_useFixed = true;
       CoordGen::addCoords(*m, &params);
       TEST_ASSERT(m->getNumConformers() == 1);
       m->setProp("_Name", "templated");
       mb = MolToMolBlock(*m);
       std::cerr << mb << std::endl;
       TEST_ASSERT(compareConfs(m, core, mv));
+    }
+    delete m;
+    delete core;
+  }
+
+  {
+    ROMol* core = SmilesToMol("C1CCCC2C1NCC2");
+    TEST_ASSERT(core);
+    core->setProp("_Name", "core");
+
+    CoordGen::addCoords(*core);
+    TEST_ASSERT(core->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*core);
+    std::cerr << mb << std::endl;
+
+    ROMol* m = SmilesToMol("C1C(CCC)CC(CC3CC3)C2C1N(C(C)C)CC2");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "core+sidechain");
+
+    MatchVectType mv;
+    SubstructMatch(*m, *core, mv);
+
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    TEST_ASSERT(!compareConfs(m, core, mv, true));
+
+    {
+      CoordGen::CoordGenParams params;
+      params.templateMol = core;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      m->setProp("_Name", "templated");
+      mb = MolToMolBlock(*m);
+      std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv, true, -1, -1, 0.3));
+    }
+    delete m;
+    delete core;
+  }
+
+  {
+    ROMol* core = SmilesToMol("CC(N)CC");
+    TEST_ASSERT(core);
+    core->setProp("_Name", "core");
+
+    CoordGen::addCoords(*core);
+    TEST_ASSERT(core->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*core);
+    std::cerr << mb << std::endl;
+
+    ROMol* m = SmilesToMol("CC(N)CC(O)C");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "core+sidechain");
+
+    MatchVectType mv;
+    SubstructMatch(*m, *core, mv);
+
+    CoordGen::addCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    TEST_ASSERT(!compareConfs(m, core, mv, true));
+
+    {
+      CoordGen::CoordGenParams params;
+      params.templateMol = core;
+      CoordGen::addCoords(*m, &params);
+      TEST_ASSERT(m->getNumConformers() == 1);
+      m->setProp("_Name", "templated");
+      mb = MolToMolBlock(*m);
+      std::cerr << mb << std::endl;
+      TEST_ASSERT(compareConfs(m, core, mv, true, -1, -1, 0.05));
     }
     delete m;
     delete core;
