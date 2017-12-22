@@ -55,4 +55,6 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       MolAlign FileParsers SmilesParse SubstructMatch GraphMol
       RDGeneral DataStructs RDGeneral RDGeometryLib
       ${RDKit_THREAD_LIBS})
+else (RDK_BUILD_COORDGEN_SUPPORT)
+    set(RDK_COORDGEN_LIBS  CACHE STRING "the external libraries" FORCE)
 endif(RDK_BUILD_COORDGEN_SUPPORT)
