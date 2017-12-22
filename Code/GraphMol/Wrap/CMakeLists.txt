@@ -41,8 +41,9 @@ endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 rdkit_python_extension(rdmolfiles
                        ${rdmolfiles_sources}
                        DEST Chem
-                       LINK_LIBRARIES SmilesParse FileParsers GraphMol
-                                      RDGeometryLib RDGeneral RDBoost)
+                       LINK_LIBRARIES ${RDK_COORDGEN_LIBS} Depictor SubstructMatch
+		       SmilesParse FileParsers GraphMol
+                       RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdtrajectory
                        Trajectory.cpp rdTrajectory.cpp

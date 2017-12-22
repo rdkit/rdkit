@@ -8,6 +8,7 @@ if(RDK_TEST_MMFF_COMPLIANCE)
   endif()
 rdkit_test(testMMFFForceField testMMFFForceField.cpp 
     LINK_LIBRARIES 
+    ${RDK_COORDGEN_LIBS} Depictor
     DistGeomHelpers DistGeometry ForceFieldHelpers ForceField 
     FileParsers MolTransforms SmilesParse SubstructMatch MolAlign
     Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
