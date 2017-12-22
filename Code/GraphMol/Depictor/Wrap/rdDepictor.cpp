@@ -128,6 +128,11 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::generateDepictionMatching3DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
+void setPreferCoordGen(bool value) {
+#ifdef BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = value;
+#endif
+}
 }
 
 BOOST_PYTHON_MODULE(rdDepictor) {
@@ -139,8 +144,15 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 
   rdkit_import_array();
 
+  python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
+#ifdef BUILD_COORDGEN_SUPPORT
+              "Sets whether or not the CoordGen library should be prefered to "
+              "the RDKit depiction library."
+#else
+              "Has no effect (CoordGen support not enabled)"
+#endif
+              );
   std::string docString;
-
   docString =
       "Compute 2D coordinates for a molecule. \n\
   The resulting coordinates are stored on each atom of the molecule \n\n\
@@ -168,7 +180,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("coordMap") = python::dict(),
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
-       python::arg("bondLength") = -1.0),
+       python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false),
       docString.c_str());
 
   docString =
@@ -203,8 +215,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("canonOrient") = false, python::arg("clearConfs") = true,
        python::arg("weightDistMat") = 0.5, python::arg("nFlipsPerSample") = 3,
        python::arg("nSample") = 100, python::arg("sampleSeed") = 100,
-       python::arg("permuteDeg4Nodes") = true,
-       python::arg("bondLength") = -1.0),
+       python::arg("permuteDeg4Nodes") = true, python::arg("bondLength") = -1.0,
+       python::arg("forceRDKit") = false),
       docString.c_str());
 
   docString =
@@ -229,7 +241,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       RDDepict::GenerateDepictionMatching2DStructure,
       (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
        python::arg("refPatt") = python::object(),
-       python::arg("acceptFailure") = false),
+       python::arg("acceptFailure") = false, python::arg("forceRDKit") = false),
       docString.c_str());
 
   docString =
@@ -255,6 +267,6 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       RDDepict::GenerateDepictionMatching3DStructure,
       (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
        python::arg("refPatt") = python::object(),
-       python::arg("acceptFailure") = false),
+       python::arg("acceptFailure") = false, python::arg("forceRDKit") = false),
       docString.c_str());
 }

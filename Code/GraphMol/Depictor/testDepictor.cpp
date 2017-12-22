@@ -1031,6 +1031,10 @@ void testGithub1691() {
 }
 
 int main() {
+#ifdef BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   BOOST_LOG(rdInfoLog)

@@ -20,6 +20,11 @@ class ROMol;
 }
 
 namespace RDDepict {
+
+#ifdef BUILD_COORDGEN_SUPPORT
+extern bool preferCoordGen;
+#endif
+
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
 class DepictException : public std::exception {

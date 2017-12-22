@@ -31,6 +31,9 @@
 #include <algorithm>
 
 namespace RDDepict {
+#ifdef BUILD_COORDGEN_SUPPORT
+bool preferCoordGen = true;
+#endif
 namespace DepictorLocal {
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
@@ -307,7 +310,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              bool permuteDeg4Nodes, bool forceRDKit) {
 #ifdef BUILD_COORDGEN_SUPPORT
   // default to use CoordGen if we have it installed
-  if (!forceRDKit) {
+  if (!forceRDKit && preferCoordGen) {
     return RDKit::CoordGen::addCoords(mol);
   };
 #endif
