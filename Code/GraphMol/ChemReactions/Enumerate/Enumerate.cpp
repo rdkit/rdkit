@@ -31,7 +31,7 @@
 //
 
 #include <boost/version.hpp>
-#if (BOOST_VERSION / 100000) > 1 or ((BOOST_VERSION / 100) % 1000) >= 53
+#if (BOOST_VERSION / 100000) > 1 || ((BOOST_VERSION / 100) % 1000) >= 53
 #define RDK_HAVE_MULTIPREC
 #include <boost/multiprecision/cpp_int.hpp>
 #endif

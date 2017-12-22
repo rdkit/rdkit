@@ -307,7 +307,7 @@ ForceFields::ForceField *construct3DForceField(
           new ForceFields::UFF::InversionContrib(
               field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
               improperAtoms[t][n[2]], improperAtoms[t][n[3]],
-              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
+              improperAtoms[t][4], static_cast<bool>(improperAtoms[t][5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }
@@ -510,7 +510,7 @@ ForceFields::ForceField *construct3DImproperForceField(
           new ForceFields::UFF::InversionContrib(
               field, improperAtoms[t][n[0]], improperAtoms[t][n[1]],
               improperAtoms[t][n[2]], improperAtoms[t][n[3]],
-              improperAtoms[t][4], improperAtoms[t][5], oobForceScalingFactor);
+              improperAtoms[t][4], static_cast<bool>(improperAtoms[t][5]), oobForceScalingFactor);
       field->contribs().push_back(ForceFields::ContribPtr(contrib));
     }
   }

@@ -36,9 +36,9 @@ void embedFusedSystems(const RDKit::ROMol &mol,
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
   RDKit::INT_VECT fused;
-  int cnrs = arings.size();
+  size_t cnrs = arings.size();
   boost::dynamic_bitset<> fusDone(cnrs);
-  int curr = 0;
+  size_t curr = 0;
 
   while (curr < cnrs) {
     // embed all ring and fused ring systems
@@ -52,7 +52,7 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     EmbeddedFrag efrag(&mol, frings);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
-    int rix;
+    size_t rix;
     for (rix = 0; rix < cnrs; ++rix) {
       if (!fusDone[rix]) {
         curr = rix;
