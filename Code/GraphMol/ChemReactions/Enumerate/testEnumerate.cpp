@@ -126,9 +126,9 @@ void testSamplers() {
 void testEvenSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
-  unsigned long R1 = 6000;
-  unsigned long R2 = 500;
-  unsigned long R3 = 10000;
+  boost::uint64_t R1 = 6000;
+  boost::uint64_t R2 = 500;
+  boost::uint64_t R3 = 10000;
   for (unsigned long i = 0; i < R1; ++i)
     bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
 

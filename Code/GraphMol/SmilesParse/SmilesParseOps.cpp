@@ -327,10 +327,10 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
       // second (everything else).
       auto selfPos = neighbors.begin();
-      if (selfPos->first != static_cast<int>((*atomIt)->getIdx())) {
+      if (selfPos->first != (*atomIt)->getIdx()) {
         ++selfPos;
       }
-      CHECK_INVARIANT(selfPos->first == static_cast<int>((*atomIt)->getIdx()),
+      CHECK_INVARIANT(selfPos->first == (*atomIt)->getIdx(),
                       "weird atom ordering");
 
       // copy over the bond ids:

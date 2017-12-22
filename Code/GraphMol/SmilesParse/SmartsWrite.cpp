@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -455,7 +454,7 @@ std::string _recurseBondSmarts(const Bond *bond,
     // child1 is  simple node get the smarts directly
     const BOND_EQUALS_QUERY *tchild =
         static_cast<const BOND_EQUALS_QUERY *>(child1);
-    csmarts1 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
+    csmarts1 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -471,7 +470,7 @@ std::string _recurseBondSmarts(const Bond *bond,
     // child 2 is a simple node
     const BOND_EQUALS_QUERY *tchild =
         static_cast<const BOND_EQUALS_QUERY *>(child2);
-    csmarts2 = getBondSmartsSimple(bond,tchild, atomToLeftIdx);
+    csmarts2 = getBondSmartsSimple(bond, tchild, atomToLeftIdx);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
@@ -599,6 +598,7 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
 std::string getNonQueryBondSmarts(const QueryBond *qbond, int atomToLeftIdx) {
   PRECONDITION(qbond, "bad bond");
   PRECONDITION(!qbond->hasQuery(), "bond should not have query");
+  RDUNUSED_PARAM(atomToLeftIdx);
   std::string res;
 
   if (qbond->getIsAromatic()) {
@@ -715,7 +715,7 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
     }
     const BOND_EQUALS_QUERY *tquery =
         static_cast<const BOND_EQUALS_QUERY *>(query);
-    res += getBondSmartsSimple(bond,tquery, atomToLeftIdx);
+    res += getBondSmartsSimple(bond, tquery, atomToLeftIdx);
   }
   return res;
 }

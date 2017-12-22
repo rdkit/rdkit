@@ -404,6 +404,7 @@ void get2DCoordsForReaction(ChemicalReaction &rxn, const MolDrawOptions &opts,
                             Point2D &arrowBegin, Point2D &arrowEnd,
                             std::vector<double> &plusLocs, double spacing,
                             const std::vector<int> *confIds) {
+  RDUNUSED_PARAM(opts);
   plusLocs.resize(0);
   double maxY = -1e8, minY = 1e8;
   double offset = 0.0;

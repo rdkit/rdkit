@@ -56,16 +56,15 @@ std::vector<double> getG(int n) {
 }
 
 std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
+  RDUNUSED_PARAM(conf);
   std::vector<double> IState = moldata3D.GetIState(mol);
   return IState;
 }
 
 void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
                   std::vector<double> &res) {
-  int numAtoms = conf.getNumAtoms();
-  int confId = conf.getId();
+  unsigned int numAtoms = conf.getNumAtoms();
+  unsigned int confId = conf.getId();
 
   std::vector<double> R = getG(32);
   std::vector<double> R1(32);
@@ -84,7 +83,7 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
   std::vector<double> IState = prepareIState(mol, confId);
 
   double p;
-  for (int i = 0; i < R.size(); i++) {
+  for (unsigned int i = 0; i < R.size(); i++) {
     double res1 = 0.0;
     double res2 = 0.0;
     double res3 = 0.0;
@@ -93,8 +92,8 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
     double res6 = 0.0;
     double res7 = 0.0;
 
-    for (int j = 0; j < numAtoms - 1; j++) {
-      for (int k = j + 1; k < numAtoms; k++) {
+    for (unsigned int j = 0; j < numAtoms - 1; j++) {
+      for (unsigned int k = j + 1; k < numAtoms; k++) {
         if (i == 0) {
           p = 1;
         } else {

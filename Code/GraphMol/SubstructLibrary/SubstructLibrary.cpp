@@ -133,7 +133,7 @@ std::vector<unsigned int> internalGetMatches(
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
 
   endIdx = std::min(mols.size(), endIdx);
-  if (endIdx < numThreads) numThreads = endIdx;
+  if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
 
   boost::thread_group thread_group;
   boost::atomic<int> counter(0);
@@ -183,7 +183,7 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
   else
     numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
 
-  if (endIdx < numThreads) numThreads = endIdx;
+  if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
 
   boost::thread_group thread_group;
   boost::atomic<int> counter(0);
