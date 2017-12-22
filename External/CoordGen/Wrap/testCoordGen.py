@@ -10,10 +10,10 @@ from __future__ import print_function
 import unittest
 import os,sys, copy
 
-from rdkit.Chem import rdCoordGen
+from rdkit.Chem import rdCoordGen, rdMolAlign
 from rdkit import Chem, Geometry
 
-def compareConfs(c1,c2,match, tol=1e-2):
+def compareConfs(c1,c2,match, tol=1e-2, alignIt=False):
   for i,j in enumerate(match):
     pi = c2.GetAtomPosition(i)
     pj = c1.GetAtomPosition(j)
@@ -47,6 +47,7 @@ class TestCase(unittest.TestCase) :
             mapd[aid] = Geometry.Point2D(p.x,p.y)
         ps = rdCoordGen.CoordGenParams()
         ps.SetCoordMap(mapd)
+        ps.dbg_useFixed = True
         rdCoordGen.AddCoords(mol,ps)
         self.assertTrue(compareConfs(mol.GetConformer(),template.GetConformer(),mol.GetSubstructMatch(template)))
 
@@ -59,6 +60,7 @@ class TestCase(unittest.TestCase) :
         rdCoordGen.AddCoords(template)
         ps = rdCoordGen.CoordGenParams()
         ps.SetTemplateMol(template)
+        ps.dbg_useFixed = True
         rdCoordGen.AddCoords(mol,ps)
         self.assertTrue(compareConfs(mol.GetConformer(),template.GetConformer(),mol.GetSubstructMatch(template)))
 
@@ -71,6 +73,7 @@ class TestCase(unittest.TestCase) :
         ps = rdCoordGen.CoordGenParams()
         ps.SetTemplateMol(template2)
         template2 = None
+        ps.dbg_useFixed = True
         rdCoordGen.AddCoords(mol,ps)
         self.assertTrue(compareConfs(mol.GetConformer(),template.GetConformer(),mol.GetSubstructMatch(template)))
 
