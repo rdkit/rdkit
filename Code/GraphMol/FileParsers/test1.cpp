@@ -4877,7 +4877,6 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-<<<<<<< HEAD
 void testMolBlockChirality() {
   BOOST_LOG(rdInfoLog)
       << "Test automatic generation of coordinates for mol block chirality "
@@ -5006,6 +5005,7 @@ void testMolBlock3DStereochem() {
     delete m1;
     delete m2;
   }
+}
 
 void testMarvinSMATag() {
   BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag "
