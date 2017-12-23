@@ -16,16 +16,16 @@ rdkit_library(ChemReactions
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
-                    
+
               LINK_LIBRARIES
               FilterCatalog Descriptors Fingerprints DataStructs Depictor
               FileParsers SubstructMatch ChemTransforms Boost::serialization)
 
 rdkit_headers(Reaction.h
               ReactionParser.h
-              ReactionPickler.h 
-              ReactionFingerprints.h 
-              ReactionUtils.h 
+              ReactionPickler.h
+              ReactionFingerprints.h
+              ReactionUtils.h
               ReactionRunner.h
               PreprocessRxn.h
               SanitizeRxn.h
@@ -39,16 +39,16 @@ rdkit_headers(Reaction.h
               DEST GraphMol/ChemReactions)
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
-${RDK_COORDGEN_LIBS} ChemReactions ChemTransforms Descriptors Fingerprints
-Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+ ChemReactions ChemTransforms Descriptors Fingerprints
+Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
-ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
+ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
-ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs FileParsers SmilesParse SubstructMatch
 GraphMol RDGeneral RDGeometryLib Boost::serialization )
 
 add_subdirectory(Wrap)

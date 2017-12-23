@@ -38,13 +38,13 @@ if(RDK_BUILD_CAIRO_SUPPORT)
 endif(RDK_BUILD_CAIRO_SUPPORT)
 
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
-  ${RDK_COORDGEN_LIBS} ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
+  ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
   RDGeometryLib
   MolDraw2D ${RDKit_THREAD_LIBS} )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
-    ${RDK_COORDGEN_LIBS} ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
+    ChemReactions FileParsers SmilesParse Depictor RDGeometryLib
     RDGeneral SubstructMatch Subgraphs GraphMol MolTransforms EigenSolvers
   RDGeometryLib
     MolDraw2D ${RDKit_THREAD_LIBS} ${EXTRA_LOCAL_LIBS} )

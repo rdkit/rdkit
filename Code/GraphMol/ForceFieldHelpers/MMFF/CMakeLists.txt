@@ -1,5 +1,4 @@
 rdkit_test(testMMFFForceFieldHelpers testMMFFHelpers.cpp
-           LINK_LIBRARIES 
+           LINK_LIBRARIES
            ForceFieldHelpers
-${RDK_COORDGEN_LIBS} Depictor
 DistGeomHelpers DistGeometry FileParsers MolTransforms SmilesParse SubstructMatch ForceField MolAlign Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})

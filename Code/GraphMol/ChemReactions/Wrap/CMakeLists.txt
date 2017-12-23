@@ -1,10 +1,10 @@
 rdkit_python_extension(rdChemReactions
                        Enumerate.cpp
                        rdChemReactions.cpp
-                       DEST Chem 
-                       LINK_LIBRARIES 
+                       DEST Chem
+                       LINK_LIBRARIES
 ChemReactions
-${RDK_COORDGEN_LIBS} FilterCatalog ChemTransforms
+ FilterCatalog ChemTransforms
 Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
 GraphMol Catalogs FilterCatalog RDGeneral RDGeometryLib RDBoost Boost::serialization)
 

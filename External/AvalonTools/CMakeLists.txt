@@ -95,7 +95,7 @@ rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FilePa
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
            LINK_LIBRARIES AvalonLib avalon_clib
-	   ${RDK_COORDGEN_LIBS} Depictor SubstructMatch
+	   SubstructMatch
 	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 
 add_subdirectory(Wrap)
