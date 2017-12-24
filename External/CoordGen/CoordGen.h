@@ -18,17 +18,25 @@ namespace RDKit {
 namespace CoordGen {
 
 struct CoordGenParams {
-  RDGeom::INT_POINT2D_MAP coordMap;
-  const ROMol* templateMol = nullptr;
+  RDGeom::INT_POINT2D_MAP coordMap; // coordinates for fixing particular atoms of a template
+  const ROMol* templateMol = nullptr; // a molecule to use as a template
   double coordgenScaling = 50.0;  // at the time this was written, coordgen
   // returned coordinates with a single bond
   // length of 50.
-  bool dbg_useConstrained = true;
-  bool dbg_useFixed = false;
+  bool dbg_useConstrained = true; // debugging
+  bool dbg_useFixed = false; // debugging
 };
 
 static CoordGenParams defaultParams;
 
+//! Generates a 2D conformer for a molecule and replaces the existing conformers
+/*!
+  This call uses the CoordGen library from Schroedinger
+
+  \param mol     the molecule we are working with
+  \param params  a pointer to a parameter object
+
+*/
 template <typename T>
 unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   double scaleFactor = defaultParams.coordgenScaling;

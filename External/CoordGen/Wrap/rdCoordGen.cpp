@@ -49,14 +49,14 @@ struct coordgen_wrapper {
 
     python::class_<CoordGen::CoordGenParams>(
         "CoordGenParams", "Parameters controlling coordinate generation")
-        .def("SetCoordMap", SetCoordMap, "docs")
+        .def("SetCoordMap", SetCoordMap, "expects a dictionary of Point2D objects with template coordinates")
         .def("SetTemplateMol", SetTemplateMol,
-             python::with_custodian_and_ward<1, 2>(), "docs")
+             python::with_custodian_and_ward<1, 2>(), "sets a molecule to be used as the template")
         .def_readwrite("coordgenScaling",
-                       &CoordGen::CoordGenParams::coordgenScaling)
+                       &CoordGen::CoordGenParams::coordgenScaling,"scaling factor for a single bond")
         .def_readwrite("dbg_useConstrained",
-                       &CoordGen::CoordGenParams::dbg_useConstrained)
-        .def_readwrite("dbg_useFixed", &CoordGen::CoordGenParams::dbg_useFixed);
+                       &CoordGen::CoordGenParams::dbg_useConstrained,"for debugging use")
+        .def_readwrite("dbg_useFixed", &CoordGen::CoordGenParams::dbg_useFixed,"for debugging use");
 
     docString =
         "Add 2D coordinates.\n"
@@ -65,7 +65,6 @@ struct coordgen_wrapper {
         "   - params: (optional) parameters controlling the coordinate "
         "generation\n"
         "\n";
-
     python::def("AddCoords", addCoordsHelper,
                 (python::arg("mol"), python::arg("params") = python::object()),
                 docString.c_str());
