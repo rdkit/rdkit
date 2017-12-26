@@ -95,16 +95,7 @@ void Bond::setBeginAtom(Atom *at) {
   PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   setBeginAtomIdx(at->getIdx());
 }
-void Bond::setBeginAtom(Atom::ATOM_SPTR at) {
-  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
-  setBeginAtomIdx(at->getIdx());
-}
-
 void Bond::setEndAtom(Atom *at) {
-  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
-  setEndAtomIdx(at->getIdx());
-}
-void Bond::setEndAtom(Atom::ATOM_SPTR at) {
   PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   setEndAtomIdx(at->getIdx());
 }
@@ -179,10 +170,6 @@ double Bond::getBondTypeAsDouble() const {
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
-}
-
-double Bond::getValenceContrib(Atom::ATOM_SPTR at) const {
-  return getValenceContrib(at.get());
 }
 
 double Bond::getValenceContrib(const Atom *atom) const {
@@ -273,10 +260,6 @@ bool Bond::Match(Bond const *what) const {
     res = getBondType() == what->getBondType();
   }
   return res;
-};
-
-bool Bond::Match(const Bond::BOND_SPTR what) const {
-  return Match(what.get());
 };
 
 void Bond::expandQuery(Bond::QUERYBOND_QUERY *what,

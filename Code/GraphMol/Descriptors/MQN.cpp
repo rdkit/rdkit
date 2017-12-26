@@ -32,7 +32,7 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     ++atBegin;
     unsigned int nHs = at->getTotalNumHs();
     unsigned int nRings = mol.getRingInfo()->numAtomRings(at->getIdx());
@@ -135,7 +135,7 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     if (bond->getIsAromatic()) ++nAromatic;
     unsigned int nRings = mol.getRingInfo()->numBondRings(bond->getIdx());
     switch (bond->getBondType()) {

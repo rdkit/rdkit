@@ -17,15 +17,13 @@ namespace RDKit {
 class ROMol;
 class Atom;
 class Bond;
-typedef boost::shared_ptr<Atom> ATOM_SPTR;
-typedef boost::shared_ptr<Bond> BOND_SPTR;
 
 double toPrime(const MatchVectType &v);
 void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms);
-bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
+bool atomCompat(const Atom* a1, const Atom* a2,
                 bool useQueryQueryMatches = false);
-bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2);
-bool bondCompat(const BOND_SPTR &b1, const BOND_SPTR &b2,
+bool chiralAtomCompat(const Atom* a1, const Atom* a2);
+bool bondCompat(const Bond* b1, const Bond* b2,
                 bool useQueryQueryMatches = false);
 }
 

@@ -471,7 +471,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         // note the assumption that the H only has one neighbor... I
         // feel no need to handle the case of hypervalent hydrogen!
         // :-)
-        const BOND_SPTR bond = mol[*beg];
+        const Bond* bond = mol[*beg];
         Atom *heavyAtom = bond->getOtherAtom(atom);
         int heavyAtomNum = heavyAtom->getAtomicNum();
         const INT_VECT &defaultVs =
@@ -545,7 +545,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
             if (mol[*beg]->getIdx() != bond->getIdx() &&
                 mol[*beg]->getBondType() == Bond::SINGLE) {
               if (mol[*beg]->getBondDir() == Bond::NONE) {
-                oBond = mol[*beg].get();
+                oBond = mol[*beg];
               } else {
                 foundADir = true;
               }

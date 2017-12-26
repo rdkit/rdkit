@@ -467,7 +467,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     ROMol::EDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getEdges();
     while (beg != end) {
-      BOND_SPTR bond = (mol)[*beg];
+      const Bond* bond = (mol)[*beg];
       ++beg;
       if (!copiedBonds[bond->getIdx()]) {
         continue;

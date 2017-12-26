@@ -96,7 +96,7 @@ void markUselessD2s(unsigned int root, const ROMol &tMol,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(root));
   while (beg != end) {
-    BOND_SPTR bond = tMol[*beg];
+    const Bond* bond = tMol[*beg];
     ++beg;
     if (!activeBonds[bond->getIdx()]) continue;
     unsigned int oIdx = bond->getOtherAtomIdx(root);
@@ -585,7 +585,7 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = tMol.getAtomBonds(tMol.getAtomWithIdx(cand));
   while (beg != end) {
-    BOND_SPTR bond = tMol[*beg];
+    const Bond* bond = tMol[*beg];
     ++beg;
     if (!activeBonds[bond->getIdx()]) continue;
     unsigned int oIdx = bond->getOtherAtomIdx(cand);
@@ -662,7 +662,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(curr));
     while (beg != end) {
-      BOND_SPTR bond = mol[*beg];
+      const Bond* bond = mol[*beg];
       ++beg;
       if (!activeBonds[bond->getIdx()]) continue;
       int nbrIdx = bond->getOtherAtomIdx(curr);
@@ -865,7 +865,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     if (bond->getBondType() == Bond::ZERO) activeBonds[bond->getIdx()] = 0;
     ++firstB;
   }
@@ -883,7 +883,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     while (beg != end) {
-      BOND_SPTR bond = mol[*beg];
+      const Bond* bond = mol[*beg];
       if (bond->getBondType() == Bond::ZERO) atomDegrees[i]--;
       ++beg;
     }
@@ -1222,7 +1222,7 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
   ROMol::ADJ_ITER nbrIter, endNbrs;
   boost::tie(nbrIter, endNbrs) = mol.getAtomNeighbors(atom);
   while (nbrIter != endNbrs) {
-    const Atom *nbr = mol[*nbrIter].get();
+    const Atom *nbr = mol[*nbrIter];
     unsigned int nbrIdx = nbr->getIdx();
     // std::cerr<<"   "<<atom->getIdx()<<"       consider: "<<nbrIdx<<"
     // "<<atomColors[nbrIdx]<<std::endl;

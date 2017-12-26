@@ -16,7 +16,7 @@
 
 namespace RDKit {
 
-bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
+bool atomCompat(const Atom* a1, const Atom* a2,
                 bool useQueryQueryMatches) {
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
@@ -24,8 +24,8 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
   // " " << a2->getIdx() << std::endl;
   bool res;
   if (useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
-    res = static_cast<QueryAtom *>(a1.get())->QueryMatch(
-        static_cast<QueryAtom *>(a2.get()));
+    res = static_cast<const QueryAtom *>(a1)->QueryMatch(
+        static_cast<const QueryAtom *>(a2));
   } else {
     res = a1->Match(a2);
   }
@@ -36,7 +36,7 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
   return res;
 }
 
-bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
+bool chiralAtomCompat(const Atom* &a1, const Atom* &a2) {
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
   bool res = a1->Match(a2);
@@ -54,14 +54,14 @@ bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
   return res;
 }
 
-bool bondCompat(const BOND_SPTR &b1, const BOND_SPTR &b2,
+bool bondCompat(const Bond* b1, const Bond* b2,
                 bool useQueryQueryMatches) {
   PRECONDITION(b1, "bad bond");
   PRECONDITION(b2, "bad bond");
   bool res;
   if (useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
-    res = static_cast<QueryBond *>(b1.get())->QueryMatch(
-        static_cast<QueryBond *>(b2.get()));
+    res = static_cast<const QueryBond *>(b1)->QueryMatch(
+        static_cast<const QueryBond *>(b2));
   } else {
     res = b1->Match(b2);
   }

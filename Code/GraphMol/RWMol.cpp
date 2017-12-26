@@ -113,7 +113,7 @@ unsigned int RWMol::addAtom(bool updateLabel) {
   auto *atom_p = new Atom();
   atom_p->setOwningMol(this);
   MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
-  d_graph[which].reset(atom_p);
+  d_graph[which] = atom_p;
   atom_p->setIdx(which);
   if (updateLabel) {
     clearAtomBookmark(ci_RIGHTMOST_ATOM);
@@ -138,9 +138,10 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool updateLabel,
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
   if (preserveProps) {
     const bool replaceExistingData = false;
-    atom_p->updateProps(*d_graph[vd].get(), replaceExistingData);
+    atom_p->updateProps(*d_graph[vd], replaceExistingData);
   }
-  d_graph[vd].reset(atom_p);
+  delete d_graph[vd];
+  d_graph[vd] = atom_p;
   // FIX: do something about bookmarks
 };
 
@@ -149,7 +150,7 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   URANGE_CHECK(idx, getNumBonds());
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
-  BOND_SPTR obond = d_graph[*(bIter.first)];
+  Bond* obond = d_graph[*(bIter.first)];
   Bond *bond_p = bond_pin->copy();
   bond_p->setOwningMol(this);
   bond_p->setIdx(idx);
@@ -157,10 +158,11 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps) {
   bond_p->setEndAtomIdx(obond->getEndAtomIdx());
   if (preserveProps) {
     const bool replaceExistingData = false;
-    bond_p->updateProps(*d_graph[*(bIter.first)].get(), replaceExistingData);
+    bond_p->updateProps(*d_graph[*(bIter.first)], replaceExistingData);
   }
 
-  d_graph[*(bIter.first)].reset(bond_p);
+  delete d_graph[*(bIter.first)];
+  d_graph[*(bIter.first)] = bond_p;
   // FIX: do something about bookmarks
 };
 
@@ -239,7 +241,7 @@ void RWMol::removeAtom(Atom *atom) {
   EDGE_ITER beg, end;
   boost::tie(beg, end) = getEdges();
   while (beg != end) {
-    BOND_SPTR bond = d_graph[*beg++];
+    Bond* bond = d_graph[*beg++];
     unsigned int tmpIdx = bond->getBeginAtomIdx();
     if (tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx - 1);
     tmpIdx = bond->getEndAtomIdx();
@@ -267,6 +269,7 @@ void RWMol::removeAtom(Atom *atom) {
   boost::clear_vertex(vd, d_graph);
   // finally remove the vertex itself
   boost::remove_vertex(vd, d_graph);
+  delete atom;
 }
 
 unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
@@ -293,7 +296,7 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
   bool ok;
   MolGraph::edge_descriptor which;
   boost::tie(which, ok) = boost::add_edge(atomIdx1, atomIdx2, d_graph);
-  d_graph[which].reset(b);
+  d_graph[which] = b;
   // unsigned int res = rdcast<unsigned int>(boost::num_edges(d_graph));
   ++numBonds;
   b->setIdx(numBonds - 1);
@@ -313,11 +316,6 @@ unsigned int RWMol::addBond(unsigned int atomIdx1, unsigned int atomIdx2,
 
 unsigned int RWMol::addBond(Atom *atom1, Atom *atom2, Bond::BondType bondType) {
   PRECONDITION(atom1 && atom2, "NULL atom passed in");
-  return addBond(atom1->getIdx(), atom2->getIdx(), bondType);
-}
-
-unsigned int RWMol::addBond(Atom::ATOM_SPTR atom1, Atom::ATOM_SPTR atom2,
-                            Bond::BondType bondType) {
   return addBond(atom1->getIdx(), atom2->getIdx(), bondType);
 }
 
@@ -373,7 +371,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = this->getEdges();
   while (firstB != lastB) {
-    BOND_SPTR bond = (*this)[*firstB];
+    Bond* bond = (*this)[*firstB];
     if (bond->getIdx() > idx) {
       bond->setIdx(bond->getIdx() - 1);
     }
@@ -384,6 +382,7 @@ void RWMol::removeBond(unsigned int aid1, unsigned int aid2) {
   MolGraph::vertex_descriptor vd1 = boost::vertex(aid1, d_graph);
   MolGraph::vertex_descriptor vd2 = boost::vertex(aid2, d_graph);
   boost::remove_edge(vd1, vd2, d_graph);
+  delete bnd;
   --numBonds;
 }
 

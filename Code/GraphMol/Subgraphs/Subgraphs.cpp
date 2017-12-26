@@ -43,7 +43,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
       ROMol::OEDGE_ITER bIt1, end;
       boost::tie(bIt1, end) = mol.getAtomBonds(atom);
       while (bIt1 != end) {
-        const BOND_SPTR bond1 = mol[*bIt1];
+        const Bond* bond1 = mol[*bIt1];
         // if this bond connect to a hydrogen and we are not interested
         // in it ignore
         if (useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1) {
@@ -54,7 +54,7 @@ void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
           }
           ROMol::OEDGE_ITER bIt2 = mol.getAtomBonds(atom).first;
           while (bIt2 != end) {
-            const BOND_SPTR bond2 = mol[*bIt2];
+            const Bond* bond2 = mol[*bIt2];
             int bid2 = bond2->getIdx();
             if (bid1 != bid2 &&
                 (useHs || bond2->getOtherAtom(atom)->getAtomicNum() != 1)) {
@@ -548,7 +548,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
   while (beg != end) {
-    BOND_SPTR bond = mol[*beg];
+    const Bond* bond = mol[*beg];
     if (useHs ||
         mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
                 ->getAtomicNum() != 1) {
@@ -576,7 +576,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
         while (beg != end) {
-          BOND_SPTR bond = mol[*beg];
+          const Bond* bond = mol[*beg];
           if (!bondsIn.test(bond->getIdx())) {
             if (useHs ||
                 mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))

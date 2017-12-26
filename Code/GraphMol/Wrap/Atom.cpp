@@ -72,7 +72,7 @@ python::tuple AtomGetBonds(Atom *atom) {
   ROMol::OEDGE_ITER begin, end;
   boost::tie(begin, end) = parent->getAtomBonds(atom);
   while (begin != end) {
-    Bond *tmpB = (*parent)[*begin].get();
+    const Bond *tmpB = (*parent)[*begin];
     res.append(python::ptr(tmpB));
     begin++;
   }

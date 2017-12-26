@@ -311,7 +311,7 @@ bool AtomElectrons::isNbrCharged(unsigned int bo, unsigned int oeConstraint) {
   ROMol::OEDGE_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol.getAtomBonds(d_atom);
   for (; !res && (nbrIdx != endNbrs); ++nbrIdx) {
-    const Bond *bondNbr = mol[*nbrIdx].get();
+    const Bond *bondNbr = mol[*nbrIdx];
     unsigned int biNbr = bondNbr->getIdx();
     if (d_parent->parent()->getBondConjGrpIdx(biNbr) != conjGrpIdx()) continue;
     BondElectrons *beNbr = d_parent->getBondElectronsWithIdx(biNbr);
@@ -373,7 +373,7 @@ void AtomElectrons::allConjBondsDefinitiveBut(unsigned int bi) {
   ROMol::OEDGE_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol.getAtomBonds(d_atom);
   for (; allDefinitive && (nbrIdx != endNbrs); ++nbrIdx) {
-    unsigned int nbi = mol[*nbrIdx].get()->getIdx();
+    unsigned int nbi = mol[*nbrIdx]->getIdx();
     if ((nbi != bi) &&
         (d_parent->parent()->getBondConjGrpIdx(nbi) == conjGrpIdx()))
       allDefinitive = d_parent->getBondElectronsWithIdx(nbi)->isDefinitive();
@@ -1333,7 +1333,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       boost::tie(nbrIdx, endNbrs) =
           d_mol->getAtomNeighbors(ae[BEGIN_POS]->atom());
       for (; nbrIdx != endNbrs; ++nbrIdx) {
-        unsigned int aiNbr = (*d_mol)[*nbrIdx].get()->getIdx();
+        unsigned int aiNbr = (*d_mol)[*nbrIdx]->getIdx();
         // if this neighbor is not part of the conjugated group,
         // ignore it
         if (ce->parent()->getAtomConjGrpIdx(aiNbr) !=

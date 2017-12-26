@@ -71,8 +71,6 @@ class Atom : public RDProps {
   friend class RWMol;
 
  public:
-  typedef boost::shared_ptr<Atom> ATOM_SPTR;
-  typedef boost::shared_ptr<const Atom> C_ATOM_SPTR;
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
@@ -303,10 +301,6 @@ class Atom : public RDProps {
         | [CH2]   | O[CH2]O | Yes   |
   */
   virtual bool Match(Atom const *what) const;
-  //! \overload
-  virtual inline bool Match(const ATOM_SPTR &what) const {
-    return Match(what.get());
-  };
 
   //! returns the perturbation order for a list of integers
   /*!

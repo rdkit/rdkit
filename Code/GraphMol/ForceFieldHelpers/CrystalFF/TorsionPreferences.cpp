@@ -227,7 +227,7 @@ void getExperimentalTorsions(
           unsigned int i = 0;
           unsigned int isBoundToSP2O = 0;  // false
           for (; nbrIdx != endNbrs; ++nbrIdx) {
-            const Atom *atomX = mol[*nbrIdx].get();
+            const Atom *atomX = mol[*nbrIdx];
             atoms[i] = atomX->getIdx();
             // if the central atom is sp2 carbon and is bound to sp2 oxygen, set
             // a flag
