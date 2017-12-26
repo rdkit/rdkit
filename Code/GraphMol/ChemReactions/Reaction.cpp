@@ -479,7 +479,7 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = rAtom.getOwningMol().getAtomNeighbors(&rAtom);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = rAtom.getOwningMol()[*nbrIdx];
+    const Atom *nbr = rAtom.getOwningMol()[*nbrIdx];
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       reactantBonds[mapNum] = rAtom.getOwningMol().getBondBetweenAtoms(
@@ -492,7 +492,7 @@ bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
   }
   boost::tie(nbrIdx, endNbrs) = pAtom.getOwningMol().getAtomNeighbors(&pAtom);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = pAtom.getOwningMol()[*nbrIdx];
+    const Atom * nbr = pAtom.getOwningMol()[*nbrIdx];
     int mapNum;
     if (nbr->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
       // if we don't have a bond to a similarly mapped atom in the reactant,
@@ -560,7 +560,7 @@ template <class T>
 bool getMappedAtoms(T &rIt, std::map<int, const Atom *> &mappedAtoms) {
   ROMol::ATOM_ITER_PAIR atItP = rIt->getVertices();
   while (atItP.first != atItP.second) {
-    const Atom *oAtom = (*rIt)[*(atItP.first++)].get();
+    const Atom *oAtom = (*rIt)[*(atItP.first++)];
     // we only worry about mapped atoms:
     int mapNum;
     if (oAtom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
@@ -597,7 +597,7 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
        rIt != rxn.endReactantTemplates(); ++rIt, ++resIt) {
     ROMol::ATOM_ITER_PAIR atItP = (*rIt)->getVertices();
     while (atItP.first != atItP.second) {
-      const Atom *oAtom = (**rIt)[*(atItP.first++)].get();
+      const Atom *oAtom = (**rIt)[*(atItP.first++)];
       // unmapped atoms are definitely changing:
       int mapNum;
       if (!oAtom->getPropIfPresent(common_properties::molAtomMapNumber,

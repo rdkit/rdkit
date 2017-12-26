@@ -25,7 +25,6 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class Atom;
-typedef boost::shared_ptr<Atom> ATOM_SPTR;
 
 //! class for representing a bond
 /*!
@@ -49,7 +48,6 @@ class Bond : public RDProps {
   friend class ROMol;
 
  public:
-  typedef boost::shared_ptr<Bond> BOND_SPTR;
   // FIX: grn...
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
@@ -132,8 +130,6 @@ class Bond : public RDProps {
       - requires an owning molecule
   */
   double getValenceContrib(const Atom *at) const;
-  // \overload
-  double getValenceContrib(ATOM_SPTR at) const;
 
   //! sets our \c isAromatic flag
   void setIsAromatic(bool what) { df_isAromatic = what; };
@@ -210,16 +206,12 @@ class Bond : public RDProps {
       - requires an owning molecule
   */
   void setBeginAtom(Atom *at);
-  //! \overload
-  void setBeginAtom(ATOM_SPTR at);
   //! sets our end Atom
   /*!
     <b>Notes:</b>
       - requires an owning molecule
   */
   void setEndAtom(Atom *at);
-  //! \overload
-  void setEndAtom(ATOM_SPTR at);
 
   //! returns a pointer to our begin Atom
   /*!
@@ -268,8 +260,6 @@ class Bond : public RDProps {
           same \c bondType.
   */
   virtual bool Match(Bond const *what) const;
-  //! \overload
-  virtual bool Match(const Bond::BOND_SPTR what) const;
 
   //! sets our direction
   void setBondDir(BondDir what) { d_dirTag = what; };

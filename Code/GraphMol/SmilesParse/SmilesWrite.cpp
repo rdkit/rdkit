@@ -559,7 +559,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(aidx));
       while (beg != end) {
-        const BOND_SPTR bond = mol[*beg];
+        const Bond* bond = mol[*beg];
         if (atomsInPlay[bond->getOtherAtomIdx(aidx)])
           bondsInPlay.set(bond->getIdx());
         ++beg;

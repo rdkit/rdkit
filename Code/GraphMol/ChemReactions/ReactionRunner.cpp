@@ -191,7 +191,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   // copy in the atoms:
   ROMol::ATOM_ITER_PAIR atItP = prodTemplate->getVertices();
   while (atItP.first != atItP.second) {
-    Atom *oAtom = (*prodTemplate)[*(atItP.first++)].get();
+    const Atom *oAtom = (*prodTemplate)[*(atItP.first++)];
     auto *newAtom = new Atom(*oAtom);
     res->addAtom(newAtom, false, true);
     int mapNum;
@@ -234,7 +234,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
   while (bondItP.first != bondItP.second) {
-    const BOND_SPTR oldB = (*prodTemplate)[*(bondItP.first++)];
+    const Bond* oldB = (*prodTemplate)[*(bondItP.first++)];
     unsigned int bondIdx;
     bondIdx = res->addBond(oldB->getBeginAtomIdx(), oldB->getEndAtomIdx(),
                            oldB->getBondType()) -
@@ -300,7 +300,7 @@ ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     ROMol::EDGE_ITER firstB, lastB;
     boost::tie(firstB, lastB) = reactantTemplate.getEdges();
     while (firstB != lastB) {
-      BOND_SPTR bond = reactantTemplate[*firstB];
+      const Bond* bond = reactantTemplate[*firstB];
       // this will put in pairs with 0s for things that aren't mapped, but we
       // don't care about that
       int a1mapidx = bond->getBeginAtom()->getAtomMapNum();
@@ -345,7 +345,7 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         ReactantProductAtomMapping *mapping) {
   ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
   while (bondItP.first != bondItP.second) {
-    BOND_SPTR pBond = (*product)[*(bondItP.first)];
+    Bond* pBond = (*product)[*(bondItP.first)];
     ++bondItP.first;
     if (pBond->hasProp(common_properties::NullBond)) {
       if (mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx()) !=
@@ -734,7 +734,7 @@ void checkAndCorrectChiralityOfProduct(
         boost::tie(beg, end) =
             reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
         while (beg != end) {
-          const BOND_SPTR reactantBond = reactantAtom->getOwningMol()[*beg];
+          const Bond* reactantBond = reactantAtom->getOwningMol()[*beg];
           unsigned int oAtomIdx =
               reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
           CHECK_INVARIANT(mapping->reactProdAtomMap.find(oAtomIdx) !=

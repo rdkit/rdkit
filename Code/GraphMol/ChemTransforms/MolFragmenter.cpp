@@ -360,9 +360,9 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(oAt);
   while (beg != end) {
-    const BOND_SPTR obond = mol[*beg];
+    const Bond* obond = mol[*beg];
     ++beg;
-    if (obond.get() == bond) {
+    if (obond == bond) {
       continue;
     }
     newOrder.push_back(obond->getIdx());

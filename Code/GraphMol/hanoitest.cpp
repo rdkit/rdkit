@@ -343,7 +343,7 @@ class atomcomparefunctor3 {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = dp_mol->getAtomBonds(at);
     while (beg != end) {
-      const BOND_SPTR bond = (*dp_mol)[*beg];
+      const Bond* bond = (*dp_mol)[*beg];
       nbrs[nbridx] =
           static_cast<unsigned int>(100 * bond->getBondTypeAsDouble()) +
           dp_atoms[bond->getOtherAtomIdx(i)].index;

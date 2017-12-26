@@ -95,10 +95,6 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
   }
 }
 
-bool QueryBond::Match(const Bond::BOND_SPTR what) const {
-  return Match(what.get());
-}
-
 namespace {
 bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
   if (q1->getNegation() == q2->getNegation()) {

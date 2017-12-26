@@ -284,7 +284,7 @@ bool incidentMultipleBond(const Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    BOND_SPTR bond = at->getOwningMol()[*beg];
+    Bond* bond = at->getOwningMol()[*beg];
     if (bond->getBondType() == Bond::ZERO) --deg;
     ++beg;
   }
@@ -500,7 +500,7 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
     while (beg != end) {
-      const Bond *bnd = mol[*beg].get();
+      const Bond *bnd = mol[*beg];
       if ((bnd->getBondType() == Bond::DOUBLE ||
            bnd->getBondType() == Bond::TRIPLE) &&
           !queryIsBondInRing(bnd))
@@ -606,7 +606,7 @@ int countAtomElec(const Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    BOND_SPTR bond = at->getOwningMol()[*beg];
+    Bond* bond = at->getOwningMol()[*beg];
     if (bond->getBondType() == Bond::UNSPECIFIED  // query bonds should not
                                                   // contribute; this was github
                                                   // issue #443

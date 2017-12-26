@@ -776,7 +776,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
           boost::tie(beg, end) =
               bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
           while (beg != end && !nbrHasDir) {
-            const BOND_SPTR nbrBond = bond->getOwningMol()[*beg];
+            const Bond* nbrBond = bond->getOwningMol()[*beg];
             if (nbrBond->getBondType() == Bond::SINGLE &&
                 (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
@@ -787,7 +787,7 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
           boost::tie(beg, end) =
               bond->getOwningMol().getAtomBonds(bond->getEndAtom());
           while (beg != end && !nbrHasDir) {
-            const BOND_SPTR nbrBond = bond->getOwningMol()[*beg];
+            const Bond* nbrBond = bond->getOwningMol()[*beg];
             if (nbrBond->getBondType() == Bond::SINGLE &&
                 (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
                  nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {

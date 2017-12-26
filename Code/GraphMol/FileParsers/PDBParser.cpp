@@ -457,7 +457,7 @@ void BasicPDBCleanup(RWMol &mol) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR atom = mol[*atBegin];
+    Atom* atom = mol[*atBegin];
     atom->calcExplicitValence(false);
 
     // correct four-valent neutral N -> N+

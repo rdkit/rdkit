@@ -203,7 +203,7 @@ double calcFractionCSP3(const ROMol &mol) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     if (at->getAtomicNum() == 6) {
       ++nC;
       if (at->getTotalDegree() == 4) {

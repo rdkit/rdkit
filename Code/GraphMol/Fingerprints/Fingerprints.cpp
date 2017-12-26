@@ -243,7 +243,7 @@ void identifyQueryBonds(const ROMol &mol,
   ROMol::EDGE_ITER firstB,lastB;
   boost::tie(firstB,lastB) = mol.getEdges();
   while(firstB!=lastB){
-    const Bond *bond = mol[*firstB].get();
+    const Bond *bond = mol[*firstB];
     isQueryBond[bond->getIdx()] = 0x0;
     bondCache[bond->getIdx()]=bond;
     if(isComplexQuery(bond)){
@@ -639,7 +639,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond *bond = mol[*firstB].get();
+    const Bond *bond = mol[*firstB];
     isQueryBond[bond->getIdx()] = 0x0;
     bondCache[bond->getIdx()] = bond;
     if (isComplexQuery(bond)) {
@@ -659,7 +659,7 @@ ExplicitBitVect *LayeredFingerprintMol(
   ROMol::VERTEX_ITER firstA, lastA;
   boost::tie(firstA, lastA) = mol.getVertices();
   while (firstA != lastA) {
-    const Atom *atom = mol[*firstA].get();
+    const Atom *atom = mol[*firstA];
     if (isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()] = true;
     anums[atom->getIdx()] = atom->getAtomicNum();
     ++firstA;

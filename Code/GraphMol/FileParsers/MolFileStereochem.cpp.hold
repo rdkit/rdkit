@@ -401,7 +401,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
     while (nbrIdx != endNbrs) {
-      const ATOM_SPTR nat = mol[*nbrIdx];
+      const Atom* nat = mol[*nbrIdx];
       ++nbrIdx;
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:

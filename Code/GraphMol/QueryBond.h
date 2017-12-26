@@ -50,8 +50,6 @@ class QueryBond : public Bond {
   void setBondDir(BondDir bD);
 
   //! returns true if we match Bond \c what
-  bool Match(const Bond::BOND_SPTR what) const;
-  //! \overload
   bool Match(Bond const *what) const;
 
   //! returns true if our query details match those of QueryBond \c what
