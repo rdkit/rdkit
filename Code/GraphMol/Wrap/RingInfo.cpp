@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Created by Greg Landrum: January 2007
+//  Copyright (C) Greg Landrum 2007-2017
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +10,7 @@
 
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
@@ -35,6 +35,19 @@ python::object bondRings(const RingInfo *self) {
   }
   return python::tuple(res);
 }
+void addRing(RingInfo *self,python::object atomRing, python::object bondRing){
+  unsigned int nAts = python::extract<unsigned int>(atomRing.attr("__len__")());
+  unsigned int nBnds = python::extract<unsigned int>(bondRing.attr("__len__")());
+  if(nAts != nBnds) throw_value_error("list sizes must match");
+  if(!self->isInitialized()) self->initialize();
+  INT_VECT aring(nAts);
+  INT_VECT bring(nAts);
+  for (unsigned int i = 0; i < nAts; ++i) {
+    aring[i] = python::extract<int>(atomRing[i])();
+    bring[i] = python::extract<int>(bondRing[i])();
+  }
+  self->addRing(aring,bring);
+}
 }
 
 namespace RDKit {
@@ -50,7 +63,9 @@ struct ringinfo_wrapper {
         .def("NumBondRings", &RingInfo::numBondRings)
         .def("NumRings", &RingInfo::numRings)
         .def("AtomRings", atomRings)
-        .def("BondRings", bondRings);
+        .def("BondRings", bondRings)
+        .def("AddRing", addRing, (python::arg("self"),python::arg("atomIds"),python::arg("bondIds")),
+         "Adds a ring to the set. Be very careful with this operation.");
   };
 };
 }  // end of namespace
