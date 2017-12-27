@@ -33,6 +33,17 @@ const int ci_ATOM_HOLDER = -0xDEADD06;
 void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
+
+  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);  
+  while (atItP.first != atItP.second) {
+    delete (d_graph)[*(atItP.first++)];
+  }
+
+  BOND_ITER_PAIR bondItP = boost::edges(d_graph);
+  while (bondItP.first != bondItP.second) {
+    delete (d_graph)[*(bondItP.first++)];
+  }
+  
   d_graph.clear();
 
   if (dp_ringInfo) {
