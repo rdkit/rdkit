@@ -28,10 +28,10 @@ std::string FreeChemicalFeature::toString() const {
   // write the id
   streamWrite(ss, d_id);
 
-  tInt = d_family.size() + 1;
+  tInt = static_cast<uint32_t>(d_family.size() + 1);
   streamWrite(ss, tInt);
   ss.write(d_family.c_str(), tInt * sizeof(char));
-  tInt = d_type.size() + 1;
+  tInt = static_cast<uint32_t>(d_type.size() + 1);
   streamWrite(ss, tInt);
   ss.write(d_type.c_str(), tInt * sizeof(char));
   streamWrite(ss, d_position.x);

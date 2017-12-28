@@ -475,9 +475,10 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   return PyArray_Return(res);
 }
 
-python::tuple GetMolFragsWithMapping(const ROMol &mol,
-  bool asMols, bool sanitizeFrags, python::object frags = python::object(),
-  python::object fragsMolAtomMapping = python::object()) {
+python::tuple GetMolFragsWithMapping(
+    const ROMol &mol, bool asMols, bool sanitizeFrags,
+    python::object frags = python::object(),
+    python::object fragsMolAtomMapping = python::object()) {
   python::list res;
 
   if (!asMols) {
@@ -492,17 +493,20 @@ python::tuple GetMolFragsWithMapping(const ROMol &mol,
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<std::vector<int> > fragsMolAtomMappingVec;
+    std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
-    std::vector<boost::shared_ptr<ROMol> > molFrags;
+    std::vector<boost::shared_ptr<ROMol>> molFrags;
     python::list &fragsList = reinterpret_cast<python::list &>(frags);
-    python::list &fragsMolAtomMappingList = reinterpret_cast<python::list &>(fragsMolAtomMapping);
+    python::list &fragsMolAtomMappingList =
+        reinterpret_cast<python::list &>(fragsMolAtomMapping);
     bool hasFrags = fragsList != python::object();
     bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
-    molFrags = hasFrags || hasFragsMolAtomMapping
-      ? MolOps::getMolFrags(mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
-      hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
-      : MolOps::getMolFrags(mol, sanitizeFrags);
+    molFrags =
+        hasFrags || hasFragsMolAtomMapping
+            ? MolOps::getMolFrags(
+                  mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
+                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
+            : MolOps::getMolFrags(mol, sanitizeFrags);
     if (hasFrags) {
       for (unsigned int i = 0; i < fragsVec.size(); ++i)
         fragsList.append(fragsVec[i]);
@@ -515,8 +519,7 @@ python::tuple GetMolFragsWithMapping(const ROMol &mol,
         fragsMolAtomMappingList.append(python::tuple(perFragMolAtomMappingTpl));
       }
     }
-    for (unsigned int i = 0; i < molFrags.size(); ++i)
-      res.append(molFrags[i]);
+    for (unsigned int i = 0; i < molFrags.size(); ++i) res.append(molFrags[i]);
   }
   return python::tuple(res);
 }
@@ -627,8 +630,6 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   }
   if (lBitInfo) {
     python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint32_t, std::vector<std::vector<int>>>::iterator
-        it_type;
     for (auto &it : (*lBitInfo)) {
       python::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -685,8 +686,6 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   }
   if (lBitInfo) {
     python::dict &pyd = static_cast<python::dict &>(bitInfo);
-    typedef std::map<boost::uint64_t, std::vector<std::vector<int>>>::iterator
-        it_type;
     for (auto &it : (*lBitInfo)) {
       python::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -1227,6 +1226,7 @@ struct molops_wrapper {
         .value("AROMATICITY_DEFAULT", MolOps::AROMATICITY_DEFAULT)
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
         .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
+        .value("AROMATICITY_MDL", MolOps::AROMATICITY_MDL)
         .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
         .export_values();
 

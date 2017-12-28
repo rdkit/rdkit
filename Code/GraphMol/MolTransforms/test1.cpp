@@ -167,7 +167,7 @@ void testGetSetAngle() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double angle = getAngleDeg(conf, 0, 19, 21);
-  TEST_ASSERT(RDKit::feq(RDKit::round(angle * 10) / 10, 109.7));
+  TEST_ASSERT(RDKit::feq(angle, 109.7, 0.05));
   setAngleDeg(conf, 0, 19, 21, 125.0);
   angle = getAngleDeg(conf, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(angle, 125.0));
@@ -187,7 +187,7 @@ void testGetSetDihedral() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double dihedral = getDihedralDeg(conf, 0, 19, 21, 24);
-  TEST_ASSERT(RDKit::feq(RDKit::round(dihedral * 100) / 100, 176.05));
+  TEST_ASSERT(RDKit::feq(dihedral, 176.05, 0.05));
   setDihedralDeg(conf, 8, 0, 19, 21, 65.0);
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, 65.0));
@@ -199,6 +199,38 @@ void testGetSetDihedral() {
   TEST_ASSERT(RDKit::feq(dihedral, -2. / 3. * M_PI));
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, -120.0));
+}
+
+void testGetSetDihedralThroughTripleBond() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  setDihedralDeg(conf, 6, 1, 2, 9, 0.0);
+  double dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 0.0));
+  double dist = getBondLength(conf, 6, 9);
+  setDihedralDeg(conf, 6, 1, 2, 9, 120.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 120.0));
+  double dist2 = getBondLength(conf, 6, 7);
+  TEST_ASSERT(RDKit::feq(dist, dist2, 0.05));
+  setDihedralDeg(conf, 6, 1, 2, 9, 180.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 180.0));
+  double dist3 = getBondLength(conf, 6, 9);
+  TEST_ASSERT(!RDKit::feq(dist, dist3, 0.3));
+  bool exceptionRaised = false;
+  try {
+    setDihedralDeg(conf, 6, 0, 3, 9, 0.0);
+  }
+  catch (ValueErrorException &e) {
+    exceptionRaised = true;
+  }
+  TEST_ASSERT(exceptionRaised);
 }
 
 #ifndef RDK_HAS_EIGEN3
@@ -283,6 +315,9 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGetSetDihedral \n\n";
   testGetSetDihedral();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetDihedralThroughTripleBond \n\n";
+  testGetSetDihedralThroughTripleBond();
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGithub1262: PMI descriptors incorrect  \n\n";
   testGithub1262();

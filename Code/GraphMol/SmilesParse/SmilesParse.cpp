@@ -243,7 +243,7 @@ RWMol *SmilesToMol(const std::string &smiles,
     // a way to get a const_iterator from a non-const std::string. In C++11
     // we could just use .cend()
     const std::string &cxcopy = cxPart;
-    std::string::const_iterator pos;
+    std::string::const_iterator pos = cxcopy.begin();
     SmilesParseOps::parseCXExtensions(*res, cxcopy, pos);
     if (params.parseName && pos != cxcopy.end()) {
       std::string nmpart(pos, cxcopy.end());

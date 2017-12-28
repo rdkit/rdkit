@@ -120,12 +120,8 @@ double getAlpha(const Atom &atom, bool &found) {
       };
       break;
     case 9:
-      switch (atom.getHybridization()) {
-        default:
-          res = -0.07;
-          found = true;
-          break;
-      };
+      res = -0.07;
+      found = true;
       break;
     case 15:
       switch (atom.getHybridization()) {
@@ -152,28 +148,16 @@ double getAlpha(const Atom &atom, bool &found) {
       };
       break;
     case 17:
-      switch (atom.getHybridization()) {
-        default:
-          res = 0.29;
-          found = true;
-          break;
-      };
+      res = 0.29;
+      found = true;
       break;
     case 35:
-      switch (atom.getHybridization()) {
-        default:
-          res = 0.48;
-          found = true;
-          break;
-      };
+      res = 0.48;
+      found = true;
       break;
     case 53:
-      switch (atom.getHybridization()) {
-        default:
-          res = 0.73;
-          found = true;
-          break;
-      };
+      res = 0.73;
+      found = true;
       break;
     default:
       break;

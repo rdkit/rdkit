@@ -18,23 +18,21 @@ namespace RDKit {
 class RWMol;
 
 struct SmilesParserParams {
-	int debugParse;
-	bool sanitize;
-	std::map<std::string, std::string> *replacements;
-	bool allowCXSMILES;
-	bool parseName;
-	bool removeHs;
-	SmilesParserParams() :
-		debugParse(0),
-		sanitize(true),
-		replacements(NULL),
-		allowCXSMILES(false),
-		parseName(false),
-		removeHs(true)
-	{};
+  int debugParse;
+  bool sanitize;
+  std::map<std::string, std::string> *replacements;
+  bool allowCXSMILES;
+  bool parseName;
+  bool removeHs;
+  SmilesParserParams()
+      : debugParse(0),
+        sanitize(true),
+        replacements(NULL),
+        allowCXSMILES(true),
+        parseName(false),
+        removeHs(true){};
 };
 RWMol *SmilesToMol(const std::string &smi, const SmilesParserParams &params);
-
 
 //! Construct a molecule from a SMILES string
 /*!
@@ -63,22 +61,21 @@ RWMol *SmilesToMol(const std::string &smi, const SmilesParserParams &params);
  \endcode
 
  */
-inline RWMol *SmilesToMol(const std::string &smi, int debugParse = 0,
-                   bool sanitize = true,
-                   std::map<std::string, std::string> *replacements = 0){
+inline RWMol *SmilesToMol(
+    const std::string &smi, int debugParse = 0, bool sanitize = true,
+    std::map<std::string, std::string> *replacements = 0) {
   SmilesParserParams params;
   params.debugParse = debugParse;
   params.replacements = replacements;
-  if(sanitize) {
-    params.sanitize=true;
-    params.removeHs=true;
+  if (sanitize) {
+    params.sanitize = true;
+    params.removeHs = true;
   } else {
-    params.sanitize=false;
-    params.removeHs=false;
+    params.sanitize = false;
+    params.removeHs = false;
   }
-  return SmilesToMol(smi,params);
+  return SmilesToMol(smi, params);
 };
-
 
 //! Construct a molecule from a SMARTS string
 /*!

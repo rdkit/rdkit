@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2016 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -4280,7 +4280,7 @@ void testPDBResidues() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false);
 
     TEST_ASSERT(res.size() == 22);
@@ -4306,7 +4306,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
     TEST_ASSERT(res.size() == 1);
@@ -4331,7 +4331,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.push_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol> > res =
+    std::map<std::string, boost::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
     TEST_ASSERT(res.size() == 21);
@@ -4877,6 +4877,173 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolBlockChirality() {
+  BOOST_LOG(rdInfoLog)
+      << "Test automatic generation of coordinates for mol block chirality "
+      << std::endl;
+  {
+    std::string smi = "C[C@H](Cl)Br";
+    auto mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    auto mb = MolToMolBlock(*mol, true);
+    auto mol2 = MolBlockToMol(mb);
+    TEST_ASSERT(mol2);
+    auto csmi1 = MolToSmiles(*mol, true);
+    auto csmi2 = MolToSmiles(*mol2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete mol;
+    delete mol2;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testMolBlock3DStereochem() {
+  BOOST_LOG(rdInfoLog)
+      << "Test automatic perception of stereochem from 3D structure "
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName = rdbase + "stereo3d_1.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_2.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_conflict.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C@](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_unknown.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F[C](Cl)(Br)I";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("@") == std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_trans.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F/C=C/F";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string fName = rdbase + "stereo3d_cis.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "F/C=C\\F";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") != std::string::npos);
+    TEST_ASSERT(csmi1.find("\\") != std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+
+  {
+    std::string fName = rdbase + "stereo3d_dblunknown.mol";
+    auto m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    std::string smi = "FC=CF";
+    auto m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    auto csmi1 = MolToSmiles(*m1, true);
+    auto csmi2 = MolToSmiles(*m2, true);
+    TEST_ASSERT(csmi1.find("/") == std::string::npos);
+    TEST_ASSERT(csmi1.find("\\") == std::string::npos);
+    TEST_ASSERT(csmi1 == csmi2);
+    delete m1;
+    delete m2;
+  }
+}
+
+void testMarvinSMATag() {
+  BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag "
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName =
+        rdbase + "mrv-sma.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::MRV_SMA) == "[#16;H1]");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(common_properties::MRV_SMA) == "[#7;H2A]");
+    // this should be similar to [#7;AH2:4][c;r6:3]:[c;r6:1]-[#16H1:2]
+    //  RDKit makes these recursive smarts, not "ANDED" smarts which are a simpler case
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&$([#6&r6]):1](-[#16&$([#16&H1]):2]):[#6&$([#6&r6]):3]-[#7&$([#7&H2&A]):4]");
+    delete m;
+  }
+
+  {
+    std::string fName =
+        rdbase + "mrv-sma-bad.mol";
+    bool ok = false;
+    try {
+      MolFileToMol(fName, false);
+    } catch( FileParseException &e ) {
+      ok = true;
+      TEST_ASSERT(std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") == e.message());
+    }
+    TEST_ASSERT(ok);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4967,9 +5134,12 @@ void RunTests() {
 
   testMolFileDativeBonds();
   testGithub1251();
-#endif
+  testMarvinSMATag();
   testGithub1029();
   testGithub1340();
+#endif
+  testMolBlockChirality();
+  testMolBlock3DStereochem();
 }
 
 // must be in German Locale for test...

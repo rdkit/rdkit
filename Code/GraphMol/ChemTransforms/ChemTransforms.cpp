@@ -625,7 +625,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
         for (unsigned int i = 0; i < mol2.getNumAtoms(); ++i) {
           conf1->setAtomPos(i + nAtoms1, conf2->getAtomPos(i) + offset);
         }
-      } catch (ConformerException &ce) {
+      } catch (ConformerException &) {
         BOOST_LOG(rdWarningLog) << "combineMols: conformer id "
                                 << conf1->getId() << " not found in mol2";
       }
@@ -653,13 +653,15 @@ void addRecursiveQueries(
     if (!at->hasProp(propName)) continue;
     std::string pval;
     at->getProp(propName, pval);
+    std::string maybeSmarts = pval; // keep unmodified in case we are a smarts string
     boost::algorithm::to_lower(pval);
     if (reactantLabels != nullptr) {
       std::pair<unsigned int, std::string> label(at->getIdx(), pval);
       (*reactantLabels).push_back(label);
     }
 
-    QueryAtom::QUERYATOM_QUERY *qToAdd;
+    QueryAtom::QUERYATOM_QUERY *qToAdd = 0;
+    bool notFound = false;
     if (pval.find(delim) != std::string::npos) {
       boost::tokenizer<boost::char_separator<char>> tokens(pval, sep);
       boost::tokenizer<boost::char_separator<char>>::iterator token;
@@ -667,7 +669,9 @@ void addRecursiveQueries(
       for (token = tokens.begin(); token != tokens.end(); ++token) {
         auto iter = queries.find(*token);
         if (iter == queries.end()) {
-          throw KeyErrorException(pval);
+          delete qToAdd;
+          notFound = true;
+          break;
         }
         auto *tqp = new RecursiveStructureQuery(new ROMol(*(iter->second)));
         boost::shared_ptr<RecursiveStructureQuery> nq(tqp);
@@ -676,10 +680,26 @@ void addRecursiveQueries(
     } else {
       auto iter = queries.find(pval);
       if (iter == queries.end()) {
+        notFound = true;
+      }
+      else {
+        qToAdd = new RecursiveStructureQuery(new ROMol(*(iter->second)));
+      }
+    }
+
+    if (notFound) {
+      // See if we are actually a smarts expression already
+      RWMol *m = 0;
+      try {
+        m = SmartsToMol(maybeSmarts);
+        if (!m)
+          throw KeyErrorException(pval);
+        qToAdd = new RecursiveStructureQuery(m);
+      } catch (...) {
         throw KeyErrorException(pval);
       }
-      qToAdd = new RecursiveStructureQuery(new ROMol(*(iter->second)));
     }
+
     if (!at->hasQuery()) {
       QueryAtom qAt(*at);
       static_cast<RWMol &>(mol).replaceAtom(at->getIdx(), &qAt);

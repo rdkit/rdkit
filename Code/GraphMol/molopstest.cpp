@@ -5144,18 +5144,30 @@ void testGetMolFrags() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace {
+void hypervalent_check(const char *smiles) {
+  RWMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
+  delete m;
+}
+}
 void testGithubIssue510() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
                           "Hexafluorophosphate cannot be handled"
                        << std::endl;
-  {
-    std::string smiles = "F[P-](F)(F)(F)(F)F";
-    RWMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
-    delete m;
-  }
+  hypervalent_check("F[P-](F)(F)(F)(F)F");
+  // test #1668 too, it's the same thing but with As, Sb, and Bi
+  hypervalent_check("F[As-](F)(F)(F)(F)F");
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  // we also added a valence of 5 for Bi:
+  hypervalent_check("F[Bi-](F)(F)F");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -6914,12 +6926,136 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub1622() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1622: add MDL aromaticity perception"
+                       << std::endl;
+  {
+    // rings that should be aromatic
+    string aromaticSmis[] = {"C1=CC=CC=C1",  // benzene, of course
+                             // heterocyclics
+                             "N1=CC=CC=C1",  // pyridine
+                             "N1=CC=CC=N1",  // pyridazine
+                             "N1=CC=CN=C1",  // pyrimidine
+                             "N1=CC=NC=C1",  // pyrazine
+                             "N1=CN=CN=C1",  // 1,3,5-triazine
+                             // polycyclic aromatics
+                             "C1=CC2=CC=CC=CC2=C1",            // azulene
+                             "C1=CC=CC2=CC=CC=C12",            // 6-6 fused
+                             "C1=CC2=CC=CC=CC=C12",            // 4-8 fused
+                             "C1=CC=C2C(=C1)N=CC=N2",          // 6-6 with Ns
+                             "C1=CN=CC2C=CC=CC1=2",            // 6-6
+                             "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",  // 6-6-6
+                             "C1=CN=NC2C=CC=CC1=2",            // 6-6 with Ns
+                             // macrocycle aromatics
+                             "C1=CC=CC=CC=CC=C1",              // 10 atoms
+                             "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",  // 18 atoms
+                             "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1",
+                             "EOS"};
+    unsigned int i = 0;
+    while (aromaticSmis[i] != "EOS") {
+      string smi = aromaticSmis[i];
+      // std::cerr << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic())
+      delete mol;
+      ++i;
+    }
+  }
+  {
+    // rings that should not be aromatic
+    string nonaromaticSmis[] = {
+        "C1=C[N]C=C1",  // radicals are not two electron donors
+        // exocyclic double bonds disqualify us
+        "C1(=O)C=CNC=C1", "C1(=C)C=CC(=C)C=C1", "C1(=O)C=CC(=O)C=C1",
+
+        "C1#CC=CC=C1",  // not benzyne
+        // five-membered heterocycles
+        "C1=COC=C1",      // furan
+        "C1=CSC=C1",      // thiophene
+        "C1=CNC=C1",      // pyrrole
+        "C1=COC=N1",      // oxazole
+        "C1=CSC=N1",      // thiazole
+        "C1=CNC=N1",      // imidzole
+        "C1=CNN=C1",      // pyrazole
+        "C1=CON=C1",      // isoxazole
+        "C1=CSN=C1",      // isothiazole
+        "C1=CON=N1",      // 1,2,3-oxadiazole
+        "C1=CNN=N1",      // 1,2,3-triazole
+        "N1=CSC=N1",      // 1,3,4-thiadiazole
+        "C1=CS(=O)C=C1",  // not sure how to classify this example from the
+                          // OEChem docs
+        //  outside the second rows
+        "C1=CC=C[Si]=C1", "C1=CC=CC=P1",
+        // 5-membered heterocycles outside the second row
+        "C1=C[Se]C=C1", "C1=C[Te]C=C1",
+
+        "EOS"};
+    unsigned int i = 0;
+    while (nonaromaticSmis[i] != "EOS") {
+      string smi = nonaromaticSmis[i];
+      // std::cerr << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(!(mol->getAtomWithIdx(0)->getIsAromatic()))
+      delete mol;
+      ++i;
+    }
+  }
+
+  {
+    // ring systems where part is aromatic, part not
+    string mixedaromaticSmis[] = {
+        "O1C=CC2=CC=CC=C12",         "S1C=CC2=CC=CC=C12",
+        "N1C2=CC=CC=C2C2=CC=CC=C12", "N1C=CC2=CC=CC=C12",
+        "N1C=NC2=CC=CC=C12",         "N1C=NC2=CN=CN=C12",
+        "C1CCCC2=CC3=CCCCC3=CC2=1",  "EOS"};
+    unsigned int i = 0;
+    while (mixedaromaticSmis[i] != "EOS") {
+      string smi = mixedaromaticSmis[i];
+      // std::cerr << smi << std::endl;
+      int debugParse = 0;
+      bool sanitize = false;
+      RWMol *mol = SmilesToMol(smi, debugParse, sanitize);
+      TEST_ASSERT(mol);
+      unsigned int whatFailed = 0;
+      unsigned int sanitFlags =
+          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_SETAROMATICITY;
+      MolOps::sanitizeMol(*mol, whatFailed, sanitFlags);
+      MolOps::setAromaticity(*mol, MolOps::AROMATICITY_MDL);
+      TEST_ASSERT(!(mol->getAtomWithIdx(0)->getIsAromatic()))
+      TEST_ASSERT(
+          (mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getIsAromatic()))
+      delete mol;
+      ++i;
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7025,7 +7161,8 @@ int main() {
   testGithub1478();
   testGithub1439();
   testGithub1281();
-#endif
   testGithub1605();
+#endif
+  testGithub1622();
   return 0;
 }

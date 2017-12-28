@@ -179,8 +179,6 @@ void AUTOCORR3D(const ROMol& mol, std::vector<double>& res, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
-  const Conformer& conf = mol.getConformer(confId);
-
   double* topologicaldistance =
       MolOps::getDistanceMat(mol, false);  // topological matrix
   double* dist3D =

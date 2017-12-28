@@ -122,7 +122,7 @@ extern const std::string molRxnRole;    // int
 extern const std::string molTotValence; // int
 extern const std::string _MolFileRLabel; // int
 extern const std::string _MolFileChiralFlag; // int
-
+extern const std::string MRV_SMA; // smarts string from Marvin
 extern const std::string dummyLabel; // atom string
 
 // Reaction Information (Reactions.cpp)

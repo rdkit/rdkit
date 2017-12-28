@@ -15,10 +15,10 @@ The RDKit Documentation
   RDKit_Book
   Cookbook
   Cartridge
+  BackwardsIncompatibleChanges
 
 Additional Information
 ======================
 
   * `Python API Documentation <api/index.html>`_
   * `C++ API Documentation <cppapi/index.html>`_
-

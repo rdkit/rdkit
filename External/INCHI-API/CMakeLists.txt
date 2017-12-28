@@ -1,30 +1,68 @@
 add_custom_target(inchi_support ALL)
 
 if(RDK_BUILD_INCHI_SUPPORT)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-    rdkit_library(Inchi src/ichican2.c       src/ichicano.c
-                       src/ichicans.c       src/ichiisot.c
-                       src/ichilnct.c       src/ichimak2.c
-                       src/ichimake.c       src/ichimap1.c
-                       src/ichimap2.c       src/ichimap4.c
-                       src/ichinorm.c       src/ichiparm.c
-                       src/ichiprt1.c       src/ichiprt2.c
-                       src/ichiprt3.c       src/ichiqueu.c
-                       src/ichiring.c       src/ichisort.c
-                       src/ichister.c       src/ichitaut.c
-                       src/ichi_bns.c       src/inchi_dll.c
-                       src/ichiread.c       src/ichirvr1.c
-                       src/ichirvr2.c       src/ichirvr3.c 
-                       src/ichirvr4.c       src/ichirvr5.c
-                       src/ichirvr6.c       src/ichirvr7.c
-                       src/inchi_dll_main.c src/runichi.c
-                       src/inchi_dll_a.c    src/inchi_dll_a2.c
-                       src/ikey_dll.c       src/ikey_base26.c
-                       src/ichi_io.c
-                       src/sha2.c           src/strutil.c
-                       src/util.c SHARED)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/ichican2.c)
+    rdkit_library(Inchi
+      src/INCHI_BASE/src/ichi_bns.c
+      src/INCHI_BASE/src/ichi_io.c
+      src/INCHI_BASE/src/ichican2.c
+      src/INCHI_BASE/src/ichicano.c
+      src/INCHI_BASE/src/ichicans.c
+      src/INCHI_BASE/src/ichierr.c
+      src/INCHI_BASE/src/ichiisot.c
+      src/INCHI_BASE/src/ichimak2.c
+      src/INCHI_BASE/src/ichimake.c
+      src/INCHI_BASE/src/ichimap1.c
+      src/INCHI_BASE/src/ichimap2.c
+      src/INCHI_BASE/src/ichimap4.c
+      src/INCHI_BASE/src/ichinorm.c
+      src/INCHI_BASE/src/ichiparm.c
+      src/INCHI_BASE/src/ichiprt1.c
+      src/INCHI_BASE/src/ichiprt2.c
+      src/INCHI_BASE/src/ichiprt3.c
+      src/INCHI_BASE/src/ichiqueu.c
+      src/INCHI_BASE/src/ichiread.c
+      src/INCHI_BASE/src/ichiring.c
+      src/INCHI_BASE/src/ichirvr1.c
+      src/INCHI_BASE/src/ichirvr2.c
+      src/INCHI_BASE/src/ichirvr3.c
+      src/INCHI_BASE/src/ichirvr4.c
+      src/INCHI_BASE/src/ichirvr5.c
+      src/INCHI_BASE/src/ichirvr6.c
+      src/INCHI_BASE/src/ichirvr7.c
+      src/INCHI_BASE/src/ichisort.c
+      src/INCHI_BASE/src/ichister.c
+      src/INCHI_BASE/src/ichitaut.c
+      src/INCHI_BASE/src/ikey_base26.c
+      src/INCHI_BASE/src/ikey_dll.c
+      src/INCHI_BASE/src/mol2atom.c
+      src/INCHI_BASE/src/mol_fmt1.c
+      src/INCHI_BASE/src/mol_fmt2.c
+      src/INCHI_BASE/src/mol_fmt3.c
+      src/INCHI_BASE/src/mol_fmt4.c
+      src/INCHI_BASE/src/readinch.c
+      src/INCHI_BASE/src/runichi.c
+      src/INCHI_BASE/src/runichi2.c
+      src/INCHI_BASE/src/runichi3.c
+      src/INCHI_BASE/src/runichi4.c
+      src/INCHI_BASE/src/sha2.c
+      src/INCHI_BASE/src/strutil.c
+      src/INCHI_BASE/src/util.c
+      src/INCHI_API/libinchi/src/ichilnct.c
+      src/INCHI_API/libinchi/src/inchi_dll.c
+      src/INCHI_API/libinchi/src/inchi_dll_a.c
+      src/INCHI_API/libinchi/src/inchi_dll_a2.c
+      src/INCHI_API/libinchi/src/inchi_dll_b.c
+      src/INCHI_API/libinchi/src/inchi_dll_main.c
+      src/INCHI_API/libinchi/src/ixa/ixa_builder.c
+      src/INCHI_API/libinchi/src/ixa/ixa_inchikey_builder.c
+      src/INCHI_API/libinchi/src/ixa/ixa_mol.c
+      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c 
+      src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
+      src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
     install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/)
+    ADD_DEFINITIONS("-DTARGET_API_LIB")
   endif()
 
      if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")

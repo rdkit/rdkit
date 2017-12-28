@@ -3394,13 +3394,13 @@ void testGithub45() {
     std::string smiles = "CC1CCC[13C]2(C)C1CC[14CH]2C(C)=O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1a = MolToSmiles(*m, false);
     std::string csmiles1b = MolToSmiles(*m, true);
     std::string smiles2 = "CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
     delete m;
     m = SmilesToMol(smiles2);
     TEST_ASSERT(m);
-    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2a = MolToSmiles(*m, false);
     std::string csmiles2b = MolToSmiles(*m, true);
 
     TEST_ASSERT(csmiles1a == csmiles2a);
@@ -3412,13 +3412,13 @@ void testGithub45() {
     std::string smiles = "CC1CCC[C@@]2(C)C1CC[C@@H]2C(C)=O";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1a = MolToSmiles(*m, false);
     std::string csmiles1b = MolToSmiles(*m, true);
     std::string smiles2 = "CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
     delete m;
     m = SmilesToMol(smiles2);
     TEST_ASSERT(m);
-    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2a = MolToSmiles(*m, false);
     std::string csmiles2b = MolToSmiles(*m, true);
 
     TEST_ASSERT(csmiles1a == csmiles2a);
@@ -3785,9 +3785,10 @@ void testGithub786() {
 }
 
 void testGithub1652() {
-  BOOST_LOG(rdInfoLog) << "testing github issue 1652: chiral order for "
-                          "ring closure after branch for the first atom in the SMILES string"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github issue 1652: chiral order for "
+         "ring closure after branch for the first atom in the SMILES string"
+      << std::endl;
   {
     std::string smiles = "Cl[C@](F)1CC[C@H](F)CC1";
     ROMol *m = SmilesToMol(smiles);
@@ -3937,13 +3938,14 @@ void testSmilesParseParams() {
   {  // basic name parsing
     std::string smiles = "CCCC the_name";
     ROMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(!m);
-    {  // no removeHs, no sanitization
+    TEST_ASSERT(m);
+    {  // it's ignored
       SmilesParserParams params;
       m = SmilesToMol(smiles, params);
-      TEST_ASSERT(!m);
+      TEST_ASSERT(m);
+      TEST_ASSERT(!m->hasProp(common_properties::_Name));
     }
-    {  // no removeHs, no sanitization
+    {
       SmilesParserParams params;
       params.parseName = true;
       m = SmilesToMol(smiles, params);
@@ -3988,16 +3990,16 @@ void testSmilesParseParams() {
 
 void testRingClosureNumberWithBrackets() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Testing the %(....) notation for SMILES ring closure numbers\n" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing the %(....) notation for SMILES ring closure numbers\n"
+      << std::endl;
   {
-    const char * benzenes[6] = { "c1ccccc1",
-                                 "c%(1)ccccc%(1)",
-                                 "c%(12)ccccc%(12)",
-                                 "c%(123)ccccc%(123)",
-                                 "c%(1234)ccccc%(1234)",
-                                 "c%(99999)ccccc%(99999)" };
-    for(int i=0; i<6; ++i) {
-      BOOST_LOG(rdInfoLog) << "Test: " << benzenes[i] << " (should be read)" << std::endl;
+    const char *benzenes[6] = {
+        "c1ccccc1",           "c%(1)ccccc%(1)",       "c%(12)ccccc%(12)",
+        "c%(123)ccccc%(123)", "c%(1234)ccccc%(1234)", "c%(99999)ccccc%(99999)"};
+    for (int i = 0; i < 6; ++i) {
+      BOOST_LOG(rdInfoLog) << "Test: " << benzenes[i] << " (should be read)"
+                           << std::endl;
       ROMol *m = SmilesToMol(benzenes[i]);
       TEST_ASSERT(m);
       TEST_ASSERT(m->getNumAtoms() == 6);
@@ -4007,15 +4009,28 @@ void testRingClosureNumberWithBrackets() {
       delete m;
     }
 
-    const char * not_allowed[2] = { "c%()ccccc%()",
-                                    "c%(100000)ccccc%(100000)" };
-    for(int i=0; i<2; ++i) {
-      BOOST_LOG(rdInfoLog) << "Test: " << not_allowed[i] << " (should NOT be read)" << std::endl;
+    const char *not_allowed[2] = {"c%()ccccc%()", "c%(100000)ccccc%(100000)"};
+    for (int i = 0; i < 2; ++i) {
+      BOOST_LOG(rdInfoLog) << "Test: " << not_allowed[i]
+                           << " (should NOT be read)" << std::endl;
       ROMol *m = SmilesToMol(not_allowed[i]);
-      TEST_ASSERT(m==(ROMol*)0);
+      TEST_ASSERT(m == (ROMol *)0);
       delete m;
     }
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
+void testIsomericSmilesIsDefault() {
+  BOOST_LOG(rdInfoLog)
+      << "Testing that isomeric SMILES is now the default output" << std::endl;
+  {
+    std::string smi = "C[C@H](Cl)Br";
+    auto m = SmilesToMol(smi);
+    TEST_ASSERT(m)
+    auto csmi = MolToSmiles(*m);
+    TEST_ASSERT(csmi.find("@") != std::string::npos);
+    delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -4090,4 +4105,5 @@ int main(int argc, char *argv[]) {
   testRingClosureNumberWithBrackets();
 #endif
   testGithub1652();
+  testIsomericSmilesIsDefault();
 }

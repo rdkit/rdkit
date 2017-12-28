@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -385,12 +385,14 @@ void sanitizeMol(RWMol &mol);
 Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
+- \c AROMATICITY_MDL
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
+  AROMATICITY_MDL = 0x4,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
 

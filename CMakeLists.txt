@@ -132,6 +132,12 @@ install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir})
 
+# disable some warnings that we don't care about
+if(MSVC)
+  target_compile_definitions(rdkit_base INTERFACE "/wd4267")  # conversion with possible loss of data. This should occasionally be enabled to check what's going on
+endif(MSVC)
+
+
 # extra boost versions
 if(MSVC)
   # FIX: do we still need this?
