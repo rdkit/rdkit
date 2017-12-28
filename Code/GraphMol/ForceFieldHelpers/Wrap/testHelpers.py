@@ -3,6 +3,7 @@ from rdkit.Chem import ChemicalForceFields
 from rdkit import RDConfig
 import unittest
 import os
+import numpy
 
 
 def feq(v1, v2, tol2=1e-4):
@@ -265,6 +266,12 @@ M  END"""
     ff.Minimize(10000, 1.0e-6, 1.0e-3)
     e2 = ff.CalcEnergy()
     self.failUnless(e2 < e1)
+    e3 = ff.CalcEnergy(savedPos)
+    self.assertAlmostEqual(e3, e1, 2);
+    savedPos = tuple(positions)
+    e3 = ff.CalcEnergy(savedPos)
+    self.assertAlmostEqual(e3, e1, 2);
+    savedPos = tuple(numpy.array(savedPos))
     e3 = ff.CalcEnergy(savedPos)
     self.assertAlmostEqual(e3, e1, 2);
 

@@ -481,13 +481,12 @@ void testCalcEnergyPassedCoords() {
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  const RDGeom::PointPtrVect &positions = field->positions();
-  int l = 3 * field->numPoints();
+  size_t l = 3 * field->numPoints();
   double *savedPos = new double[l];
-  int i = 0;
-  for (RDGeom::PointPtrVect::const_iterator it = positions.begin(); it != positions.end(); ++it) {
-    for (int j = 0; j < 3; ++j)
-      savedPos[i++] = (*(*it))[j];
+  size_t i = 0;
+  for (const auto pptr: field->positions()) {
+    for (size_t j = 0; j < 3; ++j)
+      savedPos[i++] = (*pptr)[j];
   }
   TEST_ASSERT(i == l);
   e1 = field->calcEnergy();
@@ -520,15 +519,14 @@ void testCalcGrad() {
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  int l = 3 * field->numPoints();
-  const RDGeom::PointPtrVect &positions = field->positions();
+  size_t l = 3 * field->numPoints();
   double *savedPos = new double[l];
   double *grad1 = new double[l];
   double *grad2 = new double[l];
-  int i = 0;
-  for (RDGeom::PointPtrVect::const_iterator it = positions.begin(); it != positions.end(); ++it) {
-    for (int j = 0; j < 3; ++j)
-      savedPos[i++] = (*(*it))[j];
+  size_t i = 0;
+  for (const auto pptr: field->positions()) {
+    for (size_t j = 0; j < 3; ++j)
+      savedPos[i++] = (*pptr)[j];
   }
   TEST_ASSERT(i == l);
   

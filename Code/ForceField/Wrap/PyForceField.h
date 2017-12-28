@@ -46,13 +46,13 @@ class PyForceField {
     return idx;
   }
 
-  double calcEnergyWithPos(const python::list &pos = python::list());
+  double calcEnergyWithPos(const python::object &pos = python::object());
 
   double calcEnergy() {
-    return calcEnergyWithPos(python::list());
+    return calcEnergyWithPos();
   }
 
-  PyObject *calcGradWithPos(const python::list &pos = python::list());
+  PyObject *calcGradWithPos(const python::object &pos = python::object());
 
   PyObject *positions();
 
