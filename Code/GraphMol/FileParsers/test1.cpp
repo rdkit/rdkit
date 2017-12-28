@@ -5005,7 +5005,42 @@ void testMolBlock3DStereochem() {
     delete m1;
     delete m2;
   }
+}
 
+void testMarvinSMATag() {
+  BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag "
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    std::string fName =
+        rdbase + "mrv-sma.mol";
+    RWMol *m = MolFileToMol(fName, false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::MRV_SMA) == "[#16;H1]");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(common_properties::MRV_SMA) == "[#7;H2A]");
+    // this should be similar to [#7;AH2:4][c;r6:3]:[c;r6:1]-[#16H1:2]
+    //  RDKit makes these recursive smarts, not "ANDED" smarts which are a simpler case
+    std::string sma = MolToSmarts(*m);
+    TEST_ASSERT(sma == "[#6&$([#6&r6]):1](-[#16&$([#16&H1]):2]):[#6&$([#6&r6]):3]-[#7&$([#7&H2&A]):4]");
+    delete m;
+  }
+
+  {
+    std::string fName =
+        rdbase + "mrv-sma-bad.mol";
+    bool ok = false;
+    try {
+      MolFileToMol(fName, false);
+    } catch( FileParseException &e ) {
+      ok = true;
+      TEST_ASSERT(std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") == e.message());
+    }
+    TEST_ASSERT(ok);
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -5099,6 +5134,7 @@ void RunTests() {
 
   testMolFileDativeBonds();
   testGithub1251();
+  testMarvinSMATag();
   testGithub1029();
   testGithub1340();
 #endif
