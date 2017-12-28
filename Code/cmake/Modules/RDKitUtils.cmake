@@ -63,10 +63,10 @@ macro(rdkit_library)
                               OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
 
       endif(RDK_INSTALL_STATIC_LIBS)
-    IF(RDKLIB_LINK_LIBRARIES)
-      target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
-    ENDIF(RDKLIB_LINK_LIBRARIES)
   endif(MSVC)
+  IF(RDKLIB_LINK_LIBRARIES)
+    target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
+  ENDIF(RDKLIB_LINK_LIBRARIES)
   if(WIN32)
     set_target_properties(${RDKLIB_NAME} PROPERTIES
                           OUTPUT_NAME "RDKit${RDKLIB_NAME}"
