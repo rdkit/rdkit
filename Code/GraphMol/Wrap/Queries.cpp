@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2017 Rational Discovery LLC and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -73,6 +72,7 @@ QAFUNC1(InNRings, makeAtomInNRingsQuery, int);
 QAFUNC1(MinRingSize, makeAtomMinRingSizeQuery, int);
 QAFUNC1(RingBondCount, makeAtomRingBondCountQuery, int);
 QAFUNC1(NumRadicalElectrons, makeAtomNumRadicalElectronsQuery, int);
+QAFUNC1(NumHeteroatomNeighbors, makeAtomNumHeteroatomNbrsQuery, int);
 
 QAFUNC2(IsUnsaturatedQueryAtom, makeAtomUnsaturatedQuery, int);
 QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);
@@ -155,6 +155,7 @@ struct queries_wrapper {
     QADEF1(MinRingSize);
     QADEF1(RingBondCount);
     QADEF1(NumRadicalElectrons)
+    QADEF1(NumHeteroatomNeighbors)
 
     QADEF2(IsUnsaturated);
     QADEF2(IsAromatic);
