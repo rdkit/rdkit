@@ -1297,7 +1297,7 @@ YY_RULE_SETUP
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomNumHeteroatomNbrsQuery(1));
-	return RANGE_ATOM_QUERY_TOKEN;
+	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
 case 117:

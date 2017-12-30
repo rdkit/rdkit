@@ -229,7 +229,7 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 <IN_ATOM_STATE>z {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomNumHeteroatomNbrsQuery(1));
-	return RANGE_ATOM_QUERY_TOKEN;
+	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 
 <IN_ATOM_STATE>h {

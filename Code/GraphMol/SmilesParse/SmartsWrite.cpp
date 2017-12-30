@@ -126,35 +126,41 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
   PRECONDITION(query, "bad query");
 
   std::string descrip = query->getDescription();
-  bool hasRangeQuery=false;
+  bool hasRangeQuery=false, hasVal=false;
   if(descrip.find("range_")==0){
     hasRangeQuery=true;
     descrip = descrip.substr(6);
   }
   std::stringstream res;
   if (descrip == "AtomImplicitHCount") {
-    res << "h" << query->getVal();
+    res << "h";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomHasImplicitH") {
     res << "h";
     needParen = true;
   } else if (descrip == "AtomTotalValence") {
-    res << "v" << query->getVal();
+    res << "v";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
-    res << "#" << query->getVal();
+    res << "#";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomExplicitDegree") {
-    res << "D" << query->getVal();
+    res << "D";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomTotalDegree") {
-    res << "X" << query->getVal();
+    res << "X";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomHasRingBond") {
     res << "x";
     needParen = true;
   } else if (descrip == "AtomHCount") {
-    res << "H" << query->getVal();
+    res << "H";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomIsAliphatic") {
     res << "A";
@@ -169,20 +175,19 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "R";
     needParen = true;
   } else if (descrip == "AtomMinRingSize") {
-    res << "r" << query->getVal();
+    res << "r";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
-    if (query->getVal() >= 0) {
-      res << query->getVal();
+    if (!hasRangeQuery && query->getVal() >= 0) {
+      hasVal=true;
     }
     needParen = true;
   } else if (descrip == "AtomNumHeteroatomNeighbors") {
     res << "z";
-    if(hasRangeQuery){
-      res<<"{"<<((const ATOM_RANGE_QUERY *)query)->getLower()<<"-"<<((const ATOM_RANGE_QUERY *)query)->getUpper()<<"}";
-    } else if (query->getVal() != 1) {
-        res << query->getVal();
+    if (!hasRangeQuery && query->getVal() != 1) {
+        hasVal = true;
     }
     needParen = true;
   } else if (descrip == "AtomFormalCharge") {
@@ -222,7 +227,8 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "x";
     needParen = true;
   } else if (descrip == "AtomRingBondCount") {
-    res << "x" << query->getVal();
+    res << "x";
+    hasVal=true;
     needParen = true;
   } else if (descrip == "AtomUnsaturated") {
     res << "$(*=,:,#*)";
@@ -233,6 +239,13 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
         << ". Ignoring it." << std::endl;
     res << "*";
   }
+
+  if(hasRangeQuery){
+    res<<"{"<<((const ATOM_RANGE_QUERY *)query)->getLower()<<"-"<<((const ATOM_RANGE_QUERY *)query)->getUpper()<<"}";
+  } else if (hasVal) {
+    res << query->getVal();
+  }
+
   return res.str();
 }
 

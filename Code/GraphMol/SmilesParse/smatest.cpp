@@ -2092,7 +2092,7 @@ void testCactvsExtensions() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing cactvs SMARTS extensions"
                        << std::endl;
-  ROMol *m = SmilesToMol("COCN");
+  ROMol *m = SmilesToMol("COC(C)N");
   TEST_ASSERT(m);
   {
     ROMol *p = SmartsToMol("[z2]");
@@ -2125,6 +2125,24 @@ void testCactvsExtensions() {
 
     delete p;
   }
+  {
+    ROMol *p = SmartsToMol("[D{2-3}]");
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[D{2-3}]");
+
+    std::vector<MatchVectType> mVV;
+    int matchCount = SubstructMatch(*m, *p, mVV);
+    TEST_ASSERT(matchCount == 2);
+    TEST_ASSERT(mVV[0].size() == 1);
+    TEST_ASSERT(mVV[0][0].second == 1);
+    TEST_ASSERT(mVV[1][0].second == 2);
+
+    delete p;
+  }
+
+
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
