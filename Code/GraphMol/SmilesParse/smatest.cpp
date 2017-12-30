@@ -89,6 +89,9 @@ void testPass() {
     "C%(100)CC%(100)",      // high ring closures (Github #1624)
     "C%(1000)CC%(1000)",    // high ring closures (Github #1624)
     "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
+    "[z]", // cactvs heteroatom neighbor queries
+    "[z1]",
+    "[z{1-3}]",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -125,7 +128,8 @@ void testFail() {
                    "C-0",  // part of sf.net issue 2525792
                    "C1CC1",
                    "C+0",  // part of sf.net issue 2525792
-                   "C1CC1",    "[HQ]",     "C1CC1", "EOS"};
+                   "C1CC1",    "[HQ]",     "C1CC1",
+                   "EOS"};
   while (smis[i] != "EOS") {
     string smi = smis[i];
     boost::logging::disable_logs("rdApp.error");
@@ -2083,6 +2087,48 @@ void testGithub1472() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testCactvsExtensions() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing cactvs SMARTS extensions"
+                       << std::endl;
+  ROMol *m = SmilesToMol("COCN");
+  TEST_ASSERT(m);
+  {
+    ROMol *p = SmartsToMol("[z2]");
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[z2]");
+
+    std::vector<MatchVectType> mVV;
+    int matchCount = SubstructMatch(*m, *p, mVV);
+    TEST_ASSERT(matchCount == 1);
+    TEST_ASSERT(mVV[0].size() == 1);
+    TEST_ASSERT(mVV[0][0].second == 2);
+
+    delete p;
+  }
+  {
+    ROMol *p = SmartsToMol("[z{1-2}]");
+    TEST_ASSERT(p);
+    std::string asma = SmartsWrite::GetAtomSmarts(
+        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+    TEST_ASSERT(asma == "[z{1-2}]");
+
+    std::vector<MatchVectType> mVV;
+    int matchCount = SubstructMatch(*m, *p, mVV);
+    TEST_ASSERT(matchCount == 2);
+    TEST_ASSERT(mVV[0].size() == 1);
+    TEST_ASSERT(mVV[0][0].second == 0);
+    TEST_ASSERT(mVV[1][0].second == 2);
+
+    delete p;
+  }
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2125,5 +2171,6 @@ int main(int argc, char *argv[]) {
   testGithub893();
   testTransuranic();
   testGithub1338();
+  testCactvsExtensions();
   return 0;
 }

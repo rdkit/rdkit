@@ -126,6 +126,11 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
   PRECONDITION(query, "bad query");
 
   std::string descrip = query->getDescription();
+  bool hasRangeQuery=false;
+  if(descrip.find("range_")==0){
+    hasRangeQuery=true;
+    descrip = descrip.substr(6);
+  }
   std::stringstream res;
   if (descrip == "AtomImplicitHCount") {
     res << "h" << query->getVal();
@@ -170,6 +175,14 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "R";
     if (query->getVal() >= 0) {
       res << query->getVal();
+    }
+    needParen = true;
+  } else if (descrip == "AtomNumHeteroatomNeighbors") {
+    res << "z";
+    if(hasRangeQuery){
+      res<<"{"<<((const ATOM_RANGE_QUERY *)query)->getLower()<<"-"<<((const ATOM_RANGE_QUERY *)query)->getUpper()<<"}";
+    } else if (query->getVal() != 1) {
+        res << query->getVal();
     }
     needParen = true;
   } else if (descrip == "AtomFormalCharge") {

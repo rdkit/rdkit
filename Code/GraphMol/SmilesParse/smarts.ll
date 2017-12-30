@@ -226,6 +226,12 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 
+<IN_ATOM_STATE>z {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomNumHeteroatomNbrsQuery(1));
+	return RANGE_ATOM_QUERY_TOKEN;
+}
+
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
         yylval->atom->setQuery(makeAtomHasImplicitHQuery());
@@ -346,6 +352,10 @@ A			{
 \(       	{ yy_push_state(IN_BRANCH_STATE,yyscanner); return GROUP_OPEN_TOKEN; }
 <IN_BRANCH_STATE>\)       	{ yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 <IN_RECURSION_STATE>\)       	{ yy_pop_state(yyscanner); return END_RECURSE; }
+
+\{       	{  return RANGE_OPEN_TOKEN; }
+\}       	{ yy_pop_state(yyscanner); return RANGE_CLOSE_TOKEN; }
+
 
 
 \[			{ yy_push_state(IN_ATOM_STATE,yyscanner); return ATOM_OPEN_TOKEN; }
