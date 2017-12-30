@@ -464,6 +464,98 @@ void testIssue239() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testCalcEnergyPassedCoords() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords." << std::endl;
+
+  RWMol *mol;
+  ForceFields::ForceField *field;
+  double e1, e2, e3;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
+  mol = MolFileToMol(pathName + "/Issue239.mol", false);
+  TEST_ASSERT(mol);
+  MolOps::sanitizeMol(*mol);
+
+  field = MMFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  size_t l = 3 * field->numPoints();
+  double *savedPos = new double[l];
+  size_t i = 0;
+  for (const auto pptr: field->positions()) {
+    for (size_t j = 0; j < 3; ++j)
+      savedPos[i++] = (*pptr)[j];
+  }
+  TEST_ASSERT(i == l);
+  e1 = field->calcEnergy();
+  field->minimize(10000, 1.0e-6, 1.0e-3);
+  e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  e3 = field->calcEnergy(savedPos);
+  TEST_ASSERT(feq(e3, e1, 0.01));
+
+  delete [] savedPos;
+  delete mol;
+  delete field;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testCalcGrad() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcGrad." << std::endl;
+
+  RWMol *mol;
+  ForceFields::ForceField *field;
+
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/MMFF/test_data";
+  mol = MolFileToMol(pathName + "/Issue239.mol", false);
+  TEST_ASSERT(mol);
+  MolOps::sanitizeMol(*mol);
+
+  field = MMFF::constructForceField(*mol);
+  TEST_ASSERT(field);
+  field->initialize();
+  size_t l = 3 * field->numPoints();
+  double *savedPos = new double[l];
+  double *grad1 = new double[l];
+  double *grad2 = new double[l];
+  size_t i = 0;
+  for (const auto pptr: field->positions()) {
+    for (size_t j = 0; j < 3; ++j)
+      savedPos[i++] = (*pptr)[j];
+  }
+  TEST_ASSERT(i == l);
+  
+  std::memset(grad1, 0, l * sizeof(double));
+  field->calcGrad(grad1);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+
+  field->minimize(10000, 1.0e-6, 1.0e-3);
+  std::memset(grad2, 0, l * sizeof(double));
+  field->calcGrad(grad2);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+
+  field->initialize();
+  std::memset(grad2, 0, l * sizeof(double));
+  field->calcGrad(savedPos, grad2);
+  for (i = 0; i < l; ++i)
+    TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+
+  delete [] savedPos;
+  delete [] grad1;
+  delete [] grad2;
+  delete mol;
+  delete field;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testIssue242() {
   // FIX: Changes to the forcefield (connected to Issue 408) have
   // made it so that this particular problem no longer manifests
@@ -919,6 +1011,8 @@ int main() {
   testMMFFBuilder1();
   testMMFFBuilder2();
   testIssue239();
+  testCalcEnergyPassedCoords();
+  testCalcGrad();
   testIssue242();
   testGithub308();
   testSFIssue1653802();

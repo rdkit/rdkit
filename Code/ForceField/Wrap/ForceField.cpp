@@ -123,6 +123,61 @@ PyObject *ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
   return res;
 }
 
+double PyForceField::calcEnergyWithPos(const python::object &pos) {
+  PRECONDITION(this->field, "no force field");
+  if (pos != python::object()) {
+    size_t s = this->field->dimension() * this->field->numPoints();
+    size_t numElements = python::extract<size_t>(pos.attr("__len__")());
+    if (s != numElements)
+      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+    std::vector<double> c(s);
+    for (size_t i = 0; i < s; ++i)
+      c[i] = python::extract<double>(pos[i]);
+    return this->field->calcEnergy(c.data());
+  }
+  else
+    return this->field->calcEnergy();
+}
+
+PyObject *PyForceField::positions() {
+  PRECONDITION(this->field, "no force field");
+  size_t s = this->field->dimension() * this->field->numPoints();
+  PyObject *coordTuple = PyTuple_New(s);
+  const RDGeom::PointPtrVect &p = this->field->positions();
+  size_t i = 0;
+  PyObject *coordItem;
+  for (const auto pptr: p) {
+    for (size_t j = 0; j < 3; ++j) {
+      coordItem = PyFloat_FromDouble((*pptr)[j]);
+      PyTuple_SetItem(coordTuple, i++, coordItem);
+    }
+  }
+  return coordTuple;
+}
+
+PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
+  PRECONDITION(this->field, "no force field");
+  size_t s = this->field->dimension() * this->field->numPoints();
+  std::vector<double> g(s, 0.0);
+  PyObject *gradTuple = PyTuple_New(s);
+  if (pos != python::object()) {
+    size_t numElements = python::extract<size_t>(pos.attr("__len__")());
+    if (s != numElements)
+      throw ValueErrorException("The Python container must have length equal to Dimension() * NumPoints()");
+    std::vector<double> c(s);
+    for (size_t i = 0; i < s; ++i)
+      c[i] = python::extract<double>(pos[i]);
+    this->field->calcGrad(c.data(), g.data());
+  }
+  else
+    this->field->calcGrad(g.data());
+  for (size_t i = 0; i < s; ++i) {
+    PyObject *coordItem = PyFloat_FromDouble(g[i]);
+    PyTuple_SetItem(gradTuple, i, coordItem);
+  }
+  return gradTuple;
+}
+
 python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol, double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
@@ -241,8 +296,23 @@ BOOST_PYTHON_MODULE(rdForceField) {
 
   python::class_<PyForceField>("ForceField", "A force field", python::no_init)
       .def("CalcEnergy",
-           (double (PyForceField::*)() const) & PyForceField::calcEnergy,
-           "Returns the energy (in kcal/mol) of the current arrangement")
+           (double (PyForceField::*)(const python::object &) const) &PyForceField::calcEnergyWithPos,
+           (python::arg("pos") = python::object()),
+           "Returns the energy (in kcal/mol) of the current arrangement\n"
+           "or of the supplied coordinate list (if non-empty)")
+      .def("CalcGrad", &PyForceField::calcGradWithPos,
+           (python::arg("pos") = python::object()),
+           "Returns a tuple filled with the per-coordinate gradients\n"
+           "of the current arrangement or of the supplied coordinate list (if non-empty)")
+      .def("Positions", &PyForceField::positions,
+           "Returns a tuple filled with the coordinates of the\n"
+           "points the ForceField is handling")
+      .def("Dimension",
+           (unsigned int (PyForceField::*)() const) &PyForceField::dimension,
+           "Returns the dimension of the ForceField")
+      .def("NumPoints",
+           (unsigned int (PyForceField::*)() const) &PyForceField::numPoints,
+           "Returns the number of points the ForceField is handling")
       .def("Minimize", &PyForceField::minimize,
            (python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
             python::arg("energyTol") = 1e-6),
