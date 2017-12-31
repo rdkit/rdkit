@@ -100,6 +100,48 @@ extern const int ci_ATOM_HOLDER;
 
  */
 
+//! \name C++11 Iterators
+/*
+template<class Graph, class Vertex>
+struct CXXAtomIter {
+  Graph *graph;
+  typename Graph::vertex_iterator vend, pos;
+  
+  CXXAtomIter(Graph *graph,
+              typename Graph::vertex_iterator pos) : graph(graph), pos(pos) {}
+
+  Vertex& operator*() { return (*graph)[*pos]; }
+  CXXAtomIter<Graph, Vertex>& operator++() { ++pos; return *this; }
+  bool operator!=(const CXXAtomIter<Graph, Vertex> &it) const { return pos != it.pos; }
+};
+*/
+
+template<class Graph, class Vertex>
+struct CXXAtomIterator {
+  Graph *graph;
+  typename Graph::vertex_iterator vstart, vend;
+  
+  struct CXXAtomIter {
+    Graph *graph;
+    typename Graph::vertex_iterator vend, pos;
+    
+   CXXAtomIter(Graph *graph,
+               typename Graph::vertex_iterator pos) : graph(graph), pos(pos) {}
+    
+    Vertex& operator*() { return (*graph)[*pos]; }
+    CXXAtomIter& operator++() { ++pos; return *this; }
+    bool operator!=(const CXXAtomIter&it) const { return pos != it.pos; }
+  };
+  
+   CXXAtomIterator(Graph *graph) : graph(graph) {
+        auto vs = boost::vertices(*graph);
+        vstart = vs.first;
+        vend = vs.second;
+   }
+  CXXAtomIter begin() { return { graph, vstart }; }
+  CXXAtomIter end()   { return { graph, vend }; }
+};
+
 class ROMol : public RDProps {
  public:
   friend class MolPickler;
@@ -174,6 +216,24 @@ class ROMol : public RDProps {
 
   //@}
   //! \endcond
+
+  //! C++11 Range iterator
+  /*!
+    <b>Usage</b>
+    \code
+      for(auto at : mol.atoms()) {
+         atom->getIdx();
+      };
+    \endcode
+   */
+  
+  CXXAtomIterator<MolGraph, Atom*> atoms() {
+        return { &d_graph };
+  }
+
+  CXXAtomIterator<const MolGraph, Atom*const> atoms() const {
+    return { &d_graph };
+  }
 
   ROMol() : RDProps(), numBonds(0) { initMol(); }
 

@@ -324,8 +324,7 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
     atom_p = atom_pin;
 
   atom_p->setOwningMol(this);
-  MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
-  d_graph[which].reset(atom_p);
+  MolGraph::vertex_descriptor which = boost::add_vertex(atom_p, d_graph);
   atom_p->setIdx(which);
   if (updateLabel) {
     replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
