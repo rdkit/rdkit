@@ -101,20 +101,6 @@ extern const int ci_ATOM_HOLDER;
  */
 
 //! \name C++11 Iterators
-/*
-template<class Graph, class Vertex>
-struct CXXAtomIter {
-  Graph *graph;
-  typename Graph::vertex_iterator vend, pos;
-  
-  CXXAtomIter(Graph *graph,
-              typename Graph::vertex_iterator pos) : graph(graph), pos(pos) {}
-
-  Vertex& operator*() { return (*graph)[*pos]; }
-  CXXAtomIter<Graph, Vertex>& operator++() { ++pos; return *this; }
-  bool operator!=(const CXXAtomIter<Graph, Vertex> &it) const { return pos != it.pos; }
-};
-*/
 
 template<class Graph, class Vertex>
 struct CXXAtomIterator {
@@ -124,12 +110,13 @@ struct CXXAtomIterator {
   struct CXXAtomIter {
     Graph *graph;
     typename Graph::vertex_iterator vend, pos;
+    Atom *current;
     
-   CXXAtomIter(Graph *graph,
-               typename Graph::vertex_iterator pos) : graph(graph), pos(pos) {}
+     CXXAtomIter(Graph *graph,
+                 typename Graph::vertex_iterator pos) : graph(graph), pos(pos), current(0) {}
     
-    Vertex& operator*() { return (*graph)[*pos]; }
-    CXXAtomIter& operator++() { ++pos; return *this; }
+    Vertex& operator*() { return current; }
+    CXXAtomIter& operator++() { ++pos; current = (*graph)[*pos].get(); return *this; }
     bool operator!=(const CXXAtomIter&it) const { return pos != it.pos; }
   };
   

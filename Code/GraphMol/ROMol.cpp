@@ -324,7 +324,8 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
     atom_p = atom_pin;
 
   atom_p->setOwningMol(this);
-  MolGraph::vertex_descriptor which = boost::add_vertex(atom_p, d_graph);
+  MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
+  d_graph[which].reset(atom_p);
   atom_p->setIdx(which);
   if (updateLabel) {
     replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
@@ -474,10 +475,10 @@ void ROMol::clearComputedProps(bool includeRings) const {
 
   RDProps::clearComputedProps();
 
-  for (ConstAtomIterator atomIt = this->beginAtoms();
-       atomIt != this->endAtoms(); ++atomIt) {
-    (*atomIt)->clearComputedProps();
+  for (auto atom: atoms()) {
+    atom->clearComputedProps();
   }
+  
   for (ConstBondIterator bondIt = this->beginBonds();
        bondIt != this->endBonds(); bondIt++) {
     (*bondIt)->clearComputedProps();

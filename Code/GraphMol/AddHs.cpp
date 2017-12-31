@@ -348,10 +348,10 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // pre-allocate the necessary space on the conformations of the molecule
   // for their coordinates
   unsigned int numAddHyds = 0;
-    for(auto at : mol.atoms()) {
+  for(auto at : mol.atoms()) {
     if (!onlyOnAtoms ||
         std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
-            onlyOnAtoms->end()) {
+        onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
