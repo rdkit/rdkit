@@ -113,10 +113,12 @@ struct CXXAtomIterator {
     Atom *current;
     
      CXXAtomIter(Graph *graph,
-                 typename Graph::vertex_iterator pos) : graph(graph), pos(pos), current(0) {}
+                 typename Graph::vertex_iterator pos) :
+      graph(graph), pos(pos),
+      current(boost::num_vertices(*graph) ? (*graph)[*pos].get() : 0) {}
     
     Vertex& operator*() { return current; }
-    CXXAtomIter& operator++() { ++pos; current = (*graph)[*pos].get(); return *this; }
+    CXXAtomIter& operator++() { current = (*graph)[*(++pos)].get(); return *this; }
     bool operator!=(const CXXAtomIter&it) const { return pos != it.pos; }
   };
   
