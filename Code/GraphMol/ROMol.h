@@ -109,7 +109,7 @@ struct CXXAtomIterator {
   
   struct CXXAtomIter {
     Graph *graph;
-    typename Graph::vertex_iterator vend, pos;
+    typename Graph::vertex_iterator pos;
     Atom *current;
     
      CXXAtomIter(Graph *graph,
@@ -129,6 +129,35 @@ struct CXXAtomIterator {
    }
   CXXAtomIter begin() { return { graph, vstart }; }
   CXXAtomIter end()   { return { graph, vend }; }
+};
+
+template<class Graph, class Edge>
+struct CXXBondIterator {
+  Graph *graph;
+  typename Graph::edge_iterator vstart, vend;
+  
+  struct CXXBondIter {
+    Graph *graph;
+    typename Graph::edge_iterator pos;
+    Bond *current;
+    
+     CXXBondIter(Graph *graph,
+                 typename Graph::edge_iterator pos) :
+      graph(graph), pos(pos),
+      current(boost::num_vertices(*graph) ? (*graph)[*pos].get() : 0) {}
+    
+    Edge& operator*() { return current; }
+    CXXBondIter& operator++() { current = (*graph)[*(++pos)].get(); return *this; }
+    bool operator!=(const CXXBondIter&it) const { return pos != it.pos; }
+  };
+  
+   CXXBondIterator(Graph *graph) : graph(graph) {
+        auto vs = boost::edges(*graph);
+        vstart = vs.first;
+        vend = vs.second;
+   }
+  CXXBondIter begin() { return { graph, vstart }; }
+  CXXBondIter end()   { return { graph, vend }; }
 };
 
 class ROMol : public RDProps {
@@ -210,7 +239,7 @@ class ROMol : public RDProps {
   /*!
     <b>Usage</b>
     \code
-      for(auto at : mol.atoms()) {
+      for(auto atom : mol.atoms()) {
          atom->getIdx();
       };
     \endcode
@@ -224,6 +253,24 @@ class ROMol : public RDProps {
     return { &d_graph };
   }
 
+    /*!
+    <b>Usage</b>
+    \code
+      for(auto bond : mol.bonds()) {
+         bond->getIdx();
+      };
+    \endcode
+   */
+
+  CXXBondIterator<MolGraph, Bond*> bonds() {
+        return { &d_graph };
+  }
+
+  CXXBondIterator<const MolGraph, Bond*const> bonds() const {
+    return { &d_graph };
+  }
+
+  
   ROMol() : RDProps(), numBonds(0) { initMol(); }
 
   //! copy constructor with a twist
