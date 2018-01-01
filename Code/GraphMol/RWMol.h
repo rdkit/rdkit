@@ -192,15 +192,12 @@ class RWMol : public ROMol {
 
   //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
-    d_atomBookmarks.clear();
-    d_bondBookmarks.clear();
-    d_graph.clear();
+    destroy();
     d_confs.clear();
     dp_props.reset();
     STR_VECT computed;
     dp_props.setVal(RDKit::detail::computedPropName, computed);
     numBonds = 0;
-    if (dp_ringInfo) dp_ringInfo->reset();
   };
  
  private:
