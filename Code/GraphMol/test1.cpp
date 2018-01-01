@@ -1357,14 +1357,29 @@ void testGithub1453() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-#define in :
-
 void testRanges() {
     RWMol *m = SmilesToMol("N1NN1");
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
+
+
+    // For by value (ok since the atoms are pointers)
     unsigned int i=0;
-    for(auto atom in m->atoms()) {
+    for(auto atom : m->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    // try refs
+    i=0;
+    for(auto &atom : m->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    // try const refs
+    i=0;
+    for(auto const &atom : m->atoms()) {
       TEST_ASSERT(atom->getIdx() == i);
       i++;
     }
@@ -1377,7 +1392,7 @@ void testRanges() {
     }
 
     i=0;
-    for(auto bond in m->bonds()) {
+    for(auto bond : m->bonds()) {
       TEST_ASSERT(bond->getIdx() == i);
       i++;
     }
@@ -1388,6 +1403,7 @@ void testRanges() {
       i++;
     }
 
+    delete m;
     
 }
 
@@ -1395,6 +1411,7 @@ void testRanges() {
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.info");
+  /*
 #if 1
   test1();
   testPropLeak();
@@ -1420,6 +1437,7 @@ int main() {
   testGithub1041();
   testGithub1041();
   testGithub1453();
+  */
   testRanges();
   return 0;
 }
