@@ -311,7 +311,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 #ifdef BUILD_COORDGEN_SUPPORT
   // default to use CoordGen if we have it installed
   if (!forceRDKit && preferCoordGen) {
-    return RDKit::CoordGen::addCoords(mol);
+    RDKit::CoordGen::CoordGenParams params;
+    if (coordMap) params.coordMap = *coordMap;
+    return RDKit::CoordGen::addCoords(mol, &params);
   };
 #endif
   // storage for pieces of a molecule/s that are embedded in 2D
@@ -493,7 +495,7 @@ void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
     }
   }
   RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
-                            true /* clearConfs */);
+                            true /* clearConfs */, 0, 0, 0, false, forceRDKit);
 }
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
@@ -558,6 +560,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
     }
   }
 
-  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat);
+  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
+                                        25, true, forceRDKit);
 }
 }
