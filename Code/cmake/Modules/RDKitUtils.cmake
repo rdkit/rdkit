@@ -55,6 +55,15 @@ macro(rdkit_library)
               COMPONENT runtime )
       if(RDK_INSTALL_STATIC_LIBS)
         add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+
+        foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+          if(${linkLib} MATCHES "^(Boost)|(Thread)")
+            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
+          else()
+            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+          endif()
+        endforeach()
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
         target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
