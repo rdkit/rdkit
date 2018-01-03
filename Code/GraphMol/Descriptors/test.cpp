@@ -2093,6 +2093,21 @@ void testUSRCATDescriptor() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub1702() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github #1702: AUTOCORR2D.h not installed "
+                           "unless RDK_BUILD_DESCRIPTORS3D but is required"
+                        << std::endl;
+  std::vector<double> descriptor(12);
+
+  ROMol *mol = SmilesToMol("C1CCCCC1");
+  std::vector<double> dvals;
+  AUTOCORR2D(*mol, dvals);
+  TEST_ASSERT(dvals.size() == 192);
+  delete mol;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -2133,4 +2148,5 @@ int main() {
   testPropertyQueries();
   testStereoCounting();
   testUSRDescriptor();
+  testGithub1702();
 }
