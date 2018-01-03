@@ -74,7 +74,7 @@ QAFUNC1(RingBondCount, makeAtomRingBondCountQuery, int);
 QAFUNC1(NumRadicalElectrons, makeAtomNumRadicalElectronsQuery, int);
 QAFUNC1(NumHeteroatomNeighbors, makeAtomNumHeteroatomNbrsQuery, int);
 QAFUNC1(NumAliphaticHeteroatomNeighbors,
-        makeAtomAliphaticNumHeteroatomNbrsQuery, int);
+        makeAtomNumAliphaticHeteroatomNbrsQuery, int);
 
 QAFUNC2(IsUnsaturatedQueryAtom, makeAtomUnsaturatedQuery, int);
 QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);

@@ -163,6 +163,9 @@ Here's the (likely partial) list of extensions:
    - ``^1`` matches SP hybridized atoms
    - ``^2`` matches SP2 hybridized atoms
    - ``^3`` matches SP3 hybridized atoms
+   - ``^4`` matches SP3D hybridized atoms
+   - ``^5`` matches SP3D2 hybridized atoms
+
 - **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 - **Heteroatom neighbor queries**:
    - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
