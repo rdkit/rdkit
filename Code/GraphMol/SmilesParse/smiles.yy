@@ -65,7 +65,7 @@ yysmiles_error( const char *input,
 %token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
-%token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN
+%token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN HASH_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
@@ -300,6 +300,8 @@ element:	simple_atom
 		|	number simple_atom { $2->setIsotope( $1 ); $$ = $2; }
 		|	ATOM_TOKEN
 		|	number ATOM_TOKEN	   { $2->setIsotope( $1 ); $$ = $2; }
+		|	HASH_TOKEN	number   { $$ = new Atom($2); }
+		|	number HASH_TOKEN	number   { $$ = new Atom($3); $$->setIsotope($1); }
 		;
 
 /* --------------------------------------------------------------- */

@@ -63,10 +63,11 @@ extern int yysmiles_debug;
     AT_TOKEN = 273,
     PERCENT_TOKEN = 274,
     COLON_TOKEN = 275,
-    BOND_TOKEN = 276,
-    ATOM_OPEN_TOKEN = 277,
-    ATOM_CLOSE_TOKEN = 278,
-    EOS_TOKEN = 279
+    HASH_TOKEN = 276,
+    BOND_TOKEN = 277,
+    ATOM_OPEN_TOKEN = 278,
+    ATOM_CLOSE_TOKEN = 279,
+    EOS_TOKEN = 280
   };
 #endif
 
@@ -82,7 +83,7 @@ union YYSTYPE
   RDKit::Bond * bond;
   int                      ival;
 
-#line 86 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
+#line 87 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
