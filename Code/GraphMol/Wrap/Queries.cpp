@@ -73,6 +73,8 @@ QAFUNC1(MinRingSize, makeAtomMinRingSizeQuery, int);
 QAFUNC1(RingBondCount, makeAtomRingBondCountQuery, int);
 QAFUNC1(NumRadicalElectrons, makeAtomNumRadicalElectronsQuery, int);
 QAFUNC1(NumHeteroatomNeighbors, makeAtomNumHeteroatomNbrsQuery, int);
+QAFUNC1(NumAliphaticHeteroatomNeighbors,
+        makeAtomAliphaticNumHeteroatomNbrsQuery, int);
 
 QAFUNC2(IsUnsaturatedQueryAtom, makeAtomUnsaturatedQuery, int);
 QAFUNC2(IsAromaticQueryAtom, makeAtomAromaticQuery, int);
@@ -156,6 +158,7 @@ struct queries_wrapper {
     QADEF1(RingBondCount);
     QADEF1(NumRadicalElectrons)
     QADEF1(NumHeteroatomNeighbors)
+    QADEF1(NumAliphaticHeteroatomNeighbors)
 
     QADEF2(IsUnsaturated);
     QADEF2(IsAromatic);

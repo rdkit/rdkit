@@ -164,7 +164,9 @@ Here's the (likely partial) list of extensions:
    - ``^2`` matches SP2 hybridized atoms
    - ``^3`` matches SP3 hybridized atoms
 - **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
-- **Heteroatom neighbor queries**: the atom query `z` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``. This is an extension
+- **Heteroatom neighbor queries**:
+   - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
+   - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
 - **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
    - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
    - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.

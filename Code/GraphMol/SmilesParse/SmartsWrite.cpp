@@ -199,9 +199,14 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     needParen = true;
   } else if (descrip == "AtomNumHeteroatomNeighbors") {
     res << "z";
-    if (mods == Modifiers::NONE && query->getVal() != 1) {
-      hasVal = true;
-    }
+    hasVal = true;
+    needParen = true;
+  } else if (descrip == "AtomHasAliphaticHeteroatomNeighbors") {
+    res << "Z";
+    needParen = true;
+  } else if (descrip == "AtomNumAliphaticHeteroatomNeighbors") {
+    res << "Z";
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomFormalCharge") {
     int val = query->getVal();
@@ -265,6 +270,8 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
         break;
       case Modifiers::GREATER:
         res << "-" << ((const ATOM_GREATEREQUAL_QUERY *)query)->getVal();
+        break;
+      default:
         break;
     }
     res << "}";

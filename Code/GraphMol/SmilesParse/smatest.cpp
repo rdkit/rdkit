@@ -92,6 +92,9 @@ void testPass() {
     "[z]",                  // cactvs heteroatom neighbor queries
     "[z1]",
     "[z{1-3}]",
+    "[Z]",
+    "[Z1]",
+    "[Z{1-3}]",
     "[D{1-3}]",  // cactvs range queries
     "[D{-3}]",
     "[D{1-}]",
@@ -2268,6 +2271,43 @@ void testCactvsExtensions() {
     }
     delete m;
   }  // end of C1C2CCCC12 examples
+
+  {
+    ROMol *m = SmilesToMol("NCOc1ncccc1");
+    TEST_ASSERT(m);
+    {
+      ROMol *p = SmartsToMol("[Z2]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[Z2]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 1);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 1);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[Z]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[Z]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 2);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 1);
+      TEST_ASSERT(mVV[1][0].second == 3);
+
+      delete p;
+    }
+    delete m;
+  }  // end of NCOc1ncccc1 examples
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

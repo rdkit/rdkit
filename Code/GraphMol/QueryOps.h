@@ -155,6 +155,35 @@ static inline int queryAtomNumHeteroatomNbrs(Atom const *at) {
   return res;
 };
 
+static inline int queryAtomHasAliphaticHeteroatomNbrs(Atom const *at) {
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
+        nbr->getAtomicNum() != 1) {
+      return 1;
+    }
+    ++nbrIdx;
+  }
+  return 0;
+};
+
+static inline int queryAtomNumAliphaticHeteroatomNbrs(Atom const *at) {
+  int res = 0;
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
+        nbr->getAtomicNum() != 1) {
+      ++res;
+    }
+    ++nbrIdx;
+  }
+  return res;
+};
+
 unsigned int queryAtomBondProduct(Atom const *at);
 unsigned int queryAtomAllBondProduct(Atom const *at);
 
@@ -488,14 +517,6 @@ T *makeAtomNumHeteroatomNbrsQuery(int what, const std::string &descr) {
 }
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what);
-//! \overload
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
-                                                 bool lowerOpen, bool upperOpen,
-                                                 const std::string &descr);
-//! \overload
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
-                                                 bool lowerOpen = true,
-                                                 bool upperOpen = true);
 
 //! returns a Query for matching atoms that have heteroatom neighbors
 template <class T>
@@ -504,6 +525,23 @@ T *makeAtomHasHeteroatomNbrsQuery(const std::string &descr) {
 }
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery();
+
+//! returns a Query for matching the number of aliphatic heteroatom neighbors
+template <class T>
+T *makeAtomNumAliphaticHeteroatomNbrsQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNumAliphaticHeteroatomNbrs,
+                                descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomNumAliphaticHeteroatomNbrsQuery(int what);
+
+//! returns a Query for matching atoms that have heteroatom neighbors
+template <class T>
+T *makeAtomHasAliphaticHeteroatomNbrsQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(1, queryAtomHasAliphaticHeteroatomNbrs, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery();
 
 //! returns a Query for matching bond orders
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);
