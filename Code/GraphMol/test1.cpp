@@ -1207,8 +1207,8 @@ void testAtomListLineRoundTrip() {
       MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
   TEST_ASSERT(m2);
   TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
-  Atom::Atom* cl(new Atom(17));
-  Atom::Atom* o(new Atom(17));
+  Atom* cl(new Atom(17));
+  Atom* o(new Atom(17));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(cl));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(o));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m2->getAtomWithIdx(3))->Match(cl));
