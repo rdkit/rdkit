@@ -1,6 +1,6 @@
-#line 2 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 2 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
-#line 4 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 4 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -224,7 +224,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -600,9 +600,8 @@ static yyconst flex_int16_t yy_chk[375] =
 #line 1 "smarts.ll"
 #line 6 "smarts.ll"
 
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -678,7 +677,7 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 
 
 
-#line 682 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 681 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -710,7 +709,7 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    yy_size_t yy_n_chars;
+    int yy_n_chars;
     yy_size_t yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
@@ -962,10 +961,10 @@ YY_DECL
 		}
 
 	{
-#line 87 "smarts.ll"
+#line 86 "smarts.ll"
 
 
-#line 969 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 968 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1023,241 +1022,241 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 90 "smarts.ll"
+#line 89 "smarts.ll"
 case 2:
-#line 91 "smarts.ll"
+#line 90 "smarts.ll"
 case 3:
-#line 92 "smarts.ll"
+#line 91 "smarts.ll"
 case 4:
-#line 93 "smarts.ll"
+#line 92 "smarts.ll"
 case 5:
 YY_RULE_SETUP
-#line 93 "smarts.ll"
+#line 92 "smarts.ll"
 { return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 95 "smarts.ll"
+#line 94 "smarts.ll"
 { return AT_TOKEN; }
 	YY_BREAK
 case 7:
-#line 99 "smarts.ll"
+#line 98 "smarts.ll"
 case 8:
-#line 100 "smarts.ll"
+#line 99 "smarts.ll"
 case 9:
-#line 101 "smarts.ll"
+#line 100 "smarts.ll"
 case 10:
-#line 102 "smarts.ll"
+#line 101 "smarts.ll"
 case 11:
-#line 103 "smarts.ll"
+#line 102 "smarts.ll"
 case 12:
-#line 104 "smarts.ll"
+#line 103 "smarts.ll"
 case 13:
-#line 105 "smarts.ll"
+#line 104 "smarts.ll"
 case 14:
-#line 106 "smarts.ll"
+#line 105 "smarts.ll"
 case 15:
-#line 107 "smarts.ll"
+#line 106 "smarts.ll"
 case 16:
-#line 108 "smarts.ll"
+#line 107 "smarts.ll"
 case 17:
-#line 109 "smarts.ll"
+#line 108 "smarts.ll"
 case 18:
-#line 110 "smarts.ll"
+#line 109 "smarts.ll"
 case 19:
-#line 111 "smarts.ll"
+#line 110 "smarts.ll"
 case 20:
-#line 112 "smarts.ll"
+#line 111 "smarts.ll"
 case 21:
-#line 113 "smarts.ll"
+#line 112 "smarts.ll"
 case 22:
-#line 114 "smarts.ll"
+#line 113 "smarts.ll"
 case 23:
-#line 115 "smarts.ll"
+#line 114 "smarts.ll"
 case 24:
-#line 116 "smarts.ll"
+#line 115 "smarts.ll"
 case 25:
-#line 117 "smarts.ll"
+#line 116 "smarts.ll"
 case 26:
-#line 118 "smarts.ll"
+#line 117 "smarts.ll"
 case 27:
-#line 119 "smarts.ll"
+#line 118 "smarts.ll"
 case 28:
-#line 120 "smarts.ll"
+#line 119 "smarts.ll"
 case 29:
-#line 121 "smarts.ll"
+#line 120 "smarts.ll"
 case 30:
-#line 122 "smarts.ll"
+#line 121 "smarts.ll"
 case 31:
-#line 123 "smarts.ll"
+#line 122 "smarts.ll"
 case 32:
-#line 124 "smarts.ll"
+#line 123 "smarts.ll"
 case 33:
-#line 125 "smarts.ll"
+#line 124 "smarts.ll"
 case 34:
-#line 126 "smarts.ll"
+#line 125 "smarts.ll"
 case 35:
-#line 127 "smarts.ll"
+#line 126 "smarts.ll"
 case 36:
-#line 128 "smarts.ll"
+#line 127 "smarts.ll"
 case 37:
-#line 129 "smarts.ll"
+#line 128 "smarts.ll"
 case 38:
-#line 130 "smarts.ll"
+#line 129 "smarts.ll"
 case 39:
-#line 131 "smarts.ll"
+#line 130 "smarts.ll"
 case 40:
-#line 132 "smarts.ll"
+#line 131 "smarts.ll"
 case 41:
-#line 133 "smarts.ll"
+#line 132 "smarts.ll"
 case 42:
-#line 134 "smarts.ll"
+#line 133 "smarts.ll"
 case 43:
-#line 135 "smarts.ll"
+#line 134 "smarts.ll"
 case 44:
-#line 136 "smarts.ll"
+#line 135 "smarts.ll"
 case 45:
-#line 137 "smarts.ll"
+#line 136 "smarts.ll"
 case 46:
-#line 138 "smarts.ll"
+#line 137 "smarts.ll"
 case 47:
-#line 139 "smarts.ll"
+#line 138 "smarts.ll"
 case 48:
-#line 140 "smarts.ll"
+#line 139 "smarts.ll"
 case 49:
-#line 141 "smarts.ll"
+#line 140 "smarts.ll"
 case 50:
-#line 142 "smarts.ll"
+#line 141 "smarts.ll"
 case 51:
-#line 143 "smarts.ll"
+#line 142 "smarts.ll"
 case 52:
-#line 144 "smarts.ll"
+#line 143 "smarts.ll"
 case 53:
-#line 145 "smarts.ll"
+#line 144 "smarts.ll"
 case 54:
-#line 146 "smarts.ll"
+#line 145 "smarts.ll"
 case 55:
-#line 147 "smarts.ll"
+#line 146 "smarts.ll"
 case 56:
-#line 148 "smarts.ll"
+#line 147 "smarts.ll"
 case 57:
-#line 149 "smarts.ll"
+#line 148 "smarts.ll"
 case 58:
-#line 150 "smarts.ll"
+#line 149 "smarts.ll"
 case 59:
-#line 151 "smarts.ll"
+#line 150 "smarts.ll"
 case 60:
-#line 152 "smarts.ll"
+#line 151 "smarts.ll"
 case 61:
-#line 153 "smarts.ll"
+#line 152 "smarts.ll"
 case 62:
-#line 154 "smarts.ll"
+#line 153 "smarts.ll"
 case 63:
-#line 155 "smarts.ll"
+#line 154 "smarts.ll"
 case 64:
-#line 156 "smarts.ll"
+#line 155 "smarts.ll"
 case 65:
-#line 157 "smarts.ll"
+#line 156 "smarts.ll"
 case 66:
-#line 158 "smarts.ll"
+#line 157 "smarts.ll"
 case 67:
-#line 159 "smarts.ll"
+#line 158 "smarts.ll"
 case 68:
-#line 160 "smarts.ll"
+#line 159 "smarts.ll"
 case 69:
-#line 161 "smarts.ll"
+#line 160 "smarts.ll"
 case 70:
-#line 162 "smarts.ll"
+#line 161 "smarts.ll"
 case 71:
-#line 163 "smarts.ll"
+#line 162 "smarts.ll"
 case 72:
-#line 164 "smarts.ll"
+#line 163 "smarts.ll"
 case 73:
-#line 165 "smarts.ll"
+#line 164 "smarts.ll"
 case 74:
-#line 166 "smarts.ll"
+#line 165 "smarts.ll"
 case 75:
-#line 167 "smarts.ll"
+#line 166 "smarts.ll"
 case 76:
-#line 168 "smarts.ll"
+#line 167 "smarts.ll"
 case 77:
-#line 169 "smarts.ll"
+#line 168 "smarts.ll"
 case 78:
-#line 170 "smarts.ll"
+#line 169 "smarts.ll"
 case 79:
-#line 171 "smarts.ll"
+#line 170 "smarts.ll"
 case 80:
-#line 172 "smarts.ll"
+#line 171 "smarts.ll"
 case 81:
-#line 173 "smarts.ll"
+#line 172 "smarts.ll"
 case 82:
-#line 174 "smarts.ll"
+#line 173 "smarts.ll"
 case 83:
-#line 175 "smarts.ll"
+#line 174 "smarts.ll"
 case 84:
-#line 176 "smarts.ll"
+#line 175 "smarts.ll"
 case 85:
-#line 177 "smarts.ll"
+#line 176 "smarts.ll"
 case 86:
-#line 178 "smarts.ll"
+#line 177 "smarts.ll"
 case 87:
-#line 179 "smarts.ll"
+#line 178 "smarts.ll"
 case 88:
-#line 180 "smarts.ll"
+#line 179 "smarts.ll"
 case 89:
-#line 181 "smarts.ll"
+#line 180 "smarts.ll"
 case 90:
-#line 182 "smarts.ll"
+#line 181 "smarts.ll"
 case 91:
-#line 183 "smarts.ll"
+#line 182 "smarts.ll"
 case 92:
-#line 184 "smarts.ll"
+#line 183 "smarts.ll"
 case 93:
-#line 185 "smarts.ll"
+#line 184 "smarts.ll"
 case 94:
-#line 186 "smarts.ll"
+#line 185 "smarts.ll"
 case 95:
-#line 187 "smarts.ll"
+#line 186 "smarts.ll"
 case 96:
-#line 188 "smarts.ll"
+#line 187 "smarts.ll"
 case 97:
-#line 189 "smarts.ll"
+#line 188 "smarts.ll"
 case 98:
-#line 190 "smarts.ll"
+#line 189 "smarts.ll"
 case 99:
-#line 191 "smarts.ll"
+#line 190 "smarts.ll"
 case 100:
-#line 192 "smarts.ll"
+#line 191 "smarts.ll"
 case 101:
-#line 193 "smarts.ll"
+#line 192 "smarts.ll"
 case 102:
-#line 194 "smarts.ll"
+#line 193 "smarts.ll"
 case 103:
-#line 195 "smarts.ll"
+#line 194 "smarts.ll"
 case 104:
-#line 196 "smarts.ll"
+#line 195 "smarts.ll"
 case 105:
-#line 197 "smarts.ll"
+#line 196 "smarts.ll"
 case 106:
-#line 198 "smarts.ll"
+#line 197 "smarts.ll"
 case 107:
-#line 199 "smarts.ll"
+#line 198 "smarts.ll"
 case 108:
-#line 200 "smarts.ll"
+#line 199 "smarts.ll"
 case 109:
-#line 201 "smarts.ll"
+#line 200 "smarts.ll"
 case 110:
-#line 202 "smarts.ll"
+#line 201 "smarts.ll"
 case 111:
 YY_RULE_SETUP
-#line 202 "smarts.ll"
+#line 201 "smarts.ll"
 {   yylval->atom = new QueryAtom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN;
 			}
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 205 "smarts.ll"
+#line 204 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomExplicitDegreeQuery(1));
@@ -1266,7 +1265,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 211 "smarts.ll"
+#line 210 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalDegreeQuery(1));
@@ -1275,7 +1274,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 217 "smarts.ll"
+#line 216 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHasRingBondQuery());
@@ -1284,7 +1283,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 223 "smarts.ll"
+#line 222 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalValenceQuery(1));
@@ -1293,16 +1292,16 @@ YY_RULE_SETUP
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 229 "smarts.ll"
+#line 228 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomNumHeteroatomNbrsQuery(1));
-	return COMPLEX_ATOM_QUERY_TOKEN;
+	yylval->atom->setQuery(makeAtomHasHeteroatomNbrsQuery());
+	return HETERONEIGHBOR_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 235 "smarts.ll"
+#line 234 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
         yylval->atom->setQuery(makeAtomHasImplicitHQuery());
@@ -1311,7 +1310,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 241 "smarts.ll"
+#line 240 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(new AtomRingQuery(-1));
@@ -1320,7 +1319,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 247 "smarts.ll"
+#line 246 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomInRingQuery());
@@ -1329,102 +1328,102 @@ YY_RULE_SETUP
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 253 "smarts.ll"
+#line 252 "smarts.ll"
 {  return H_TOKEN;  }
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 256 "smarts.ll"
+#line 255 "smarts.ll"
 {  yylval->ival = 5;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 258 "smarts.ll"
+#line 257 "smarts.ll"
 {  yylval->ival = 6;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 260 "smarts.ll"
+#line 259 "smarts.ll"
 {  yylval->ival = 7;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 262 "smarts.ll"
+#line 261 "smarts.ll"
 {  yylval->ival = 8;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 264 "smarts.ll"
+#line 263 "smarts.ll"
 {  yylval->ival = 9;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 266 "smarts.ll"
+#line 265 "smarts.ll"
 {  yylval->ival = 15;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 268 "smarts.ll"
+#line 267 "smarts.ll"
 {  yylval->ival = 16;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 270 "smarts.ll"
+#line 269 "smarts.ll"
 {  yylval->ival = 17;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 272 "smarts.ll"
+#line 271 "smarts.ll"
 {  yylval->ival = 35;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 274 "smarts.ll"
+#line 273 "smarts.ll"
 {  yylval->ival = 53;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 277 "smarts.ll"
+#line 276 "smarts.ll"
 {  yylval->ival = 5;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 279 "smarts.ll"
+#line 278 "smarts.ll"
 {  yylval->ival = 6;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 281 "smarts.ll"
+#line 280 "smarts.ll"
 {  yylval->ival = 7;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 283 "smarts.ll"
+#line 282 "smarts.ll"
 {  yylval->ival = 8;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 285 "smarts.ll"
+#line 284 "smarts.ll"
 {  yylval->ival = 15;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 287 "smarts.ll"
+#line 286 "smarts.ll"
 {  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 289 "smarts.ll"
+#line 288 "smarts.ll"
 {  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 291 "smarts.ll"
+#line 290 "smarts.ll"
 {  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 295 "smarts.ll"
+#line 294 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomNullQuery());
@@ -1433,7 +1432,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 301 "smarts.ll"
+#line 300 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomAromaticQuery());
@@ -1443,7 +1442,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 308 "smarts.ll"
+#line 307 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomAliphaticQuery());
@@ -1452,50 +1451,50 @@ YY_RULE_SETUP
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 315 "smarts.ll"
+#line 314 "smarts.ll"
 { return COLON_TOKEN; }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 317 "smarts.ll"
+#line 316 "smarts.ll"
 { return UNDERSCORE_TOKEN; }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 319 "smarts.ll"
+#line 318 "smarts.ll"
 { return HASH_TOKEN; }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 321 "smarts.ll"
+#line 320 "smarts.ll"
 { yylval->bond = new QueryBond(Bond::DOUBLE);
 	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 325 "smarts.ll"
+#line 324 "smarts.ll"
 { yylval->bond = new QueryBond();
 	yylval->bond->setQuery(makeBondNullQuery());
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 329 "smarts.ll"
+#line 328 "smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 333 "smarts.ll"
+#line 332 "smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 337 "smarts.ll"
+#line 336 "smarts.ll"
 {
     yylval->bond = new QueryBond(Bond::DATIVER);
     return BOND_TOKEN;
@@ -1503,7 +1502,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 341 "smarts.ll"
+#line 340 "smarts.ll"
 {
     yylval->bond = new QueryBond(Bond::DATIVEL);
     return BOND_TOKEN;
@@ -1511,57 +1510,57 @@ YY_RULE_SETUP
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 346 "smarts.ll"
+#line 345 "smarts.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 348 "smarts.ll"
+#line 347 "smarts.ll"
 { return PLUS_TOKEN; }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 350 "smarts.ll"
+#line 349 "smarts.ll"
 { yy_push_state(IN_RECURSION_STATE,yyscanner); return BEGIN_RECURSE; }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 352 "smarts.ll"
+#line 351 "smarts.ll"
 { yy_push_state(IN_BRANCH_STATE,yyscanner); return GROUP_OPEN_TOKEN; }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 353 "smarts.ll"
+#line 352 "smarts.ll"
 { yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 354 "smarts.ll"
+#line 353 "smarts.ll"
 { yy_pop_state(yyscanner); return END_RECURSE; }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 356 "smarts.ll"
+#line 355 "smarts.ll"
 {  return RANGE_OPEN_TOKEN; }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 357 "smarts.ll"
+#line 356 "smarts.ll"
 { yy_pop_state(yyscanner); return RANGE_CLOSE_TOKEN; }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 361 "smarts.ll"
+#line 360 "smarts.ll"
 { yy_push_state(IN_ATOM_STATE,yyscanner); return ATOM_OPEN_TOKEN; }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 362 "smarts.ll"
+#line 361 "smarts.ll"
 { yy_pop_state(yyscanner); return ATOM_CLOSE_TOKEN; }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 363 "smarts.ll"
+#line 362 "smarts.ll"
 { /* FIX: ???
                            This rule is here because otherwise recursive SMARTS queries like:
 	                   [$(C(=O)[O,N])] lex improperly (no ATOM_CLOSE token is returned).
@@ -1573,47 +1572,47 @@ YY_RULE_SETUP
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 372 "smarts.ll"
+#line 371 "smarts.ll"
 { return SEPARATOR_TOKEN; }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 374 "smarts.ll"
+#line 373 "smarts.ll"
 { return PERCENT_TOKEN; }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 376 "smarts.ll"
+#line 375 "smarts.ll"
 { yylval->ival = 0;  return ZERO_TOKEN; }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 377 "smarts.ll"
+#line 376 "smarts.ll"
 { yylval->ival = yytext[0]-'0';  return NONZERO_DIGIT_TOKEN; }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 379 "smarts.ll"
+#line 378 "smarts.ll"
 { return NOT_TOKEN; }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 381 "smarts.ll"
+#line 380 "smarts.ll"
 { return SEMI_TOKEN; }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 383 "smarts.ll"
+#line 382 "smarts.ll"
 { return AND_TOKEN; }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 385 "smarts.ll"
+#line 384 "smarts.ll"
 { return OR_TOKEN; }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 387 "smarts.ll"
+#line 386 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::S));
@@ -1622,7 +1621,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 393 "smarts.ll"
+#line 392 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP));
@@ -1631,7 +1630,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 399 "smarts.ll"
+#line 398 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP2));
@@ -1640,7 +1639,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 405 "smarts.ll"
+#line 404 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
@@ -1650,27 +1649,27 @@ YY_RULE_SETUP
 case 174:
 /* rule 174 can match eol */
 YY_RULE_SETUP
-#line 411 "smarts.ll"
+#line 410 "smarts.ll"
 return EOS_TOKEN;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
 case YY_STATE_EOF(IN_BRANCH_STATE):
 case YY_STATE_EOF(IN_RECURSION_STATE):
-#line 413 "smarts.ll"
+#line 412 "smarts.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 414 "smarts.ll"
+#line 413 "smarts.ll"
 return yytext[0];
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 416 "smarts.ll"
+#line 415 "smarts.ll"
 ECHO;
 	YY_BREAK
-#line 1674 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1673 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1925,9 +1924,9 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((yy_size_t) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if ((int) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yysmarts_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
@@ -2358,7 +2357,7 @@ static void yysmarts_ensure_buffer_stack (yyscan_t yyscanner)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1; // After all that talk, this was set to 1 anyways...
+		num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
 		yyg->yy_buffer_stack = (struct yy_buffer_state**)yysmarts_alloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
@@ -2889,7 +2888,7 @@ void yysmarts_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 416 "smarts.ll"
+#line 415 "smarts.ll"
 
 
 

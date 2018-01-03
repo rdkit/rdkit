@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YYSMARTS_MNT_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
-# define YY_YYSMARTS_MNT_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+#ifndef YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
+# define YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -54,34 +54,35 @@ extern int yysmarts_debug;
     RINGBOND_ATOM_QUERY_TOKEN = 264,
     IMPLICIT_H_ATOM_QUERY_TOKEN = 265,
     HYB_TOKEN = 266,
-    ZERO_TOKEN = 267,
-    NONZERO_DIGIT_TOKEN = 268,
-    GROUP_OPEN_TOKEN = 269,
-    GROUP_CLOSE_TOKEN = 270,
-    SEPARATOR_TOKEN = 271,
-    RANGE_OPEN_TOKEN = 272,
-    RANGE_CLOSE_TOKEN = 273,
-    HASH_TOKEN = 274,
-    MINUS_TOKEN = 275,
-    PLUS_TOKEN = 276,
-    CHIRAL_MARKER_TOKEN = 277,
-    CHI_CLASS_TOKEN = 278,
-    CHI_CLASS_OH_TOKEN = 279,
-    H_TOKEN = 280,
-    AT_TOKEN = 281,
-    PERCENT_TOKEN = 282,
-    ATOM_OPEN_TOKEN = 283,
-    ATOM_CLOSE_TOKEN = 284,
-    NOT_TOKEN = 285,
-    AND_TOKEN = 286,
-    OR_TOKEN = 287,
-    SEMI_TOKEN = 288,
-    BEGIN_RECURSE = 289,
-    END_RECURSE = 290,
-    COLON_TOKEN = 291,
-    UNDERSCORE_TOKEN = 292,
-    BOND_TOKEN = 293,
-    EOS_TOKEN = 294
+    HETERONEIGHBOR_ATOM_QUERY_TOKEN = 267,
+    ZERO_TOKEN = 268,
+    NONZERO_DIGIT_TOKEN = 269,
+    GROUP_OPEN_TOKEN = 270,
+    GROUP_CLOSE_TOKEN = 271,
+    SEPARATOR_TOKEN = 272,
+    RANGE_OPEN_TOKEN = 273,
+    RANGE_CLOSE_TOKEN = 274,
+    HASH_TOKEN = 275,
+    MINUS_TOKEN = 276,
+    PLUS_TOKEN = 277,
+    CHIRAL_MARKER_TOKEN = 278,
+    CHI_CLASS_TOKEN = 279,
+    CHI_CLASS_OH_TOKEN = 280,
+    H_TOKEN = 281,
+    AT_TOKEN = 282,
+    PERCENT_TOKEN = 283,
+    ATOM_OPEN_TOKEN = 284,
+    ATOM_CLOSE_TOKEN = 285,
+    NOT_TOKEN = 286,
+    AND_TOKEN = 287,
+    OR_TOKEN = 288,
+    SEMI_TOKEN = 289,
+    BEGIN_RECURSE = 290,
+    END_RECURSE = 291,
+    COLON_TOKEN = 292,
+    UNDERSCORE_TOKEN = 293,
+    BOND_TOKEN = 294,
+    EOS_TOKEN = 295
   };
 #endif
 
@@ -90,14 +91,14 @@ extern int yysmarts_debug;
 
 union YYSTYPE
 {
-#line 51 "smarts.yy" /* yacc.c:1909  */
+#line 50 "smarts.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
   int                      ival;
 
-#line 101 "/mnt/c/Users/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
+#line 102 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -109,4 +110,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, void *scanner);
 
-#endif /* !YY_YYSMARTS_MNT_C_USERS_GLANDRUM_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */
+#endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */
