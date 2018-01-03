@@ -69,6 +69,8 @@ void testPass() {
     "[C;!$(C-[OH])]=O",
     "[#6]-!:[#6]",
     "[C^3]",
+    "[*^4]",
+    "[*^5]",
     "[se]",
     "[te]",
     // test zeros as ring indices, issue 2690982:

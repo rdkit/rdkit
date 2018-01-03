@@ -412,7 +412,16 @@ A			{
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
 	return HYB_TOKEN;
 }
-
+\^4		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D));
+	return HYB_TOKEN;
+}
+\^5		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D2));
+	return HYB_TOKEN;
+}
 \n		return EOS_TOKEN;
 
 <<EOF>>		{ return EOS_TOKEN; }

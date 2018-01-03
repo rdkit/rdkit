@@ -234,6 +234,12 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
       case Atom::SP3:
         res << "3";
         break;
+      case Atom::SP3D:
+        res << "4";
+        break;
+      case Atom::SP3D2:
+        res << "5";
+        break;
     }
   } else if (descrip == "AtomMass") {
     res << query->getVal() / massIntegerConversionFactor << "*";
