@@ -55,34 +55,36 @@ extern int yysmarts_debug;
     IMPLICIT_H_ATOM_QUERY_TOKEN = 265,
     HYB_TOKEN = 266,
     HETERONEIGHBOR_ATOM_QUERY_TOKEN = 267,
-    ZERO_TOKEN = 268,
-    NONZERO_DIGIT_TOKEN = 269,
-    GROUP_OPEN_TOKEN = 270,
-    GROUP_CLOSE_TOKEN = 271,
-    SEPARATOR_TOKEN = 272,
-    RANGE_OPEN_TOKEN = 273,
-    RANGE_CLOSE_TOKEN = 274,
-    HASH_TOKEN = 275,
-    MINUS_TOKEN = 276,
-    PLUS_TOKEN = 277,
-    CHIRAL_MARKER_TOKEN = 278,
-    CHI_CLASS_TOKEN = 279,
-    CHI_CLASS_OH_TOKEN = 280,
-    H_TOKEN = 281,
-    AT_TOKEN = 282,
-    PERCENT_TOKEN = 283,
-    ATOM_OPEN_TOKEN = 284,
-    ATOM_CLOSE_TOKEN = 285,
-    NOT_TOKEN = 286,
-    AND_TOKEN = 287,
-    OR_TOKEN = 288,
-    SEMI_TOKEN = 289,
-    BEGIN_RECURSE = 290,
-    END_RECURSE = 291,
-    COLON_TOKEN = 292,
-    UNDERSCORE_TOKEN = 293,
-    BOND_TOKEN = 294,
-    EOS_TOKEN = 295
+    ALIPHATIC = 268,
+    ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN = 269,
+    ZERO_TOKEN = 270,
+    NONZERO_DIGIT_TOKEN = 271,
+    GROUP_OPEN_TOKEN = 272,
+    GROUP_CLOSE_TOKEN = 273,
+    SEPARATOR_TOKEN = 274,
+    RANGE_OPEN_TOKEN = 275,
+    RANGE_CLOSE_TOKEN = 276,
+    HASH_TOKEN = 277,
+    MINUS_TOKEN = 278,
+    PLUS_TOKEN = 279,
+    CHIRAL_MARKER_TOKEN = 280,
+    CHI_CLASS_TOKEN = 281,
+    CHI_CLASS_OH_TOKEN = 282,
+    H_TOKEN = 283,
+    AT_TOKEN = 284,
+    PERCENT_TOKEN = 285,
+    ATOM_OPEN_TOKEN = 286,
+    ATOM_CLOSE_TOKEN = 287,
+    NOT_TOKEN = 288,
+    AND_TOKEN = 289,
+    OR_TOKEN = 290,
+    SEMI_TOKEN = 291,
+    BEGIN_RECURSE = 292,
+    END_RECURSE = 293,
+    COLON_TOKEN = 294,
+    UNDERSCORE_TOKEN = 295,
+    BOND_TOKEN = 296,
+    EOS_TOKEN = 297
   };
 #endif
 
@@ -98,7 +100,7 @@ union YYSTYPE
   RDKit::QueryBond * bond;
   int                      ival;
 
-#line 102 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
+#line 104 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
