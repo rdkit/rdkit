@@ -132,6 +132,18 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 **Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
+SMILES Support and Extensions
+=============================
+
+The RDKit covers all of the standard features of Daylight SMILES [#smiles]_ as well as some useful extensions.
+
+Here's the (likely partial) list of extensions:
+
+- **Aromaticity**: ``te`` (aromatic Te) is accepted
+- **Dative bonds**: ``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
+- **Specifying atoms by atomic number**: the ``[#6]`` construct from SMARTS is supported in SMILES.
+
+
 SMARTS Support and Extensions
 =============================
 
@@ -151,15 +163,19 @@ Here's the (likely partial) list of extensions:
    - ``^1`` matches SP hybridized atoms
    - ``^2`` matches SP2 hybridized atoms
    - ``^3`` matches SP3 hybridized atoms
-- **Dative bonds**: ``<`` and ``>`` match the corresponding dative bonds, direction does matter.
+- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 - **Heteroatom neighbor queries**: the atom query `z` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``. This is an extension
-- **Range queries**: Ranges of values can be provided for queries that expect numeric values. Some examples:
+- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
    - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
    - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
    - ``D{2-}`` matches atoms that have at least 2 explicit connections.
 
 Some examples of the extensions:
 
+>>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('[#7]->*'))
+((5, 6),)
+>>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
+((6, 5),)
 >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
 ((1,),)
 >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
