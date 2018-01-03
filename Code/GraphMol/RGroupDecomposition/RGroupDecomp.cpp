@@ -372,7 +372,7 @@ double score(const std::vector<size_t> &permutation,
         if(static_cast<size_t>(it->second) == permutation.size())
           equivalentRGroupCount.push_back(static_cast<float>(it->second));
         else
-          equivalentRGroupCount.push_back(it->second * 0.05f); // small boosts for hydrogens
+          equivalentRGroupCount.push_back(it->second * 1.0/permutation.size()); // massively downweight hydrogens
       } else {
         equivalentRGroupCount.push_back(static_cast<float>(it->second));
       }
