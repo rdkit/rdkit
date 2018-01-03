@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2018 Novartis Institutes Of BioMedical Research
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,14 +13,12 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <sstream>
 #include <iostream>
-#include <boost/random/uniform_int.hpp>
 
 using namespace std;
 using namespace RDKit;
@@ -29,17 +26,15 @@ using namespace RDKit;
 // memory tests for valgrind
 void testRemoveAtomBond(RWMol &m, int atomidx, int bondidx)
 {
+  const Bond *b = m.getBondWithIdx(bondidx);
+  if (bondidx>=0) m.removeBond(b->getBeginAtomIdx(), b->getEndAtomIdx());
   if (atomidx>=0) m.removeAtom(atomidx);
-  if (bondidx>=0) m.removeAtom(bondidx);
 }
 
 void testRemovals(RWMol m) {
-  boost::random::mt19937 rng;   
-  for(int i=0;i<m.getNumAtoms()/2;++i) {
-    boost::random::uniform_int_distribution<> arng(0,m.getNumAtoms()-1);
-    boost::random::uniform_int_distribution<> brng(0,m.getNumBonds()-1);
-    int atomidx = arng(rng);
-    int bondidx = brng(rng);
+  for(unsigned int i=0;i<m.getNumAtoms()/2;i++) {
+    int atomidx = (i%2==0) ? m.getNumAtoms()-1 : 0;
+    int bondidx = (i%2==0) ? m.getNumBonds()-1 : 0;
     testRemoveAtomBond(m, atomidx, bondidx);
   }
 }
