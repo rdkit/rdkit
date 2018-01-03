@@ -6,7 +6,6 @@ from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.Chem import rdMolTransforms as rdmt
 
-
 def feq(v1, v2, tol=1.0e-4):
   return abs(v1 - v2) < tol
 
@@ -63,6 +62,110 @@ class TestCase(unittest.TestCase):
       self.failUnless(feq(p1[0], p2[0]))
       self.failUnless(feq(p1[1], p2[1]))
       self.failUnless(feq(p1[2], p2[2]))
+
+  def testComputePrincipalAxesAndMoments(self):
+    if (not hasattr(rdmt, 'ComputePrincipalAxesAndMoments')):
+      return
+    molBlock = '''\
+
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.1888    1.3224   -0.2048 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0790    0.1671    0.6070 C   0  0  1  0  0  0  0  0  0  0  0  0
+   -1.3083   -0.8939   -0.2236 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.5761   -0.5956   -0.1786 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  4  1  0
+M  END
+'''
+    axesRef = (
+      (-0.9997, -0.0246,  0.0009),
+      ( 0.0246, -0.9981,  0.0559),
+      ( 0.0004, -0.0559, -0.9984)
+    )
+    momentsRef = ( 3.4220,  4.7230,  7.1757)
+    m = Chem.MolFromMolBlock(molBlock)
+    axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer())
+    self.assertIsNotNone(axes)
+    self.assertIsNotNone(moments)
+    for y in range(3):
+      for x in range(3):
+        self.assertAlmostEqual(axes[y][x], axesRef[y][x], 3)
+      self.assertAlmostEqual(moments[y], momentsRef[y], 3)
+    failed = False
+    try:
+      axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer(), weights = (0.5, 0.5))
+    except:
+      failed = True
+    self.assertTrue(failed)
+    axesWeightedRef = (
+      (-0.9998, -0.0114, -0.0189),
+      (-0.0153,  0.9744,  0.2245),
+      ( 0.0158,  0.2247, -0.9743)
+    )
+    momentsWeightedRef = ( 0.5496,  1.5559,  1.9361)
+    axesWeighted, momentsWeighted = rdmt.ComputePrincipalAxesAndMoments(
+                                    m.GetConformer(), weights = (0.1, 0.2, 0.3, 0.4))
+    self.assertIsNotNone(axesWeighted)
+    self.assertIsNotNone(momentsWeighted)
+    for y in range(3):
+      for x in range(3):
+        self.assertAlmostEqual(axesWeighted[y][x], axesWeightedRef[y][x], 3)
+      self.assertAlmostEqual(momentsWeighted[y], momentsWeightedRef[y], 3)
+
+  def testComputePrincipalAxesAndMomentsFromGyrationMatrix(self):
+    if (not hasattr(rdmt, 'ComputePrincipalAxesAndMomentsFromGyrationMatrix')):
+      return
+    molBlock = '''\
+
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.1888    1.3224   -0.2048 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0790    0.1671    0.6070 C   0  0  1  0  0  0  0  0  0  0  0  0
+   -1.3083   -0.8939   -0.2236 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.5761   -0.5956   -0.1786 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  4  1  0
+M  END
+'''
+    axesRef = (
+      (-0.0009, -0.0246,  0.9997),
+      (-0.0559, -0.9981, -0.0246),
+      ( 0.9984, -0.0559, -0.0004)
+    )
+    momentsRef = ( 0.1212,  0.7343,  1.0596)
+    m = Chem.MolFromMolBlock(molBlock)
+    axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(m.GetConformer())
+    self.assertIsNotNone(axes)
+    self.assertIsNotNone(moments)
+    for y in range(3):
+      for x in range(3):
+        self.assertAlmostEqual(axes[y][x], axesRef[y][x], 3)
+      self.assertAlmostEqual(moments[y], momentsRef[y], 3)
+    failed = False
+    try:
+      axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(m.GetConformer(), weights = (0.5, 0.5))
+    except:
+      failed = True
+    self.assertTrue(failed)
+    axesWeightedRef = (
+      ( 0.0189, -0.0114,  0.9998),
+      (-0.2245,  0.9744,  0.0153),
+      ( 0.9743,  0.2247, -0.0158)
+    )
+    momentsWeightedRef = (  0.0847,  0.4649,  1.4712)
+    axesWeighted, momentsWeighted = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(
+                                    m.GetConformer(), weights = (0.1, 0.2, 0.3, 0.4))
+    self.assertIsNotNone(axesWeighted)
+    self.assertIsNotNone(momentsWeighted)
+    for y in range(3):
+      for x in range(3):
+        self.assertAlmostEqual(abs(axesWeighted[y][x]), abs(axesWeightedRef[y][x]), 3)
+      self.assertAlmostEqual(abs(momentsWeighted[y]), abs(momentsWeightedRef[y]), 3)
 
   def testGetSetBondLength(self):
     file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
