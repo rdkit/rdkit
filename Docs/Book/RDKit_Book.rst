@@ -166,23 +166,32 @@ Here's the (likely partial) list of extensions:
    - ``^4`` matches SP3D hybridized atoms
    - ``^5`` matches SP3D2 hybridized atoms
 
-- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
-- **Heteroatom neighbor queries**:
-   - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
-   - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
-- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
-   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
-   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
-   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+>> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
+((1,), (2,))
 
-Some examples of the extensions:
+- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 
 >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('[#7]->*'))
 ((5, 6),)
 >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
 ((6, 5),)
->>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
+
+- **Heteroatom neighbor queries**:
+   - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
+   - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
+
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
+((1,), (3,), (5,))
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z2]'))
 ((1,),)
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
+((5,),)
+
+- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
+   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
+   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
+   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+
 >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
 ((1,), (4,))
 >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[D{2-3}]'))
