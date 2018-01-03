@@ -128,13 +128,26 @@ static inline int queryAtomMissingChiralTag(Atom const *at) {
          at->hasProp(common_properties::_ChiralityPossible);
 };
 
+static inline int queryAtomHasHeteroatomNbrs(Atom const *at) {
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
+      return 1;
+    }
+    ++nbrIdx;
+  }
+  return 0;
+};
+
 static inline int queryAtomNumHeteroatomNbrs(Atom const *at) {
   int res = 0;
-  ROMol::ADJ_ITER nbrIdx,endNbrs;
-  boost::tie(nbrIdx,endNbrs) = at->getOwningMol().getAtomNeighbors(at);
-  while(nbrIdx!=endNbrs){
-    const ATOM_SPTR nbr=at->getOwningMol()[*nbrIdx];
-    if(nbr->getAtomicNum()!=6 && nbr->getAtomicNum()!=1){
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
       ++res;
     }
     ++nbrIdx;
@@ -235,13 +248,13 @@ T *makeAtomSimpleQuery(int what, int func(Atom const *),
   return res;
 }
 
-static inline ATOM_RANGE_QUERY *makeAtomRangeQuery(int lower, int upper, bool lowerOpen,
-bool upperOpen, int func(Atom const *),
-const std::string &description = "Atom Range" ) {
-  ATOM_RANGE_QUERY *res = new ATOM_RANGE_QUERY(lower,upper);
+static inline ATOM_RANGE_QUERY *makeAtomRangeQuery(
+    int lower, int upper, bool lowerOpen, bool upperOpen,
+    int func(Atom const *), const std::string &description = "Atom Range") {
+  ATOM_RANGE_QUERY *res = new ATOM_RANGE_QUERY(lower, upper);
   res->setDataFunc(func);
   res->setDescription(description);
-  res->setEndsOpen(lowerOpen,upperOpen);
+  res->setEndsOpen(lowerOpen, upperOpen);
   return res;
 }
 
@@ -476,10 +489,21 @@ T *makeAtomNumHeteroatomNbrsQuery(int what, const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what);
 //! \overload
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower,int upper, bool lowerOpen, bool upperOpen, const std::string &descr);
+ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
+                                                 bool lowerOpen, bool upperOpen,
+                                                 const std::string &descr);
 //! \overload
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper, bool lowerOpen=true, bool upperOpen=true);
+ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
+                                                 bool lowerOpen = true,
+                                                 bool upperOpen = true);
 
+//! returns a Query for matching atoms that have heteroatom neighbors
+template <class T>
+T *makeAtomHasHeteroatomNbrsQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(1, queryAtomHasHeteroatomNbrs, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery();
 
 //! returns a Query for matching bond orders
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);

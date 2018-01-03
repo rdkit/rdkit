@@ -132,6 +132,44 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 **Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
 
+SMARTS Support and Extensions
+=============================
+
+The RDKit covers most of the standard features of Daylight SMARTS [#smarts]_ as well as some useful extensions.
+
+Here's the (hopefully complete) list of SMARTS features that are *not* supported:
+
+- Non-tetrahedral chiral classes
+- the ``@?`` operator
+- explicit atomic masses (though isotope queries are supported)
+- component level grouping requiring matches in different components, i.e. ``(C).(C)``
+
+Here's the (likely partial) list of extensions:
+
+- **Hybridization queries**:
+   - ``^0`` matches S hybridized atoms
+   - ``^1`` matches SP hybridized atoms
+   - ``^2`` matches SP2 hybridized atoms
+   - ``^3`` matches SP3 hybridized atoms
+- **Dative bonds**: ``<`` and ``>`` match the corresponding dative bonds, direction does matter.
+- **Heteroatom neighbor queries**: the atom query `z` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``. This is an extension
+- **Range queries**: Ranges of values can be provided for queries that expect numeric values. Some examples:
+   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
+   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
+   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+
+Some examples of the extensions:
+
+>>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
+((1,),)
+>>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
+((1,), (4,))
+>>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[D{2-3}]'))
+((1,), (3,))
+>>> Chem.MolFromSmiles('CC(=O)OC.C').GetSubstructMatches(Chem.MolFromSmarts('[D{-2}]'))
+((0,), (2,), (3,), (4,), (5,))
+
+
 
 Ring Finding and SSSR
 =====================
@@ -801,7 +839,7 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2016 by Greg Landrum
+This document is copyright (C) 2007-2018 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

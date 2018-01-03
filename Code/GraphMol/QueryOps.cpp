@@ -470,17 +470,28 @@ ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what) {
   return res;
 }
 
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower,int upper, bool lowerOpen, bool upperOpen, const std::string &descr) {
-  return makeAtomRangeQuery(lower, upper, lowerOpen, upperOpen, queryAtomNumHeteroatomNbrs, descr);
+ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
+                                                 bool lowerOpen, bool upperOpen,
+                                                 const std::string &descr) {
+  return makeAtomRangeQuery(lower, upper, lowerOpen, upperOpen,
+                            queryAtomNumHeteroatomNbrs, descr);
 }
 
-ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper, bool lowerOpen, bool upperOpen) {
-  ATOM_RANGE_QUERY *res =
-      makeAtomRangeQuery(lower,upper, lowerOpen, upperOpen, queryAtomNumHeteroatomNbrs);
+ATOM_RANGE_QUERY *makeAtomNumHeteroatomNbrsQuery(int lower, int upper,
+                                                 bool lowerOpen,
+                                                 bool upperOpen) {
+  ATOM_RANGE_QUERY *res = makeAtomRangeQuery(lower, upper, lowerOpen, upperOpen,
+                                             queryAtomNumHeteroatomNbrs);
   res->setDescription("AtomNumHeteroatomNeighbors");
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery() {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasHeteroatomNbrs);
+  res->setDescription("AtomHasHeteroatomNeighbors");
+  return res;
+}
 
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   auto *res = new BOND_EQUALS_QUERY;

@@ -2092,91 +2092,183 @@ void testGithub1472() {
 void testCactvsExtensions() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing cactvs SMARTS extensions" << std::endl;
-  ROMol *m = SmilesToMol("COC(C)N");
-  TEST_ASSERT(m);
   {
-    ROMol *p = SmartsToMol("[z2]");
-    TEST_ASSERT(p);
-    std::string asma = SmartsWrite::GetAtomSmarts(
-        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[z2]");
+    ROMol *m = SmilesToMol("COC(C)N");
+    TEST_ASSERT(m);
+    {
+      ROMol *p = SmartsToMol("[z2]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[z2]");
 
-    std::vector<MatchVectType> mVV;
-    int matchCount = SubstructMatch(*m, *p, mVV);
-    TEST_ASSERT(matchCount == 1);
-    TEST_ASSERT(mVV[0].size() == 1);
-    TEST_ASSERT(mVV[0][0].second == 2);
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 1);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 2);
 
-    delete p;
-  }
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[z]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[z]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 2);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 0);
+      TEST_ASSERT(mVV[1][0].second == 2);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[z{1-2}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[z{1-2}]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 2);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 0);
+      TEST_ASSERT(mVV[1][0].second == 2);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[z{2-}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[z{2-}]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 1);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 2);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[D{2-3}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[D{2-3}]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 2);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 1);
+      TEST_ASSERT(mVV[1][0].second == 2);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[D{2-}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[D{2-}]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 2);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 1);
+      TEST_ASSERT(mVV[1][0].second == 2);
+
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[D{-2}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[D{-2}]");
+
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 4);
+      TEST_ASSERT(mVV[0].size() == 1);
+      TEST_ASSERT(mVV[0][0].second == 0);
+      TEST_ASSERT(mVV[1][0].second == 1);
+      TEST_ASSERT(mVV[2][0].second == 3);
+      TEST_ASSERT(mVV[3][0].second == 4);
+
+      delete p;
+    }
+
+    delete m;
+  }  // end of COC(C)N examples
+
   {
-    ROMol *p = SmartsToMol("[z{1-2}]");
-    TEST_ASSERT(p);
-    std::string asma = SmartsWrite::GetAtomSmarts(
-        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[z{1-2}]");
+    ROMol *m = SmilesToMol("C1C2CCCC12");
+    TEST_ASSERT(m);
+    {
+      ROMol *p = SmartsToMol("[r{3-5}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[r{3-5}]");
 
-    std::vector<MatchVectType> mVV;
-    int matchCount = SubstructMatch(*m, *p, mVV);
-    TEST_ASSERT(matchCount == 2);
-    TEST_ASSERT(mVV[0].size() == 1);
-    TEST_ASSERT(mVV[0][0].second == 0);
-    TEST_ASSERT(mVV[1][0].second == 2);
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 6);
 
-    delete p;
-  }
-  {
-    ROMol *p = SmartsToMol("[D{2-3}]");
-    TEST_ASSERT(p);
-    std::string asma = SmartsWrite::GetAtomSmarts(
-        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[D{2-3}]");
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[r{4-5}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[r{4-5}]");
 
-    std::vector<MatchVectType> mVV;
-    int matchCount = SubstructMatch(*m, *p, mVV);
-    TEST_ASSERT(matchCount == 2);
-    TEST_ASSERT(mVV[0].size() == 1);
-    TEST_ASSERT(mVV[0][0].second == 1);
-    TEST_ASSERT(mVV[1][0].second == 2);
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 3);
 
-    delete p;
-  }
-  {
-    ROMol *p = SmartsToMol("[D{2-}]");
-    TEST_ASSERT(p);
-    std::string asma = SmartsWrite::GetAtomSmarts(
-        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[D{2-}]");
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[r{3-}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[r{3-}]");
 
-    std::vector<MatchVectType> mVV;
-    int matchCount = SubstructMatch(*m, *p, mVV);
-    TEST_ASSERT(matchCount == 2);
-    TEST_ASSERT(mVV[0].size() == 1);
-    TEST_ASSERT(mVV[0][0].second == 1);
-    TEST_ASSERT(mVV[1][0].second == 2);
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 6);
 
-    delete p;
-  }
-  {
-    ROMol *p = SmartsToMol("[D{-2}]");
-    TEST_ASSERT(p);
-    std::string asma = SmartsWrite::GetAtomSmarts(
-        static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    TEST_ASSERT(asma == "[D{-2}]");
+      delete p;
+    }
+    {
+      ROMol *p = SmartsToMol("[r{-5}]");
+      TEST_ASSERT(p);
+      std::string asma = SmartsWrite::GetAtomSmarts(
+          static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
+      TEST_ASSERT(asma == "[r{-5}]");
 
-    std::vector<MatchVectType> mVV;
-    int matchCount = SubstructMatch(*m, *p, mVV);
-    TEST_ASSERT(matchCount == 4);
-    TEST_ASSERT(mVV[0].size() == 1);
-    TEST_ASSERT(mVV[0][0].second == 0);
-    TEST_ASSERT(mVV[1][0].second == 1);
-    TEST_ASSERT(mVV[2][0].second == 3);
-    TEST_ASSERT(mVV[3][0].second == 4);
+      std::vector<MatchVectType> mVV;
+      int matchCount = SubstructMatch(*m, *p, mVV);
+      TEST_ASSERT(matchCount == 6);
 
-    delete p;
-  }
+      delete p;
+    }
+    delete m;
+  }  // end of C1C2CCCC12 examples
 
-  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -2216,12 +2308,12 @@ int main(int argc, char *argv[]) {
   testGithub313();
   testGithub314();
   testGithub378();
-#endif
   testGithub544();
   testGithub766();
   testGithub893();
   testTransuranic();
   testGithub1338();
+#endif
   testCactvsExtensions();
   return 0;
 }

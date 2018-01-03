@@ -194,6 +194,9 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
       hasVal = true;
     }
     needParen = true;
+  } else if (descrip == "AtomHasHeteroatomNeighbors") {
+    res << "z";
+    needParen = true;
   } else if (descrip == "AtomNumHeteroatomNeighbors") {
     res << "z";
     if (mods == Modifiers::NONE && query->getVal() != 1) {
