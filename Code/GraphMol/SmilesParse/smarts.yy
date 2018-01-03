@@ -1,8 +1,7 @@
 %{
 
-  // $Id$
   //
-  //  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -431,6 +430,18 @@ atom_query:	simple_atom
 | COMPLEX_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);
+}
+| COMPLEX_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
+  ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>($4,oq->getDataFunc(),
+    std::string("greater_")+oq->getDescription());
+  $1->setQuery(nq);
+}
+| COMPLEX_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
+  ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
+  ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>($3,oq->getDataFunc(),
+    std::string("less_")+oq->getDescription());
+  $1->setQuery(nq);
 }
 | COMPLEX_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());

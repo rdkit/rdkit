@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,6 +9,8 @@
 //
 #include "SmartsWrite.h"
 #include <sstream>
+#include <cstdint>
+#include <boost/algorithm/string.hpp>
 #include "SmilesWrite.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -126,41 +128,49 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
   PRECONDITION(query, "bad query");
 
   std::string descrip = query->getDescription();
-  bool hasRangeQuery=false, hasVal=false;
-  if(descrip.find("range_")==0){
-    hasRangeQuery=true;
+  bool hasVal = false;
+  enum class Modifiers : std::uint8_t { NONE, RANGE, LESS, GREATER };
+  Modifiers mods = Modifiers::NONE;
+  if (boost::starts_with(descrip, "range_")) {
+    mods = Modifiers::RANGE;
     descrip = descrip.substr(6);
+  } else if (boost::starts_with(descrip, "less_")) {
+    mods = Modifiers::LESS;
+    descrip = descrip.substr(5);
+  } else if (boost::starts_with(descrip, "greater_")) {
+    mods = Modifiers::GREATER;
+    descrip = descrip.substr(8);
   }
   std::stringstream res;
   if (descrip == "AtomImplicitHCount") {
     res << "h";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomHasImplicitH") {
     res << "h";
     needParen = true;
   } else if (descrip == "AtomTotalValence") {
     res << "v";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomAtomicNum") {
     res << "#";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomExplicitDegree") {
     res << "D";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomTotalDegree") {
     res << "X";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomHasRingBond") {
     res << "x";
     needParen = true;
   } else if (descrip == "AtomHCount") {
     res << "H";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomIsAliphatic") {
     res << "A";
@@ -176,18 +186,18 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     needParen = true;
   } else if (descrip == "AtomMinRingSize") {
     res << "r";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
-    if (!hasRangeQuery && query->getVal() >= 0) {
-      hasVal=true;
+    if (mods == Modifiers::NONE && query->getVal() >= 0) {
+      hasVal = true;
     }
     needParen = true;
   } else if (descrip == "AtomNumHeteroatomNeighbors") {
     res << "z";
-    if (!hasRangeQuery && query->getVal() != 1) {
-        hasVal = true;
+    if (mods == Modifiers::NONE && query->getVal() != 1) {
+      hasVal = true;
     }
     needParen = true;
   } else if (descrip == "AtomFormalCharge") {
@@ -228,7 +238,7 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     needParen = true;
   } else if (descrip == "AtomRingBondCount") {
     res << "x";
-    hasVal=true;
+    hasVal = true;
     needParen = true;
   } else if (descrip == "AtomUnsaturated") {
     res << "$(*=,:,#*)";
@@ -240,8 +250,21 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << "*";
   }
 
-  if(hasRangeQuery){
-    res<<"{"<<((const ATOM_RANGE_QUERY *)query)->getLower()<<"-"<<((const ATOM_RANGE_QUERY *)query)->getUpper()<<"}";
+  if (mods != Modifiers::NONE) {
+    res << "{";
+    switch (mods) {
+      case Modifiers::LESS:
+        res << ((const ATOM_LESSEQUAL_QUERY *)query)->getVal() << "-";
+        break;
+      case Modifiers::RANGE:
+        res << ((const ATOM_RANGE_QUERY *)query)->getLower() << "-"
+            << ((const ATOM_RANGE_QUERY *)query)->getUpper();
+        break;
+      case Modifiers::GREATER:
+        res << "-" << ((const ATOM_GREATEREQUAL_QUERY *)query)->getVal();
+        break;
+    }
+    res << "}";
   } else if (hasVal) {
     res << query->getVal();
   }
