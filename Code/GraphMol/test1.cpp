@@ -1411,7 +1411,6 @@ void testRanges() {
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.info");
-  /*
 #if 1
   test1();
   testPropLeak();
@@ -1437,7 +1436,6 @@ int main() {
   testGithub1041();
   testGithub1041();
   testGithub1453();
-  */
   testRanges();
   return 0;
 }
