@@ -11,6 +11,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <cstdlib>
 
 #include "coordgenlibs/sketcherMinimizer.h"
 
@@ -18,13 +19,15 @@ namespace RDKit {
 namespace CoordGen {
 
 struct CoordGenParams {
-  RDGeom::INT_POINT2D_MAP coordMap; // coordinates for fixing particular atoms of a template
-  const ROMol* templateMol = nullptr; // a molecule to use as a template
-  double coordgenScaling = 50.0;  // at the time this was written, coordgen
+  RDGeom::INT_POINT2D_MAP
+      coordMap;  // coordinates for fixing particular atoms of a template
+  const ROMol* templateMol = nullptr;  // a molecule to use as a template
+  double coordgenScaling = 50.0;       // at the time this was written, coordgen
   // returned coordinates with a single bond
   // length of 50.
-  bool dbg_useConstrained = true; // debugging
-  bool dbg_useFixed = false; // debugging
+  std::string templateFileDir = "";
+  bool dbg_useConstrained = true;  // debugging
+  bool dbg_useFixed = false;       // debugging
 };
 
 static CoordGenParams defaultParams;
@@ -39,11 +42,23 @@ static CoordGenParams defaultParams;
 */
 template <typename T>
 unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
+  // FIX: the default value of this should be handled once in a threadsafe way
+  std::string templateFileDir;
+  if (params && params->templateFileDir != "") {
+    templateFileDir = params->templateFileDir;
+  } else {
+    templateFileDir = std::getenv("RDBASE");
+    templateFileDir += "/Data/";
+  }
   double scaleFactor = defaultParams.coordgenScaling;
   if (params) scaleFactor = params->coordgenScaling;
 
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
+
+  // FIX: only do this check once.
+  std::cerr << "  TEMPLATES: " << templateFileDir << std::endl;
+  minimizer.setTemplateFileDir(templateFileDir);
 
   bool hasTemplateMatch = false;
   MatchVectType mv;

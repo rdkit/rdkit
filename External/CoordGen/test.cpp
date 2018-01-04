@@ -94,6 +94,19 @@ void test1() {
     std::cerr << mb << std::endl;
     delete m;
   }
+
+  {
+    ROMol* m = SmilesToMol("C1C3CC2CC(CC1C2)C3");
+    TEST_ASSERT(m);
+    m->setProp("_Name", "admntn");
+
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -382,6 +395,6 @@ int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-  test1();
   test2();
+  test1();
 }

@@ -25,10 +25,10 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs")
     endif()
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(SHA "42c8bb7f91ae199834fcb44ca816dda890222e7d")
+        set(SHA "ede3191bf1c1dde53f70ca086014ff9ec7768c55")
         downloadAndCheckMD5("https://codeload.github.com/schrodinger/coordgenlibs/tar.gz/${SHA}"
               "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-              "")
+              "") # we aren't testing the md5 here because this code is still changing quickly
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -40,6 +40,11 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     rdkit_library(coordgenlib ${CGSOURCES} SHARED LINK_LIBRARIES maeparser)
     install(TARGETS coordgenlib DESTINATION ${RDKit_LibDir})
+
+    set(MAE_FILES ${COORDGEN_DIR}/templates.mae )
+    install(FILES ${MAE_FILES}
+            DESTINATION ${RDKit_ShareDir}
+            COMPONENT data )
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set(RDK_COORDGEN_LIBS MolAlign coordgenlib maeparser CACHE STRING "the external libraries" FORCE)
