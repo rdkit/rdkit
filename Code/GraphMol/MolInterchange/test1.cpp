@@ -33,13 +33,12 @@ void test1() {
     throw BadFileException(errout.str());
   }
 
-
-
-  std::vector<boost::shared_ptr<RWMol> > mols = MolInterchange::JSONDataStreamToMols(&inStream);
-  TEST_ASSERT(mols.size()==1);
-  RWMol *m=mols[0].get();
+  std::vector<boost::shared_ptr<RWMol>> mols =
+      MolInterchange::JSONDataStreamToMols(&inStream);
+  TEST_ASSERT(mols.size() == 1);
+  RWMol *m = mols[0].get();
   TEST_ASSERT(m);
-
+  m->debugMol(std::cerr);
   TEST_ASSERT(m->getNumAtoms() == 15);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
