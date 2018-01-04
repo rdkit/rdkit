@@ -81,6 +81,8 @@ add_subdirectory(Trajectory)
 add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
+add_subdirectory(MolInterchange)
+
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
 endif()
