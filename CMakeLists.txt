@@ -93,7 +93,7 @@ if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
   set(RDKit_HdrDir "Code") # used in rdkit-config.cmake, path prefix not needed.
-  set(RDKit_ShareDir "${CMAKE_SOURCE_DIR}/Data")
+  set(RDKit_ShareDir "${CMAKE_SOURCE_DIR}")
 else(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")

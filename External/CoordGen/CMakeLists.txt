@@ -43,7 +43,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
 
     set(MAE_FILES ${COORDGEN_DIR}/templates.mae )
     install(FILES ${MAE_FILES}
-            DESTINATION ${RDKit_ShareDir}
+            DESTINATION ${RDKit_ShareDir}/Data
             COMPONENT data )
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
