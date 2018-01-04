@@ -40,6 +40,7 @@ void test1() {
   TEST_ASSERT(m);
   m->debugMol(std::cerr);
   TEST_ASSERT(m->getNumAtoms() == 15);
+  TEST_ASSERT(m->getNumBonds() == 15);
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
