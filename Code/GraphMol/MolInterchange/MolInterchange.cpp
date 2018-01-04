@@ -89,6 +89,11 @@ void processMol(RWMol *mol, const rj::Value &molval,
       {"other", Atom::CHI_OTHER}};
   static const std::map<unsigned int, Bond::BondType> bolookup = {
       {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
+  static const std::map<std::string, Bond::BondStereo> stereolookup = {
+      {"unspecified", Bond::STEREONONE},
+      {"cis", Bond::STEREOCIS},
+      {"trans", Bond::STEREOTRANS},
+      {"either", Bond::STEREOANY}};
 
   if (molval.HasMember("name")) {
     mol->setProp("_Name", molval["name"].GetString());
@@ -107,6 +112,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
     at->setChiralTag(chilookup.find(stereo)->second);
     mol->addAtom(at);
   }
+  bool needStereoLoop = false;
   for (const auto &bondVal : molval["bonds"].GetArray()) {
     const auto &aids = bondVal["atoms"].GetArray();
     unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
@@ -115,6 +121,31 @@ void processMol(RWMol *mol, const rj::Value &molval,
     if (bolookup.find(bo) == bolookup.end())
       throw FileParseException("Bad Format: bad bond order for bond");
     bnd->setBondType(bolookup.find(bo)->second);
+    if (bondVal.HasMember("stereoAtoms")) {
+      needStereoLoop = true;
+    }
+  }
+  if (needStereoLoop) {
+    // need to set bond stereo after the bonds are there
+    unsigned int bidx = 0;
+    for (const auto &bondVal : molval["bonds"].GetArray()) {
+      Bond *bnd = mol->getBondWithIdx(bidx++);
+      if (bondVal.HasMember("stereoAtoms")) {
+        const auto aids = bondVal["stereoAtoms"].GetArray();
+        bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
+        std::string stereo =
+            getStringDefaultValue("stereo", bondVal, bondDefaults);
+        if (stereolookup.find(stereo) == stereolookup.end())
+          throw FileParseException("Bad Format: bond stereo value for bond");
+        bnd->setStereo(stereolookup.find(stereo)->second);
+
+      } else {
+        if (bondVal.HasMember("stereo")) {
+          throw FileParseException(
+              "Bad Format: bond stereo provided without stereoAtoms");
+        }
+      }
+    }
   }
   mol->updatePropertyCache(false);
   mol->setProp("_StereochemDone", 1);
