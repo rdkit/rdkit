@@ -463,6 +463,33 @@ ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery() {
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what) {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(what, queryAtomNumHeteroatomNbrs);
+  res->setDescription("AtomNumHeteroatomNeighbors");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery() {
+  ATOM_EQUALS_QUERY *res =
+      makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(true, queryAtomHasHeteroatomNbrs);
+  res->setDescription("AtomHasHeteroatomNeighbors");
+  return res;
+}
+ATOM_EQUALS_QUERY *makeAtomNumAliphaticHeteroatomNbrsQuery(int what) {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      what, queryAtomNumAliphaticHeteroatomNbrs);
+  res->setDescription("AtomNumAliphaticHeteroatomNeighbors");
+  return res;
+}
+
+ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery() {
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery<ATOM_EQUALS_QUERY>(
+      true, queryAtomHasAliphaticHeteroatomNbrs);
+  res->setDescription("AtomHasAliphaticHeteroatomNeighbors");
+  return res;
+}
+
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   auto *res = new BOND_EQUALS_QUERY;
   res->setVal(what);

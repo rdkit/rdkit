@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2016 Rational Discovery LLC and Greg Landrum
+//   Copyright (C) 2002-2017 Rational Discovery LLC and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -783,6 +783,55 @@ void testExtraBondQueries() {
   }
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
+void testNumHeteroatomNeighborQueries() {
+  BOOST_LOG(rdErrorLog)
+      << "---------------------- Test num heteroatom neighbor queries"
+      << std::endl;
+
+  RWMol *m = SmilesToMol("CCNCOO");
+  {
+    QueryAtom qA;
+    qA.setQuery(makeAtomNumHeteroatomNbrsQuery(1));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(3)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(
+        makeAtomRangeQuery(0, 3, true, true, queryAtomNumHeteroatomNbrs));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(
+        makeAtomRangeQuery(1, 2, false, false, queryAtomNumHeteroatomNbrs));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+  }
+  {
+    QueryAtom qA;
+    qA.setQuery(
+        makeAtomRangeQuery(0, 2, true, false, queryAtomNumHeteroatomNbrs));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
+    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
+    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+  }
+  delete m;
+
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -803,6 +852,7 @@ int main() {
 #endif
   testExtraAtomQueries();
   testExtraBondQueries();
+  testNumHeteroatomNeighborQueries();
 
   return 0;
 }

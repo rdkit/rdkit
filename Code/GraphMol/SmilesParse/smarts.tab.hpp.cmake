@@ -54,32 +54,37 @@ extern int yysmarts_debug;
     RINGBOND_ATOM_QUERY_TOKEN = 264,
     IMPLICIT_H_ATOM_QUERY_TOKEN = 265,
     HYB_TOKEN = 266,
-    ZERO_TOKEN = 267,
-    NONZERO_DIGIT_TOKEN = 268,
-    GROUP_OPEN_TOKEN = 269,
-    GROUP_CLOSE_TOKEN = 270,
-    SEPARATOR_TOKEN = 271,
-    HASH_TOKEN = 272,
-    MINUS_TOKEN = 273,
-    PLUS_TOKEN = 274,
-    CHIRAL_MARKER_TOKEN = 275,
-    CHI_CLASS_TOKEN = 276,
-    CHI_CLASS_OH_TOKEN = 277,
-    H_TOKEN = 278,
-    AT_TOKEN = 279,
-    PERCENT_TOKEN = 280,
-    ATOM_OPEN_TOKEN = 281,
-    ATOM_CLOSE_TOKEN = 282,
-    NOT_TOKEN = 283,
-    AND_TOKEN = 284,
-    OR_TOKEN = 285,
-    SEMI_TOKEN = 286,
-    BEGIN_RECURSE = 287,
-    END_RECURSE = 288,
-    COLON_TOKEN = 289,
-    UNDERSCORE_TOKEN = 290,
-    BOND_TOKEN = 291,
-    EOS_TOKEN = 292
+    HETERONEIGHBOR_ATOM_QUERY_TOKEN = 267,
+    ALIPHATIC = 268,
+    ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN = 269,
+    ZERO_TOKEN = 270,
+    NONZERO_DIGIT_TOKEN = 271,
+    GROUP_OPEN_TOKEN = 272,
+    GROUP_CLOSE_TOKEN = 273,
+    SEPARATOR_TOKEN = 274,
+    RANGE_OPEN_TOKEN = 275,
+    RANGE_CLOSE_TOKEN = 276,
+    HASH_TOKEN = 277,
+    MINUS_TOKEN = 278,
+    PLUS_TOKEN = 279,
+    CHIRAL_MARKER_TOKEN = 280,
+    CHI_CLASS_TOKEN = 281,
+    CHI_CLASS_OH_TOKEN = 282,
+    H_TOKEN = 283,
+    AT_TOKEN = 284,
+    PERCENT_TOKEN = 285,
+    ATOM_OPEN_TOKEN = 286,
+    ATOM_CLOSE_TOKEN = 287,
+    NOT_TOKEN = 288,
+    AND_TOKEN = 289,
+    OR_TOKEN = 290,
+    SEMI_TOKEN = 291,
+    BEGIN_RECURSE = 292,
+    END_RECURSE = 293,
+    COLON_TOKEN = 294,
+    UNDERSCORE_TOKEN = 295,
+    BOND_TOKEN = 296,
+    EOS_TOKEN = 297
   };
 #endif
 
@@ -88,14 +93,14 @@ extern int yysmarts_debug;
 
 union YYSTYPE
 {
-#line 51 "smarts.yy" /* yacc.c:1909  */
+#line 50 "smarts.yy" /* yacc.c:1909  */
 
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
   int                      ival;
 
-#line 99 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
+#line 104 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

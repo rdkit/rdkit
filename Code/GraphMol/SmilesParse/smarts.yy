@@ -1,8 +1,7 @@
 %{
 
-  // $Id$
   //
-  //  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -58,9 +57,11 @@ namespace {
 %token <ival> AROMATIC_ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <atom> ATOM_TOKEN
 %token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
-%token <atom> RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN HYB_TOKEN
+%token <atom> RINGSIZE_ATOM_QUERY_TOKEN RINGBOND_ATOM_QUERY_TOKEN IMPLICIT_H_ATOM_QUERY_TOKEN
+%token <atom> HYB_TOKEN HETERONEIGHBOR_ATOM_QUERY_TOKEN ALIPHATIC ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
 %token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
+%token RANGE_OPEN_TOKEN RANGE_CLOSE_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN
 %token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
@@ -70,7 +71,7 @@ namespace {
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd simple_atom hydrogen_atom
-%type <atom> atom_expr point_query atom_query recursive_query
+%type <atom> atom_expr point_query atom_query recursive_query possible_range_query
 %type <ival> ring_number nonzero_number number charge_spec digit
 %type <bond> bondd bond_expr bond_query
 %token EOS_TOKEN
@@ -333,11 +334,6 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
 }
 ;
 
-
-
-
-
-
 /* --------------------------------------------------------------- */
 atom_expr: atom_expr AND_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
@@ -428,20 +424,47 @@ atom_query:	simple_atom
   $$->expandQuery(makeAtomIsotopeQuery($1),Queries::COMPOSITE_AND,true);
 }
 | COMPLEX_ATOM_QUERY_TOKEN
+| HETERONEIGHBOR_ATOM_QUERY_TOKEN
+| ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN
+| RINGSIZE_ATOM_QUERY_TOKEN
+| RINGBOND_ATOM_QUERY_TOKEN
+| IMPLICIT_H_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);
 }
-| RINGSIZE_ATOM_QUERY_TOKEN
+| HETERONEIGHBOR_ATOM_QUERY_TOKEN number {
+  $1->setQuery(makeAtomNumHeteroatomNbrsQuery($2));
+}
+| ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number {
+  $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery($2));
+}
 | RINGSIZE_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomMinRingSizeQuery($2));
 }
-| RINGBOND_ATOM_QUERY_TOKEN
 | RINGBOND_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomRingBondCountQuery($2));
 }
-| IMPLICIT_H_ATOM_QUERY_TOKEN
 | IMPLICIT_H_ATOM_QUERY_TOKEN number {
   $1->setQuery(makeAtomImplicitHCountQuery($2));
+}
+| possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
+  ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>($4,oq->getDataFunc(),
+    std::string("greater_")+oq->getDescription());
+  $1->setQuery(nq);
+}
+| possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
+  ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
+  ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>($3,oq->getDataFunc(),
+    std::string("less_")+oq->getDescription());
+  $1->setQuery(nq);
+}
+| possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>($1->getQuery());
+  ATOM_RANGE_QUERY *nq = makeAtomRangeQuery($3,$5,false,false,
+    oq->getDataFunc(),
+    std::string("range_")+oq->getDescription());
+  $1->setQuery(nq);
 }
 | simple_atom H_TOKEN number {
   $$->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND);
@@ -481,6 +504,24 @@ atom_query:	simple_atom
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery($1));
   $$=newQ;
+}
+;
+
+possible_range_query : COMPLEX_ATOM_QUERY_TOKEN
+| HETERONEIGHBOR_ATOM_QUERY_TOKEN {
+  $1->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
+}
+| ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN {
+  $1->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
+}
+| RINGSIZE_ATOM_QUERY_TOKEN {
+  $1->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
+}
+| RINGBOND_ATOM_QUERY_TOKEN {
+  $1->setQuery(makeAtomRingBondCountQuery(0));
+}
+| IMPLICIT_H_ATOM_QUERY_TOKEN {
+  $1->setQuery(makeAtomImplicitHCountQuery(0));
 }
 ;
 

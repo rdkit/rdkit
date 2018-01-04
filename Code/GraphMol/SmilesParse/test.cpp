@@ -108,6 +108,8 @@ void testPass() {
                                                       // elements
     "['Db']['Sg']['Bh']['Hs']['Mt']['Ds']['Rg']['Cn']['Nh']['Fl']['Mc']['Lv']['"
     "Ts']['Og']",  // a biovia pathology
+    "[#6]",        // feature borrowed from SMARTS
+    "[12#6]",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -4035,6 +4037,21 @@ void testIsomericSmilesIsDefault() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testHashAtomExtension() {
+  BOOST_LOG(rdInfoLog) << "Testing constructs like [#6]" << std::endl;
+  {
+    std::string smi = "[#6][12#6]";
+    auto m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum() == 6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsotope() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getAtomicNum() == 6);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsotope() == 12);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4106,4 +4123,5 @@ int main(int argc, char *argv[]) {
 #endif
   testGithub1652();
   testIsomericSmilesIsDefault();
+  testHashAtomExtension();
 }

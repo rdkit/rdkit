@@ -3247,6 +3247,15 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (1, ))
 
+    m = Chem.MolFromSmiles('CNCON')
+    qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, ))
+    qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (0, 2, 3, 4))
+
+
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
     self.assertTrue(m is not None)

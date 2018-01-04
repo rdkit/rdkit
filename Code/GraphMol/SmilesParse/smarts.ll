@@ -4,9 +4,8 @@
 
 %{
 
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -226,6 +225,18 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 
+<IN_ATOM_STATE>z {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHasHeteroatomNbrsQuery());
+	return HETERONEIGHBOR_ATOM_QUERY_TOKEN;
+}
+
+<IN_ATOM_STATE>Z {
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHasAliphaticHeteroatomNbrsQuery());
+	return ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN;
+}
+
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
         yylval->atom->setQuery(makeAtomHasImplicitHQuery());
@@ -347,6 +358,10 @@ A			{
 <IN_BRANCH_STATE>\)       	{ yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 <IN_RECURSION_STATE>\)       	{ yy_pop_state(yyscanner); return END_RECURSE; }
 
+\{       	{  return RANGE_OPEN_TOKEN; }
+\}       	{ yy_pop_state(yyscanner); return RANGE_CLOSE_TOKEN; }
+
+
 
 \[			{ yy_push_state(IN_ATOM_STATE,yyscanner); return ATOM_OPEN_TOKEN; }
 <IN_ATOM_STATE>\]	{ yy_pop_state(yyscanner); return ATOM_CLOSE_TOKEN; }
@@ -397,7 +412,16 @@ A			{
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
 	return HYB_TOKEN;
 }
-
+\^4		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D));
+	return HYB_TOKEN;
+}
+\^5		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D2));
+	return HYB_TOKEN;
+}
 \n		return EOS_TOKEN;
 
 <<EOF>>		{ return EOS_TOKEN; }

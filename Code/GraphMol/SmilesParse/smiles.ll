@@ -279,6 +279,9 @@ s		    {	yylval->atom = new Atom( 16 );
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
 
+<IN_ATOM_STATE>\# 	{ return HASH_TOKEN; }
+
+
 %{
   // The next block is a workaround for a pathlogy in the SMILES produced
   // by some Biovia tools
