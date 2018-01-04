@@ -25,6 +25,17 @@ from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
 from rdkit.Chem.inchi import *
 
+# Coordgen needs to know where its template file is.
+# The default install puts it in RDDataDir
+try:
+  from rdkit.Chem import rdCoordGen
+except ImportError:
+  pass
+else:
+  templDir = RDConfig.RDDataDir
+  if templDir[-1] != '/':
+    templDir += '/'
+  rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
 def QuickSmartsMatch(smi, sma, unique=True, display=False):
   m = MolFromSmiles(smi)

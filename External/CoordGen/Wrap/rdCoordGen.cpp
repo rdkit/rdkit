@@ -41,6 +41,9 @@ void addCoordsHelper(ROMol &mol, python::object &params) {
 void SetTemplateMol(CoordGen::CoordGenParams *self, const ROMol *templ) {
   self->templateMol = templ;
 }
+void SetDefaultTemplateFileDir(const std::string &dir) {
+  CoordGen::defaultParams.templateFileDir = dir;
+}
 }  // end of anonymous namespace
 
 struct coordgen_wrapper {
@@ -49,15 +52,24 @@ struct coordgen_wrapper {
 
     python::class_<CoordGen::CoordGenParams>(
         "CoordGenParams", "Parameters controlling coordinate generation")
-        .def("SetCoordMap", SetCoordMap, "expects a dictionary of Point2D objects with template coordinates")
+        .def(
+            "SetCoordMap", SetCoordMap,
+            "expects a dictionary of Point2D objects with template coordinates")
         .def("SetTemplateMol", SetTemplateMol,
-             python::with_custodian_and_ward<1, 2>(), "sets a molecule to be used as the template")
+             python::with_custodian_and_ward<1, 2>(),
+             "sets a molecule to be used as the template")
         .def_readwrite("coordgenScaling",
-                       &CoordGen::CoordGenParams::coordgenScaling,"scaling factor for a single bond")
+                       &CoordGen::CoordGenParams::coordgenScaling,
+                       "scaling factor for a single bond")
         .def_readwrite("dbg_useConstrained",
-                       &CoordGen::CoordGenParams::dbg_useConstrained,"for debugging use")
-        .def_readwrite("dbg_useFixed", &CoordGen::CoordGenParams::dbg_useFixed,"for debugging use");
-
+                       &CoordGen::CoordGenParams::dbg_useConstrained,
+                       "for debugging use")
+        .def_readwrite("dbg_useFixed", &CoordGen::CoordGenParams::dbg_useFixed,
+                       "for debugging use")
+        .def_readwrite("templateFileDir",
+                       &CoordGen::CoordGenParams::templateFileDir,
+                       "directory containing the templates.mae file");
+    python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
     docString =
         "Add 2D coordinates.\n"
         "ARGUMENTS:\n"

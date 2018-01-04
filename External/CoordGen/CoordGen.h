@@ -42,16 +42,16 @@ static CoordGenParams defaultParams;
 */
 template <typename T>
 unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
+  if (!params) params = &defaultParams;
   // FIX: the default value of this should be handled once in a threadsafe way
   std::string templateFileDir;
-  if (params && params->templateFileDir != "") {
+  if (params->templateFileDir != "") {
     templateFileDir = params->templateFileDir;
   } else {
     templateFileDir = std::getenv("RDBASE");
     templateFileDir += "/Data/";
   }
-  double scaleFactor = defaultParams.coordgenScaling;
-  if (params) scaleFactor = params->coordgenScaling;
+  double scaleFactor = params->coordgenScaling;
 
   sketcherMinimizer minimizer;
   auto min_mol = new sketcherMinimizerMolecule();
@@ -62,8 +62,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
 
   bool hasTemplateMatch = false;
   MatchVectType mv;
-  if (params && params->templateMol &&
-      params->templateMol->getNumConformers() == 1) {
+  if (params->templateMol && params->templateMol->getNumConformers() == 1) {
     if (SubstructMatch(mol, *(params->templateMol), mv)) {
       hasTemplateMatch = true;
     }
@@ -76,9 +75,8 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     atom->molecule = min_mol;  // seems like this should be in addNewAtom()
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
-    if (params &&
-        (hasTemplateMatch ||
-         params->coordMap.find(oatom->getIdx()) != params->coordMap.end())) {
+    if (hasTemplateMatch ||
+        params->coordMap.find(oatom->getIdx()) != params->coordMap.end()) {
       atom->constrained = params->dbg_useConstrained;
       atom->fixed = params->dbg_useFixed;
       RDGeom::Point2D coords;
