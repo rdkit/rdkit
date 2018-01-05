@@ -1357,6 +1357,56 @@ void testGithub1453() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testRanges() {
+    RWMol *m = SmilesToMol("N1NN1");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 3);
+
+
+    // For by value (ok since the atoms are pointers)
+    unsigned int i=0;
+    for(auto atom : m->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    // try refs
+    i=0;
+    for(auto &atom : m->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    // try const refs
+    i=0;
+    for(auto const &atom : m->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    const RWMol *cm = m;
+    i = 0;
+    for(auto atom : cm->atoms()) {
+      TEST_ASSERT(atom->getIdx() == i);
+      i++;
+    }
+
+    i=0;
+    for(auto bond : m->bonds()) {
+      TEST_ASSERT(bond->getIdx() == i);
+      i++;
+    }
+
+    i = 0;
+    for(auto bond : cm->bonds()) {
+      TEST_ASSERT(bond->getIdx() == i);
+      i++;
+    }
+
+    delete m;
+    
+}
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1386,6 +1436,6 @@ int main() {
   testGithub1041();
   testGithub1041();
   testGithub1453();
-
+  testRanges();
   return 0;
 }

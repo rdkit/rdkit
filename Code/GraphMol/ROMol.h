@@ -100,6 +100,66 @@ extern const int ci_ATOM_HOLDER;
 
  */
 
+//! \name C++11 Iterators
+
+template<class Graph, class Vertex>
+struct CXXAtomIterator {
+  Graph *graph;
+  typename Graph::vertex_iterator vstart, vend;
+  
+  struct CXXAtomIter {
+    Graph *graph;
+    typename Graph::vertex_iterator pos;
+    Atom *current;
+    
+     CXXAtomIter(Graph *graph,
+                 typename Graph::vertex_iterator pos) :
+      graph(graph), pos(pos),
+      current(boost::num_vertices(*graph) ? (*graph)[*pos].get() : 0) {}
+    
+    Vertex& operator*() { return current; }
+    CXXAtomIter& operator++() { current = (*graph)[*(++pos)].get(); return *this; }
+    bool operator!=(const CXXAtomIter&it) const { return pos != it.pos; }
+  };
+  
+   CXXAtomIterator(Graph *graph) : graph(graph) {
+        auto vs = boost::vertices(*graph);
+        vstart = vs.first;
+        vend = vs.second;
+   }
+  CXXAtomIter begin() { return { graph, vstart }; }
+  CXXAtomIter end()   { return { graph, vend }; }
+};
+
+template<class Graph, class Edge>
+struct CXXBondIterator {
+  Graph *graph;
+  typename Graph::edge_iterator vstart, vend;
+  
+  struct CXXBondIter {
+    Graph *graph;
+    typename Graph::edge_iterator pos;
+    Bond *current;
+    
+     CXXBondIter(Graph *graph,
+                 typename Graph::edge_iterator pos) :
+      graph(graph), pos(pos),
+      current(boost::num_vertices(*graph) ? (*graph)[*pos].get() : 0) {}
+    
+    Edge& operator*() { return current; }
+    CXXBondIter& operator++() { current = (*graph)[*(++pos)].get(); return *this; }
+    bool operator!=(const CXXBondIter&it) const { return pos != it.pos; }
+  };
+  
+   CXXBondIterator(Graph *graph) : graph(graph) {
+        auto vs = boost::edges(*graph);
+        vstart = vs.first;
+        vend = vs.second;
+   }
+  CXXBondIter begin() { return { graph, vstart }; }
+  CXXBondIter end()   { return { graph, vend }; }
+};
+
 class ROMol : public RDProps {
  public:
   friend class MolPickler;
@@ -175,6 +235,42 @@ class ROMol : public RDProps {
   //@}
   //! \endcond
 
+  //! C++11 Range iterator
+  /*!
+    <b>Usage</b>
+    \code
+      for(auto atom : mol.atoms()) {
+         atom->getIdx();
+      };
+    \endcode
+   */
+  
+  CXXAtomIterator<MolGraph, Atom*> atoms() {
+        return { &d_graph };
+  }
+
+  CXXAtomIterator<const MolGraph, Atom*const> atoms() const {
+    return { &d_graph };
+  }
+
+    /*!
+    <b>Usage</b>
+    \code
+      for(auto bond : mol.bonds()) {
+         bond->getIdx();
+      };
+    \endcode
+   */
+
+  CXXBondIterator<MolGraph, Bond*> bonds() {
+        return { &d_graph };
+  }
+
+  CXXBondIterator<const MolGraph, Bond*const> bonds() const {
+    return { &d_graph };
+  }
+
+  
   ROMol() : RDProps(), numBonds(0) { initMol(); }
 
   //! copy constructor with a twist
