@@ -24,24 +24,64 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fName =
-      rdbase + "/Code/GraphMol/MolInterchange/test_data/test1.json";
-  std::ifstream inStream(fName);
-  if (!inStream || (inStream.bad())) {
-    std::ostringstream errout;
-    errout << "Bad input file " << fName;
-    throw BadFileException(errout.str());
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/test1.json";
+    std::ifstream inStream(fName);
+    if (!inStream || (inStream.bad())) {
+      std::ostringstream errout;
+      errout << "Bad input file " << fName;
+      throw BadFileException(errout.str());
+    }
+
+    std::vector<boost::shared_ptr<RWMol>> mols =
+        MolInterchange::JSONDataStreamToMols(&inStream);
+    TEST_ASSERT(mols.size() == 1);
+    RWMol *m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 15);
+    TEST_ASSERT(m->getNumBonds() == 15);
+    TEST_ASSERT(m->getAtomWithIdx(13)->getFormalCharge() == 1);
+    TEST_ASSERT(m->getAtomWithIdx(12)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 11));
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 11)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(10, 11)->getStereo() == Bond::STEREOCIS);
+    TEST_ASSERT(m->getNumConformers() == 0);
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 1"));
+    TEST_ASSERT(m->hasProp("prop1"));
+    TEST_ASSERT(m->getProp<int>("prop1") == 1);
+    TEST_ASSERT(m->hasProp("prop2"));
+    TEST_ASSERT(feq(m->getProp<double>("prop2"), 3.14));
+    TEST_ASSERT(m->hasProp("prop3"));
+    TEST_ASSERT(m->getProp<std::string>("prop3") == "foo");
   }
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/test2.json";
+    std::ifstream inStream(fName);
+    if (!inStream || (inStream.bad())) {
+      std::ostringstream errout;
+      errout << "Bad input file " << fName;
+      throw BadFileException(errout.str());
+    }
 
-  std::vector<boost::shared_ptr<RWMol>> mols =
-      MolInterchange::JSONDataStreamToMols(&inStream);
-  TEST_ASSERT(mols.size() == 1);
-  RWMol *m = mols[0].get();
-  TEST_ASSERT(m);
-  m->debugMol(std::cerr);
-  TEST_ASSERT(m->getNumAtoms() == 15);
-  TEST_ASSERT(m->getNumBonds() == 15);
-
+    std::vector<boost::shared_ptr<RWMol>> mols =
+        MolInterchange::JSONDataStreamToMols(&inStream);
+    TEST_ASSERT(mols.size() == 1);
+    RWMol *m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getNumConformers() == 2);
+    TEST_ASSERT(!m->getConformer(0).is3D());
+    TEST_ASSERT(m->getConformer(1).is3D());
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 2"));
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

@@ -10,8 +10,6 @@
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
 
-#include <GraphMol/RDKitBase.h>
-
 #include <string>
 #include <iostream>
 #include <vector>
@@ -20,20 +18,24 @@
 
 namespace RDKit {
 
+class RWMol;
+
 namespace MolInterchange {
 // \brief construct molecules from MolJSON data in a stream
 /*!
  *   \param inStream - stream containing the data *
  */
-std::vector<boost::shared_ptr<RWMol> > JSONDataStreamToMols(std::istream *inStream);
+std::vector<boost::shared_ptr<RWMol>> JSONDataStreamToMols(
+    std::istream *inStream);
 
 // \brief construct a molecule from an MDL mol block
 /*!
  *   \param jsonBlock - string containing the mol block
  */
-std::vector<boost::shared_ptr<RWMol> >  JSONDataToMols(const std::string &jsonBlock);
+std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
+    const std::string &jsonBlock);
 
-} // end of namespace MolInterchange
-} // end of namespace RDKit
+}  // end of namespace MolInterchange
+}  // end of namespace RDKit
 
 #endif

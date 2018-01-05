@@ -12,11 +12,14 @@
 #endif
 
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/RDKitBase.h>
+
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <RDGeneral/FileParseException.h>
 
 #include <sstream>
 #include <exception>
+#include <map>
 
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
@@ -30,6 +33,7 @@ namespace MolInterchange {
 namespace {
 int getIntDefaultValue(const char *key, const rj::Value &from,
                        const rj::Value &defaults) {
+  PRECONDITION(key, "no key");
   rj::Value::ConstMemberIterator endp = from.MemberEnd();
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
   if (miter == endp) {
@@ -47,6 +51,7 @@ int getIntDefaultValue(const char *key, const rj::Value &from,
 }
 bool getBoolDefaultValue(const char *key, const rj::Value &from,
                          const rj::Value &defaults) {
+  PRECONDITION(key, "no key");
   rj::Value::ConstMemberIterator endp = from.MemberEnd();
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
   if (miter == endp) {
@@ -64,6 +69,7 @@ bool getBoolDefaultValue(const char *key, const rj::Value &from,
 }
 std::string getStringDefaultValue(const char *key, const rj::Value &from,
                                   const rj::Value &defaults) {
+  PRECONDITION(key, "no key");
   rj::Value::ConstMemberIterator endp = from.MemberEnd();
   rj::Value::ConstMemberIterator miter = from.FindMember(key);
   if (miter == endp) {
@@ -80,75 +86,139 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
   return "";
 }
 
-void processMol(RWMol *mol, const rj::Value &molval,
-                const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
+void readAtom(RWMol *mol, const rj::Value &atomVal,
+              const rj::Value &atomDefaults) {
+  PRECONDITION(mol, "no mol");
   static const std::map<std::string, Atom::ChiralType> chilookup = {
       {"unspecified", Atom::CHI_UNSPECIFIED},
       {"cw", Atom::CHI_TETRAHEDRAL_CW},
       {"ccw", Atom::CHI_TETRAHEDRAL_CCW},
       {"other", Atom::CHI_OTHER}};
+  Atom *at = new Atom(getIntDefaultValue("Z", atomVal, atomDefaults));
+  at->setNoImplicit(true);
+  at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+  at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
+  at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
+  std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
+  if (chilookup.find(stereo) == chilookup.end())
+    throw FileParseException("Bad Format: bad stereo value for atom");
+  at->setChiralTag(chilookup.find(stereo)->second);
+  mol->addAtom(at);
+}
+
+void readBond(RWMol *mol, const rj::Value &bondVal,
+              const rj::Value &bondDefaults, bool &needStereoLoop) {
+  PRECONDITION(mol, "no mol");
   static const std::map<unsigned int, Bond::BondType> bolookup = {
       {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
+  const auto &aids = bondVal["atoms"].GetArray();
+  unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
+  Bond *bnd = mol->getBondWithIdx(bid);
+  unsigned int bo = getIntDefaultValue("bo", bondVal, bondDefaults);
+  if (bolookup.find(bo) == bolookup.end())
+    throw FileParseException("Bad Format: bad bond order for bond");
+  bnd->setBondType(bolookup.find(bo)->second);
+  if (bondVal.HasMember("stereoAtoms")) needStereoLoop = true;
+}
+
+void readBondStereo(Bond *bnd, const rj::Value &bondVal,
+                    const rj::Value &bondDefaults) {
+  PRECONDITION(bnd, "no bond");
+
   static const std::map<std::string, Bond::BondStereo> stereolookup = {
       {"unspecified", Bond::STEREONONE},
       {"cis", Bond::STEREOCIS},
       {"trans", Bond::STEREOTRANS},
       {"either", Bond::STEREOANY}};
+  if (bondVal.HasMember("stereoAtoms")) {
+    const auto aids = bondVal["stereoAtoms"].GetArray();
+    bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
+    std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
+    if (stereolookup.find(stereo) == stereolookup.end())
+      throw FileParseException("Bad Format: bond stereo value for bond");
+    bnd->setStereo(stereolookup.find(stereo)->second);
 
-  if (molval.HasMember("name")) {
-    mol->setProp("_Name", molval["name"].GetString());
+  } else {
+    if (bondVal.HasMember("stereo")) {
+      throw FileParseException(
+          "Bad Format: bond stereo provided without stereoAtoms");
+    }
   }
+}
+
+void readConformer(Conformer *conf, const rj::Value &confVal) {
+  PRECONDITION(conf, "no conformer");
+
+  if (!confVal.HasMember("dim"))
+    throw FileParseException("Bad Format: no conformer dimension");
+  size_t dim = confVal["dim"].GetInt();
+  if (dim == 2)
+    conf->set3D(false);
+  else if (dim == 3)
+    conf->set3D(true);
+  else
+    throw FileParseException("Bad Format: conformer dimension != 2 or 3");
+  if (!confVal.HasMember("coords"))
+    throw FileParseException("Bad Format: no conformer coords");
+  size_t idx = 0;
+  for (const auto &ptVal : confVal["coords"].GetArray()) {
+    const auto &arr = ptVal.GetArray();
+    if (arr.Size() != dim)
+      throw FileParseException("coordinate contains wrong number of values");
+    RDGeom::Point3D pt(arr[0].GetFloat(), arr[1].GetFloat(),
+                       (dim == 3 ? arr[2].GetFloat() : 0.0));
+    conf->setAtomPos(idx++, pt);
+  }
+  if (idx != conf->getNumAtoms())
+    throw FileParseException(
+        "Bad Format: conformer doesn't contain coordinates for all atoms");
+}
+
+void processMol(RWMol *mol, const rj::Value &molval,
+                const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
+  if (molval.HasMember("name")) {
+    mol->setProp(common_properties::_Name, molval["name"].GetString());
+  }
+  if (!molval.HasMember("atoms"))
+    throw FileParseException("Bad Format: missing atoms in JSON");
+  if (!molval.HasMember("bonds"))
+    throw FileParseException("Bad Format: missing bonds in JSON");
 
   for (const auto &atomVal : molval["atoms"].GetArray()) {
-    Atom *at = new Atom(getIntDefaultValue("Z", atomVal, atomDefaults));
-    at->setNoImplicit(true);
-    at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
-    at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
-    at->setNumRadicalElectrons(
-        getIntDefaultValue("nRad", atomVal, atomDefaults));
-    std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
-    if (chilookup.find(stereo) == chilookup.end())
-      throw FileParseException("Bad Format: bad stereo value for atom");
-    at->setChiralTag(chilookup.find(stereo)->second);
-    mol->addAtom(at);
+    readAtom(mol, atomVal, atomDefaults);
   }
   bool needStereoLoop = false;
   for (const auto &bondVal : molval["bonds"].GetArray()) {
-    const auto &aids = bondVal["atoms"].GetArray();
-    unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
-    Bond *bnd = mol->getBondWithIdx(bid);
-    unsigned int bo = getIntDefaultValue("bo", bondVal, bondDefaults);
-    if (bolookup.find(bo) == bolookup.end())
-      throw FileParseException("Bad Format: bad bond order for bond");
-    bnd->setBondType(bolookup.find(bo)->second);
-    if (bondVal.HasMember("stereoAtoms")) {
-      needStereoLoop = true;
-    }
+    readBond(mol, bondVal, bondDefaults, needStereoLoop);
   }
   if (needStereoLoop) {
     // need to set bond stereo after the bonds are there
     unsigned int bidx = 0;
     for (const auto &bondVal : molval["bonds"].GetArray()) {
       Bond *bnd = mol->getBondWithIdx(bidx++);
-      if (bondVal.HasMember("stereoAtoms")) {
-        const auto aids = bondVal["stereoAtoms"].GetArray();
-        bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
-        std::string stereo =
-            getStringDefaultValue("stereo", bondVal, bondDefaults);
-        if (stereolookup.find(stereo) == stereolookup.end())
-          throw FileParseException("Bad Format: bond stereo value for bond");
-        bnd->setStereo(stereolookup.find(stereo)->second);
+      readBondStereo(bnd, bondVal, bondDefaults);
+    }
+  }
+  if (molval.HasMember("conformers")) {
+    for (const auto &confVal : molval["conformers"].GetArray()) {
+      Conformer *conf = new Conformer(mol->getNumAtoms());
+      readConformer(conf, confVal);
+      mol->addConformer(conf, true);
+    }
+  }
 
-      } else {
-        if (bondVal.HasMember("stereo")) {
-          throw FileParseException(
-              "Bad Format: bond stereo provided without stereoAtoms");
-        }
-      }
+  if (molval.HasMember("molProperties")) {
+    for (const auto &propVal : molval["molProperties"].GetObject()) {
+      if (propVal.value.IsInt())
+        mol->setProp(propVal.name.GetString(), propVal.value.GetInt());
+      else if (propVal.value.IsDouble())
+        mol->setProp(propVal.name.GetString(), propVal.value.GetDouble());
+      else if (propVal.value.IsString())
+        mol->setProp(propVal.name.GetString(), propVal.value.GetString());
     }
   }
   mol->updatePropertyCache(false);
-  mol->setProp("_StereochemDone", 1);
+  mol->setProp(common_properties::_StereochemDone, 1);
 }
 
 std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {

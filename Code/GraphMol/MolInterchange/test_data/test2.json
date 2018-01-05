@@ -2,7 +2,7 @@
  "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified", "nrad": 0},
  "bondDefaults": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []},
  "molecules": [{"name": "example 2", "atoms": [{"Z": 8},
- {"Z": 6, "stereo": "ccw"},
+ {"Z": 6, "stereo": "cw"},
  {"Z": 17},
  {"Z": 9},
  {"Z": 1},
