@@ -889,6 +889,7 @@ int main() {
   testHasPropMatch();
   testHasPropWithValueMatch();
   testHasPropWithDoubleValueMatch();
+#endif
   testExtraAtomQueries();
   testExtraBondQueries();
   testNumHeteroatomNeighborQueries();
