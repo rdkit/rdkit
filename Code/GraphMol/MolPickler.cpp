@@ -778,11 +778,11 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog)
-        << "Depickling from a version number (" << majorVersion << "."
-        << minorVersion << ")"
-        << "that is higher than our version (" << versionMajor << "."
-        << versionMinor << ").\nThis probably won't work." << std::endl;
+    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
+                            << majorVersion << "." << minorVersion << ")"
+                            << "that is higher than our version ("
+                            << versionMajor << "." << versionMinor
+                            << ").\nThis probably won't work." << std::endl;
   }
   majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
   if (majorVersion == 1) {
@@ -1580,12 +1580,12 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
       if (flags & (0x1 << 1)) {
         streamRead(ss, tmpChar, version);
         Bond::BondStereo stereo = static_cast<Bond::BondStereo>(tmpChar);
-        bond->setStereo(stereo);
         streamRead(ss, tmpChar, version);
         for (char i = 0; i < tmpChar; ++i) {
           streamRead(ss, tmpT, version);
           bond->getStereoAtoms().push_back(static_cast<int>(tmpT));
         }
+        bond->setStereo(stereo);
       } else {
         bond->setStereo(Bond::STEREONONE);
       }
