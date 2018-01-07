@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,8 @@
 #include <Query/QueryObjects.h>
 #include <map>
 #include <boost/cstdint.hpp>
+#include <boost/algorithm/string.hpp>
+
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/once.hpp>
 #include <boost/thread/mutex.hpp>
@@ -218,8 +220,17 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
 
 void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
                                   Atom const *owner) {
-  RDUNUSED_PARAM(owner);
   std::string descr = query->getDescription();
+  RDUNUSED_PARAM(owner);
+
+  if (boost::starts_with(descr, "range_")) {
+    descr = descr.substr(6);
+  } else if (boost::starts_with(descr, "less_")) {
+    descr = descr.substr(5);
+  } else if (boost::starts_with(descr, "greater_")) {
+    descr = descr.substr(8);
+  }
+
   Query<int, Atom const *, true> *tmpQuery;
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
@@ -270,6 +281,14 @@ void finalizeQueryFromDescription(Query<int, Atom const *, true> *query,
     query->setDataFunc(queryIsAtomInRing);
   } else if (descr == "AtomInNRings") {
     query->setDataFunc(queryIsAtomInNRings);
+  } else if (descr == "AtomHasHeteroatomNeighbors") {
+    query->setDataFunc(queryAtomHasHeteroatomNbrs);
+  } else if (descr == "AtomNumHeteroatomNeighbors") {
+    query->setDataFunc(queryAtomNumHeteroatomNbrs);
+  } else if (descr == "AtomHasAliphaticHeteroatomNeighbors") {
+    query->setDataFunc(queryAtomHasAliphaticHeteroatomNbrs);
+  } else if (descr == "AtomNumAliphaticHeteroatomNeighbors") {
+    query->setDataFunc(queryAtomNumAliphaticHeteroatomNbrs);
   } else if (descr == "AtomNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
