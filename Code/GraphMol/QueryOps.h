@@ -132,7 +132,7 @@ static inline int queryAtomHasHeteroatomNbrs(Atom const *at) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
     if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
       return 1;
     }
@@ -146,7 +146,7 @@ static inline int queryAtomNumHeteroatomNbrs(Atom const *at) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
     if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
       ++res;
     }
@@ -159,7 +159,7 @@ static inline int queryAtomHasAliphaticHeteroatomNbrs(Atom const *at) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
     if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
         nbr->getAtomicNum() != 1) {
       return 1;
@@ -174,7 +174,7 @@ static inline int queryAtomNumAliphaticHeteroatomNbrs(Atom const *at) {
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
   while (nbrIdx != endNbrs) {
-    const ATOM_SPTR nbr = at->getOwningMol()[*nbrIdx];
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
     if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
         nbr->getAtomicNum() != 1) {
       ++res;
