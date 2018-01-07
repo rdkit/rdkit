@@ -87,17 +87,17 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
   bool dir1Set = false, dir2Set = false;
   atomBonds = mol.getAtomBonds(atom1);
   while (atomBonds.first != atomBonds.second) {
-    if (mol[*atomBonds.first].get() != dblBond) {
+    if (mol[*atomBonds.first] != dblBond) {
       int bondIdx = mol[*atomBonds.first]->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir1Set = true;
       }
       if (!firstFromAtom1 || bondVisitOrders[bondIdx] < firstVisitOrder) {
         if (firstFromAtom1) secondFromAtom1 = firstFromAtom1;
-        firstFromAtom1 = mol[*atomBonds.first].get();
+        firstFromAtom1 = mol[*atomBonds.first];
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom1 = mol[*atomBonds.first].get();
+        secondFromAtom1 = mol[*atomBonds.first];
       }
     }
     atomBonds.first++;
@@ -105,17 +105,17 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
   atomBonds = mol.getAtomBonds(atom2);
   firstVisitOrder = 10000;
   while (atomBonds.first != atomBonds.second) {
-    if (mol[*atomBonds.first].get() != dblBond) {
+    if (mol[*atomBonds.first] != dblBond) {
       int bondIdx = mol[*atomBonds.first]->getIdx();
       if (bondDirCounts[bondIdx] > 0) {
         dir2Set = true;
       }
       if (!firstFromAtom2 || bondVisitOrders[bondIdx] < firstVisitOrder) {
         if (firstFromAtom2) secondFromAtom2 = firstFromAtom2;
-        firstFromAtom2 = mol[*atomBonds.first].get();
+        firstFromAtom2 = mol[*atomBonds.first];
         firstVisitOrder = bondVisitOrders[bondIdx];
       } else {
-        secondFromAtom2 = mol[*atomBonds.first].get();
+        secondFromAtom2 = mol[*atomBonds.first];
       }
     }
     atomBonds.first++;
@@ -425,7 +425,7 @@ void canonicalizeDoubleBond(Bond *dblBond, INT_VECT &bondVisitOrders,
     bool dblBondPresent = false;
     atomBonds = mol.getAtomBonds(atom3);
     while (atomBonds.first != atomBonds.second) {
-      Bond *tbond = mol[*atomBonds.first].get();
+      Bond *tbond = mol[*atomBonds.first];
       if (tbond->getBondType() == Bond::DOUBLE &&
           tbond->getStereo() > Bond::STEREOANY) {
         dblBondPresent = true;
@@ -466,7 +466,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   possibles.reserve(bondsPair.second - bondsPair.first);
 
   while (bondsPair.first != bondsPair.second) {
-    BOND_SPTR theBond = mol[*(bondsPair.first)];
+    Bond* theBond = mol[*(bondsPair.first)];
     bondsPair.first++;
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
     if (inBondIdx < 0 ||
@@ -516,7 +516,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
       // std::cerr<<"aIdx: "<< atomIdx <<"   p: "<<otherIdx<<" Rank:
       // "<<ranks[otherIdx] <<" "<<colors[otherIdx]<<"
       // "<<theBond->getBondType()<<" "<<rank<<std::endl;
-      possibles.push_back(PossibleType(rank, otherIdx, theBond.get()));
+      possibles.push_back(PossibleType(rank, otherIdx, theBond));
     }
   }
 
@@ -640,7 +640,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   possibles.reserve(bondsPair.second - bondsPair.first);
 
   while (bondsPair.first != bondsPair.second) {
-    BOND_SPTR theBond = mol[*(bondsPair.first)];
+    Bond* theBond = mol[*(bondsPair.first)];
     bondsPair.first++;
     if (bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
     if (inBondIdx < 0 ||
@@ -674,7 +674,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
       }
       // std::cerr<<"   p: "<<otherIdx<<" "<<colors[otherIdx]<<"
       // "<<theBond->getBondType()<<" "<<rank<<std::endl;
-      possibles.push_back(PossibleType(rank, otherIdx, theBond.get()));
+      possibles.push_back(PossibleType(rank, otherIdx, theBond));
     }
   }
 
@@ -786,7 +786,7 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   boost::tie(beg, end) = mol.getAtomBonds(fromAtom);
   bool nbrPossible = false, adjusted = false;
   while (beg != end) {
-    Bond *oBond = mol[*beg].get();
+    Bond *oBond = mol[*beg];
     // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(oBond)<<"
     // "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<"
     // "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
@@ -850,7 +850,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(canonBeginAtom);
         while (beg != end) {
-          if (mol[*beg].get() != tBond &&
+          if (mol[*beg] != tBond &&
               mol[*beg]->getBondType() == Bond::DOUBLE &&
               mol[*beg]->getStereo() > Bond::STEREOANY) {
             dblBondAtom =
@@ -866,7 +866,7 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
         dblBondAtom = nullptr;
         boost::tie(beg, end) = mol.getAtomBonds(canonEndAtom);
         while (beg != end) {
-          if (mol[*beg].get() != tBond &&
+          if (mol[*beg] != tBond &&
               mol[*beg]->getBondType() == Bond::DOUBLE &&
               mol[*beg]->getStereo() > Bond::STEREOANY) {
             dblBondAtom = canonEndAtom;  // tBond->getOtherAtom(canonEndAtom);

@@ -242,10 +242,10 @@ class BondLabelFunctor {
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (df_useChirality) {
-      const BOND_SPTR qBnd = d_query[i];
+      const Bond* qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
           qBnd->getStereo() > Bond::STEREOANY) {
-        const BOND_SPTR mBnd = d_mol[j];
+        const Bond* mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
             mBnd->getStereo() <= Bond::STEREOANY)
           return false;

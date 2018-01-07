@@ -261,7 +261,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
         while (beg != end) {
-          const BOND_SPTR bond = mol[*beg];
+          const Bond*  bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);

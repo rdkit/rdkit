@@ -29,7 +29,7 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     unsigned int n = at->getAtomicNum();
     if (n <= 1) {
       deltas[at->getIdx()] = 0;
@@ -57,7 +57,7 @@ void nVals(const ROMol &mol, std::vector<double> &nVs, bool force) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     double v = tbl->getNouterElecs(at->getAtomicNum()) - at->getTotalNumHs();
     if (v != 0.0) {
       v = 1. / sqrt(v);
@@ -219,7 +219,7 @@ double calcChi1v(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     res += hkDs[bond->getBeginAtomIdx()] * hkDs[bond->getEndAtomIdx()];
     ++firstB;
   }
@@ -248,7 +248,7 @@ double calcChi1n(const ROMol &mol, bool force) {
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     res += nVs[bond->getBeginAtomIdx()] * nVs[bond->getEndAtomIdx()];
     ++firstB;
   }
@@ -273,12 +273,12 @@ double calcHallKierAlpha(const ROMol &mol, std::vector<double> *atomContribs) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     ++atBegin;
     unsigned int n = at->getAtomicNum();
     if (!n) continue;
     bool found;
-    double alpha = detail::getAlpha(*(at.get()), found);
+    double alpha = detail::getAlpha(*(at), found);
     if (!found) {
       double rA = tbl->getRb0(n);
       alpha = rA / rC - 1.0;

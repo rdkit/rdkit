@@ -123,7 +123,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     RWMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
     while (beg != end) {
-      Bond *bond = mol[*beg].get();
+      Bond *bond = mol[*beg];
       if (bond->getIsAromatic() && (bond->getBondType() == Bond::SINGLE ||
                                     bond->getBondType() == Bond::DOUBLE ||
                                     bond->getBondType() == Bond::AROMATIC)) {

@@ -33,6 +33,17 @@ const int ci_ATOM_HOLDER = -0xDEADD06;
 void ROMol::destroy() {
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
+
+  ATOM_ITER_PAIR atItP = boost::vertices(d_graph);  
+  while (atItP.first != atItP.second) {
+    delete (d_graph)[*(atItP.first++)];
+  }
+
+  BOND_ITER_PAIR bondItP = boost::edges(d_graph);
+  while (bondItP.first != bondItP.second) {
+    delete (d_graph)[*(bondItP.first++)];
+  }
+  
   d_graph.clear();
 
   if (dp_ringInfo) {
@@ -122,9 +133,7 @@ void ROMol::initMol() {
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
   return rdcast<unsigned int>(boost::out_degree(at->getIdx(), d_graph));
 };
-unsigned int ROMol::getAtomDegree(Atom::ATOM_SPTR at) const {
-  return getAtomDegree(at.get());
-};
+
 unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
   int res = rdcast<int>(boost::num_vertices(d_graph));
   if (!onlyExplicit) {
@@ -149,7 +158,7 @@ Atom *ROMol::getAtomWithIdx(unsigned int idx) {
   URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
-  Atom *res = d_graph[vd].get();
+  Atom *res = d_graph[vd];
   POSTCONDITION(res, "");
   return res;
 }
@@ -159,7 +168,7 @@ const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
   URANGE_CHECK(idx, getNumAtoms());
 
   MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
-  const Atom *res = d_graph[vd].get();
+  const Atom *res = d_graph[vd];
 
   POSTCONDITION(res, "");
   return res;
@@ -248,7 +257,7 @@ Bond *ROMol::getBondWithIdx(unsigned int idx) {
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
-  Bond *res = d_graph[*(bIter.first)].get();
+  Bond *res = d_graph[*(bIter.first)];
 
   POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
@@ -260,7 +269,7 @@ const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
 
   BOND_ITER_PAIR bIter = getEdges();
   for (unsigned int i = 0; i < idx; i++) ++bIter.first;
-  const Bond *res = d_graph[*(bIter.first)].get();
+  const Bond *res = d_graph[*(bIter.first)];
 
   POSTCONDITION(res != nullptr, "Invalid bond requested");
   return res;
@@ -276,7 +285,7 @@ Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
   boost::tie(edge, found) = boost::edge(boost::vertex(idx1, d_graph),
                                         boost::vertex(idx2, d_graph), d_graph);
   if (found) {
-    res = d_graph[edge].get();
+    res = d_graph[edge];
   }
   return res;
 }
@@ -292,7 +301,7 @@ const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
   boost::tie(edge, found) = boost::edge(boost::vertex(idx1, d_graph),
                                         boost::vertex(idx2, d_graph), d_graph);
   if (found) {
-    res = d_graph[edge].get();
+    res = d_graph[edge];
   }
   return res;
 }
@@ -300,9 +309,7 @@ const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
 ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
   return boost::adjacent_vertices(at->getIdx(), d_graph);
 };
-ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom::ATOM_SPTR at) const {
-  return boost::adjacent_vertices(at->getIdx(), d_graph);
-};
+
 ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const *at) const {
   return boost::out_edges(at->getIdx(), d_graph);
 }
@@ -325,7 +332,7 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
 
   atom_p->setOwningMol(this);
   MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
-  d_graph[which].reset(atom_p);
+  d_graph[which] = atom_p;
   atom_p->setIdx(which);
   if (updateLabel) {
     replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
@@ -336,9 +343,7 @@ unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
   }
   return rdcast<unsigned int>(which);
 };
-unsigned int ROMol::addAtom(Atom::ATOM_SPTR atom_sp, bool updateLabel) {
-  return addAtom(atom_sp.get(), updateLabel, false);
-}
+
 unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   PRECONDITION(bond_pin, "null bond passed in");
   URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms());
@@ -362,13 +367,12 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   boost::tie(which, ok) = boost::add_edge(bond_p->getBeginAtomIdx(),
                                           bond_p->getEndAtomIdx(), d_graph);
   CHECK_INVARIANT(ok, "bond could not be added");
-  d_graph[which].reset(bond_p);
+  d_graph[which] = bond_p;
   numBonds++;
   //  int res = rdcast<int>(boost::num_edges(d_graph));
   bond_p->setIdx(numBonds - 1);
   return numBonds;  // res;
 }
-unsigned int ROMol::addBond(Bond::BOND_SPTR bsp) { return addBond(bsp.get()); }
 
 void ROMol::debugMol(std::ostream &str) const {
   ATOM_ITER_PAIR atItP = getVertices();
@@ -376,12 +380,12 @@ void ROMol::debugMol(std::ostream &str) const {
 
   str << "Atoms:" << std::endl;
   while (atItP.first != atItP.second) {
-    str << "\t" << *d_graph[*(atItP.first++)].get() << std::endl;
+    str << "\t" << *d_graph[*(atItP.first++)] << std::endl;
   }
 
   str << "Bonds:" << std::endl;
   while (bondItP.first != bondItP.second) {
-    str << "\t" << *d_graph[*(bondItP.first++)].get() << std::endl;
+    str << "\t" << *d_graph[*(bondItP.first++)] << std::endl;
   }
 }
 

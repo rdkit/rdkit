@@ -238,7 +238,7 @@ bool isUnsaturated(const Atom *atom, const RWMol *mol) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol->getAtomBonds(atom);
   while (beg != end) {
-    const BOND_SPTR bond = (*mol)[*beg];
+    const Bond* bond = (*mol)[*beg];
     ++beg;
     if (bond->getBondType() != Bond::SINGLE) return true;
   }
