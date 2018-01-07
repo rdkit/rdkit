@@ -8,6 +8,7 @@
 //
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -101,22 +102,25 @@ void test2() {
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
-        rdbase + "/Code/GraphMol/MolInterchange/test_data/1000mols.json";
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/10000mols.json";
     std::ifstream inStream(fName);
     if (!inStream || (inStream.bad())) {
       std::ostringstream errout;
       errout << "Bad input file " << fName;
       throw BadFileException(errout.str());
     }
+    std::string data((std::istreambuf_iterator<char>(inStream)),
+                     std::istreambuf_iterator<char>());
 
     std::vector<boost::shared_ptr<RWMol>> mols;
     std::cerr << "from json" << std::endl;
     {
       boost::timer::auto_cpu_timer t;
-      mols = MolInterchange::JSONDataStreamToMols(&inStream);
+      mols = MolInterchange::JSONDataToMols(data);
     }
     std::cerr << "done" << std::endl;
-    TEST_ASSERT(mols.size() == 1000);
+    TEST_ASSERT(mols.size() == 10000);
+#if 0
     std::vector<std::string> smis;
     for (auto &mol : mols) {
       smis.push_back(mol->getProp<std::string>("_Name"));
@@ -140,15 +144,34 @@ void test2() {
             boost::shared_ptr<RWMol>(SmilesToMol(smi, false, false)));
       }
     }
+#elif 1
+    std::vector<std::string> pkls;
+    for (auto &mol : mols) {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      pkls.push_back(pkl);
+    }
+
+    std::vector<boost::shared_ptr<RWMol>> mols2;
+    std::cerr << "from pickle" << std::endl;
+    {
+      boost::timer::auto_cpu_timer t;
+      for (const auto &pkl : pkls) {
+        mols2.push_back(boost::shared_ptr<RWMol>(new RWMol(pkl)));
+      }
+    }
+    std::cerr << "done" << std::endl;
+
+#endif
     std::cerr << "done" << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 void RunTests() {
-#if 1
+#if 0
   test1();
-  test2();
 #endif
+  test2();
 }
 
 #if 0
