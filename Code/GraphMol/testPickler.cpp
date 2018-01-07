@@ -1211,7 +1211,6 @@ void testGithub1563() {
   BOOST_LOG(rdInfoLog)
       << "Testing Github 1563: Add a canned Atom query for heavy atom degree"
       << std::endl;
-
   RWMol m;
   QueryAtom *qa = new QueryAtom();
   qa->setQuery(makeAtomHeavyAtomDegreeQuery(3));
@@ -1223,6 +1222,16 @@ void testGithub1563() {
   TEST_ASSERT(nm.getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(nm.getAtomWithIdx(0)->getQuery()->getDescription() ==
               "AtomHeavyAtomDegree");
+  std::string pkl;
+  MolPickler::pickleMol(m, pkl);
+  RWMol nm2(pkl);
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 void testGithub1710() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n";
   BOOST_LOG(rdInfoLog) << "Testing Github 1710: bonds that are STEREOCIS or "
