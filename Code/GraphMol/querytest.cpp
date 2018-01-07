@@ -52,8 +52,7 @@ void test1() {
   qM.addAtom(qA);
   delete qA;
   qM.addAtom(new QueryAtom(8), true, true);
-  // Atom::ATOM_SPTR qA(new QueryAtom(6));
-
+  
   QueryBond *qB;
   qB = new QueryBond(Bond::UNSPECIFIED);
   qB->setOwningMol(qM);

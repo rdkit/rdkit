@@ -208,7 +208,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
           Atom* a = em.getAtomWithIdx(ai);
           ROMol::OEDGE_ITER beg, end;
           for (boost::tie(beg, end) = em.getAtomBonds(a); beg != end; ++beg) {
-            const BOND_SPTR bond = em[*beg];
+            const Bond* bond = em[*beg];
             if (newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx()) ||
                 newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx()) ||
                 visitedBonds.end() != visitedBonds.find(bond->getIdx()))
@@ -247,7 +247,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
         Atom* a = em.getAtomWithIdx(ai);
         ROMol::OEDGE_ITER beg, end;
         for (boost::tie(beg, end) = em.getAtomBonds(a); beg != end; ++beg) {
-          const BOND_SPTR bond = em[*beg];
+          const Bond* bond = em[*beg];
           if (newAtomMap.end() == newAtomMap.find(bond->getBeginAtomIdx()) ||
               newAtomMap.end() == newAtomMap.find(bond->getEndAtomIdx()) ||
               visitedBonds.end() != visitedBonds.find(bond->getIdx()))

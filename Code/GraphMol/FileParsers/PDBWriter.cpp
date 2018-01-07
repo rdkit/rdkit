@@ -147,7 +147,7 @@ std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,
   ROMol *mol = &atom->getOwningMol();
   for (ROMol::OBOND_ITER_PAIR bondIt = mol->getAtomBonds(atom);
        bondIt.first != bondIt.second; ++bondIt.first) {
-    Bond *bptr = (*mol)[*bondIt.first].get();
+    Bond *bptr = (*mol)[*bondIt.first];
     Atom *nptr = bptr->getOtherAtom(atom);
     unsigned int dst = nptr->getIdx() + 1;
     if (dst < src && !both) continue;

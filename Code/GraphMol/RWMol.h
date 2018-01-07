@@ -80,22 +80,6 @@ class RWMol : public ROMol {
   };
 
   //! adds an Atom to our collection
-  /*!
-    \param atom          pointer to the Atom to add
-    \param updateLabel   (optional) if this is true, the new Atom will be
-                         our \c activeAtom
-
-
-    \return the new number of atoms
-
-    <b>Note:</b> since this is using a smart pointer, we don't need to worry
-    about
-    issues of ownership.
-
-  */
-  unsigned int addAtom(ATOM_SPTR atom, bool updateLabel = true) {
-    return ROMol::addAtom(atom, updateLabel);
-  };
 
   //! replaces a particular Atom
   /*!
@@ -137,9 +121,6 @@ class RWMol : public ROMol {
   unsigned int addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                        Bond::BondType order = Bond::UNSPECIFIED);
   //! \overload
-  unsigned int addBond(ATOM_SPTR beginAtom, ATOM_SPTR endAtom,
-                       Bond::BondType order = Bond::UNSPECIFIED);
-  //! \overload
   unsigned int addBond(Atom *beginAtom, Atom *endAtom,
                        Bond::BondType order = Bond::UNSPECIFIED);
 
@@ -155,17 +136,6 @@ class RWMol : public ROMol {
   unsigned int addBond(Bond *bond, bool takeOwnership = false) {
     return ROMol::addBond(bond, takeOwnership);
   };
-  //! adds a Bond to our collection
-  /*!
-    \param bsp        smart pointer to the Bond to add
-
-    \return the new number of bonds
-
-    <b>Note:</b> since this is using a smart pointer, we don't need to worry
-    about
-    issues of ownership.
-  */
-  unsigned int addBond(BOND_SPTR bsp) { return ROMol::addBond(bsp); };
 
   //! starts a Bond and sets its beginAtomIdx
   /*!
@@ -222,19 +192,16 @@ class RWMol : public ROMol {
 
   //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
-    d_atomBookmarks.clear();
-    d_bondBookmarks.clear();
-    d_graph.clear();
+    destroy();
     d_confs.clear();
     dp_props.reset();
     STR_VECT computed;
     dp_props.setVal(RDKit::detail::computedPropName, computed);
     numBonds = 0;
-    if (dp_ringInfo) dp_ringInfo->reset();
   };
-
+ 
  private:
-  std::vector<BOND_SPTR> d_partialBonds;
+  std::vector<Bond*> d_partialBonds;
   void destroy();
 };
 

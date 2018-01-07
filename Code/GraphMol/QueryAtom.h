@@ -69,8 +69,6 @@ class QueryAtom : public Atom {
                    bool maintainOrder = true);
 
   //! returns true if we match Atom \c what
-  bool Match(const Atom::ATOM_SPTR &what) const;
-  //! \overload
   bool Match(Atom const *what) const;
 
   //! returns true if our query details match those of QueryAtom \c what

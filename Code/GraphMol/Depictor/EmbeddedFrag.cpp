@@ -1613,7 +1613,7 @@ void _recurseDegTwoRingAtoms(unsigned int aid, const RDKit::ROMol *mol,
   int bondId;
   RDKit::INT_VECT nbrs;
   while (atomBonds.first != atomBonds.second) {
-    const RDKit::BOND_SPTR bnd = (*mol)[*atomBonds.first];
+    const RDKit::Bond* bnd = (*mol)[*atomBonds.first];
     bondId = bnd->getIdx();
     if (mol->getRingInfo()->numBondRings(bondId)) {
       nbrs.push_back(bnd->getOtherAtomIdx(aid));

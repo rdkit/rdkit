@@ -89,7 +89,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(atom);
   while (beg != end) {
-    Bond *nbrBond = mol[*beg].get();
+    const Bond *nbrBond = mol[*beg];
     if (nbrBond->getBondType() != Bond::SINGLE) {
       allSingle = false;
       // break;
@@ -404,7 +404,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
     while (nbrIdx != endNbrs) {
-      const ATOM_SPTR nat = mol[*nbrIdx];
+      const Atom* nat = mol[*nbrIdx];
       ++nbrIdx;
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
@@ -457,7 +457,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
     std::vector<std::pair<int, int>> nbrScores;
     while (atomBonds.first != atomBonds.second) {
-      const Bond *bond = mol[*atomBonds.first].get();
+      const Bond *bond = mol[*atomBonds.first];
       ++atomBonds.first;
 
       // can only wedge single bonds:
@@ -564,7 +564,7 @@ Bond::BondDir DetermineBondWedgeState(const Bond *bond,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol->getAtomBonds(atom);
   while (beg != end) {
-    Bond *nbrBond = (*mol)[*beg].get();
+    const Bond *nbrBond = (*mol)[*beg];
     Atom *otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
       tmpPt = conf->getAtomPos(otherAtom->getIdx());

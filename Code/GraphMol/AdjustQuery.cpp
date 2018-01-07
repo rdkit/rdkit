@@ -171,7 +171,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     ROMol::EDGE_ITER firstB, lastB;
     boost::tie(firstB, lastB) = mol.getEdges();
     while (firstB != lastB) {
-      BOND_SPTR bond = mol[*firstB];
+      //Bond *bond = mol[*firstB];
       ++firstB;
     }
   }

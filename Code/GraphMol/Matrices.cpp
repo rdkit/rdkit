@@ -190,7 +190,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     i = bond->getBeginAtomIdx();
     j = bond->getEndAtomIdx();
     double contrib;

@@ -370,9 +370,9 @@ static bool StandardPDBDoubleBond(RWMol *mol, Atom *beg, Atom *end) {
   // Check that neither end already has a double bond
   ROMol::OBOND_ITER_PAIR bp;
   for (bp = mol->getAtomBonds(beg); bp.first != bp.second; ++bp.first)
-    if ((*mol)[*bp.first].get()->getBondType() == Bond::DOUBLE) return false;
+    if ((*mol)[*bp.first]->getBondType() == Bond::DOUBLE) return false;
   for (bp = mol->getAtomBonds(end); bp.first != bp.second; ++bp.first)
-    if ((*mol)[*bp.first].get()->getBondType() == Bond::DOUBLE) return false;
+    if ((*mol)[*bp.first]->getBondType() == Bond::DOUBLE) return false;
 
   return true;
 }

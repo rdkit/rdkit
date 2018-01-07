@@ -498,7 +498,7 @@ void testMisc() {
   boost::tie(atBegin, atEnd) = m2.getVertices();
   TEST_ASSERT(atBegin != atEnd);
   while (atBegin != atEnd) {
-    const ATOM_SPTR at2 = m2[*atBegin];
+    const Atom* at2 = m2[*atBegin];
     TEST_ASSERT(at2->getIdx() == *atBegin);
     atBegin++;
   }
@@ -1207,8 +1207,8 @@ void testAtomListLineRoundTrip() {
       MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
   TEST_ASSERT(m2);
   TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
-  Atom::ATOM_SPTR cl(new Atom(17));
-  Atom::ATOM_SPTR o(new Atom(17));
+  Atom* cl(new Atom(17));
+  Atom* o(new Atom(17));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(cl));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(o));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m2->getAtomWithIdx(3))->Match(cl));

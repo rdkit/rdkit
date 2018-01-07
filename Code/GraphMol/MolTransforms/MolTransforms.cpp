@@ -377,7 +377,7 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(tAtom);
     unsigned int eIdx;
     for (eIdx = 0; nbrIdx != endNbrs; ++nbrIdx, ++eIdx) {
-      wIdx = (mol[*nbrIdx].get())->getIdx();
+      wIdx = (mol[*nbrIdx])->getIdx();
       if (!visitedIdx[wIdx]) {
         visitedIdx[wIdx] = 1;
         stack.push(wIdx);

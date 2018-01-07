@@ -292,7 +292,7 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
   ROMol::ADJ_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomNeighbors(at);
   while (beg != end) {
-    const ATOM_SPTR nbr = mol[*beg];
+    const Atom* nbr = mol[*beg];
     ++beg;
     if ((nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) &&
@@ -309,7 +309,7 @@ void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
   unsigned int idx = 0;
 
   while (beg != end) {
-    const BOND_SPTR bond = (mol)[*beg];
+    const Bond* bond = (mol)[*beg];
     ++beg;
     unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
     ids[idx] = nbrIdx;
@@ -335,10 +335,10 @@ void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
   while (beg != end) {
-    const BOND_SPTR bond = (mol)[*beg];
+    const Bond* bond = (mol)[*beg];
     ++beg;
     nbrs.push_back(makeBondHolder(
-        bond.get(), bond->getOtherAtomIdx(at->getIdx()), includeChirality));
+        bond, bond->getOtherAtomIdx(at->getIdx()), includeChirality));
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
@@ -348,7 +348,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
   while (beg != end) {
-    const BOND_SPTR bond = (mol)[*beg];
+    const Bond* bond = (mol)[*beg];
     ++beg;
     unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
     const Atom *nbr = mol.getAtomWithIdx(nbrIdx);

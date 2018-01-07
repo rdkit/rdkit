@@ -523,7 +523,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 }
 
 ROMol *MurckoDecompose(const ROMol &mol) {
-  auto *res = new RWMol(mol);
+  RWMol *res = new RWMol(mol);
   unsigned int nAtoms = res->getNumAtoms();
   if (!nAtoms) return res;
 
@@ -568,7 +568,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = res->getAtomNeighbors(atom);
       while (nbrIdx != endNbrs) {
-        const ATOM_SPTR nbr = (*res)[*nbrIdx];
+        Atom *nbr = (*res)[*nbrIdx];
         if (keepAtoms[nbr->getIdx()]) {
           if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
                   ->getBondType() == Bond::DOUBLE) {
@@ -648,7 +648,7 @@ void addRecursiveQueries(
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    Atom *at = mol[*atBegin].get();
+    Atom *at = mol[*atBegin];
     ++atBegin;
     if (!at->hasProp(propName)) continue;
     std::string pval;
