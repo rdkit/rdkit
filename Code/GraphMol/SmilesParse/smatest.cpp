@@ -36,7 +36,6 @@ void testPass() {
     "C-C",
     "C=C",
     "[CH2+]C[CH+2]",
-#endif
     "C1CC=1",
     "C=1CC1",
     "Ccc",
@@ -95,6 +94,7 @@ void testPass() {
     "[z1]",
     "[Z]",
     "[Z1]",
+#endif
     "[D{1-3}]",  // cactvs range queries
     "[D{-3}]",
     "[D{1-}]",
@@ -108,11 +108,11 @@ void testPass() {
     CHECK_INVARIANT(mol, smi);
     int nAts = mol->getNumAtoms();
     CHECK_INVARIANT(nAts != 0, smi.c_str());
-    // make sure that we can pickle and de-pickle it (this is the test for github #1710):
+    // make sure that we can pickle and de-pickle it (this is the test for
+    // github #1710):
     std::string pkl;
-    MolPickler::pickleMol(*mol,pkl);
+    MolPickler::pickleMol(*mol, pkl);
     delete mol;
-    std::cerr<<smi<<std::endl;
     mol = new Mol(pkl);
     TEST_ASSERT(mol);
     delete mol;
