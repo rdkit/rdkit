@@ -9,6 +9,8 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
@@ -39,14 +41,18 @@ void test1() {
     TEST_ASSERT(mols.size() == 1);
     RWMol *m = mols[0].get();
     TEST_ASSERT(m);
+    m->debugMol(std::cerr);
     TEST_ASSERT(m->getNumAtoms() == 15);
     TEST_ASSERT(m->getNumBonds() == 15);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
     TEST_ASSERT(m->getAtomWithIdx(13)->getFormalCharge() == 1);
     TEST_ASSERT(m->getAtomWithIdx(12)->getChiralTag() ==
                 Atom::CHI_TETRAHEDRAL_CCW);
     TEST_ASSERT(m->getBondBetweenAtoms(10, 11));
     TEST_ASSERT(m->getBondBetweenAtoms(10, 11)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(10, 11)->getStereo() == Bond::STEREOCIS);
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
     TEST_ASSERT(m->getNumConformers() == 0);
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
                 std::string("example 1"));
@@ -56,6 +62,9 @@ void test1() {
     TEST_ASSERT(feq(m->getProp<double>("prop2"), 3.14));
     TEST_ASSERT(m->hasProp("prop3"));
     TEST_ASSERT(m->getProp<std::string>("prop3") == "foo");
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->atomRings().size() == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRings()[0].size() == 6);
   }
   {
     std::string fName =
@@ -85,9 +94,60 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+#include <boost/timer/timer.hpp>
+void test2() {
+  BOOST_LOG(rdInfoLog) << "test2: timing" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/1000mols.json";
+    std::ifstream inStream(fName);
+    if (!inStream || (inStream.bad())) {
+      std::ostringstream errout;
+      errout << "Bad input file " << fName;
+      throw BadFileException(errout.str());
+    }
+
+    std::vector<boost::shared_ptr<RWMol>> mols;
+    std::cerr << "from json" << std::endl;
+    {
+      boost::timer::auto_cpu_timer t;
+      mols = MolInterchange::JSONDataStreamToMols(&inStream);
+    }
+    std::cerr << "done" << std::endl;
+    TEST_ASSERT(mols.size() == 1000);
+    std::vector<std::string> smis;
+    for (auto &mol : mols) {
+      smis.push_back(mol->getProp<std::string>("_Name"));
+    }
+
+    std::vector<boost::shared_ptr<RWMol>> mols2;
+    std::cerr << "from smiles" << std::endl;
+    {
+      boost::timer::auto_cpu_timer t;
+      for (const auto &smi : smis) {
+        mols2.push_back(boost::shared_ptr<RWMol>(SmilesToMol(smi)));
+      }
+    }
+    std::cerr << "done" << std::endl;
+    mols2.clear();
+    std::cerr << "from smiles no sanit" << std::endl;
+    {
+      boost::timer::auto_cpu_timer t;
+      for (const auto &smi : smis) {
+        mols2.push_back(
+            boost::shared_ptr<RWMol>(SmilesToMol(smi, false, false)));
+      }
+    }
+    std::cerr << "done" << std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 void RunTests() {
 #if 1
   test1();
+  test2();
 #endif
 }
 

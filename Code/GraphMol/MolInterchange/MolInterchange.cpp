@@ -174,6 +174,69 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
         "Bad Format: conformer doesn't contain coordinates for all atoms");
 }
 
+void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
+  PRECONDITION(mol, "no molecule");
+  PRECONDITION(repVal["toolkit"].GetString() == std::string("RDKit"),
+               "bad representation");
+  if (!repVal.HasMember("format_version"))
+    throw FileParseException("Bad Format: missing format_version");
+  if (repVal["format_version"].GetInt() > 1) {
+    BOOST_LOG(rdWarningLog) << "RDKit representation format version "
+                            << repVal["format_version"].GetInt()
+                            << " too recent. Ignoring it." << std::endl;
+    return;
+  }
+  if (repVal.HasMember("aromaticAtoms")) {
+    for (const auto &val : repVal["aromaticAtoms"].GetArray()) {
+      mol->getAtomWithIdx(val.GetInt())->setIsAromatic(true);
+    }
+  }
+  if (repVal.HasMember("aromaticBonds")) {
+    for (const auto &val : repVal["aromaticBonds"].GetArray()) {
+      mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
+    }
+  }
+  if (repVal.HasMember("cipRanks")) {
+    size_t i = 0;
+    for (const auto &val : repVal["cipRanks"].GetArray()) {
+      mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPRank,
+                                        val.GetInt());
+    }
+  }
+  if (repVal.HasMember("cipCodes")) {
+    size_t i = 0;
+    for (const auto &val : repVal["cipCodes"].GetArray()) {
+      mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPCode,
+                                        val.GetString());
+    }
+  }
+  if (repVal.HasMember("atomRings")) {
+    CHECK_INVARIANT(!mol->getRingInfo()->isInitialized(),
+                    "rings already initialized");
+    auto ri = mol->getRingInfo();
+    ri->initialize();
+    for (const auto &val : repVal["atomRings"].GetArray()) {
+      INT_VECT atomRing;
+      INT_VECT bondRing;
+      for (size_t i = 0; i < val.Size() - 1; ++i) {
+        int idx1 = val[i].GetInt();
+        int idx2 = val[i + 1].GetInt();
+        atomRing.push_back(idx1);
+        const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
+        CHECK_INVARIANT(bnd, "no bond found for ring");
+        bondRing.push_back(bnd->getIdx());
+      }
+      int idx1 = val[val.Size() - 1].GetInt();
+      int idx2 = val[0].GetInt();
+      atomRing.push_back(idx1);
+      const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
+      CHECK_INVARIANT(bnd, "no bond found for ring");
+      bondRing.push_back(bnd->getIdx());
+      ri->addRing(atomRing, bondRing);
+    }
+  }
+}
+
 void processMol(RWMol *mol, const rj::Value &molval,
                 const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
   if (molval.HasMember("name")) {
@@ -215,6 +278,17 @@ void processMol(RWMol *mol, const rj::Value &molval,
         mol->setProp(propVal.name.GetString(), propVal.value.GetDouble());
       else if (propVal.value.IsString())
         mol->setProp(propVal.name.GetString(), propVal.value.GetString());
+    }
+  }
+
+  if (molval.HasMember("representations")) {
+    for (const auto &propVal : molval["representations"].GetArray()) {
+      if (!propVal.HasMember("toolkit"))
+        throw FileParseException(
+            "Bad Format: representation has no toolkit member");
+      if (propVal["toolkit"].GetString() == std::string("RDKit")) {
+        readRDKitRepresentation(mol, propVal);
+      }
     }
   }
   mol->updatePropertyCache(false);
