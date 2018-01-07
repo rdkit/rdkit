@@ -103,7 +103,8 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   if (chilookup.find(stereo) == chilookup.end())
     throw FileParseException("Bad Format: bad stereo value for atom");
   at->setChiralTag(chilookup.find(stereo)->second);
-  mol->addAtom(at);
+  bool updateLabel = false, takeOwnership = true;
+  mol->addAtom(at, updateLabel, takeOwnership);
 }
 
 void readBond(RWMol *mol, const rj::Value &bondVal,
@@ -130,8 +131,9 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
       {"cis", Bond::STEREOCIS},
       {"trans", Bond::STEREOTRANS},
       {"either", Bond::STEREOANY}};
-  if (bondVal.HasMember("stereoAtoms")) {
-    const auto aids = bondVal["stereoAtoms"].GetArray();
+  const auto &miter = bondVal.FindMember("stereoAtoms");
+  if (miter != bondVal.MemberEnd()) {
+    const auto aids = miter->value.GetArray();
     bnd->setStereoAtoms(aids[0].GetInt(), aids[1].GetInt());
     std::string stereo = getStringDefaultValue("stereo", bondVal, bondDefaults);
     if (stereolookup.find(stereo) == stereolookup.end())
@@ -186,53 +188,68 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
                             << " too recent. Ignoring it." << std::endl;
     return;
   }
-  if (repVal.HasMember("aromaticAtoms")) {
-    for (const auto &val : repVal["aromaticAtoms"].GetArray()) {
-      mol->getAtomWithIdx(val.GetInt())->setIsAromatic(true);
+  {
+    const auto &miter = repVal.FindMember("aromaticAtoms");
+    if (miter != repVal.MemberEnd()) {
+      for (const auto &val : miter->value.GetArray()) {
+        mol->getAtomWithIdx(val.GetInt())->setIsAromatic(true);
+      }
     }
   }
-  if (repVal.HasMember("aromaticBonds")) {
-    for (const auto &val : repVal["aromaticBonds"].GetArray()) {
-      mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
+  {
+    const auto &miter = repVal.FindMember("aromaticBonds");
+    if (miter != repVal.MemberEnd()) {
+      for (const auto &val : miter->value.GetArray()) {
+        mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
+      }
     }
   }
-  if (repVal.HasMember("cipRanks")) {
-    size_t i = 0;
-    for (const auto &val : repVal["cipRanks"].GetArray()) {
-      mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPRank,
-                                        val.GetInt());
+  {
+    const auto &miter = repVal.FindMember("cipRanks");
+    if (miter != repVal.MemberEnd()) {
+      size_t i = 0;
+      for (const auto &val : miter->value.GetArray()) {
+        mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPRank,
+                                          val.GetInt());
+      }
     }
   }
-  if (repVal.HasMember("cipCodes")) {
-    size_t i = 0;
-    for (const auto &val : repVal["cipCodes"].GetArray()) {
-      mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPCode,
-                                        val.GetString());
+  {
+    const auto &miter = repVal.FindMember("cipCodes");
+    if (miter != repVal.MemberEnd()) {
+      size_t i = 0;
+      for (const auto &val : miter->value.GetArray()) {
+        mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPCode,
+                                          val.GetString());
+      }
     }
   }
-  if (repVal.HasMember("atomRings")) {
-    CHECK_INVARIANT(!mol->getRingInfo()->isInitialized(),
-                    "rings already initialized");
-    auto ri = mol->getRingInfo();
-    ri->initialize();
-    for (const auto &val : repVal["atomRings"].GetArray()) {
-      INT_VECT atomRing;
-      INT_VECT bondRing;
-      for (size_t i = 0; i < val.Size() - 1; ++i) {
-        int idx1 = val[i].GetInt();
-        int idx2 = val[i + 1].GetInt();
+  {
+    const auto &miter = repVal.FindMember("atomRings");
+    if (miter != repVal.MemberEnd()) {
+      CHECK_INVARIANT(!mol->getRingInfo()->isInitialized(),
+                      "rings already initialized");
+      auto ri = mol->getRingInfo();
+      ri->initialize();
+      for (const auto &val : miter->value.GetArray()) {
+        INT_VECT atomRing;
+        INT_VECT bondRing;
+        for (size_t i = 0; i < val.Size() - 1; ++i) {
+          int idx1 = val[i].GetInt();
+          int idx2 = val[i + 1].GetInt();
+          atomRing.push_back(idx1);
+          const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
+          CHECK_INVARIANT(bnd, "no bond found for ring");
+          bondRing.push_back(bnd->getIdx());
+        }
+        int idx1 = val[val.Size() - 1].GetInt();
+        int idx2 = val[0].GetInt();
         atomRing.push_back(idx1);
         const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
         CHECK_INVARIANT(bnd, "no bond found for ring");
         bondRing.push_back(bnd->getIdx());
+        ri->addRing(atomRing, bondRing);
       }
-      int idx1 = val[val.Size() - 1].GetInt();
-      int idx2 = val[0].GetInt();
-      atomRing.push_back(idx1);
-      const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
-      CHECK_INVARIANT(bnd, "no bond found for ring");
-      bondRing.push_back(bnd->getIdx());
-      ri->addRing(atomRing, bondRing);
     }
   }
 }
