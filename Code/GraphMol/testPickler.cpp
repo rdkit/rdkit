@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1211,7 +1211,6 @@ void testGithub1563() {
   BOOST_LOG(rdInfoLog)
       << "Testing Github 1563: Add a canned Atom query for heavy atom degree"
       << std::endl;
-
   RWMol m;
   QueryAtom *qa = new QueryAtom();
   qa->setQuery(makeAtomHeavyAtomDegreeQuery(3));
@@ -1223,7 +1222,52 @@ void testGithub1563() {
   TEST_ASSERT(nm.getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(nm.getAtomWithIdx(0)->getQuery()->getDescription() ==
               "AtomHeavyAtomDegree");
+  std::string pkl;
+  MolPickler::pickleMol(m, pkl);
+  RWMol nm2(pkl);
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
 
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testGithub1710() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing Github 1710: bonds that are STEREOCIS or "
+                          "STEREOTRANS cannot be depickled"
+                       << std::endl;
+
+  RWMol m;
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addBond(0, 1, Bond::SINGLE);
+  m.addBond(1, 2, Bond::DOUBLE);
+  m.addBond(2, 3, Bond::SINGLE);
+  m.getBondWithIdx(1)->setStereoAtoms(0, 3);
+
+  {
+    m.getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    delete m2;
+  }
+  {
+    m.getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    delete m2;
+  }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -1260,4 +1304,5 @@ int main(int argc, char *argv[]) {
   testGithub149();
   testGithub713();
   testGithub1563();
+  testGithub1710();
 }
