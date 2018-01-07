@@ -2315,7 +2315,6 @@ void testCactvsExtensions() {
     }
     delete m;
   }  // end of NCOc1ncccc1 examples
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
