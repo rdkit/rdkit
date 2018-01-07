@@ -344,6 +344,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
   Query<int, T const *, true> *res = nullptr;
   int32_t val;
   int32_t nMembers;
+  char cval;
   switch (tag) {
     case MolPickler::QUERY_AND:
       res = new AndQuery<int, T const *, true>();
@@ -427,6 +428,9 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       static_cast<RangeQuery<int, T const *, true> *>(res)->setUpper(val);
       streamRead(ss, val, version);
       static_cast<RangeQuery<int, T const *, true> *>(res)->setTol(val);
+      streamRead(ss, cval, version);
+      static_cast<RangeQuery<int, T const *, true> *>(res)->setEndsOpen(
+          cval & (1 << 1), cval & 1);
       break;
     case MolPickler::QUERY_SET:
       res = new SetQuery<int, T const *, true>();
