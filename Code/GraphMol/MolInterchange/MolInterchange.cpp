@@ -34,8 +34,8 @@ namespace {
 int getIntDefaultValue(const char *key, const rj::Value &from,
                        const rj::Value &defaults) {
   PRECONDITION(key, "no key");
-  rj::Value::ConstMemberIterator endp = from.MemberEnd();
-  rj::Value::ConstMemberIterator miter = from.FindMember(key);
+  auto endp = from.MemberEnd();
+  auto miter = from.FindMember(key);
   if (miter == endp) {
     miter = defaults.FindMember(key);
     endp = defaults.MemberEnd();
@@ -52,8 +52,8 @@ int getIntDefaultValue(const char *key, const rj::Value &from,
 bool getBoolDefaultValue(const char *key, const rj::Value &from,
                          const rj::Value &defaults) {
   PRECONDITION(key, "no key");
-  rj::Value::ConstMemberIterator endp = from.MemberEnd();
-  rj::Value::ConstMemberIterator miter = from.FindMember(key);
+  auto endp = from.MemberEnd();
+  auto miter = from.FindMember(key);
   if (miter == endp) {
     miter = defaults.FindMember(key);
     endp = defaults.MemberEnd();
@@ -70,8 +70,8 @@ bool getBoolDefaultValue(const char *key, const rj::Value &from,
 std::string getStringDefaultValue(const char *key, const rj::Value &from,
                                   const rj::Value &defaults) {
   PRECONDITION(key, "no key");
-  rj::Value::ConstMemberIterator endp = from.MemberEnd();
-  rj::Value::ConstMemberIterator miter = from.FindMember(key);
+  auto endp = from.MemberEnd();
+  auto miter = from.FindMember(key);
   if (miter == endp) {
     miter = defaults.FindMember(key);
     endp = defaults.MemberEnd();
@@ -234,18 +234,21 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
       for (const auto &val : miter->value.GetArray()) {
         INT_VECT atomRing;
         INT_VECT bondRing;
-        for (size_t i = 0; i < val.Size() - 1; ++i) {
+        size_t sz = val.Size();
+        atomRing.reserve(sz);
+        bondRing.reserve(sz);
+        for (size_t i = 0; i < sz - 1; ++i) {
           int idx1 = val[i].GetInt();
           int idx2 = val[i + 1].GetInt();
           atomRing.push_back(idx1);
-          const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
+          const auto &bnd = mol->getBondBetweenAtoms(idx1, idx2);
           CHECK_INVARIANT(bnd, "no bond found for ring");
           bondRing.push_back(bnd->getIdx());
         }
-        int idx1 = val[val.Size() - 1].GetInt();
+        int idx1 = val[sz - 1].GetInt();
         int idx2 = val[0].GetInt();
         atomRing.push_back(idx1);
-        const auto bnd = mol->getBondBetweenAtoms(idx1, idx2);
+        const auto &bnd = mol->getBondBetweenAtoms(idx1, idx2);
         CHECK_INVARIANT(bnd, "no bond found for ring");
         bondRing.push_back(bnd->getIdx());
         ri->addRing(atomRing, bondRing);
