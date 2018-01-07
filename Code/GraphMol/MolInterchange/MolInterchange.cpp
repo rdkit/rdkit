@@ -31,15 +31,67 @@ namespace RDKit {
 namespace MolInterchange {
 
 namespace {
+struct DefaultValueCache {
+  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs){};
+  const rj::Value &rjDefaults;
+  mutable std::map<const char *, int> intMap;
+  mutable std::map<const char *, bool> boolMap;
+  mutable std::map<const char *, std::string> stringMap;
+  int getInt(const char *key) const {
+    PRECONDITION(key, "no key");
+    const auto &lookup = intMap.find(key);
+    if (lookup != intMap.end()) return lookup->second;
+    const auto &miter = rjDefaults.FindMember(key);
+    if (miter != rjDefaults.MemberEnd()) {
+      if (!miter->value.IsInt())
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not an int"));
+      int res = miter->value.GetInt();
+      intMap[key] = res;
+      return res;
+    }
+    return 0;
+  }
+  bool getBool(const char *key) const {
+    PRECONDITION(key, "no key");
+    const auto &lookup = boolMap.find(key);
+    if (lookup != boolMap.end()) return lookup->second;
+    const auto &miter = rjDefaults.FindMember(key);
+    if (miter != rjDefaults.MemberEnd()) {
+      if (!miter->value.IsBool())
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a bool"));
+      bool res = miter->value.GetBool();
+      boolMap[key] = res;
+      return res;
+    }
+    return false;
+  }
+  std::string getString(const char *key) const {
+    PRECONDITION(key, "no key");
+    const auto &lookup = stringMap.find(key);
+    if (lookup != stringMap.end()) return lookup->second;
+    const auto &miter = rjDefaults.FindMember(key);
+    if (miter != rjDefaults.MemberEnd()) {
+      if (!miter->value.IsString())
+        throw FileParseException(std::string("Bad format: value of ") +
+                                 std::string(key) +
+                                 std::string(" is not a string"));
+      std::string res = miter->value.GetString();
+      stringMap[key] = res;
+      return res;
+    }
+    return "";
+  }
+};
+
 int getIntDefaultValue(const char *key, const rj::Value &from,
-                       const rj::Value &defaults) {
+                       const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
   auto endp = from.MemberEnd();
   auto miter = from.FindMember(key);
-  if (miter == endp) {
-    miter = defaults.FindMember(key);
-    endp = defaults.MemberEnd();
-  }
   if (miter != endp) {
     if (!miter->value.IsInt())
       throw FileParseException(std::string("Bad format: value of ") +
@@ -47,17 +99,13 @@ int getIntDefaultValue(const char *key, const rj::Value &from,
                                std::string(" is not an int"));
     return miter->value.GetInt();
   }
-  return 0;
+  return defaults.getInt(key);
 }
 bool getBoolDefaultValue(const char *key, const rj::Value &from,
-                         const rj::Value &defaults) {
+                         const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
   auto endp = from.MemberEnd();
   auto miter = from.FindMember(key);
-  if (miter == endp) {
-    miter = defaults.FindMember(key);
-    endp = defaults.MemberEnd();
-  }
   if (miter != endp) {
     if (!miter->value.IsBool())
       throw FileParseException(std::string("Bad format: value of ") +
@@ -65,17 +113,13 @@ bool getBoolDefaultValue(const char *key, const rj::Value &from,
                                std::string(" is not a bool"));
     return miter->value.GetBool();
   }
-  return false;
+  return defaults.getBool(key);
 }
 std::string getStringDefaultValue(const char *key, const rj::Value &from,
-                                  const rj::Value &defaults) {
+                                  const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");
   auto endp = from.MemberEnd();
   auto miter = from.FindMember(key);
-  if (miter == endp) {
-    miter = defaults.FindMember(key);
-    endp = defaults.MemberEnd();
-  }
   if (miter != endp) {
     if (!miter->value.IsString())
       throw FileParseException(std::string("Bad format: value of ") +
@@ -83,11 +127,11 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
                                std::string(" is not a string"));
     return miter->value.GetString();
   }
-  return "";
+  return defaults.getString(key);
 }
 
 void readAtom(RWMol *mol, const rj::Value &atomVal,
-              const rj::Value &atomDefaults) {
+              const DefaultValueCache &atomDefaults) {
   PRECONDITION(mol, "no mol");
   static const std::map<std::string, Atom::ChiralType> chilookup = {
       {"unspecified", Atom::CHI_UNSPECIFIED},
@@ -108,7 +152,7 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
 }
 
 void readBond(RWMol *mol, const rj::Value &bondVal,
-              const rj::Value &bondDefaults, bool &needStereoLoop) {
+              const DefaultValueCache &bondDefaults, bool &needStereoLoop) {
   PRECONDITION(mol, "no mol");
   static const std::map<unsigned int, Bond::BondType> bolookup = {
       {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
@@ -123,7 +167,7 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
 }
 
 void readBondStereo(Bond *bnd, const rj::Value &bondVal,
-                    const rj::Value &bondDefaults) {
+                    const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
 
   static const std::map<std::string, Bond::BondStereo> stereolookup = {
@@ -258,7 +302,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
 }
 
 void processMol(RWMol *mol, const rj::Value &molval,
-                const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
+                const DefaultValueCache &atomDefaults,
+                const DefaultValueCache &bondDefaults) {
   if (molval.HasMember("name")) {
     mol->setProp(common_properties::_Name, molval["name"].GetString());
   }
@@ -328,19 +373,21 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
   if (doc["moljson-header"]["version"].GetInt() != 10)
     throw FileParseException("Bad Format: bad version in JSON");
 
-  rj::Value atomDefaults;
+  rj::Value atomDefaults_;
   if (doc.HasMember("atomDefaults")) {
-    atomDefaults = doc["atomDefaults"];
-    if (!atomDefaults.IsObject())
+    atomDefaults_ = doc["atomDefaults"];
+    if (!atomDefaults_.IsObject())
       throw FileParseException("Bad Format: atomDefaults is not an object");
   }
+  DefaultValueCache atomDefaults(atomDefaults_);
 
-  rj::Value bondDefaults;
+  rj::Value bondDefaults_;
   if (doc.HasMember("bondDefaults")) {
-    bondDefaults = doc["bondDefaults"];
-    if (!bondDefaults.IsObject())
+    bondDefaults_ = doc["bondDefaults"];
+    if (!bondDefaults_.IsObject())
       throw FileParseException("Bad Format: bondDefaults is not an object");
   }
+  DefaultValueCache bondDefaults(bondDefaults_);
 
   if (doc.HasMember("molecules")) {
     if (!doc["molecules"].IsArray())
