@@ -285,7 +285,7 @@ bool incidentMultipleBond(const Atom *at) {
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
     Bond *bond = at->getOwningMol()[*beg];
-    if (bond->getValenceContrib(at) == 0.0) --deg;
+    if (!std::lround(bond->getValenceContrib(at))) --deg;
     ++beg;
   }
   return at->getExplicitValence() != static_cast<int>(deg);
@@ -608,7 +608,7 @@ int countAtomElec(const Atom *at) {
   while (beg != end) {
     Bond *bond = at->getOwningMol()[*beg];
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!(int)bond->getValenceContrib(at)) {
+    if (!std::lround(bond->getValenceContrib(at))) {
       --degree;
     }
     ++beg;
