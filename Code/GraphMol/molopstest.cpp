@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -6926,8 +6926,9 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -7067,6 +7068,7 @@ void testGithub1703() {
     SmilesParserParams ps;
     ps.sanitize = false;
     std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=NC=N1.[Fe]", ps));
+    TEST_ASSERT(mol);
     mol->addBond(5, 6, Bond::ZERO);
     MolOps::sanitizeMol(*mol);
     TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
@@ -7077,6 +7079,7 @@ void testGithub1703() {
     SmilesParserParams ps;
     ps.sanitize = false;
     std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=NC=N1->[Fe]", ps));
+    TEST_ASSERT(mol);
     MolOps::sanitizeMol(*mol);
     TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
     TEST_ASSERT(mol->getAtomWithIdx(5)->getIsAromatic());
@@ -7089,7 +7092,7 @@ int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();

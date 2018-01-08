@@ -607,11 +607,10 @@ int countAtomElec(const Atom *at) {
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
     Bond *bond = at->getOwningMol()[*beg];
-    if (bond->getBondType() == Bond::UNSPECIFIED  // query bonds should not
-                                                  // contribute; this was github
-                                                  // issue #443
-        || bond->getBondType() == Bond::ZERO)
+    // don't count bonds that aren't actually contributing to the valence here:
+    if (!(int)bond->getValenceContrib(at)) {
       --degree;
+    }
     ++beg;
   }
 

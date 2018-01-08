@@ -170,9 +170,10 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         ++vi;
       }
 
-      std::cerr << "  kek: " << at->getIdx() << " tbo:" << tbo << " sbo:" << sbo
-                << "  dv : " << dv << " totalDegree : " << totalDegree
-                << " nRadicals: " << nRadicals << std::endl;
+      // std::cerr << "  kek: " << at->getIdx() << " tbo:" << tbo << " sbo:" <<
+      // sbo
+      //           << "  dv : " << dv << " totalDegree : " << totalDegree
+      //           << " nRadicals: " << nRadicals << std::endl;
       if (totalDegree + nRadicals >= dv) {
         // if our degree + nRadicals exceeds the default valence,
         // there's no way we can take a double bond, just continue.
