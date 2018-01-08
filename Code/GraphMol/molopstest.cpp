@@ -6926,9 +6926,8 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(
-          *m, failed,
-          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
+                                          MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -7059,11 +7058,38 @@ void testGithub1622() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1703() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1703: Dative bonds interfere with kekulization and "
+                          "the perception of aromaticity"
+                       << std::endl;
+  {  // start with zero-order bonds
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=NC=N1.[Fe]", ps));
+    mol->addBond(5, 6, Bond::ZERO);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(mol->getAtomWithIdx(5)->getIsAromatic());
+    MolOps::Kekulize(*mol);
+  }
+  {  // and dative bonds:
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1=CC=NC=N1->[Fe]", ps));
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(mol->getAtomWithIdx(5)->getIsAromatic());
+    MolOps::Kekulize(*mol);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -7162,7 +7188,8 @@ int main() {
   testGithub1439();
   testGithub1281();
   testGithub1605();
-#endif
   testGithub1622();
+#endif
+  testGithub1703();
   return 0;
 }
