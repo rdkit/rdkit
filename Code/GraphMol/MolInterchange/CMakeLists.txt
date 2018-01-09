@@ -21,4 +21,4 @@ rdkit_headers(MolInterchange.h
 
 find_package(Boost 1.56.0 COMPONENTS timer)
 rdkit_test(molInterchangeTest1 test1.cpp
-           LINK_LIBRARIES MolInterchange FileParsers SmilesParse GraphMol RDGeneral Boost::timer)
+           LINK_LIBRARIES MolInterchange FileParsers SmilesParse GraphMol RDGeneral) # Boost::timer)

@@ -155,7 +155,7 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
               const DefaultValueCache &bondDefaults, bool &needStereoLoop) {
   PRECONDITION(mol, "no mol");
   static const std::map<unsigned int, Bond::BondType> bolookup = {
-      {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
+      {0, Bond::ZERO}, {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
   const auto &aids = bondVal["atoms"].GetArray();
   unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
   Bond *bnd = mol->getBondWithIdx(bid);

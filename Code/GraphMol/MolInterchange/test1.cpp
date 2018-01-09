@@ -42,7 +42,7 @@ void test1() {
     TEST_ASSERT(mols.size() == 1);
     RWMol *m = mols[0].get();
     TEST_ASSERT(m);
-    m->debugMol(std::cerr);
+    // m->debugMol(std::cerr);
     TEST_ASSERT(m->getNumAtoms() == 15);
     TEST_ASSERT(m->getNumBonds() == 15);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
@@ -92,9 +92,33 @@ void test1() {
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
                 std::string("example 2"));
   }
+
+  {
+    std::string json =
+        "{\"moljson-header\": {\"version\": 10, \"name\": \"example "
+        "molecules\"}, \"atomDefaults\": {\"chg\": 0, \"impHs\": 0, "
+        "\"stereo\": \"unspecified\", \"nrad\": 0, \"Z\": 6}, "
+        "\"bondDefaults\": {\"bo\": 1, \"stereo\": \"unspecified\", "
+        "\"stereoAtoms\": []}, \"molecules\": [{\"name\": \"no name\", "
+        "\"atoms\": [{\"Z\": 6, \"impHs\": 2}, {\"Z\": 8}, {\"Z\": 26}], "
+        "\"bonds\": [{\"atoms\": [0, 1], \"bo\": 2}, {\"atoms\": [1, 2], "
+        "\"bo\": 0}], \"representations\": [{\"format_version\": 1, "
+        "\"toolkit\": \"RDKit\", \"toolkit_version\": \"2018.03.1.dev1\", "
+        "\"aromaticAtoms\": [], \"aromaticBonds\": [], \"cipRanks\": [0, 1, "
+        "2], \"cipCodes\": [], \"atomRings\": []}]}]}";
+    std::vector<boost::shared_ptr<RWMol>> mols =
+        MolInterchange::JSONDataToMols(json);
+    TEST_ASSERT(mols.size() == 1);
+    RWMol *m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::ZERO);
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+#if 0
 #include <boost/timer/timer.hpp>
 void test2() {
   BOOST_LOG(rdInfoLog) << "test2: timing" << std::endl;
@@ -167,11 +191,13 @@ void test2() {
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+#endif
+
 void RunTests() {
-#if 0
+#if 1
   test1();
 #endif
-  test2();
+  // test2();
 }
 
 #if 0
