@@ -136,3 +136,6 @@ rdkit_test(molBundleTest testMolBundle.cpp
           LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral SubstructMatch FileParsers)
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
+
+rdkit_catch_test(new_tests new_tests.cpp
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
