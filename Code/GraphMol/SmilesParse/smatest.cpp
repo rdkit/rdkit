@@ -36,7 +36,6 @@ void testPass() {
     "C-C",
     "C=C",
     "[CH2+]C[CH+2]",
-#endif
     "C1CC=1",
     "C=1CC1",
     "Ccc",
@@ -93,24 +92,30 @@ void testPass() {
     "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
     "[z]",                  // cactvs heteroatom neighbor queries
     "[z1]",
-    "[z{1-3}]",
     "[Z]",
     "[Z1]",
-    "[Z{1-3}]",
+#endif
     "[D{1-3}]",  // cactvs range queries
     "[D{-3}]",
     "[D{1-}]",
+    "[z{1-3}]",
+    "[Z{1-3}]",
     "EOS"
   };
   while (smis[i] != "EOS") {
     string smi = smis[i];
     mol = SmartsToMol(smi);
     CHECK_INVARIANT(mol, smi);
-    if (mol) {
-      int nAts = mol->getNumAtoms();
-      CHECK_INVARIANT(nAts != 0, smi.c_str());
-      delete mol;
-    }
+    int nAts = mol->getNumAtoms();
+    CHECK_INVARIANT(nAts != 0, smi.c_str());
+    // make sure that we can pickle and de-pickle it (this is the test for
+    // github #1710):
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    delete mol;
+    mol = new Mol(pkl);
+    TEST_ASSERT(mol);
+    delete mol;
     i++;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2310,7 +2315,6 @@ void testCactvsExtensions() {
     }
     delete m;
   }  // end of NCOc1ncccc1 examples
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
