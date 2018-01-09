@@ -97,7 +97,6 @@ void testSymmetryMatching() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  const RGroupColumns &groups = decomp.getRGroupsAsColumns();
 
   std::ostringstream str;
 
@@ -128,7 +127,6 @@ void testRGroupOnlyMatching() {
     ROMol *mol = SmilesToMol(matchRGroupOnlyData[i]);
     int res = decomp.add(*mol);
     if (i < 4) {
-      std::cerr << i << " " << res << std::endl;
       TEST_ASSERT(res == i);
     } else {
       TEST_ASSERT(res == -1);
@@ -138,7 +136,6 @@ void testRGroupOnlyMatching() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  const RGroupColumns &groups = decomp.getRGroupsAsColumns();
   std::ostringstream str;
 
   // All Cl's should be labeled with the same rgroup
@@ -174,7 +171,6 @@ void testRingMatching() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  const RGroupColumns &groups = decomp.getRGroupsAsColumns();
   std::ostringstream str;
 
   // All Cl's should be labeled with the same rgroup
@@ -250,7 +246,6 @@ void testRingMatching3() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  const RGroupColumns &groups = decomp.getRGroupsAsColumns();
   std::ostringstream str;
 
   // All Cl's should be labeled with the same rgroup
@@ -302,7 +297,6 @@ void testMultiCore() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  const RGroupColumns &groups = decomp.getRGroupsAsColumns();
   std::ostringstream str;
 
   // All Cl's should be labeled with the same rgroup
@@ -336,6 +330,7 @@ void testGithub1550() {
 
   decomp.process();
   RGroupColumns groups = decomp.getRGroupsAsColumns();
+  
   RWMol *coreRes = (RWMol *)groups["Core"][0].get();
   TEST_ASSERT(coreRes->getNumAtoms() == 14);
   MolOps::Kekulize(*coreRes);
@@ -390,12 +385,46 @@ void testRemoveHs() {
   }
 }
 
+void testGitHubIssue1705() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "test preferring grouping non hydrogens over hydrogens if possible" << std::endl;
+
+  RWMol *core = SmilesToMol("Oc1ccccc1");
+  RGroupDecompositionParameters params;
+
+  RGroupDecomposition decomp(*core, params);
+  const char *smilesData[5] = {"Oc1ccccc1","Oc1c(F)cccc1","Oc1ccccc1F","Oc1c(F)cc(N)cc1","Oc1ccccc1Cl"};
+  for (int i = 0; i < 5; ++i) {
+    ROMol *mol = SmilesToMol(smilesData[i]);
+    int res = decomp.add(*mol);
+    delete mol;
+    TEST_ASSERT(res == i);
+  }
+
+  decomp.process();
+  std::stringstream ss;
+  RGroupColumns groups = decomp.getRGroupsAsColumns();
+  for (auto &column : groups) {
+    ss << "Rgroup===" << column.first << std::endl;
+    for (auto &rgroup : column.second ) {
+      ss << MolToSmiles(*rgroup) << std::endl;
+    }
+  }
+
+  TEST_ASSERT(ss.str() == "Rgroup===Core\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nRgroup===R1\n[H][*:1]\nF[*:1]\nF[*:1]\nF[*:1]\nCl[*:1]\nRgroup===R2\n[H][*:2]\n[H][*:2]\n[H][*:2]\n[H]N([H])[*:2]\n[H][*:2]\n");
+
+  
+}
+
+
 int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
+
 #if 1
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -407,6 +436,8 @@ int main() {
   testGithub1550();
   testRemoveHs();
 
+  testGitHubIssue1705();
+  
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
