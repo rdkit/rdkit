@@ -120,6 +120,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     // double, or aromatic bonds. Along the way, mark
     // bonds that we will later mark as being single:
     int sbo = 0;
+    unsigned nToIgnore = 0;
     RWMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
     while (beg != end) {
@@ -133,7 +134,9 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         // valence calculation to determine the number of hydrogens below
         makeSingle.push_back(bond);
       } else {
-        sbo += (int)bond->getValenceContrib(at);
+        int bondContrib = std::lround(bond->getValenceContrib(at));
+        sbo += bondContrib;
+        if (!bondContrib) ++nToIgnore;
       }
       ++beg;
     }
@@ -156,7 +159,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       dv += chrg;
       int tbo = at->getTotalValence();
       int nRadicals = at->getNumRadicalElectrons();
-      int totalDegree = at->getDegree() + at->getImplicitValence();
+      int totalDegree = at->getDegree() + at->getImplicitValence() - nToIgnore;
 
       const INT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
@@ -167,9 +170,10 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         ++vi;
       }
 
-      // std::cerr<<"  kek: "<<at->getIdx()<<" tbo:"<<tbo<<" sbo:"<<sbo<<"
-      // dv:"<<dv<<" totalDegree:"<<totalDegree<<"
-      // nRadicals:"<<nRadicals<<std::endl;
+      // std::cerr << "  kek: " << at->getIdx() << " tbo:" << tbo << " sbo:" <<
+      // sbo
+      //           << "  dv : " << dv << " totalDegree : " << totalDegree
+      //           << " nRadicals: " << nRadicals << std::endl;
       if (totalDegree + nRadicals >= dv) {
         // if our degree + nRadicals exceeds the default valence,
         // there's no way we can take a double bond, just continue.
