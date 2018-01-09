@@ -284,8 +284,8 @@ bool incidentMultipleBond(const Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    BOND_SPTR bond = at->getOwningMol()[*beg];
-    if (bond->getBondType() == Bond::ZERO) --deg;
+    Bond *bond = at->getOwningMol()[*beg].get();
+    if (!int(bond->getValenceContrib(at))) --deg;
     ++beg;
   }
   return at->getExplicitValence() != static_cast<int>(deg);
@@ -577,12 +577,11 @@ int countAtomElec(const Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    BOND_SPTR bond = at->getOwningMol()[*beg];
-    if (bond->getBondType() == Bond::UNSPECIFIED  // query bonds should not
-                                                  // contribute; this was github
-                                                  // issue #443
-        || bond->getBondType() == Bond::ZERO)
+    Bond *bond = at->getOwningMol()[*beg].get();
+    // don't count bonds that aren't actually contributing to the valence here:
+    if (!int(bond->getValenceContrib(at))) {
       --degree;
+    }
     ++beg;
   }
 
