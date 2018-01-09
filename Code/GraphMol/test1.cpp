@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +20,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <sstream>
 #include <iostream>
+#include <boost/range/iterator_range.hpp>
 
 using namespace std;
 using namespace RDKit;
@@ -1358,53 +1358,95 @@ void testGithub1453() {
 }
 
 void testRanges() {
-    RWMol *m = SmilesToMol("N1NN1");
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test range-based for loops." << std::endl;
+  RWMol *m = SmilesToMol("C1CC1");
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 3);
 
+  // For by value (ok since the atoms are pointers)
+  unsigned int i = 0;
+  for (auto atom : m->atoms()) {
+    TEST_ASSERT(atom->getIdx() == i);
+    i++;
+  }
 
-    // For by value (ok since the atoms are pointers)
-    unsigned int i=0;
-    for(auto atom : m->atoms()) {
-      TEST_ASSERT(atom->getIdx() == i);
-      i++;
-    }
+  // try refs
+  i = 0;
+  for (auto &atom : m->atoms()) {
+    TEST_ASSERT(atom->getIdx() == i);
+    i++;
+  }
 
-    // try refs
-    i=0;
-    for(auto &atom : m->atoms()) {
-      TEST_ASSERT(atom->getIdx() == i);
-      i++;
-    }
+  // try const refs
+  i = 0;
+  for (auto const &atom : m->atoms()) {
+    TEST_ASSERT(atom->getIdx() == i);
+    i++;
+  }
 
-    // try const refs
-    i=0;
-    for(auto const &atom : m->atoms()) {
-      TEST_ASSERT(atom->getIdx() == i);
-      i++;
-    }
+  const RWMol *cm = m;
+  i = 0;
+  for (auto atom : cm->atoms()) {
+    TEST_ASSERT(atom->getIdx() == i);
+    i++;
+  }
 
-    const RWMol *cm = m;
-    i = 0;
-    for(auto atom : cm->atoms()) {
-      TEST_ASSERT(atom->getIdx() == i);
-      i++;
-    }
+  i = 0;
+  for (auto bond : m->bonds()) {
+    TEST_ASSERT(bond->getIdx() == i);
+    i++;
+  }
 
-    i=0;
-    for(auto bond : m->bonds()) {
-      TEST_ASSERT(bond->getIdx() == i);
-      i++;
-    }
+  i = 0;
+  for (auto bond : cm->bonds()) {
+    TEST_ASSERT(bond->getIdx() == i);
+    i++;
+  }
 
-    i = 0;
-    for(auto bond : cm->bonds()) {
-      TEST_ASSERT(bond->getIdx() == i);
-      i++;
-    }
+  const auto atom = m->getAtomWithIdx(0);
+  i = 0;
+  for (const auto &nbri :
+       boost::make_iterator_range(m->getAtomNeighbors(atom))) {
+    const auto &nbr = (*m)[nbri];
+    TEST_ASSERT(nbr->getAtomicNum() == 6);
+    i++;
+  }
+  TEST_ASSERT(i == 2);
 
-    delete m;
-    
+  i = 0;
+  for (const auto &nbri : boost::make_iterator_range(m->getAtomBonds(atom))) {
+    const auto &bnd = (*m)[nbri];
+    TEST_ASSERT(bnd->getBondType() == Bond::SINGLE);
+    i++;
+  }
+  TEST_ASSERT(i == 2);
+
+  // non-const versions of the same things
+  i = 0;
+  for (const auto &nbri :
+       boost::make_iterator_range(m->getAtomNeighbors(atom))) {
+    auto nbr = (*m)[nbri];
+    TEST_ASSERT(nbr->getAtomicNum() == 6);
+    nbr->setAtomicNum(7);
+    nbr->setAtomicNum(6);
+    i++;
+  }
+  TEST_ASSERT(i == 2);
+
+  i = 0;
+  for (const auto &nbri : boost::make_iterator_range(m->getAtomBonds(atom))) {
+    auto bnd = (*m)[nbri];
+    TEST_ASSERT(bnd->getBondType() == Bond::SINGLE);
+    bnd->setBondType(Bond::DOUBLE);
+    bnd->setBondType(Bond::SINGLE);
+    i++;
+  }
+  TEST_ASSERT(i == 2);
+
+  delete m;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 // -------------------------------------------------------------------

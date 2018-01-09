@@ -448,15 +448,15 @@ class ROMol : public RDProps {
 
     <b>Usage</b>
     \code
-      ... molPtr is a const ROMol & ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::ADJ_ITER nbrIdx,endNbrs;
-      boost::tie(nbrIdx,endNbrs) = molPtr.getAtomNeighbors(atomPtr);
-      while(nbrIdx!=endNbrs){
-        const ATOM_SPTR at=molPtr[*nbrIdx];
-        ... do something with the Atom ...
-        ++nbrIdx;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomNeighbors(atomPtr))) {
+        const auto &nbr = (*m)[nbri];
+        // nbr is an atom pointer
       }
+
     \endcode
 
   */
@@ -468,26 +468,24 @@ class ROMol : public RDProps {
 
     <b>Usage</b>
     \code
-      ... molPtr is a const ROMol * ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::OEDGE_ITER beg,end;
-      boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-      while(beg!=end){
-        const BOND_SPTR bond=(*molPtr)[*beg];
-        ... do something with the Bond ...
-        ++beg;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomBonds(atomPtr))) {
+        const auto &nbr = (*m)[nbri];
+        // nbr is a bond pointer
       }
     \endcode
     or, if you need a non-const Bond *:
     \code
-      ... molPtr is a ROMol * ...
+      ... mol is a const ROMol & ...
       ... atomPtr is a const Atom * ...
-      ROMol::OEDGE_ITER beg,end;
-      boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-      while(beg!=end){
-        BOND_SPTR bond=(*molPtr)[*beg];
-        ... do something with the Bond ...
-        ++beg;
+      ... requires #include <boost/range/iterator_range.hpp>
+      for (const auto &nbri :
+           boost::make_iterator_range(m.getAtomBonds(atomPtr))) {
+        auto nbr = (*m)[nbri];
+        // nbr is a bond pointer
       }
     \endcode
 
