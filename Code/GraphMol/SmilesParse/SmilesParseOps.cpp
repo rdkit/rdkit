@@ -24,6 +24,7 @@ void ClearAtomChemicalProps(RDKit::Atom *atom) {
   TEST_ASSERT(atom);
   atom->setIsotope(0);
   atom->setFormalCharge(0);
+  atom->setNumExplicitHs(0);
 }
 
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {

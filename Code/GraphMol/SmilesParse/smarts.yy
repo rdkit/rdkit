@@ -562,9 +562,13 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
 | SIMPLE_ATOM_QUERY_TOKEN
 | simple_atom H_TOKEN number {
   $$->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND);
+  $$->setNoImplicit(true);
+  $$->setNumExplicitHs($3);
 }
 | simple_atom H_TOKEN {
   $$->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND);
+  $$->setNoImplicit(true);
+  $$->setNumExplicitHs(1);
 }
 ;
 

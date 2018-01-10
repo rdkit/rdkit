@@ -610,27 +610,74 @@ void testSmartsWrite() {
   Mol *mol;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Smarts Writer." << std::endl;
-  string smis[] = {
-      "[v3]", "n1cncc1", "c[OH]", "S(=,-[O])", "CC", "C=O", "[$(C=O)]",
-      "[C!$(C=O)]", "[C!$(C-[OH])]=O", "[C!$(C=O)]-[OH]", "O(-[#6])-C", "[NH2]",
-      "[NH1,nH1]", "[NH0,nH0]", "n", "[Nv3](=C)-[#6]", "C#N",
-      "[#9,#17,#35,#53]", "[SX2](-[#6])-C", "[SH]", "C=[SX1]", "C=N-O",
-      "[N!$(N=O)](-O)-C", "[N!$(N-O)]=O", "[NX3]-[NX3]", "C=N-[NX3]",
-      "N(=O)(O)[#6]", "[#6]-N=N-[#6]", "[N+]#N", "[#6]-N=[N+]=[N-]",
-      "S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]",
-      "N-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]",
-      "[NH2]-S(=,-[OX1;+0;-1])(=,-[OX1;+0;-1])-[#6]", "C(=O)-N", "C(=O)-[NH2]",
-      "C(=N)(-N)-[!#7]", "N=C=O", "N=C=S", "S-C#N", "C(=O)O-C",
-      "C-C(=O)[O;H1,-]", "c-C(=O)[O;H1,-]", "[#6]C(=O)[O;H,-1]",
-      "C1C(=O)NC(=O)NC1=O", "C(=O)(-N)-N", "N(-C(=O))-C=O", "C#[CH]", "n1cncc1",
-      "o1cccc1", "s1cccc1", "c1scnc1", "c1ocnc1", "n1ccccc1", "N1CCCCC1",
-      "N1CCNCC1", "O1CCNCC1", "N1C(=O)CC1", "[NX4]", "[nH]", "C(=N)(N)N",
-      "c1nnnn1", "O1CC1", "[C^3]",
-      "[$([NH2][CX4]),$([$([NH]([CX4])[CX4]);!$([NH]([CX4])[CX4]["
-      "O,N]);!$([NH]([CX4])[CX4][O,N])]),$([ND3]([CX4])([CX4])["
-      "CX4])]",    // this was sf.net issue 3496800
-      "[r6][r6]",  // this was sf.net issue 3496799
-      "EOS"};
+  string smis[] = {"[v3]",
+                   "n1cncc1",
+                   "c[OH]",
+                   "S(=,-[O])",
+                   "CC",
+                   "C=O",
+                   "[$(C=O)]",
+                   "[C!$(C=O)]",
+                   "[C!$(C-[OH])]=O",
+                   "[C!$(C=O)]-[OH]",
+                   "O(-[#6])-C",
+                   "[NH2]",
+                   "[NH1,nH1]",
+                   "[NH0,nH0]",
+                   "n",
+                   "[Nv3](=C)-[#6]",
+                   "C#N",
+                   "[#9,#17,#35,#53]",
+                   "[SX2](-[#6])-C",
+                   "[SH]",
+                   "C=[SX1]",
+                   "C=N-O",
+                   "[N!$(N=O)](-O)-C",
+                   "[N!$(N-O)]=O",
+                   "[NX3]-[NX3]",
+                   "C=N-[NX3]",
+                   "N(=O)(O)[#6]",
+                   "[#6]-N=N-[#6]",
+                   "[N+]#N",
+                   "[#6]-N=[N+]=[N-]",
+                   "S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])(-[#6])-[#6]",
+                   "N-S(=,-[OX1;+0,-1])(=,-[OX1;+0,-1])-[#6]",
+                   "[NH2]-S(=,-[OX1;+0;-1])(=,-[OX1;+0;-1])-[#6]",
+                   "C(=O)-N",
+                   "C(=O)-[NH2]",
+                   "C(=N)(-N)-[!#7]",
+                   "N=C=O",
+                   "N=C=S",
+                   "S-C#N",
+                   "C(=O)O-C",
+                   "C-C(=O)[O;H1,-]",
+                   "c-C(=O)[O;H1,-]",
+                   "[#6]C(=O)[O;H,-1]",
+                   "C1C(=O)NC(=O)NC1=O",
+                   "C(=O)(-N)-N",
+                   "N(-C(=O))-C=O",
+                   "C#[CH]",
+                   "n1cncc1",
+                   "o1cccc1",
+                   "s1cccc1",
+                   "c1scnc1",
+                   "c1ocnc1",
+                   "n1ccccc1",
+                   "N1CCCCC1",
+                   "N1CCNCC1",
+                   "O1CCNCC1",
+                   "N1C(=O)CC1",
+                   "[NX4]",
+                   "[nH]",
+                   "C(=N)(N)N",
+                   "c1nnnn1",
+                   "O1CC1",
+                   "[C^3]",
+                   "[$([NH2][CX4]),$([$([NH]([CX4])[CX4]);!$([NH]([CX4])[CX4]["
+                   "O,N]);!$([NH]([CX4])[CX4][O,N])]),$([ND3]([CX4])([CX4])["
+                   "CX4])]",    // this was sf.net issue 3496800
+                   "[r6][r6]",  // this was sf.net issue 3496799
+                   "EOS"};
 
   std::vector<std::string> diffSmi;
 
@@ -2356,6 +2403,11 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
 
+    TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getNumExplicitHs() == 3);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getNumExplicitHs() == 4);
+
     std::string pkl;
     MolPickler::pickleMol(*p, pkl);
     p.reset(new Mol(pkl));
@@ -2387,11 +2439,17 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(10)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
+
+    p->debugMol(std::cerr);
+    TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getNumExplicitHs() == 3);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getNumExplicitHs() == 4);
   }
 
   {  // make sure it gets cleared with more complex queries
     std::unique_ptr<ROMol> p(SmartsToMol(
-        "[12C,C][C,12C][12C;+][12C&+][C+,C][C,C+][C+&H][C+;H][!12C+]"));
+        "[12CH3,C][C,12C][12C;+][12C&+][C+,C][C,C+][C+&H][C+;H][!12C+]"));
     TEST_ASSERT(p);
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 0);
@@ -2403,6 +2461,8 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getNumExplicitHs() == 0);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
