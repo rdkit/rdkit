@@ -2318,6 +2318,95 @@ void testCactvsExtensions() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testChargesAndIsotopes() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing transfer of charge and isotope query info to the atoms"
+      << std::endl;
+  {
+    std::unique_ptr<ROMol> p(
+        SmartsToMol("[12C][12#6][12C+][12C+1][C+][C+1][12][+][C][#6][12CH2]["
+                    "12CH3+][CH4+]"));
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(1)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(2)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(9)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(2)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(4)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(5)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(9)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
+
+    std::string pkl;
+    MolPickler::pickleMol(*p, pkl);
+    p.reset(new Mol(pkl));
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(1)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(2)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(9)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
+
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(2)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(4)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(5)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(9)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(10)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
+    TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
+  }
+
+  {  // make sure it gets cleared with more complex queries
+    std::unique_ptr<ROMol> p(SmartsToMol(
+        "[12C,C][C,12C][12C;+][12C&+][C+,C][C,C+][C+&H][C+;H][!12C+]"));
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(2)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(3)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2361,5 +2450,6 @@ int main(int argc, char *argv[]) {
   testGithub1338();
 #endif
   testCactvsExtensions();
+  testChargesAndIsotopes();
   return 0;
 }

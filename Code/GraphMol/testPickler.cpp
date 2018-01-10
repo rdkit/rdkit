@@ -846,7 +846,7 @@ void testIssue3496759() {
       std::string smi2 = MolToSmiles(*m2, 1);
       std::string sma2 = MolToSmarts(*m2);
 
-      // std::cerr<<"smi match: "<<smi1<<" "<<smi2<<std::endl;
+      std::cerr << "smi match: " << smi1 << " " << smi2 << std::endl;
       TEST_ASSERT(smi1 == smi2);
       // std::cerr<<"sma match: "<<sma1<<" "<<sma2<<std::endl;
       TEST_ASSERT(sma1 == sma2);
