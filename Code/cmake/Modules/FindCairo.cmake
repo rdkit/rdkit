@@ -95,7 +95,6 @@ find_package_handle_standard_args(Cairo
 if(Cairo_FOUND AND NOT TARGET Cairo::Cairo)
   add_library(Cairo::Cairo INTERFACE IMPORTED)
   set_target_properties(Cairo::Cairo PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES  ${CAIRO_INCLUDE_DIRS}
-    INTERFACE_LINK_LIBRARIES       ${CAIRO_LIBRARIES})
+    INTERFACE_INCLUDE_DIRECTORIES  "${CAIRO_INCLUDE_DIRS}"
+    INTERFACE_LINK_LIBRARIES       "${CAIRO_LIBRARIES}")
 endif()
-
