@@ -130,14 +130,20 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
   return defaults.getString(key);
 }
 
+static const std::map<std::string, Atom::ChiralType> chilookup = {
+    {"unspecified", Atom::CHI_UNSPECIFIED},
+    {"cw", Atom::CHI_TETRAHEDRAL_CW},
+    {"ccw", Atom::CHI_TETRAHEDRAL_CCW},
+    {"other", Atom::CHI_OTHER}};
+static const std::map<Atom::ChiralType, std::string> inv_chilookup = {
+    {Atom::CHI_UNSPECIFIED, "unspecified"},
+    {Atom::CHI_TETRAHEDRAL_CW, "cw"},
+    {Atom::CHI_TETRAHEDRAL_CCW, "ccw"},
+    {Atom::CHI_OTHER, "other"}};
+
 void readAtom(RWMol *mol, const rj::Value &atomVal,
               const DefaultValueCache &atomDefaults) {
   PRECONDITION(mol, "no mol");
-  static const std::map<std::string, Atom::ChiralType> chilookup = {
-      {"unspecified", Atom::CHI_UNSPECIFIED},
-      {"cw", Atom::CHI_TETRAHEDRAL_CW},
-      {"ccw", Atom::CHI_TETRAHEDRAL_CCW},
-      {"other", Atom::CHI_OTHER}};
   Atom *at = new Atom(getIntDefaultValue("Z", atomVal, atomDefaults));
   at->setNoImplicit(true);
   at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
@@ -151,11 +157,13 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   mol->addAtom(at, updateLabel, takeOwnership);
 }
 
+static const std::map<unsigned int, Bond::BondType> bolookup = {
+    {0, Bond::ZERO}, {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
+static const std::map<Bond::BondType, unsigned int> inv_bolookup = {
+    {Bond::ZERO, 0}, {Bond::SINGLE, 1}, {Bond::DOUBLE, 2}, {Bond::TRIPLE, 3}};
 void readBond(RWMol *mol, const rj::Value &bondVal,
               const DefaultValueCache &bondDefaults, bool &needStereoLoop) {
   PRECONDITION(mol, "no mol");
-  static const std::map<unsigned int, Bond::BondType> bolookup = {
-      {0, Bond::ZERO}, {1, Bond::SINGLE}, {2, Bond::DOUBLE}, {3, Bond::TRIPLE}};
   const auto &aids = bondVal["atoms"].GetArray();
   unsigned int bid = mol->addBond(aids[0].GetInt(), aids[1].GetInt()) - 1;
   Bond *bnd = mol->getBondWithIdx(bid);
@@ -166,15 +174,20 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
   if (bondVal.HasMember("stereoAtoms")) needStereoLoop = true;
 }
 
+static const std::map<std::string, Bond::BondStereo> stereolookup = {
+    {"unspecified", Bond::STEREONONE},
+    {"cis", Bond::STEREOCIS},
+    {"trans", Bond::STEREOTRANS},
+    {"either", Bond::STEREOANY}};
+static const std::map<Bond::BondStereo, std::string> inv_stereolookup = {
+    {Bond::STEREONONE, "unspecified"},
+    {Bond::STEREOCIS, "cis"},
+    {Bond::STEREOTRANS, "trans"},
+    {Bond::STEREOANY, "either"}};
 void readBondStereo(Bond *bnd, const rj::Value &bondVal,
                     const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
 
-  static const std::map<std::string, Bond::BondStereo> stereolookup = {
-      {"unspecified", Bond::STEREONONE},
-      {"cis", Bond::STEREOCIS},
-      {"trans", Bond::STEREOTRANS},
-      {"either", Bond::STEREOANY}};
   const auto &miter = bondVal.FindMember("stereoAtoms");
   if (miter != bondVal.MemberEnd()) {
     const auto aids = miter->value.GetArray();
