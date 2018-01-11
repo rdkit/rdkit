@@ -2371,9 +2371,24 @@ void testChargesAndIsotopes() {
       << "Testing transfer of charge and isotope query info to the atoms"
       << std::endl;
   {
+    std::unique_ptr<ROMol> p(SmartsToMol("[14N@H+]"));  //, true));
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 14);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getNumExplicitHs() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
+  }
+  {
+    std::unique_ptr<ROMol> p(SmartsToMol("[!12C+]"));  //, true));
+    TEST_ASSERT(p);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 1);
+  }
+  {
     std::unique_ptr<ROMol> p(
         SmartsToMol("[12C][12#6][12C+][12C+1][C+][C+1][12][+][C][#6][12CH2]["
-                    "12CH3+][CH4+]"));
+                    "12CH3+][CH4+][14N@H+]"));
     TEST_ASSERT(p);
     TEST_ASSERT(p->getAtomWithIdx(0)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getFormalCharge() == 0);
@@ -2382,12 +2397,13 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(9)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2402,11 +2418,16 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(10)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
 
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
     TEST_ASSERT(p->getAtomWithIdx(11)->getNumExplicitHs() == 3);
     TEST_ASSERT(p->getAtomWithIdx(12)->getNumExplicitHs() == 4);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getNumExplicitHs() == 1);
+
+    TEST_ASSERT(p->getAtomWithIdx(13)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
 
     std::string pkl;
     MolPickler::pickleMol(*p, pkl);
@@ -2419,12 +2440,13 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(4)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(9)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(11)->getFormalCharge() == 1);
     TEST_ASSERT(p->getAtomWithIdx(12)->getFormalCharge() == 1);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 12);
@@ -2439,17 +2461,22 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(10)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(11)->getIsotope() == 12);
     TEST_ASSERT(p->getAtomWithIdx(12)->getIsotope() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getIsotope() == 14);
 
-    p->debugMol(std::cerr);
+    // p->debugMol(std::cerr);
     TEST_ASSERT(p->getAtomWithIdx(9)->getNumExplicitHs() == 0);
     TEST_ASSERT(p->getAtomWithIdx(10)->getNumExplicitHs() == 2);
     TEST_ASSERT(p->getAtomWithIdx(11)->getNumExplicitHs() == 3);
     TEST_ASSERT(p->getAtomWithIdx(12)->getNumExplicitHs() == 4);
+    TEST_ASSERT(p->getAtomWithIdx(13)->getNumExplicitHs() == 1);
+
+    TEST_ASSERT(p->getAtomWithIdx(13)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
   }
 
   {  // make sure it gets cleared with more complex queries
     std::unique_ptr<ROMol> p(SmartsToMol(
-        "[12CH3,C][C,12C][12C;+][12C&+][C+,C][C,C+][C+&H][C+;H][!12C+]"));
+        "[12CH3,C][C,12C][12C;+][12C&+][C+,C][C,C+][C+&H][C+;H][!12CH+]"));
     TEST_ASSERT(p);
     TEST_ASSERT(p->getAtomWithIdx(0)->getIsotope() == 0);
     TEST_ASSERT(p->getAtomWithIdx(1)->getIsotope() == 0);
@@ -2460,9 +2487,10 @@ void testChargesAndIsotopes() {
     TEST_ASSERT(p->getAtomWithIdx(5)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(6)->getFormalCharge() == 0);
     TEST_ASSERT(p->getAtomWithIdx(7)->getFormalCharge() == 0);
-    TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getFormalCharge() == 1);
 
     TEST_ASSERT(p->getAtomWithIdx(0)->getNumExplicitHs() == 0);
+    TEST_ASSERT(p->getAtomWithIdx(8)->getNumExplicitHs() == 1);
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -2508,8 +2536,8 @@ int main(int argc, char *argv[]) {
   testGithub893();
   testTransuranic();
   testGithub1338();
-#endif
   testCactvsExtensions();
+#endif
   testChargesAndIsotopes();
   return 0;
 }

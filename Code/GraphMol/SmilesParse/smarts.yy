@@ -109,7 +109,6 @@ mol: atomd {
   int sz     = molList->size();
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
-  $1->setProp(RDKit::common_properties::_SmilesStart,1);
   (*molList)[ sz ]->addAtom($1,true,true);
   //delete $1;
   $$ = sz;
@@ -165,7 +164,6 @@ mol: atomd {
 
 | mol SEPARATOR_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
-  $3->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom($3,true,true);
 }
 
@@ -226,7 +224,6 @@ mol: atomd {
 
 | mol branch {
   RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
-  m2_p->getAtomWithIdx(0)->setProp(RDKit::common_properties::_SmilesStart,1);
   // FIX: handle generic bonds here
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
   delete m2_p;
@@ -360,6 +357,24 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 | atom_expr point_query {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
+  if($2->getNumExplicitHs()){
+    if(!$1->getNumExplicitHs()){
+      $1->setNumExplicitHs($2->getNumExplicitHs());
+      $1->setNoImplicit(true);
+    } else if($1->getNumExplicitHs()!=$2->getNumExplicitHs()){
+      // conflicting queries...
+      $1->setNumExplicitHs(0);
+      $1->setNoImplicit(false);
+    }
+  }
+  if($2->getFormalCharge()){
+    if(!$1->getFormalCharge()){
+      $1->setFormalCharge($2->getFormalCharge());
+    } else if($1->getFormalCharge()!=$2->getFormalCharge()){
+      // conflicting queries...
+      $1->setFormalCharge(0);
+    }
+  }
   delete $2;
 }
 | point_query
@@ -480,27 +495,19 @@ atom_query:	simple_atom
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));
+  newQ->setNumExplicitHs($2);
   $$=newQ;
 }
 | H_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
+  newQ->setNumExplicitHs(1);
   $$=newQ;
-}
-| number simple_atom charge_spec {
-  $2->setIsotope($1);
-  $2->expandQuery(makeAtomIsotopeQuery($1),Queries::COMPOSITE_AND);
-  $2->setFormalCharge($3);
-  $2->expandQuery(makeAtomFormalChargeQuery($3),Queries::COMPOSITE_AND);
-  $$ = $2;
-}
-| simple_atom charge_spec {
-  $$->setFormalCharge($2);
-  $$->expandQuery(makeAtomFormalChargeQuery($2),Queries::COMPOSITE_AND);
 }
 | charge_spec {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery($1));
+  newQ->setFormalCharge($1);
   $$=newQ;
 }
 | AT_TOKEN AT_TOKEN {
@@ -560,16 +567,6 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
   $$->expandQuery(makeAtomAromaticQuery(),Queries::COMPOSITE_AND);
 }
 | SIMPLE_ATOM_QUERY_TOKEN
-| simple_atom H_TOKEN number {
-  $$->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND);
-  $$->setNoImplicit(true);
-  $$->setNumExplicitHs($3);
-}
-| simple_atom H_TOKEN {
-  $$->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND);
-  $$->setNoImplicit(true);
-  $$->setNumExplicitHs(1);
-}
 ;
 
 
