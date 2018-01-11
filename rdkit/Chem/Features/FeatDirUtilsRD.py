@@ -312,6 +312,7 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5):
     # in this case we should have two or more hydrogens we will simple use there directions
     res = []
     for hid in hydrogens:
+      hid = hid.GetIdx()
       bvec = conf.GetAtomPosition(hid)
       bvec -= cpt
       bvec.Normalize()
