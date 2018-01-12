@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -788,7 +788,10 @@ void testGitHubIssue910() {
     }
     MolOps::addHs(*m, false, false, &chiralAts);
     RDDepict::compute2DCoords(*m, nullptr, true);
-
+#if 0
+    m->setProp("_Name", "github910");
+    std::cerr << MolToMolBlock(*m);
+#endif
     // now look for close contacts.
     const Conformer &conf = m->getConformer();
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
@@ -949,6 +952,82 @@ void testGitHubIssue1286() {
     delete templ;
     delete mol;
   }
+}
+
+void testGithub1691() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github issue "
+         "1691: Acetylenic hydrogens not given appropriate 2D coordinates"
+      << std::endl;
+#if 1
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[F]1.[F]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+#endif
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[H]1.[H]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C#C"));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 2);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {
@@ -1136,8 +1215,6 @@ int main() {
   testIssue2303566();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
-
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1286: "
@@ -1146,6 +1223,8 @@ int main() {
   testGitHubIssue1286();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+#endif
+  testGithub1691();
 
   return (0);
 }

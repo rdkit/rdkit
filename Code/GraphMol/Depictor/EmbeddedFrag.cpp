@@ -27,18 +27,10 @@ const double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
 namespace {
-unsigned int getHeavyDegree(const RDKit::Atom *atom) {
+// returns the atomic degree to be used for coordinate generation
+unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
-  unsigned int res = 0;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = atom->getOwningMol().getAtomNeighbors(atom);
-  while (nbrIdx != endNbrs) {
-    if (atom->getOwningMol()[*nbrIdx]->getAtomicNum() != 1) ++res;
-    ++nbrIdx;
-  }
-  // special case: only explicit H attachments
-  if (res == 0 && atom->getAtomicNum() == 1) res = atom->getDegree();
-  return res;
+  return atom->getDegree();
 }
 }  // end of anonymous namespace
 
@@ -333,7 +325,7 @@ void EmbeddedFrag::updateNewNeighs(
   d_eatoms[aid].neighs.insert(d_eatoms[aid].neighs.end(), hIndices.begin(),
                               hIndices.end());
 
-  int deg = getHeavyDegree(dp_mol->getAtomWithIdx(aid));
+  int deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
   // order the neigbors by their CIPranks, if the number is between > 0 but less
   // than 3
   if ((d_eatoms[aid].neighs.size() > 0) &&
@@ -810,7 +802,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
 
   // find out what angle we want to add bond at
   const RDKit::Atom *atm = dp_mol->getAtomWithIdx(toAid);
-  int deg = getHeavyDegree(atm);
+  int deg = getDepictDegree(atm);
 
   double angle = computeSubAngle(deg, atm->getHybridization());
 
@@ -1402,7 +1394,7 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     for (RDKit::ROMol::ConstAtomIterator ai = dp_mol->beginAtoms();
          ai != dp_mol->endAtoms(); ai++) {
       unsigned int caid = (*ai)->getIdx();
-      if ((getHeavyDegree(*ai) == 4) &&
+      if ((getDepictDegree(*ai) == 4) &&
           (!(dp_mol->getRingInfo()->numAtomRings(caid)))) {
         RDKit::INT_VECT aids, bids;
         getNbrAtomAndBondIds(caid, dp_mol, aids, bids);
@@ -1613,7 +1605,7 @@ void _recurseDegTwoRingAtoms(unsigned int aid, const RDKit::ROMol *mol,
   int bondId;
   RDKit::INT_VECT nbrs;
   while (atomBonds.first != atomBonds.second) {
-    const RDKit::Bond* bnd = (*mol)[*atomBonds.first];
+    const RDKit::Bond *bnd = (*mol)[*atomBonds.first];
     bondId = bnd->getIdx();
     if (mol->getRingInfo()->numBondRings(bondId)) {
       nbrs.push_back(bnd->getOtherAtomIdx(aid));
@@ -1721,7 +1713,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
 
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
-  unsigned int deg = getHeavyDegree(mol->getAtomWithIdx(aid));
+  unsigned int deg = getDepictDegree(mol->getAtomWithIdx(aid));
   CHECK_INVARIANT(deg == 1, "");
   unsigned int res = 0;
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -1780,8 +1772,8 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
-  unsigned int deg1 = getHeavyDegree(dp_mol->getAtomWithIdx(aid1));
-  unsigned int deg2 = getHeavyDegree(dp_mol->getAtomWithIdx(aid2));
+  unsigned int deg1 = getDepictDegree(dp_mol->getAtomWithIdx(aid1));
+  unsigned int deg2 = getDepictDegree(dp_mol->getAtomWithIdx(aid2));
   bool fixed1 = d_eatoms[aid1].df_fixed;
   bool fixed2 = d_eatoms[aid2].df_fixed;
   if ((deg1 > 1 || fixed1) && (deg2 > 1 || fixed2)) {
