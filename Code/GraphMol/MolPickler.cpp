@@ -29,7 +29,7 @@ using boost::int32_t;
 using boost::uint32_t;
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 8;
+const int32_t MolPickler::versionMajor = 9;
 const int32_t MolPickler::versionMinor = 0;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
@@ -778,11 +778,11 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol) {
   streamRead(ss, patchVersion);
   if (majorVersion > versionMajor ||
       (majorVersion == versionMajor && minorVersion > versionMinor)) {
-    BOOST_LOG(rdWarningLog) << "Depickling from a version number ("
-                            << majorVersion << "." << minorVersion << ")"
-                            << "that is higher than our version ("
-                            << versionMajor << "." << versionMinor
-                            << ").\nThis probably won't work." << std::endl;
+    BOOST_LOG(rdWarningLog)
+        << "Depickling from a version number (" << majorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
   }
   majorVersion = 1000 * majorVersion + minorVersion * 10 + patchVersion;
   if (majorVersion == 1) {
@@ -1220,13 +1220,12 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
 
   streamWrite(ss, flags);
 
-  if (!atom->hasQuery()) {
-    std::stringstream tss(std::ios_base::binary | std::ios_base::out |
-                          std::ios_base::in);
-    int32_t propFlags = _pickleAtomData(tss, atom);
-    streamWrite(ss, propFlags);
-    ss.write(tss.str().c_str(), tss.str().size());
-  } else {
+  std::stringstream tss(std::ios_base::binary | std::ios_base::out |
+                        std::ios_base::in);
+  int32_t propFlags = _pickleAtomData(tss, atom);
+  streamWrite(ss, propFlags);
+  ss.write(tss.str().c_str(), tss.str().size());
+  if (atom->hasQuery()) {
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryAtom *>(atom)->getQuery());
     streamWrite(ss, ENDQUERY);
@@ -1390,7 +1389,10 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     }
 
   } else if (version > 5000) {
-    // we have a query:
+    // we have a query
+    if (version >= 9000) {
+      _unpickleAtomData(ss, atom, version);
+    }
     streamRead(ss, tag, version);
     if (tag != BEGINQUERY) {
       throw MolPicklerException("Bad pickle format: BEGINQUERY tag not found.");
@@ -1400,7 +1402,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     if (tag != ENDQUERY) {
       throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
     }
-    atom->setNumExplicitHs(0);
+    // atom->setNumExplicitHs(0);
   }
 
   if (version > 5000) {

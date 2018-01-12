@@ -20,6 +20,13 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+void ClearAtomChemicalProps(RDKit::Atom *atom) {
+  TEST_ASSERT(atom);
+  atom->setIsotope(0);
+  atom->setFormalCharge(0);
+  atom->setNumExplicitHs(0);
+}
+
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   // github #786 and #1652: if the ring closure comes after a branch,
   // the stereochem is wrong.
@@ -238,7 +245,7 @@ bool isUnsaturated(const Atom *atom, const RWMol *mol) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol->getAtomBonds(atom);
   while (beg != end) {
-    const Bond* bond = (*mol)[*beg];
+    const Bond *bond = (*mol)[*beg];
     ++beg;
     if (bond->getBondType() != Bond::SINGLE) return true;
   }
