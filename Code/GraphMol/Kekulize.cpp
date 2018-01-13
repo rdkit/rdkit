@@ -133,7 +133,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         // valence calculation to determine the number of hydrogens below
         makeSingle.push_back(bond);
       } else {
-        int bondContrib = std::lround(bond->getValenceContrib(at));
+        int bondContrib = int(bond->getValenceContrib(at));
         sbo += bondContrib;
         if (!bondContrib) ++nToIgnore;
       }
