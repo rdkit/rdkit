@@ -960,7 +960,7 @@ void testGithub1691() {
   {
     SmilesParserParams ps;
     ps.removeHs = false;
-    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[F]1.[F]2", ps));
+    RWMOL_SPTR mol(SmilesToMol("C1#C2.[F]1.[F]2", ps));
 
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 4);
@@ -983,7 +983,7 @@ void testGithub1691() {
   {
     SmilesParserParams ps;
     ps.removeHs = false;
-    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[H]1.[H]2", ps));
+    RWMOL_SPTR mol(SmilesToMol("C1#C2.[H]1.[H]2", ps));
 
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 4);
@@ -1003,7 +1003,7 @@ void testGithub1691() {
     TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
   }
   {
-    std::unique_ptr<RWMol> mol(SmilesToMol("C#C"));
+    RWMOL_SPTR mol(SmilesToMol("C#C"));
 
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 2);
