@@ -91,6 +91,8 @@ void test1() {
     TEST_ASSERT(m->getConformer(1).is3D());
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
                 std::string("example 2"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsotope() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope() == 35);
   }
 
   {

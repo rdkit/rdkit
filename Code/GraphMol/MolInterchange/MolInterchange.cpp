@@ -149,6 +149,7 @@ void readAtom(RWMol *mol, const rj::Value &atomVal,
   at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
+  at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
   std::string stereo = getStringDefaultValue("stereo", atomVal, atomDefaults);
   if (chilookup.find(stereo) == chilookup.end())
     throw FileParseException("Bad Format: bad stereo value for atom");
