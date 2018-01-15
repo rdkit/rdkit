@@ -632,7 +632,11 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   delete mol;
 
-  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo assignment
+  // The remaining examples are for github #1614 :
+  // AssignStereochemistry incorrectly removing CIS/TRANS bond stereo
+
+  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
+  // assignment
   smi = "CC(F)=CC(Cl)C";
   mol = SmilesToMol(smi);
   mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
@@ -671,22 +675,25 @@ void testChiralityCleanup() {
   TEST_ASSERT(MolToSmiles(*mol, true) == "FC=C1CCCCC1");
   delete mol;
 
-  ///////////////////////////
-  // Pseudo-stereo test cases
-  // - bond stereo dependent on other bond stereo breaking symmetry - DOESN'T CURRENTLY WORK
-  // - bond stereo dependent on atom stereo breaking symmetry - DOESN'T CURRENTLY WORK
-  // - atom stereo dependent on other atom stereo breaking symmetry - WORKS
-  // - atom stereo dependent on bond stereo breaking symmetry - WORKS
-  ///////////////////////////
+///////////////////////////
+// Pseudo-stereo test cases
+// - bond stereo dependent on other bond stereo breaking symmetry - DOESN'T
+// CURRENTLY WORK
+// - bond stereo dependent on atom stereo breaking symmetry - DOESN'T CURRENTLY
+// WORK
+// - atom stereo dependent on other atom stereo breaking symmetry - WORKS
+// - atom stereo dependent on bond stereo breaking symmetry - WORKS
+///////////////////////////
 
-  // Everything ifdef'd USE_NEW_STEREOCHEMISTRY are test cases that
-  // should 'hopefully' work when switching to the new_canon.h ranking
-  // for stereo perception. However, making USE_NEW_STEREOCHEMISTRY
-  // copasetic with the current behavior is non-trivial, possibly
-  // impossible?
+// Everything ifdef'd USE_NEW_STEREOCHEMISTRY are test cases that
+// should 'hopefully' work when switching to the new_canon.h ranking
+// for stereo perception. However, making USE_NEW_STEREOCHEMISTRY
+// copasetic with the current behavior is non-trivial, possibly
+// impossible?
 
-  // bond stereo dependent on other bond stereo breaking symmetry
-  // cleanIt=true, force=true should NOT remove this trickier case of pseudo-stereo
+// bond stereo dependent on other bond stereo breaking symmetry
+// cleanIt=true, force=true should NOT remove this trickier case of
+// pseudo-stereo
 #ifdef USE_NEW_STEREOCHEMISTRY
   smi = "CCC=CC(C=CCC)=C(CC)CO";
   mol = SmilesToMol(smi);
@@ -754,7 +761,8 @@ void testChiralityCleanup() {
 
 #ifdef USE_NEW_STEREOCHEMISTRY
   // bond stereo dependent on atom stereo breaking symmetry
-  // cleanIt=true, force=true should NOT remove this trickier case of pseudo-stereo
+  // cleanIt=true, force=true should NOT remove this trickier case of
+  // pseudo-stereo
   smi = "CCC(CO)=C([C@H](C)F)[C@@H](C)F";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
@@ -767,7 +775,8 @@ void testChiralityCleanup() {
   delete mol;
 #endif
 
-  // cleanIt=true, force=true should remove this manual assignment of bond stereochemistry since it's a pseudo-stereo center
+  // cleanIt=true, force=true should remove this manual assignment of bond
+  // stereochemistry since it's a pseudo-stereo center
   smi = "CCC(CO)=C([C@@H](C)F)[C@@H](C)F";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
@@ -779,7 +788,8 @@ void testChiralityCleanup() {
   delete mol;
 
   // atom stereo dependent on other atom stereo breaking symmetry
-  // cleanIt=true, force=true should remove this manual assignment of atom stereochemistry since it's a pseudo-stereo center
+  // cleanIt=true, force=true should remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
   smi = "C[C@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getRingInfo()->isAtomInRingOfSize(3, 6));
@@ -791,10 +801,12 @@ void testChiralityCleanup() {
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(MolToSmiles(*mol, true) == "C[C@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1");
+  TEST_ASSERT(MolToSmiles(*mol, true) ==
+              "C[C@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1");
   delete mol;
 
-  // cleanIt=true, force=true should NOT remove this manual assignment of atom stereochemistry since it's a pseudo-stereo center
+  // cleanIt=true, force=true should NOT remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
   smi = "C[C@@H]1CC(N2CCc3ccc(N)cc3C2)C[C@H](C)C1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getRingInfo()->isAtomInRingOfSize(3, 6));
@@ -806,11 +818,13 @@ void testChiralityCleanup() {
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-  TEST_ASSERT(MolToSmiles(*mol, true) == "C[C@H]1C[C@@H](C)C[C@H](N2CCc3ccc(N)cc3C2)C1");
+  TEST_ASSERT(MolToSmiles(*mol, true) ==
+              "C[C@H]1C[C@@H](C)C[C@H](N2CCc3ccc(N)cc3C2)C1");
   delete mol;
 
   // atom stereo dependent on bond stereo breaking symmetry
-  // cleanIt=true, force=true should remove this manual assignment of atom stereochemistry since it's a pseudo-stereo center
+  // cleanIt=true, force=true should remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
   smi = "C/C=C/C(/C=C/C)(CC)CO";
   mol = SmilesToMol(smi);
   chiral_center = mol->getAtomWithIdx(3);
@@ -824,7 +838,8 @@ void testChiralityCleanup() {
   delete mol;
 
   // atom stereo dependent on bond stereo breaking symmetry
-  // cleanIt=true, force=true should NOT remove this manual assignment of atom stereochemistry since it's a pseudo-stereo center
+  // cleanIt=true, force=true should NOT remove this manual assignment of atom
+  // stereochemistry since it's a pseudo-stereo center
   smi = "C/C=C\\C(/C=C/C)(CC)CO";
   mol = SmilesToMol(smi);
   chiral_center = mol->getAtomWithIdx(3);

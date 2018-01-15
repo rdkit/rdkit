@@ -6938,8 +6938,9 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -6978,11 +6979,39 @@ void testGithub1703() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1614() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue "
+                          "1614: AssignStereochemistry incorrectly removing "
+                          "CIS/TRANS bond stereo"
+                       << std::endl;
+  {
+    RWMol m;
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(8), true, true);
+    m.addBond(0, 1, Bond::SINGLE);
+    m.addBond(2, 3, Bond::SINGLE);
+    m.addBond(1, 2, Bond::DOUBLE);
+    m.getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m.getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
+    m.updatePropertyCache();
+
+    bool force = true, cleanIt = true;
+    MolOps::assignStereochemistry(m, cleanIt, force);
+
+    m.debugMol(std::cerr);
+    TEST_ASSERT(m.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -7080,9 +7109,10 @@ int main() {
   testGithub1478();
   testGithub1439();
   testGithub1281();
-#endif
   testGithub1605();
   testGithub1703();
+#endif
+  testGithub1614();
 
   return 0;
 }
