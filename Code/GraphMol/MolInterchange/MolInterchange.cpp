@@ -415,6 +415,23 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
 
   return res;
 }
+
+void initAtomDefaults(DefaultValueCache &atomDefaults, rj::Value &rjDefaults) {
+  // "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified",
+  // "nrad": 0, "isotope": 0},
+  atomDefaults.intMap["Z"] = 6;
+  atomDefaults.intMap["impHs"] = 0;
+  atomDefaults.intMap["chg"] = 0;
+  atomDefaults.intMap["nRad"] = 0;
+  atomDefaults.intMap["isotope"] = 0;
+  atomDefaults.stringMap["stereo"] = "unspecified";
+}
+void initBondDefaults(DefaultValueCache &bondDefaults, rj::Value &rjDefaults) {
+  // "bondDefaults": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []},
+  bondDefaults.intMap["bo"] = 1;
+  bondDefaults.stringMap["stereo"] = "unspecified";
+}
+
 }  // end of anonymous namespace
 
 std::vector<boost::shared_ptr<RWMol>> JSONDataStreamToMols(
@@ -433,5 +450,14 @@ std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
   doc.Parse(jsonBlock.c_str());
   return (DocToMols(doc));
 }
+
+std::string MolsToJSONData(const std::vector<const ROMol *> &mols) {
+  std::string res = "";
+  DefaultValueCache atomDefaults, bondDefaults;
+  initAtomDefaults(atomDefaults);
+  initBondDefaults(bondDefaults);
+  return res;
+};
+
 }  // end of namespace MolInterchange
 }  // end of namespace RDKit
