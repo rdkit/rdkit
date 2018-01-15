@@ -1045,8 +1045,8 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       }
     }
     if (!cleanIt && hasStereoBonds) {
-      break; // no reason to keep iterating if we've already
-             // determined there are stereo bonds to consider
+      break;  // no reason to keep iterating if we've already
+              // determined there are stereo bonds to consider
     }
   }
   UINT_VECT atomRanks;
@@ -1085,7 +1085,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   if (cleanIt) {
     // if the ranks are needed again, this will force them to be
     // re-calculated based on the stereo calculated above.
-    atomRanks.clear();
+    // atomRanks.clear();
 
     for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
@@ -1104,7 +1104,6 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
           !atom->hasProp(common_properties::_CIPCode) &&
           (!possibleSpecialCases[atom->getIdx()] ||
            !atom->hasProp(common_properties::_ringStereoAtoms))) {
-
         atom->setChiralTag(Atom::CHI_UNSPECIFIED);
 
         // If the atom has an explicit hydrogen and no charge, that H
@@ -1135,7 +1134,6 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       if ((*bondIt)->getBondType() == Bond::DOUBLE) {
         if ((*bondIt)->getStereo() == Bond::STEREOCIS ||
             (*bondIt)->getStereo() == Bond::STEREOTRANS) {
-
           if (!atomRanks.size()) {
             Chirality::assignAtomCIPRanks(mol, atomRanks);
           }
@@ -1152,9 +1150,11 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
           // graph as the 'Note' in the doc string of this function
           // indicates is a pre-condition.
           if ((begAtomNeighbors.size() == 2 &&
-               atomRanks[begAtomNeighbors[0]] == atomRanks[begAtomNeighbors[1]]) ||
+               atomRanks[begAtomNeighbors[0]] ==
+                   atomRanks[begAtomNeighbors[1]]) ||
               (endAtomNeighbors.size() == 2 &&
-               atomRanks[endAtomNeighbors[0]] == atomRanks[endAtomNeighbors[1]])) {
+               atomRanks[endAtomNeighbors[0]] ==
+                   atomRanks[endAtomNeighbors[1]])) {
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
