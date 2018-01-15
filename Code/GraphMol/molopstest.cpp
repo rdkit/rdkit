@@ -7019,6 +7019,24 @@ void testGithub1614() {
       TEST_ASSERT(smi == "[H]/C(F)=C(/[H])Cl");
     }
   }
+  {
+    RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\C", false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
+    m->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m->getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOCIS);
+
+    {
+      RWMol nm(*m);
+      bool force = true, cleanIt = true;
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+
+      nm.debugMol(std::cerr);
+    }
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -7026,7 +7044,7 @@ int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
