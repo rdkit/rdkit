@@ -336,7 +336,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   }
 }
 
-void AssignHsPDBInfo(RWMol &mol) {
+void AssignHsResidueInfo(RWMol &mol) {
 
   int max_serial = 0;
   unsigned int stopIdx = mol.getNumAtoms();
@@ -399,7 +399,7 @@ void AssignHsPDBInfo(RWMol &mol) {
 namespace MolOps {
 
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
-           const UINT_VECT *onlyOnAtoms) {
+           const UINT_VECT *onlyOnAtoms, bool residueInfo) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -473,13 +473,13 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     newAt->updatePropertyCache();
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
-  AssignHsPDBInfo(mol);
+  if (residueInfo) AssignHsResidueInfo(mol);
 }
 
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
-             const UINT_VECT *onlyOnAtoms) {
+             const UINT_VECT *onlyOnAtoms, bool residueInfo) {
   RWMol *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords, onlyOnAtoms);
+  addHs(*res, explicitOnly, addCoords, onlyOnAtoms, residueInfo);
   return static_cast<ROMol *>(res);
 };
 
