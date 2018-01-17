@@ -163,7 +163,7 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
                 of the added Hs will be used.
     \param onlyOnAtoms   (optional) if provided, this should be a vector of
                 IDs of the atoms that will be considered for H addition.
-    \param residueInfo   (optional) if this is true, add residue info to
+    \param addResidueInfo   (optional) if this is true, add residue info to
                 hydrogen atoms (useful for PDB files).
 
     \return the new molecule
@@ -177,11 +177,11 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
  */
 ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
              bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL,
-             bool residueInfo = false);
+             bool addResidueInfo = false);
 //! \overload
 // modifies the molecule in place
 void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
-           const UINT_VECT *onlyOnAtoms = NULL, bool residueInfo = false);
+           const UINT_VECT *onlyOnAtoms = NULL, bool addResidueInfo = false);
 
 //! returns a copy of a molecule with hydrogens removed
 /*!
