@@ -3745,6 +3745,13 @@ void testPDBFile() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 17.047));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 14.099));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
+
+    // test adding hydrogens
+    ROMol *nm = MolOps::addHs(*m, false, false, NULL, true);
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(nm->getAtomWithIdx(nm->getNumAtoms()-1)->getMonomerInfo());
+    TEST_ASSERT(info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(info->getName() == " H7 ");
+    TEST_ASSERT(info->getResidueName() == "ASN");
   }
 
   {
