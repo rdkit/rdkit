@@ -11,9 +11,11 @@
 #include <list>
 #include "QueryAtom.h"
 #include "QueryOps.h"
+#include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit {
 
@@ -333,11 +335,71 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       break;
   }
 }
+
+void AssignHsResidueInfo(RWMol &mol) {
+
+  int max_serial = 0;
+  unsigned int stopIdx = mol.getNumAtoms();
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *) (mol.getAtomWithIdx(aidx)->getMonomerInfo());
+    if (info &&
+        info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
+        info->getSerialNumber() > max_serial) {
+      max_serial = info->getSerialNumber();
+    }
+  }
+
+  AtomPDBResidueInfo *current_info = 0;
+  int current_h_id = 0;
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    Atom *newAt = mol.getAtomWithIdx(aidx);
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+      ROMol::ADJ_ITER begin, end;
+      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
+      while (begin != end) {
+        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
+          // Make all Hs unique - increment id even for existing
+          ++current_h_id;
+          // skip if hyrogen already has PDB info
+          AtomPDBResidueInfo *h_info = (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)->getMonomerInfo();
+          if (h_info && h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE)
+            continue;
+          // the hydrogens have unique names on residue basis (H1, H2, ...)
+          if(!current_info ||
+             current_info->getResidueNumber() != info->getResidueNumber() ||
+             current_info->getChainId() !=  info->getChainId()) {
+            current_h_id = 1;
+            current_info = info;
+          }
+          std::string h_label = boost::lexical_cast<std::string>(current_h_id);
+          if (h_label.length() > 3)
+            h_label = h_label.substr(h_label.length()-3, 3);
+          while (h_label.length() < 3)
+            h_label = h_label + " ";
+          h_label = "H" + h_label;
+          // wrap around id to '3H12'
+          h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(h_label, max_serial, "", info->getResidueName(),
+                                                               info->getResidueNumber(), info->getChainId(), "",
+                                                               info->getIsHeteroAtom());
+          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
+
+          ++max_serial;
+
+        }
+        ++begin;
+      }
+    }
+  }
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
+
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
-           const UINT_VECT *onlyOnAtoms) {
+           const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -410,11 +472,14 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // update the atom's derived properties (valence count, etc.)
     newAt->updatePropertyCache();
   }
+  // take care of AtomPDBResidueInfo for Hs if root atom has it
+  if (addResidueInfo) AssignHsResidueInfo(mol);
 }
+
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
-             const UINT_VECT *onlyOnAtoms) {
+             const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
   RWMol *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords, onlyOnAtoms);
+  addHs(*res, explicitOnly, addCoords, onlyOnAtoms, addResidueInfo);
   return static_cast<ROMol *>(res);
 };
 

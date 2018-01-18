@@ -301,12 +301,12 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
-             python::object onlyOnAtoms) {
+             python::object onlyOnAtoms, bool addResidueInfo) {
   rdk_auto_ptr<std::vector<unsigned int> > onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get());
+  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(), addResidueInfo);
   return res;
 }
 int getSSSR(ROMol &mol) {
@@ -931,8 +931,11 @@ struct molops_wrapper {
     - addCoords: (optional) if this toggle is set, The Hs will have 3D coordinates\n\
       set.  Default value is 0 (no 3D coords).\n\
 \n\
-    - onlyOnHs: (optional) if this sequence is provided, only these atoms will be\n\
+    - onlyOnAtoms: (optional) if this sequence is provided, only these atoms will be\n\
       considered to have Hs added to them\n\
+\n\
+    - addResidueInfo: (optional) if this is true, add residue info to\n\
+      hydrogen atoms (useful for PDB files).\n\
 \n\
   RETURNS: a new molecule with added Hs\n\
 \n\
@@ -947,7 +950,8 @@ struct molops_wrapper {
     python::def("AddHs", addHs,
                 (python::arg("mol"), python::arg("explicitOnly") = false,
                  python::arg("addCoords") = false,
-                 python::arg("onlyOnAtoms") = python::object()),
+                 python::arg("onlyOnAtoms") = python::object(),
+                 python::arg("addResidueInfo") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
