@@ -637,13 +637,33 @@ void testChiralityCleanup() {
 
   // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
   // assignment
+  smi = "CC=CC(Cl)C";
+  mol = SmilesToMol(smi);
+  mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+  mol->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+  std::cerr << "--------------------------" << std::endl;
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  std::cerr << "--------------------------" << std::endl;
+  MolOps::assignStereochemistry(*mol, true, true);
+  std::cerr << MolToSmiles(*mol, true) << std::endl;
+  TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C/C(C)Cl");
+  delete mol;
+
+  // cleanIt=true, force=true should NOT remove this manual cis/trans stereo
+  // assignment
   smi = "CC(F)=CC(Cl)C";
   mol = SmilesToMol(smi);
   mol->getAtomWithIdx(4)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(2)->setStereoAtoms(2, 4);
   mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+  std::cerr << "--------------------------" << std::endl;
+  MolOps::setDoubleBondNeighborDirections(*mol);
+  std::cerr << "--------------------------" << std::endl;
   MolOps::assignStereochemistry(*mol, true, true);
+  std::cerr << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "C/C(F)=C/[C@H](C)Cl");
   delete mol;
 
@@ -653,6 +673,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(2)->setStereoAtoms(2, 4);
   mol->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(MolToSmiles(*mol, true) == "FC(F)=C(Cl)Cl");
   delete mol;
@@ -662,6 +683,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
   mol->getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(MolToSmiles(*mol, true) == "FC=C1CCCCC1");
   delete mol;
@@ -671,6 +693,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(mol->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
   mol->getBondWithIdx(5)->setStereoAtoms(4, 7);
   mol->getBondWithIdx(5)->setStereo(Bond::STEREOCIS);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(MolToSmiles(*mol, true) == "FC=C1CCCCC1");
   delete mol;
@@ -709,6 +732,7 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
   mol->getBondWithIdx(8)->setStereo(Bond::STEREOCIS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(\\C=C\\CC)=C(\\CC)CO");
@@ -722,6 +746,7 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
   mol->getBondWithIdx(8)->setStereo(Bond::STEREOTRANS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(\\C=C\\CC)=C(\\CC)CO");
@@ -743,7 +768,9 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(10)->setStereoAtoms(11, 12);
   mol->getBondWithIdx(10)->setStereo(Bond::STEREOCIS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
+  BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
   delete mol;
 
@@ -755,6 +782,7 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(8)->setStereoAtoms(3, 10);
   mol->getBondWithIdx(8)->setStereo(Bond::STEREOCIS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C=C\\C(/C=C\\CC)=C(CC)CO");
   delete mol;
@@ -769,6 +797,7 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(4)->setStereoAtoms(1, 6);
   mol->getBondWithIdx(4)->setStereo(Bond::STEREOCIS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   BOOST_LOG(rdInfoLog) << MolToSmiles(*mol, true) << std::endl;
   TEST_ASSERT(MolToSmiles(*mol, true) == "CC/C(CO)=C(/[C@@H](C)F)[C@H](C)F");
@@ -783,6 +812,7 @@ void testChiralityCleanup() {
   mol->getBondWithIdx(4)->setStereoAtoms(1, 6);
   mol->getBondWithIdx(4)->setStereo(Bond::STEREOCIS);
 
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(MolToSmiles(*mol, true) == "CCC(CO)=C([C@@H](C)F)[C@@H](C)F");
   delete mol;
@@ -799,6 +829,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(!chiral_center->getIsAromatic());
 
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(MolToSmiles(*mol, true) ==
@@ -816,6 +847,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(!chiral_center->getIsAromatic());
 
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
   TEST_ASSERT(MolToSmiles(*mol, true) ==
@@ -832,6 +864,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(chiral_center->getDegree() == 4);
 
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C/C(/C=C/C)(CC)CO");
@@ -847,6 +880,7 @@ void testChiralityCleanup() {
   TEST_ASSERT(chiral_center->getDegree() == 4);
 
   chiral_center->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::setDoubleBondNeighborDirections(*mol);
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
   TEST_ASSERT(MolToSmiles(*mol, true) == "C/C=C\\[C@@](/C=C/C)(CC)CO");

@@ -26,6 +26,7 @@ class ROMol;
 class RWMol;
 class Atom;
 class Bond;
+class Conformer;
 typedef std::vector<double> INVAR_VECT;
 typedef INVAR_VECT::iterator INVAR_VECT_I;
 typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
@@ -820,6 +821,7 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId = -1,
   \param confId               the conformer to use
 */
 void detectBondStereochemistry(ROMol &mol, int confId = -1);
+void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf = NULL);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
 /*!
