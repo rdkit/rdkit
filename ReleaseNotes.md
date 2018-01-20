@@ -1,3 +1,26 @@
+# Release_2017.09.3
+(Changes relative to Release_2017.09.2)
+
+## Acknowledgements:
+Jason Biggs, Brian Kelley, Noel O'Boyle, Paolo Tosco
+
+## Bug Fixes:
+  - Missed symmetrization in R-Group decomposition
+ (github issue #1659 from bp-kelley)
+  - Acetylenic hydrogens not given appropriate 2D coordinates
+ (github issue #1691 from jasondbiggs)
+  - Warning on import of rgroup decomposition package
+ (github issue #1695 from greglandrum)
+  - AUTOCORR2D.h not installed unless RDK_BUILD_DESCRIPTORS3D but is required
+ (github issue #1702 from baoilleach)
+  - Dative bonds interfere with kekulization and the perception of aromaticity
+ (github issue #1703 from greglandrum)
+  - bonds that are STEREOCIS or STEREOTRANS cannot be depickled
+ (github issue #1710 from greglandrum)
+  - Added dependency from Boost headers to PgSQL CMakeLists.txt
+ (github pull #1717 from ptosco)
+
+
 # Release_2017.09.2
 (Changes relative to Release_2017.09.1)
 
