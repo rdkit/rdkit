@@ -25,6 +25,7 @@ option(RDK_PGSQL_STATIC "statically link rdkit libraries into the PostgreSQL car
 option(RDK_BUILD_CONTRIB "build the Contrib directory" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
+option(RDK_INSTALL_PYTHON_TESTS "install the rdkit Python tests with the wrappers" OFF )
 option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching (requires boost.thread)" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" ON )
@@ -200,17 +201,27 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       )
     endif (NOT PYTHON_INSTDIR)
     message("Python Install directory ${PYTHON_INSTDIR}")
-    install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
-      COMPONENT python
-      PATTERN ".svn" EXCLUDE
-      PATTERN "test_data" EXCLUDE
-      PATTERN "testData" EXCLUDE
-      PATTERN "test_list*" EXCLUDE
-      PATTERN "CMake*" EXCLUDE
-      PATTERN "Basement" EXCLUDE
-      PATTERN "UnitTest*" EXCLUDE
-      )
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
+    if(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+        )
+    else(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "test_data" EXCLUDE
+        PATTERN "testData" EXCLUDE
+        PATTERN "test_list*" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+        PATTERN "UnitTest*" EXCLUDE
+        )
+    endif(RDK_INSTALL_PYTHON_TESTS)
+
   endif(RDK_INSTALL_INTREE)
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
@@ -345,6 +356,11 @@ if(NOT RDK_INSTALL_INTREE)
         PATTERN ".svn" EXCLUDE
         PATTERN "test_list*" EXCLUDE
         PATTERN "CMake*" EXCLUDE
+        )
+    install(DIRECTORY Scripts DESTINATION
+        ${RDKit_ShareDir}
+        COMPONENT data
+        PATTERN ".svn" EXCLUDE
         )
   endif(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES README license.txt
