@@ -357,11 +357,22 @@ if(NOT RDK_INSTALL_INTREE)
         PATTERN "test_list*" EXCLUDE
         PATTERN "CMake*" EXCLUDE
         )
-    install(DIRECTORY Scripts DESTINATION
+    if(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
         COMPONENT data
         PATTERN ".svn" EXCLUDE
         )
+    else(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY Scripts DESTINATION
+        ${RDKit_ShareDir}
+        COMPONENT data
+        PATTERN ".svn" EXCLUDE
+        PATTERN "run_python_tests.py" EXCLUDE
+        )
+    endif(RDK_INSTALL_PYTHON_TESTS)
+
+
   endif(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES README license.txt
           DESTINATION ${RDKit_ShareDir}
