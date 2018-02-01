@@ -2422,6 +2422,60 @@ void testAssignStereochemistryFrom3D() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testDoubleBondStereoInRings() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing double bond stereochemistry in rings" << std::endl;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  {
+    RWMol *m = MolFileToMol(pathName + "cyclohexene_3D.mol", true, false); // don't remove Hs
+    MolOps::detectBondStereochemistry(*m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    const Bond *b = m->getBondBetweenAtoms(0, 1);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREONONE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674_3D.mol", true, false); // don't remove Hs
+    MolOps::detectBondStereochemistry(*m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    MolOps::assignStereochemistry(*m, true, true);
+    const Bond *b = m->getBondBetweenAtoms(6, 7);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    b = m->getBondBetweenAtoms(11, 12);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    const Bond *b = m->getBondBetweenAtoms(6, 7);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    b = m->getBondBetweenAtoms(11, 12);
+    TEST_ASSERT(b);
+    TEST_ASSERT(b->getStereo() == Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m = MolFileToMol(pathName + "CHEMBL501674.mol"); // don't remove Hs
+    std::string smi = MolToSmiles(*m, true);
+    unsigned int nTrans = 0;
+    size_t pos = 0;
+    size_t len = smi.length();
+    bool keepCounting = true;
+    while (keepCounting) {
+      pos = smi.find("/C=C/", pos);
+      keepCounting = (pos != std::string::npos && ++nTrans && ++pos < len);
+    }
+    TEST_ASSERT(nTrans == 2);
+    delete m;
+  }
+}
+  
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -2450,5 +2504,6 @@ int main() {
 #endif
   testGithub1423();
   testAssignStereochemistryFrom3D();
+  testDoubleBondStereoInRings();
   return 0;
 }

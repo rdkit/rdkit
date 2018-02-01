@@ -24,6 +24,15 @@
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
+
+namespace {
+bool shouldDetectDoubleBondStereo(const Bond *bond) {
+  const RingInfo *ri = bond->getOwningMol().getRingInfo();
+  return (!ri->numBondRings(bond->getIdx())
+          || ri->minBondRingSize(bond->getIdx()) > 7);
+}
+}  // end of anonymous namespace
+
 namespace Chirality {
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
@@ -773,8 +782,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       // at the moment we are ignoring stereochem on ring bonds with less than
       // 8
       // members.
-      if (!mol.getRingInfo()->numBondRings(dblBond->getIdx()) ||
-          mol.getRingInfo()->minBondRingSize(dblBond->getIdx()) > 7) {
+      if (shouldDetectDoubleBondStereo(dblBond)) {
         const Atom *begAtom = dblBond->getBeginAtom();
         const Atom *endAtom = dblBond->getEndAtom();
         // we're only going to handle 2 or three coordinate atoms:
@@ -1696,7 +1704,7 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
         (*bondIt)->getBondDir() != Bond::EITHERDOUBLE &&
         (*bondIt)->getBeginAtom()->getDegree() > 1 &&
         (*bondIt)->getEndAtom()->getDegree() > 1 &&
-        !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
+        shouldDetectDoubleBondStereo(*bondIt)) {
       const Atom *a1 = (*bondIt)->getBeginAtom();
       const Atom *a2 = (*bondIt)->getEndAtom();
 
