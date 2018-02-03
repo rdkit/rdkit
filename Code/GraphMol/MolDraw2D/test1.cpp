@@ -1232,8 +1232,8 @@ M  END";
     std::ofstream outs("test983_1.svg");
     outs << text;
     outs.flush();
-    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 73.5169,75.8928 "
-                          "65.8827,89.1161 130.309,117.496' "
+    TEST_ASSERT(text.find("<svg:path d='M 130.309,117.496 194.727,89.1159 "
+                          "187.092,75.893 130.309,117.496' "
                           "style='fill:#000000") != std::string::npos);
     delete m;
   }
