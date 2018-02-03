@@ -1431,7 +1431,7 @@ void testIssue183() {
   TEST_ASSERT(m2->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
-  m2->debugMol(std::cerr);
+  // m2->debugMol(std::cerr);
   refSmi = MolToSmiles(*m2, 1);
   BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
   m = SmilesToMol(refSmi);
@@ -7110,7 +7110,6 @@ void testGithub1614() {
 #endif
 #if 1
   {
-    std::cerr << "0 #_#_#_#_##_#_##_#_##_#_#_#_#_#_#_#_#_##_#_#" << std::endl;
     RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\F", false, false);
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
@@ -7118,12 +7117,10 @@ void testGithub1614() {
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      nm.debugMol(std::cerr);
+      // nm.debugMol(std::cerr);
       bool force = true, cleanIt = true;
-      std::cerr << "@@@@      ---------------------------------------"
-                << std::endl;
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      nm.debugMol(std::cerr);
+      // nm.debugMol(std::cerr);
       TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
       TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
       TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
@@ -7133,8 +7130,6 @@ void testGithub1614() {
 #endif
 
   {
-    std::cerr << "2a #_#_#_#_##_#_##_#_##_#_#_#_#_#_#_#_#_##_#_#" << std::endl;
-
     RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\F", false, false);
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
@@ -7146,12 +7141,9 @@ void testGithub1614() {
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      nm.debugMol(std::cerr);
+      // nm.debugMol(std::cerr);
       bool force = true, cleanIt = true;
-      std::cerr << "!!!!      ----------------------------------------"
-                << std::endl;
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      nm.debugMol(std::cerr);
       TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
       TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
       TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
@@ -7161,7 +7153,6 @@ void testGithub1614() {
 
 #if 1
   {
-    std::cerr << "1 #_#_#_#_##_#_##_#_##_#_#_#_#_#_#_#_#_##_#_#" << std::endl;
     RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\C", false, false);
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
@@ -7169,12 +7160,9 @@ void testGithub1614() {
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      nm.debugMol(std::cerr);
+      // nm.debugMol(std::cerr);
       bool force = true, cleanIt = true;
-      std::cerr << "@@@@      ---------------------------------------"
-                << std::endl;
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      nm.debugMol(std::cerr);
       TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
       TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
       TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
@@ -7183,8 +7171,6 @@ void testGithub1614() {
   }
 #endif
   {
-    std::cerr << "2 #_#_#_#_##_#_##_#_##_#_#_#_#_#_#_#_#_##_#_#" << std::endl;
-
     RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\C", false, false);
     TEST_ASSERT(m);
     MolOps::sanitizeMol(*m);
@@ -7196,12 +7182,9 @@ void testGithub1614() {
     {
       RWMol nm(*m);
       MolOps::setDoubleBondNeighborDirections(nm);
-      nm.debugMol(std::cerr);
+      // nm.debugMol(std::cerr);
       bool force = true, cleanIt = true;
-      std::cerr << "!!!!      ----------------------------------------"
-                << std::endl;
       MolOps::assignStereochemistry(nm, cleanIt, force);
-      nm.debugMol(std::cerr);
       TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
       TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
       TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
