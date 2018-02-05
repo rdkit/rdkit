@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 project (RDKit)
 
+#include catch
+add_subdirectory(${RDKit_ExternalDir}/catch)
+
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -14,6 +17,7 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
+add_dependencies(rdkit_base catch)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
@@ -68,15 +72,7 @@ if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
-# Includes Catch in the project:
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/External)
-set (CATCH_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/External/Catch2")
-set (CATCH_INCLUDE_PATH "${CATCH_MODULE_PATH}/single_include")
-include_directories(${CATCH_INCLUDE_PATH})
-#include custom cmake function
-include ( "${CATCH_MODULE_PATH}/contrib/ParseAndAddCatchTests.cmake")
-
-
+include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   if(NOT RDK_INSTALL_STATIC_LIBS)
