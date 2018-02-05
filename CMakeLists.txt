@@ -70,8 +70,13 @@ endif()
 
 # Includes Catch in the project:
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/External)
+set (CATCH_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/External/Catch2")
+set (CATCH_INCLUDE_PATH "${CATCH_MODULE_PATH}/single_include")
+include_directories(${CATCH_INCLUDE_PATH})
+#include custom cmake function
+include ( "${CATCH_MODULE_PATH}/contrib/ParseAndAddCatchTests.cmake")
 
-include(ParseAndAddCatchTests)
+
 
 if(RDK_PGSQL_STATIC AND RDK_BUILD_PGSQL)
   if(NOT RDK_INSTALL_STATIC_LIBS)
