@@ -33,10 +33,9 @@
 
 // LocaleSwitcher Dependencies
 #include <clocale>
-#ifdef __clang__
+#ifdef __APPLE__
 #include <xlocale.h>
 #endif
-
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/tss.hpp>
 #endif
