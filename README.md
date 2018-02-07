@@ -68,6 +68,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
   * [shape-it-rdkit](https://github.com/jandom/shape-it-rdkit) - Gaussian molecular overlap code shape-it (from silicos it) ported to RDKit backend
   * [WONKA](http://wonka.sgc.ox.ac.uk/WONKA/) - Tool for analysis and interrogation of protein-ligand crystal structures
   * [OOMMPPAA](http://oommppaa.sgc.ox.ac.uk/OOMMPPAA/) - Tool for directed synthesis and data analysis based on protein-ligand crystal structures
+  * [DeepChem](https://deepchem.io) - Machine learning library for small molecules
 
 
 ## License
