@@ -401,8 +401,8 @@ class Atom : public RDProps {
   boost::uint8_t d_chiralTag;
   boost::uint8_t d_hybrid;
 
-  atomindex_t d_index;
   boost::uint16_t d_isotope;
+  atomindex_t d_index;
 
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;
