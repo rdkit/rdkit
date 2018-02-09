@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum
+//  Copyright (C) 2013-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -357,18 +356,33 @@ namespace {
 void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
                             const Bond *bond) {
   INT_LIST newOrder;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(oAt);
-  while (beg != end) {
-    const Bond* obond = mol[*beg];
-    ++beg;
-    if (obond == bond) {
-      continue;
+  INT_LIST incomingOrder;
+  if(nAt->getPropIfPresent("_newBondOrder",incomingOrder)){
+    BOOST_FOREACH(int bidx,incomingOrder){
+      if(bidx!=bond->getIdx()){
+          newOrder.push_back(bidx);
+      }
     }
-    newOrder.push_back(obond->getIdx());
+  } else {
+    ROMol::OEDGE_ITER beg, end;
+    boost::tie(beg, end) = mol.getAtomBonds(oAt);
+    while (beg != end) {
+      const Bond* obond = mol[*beg];
+      ++beg;
+      if (obond == bond) {
+        continue;
+      }
+      newOrder.push_back(obond->getIdx());
+    }
   }
   newOrder.push_back(bond->getIdx());
+  nAt->setProp("_newBondOrder", newOrder, true);
   unsigned int nSwaps = oAt->getPerturbationOrder(newOrder);
+  // std::copy(newOrder.begin(), newOrder.end(),
+  //           std::ostream_iterator<int>(std::cerr, ", "));
+  // std::cerr << std::endl;
+  // std::cerr<<"ccpm: "<<oAt->getIdx()<<"->"<<nAt->getIdx()<<" bond: "<<bond->getIdx()<<" swaps: "<<nSwaps<<std::endl;
+  nAt->setChiralTag(oAt->getChiralTag());
   if (nSwaps % 2) nAt->invertChirality();
 }
 }

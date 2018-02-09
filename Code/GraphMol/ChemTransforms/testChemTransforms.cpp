@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2006-2015 Greg Landrum
+//  Copyright (C) 2006-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -98,14 +97,14 @@ void testDeleteSubstruct() {
   matcher1 = SmartsToMol("O[C@H](N)(P)");
   mol2 = deleteSubstructs(*mol1, *matcher1, false, true);
   std::string smi1 = MolToSmiles(*mol2, true);
-  std::cerr << "1 smi: " << smi1 << std::endl;  
+  std::cerr << "1 smi: " << smi1 << std::endl;
   TEST_ASSERT(smi1 == "CC");
   delete mol2;
 
   // still matches with non-chiral
   mol2 = deleteSubstructs(*mol1, *matcher1, false, false);
   smi1 = MolToSmiles(*mol2, true);
-  std::cerr << "1 smi: " << smi1 << std::endl;  
+  std::cerr << "1 smi: " << smi1 << std::endl;
   TEST_ASSERT(smi1 == "CC");
   delete matcher1;
 
@@ -125,7 +124,7 @@ void testDeleteSubstruct() {
   delete mol2;
   delete mol1;
   delete matcher1;
-  
+
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -223,13 +222,13 @@ void testReplaceSubstructs() {
   TEST_ASSERT(vect.size() == 1);
   std::string smi1 = MolToSmiles(*vect[0], true);
   TEST_ASSERT(smi1 == "CCNCC");
-  
+
   // should also match when matching non-chiral
   vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
   TEST_ASSERT(vect.size() == 1);
   smi1 = MolToSmiles(*vect[0], true);
   TEST_ASSERT(smi1 == "CCNCC");
-  
+
   smi = "CCP([C@@H](N)O)CC";
   mol1 = SmilesToMol(smi);
   vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, true);
@@ -239,15 +238,15 @@ void testReplaceSubstructs() {
   // no change
   TEST_ASSERT(smi1 == "CCP(CC)[C@@H](N)O");
 
-  // should also match when matching non-chiral  
+  // should also match when matching non-chiral
   vect = replaceSubstructs(*mol1, *matcher1, *frag, false, 0, false);
   TEST_ASSERT(vect.size() == 1);
   smi1 = MolToSmiles(*vect[0], true);
   std::cerr << "replaceSub smi1:" << smi1 << std::endl;;
   // no change
   TEST_ASSERT(smi1 == "CCNCC");
-  
-  
+
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -372,7 +371,7 @@ void testReplaceSidechains() {
   delete mol1;
   delete mol2;
   delete matcher1;
-  
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -661,7 +660,7 @@ struct CoreTest {
   bool useChirality;
   const char * expected;
 };
-  
+
 void testReplaceCore2() {
   const CoreTest tests[] = {
     {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
@@ -672,12 +671,12 @@ void testReplaceCore2() {
     {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
     {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
     {"C1O[C@@]1(OC)NC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]C.[4*]C"},
-    
+
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, false, "[1*]OC.[2*]NC"},
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, false, false, true,  "[1*]OC.[2*]NC"},
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, false, "[3*]OC.[4*]NC"},
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", false, true,  false, true,  "[3*]OC.[4*]NC"},
-    
+
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]C"},
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  false, false, true,  "[1*]C.[2*]C"},
     {"C1O[C@]1(OC)NC",  "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]C"},
@@ -685,7 +684,7 @@ void testReplaceCore2() {
 
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, false, "[1*]C.[2*]CC"},
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  false, false, true,  "[1*]CC.[2*]C"},
-    
+
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, false, "[3*]C.[4*]CC"},
     {"C1O[C@@]1(OC)NCC", "C1O[C@]1(*)*", true,  true,  false, true,  "[3*]CC.[4*]C"},
 
@@ -740,7 +739,7 @@ void testReplaceCore2() {
                                  tests[i].replaceDummies,
                                  tests[i].labelByIndex,
                                  tests[i].requireDummyMatch));
-                     
+
     if(tests[i].expected) {
       TEST_ASSERT(res.get());
       std::string smi = MolToSmiles(*res.get(), true);
@@ -758,7 +757,7 @@ void testReplaceCore2() {
     } else {
       TEST_ASSERT(!res.get());
     }
-                   
+
   }
 }
 
@@ -930,12 +929,12 @@ void testReplaceCoreMatchVect() {
   expected["[1*]O.[2*]P.[3*]N"] = 1;
   expected["[1*]P.[2*]N.[3*]O"] = 1;
   expected["[1*]P.[2*]O.[3*]N"] = 1;
-  
+
   const char * smiles = "NC1C(O)C1P";
   const char * smarts = "*C1C(*)C1*";
   ROMOL_SPTR mol(SmilesToMol(smiles));
   ROMOL_SPTR query(SmartsToMol(smarts));
-  
+
   std::vector<MatchVectType> matches;
   const bool uniquify = false;
   unsigned int matchCount = SubstructMatch(*mol.get(), *query.get(), matches, uniquify);
@@ -961,7 +960,7 @@ void testReplaceCoreMatchVect() {
       BOOST_LOG(rdInfoLog) << "-- caught error";
     }
   }
-  
+
   {
     MatchVectType fake;
     fake.push_back( std::make_pair(100,1) );
@@ -995,7 +994,7 @@ void testReplaceCoreMatchVect() {
     }
   }
 }
-   
+
 void testMurckoDecomp() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing murcko decomposition" << std::endl;
@@ -1403,7 +1402,7 @@ void testAddRecursiveQueries() {
     delete mmol;
 
     delete mol1;
-    
+
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1966,6 +1965,39 @@ void testGithubIssue511() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub1734() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 1734: BreakBRICSBonds() not preserving stereochemistry"
+                       << std::endl;
+
+   {  // no implicit H on chiral center
+     std::string smi = "c1ccccc1[C@]([I])(C)NC";
+     RWMol *mol = SmilesToMol(smi);
+     TEST_ASSERT(mol);
+     TEST_ASSERT(mol->getNumAtoms() == 11)
+     ROMol *nmol = MolFragmenter::fragmentOnBRICSBonds(*mol);
+     TEST_ASSERT(nmol);
+     TEST_ASSERT(nmol->getNumAtoms() == 15);
+     smi = MolToSmiles(*nmol, true);
+     TEST_ASSERT(smi == "[16*]c1ccccc1.[4*][C@]([8*])(C)I.[5*]NC");
+     delete mol;
+   }
+   {  // The original example
+    std::string smi = "c1ccccc1[C@H](C)NC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 10)
+    ROMol *nmol = MolFragmenter::fragmentOnBRICSBonds(*mol);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms() == 14);
+    smi = MolToSmiles(*nmol, true);
+    TEST_ASSERT(smi == "[16*]c1ccccc1.[4*][C@H]([8*])C.[5*]NC");
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int main() {
   RDLog::InitLogs();
 
@@ -2001,9 +2033,10 @@ int main() {
   // benchFragmentOnBRICSBonds();
   testGithubIssue429();
   testGithubIssue430();
-#endif
   testGithubIssue511();
   testReplaceCore2();
+#endif
+  testGithub1734();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);
