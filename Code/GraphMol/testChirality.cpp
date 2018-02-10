@@ -2485,7 +2485,7 @@ void testDoubleBondStereoInRings() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testIssue1737() {
+void testIssue1735() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing empty mols in rankMolAtoms" << std::endl;
 
@@ -2525,6 +2525,6 @@ int main() {
   testGithub1423();
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();
-  testIssue1737();
+  testIssue1735();
   return 0;
 }
