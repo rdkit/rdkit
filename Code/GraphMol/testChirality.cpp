@@ -2482,7 +2482,19 @@ void testDoubleBondStereoInRings() {
     TEST_ASSERT(nTrans == 2);
     delete m;
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testIssue1737() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing empty mols in rankMolAtoms" << std::endl;
+
+  RWMol m;
+  std::vector<unsigned int> oranks;
+  Canon::rankMolAtoms(m, oranks);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
   
 int main() {
   RDLog::InitLogs();
@@ -2513,5 +2525,6 @@ int main() {
   testGithub1423();
   testAssignStereochemistryFrom3D();
   testDoubleBondStereoInRings();
+  testIssue1737();
   return 0;
 }
