@@ -2014,7 +2014,7 @@ void testGithub1734() {
     TEST_ASSERT(smi == "[16*]c1ccccc1.[4*][C@H]([8*])C.[5*]NC");
     delete mol;
   }
-  s BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 int main() {
