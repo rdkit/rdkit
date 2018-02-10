@@ -60,8 +60,8 @@ void constructFragmenterAtomTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 2) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "line " << line << " is too short" << std::endl;
       continue;
     }
     unsigned int idx = boost::lexical_cast<unsigned int>(tokens[0]);
@@ -149,20 +149,20 @@ void constructFragmenterBondTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 3) {
-      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "line " << line << " is too short" << std::endl;
       continue;
     }
     unsigned int idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
     if (atomTypes.find(idx1) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx1 << " not recognized."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "atom type #" << idx1 << " not recognized." << std::endl;
       continue;
     }
     unsigned int idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
     if (atomTypes.find(idx2) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog) << "atom type #" << idx2 << " not recognized."
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "atom type #" << idx2 << " not recognized." << std::endl;
       continue;
     }
     std::string sma1 = atomTypes.find(idx1)->second;
@@ -304,9 +304,9 @@ boost::uint64_t nextBitCombo(boost::uint64_t v) {
 void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     std::vector<ROMOL_SPTR> &resMols, unsigned int maxToCut, bool addDummies,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
-    std::vector<std::vector<unsigned int> > *nCutsPerAtom) {
+    std::vector<std::vector<unsigned int>> *nCutsPerAtom) {
   PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
@@ -321,7 +321,7 @@ void fragmentOnSomeBonds(
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
     dummyLabelsHere =
-        new std::vector<std::pair<unsigned int, unsigned int> >(maxToCut);
+        new std::vector<std::pair<unsigned int, unsigned int>>(maxToCut);
   }
   std::vector<Bond::BondType> *bondTypesHere = nullptr;
   if (bondTypes) {
@@ -357,17 +357,21 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
                             const Bond *bond) {
   INT_LIST newOrder;
   INT_LIST incomingOrder;
-  if(nAt->getPropIfPresent("_newBondOrder",incomingOrder)){
-    BOOST_FOREACH(int bidx,incomingOrder){
-      if(bidx!=bond->getIdx()){
-          newOrder.push_back(bidx);
+  // since we may call this function more than once, we need to keep track of
+  // whether or not we've already been called and what the new atom order is.
+  // we do this with a property.
+  // this was github #1734
+  if (nAt->getPropIfPresent("_newBondOrder", incomingOrder)) {
+    BOOST_FOREACH (int bidx, incomingOrder) {
+      if (bidx != bond->getIdx()) {
+        newOrder.push_back(bidx);
       }
     }
   } else {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(oAt);
     while (beg != end) {
-      const Bond* obond = mol[*beg];
+      const Bond *obond = mol[*beg];
       ++beg;
       if (obond == bond) {
         continue;
@@ -381,7 +385,8 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
   // std::copy(newOrder.begin(), newOrder.end(),
   //           std::ostream_iterator<int>(std::cerr, ", "));
   // std::cerr << std::endl;
-  // std::cerr<<"ccpm: "<<oAt->getIdx()<<"->"<<nAt->getIdx()<<" bond: "<<bond->getIdx()<<" swaps: "<<nSwaps<<std::endl;
+  // std::cerr<<"ccpm: "<<oAt->getIdx()<<"->"<<nAt->getIdx()<<" bond:
+  // "<<bond->getIdx()<<" swaps: "<<nSwaps<<std::endl;
   nAt->setChiralTag(oAt->getChiralTag());
   if (nSwaps % 2) nAt->invertChirality();
 }
@@ -390,7 +395,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
 ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     bool addDummies,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<unsigned int> *nCutsPerAtom) {
   PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
@@ -484,7 +489,7 @@ ROMol *fragmentOnBonds(const ROMol &mol,
   PRECONDITION((!nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms()),
                "bad nCutsPerAtom vector");
   std::vector<unsigned int> bondIndices;
-  std::vector<std::pair<unsigned int, unsigned int> > dummyLabels;
+  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
   std::vector<Bond::BondType> bondTypes;
 
   std::map<unsigned int, bool> environsMatch;
