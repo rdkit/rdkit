@@ -60,8 +60,8 @@ void constructFragmenterAtomTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 2) {
-      BOOST_LOG(rdWarningLog)
-          << "line " << line << " is too short" << std::endl;
+      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
+                              << std::endl;
       continue;
     }
     unsigned int idx = boost::lexical_cast<unsigned int>(tokens[0]);
@@ -149,20 +149,20 @@ void constructFragmenterBondTypes(
     boost::split(tokens, tempStr, boost::is_any_of(" \t"),
                  boost::token_compress_on);
     if (tokens.size() < 3) {
-      BOOST_LOG(rdWarningLog)
-          << "line " << line << " is too short" << std::endl;
+      BOOST_LOG(rdWarningLog) << "line " << line << " is too short"
+                              << std::endl;
       continue;
     }
     unsigned int idx1 = boost::lexical_cast<unsigned int>(tokens[0]);
     if (atomTypes.find(idx1) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog)
-          << "atom type #" << idx1 << " not recognized." << std::endl;
+      BOOST_LOG(rdWarningLog) << "atom type #" << idx1 << " not recognized."
+                              << std::endl;
       continue;
     }
     unsigned int idx2 = boost::lexical_cast<unsigned int>(tokens[1]);
     if (atomTypes.find(idx2) == atomTypes.end()) {
-      BOOST_LOG(rdWarningLog)
-          << "atom type #" << idx2 << " not recognized." << std::endl;
+      BOOST_LOG(rdWarningLog) << "atom type #" << idx2 << " not recognized."
+                              << std::endl;
       continue;
     }
     std::string sma1 = atomTypes.find(idx1)->second;
@@ -355,13 +355,14 @@ void fragmentOnSomeBonds(
 namespace {
 void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
                             const Bond *bond) {
+  static const std::string newBondOrder = "_newBondOrder";
   INT_LIST newOrder;
   INT_LIST incomingOrder;
   // since we may call this function more than once, we need to keep track of
   // whether or not we've already been called and what the new atom order is.
   // we do this with a property.
   // this was github #1734
-  if (nAt->getPropIfPresent("_newBondOrder", incomingOrder)) {
+  if (nAt->getPropIfPresent(newBondOrder, incomingOrder)) {
     BOOST_FOREACH (int bidx, incomingOrder) {
       if (bidx != bond->getIdx()) {
         newOrder.push_back(bidx);
@@ -380,7 +381,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
     }
   }
   newOrder.push_back(bond->getIdx());
-  nAt->setProp("_newBondOrder", newOrder, true);
+  nAt->setProp(newBondOrder, newOrder, true);
   unsigned int nSwaps = oAt->getPerturbationOrder(newOrder);
   // std::copy(newOrder.begin(), newOrder.end(),
   //           std::ostream_iterator<int>(std::cerr, ", "));

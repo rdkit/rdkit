@@ -2024,7 +2024,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
 
-#if 0
+#if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSubstructs2();
