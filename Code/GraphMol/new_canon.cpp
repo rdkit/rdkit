@@ -567,6 +567,9 @@ void updateAtomNeighborNumSwaps(
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes) {
+  if (!mol.getNumAtoms())
+    return;
+  
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initCanonAtoms(mol, atoms, includeChirality);
   AtomCompareFunctor ftor(&atoms.front(), mol);
@@ -595,7 +598,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   PRECONDITION(bondsInPlay.size() == mol.getNumBonds(), "bad bondsInPlay size");
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
                "bad atomSymbols size");
-
+  if (!mol.getNumAtoms())
+    return;
+        
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, atomsInPlay,
                          bondsInPlay);
@@ -618,6 +623,9 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 }  // end of rankFragmentAtoms()
 
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
+  if(!mol.getNumAtoms())
+    return;
+  
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
