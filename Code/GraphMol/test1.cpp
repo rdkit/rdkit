@@ -498,7 +498,7 @@ void testMisc() {
   boost::tie(atBegin, atEnd) = m2.getVertices();
   TEST_ASSERT(atBegin != atEnd);
   while (atBegin != atEnd) {
-    const Atom* at2 = m2[*atBegin];
+    const Atom *at2 = m2[*atBegin];
     TEST_ASSERT(at2->getIdx() == *atBegin);
     atBegin++;
   }
@@ -1207,8 +1207,8 @@ void testAtomListLineRoundTrip() {
       MolDataStreamToMol(inStream2, line, sanitize, removeHs, strictParsing);
   TEST_ASSERT(m2);
   TEST_ASSERT(desc == qhelper(m2->getAtomWithIdx(3)->getQuery()));
-  Atom* cl(new Atom(17));
-  Atom* o(new Atom(17));
+  Atom *cl(new Atom(17));
+  Atom *o(new Atom(17));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(cl));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m->getAtomWithIdx(3))->Match(o));
   TEST_ASSERT(dynamic_cast<QueryAtom *>(m2->getAtomWithIdx(3))->Match(cl));
@@ -1449,6 +1449,29 @@ void testRanges() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub1642() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test github1642: Atom index type is to low for big molecules."
+      << std::endl;
+  RWMol m2;
+
+  unsigned int big_num_atoms = 70000;
+
+  for (unsigned int i = 0; i < big_num_atoms; ++i) {
+    m2.addAtom(new Atom(6));
+  }
+
+  TEST_ASSERT(m2.getNumAtoms() == big_num_atoms);
+
+  for (int i = big_num_atoms; i > 0; --i) {
+    m2.removeAtom(i - 1);
+  }
+  TEST_ASSERT(m2.getNumAtoms() == 0);
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1479,5 +1502,7 @@ int main() {
   testGithub1041();
   testGithub1453();
   testRanges();
+  testGithub1642();
+
   return 0;
 }
