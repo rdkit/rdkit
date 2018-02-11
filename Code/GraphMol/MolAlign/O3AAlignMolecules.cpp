@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C) 2013-2014 Paolo Tosco
+// Copyright (C) 2013-2018 Paolo Tosco, Greg Landrum
 //
 // @@ All Rights Reserved @@
 // This file is part of the RDKit.
@@ -1702,16 +1701,17 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
   }
 #ifdef RDK_THREADSAFE_SSS
   else {
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     detail::O3AHelperArgs_ args = {atomTypes,        refCid,  reflect,
                                    maxIters,         options, constraintMap,
                                    constraintWeights};
     for (int ti = 0; ti < numThreads; ++ti) {
-      tg.add_thread(new boost::thread(detail::O3AHelper_, &prbMol, &refMol,
-                                      prbProp, refProp, &res, ti, numThreads,
-                                      &args));
+      tg.emplace_back(std::thread(detail::O3AHelper_, &prbMol, &refMol, prbProp,
+                                  refProp, &res, ti, numThreads, &args));
     }
-    tg.join_all();
+    for (auto &thread : tg) {
+      if (thread.joinable()) thread.join();
+    }
   }
 #endif
 }

@@ -18,7 +18,7 @@
 
 #ifdef RDK_THREADSAFE_SSS
 // Thread local storage for output buffer for RDKit Logging
-#include <boost/thread/tss.hpp>
+#include <thread>
 #endif
 
 #include <sstream>
@@ -67,21 +67,17 @@ struct PySysErrWrite : std::ostream, std::streambuf {
 
 #ifdef RDK_THREADSAFE_SSS
   void write(char c) {  // enable thread safe logging
-    static boost::thread_specific_ptr<std::string> buffer;
-    if (!buffer.get()) {
-      buffer.reset(new std::string);
-    }
-    (*buffer.get()) += c;
+    static thread_local std::string buffer = "";
+    buffer += c;
     if (c == '\n') {
       // Python IO is not thread safe, so grab the GIL
       PyGILState_STATE gstate;
       gstate = PyGILState_Ensure();
-      PySys_WriteStderr("%s", (prefix + (*buffer.get())).c_str());
+      PySys_WriteStderr("%s", (prefix + buffer).c_str());
       PyGILState_Release(gstate);
-      buffer->clear();
+      buffer.clear();
     }
   }
-
 #else
   std::string buffer;  // unlimited! flushes in endl
   void write(char c) {
@@ -147,7 +143,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       python::no_init)
       .def("__iter__", &AtomIterSeq::__iter__,
            python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1> >())
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def(NEXT_METHOD, &AtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
 
@@ -160,7 +156,7 @@ BOOST_PYTHON_MODULE(rdchem) {
                                    python::no_init)
       .def("__iter__", &QueryAtomIterSeq::__iter__,
            python::return_internal_reference<
-               1, python::with_custodian_and_ward_postcall<0, 1> >())
+               1, python::with_custodian_and_ward_postcall<0, 1>>())
       .def(NEXT_METHOD, &QueryAtomIterSeq::next,
            python::return_value_policy<python::reference_existing_object>())
       .def("__len__", &QueryAtomIterSeq::len)

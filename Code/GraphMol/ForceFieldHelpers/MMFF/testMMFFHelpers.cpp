@@ -466,7 +466,8 @@ void testIssue239() {
 
 void testCalcEnergyPassedCoords() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords." << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords."
+                        << std::endl;
 
   RWMol *mol;
   ForceFields::ForceField *field;
@@ -484,9 +485,8 @@ void testCalcEnergyPassedCoords() {
   size_t l = 3 * field->numPoints();
   double *savedPos = new double[l];
   size_t i = 0;
-  for (const auto pptr: field->positions()) {
-    for (size_t j = 0; j < 3; ++j)
-      savedPos[i++] = (*pptr)[j];
+  for (const auto pptr : field->positions()) {
+    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
   }
   TEST_ASSERT(i == l);
   e1 = field->calcEnergy();
@@ -496,7 +496,7 @@ void testCalcEnergyPassedCoords() {
   e3 = field->calcEnergy(savedPos);
   TEST_ASSERT(feq(e3, e1, 0.01));
 
-  delete [] savedPos;
+  delete[] savedPos;
   delete mol;
   delete field;
 
@@ -524,32 +524,28 @@ void testCalcGrad() {
   double *grad1 = new double[l];
   double *grad2 = new double[l];
   size_t i = 0;
-  for (const auto pptr: field->positions()) {
-    for (size_t j = 0; j < 3; ++j)
-      savedPos[i++] = (*pptr)[j];
+  for (const auto pptr : field->positions()) {
+    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
   }
   TEST_ASSERT(i == l);
-  
+
   std::memset(grad1, 0, l * sizeof(double));
   field->calcGrad(grad1);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
 
   field->minimize(10000, 1.0e-6, 1.0e-3);
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(grad2);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
 
   field->initialize();
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(savedPos, grad2);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
 
-  delete [] savedPos;
-  delete [] grad1;
-  delete [] grad2;
+  delete[] savedPos;
+  delete[] grad1;
+  delete[] grad2;
   delete mol;
   delete field;
 
@@ -745,7 +741,8 @@ void testSFIssue2378119() {
 void testGithub162() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Testing github 162: Incorrect SMILES after "
-                           "MMFF parameterization ." << std::endl;
+                           "MMFF parameterization ."
+                        << std::endl;
   {
     ROMol *mol = SmilesToMol("C1=CNC=C1");
     TEST_ASSERT(mol);
@@ -876,7 +873,7 @@ void runblock_mmff(const std::vector<ROMol *> &mols,
   }
 }
 }
-#include <boost/thread.hpp>
+#include <thread>
 void testMMFFMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test MMFF multithreading" << std::endl;
@@ -916,16 +913,18 @@ void testMMFFMultiThread() {
     delete field;
   }
 
-  boost::thread_group tg;
+  std::vector<std::thread> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock_mmff, mols, energies, count, i));
+    tg.emplace_back(std::thread(runblock_mmff, mols, energies, count, i));
   }
-  tg.join_all();
+  for (auto &thread : tg) {
+    if (thread.joinable()) thread.join();
+  }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -944,7 +943,7 @@ void testMMFFMultiThread2() {
   for (unsigned int i = 0; i < 1000; ++i) {
     m->addConformer(new Conformer(m->getConformer()), true);
   }
-  std::vector<std::pair<int, double> > res;
+  std::vector<std::pair<int, double>> res;
 
   MMFF::MMFFOptimizeMolecule(*om);
   MMFF::MMFFOptimizeMoleculeConfs(*m, res, 0);

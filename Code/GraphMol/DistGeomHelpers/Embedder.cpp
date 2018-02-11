@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -270,12 +270,12 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
 bool _minimizeWithExpTorsions(
     RDGeom::PointPtrVect &positions, DistGeom::BoundsMatPtr mmat,
     double optimizerForceTol, double basinThresh,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+    const std::vector<std::pair<int, int>> &bonds,
+    const std::vector<std::vector<int>> &angles,
+    const std::vector<std::vector<int>> &expTorsionAtoms,
+    const std::vector<std::pair<std::vector<int>, std::vector<double>>>
         &expTorsionAngles,
-    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums, bool useBasicKnowledge) {
   RDUNUSED_PARAM(basinThresh);
 
@@ -352,12 +352,12 @@ bool _embedPoints(
     const DistGeom::VECT_CHIRALSET *chiralCenters,
     const DistGeom::VECT_CHIRALSET *tetrahedralCarbons, bool enforceChirality,
     bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
-    const std::vector<std::pair<int, int> > &bonds,
-    const std::vector<std::vector<int> > &angles,
-    const std::vector<std::vector<int> > &expTorsionAtoms,
-    const std::vector<std::pair<std::vector<int>, std::vector<double> > >
+    const std::vector<std::pair<int, int>> &bonds,
+    const std::vector<std::vector<int>> &angles,
+    const std::vector<std::vector<int>> &expTorsionAtoms,
+    const std::vector<std::pair<std::vector<int>, std::vector<double>>>
         &expTorsionAngles,
-    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<std::vector<int>> &improperAtoms,
     const std::vector<int> &atomNums) {
   unsigned int nat = positions->size();
   if (maxIterations == 0) {
@@ -374,7 +374,8 @@ bool _embedPoints(
   RDKit::double_source_type *rng = nullptr;
   RDKit::rng_type *generator;
   RDKit::uniform_double *distrib;
-  CHECK_INVARIANT(seed >= -1, "random seed must either be positive, zero, or negative one");
+  CHECK_INVARIANT(seed >= -1,
+                  "random seed must either be positive, zero, or negative one");
   if (seed > -1) {
     generator = new RDKit::rng_type(42u);
     generator->seed(seed);
@@ -752,22 +753,20 @@ typedef struct {
   bool enforceChirality;
   bool useExpTorsionAnglePrefs;
   bool useBasicKnowledge;
-  std::vector<std::pair<int, int> > *bonds;
-  std::vector<std::vector<int> > *angles;
-  std::vector<std::vector<int> > *expTorsionAtoms;
-  std::vector<std::pair<std::vector<int>, std::vector<double> > >
+  std::vector<std::pair<int, int>> *bonds;
+  std::vector<std::vector<int>> *angles;
+  std::vector<std::vector<int>> *expTorsionAtoms;
+  std::vector<std::pair<std::vector<int>, std::vector<double>>>
       *expTorsionAngles;
-  std::vector<std::vector<int> > *improperAtoms;
+  std::vector<std::vector<int>> *improperAtoms;
   std::vector<int> *atomNums;
 } EmbedArgs;
 
-template<class T>
+template <class T>
 bool multiplication_overflows_(T a, T b) {
   // a * b > c if and only if a > c / b
-  if (a == 0 || b == 0)
-    return false;
-  if (a > std::numeric_limits<T>::max() / b)
-    return true;
+  if (a == 0 || b == 0) return false;
+  if (a > std::numeric_limits<T>::max() / b) return true;
   return false;
 }
 
@@ -789,7 +788,9 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
       continue;
     }
 
-    CHECK_INVARIANT(eargs->seed >= -1, "random seed must either be positive, zero, or negative one");
+    CHECK_INVARIANT(
+        eargs->seed >= -1,
+        "random seed must either be positive, zero, or negative one");
     int new_seed = eargs->seed;
     if (new_seed > -1) {
       if (!multiplication_overflows_(rdcast<int>(ci + 1), eargs->seed)) {
@@ -814,7 +815,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs) {
         new_seed = rdcast<int>(folded_num & positive_int_mask);
       }
     }
-    CHECK_INVARIANT(new_seed >= -1, "Something went wrong calculating a new seed");
+    CHECK_INVARIANT(new_seed >= -1,
+                    "Something went wrong calculating a new seed");
 
     bool gotCoords = _embedPoints(
         &positions, eargs->mmat, eargs->useRandomCoords, eargs->boxSizeMult,
@@ -891,12 +893,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     initBoundsMat(mmat);
 
     double tol = 0.0;
-    std::vector<std::vector<int> > expTorsionAtoms;
-    std::vector<std::pair<std::vector<int>, std::vector<double> > >
+    std::vector<std::vector<int>> expTorsionAtoms;
+    std::vector<std::pair<std::vector<int>, std::vector<double>>>
         expTorsionAngles;
-    std::vector<std::vector<int> > improperAtoms;
-    std::vector<std::pair<int, int> > bonds;
-    std::vector<std::vector<int> > angles;
+    std::vector<std::vector<int>> improperAtoms;
+    std::vector<std::pair<int, int>> bonds;
+    std::vector<std::vector<int>> angles;
     std::vector<int> atomNums(nAtoms);
     if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
       ForceFields::CrystalFF::getExperimentalTorsions(
@@ -965,7 +967,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       fourD = true;
     }
 #ifdef RDK_THREADSAFE_SSS
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
 #endif
     int numThreads = getNumThreadsToUse(params.numThreads);
 
@@ -1000,10 +1002,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #ifdef RDK_THREADSAFE_SSS
     else {
       for (int tid = 0; tid < numThreads; ++tid) {
-        tg.add_thread(
-            new boost::thread(detail::embedHelper_, tid, numThreads, &eargs));
+        tg.emplace_back(
+            std::thread(detail::embedHelper_, tid, numThreads, &eargs));
       }
-      tg.join_all();
+      for (auto &thread : tg) {
+        if (thread.joinable()) thread.join();
+      }
     }
 #endif
   }

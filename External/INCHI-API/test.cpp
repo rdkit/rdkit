@@ -30,8 +30,8 @@ using namespace RDKit;
 namespace {
 void runblock(const std::vector<ROMol *> &mols, unsigned int count,
               unsigned int idx, std::vector<std::string> &inchis,
-              std::vector<std::string> &keys) {
-  for (unsigned int j = 0; j < 50; j++) {
+              const std::vector<std::string> &keys) {
+  for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
       if (i % count != idx) continue;
       ROMol *mol = mols[i];
@@ -51,7 +51,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 };
 }
 
-#include <boost/thread.hpp>
+#include <thread>
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -82,15 +82,18 @@ void testMultiThread() {
     keys.push_back(key);
   }
 
-  boost::thread_group tg;
+  std::vector<std::thread> tg;
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock, mols, count, i, inchis, keys));
+    tg.emplace_back(std::thread(runblock, std::ref(mols), count, i,
+                                std::ref(inchis), std::ref(keys)));
   }
-  tg.join_all();
+  for (auto &thread : tg) {
+    if (thread.joinable()) thread.join();
+  }
 
   for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];
 

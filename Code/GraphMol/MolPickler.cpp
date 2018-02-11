@@ -22,7 +22,7 @@
 
 #ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/once.hpp>
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 #endif
 
 using boost::int32_t;
@@ -60,18 +60,18 @@ namespace {
 static unsigned int defaultProperties = PicklerOps::NoProps;
 
 #ifdef RDK_THREADSAFE_SSS
-boost::mutex &propmutex_get() {
+std::mutex &propmutex_get() {
   // create on demand
-  static boost::mutex _mutex;
+  static std::mutex _mutex;
   return _mutex;
 }
 
 void propmutex_create() {
-  boost::mutex &mutex = propmutex_get();
-  boost::mutex::scoped_lock test_lock(mutex);
+  std::mutex &mutex = propmutex_get();
+  std::lock_guard<std::mutex> test_lock(mutex);
 }
 
-boost::mutex &GetPropMutex() {
+std::mutex &GetPropMutex() {
 #ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
   static boost::once_flag flag;
 #else
@@ -85,7 +85,7 @@ boost::mutex &GetPropMutex() {
 
 unsigned int MolPickler::getDefaultPickleProperties() {
 #ifdef RDK_THREADSAFE_SSS
-  boost::mutex::scoped_lock lock(GetPropMutex());
+  std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   unsigned int props = defaultProperties;
   return props;
@@ -93,7 +93,7 @@ unsigned int MolPickler::getDefaultPickleProperties() {
 
 void MolPickler::setDefaultPickleProperties(unsigned int props) {
 #ifdef RDK_THREADSAFE_SSS
-  boost::mutex::scoped_lock lock(GetPropMutex());
+  std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   defaultProperties = props;
 }

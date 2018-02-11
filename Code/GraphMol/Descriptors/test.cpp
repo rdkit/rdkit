@@ -845,9 +845,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
   }
 };
 }
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -867,17 +865,18 @@ void testMultiThread() {
     if (!mol) continue;
     mols.push_back(mol);
   }
-  boost::thread_group tg;
+  std::vector<std::thread> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock, mols, count, i));
+    tg.emplace_back(std::thread(runblock, mols, count, i));
   }
-  tg.join_all();
-
+  for (auto &thread : tg) {
+    if (thread.joinable()) thread.join();
+  }
   for (auto &mol : mols) delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

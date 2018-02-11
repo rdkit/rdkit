@@ -21,7 +21,7 @@
 #include <map>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 #endif
 
 #include "ullmann.hpp"
@@ -58,7 +58,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               unsigned int bi, unsigned int ei);
 
 typedef std::list<
-    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor> >
+    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
 class MolMatchFinalCheckFunctor {
@@ -242,10 +242,10 @@ class BondLabelFunctor {
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (df_useChirality) {
-      const Bond* qBnd = d_query[i];
+      const Bond *qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
           qBnd->getStereo() > Bond::STEREOANY) {
-        const Bond* mBnd = d_mol[j];
+        const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
             mBnd->getStereo() <= Bond::STEREOANY)
           return false;
@@ -536,7 +536,7 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
                                      resMolSupplier.length());
 #ifdef RDK_THREADSAFE_SSS
   else {
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     std::vector<std::vector<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
@@ -547,10 +547,13 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
-      tg.add_thread(new boost::thread(detail::ResSubstructMatchHelper_, args,
-                                      matchesThread[ti], bi, ei));
+      tg.emplace_back(std::thread(detail::ResSubstructMatchHelper_, args,
+                                  matchesThread[ti], bi, ei));
     }
-    tg.join_all();
+    for (auto &thread : tg) {
+      if (thread.joinable()) thread.join();
+    }
+
     unsigned int matchSize = 0;
     for (unsigned int ti = 0; ti < nt; ++ti)
       matchSize += matchesThread[ti]->size();

@@ -35,7 +35,7 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -1253,9 +1253,7 @@ void runblock(const std::vector<ROMol *> &mols,
 };
 }
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
 void testMultiThread() {
   std::cerr << "building molecules" << std::endl;
   // std::string smi="C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4";
@@ -1306,16 +1304,17 @@ void testMultiThread() {
     delete field;
   }
 
-  boost::thread_group tg;
-
+  std::vector<std::thread> tg;
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock, mols, energies, count, i));
+    tg.emplace_back(std::thread(runblock, mols, energies, count, i));
   }
-  tg.join_all();
+  for (auto &thread : tg) {
+    if (thread.joinable()) thread.join();
+  }
 
   for (auto &mol : mols) delete mol;
 
@@ -1493,8 +1492,7 @@ void testGithub568() {
         "Nc1ncnc2c1ncn2[C@H]3C[C@H](O)[C@@H](CO)C3",
         "C[C@@H](N1CC[C@@]23CCCC[C@@H]2[C@@H]1Cc4ccc(OCc5cccc(F)c5)cc34)C(=O)N",
         "CN1C(=O)CC[C@@]2(C)C1=CCc3cc(Cl)ccc23",
-        "Cc1nc(COc2ccc3OC[C@H](Cc4cccnc4)[C@H](O)c3c2)ccc1[N+](=O)[O-]",
-        "EOS"};
+        "Cc1nc(COc2ccc3OC[C@H](Cc4cccnc4)[C@H](O)c3c2)ccc1[N+](=O)[O-]", "EOS"};
     for (unsigned int idx = 0; smis[idx] != "EOS"; ++idx) {
       ROMol *m = SmilesToMol(smis[idx]);
       std::string csmi = MolToSmiles(*m, true);
@@ -1552,11 +1550,8 @@ void testGithub697() {
   {  // a group of chembl molecules (and things derived from them), all of which
     // contain a c1cscn1 heterocycle
     std::string smis[] = {
-        "C1SC2=NC1CCCCCC2",
-        "C1CCCc2nc(CC1)cs2",
-        "C1Cc2coc(n2)-c2coc(C1)n2",
-        "C1Cc2coc(n2)-c2csc(C1)n2",
-        "C1CCc2nc(cs2)-c2nc(C1)co2",
+        "C1SC2=NC1CCCCCC2", "C1CCCc2nc(CC1)cs2", "C1Cc2coc(n2)-c2coc(C1)n2",
+        "C1Cc2coc(n2)-c2csc(C1)n2", "C1CCc2nc(cs2)-c2nc(C1)co2",
         "C1Cc2nc(co2)-c2nc(cs2)-c2nc1co2",
         "C1Cc2nc(co2)-c2nc(co2)-c2nc(cs2)-c2nc(co2)-c2nc1co2",
         "C1CNCc2coc(n2)-c2coc(n2)-c2csc(n2)-c2coc(n2)-c2coc(CNCCN1)n2",
@@ -1989,27 +1984,28 @@ void testGithubPullRequest1635() {
     delete m;
 
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
-    params.randomSeed = MAX_INT; // the largest possible random seed
+    params.randomSeed = MAX_INT;  // the largest possible random seed
 
     INT_VECT firstCids = DGeomHelpers::EmbedMultipleConfs(firstMol, 10, params);
-    INT_VECT secondCids = DGeomHelpers::EmbedMultipleConfs(secondMol, 10, params);
+    INT_VECT secondCids =
+        DGeomHelpers::EmbedMultipleConfs(secondMol, 10, params);
     TEST_ASSERT(firstCids.size() == 10);
     TEST_ASSERT(secondCids.size() == 10);
 
     for (size_t i = 0; i < 10; i++) {
-        TEST_ASSERT(firstCids[i] == secondCids[i]);
+      TEST_ASSERT(firstCids[i] == secondCids[i]);
 
-        int confIdx = firstCids[i];
-        const Conformer &firstConf = firstMol.getConformer(confIdx);
-        const Conformer &secondConf = secondMol.getConformer(confIdx);
+      int confIdx = firstCids[i];
+      const Conformer &firstConf = firstMol.getConformer(confIdx);
+      const Conformer &secondConf = secondMol.getConformer(confIdx);
 
-        for (int atomIdx = 0; atomIdx < expected_num_atoms; ++atomIdx) {
-            const RDGeom::Point3D &firstPoint = firstConf.getAtomPos(atomIdx);
-            const RDGeom::Point3D &secondPoint = secondConf.getAtomPos(atomIdx);
-            TEST_ASSERT(firstPoint.x == secondPoint.x);
-            TEST_ASSERT(firstPoint.y == secondPoint.y);
-            TEST_ASSERT(firstPoint.z == secondPoint.z);
-        }
+      for (int atomIdx = 0; atomIdx < expected_num_atoms; ++atomIdx) {
+        const RDGeom::Point3D &firstPoint = firstConf.getAtomPos(atomIdx);
+        const RDGeom::Point3D &secondPoint = secondConf.getAtomPos(atomIdx);
+        TEST_ASSERT(firstPoint.x == secondPoint.x);
+        TEST_ASSERT(firstPoint.y == secondPoint.y);
+        TEST_ASSERT(firstPoint.z == secondPoint.z);
+      }
     }
   }
 }

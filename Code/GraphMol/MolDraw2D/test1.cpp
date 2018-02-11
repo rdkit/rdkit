@@ -551,9 +551,7 @@ void test5() {
 }
 
 #ifdef RDK_TEST_MULTITHREADED
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
 namespace {
 void runblock(const std::vector<ROMol *> &mols,
               const std::vector<std::string> &refData, unsigned int count,
@@ -601,15 +599,17 @@ void testMultiThreaded() {
     TEST_ASSERT(refData[i].find("</svg:svg>") != std::string::npos);
   }
 
-  boost::thread_group tg;
+  std::vector<std::thread> tg;
   unsigned int count = 4;
   std::cerr << "processing" << std::endl;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock, mols, refData, count, i));
+    tg.emplace_back(std::thread(runblock, mols, refData, count, i));
   }
-  tg.join_all();
+  for (auto &thread : tg) {
+    if (thread.joinable()) thread.join();
+  }
   std::cerr << " Done" << std::endl;
 }
 #else

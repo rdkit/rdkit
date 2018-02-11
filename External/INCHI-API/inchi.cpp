@@ -72,10 +72,10 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
-#if RDK_TEST_MULTITHREADED
-#include <boost/thread.hpp>
-#endif
 #include <RDGeneral/BoostEndInclude.h>
+#if RDK_TEST_MULTITHREADED
+#include <mutex>
+#endif
 
 //#define DEBUG 1
 namespace RDKit {
@@ -104,7 +104,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
     pending.insert(pair.second);
   }
   // a queue for pending assignments
-  typedef std::queue<std::pair<int, Bond::BondDir> > ASSIGNMENTQTYPE;
+  typedef std::queue<std::pair<int, Bond::BondDir>> ASSIGNMENTQTYPE;
   ASSIGNMENTQTYPE queue;
   // in a loop, modify one bond at a time, until all bonds are assigned
   while (!pending.empty() || !queue.empty()) {
@@ -1167,7 +1167,7 @@ void cleanUp(RWMol& mol) {
 }  // end inner namespace
 
 #if RDK_TEST_MULTITHREADED
-boost::mutex inchiMutex;
+std::mutex inchiMutex;
 #endif
 
 RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
@@ -1186,7 +1186,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     // output structure
     inchi_OutputStruct inchiOutput;
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     // DLL call
     int retcode = GetStructFromINCHI(&inchiInput, &inchiOutput);
@@ -1198,7 +1198,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     if (inchiOutput.szLog) rv.logPtr = std::string(inchiOutput.szLog);
 
     // for isotopes of H
-    typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int> >
+    typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int>>
         ISOTOPES_t;
     ISOTOPES_t isotopes;
     if (retcode == inchi_Ret_OKAY || retcode == inchi_Ret_WARNING) {
@@ -1255,7 +1255,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
       }
 
       // adding bonds
-      std::set<std::pair<unsigned int, unsigned int> > bondRegister;
+      std::set<std::pair<unsigned int, unsigned int>> bondRegister;
       for (unsigned int i = 0; i < nAtoms; i++) {
         inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
         unsigned int nBonds = inchiAtom->num_bonds;
@@ -1722,7 +1722,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
       stereo0D.type = INCHI_StereoType_Tetrahedral;
       ROMol::ADJ_ITER nbrIter, endNbrIter;
       boost::tie(nbrIter, endNbrIter) = m->getAtomNeighbors(atom);
-      std::vector<std::pair<unsigned int, unsigned int> > neighbors;
+      std::vector<std::pair<unsigned int, unsigned int>> neighbors;
       while (nbrIter != endNbrIter) {
         int cip = 0;
         // if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
@@ -1938,7 +1938,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   std::string inchi;
   {
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     int retcode = GetINCHI(&input, &output);
 
@@ -1966,7 +1966,7 @@ std::string InchiToInchiKey(const std::string& inchi) {
   int ret = 0;
   {
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   }

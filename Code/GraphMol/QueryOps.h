@@ -20,9 +20,7 @@
 #include <Query/Query.h>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread/mutex.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <mutex>
 #endif
 
 namespace RDKit {
@@ -666,7 +664,7 @@ class RecursiveStructureQuery
   unsigned int getSerialNumber() const { return d_serialNumber; };
 
 #ifdef RDK_THREADSAFE_SSS
-  boost::mutex d_mutex;
+  std::mutex d_mutex;
 #endif
  private:
   boost::shared_ptr<const ROMol> dp_queryMol;

@@ -14,16 +14,14 @@
 #include <RDGeneral/Invariant.h>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
 
 namespace RDKit {
 inline unsigned int getNumThreadsToUse(int target) {
   if (target >= 1) {
     return static_cast<unsigned int>(target);
   }
-  unsigned int res = boost::thread::hardware_concurrency();
+  unsigned int res = std::thread::hardware_concurrency();
   if (res > rdcast<unsigned int>(-target)) {
     return res + target;
   } else {
