@@ -139,7 +139,6 @@ std::vector<unsigned int> internalGetMatches(
   std::atomic<int> counter(0);
   std::vector<std::vector<unsigned int>> internal_results(numThreads);
 
-  // needed because boost::thread can only handle 10 arguments
   Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
 
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
