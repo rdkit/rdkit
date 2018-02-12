@@ -1270,6 +1270,7 @@ void testGithub608() {
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <thread>
+#include <future>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -1288,16 +1289,16 @@ void testGithub381() {
       << "    Test github381: thread-safe initialization of the periodic table"
       << std::endl;
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
   unsigned int count = 32;
   std::vector<const PeriodicTable *> pts(count);
 #if 1
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, &pts, i));
+    tg.emplace_back(std::async(std::launch::async, runblock, &pts, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
   TEST_ASSERT(pts[0] != nullptr);
   for (unsigned int i = 1; i < count; ++i) {

@@ -612,6 +612,7 @@ void testRecursiveSerialNumbers() {
 #ifdef RDK_TEST_MULTITHREADED
 #include <RDGeneral/BoostStartInclude.h>
 #include <thread>
+#include <future>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 namespace {
@@ -650,7 +651,7 @@ void testMultiThread() {
     if (!mol) continue;
     mols.push_back(mol);
   }
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
   ROMol *query = SmartsToMol("[#6;$([#6]([#6])[!#6])]");
   boost::dynamic_bitset<> hits(mols.size());
   for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -664,11 +665,13 @@ void testMultiThread() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, query, hits, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock, mols, query, hits, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
+  tg.clear();
   std::cerr << " done" << std::endl;
   delete query;
 
@@ -682,11 +685,13 @@ void testMultiThread() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch2 :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, query, hits, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock, mols, query, hits, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
+  tg.clear();
   std::cerr << " done" << std::endl;
   delete query;
 #endif
@@ -702,10 +707,11 @@ void testMultiThread() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch3 :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, query, hits, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock, mols, query, hits, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
   std::cerr << " done" << std::endl;
   delete query;

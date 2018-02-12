@@ -2904,6 +2904,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 };
 }
 #include <thread>
+#include <future>
 void testMultithreadedPatternFP() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP"
@@ -2925,18 +2926,20 @@ void testMultithreadedPatternFP() {
     if (!mol) continue;
     mols.push_back(mol);
   }
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "pass 1" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, count, i, referenceData, 10));
+    tg.emplace_back(std::async(std::launch::async, runblock, mols, count, i,
+                               referenceData, 10));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
+  tg.clear();
 
   BOOST_FOREACH (const ROMol *mol, mols) {
     ExplicitBitVect *bv = PatternFingerprintMol(*mol, 2048);
@@ -2946,10 +2949,11 @@ void testMultithreadedPatternFP() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, count, i, referenceData, 300));
+    tg.emplace_back(std::async(std::launch::async, runblock, mols, count, i,
+                               referenceData, 300));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
 
   for (unsigned int i = 0; i < mols.size(); ++i) {

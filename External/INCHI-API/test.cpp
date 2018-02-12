@@ -52,6 +52,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 }
 
 #include <thread>
+#include <future>
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -82,17 +83,17 @@ void testMultiThread() {
     keys.push_back(key);
   }
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, std::ref(mols), count, i,
-                                std::ref(inchis), std::ref(keys)));
+    tg.emplace_back(std::async(std::launch::async, runblock, std::ref(mols),
+                               count, i, std::ref(inchis), std::ref(keys)));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
 
   for (unsigned int i = 0; i < mols.size(); ++i) delete mols[i];

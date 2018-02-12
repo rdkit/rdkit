@@ -22,6 +22,11 @@
 #include <boost/math/special_functions/round.hpp>
 #include <RDGeneral/RDThreads.h>
 
+#ifdef RDK_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
+
 #define square(x) ((x) * (x))
 
 namespace RDKit {
@@ -1701,16 +1706,17 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
   }
 #ifdef RDK_THREADSAFE_SSS
   else {
-    std::vector<std::thread> tg;
+    std::vector<std::future<void>> tg;
     detail::O3AHelperArgs_ args = {atomTypes,        refCid,  reflect,
                                    maxIters,         options, constraintMap,
                                    constraintWeights};
     for (int ti = 0; ti < numThreads; ++ti) {
-      tg.emplace_back(std::thread(detail::O3AHelper_, &prbMol, &refMol, prbProp,
-                                  refProp, &res, ti, numThreads, &args));
+      tg.emplace_back(std::async(std::launch::async, detail::O3AHelper_,
+                                 &prbMol, &refMol, prbProp, refProp, &res, ti,
+                                 numThreads, &args));
     }
-    for (auto &thread : tg) {
-      if (thread.joinable()) thread.join();
+    for (auto &fut : tg) {
+      fut.get();
     }
   }
 #endif

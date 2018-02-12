@@ -13,6 +13,10 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/RDThreads.h>
+#ifdef RDK_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
 
 #include <boost/foreach.hpp>
 #include "MultiFPBReader.h"
@@ -104,7 +108,7 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   res.resize(0);
   numThreads = getNumThreadsToUse(numThreads);
 #ifdef RDK_THREADSAFE_SSS
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 #endif
   if (numThreads == 1) {
     func(0, 1, &args);
@@ -113,10 +117,11 @@ void generic_nbr_helper(std::vector<MultiFPBReader::ResultTuple> &res, T func,
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < args.readers.size();
          ++tid) {
-      tg.emplace_back(std::thread(func, tid, numThreads, &args));
+      tg.emplace_back(
+          std::async(std::launch::async, func, tid, numThreads, &args));
     }
-    for (auto &thread : tg) {
-      if (thread.joinable()) thread.join();
+    for (auto &fut : tg) {
+      fut.get();
     }
   }
 #endif
@@ -163,7 +168,7 @@ void get_containing_nbrs(
     unsigned int numThreads, bool initOnSearch) {
   numThreads = getNumThreadsToUse(numThreads);
 #ifdef RDK_THREADSAFE_SSS
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 #endif
 
   std::vector<std::vector<unsigned int>> accum(d_readers.size());
@@ -174,11 +179,12 @@ void get_containing_nbrs(
   else {
     for (unsigned int tid = 0; tid < numThreads && tid < d_readers.size();
          ++tid) {
-      tg.emplace_back(std::thread(contain_helper, tid, numThreads, bv,
-                                  &d_readers, &accum, initOnSearch));
+      tg.emplace_back(std::async(std::launch::async, contain_helper, tid,
+                                 numThreads, bv, &d_readers, &accum,
+                                 initOnSearch));
     }
-    for (auto &thread : tg) {
-      if (thread.joinable()) thread.join();
+    for (auto &fut : tg) {
+      fut.get();
     }
   }
 #endif

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2018 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -649,6 +648,7 @@ void runblock_o3a_crippen(ROMol *refMol, const std::vector<ROMol *> &mols,
 }
 }
 #include <thread>
+#include <future>
 void testMMFFO3AMultiThread() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
@@ -682,18 +682,18 @@ void testMMFFO3AMultiThread() {
     scores[i] = o3a.score();
   }
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(
-        std::thread(runblock_o3a_mmff, refMol, mols, rmsds, scores, count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock_o3a_mmff, refMol,
+                               mols, rmsds, scores, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
@@ -747,18 +747,18 @@ void testCrippenO3AMultiThread() {
     scores[i] = o3a.score();
   }
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock_o3a_crippen, refMol, mols, rmsds,
-                                scores, count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock_o3a_crippen, refMol,
+                               mols, rmsds, scores, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }

@@ -418,8 +418,8 @@ void testMMFFBatch() {
       field->initialize();
       int failed = field->minimize(500);
       if (failed) {
-        BOOST_LOG(rdErrorLog) << " not converged (code = " << failed << ")"
-                              << std::endl;
+        BOOST_LOG(rdErrorLog)
+            << " not converged (code = " << failed << ")" << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
       }
@@ -920,8 +920,8 @@ void testMMFFMultiThread() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.push_back(std::async(std::launch::async, runblock_mmff, mols, energies,
-                            count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock_mmff, mols,
+                               energies, count, i));
   }
   for (auto &fut : tg) {
     fut.get();

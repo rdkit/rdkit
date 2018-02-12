@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +22,8 @@
 
 #ifdef RDK_THREADSAFE_SSS
 #include <mutex>
+#include <thread>
+#include <future>
 #endif
 
 #include "ullmann.hpp"
@@ -536,7 +538,7 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
                                      resMolSupplier.length());
 #ifdef RDK_THREADSAFE_SSS
   else {
-    std::vector<std::thread> tg;
+    std::vector<std::future<void>> tg;
     std::vector<std::vector<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
@@ -547,11 +549,12 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
-      tg.emplace_back(std::thread(detail::ResSubstructMatchHelper_, args,
-                                  matchesThread[ti], bi, ei));
+      tg.emplace_back(std::async(std::launch::async,
+                                 detail::ResSubstructMatchHelper_, args,
+                                 matchesThread[ti], bi, ei));
     }
-    for (auto &thread : tg) {
-      if (thread.joinable()) thread.join();
+    for (auto &fut : tg) {
+      fut.get();
     }
 
     unsigned int matchSize = 0;
@@ -617,8 +620,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           }
         }
         if (!found) {
-          BOOST_LOG(rdErrorLog) << "no match found for queryRootAtom"
-                                << std::endl;
+          BOOST_LOG(rdErrorLog)
+              << "no match found for queryRootAtom" << std::endl;
         }
       }
     }

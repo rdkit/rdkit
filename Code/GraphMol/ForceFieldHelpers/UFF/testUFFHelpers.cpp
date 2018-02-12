@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -598,8 +597,8 @@ void testUFFBatch() {
       field->initialize();
       int failed = field->minimize(500);
       if (failed) {
-        BOOST_LOG(rdErrorLog) << " not converged (code=" << failed << ")"
-                              << std::endl;
+        BOOST_LOG(rdErrorLog)
+            << " not converged (code=" << failed << ")" << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
       }
@@ -1194,6 +1193,7 @@ void runblock_uff(const std::vector<ROMol *> &mols,
 }
 }
 #include <thread>
+#include <future>
 void testUFFMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test UFF multithreading" << std::endl;
@@ -1233,17 +1233,18 @@ void testUFFMultiThread() {
     delete field;
   }
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock_uff, mols, energies, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock_uff, mols, energies, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }

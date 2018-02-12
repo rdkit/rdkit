@@ -552,6 +552,7 @@ void test5() {
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <thread>
+#include <future>
 namespace {
 void runblock(const std::vector<ROMol *> &mols,
               const std::vector<std::string> &refData, unsigned int count,
@@ -599,16 +600,17 @@ void testMultiThreaded() {
     TEST_ASSERT(refData[i].find("</svg:svg>") != std::string::npos);
   }
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
   unsigned int count = 4;
   std::cerr << "processing" << std::endl;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, refData, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock, mols, refData, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
   std::cerr << " Done" << std::endl;
 }

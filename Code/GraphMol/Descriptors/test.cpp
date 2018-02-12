@@ -846,6 +846,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
 };
 }
 #include <thread>
+#include <future>
 void testMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -865,17 +866,17 @@ void testMultiThread() {
     if (!mol) continue;
     mols.push_back(mol);
   }
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.emplace_back(std::thread(runblock, mols, count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock, mols, count, i));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
   for (auto &mol : mols) delete mol;
 
@@ -1817,22 +1818,25 @@ void testGitHubIssue694() {
     mol = SmilesToMol("[35Cl-]");
     TEST_ASSERT(mol);
     mw = calcExactMW(*mol);
-    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) +
-                            constants::electronMass,
+    TEST_ASSERT(feq(mw,
+                    PeriodicTable::getTable()->getMassForIsotope(17, 35) +
+                        constants::electronMass,
                     .000001));
     delete mol;
     mol = SmilesToMol("[35Cl+]");
     TEST_ASSERT(mol);
     mw = calcExactMW(*mol);
-    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) -
-                            constants::electronMass,
+    TEST_ASSERT(feq(mw,
+                    PeriodicTable::getTable()->getMassForIsotope(17, 35) -
+                        constants::electronMass,
                     .000001));
     delete mol;
     mol = SmilesToMol("[35Cl+2]");
     TEST_ASSERT(mol);
     mw = calcExactMW(*mol);
-    TEST_ASSERT(feq(mw, PeriodicTable::getTable()->getMassForIsotope(17, 35) -
-                            2 * constants::electronMass,
+    TEST_ASSERT(feq(mw,
+                    PeriodicTable::getTable()->getMassForIsotope(17, 35) -
+                        2 * constants::electronMass,
                     .000001));
     delete mol;
   }
@@ -1906,8 +1910,8 @@ void testProperties() {
       Properties sink(names);
       TEST_ASSERT(0);  // should throw
     } catch (KeyErrorException) {
-      BOOST_LOG(rdErrorLog) << "---Caught keyerror (bad property name)---"
-                            << std::endl;
+      BOOST_LOG(rdErrorLog)
+          << "---Caught keyerror (bad property name)---" << std::endl;
     }
   }
 }

@@ -5227,6 +5227,7 @@ void testLocaleSwitcher() {
 #ifdef RDK_TEST_MULTITHREADED
 
 #include <thread>
+#include <future>
 
 namespace {
 void runblock() { testLocaleSwitcher(); }
@@ -5236,13 +5237,13 @@ void testMultiThreadedSwitcher() {
   BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
                         << std::endl;
 
-  std::vector<std::thread> tg;
+  std::vector<std::future<void>> tg;
   unsigned int count = 100;
   for (unsigned int i = 0; i < count; ++i) {
-    tg.emplace_back(std::thread(runblock));
+    tg.emplace_back(std::async(std::launch::async, runblock));
   }
-  for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+  for (auto &fut : tg) {
+    fut.get();
   }
   BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;

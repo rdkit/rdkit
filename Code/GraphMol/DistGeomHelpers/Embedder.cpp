@@ -34,6 +34,10 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 
+#ifdef RDK_THREADSAFE_SSS
+#include <future>
+#endif
+
 //#define DEBUG_EMBEDDING 1
 
 #define ERROR_TOL 0.00001
@@ -967,7 +971,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       fourD = true;
     }
 #ifdef RDK_THREADSAFE_SSS
-    std::vector<std::thread> tg;
+    std::vector<std::future<void>> tg;
 #endif
     int numThreads = getNumThreadsToUse(params.numThreads);
 
@@ -1002,11 +1006,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #ifdef RDK_THREADSAFE_SSS
     else {
       for (int tid = 0; tid < numThreads; ++tid) {
-        tg.emplace_back(
-            std::thread(detail::embedHelper_, tid, numThreads, &eargs));
+        tg.emplace_back(std::async(std::launch::async, detail::embedHelper_,
+                                   tid, numThreads, &eargs));
       }
-      for (auto &thread : tg) {
-        if (thread.joinable()) thread.join();
+      for (auto &fut : tg) {
+        fut.get();
       }
     }
 #endif
