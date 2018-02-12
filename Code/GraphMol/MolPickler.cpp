@@ -21,7 +21,6 @@
 #include <boost/algorithm/string.hpp>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/once.hpp>
 #include <mutex>
 #endif
 
@@ -72,12 +71,8 @@ void propmutex_create() {
 }
 
 std::mutex &GetPropMutex() {
-#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
-  static boost::once_flag flag;
-#else
-  static boost::once_flag flag = BOOST_ONCE_INIT;
-#endif
-  boost::call_once(&propmutex_create, flag);
+  static std::once_flag flag;
+  std::call_once(flag, propmutex_create);
   return propmutex_get();
 }
 #endif
