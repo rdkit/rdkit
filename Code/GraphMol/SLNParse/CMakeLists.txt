@@ -6,15 +6,8 @@ else(RDK_USE_FLEXBISON)
   set(BISON_EXECUTABLE "")
 endif(RDK_USE_FLEXBISON)
 
-find_package(Boost 1.56.0 COMPONENTS regex REQUIRED)
-list(APPEND Boost_IMPORTED_LIBRARIES "Boost::regex")
-
 if(MSVC)
   ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
-  # as of cmake 2.8.0 and boost 1.43 we need to do this to avoid
-  # forcing the user to build both static and dynamic versions
-  # of the regex library:
-  ADD_DEFINITIONS("/D BOOST_ALL_DYN_LINK")
 endif(MSVC)
 
 if(FLEX_EXECUTABLE)
@@ -48,7 +41,7 @@ endif(BISON_EXECUTABLE)
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp
               ${BISON_OUTPUT_FILES} ${FLEX_OUTPUT_FILES}
-              LINK_LIBRARIES GraphMol Boost::regex )
+              LINK_LIBRARIES GraphMol )
 
 rdkit_headers(SLNAttribs.h
               SLNParse.h
@@ -56,7 +49,7 @@ rdkit_headers(SLNAttribs.h
 
 rdkit_test(testSLNParse test.cpp
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
-GraphMol RDGeometryLib RDGeneral Boost::regex
+GraphMol RDGeometryLib RDGeneral
 )
 
 add_subdirectory(Wrap)
