@@ -131,7 +131,6 @@ std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
       start = what[0].second;
       // update flags:
       flags |= std::regex_constants::match_prev_avail;
-      // flags |= std::regex_constants::match_not_bob;
     }
   }
   return res;
