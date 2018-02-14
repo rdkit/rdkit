@@ -246,62 +246,62 @@ class TestCase(unittest.TestCase):
   def testUSR(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSR(mol))
     mol = Chem.MolFromSmiles("C1CCCCC1")
     mol = Chem.AddHs(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSR(mol))
     AllChem.Compute2DCoords(mol)
     usr = rdMD.GetUSR(mol)
-    self.failUnlessEqual(len(usr), 12)
+    self.assertEqual(len(usr), 12)
 
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
 
     conf = mol.GetConformer()
     coords = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
     dist = rdMD.GetUSRDistributions(coords)
-    self.failUnlessEqual(len(dist), 4)
-    self.failUnlessEqual(len(dist[0]), mol.GetNumAtoms())
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
+    self.assertEqual(len(dist), 4)
+    self.assertEqual(len(dist[0]), mol.GetNumAtoms())
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
     usr2 = rdMD.GetUSRFromDistributions(dist)
-    self.failUnlessEqual(usr, usr2)
+    self.assertEqual(usr, usr2)
 
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
     p = []
     dist = rdMD.GetUSRDistributions(coords, p)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
     dist2 = rdMD.GetUSRDistributionsFromPoints(coords, p)
     usr2 = rdMD.GetUSRFromDistributions(dist2)
-    self.failUnlessEqual(usr, usr2)
+    self.assertEqual(usr, usr2)
 
     mol2 = Chem.MolFromSmiles("C1CCCCC1")
     mol2 = Chem.AddHs(mol2)
     AllChem.Compute2DCoords(mol2)
     usr2 = rdMD.GetUSR(mol2)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
-    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
+    self.assertEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
 
     m1 = [4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51]
     m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
-    self.failUnlessAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
+    self.assertAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
 
   def testUSRCAT(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
     mol = Chem.MolFromSmiles("C1CCCCC1")
     mol = Chem.AddHs(mol)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
     AllChem.Compute2DCoords(mol)
     usr = rdMD.GetUSRCAT(mol)
-    self.failUnlessEqual(len(usr), 60)
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
+    self.assertEqual(len(usr), 60)
+    self.assertRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
     atoms = [[1, 2, 3, 4, 5, 6], []]
     usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
-    self.failUnlessEqual(len(usr2), 36)
+    self.assertEqual(len(usr2), 36)
     atoms = [[1, 2, 3, 4, 5, 6], [], [], []]
     usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
-    self.failUnlessEqual(len(usr2), 60)
-    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2, weights=[1.0, 1.0, 1.0, 1.0, 1.0]), 1.0)
+    self.assertEqual(len(usr2), 60)
+    self.assertEqual(rdMD.GetUSRScore(usr, usr2, weights=[1.0, 1.0, 1.0, 1.0, 1.0]), 1.0)
 
   def testMolWt(self):
     mol = Chem.MolFromSmiles("C")
@@ -463,34 +463,34 @@ class TestCase(unittest.TestCase):
       v6 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.Strict)
       v7 = rdMD.CalcNumRotatableBonds(m, rdMD.NumRotatableBondsOptions.StrictLinkages)
 
-      self.assertEquals(v1, v4)
-      self.assertEquals(v2, v5)
-      self.assertEquals(v3, v6)
+      self.assertEqual(v1, v4)
+      self.assertEqual(v2, v5)
+      self.assertEqual(v3, v6)
 
   def testProperties(self):
     props = rdMD.Properties()
     names = list(props.GetAvailableProperties())
-    self.assertEquals(names, list(props.GetPropertyNames()))
+    self.assertEqual(names, list(props.GetPropertyNames()))
     m = Chem.MolFromSmiles("C1CC1CC")
     results = props.ComputeProperties(m)
 
     for i, name in enumerate(names):
       props = rdMD.Properties([name])
       res = props.ComputeProperties(m)
-      self.assertEquals(len(res), 1)
-      self.assertEquals(res[0], results[i])
-      self.assertEquals(props.GetPropertyNames()[0], names[i])
-      self.assertEquals(len(props.GetPropertyNames()), 1)
+      self.assertEqual(len(res), 1)
+      self.assertEqual(res[0], results[i])
+      self.assertEqual(props.GetPropertyNames()[0], names[i])
+      self.assertEqual(len(props.GetPropertyNames()), 1)
 
     try:
       props = rdMD.Properties([1, 2, 3])
-      self.assertEquals("should not get here", "but did")
+      self.assertEqual("should not get here", "but did")
     except TypeError:
       pass
 
     try:
       props = rdMD.Properties(["property that doesn't exist"])
-      self.assertEquals("should not get here", "but did")
+      self.assertEqual("should not get here", "but did")
     except RuntimeError:
       pass
 
@@ -507,12 +507,12 @@ class TestCase(unittest.TestCase):
     numAtoms = NumAtoms()
     rdMD.Properties.RegisterProperty(numAtoms)
     props = rdMD.Properties(["NumAtoms"])
-    self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
 
     self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
     # check memory
     del numAtoms
-    self.assertEquals(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
     self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
 
     m = Chem.MolFromSmiles("c1ccccc1")
