@@ -558,7 +558,9 @@ class TestCase(unittest.TestCase):
       self.assertEqual(actual, expected)
       self.assertEqual(rdMD.CalcNumUnspecifiedAtomStereoCenters(mol), expected)
 
-
+  def testGithub1749(self):
+    mol = Chem.MolFromSmiles("c1ccccc1O")
+    self.assertRaises(ValueError, lambda : rdMD.GetMorganFingerprintAsBitVect(mol,2,fromAtoms=[10]))
 
 if __name__ == '__main__':
   unittest.main()
