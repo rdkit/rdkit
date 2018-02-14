@@ -8,7 +8,6 @@ This release includes a set of changes to make the default arguments to common f
 - MolToMolBlock() will now by default generate a set of 2D coordinates for molecules when the includeStereo option is set to True. The changes are made to a copy of the molecule; the molecule itself will not be modified.
 - The Mol file (and SDF) parser now determines atomic stereochemisty based on the 3D coordinates provided (if 3D coordinates are provided).
 - The SMILES parser now supports CXSMILES by default (assuming that additional text that looks like CXSMILES extensions is there).
-- If the RDKit has been built with support for Schroedinger's CoordGen enabled, it will be used as the default 2D coordinate generator for molecules.
 
 In every case the old behavior can be obtained by providing an optional argument to the function(s) mentioned.
 

@@ -32,7 +32,7 @@
 
 namespace RDDepict {
 #ifdef BUILD_COORDGEN_SUPPORT
-bool preferCoordGen = true;
+bool preferCoordGen = false;
 #endif
 namespace DepictorLocal {
 // arings: indices of atoms in rings
