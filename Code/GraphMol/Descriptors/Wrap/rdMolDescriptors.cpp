@@ -420,17 +420,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
 
-  std::vector<boost::uint32_t> *froms = 0;
-  if (fromAtoms) {
-    unsigned int nFrom =
-        python::extract<unsigned int>(fromAtoms.attr("__len__")());
-    if (nFrom) {
-      froms = new std::vector<boost::uint32_t>();
-      for (unsigned int i = 0; i < nFrom; ++i) {
-        froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
-      }
-    }
-  }
+  rdk_auto_ptr<std::vector<boost::uint32_t> > froms =
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = 0;
   if (bitInfo != python::object()) {
     // make sure the optional argument actually was a dictionary
@@ -439,7 +430,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-      mol, static_cast<unsigned int>(radius), nBits, invars, froms,
+      mol, static_cast<unsigned int>(radius), nBits, invars, froms.get(),
       useChirality, useBondTypes, false, bitInfoMap);
   if (bitInfoMap) {
     bitInfo.attr("clear")();
@@ -458,8 +449,7 @@ ExplicitBitVect *GetMorganFingerprintBV(
     }
     delete bitInfoMap;
   }
-  if (invars) delete invars;
-  if (froms) delete froms;
+  delete invars;
   return res;
 }
 
