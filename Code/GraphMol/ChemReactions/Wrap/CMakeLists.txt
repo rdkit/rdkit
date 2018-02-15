@@ -1,9 +1,12 @@
 rdkit_python_extension(rdChemReactions
                        Enumerate.cpp
                        rdChemReactions.cpp
-                       DEST Chem 
-                       LINK_LIBRARIES 
-ChemReactions FilterCatalog ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch GraphMol Catalogs FilterCatalog RDGeneral RDGeometryLib RDBoost Boost::serialization)
+                       DEST Chem
+                       LINK_LIBRARIES
+ChemReactions
+ FilterCatalog ChemTransforms
+Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
+GraphMol Catalogs FilterCatalog RDGeneral RDGeometryLib RDBoost Boost::serialization)
 
 add_pytest(pyChemReactions
          ${CMAKE_CURRENT_SOURCE_DIR}/testReactionWrapper.py)

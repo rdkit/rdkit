@@ -2109,6 +2109,10 @@ void test15ContinuousHighlightingWithGrid() {
 }
 
 int main() {
+#ifdef BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   test1();

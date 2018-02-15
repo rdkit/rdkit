@@ -73,7 +73,7 @@ def AlignMolToTemplate2D(mol,
     [True, True, True]
 
 
-    
+
   """
   if not match:
     match = mol.GetSubstructMatch(template)
@@ -95,6 +95,8 @@ def AlignMolToTemplate2D(mol,
 #
 def _test():
   import doctest, sys
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
   return doctest.testmod(sys.modules["__main__"])
 
 

@@ -11,7 +11,6 @@ This release includes a set of changes to make the default arguments to common f
 
 In every case the old behavior can be obtained by providing an optional argument to the function(s) mentioned.
 
-
 ## Acknowledgements:
 
 ## Highlights:

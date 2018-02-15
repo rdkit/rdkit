@@ -11,6 +11,10 @@
 #include "RDDepictor.h"
 #include "EmbeddedFrag.h"
 
+#ifdef BUILD_COORDGEN_SUPPORT
+#include <CoordGen/CoordGen.h>
+#endif
+
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
@@ -27,6 +31,9 @@
 #include <algorithm>
 
 namespace RDDepict {
+#ifdef BUILD_COORDGEN_SUPPORT
+bool preferCoordGen = false;
+#endif
 namespace DepictorLocal {
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
@@ -300,7 +307,15 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              bool canonOrient, bool clearConfs,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
-                             bool permuteDeg4Nodes) {
+                             bool permuteDeg4Nodes, bool forceRDKit) {
+#ifdef BUILD_COORDGEN_SUPPORT
+  // default to use CoordGen if we have it installed
+  if (!forceRDKit && preferCoordGen) {
+    RDKit::CoordGen::CoordGenParams params;
+    if (coordMap) params.coordMap = *coordMap;
+    return RDKit::CoordGen::addCoords(mol, &params);
+  };
+#endif
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, coordMap, efrags);
@@ -402,7 +417,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
-    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes) {
+    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
+    bool forceRDKit) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, nullptr, efrags);
@@ -435,7 +451,7 @@ void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
                                           const RDKit::ROMol &reference,
                                           int confId,
                                           RDKit::ROMol *referencePattern,
-                                          bool acceptFailure) {
+                                          bool acceptFailure, bool forceRDKit) {
   std::vector<int> refMatch;
   RDKit::MatchVectType matchVect;
   if (referencePattern) {
@@ -479,7 +495,7 @@ void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
     }
   }
   RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
-                            true /* clearConfs */);
+                            true /* clearConfs */, 0, 0, 0, false, forceRDKit);
 }
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
@@ -488,7 +504,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                           const RDKit::ROMol &reference,
                                           int confId,
                                           RDKit::ROMol *referencePattern,
-                                          bool acceptFailure) {
+                                          bool acceptFailure, bool forceRDKit) {
   unsigned int num_ats = mol.getNumAtoms();
   if (!referencePattern && reference.getNumAtoms() < num_ats) {
     if (acceptFailure) {
@@ -544,6 +560,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
     }
   }
 
-  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat);
+  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
+                                        25, true, forceRDKit);
 }
 }

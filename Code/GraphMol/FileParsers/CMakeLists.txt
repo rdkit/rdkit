@@ -19,7 +19,8 @@ rdkit_headers(FileParsers.h
               DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
+           LINK_LIBRARIES FileParsers SmilesParse
+	   SubstructMatch GraphMol RDGeneral RDGeometryLib )
 
 if(RDK_BUILD_TEST_GZIP)
     find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
@@ -33,12 +34,13 @@ else()
 endif()
 
 rdkit_test(testMolSupplier testMolSupplier.cpp
-           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib ${link_iostreams})
+           LINK_LIBRARIES  FileParsers SmilesParse SubstructMatch
+	   GraphMol RDGeneral RDGeometryLib ${link_iostreams})
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES Depictor FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES Depictor FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES Depictor FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES Depictor FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(testSequence testSequence.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )

@@ -2542,6 +2542,8 @@ void test3V3K() {
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1024);
+    Conformer *conf = new Conformer(m->getNumAtoms());
+    m->addConformer(conf, true);
     std::string mb = MolToMolBlock(*m);
     TEST_ASSERT(mb.find("V2000") == std::string::npos);
     TEST_ASSERT(mb.find("V3000") != std::string::npos);

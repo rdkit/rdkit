@@ -42,6 +42,7 @@ option(RDK_OPTIMIZE_NATIVE "Use native features while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
+option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
@@ -92,6 +93,7 @@ if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
   set(RDKit_HdrDir "Code") # used in rdkit-config.cmake, path prefix not needed.
+  set(RDKit_ShareDir "${CMAKE_SOURCE_DIR}")
 else(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
@@ -102,6 +104,14 @@ endif(RDK_INSTALL_INTREE)
 if(RDK_BUILD_SWIG_WRAPPERS)
   set(RDKit_JavaLibDir "${RDKit_ExternalDir}/java_lib")
 endif(RDK_BUILD_SWIG_WRAPPERS)
+
+
+if(RDK_BUILD_COORDGEN_SUPPORT)
+    add_definitions(-DBUILD_COORDGEN_SUPPORT)
+    include_directories(${RDKit_ExternalDir})
+endif()
+
+
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")

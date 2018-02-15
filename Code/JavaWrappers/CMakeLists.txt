@@ -27,6 +27,9 @@ set(swigRDKitLibList "${swigRDKitLibList}"
   "ForceFieldHelpers;ForceField;EigenSolvers;Optimizer;MolAlign;"
   "Alignment;SimDivPickers;RDGeometryLib;RDGeneral;"
 )
+#if(RDK_BUILD_COORDGEN_SUPPORT)
+#  set(swigRDKitLibList "${swigRDKitLibList};${RDK_COORDGEN_LIBS}")
+#endif(RDK_BUILD_COORDGEN_SUPPORT)
 set(swigRDKitLibs "")
 foreach(swigRDKitLib ${swigRDKitLibList})
   set(swigRDKitLibs "${swigRDKitLibs}${swigRDKitLib}${swigRDKitLibSuffix};")
