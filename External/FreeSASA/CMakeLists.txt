@@ -12,24 +12,41 @@ if(needDownload)
   # don't actually use the md5 here
   if(MSVC)
     message(FATAL_ERROR "FreeSASA currently not working on windows.  Come back soon!")
-    message("Downloading WINDOWS FREESASA source")
-    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/windows.tar.gz"
-          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-          "")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-      ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-      set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-windows")
+    set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-windows")
+
+    if(NOT EXISTS "${FREESASA_SRC_DIR}/src")
+      message("Downloading WINDOWS FREESASA source")
+      downloadAndCheckMD5("https://github.com/mittinatten/freesasa/archive/windows.tar.gz"
+            "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
+            "")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+        ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+      message("Copying freesasa2.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
+      file(COPY freesasa2.c DESTINATION ${FREESASA_SRC_DIR}/src/)
+    else()
+      message("FreeSASA found in ${FREESASA_SRC_DIR}, no download required")
+    endif()
+
+
       set(FREESASA_GETLINE "getline.c")
   else()
-    downloadAndCheckMD5("https://github.com/mittinatten/freesasa/releases/download/2.0.1/freesasa-2.0.1.tar.gz"
-          "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
-          "")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-      ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-      set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-2.0.1")
-      set(FREESASA_GETLINE "")
+    set(FREESASA_VERSION "2.0.1")
+    set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-${FREESASA_VERSION}")
+    if(NOT EXISTS "${FREESASA_SRC_DIR}/src")
+      downloadAndCheckMD5("https://github.com/mittinatten/freesasa/releases/download/${FREESASA_VERSION}/freesasa-${FREESASA_VERSION}.tar.gz"
+            "${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz"
+            "")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+        ${CMAKE_CURRENT_SOURCE_DIR}/master.tar.gz
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      message("Copying freesasa2.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
+      file(COPY freesasa2.c DESTINATION ${FREESASA_SRC_DIR}/src/)
+    else()
+      message("FreeSASA found in ${FREESASA_SRC_DIR}, no download required")
+    endif()
+    set(FREESASA_GETLINE "")
   endif()
 endif()
 
@@ -44,8 +61,6 @@ macro(use_c99)
 endmacro(use_c99)
 
 use_c99()
-message("Copying freesasa2.c to ${FREESASA_SRC_DIR}/src/freesasa2.c")
-file(COPY freesasa2.c DESTINATION ${FREESASA_SRC_DIR}/src/)
 
 set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/classifier.c
