@@ -4686,6 +4686,15 @@ void testRenumberAtoms() {
     _renumberTest(m);
     delete m;
   }
+
+  { // github issue 1735 renumber empty molecules
+    ROMol *m = new ROMol;
+    TEST_ASSERT(m);
+    std::vector<unsigned int> nVect;
+    ROMol *nm = MolOps::renumberAtoms(*m, nVect);
+    delete m;
+  }
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 void testGithubIssue141() {

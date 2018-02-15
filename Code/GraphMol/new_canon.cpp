@@ -566,7 +566,12 @@ void updateAtomNeighborNumSwaps(
 }
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
-                  bool breakTies, bool includeChirality, bool includeIsotopes) {
+                  bool breakTies, bool includeChirality, bool includeIsotopes) { 
+  res.resize(mol.getNumAtoms());
+ 
+  if (!mol.getNumAtoms())
+    return;
+  
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initCanonAtoms(mol, atoms, includeChirality);
   AtomCompareFunctor ftor(&atoms.front(), mol);
@@ -577,7 +582,6 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
   rankWithFunctor(ftor, breakTies, order, true, includeChirality);
 
-  res.resize(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
@@ -596,6 +600,11 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
                "bad atomSymbols size");
 
+  res.resize(mol.getNumAtoms());
+  
+  if (!mol.getNumAtoms())
+    return;
+        
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, atomsInPlay,
                          bondsInPlay);
@@ -609,7 +618,6 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   rankWithFunctor(ftor, breakTies, order, true, includeChirality, &atomsInPlay,
                   &bondsInPlay);
 
-  res.resize(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
@@ -618,6 +626,11 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 }  // end of rankFragmentAtoms()
 
 void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
+  res.resize(mol.getNumAtoms());
+
+  if(!mol.getNumAtoms())
+    return;
+  
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
   initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
@@ -625,7 +638,6 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
   rankWithFunctor(ftor, false, order);
 
-  res.resize(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
