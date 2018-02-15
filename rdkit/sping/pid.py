@@ -1,18 +1,18 @@
 # $Id$
-# based upon 
+# based upon
 # piddle.py -- Plug In Drawing, Does Little Else
 # Copyright (C) 1999  Joseph J. Strout
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -46,8 +46,8 @@
 
 #  JJS, 3/01/99: nailed down drawFigure interface (and added needed constants).
 
-#  JJS, 3/08/99: added arcPoints and curvePoints methods; added default 
-#       implementations for drawRect, drawRoundRect, drawArc, drawCurve, 
+#  JJS, 3/08/99: added arcPoints and curvePoints methods; added default
+#       implementations for drawRect, drawRoundRect, drawArc, drawCurve,
 #       drawEllipse, and drawFigure (!), mostly thanks to Magnus.
 
 #  JJS, 3/09/99: added 'closed' parameter to drawPolygon, drawCurve, and
@@ -110,9 +110,9 @@ class StateSaver:
   """This is a little utility class for saving and restoring the
         default drawing parameters of a canvas.  To use it, add a line
         like this before changing any of the parameters:
-        
+
                 saver = StateSaver(myCanvas)
-        
+
         then, when "saver" goes out of scope, it will automagically
         restore the drawing parameters of myCanvas."""
 
@@ -202,7 +202,7 @@ class Canvas:
         the various drawing methods."""
 
   def __init__(self, size=(300, 300), name="PIDDLE"):
-    """Initialize the canvas, and set default drawing parameters. 
+    """Initialize the canvas, and set default drawing parameters.
                 Derived classes should be sure to call this method."""
     # defaults used when drawing
     self.defaultLineColor = black
@@ -518,9 +518,9 @@ class Canvas:
       if op == figureLine:
         pointList.extend([args[:2], args[2:]])
       elif op == figureArc:
-        pointList.extend(apply(self.arcPoints, args))
+        pointList.extend(self.arcPoints(*args))
       elif op == figureCurve:
-        pointList.extend(apply(self.curvePoints, args))
+        pointList.extend(self.curvePoints(*args))
       else:
         raise TypeError("unknown figure operator: " + op)
 

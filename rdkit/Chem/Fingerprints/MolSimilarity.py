@@ -56,7 +56,7 @@ def _ConstructSQL(details, extraFields=''):
 
 def ScreenInDb(details, mol):
   try:
-    probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
+    probeFp = FingerprintMols.FingerprintMol(mol, **details.__dict__)
   except Exception:
     import traceback
     FingerprintMols.error('Error: problems fingerprinting molecule.\n')
@@ -164,7 +164,7 @@ def ScreenFingerprints(details, data, mol=None, probeFp=None):
   """
   if probeFp is None:
     try:
-      probeFp = apply(FingerprintMols.FingerprintMol, (mol, ), details.__dict__)
+      probeFp = FingerprintMols.FingerprintMol(mol, **details.__dict__)
     except Exception:
       import traceback
       FingerprintMols.error('Error: problems fingerprinting molecule.\n')
