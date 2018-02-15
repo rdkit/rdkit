@@ -40,7 +40,7 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      unsigned int lineWidthMult, unsigned int fontSize,
                      bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
-  rdk_auto_ptr<std::vector<int>> highlightAtoms =
+  std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
   MolDraw2DSVG drawer(width, height, outs);
@@ -57,7 +57,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int>> bondIndices =
+  std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) throw_value_error("empty bond indices");
 
@@ -130,7 +130,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  rdk_auto_ptr<std::vector<unsigned int>> bondIndices =
+  std::unique_ptr<std::vector<unsigned int>> bondIndices =
       pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) throw_value_error("empty bond indices");
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
@@ -186,7 +186,7 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  rdk_auto_ptr<std::vector<unsigned int>> newOrder =
+  std::unique_ptr<std::vector<unsigned int>> newOrder =
       pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
@@ -302,7 +302,7 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
              python::object onlyOnAtoms, bool addResidueInfo) {
-  rdk_auto_ptr<std::vector<unsigned int>> onlyOn;
+  std::unique_ptr<std::vector<unsigned int>> onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
@@ -534,7 +534,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
     unsigned int maxPath, unsigned int fpSize, python::list atomCounts,
     ExplicitBitVect *includeOnlyBits, bool branchedPaths,
     python::object fromAtoms) {
-  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
@@ -600,9 +600,9 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     double tgtDensity, unsigned int minSize, bool branchedPaths,
     bool useBondOrder, python::object atomInvariants, python::object fromAtoms,
     python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int>> lAtomInvariants =
+  std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint32_t>> *lAtomBits = nullptr;
   std::map<boost::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
@@ -655,9 +655,9 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder, python::object atomInvariants,
     python::object fromAtoms, python::object atomBits, python::object bitInfo) {
-  rdk_auto_ptr<std::vector<unsigned int>> lAtomInvariants =
+  std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
-  rdk_auto_ptr<std::vector<unsigned int>> lFromAtoms =
+  std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;

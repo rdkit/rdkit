@@ -96,7 +96,7 @@ void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_atom_map,
                          python::object highlight_atom_radii, int confId,
                          std::string legend) {
-  rdk_auto_ptr<std::vector<int>> highlightAtoms =
+  std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
@@ -113,9 +113,9 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
                          python::object highlight_bond_map,
                          python::object highlight_atom_radii, int confId,
                          std::string legend) {
-  rdk_auto_ptr<std::vector<int>> highlightAtoms =
+  std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
-  rdk_auto_ptr<std::vector<int>> highlightBonds =
+  std::unique_ptr<std::vector<int>> highlightBonds =
       pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
   // FIX: support these
   ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
@@ -136,9 +136,9 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_bond_map,
                           python::object highlight_atom_radii,
                           python::object pconfIds, python::object plegends) {
-  rdk_auto_ptr<std::vector<ROMol *>> mols = pythonObjectToVect<ROMol *>(pmols);
+  std::unique_ptr<std::vector<ROMol *>> mols = pythonObjectToVect<ROMol *>(pmols);
   unsigned int nThere = mols->size();
-  rdk_auto_ptr<std::vector<std::vector<int>>> highlightAtoms;
+  std::unique_ptr<std::vector<std::vector<int>>> highlightAtoms;
   if (highlight_atoms) {
     if (python::extract<unsigned int>(highlight_atoms.attr("__len__")()) !=
         nThere) {
@@ -151,7 +151,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
       pythonObjectToVect(highlight_atoms[i], (*highlightAtoms)[i]);
     }
   }
-  rdk_auto_ptr<std::vector<std::vector<int>>> highlightBonds;
+  std::unique_ptr<std::vector<std::vector<int>>> highlightBonds;
   if (highlight_bonds) {
     if (python::extract<unsigned int>(highlight_bonds.attr("__len__")()) !=
         nThere) {
@@ -165,7 +165,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
     }
   }
 
-  rdk_auto_ptr<std::vector<ColourPalette>> highlightAtomMap;
+  std::unique_ptr<std::vector<ColourPalette>> highlightAtomMap;
   if (highlight_atom_map) {
     if (python::extract<unsigned int>(highlight_atom_map.attr("__len__")()) !=
         nThere) {
@@ -178,7 +178,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
       pyDictToColourMap(highlight_atom_map[i], (*highlightAtomMap)[i]);
     }
   }
-  rdk_auto_ptr<std::vector<ColourPalette>> highlightBondMap;
+  std::unique_ptr<std::vector<ColourPalette>> highlightBondMap;
   if (highlight_bond_map) {
     if (python::extract<unsigned int>(highlight_bond_map.attr("__len__")()) !=
         nThere) {
@@ -191,7 +191,7 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
       pyDictToColourMap(highlight_bond_map[i], (*highlightBondMap)[i]);
     }
   }
-  rdk_auto_ptr<std::vector<std::map<int, double>>> highlightRadii;
+  std::unique_ptr<std::vector<std::map<int, double>>> highlightRadii;
   if (highlight_atom_radii) {
     if (python::extract<unsigned int>(highlight_atom_radii.attr("__len__")()) !=
         nThere) {
@@ -204,10 +204,10 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
       pyDictToDoubleMap(highlight_atom_radii[i], (*highlightRadii)[i]);
     }
   }
-  // rdk_auto_ptr<std::vector<int> > highlightAtoms =
+  // std::unique_ptr<std::vector<int> > highlightAtoms =
   //     pythonObjectToVect(highlight_atoms,
   //     static_cast<int>(mol.getNumAtoms()));
-  // rdk_auto_ptr<std::vector<int> > highlightBonds =
+  // std::unique_ptr<std::vector<int> > highlightBonds =
   //     pythonObjectToVect(highlight_bonds,
   //     static_cast<int>(mol.getNumBonds()));
   // FIX: support these
@@ -215,8 +215,8 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
   // std::map<int, DrawColour> *hbm = pyDictToColourMap(highlight_bond_map);
   // std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
   //
-  rdk_auto_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
-  rdk_auto_ptr<std::vector<std::string>> legends =
+  std::unique_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
+  std::unique_ptr<std::vector<std::string>> legends =
       pythonObjectToVect<std::string>(plegends);
 
   self.drawMolecules(*mols, legends.get(), highlightAtoms.get(),
@@ -229,13 +229,13 @@ void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
                         bool highlightByReactant,
                         python::object phighlightColorsReactants,
                         python::object pconfIds) {
-  rdk_auto_ptr<std::vector<DrawColour>> highlightColorsReactants;
+  std::unique_ptr<std::vector<DrawColour>> highlightColorsReactants;
   if (phighlightColorsReactants) {
     highlightColorsReactants.reset(new std::vector<DrawColour>);
     pyListToColourVec(phighlightColorsReactants, *highlightColorsReactants);
   }
 
-  rdk_auto_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
+  std::unique_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
 
   self.drawReaction(rxn, highlightByReactant, highlightColorsReactants.get(),
                     confIds.get());
