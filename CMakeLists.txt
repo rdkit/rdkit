@@ -228,11 +228,6 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.56.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
-if(APPLE)
-  find_package(Boost 1.56.0 COMPONENTS regex REQUIRED)
-  list(APPEND Boost_IMPORTED_LIBRARIES "Boost::regex")
-endif(APPLE)
-
 # set the boost include directories
 target_link_libraries(rdkit_base INTERFACE Boost::boost)
 
