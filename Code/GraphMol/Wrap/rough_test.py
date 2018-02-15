@@ -4566,6 +4566,12 @@ M  END
     csmi2 = Chem.MolToSmiles(m2,isomericSmiles=True)
     self.assertEqual(csmi1,csmi2)
 
+  def testIssue1735(self):
+    # this shouldn't seg fault...
+    m = Chem.RWMol()
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=True)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
