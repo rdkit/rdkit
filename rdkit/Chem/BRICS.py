@@ -1,20 +1,19 @@
-# $Id$
 #
 #  Copyright (c) 2009, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -90,7 +89,7 @@ reactionDefs = (
     ('1', '10', '-'),
   ],
 
-  # L3 
+  # L3
   [
     ('3', '4', '-'),
     ('3', '13', '-'),
@@ -267,18 +266,18 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
   >>> res = list(FindBRICSBonds(m))
   >>> sorted(res)
   [((1, 2), ('7', '7'))]
-  
+
   make sure we don't match ring bonds:
   >>> m = Chem.MolFromSmiles('O=C1NCCC1')
   >>> list(FindBRICSBonds(m))
   []
-  
+
   another nice one, make sure environment 8 doesn't match something connected
   to a ring atom:
   >>> m = Chem.MolFromSmiles('CC1(C)CCCCC1')
   >>> list(FindBRICSBonds(m))
   []
-  
+
   """
   letter = re.compile('[a-z,A-Z]')
   indices = list(range(len(bondMatchers)))
@@ -328,7 +327,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
   >>> m2 = BreakBRICSBonds(m,[((3, 2), ('3', '4'))])
   >>> Chem.MolToSmiles(m2,True)
   '[3*]OCC.[4*]CCC'
-  
+
   this can be used as an alternate approach for doing a BRICS decomposition by
   following BreakBRICSBonds with a call to Chem.GetMolFrags:
   >>> m = Chem.MolFromSmiles('CCCOCC')
@@ -977,6 +976,17 @@ M  END
       atIds = [x[0] for x in res]
       atIds.sort()
       self.assertEqual(atIds, [(5, 2), (6, 5)])
+
+    def testGithub1734(self):
+      m = Chem.MolFromSmiles('c1ccccc1[C@H](C)NC')
+      res = BRICSDecompose(m)
+      self.assertEqual(len(res), 3)
+      self.assertTrue('[4*][C@H]([8*])C' in res)
+      res = BreakBRICSBonds(m)
+      self.assertEqual(Chem.MolToSmiles(res,isomericSmiles=True),
+                       '[16*]c1ccccc1.[4*][C@H]([8*])C.[5*]NC')
+
+
 
   failed, tried = _test()
   if failed:
