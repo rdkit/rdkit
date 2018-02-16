@@ -26,6 +26,7 @@ using namespace RDKit;
 void test1() {
   BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
 
+#if 1
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -116,88 +117,46 @@ void test1() {
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::ZERO);
   }
+#endif
+
+  {
+    std::string json =
+        "{\"moljson-header\":{\"version\":10,\"name\":\"test2 mols\"},"
+        "\"atomDefaults\":{\"Z\":6,\"impHs\":3,\"chg\":0,\"nRad\":0,"
+        "\"isotope\":0,"
+        "\"stereo\":\"unspecified\"},\"bondDefaults\":{\"bo\":1,\"stereo\":"
+        "\"unspecified\"},"
+        "\"molecules\":[{\"name\":\"mol1 "
+        "name\",\"atoms\":[{},{}],\"bonds\":[{\"bo\":1, \"atoms\":[0, 1]}]}]}";
+    std::vector<boost::shared_ptr<RWMol>> mols =
+        MolInterchange::JSONDataToMols(json);
+    TEST_ASSERT(mols.size() == 1);
+    RWMol *m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2)
+    TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-#if 0
-#include <boost/timer/timer.hpp>
 void test2() {
-  BOOST_LOG(rdInfoLog) << "test2: timing" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test2: basic writing" << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
   {
-    std::string fName =
-        rdbase + "/Code/GraphMol/MolInterchange/test_data/10000mols.json";
-    std::ifstream inStream(fName);
-    if (!inStream || (inStream.bad())) {
-      std::ostringstream errout;
-      errout << "Bad input file " << fName;
-      throw BadFileException(errout.str());
-    }
-    std::string data((std::istreambuf_iterator<char>(inStream)),
-                     std::istreambuf_iterator<char>());
-
-    std::vector<boost::shared_ptr<RWMol>> mols;
-    std::cerr << "from json" << std::endl;
-    {
-      boost::timer::auto_cpu_timer t;
-      mols = MolInterchange::JSONDataToMols(data);
-    }
-    std::cerr << "done" << std::endl;
-    TEST_ASSERT(mols.size() == 10000);
-#if 0
-    std::vector<std::string> smis;
-    for (auto &mol : mols) {
-      smis.push_back(mol->getProp<std::string>("_Name"));
-    }
-
-    std::vector<boost::shared_ptr<RWMol>> mols2;
-    std::cerr << "from smiles" << std::endl;
-    {
-      boost::timer::auto_cpu_timer t;
-      for (const auto &smi : smis) {
-        mols2.push_back(boost::shared_ptr<RWMol>(SmilesToMol(smi)));
-      }
-    }
-    std::cerr << "done" << std::endl;
-    mols2.clear();
-    std::cerr << "from smiles no sanit" << std::endl;
-    {
-      boost::timer::auto_cpu_timer t;
-      for (const auto &smi : smis) {
-        mols2.push_back(
-            boost::shared_ptr<RWMol>(SmilesToMol(smi, false, false)));
-      }
-    }
-#elif 1
-    std::vector<std::string> pkls;
-    for (auto &mol : mols) {
-      std::string pkl;
-      MolPickler::pickleMol(*mol, pkl);
-      pkls.push_back(pkl);
-    }
-
-    std::vector<boost::shared_ptr<RWMol>> mols2;
-    std::cerr << "from pickle" << std::endl;
-    {
-      boost::timer::auto_cpu_timer t;
-      for (const auto &pkl : pkls) {
-        mols2.push_back(boost::shared_ptr<RWMol>(new RWMol(pkl)));
-      }
-    }
-    std::cerr << "done" << std::endl;
-
-#endif
-    std::cerr << "done" << std::endl;
+    std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
+    TEST_ASSERT(mol);
+    mol->setProp("_Name", "mol1 name");
+    auto json = MolInterchange::MolToJSONData(*mol, "test2 mols");
+    std::cerr << json << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
-#endif
 
 void RunTests() {
 #if 1
   test1();
+  test2();
 #endif
   // test2();
 }

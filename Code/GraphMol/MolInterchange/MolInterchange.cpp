@@ -23,12 +23,16 @@
 
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 namespace rj = rapidjson;
 
 namespace RDKit {
 
 namespace MolInterchange {
+
+static int currentMolJSONVersion = 10;
 
 namespace {
 struct DefaultValueCache {
@@ -384,7 +388,7 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
     throw FileParseException("Bad Format: missing header in JSON");
   if (!doc["moljson-header"].HasMember("version"))
     throw FileParseException("Bad Format: missing version in JSON");
-  if (doc["moljson-header"]["version"].GetInt() != 10)
+  if (doc["moljson-header"]["version"].GetInt() != currentMolJSONVersion)
     throw FileParseException("Bad Format: bad version in JSON");
 
   rj::Value atomDefaults_;
@@ -393,7 +397,7 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
     if (!atomDefaults_.IsObject())
       throw FileParseException("Bad Format: atomDefaults is not an object");
   }
-  DefaultValueCache atomDefaults(atomDefaults_);
+  const DefaultValueCache atomDefaults(atomDefaults_);
 
   rj::Value bondDefaults_;
   if (doc.HasMember("bondDefaults")) {
@@ -401,7 +405,7 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
     if (!bondDefaults_.IsObject())
       throw FileParseException("Bad Format: bondDefaults is not an object");
   }
-  DefaultValueCache bondDefaults(bondDefaults_);
+  const DefaultValueCache bondDefaults(bondDefaults_);
 
   if (doc.HasMember("molecules")) {
     if (!doc["molecules"].IsArray())
@@ -414,22 +418,6 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
   }
 
   return res;
-}
-
-void initAtomDefaults(DefaultValueCache &atomDefaults, rj::Value &rjDefaults) {
-  // "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified",
-  // "nrad": 0, "isotope": 0},
-  atomDefaults.intMap["Z"] = 6;
-  atomDefaults.intMap["impHs"] = 0;
-  atomDefaults.intMap["chg"] = 0;
-  atomDefaults.intMap["nRad"] = 0;
-  atomDefaults.intMap["isotope"] = 0;
-  atomDefaults.stringMap["stereo"] = "unspecified";
-}
-void initBondDefaults(DefaultValueCache &bondDefaults, rj::Value &rjDefaults) {
-  // "bondDefaults": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []},
-  bondDefaults.intMap["bo"] = 1;
-  bondDefaults.stringMap["stereo"] = "unspecified";
 }
 
 }  // end of anonymous namespace
@@ -451,12 +439,166 @@ std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
   return (DocToMols(doc));
 }
 
-std::string MolsToJSONData(const std::vector<const ROMol *> &mols) {
+namespace {
+void initAtomDefaults(rj::Value &rjDefaults, rj::Document &document) {
+  // "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified",
+  // "nrad": 0, "isotope": 0},
+  rjDefaults.AddMember("Z", 6, document.GetAllocator());
+  rjDefaults.AddMember("impHs", 0, document.GetAllocator());
+  rjDefaults.AddMember("chg", 0, document.GetAllocator());
+  rjDefaults.AddMember("nRad", 0, document.GetAllocator());
+  rjDefaults.AddMember("isotope", 0, document.GetAllocator());
+  rjDefaults.AddMember("stereo", "unspecified", document.GetAllocator());
+}
+void initBondDefaults(rj::Value &rjDefaults, rj::Document &document) {
+  // "bondDefaults": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []},
+  rjDefaults.AddMember("bo", 1, document.GetAllocator());
+  rjDefaults.AddMember("stereo", "unspecified", document.GetAllocator());
+}
+void initHeader(rj::Value &rjHeader, rj::Document &document, const char *nm) {
+  rjHeader.AddMember("version", currentMolJSONVersion, document.GetAllocator());
+  rj::Value nmv;
+  nmv.SetString(rj::StringRef(nm));
+  rjHeader.AddMember("name", nmv, document.GetAllocator());
+}
+
+void addIntVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
+               int val, rj::Document &doc) {
+  const auto srt = rj::StringRef(tag);
+  const auto &miter = defaults.FindMember(srt);
+  if (miter != defaults.MemberEnd()) {
+    int dval = miter->value.GetInt();
+    if (dval != val) {
+      dest.AddMember(srt, val, doc.GetAllocator());
+    }
+  } else {
+    dest.AddMember(srt, val, doc.GetAllocator());
+  }
+}
+
+void addStringVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
+                  const std::string &val, rj::Document &doc) {
+  const auto srt = rj::StringRef(tag);
+  const auto &miter = defaults.FindMember(srt);
+  if (miter != defaults.MemberEnd()) {
+    std::string dval = miter->value.GetString();
+    if (dval != val) {
+      rj::Value nmv;
+      nmv.SetString(rj::StringRef(val.c_str(), val.size()));
+      dest.AddMember(srt, nmv, doc.GetAllocator());
+    }
+  } else {
+    rj::Value nmv;
+    nmv.SetString(rj::StringRef(val.c_str(), val.size()));
+    dest.AddMember(srt, nmv, doc.GetAllocator());
+  }
+}
+
+void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
+             const rj::Value &rjDefaults) {
+  addIntVal(rjAtom, rjDefaults, "Z", atom.getAtomicNum(), doc);
+  addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
+  addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
+  addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
+  addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
+  std::string chi = "unspecified";
+  if (inv_chilookup.find(atom.getChiralTag()) != inv_chilookup.end()) {
+    chi = inv_chilookup.find(atom.getChiralTag())->second;
+  } else {
+    BOOST_LOG(rdWarningLog)
+        << " unrecognized atom chirality to unspecified while writing"
+        << std::endl;
+  }
+
+  addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
+}
+
+void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
+             const rj::Value &rjDefaults) {
+  int bo = 0;
+  if (inv_bolookup.find(bond.getBondType()) != inv_bolookup.end()) {
+    bo = inv_bolookup.find(bond.getBondType())->second;
+  } else {
+    BOOST_LOG(rdWarningLog)
+        << " unrecognized bond type set to zero while writing" << std::endl;
+  }
+  addIntVal(rjBond, rjDefaults, "bo", bo, doc);
+  rj::Value rjAtoms(rj::kArrayType);
+  rj::Value v1(static_cast<int>(bond.getBeginAtomIdx()));
+  rj::Value v2(static_cast<int>(bond.getEndAtomIdx()));
+  rjAtoms.PushBack(v1, doc.GetAllocator());
+  rjAtoms.PushBack(v2, doc.GetAllocator());
+  rjBond.AddMember("atoms", rjAtoms, doc.GetAllocator());
+}
+
+void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
+            const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
+  RWMol mol(imol);
+  MolOps::Kekulize(mol, false);
+  if (mol.hasProp(common_properties::_Name)) {
+    rj::Value nmv;
+    const std::string &nm =
+        mol.getProp<std::string>(common_properties::_Name).c_str();
+    nmv.SetString(nm.c_str(), nm.size(), doc.GetAllocator());
+    rjMol.AddMember("name", nmv, doc.GetAllocator());
+
+    rj::Value rjAtoms(rj::kArrayType);
+    for (const auto &at : mol.atoms()) {
+      rj::Value rjAtom(rj::kObjectType);
+      addAtom(*at, rjAtom, doc, atomDefaults);
+      rjAtoms.PushBack(rjAtom, doc.GetAllocator());
+    }
+    rjMol.AddMember("atoms", rjAtoms, doc.GetAllocator());
+
+    rj::Value rjBonds(rj::kArrayType);
+    for (const auto &bnd : mol.bonds()) {
+      rj::Value rjBond(rj::kObjectType);
+      addBond(*bnd, rjBond, doc, atomDefaults);
+      rjBonds.PushBack(rjBond, doc.GetAllocator());
+    }
+    rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
+  }
+}
+
+}  // end of anonymous namespace
+
+std::string MolsToJSONData(const std::vector<const ROMol *> &mols,
+                           const char *name) {
   std::string res = "";
+  rj::Document doc;
+  doc.SetObject();
+
+  rj::Value header(rj::kObjectType);
+  initHeader(header, doc, name);
+  doc.AddMember("moljson-header", header, doc.GetAllocator());
+
+  rj::Value atomDefaults(rj::kObjectType);
+  initAtomDefaults(atomDefaults, doc);
+  doc.AddMember("atomDefaults", atomDefaults, doc.GetAllocator());
+
+  rj::Value bondDefaults(rj::kObjectType);
+  initBondDefaults(bondDefaults, doc);
+  doc.AddMember("bondDefaults", bondDefaults, doc.GetAllocator());
+
+  rj::Value rjMols(rj::kArrayType);
+  for (const auto &mol : mols) {
+    rj::Value rjMol(rj::kObjectType);
+    // write mol;
+    addMol(*mol, rjMol, doc, atomDefaults, bondDefaults);
+    rjMols.PushBack(rjMol, doc.GetAllocator());
+  }
+  doc.AddMember("molecules", rjMols, doc.GetAllocator());
+
+#if 0
   DefaultValueCache atomDefaults, bondDefaults;
   initAtomDefaults(atomDefaults);
   initBondDefaults(bondDefaults);
-  return res;
+#endif
+
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
 };
 
 }  // end of namespace MolInterchange

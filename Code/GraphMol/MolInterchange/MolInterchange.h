@@ -35,10 +35,11 @@ std::vector<boost::shared_ptr<RWMol>> JSONDataStreamToMols(
 std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
     const std::string &jsonBlock);
 
-std::string MolsToJSONData(const std::vector<const ROMol *> &mols);
-std::string MolToJSONData(const ROMol &mol) {
+std::string MolsToJSONData(const std::vector<const ROMol *> &mols,
+                           const char *name = "rdkit mols");
+std::string MolToJSONData(const ROMol &mol, const char *name = "rdkit mols") {
   std::vector<const ROMol *> ms{&mol};
-  return MolsToJSONData(ms);
+  return MolsToJSONData(ms, name);
 };
 
 }  // end of namespace MolInterchange
