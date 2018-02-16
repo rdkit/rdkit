@@ -44,7 +44,7 @@ def message(msg):
 def GetRDKFingerprint(mol):
   """ uses default parameters """
   details = FingerprinterDetails()
-  return apply(FingerprintMol, (mol, ), details.__dict__)
+  return FingerprintMol(mol, **details.__dict__)
 
 
 def FoldFingerprintToTargetDensity(fp, **fpArgs):
@@ -220,11 +220,11 @@ def FingerprintsFromDetails(details, reportFreq=10):
   if dataSet and not details.useSD:
     data = dataSet.GetNamedData()
     if not details.molPklName:
-      fps = apply(FingerprintsFromSmiles, (data, idCol, smiCol), details.__dict__)
+      fps = FingerprintsFromSmiles(data, idCol, smiCol, **details.__dict__)
     else:
-      fps = apply(FingerprintsFromPickles, (data, idCol, smiCol), details.__dict__)
+      fps = FingerprintsFromPickles(data, idCol, smiCol, **details.__dict__)
   elif dataSet and details.useSD:
-    fps = apply(FingerprintsFromMols, (dataSet, ), details.__dict__)
+    fps = FingerprintsFromMols(dataSet, **details.__dict__)
 
   if fps:
     if details.outFileName:
