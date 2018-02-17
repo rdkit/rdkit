@@ -12,6 +12,7 @@
 #endif
 
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -33,6 +34,7 @@ namespace RDKit {
 namespace MolInterchange {
 
 static int currentMolJSONVersion = 10;
+static int currentRDKitRepresentationVersion = 1;
 
 namespace {
 struct DefaultValueCache {
@@ -494,7 +496,7 @@ void addStringVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
   if (miter != defaults.MemberEnd()) {
     std::string dval = miter->value.GetString();
     if (val.size() && dval != val) {
-      dest.AddMember("chi", nmv, doc.GetAllocator());
+      dest.AddMember(srt, nmv, doc.GetAllocator());
     }
   } else {
     dest.AddMember(srt, nmv, doc.GetAllocator());
@@ -557,25 +559,106 @@ void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
         mol.getProp<std::string>(common_properties::_Name).c_str();
     nmv.SetString(nm.c_str(), nm.size(), doc.GetAllocator());
     rjMol.AddMember("name", nmv, doc.GetAllocator());
-
-    rj::Value rjAtoms(rj::kArrayType);
-    for (const auto &at : mol.atoms()) {
-      rj::Value rjAtom(rj::kObjectType);
-      addAtom(*at, rjAtom, doc, atomDefaults);
-      rjAtoms.PushBack(rjAtom, doc.GetAllocator());
-    }
-    rjMol.AddMember("atoms", rjAtoms, doc.GetAllocator());
-
-    rj::Value rjBonds(rj::kArrayType);
-    for (const auto &bnd : mol.bonds()) {
-      rj::Value rjBond(rj::kObjectType);
-      addBond(*bnd, rjBond, doc, bondDefaults);
-      rjBonds.PushBack(rjBond, doc.GetAllocator());
-    }
-    rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
   }
-}
+  rj::Value rjAtoms(rj::kArrayType);
+  for (const auto &at : mol.atoms()) {
+    rj::Value rjAtom(rj::kObjectType);
+    addAtom(*at, rjAtom, doc, atomDefaults);
+    rjAtoms.PushBack(rjAtom, doc.GetAllocator());
+  }
+  rjMol.AddMember("atoms", rjAtoms, doc.GetAllocator());
 
+  rj::Value rjBonds(rj::kArrayType);
+  for (const auto &bnd : mol.bonds()) {
+    rj::Value rjBond(rj::kObjectType);
+    addBond(*bnd, rjBond, doc, bondDefaults);
+    rjBonds.PushBack(rjBond, doc.GetAllocator());
+  }
+  rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
+
+  rj::Value representation(rj::kObjectType);
+  representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
+  representation.AddMember("format_version", currentRDKitRepresentationVersion,
+                           doc.GetAllocator());
+  rj::Value toolkitVersion;
+  toolkitVersion.SetString(rj::StringRef(rdkitVersion));
+  representation.AddMember("toolkit_version", toolkitVersion,
+                           doc.GetAllocator());
+
+  bool hasArom = false;
+  for (const auto &atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      hasArom = true;
+      break;
+    }
+  }
+  if (hasArom) {
+    {
+      rj::Value rjArr(rj::kArrayType);
+      for (const auto &atom : mol.atoms()) {
+        if (atom->getIsAromatic()) {
+          rjArr.PushBack(atom->getIdx(), doc.GetAllocator());
+        }
+      }
+      representation.AddMember("aromaticAtoms", rjArr, doc.GetAllocator());
+    }
+    {
+      rj::Value rjArr(rj::kArrayType);
+      for (const auto &bond : mol.bonds()) {
+        if (bond->getIsAromatic()) {
+          rjArr.PushBack(bond->getIdx(), doc.GetAllocator());
+        }
+      }
+      representation.AddMember("aromaticBonds", rjArr, doc.GetAllocator());
+    }
+  }
+  {
+    rj::Value rjArr(rj::kArrayType);
+    if (mol.getAtomWithIdx(0)->hasProp(common_properties::_CIPRank)) {
+      for (const auto &atom : mol.atoms()) {
+        rjArr.PushBack(atom->getProp<unsigned int>(common_properties::_CIPRank),
+                       doc.GetAllocator());
+      }
+    }
+    if (rjArr.Size()) {
+      representation.AddMember("cipRanks", rjArr, doc.GetAllocator());
+    }
+  }
+  {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto &atom : mol.atoms()) {
+      std::string cip;
+      if (atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
+        rj::Value cipv;
+        cipv.SetString(cip.c_str(), cip.size(), doc.GetAllocator());
+        rj::Value rjElement(rj::kArrayType);
+        rjElement.PushBack(rj::Value(atom->getIdx()), doc.GetAllocator());
+        rjElement.PushBack(cipv, doc.GetAllocator());
+        rjArr.PushBack(rjElement, doc.GetAllocator());
+      }
+    }
+    if (rjArr.Size()) {
+      representation.AddMember("cipCodes", rjArr, doc.GetAllocator());
+    }
+  }
+  if (mol.getRingInfo()->numRings()) {
+    {
+      rj::Value rjArr(rj::kArrayType);
+      for (const auto &ring : mol.getRingInfo()->atomRings()) {
+        rj::Value rjRing(rj::kArrayType);
+        for (const auto &ai : ring) {
+          rjRing.PushBack(ai, doc.GetAllocator());
+        }
+        rjArr.PushBack(rjRing, doc.GetAllocator());
+      }
+      representation.AddMember("atomRings", rjArr, doc.GetAllocator());
+    }
+  }
+
+  rj::Value rjReprs(rj::kArrayType);
+  rjReprs.PushBack(representation, doc.GetAllocator());
+  rjMol.AddMember("representations", rjReprs, doc.GetAllocator());
+}
 }  // end of anonymous namespace
 
 std::string MolsToJSONData(const std::vector<const ROMol *> &mols,

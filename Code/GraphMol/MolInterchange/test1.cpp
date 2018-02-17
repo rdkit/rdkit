@@ -140,6 +140,25 @@ void test1() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void roundtripSmi(const char *smi) {
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+  TEST_ASSERT(mol);
+  mol->setProp("_Name", "test mol");
+  auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
+  std::cerr << json << std::endl;
+  std::string smi1 = MolToSmiles(*mol);
+  auto newMols = MolInterchange::JSONDataToMols(json);
+  TEST_ASSERT(newMols.size() == 1);
+  // mol->debugMol(std::cerr);
+  // newMols[0]->debugMol(std::cerr);
+  std::string smi2 = MolToSmiles(*newMols[0]);
+  if (smi1 != smi2) {
+    std::cerr << "smi1: " << smi1 << std::endl;
+    std::cerr << "smi2: " << smi2 << std::endl;
+  }
+  TEST_ASSERT(smi1 == smi2);
+}
+
 void test2() {
   BOOST_LOG(rdInfoLog) << "test2: basic writing" << std::endl;
 #if 1
@@ -151,7 +170,9 @@ void test2() {
     std::cerr << json << std::endl;
   }
 #endif
-#if 1
+  roundtripSmi("F[C@@](Cl)(O)C");
+  roundtripSmi("c1ccccc1");
+#if 0
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("F[C@](Cl)(O)/C=C/C"));
     TEST_ASSERT(mol);
@@ -159,6 +180,15 @@ void test2() {
     mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::STEREOTRANS);
     auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
     std::cerr << json << std::endl;
+    std::string smi1 = MolToSmiles(*mol);
+    auto newMols = MolInterchange::JSONDataToMols(json);
+    TEST_ASSERT(newMols.size() == 1);
+    mol->debugMol(std::cerr);
+    newMols[0]->debugMol(std::cerr);
+    std::string smi2 = MolToSmiles(*newMols[0]);
+    std::cerr << "smi1: " << smi1 << std::endl;
+    std::cerr << "smi2: " << smi2 << std::endl;
+    TEST_ASSERT(smi1 == smi2);
   }
 #endif
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
