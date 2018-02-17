@@ -254,6 +254,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
     const auto &miter = repVal.FindMember("aromaticAtoms");
     if (miter != repVal.MemberEnd()) {
       for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsInt())
+          throw FileParseException("Bad Format: aromaticAtom not int");
         mol->getAtomWithIdx(val.GetInt())->setIsAromatic(true);
       }
     }
@@ -262,6 +264,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
     const auto &miter = repVal.FindMember("aromaticBonds");
     if (miter != repVal.MemberEnd()) {
       for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsInt())
+          throw FileParseException("Bad Format: aromaticBond not int");
         mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
       }
     }
@@ -271,6 +275,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
     if (miter != repVal.MemberEnd()) {
       size_t i = 0;
       for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsInt())
+          throw FileParseException("Bad Format: ciprank not int");
         mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPRank,
                                           val.GetInt());
       }
@@ -279,10 +285,11 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
   {
     const auto &miter = repVal.FindMember("cipCodes");
     if (miter != repVal.MemberEnd()) {
-      size_t i = 0;
       for (const auto &val : miter->value.GetArray()) {
-        mol->getAtomWithIdx(i++)->setProp(common_properties::_CIPCode,
-                                          val.GetString());
+        if (!val.IsArray())
+          throw FileParseException("Bad Format: CIPCode not string");
+        mol->getAtomWithIdx(val[0].GetInt())
+            ->setProp(common_properties::_CIPCode, val[1].GetString());
       }
     }
   }
@@ -294,6 +301,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
       auto ri = mol->getRingInfo();
       ri->initialize();
       for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsArray())
+          throw FileParseException("Bad Format: atomRing not array");
         INT_VECT atomRing;
         INT_VECT bondRing;
         size_t sz = val.Size();
@@ -478,18 +487,16 @@ void addIntVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
 
 void addStringVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
                   const std::string &val, rj::Document &doc) {
+  rj::Value nmv;
+  nmv.SetString(val.c_str(), val.size(), doc.GetAllocator());
   const auto srt = rj::StringRef(tag);
   const auto &miter = defaults.FindMember(srt);
   if (miter != defaults.MemberEnd()) {
     std::string dval = miter->value.GetString();
-    if (dval != val) {
-      rj::Value nmv;
-      nmv.SetString(rj::StringRef(val.c_str(), val.size()));
-      dest.AddMember(srt, nmv, doc.GetAllocator());
+    if (val.size() && dval != val) {
+      dest.AddMember("chi", nmv, doc.GetAllocator());
     }
   } else {
-    rj::Value nmv;
-    nmv.SetString(rj::StringRef(val.c_str(), val.size()));
     dest.AddMember(srt, nmv, doc.GetAllocator());
   }
 }
@@ -501,15 +508,14 @@ void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
   addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
   addIntVal(rjAtom, rjDefaults, "nRad", atom.getNumRadicalElectrons(), doc);
-  std::string chi = "unspecified";
+  std::string chi = "";
   if (inv_chilookup.find(atom.getChiralTag()) != inv_chilookup.end()) {
     chi = inv_chilookup.find(atom.getChiralTag())->second;
   } else {
     BOOST_LOG(rdWarningLog)
-        << " unrecognized atom chirality to unspecified while writing"
+        << " unrecognized atom chirality set to default while writing"
         << std::endl;
   }
-
   addStringVal(rjAtom, rjDefaults, "stereo", chi, doc);
 }
 
@@ -529,6 +535,16 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   rjAtoms.PushBack(v1, doc.GetAllocator());
   rjAtoms.PushBack(v2, doc.GetAllocator());
   rjBond.AddMember("atoms", rjAtoms, doc.GetAllocator());
+
+  std::string chi = "";
+  if (inv_stereolookup.find(bond.getStereo()) != inv_stereolookup.end()) {
+    chi = inv_stereolookup.find(bond.getStereo())->second;
+  } else {
+    BOOST_LOG(rdWarningLog)
+        << " unrecognized bond stereo set to default while writing"
+        << std::endl;
+  }
+  addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
 }
 
 void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
@@ -553,7 +569,7 @@ void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
     rj::Value rjBonds(rj::kArrayType);
     for (const auto &bnd : mol.bonds()) {
       rj::Value rjBond(rj::kObjectType);
-      addBond(*bnd, rjBond, doc, atomDefaults);
+      addBond(*bnd, rjBond, doc, bondDefaults);
       rjBonds.PushBack(rjBond, doc.GetAllocator());
     }
     rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
@@ -584,7 +600,8 @@ std::string MolsToJSONData(const std::vector<const ROMol *> &mols,
   for (const auto &mol : mols) {
     rj::Value rjMol(rj::kObjectType);
     // write mol;
-    addMol(*mol, rjMol, doc, atomDefaults, bondDefaults);
+    addMol(*mol, rjMol, doc, doc.FindMember("atomDefaults")->value,
+           doc.FindMember("bondDefaults")->value);
     rjMols.PushBack(rjMol, doc.GetAllocator());
   }
   doc.AddMember("molecules", rjMols, doc.GetAllocator());

@@ -142,7 +142,7 @@ void test1() {
 
 void test2() {
   BOOST_LOG(rdInfoLog) << "test2: basic writing" << std::endl;
-
+#if 1
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
@@ -150,12 +150,23 @@ void test2() {
     auto json = MolInterchange::MolToJSONData(*mol, "test2 mols");
     std::cerr << json << std::endl;
   }
+#endif
+#if 1
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("F[C@](Cl)(O)/C=C/C"));
+    TEST_ASSERT(mol);
+    mol->setProp("_Name", "test mol");
+    mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::STEREOTRANS);
+    auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
+    std::cerr << json << std::endl;
+  }
+#endif
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 void RunTests() {
 #if 1
-  test1();
+  // test1();
   test2();
 #endif
   // test2();
