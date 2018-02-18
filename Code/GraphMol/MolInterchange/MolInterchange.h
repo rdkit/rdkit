@@ -38,8 +38,9 @@ std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
 template <typename T>
 std::string MolsToJSONData(const std::vector<T> &mols,
                            const char *name = "rdkit mols");
-std::string MolToJSONData(const ROMol &mol, const char *name = "rdkit mols") {
-  std::vector<const ROMol *> ms{&mol};
+template <typename T>
+std::string MolToJSONData(const T &mol, const char *name = "rdkit mols") {
+  std::vector<const T *> ms{&mol};
   return MolsToJSONData(ms, name);
 };
 

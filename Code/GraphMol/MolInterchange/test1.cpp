@@ -197,7 +197,7 @@ void test2() {
 }
 
 void benchmarking() {
-  BOOST_LOG(rdInfoLog) << "benchmarkig performance" << std::endl;
+  BOOST_LOG(rdInfoLog) << "benchmarking performance" << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -205,7 +205,7 @@ void benchmarking() {
     SmilesMolSupplier suppl(fName);
     std::vector<RWMol *> mols;
     auto smir_t1 = std::chrono::system_clock::now();
-    while (mols.size() < 30000) {
+    while (mols.size() < 10000) {
       mols.push_back(static_cast<RWMol *>(suppl.next()));
     }
     auto smir_t2 = std::chrono::system_clock::now();
