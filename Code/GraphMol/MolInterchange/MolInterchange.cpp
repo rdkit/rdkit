@@ -239,7 +239,8 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
         "Bad Format: conformer doesn't contain coordinates for all atoms");
 }
 
-void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
+void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
+                             const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(repVal["toolkit"].GetString() == std::string("RDKit"),
                "bad representation");
@@ -268,6 +269,9 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
         if (!val.IsInt())
           throw FileParseException("Bad Format: aromaticBond not int");
         mol->getBondWithIdx(val.GetInt())->setIsAromatic(true);
+        if (params.setAromaticBonds) {
+          mol->getBondWithIdx(val.GetInt())->setBondType(Bond::AROMATIC);
+        }
       }
     }
   }
@@ -331,7 +335,8 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal) {
 
 void processMol(RWMol *mol, const rj::Value &molval,
                 const DefaultValueCache &atomDefaults,
-                const DefaultValueCache &bondDefaults) {
+                const DefaultValueCache &bondDefaults,
+                const JSONParseParameters &params) {
   if (molval.HasMember("name")) {
     mol->setProp(common_properties::_Name, molval["name"].GetString());
   }
@@ -380,7 +385,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
         throw FileParseException(
             "Bad Format: representation has no toolkit member");
       if (propVal["toolkit"].GetString() == std::string("RDKit")) {
-        readRDKitRepresentation(mol, propVal);
+        readRDKitRepresentation(mol, propVal, params);
       }
     }
   }
@@ -388,8 +393,9 @@ void processMol(RWMol *mol, const rj::Value &molval,
   mol->setProp(common_properties::_StereochemDone, 1);
 }
 
-std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
-  std::vector<boost::shared_ptr<RWMol>> res;
+std::vector<boost::shared_ptr<ROMol>> DocToMols(
+    rj::Document &doc, const JSONParseParameters &params) {
+  std::vector<boost::shared_ptr<ROMol>> res;
 
   // some error checking
   if (!doc.IsObject())
@@ -422,8 +428,10 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
       throw FileParseException("Bad Format: molecules is not an array");
     for (const auto &molval : doc["molecules"].GetArray()) {
       RWMol *mol = new RWMol();
-      processMol(mol, molval, atomDefaults, bondDefaults);
-      res.push_back(boost::shared_ptr<RWMol>(mol));
+      processMol(mol, molval, atomDefaults, bondDefaults, params);
+      mol->updatePropertyCache(params.strictValenceCheck);
+      mol->setProp(common_properties::_StereochemDone, 1);
+      res.push_back(boost::shared_ptr<ROMol>(static_cast<ROMol *>(mol)));
     }
   }
 
@@ -432,21 +440,21 @@ std::vector<boost::shared_ptr<RWMol>> DocToMols(rj::Document &doc) {
 
 }  // end of anonymous namespace
 
-std::vector<boost::shared_ptr<RWMol>> JSONDataStreamToMols(
-    std::istream *inStream) {
+std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
+    std::istream *inStream, const JSONParseParameters &params) {
   PRECONDITION(inStream, "no stream");
 
   rj::IStreamWrapper isw(*inStream);
   rj::Document doc;
   doc.ParseStream(isw);
 
-  return (DocToMols(doc));
+  return DocToMols(doc, params);
 }
-std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
-    const std::string &jsonBlock) {
+std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
+    const std::string &jsonBlock, const JSONParseParameters &params) {
   rj::Document doc;
   doc.Parse(jsonBlock.c_str());
-  return (DocToMols(doc));
+  return DocToMols(doc, params);
 }
 
 namespace {

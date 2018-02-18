@@ -40,10 +40,9 @@ void test1() {
       throw BadFileException(errout.str());
     }
 
-    std::vector<boost::shared_ptr<RWMol>> mols =
-        MolInterchange::JSONDataStreamToMols(&inStream);
+    auto mols = MolInterchange::JSONDataStreamToMols(&inStream);
     TEST_ASSERT(mols.size() == 1);
-    RWMol *m = mols[0].get();
+    auto m = mols[0].get();
     TEST_ASSERT(m);
     // m->debugMol(std::cerr);
     TEST_ASSERT(m->getNumAtoms() == 15);
@@ -80,10 +79,9 @@ void test1() {
       throw BadFileException(errout.str());
     }
 
-    std::vector<boost::shared_ptr<RWMol>> mols =
-        MolInterchange::JSONDataStreamToMols(&inStream);
+    auto mols = MolInterchange::JSONDataStreamToMols(&inStream);
     TEST_ASSERT(mols.size() == 1);
-    RWMol *m = mols[0].get();
+    auto m = mols[0].get();
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 6);
     TEST_ASSERT(m->getNumBonds() == 5);
@@ -111,10 +109,9 @@ void test1() {
         "\"toolkit\": \"RDKit\", \"toolkit_version\": \"2018.03.1.dev1\", "
         "\"aromaticAtoms\": [], \"aromaticBonds\": [], \"cipRanks\": [0, 1, "
         "2], \"cipCodes\": [], \"atomRings\": []}]}]}";
-    std::vector<boost::shared_ptr<RWMol>> mols =
-        MolInterchange::JSONDataToMols(json);
+    auto mols = MolInterchange::JSONDataToMols(json);
     TEST_ASSERT(mols.size() == 1);
-    RWMol *m = mols[0].get();
+    auto m = mols[0].get();
     TEST_ASSERT(m);
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::ZERO);
@@ -130,10 +127,9 @@ void test1() {
         "\"unspecified\"},"
         "\"molecules\":[{\"name\":\"mol1 "
         "name\",\"atoms\":[{},{}],\"bonds\":[{\"bo\":1, \"atoms\":[0, 1]}]}]}";
-    std::vector<boost::shared_ptr<RWMol>> mols =
-        MolInterchange::JSONDataToMols(json);
+    auto mols = MolInterchange::JSONDataToMols(json);
     TEST_ASSERT(mols.size() == 1);
-    RWMol *m = mols[0].get();
+    auto m = mols[0].get();
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 2)
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
@@ -151,10 +147,10 @@ void roundtripSmi(const char *smi) {
   std::string smi1 = MolToSmiles(*mol);
   auto newMols = MolInterchange::JSONDataToMols(json);
   TEST_ASSERT(newMols.size() == 1);
-  // mol->debugMol(std::cerr);
-  // newMols[0]->debugMol(std::cerr);
   std::string smi2 = MolToSmiles(*newMols[0]);
   if (smi1 != smi2) {
+    mol->debugMol(std::cerr);
+    newMols[0]->debugMol(std::cerr);
     std::cerr << "smi1: " << smi1 << std::endl;
     std::cerr << "smi2: " << smi2 << std::endl;
   }
@@ -174,6 +170,7 @@ void test2() {
 #endif
   roundtripSmi("F[C@@](Cl)(O)C");
   roundtripSmi("c1ccccc1");
+  roundtripSmi("CCC1=C(N)C=C(C)N=C1");
 #if 0
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("F[C@](Cl)(O)/C=C/C"));

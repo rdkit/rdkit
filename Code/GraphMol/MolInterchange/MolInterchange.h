@@ -21,19 +21,28 @@ namespace RDKit {
 class RWMol;
 
 namespace MolInterchange {
+
+struct JSONParseParameters {
+  bool setAromaticBonds = true;
+  bool strictValenceCheck = false;
+};
+static JSONParseParameters defaultJSONParseParameters;
+
 // \brief construct molecules from MolJSON data in a stream
 /*!
  *   \param inStream - stream containing the data *
  */
-std::vector<boost::shared_ptr<RWMol>> JSONDataStreamToMols(
-    std::istream *inStream);
+std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
+    std::istream *inStream,
+    const JSONParseParameters &params = defaultJSONParseParameters);
 
 // \brief construct a molecule from an MDL mol block
 /*!
  *   \param jsonBlock - string containing the mol block
  */
-std::vector<boost::shared_ptr<RWMol>> JSONDataToMols(
-    const std::string &jsonBlock);
+std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
+    const std::string &jsonBlock,
+    const JSONParseParameters &params = defaultJSONParseParameters);
 
 template <typename T>
 std::string MolsToJSONData(const std::vector<T> &mols,
