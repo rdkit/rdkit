@@ -261,7 +261,7 @@ void RunTests() {
 #if 1
   test1();
   test2();
-  benchmarking();
+// benchmarking();
 #endif
   // test2();
 }
