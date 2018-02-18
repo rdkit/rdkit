@@ -196,8 +196,8 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void test3() {
-  BOOST_LOG(rdInfoLog) << "test3: timing" << std::endl;
+void benchmarking() {
+  BOOST_LOG(rdInfoLog) << "benchmarkig performance" << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -264,7 +264,7 @@ void RunTests() {
 #if 1
   test1();
   test2();
-  test3();
+  benchmarking();
 #endif
   // test2();
 }
