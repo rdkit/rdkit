@@ -187,10 +187,9 @@ static const std::map<std::string, Bond::BondStereo> stereolookup = {
     {"trans", Bond::STEREOTRANS},
     {"either", Bond::STEREOANY}};
 static const std::map<Bond::BondStereo, std::string> inv_stereolookup = {
-    {Bond::STEREONONE, "unspecified"},
-    {Bond::STEREOCIS, "cis"},
-    {Bond::STEREOTRANS, "trans"},
-    {Bond::STEREOANY, "either"}};
+    {Bond::STEREONONE, "unspecified"}, {Bond::STEREOCIS, "cis"},
+    {Bond::STEREOTRANS, "trans"},      {Bond::STEREOZ, "cis"},
+    {Bond::STEREOE, "trans"},          {Bond::STEREOANY, "either"}};
 void readBondStereo(Bond *bnd, const rj::Value &bondVal,
                     const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
@@ -542,14 +541,14 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   if (inv_stereolookup.find(bond.getStereo()) != inv_stereolookup.end()) {
     chi = inv_stereolookup.find(bond.getStereo())->second;
   } else {
-    BOOST_LOG(rdWarningLog)
-        << " unrecognized bond stereo set to default while writing"
-        << std::endl;
+    BOOST_LOG(rdWarningLog) << " unrecognized bond stereo " << bond.getStereo()
+                            << " set to default while writing" << std::endl;
   }
   addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
 }
 
-void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
+template <typename T>
+void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
   RWMol mol(imol);
   MolOps::Kekulize(mol, false);
@@ -661,8 +660,8 @@ void addMol(const ROMol &imol, rj::Value &rjMol, rj::Document &doc,
 }
 }  // end of anonymous namespace
 
-std::string MolsToJSONData(const std::vector<const ROMol *> &mols,
-                           const char *name) {
+template <typename T>
+std::string MolsToJSONData(const std::vector<T> &mols, const char *name) {
   std::string res = "";
   rj::Document doc;
   doc.SetObject();
@@ -700,6 +699,15 @@ std::string MolsToJSONData(const std::vector<const ROMol *> &mols,
   doc.Accept(writer);
   return buffer.GetString();
 };
+
+template std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &,
+                                             const char *);
+template std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &,
+                                             const char *);
+template std::string MolsToJSONData<const ROMol *>(
+    const std::vector<const ROMol *> &, const char *);
+template std::string MolsToJSONData<const RWMol *>(
+    const std::vector<const RWMol *> &, const char *);
 
 }  // end of namespace MolInterchange
 }  // end of namespace RDKit
