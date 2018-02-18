@@ -555,6 +555,25 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
 }
 
+void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc) {
+  int dim = 2;
+  if (conf.is3D()) {
+    dim = 3;
+  }
+  rjConf.AddMember("dim", dim, doc.GetAllocator());
+  rj::Value rjCoords(rj::kArrayType);
+  for (const auto &pos : conf.getPositions()) {
+    rj::Value rjPos(rj::kArrayType);
+    rjPos.PushBack(pos.x, doc.GetAllocator());
+    rjPos.PushBack(pos.y, doc.GetAllocator());
+    if (dim == 3) {
+      rjPos.PushBack(pos.z, doc.GetAllocator());
+    }
+    rjCoords.PushBack(rjPos, doc.GetAllocator());
+  }
+  rjConf.AddMember("coords", rjCoords, doc.GetAllocator());
+}
+
 template <typename T>
 void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value &atomDefaults, const rj::Value &bondDefaults) {
@@ -582,6 +601,18 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rjBonds.PushBack(rjBond, doc.GetAllocator());
   }
   rjMol.AddMember("bonds", rjBonds, doc.GetAllocator());
+
+  if (mol.getNumConformers()) {
+    rj::Value rjConfs(rj::kArrayType);
+    for (auto conf = mol.beginConformers(); conf != mol.endConformers();
+         ++conf) {
+      rj::Value rjConf(rj::kObjectType);
+      addConformer(*(conf->get()), rjConf, doc);
+      rjConfs.PushBack(rjConf, doc.GetAllocator());
+    }
+
+    rjMol.AddMember("conformers", rjConfs, doc.GetAllocator());
+  }
 
   rj::Value representation(rj::kObjectType);
   representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
@@ -704,6 +735,7 @@ std::string MolsToJSONData(const std::vector<T> &mols, const char *name) {
 
   rj::StringBuffer buffer;
   rj::Writer<rj::StringBuffer> writer(buffer);
+  writer.SetMaxDecimalPlaces(4);
   doc.Accept(writer);
   return buffer.GetString();
 };

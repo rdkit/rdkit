@@ -193,6 +193,29 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void test3() {
+  BOOST_LOG(rdInfoLog) << "test3: writing conformers" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/test2.json";
+    std::ifstream inStream(fName);
+    auto mols = MolInterchange::JSONDataStreamToMols(&inStream);
+    TEST_ASSERT(mols.size() == 1);
+    TEST_ASSERT(mols[0]->getNumConformers() == 2);
+    TEST_ASSERT(!mols[0]->getConformer(0).is3D());
+    TEST_ASSERT(mols[0]->getConformer(1).is3D());
+    std::string json = MolInterchange::MolToJSONData(*mols[0]);
+    std::cerr << json << std::endl;
+    TEST_ASSERT(json.find("conformers") != std::string::npos);
+    auto newMols = MolInterchange::JSONDataToMols(json);
+    TEST_ASSERT(newMols.size() == 1);
+    TEST_ASSERT(newMols[0]->getNumConformers() == 2);
+    TEST_ASSERT(!newMols[0]->getConformer(0).is3D());
+    TEST_ASSERT(newMols[0]->getConformer(1).is3D());
+  }
+}
+
 void benchmarking() {
   BOOST_LOG(rdInfoLog) << "benchmarking performance" << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -261,6 +284,7 @@ void RunTests() {
 #if 1
   test1();
   test2();
+  test3();
 // benchmarking();
 #endif
   // test2();
