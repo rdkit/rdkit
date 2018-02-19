@@ -56,14 +56,38 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
           &RDKit::MolInterchange::JSONParseParameters::strictValenceCheck,
           "be strict when checking atom valences");
 
-  std::string docString = "";
+  std::string docString;
+  docString =
+      "Convert a single molecule to JSON\n\
+\n\
+    ARGUMENTS:\n\
+      - mol: the molecule to work with\n\
+      - datasetName: (optional) the name of the molecule set\n\
+    RETURNS:\n\
+      a string\n";
   python::def("MolToJSON", (std::string(*)(const RDKit::ROMol &, const char *))
                                RDKit::MolInterchange::MolToJSONData,
               (python::arg("mol"), python::arg("datasetName") = "rdkit mol"),
               docString.c_str());
+  docString =
+      "Convert a set of molecules to JSON\n\
+\n\
+    ARGUMENTS:\n\
+      - mols: the molecules to work with\n\
+      - datasetName: (optional) the name of the molecule set\n\
+    RETURNS:\n\
+      a string\n";
   python::def("MolsToJSON", MolsToJSON,
               (python::arg("mols"), python::arg("datasetName") = "rdkit mols"),
               docString.c_str());
+  docString =
+      "Convert JSON to a tuple of molecules\n\
+\n\
+    ARGUMENTS:\n\
+      - jsonBlock: the molecule to work with\n\
+      - params: (optional) JSONParseParameters controlling the JSON parsing\n\
+    RETURNS:\n\
+      a tuple of Mols\n";
   python::def(
       "JSONToMols", JSONToMols,
       (python::arg("jsonBlock"), python::arg("params") = python::object()),
