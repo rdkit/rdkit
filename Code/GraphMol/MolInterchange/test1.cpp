@@ -98,12 +98,12 @@ void test1() {
 
   {
     std::string json =
-        "{\"moljson-header\": {\"version\": 10, \"name\": \"example "
-        "molecules\"}, \"atomDefaults\": {\"chg\": 0, \"impHs\": 0, "
-        "\"stereo\": \"unspecified\", \"nrad\": 0, \"Z\": 6}, "
-        "\"bondDefaults\": {\"bo\": 1, \"stereo\": \"unspecified\", "
-        "\"stereoAtoms\": []}, \"molecules\": [{\"name\": \"no name\", "
-        "\"atoms\": [{\"Z\": 6, \"impHs\": 2}, {\"Z\": 8}, {\"Z\": 26}], "
+        "{\"commonchem\": {\"version\": 10, \"name\": \"example "
+        "molecules\"}, \"defaults\": {\"atom\": {\"chg\": 0, \"impHs\": 0, "
+        "\"stereo\": \"unspecified\", \"nrad\": 0, \"z\": 6}, "
+        "\"bond\": {\"bo\": 1, \"stereo\": \"unspecified\", "
+        "\"stereoAtoms\": []}}, \"molecules\": [{\"name\": \"no name\", "
+        "\"atoms\": [{\"z\": 6, \"impHs\": 2}, {\"z\": 8}, {\"z\": 26}], "
         "\"bonds\": [{\"atoms\": [0, 1], \"bo\": 2}, {\"atoms\": [1, 2], "
         "\"bo\": 0}], \"representations\": [{\"format_version\": 1, "
         "\"toolkit\": \"RDKit\", \"toolkit_version\": \"2018.03.1.dev1\", "
@@ -120,11 +120,11 @@ void test1() {
 
   {
     std::string json =
-        "{\"moljson-header\":{\"version\":10,\"name\":\"test2 mols\"},"
-        "\"atomDefaults\":{\"Z\":6,\"impHs\":3,\"chg\":0,\"nRad\":0,"
+        "{\"commonchem\":{\"version\":10,\"name\":\"test2 mols\"},"
+        "\"defaults\":{\"atom\":{\"z\":6,\"impHs\":3,\"chg\":0,\"nRad\":0,"
         "\"isotope\":0,"
-        "\"stereo\":\"unspecified\"},\"bondDefaults\":{\"bo\":1,\"stereo\":"
-        "\"unspecified\"},"
+        "\"stereo\":\"unspecified\"},\"bond\":{\"bo\":1,\"stereo\":"
+        "\"unspecified\"}},"
         "\"molecules\":[{\"name\":\"mol1 "
         "name\",\"atoms\":[{},{}],\"bonds\":[{\"bo\":1, \"atoms\":[0, 1]}]}]}";
     auto mols = MolInterchange::JSONDataToMols(json);

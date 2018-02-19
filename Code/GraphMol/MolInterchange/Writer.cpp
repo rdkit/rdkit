@@ -24,9 +24,9 @@
 #include <map>
 
 #include <rapidjson/document.h>
-#include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include "rapidjson/pointer.h"
 
 namespace rj = rapidjson;
 
@@ -38,7 +38,7 @@ namespace {
 void initAtomDefaults(rj::Value &rjDefaults, rj::Document &document) {
   // "atomDefaults": {"Z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified",
   // "nrad": 0, "isotope": 0},
-  rjDefaults.AddMember("Z", 6, document.GetAllocator());
+  rjDefaults.AddMember("z", 6, document.GetAllocator());
   rjDefaults.AddMember("impHs", 0, document.GetAllocator());
   rjDefaults.AddMember("chg", 0, document.GetAllocator());
   rjDefaults.AddMember("nRad", 0, document.GetAllocator());
@@ -89,7 +89,7 @@ void addStringVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
 
 void addAtom(const Atom &atom, rj::Value &rjAtom, rj::Document &doc,
              const rj::Value &rjDefaults) {
-  addIntVal(rjAtom, rjDefaults, "Z", atom.getAtomicNum(), doc);
+  addIntVal(rjAtom, rjDefaults, "z", atom.getAtomicNum(), doc);
   addIntVal(rjAtom, rjDefaults, "impHs", atom.getTotalNumHs(), doc);
   addIntVal(rjAtom, rjDefaults, "chg", atom.getFormalCharge(), doc);
   addIntVal(rjAtom, rjDefaults, "isotope", atom.getIsotope(), doc);
@@ -130,6 +130,14 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
                             << " set to default while writing" << std::endl;
   }
   addStringVal(rjBond, rjDefaults, "stereo", chi, doc);
+  if (chi != "unspecified" && bond.getStereoAtoms().size() == 2) {
+    rj::Value rjStereoAtoms(rj::kArrayType);
+    rj::Value v1(static_cast<int>(bond.getStereoAtoms()[0]));
+    rj::Value v2(static_cast<int>(bond.getStereoAtoms()[1]));
+    rjStereoAtoms.PushBack(v1, doc.GetAllocator());
+    rjStereoAtoms.PushBack(v2, doc.GetAllocator());
+    rjBond.AddMember("stereoAtoms", rjStereoAtoms, doc.GetAllocator());
+  }
 }
 
 void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc) {
@@ -284,22 +292,25 @@ std::string MolsToJSONData(const std::vector<T> &mols, const char *name) {
 
   rj::Value header(rj::kObjectType);
   initHeader(header, doc, name);
-  doc.AddMember("moljson-header", header, doc.GetAllocator());
+  doc.AddMember("commonchem", header, doc.GetAllocator());
+
+  rj::Value defaults(rj::kObjectType);
 
   rj::Value atomDefaults(rj::kObjectType);
   initAtomDefaults(atomDefaults, doc);
-  doc.AddMember("atomDefaults", atomDefaults, doc.GetAllocator());
+  defaults.AddMember("atom", atomDefaults, doc.GetAllocator());
 
   rj::Value bondDefaults(rj::kObjectType);
   initBondDefaults(bondDefaults, doc);
-  doc.AddMember("bondDefaults", bondDefaults, doc.GetAllocator());
+  defaults.AddMember("bond", bondDefaults, doc.GetAllocator());
+  doc.AddMember("defaults", defaults, doc.GetAllocator());
 
   rj::Value rjMols(rj::kArrayType);
   for (const auto &mol : mols) {
     rj::Value rjMol(rj::kObjectType);
     // write mol;
-    addMol(*mol, rjMol, doc, doc.FindMember("atomDefaults")->value,
-           doc.FindMember("bondDefaults")->value);
+    addMol(*mol, rjMol, doc, *rj::GetValueByPointer(doc, "/defaults/atom"),
+           *rj::GetValueByPointer(doc, "/defaults/bond"));
     rjMols.PushBack(rjMol, doc.GetAllocator());
   }
   doc.AddMember("molecules", rjMols, doc.GetAllocator());

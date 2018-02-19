@@ -27,6 +27,7 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <rapidjson/pointer.h>
 
 namespace rj = rapidjson;
 
@@ -137,7 +138,7 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
 void readAtom(RWMol *mol, const rj::Value &atomVal,
               const DefaultValueCache &atomDefaults) {
   PRECONDITION(mol, "no mol");
-  Atom *at = new Atom(getIntDefaultValue("Z", atomVal, atomDefaults));
+  Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
   at->setNoImplicit(true);
   at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
@@ -374,24 +375,24 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   // some error checking
   if (!doc.IsObject())
     throw FileParseException("Bad Format: JSON should be an object");
-  if (!doc.HasMember("moljson-header"))
+  if (!doc.HasMember("commonchem"))
     throw FileParseException("Bad Format: missing header in JSON");
-  if (!doc["moljson-header"].HasMember("version"))
+  if (!doc["commonchem"].HasMember("version"))
     throw FileParseException("Bad Format: missing version in JSON");
-  if (doc["moljson-header"]["version"].GetInt() != currentMolJSONVersion)
+  if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion)
     throw FileParseException("Bad Format: bad version in JSON");
 
   rj::Value atomDefaults_;
-  if (doc.HasMember("atomDefaults")) {
-    atomDefaults_ = doc["atomDefaults"];
+  if (rj::GetValueByPointer(doc, "/defaults/atom")) {
+    atomDefaults_ = *rj::GetValueByPointer(doc, "/defaults/atom");
     if (!atomDefaults_.IsObject())
       throw FileParseException("Bad Format: atomDefaults is not an object");
   }
   const DefaultValueCache atomDefaults(atomDefaults_);
 
   rj::Value bondDefaults_;
-  if (doc.HasMember("bondDefaults")) {
-    bondDefaults_ = doc["bondDefaults"];
+  if (rj::GetValueByPointer(doc, "/defaults/bond")) {
+    bondDefaults_ = *rj::GetValueByPointer(doc, "/defaults/bond");
     if (!bondDefaults_.IsObject())
       throw FileParseException("Bad Format: bondDefaults is not an object");
   }
