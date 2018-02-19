@@ -217,8 +217,9 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
 void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal["toolkit"].GetString() == std::string("RDKit"),
-               "bad representation");
+  PRECONDITION(
+      repVal["name"].GetString() == std::string("rdkit-representation"),
+      "bad representation");
   if (!repVal.HasMember("format_version"))
     throw FileParseException("Bad Format: missing format_version");
   if (repVal["format_version"].GetInt() > 1) {
@@ -354,12 +355,12 @@ void processMol(RWMol *mol, const rj::Value &molval,
     }
   }
 
-  if (molval.HasMember("representations")) {
-    for (const auto &propVal : molval["representations"].GetArray()) {
-      if (!propVal.HasMember("toolkit"))
+  if (molval.HasMember("extensions")) {
+    for (const auto &propVal : molval["extensions"].GetArray()) {
+      if (!propVal.HasMember("name"))
         throw FileParseException(
-            "Bad Format: representation has no toolkit member");
-      if (propVal["toolkit"].GetString() == std::string("RDKit")) {
+            "Bad Format: representation has no name member");
+      if (propVal["name"].GetString() == std::string("rdkit-representation")) {
         readRDKitRepresentation(mol, propVal, params);
       }
     }

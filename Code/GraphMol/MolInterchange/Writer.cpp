@@ -200,7 +200,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   }
 
   rj::Value representation(rj::kObjectType);
-  representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
+  representation.AddMember("name", "rdkit-representation", doc.GetAllocator());
   representation.AddMember("format_version", currentRDKitRepresentationVersion,
                            doc.GetAllocator());
   rj::Value toolkitVersion;
@@ -280,7 +280,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
 
   rj::Value rjReprs(rj::kArrayType);
   rjReprs.PushBack(representation, doc.GetAllocator());
-  rjMol.AddMember("representations", rjReprs, doc.GetAllocator());
+  rjMol.AddMember("extensions", rjReprs, doc.GetAllocator());
 }
 }  // end of anonymous namespace
 
