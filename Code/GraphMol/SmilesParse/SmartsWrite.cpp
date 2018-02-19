@@ -24,7 +24,8 @@ using namespace Canon;
 // local utility namespace
 namespace {
 
-std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
+std::string _recurseGetSmarts(const QueryAtom *qatom,
+                              const QueryAtom::QUERYATOM_QUERY *node,
                               bool negate);
 std::string _recurseBondSmarts(const Bond *bond,
                                const QueryBond::QUERYBOND_QUERY *node,
@@ -122,8 +123,9 @@ std::string smartsOrganicAtom(const QueryAtom::QUERYATOM_QUERY *child1,
   }
   return res;
 }
-
-std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
+const static std::string _qatomHasStereoSet = "_qatomHasStereoSet";
+std::string getAtomSmartsSimple(const QueryAtom *qatom,
+                                const ATOM_EQUALS_QUERY *query,
                                 bool &needParen) {
   PRECONDITION(query, "bad query");
 
@@ -285,6 +287,27 @@ std::string getAtomSmartsSimple(const ATOM_EQUALS_QUERY *query,
     res << query->getVal();
   }
 
+  // handle atomic stereochemistry
+  if (qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+    if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+        !qatom->hasProp(_qatomHasStereoSet) &&
+        !qatom->hasProp(common_properties::_brokenChirality)) {
+      qatom->setProp(_qatomHasStereoSet, 1);
+      switch (qatom->getChiralTag()) {
+        case Atom::CHI_TETRAHEDRAL_CW:
+          res << "@@";
+          needParen = true;
+          break;
+        case Atom::CHI_TETRAHEDRAL_CCW:
+          res << "@";
+          needParen = true;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   return res.str();
 }
 
@@ -349,7 +372,8 @@ std::string getBondSmartsSimple(const Bond *bond,
   return res;
 }
 
-std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
+std::string _recurseGetSmarts(const QueryAtom *qatom,
+                              const QueryAtom::QUERYATOM_QUERY *node,
                               bool negate) {
   PRECONDITION(node, "bad node");
   // the algorithm goes something like this
@@ -426,7 +450,7 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
     // child 1 is a simple node
     const ATOM_EQUALS_QUERY *tchild =
         static_cast<const ATOM_EQUALS_QUERY *>(child1);
-    csmarts1 = getAtomSmartsSimple(tchild, needParen);
+    csmarts1 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
@@ -434,7 +458,7 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
   } else {
     // child 1 is composite node - recurse
     bool nneg = (negate) ^ (child1->getNegation());
-    csmarts1 = _recurseGetSmarts(child1, nneg);
+    csmarts1 = _recurseGetSmarts(qatom, child1, nneg);
   }
 
   // deal with the second child
@@ -444,14 +468,14 @@ std::string _recurseGetSmarts(const QueryAtom::QUERYATOM_QUERY *node,
     // child 2 is a simple node
     const ATOM_EQUALS_QUERY *tchild =
         static_cast<const ATOM_EQUALS_QUERY *>(child2);
-    csmarts2 = getAtomSmartsSimple(tchild, needParen);
+    csmarts2 = getAtomSmartsSimple(qatom, tchild, needParen);
     bool nneg = (negate) ^ (tchild->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
     }
   } else {
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts2 = _recurseGetSmarts(child2, nneg);
+    csmarts2 = _recurseGetSmarts(qatom, child2, nneg);
   }
 
   // ok if we have a negation and we have an OR , we have to change to
@@ -631,6 +655,25 @@ std::string getNonQueryAtomSmarts(const QueryAtom *qatom) {
   } else {
     res << qatom->getSymbol();
   }
+
+  if (qatom->getOwningMol().hasProp(common_properties::_doIsoSmiles)) {
+    if (qatom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+        !qatom->hasProp(_qatomHasStereoSet) &&
+        !qatom->hasProp(common_properties::_brokenChirality)) {
+      qatom->setProp(_qatomHasStereoSet, 1);
+      switch (qatom->getChiralTag()) {
+        case Atom::CHI_TETRAHEDRAL_CW:
+          res << "@@";
+          break;
+        case Atom::CHI_TETRAHEDRAL_CCW:
+          res << "@";
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   int hs = qatom->getNumExplicitHs();
   // FIX: probably should be smarter about Hs:
   if (hs) {
@@ -721,7 +764,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   } else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
     // we have a composite query
     needParen = true;
-    res = _recurseGetSmarts(query, query->getNegation());
+    res = _recurseGetSmarts(qatom, query, query->getNegation());
     if (res.length() == 1) {  // single atom symbol we don't need parens
       needParen = false;
     }
@@ -732,7 +775,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
   } else {  // we have a simple smarts
     ATOM_EQUALS_QUERY *tquery =
         static_cast<ATOM_EQUALS_QUERY *>(qatom->getQuery());
-    res = getAtomSmartsSimple(tquery, needParen);
+    res = getAtomSmartsSimple(qatom, tquery, needParen);
     if (tquery->getNegation()) {
       res = "!" + res;
     }
@@ -787,7 +830,6 @@ std::string GetBondSmarts(const QueryBond *bond, int atomToLeftIdx) {
 }  // end of namespace SmartsWrite
 
 std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
-  RDUNUSED_PARAM(doIsomericSmiles);  // does this parameter even make sense?
   std::string res;
   unsigned int nAtoms = inmol.getNumAtoms();
   if (!nAtoms) return "";
@@ -800,6 +842,12 @@ std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
   for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
        atIt++) {
     ranks.push_back((*atIt)->getIdx());
+  }
+
+  // clean up the chirality on any atom that is marked as chiral,
+  // but that should not be:
+  if (doIsomericSmiles) {
+    mol.setProp(common_properties::_doIsoSmiles, 1);
   }
 
   std::vector<AtomColors> colors;
