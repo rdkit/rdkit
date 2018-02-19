@@ -92,7 +92,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
         }
         coords = params->coordMap.find(oatom->getIdx())->second;
       } else {
-        ASSERT_INVARIANT(params->coordMap, "bad pointer");
         const RDGeom::Point2D& coords =
             params->coordMap.find(oatom->getIdx())->second;
         atom->templateCoordinates = sketcherMinimizerPointF(
