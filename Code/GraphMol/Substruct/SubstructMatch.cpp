@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,7 +21,9 @@
 #include <map>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/mutex.hpp>
+#include <mutex>
+#include <thread>
+#include <future>
 #endif
 
 #include "ullmann.hpp"
@@ -58,7 +60,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               unsigned int bi, unsigned int ei);
 
 typedef std::list<
-    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor> >
+    std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
 class MolMatchFinalCheckFunctor {
@@ -242,10 +244,10 @@ class BondLabelFunctor {
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (df_useChirality) {
-      const Bond* qBnd = d_query[i];
+      const Bond *qBnd = d_query[i];
       if (qBnd->getBondType() == Bond::DOUBLE &&
           qBnd->getStereo() > Bond::STEREOANY) {
-        const Bond* mBnd = d_mol[j];
+        const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
             mBnd->getStereo() <= Bond::STEREOANY)
           return false;
@@ -536,7 +538,7 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
                                      resMolSupplier.length());
 #ifdef RDK_THREADSAFE_SSS
   else {
-    boost::thread_group tg;
+    std::vector<std::future<void>> tg;
     std::vector<std::vector<MatchVectType> *> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
@@ -547,10 +549,14 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
-      tg.add_thread(new boost::thread(detail::ResSubstructMatchHelper_, args,
-                                      matchesThread[ti], bi, ei));
+      tg.emplace_back(std::async(std::launch::async,
+                                 detail::ResSubstructMatchHelper_, args,
+                                 matchesThread[ti], bi, ei));
     }
-    tg.join_all();
+    for (auto &fut : tg) {
+      fut.get();
+    }
+
     unsigned int matchSize = 0;
     for (unsigned int ti = 0; ti < nt; ++ti)
       matchSize += matchesThread[ti]->size();
@@ -614,8 +620,8 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           }
         }
         if (!found) {
-          BOOST_LOG(rdErrorLog) << "no match found for queryRootAtom"
-                                << std::endl;
+          BOOST_LOG(rdErrorLog)
+              << "no match found for queryRootAtom" << std::endl;
         }
       }
     }

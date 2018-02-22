@@ -30,7 +30,12 @@
 //
 #include "SubstructLibrary.h"
 #include <RDGeneral/RDThreads.h>
-#include <boost/atomic.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
+
+#include <atomic>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit {
@@ -78,7 +83,7 @@ namespace {
 void SubSearcher(const ROMol &in_query, const Bits &bits,
                  const MolHolderBase &mols, std::vector<unsigned int> &idxs,
                  unsigned int start, unsigned int end, unsigned int numThreads,
-                 boost::atomic<int> &counter, const int maxResults) {
+                 std::atomic<int> &counter, const int maxResults) {
   ROMol query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
@@ -104,7 +109,7 @@ void SubSearcher(const ROMol &in_query, const Bits &bits,
 void SubSearchMatchCounter(const ROMol &in_query, const Bits &bits,
                            const MolHolderBase &mols, unsigned int start,
                            unsigned int end, int numThreads,
-                           boost::atomic<int> &counter) {
+                           std::atomic<int> &counter) {
   ROMol query(in_query);
   MatchVectType matchVect;
   for (unsigned int idx = start; idx < end; idx += numThreads) {
@@ -135,23 +140,24 @@ std::vector<unsigned int> internalGetMatches(
   endIdx = std::min(mols.size(), endIdx);
   if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
 
-  boost::thread_group thread_group;
-  boost::atomic<int> counter(0);
+  std::vector<std::future<void>> thread_group;
+  std::atomic<int> counter(0);
   std::vector<std::vector<unsigned int>> internal_results(numThreads);
 
-  // needed because boost::thread can only handle 10 arguments
   Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
 
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
     // need to use boost::ref otherwise things are passed by value
-    thread_group.add_thread(new boost::thread(
-        SubSearcher, boost::ref(query), bits, boost::ref(mols),
-        boost::ref(internal_results[thread_group_idx]),
-        startIdx + thread_group_idx, endIdx, numThreads, boost::ref(counter),
-        maxResults));
+    thread_group.emplace_back(
+        std::async(std::launch::async, SubSearcher, std::ref(query), bits,
+                   std::ref(mols), std::ref(internal_results[thread_group_idx]),
+                   startIdx + thread_group_idx, endIdx, numThreads,
+                   std::ref(counter), maxResults));
   }
-  thread_group.join_all();
+  for (auto &fut : thread_group) {
+    fut.get();
+  }
   delete bits.queryBits;
 
   std::vector<unsigned int> results;
@@ -185,18 +191,21 @@ int internalMatchCounter(const ROMol &query, MolHolderBase &mols,
 
   if (endIdx < static_cast<unsigned int>(numThreads)) numThreads = endIdx;
 
-  boost::thread_group thread_group;
-  boost::atomic<int> counter(0);
+  std::vector<std::future<void>> thread_group;
+  std::atomic<int> counter(0);
 
   Bits bits(fps, query, recursionPossible, useChirality, useQueryQueryMatches);
   for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
     // need to use boost::ref otherwise things are passed by value
-    thread_group.add_thread(new boost::thread(
-        SubSearchMatchCounter, boost::ref(query), bits, boost::ref(mols),
-        startIdx + thread_group_idx, endIdx, numThreads, boost::ref(counter)));
+    thread_group.emplace_back(
+        std::async(std::launch::async, SubSearchMatchCounter, std::ref(query),
+                   bits, std::ref(mols), startIdx + thread_group_idx, endIdx,
+                   numThreads, std::ref(counter)));
   }
-  thread_group.join_all();
+  for (auto &thread : thread_group) {
+    thread.get();
+  }
   delete bits.queryBits;
   return (int)counter;
 }

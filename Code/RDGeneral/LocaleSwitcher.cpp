@@ -37,7 +37,7 @@
 #include <xlocale.h>
 #endif
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/tss.hpp>
+#include <thread>
 #endif
 
 namespace RDKit {
@@ -70,15 +70,12 @@ static int recurseLocale(int state) {
     recursion--;
   return recursion;
 #else
-  static boost::thread_specific_ptr<int> recursion;
-  if (!recursion.get()) {
-    recursion.reset(new int(0));
-  }
+  static thread_local int recursion = 0;
   if (state == SwitchLocale)
-    (*recursion)++;
+    recursion++;
   else if (state == ResetLocale)
-    (*recursion)--;
-  return (*recursion);
+    recursion--;
+  return recursion;
 #endif
 }
 

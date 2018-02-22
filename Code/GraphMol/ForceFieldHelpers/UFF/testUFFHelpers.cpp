@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -598,8 +597,8 @@ void testUFFBatch() {
       field->initialize();
       int failed = field->minimize(500);
       if (failed) {
-        BOOST_LOG(rdErrorLog) << " not converged (code=" << failed << ")"
-                              << std::endl;
+        BOOST_LOG(rdErrorLog)
+            << " not converged (code=" << failed << ")" << std::endl;
         std::cout << origMolBlock << "$$$$" << std::endl;
         std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
       }
@@ -705,7 +704,8 @@ void testIssue239() {
 
 void testCalcEnergyPassedCoords() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords." << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing calcEnergy with passed coords."
+                        << std::endl;
 
   RWMol *mol;
   ForceFields::ForceField *field;
@@ -722,9 +722,8 @@ void testCalcEnergyPassedCoords() {
   field->initialize();
   double *savedPos = new double[3 * field->numPoints()];
   size_t i = 0;
-  for (const auto pptr: field->positions()) {
-    for (size_t j = 0; j < 3; ++j)
-      savedPos[i++] = (*pptr)[j];
+  for (const auto pptr : field->positions()) {
+    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
   }
   e1 = field->calcEnergy();
   field->minimize(10000, 1.0e-6, 1.0e-3);
@@ -733,7 +732,7 @@ void testCalcEnergyPassedCoords() {
   e3 = field->calcEnergy(savedPos);
   TEST_ASSERT(feq(e3, e1, 0.01));
 
-  delete [] savedPos;
+  delete[] savedPos;
   delete mol;
   delete field;
 
@@ -761,32 +760,28 @@ void testCalcGrad() {
   double *grad1 = new double[l];
   double *grad2 = new double[l];
   size_t i = 0;
-  for (const auto pptr: field->positions()) {
-    for (size_t j = 0; j < 3; ++j)
-      savedPos[i++] = (*pptr)[j];
+  for (const auto pptr : field->positions()) {
+    for (size_t j = 0; j < 3; ++j) savedPos[i++] = (*pptr)[j];
   }
   TEST_ASSERT(i == l);
-  
+
   std::memset(grad1, 0, l * sizeof(double));
   field->calcGrad(grad1);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(!feq(grad1[i], 0.0, 0.001));
 
   field->minimize(10000, 1.0e-6, 1.0e-3);
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(grad2);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad2[i], 0.0, 0.001));
 
   field->initialize();
   std::memset(grad2, 0, l * sizeof(double));
   field->calcGrad(savedPos, grad2);
-  for (i = 0; i < l; ++i)
-    TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
+  for (i = 0; i < l; ++i) TEST_ASSERT(feq(grad1[i], grad2[i], 0.001));
 
-  delete [] savedPos;
-  delete [] grad1;
-  delete [] grad2;
+  delete[] savedPos;
+  delete[] grad1;
+  delete[] grad2;
   delete mol;
   delete field;
 
@@ -1197,7 +1192,8 @@ void runblock_uff(const std::vector<ROMol *> &mols,
   }
 }
 }
-#include <boost/thread.hpp>
+#include <thread>
+#include <future>
 void testUFFMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test UFF multithreading" << std::endl;
@@ -1237,16 +1233,19 @@ void testUFFMultiThread() {
     delete field;
   }
 
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock_uff, mols, energies, count, i));
+    tg.emplace_back(
+        std::async(std::launch::async, runblock_uff, mols, energies, count, i));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

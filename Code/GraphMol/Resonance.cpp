@@ -12,6 +12,10 @@
 #include <GraphMol/Resonance.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/RDThreads.h>
+#ifdef RDK_THREADSAFE_SSS
+#include <thread>
+#include <future>
+#endif
 
 namespace RDKit {
 // class definitions that do not need being exposed in Resonance.h
@@ -86,12 +90,14 @@ class ConjElectrons {
   unsigned int fcSameSignDist() const { return d_ceMetrics.d_fcSameSignDist; };
   unsigned int fcOppSignDist() const { return d_ceMetrics.d_fcOppSignDist; };
   unsigned int nbMissing() const { return d_ceMetrics.d_nbMissing; }
-  unsigned int sumFormalChargeIdxs() const { return d_ceMetrics.d_sumFormalChargeIdxs; }
-  unsigned int sumMultipleBondIdxs() const { return d_ceMetrics.d_sumMultipleBondIdxs; }
+  unsigned int sumFormalChargeIdxs() const {
+    return d_ceMetrics.d_sumFormalChargeIdxs;
+  }
+  unsigned int sumMultipleBondIdxs() const {
+    return d_ceMetrics.d_sumMultipleBondIdxs;
+  }
   CEMetrics &metrics() { return d_ceMetrics; }
-  int wtdFormalCharges() const {
-    return d_ceMetrics.d_wtdFormalCharges;
-  };
+  int wtdFormalCharges() const { return d_ceMetrics.d_wtdFormalCharges; };
   void enumerateNonBonded(CEMap &ceMap);
   void initCeFromMol();
   void assignNonBonded();
@@ -236,9 +242,10 @@ void updateV(unsigned int &v) {
 // sanitize the resonance structure which has been assembled
 void sanitizeMol(RWMol &mol) {
   unsigned int opFailed;
-  MolOps::sanitizeMol(mol, opFailed, MolOps::SANITIZE_FINDRADICALS |
-                                         MolOps::SANITIZE_SETAROMATICITY |
-                                         MolOps::SANITIZE_ADJUSTHS);
+  MolOps::sanitizeMol(mol, opFailed,
+                      MolOps::SANITIZE_FINDRADICALS |
+                          MolOps::SANITIZE_SETAROMATICITY |
+                          MolOps::SANITIZE_ADJUSTHS);
 }
 
 // fix the number of explicit and implicit Hs in the
@@ -451,7 +458,7 @@ CEMetrics::CEMetrics()
       d_nbMissing(0),
       d_wtdFormalCharges(0),
       d_sumFormalChargeIdxs(0),
-      d_sumMultipleBondIdxs(0) {};
+      d_sumMultipleBondIdxs(0){};
 
 bool CEMetrics::operator==(const CEMetrics &other) {
   return ((d_absFormalCharges == other.d_absFormalCharges) &&
@@ -531,7 +538,8 @@ bool ConjElectrons::storeFP(CEMap &ceMap, unsigned int flags) {
   ConjFP fp;
   unsigned int fpSize = 0;
   if (flags & FP_ATOMS) fpSize += rdcast<unsigned int>(d_conjAtomMap.size());
-  if (flags & FP_BONDS) fpSize += rdcast<unsigned int>((d_conjBondMap.size() - 1) / 4 + 1);
+  if (flags & FP_BONDS)
+    fpSize += rdcast<unsigned int>((d_conjBondMap.size() - 1) / 4 + 1);
   fp.reserve(fpSize);
   if (flags & FP_ATOMS) {
     // for each atom, we push a byte to the FP vector whose
@@ -740,7 +748,8 @@ void ConjElectrons::enumerateNonBonded(CEMap &ceMap) {
     // we compute the number of permutations (numComb) and a
     // binary code (v) which indicates which of the atom indices in
     // aiVec will be octet-unsatisfied for each permutation
-    ResonanceUtils::getNumCombStartV(numCand, rdcast<unsigned int>(aiVec.size()), numComb, v);
+    ResonanceUtils::getNumCombStartV(
+        numCand, rdcast<unsigned int>(aiVec.size()), numComb, v);
     // if there are multiple permutations, make a copy of the original
     // ConjElectrons object, since the latter will be modified
     ConjElectrons *ceCopy = ((numComb > 1) ? new ConjElectrons(*ce) : nullptr);
@@ -814,8 +823,8 @@ void ConjElectrons::computeDistFormalCharges() {
     for (auto it2 = it1; it2 != d_conjAtomMap.end(); ++it2) {
       if ((it1 == it2) || !it2->second->fc()) continue;
       unsigned int dist = rdcast<unsigned int>(
-          MolOps::getShortestPath(d_parent->mol(), it1->first,
-                                                   it2->first).size());
+          MolOps::getShortestPath(d_parent->mol(), it1->first, it2->first)
+              .size());
       if ((it1->second->fc() * it2->second->fc()) > 0)
         d_ceMetrics.d_fcSameSignDist += dist;
       else
@@ -894,7 +903,8 @@ bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                             ? (a->fcSameSignDist() > b->fcSameSignDist())
                             : (a->fcOppSignDist() != b->fcOppSignDist())
                                   ? (a->fcOppSignDist() > b->fcOppSignDist())
-                                  : (a->sumFormalChargeIdxs() != b->sumFormalChargeIdxs())
+                                  : (a->sumFormalChargeIdxs() !=
+                                     b->sumFormalChargeIdxs())
                                         ? (a->sumFormalChargeIdxs() <
                                            b->sumFormalChargeIdxs())
                                         : (a->sumMultipleBondIdxs() <
@@ -1146,11 +1156,17 @@ void ResonanceMolSupplier::enumerate() {
   if (d_numThreads == 1) mainLoop(0, 1);
 #ifdef RDK_THREADSAFE_SSS
   else {
-    boost::thread_group tg;
-    for (unsigned int ti = 0; ti < d_numThreads; ++ti)
-      tg.add_thread(new boost::thread(boost::bind(
-          &ResonanceMolSupplier::mainLoop, this, ti, d_numThreads)));
-    tg.join_all();
+    std::vector<std::future<void>> tg;
+    auto functor = [this](unsigned int ti, unsigned int d_numThreads) -> void {
+      mainLoop(ti, d_numThreads);
+    };
+    for (unsigned int ti = 0; ti < d_numThreads; ++ti) {
+      tg.emplace_back(
+          std::async(std::launch::async, functor, ti, d_numThreads));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
   }
 #endif
   setResonanceMolSupplierLength();

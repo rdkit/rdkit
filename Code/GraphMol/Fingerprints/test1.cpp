@@ -2328,7 +2328,7 @@ void testRDKitAtomBits() {
     std::string smi = "CCCCCC";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
-    std::vector<std::vector<boost::uint32_t> > atomBits(m1->getNumAtoms());
+    std::vector<std::vector<boost::uint32_t>> atomBits(m1->getNumAtoms());
     ExplicitBitVect *fp1 =
         RDKFingerprintMol(*m1, 1, 4, 2048, 1, true, 0, 128, true, true, nullptr,
                           nullptr, &atomBits);
@@ -2343,7 +2343,7 @@ void testRDKitAtomBits() {
     std::string smi = "CCCO";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
-    std::vector<std::vector<boost::uint32_t> > atomBits(m1->getNumAtoms());
+    std::vector<std::vector<boost::uint32_t>> atomBits(m1->getNumAtoms());
     ExplicitBitVect *fp1 =
         RDKFingerprintMol(*m1, 1, 2, 2048, 1, true, 0, 128, true, true, nullptr,
                           nullptr, &atomBits);
@@ -2903,9 +2903,8 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
   }
 };
 }
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
+#include <future>
 void testMultithreadedPatternFP() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading with the pattern FP"
@@ -2927,17 +2926,20 @@ void testMultithreadedPatternFP() {
     if (!mol) continue;
     mols.push_back(mol);
   }
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "pass 1" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(
-        new boost::thread(runblock, mols, count, i, referenceData, 10));
+    tg.emplace_back(std::async(std::launch::async, runblock, mols, count, i,
+                               referenceData, 10));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
+  tg.clear();
 
   BOOST_FOREACH (const ROMol *mol, mols) {
     ExplicitBitVect *bv = PatternFingerprintMol(*mol, 2048);
@@ -2947,10 +2949,12 @@ void testMultithreadedPatternFP() {
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(
-        new boost::thread(runblock, mols, count, i, referenceData, 300));
+    tg.emplace_back(std::async(std::launch::async, runblock, mols, count, i,
+                               referenceData, 300));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
 
   for (unsigned int i = 0; i < mols.size(); ++i) {
     delete mols[i];
@@ -3243,8 +3247,8 @@ void testRDKFPUnfolded() {
     TEST_ASSERT(m1);
     SparseIntVect<boost::uint64_t> *fp1;
     SparseIntVect<boost::uint64_t>::StorageType::const_iterator iter;
-    std::map<boost::uint64_t, std::vector<std::vector<int> > > bitInfo;
-    std::map<boost::uint64_t, std::vector<std::vector<int> > >::const_iterator
+    std::map<boost::uint64_t, std::vector<std::vector<int>>> bitInfo;
+    std::map<boost::uint64_t, std::vector<std::vector<int>>>::const_iterator
         iter2;
 
     fp1 = getUnfoldedRDKFingerprintMol(*m1, 1, 7, true, true, true, nullptr,
@@ -3317,8 +3321,8 @@ void testRDKFPBitInfo() {
     ROMol *m1 = SmilesToMol("CCCO");
     TEST_ASSERT(m1);
     ExplicitBitVect *fp1;
-    std::map<boost::uint32_t, std::vector<std::vector<int> > > bitInfo;
-    std::map<boost::uint32_t, std::vector<std::vector<int> > >::const_iterator
+    std::map<boost::uint32_t, std::vector<std::vector<int>>> bitInfo;
+    std::map<boost::uint32_t, std::vector<std::vector<int>>>::const_iterator
         iter2;
 
     fp1 = RDKFingerprintMol(*m1, 1, 7, 2048, 2, true, 0.0, 128, true, true,

@@ -1,6 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -90,15 +88,18 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //
 // ------------------------------------------------------------------------
 boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
-  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X
-    | (RELATION_1_X << 2) | (RELATION_1_X << 4) | (RELATION_1_X << 6);
+  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
+                                           (RELATION_1_X << 4) |
+                                           (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
-  for (ROMol::ConstBondIterator bondi = mol.beginBonds(); bondi != mol.endBonds(); ++bondi) {
+  for (ROMol::ConstBondIterator bondi = mol.beginBonds();
+       bondi != mol.endBonds(); ++bondi) {
     setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                  (*bondi)->getEndAtomIdx()), RELATION_1_2);
+                                     (*bondi)->getEndAtomIdx()),
+                  RELATION_1_2);
     unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
     unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
     for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
@@ -442,10 +443,11 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
           (ignoreInterfragInteractions && fragMapping[i] != fragMapping[j])) {
         continue;
       }
-      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >= RELATION_1_4) {
+      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >=
+          RELATION_1_4) {
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        if (dist <
-            vdwThresh * UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
+        if (dist < vdwThresh *
+                       UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
           vdWContrib *contrib;
           contrib = new vdWContrib(field, i, j, params[i], params[j]);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -476,21 +478,19 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
       }
 #endif
 
-const std::string DefaultTorsionBondSmarts::ds_string = "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+const std::string DefaultTorsionBondSmarts::ds_string =
+    "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
 boost::scoped_ptr<const ROMol> DefaultTorsionBondSmarts::ds_instance;
-#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
-boost::once_flag DefaultTorsionBondSmarts::ds_flag;
-#else
-boost::once_flag DefaultTorsionBondSmarts::ds_flag = BOOST_ONCE_INIT;
+#ifdef RDK_THREADSAFE_SSS
+std::once_flag DefaultTorsionBondSmarts::ds_flag;
 #endif
-
 void DefaultTorsionBondSmarts::create() {
   ds_instance.reset(SmartsToMol(ds_string));
 }
 
 const ROMol *DefaultTorsionBondSmarts::query() {
 #ifdef RDK_THREADSAFE_SSS
-  boost::call_once(&create, ds_flag);
+  std::call_once(ds_flag, create);
 #else
   static bool created = false;
   if (!created) {
@@ -516,7 +516,8 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
   std::vector<MatchVectType> matchVect;
   const ROMol *defaultQuery = DefaultTorsionBondSmarts::query();
   const ROMol *query = (torsionBondSmarts == DefaultTorsionBondSmarts::string())
-                       ? defaultQuery : SmartsToMol(torsionBondSmarts);
+                           ? defaultQuery
+                           : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
   if (query != defaultQuery) delete query;

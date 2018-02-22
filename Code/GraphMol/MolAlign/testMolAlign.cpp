@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2018 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -648,10 +647,8 @@ void runblock_o3a_crippen(ROMol *refMol, const std::vector<ROMol *> &mols,
   }
 }
 }
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
+#include <thread>
+#include <future>
 void testMMFFO3AMultiThread() {
   std::string rdbase = getenv("RDBASE");
   std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2.sdf";
@@ -685,17 +682,19 @@ void testMMFFO3AMultiThread() {
     scores[i] = o3a.score();
   }
 
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock_o3a_mmff, refMol, mols, rmsds,
-                                    scores, count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock_o3a_mmff, refMol,
+                               mols, rmsds, scores, count, i));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -748,17 +747,19 @@ void testCrippenO3AMultiThread() {
     scores[i] = o3a.score();
   }
 
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
 
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
     std::cerr << " launch :" << i << std::endl;
     std::cerr.flush();
-    tg.add_thread(new boost::thread(runblock_o3a_crippen, refMol, mols, rmsds,
-                                    scores, count, i));
+    tg.emplace_back(std::async(std::launch::async, runblock_o3a_crippen, refMol,
+                               mols, rmsds, scores, count, i));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
 
   BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

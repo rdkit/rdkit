@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package( Boost COMPONENTS iostreams filesystem system thread)
+find_package( Boost COMPONENTS iostreams filesystem system)
 
 find_package( Cairo REQUIRED )
 
@@ -22,8 +22,6 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR})
 
 find_package (Threads)
 set(RDKit_THREAD_LIBS Threads::Threads)
-list(APPEND Boost_IMPORTED_LIBRARIES Boost::thread Boost::system)
-list(APPEND RDKit_THREAD_LIBS Boost::thread Boost::system)
 
 set( LIBS ${RDKIT_LIBRARIES} Boost::iostreams ${RDKit_THREAD_LIBS} z  )
 

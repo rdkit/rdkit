@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -5019,36 +5019,42 @@ void testMolBlock3DStereochem() {
 }
 
 void testMarvinSMATag() {
-  BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag "
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test Marvin MRV SMA tag " << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
-    std::string fName =
-        rdbase + "mrv-sma.mol";
+    std::string fName = rdbase + "mrv-sma.mol";
     RWMol *m = MolFileToMol(fName, false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
-    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(common_properties::MRV_SMA) == "[#16;H1]");
-    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(common_properties::MRV_SMA) == "[#6;r6]");
-    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(common_properties::MRV_SMA) == "[#7;H2A]");
+    TEST_ASSERT(m->getAtomWithIdx(0)->getProp<std::string>(
+                    common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::MRV_SMA) == "[#16;H1]");
+    TEST_ASSERT(m->getAtomWithIdx(2)->getProp<std::string>(
+                    common_properties::MRV_SMA) == "[#6;r6]");
+    TEST_ASSERT(m->getAtomWithIdx(3)->getProp<std::string>(
+                    common_properties::MRV_SMA) == "[#7;H2A]");
     // this should be similar to [#7;AH2:4][c;r6:3]:[c;r6:1]-[#16H1:2]
-    //  RDKit makes these recursive smarts, not "ANDED" smarts which are a simpler case
+    //  RDKit makes these recursive smarts, not "ANDED" smarts which are a
+    //  simpler case
     std::string sma = MolToSmarts(*m);
-    TEST_ASSERT(sma == "[#6&$([#6&r6]):1](-[#16&$([#16&H1]):2]):[#6&$([#6&r6]):3]-[#7&$([#7&H2&A]):4]");
+    TEST_ASSERT(sma ==
+                "[#6&$([#6&r6]):1](-[#16&$([#16&H1]):2]):[#6&$([#6&r6]):3]-[#7&"
+                "$([#7&H2&A]):4]");
     delete m;
   }
 
   {
-    std::string fName =
-        rdbase + "mrv-sma-bad.mol";
+    std::string fName = rdbase + "mrv-sma-bad.mol";
     bool ok = false;
     try {
       MolFileToMol(fName, false);
-    } catch( FileParseException &e ) {
+    } catch (FileParseException &e) {
       ok = true;
-      TEST_ASSERT(std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") == e.message());
+      TEST_ASSERT(
+          std::string("Cannot parse smarts: 'MyDogHasFleas' on line 12") ==
+          e.message());
     }
     TEST_ASSERT(ok);
   }
@@ -5084,7 +5090,6 @@ void testGithub1689() {
       MolBlockToMol(molb, sanitize, removeHs, strictParsing);
     } catch (FileParseException &e) {
       ok = true;
-
     }
     TEST_ASSERT(ok);
   }
@@ -5223,9 +5228,8 @@ void testLocaleSwitcher() {
 
 #ifdef RDK_TEST_MULTITHREADED
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <thread>
+#include <future>
 
 namespace {
 void runblock() { testLocaleSwitcher(); }
@@ -5235,12 +5239,14 @@ void testMultiThreadedSwitcher() {
   BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
                         << std::endl;
 
-  boost::thread_group tg;
+  std::vector<std::future<void>> tg;
   unsigned int count = 100;
   for (unsigned int i = 0; i < count; ++i) {
-    tg.add_thread(new boost::thread(runblock));
+    tg.emplace_back(std::async(std::launch::async, runblock));
   }
-  tg.join_all();
+  for (auto &fut : tg) {
+    fut.get();
+  }
   BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
 }

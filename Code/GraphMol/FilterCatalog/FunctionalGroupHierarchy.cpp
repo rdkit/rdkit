@@ -35,11 +35,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
-#ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/once.hpp>
-#endif
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_THREADSAFE_SSS
+#include <mutex>
+#endif
 
 namespace RDKit {
 
@@ -241,12 +241,8 @@ void hierarchy_create() {
 
 const FilterCatalog &GetFunctionalGroupHierarchy() {
 #ifdef RDK_THREADSAFE_SSS
-#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
-  static boost::once_flag flag;
-#else
-  static boost::once_flag flag = BOOST_ONCE_INIT;
-#endif
-  boost::call_once(&hierarchy_create, flag);
+  static std::once_flag flag;
+  std::call_once(flag, &hierarchy_create);
 #else
   static bool loaded = false;
   if (!loaded) {
