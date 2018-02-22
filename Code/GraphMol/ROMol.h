@@ -110,13 +110,14 @@ struct CXXAtomIterator {
     Atom *current;
 
     CXXAtomIter(Graph *graph, typename Graph::vertex_iterator pos)
-        : graph(graph),
-          pos(pos),
-          current(boost::num_vertices(*graph) ? (*graph)[*pos] : 0) {}
+        : graph(graph), pos(pos), current(nullptr) {}
 
-    Vertex &operator*() { return current; }
+    Vertex &operator*() {
+      current = (*graph)[*pos];
+      return current;
+    }
     CXXAtomIter &operator++() {
-      current = (*graph)[*(++pos)];
+      ++pos;
       return *this;
     }
     bool operator!=(const CXXAtomIter &it) const { return pos != it.pos; }
@@ -142,13 +143,14 @@ struct CXXBondIterator {
     Bond *current;
 
     CXXBondIter(Graph *graph, typename Graph::edge_iterator pos)
-        : graph(graph),
-          pos(pos),
-          current(boost::num_vertices(*graph) ? (*graph)[*pos] : 0) {}
+        : graph(graph), pos(pos), current(nullptr) {}
 
-    Edge &operator*() { return current; }
+    Edge &operator*() {
+      current = (*graph)[*pos];
+      return current;
+    }
     CXXBondIter &operator++() {
-      current = (*graph)[*(++pos)];
+      ++pos;
       return *this;
     }
     bool operator!=(const CXXBondIter &it) const { return pos != it.pos; }

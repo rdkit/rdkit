@@ -1455,14 +1455,14 @@ void testRanges() {
 void testGithub1642() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
-      << "    Test github1642: Atom index type is to low for big molecules."
+      << "    Test github1642: Atom index type is too low for big molecules."
       << std::endl;
   RWMol m2;
 
   unsigned int big_num_atoms = 70000;
-
+  Atom *carbon = new Atom(6);
   for (unsigned int i = 0; i < big_num_atoms; ++i) {
-    m2.addAtom(new Atom(6));
+    m2.addAtom(carbon);
   }
 
   TEST_ASSERT(m2.getNumAtoms() == big_num_atoms);
@@ -1472,7 +1472,7 @@ void testGithub1642() {
   }
   TEST_ASSERT(m2.getNumAtoms() == 0);
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
 }
 
 // -------------------------------------------------------------------
