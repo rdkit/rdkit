@@ -94,6 +94,11 @@ void test1() {
                 std::string("example 2"));
     TEST_ASSERT(m->getAtomWithIdx(1)->getIsotope() == 0);
     TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope() == 35);
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
+    TEST_ASSERT(feq(m->getAtomWithIdx(0)->getProp<double>(
+                        common_properties::_GasteigerCharge),
+                    -0.352));
   }
 
   {

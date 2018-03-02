@@ -214,6 +214,35 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
         "Bad Format: conformer doesn't contain coordinates for all atoms");
 }
 
+void readPartialCharges(RWMol *mol, const rj::Value &repVal,
+                        const JSONParseParameters &params) {
+  PRECONDITION(mol, "no molecule");
+  PRECONDITION(repVal["name"].GetString() == std::string("partial-charges"),
+               "bad charges");
+  if (!repVal.HasMember("version"))
+    throw FileParseException("Bad Format: missing version");
+  if (repVal["version"].GetInt() > 10) {
+    BOOST_LOG(rdWarningLog) << "partial-charges format version "
+                            << repVal["version"].GetInt()
+                            << " too recent. Ignoring it." << std::endl;
+    return;
+  }
+  {
+    const auto &miter = repVal.FindMember("values");
+    if (miter != repVal.MemberEnd()) {
+      if (miter->value.GetArray().Size() != mol->getNumAtoms())
+        throw FileParseException(
+            "Bad Format: size of values array != num atoms");
+      for (unsigned int idx = 0; idx != mol->getNumAtoms(); ++idx) {
+        const auto &val = miter->value.GetArray()[idx];
+        if (!val.IsDouble())
+          throw FileParseException("Bad Format: partial charge not double");
+        mol->getAtomWithIdx(idx)->setProp(common_properties::_GasteigerCharge,
+                                          val.GetDouble());
+      }
+    }
+  }
+}
 void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
@@ -362,6 +391,9 @@ void processMol(RWMol *mol, const rj::Value &molval,
             "Bad Format: representation has no name member");
       if (propVal["name"].GetString() == std::string("rdkit-representation")) {
         readRDKitRepresentation(mol, propVal, params);
+      }
+      if (propVal["name"].GetString() == std::string("partial-charges")) {
+        readPartialCharges(mol, propVal, params);
       }
     }
   }
