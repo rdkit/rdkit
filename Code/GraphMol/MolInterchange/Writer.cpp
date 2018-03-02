@@ -217,7 +217,9 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
           rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
         }
       }
-      properties.AddMember(rj::StringRef(pN.c_str()), rjv, doc.GetAllocator());
+      rj::Value rjpN;
+      rjpN.SetString(pN.c_str(), pN.size(), doc.GetAllocator());
+      properties.AddMember(rjpN, rjv, doc.GetAllocator());
     }
     rjMol.AddMember("properties", properties, doc.GetAllocator());
   }
