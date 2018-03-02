@@ -199,6 +199,29 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rjMol.AddMember("conformers", rjConfs, doc.GetAllocator());
   }
 
+  bool includePrivate = false, includeComputed = false;
+  auto propNames = mol.getPropList(includePrivate, includeComputed);
+  if (propNames.size()) {
+    rj::Value properties(rj::kObjectType);
+    for (const auto &pN : propNames) {
+      rj::Value rjv;
+      try {
+        auto val = mol.getProp<int>(pN);
+        rjv = val;
+      } catch (const boost::bad_any_cast &) {
+        try {
+          auto val = mol.getProp<double>(pN);
+          rjv = val;
+        } catch (const boost::bad_any_cast &) {
+          auto val = mol.getProp<std::string>(pN);
+          rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
+        }
+      }
+      properties.AddMember(rj::StringRef(pN.c_str()), rjv, doc.GetAllocator());
+    }
+    rjMol.AddMember("properties", properties, doc.GetAllocator());
+  }
+
   rj::Value representation(rj::kObjectType);
   representation.AddMember("name", "rdkit-representation", doc.GetAllocator());
   representation.AddMember("format_version", currentRDKitRepresentationVersion,

@@ -214,6 +214,34 @@ void test3() {
     TEST_ASSERT(!newMols[0]->getConformer(0).is3D());
     TEST_ASSERT(newMols[0]->getConformer(1).is3D());
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void test4() {
+  BOOST_LOG(rdInfoLog) << "test4: writing properties" << std::endl;
+#if 1
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
+    TEST_ASSERT(mol);
+    mol->setProp("foo_string", "bar");
+    mol->setProp("foo_int", 1);
+    mol->setProp("foo_double", 1.2);
+    auto json = MolInterchange::MolToJSONData(*mol, "test4 mols");
+    std::cerr << json << std::endl;
+    TEST_ASSERT(json.find("foo_string") != std::string::npos);
+    TEST_ASSERT(json.find("foo_int") != std::string::npos);
+    TEST_ASSERT(json.find("foo_double") != std::string::npos);
+    auto newMols = MolInterchange::JSONDataToMols(json);
+    TEST_ASSERT(newMols.size() == 1);
+    TEST_ASSERT(newMols[0]->hasProp("foo_string"));
+    TEST_ASSERT(newMols[0]->getProp<std::string>("foo_string") == "bar");
+    TEST_ASSERT(newMols[0]->hasProp("foo_int"));
+    TEST_ASSERT(newMols[0]->getProp<int>("foo_int") == 1);
+    TEST_ASSERT(newMols[0]->hasProp("foo_double"));
+    TEST_ASSERT(newMols[0]->getProp<double>("foo_double") == 1.2);
+  }
+#endif
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 void benchmarking() {
@@ -285,6 +313,7 @@ void RunTests() {
   test1();
   test2();
   test3();
+  test4();
 // benchmarking();
 #endif
   // test2();

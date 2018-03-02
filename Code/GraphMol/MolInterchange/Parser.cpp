@@ -344,8 +344,8 @@ void processMol(RWMol *mol, const rj::Value &molval,
     }
   }
 
-  if (molval.HasMember("molProperties")) {
-    for (const auto &propVal : molval["molProperties"].GetObject()) {
+  if (molval.HasMember("properties")) {
+    for (const auto &propVal : molval["properties"].GetObject()) {
       if (propVal.value.IsInt())
         mol->setProp(propVal.name.GetString(), propVal.value.GetInt());
       else if (propVal.value.IsDouble())
