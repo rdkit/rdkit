@@ -13,6 +13,7 @@ namespace RDKit {
 namespace MolInterchange {
 static const int currentMolJSONVersion = 10;
 static const int currentRDKitRepresentationVersion = 1;
+static const int currentChargeRepresentationVersion = 10;
 
 static const std::map<std::string, Atom::ChiralType> chilookup = {
     {"unspecified", Atom::CHI_UNSPECIFIED},

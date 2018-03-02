@@ -305,6 +305,35 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
 
   rj::Value rjReprs(rj::kArrayType);
   rjReprs.PushBack(representation, doc.GetAllocator());
+
+  if(mol.getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge)){
+
+    rj::Value representation(rj::kObjectType);
+    representation.AddMember("name", "partial-charges", doc.GetAllocator());
+    representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
+    representation.AddMember("version", currentChargeRepresentationVersion,
+                             doc.GetAllocator());
+    rj::Value toolkitVersion;
+    toolkitVersion.SetString(rj::StringRef(rdkitVersion));
+    representation.AddMember("toolkit_version", toolkitVersion,
+                             doc.GetAllocator());
+
+    rj::Value rjArr(rj::kArrayType);
+    for(const auto &at : mol.atoms()){
+      rj::Value rjval;
+      if(at->hasProp(common_properties::_GasteigerCharge)){
+        rjval = at->getProp<double>(common_properties::_GasteigerCharge);
+      } else {
+        rjval = 0.0;
+      }
+      rjArr.PushBack(rjval,doc.GetAllocator());
+    }
+    representation.AddMember("values",rjArr,doc.GetAllocator());
+    rjReprs.PushBack(representation, doc.GetAllocator());
+
+  }
+
+
   rjMol.AddMember("extensions", rjReprs, doc.GetAllocator());
 }
 }  // end of anonymous namespace

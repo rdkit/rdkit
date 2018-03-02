@@ -221,8 +221,8 @@ void readPartialCharges(RWMol *mol, const rj::Value &repVal,
                "bad charges");
   if (!repVal.HasMember("version"))
     throw FileParseException("Bad Format: missing version");
-  if (repVal["version"].GetInt() > 10) {
-    BOOST_LOG(rdWarningLog) << "partial-charges format version "
+  if (repVal["version"].GetInt() > currentChargeRepresentationVersion) {
+    BOOST_LOG(rdWarningLog) << "partial-charges version "
                             << repVal["version"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
     return;
