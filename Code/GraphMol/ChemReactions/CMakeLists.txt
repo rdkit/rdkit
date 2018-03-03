@@ -1,7 +1,9 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
+    set(RDKit_SERIALIZATION_LIBS Boost::serialization)
 else()
       message("== Making EnumerateLibrary without boost Serialization support")
+    set(RDKit_SERIALIZATION_LIBS )
 endif()
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
@@ -19,7 +21,7 @@ rdkit_library(ChemReactions
 
               LINK_LIBRARIES
               FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms Boost::serialization)
+              FileParsers SubstructMatch ChemTransforms ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_headers(Reaction.h
               ReactionParser.h
@@ -41,14 +43,14 @@ rdkit_headers(Reaction.h
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
  ChemReactions ChemTransforms Descriptors Fingerprints
 Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib Boost::serialization )
+GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
 ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib Boost::serialization )
+GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib Boost::serialization )
+GraphMol RDGeneral RDGeometryLib )
 
 add_subdirectory(Wrap)
