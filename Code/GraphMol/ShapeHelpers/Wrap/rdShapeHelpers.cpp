@@ -120,6 +120,16 @@ void EncodeMolShape(
                            ignoreHs);
   }
 }
+double tverskyMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
+                         int confId2 = -1, double gridSpacing = 0.5,
+                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
+                             DiscreteValueVect::TWOBITVALUE,
+                         double vdwScale = 0.8, double stepSize = 0.25,
+                         int maxLayers = -1, bool ignoreHs = true, double alpha = 1.0, double beta = 1.0) {
+  return MolShapes::tverskyIndex(mol1, mol2, confId1, confId2, gridSpacing,
+                                     bitsPerPoint, vdwScale, stepSize,
+                                     maxLayers, ignoreHs, alpha, beta);
+}
 
 double tanimotoMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
                          int confId2 = -1, double gridSpacing = 0.5,

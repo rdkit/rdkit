@@ -16,12 +16,23 @@ namespace RDGeom {
 class UniformGrid3D;
 class Point3D;
 
+//! calculate the tversky index between the shapes encoded on two grids
+/*!
+
+   tanimoto(S1,S2) =  | S1&S2 | / ( alpha * | S1 | + beta * | S2 | + | S1&S2 | )
+
+*/
+
+template <class GRIDTYPE>
+double tverskyIndex(const GRIDTYPE &grid1, const GRIDTYPE &grid2, double alpha, double beta);
+
 //! calculate the tanimoto distance between the shapes encoded on two grids
 /*!
 
    tanimoto(S1,S2) =  1 - ( | S1&S2 | / | S1|S2 | )
 
 */
+
 template <class GRIDTYPE>
 double tanimotoDistance(const GRIDTYPE &grid1, const GRIDTYPE &grid2);
 //! calculate the protrude distance between the shapes encoded on two grids
