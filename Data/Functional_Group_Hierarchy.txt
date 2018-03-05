@@ -1,0 +1,105 @@
+// $Id: Functional_Group_Hierarchy.txt 10346 2013-07-04 14:53:03Z landrgr1 $
+// Created by Greg Landrum, October 2006
+//  Format: Name\tSmarts\tLabel\tRemovalReaction (optional)
+//
+//  NOTES:
+//     1) be sure to make the distinguishing feature of the functional group
+//        the first atom in the pattern
+//     2) the RemovalReaction (if present) is used to remove the functional
+//        group from the molecule. This is necessary for cases like boronic
+//        ethers where the full functional group cannot be specified in SMARTS.
+//
+AcidChloride	C(=O)Cl	Acid Chloride
+  AcidChloride.Aromatic	[$(C-!@[a])](=O)(Cl)	Aromatic
+  AcidChloride.Aliphatic	[$(C-!@[A;!Cl])](=O)(Cl)	Aliphatic
+
+CarboxylicAcid	C(=O)[O;H,-]	Carboxylic acid
+  CarboxylicAcid.Aromatic	[$(C-!@[a])](=O)([O;H,-])	Aromatic
+  CarboxylicAcid.Aliphatic	[$(C-!@[A;!O])](=O)([O;H,-])	Aliphatic
+  CarboxylicAcid.AlphaAmino	[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])	alpha Amino Acid
+
+SulfonylChloride	[$(S-!@[#6])](=O)(=O)(Cl)	Sulfonyl Chloride
+  SulfonylChloride.Aromatic	[$(S-!@c)](=O)(=O)(Cl)	 Aromatic
+  SulfonylChloride.Aliphatic	[$(S-!@C)](=O)(=O)(Cl)	 Aliphatic
+
+Amine				[N;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Amine
+  Amine.Primary			[N;H2;D1;$(N-!@[#6]);!$(N-C=[O,N,S])]		Primary
+  Amine.Primary.Aromatic		[N;H2;D1;$(N-!@c);!$(N-C=[O,N,S])]		Primary aromatic
+  Amine.Primary.Aliphatic	[N;H2;D1;$(N-!@C);!$(N-C=[O,N,S])]		Primary aliphatic
+  Amine.Secondary		[N;H1;D2;$(N(-[#6])-[#6]);!$(N-C=[O,N,S])]	Secondary
+  Amine.Secondary.Aromatic	[N;H1;D2;$(N(-[c])-[#6]);!$(N-C=[O,N,S])]	Secondary aromatic
+  Amine.Secondary.Aliphatic	[N;H1;D2;$(N(-C)-C);!$(N-C=[O,N,S])]	Secondary aliphatic
+  Amine.Tertiary		[N;H0;D3;$(N(-[#6])(-[#6])-[#6]);!$(N-C=[O,N,S])]	Tertiary
+  Amine.Tertiary.Aromatic	[N;H0;D3;$(N(-[c])(-[#6])-[#6]);$(N-C=[O,N,S])]	Tertiary aromatic
+  Amine.Tertiary.Aliphatic	[N;H0;D3;$(N(-C)(-C)-C);!$(N-C=[O,N,S])]	Tertiary aliphatic
+  Amine.Aromatic		[N;$(N-c);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]		Aromatic
+  Amine.Aliphatic		[N;!$(N-c);$(N-C);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]		Aliphatic
+  Amine.Cyclic			[N;R;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Cyclic
+
+BoronicAcid			[$(B-!@[#6])](O)(O)		Boronic Acid		[#6:1]-!@[B:2]([O:3])[O:4]>>[#6:1][X].[B:2]([O:3])[O:4]
+  BoronicAcid.Aromatic		[$(B-!@c)](O)(O)	Aromatic	[c:1]-!@[B:2]([O:3])[O:4]>>[c:1][X].[B:2]([O:3])[O:4]
+  BoronicAcid.Aliphatic		[$(B-!@C)](O)(O)		Aliphatic	[C:1]-!@[B:2]([O:3])[O:4]>>[C:1][X].[B:2]([O:3])[O:4]
+
+Isocyanate			[$(N-!@[#6])](=!@C=!@O)	Isocyanate
+  Isocyanate.Aromatic		[$(N-!@c)](=!@C=!@O)	Aromatic
+  Isocyanate.Aliphatic		[$(N-!@C)](=!@C=!@O)	Aliphatic
+
+Alcohol				[O;H1;$(O-!@[#6;!$(C=!@[O,N,S])])]	Alcohol
+  Alcohol.Aromatic		[O;H1;$(O-!@c)]	Aromatic
+  Alcohol.Aliphatic		[O;H1;$(O-!@[C;!$(C=!@[O,N,S])])]	Aliphatic
+
+Aldehyde			[CH;D2;!$(C-[!#6;!#1])]=O	Aldehyde
+  Aldehyde.Aromatic		[CH;D2;$(C-!@[a])](=O)	Aromatic
+  Aldehyde.Aliphatic		[CH;D2;$(C-!@C)](=O)	Aliphatic
+
+Halogen				[$([F,Cl,Br,I]-!@[#6]);!$([F,Cl,Br,I]-!@C-!@[F,Cl,Br,I]);!$([F,Cl,Br,I]-[C,S](=[O,S,N]))]	Halogen
+  Halogen.Aromatic		[F,Cl,Br,I;$(*-!@c)]	Aromatic
+  Halogen.Aliphatic		[$([F,Cl,Br,I]-!@C);!$([F,Cl,Br,I]-!@C-!@[F,Cl,Br,I])]	Aliphatic
+  Halogen.NotFluorine		[$([Cl,Br,I]-!@[#6]);!$([Cl,Br,I]-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](=[O,S,N]))]	Not Fluorine
+  Halogen.NotFluorine.Aliphatic		[$([Cl,Br,I]-!@C);!$([Cl,Br,I]-!@C-!@[F,Cl,Br,I]);!$([Cl,Br,I]-[C,S](=[O,S,N]))]	Aliphatic Not Fluorine
+  Halogen.NotFluorine.Aromatic		[$([Cl,Br,I]-!@c)]	Aromatic Not Fluorine
+  Halogen.Bromine	[Br;$([Br]-!@[#6]);!$([Br]-!@C-!@[F,Cl,Br,I]);!$([Br]-[C,S](=[O,S,N]))]	Bromine
+  Halogen.Bromine.Aliphatic	[Br;$(Br-!@C);!$(Br-!@C-!@[F,Cl,Br,I]);!$(Br-[C,S](=[O,S,N]))]	Aliphatic Bromine
+  Halogen.Bromine.Aromatic	[Br;$(Br-!@c)]	Aromatic Bromine
+  Halogen.Bromine.BromoKetone	[Br;$(Br-[CH2]-C(=O)-[#6])]	Bromoketone
+  
+Azide				[N;H0;$(N-[#6]);D2]=[N;D2]=[N;D1]	Azide
+  Azide.Aromatic		[N;H0;$(N-c);D2]=[N;D2]=[N;D1]	Aromatic Azide
+  Azide.Aliphatic		[N;H0;$(N-C);D2]=[N;D2]=[N;D1]	Aliphatic Azide
+
+Nitro				[N;H0;$(N-[#6]);D3](=[O;D1])~[O;D1]	Nitro
+  Nitro.Aromatic		[N;H0;$(N-c);D3](=[O;D1])~[O;D1]	Aromatic Nitro
+  Nitro.Aliphatic		[N;H0;$(N-C);D3](=[O;D1])~[O;D1]	Aliphatic Nitro
+
+TerminalAlkyne			[C;$(C#[CH])]			Terminal Alkyne
+//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met: 
+//
+//     * Redistributions of source code must retain the above copyright 
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following 
+//       disclaimer in the documentation and/or other materials provided 
+//       with the distribution.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
+//       nor the names of its contributors may be used to endorse or promote 
+//       products derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+
+

@@ -1,0 +1,127 @@
+PgSQL/rdkit is a PostgreSQL contribution module, which implements 
+*mol* datatype to describe molecules and *fp* datatype for fingerprints,  
+basic comparison operations, similarity operation (tanimoto, dice) and  index 
+support (using GiST indexing framework).
+
+Compatibility: PostgreSQL 9.1+
+ If using PostgreSQL packages from your linux distribution, be sure
+ that you have the -devel package installed.
+
+Installation:
+if PostgreSQL is installed in a location where CMake is unable to find it,
+either set the environment variable PostgreSQL_ROOT or add a
+"-DPostgreSQL_ROOT" switch to the cmake command line, pointing to the
+PostgreSQL root directory, e.g. C:\Program Files\PostgreSQL\9.6
+Under Linux, if you install PostgreSQL using the RHEL/CentOS RPMs provided by
+the PostgreSQL RPM Building Project
+(http://yum.postgresql.org/repopackages.php),
+PostgreSQL lives under /usr/pgsql-9.x, and the
+include files are located under a path that the current FindPostgreSQL.cmake
+module is unable to find without a little help. Therefore, you will need to
+add a "-DPostgreSQL_TYPE_INCLUDE_DIR" switch pointing to the location of the
+"server" include directory. E.g., for PostgreSQL 9.6 the CMake PostgreSQL-
+related switches would be:
+-DPostgreSQL_ROOT=/usr/pgsql-9.6
+-DPostgreSQL_TYPE_INCLUDE_DIR=/usr/pgsql-9.6/include/server
+
+After building the RDKit, carry out the following steps:
+1) Open a shell (CMD under Windows) with administrator privileges
+2) Stop the PostgreSQL service:
+   "C:\Program Files\PostgreSQL\9.6\bin\pg_ctl.exe" ^
+   -N "postgresql-9.6"  -D "C:\Program Files\PostgreSQL\9.6\data" ^
+   -w stop (Windows)
+   service postgresql stop (Linux)
+   
+3) run the "pgsql_install" script:
+   
+   ${CMAKE_BINARY_DIR}\Code\PgSQL\rdkit\pgsql_install.bat (Windows)
+   sh ${CMAKE_BINARY_DIR}/Code/PgSQL/rdkit/pgsql_install.sh (Linux)
+   
+   which will install rdkit--3.5.sql, rdkit.control and rdkit.dll
+   into PostgreSQL 
+4) Under Windows, make sure that the Boost DLLs against which the RDKit
+   is built are in the SYSTEM path, or PostgreSQL will fail to create the
+   rdkit extension with a deceptive error message such as:
+
+   ERROR:  could not load library
+   "C:/Program Files/PostgreSQL/9.6/lib/rdkit.dll":
+   The specified module could not be found.
+   Under Linux, make sure to add to the .bashrc of the postgres user
+   an "export LD_LIBRARY_PATH" directive pointing to any dynamic
+   libraries that the postgresql service may need (e.g., Boost or
+   PostgreSQL libraries) which are not in the system ldconfig path.
+   Alternatively, in some PostgreSQL distributions you may add a
+   LD_LIBRARY_PATH = '/path/to/dynamic/libraries'
+   line to /etc/postgresql/9.6/main/environment
+
+5) Start the PostgreSQL service, e.g.:
+   "C:\Program Files\PostgreSQL\9.6\bin\pg_ctl.exe" ^
+   -N "postgresql-9.6"  -D "C:\Program Files\PostgreSQL\9.6\data" ^
+   -w start (Windows)
+   service postgresql start (Linux)
+
+Before running ctest, make sure that your current user has enough
+PostgreSQL privileges to carry out the database operations required by
+the tests. You might need to set the PGPASSWORD environment variable
+in your shell to avoid authentication issues.
+
+To install the rdkit cartridge into the database DB: 
+ psql -c 'CREATE EXTENSION rdkit' DB
+
+Uninstall cartridge from database DB:
+ psql -c 'DROP EXTENSION rdkit CASCADE' DB
+
+Data types:
+
+Input/output functions for *mol* datatype follow SMILES format.
+Input/output functions for *fp* datatype follow bytea format.
+
+It's possible to use implicit cast mol to fp, i.e., mol::fp
+
+Functions:
+
+double tanimoto_sml(mol,mol) - calculates tanimoto similarity
+double tanimoto_sml(fp,fp)
+
+double dice_sml(mol,mol)     - calculates dice similarity
+double dice_sml(fp,fp)     
+
+bool substruct(mol a, mol b)  - returns TRUE if second argument is a 
+                                substructure of the first argument.
+
+size(fp) - calculates length of fingerprint
+
+
+GUC variables rdkit.tanimoto_threshold, rdkit.dice_threshold should be
+defined, see shared_preload_libraries', 'custom_variable_classes' 
+instructions in postgresql.conf. Default value for both of them is 0.5. 
+We recommend to initialize them via  'shared_preload_libraries'.
+
+Operations:
+
+  mol % mol, fp % fp  - returns TRUE if tanimoto similarity between operands is 
+                        lower than rdkit.tanimoto_threshold
+  
+  mol # mol, fp # fp  - returns TRUE if dice similarity between operands is 
+                        lower than rdkit.dice_threshold
+ 
+  mol @> mol          - returns TRUE if left operand contains right one
+  mol <@ mol          - returns TRUE if left operand contained in right one
+ 
+  comparison operations ( <, <=, =, >=, > )  were implemented using memcpy()
+
+Indexes:
+
+  Btree and Hash indexes support comparison operations for mol and fp 
+  datatypes. 
+  Example:  CREATE INDEX molidx ON pgmol (mol);
+            CREATE INDEX molidx ON pgmol (fp);
+
+  GiST index over mol supports %,#, @>, <@ operations.
+  GiST index over fp supports %,# operations.
+  Example:  CREATE INDEX molidx ON pgmol USING gist (mol);
+
+
+Example:
+
+  See sql/* for examples.

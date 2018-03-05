@@ -1,0 +1,8 @@
+#ignore
+foo bar baz grn
+foo #bar baz grn
+#ignore
+foo bar # baz grn
+foo bar # baz grn #
+foo bar baz grn #
+#ignore

@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="RD.css">
+  <meta content="text/html; charset=ISO-8859-1"  http-equiv="content-type">
+  <title>FDef File Format</title>
+</head>
+<body>
+<h1>Overview of the feature definition (FDef) file format</h1>
+
+An FDef file contains all the information needed to define a set of
+chemical features. It contains definitions of feature types that are
+defined from queries built up using <a
+href="http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html">Daylight's
+SMARTS language</a>. The FDef file can optionally also include
+definitions of atom types that are used to make feature definitions
+more readable.
+
+<h2>Chemical Features</h2>
+
+Chemical features are defined by a <tt>Feature Type</tt> and a
+<tt>Feature Family</tt>. The <tt>Feature Family</tt> is a general
+classification of the feature (such as "Hydrogen-bond Donor" or
+"Aromatic") while the <tt>Feature Type</tt> provides additional,
+higher-resolution, information about features. Pharmacophore matching
+is done using <tt>Feature Family's</tt>.
+
+<br>
+Each feature type contains the following pieces of information:
+<ul>
+<li> The family to which the feature belongs.</li>
+<li> A SMARTS pattern that describes atoms (one or more) matching
+the feature type.</li>
+<li> Weights used to determine the feature's position based on the
+positions of its defining atoms.</li>
+</ul>
+
+<h2>Syntax of the FDef file</h2>
+
+<h3>AtomType definitions</h3> 
+
+An AtomType definition allows you to assign a shorthand name to be
+used in place of a SMARTS string defining an atom query. 
+This allows FDef files to be made much more readable. 
+For example, defining a non-polar carbon atom like this:
+<pre class="example">
+AtomType Carbon_NonPolar [C&!$(C=[O,N,P,S])&!$(C#N)]
+</pre>
+creates a new name that can be used anywhere else in the FDef file
+that it would be useful to use this SMARTS. To reference an AtomType,
+just include its name in curly brackets. For example, this excerpt
+from an FDef file defines another atom type - <tt>Hphobe</tt> - which
+references the <tt>Carbon_NonPolar</tt> definition:
+<pre class="example">
+AtomType Carbon_NonPolar [C&!$(C=[O,N,P,S])&!$(C#N)]
+AtomType Hphobe [{Carbon_NonPolar},c,s,S&H0&v2,F,Cl,Br,I]
+</pre>
+Note that <tt>{Carbon_NonPolar}</tt> is used in the new AtomType
+definition without any additional decoration (no square brackes or
+recursive SMARTS markers are required).
+
+
+<p>
+Repeating an AtomType results in the two definitions being
+combined using the SMARTS <tt>","</tt> (or) operator.
+Here's an example:
+<pre class="example">
+AtomType d1 [N&!H0]
+AtomType d1 [O&!H0]
+</pre>
+
+This is equivalent to:
+
+<pre class="example">
+AtomType d1 [N&!H0,O&!H0]
+</pre>
+
+Which is equivalent to the more efficient:
+
+<pre class="example">
+AtomType d1 [N,O;!H0]
+</pre>
+
+<b>Note</b> that these examples tend to use SMARTS's high-precendence
+and operator <tt>"&amp;"</tt> and not the low precedence and
+<tt>";"</tt>. This can be important when AtomTypes are combined when
+they are repeated. The SMARTS <tt>","</tt> operator is higher
+precedence than <tt>";"</tt>, so definitions that use <tt>";"</tt> can
+lead to unexpected results.
+
+
+<p>It is also possible to define negative AtomType queries:
+<pre class="example">
+AtomType d1 [N,O,S]
+AtomType !d1 [H0]
+</pre>
+The negative query gets combined with the first to produce a
+definition identical to this:
+<pre class="example">
+AtomType d1 [!H0;N,O,S]
+</pre>
+Note that the negative AtomType is added to the beginning of the query.
+
+
+<h3>Feature definitions</h3> 
+
+A feature definition is more complex than an AtomType definition and
+stretches across multiple lines:
+<pre class="example">
+DefineFeature HDonor1 [N,O;!H0]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+</pre>
+The first line of the feature definition includes the feature type and
+the SMARTS string defining the feature.
+
+<br>The next two lines (order not important) define the feature's
+family and its atom weights (a comma-delimited list that is the same
+length as the number of atoms defining the feature). The atom weights
+are used to calculate the feature's locations based on a weighted
+average of the positions of the atom defining the feature. More detail
+on this is provided below.
+
+<br>The final line of a feature definition must be <tt>EndFeature</tt>.
+
+It is perfectly legal to mix AtomType definitions with feature
+definitions in the FDef file. The one rule is that AtomTypes
+must be defined before they are referenced.
+
+<h3>Additional syntax notes:</h3>
+<ul>
+<li> Any line that begins with a <tt>#</tt> symbol is considered a
+comment and will be ignored.
+
+<li> A backslash character, <tt>\</tt>, at the end of a line is a
+continuation character, it indicates that the data from that line is
+continued on the next line of the file. Blank space at the beginning of these
+additional lines is ignored. For example, this AtomType definition:
+<pre class="example">
+AtomType tButylAtom [$([C;!R](-[CH3])(-[CH3])(-[CH3])),\
+                     $([CH3](-[C;!R](-[CH3])(-[CH3])))]
+</pre>
+is exactly equivalent to this one:
+<pre class="example">
+AtomType tButylAtom [$([C;!R](-[CH3])(-[CH3])(-[CH3])),$([CH3](-[C;!R](-[CH3])(-[CH3])))]
+</pre>
+(though the first form is much easier to read!)
+</li>
+
+</ul>
+
+
+<h2>Atom weights and feature locations</h2>
+
+
+<h2>Frequently Asked Question(s)</h2>
+<ul>
+
+
+  <li> What happens if a <tt>Feature Type</tt> is repeated in the
+file? Here's an example:
+<pre class="example">
+DefineFeature HDonor1 [O&!H0]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+DefineFeature HDonor1 [N&!H0]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+</pre>
+In this case both definitions of the <tt>HDonor1</tt> feature type will
+be active. This is functionally identical to:
+<pre class="example">
+DefineFeature HDonor1 [O,N;!H0]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+</pre>
+<strong>However</strong> the formulation of this feature definition
+with a duplicated feature type is considerably less efficient and more
+confusing than the simpler combined definition.
+</li>
+</ul>
+
+</body>
+</html>

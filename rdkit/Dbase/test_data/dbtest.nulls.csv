@@ -1,0 +1,5 @@
+int col,floatCol,strCol
+1,1,1
+2,2.4,1
+3,3,fiib
+4,NA,foo

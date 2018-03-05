@@ -1,0 +1,486 @@
+# $Id$
+#
+# Various smarts filters collected and contributed
+#   by Richard Lewis
+# 
+#-------------------
+# GW (GlaxoWellcome) reactives
+[Br,Cl,I][CX4;CH,CH2] Reactive_alkyl_halides
+[S,C](=[O,S])[F,Br,Cl,I] Acid_halides
+O=CN=[N+]=[N-] Carbazides
+COS(=O)O[C,c] Sulphate_esters
+COS(=O)(=O)[C,c] Sulphonates
+C(=O)OC(=O) Acid_anhydrides
+OO Peroxides
+C(=O)Oc1c(F)c(F)c(F)c(F)c1(F) Pentafluorophenyl_esters
+C(=O)Oc1ccc(N(=O)=O)cc1 Paranitrophenyl_esters
+C(=O)Onnn Esters_of_HOBT
+N=C=[S,O] Isocyanates_&_Isothiocyanantes
+OS(=O)(=O)C(F)(F)F Triflates
+P(=S)(S)S Lawessons_reagent_and_derivatives
+NP(=O)(N)N phosphoramides
+cN=[N+]=[N-] Aromatic_azides
+C(=O)C[N+,n+] Beta_carbonyl_quaternary_Nitrogen
+[N;R0][N;R0]C(=O) acylhydrazide
+[C+,Cl+,I+,P+,S+] Quaternary_C,Cl,I,P_or_S
+C=P Phosphoranes
+[Cl]C([C&R0])=N Chloramidines
+[N&D2](=O) Nitroso
+[P,S][Cl,Br,F,I] P/S_Halides
+N=C=N Carbodiimide
+[N+]#[C-] Isonitrile
+C(=O)N(C(=O))OC(=O) Triacyloximes
+N#CC[OH] Cyanohydrins
+N#CC(=O) Acyl_cyanides
+S(=O)(=O)C#N Sulfonyl_cyanides
+P(OCC)(OCC)(=O)C#N Cyanophosphonates
+[N;R0]=[N;R0]C#N Azocyanamides
+[N;R0]=[N;R0]CC=O Azoalkanals
+#-------------------
+#GW bad leads
+[CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0] Aliphatic_methylene_chains_7_or_more_long
+#>4[C,S,P](=O)[OH] Compounds_with_4_or_more_acidic_groups
+[O;R1][C;R1][C;R1][O;R1][C;R1][C;R1][O;R1] Crown_ethers
+SS Disulphides
+[SH] Thiols
+C1[O,S,N]C1 Epoxides,_Thioepoxides,_Aziridines
+c([OH])cc([OH])c([OH]) 2,4,5_trihydroxyphenyl
+c([OH])c([OH])c([OH]) 2,3,4_trihydroxyphenyl
+N=NC(=S)N Hydrazothiourea
+SC#N Thiocyanate
+cC[N+] Benzylic_quaternary_Nitrogen
+C[O,S;R0][C;R0](=S) Thioesters
+N[CH2]C#N Cyanamides
+C1(=O)OCC1 Four_membered_lactones
+P(=O)([OH])OP(=O)[OH] Di_and_Triphosphates
+N1CCC1=O Betalactams
+#-------------------
+#GW natural products
+O=C1[#6]~[#6]C(=O)[#6]~[#6]1 Quinones
+C=CC=CC=CC=C Polyenes
+O1CCCCC1OC2CCC3CCCCC3C2 Saponin_derivatives
+O=C1NCC2CCCCC21 Cytochalasin_derivatives
+O=C1CCCC(N1)=O Cycloheximide_derivatives
+O1CCCCC1C2CCCO2 Monensin_derivatives
+[OH]c1cc([OH])cc2OC(C([OH])Cc21)c3cc([OH])c([OH])cc3 Cyanidol_derivatives
+C12OCCC(O1)CC2 Squalestatin_derivatives
+#-------------------
+# Pfizer filters 6 May 2003
+c-N(=O)~O Aromatic_Nitro
+[O,N,S][CH2]N1C(=O)CCC1(=O) Het_Imides
+O=C-N!@N Carbonyl_NN
+C!@N=* Acyclic_Imines
+[S,P](=O)(=O)OC Alkyl_PS_Esters
+[$(N!@N),$([N;R0]=[N;R0])] N_N
+[$(N!@S),$(N~C(~S)-N)] N_S
+[CH2]=[CH]-[N,O,S] End_Vinyl
+S-C#N Thiocyanate
+S=C-[#6,N,O] Thionyl
+[Cl,Br,I]-N NX
+O=CC([$(C(F)(F)F),$(C#N),$(Cl)])=C AB_ketones
+#-------------------
+#ParkeDavis_smartsfilters
+C#C-[F,Br,I,Cl]
+C(-[O;H1])(-C#N)
+C(-O)-C-N(=O)=O
+C(=N)-S
+C(=O)-C(-O)-N-C=O
+C(=O)-C(=C)-C(=O)
+C(=O)-C(=N)
+C(=O)-C([F,Br,I,Cl])-C(=O)
+C(=O)-C([F,Br,I,Cl])=C([F,Br,I,Cl])-C(=O)
+C(=O)-C=C-C(=O)
+C(=O)-N(-O)-C(=O)
+C(=O)-N(-S)-C(=O)
+[C;!R](=O)-[N;!R]-[C;!R](=O)
+C(=O)-N-N(=O)
+C(=O)-N-N-C(=O)
+C(=O)-O-N-C(=O)
+C(=O)-S
+C(=O)-S-C(=S)
+C(=S)-S
+[C;H1](=O)
+C([F,Br,I,Cl])=N
+[C;H2]-[C;H2]-[C;H2]-[C;H2]-[C;H2]-[C;H2]-[C;H2]
+C-N=O
+C-S(=O)(=O)-O
+C1-C-C(=O)-O1
+C=C(-S)-S(=O)
+[C;!R]=[C;!R]-[C;!R](-O)
+C=C-C(=N)
+[C;!R]=[C;!R]-[C;!R](=O)
+C=C-C(=O)-C=C
+C=C-C(=S)
+C=C-C(=S)-S
+C=C-C([F,Br,I,Cl])=C([F,Br,I,Cl])
+C=C-C=N
+C=C-N([C,c])([C,c])
+C=C-N(=O)(=O)
+C=C-N(O)(=O)
+C=C-O
+C=C-O-C(=O)
+[C;!R]=[C;!R]-[S;!R]
+C=C-S(=O)(=O)
+C=N-C(-O)
+C=N-C(=O)
+C=N-N
+C=N-N=C
+C=N-O
+C=N-O-C(=O)
+C=N=O
+N#C-S
+N(=O)-C([F,Br,I,Cl])
+[N!H0]-[C!H0]-[N!H0]
+N(O)=C-C-N(=O)
+N-C(-S)=N-S(=O)(=O)
+N-C(=N)-S
+N-C(=O)-O-c1ccccc1
+N-C(=S)
+N-C(=S)-N
+N-C=C
+N-O-C(=O)
+N1-C-C1
+N1-N-C(=O)-N-N1
+N=C(-N)-C(=N)-N
+N=C(-O)-N
+N=C(-S)-C(=N)-N
+N=C([F,Br,I,Cl])
+N=C-C(=O)
+N=C-S
+N=C=N
+N=C=O
+N=C=S
+O-C(=O)-O-N
+O-C([F,Br,I,Cl])=S
+O-C=C
+O-N=C-C=N-O
+P
+S(=O)(=O)-C([F,Br,I,Cl])
+S(=O)(=O)O
+S-C#N
+S-C(=C)-S
+S-C(=N)-N
+S-C(=N)-S
+S-C(=S)-N
+S-N-C(=O)
+[S;H]
+[Si]
+[N;H2]-S
+[N;H]-[C;H]-[N;H]
+c-C(-O)(-O)-c
+c-C(-[O;H])[!O]
+c-S(=O)(=O)-C=C
+c-S(=O)(=O)-O
+n1(=O)c([F,Br,I,Cl])cccc1
+n1c([F,Br,I,Cl])cccc1
+n1c([F,Br,I,Cl])ncccc1
+C1-C-O-C-O-C1
+C=S
+c=S
+S=C-S
+C=C-N(=O)(=O)
+C=C-N(=O)(-O)
+C(=O)-C(=N)
+C=C-S
+C(-S)(-S)(-S)(-S)
+S(-O)(-O)(-O)(-O)
+S(=O)(=O)-C-N(=O)(=O)
+S(=O)(=O)-C-N(=O)(-O)
+N#C-S
+C=N-O
+C=N-S=N
+S-C(=O)-S
+S-C(=N)-S
+S-C(=N)(=N)
+N(=O)(=O)
+N(=O)(-O)
+N(-O)(-O)
+C1-S-C-S1
+N=C=S
+N=C=N
+C1-N=N1
+C([F,Br,Cl,I])-S
+C(-S)(-S)=C(-S)(-S)
+C(=N)-C=N-O
+C(-C#N)(-C#N)
+C-O-N=O
+C=C-N
+C=N-S(=O)(=O)
+N-N=O
+N-C(=O)-S
+S-C#N
+N-C(=O)-C(=O)-N
+c=N
+C1-O-C-O-C1
+C=N-N-S(=O)(=O)
+[C;!R](=O)-[C;!R](=O)
+C(=O)-N-O-C(=O)
+C1(=O)-C=C-C(=O)-C=C1
+B
+ONO
+ON(~O)~O
+C1(O)CC(O)CO1
+C1(O)C(O)CCO1
+C1(O)CC(O)CCO1
+N=[N+]=N
+N-C#N
+[C;!R]=N-N=[C;!R]
+N(C)(C)-[C;H2]-[C;H2]([F,Br,I,Cl])
+[C;a]-[N;H1]-[N;H2]
+[C;a]-[C;H2]([F,Br,I,Cl])
+[S;!R]-[C;!R]-[O;!R]
+N1-C-O1
+[C;H2]-O-S(=O)(=O)-C
+C1-C-O1
+c1-[N;a]-c([F,Br,I,Cl])-c-c-c1
+C=[C;H0]([F,Br,I,Cl])([F,Br,I,Cl])
+[N+]#N
+ON#C
+OOO
+OO
+Cl(~O)(~O)(~O)
+Cl(~O)(~O)(~O)(~O)
+C(~O)(~O)(~[OH])
+N[F,I,Br,Cl]
+P[F,I,Br,Cl]
+S[F,I,Br,Cl]
+C=C-[C;!H0]([F,Br,I,Cl])([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+C=C-[C;!H0]([F,Br,I,Cl])([!F,!Br,!I,!Cl])([!F,!Br,!I,!Cl])
+C=C-[C;H1]([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+C=C-[C;H2]([F,Br,I,Cl])
+CN=C=O
+CN=C=S
+C(=O)([F,I,Br,Cl])
+[N;!R]=[N;!R]
+[S;!R]-[S;!R]
+C1NC(=O)OC(=O)C1
+[C;!R]C(=N)S[C;!R]
+[C;!R]C(=N)O[C;!R]
+C=C=C
+C(=O)-O-C(=O)-[!N]
+C=C-C#N
+[C;H2]=C-C(=O)
+[C;D1&H3,D2&H2,D3&H1,D4]-[C;H1]=C-C(=O)-C
+[C;D1&H3,D2&H2,D3&H1,D4]-[C;H1]=C-C(=O)-O-C-C
+C#C-C#N
+C#C-C(=O)
+C#C-C(=O)-O-C-C
+C#C-[C;!H0](=O)
+C#C-C(=O)[N,!H0]
+C=C-[C;H1](=O)
+[O;D2]-[C;!H0]([F,Br,I,Cl])([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+[C;!H3]-O-S(=O)(=O)O
+[C;!a]-S(=O)(=O)[O-]
+[N;!a]-S(=O)(=O)[O-]
+C(=O)-[C;!H0]([F,Br,I,Cl])([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+C(=O)-[C;!H0]([F,Br,I,Cl])([!F,!Br,!I,!Cl])([!F,!Br,!I,!Cl])
+C(=O)-[C;H1]([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+C(=O)-[C;H2]([F,Br,I,Cl])
+S(=O)(=O)-[C;!H0]([F,Br,I,Cl])([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+S(=O)(=O)-[C;!H0]([F,Br,I,Cl])([!F,!Br,!I,!Cl])([!F,!Br,!I,!Cl])
+S(=O)(=O)-[C;H1]([F,Br,I,Cl])([!F,!Br,!I,!Cl])
+S(=O)(=O)-[C;H2]([F,Br,I,Cl])
+#-------------------
+# REACTIVE HALOGENS
+[$(C-[Cl,Br,I]),$(O=C-[Cl,Br,I,F]),$(O=C([CH,CH2][Cl,Br,I,F])[O,C]),$(C~O~[Cl,Br,I,F][CH,CH2]),$(n1c([Cl,Br,I,F])nccc1);!$(C=C-[Cl,Br,I]);!$(ClC-[Cl,Br,I,F])] Active_halogen
+# 2. 3-m rings; all epoxides are removed, even those stabilised
+# by a second ring, on the advice of the med. chemists
+[O,N,S]1CC1 epoxide
+# 3. ANHYDRIDES
+O=COC=O anhydride
+# 4. NCS,NCO,peroxides
+N=C=O N=C=O
+S=C=N S=C=N
+O~O peroxide
+[Si]~N Si-N_bonds
+P[S,N] P-[S,N]_bonds
+[N;R0]=[N;R0]=[C;R0] alkyl_diazo
+[N+]#N-* diazonium
+[C,c]-[S;D2]-[O,N] SON
+# 5. S, P, Si, N halides
+[Cl,Br,I,F][S,P,Si,N] Unstable_halide
+# added v2.53
+[Cl,Br,I]CC[S,N] Mustards
+# 6. sulphonates, sulphinates, Silicates
+[Si]-O-* silicate
+S(O[C,c,N,n])(~O)[C,c,N,n] sulphate
+# 7. N-O systems
+# acyclic nitroamino; removes N-nitroso (and N-nitrate, but the latter is no great loss)
+[N;R0](~N)~O acyclic nitroamino
+# nitrate
+N(~O)(~O)(~O)-* nitrate
+# nitro
+#>4[C,c]-N(=O)~O more_than_4_nitros
+[N+]([O-])(=C)-* nitrone
+[!$([C,c]-N(=O)~O);$([!O]~[N;R0]=O)] N-oxide
+# 8. acyclic aminal
+N([H,C;X4])([H,C;X4])-[C;R0;X4]-N[C;X4]([H,C;X4])([H,C;X4]) acyclic_aminal
+# 9. acyclic cyanohydrin
+N#C[C;R0;X4]O[!$(O=[C,S])] acyclic_cyanohydrin
+# 10. acyclic enol; gets rid even of stabilised enols but this was acceptable to chemists
+[C;R0](=[C;R0])-[S,O,N;R0][!$(O=[C,S])] acyclic_enol
+[O-]-[C;R0]=[C;R0] acyclic_enolate
+[C;R0](=[C;R0])-[OH] acyclic enol
+# 11. metals and other elements
+[Be,B,Al,Ti,Cr,Mn,Fe,Co,Ni,Cu,Pd,Ag,Sn,Pt,Au,Hg,Pb,Bi,As,Sb,Gd,Te] metals_and_other_elements
+# 13. labile esters
+O=CON1C(=O)CCC1=O labile_ester
+O=COn1cncc1 labile_ester
+Fc1c(OC=O)c(F)c(F)c(F)c1F labile_ester
+# 14. quarternary S
+[S;D2][C;R0](C)(C)C quarternary_S
+# 15. hydrocarbon tails
+[C;R0;X4]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH][CH2] 10_alkyl_chain
+# 16. aldehydes
+[CH]=O aldehyde
+#-------------------
+#1. hydrocarbon tails
+#1010 shtail [C;R0;X4][CH2][CH2][CH2][CH2][C;R0;X4] S
+[C;R0;X4]!@[CH2]!@[CH2]!@[CH2]!@[CH2]!@[CH2]!@[C;R0;X4] (CH2)6_alkyl_chain_Q
+# 2. Se (2.5)
+#Selenium se [Se,se] S
+# 3. S-compounds (2.5)
+[S;D2;R0]-[S;D2] Disulphide_bond_Q
+[SH] thiol_Q
+[S,s;D2]C[S,s;D2] masked_aldehyde_Q
+[$([S,s]~[S,s]~[C,c]=S),$([S,s]~[C,c](=S)~[S,s,N]),$([S;D2;R0]-S~O)] thiolating_agent_Q
+# 4. N-alkyl heterocycles
+[n+]-C pyridinium_Q
+# 5. benzamidines
+[NH]=C([NH2])c benzamidine_Q
+# 6. hydroxamates
+O=CN[OH] hydroxamate_Q
+# 7. Hydrazines
+[NH;R0][NH;R0] hydrazine_Q
+# 8. tricarbonyls
+[$(O=C[CH](C=O)C=O),$(N#C[CH](-C=O)-C=O)] tricarbonyls_Q
+# 9. phosphinates
+P(=O)(O[H,C])O[H,C] phosphinate_Q
+# 10. Michaels acceptors; 2.51 change to allow anything rather than C,c attached to Beta-C.
+[$(N#C-C=[CH][C,c]),$([CH](=[C;R0]-[CH]=O)),$([CH](=[C,R]-C(=O)-C));!$([CH]1=CC(=O)C=CC1=*);!$([CH]1=CC(=O)C(=[N,O])C=C1);!$([CH](=C-C=O)-C=O)] Michaels_acceptors_Q
+# added v2.52 enyne acceptors
+[$(N#C-C#C[C,c]),$(C#C-[CH]=O),$(C(#C-C(=O)-[C,c]))] Michaels_acceptors1_Q
+# 11. electrophiles for Cys
+[$(N#CSc1sc(nc1)N),$([S,Se]1C(N)C(=O)[#6][#6]1)] electrophiles_for_Cys_Q
+# 12. imines
+[!$(O=[C,S])][N;R0]=[C;R0]([C,c])[C,c] imines_Q
+# 13. perhalo ketones
+O=CC([Cl,Br,I,F])([Cl,Br,I,F])[Cl,Br,I,F] perhalketones_Q
+# 14. thioesters
+[#6]SC(=O) thioester_Q
+#-------------------
+# other useful queries
+[$(O([CX4,c])!@[CH,CH2]!@O[CX4,c])] acetal 
+C(=O)Cl acid_chloride 
+[$(C#N),$([C,N,S]=O)][CH2,CH][$([C,N,S]=O),$(C#N)] acidic_CH 
+C(=O)[Cl,Br] acyl_halide 
+[CX4][OH] any_alcohol 
+[CX4;H2][OH] primary_alcohol 
+[CX4;H][OH] secondary_alcohol 
+[CX4;H0][OH] tertiary_alcohol 
+[#6][CH]=O aldehyde 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])] alkene  
+[CX4][Cl,Br,I] alkyl_halide 
+C#C alkyne 
+[Cl,Br,I][CH]C=C allyl_halide 
+cCC(=O)[OH] alpha_aryl_ca 
+C([Cl,Br,I])([Cl,Br,I])([Cl,Br,I])C(=O)[OH] alpha_trihalo_ca 
+[#6]C(=O)C(=O)[OH] alpha_keto_ca 
+C=CC(=O)[OH] alpha_beta_unsat_ca 
+N#C-C(=O)[OH] alpha_cyano_ca 
+N(~O)(~O)-C-C(=O)[OH] alpha_nitro_ca 
+[ND3]([CX4,c,H])([CX4,c,H])[CX4][$([CH]),$(C([CX4,c]))]=O alpha_amino_ket_or_ald 
+[OH][CX4][$([CH]),$(C([CX4,c]))]=O alpha_hydroxy_ket_or_ald 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=C-[$([CH]),$(C([CX4,c]))]=O alpha_beta_ket_or_ald 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=C-C#N alpha_beta_CN 
+[OH][CX4][Cl,Br,I] alpha_halo_hydroxyl 
+[Cl,Br,I][$([CX4][CH]=O),$([CX4]C(=O)[CX4,c])] alpha_halo_ket_or_ald 
+[OH][CX4][$([NH2]),$([NH][CX4]),$(N([CX4])[CX4])] alpha_amino_hydroxyl 
+O=C([c,CX4])[$([NH2]),$([NH][c,CX4]),$(N([c,CX4])[c,CX4])] amide 
+[$([NH2][CX4]),$([$([NH]([CX4])[CX4]);!$([NH]([CX4])[CX4][O,N]);!$([NH]([CX4])[CX4][O,N])]),$([ND3]([CX4])([CX4])[CX4])] any_amine 
+[$([NH2]),$([NH][c,CX4]),$(N([c,CX4])[c,CX4]);!$(NC=O)][CX4]C(=O)[OH] amino_acid 
+O(C(=O)[#6])(C(=O)[#6]) anhydride 
+c[NH,NH2] aniline 
+c-[ND3]([#6])[#6] aniline_disub 
+c aromatic 
+c-[F,Cl,Br,I] aryl_halide 
+c-[Br,I] aryl_heavy_halide 
+Fcaa[F,Cl,Br,I,$([C,N,S]=O)] active_aryl_fluoride 
+cB([OH])[OH] aryl_boronate 
+[N;R0;D2]~[N;R0]~[N;R0;D1] azide 
+[N;D2]([C,c;!$(C=[O,S,N])])=[N;D2]-[C,c;!$(C=[O,S,N])] azo 
+[OH][CX4][CX4][Cl,Br,I] beta_halo_hydroxyl 
+[OH][CX4][CX4][$([NH2]),$([NH][CX4]),$(N([CX4])[CX4])] beta_amino_hydroxyl 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=C[CX4]C(=O)[OH] beta_gamma_unsat_ca 
+[CX4]([OH])[CX4]C(=O)[OH] beta_hydroxy_ca 
+[CX4]([Cl,Br,I])[CX4]C(=O)[OH] beta_halo_ca 
+[#6]C(=O)[CX4]C(=O)[OH] beta_keto_ca 
+[#6]C(=O)[CX4]C(=O)O[$([#6]);!$(C=[O,S,N])] beta_keto_ester 
+[$([NH2]),$([NH][c,CX4]),$(N([c,CX4])[c,CX4])]C(=O)O[$([#6]);!$(C=[O,S,N])] carbamate 
+[$([NH2]),$([NH][c,CX4]),$(N([c,CX4])[c,CX4])]C(=O)[OH] carbamic_acid 
+C(=O)[OH] carboxylic_acid 
+O([CX4,c])C(=O)O[CX4,c] carbonate 
+[$([CX4,c][CH]=O),$([CX4,c]C(=O)[CX4,c])] carbonyl 
+ClC(=O)O[CX4,c] chloroformate 
+[CX4,c]-C#N cyanide 
+N[CX4]C(=O)N[CX4]C(=O) dipeptide 
+[S;D2]-[S;D2] disulphide 
+[$([S;D2]([CX4,c])!@[CH,CH2]!@[S;D2][CX4,c])] dithioacetal 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=[$([CX3][$([NH2]),$([NH][CX4]),$([N;R0]([CX4])[CX4])]);!$(CC=[O,S,N]);!$(C[O,S])] enamine 
+[$([CX3]C(=O)[CX4,c]);!$(CC=[S,N]);!$(C[O,S,N])]=[$([CX3]C(=O)[CX4,c]);!$(CC=[S,N]);!$(C[N,S])] enedione 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=[$([CX3][OH]);!$(CC=[O,S,N]);!$(C[N,S])] enol 
+[$([CX3]);!$(CC=[O,S,N]);!$(C[O,S,N])]=[$([CX3]O[CX4]);!$(CC=[O,S,N]);!$(C[N,S])] enol_ether 
+O1[CX4][CX4]1 epoxide 
+[$([#6]);!$(C=[O,S,N])]C(=O)O[$([#6]);!$(C=[O,S,N])] ester 
+[$(O([$([CX4,c]);!$(C[O,N,S])])[$([CX4,c]);!$(C[O,N,S])]);!$(O1[CX4][CX4]1)] ether 
+[OH][CH,CH2]O[CX4,c] hemiacetal 
+O([#6])-C([#6])([#6])-[OH] hemiketal 
+[OH][$([NX3]([C;!$(C=[O,S,N])])[C;!$(C=[O,S,N])]),$([NH][CX4])] hydroxylamine 
+[$([NH;R0]([C;!$(C=[O,S,N])]))][$([NH;R0][C;!$(C=[O,S,N])])] hydrazine 
+C=N[NH2] hydrazone 
+C=NC=O imide 
+[$([C;R0]=[N;R0]);!$(C(~[N,O,S])(~[N,O,S]));!$([C;R0]=[N;R0]~[N,O,n])] imine 
+C#N-[#6] isocyanide 
+O=C=N-[#6] isocyanate 
+S=C=N-[#6] isothiocyanate 
+O([CX4,c])-C([CX4,c])([CX4,c])-O([CX4,c]) ketal 
+[CX4,c]C(=O)[CX4,c] ketone 
+[C;R0;X4]!@[CX4]!@[CX4]!@[CX4]!@[CX4]!@[CX4]!@[C;R0;X4] long_chain 
+[$([C;R1]);!$(C(N)N)](=O)@[$([NH][c,CX4]),$(N([c,CX4])[c,CX4])] lactam 
+[$([C;R1]);!$(C(O)N);!$(C(O)O)](=O)@[$(O);!$(O(C=O))] lactone 
+OC(=O)CC(=O)[OH] malonic_acid 
+[r8,r9,r10,r11,r12,r13,r14] macrocycle 
+*-C#N nitrile 
+*-N(=O)(~O) nitro 
+[N;D4] nquat 
+OC(=O)C(=O)O oxalyl 
+C=[N;R0]-[OH] oxime 
+O~O peroxide 
+c[OH] phenol 
+[PX3](=O)(~O)~[OH] phosphonic_acid 
+[PX3](=O)(~O)~O-[#6] phosphonic_ester 
+[PX4](=O)(~O)(~O)~[OH] phosphoric_acid 
+[PX4](=O)(~O)(~O)~O-[#6] phosphoric_ester 
+[PX4](=O)(~O)~O phosphinate 
+O=P(~O)(~O)(~O) phosphate 
+[CX4][NH2] primary_amine 
+[c,C]1(~[O;D1])~*!-*~[c,C](~[O;D1])~*!-*~1 quinone 
+[$([NH]([CX4])[CX4]);!$([NH]([CX4])[CX4][O,N]);!$([NH]([CX4])[CX4][O,N])] secondary_amine 
+C14~*~*~*~*~C~1~*~*~C2~C3~*~*~*~C~3~*~*~C~2~4 steroid 
+[#6][SD3](~O)[#6] sulphoxide 
+[#6][SD4](~O)(~O)[#6] sulphone 
+[#6][SD4](~O)(~O)N sulphonamide
+[#6]S(~O)(~O)[OH] sulphonic_acid 
+[#6]S(~O)(~O)O[#6] sulphonic_ester 
+[#6][SD4](~O)(~O)[Cl,Br] sulphonyl_halide 
+[ND3]([CX4])([CX4])[CX4] tertiary_amine 
+s1c(=N)nnc1[S,N] thiadiazole 
+S=C([c,CX4])[$([NH2]),$([NH][c,CX4]),$(N([c,CX4])[c,CX4])] thioamide 
+[$([#6]);!$(C=[O,S,N])]C(=S)O[$([#6]);!$(C=[O,S,N])] thioester 
+[$([#16;D2]([$([CX4,c]);!$(C[O,N,S])])[$([CX4,c]);!$(C[O,N,S])]);!$([#16;D2]1[CX4][CX4]1);!$(s1aaaa1)] thioether 
+[CX4][SH] thiol 
+c[SH] thiophenol 
+NC(=S)N thiourea 
+[$([CX4,c][CH]=S),$([CX4,c]C(=S)[CX4,c])] thiocarbonyl 
+[D2R0]-[D2R0]-[D2R0]-[D2R0]-[D2R0] unbranched_chain 
+NC(=O)N urea 

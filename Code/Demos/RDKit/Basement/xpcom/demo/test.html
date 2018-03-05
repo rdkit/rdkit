@@ -1,0 +1,187 @@
+<html>
+<head>
+
+<script src="sorttable.js"></script>
+<style type="text/css">
+table.sortable a.sortheader {
+    background-color:#eee;
+    color:#666666;
+    font-weight: bold;
+    text-decoration: none;
+    display: block;
+}
+table.sortable span.sortarrow {
+    color: black;
+    text-decoration: none;
+}
+</style>
+<script src="chemdraw/chemdraw.js"></script>
+<script>
+  cd_includeWrapperFile("chemdraw/"); 
+</script>
+
+
+<title>RDKit XPCOM Demo</title>
+</head>
+
+<body>
+
+
+<script>
+var globalPluginSize=150;
+
+function getRpcClient() {
+  netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect UniversalBrowserAccess');
+  return Components.classes['@mozilla.org/xml-rpc/client;1']
+     .createInstance(Components.interfaces.nsIXmlRpcClient);
+};
+
+var xmlRpcClient;
+var xmlRpcClientInited;
+function getXmlRpc() {
+  if (!xmlRpcClient) xmlRpcClient = getRpcClient();
+  return xmlRpcClient;
+}
+
+var Listener = {
+    onResult: function(client, ctxt, result) {
+      netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+      //result = result.QueryInterface(Components.interfaces.nsISupportsCString);
+    },
+    onFault: function(client, ctxt, fault) {
+        alert('Fault! ' + fault + '\n');
+    },
+    onError: function(client, ctxt, status, errorMsg) {
+        alert('Error! <(' + status.toString(16) + ') ' + errorMsg + '>\n');
+    }
+};
+
+function molblockToPyMol(mb,id){
+  var pymol = getXmlRpc();
+  pymol.init("http://localhost:9123");
+  var mbVar=pymol.createType(pymol.STRING,{});
+  mbVar.data=mb;
+  var idVar = pymol.createType(pymol.STRING,{});
+  idVar.data=id;
+  pymol.asyncCall(Listener,null,"loadMolBlock",[mbVar,idVar],2);
+}
+
+
+
+netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+var cls = Components.classes["@rationaldiscovery.com/RDKit/base"].createInstance();
+var baseI = cls.QueryInterface(Components.interfaces.IRDKit);
+
+function formatNumber(number, numDecimals) { 
+  var str = number.toString() 
+  var point = str.indexOf(".") 
+  var newstring = str.substring(0, Number(point) + Number(numDecimals) + 1);
+  return(Number(newstring)) 
+} 
+
+function addMolToTable(table,mol){
+  if(!mol) alert("bad molecule");
+
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  var canSmi = mol.GetSmiles();
+  var numDonors=mol.GetSmartsMatchCount('[$([#7,#8;!H0])]');
+  var numAcceptors=mol.GetSmartsMatchCount('[$([#7,#8])]');
+  var numRotatable=mol.GetSmartsMatchCount('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
+  var mw=mol.GetMW();
+  var logp=mol.LogP();
+  var mr = mol.MR();
+  var url="data:chemical/smiles,"+canSmi;
+  var rowIdx=GLOBAL_ROWS.length;
+  var img = cd_getSpecificObjectTag("chemical/x-cdx",globalPluginSize,globalPluginSize,"cdp"+String(rowIdx+1),"",true,true,url);
+
+  var numViolations=0;
+  if(mw>500) numViolations++;
+  if(logp>5) numViolations++;
+  if(numDonors>5) numViolations++;
+  if(numAcceptors>10) numViolations++;
+  var row =new Array(img,numViolations,formatNumber(mw,3),formatNumber(logp,4),numDonors,numAcceptors,numRotatable,formatNumber(mr,4),canSmi)
+  GLOBAL_ROWS[rowIdx]=row;
+};
+
+function addSmiles(smiles)
+{
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect UniversalBrowserAccess");
+  var mol = baseI.MolFromSmiles(smiles);
+  var tbl = document.getElementById('moltable');
+  if(!mol) alert("cannot construct molecule from smiles");
+  addMolToTable(tbl,mol);
+  var startp = 0;
+  GLOBAL_START_POINT=startp;
+  ts_refreshTable(tbl,startp,GLOBAL_TABLE_SIZE);
+  ts_clearArrows(tbl);
+    //mol.Generate3DCoords();
+  //var mb = mol.GetMolBlock();
+  //molblockToPyMol(mb,"Mol-"+tbl.rows.length);
+  
+}
+
+function addSDFile(fileName,statusBox)
+{
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  var suppl = baseI.SupplierFromSDFile(fileName);
+  if(!suppl) alert("Could not open SD file");
+  var tbl = document.getElementById('moltable');
+  var mol;
+  var startP = 0;
+  while(!suppl.atEnd()){
+    mol = suppl.next();
+    addMolToTable(tbl,mol);
+    if(statusBox){
+     statusBox.value = GLOBAL_ROWS.length;
+    }
+  }
+  GLOBAL_START_POINT=startP;
+  GLOBAL_TABLE_SIZE=5
+  ts_refreshTable(tbl,startP,GLOBAL_TABLE_SIZE);
+  
+  //var mb = mol.GetMolBlock();
+  //molblockToPyMol(mb,mol.GetSmiles());
+}
+
+
+</script>
+
+<form>
+<table>
+<tr>
+  <td>
+    <input name="textBox" size=80 value="c1cc(N)ccc1CC(=O)O">
+    <input type=button onclick="addSmiles(form.textBox.value)" value="Grab">
+  </td>
+</tr>
+<tr>
+  <td>
+    <input type=file name="sdBox" cols=80 size=80>
+    <input type=button onclick="addSDFile(form.sdBox.value,form.numCompounds)" size=60 value="Grab SD">
+  </td>
+</tr>
+</table>
+Number of compounds loaded: <input name="numCompounds" value="0">
+<br>
+<input type=button id="prevButton" value="Previous" onClick="ts_decrementTable('moltable');">
+<input type=button id="nextButton" value="Next" onClick="ts_incrementTable('moltable');">
+
+<table class="sortable" id="moltable" border=1>
+  <tr>
+    <th></th>
+    <th>Violations</th>
+    <th>MW</th>
+    <th>LogP</th>
+    <th>NumDonors</th>
+    <th>NumAcceptors</th>
+    <th>NumRotatable</th>
+    <th>MR</th>
+    <th>smiles</th>
+  </tr>
+</table>
+
+</form>
+
+
+</body>
+</html>

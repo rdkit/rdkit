@@ -1,0 +1,21 @@
+Greg,
+
+I've compiled my descriptor correlation results and attached them as various files here.  Here is some explantion:
+
+I used 3 datasets from ZINC (http://zinc.docking.org/), sp. The Drug-like dataset (66796 structures), Lead-like (97433 structures), Fragment-like (15937 structures), and an in-house set of compounds (~24,000 structures).  For all of the ZINC sets, I downloaed the T80 versions, which have been somewhat filtered for similar compounds in an attempt to get the pairwise Tanimoto below 0.8.  I generated all descriptors from RDKIT including all VSA descriptors that I had access to.  I still cannot get the VSA_Estate and VSA_Slogp descriptors working.
+
+The procedure I used for filtering descriptors consisted of eliminating those with less than 10% variance followed by a pairwise correlation analysis.  The correlation analysis consists of giving each column a score of the number of other columns with which it is correlated above the set threshold (0.85).  The column with the most correlated columns is kept and the others are deleted.  I did this using a KNIME workflow.
+
+In all cases, SMA_VSA8 and Estate_VSA11 were eliminated due to low variance.  In general, the Kappa and Chi descriptos show significant intercorrelation and many are eliminated.  As expected, the VSA descriptors are not significantly correlated and so all those passing the variance filter are kept.  Here are the lists of retained descriptors for each set:
+
+Drug-like:  BalabanJ, BertzC, IPc, HallKierAlpha, Kappa2, Kappa3, Chi2n, Chi0v, Chi2v, MolLogP, NHOHCount, NOCount, NumHAcceptors, NumRotatableBonds.
+Lead-like:  BalabanJ, BertzC, IPc, HallKierAlpha, Kappa2, Kappa3, Chi1, Chi2n, Chi2v, MolLogP, NHOHCount, NOCount, NumHAcceptors.
+Fragment-like:  BalabanJ, BertzC, IPc, HallKierAlpha, Kappa2, Kappa3, Chi0n, Chi3n, Chi2v, MolLogP, MolWt, NHOHCount, NOCount, NUMHAcceptors, NumRotatableBonds, TPSA.
+Internal:  BalabanJ, BertzC, IPc, HallKierAlpha, Kappa2, Chi3n, Chi1v, MolLogP, NHOHCount, NOCount.
+
+The CorrelMatricesPNG.zip file contains 3 .png files with a visualization of the correlation matrix.  (I left out the internal results to avoid any legal issues here.)  The CorrelMatricesCSV.zip file consists of the correlation matrices themselves as .csv files.
+
+I hope this is useful/interesting.
+
+-Kirk
+(Robert DeLisle <rkdelisle@gmail.com>)

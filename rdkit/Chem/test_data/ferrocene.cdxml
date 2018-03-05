@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="ferrocene.cdxml"
+ BoundingBox="182 189 247 338"
+ WindowPosition="184 349"
+ WindowSize="794 567"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001220122000000000C150910FFD0FFB80C4609590367052803FC0002000001220122000000000C150910000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="27"
+ BoundingBox="182 189 247 338"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="28"
+ BoundingBox="184 191 245 336"
+><n
+ id="1"
+ p="195.35 203"
+ Z="1"
+/><n
+ id="2"
+ p="195.35 233"
+ Z="2"
+/><n
+ id="3"
+ p="223.89 242.27"
+ Z="3"
+/><n
+ id="4"
+ p="241.52 218"
+ Z="4"
+/><n
+ id="5"
+ p="223.89 193.73"
+ Z="5"
+/><n
+ id="11"
+ p="186.35 293"
+ Z="11"
+/><n
+ id="12"
+ p="186.35 323"
+ Z="12"
+/><n
+ id="13"
+ p="214.89 332.27"
+ Z="13"
+/><n
+ id="14"
+ p="232.52 308"
+ Z="14"
+/><n
+ id="15"
+ p="214.89 283.73"
+ Z="15"
+ Warning="This atom is very close to another atom or bond."
+/><n
+ id="21"
+ p="207 308"
+ Z="21"
+ NodeType="MultiAttachment"
+ AS="N"
+ Attachments="11 12 13 14 15"
+/><n
+ id="22"
+ p="216 218"
+ Z="22"
+ NodeType="MultiAttachment"
+ AS="N"
+ Attachments="1 2 3 4 5"
+/><n
+ id="24"
+ p="208.91 263.35"
+ Z="24"
+ Element="26"
+ NumHydrogens="0"
+ AS="N"
+><t
+ id="23"
+ p="206 268"
+ BoundingBox="206 259 217 268"
+ Z="23"
+ LineHeight="yes"
+ LabelAlignment="Left"
+><s font="4" size="12">Fe</s></t></n><b
+ id="6"
+ Z="6"
+ B="1"
+ E="2"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="10 0 0 7"
+/><b
+ id="7"
+ Z="7"
+ B="2"
+ E="3"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="6 0 0 8"
+/><b
+ id="8"
+ Z="8"
+ B="3"
+ E="4"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="7 0 0 9"
+/><b
+ id="9"
+ Z="9"
+ B="4"
+ E="5"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="8 0 0 10"
+/><b
+ id="10"
+ Z="10"
+ B="5"
+ E="1"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="9 0 0 6"
+/><b
+ id="16"
+ Z="16"
+ B="11"
+ E="12"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="20 0 0 17"
+/><b
+ id="17"
+ Z="17"
+ B="12"
+ E="13"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="16 0 0 18"
+/><b
+ id="18"
+ Z="18"
+ B="13"
+ E="14"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="17 0 0 19"
+/><b
+ id="19"
+ Z="19"
+ B="14"
+ E="15"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="18 0 0 20"
+/><b
+ id="20"
+ Z="20"
+ B="15"
+ E="11"
+ Order="1.5"
+ Display="Dash"
+ BondCircularOrdering="19 0 0 16"
+/><b
+ id="25"
+ Z="25"
+ B="22"
+ E="24"
+ BS="N"
+ EndAttach="1"
+/><b
+ id="26"
+ Z="26"
+ B="24"
+ E="21"
+ BS="N"
+ BeginAttach="1"
+/></fragment></page></CDXML>

@@ -1,0 +1,121 @@
+CREATE INDEX fpidx ON pgbfp USING gist (f);
+CREATE INDEX maccsfpidx ON pgbfp USING gist (maccsf);
+SET rdkit.tanimoto_threshold = 0.5;
+SET rdkit.dice_threshold = 0.6;
+SET enable_indexscan=off;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY sml DESC, id limit 10;
+ id | sml 
+----+-----
+(0 rows)
+
+SELECT
+    id, dice_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id limit 10;
+   id   |        sml        
+--------+-------------------
+ 698576 | 0.604972375690608
+(1 row)
+
+SELECT
+    id, tanimoto_sml(maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), maccsf) AS sml
+FROM
+	pgbfp
+WHERE maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % maccsf
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  2055076 | 0.740740740740741
+  5281628 |           0.65625
+ 10560368 | 0.571428571428571
+   755497 | 0.527777777777778
+   718644 | 0.526315789473684
+   902176 | 0.516129032258065
+   687554 |               0.5
+  1380883 |               0.5
+(8 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=off;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY sml DESC, id limit 10;
+ id | sml 
+----+-----
+(0 rows)
+
+SELECT
+    id, dice_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id limit 10;
+   id   |        sml        
+--------+-------------------
+ 698576 | 0.604972375690608
+(1 row)
+
+SELECT
+    id, tanimoto_sml(maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), maccsf) AS sml
+FROM
+	pgbfp
+WHERE maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % maccsf
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  2055076 | 0.740740740740741
+  5281628 |           0.65625
+ 10560368 | 0.571428571428571
+   755497 | 0.527777777777778
+   718644 | 0.526315789473684
+   902176 | 0.516129032258065
+   687554 |               0.5
+  1380883 |               0.5
+(8 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=on;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) <%> f,id limit 10;
+ id | sml 
+----+-----
+(0 rows)
+
+SELECT
+    id, tanimoto_sml(maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), maccsf) AS sml
+FROM
+	pgbfp
+WHERE maccs_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % maccsf
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  2055076 | 0.740740740740741
+  5281628 |           0.65625
+ 10560368 | 0.571428571428571
+   755497 | 0.527777777777778
+   718644 | 0.526315789473684
+   902176 | 0.516129032258065
+   687554 |               0.5
+  1380883 |               0.5
+(8 rows)
+
+DROP INDEX fpidx;
+DROP INDEX maccsfpidx;

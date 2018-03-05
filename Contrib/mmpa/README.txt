@@ -1,0 +1,303 @@
+This directory contains the scripts used to generate matched molecular pairs (MMPs) from an input list of SMILES. 
+The fragment indexing algorithm used in the scripts is described in the following publications:
+
+Hussain, J., & Rea, C. (2010). "Computationally efficient algorithm to identify matched molecular pairs (MMPs) 
+in large data sets." Journal of chemical information and modeling, 50(3), 339-348.
+http://dx.doi.org/10.1021/ci900450m
+	
+Wagener, M., & Lommerse, J. P. (2006). "The quest for bioisosteric replacements." 
+Journal of chemical information and modeling, 46(2), 677-685.
+
+The scripts requires RDKit (www.rdkit.org) be installed and properly configured.
+
+Help is available for all the scripts using the -h option
+
+To find all the MMPs in your set 
+--------------------------------
+
+The program to generate the MMPs from a set is divided into two parts; fragmentation and indexing. 
+
+Before running the programs, make sure your input set of SMILES:
+    - does not contain mixtures (salts etc.) 
+    - does not contain "*" atoms
+    - has been canonicalised using RDKit.
+
+If your smiles set doesn't satisfy the conditions above the programs are likely to fail or in the case of 
+canonicalisation result in not identifying MMPs involving H atom substitution.
+
+1) Fragmentation command:
+
+python rfrag.py <SMILES_FILE >FRAGMENT_OUTPUT
+
+Example command: 
+python rfrag.py <data/sample.smi >data/sample_fragmented.txt
+
+Format of SMILES_FILE is: SMILES ID <space or comma separated>
+See data/sample.smi for an example input file
+
+Format of output: WHOLE_MOL_SMILES,ID,SMILES_OF_CORE,SMILES_OF_CONTEXT
+See data/sample_fragmented.txt for an example output file 
+
+2) Index command:
+
+python indexing.py <FRAGMENT_OUTPUT >MMP_OUTPUT.CSV
+
+Format of output:
+SMILES_OF_LEFT_MMP,SMILES_OF_RIGHT_MMP,ID_OF_LEFT_MMP,ID_OF_RIGHT_MMP,SMIRKS_OF_TRANSFORMATION,SMILES_OF_CONTEXT 
+
+This program has several options (see help from program below):
+
+Usage: indexing.py [options]
+
+Program to generate MMPs
+
+Options:
+  -h, --help            show this help message and exit
+  -s, --symmetric       Output symmetrically equivalent MMPs, i.e output both
+                        cmpd1,cmpd2, SMIRKS:A>>B and cmpd2,cmpd1, SMIRKS:B>>A
+  -m MAXSIZE, --maxsize=MAXSIZE
+                        Maximum size of change (in heavy atoms) allowed in
+                        matched molecular pairs identified. DEFAULT=10.
+                        Note: This option overrides the ratio option if both
+                        are specified.
+  -r RATIO, --ratio=RATIO
+                        Maximum ratio of change allowed in matched molecular
+                        pairs identified. The ratio is: size of change /
+                        size of cmpd (in terms of heavy atoms). DEFAULT=0.3.
+                        Note: If this option is used with the maxsize option,
+                        the maxsize option will be used.
+
+Example commands (with sample outputs):
+
+Default settings:
+python indexing.py <data/sample_fragmented.txt >data/sample_mmps_default.csv
+
+Output symmetrically equivalent MMPs (ie forward and reverse transforms):
+python indexing.py -s <data/sample_fragmented.txt >data/sample_mmps_sym.csv
+
+Output MMPs where maximum size of change is 3 heavy atoms:
+python indexing.py -m 3 <data/sample_fragmented.txt >data/sample_mmps_maxheavy.csv
+
+Output MMPs where no more that 10% of the compound has changed:
+python indexing.py -r 0.1 <data/sample_fragmented.txt >data/sample_mmps_maxratio.csv
+
+Output symmetrically equivalent MMPs where maximum size of change is 3 heavy atoms:
+python indexing.py -s -m 3 <data/sample_fragmented.txt >data/sample_mmps_sym_maxheavy.csv
+ 
+SMIRKS canonicalisation
+-----------------------
+
+The MMP identification script uses a SMIRKS canonicalisation routine so the same change always has the same output SMIRKS.
+
+To canonicalise a SMIRKS (generated elsewhere) so it is in the same format as MMP identification scripts use command:
+
+python cansmirks.py <SMIRKS_FILE >SMIRKS_OUTPUT_FILE
+
+Example command:
+python cansmirk.py <data/sample_smirks.txt >data/sample_cansmirks.txt
+
+Format of SMIRKS_FILE: SMIRKS ID <space or comma separated>
+See data/sample_smirks.txt for an example input file
+  
+Format of output: CANONICALISED_SMIRKS ID
+See data/sample_cansmirks.txt for an example output file
+
+Note: The script will NOT deal with SMARTS characters, so the SMIRKS must contain valid SMILES for left and right hand sides.
+
+The algorithm used to canonicalise SMIRKS is as follows:
+1) Canonicalise the LHS.
+2) For the LHS the 1st asterisk (attachment point) in the SMILES will have label 1, 2nd asterisk will have label 2 and so on
+3) For the RHS, if you have a choice (ie. two attachment points are symmetrically equivalent), always put the label 
+with lower numerical value on the earlier attachment point in the canonicalised SMILES
+
+Applying SMIRKS to input compounds
+----------------------------------
+
+If you want to apply a SMIRKS/transform generated by the programs above to a compound, use the mol_transform.py program
+with the following command:
+
+python mol_transform.py -f TRANSFORM_FILE <SMILES_FILE >OUTPUT_FILE
+
+If you want to use a set SMIRKS generated elsewhere, please make sure they have been canonicalised 
+using the cansmirks.py command.
+
+Example command:
+mol_transform.py -f data/sample_smirks_mol_trans.txt <data/sample_smiles_mol_trans.smi >data/sample_mol_trans_output.txt
+
+Format of SMILES_FILE: SMILES ID <space or comma separated>
+See data/sample_smiles_mol_trans.smi for an example input file
+
+Format of transform file: transform <one per line>
+See data/sample_smirks_mol_trans.txt for an example transform file
+
+Format of output: SMILES,ID,Transform,Modified_SMILES
+See data/sample_mol_trans_output.txt for an example output file
+
+Generating and searching an MMP database
+----------------------------------------
+
+The pair index used in the MMP identification algorithm can be written to a relational database. For the indexing.py
+program described above, the index is written to memory and the program will identify all the MMPs in the dataset.
+However, if you just want to ask a (series of) specific questions on a dataset, a relational database containing the
+pair index (MMP db) can be used to do that.
+
+The program create_mmp_db.py will build a MMP db for a given dataset and the program search_mmp_db.py can be used to
+search the MMP db. The types of searching that can be performed on the db are as follows:
+
+1) Find all MMPs of an input/query compound to the compounds in the db
+2) Find all MMPs in the db where the LHS of the transform matches an input substructure
+3) Find all MMPs that match the input transform/SMIRKS
+4) Find all MMPs in the db where the LHS of the transform matches an input SMARTS 
+5) Find all MMPs that match the LHS and RHS SMARTS of the input transform
+
+The SMARTS searching utilises the DbCLI tools (http://code.google.com/p/rdkit/wiki/UsingTheDbCLI) that are part 
+of the RDKit distribution.
+
+Generating the db
+-----------------
+
+To generate an MMP db use the following command:
+
+python create_mmp_db.py <FRAGMENT_OUTPUT
+
+The program takes a FRAGMENT_OUTPUT generated by the rfrag.py command (described above) as input.
+This program has several options (see help from program below):
+
+Usage: create_mmp_db.py [options]
+
+Program to create an MMP db.
+
+Options:
+  -h, --help            show this help message and exit
+  -p PREFIX, --prefix=PREFIX
+                        Prefix to use for the db file (and directory for
+                        SMARTS index). DEFAULT=mmp
+  -m MAXSIZE, --maxsize=MAXSIZE
+                        Maximum size of change (in heavy atoms) that is stored
+                        in the database. DEFAULT=15.
+                        Note: Any MMPs that involve a change greater than this
+                        value will not be stored in the database and hence not
+                        be identified in the searching.
+  -s, --smarts          Build SMARTS db so can perform SMARTS searching
+                        against db. Note: Will make the build process somewhat
+                        slower.
+ 
+Example commands:
+
+Default Settings:
+python create_mmp_db.py <data/sample_fragmented.txt
+
+A sqllite3 db file will be created called mmp.db
+
+Generate a db with the prefix "my_MMP_db" and SMARTS searching capability:
+python create_mmp_db.py -p my_MMP_db -s <data/sample_fragmented.txt
+
+A sqllite3 db file will be created called my_MMP_db.db and a DbCLi files will be created in a directory called my_MMP_db_smarts
+
+Generate a db with SMARTS searching capability and where only changes up to (and including) 10 heavy atoms are stored:
+python create_mmp_db.py -m 10 -s <data/sample_fragmented.txt
+
+Searching the db
+----------------
+
+To search the MMP db use the following command:
+
+python search_mmp_db.py [options] <INPUT_FILE
+
+This program has several options (see help from program below):
+
+Options:
+  -h, --help            show this help message and exit
+  -t TYPE, --type=TYPE  Type of search required. Options are: mmp, subs,
+                        trans, subs_smarts, trans_smarts
+  -m MAXSIZE, --maxsize=MAXSIZE
+                        Maximum size of change (in heavy atoms) allowed in
+                        matched molecular pairs identified. DEFAULT=10.
+                        Note: This option overrides the ratio option if both
+                        are specified.
+  -r RATIO, --ratio=RATIO
+                        Only applicable with the mmp search type. Maximum
+                        ratio of change allowed in matched molecular pairs
+                        identified. The ratio is: size of change /
+                        size of cmpd (in terms of heavy atoms) for the QUERY
+                        MOLECULE. DEFAULT=0.3. Note: If this option is used
+                        with the maxsize option, the maxsize option will be
+                        used.
+  -p PREFIX, --prefix=PREFIX
+                        Prefix for the db file. DEFAULT=mmp
+
+
+A description of the different search options are shown below:
+
+a) mmp: Find all MMPs of a input/query compound to the compounds in the db
+
+b) subs: Find all MMPs in the db where the LHS of the transform matches an input
+substructure. Make sure the attached points are donated by an asterisk and the
+input substructure has been canonicalised (eg. [*]c1ccccc1). Note: Up to 3 attachement
+points are allowed.
+
+c) trans: Find all MMPs that match the input transform/SMIRKS. Make sure the input
+SMIRKS has been canonicalised using the cansmirk.py program.
+
+d) subs_smarts: Find all MMPs in the db where the LHS of the transform matches an
+input SMARTS. The attachment points in the SMARTS can be donated by [#0] (eg.
+[#0]c1ccccc1).
+
+e) trans_smarts: Find all MMPs that match the LHS and RHS SMARTS of the input transform.
+The transform SMARTS are input as LHS_SMARTS>>RHS_SMARTS (eg.
+[#0]c1ccccc1>>[#0]c1ccncc1). Note: This search can take a long time to run if a
+very general SMARTS expression is used.
+
+Example commands to search a db:
+The db was created using command: python create_mmp_db.py -m 10 -s <data/sample_fragmented.txt
+
+a) To carry out a mmp search:
+python search_mmp_db.py -t mmp <data/sample_db_input_smi.txt >data/sample_db_search_smi_output.txt
+
+Format of input file: SMILES ID <space or comma separated. The ID field is optional>
+See data/sample_db_input_smi.txt for an example input file 
+
+Format of output: SMILES_QUERY,SMILES_OF_MMP,QUERY_ID,RETRIEVED_ID,CHANGED_SMILES,CONTEXT_SMILES
+See data/sample_db_search_smi_output.txt for an example output file
+
+b) To carry out a LHS transform substructure search:
+python search_mmp_db.py -t subs <data/sample_db_input_subs.txt >data/sample_db_search_subs_output.txt
+
+Format of input file: Substructure_SMILES ID <space or comma separated. The ID field is optional>
+See data/sample_db_input_subs.txt for an example input file 
+
+Format of output: Input_substructure[,input_id],SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
+See data/sample_db_search_subs_output.txt for an example output file
+
+c) To carry out a transform search:
+python search_mmp_db.py -t trans <data/sample_db_input_trans.txt >data/sample_db_search_trans_output.txt
+
+Format of input file: SMIRKS ID <space or comma separated. The ID field is optional>
+See data/sample_db_input_trans.txt for an example input file 
+
+Format of output: [input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
+See data/sample_db_search_trans_output.txt for an example output file
+
+d) To carry out a LHS transform substructure SMARTS search:
+search_mmp_db.py -t subs_smarts <data/sample_db_input_subs_smarts.txt >data/sample_db_search_subs_smart_output.txt
+
+Format of input file: SMARTS ID <space or comma separated. The ID field is optional>
+See data/sample_db_input_subs_smarts.txt for an example input file 
+
+Format of output: [input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
+See data/sample_db_search_subs_smart_output.txt for an example output file
+
+e) To carry out a transform SMARTS search (with max size change of 6 heavy atoms):
+search_mmp_db.py -t trans_smarts -m 6 <data/sample_db_input_trans_smarts.txt >data/sample_db_search_trans_smarts_output.txt
+
+Format of input file: SMARTS ID <space or comma separated. The ID field is optional>
+See data/sample_db_input_trans_smarts.txt for an example input file 
+
+Format of output: input_transform_SMARTS,[input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
+See data/sample_db_search_trans_smarts_output.txt for an example output file
+  
+In the event you use the scripts for publication please reference the original publication:
+
+Hussain, J., & Rea, C. (2010). "Computationally efficient algorithm to identify matched molecular pairs (MMPs) 
+in large data sets." Journal of chemical information and modeling, 50(3), 339-348.
+http://dx.doi.org/10.1021/ci900450m

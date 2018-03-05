@@ -1,0 +1,658 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 0 0 400 500
+%%Pages: (atend)
+/Helvetica-Roman findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Helvetica-Roman-ISOLatin1 exch definefont pop
+
+/Helvetica-Bold findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Helvetica-Bold-ISOLatin1 exch definefont pop
+
+/Helvetica-Oblique findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Helvetica-Oblique-ISOLatin1 exch definefont pop
+
+/Times-Roman findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Times-Roman-ISOLatin1 exch definefont pop
+
+/Times-Bold findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Times-Bold-ISOLatin1 exch definefont pop
+
+/Times-Italic findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Times-Italic-ISOLatin1 exch definefont pop
+
+/Courier-Roman findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Courier-Roman-ISOLatin1 exch definefont pop
+
+/Courier-Bold findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Courier-Bold-ISOLatin1 exch definefont pop
+
+/Courier-Oblique findfont
+dup length dict begin
+  {1 index /FID ne
+        {def}
+        {pop pop}
+      ifelse
+   } forall
+   /Encoding ISOLatin1Encoding  def
+   currentdict
+end
+/Courier-Oblique-ISOLatin1 exch definefont pop
+
+
+%% This is hacked straight out of the Blue book (from Adobe)
+/centerdash
+  { /pattern exch def
+    /pathlen pathlength def
+    /patternlength 0 def
+    pattern
+      { patternlength add /patternlength exch def
+      } forall
+    pattern length 2 mod 0 ne
+      { /patternlength patternlength 2 mul def } if
+    /first pattern 0 get def
+    /last patternlength first sub def
+    /n pathlen last sub cvi patternlength idiv def
+    /endpart pathlen patternlength n mul sub
+       last sub 2 div def
+    /offset first endpart sub def
+    pattern offset setdash
+  } def
+
+/pathlength
+    { flattenpath
+      /dist 0 def
+
+      { /yfirst exch def /xfirst exch def
+        /ymoveto yfirst def /xmoveto xfirst def }
+      { /ynext exch def /xnext exch def
+        /dist dist ynext yfirst sub dup mul
+          xnext xfirst sub dup mul add sqrt add def
+        /yfirst ynext def /xfirst xnext def }
+      {}
+
+      { /ynext ymoveto def /xnext xmoveto def
+        /dist dist ynext yfirst sub dup mul
+          xnext xfirst sub dup mul add sqrt add def
+        /yfirst ynext def /xfirst xnext def }
+      pathforall
+      dist
+    } def
+
+%%Page: 1 1
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+1.0 1.0 0.0 setrgbcolor
+200 10 neg moveto 200 70 neg lineto stroke
+1.0 0.0 0.0 setrgbcolor
+80.276 40 neg moveto 319.724 40 neg lineto stroke
+0.0 0.0 0.0 setrgbcolor
+80.276 40 neg moveto (spam, spam, spam, baked beans, and spam!) show
+0.7 0.7 1.0 setrgbcolor
+80.276 20 neg moveto 80.276 60 neg lineto stroke
+319.724 20 neg moveto 319.724 60 neg lineto stroke
+60.276 31.384 neg moveto 339.724 31.384 neg lineto stroke
+60.276 42.484 neg moveto 339.724 42.484 neg lineto stroke
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 88.0 neg moveto (times 12 ) show
+(Times-Bold-ISOLatin1) findfont 12 scalefont setfont
+58.684 88.0 neg moveto (bold ) show
+(Times-Italic-ISOLatin1) findfont 12 scalefont setfont
+84.7 88.0 neg moveto (italic ) show
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+112.036 88.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Courier-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 106.0 neg moveto (courier 12 ) show
+(Courier-Bold-ISOLatin1) findfont 12 scalefont setfont
+66.688 106.0 neg moveto (bold ) show
+(Courier-Oblique-ISOLatin1) findfont 12 scalefont setfont
+92.704 106.0 neg moveto (italic ) show
+(Courier-Roman-ISOLatin1) findfont 12 scalefont setfont
+120.04 106.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Helvetica-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 124.0 neg moveto (helvetica 12 ) show
+(Helvetica-Bold-ISOLatin1) findfont 12 scalefont setfont
+77.368 124.0 neg moveto (bold ) show
+(Helvetica-Oblique-ISOLatin1) findfont 12 scalefont setfont
+103.384 124.0 neg moveto (italic ) show
+(Helvetica-Roman-ISOLatin1) findfont 12 scalefont setfont
+130.72 124.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Symbol) findfont 12 scalefont setfont
+10 142.0 neg moveto (symbol 12 ) show
+(Symbol) findfont 12 scalefont setfont
+68.02 142.0 neg moveto (bold ) show
+(Symbol) findfont 12 scalefont setfont
+94.036 142.0 neg moveto (italic ) show
+(Symbol) findfont 12 scalefont setfont
+121.372 142.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Courier-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 160.0 neg moveto (monospaced 12 ) show
+(Courier-Bold-ISOLatin1) findfont 12 scalefont setfont
+98.716 160.0 neg moveto (bold ) show
+(Courier-Oblique-ISOLatin1) findfont 12 scalefont setfont
+124.732 160.0 neg moveto (italic ) show
+(Courier-Roman-ISOLatin1) findfont 12 scalefont setfont
+152.068 160.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 178.0 neg moveto (serif 12 ) show
+(Times-Bold-ISOLatin1) findfont 12 scalefont setfont
+52.684 178.0 neg moveto (bold ) show
+(Times-Italic-ISOLatin1) findfont 12 scalefont setfont
+78.7 178.0 neg moveto (italic ) show
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+106.036 178.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Helvetica-Roman-ISOLatin1) findfont 12 scalefont setfont
+10 196.0 neg moveto (sansserif 12 ) show
+(Helvetica-Bold-ISOLatin1) findfont 12 scalefont setfont
+78.028 196.0 neg moveto (bold ) show
+(Helvetica-Oblique-ISOLatin1) findfont 12 scalefont setfont
+104.044 196.0 neg moveto (italic ) show
+(Helvetica-Roman-ISOLatin1) findfont 12 scalefont setfont
+131.38 196.0 neg moveto (underline) show
+0.96 setlinewidth
+0 1.242 neg rmoveto
+-49.356 0 rlineto stroke
+(Times-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 223.0 neg moveto (times 18 ) show
+(Times-Bold-ISOLatin1) findfont 18 scalefont setfont
+83.026 223.0 neg moveto (bold ) show
+(Times-Italic-ISOLatin1) findfont 18 scalefont setfont
+122.05 223.0 neg moveto (italic ) show
+(Times-Roman-ISOLatin1) findfont 18 scalefont setfont
+163.054 223.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Courier-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 250.0 neg moveto (courier 18 ) show
+(Courier-Bold-ISOLatin1) findfont 18 scalefont setfont
+95.032 250.0 neg moveto (bold ) show
+(Courier-Oblique-ISOLatin1) findfont 18 scalefont setfont
+134.056 250.0 neg moveto (italic ) show
+(Courier-Roman-ISOLatin1) findfont 18 scalefont setfont
+175.06 250.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Helvetica-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 277.0 neg moveto (helvetica 18 ) show
+(Helvetica-Bold-ISOLatin1) findfont 18 scalefont setfont
+111.052 277.0 neg moveto (bold ) show
+(Helvetica-Oblique-ISOLatin1) findfont 18 scalefont setfont
+150.076 277.0 neg moveto (italic ) show
+(Helvetica-Roman-ISOLatin1) findfont 18 scalefont setfont
+191.08 277.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Symbol) findfont 18 scalefont setfont
+10 304.0 neg moveto (symbol 18 ) show
+(Symbol) findfont 18 scalefont setfont
+97.03 304.0 neg moveto (bold ) show
+(Symbol) findfont 18 scalefont setfont
+136.054 304.0 neg moveto (italic ) show
+(Symbol) findfont 18 scalefont setfont
+177.058 304.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Courier-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 331.0 neg moveto (monospaced 18 ) show
+(Courier-Bold-ISOLatin1) findfont 18 scalefont setfont
+143.074 331.0 neg moveto (bold ) show
+(Courier-Oblique-ISOLatin1) findfont 18 scalefont setfont
+182.098 331.0 neg moveto (italic ) show
+(Courier-Roman-ISOLatin1) findfont 18 scalefont setfont
+223.102 331.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Times-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 358.0 neg moveto (serif 18 ) show
+(Times-Bold-ISOLatin1) findfont 18 scalefont setfont
+74.026 358.0 neg moveto (bold ) show
+(Times-Italic-ISOLatin1) findfont 18 scalefont setfont
+113.05 358.0 neg moveto (italic ) show
+(Times-Roman-ISOLatin1) findfont 18 scalefont setfont
+154.054 358.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+(Helvetica-Roman-ISOLatin1) findfont 18 scalefont setfont
+10 385.0 neg moveto (sansserif 18 ) show
+(Helvetica-Bold-ISOLatin1) findfont 18 scalefont setfont
+112.042 385.0 neg moveto (bold ) show
+(Helvetica-Oblique-ISOLatin1) findfont 18 scalefont setfont
+151.066 385.0 neg moveto (italic ) show
+(Helvetica-Roman-ISOLatin1) findfont 18 scalefont setfont
+192.07 385.0 neg moveto (underline) show
+1.44 setlinewidth
+0 1.863 neg rmoveto
+-74.034 0 rlineto stroke
+pgsave restore
+showpage
+%%Page: 2 2
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+0.5 0.5 1.0 setrgbcolor
+0 150 neg moveto 300 150 neg lineto stroke
+150 0 neg moveto 150 300 neg lineto stroke
+-1.0 -1.0 -1.0 setrgbcolor
+0.5 0.5 1.0 setrgbcolor
+226.044 150.0 neg moveto
+matrix currentmatrix 150.0 150.0 neg translate 76.044 76.044 scale 0 0 1 0 360 arc setmatrix stroke
+(Times-Bold-ISOLatin1) findfont 12 scalefont setfont
+150 150 neg moveto ( __albatros at 0) show
+1.0 0.647058823529 0.0 setrgbcolor
+gsave
+150 150 neg translate
+30 rotate
+0.000000 0.000000 neg moveto ( __albatros at 30) show
+grestore
+1.0 1.0 0.0 setrgbcolor
+gsave
+150 150 neg translate
+60 rotate
+0.000000 0.000000 neg moveto ( __albatros at 60) show
+grestore
+0.0 0.501960784314 0.0 setrgbcolor
+gsave
+150 150 neg translate
+90 rotate
+0.000000 0.000000 neg moveto ( __albatros at 90) show
+grestore
+0.0 0.0 1.0 setrgbcolor
+gsave
+150 150 neg translate
+120 rotate
+0.000000 0.000000 neg moveto ( __albatros at 120) show
+grestore
+0.501960784314 0.0 0.501960784314 setrgbcolor
+gsave
+150 150 neg translate
+150 rotate
+0.000000 0.000000 neg moveto ( __albatros at 150) show
+grestore
+1.0 0.0 0.0 setrgbcolor
+gsave
+150 150 neg translate
+180 rotate
+0.000000 0.000000 neg moveto ( __albatros at 180) show
+grestore
+1.0 0.647058823529 0.0 setrgbcolor
+gsave
+150 150 neg translate
+210 rotate
+0.000000 0.000000 neg moveto ( __albatros at 210) show
+grestore
+1.0 1.0 0.0 setrgbcolor
+gsave
+150 150 neg translate
+240 rotate
+0.000000 0.000000 neg moveto ( __albatros at 240) show
+grestore
+0.0 0.501960784314 0.0 setrgbcolor
+gsave
+150 150 neg translate
+270 rotate
+0.000000 0.000000 neg moveto ( __albatros at 270) show
+grestore
+0.0 0.0 1.0 setrgbcolor
+gsave
+150 150 neg translate
+300 rotate
+0.000000 0.000000 neg moveto ( __albatros at 300) show
+grestore
+0.501960784314 0.0 0.501960784314 setrgbcolor
+gsave
+150 150 neg translate
+330 rotate
+0.000000 0.000000 neg moveto ( __albatros at 330) show
+grestore
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+gsave
+350 100 neg translate
+-90 rotate
+0.000000 0.000000 neg moveto (This is  a) show
+0.96 setlinewidth
+0.000000 1.242000 neg moveto
+48.012000 0 rlineto stroke
+0.000000 14.400000 neg moveto (rotated) show
+0.96 setlinewidth
+0.000000 15.642000 neg moveto
+37.356000 0 rlineto stroke
+0.000000 28.800000 neg moveto (multi-line string!!!) show
+0.96 setlinewidth
+0.000000 30.042000 neg moveto
+90.684000 0 rlineto stroke
+grestore
+pgsave restore
+showpage
+%%Page: 3 3
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+100 250 neg moveto (Test) show
+-1.0 -1.0 -1.0 setrgbcolor
+0.0 0.0 0.0 setrgbcolor
+140.0 100.0 neg moveto
+matrix currentmatrix 120.0 100.0 neg translate 20.0 20.0 scale 0 0 1 0 360 arc setmatrix stroke
+pgsave restore
+showpage
+%%Page: 4 4
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+0.7 0.7 1.0 setrgbcolor
+0 0 neg moveto 0 300 neg lineto stroke
+10 0 neg moveto 10 300 neg lineto stroke
+20 0 neg moveto 20 300 neg lineto stroke
+30 0 neg moveto 30 300 neg lineto stroke
+40 0 neg moveto 40 300 neg lineto stroke
+50 0 neg moveto 50 300 neg lineto stroke
+60 0 neg moveto 60 300 neg lineto stroke
+70 0 neg moveto 70 300 neg lineto stroke
+80 0 neg moveto 80 300 neg lineto stroke
+90 0 neg moveto 90 300 neg lineto stroke
+100 0 neg moveto 100 300 neg lineto stroke
+110 0 neg moveto 110 300 neg lineto stroke
+120 0 neg moveto 120 300 neg lineto stroke
+130 0 neg moveto 130 300 neg lineto stroke
+140 0 neg moveto 140 300 neg lineto stroke
+150 0 neg moveto 150 300 neg lineto stroke
+160 0 neg moveto 160 300 neg lineto stroke
+170 0 neg moveto 170 300 neg lineto stroke
+180 0 neg moveto 180 300 neg lineto stroke
+190 0 neg moveto 190 300 neg lineto stroke
+200 0 neg moveto 200 300 neg lineto stroke
+210 0 neg moveto 210 300 neg lineto stroke
+220 0 neg moveto 220 300 neg lineto stroke
+230 0 neg moveto 230 300 neg lineto stroke
+240 0 neg moveto 240 300 neg lineto stroke
+250 0 neg moveto 250 300 neg lineto stroke
+260 0 neg moveto 260 300 neg lineto stroke
+270 0 neg moveto 270 300 neg lineto stroke
+280 0 neg moveto 280 300 neg lineto stroke
+290 0 neg moveto 290 300 neg lineto stroke
+0 0 neg moveto 300 0 neg lineto stroke
+0 10 neg moveto 300 10 neg lineto stroke
+0 20 neg moveto 300 20 neg lineto stroke
+0 30 neg moveto 300 30 neg lineto stroke
+0 40 neg moveto 300 40 neg lineto stroke
+0 50 neg moveto 300 50 neg lineto stroke
+0 60 neg moveto 300 60 neg lineto stroke
+0 70 neg moveto 300 70 neg lineto stroke
+0 80 neg moveto 300 80 neg lineto stroke
+0 90 neg moveto 300 90 neg lineto stroke
+0 100 neg moveto 300 100 neg lineto stroke
+0 110 neg moveto 300 110 neg lineto stroke
+0 120 neg moveto 300 120 neg lineto stroke
+0 130 neg moveto 300 130 neg lineto stroke
+0 140 neg moveto 300 140 neg lineto stroke
+0 150 neg moveto 300 150 neg lineto stroke
+0 160 neg moveto 300 160 neg lineto stroke
+0 170 neg moveto 300 170 neg lineto stroke
+0 180 neg moveto 300 180 neg lineto stroke
+0 190 neg moveto 300 190 neg lineto stroke
+0 200 neg moveto 300 200 neg lineto stroke
+0 210 neg moveto 300 210 neg lineto stroke
+0 220 neg moveto 300 220 neg lineto stroke
+0 230 neg moveto 300 230 neg lineto stroke
+0 240 neg moveto 300 240 neg lineto stroke
+0 250 neg moveto 300 250 neg lineto stroke
+0 260 neg moveto 300 260 neg lineto stroke
+0 270 neg moveto 300 270 neg lineto stroke
+0 280 neg moveto 300 280 neg lineto stroke
+0 290 neg moveto 300 290 neg lineto stroke
+1.0 0.0 0.0 setrgbcolor
+10 200 neg moveto 20 190 neg lineto stroke
+1.0 1.0 0.0 setrgbcolor
+165.0 65.0 neg moveto
+matrix currentmatrix 165.0 65.0 neg translate 35.0 35.0 scale 0 0 1 0 360 arc setmatrix eofill
+4 setlinewidth
+0.0 0.0 0.0 setrgbcolor
+200.0 65.0 neg moveto
+matrix currentmatrix 165.0 65.0 neg translate 35.0 35.0 scale 0 0 1 0 360 arc setmatrix stroke
+0.0 0.0 1.0 setrgbcolor
+165.0 65.0 neg moveto
+matrix currentmatrix 165.0 65.0 neg translate 35.0 35.0 scale 0 0 1 45 95 arc setmatrix eofill
+0.0 0.0 0.501960784314 setrgbcolor
+183.386269609 35.2183766413 neg moveto
+matrix currentmatrix 165.0 65.0 neg translate 35.0 35.0 scale 0 0 1 45 95 arc setmatrix stroke
+0.0 0.0 1.0 setrgbcolor
+newpath
+matrix currentmatrix 38 38 neg translate 8 8 scale 0 0 1 90 180 arc setmatrix
+matrix currentmatrix 38 92 neg translate 8 8 scale 0 0 1 180 270 arc setmatrix
+matrix currentmatrix 92 92 neg translate 8 8 scale 0 0 1 270 360 arc setmatrix
+matrix currentmatrix 92 38 neg translate 8 8 scale 0 0 1 0 90 arc setmatrix
+closepath
+eofill
+0.501960784314 0.0 0.0 setrgbcolor
+newpath
+matrix currentmatrix 38 38 neg translate 8 8 scale 0 0 1 90 180 arc setmatrix
+matrix currentmatrix 38 92 neg translate 8 8 scale 0 0 1 180 270 arc setmatrix
+matrix currentmatrix 92 92 neg translate 8 8 scale 0 0 1 270 360 arc setmatrix
+matrix currentmatrix 92 38 neg translate 8 8 scale 0 0 1 0 90 arc setmatrix
+closepath
+stroke
+-1.0 -1.0 -1.0 setrgbcolor
+0.0 0.0 0.0 setrgbcolor
+20 20 neg moveto 100 50 neg 50 100 neg 160 160 neg curveto stroke
+0.0 1.0 0.0 setrgbcolor
+160 120 neg moveto
+130 190 neg lineto
+210 145 neg lineto
+110 145 neg lineto
+190 190 neg lineto
+closepath
+eofill
+3 setlinewidth
+1.0 0.0 0.0 setrgbcolor
+160 120 neg moveto
+130 190 neg lineto
+210 145 neg lineto
+110 145 neg lineto
+190 190 neg lineto
+closepath
+stroke
+-1.0 -1.0 -1.0 setrgbcolor
+5 setlinewidth
+1.0 1.0 0.0 setrgbcolor
+200 200 neg moveto
+260 200 neg lineto
+260 260 neg lineto
+200 260 neg lineto
+closepath
+stroke
+0.0 0.501960784314 0.0 setrgbcolor
+200 260 neg moveto 260 260 neg lineto stroke
+1.0 0.0 0.0 setrgbcolor
+260 200 neg moveto 260 260 neg lineto stroke
+pgsave restore
+showpage
+%%Page: 5 5
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+10 20 neg moveto (años luz detrás) show
+10 40 neg moveto (Como estan?) show
+pgsave restore
+showpage
+%%Page: 6 6
+%%BeginPageSetup
+/pgsave save def
+
+% initialize
+
+2 setlinecap
+
+0 500
+translate
+
+0.0 0.0 0.0 setrgbcolor
+(Times-Roman-ISOLatin1) findfont 12 scalefont setfont
+1 setlinewidth
+%%EndPageSetup
+10 20 neg moveto (años luz detrás: page 2) show
+1.0 1.0 0.0 setrgbcolor
+200 120 neg moveto 200 180 neg lineto stroke
+1.0 0.0 0.0 setrgbcolor
+139.31 150 neg moveto 260.69 150 neg lineto stroke
+0.0 0.0 0.0 setrgbcolor
+139.31 150 neg moveto (some text with ácceñts) show
+0.7 0.7 1.0 setrgbcolor
+139.31 130 neg moveto 139.31 170 neg lineto stroke
+260.69 130 neg moveto 260.69 170 neg lineto stroke
+119.31 141.384 neg moveto 280.69 141.384 neg lineto stroke
+119.31 152.484 neg moveto 280.69 152.484 neg lineto stroke
+pgsave restore
+showpage
+%%Trailer
+%%Pages: 6
+%%EOF

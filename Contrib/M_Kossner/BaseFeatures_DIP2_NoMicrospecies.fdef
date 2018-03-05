@@ -1,0 +1,202 @@
+# $Id$
+#
+# FDef file contributed by Markus Kossner
+
+AtomType AcidicN	[$([NH,N-1](S(=O))(C(=O))),$([NH,N-1](C(=O))(C(=O))),$([NH,N-1](S(=O)(=O))c),$([NH2]S(=O)(=O)c)]
+AtomType AmideN [$([#7]-C(=O))]
+AtomType AmidineTripleN [$([#7]-C(=[#7]))]
+AtomType SulfonamideN [$([N;H0]S(=O)(=O))]
+AtomType NDonor [N&!H0&v3,N&!H0&+1&v4,n&H1&+0;!{AcidicN};!{AmidineTripleN}]
+AtomType NDonor [$([Nv3](-C)(-C)-C);!{AmideN};!{AmidineTripleN}] #Primary Amine but not Amide!
+AtomType NDonor [$(n[n;H1]),$(nc[n;H1]);!{AcidicN}]
+
+AtomType AcidicHydroxyl [$([O]C(=[O,S,P]))]
+AtomType ChalcDonor [O,S;H1;+0]
+DefineFeature SingleAtomDonor [{NDonor},{ChalcDonor};!{AcidicHydroxyl}]
+  Family Donor
+  Weights 1
+EndFeature
+
+# aromatic N, but not indole or pyrole or fusing two rings or tetrazole
+AtomType NAcceptor [$([N;H0]#,=[C&v4])]
+AtomType NAcceptor [n;+0;H0;!X3] #;!$([n](n))   !$([n;H1](cc)cc)
+# tertiary nitrogen adjacent to aromatic carbon
+AtomType NAcceptor [N&v3;H0;$(Nc)]
+
+# removes ether, thioether and nitro oxygen
+AtomType ChalcAcceptor [O;H0;!$(O=N-*);!$([OD2]([#6])[#6])]
+
+# Removed aromatic sulfur from ChalcAcceptor definition
+#We will not use aromatic oxygens! cf Leach, Gillet ... J Med Chem 2010,53, 539-558
+#Atomtype ChalcAcceptor [o;+0]
+
+# Hydroxyls and acids
+AtomType Hydroxyl [O;H1;v2]
+
+# F is an acceptor so long as the C has no other halogen neighbors. This is maybe
+# a bit too general, but the idea is to eliminate things like CF3
+AtomType HalogenAcceptor [F;$(F-[#6]);!$(FC[F,Cl,Br,I])]
+
+DefineFeature SingleAtomAcceptor [{Hydroxyl},{ChalcAcceptor},{NAcceptor},{HalogenAcceptor}]
+  Family Acceptor
+  Weights 1
+EndFeature
+
+# this one is NOT delightfully easy :-) 
+#We wil define some additional NegIonizable Features 
+#I later found some similar substructures in 
+# Good,Oprea J.Comput.Aided.Mol.Des (2008) 22:169-178:
+
+DefineFeature AcidicGroup [C,S,P](=[O,S])-[O;H1,H0&-1]
+  Family NegIonizable
+  Weights 1.0,1.0,1.0
+EndFeature
+
+DefineFeature AcidicN [{AcidicN};!$([nH,n-1]1cnnn1)]
+  Family NegIonizable
+  Weights 1
+EndFeature
+
+DefineFeature Tetrazole c1nnn[nH,n-1]1
+  Family NegIonizable
+  Weights 1,1,1,1,1
+EndFeature
+
+AtomType Carbon_NotDouble [C;!$(C=*)]
+AtomType BasicNH2 [$([N;H2&+0;!R][{Carbon_NotDouble}])]
+AtomType BasicNH1 [$([N;H1&+0;!R]([{Carbon_NotDouble}])[{Carbon_NotDouble}])]
+AtomType BasicNH0 [$([N;H0&+0;!R]([{Carbon_NotDouble}])([{Carbon_NotDouble}])[{Carbon_NotDouble}])]
+#AtomType QuatN [$([N;H0&+1]([{Carbon_NotDouble}])([{Carbon_NotDouble}])([{Carbon_NotDouble}])[{Carbon_NotDouble}])]
+
+DefineFeature BasicGroup [{BasicNH2},{BasicNH1},{BasicNH0};!$(N[a])]
+  Family PosIonizable
+  Weights 1.0
+EndFeature
+
+# 14.11.2007 (GL): add !$([N+]-[O-]) constraint so we don't match
+# nitro (or similar) groups
+DefineFeature PosN [#7;+;!$([N+]-[O-])]
+ Family PosIonizable
+ Weights 1.0
+EndFeature
+
+#Define electronegative atoms that might have an impact on pka of moieties otherwise basic?
+AtomType ElectroNegative [N,n,O,o,F,Cl,Br]
+# imidazole group can be positively charged (too promiscuous?)
+#DefineFeature Imidazole  [n,+0]1[$(cC),$([cH])][n;+0][$(cC),$([cH])][$(cC),$([cH])]1
+#  Family PosIonizable
+#  Weights 1.0,1.0,1.0,1.0,1.0
+#EndFeature
+
+# guanidine group is positively charged (too promiscuous? We do not match any aromatic systems here. That would be too promiscuous!)
+DefineFeature Guanidine [N;+0;!{AmideN}][#6;+0](=[N;+0;!{AmideN}])[N;+0;!{AmideN}]
+  Family PosIonizable
+  Weights 1.0,1.0,1.0,1.0
+EndFeature
+
+# amidine group is positively charged (too promiscuous?)
+DefineFeature Amidine [N;+0;!{AmideN}][#6]=,:[#7;+0;!$(ncn);!{AmideN}]
+  Family PosIonizable
+  Weights 1.0,1.0,1.0
+EndFeature
+
+# aromatic rings of various sizes:
+#
+# Note that with the aromatics, it's important to include the ring-size queries along with
+# the aromaticity query for two reasons:
+#   1) Much of the current feature-location code assumes that the feature point is 
+#      equidistant from the atoms defining it. Larger definitions like: a1aaaaaaaa1 will actually 
+#      match things like 'o1c2cccc2ccc1', which have an aromatic unit spread across multiple simple
+#      rings and so don't fit that requirement.
+#   2) It's *way* faster.
+# 21.1.2008 (GL): update ring membership tests to reflect corrected meaning of
+# "r" in SMARTS parser
+#
+AtomType AromR4 [a;r4,!R1&r3]
+DefineFeature Arom4 [{AromR4}]1:[{AromR4}]:[{AromR4}]:[{AromR4}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0
+EndFeature
+AtomType AromR5 [a;r5,!R1&r4,!R1&r3]
+DefineFeature Arom5 [{AromR5}]1:[{AromR5}]:[{AromR5}]:[{AromR5}]:[{AromR5}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0
+EndFeature
+AtomType AromR6 [a;r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom6 [{AromR6}]1:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+AtomType AromR7 [a;r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom7 [{AromR7}]1:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+AtomType AromR8 [a;r8,!R1&r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom8 [{AromR8}]1:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+
+# hydrophobic features
+# any carbon that is not bonded to a polar atom is considered a hydrophobe
+# 
+# 23.11.2007 (GL): match any bond (not just single bonds); add #6 at
+#  beginning to make it more efficient
+AtomType Carbon_Polar [#6;$([#6]~[#7,#8,#9])]
+# 23.11.2007 (GL): don't match charged carbon
+AtomType Carbon_NonPolar [#6;+0;!{Carbon_Polar}]
+
+# 6.2009 (MK): aromatic c is not per se a hydrophobic atom
+#AtomType RingHphobe [R;{Hphobe}]
+AtomType Hphobe [s,S&H0&v2,Br,I,Cl,F,{Carbon_NonPolar}]
+
+# 8.2009 (MK): update  'Hydrophobes'
+DefineFeature Hphobe [{Hphobe}{Hphobe}]
+ Family Hydrophobe
+  Weights 1.0
+EndFeature
+
+# 8.2009 (MK): 
+DefineFeature Methyl [CH3]
+  Family Hydrophobe
+  Weights 1.0
+EndFeature
+
+# nitro groups in the RD code are always: *-[N+](=O)[O-]
+DefineFeature Nitro2 [N;D3;+](=O)[O-]
+  Family LumpedHydrophobe
+  Weights 1.0,1.0,1.0
+EndFeature
+
+DefineFeature ThreeWayAttach [D3,D4]
+  Family LumpedHydrophobe
+  Weights 1.0
+EndFeature
+
+DefineFeature ChainEnd [R0;D1][R0;D2]
+  Family LumpedHydrophobe
+  Weights 1.0,1.0
+EndFeature
+
+# 5.2009 (MK): update ring membership tests to reflect 'Lumped Hydrophobes' 
+AtomType Ring6 [r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature R6_6 [{Ring6}]1[{Ring6}][{Ring6}][{Ring6}][{Ring6}][{Ring6}]1
+  Family LumpedHydrophobe
+  Weights 1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+AtomType Ring5 [r5,!R1&r4,!R1&r3]
+DefineFeature R5_5 [{Ring5}]1[{Ring5}][{Ring5}][{Ring5}][{Ring5}]1
+  Family LumpedHydrophobe
+  Weights 1.0,1.0,1.0,1.0,1.0
+EndFeature
+AtomType Ring4 [r4,!R1&r3]
+DefineFeature H4_4 [{Ring4}]1[{Ring4}][{Ring4}][{Ring4}]1
+  Family LumpedHydrophobe
+  Weights 1.0,1.0,1.0,1.0
+EndFeature
+AtomType Ring3 [r3]
+DefineFeature R3_3 [{Ring3}]1[{Ring3}][{Ring3}]1
+  Family LumpedHydrophobe
+  Weights 1.0,1.0,1.0
+EndFeature

@@ -1,0 +1,227 @@
+# original source: http://tripod.nih.gov/files/patty.rules, copied July 2015
+#
+#       CAT     CATION, used for basic functionality; i.e., protonated
+#       ANI     ANION, used for acidic functionality; i.e., de-protonated
+#
+#       POL     POLAR, atom is neither an ANION nor a CATION and has a LP
+#               and a polar H, or (due to tautomerization) can be a donor
+#               or an acceptor.
+#
+#       DON      DONOR, an atom that is none of the above and has a polar H.
+#       ACC      ACCEPTOR, an atom that is none of the above and has an LP.
+#
+#       HYD     HYRDOPHOBIC, an atom that is none of the above and is an
+#               accessible atom that has hydrophobic functionality
+#
+#       OTH     OTHER, an atom that falls in none of the above classes.
+*                                               OTH     # Default Rule
+                                                [#8]                                            ACC     # O
+[#7]                                            DON     # N
+[#6,#14]                                        HYD     # C, Si
+[#16]                                           HYD     # S
+[#34]                                           HYD     # Se
+[#16]                                           HYD     # P
+[#33]                                           HYD     # As
+[#9D1,#17D1,#35D1,#53D1,#85D1]                  HYD     # halogens
+[#9D0,#17D0,#35D0,#53D0,#85D0]                  ANI
+[OHD1]                                          POL     # hydroxide
+[OH2]                                           POL     # water (NEW)
+[#1]                                            HYD     # H
+[#1][#7]                                        DON
+[NH0]#*                                         ACC     # :N# (sp)      
+[ND2](*)=*                                      ACC     # =N- (sp2)
+[nH0]                                           ACC     # aomatic N - (sp2)
+[NH;D1]=*                                       POL     # HN=X  
+[ND1]=*                                         POL     # N=N= (azide)
+[#7,#15,#33;D4]                                 CAT     # quaternary N,P,As
+# any nonconjugated sp3 N is a basic amine (except next
+# to conjugated a N)
+[#7D1]-*                                        CAT
+[#7D2](-*)-*                                    CAT
+[#7D3](-*)(-*)-*                                CAT
+[#7v4]                                          CAT
+[#7D3]-N-*=*                                    OTH
+[#7D3](-*)(-*)-N-*#*                            OTH
+# conjugated N's
+[#7D1]-*=*                                      DON
+[#7D1]-*:*                                      DON
+[#7D1]-*#*                                      DON 
+[#7H;D2]-*=*                                    DON
+[#7H;D2]-*:*                                    DON
+[#7H;D2]-*#*                                    DON
+[#7;D3]-*=*                                     OTH     # conj & buried
+[#7;D3]-*:*                                     OTH     # 
+[#7;D3](*=*)(-&!@*)*:*                          OTH 
+[#7;D3]-*#*                                     OTH 
+# amidine
+#
+#             N+H2
+#            //
+#       CH3--C--:NH2
+[#7D1]-C(-[#6])=[#7D1]                             CAT
+[#7D1]=C(-[#6])-[#7D1]                             CAT
+
+# changed to #7D1 
+[#7D1]-C(-S)=[#7D1]                                 CAT
+[#7D1]=C(-S)-[#7D1]                                 CAT
+# guanidinium 
+N-C(=N)-N                                       CAT
+N=C(-N)-N                                       CAT
+# nitro 
+[OD1]-N=[OD1]                                   ACC
+[OD1]=N-[OD1]                                   ACC
+# trisubstituted sp2 amines are cations with exceptions
+[#7,#15,#33;D3]=*                               CAT
+N([OD1])=[OD1]                                  OTH
+# disbustituted sp amines and exceptions
+[N+;D2](=*)=*                                   CAT   #  diazonium -[N+]#
+[N+;D2]#*                                       CAT   #  #N-
+[N+;D2]#[CX1]                                   OTH   #  isonitrile -N#C:
+[CX1]#[N+;D2]                                   ACC   #  isonitrile :C#N-
+# trisubstituted oxygens, sulfurs and exceptions
+[#8,#16;D3]                                     CAT     # -O(-*)(-*)
+[#8,#16;D3](=*)                                 CAT     # =O-
+S=[#8,#16;X1]                                   OTH     # dative sulfoxides
+*-[#8,#16;X1]                                   OTH     # oxides,sulfides
+# misc anions
+[SD1]a                                          ANI
+# phosphate/arsenate monoanion and S equialents
+#
+#         O                       O
+#         |                       |
+#         P--O (-)      and     --P--O (-)
+#        /
+[#8,#16,#34;X1]~[#15,#33;D3]~[#8,#16,#34;D1] ANI
+[#8,#16,#34;D1]~[#15,#33;D3]~[#8,#16,#34;X1] ANI
+[#8,#16,#34;X1]~[#15,#33;D4]~[#8,#16,#34;D1] ANI
+[#8,#16,#34;D1]~[#15,#33;D4]~[#8,#16,#34;X1] ANI
+
+[#15,#33;D3]([#8,#16,#34;X1])~[#8,#16,#34;D1] OTH
+[#15,#33;D3]([#8,#16,#34;D1])~[#8,#16,#34;X1] OTH
+[#15,#33;D4]([#8,#16,#34;X1])~[#8,#16,#34;D1] OTH
+[#15,#33;D4]([#8,#16,#34;D1])~[#8,#16,#34;X1] OTH
+# sulfite and selenite anion and S equivalents
+#
+#         O                       O
+#         |                       |
+#         S--O (-)      and    O--S--O (-)
+#        /                        |
+[#8,#16,#34;X1]~[#8,#16,#34;D3]~[#8,#16,#34;D1] ANI 
+[#8,#16,#34;D1]~[#8,#16,#34;D3]~[#8,#16,#34;X1] ANI 
+[#8,#16,#34;X1]~[#8,#16,#34;D4](~[#8,#16,#34;D1])~[#8,#16,#34;X1]       ANI
+[#8,#16,#34;D1]~[#8,#16,#34;D4](~[#8,#16,#34;X1])~[#8,#16,#34;X1]       ANI
+# muscimol anion (first O is ANI, N is ACC)
+#
+#           *--*                    *--*
+#          /   |                   /   |
+#   (-) O-C    O or             O=C    O
+#          \\ /                    \  /
+#            N:                     :N (-)
+[#8D1][#6]1=[#7][#8]**1                   ANI 
+[#7]1=[#6]([#8D1])**[#8]1                 ANI
+[#8]=[#6]1[#7][#8]**1                     ANI
+[#7]1[#6](=O)**[#8]1                      ANI
+# tetrazole anion (all Ns are ANI)
+#
+#     :N--N:                 (-) :N--N:
+#    #   ||                     /   ||
+#   :N    C             or      :N    C         (aromatic)
+#     \  /                      \\  /
+#      N: (-)                     N:
+[nD2]1[nD2][nD2][nD2]c1                 ANI 
+[nD2]1[nD2][nD2]c[nD2]1                 ANI 
+[nD2]1[nD2]c[nD2][nD2]1                 ANI 
+[nD2]1c[nD2][nD2][nD2]1                 ANI 
+# diaminopyrimidine (ring Ns are POL)
+#
+#        *==*
+#       /    \  
+#     :N      C--NH2            (aromatic)
+#      \\    #  
+#        C--N:
+#       /
+#       NH2
+[nD2]1c(N)[nD2]c(N)aa1                          POL 
+[nD2]1c(N)aa[nD2]c1(N)                          POL 
+# make imidazole Ns both POL
+#
+#      C==C                       C==C
+#     /   |                      /   |
+#   :N    NH            or      HN    N:        (aromatic)
+#     \\ /                       \ #
+#       C                         C 
+#
+#       
+n1cncc1                                 POL 
+# stabilized sulfonamides and phosphonamides
+#
+#         O
+#         |
+#      a--S--NH2
+#         |
+#         O
+[ND1]~[SD4](a)(~[#8,#16,#34;D1])(~[#8,#16,#34;D1])       POL
+[ND1]~[PD4](a)(~[#8,#16,#34;D1])(~[#8,#16,#34;D1])       POL
+[#8,#16,#34;D1]~[SD4](a)(~[#8,#16,#34;D1])~[ND1]         ACC
+[#8,#16,#34;D1]~[PD4](a)(~[#8,#16,#34;D1])~[ND1]         ACC
+
+[#8,#16,#34;D1]~[SD4](a)(~[#8,#16,#34;D1])~[ND2]         ANI
+[#8,#16,#34;D1]~[PD4](a)(~[#8,#16,#34;D1])~[ND2]         ANI
+[ND2]~[SD4](a)(~[#8,#16,#34;D1])(~[#8,#16,#34;D1])       ANI
+# carbonyl-hydroxide tautaumers
+#
+#     !O  !O
+#      |   |
+#       C   C
+#     / \\/ \\
+#    OH  X   O
+[OH]C(*)=*C=O                     POL
+O=C*=C(*)[OH]                     POL
+O=C-*:[#6](*)[OH]                 POL
+# carboxylates and S equivalents
+#
+#           O
+#         #
+#       -C
+#         \
+#          O (-)
+[#8,#16,#34;D1]C=[#8,#16,#34]           ANI
+[#8,#16,#34]=C[#8,#16,#34;D1]           ANI
+#        *==*
+#       /    \  
+#      *      C==O              (aromatic)
+#      \\    /
+#        C--C                   And 4 Cs away
+#       /
+#       OH
+[OH]c1cc(=O)aaa1                        POL 
+O=c1cc([OH])aaa1                        POL 
+[OH]c1ccc(=O)aa1                        POL 
+O=c1ccc([OH])aa1                        POL 
+# special ionizations of adjacent keto/enols
+[OD1]C=CC(=O)[O]*                       ANI 
+[OD1]C=CC(=O)[N]*                       ANI 
+O=C-CC(=O)[O]*                          ANI 
+O=C-CC(=O)[N]*                          ANI 
+OC=C-C(=O)C=CO                          ANI 
+OC-C=C(-O)C=CO                          ANI 
+# planar buried C bonded to electronegative atom
+
+[#6D3](=*)-[#7,#8]           OTH 
+[#6D3](:*)(:*)[#7,#8]        OTH 
+[#6D3](-*)(:*):[#7,#8]       OTH 
+[#6D3]=[#7,#8]               OTH 
+[#6D2](#*)-[#7,#8]           OTH 
+[#6D2](*)#[#7,#8]            OTH 
+[#6D2](=*)=[#7,#8]           OTH 
+
+[#16D2](#*)-[#7,#8]          OTH     # buried sp S
+[#16D2](*)#[#7,#8]           OTH 
+[#16D2](=*)=[#7,#8]          OTH 
+# misc fixups
+[ND2](=*)=*                             OTH     # sp buried
+[ND2](*)#*                              OTH 
+[#7,#15,#33;D4]=[S,O]                   OTH
+[ND3]P(=O)                              OTH
+[OD1]-n                                 ACC
+n-[OD1]                                 OTH

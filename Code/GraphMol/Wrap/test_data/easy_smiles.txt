@@ -1,0 +1,15 @@
+test1	CCC
+test2	C1CCC1
+test3	C1CCC1.CCC
+test4	C1CCC1.C=CC
+test5	C1CC=C1.CCC
+test6	C(CC)CCC
+test7	C(CO)CCC
+test8	C(C=O)CCC
+test9	C(C=O)CCC.[Na+].[Cl-]
+test10	C(C=O)CCC.CCC.C(CC)C
+TR435	C(C)(C)(C)c1cc(Sc2cc(c(O)cc2C)C(C)(C)C)c(C)cc1O
+dbl1    C/C=C\C 
+dbl2    C\C=C/C 
+dbl3    C/C=C/C 
+dbl4    C\C=C\C

@@ -1,0 +1,11 @@
+# TPSA data calculated using Daylight tools and Ertl's contrib program tpsa.c
+1, CC1=CC(=O)C=CC1=O, 34.14
+2, S(SC1=NC2=CC=CC=C2S1)C3=NC4=C(S3)C=CC=C4, 25.78
+3, OC1=C(Cl)C=C(C=C1[N+]([O-])=O)[N+]([O-])=O, 106.51
+4, [O-][N+](=O)C1=CNC(=N)S1, 82.78
+5, NC1=CC2=C(C=C1)C(=O)C3=C(C=CC=C3)C2=O, 60.16
+6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74
+7, CN(C)C1=C(Cl)C(=O)C2=C(C=CC=C2)C1=O, 37.38
+8, CC1=C(C2=C(C=C1)C(=O)C3=CC=CC=C3C2=O)[N+]([O-])=O, 77.28
+9, CC(=NO)C(C)=NO, 65.18
+10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00

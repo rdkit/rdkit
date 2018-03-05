@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="RD.css">
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+   <title>Matching Pharmacophores</title>
+</head>
+<body>
+<h2>
+<!--
+<Object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<param name="Keyword" value="distance, 2D">
+	<param name="Keyword" value="distance, topological">
+	<param name="Keyword" value="2D distance limits">
+	<param name="Keyword" value="pharmacophore matching algorithm">
+</OBJECT> -->
+<a name="Matching_Pharmacophores"></a>Matching Pharmacophores</h2>
+For maximum efficiency, a mapping is checked for whether it can match a
+pharmacophore in a series of steps ordered by increasing computational
+complexity:<br>
+<ol>
+  <li>The 2D limits are checked: this test ensures that the topological
+distances between the features (or between the atoms in the features)
+do not exceed the pharmacophores threshold values.</li>
+  <li>The 3D limits are checked: in this test the molecular distance
+bounds matrix is compared to the pharmacophore's distance requirements.
+If the molecular bounds matrix is compatible for this mapping, the
+matrix is updated.</li>
+  <li>Triangle bounds smoothing is attempted to ensure that the updated
+bounds matrix still satisfies the triangle inequality.</li>
+</ol>
+Any mapping which passes all three tests is considered to be a likely
+candidate for matching the pharmacophore and is reported as a "hit".<br>
+<br>
+<span style="font-weight: bold;">Note</span>: Bounds matrices that pass
+triangle bounds smoothing are not absolutely guaranteed to be
+physically embeddable (i.e. they will not produce valid 3D geometries).
+This means that some small number of hits from the pharmacophore
+matching process will be false positives. This will become apparent
+when the user actually attempts to generate structures for these hits.<br>
+
+
+</body>
+</html>

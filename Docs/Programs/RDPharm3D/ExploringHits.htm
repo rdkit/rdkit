@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="RD.css">
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+</head>
+<body>
+<h2>Exploring Hits</h2>
+
+When you first expand a mapping, the software will attempt to generate a
+number of three-dimensional conformations (<i>embeddings</i> in the
+language of distance geometry) that satisfy the
+pharmacophore. Depending upon the complexity of the molecule, this
+may take several seconds. Each of the mapping's embeddings are scored
+in three different ways:
+
+<ol>
+
+<li><b>Energy:</b> this is an estimate of the energy of the embedding relative to the
+energy of the unconstrained molecule. Because this energy is only an
+estimate, it is possible to see negative energy values; these should
+not be considered as physically meaningful (i.e. the pharmacophore
+does not somehow stabilize the molecule).
+
+<li><b>Shape Score:</b> this is a measure of the degree of shape
+overlap between the embedding and the reference molecule. Higher shape
+scores indicate better shape matches.
+
+<li><b>Alignment RMS:</b> this is the root-mean-squared distance
+between the pharmacophore points in the embedding and those in the
+reference molecule. Lower RMS values indicated better matches.
+
+</ol>
+
+Further details about the scoring functions can be found in the
+<a href="ScoringAlignments.htm">Scoring Alignments</a> section of the
+<a href="MethodOverview.htm">Methodology</a> chapter.
+
+<p>You can change the the sort order of each mapping's embeddings by left
+clicking the column headings in the results tree.
+
+<p>Left clicking an individual alignment will cause that alignment to be
+displayed in PyMol. The details of what is displayed are controlled by
+the <a href="ViewOptions.htm">view options</a>.
+
+<p>
+If you would like to see more possible structures for a mapping, 
+right click on the mapping entry in the results tree and select
+<tt>More Alignments</tt> from the context menu.
+
+
+<p>Each alignment entry has a checkbox that can be used to flag the
+alignment for <a href="SavingResults.htm">export to an SD file</a>.
+
+<p><b>Note:</b> In some cases, the software may identify mappings that
+either cannot be realized by the molecule or that generate structures
+that are too strained to be chemically reasonable. Expanding these
+mappings will generate an error message.
+
+</body>
+</html>

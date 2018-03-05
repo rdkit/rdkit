@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML>
+<CDXML
+ CreationProgram="ChemDraw 6.0.2"
+ Name="list-query.cdxml"
+ BoundingBox="153 148 216 218"
+ WindowPosition="108 125"
+ WindowSize="544 550"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001760176000000000F7C0BEEFFB7FFC20FC90C2D0367052803FC0002000001760176000000000F7C0BEE000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="14"
+ BoundingBox="153 148 216 218"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="15"
+ BoundingBox="155 150 214 216"
+><n
+ id="1"
+ p="157.02 168"
+ Z="14"
+ AS="N"
+/><n
+ id="2"
+ p="157.02 198"
+ Z="15"
+ AS="N"
+/><n
+ id="3"
+ p="183 213"
+ Z="16"
+ AS="N"
+/><n
+ id="4"
+ p="208.98 198"
+ Z="17"
+ AS="N"
+/><n
+ id="5"
+ p="208.98 168"
+ Z="18"
+ AS="N"
+/><n
+ id="6"
+ p="183 153"
+ Z="19"
+ NodeType="ElementList"
+ AS="N"
+ ElementList="6 7 15"
+><t
+ id="13"
+ p="182.06 156.9"
+ BoundingBox="183 150 214 159"
+ Z="26"
+ LabelAlignment="Above"
+><s font="3" size="10" face="96">[C,N,P]</s></t></n><b
+ id="7"
+ Z="20"
+ B="1"
+ E="2"
+ Order="2"
+ BondCircularOrdering="12 0 0 8"
+/><b
+ id="8"
+ Z="21"
+ B="2"
+ E="3"
+ BS="N"
+/><b
+ id="9"
+ Z="22"
+ B="3"
+ E="4"
+ Order="2"
+ BondCircularOrdering="8 0 0 10"
+/><b
+ id="10"
+ Z="23"
+ B="4"
+ E="5"
+ BS="N"
+/><b
+ id="11"
+ Z="24"
+ B="5"
+ E="6"
+ Order="2"
+ BondCircularOrdering="10 0 0 12"
+/><b
+ id="12"
+ Z="25"
+ B="6"
+ E="1"
+ BS="N"
+/></fragment></page></CDXML>

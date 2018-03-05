@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="fused-fours.cdxml"
+ BoundingBox="188 181 287 280"
+ WindowPosition="149 143"
+ WindowSize="571 523"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001760176000000000F7C0BEEFFB7FFC20FC90C2D0367052803FC0002000001760176000000000F7C0BEE000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="29"
+ BoundingBox="188 181 287 280"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="30"
+ BoundingBox="190 183 285 278"
+><n
+ id="1"
+ p="222 215"
+ Z="1"
+/><n
+ id="2"
+ p="222 245"
+ Z="2"
+/><n
+ id="3"
+ p="252 245"
+ Z="3"
+/><n
+ id="4"
+ p="252 215"
+ Z="4"
+/><n
+ id="9"
+ p="252 185"
+ Z="9"
+ AS="N"
+/><n
+ id="10"
+ p="222 185"
+ Z="10"
+ AS="N"
+/><n
+ id="14"
+ p="282 245"
+ Z="14"
+ AS="N"
+/><n
+ id="15"
+ p="282 215"
+ Z="15"
+ AS="N"
+/><n
+ id="19"
+ p="222 275"
+ Z="19"
+ AS="N"
+/><n
+ id="20"
+ p="252 275"
+ Z="20"
+ AS="N"
+/><n
+ id="24"
+ p="192 215"
+ Z="24"
+ AS="N"
+/><n
+ id="25"
+ p="192 245"
+ Z="25"
+ AS="N"
+/><b
+ id="5"
+ Z="5"
+ B="1"
+ E="2"
+ BS="N"
+/><b
+ id="6"
+ Z="6"
+ B="2"
+ E="3"
+ BS="N"
+/><b
+ id="7"
+ Z="7"
+ B="3"
+ E="4"
+ BS="N"
+/><b
+ id="8"
+ Z="8"
+ B="4"
+ E="1"
+ BS="N"
+/><b
+ id="11"
+ Z="11"
+ B="4"
+ E="9"
+ BS="N"
+/><b
+ id="12"
+ Z="12"
+ B="9"
+ E="10"
+ BS="N"
+/><b
+ id="13"
+ Z="13"
+ B="10"
+ E="1"
+ BS="N"
+/><b
+ id="16"
+ Z="16"
+ B="3"
+ E="14"
+ BS="N"
+/><b
+ id="17"
+ Z="17"
+ B="14"
+ E="15"
+ BS="N"
+/><b
+ id="18"
+ Z="18"
+ B="15"
+ E="4"
+ BS="N"
+/><b
+ id="21"
+ Z="21"
+ B="2"
+ E="19"
+ BS="N"
+/><b
+ id="22"
+ Z="22"
+ B="19"
+ E="20"
+ BS="N"
+/><b
+ id="23"
+ Z="23"
+ B="20"
+ E="3"
+ BS="N"
+/><b
+ id="26"
+ Z="26"
+ B="1"
+ E="24"
+ BS="N"
+/><b
+ id="27"
+ Z="27"
+ B="24"
+ E="25"
+ BS="N"
+/><b
+ id="28"
+ Z="28"
+ B="25"
+ E="2"
+ BS="N"
+/></fragment></page></CDXML>

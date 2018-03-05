@@ -1,0 +1,336 @@
+SELECT mol_amw('c1ccccc1'::mol) mol_amw;
+ mol_amw 
+---------
+  78.114
+(1 row)
+
+SELECT mol_logp('c1ccccc1'::mol) mol_logp;
+ mol_logp 
+----------
+   1.6866
+(1 row)
+
+SELECT mol_hba('c1ccccc1'::mol) mol_hba;
+ mol_hba 
+---------
+       0
+(1 row)
+
+SELECT mol_hbd('c1ccccc1'::mol) mol_hbd;
+ mol_hbd 
+---------
+       0
+(1 row)
+
+SELECT mol_hba('c1ccncc1'::mol) mol_hba;
+ mol_hba 
+---------
+       1
+(1 row)
+
+SELECT mol_hbd('c1ccncc1'::mol) mol_hbd;
+ mol_hbd 
+---------
+       0
+(1 row)
+
+SELECT mol_hbd('c1ccncc1O'::mol) mol_hbd;
+ mol_hbd 
+---------
+       1
+(1 row)
+
+SELECT mol_hba('c1ccncc1O'::mol) mol_hba;
+ mol_hba 
+---------
+       2
+(1 row)
+
+SELECT mol_logp('c1ccncc1O'::mol) mol_logp;
+ mol_logp 
+----------
+   0.7872
+(1 row)
+
+SELECT mol_chi0n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 3.83396
+(1 row)
+
+SELECT mol_chi1n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 2.13429
+(1 row)
+
+SELECT mol_chi2n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 1.33555
+(1 row)
+
+SELECT mol_chi3n('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.756194
+(1 row)
+
+SELECT mol_chi4n('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.427994
+(1 row)
+
+SELECT mol_chi0v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 3.83396
+(1 row)
+
+SELECT mol_chi1v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 2.13429
+(1 row)
+
+SELECT mol_chi2v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 1.33555
+(1 row)
+
+SELECT mol_chi3v('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.756194
+(1 row)
+
+SELECT mol_chi4v('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.427994
+(1 row)
+
+SELECT mol_kappa1('C12CC2C3CC13'::mol) v;
+    v    
+---------
+ 2.34375
+(1 row)
+
+SELECT mol_kappa2('CC(C)C1CCC(C)CCC1'::mol) v;
+    v    
+---------
+ 4.13265
+(1 row)
+
+SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
+    v    
+---------
+ 2.84444
+(1 row)
+
+SELECT mol_numspiroatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+ v 
+---
+ 1
+(1 row)
+
+SELECT mol_numbridgeheadatoms('C1CCC2(C1)CC1CCC2CC1'::mol) v;
+ v 
+---
+ 2
+(1 row)
+
+SELECT mol_numspiroatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+ v 
+---
+ 0
+(1 row)
+
+SELECT mol_numbridgeheadatoms('CC1(C)CC2(C)CCC1(C)CC2'::mol) v;
+ v 
+---
+ 2
+(1 row)
+
+-- Mol formula tests - SQL equivalents of tests in testMolDescriptors.py.
+select mol_formula('[2H]C([3H])O'::mol);
+ mol_formula 
+-------------
+ CH4O
+(1 row)
+
+                                     -- separateIsotopes = true
+select mol_formula('[2H]C([3H])O'::mol, true);
+ mol_formula 
+-------------
+ CH2DTO
+(1 row)
+
+                                           -- abbreviateHIsotopes = false
+select mol_formula('[2H]C([3H])O'::mol, true, false);
+ mol_formula  
+--------------
+ CH2[2H][3H]O
+(1 row)
+
+       --
+select mol_formula('[2H][13CH2]CO'::mol);
+ mol_formula 
+-------------
+ C2H6O
+(1 row)
+
+select mol_formula('[2H][13CH2]CO'::mol, true);
+ mol_formula 
+-------------
+ C[13C]H5DO
+(1 row)
+
+select mol_formula('[2H][13CH2]CO'::mol, true, false);
+  mol_formula  
+---------------
+ C[13C]H5[2H]O
+(1 row)
+
+--
+SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     0
+(1 row)
+
+SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     1
+(1 row)
+
+SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     3
+(1 row)
+
+SELECT mol_numheavyatoms('CCC'::mol) val;
+ val 
+-----
+   3
+(1 row)
+
+SELECT mol_numatoms('CCC'::mol) val;
+ val 
+-----
+  11
+(1 row)
+
+SELECT mol_numheteroatoms('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_numheteroatoms('CCO'::mol) val;
+ val 
+-----
+   1
+(1 row)
+
+SELECT mol_tpsa('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_tpsa('CCO'::mol) val;
+  val  
+-------
+ 20.23
+(1 row)
+
+SELECT mol_numrings('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_numrings('C1CC1'::mol) val;
+ val 
+-----
+   1
+(1 row)
+
+SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
+   val    
+----------
+ c1ccccc1
+(1 row)
+
+SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT mol_to_svg('CCO'::mol) svg;
+                                                                                                         svg                                                                                                         
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                        +
+ <svg:svg version='1.1' baseProfile='full'                                                                                                                                                                          +
+               xmlns:svg='http://www.w3.org/2000/svg'                                                                                                                                                               +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                       +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                   +
+                   xml:space='preserve'                                                                                                                                                                             +
+ width='250px' height='200px' >                                                                                                                                                                                     +
+ <svg:rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </svg:rect>                                                                                                           +
+ <svg:path d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                  +
+ <svg:path d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
+ <svg:path d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
+ <svg:text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><svg:tspan>OH</svg:tspan></svg:text>+
+ </svg:svg>                                                                                                                                                                                                         +
+ 
+(1 row)
+
+SELECT mol_to_svg('CCO'::mol,'legend') svg;
+                                                                                                         svg                                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                         +
+ <svg:svg version='1.1' baseProfile='full'                                                                                                                                                                           +
+               xmlns:svg='http://www.w3.org/2000/svg'                                                                                                                                                                +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                        +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                    +
+                   xml:space='preserve'                                                                                                                                                                              +
+ width='250px' height='200px' >                                                                                                                                                                                      +
+ <svg:rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </svg:rect>                                                                                                            +
+ <svg:path d='M 11.3636,124.362 95.7545,75.6385' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                   +
+ <svg:path d='M 95.7545,75.6385 131.455,96.25' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <svg:path d='M 131.455,96.25 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <svg:text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><svg:tspan>OH</svg:tspan></svg:text> +
+ <svg:text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><svg:tspan>legend</svg:tspan></svg:text>+
+ </svg:svg>                                                                                                                                                                                                          +
+ 
+(1 row)
+
+SELECT mol_to_svg('CCO'::mol,'legend',250,200,
+  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;
+                                                                                                          svg                                                                                                          
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>                                                                                                                                                                          +
+ <svg:svg version='1.1' baseProfile='full'                                                                                                                                                                            +
+               xmlns:svg='http://www.w3.org/2000/svg'                                                                                                                                                                 +
+                       xmlns:rdkit='http://www.rdkit.org/xml'                                                                                                                                                         +
+                       xmlns:xlink='http://www.w3.org/1999/xlink'                                                                                                                                                     +
+                   xml:space='preserve'                                                                                                                                                                               +
+ width='250px' height='200px' >                                                                                                                                                                                       +
+ <svg:rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='250' height='200' x='0' y='0'> </svg:rect>                                                                                                             +
+ <svg:path d='M 11.3636,124.362 83.2395,82.864' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <svg:path d='M 108.269,82.864 137.712,99.8628' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                     +
+ <svg:path d='M 137.712,99.8628 167.155,116.862' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />                                    +
+ <svg:text x='83.2395' y='83.1385' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><svg:tspan>foo</svg:tspan></svg:text>+
+ <svg:text x='166.64' y='131.862' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><svg:tspan>OH</svg:tspan></svg:text>  +
+ <svg:text x='103.377' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#7F7F7F' ><svg:tspan>legend</svg:tspan></svg:text> +
+ </svg:svg>                                                                                                                                                                                                           +
+ 
+(1 row)
+

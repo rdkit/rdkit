@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML>
+<CDXML CreationProgram="CDXMLWriter"><colortable><color b="1" g="1" r="1"/>
+<color b="0" g="0" r="0"/>
+<color b="0" g="0" r="1"/>
+<color b="0" g="1" r="1"/>
+<color b="0" g="1" r="0"/>
+<color b="1" g="1" r="0"/>
+<color b="1" g="0" r="0"/>
+<color b="1" g="0" r="1"/>
+</colortable>
+<fonttable><font id="8" name="Arial" charset="iso-8859-1"/>
+<font id="9" name="Times New Roman" charset="iso-8859-1"/>
+</fonttable>
+<page id="10"><fragment id="11"><n id="1" Element="6"/>
+<n id="2" Element="8"/>
+<n id="3" Element="6"/>
+<n id="4" Element="6"/>
+<b B="1" E="2" id="5" Order="1"/>
+<b B="2" E="3" id="6" Order="1"/>
+<b B="3" E="4" id="7" Order="1"/>
+</fragment>
+</page>
+</CDXML>

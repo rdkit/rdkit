@@ -1,0 +1,28 @@
+// Copyright (C) 2003 Rational Discovery LLC
+// NOTE: larger functional groups should come before smaller ones involving the 
+//  the first atom in the SMARTS query is not part of the group itself
+//   Code	SMARTS	Notes
+//--------------------------------------------------
+// O containing
+-C(=O)O	*-C(=O)[O;H1,-]	carboxylic acids
+-O	*-[O;H1,-]	alcohols
+=O	*=O	aldehydes
+//--------------------------------------------------
+//         Nitrogen containing
+-N(=O)O	   *-[N;D3](=O)O	nitro
+-N=O	   *-N=[O;X1]	nitroso
+-N-O	   *-N=[O;X1]	nitroso
+=N-O	   *=N-[O;H1,-]	oximes
+=NC	   *=N-[C;D1]	Imines
+-N=C	   *N=[C;D1]	Imines
+-N	   *-[N;H2,H1&-1,-2]	amines
+=N	   *=[N;H,-1]	???
+#N	   *#[N;X1]	nitriles
+
+//--------------------------------------------------
+//       S containing
+-S	 *-[S;H1,-]	thiols
+=S	 *=S		thiocarbonyls
+
+//--------------------------------------------------
+-X	*-[#9,#17,#35,#53]	halogens

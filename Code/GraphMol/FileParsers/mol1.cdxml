@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML>
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="mol1.cdxml"
+ BoundingBox="127 239 183 314"
+ WindowPosition="249 207"
+ WindowSize="730 578"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001220122000000000C150910FFD0FFB80C4609590367052803FC0002000001220122000000000C150910000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="34"
+ BoundingBox="127 239 183 314"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="35"
+ BoundingBox="129 241 181 312"
+><n
+ id="22"
+ p="131.35 270"
+ Z="1"
+ AS="N"
+/><n
+ id="23"
+ p="131.35 300"
+ Z="2"
+ AS="N"
+/><n
+ id="24"
+ p="159.89 309.27"
+ Z="3"
+ AS="N"
+/><n
+ id="25"
+ p="177.52 285"
+ Z="4"
+ AS="N"
+/><n
+ id="26"
+ p="159.89 260.73"
+ Z="5"
+ NumHydrogens="1"
+ Charge="-1"
+ ImplicitHydrogens="yes"
+ AS="N"
+><t
+ id="33"
+ p="157.07 254.19"
+ BoundingBox="158 247 163 265"
+ Z="12"
+ LabelAlignment="Above"
+ LineStarts="2 3"
+><s font="3" size="10" face="96">CH</s></t></n><b
+ id="27"
+ Z="6"
+ B="22"
+ E="23"
+ Order="2"
+ BondCircularOrdering="31 0 0 28"
+/><b
+ id="28"
+ Z="7"
+ B="23"
+ E="24"
+ BS="N"
+/><b
+ id="29"
+ Z="8"
+ B="24"
+ E="25"
+ Order="2"
+ BondCircularOrdering="28 0 0 30"
+/><b
+ id="30"
+ Z="9"
+ B="25"
+ E="26"
+ BS="N"
+/><b
+ id="31"
+ Z="10"
+ B="26"
+ E="22"
+ BS="N"
+/><graphic
+ id="32"
+ BoundingBox="158 249 158 259"
+ Z="11"
+ GraphicType="Symbol"
+ SymbolType="CircleMinus"
+><represent attribute="Charge" object="26"/></graphic></fragment></page></CDXML>

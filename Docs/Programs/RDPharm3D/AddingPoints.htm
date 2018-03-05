@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="RD.css">
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+</head>
+<body>
+<h2>Adding Points to the Pharmacophore</h2>
+
+This program allows you to explore the effects of adding features to the
+pharmacophore in your P3D file in a straightforward manner. 
+
+<h3>Selecting Atoms</h3>
+
+The first step in adding features to the pharmacophore is to select
+atoms in PyMol that define the feature(s). For single-atom features,
+such as hydrogen-bond donors, you should select that atom; for
+multi-atom features, such as aromatic groups, you should select one of
+the aromatic atoms.
+
+<p>After selecting the atoms, click the <tt>Grab Atoms From PyMol</tt>
+button at the top of the <tt>Alignment Criteria</tt> page. The new
+atoms are added at the end of the list of atoms already in the
+pharmacophore:
+<center><img src="AddPoints-shot1.jpg"> </center>
+By clicking the <tt>Highlight</tt> button next to the feature
+assignment box for each feature, you can highlight the corresponding
+atom in the molecular sketch (this is the gray circle in the figure above).
+
+
+<h3>Assigning Feature Types</h3>
+
+<p> To assign a feature type, click the feature assignment box for
+each new feature and select the appropriate type. The program will only
+show you feature types that match the atom you selected:
+
+<center><img src="AddPoints-shot2.jpg"> </center>
+
+For example, in the illustration above, atom 3 is involved in three
+different feature types, you must select one for the pharmacophore.
+
+<h3>Defining Distances</h3>
+
+After assigning types to the points you added, the last step in
+updating the pharmacophore is to set the distances between the new
+feature(s) and the others in the pharmacophore. This is done by
+clicking the <tt>Grab Distances</tt> button.
+
+<p>When <tt>Grab Distances</tt> is pressed, the software examines
+reference molecule, calculates the distances between the new features
+and those already present in the pharmacophore, and adds the new
+distances to the list of distances at the bottom of the window:
+
+<center><img src="AddPoints-shot3.jpg"> </center>
+
+The distance ranges are automatically calculated based on a tolerance
+value.
+
+<p>Note that the sketch of the pharmacophore on the molecule has also
+been updated to highlight the atoms in the new feature (drawn with red circles in
+the sketch).
+
+<h3>Exploring Changes</h3>
+
+Once the new pharmacophore has been defined, you can switch back to
+the <tt>Search Results</tt> tab in order to explore how your current
+set of molecules can align.
+
+<p><b>Note:</b> Defining a new pharmacophore will destroy any 
+alignments that you may have found to the current pharmacophore. If
+you would like to save these, you should <a
+href="SavingResults.htm">Save your work</a> before clicking <tt>Grab Distances</tt>.
+</body>
+</html>
