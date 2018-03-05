@@ -29,6 +29,16 @@
 
 #include <vector>
 
+#include <sstream>
+
+template <typename T>
+std::string NumberToString ( T Number )
+{
+    std::ostringstream ss;
+    ss << Number;
+    return ss.str();
+}
+
 namespace python = boost::python;
 
 namespace {
@@ -315,6 +325,12 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo) {
   std::vector<boost::uint32_t> *invars = 0;
+  if (radius < 0) {
+        throw_value_error("radius " + NumberToString(radius) + " can not be below 0");;
+  }
+  if (nBits == 0) {
+        throw_value_error("nBits " + NumberToString(nBits) + " can not be 0");;
+  }
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
@@ -403,6 +419,12 @@ ExplicitBitVect *GetMorganFingerprintBV(
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo) {
   std::vector<boost::uint32_t> *invars = 0;
+  if (radius < 0) {
+        throw_value_error("radius " + NumberToString(radius) + " can not be below 0");;
+  }
+  if (nBits < 1) {
+        throw_value_error("nBits " + NumberToString(nBits) + " can not be below 1");;
+  }
   if (invariants) {
     unsigned int nInvar =
         python::extract<unsigned int>(invariants.attr("__len__")());
