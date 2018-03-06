@@ -6,7 +6,7 @@ rdkit_python_extension(rdfiltercatalog
                        FilterCatalog
 Subgraphs SubstructMatch SmilesParse Catalogs FileParsers GraphMol DataStructs
 RDGeometryLib RDGeneral RDBoost
-${Boost_SERIALIZATION_LIBRARY}
+${RDKit_SERIALIZATION_LIBS}
 )
 
 add_pytest(pyFilterCatalog ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

@@ -1,7 +1,9 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
+    set(RDKit_SERIALIZATION_LIBS Boost::serialization)
 else()
       message("== Making EnumerateLibrary without boost Serialization support")
+    set(RDKit_SERIALIZATION_LIBS )
 endif()
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
@@ -16,16 +18,16 @@ rdkit_library(ChemReactions
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
-                    
+
               LINK_LIBRARIES
               FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms ${Boost_SERIALIZATION_LIBRARY})
+              FileParsers SubstructMatch ChemTransforms ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_headers(Reaction.h
               ReactionParser.h
-              ReactionPickler.h 
-              ReactionFingerprints.h 
-              ReactionUtils.h 
+              ReactionPickler.h
+              ReactionFingerprints.h
+              ReactionUtils.h
               ReactionRunner.h
               PreprocessRxn.h
               SanitizeRxn.h
@@ -40,14 +42,14 @@ rdkit_headers(Reaction.h
 
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
 ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY}  )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS}  )
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs Depictor FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib ${Boost_SERIALIZATION_LIBRARY} )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
 
 add_subdirectory(Wrap)
