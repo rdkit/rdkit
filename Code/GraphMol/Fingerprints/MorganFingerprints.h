@@ -95,6 +95,8 @@ const std::string morganFingerprintVersion = "1.0.0";
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -105,7 +107,8 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     bool useChirality = false, bool useBondTypes = true, bool useCounts = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 //! returns the Morgan fingerprint for a molecule
 /*!
@@ -144,6 +147,8 @@ SparseIntVect<boost::uint32_t> *getFingerprint(
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -154,7 +159,8 @@ SparseIntVect<boost::uint32_t> *getHashedFingerprint(
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 //! returns the Morgan fingerprint for a molecule as a bit vector
 /*!
@@ -183,6 +189,8 @@ SparseIntVect<boost::uint32_t> *getHashedFingerprint(
                            about the atoms that set each particular bit.
                            The keys are the map are bit ids, the values
                            are lists of (atomId, radius) pairs.
+  \param includeRedundantEnvironments : if set, the check for redundant atom
+                           environments will not be done.
 
   \return a pointer to the fingerprint. The client is
   responsible for calling delete on this.
@@ -193,7 +201,8 @@ ExplicitBitVect *getFingerprintAsBitVect(
     std::vector<boost::uint32_t> *invariants = 0,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     bool useChirality = false, bool useBondTypes = true,
-    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0);
+    bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = 0,
+    bool includeRedundantEnvironments = false);
 
 //! returns the connectivity invariants for a molecule
 /*!

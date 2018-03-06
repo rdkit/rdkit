@@ -100,7 +100,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + 6);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
@@ -184,7 +185,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
                      const std::vector<uint32_t> *fromAtoms, bool useChirality,
                      bool useBondTypes, bool useCounts,
                      bool onlyNonzeroInvariants, BitInfoMap *atomsSettingBits,
-                     T &res) {
+                     bool includeRedundantEnvironments, T &res) {
   unsigned int nAtoms = mol.getNumAtoms();
   bool owner = false;
   if (!invariants) {
@@ -328,7 +329,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         neighborhoodsThisRound.push_back(
             boost::make_tuple(roundAtomNeighborhoods[atomIdx],
                               static_cast<uint32_t>(invar), atomIdx));
-        if (std::find(neighborhoods.begin(), neighborhoods.end(),
+        if (!includeRedundantEnvironments &&
+            std::find(neighborhoods.begin(), neighborhoods.end(),
                       roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
           // we have seen this exact environment before, this atom
           // is now out of consideration:
@@ -379,44 +381,40 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
   if (owner) delete invariants;
 }
 
-SparseIntVect<uint32_t> *getFingerprint(const ROMol &mol, unsigned int radius,
-                                        std::vector<uint32_t> *invariants,
-                                        const std::vector<uint32_t> *fromAtoms,
-                                        bool useChirality, bool useBondTypes,
-                                        bool useCounts,
-                                        bool onlyNonzeroInvariants,
-                                        BitInfoMap *atomsSettingBits) {
+SparseIntVect<uint32_t> *getFingerprint(
+    const ROMol &mol, unsigned int radius, std::vector<uint32_t> *invariants,
+    const std::vector<uint32_t> *fromAtoms, bool useChirality,
+    bool useBondTypes, bool useCounts, bool onlyNonzeroInvariants,
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, useCounts, onlyNonzeroInvariants,
-                  atomsSettingBits, *res);
+                  atomsSettingBits, includeRedundantEnvironments, *res);
   return res;
 }
 SparseIntVect<uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
-    BitInfoMap *atomsSettingBits) {
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, true, onlyNonzeroInvariants, atomsSettingBits,
-                  *res);
+                  includeRedundantEnvironments, *res);
   return res;
 }
 
-ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol, unsigned int radius,
-                                         unsigned int nBits,
-                                         std::vector<uint32_t> *invariants,
-                                         const std::vector<uint32_t> *fromAtoms,
-                                         bool useChirality, bool useBondTypes,
-                                         bool onlyNonzeroInvariants,
-                                         BitInfoMap *atomsSettingBits) {
+ExplicitBitVect *getFingerprintAsBitVect(
+    const ROMol &mol, unsigned int radius, unsigned int nBits,
+    std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
+    bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   ExplicitBitVect *res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
-                  *res);
+                  includeRedundantEnvironments, *res);
   return res;
 }
 
