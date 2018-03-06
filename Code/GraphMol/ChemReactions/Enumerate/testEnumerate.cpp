@@ -325,6 +325,7 @@ void testInsaneEnumerations() {
   delete rxn2;
 }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
 void testGithub1657() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing github #1657: EnumerateLibrary with "
@@ -366,6 +367,11 @@ void testGithub1657() {
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+#else
+void testGithub1657() {
+}
+#endif
+
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
