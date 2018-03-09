@@ -12,6 +12,7 @@
 #include <RDBoost/import_array.h>
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
@@ -115,7 +116,8 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 }
 
 PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
-                             bool scaleVDW = false) {
+                             bool scaleVDW = false,
+                             bool doTriangleSmoothing = true) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -124,6 +126,9 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
   DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW);
+  if (doTriangleSmoothing) {
+    DistGeom::triangleSmoothBounds(mat);
+  }
   PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)),
          static_cast<void *>(mat->getData()), nats * nats * sizeof(double));
@@ -387,12 +392,15 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                     topology (otherwise stop at 1-4s)\n\
     - scaleVDW : scale down the sum of VDW radii when setting the \n\
                  lower bounds for atoms less than 5 bonds apart \n\
+    - doTriangleSmoothing : run triangle smoothing on the bounds \n\
+                 matrix before returning it \n\
  RETURNS:\n\n\
     the bounds matrix as a Numeric array with lower bounds in \n\
     the lower triangle and upper bounds in the upper triangle\n\
 \n";
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds") = true,
-               python::arg("scaleVDW") = false),
+               python::arg("scaleVDW") = false,
+               python::arg("doTriangleSmoothing") = true),
               docString.c_str());
 }
