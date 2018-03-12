@@ -92,7 +92,6 @@ RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(const Conformer 
   allow 3 layers
   \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding
   process
-<<<<<<< HEAD
  */
 
 RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
@@ -138,7 +137,6 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const Conformer &conf1, const Conf
 
 //! Compute the shape tanimoto distance between two molecule based on a
 // predefined alignment
-
 /*!
   \param conf1        The first conformer of interest
   \param conf2        The second conformer of interest
@@ -158,20 +156,18 @@ RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const Conformer &conf1, const Conf
   allow 3 layers
   \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding
   process
-  \param alpha
-  \param beta
  */
 
-double tverskyIndex(const Conformer &conf1, const Conformer &conf2,
+double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
                         double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
                         double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true, double alpha = 1.0, double beta = 1.0);
+                        int maxLayers = -1, bool ignoreHs = true);
 
 
 //! Compute the shape tanimoto distance between two molecule based on a
-// predefined alignment */
+// predefined alignment
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest
