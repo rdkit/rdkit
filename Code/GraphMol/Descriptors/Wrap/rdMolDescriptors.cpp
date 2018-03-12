@@ -923,8 +923,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false, python::arg("useCounts") = true,
-       python::arg("bitInfo") = python::object()),
-       python::arg("includeRedundantEnvironments") = false,
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a hashed Morgan fingerprint for a molecule";
@@ -935,8 +935,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
-       python::arg("includeRedundantEnvironments") = false,
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   docString = "Returns a Morgan fingerprint for a molecule as a bit vector";
@@ -947,8 +947,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
        python::arg("fromAtoms") = python::list(),
        python::arg("useChirality") = false, python::arg("useBondTypes") = true,
        python::arg("useFeatures") = false,
-       python::arg("bitInfo") = python::object()),
-       python::arg("includeRedundantEnvironments") = false,
+       python::arg("bitInfo") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version") =
