@@ -548,7 +548,7 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
         .def("GetBoolProp", GetProp<ROMol, bool>,
-             "Returns the double value of the property if possible.\n\n"
+             "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
              "  RETURNS: a bool\n\n"
