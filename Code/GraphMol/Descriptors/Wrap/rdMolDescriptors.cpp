@@ -136,14 +136,6 @@ python::list calcRDFs(const RDKit::ROMol &mol, int confId, const std::string Cus
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
-
-python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
-        std::vector<double> res;
-        RDKit::Descriptors::EEM(mol, res, confId);
-        python::list pyres;
-        BOOST_FOREACH (double iv, res) { pyres.append(iv); }
-        return pyres;
-}
     
 python::list calcMORSEs(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
   std::vector<double> res;
@@ -1523,12 +1515,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("confId") = -1,
                python::arg("CustomAtomProperty") = ""),
               docString.c_str());
-
-  python::scope().attr("_CalcEMMcharges_version") = RDKit::Descriptors::EEMVersion;
-  docString = "Returns EEM atomic partial charges";
-  python::def("CalcEEMcharges", calcEEMcharges,
-                (python::arg("mol"), python::arg("confId") = -1),
-                docString.c_str());
     
   python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
   docString =
