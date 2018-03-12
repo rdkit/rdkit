@@ -68,6 +68,8 @@ std::vector<double> getConfDimensions(const Conformer &conf,
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest
+  \param alpha
+  \param beta
   \param confId1      Conformer in the first molecule (defaults to first
   conformer)
   \param confId2      Conformer in the second molecule (defaults to first
@@ -89,16 +91,14 @@ std::vector<double> getConfDimensions(const Conformer &conf,
   allow 3 layers
   \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding
   process
-  \param alpha
-  \param beta
  */
 
-double tverskyIndex(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
+double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
                         int confId2 = -1, double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
                         double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true, double alpha = 1.0, double beta = 1.0);
+                        int maxLayers = -1, bool ignoreHs = true);
 
 //! Compute the shape tversky index between two conformers based on a
 // predefined alignment
@@ -106,7 +106,9 @@ double tverskyIndex(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
 /*!
   \param conf1        The first conformer of interest
   \param conf2        The second conformer of interest
-  \param gridSpacing  resolution of the grid used to encode the molecular shapes
+  \param alpha
+  \param beta
+ \param gridSpacing  resolution of the grid used to encode the molecular shapes
   \param bitsPerPoint number of bit used to encode the occupancy at each grid
   point
   \param vdwScale     Scaling factor for the radius of the atoms to determine
@@ -122,20 +124,18 @@ double tverskyIndex(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
   allow 3 layers
   \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding
   process
-  \param alpha
-  \param beta
  */
 
-double tverskyIndex(const Conformer &conf1, const Conformer &conf2,
+double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
                         double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
                         double vdwScale = 0.8, double stepSize = 0.25,
-                        int maxLayers = -1, bool ignoreHs = true, double alpha = 1.0, double beta = 1.0);
+                        int maxLayers = -1, bool ignoreHs = true);
 
 
 //! Compute the shape tanimoto distance between two molecule based on a
-// predefined alignment */
+// predefined alignment
 /*!
   \param mol1         The first molecule of interest
   \param mol2         The second molecule of interest

@@ -98,22 +98,22 @@ void computeUnionBox(const RDGeom::Point3D &leftBottom1,
   uRightTop.z = std::max(rightTop1.z, rightTop2.z);
 }
 
-double tverskyIndex(const ROMol &mol1, const ROMol &mol2, int confId1,
+double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1,
                         int confId2, double gridSpacing,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint,
                         double vdwScale, double stepSize, int maxLayers,
-                        bool ignoreHs, double alpha, double beta) {
+                        bool ignoreHs) {
   const Conformer &conf1 = mol1.getConformer(confId1);
   const Conformer &conf2 = mol2.getConformer(confId2);
-  return tverskyIndex(conf1, conf2, gridSpacing = 0.5, bitsPerPoint,
-                          vdwScale, stepSize, maxLayers, ignoreHs, alpha, beta);
+  return tverskyIndex(conf1, conf2, alpha, beta, gridSpacing = 0.5, bitsPerPoint,
+                          vdwScale, stepSize, maxLayers, ignoreHs);
 }
 
-double tverskyIndex(const Conformer &conf1, const Conformer &conf2,
+double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
                         double gridSpacing,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint,
                         double vdwScale, double stepSize, int maxLayers,
-                        bool ignoreHs, double alpha, double beta) {
+                        bool ignoreHs) {
   RDGeom::Transform3D *trans = MolTransforms::computeCanonicalTransform(conf1);
 
   // now use this transform and figure out what size grid we will need
