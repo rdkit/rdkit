@@ -1499,8 +1499,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-
-
 #ifdef RDK_BUILD_DESCRIPTORS3D
   python::scope().attr("_CalcWHIM_version") = RDKit::Descriptors::WHIMVersion;
   docString = "Returns the WHIM descriptors vector";
