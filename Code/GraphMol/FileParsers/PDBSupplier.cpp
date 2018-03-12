@@ -17,16 +17,17 @@ namespace RDKit {
 
 PDBMolSupplier::PDBMolSupplier(std::istream *inStream, bool takeOwnership,
                                bool sanitize, bool removeHs,
-                               unsigned int flavor) {
+                               unsigned int flavor, bool proximityBonding) {
   dp_inStream = inStream;
   df_owner = takeOwnership;
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
+  df_proximityBonding = proximityBonding;
 }
 
 PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
-                               bool removeHs, unsigned int flavor) {
+                               bool removeHs, unsigned int flavor, bool proximityBonding) {
   std::ifstream *ifs =
       new std::ifstream(fileName.c_str(), std::ios_base::binary);
   if (!ifs || !(*ifs) || ifs->bad()) {
@@ -39,6 +40,7 @@ PDBMolSupplier::PDBMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
   d_flavor = flavor;
+  df_proximityBonding = proximityBonding;
 }
 
 void PDBMolSupplier::init() {}
@@ -46,7 +48,7 @@ void PDBMolSupplier::reset() {}
 
 ROMol *PDBMolSupplier::next() {
   return (ROMol *)PDBDataStreamToMol(dp_inStream, df_sanitize, df_removeHs,
-                                     d_flavor);
+                                     d_flavor, df_proximityBonding);
 }
 
 bool PDBMolSupplier::atEnd() {

@@ -2417,6 +2417,24 @@ CAS<~>
     fs = Chem.GetMolFrags(nm, asMols=True, sanitizeFrags=False)
     self.assertEqual([x.GetNumAtoms(onlyExplicit=False) for x in fs], [4, 2])
 
+    mol = Chem.MolFromSmiles("CC.CCC")
+    fs = Chem.GetMolFrags(mol, asMols=True)
+    self.assertEqual([x.GetNumAtoms() for x in fs], [2, 3])
+    frags = []
+    fragsMolAtomMapping = []
+    fs = Chem.GetMolFrags(mol, asMols=True, frags=frags, fragsMolAtomMapping=fragsMolAtomMapping)
+    self.assertEqual(mol.GetNumAtoms(onlyExplicit=True), len(frags))
+    fragsCheck = []
+    for i, f in enumerate(fs):
+      fragsCheck.extend([i] * f.GetNumAtoms(onlyExplicit=True))
+    self.assertEqual(frags, fragsCheck)
+    fragsMolAtomMappingCheck = []
+    i = 0
+    for f in fs:
+      n = f.GetNumAtoms(onlyExplicit=True)
+      fragsMolAtomMappingCheck.append(tuple(range(i, i + n)))
+      i += n
+    self.assertEqual(fragsMolAtomMapping, fragsMolAtomMappingCheck)
   def test53Matrices(self):
     """ test adjacency and distance matrices
 
@@ -3010,6 +3028,9 @@ CAS<~>
   def test84PDBBasics(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          '1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN, proximityBonding=False)
+    self.assertEqual(m.GetNumAtoms(), 327)
+    self.assertEqual(m.GetNumBonds(), 3)
     m = Chem.MolFromPDBFile(fileN)
     self.assertTrue(m is not None)
     self.assertEqual(m.GetNumAtoms(), 327)
@@ -3025,6 +3046,52 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetName(), " N  ")
     self.assertEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetResidueName(), "THR")
     self.assertAlmostEqual(m.GetAtomWithIdx(0).GetPDBResidueInfo().GetTempFactor(), 13.79, 2)
+    # test multivalent Hs
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2c92_hypervalentH.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(84)
+    self.assertEqual(atom.GetAtomicNum(), 1)  # is it H
+    self.assertEqual(atom.GetDegree(), 1)  # H should have 1 bond
+    for n in atom.GetNeighbors():  # Check if neighbor is from the same residue
+        self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(),
+                         n.GetPDBResidueInfo().GetResidueName())
+    # test unbinding metals (ZN)
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '1ps3_zn.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(40)
+    self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
+    self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
+    self.assertEqual(atom.GetExplicitValence(), 0)
+    bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
+    self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
+
+    # test metal bonds without proximity bonding
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False, proximityBonding=False)
+    atom = mol.GetAtomWithIdx(40)
+    self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
+    self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
+    self.assertEqual(atom.GetExplicitValence(), 0)
+    bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
+    self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
+    # test unbinding HOHs
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2vnf_bindedHOH.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(10)
+    self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
+    self.assertEqual(atom.GetDegree(), 0)  # HOH should have no bonds
+    # test metal bonding in ligand
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '2dej_APW.pdb')
+    mol = Chem.MolFromPDBFile(fileN, sanitize=False, removeHs=False)
+    atom = mol.GetAtomWithIdx(6)
+    self.assertEqual(atom.GetAtomicNum(), 12)
+    self.assertEqual(atom.GetDegree(), 2)
+    atom = mol.GetAtomWithIdx(35)
+    self.assertEqual(atom.GetPDBResidueInfo().GetResidueName(), 'HOH')
+    self.assertEqual(atom.GetDegree(), 0)
 
   def test85MolCopying(self):
     m = Chem.MolFromSmiles('C1CC1[C@H](F)Cl')
@@ -4369,6 +4436,65 @@ M  END
     except RuntimeError:
       pass
 
+  def testMolBundles1(self):
+    b = Chem.MolBundle()
+    smis = ('CC(Cl)(F)CC(F)(Br)','C[C@](Cl)(F)C[C@H](F)(Br)','C[C@](Cl)(F)C[C@@H](F)(Br)')
+    for smi in smis:
+        b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b),3)
+    self.assertEqual(b.Size(),3)
+    self.assertRaises(IndexError,lambda:b[4])
+    self.assertEqual(Chem.MolToSmiles(b[1],isomericSmiles=True),
+                     Chem.MolToSmiles(Chem.MolFromSmiles(smis[1]),isomericSmiles=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True))
+    self.failUnless(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False))
+    self.failIf(b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True))
+
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)),8)
+    self.assertEqual(len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),0)
+
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)),1)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)),0)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),useChirality=True)[0]),8)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),useChirality=True)[0]),8)
+    self.assertEqual(len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),useChirality=False)[0]),8)
+
+
+  def testMolBundles2(self):
+    b = Chem.MolBundle()
+    smis = ('Fc1c(Cl)cccc1','Fc1cc(Cl)ccc1','Fc1ccc(Cl)cc1')
+    for smi in smis:
+        b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b),3)
+    self.assertEqual(b.Size(),3)
+    self.failUnless(Chem.MolFromSmiles('Fc1c(Cl)cccc1').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1cc(Cl)ccc1').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1c(Cl)cccc1C').HasSubstructMatch(b))
+    self.failUnless(Chem.MolFromSmiles('Fc1cc(Cl)ccc1C').HasSubstructMatch(b))
+    self.failIf(Chem.MolFromSmiles('Fc1c(Br)cccc1').HasSubstructMatch(b))
+
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatch(b)),8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)),1)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)[0]),8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b)),1)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b,uniquify=False)),2)
+
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)),0)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)),0)
+
+  def testIssue1735(self):
+    # this shouldn't seg fault...
+    m = Chem.RWMol()
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=True)
+
+    
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

@@ -14,12 +14,15 @@
 #include "rdchem.h"
 #include "seqs.hpp"
 #include "props.hpp"
+#include "substructmethods.h"
+
 // ours
 #include <RDBoost/pyint_api.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
@@ -80,53 +83,6 @@ bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
                              useQueryQueryMatches);
   delete mol;
   return hasM;
-}
-
-bool HasSubstructMatch(const ROMol &mol, const ROMol &query,
-                       bool recursionPossible = true, bool useChirality = false,
-                       bool useQueryQueryMatches = false) {
-  NOGIL gil;
-  MatchVectType res;
-  return SubstructMatch(mol, query, res, recursionPossible, useChirality,
-                        useQueryQueryMatches);
-}
-
-PyObject *convertMatches(MatchVectType &matches) {
-  PyObject *res = PyTuple_New(matches.size());
-  MatchVectType::const_iterator i;
-  for (i = matches.begin(); i != matches.end(); i++) {
-    PyTuple_SetItem(res, i->first, PyInt_FromLong(i->second));
-  }
-  return res;
-}
-PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,
-                            bool useChirality = false,
-                            bool useQueryQueryMatches = false) {
-  MatchVectType matches;
-  {
-    NOGIL gil;
-    SubstructMatch(mol, query, matches, true, useChirality,
-                   useQueryQueryMatches);
-  }
-  return convertMatches(matches);
-}
-
-PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,
-                              bool uniquify = true, bool useChirality = false,
-                              bool useQueryQueryMatches = false,
-                              unsigned int maxMatches = 1000) {
-  std::vector<MatchVectType> matches;
-  int matched;
-  {
-    NOGIL gil;
-    matched = SubstructMatch(mol, query, matches, uniquify, true, useChirality,
-                             useQueryQueryMatches, maxMatches);
-  }
-  PyObject *res = PyTuple_New(matched);
-  for (int idx = 0; idx < matched; idx++) {
-    PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
-  }
-  return res;
 }
 
 unsigned int AddMolConformer(ROMol &mol, Conformer *conf,
@@ -247,7 +203,8 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     return addAtom(atom, true, false);
   };
-  void ReplaceAtom(unsigned int idx, Atom *atom, bool updateLabel, bool preserveProps) {
+  void ReplaceAtom(unsigned int idx, Atom *atom, bool updateLabel,
+                   bool preserveProps) {
     PRECONDITION(atom, "bad atom");
     replaceAtom(idx, atom, updateLabel, preserveProps);
   };
@@ -402,7 +359,8 @@ struct mol_wrapper {
              "  NOTE: bond indices start at 0\n")
 
         // substructures
-        .def("HasSubstructMatch", HasSubstructMatch,
+        .def("HasSubstructMatch", (bool (*)(const ROMol &m, const ROMol &query,
+                                            bool, bool, bool))HasSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("recursionPossible") = true,
               python::arg("useChirality") = false,
@@ -416,7 +374,9 @@ struct mol_wrapper {
              "matching\n\n"
              "    - useQueryQueryMatches: use query-query matching logic\n\n"
              "  RETURNS: True or False\n")
-        .def("GetSubstructMatch", GetSubstructMatch,
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const ROMol &m, const ROMol &query, bool,
+                             bool))GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),
@@ -437,7 +397,9 @@ struct mol_wrapper {
              "         this molecule that matches the first atom in the "
              "query.\n")
 
-        .def("GetSubstructMatches", GetSubstructMatches,
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const ROMol &m, const ROMol &query, bool, bool,
+                             bool, unsigned int))GetSubstructMatches,
              (python::arg("self"), python::arg("query"),
               python::arg("uniquify") = true,
               python::arg("useChirality") = false,
@@ -472,6 +434,29 @@ struct mol_wrapper {
              "atom in\n"
              "         this molecule that matches the first atom in the "
              "query.\n")
+
+        .def("HasSubstructMatch",
+             (bool (*)(const ROMol &m, const MolBundle &query, bool, bool,
+                       bool))HasSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("recursionPossible") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false))
+        .def("GetSubstructMatch",
+             (PyObject * (*)(const ROMol &m, const MolBundle &query, bool,
+                             bool))GetSubstructMatch,
+             (python::arg("self"), python::arg("query"),
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false))
+
+        .def("GetSubstructMatches",
+             (PyObject * (*)(const ROMol &m, const MolBundle &query, bool, bool,
+                             bool, unsigned int))GetSubstructMatches,
+             (python::arg("self"), python::arg("query"),
+              python::arg("uniquify") = true,
+              python::arg("useChirality") = false,
+              python::arg("useQueryQueryMatches") = false,
+              python::arg("maxMatches") = 1000))
 
         // properties
         .def("SetProp", MolSetProp<std::string>,
@@ -563,7 +548,7 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
         .def("GetBoolProp", GetProp<ROMol, bool>,
-             "Returns the double value of the property if possible.\n\n"
+             "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to return (a string).\n\n"
              "  RETURNS: a bool\n\n"
@@ -694,25 +679,26 @@ struct mol_wrapper {
              "Remove the specified bond from the molecule")
 
         .def("AddBond", &ReadWriteMol::AddBond,
-             (python::arg("beginAtomIdx"),
-              python::arg("endAtomIdx"),
+             (python::arg("beginAtomIdx"), python::arg("endAtomIdx"),
               python::arg("order") = Bond::UNSPECIFIED),
              "add a bond, returns the new number of bonds")
 
-        .def("AddAtom", &ReadWriteMol::AddAtom,
-             (python::arg("atom")),
+        .def("AddAtom", &ReadWriteMol::AddAtom, (python::arg("atom")),
              "add an atom, returns the index of the newly added atom")
         .def("ReplaceAtom", &ReadWriteMol::ReplaceAtom,
              (python::arg("index"), python::arg("newAtom"),
-              python::arg("updateLabel")=false, python::arg("preserveProps")=false),
+              python::arg("updateLabel") = false,
+              python::arg("preserveProps") = false),
              "replaces the specified atom with the provided one\n"
              "If updateLabel is True, the new atom becomes the active atom\n"
-             "If preserveProps is True preserve keep the existing props unless explicit set on the new atom")
+             "If preserveProps is True preserve keep the existing props unless "
+             "explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
-              python::arg("preserveProps")=false),
+              python::arg("preserveProps") = false),
              "replaces the specified bond with the provided one.\n"
-             "If preserveProps is True preserve keep the existing props unless explicit set on the new bond")
+             "If preserveProps is True preserve keep the existing props unless "
+             "explicit set on the new bond")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>());

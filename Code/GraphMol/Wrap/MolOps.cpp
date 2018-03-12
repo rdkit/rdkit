@@ -301,12 +301,12 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
-             python::object onlyOnAtoms) {
+             python::object onlyOnAtoms, bool addResidueInfo) {
   rdk_auto_ptr<std::vector<unsigned int> > onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get());
+  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(), addResidueInfo);
   return res;
 }
 int getSSSR(ROMol &mol) {
@@ -345,7 +345,6 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 
   if (!preserveExistingQuery) {
-    delete oAt->getQuery();
     oAt->setQuery(q);
   } else {
     oAt->expandQuery(q, Queries::COMPOSITE_AND);
@@ -476,28 +475,54 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   return PyArray_Return(res);
 }
 
-python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
+python::tuple GetMolFragsWithMapping(const ROMol &mol,
+  bool asMols, bool sanitizeFrags, python::object frags = python::object(),
+  python::object fragsMolAtomMapping = python::object()) {
   python::list res;
 
   if (!asMols) {
-    VECT_INT_VECT frags;
-    MolOps::getMolFrags(mol, frags);
+    VECT_INT_VECT fragsVec;
+    MolOps::getMolFrags(mol, fragsVec);
 
-    for (unsigned int i = 0; i < frags.size(); ++i) {
+    for (unsigned int i = 0; i < fragsVec.size(); ++i) {
       python::list tpl;
-      for (unsigned int j = 0; j < frags[i].size(); ++j) {
-        tpl.append(frags[i][j]);
+      for (unsigned int j = 0; j < fragsVec[i].size(); ++j) {
+        tpl.append(fragsVec[i][j]);
       }
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<boost::shared_ptr<ROMol> > frags;
-    frags = MolOps::getMolFrags(mol, sanitizeFrags);
-    for (unsigned int i = 0; i < frags.size(); ++i) {
-      res.append(frags[i]);
+    std::vector<std::vector<int> > fragsMolAtomMappingVec;
+    std::vector<int> fragsVec;
+    std::vector<boost::shared_ptr<ROMol> > molFrags;
+    python::list &fragsList = reinterpret_cast<python::list &>(frags);
+    python::list &fragsMolAtomMappingList = reinterpret_cast<python::list &>(fragsMolAtomMapping);
+    bool hasFrags = fragsList != python::object();
+    bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
+    molFrags = hasFrags || hasFragsMolAtomMapping
+      ? MolOps::getMolFrags(mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
+      hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
+      : MolOps::getMolFrags(mol, sanitizeFrags);
+    if (hasFrags) {
+      for (unsigned int i = 0; i < fragsVec.size(); ++i)
+        fragsList.append(fragsVec[i]);
     }
+    if (hasFragsMolAtomMapping) {
+      for (unsigned int i = 0; i < fragsMolAtomMappingVec.size(); ++i) {
+        python::list perFragMolAtomMappingTpl;
+        for (unsigned int j = 0; j < fragsMolAtomMappingVec[i].size(); ++j)
+          perFragMolAtomMappingTpl.append(fragsMolAtomMappingVec[i][j]);
+        fragsMolAtomMappingList.append(python::tuple(perFragMolAtomMappingTpl));
+      }
+    }
+    for (unsigned int i = 0; i < molFrags.size(); ++i)
+      res.append(molFrags[i]);
   }
   return python::tuple(res);
+}
+
+python::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
+  return GetMolFragsWithMapping(mol, asMols, sanitizeFrags);
 }
 
 ExplicitBitVect *wrapLayeredFingerprint(
@@ -906,8 +931,11 @@ struct molops_wrapper {
     - addCoords: (optional) if this toggle is set, The Hs will have 3D coordinates\n\
       set.  Default value is 0 (no 3D coords).\n\
 \n\
-    - onlyOnHs: (optional) if this sequence is provided, only these atoms will be\n\
+    - onlyOnAtoms: (optional) if this sequence is provided, only these atoms will be\n\
       considered to have Hs added to them\n\
+\n\
+    - addResidueInfo: (optional) if this is true, add residue info to\n\
+      hydrogen atoms (useful for PDB files).\n\
 \n\
   RETURNS: a new molecule with added Hs\n\
 \n\
@@ -922,7 +950,8 @@ struct molops_wrapper {
     python::def("AddHs", addHs,
                 (python::arg("mol"), python::arg("explicitOnly") = false,
                  python::arg("addCoords") = false,
-                 python::arg("onlyOnAtoms") = python::object()),
+                 python::arg("onlyOnAtoms") = python::object(),
+                 python::arg("addResidueInfo") = false),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
@@ -1428,13 +1457,22 @@ struct molops_wrapper {
       will be returned as molecules instead of atom ids.\n\
     - sanitizeFrags: (optional) if this is provided and true, the fragments\n\
       molecules will be sanitized before returning them.\n\
+    - frags: (optional, defaults to None) if this is provided as an empty list,\n\
+      the result will be mol.GetNumAtoms() long on return and will contain the\n\
+      fragment assignment for each Atom\n\
+    - fragsMolAtomMapping: (optional, defaults to None) if this is provided as\n\
+      an empty list, the result will be a a numFrags long list on return, and\n\
+      each entry will contain the indices of the Atoms in that fragment:\n\
+      [(0, 1, 2, 3), (4, 5)]\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
            or a tuple of molecules.\n\
 \n";
-    python::def("GetMolFrags", &GetMolFrags,
+    python::def("GetMolFrags", &GetMolFragsWithMapping,
                 (python::arg("mol"), python::arg("asMols") = false,
-                 python::arg("sanitizeFrags") = true),
+                 python::arg("sanitizeFrags") = true,
+                 python::arg("frags") = python::object(),
+                 python::arg("fragsMolAtomMapping") = python::object()),
                 docString.c_str());
 
     // ------------------------------------------------------------------------

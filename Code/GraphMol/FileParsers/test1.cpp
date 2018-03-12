@@ -3745,6 +3745,15 @@ void testPDBFile() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 17.047));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 14.099));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
+
+    // test adding hydrogens
+    ROMol *nm = MolOps::addHs(*m, false, false, NULL, true);
+    AtomPDBResidueInfo *info =
+        (AtomPDBResidueInfo *)(nm->getAtomWithIdx(nm->getNumAtoms() - 1)
+                                   ->getMonomerInfo());
+    TEST_ASSERT(info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE);
+    TEST_ASSERT(info->getName() == " H7 ");
+    TEST_ASSERT(info->getResidueName() == "ASN");
   }
 
   {
@@ -4876,6 +4885,41 @@ void testGithub1340() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1689() {
+  BOOST_LOG(rdInfoLog) << "Test github 1689: Play nice with naughty MOL blocks"
+                       << std::endl;
+
+  std::string molb =
+      "rdkit_blank_line_before_M_END_test.sdf\n"
+      "  ChemDraw12181709392D\n"
+      "\n"
+      "  2  1  0  0  0  0  0  0  0  0999 V2000\n"
+      "   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "    0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "  1  2  1  0      \n"
+      "\n"
+      "M  END\n";
+  {
+    bool sanitize = true, removeHs = true, strictParsing = false;
+    ROMol *m = MolBlockToMol(molb, sanitize, removeHs, strictParsing);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    TEST_ASSERT(m->getNumBonds() == 1);
+    delete m;
+  }
+  {
+    bool sanitize = true, removeHs = true, strictParsing = true;
+    bool ok = false;
+    try {
+      MolBlockToMol(molb, sanitize, removeHs, strictParsing);
+    } catch (FileParseException &e) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -4966,9 +5010,10 @@ void RunTests() {
 
   testMolFileDativeBonds();
   testGithub1251();
-#endif
   testGithub1029();
   testGithub1340();
+#endif
+  testGithub1689();
 }
 
 // must be in German Locale for test...

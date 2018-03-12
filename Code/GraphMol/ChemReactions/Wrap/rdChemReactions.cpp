@@ -451,9 +451,15 @@ Sample Usage:\n\
 \n\
 ";
 
-  python::class_<RDKit::MOL_SPTR_VECT>("ROMolList")
-      .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
-
+  // logic from https://stackoverflow.com/a/13017303
+  boost::python::type_info info =
+      boost::python::type_id<RDKit::MOL_SPTR_VECT>();
+  const boost::python::converter::registration *reg =
+      boost::python::converter::registry::query(info);
+  if (reg == NULL || (*reg).m_to_python == NULL) {
+    python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
+        .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+  }
   python::class_<RDKit::ChemicalReaction>(
       "ChemicalReaction", docString.c_str(),
       python::init<>("Constructor, takes no arguments"))

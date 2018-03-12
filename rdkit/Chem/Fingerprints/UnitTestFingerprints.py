@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2006  Greg Landrum and Rational Discovery LLC
 #
@@ -15,7 +14,7 @@ import unittest
 
 from rdkit import Chem
 from rdkit import DataStructs
-
+from rdkit.Chem.Fingerprints import FingerprintMols
 
 class TestCase(unittest.TestCase):
 
@@ -75,6 +74,11 @@ class TestCase(unittest.TestCase):
       fp2 = DataStructs.FoldFingerprint(fp1, 4)
       self.assertEqual(tuple(fp2.GetOnBits()), tuple(fp3.GetOnBits()))
 
+  def testGithub1747(self):
+    """ test github #1747: deprecated apply() function causes GetRDKFingerprint
+        to fail in Python 3 """
+    fp = FingerprintMols.GetRDKFingerprint(Chem.MolFromSmiles('CCO'))
+    self.assertNotEqual(0,fp.GetNumOnBits())
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

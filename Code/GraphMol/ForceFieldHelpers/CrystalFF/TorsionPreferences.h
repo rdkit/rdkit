@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Sereina Riniker
+//  Copyright (C) 2017 Sereina Riniker
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,7 +22,7 @@ void getExperimentalTorsions(
     std::vector<std::pair<std::vector<int>, std::vector<double> > > &
         expTorsionAngles,
     std::vector<std::vector<int> > &improperAtoms, bool useExpTorsions = false,
-    bool useBasicKnowledge = false, bool verbose = false);
+    bool useBasicKnowledge = false, unsigned int version = 1, bool verbose = false);
 }
 }
 

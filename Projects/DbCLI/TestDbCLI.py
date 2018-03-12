@@ -7,12 +7,12 @@
 import unittest, subprocess, os
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
-
+import sys
 
 class TestCase(unittest.TestCase):
 
   def test1Create(self):
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           'testData/bzr.smi'))
     res = p.wait()
     self.assertFalse(res)
@@ -39,7 +39,7 @@ class TestCase(unittest.TestCase):
     d = conn.GetData('rdkitfps', fields='count(*)')
     self.assertTrue(d[0][0] == 10)
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
                           '--doGobbi2D', 'testData/bzr.sdf'))
     res = p.wait()
     self.assertFalse(res)
@@ -72,7 +72,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
-    p = subprocess.Popen(('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
+    p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
                           '--topN=5', '--outF=testData/bzr/search.out', 'testData/bzr.sdf'))
     res = p.wait()
     self.assertFalse(res)
@@ -105,7 +105,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
     p = subprocess.Popen(
-      ('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--topN=5',
+      (sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--topN=5',
        '--outF=testData/bzr/search.out', '--similarityType=AtomPairs', 'testData/bzr.sdf'))
     res = p.wait()
     self.assertFalse(res)
@@ -137,7 +137,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
-    p = subprocess.Popen(('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
+    p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
                           '--topN=5', '--outF=testData/bzr/search.out',
                           '--similarityType=TopologicalTorsions', 'testData/bzr.sdf'))
     res = p.wait()
@@ -169,7 +169,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Descriptors.sqlt'))
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
-    p = subprocess.Popen(('python', 'SearchDb.py', '--dbDir=testData/bzr',
+    p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out', '--query=activity<6.5'))
 
     res = p.wait()
@@ -182,7 +182,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(lines) == 30)
     os.unlink('testData/bzr/search.out')
 
-    p = subprocess.Popen(('python', 'SearchDb.py', '--dbDir=testData/bzr',
+    p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out', '--query=activity<6.5'))
 
     res = p.wait()
@@ -196,7 +196,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
   def test2_5SearchSmarts(self):
-    p = subprocess.Popen(('python',
+    p = subprocess.Popen((sys.executable,
                           'SearchDb.py',
                           '--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out',
@@ -213,14 +213,14 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
     if os.path.exists('/dev/null'):
-      p = subprocess.Popen(('python',
+      p = subprocess.Popen((sys.executable,
                             'SearchDb.py',
                             '--dbDir=testData/bzr',
                             '--outF=/dev/null',
                             '--smilesOut=testData/bzr/search.out',
                             '--smarts=cncncc', ))
     else:
-      p = subprocess.Popen(('python',
+      p = subprocess.Popen((sys.executable,
                             'SearchDb.py',
                             '--dbDir=testData/bzr',
                             '--outF=testData/crud.out',
@@ -238,7 +238,7 @@ class TestCase(unittest.TestCase):
     if os.path.exists('testData/crud.out'):
       os.unlink('testData/crud.out')
 
-    p = subprocess.Popen(('python',
+    p = subprocess.Popen((sys.executable,
                           'SearchDb.py',
                           '--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out',
@@ -257,7 +257,7 @@ class TestCase(unittest.TestCase):
 
   def test2_6SearchBoth(self):
     p = subprocess.Popen(
-      ('python', 'SearchDb.py', '--dbDir=testData/bzr', '--outF=testData/bzr/search.out',
+      (sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--outF=testData/bzr/search.out',
        '--query=activity<6.5', '--smarts=cncncc'))
 
     res = p.wait()
@@ -271,7 +271,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
     p = subprocess.Popen(
-      ('python', 'SearchDb.py', '--dbDir=testData/bzr', '--outF=testData/bzr/search.out',
+      (sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--outF=testData/bzr/search.out',
        '--query=activity<6.5', '--smarts=cncncc', '--negate'))
 
     res = p.wait()
@@ -291,7 +291,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
     p = subprocess.Popen(
-      ('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--topN=5',
+      (sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--topN=5',
        '--outF=testData/bzr/search.out', '--similarityType=Gobbi2D', 'testData/bzr.sdf'))
     res = p.wait()
     self.assertFalse(res)
@@ -326,7 +326,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
     p = subprocess.Popen(
-      ('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--simThresh=0.7',
+      (sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf', '--simThresh=0.7',
        '--outF=testData/bzr/search.out', 'testData/bzr_q1.mol'))
     res = p.wait()
     self.assertFalse(res)
@@ -354,7 +354,7 @@ class TestCase(unittest.TestCase):
     if os.path.exists('testData/bzr/Fingerprints.sqlt'):
       os.unlink('testData/bzr/Fingerprints.sqlt')
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           '--noExtras', '--noSmiles', 'testData/bzr.smi'))
     res = p.wait()
     self.assertFalse(res)
@@ -385,7 +385,7 @@ class TestCase(unittest.TestCase):
     if os.path.exists('testData/bzr/Fingerprints.sqlt'):
       os.unlink('testData/bzr/Fingerprints.sqlt')
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           '--noSmiles', '--noFingerprints', '--noLayeredFps', '--noMorganFps',
                           '--noPairs', '--noDescriptors', 'testData/bzr.smi'))
     res = p.wait()
@@ -408,7 +408,7 @@ class TestCase(unittest.TestCase):
     conn.KillCursor()
     conn = None
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           '--noProps', '--noFingerprints', '--noLayeredFps', '--noMorganFps',
                           '--noPairs', '--noDescriptors', 'testData/bzr.smi'))
     res = p.wait()
@@ -431,7 +431,7 @@ class TestCase(unittest.TestCase):
     conn.KillCursor()
     conn = None
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           '--noFingerprints', '--noLayeredFps', '--noMorganFps', '--noPairs',
                           '--noDescriptors', '--maxRowsCached=4', 'testData/bzr.smi'))
     res = p.wait()
@@ -455,7 +455,7 @@ class TestCase(unittest.TestCase):
     conn = None
 
     p = subprocess.Popen(
-      ('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles', '--noFingerprints',
+      (sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles', '--noFingerprints',
        '--noPairs', '--noDescriptors', '--maxRowsCached=4', 'testData/bzr.smi'))
     res = p.wait()
     self.assertFalse(res)
@@ -476,7 +476,7 @@ class TestCase(unittest.TestCase):
     if os.path.exists('testData/bzr/Fingerprints.sqlt'):
       os.unlink('testData/bzr/Fingerprints.sqlt')
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--noFingerprints',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--noFingerprints',
                           '--noDescriptors', 'testData/bzr.sdf'))
     res = p.wait()
     self.assertFalse(res)
@@ -485,7 +485,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     curs = conn.GetCursor()
     curs.execute('create table tmp as select compound_id,atompairfp,torsionfp from atompairs')
-    p = subprocess.Popen(('python', 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
+    p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
                           '--topN=5', '--outF=testData/bzr/search.out',
                           '--similarityType=AtomPairs', '--pairTableName=tmp', 'testData/bzr.sdf'))
     res = p.wait()
@@ -512,7 +512,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
   def test6Update(self):
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           'testData/bzr.smi'))
     res = p.wait()
     self.assertFalse(res)
@@ -541,7 +541,7 @@ class TestCase(unittest.TestCase):
     d = None
     conn.KillCursor()
 
-    p = subprocess.Popen(('python', 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
+    p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--molFormat=smiles',
                           '--updateDb', 'testData/bzr.2.smi'))
     res = p.wait()
     self.assertFalse(res)

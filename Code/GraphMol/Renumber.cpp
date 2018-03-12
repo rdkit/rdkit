@@ -83,7 +83,7 @@ ROMol *renumberAtoms(const ROMol &mol,
 
   // update the ring info:
   const RingInfo *oRings = mol.getRingInfo();
-  if (oRings) {
+  if (oRings && oRings->isInitialized() ) {
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
     nRings->initialize();

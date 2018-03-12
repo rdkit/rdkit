@@ -60,7 +60,7 @@ class Canvas(CanvasBase):
 
     annot = canvas.annotate(text, (pos[0], pos[1]), color=color, verticalalignment=valign,
                             horizontalalignment=halign, weight=font.weight, size=font.size * 2.0,
-                            family=font.face, backgroundcolor='white')
+                            family=font.face)
 
     try:
       bb = annot.get_window_extent(renderer=self._figure.canvas.get_renderer())

@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2017 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -4686,6 +4686,15 @@ void testRenumberAtoms() {
     _renumberTest(m);
     delete m;
   }
+
+  { // github issue 1735 renumber empty molecules
+    ROMol *m = new ROMol;
+    TEST_ASSERT(m);
+    std::vector<unsigned int> nVect;
+    ROMol *nm = MolOps::renumberAtoms(*m, nVect);
+    delete m;
+  }
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 void testGithubIssue141() {
@@ -5145,18 +5154,30 @@ void testGetMolFrags() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+namespace {
+void hypervalent_check(const char *smiles) {
+  RWMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
+  delete m;
+}
+}
 void testGithubIssue510() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
                           "Hexafluorophosphate cannot be handled"
                        << std::endl;
-  {
-    std::string smiles = "F[P-](F)(F)(F)(F)F";
-    RWMol *m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
-    delete m;
-  }
+  hypervalent_check("F[P-](F)(F)(F)(F)F");
+  // test #1668 too, it's the same thing but with As, Sb, and Bi
+  hypervalent_check("F[As-](F)(F)(F)(F)F");
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  hypervalent_check("F[Sb-](F)(F)(F)(F)F");
+  hypervalent_check("F[Bi-](F)(F)(F)(F)F");
+
+  // we also added a valence of 5 for Bi:
+  hypervalent_check("F[Bi-](F)(F)F");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -6906,6 +6927,57 @@ void testGithub1281() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1605() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1605: Inappropriate bad valence exception during "
+                          "partial sanitization. "
+                       << std::endl;
+  {
+    std::string smiles = "C1=CC=CC=C1N(=O)=O";
+    {  // easy to test; we shouldn't throw an exception. :-)
+      RWMol *m = SmilesToMol(smiles, 0, false);
+      TEST_ASSERT(m);
+      unsigned int failed;
+      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
+                                          MolOps::SANITIZE_ADJUSTHS);
+      TEST_ASSERT(!failed);
+      delete m;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub1703() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1703: Dative bonds interfere with kekulization and "
+                          "the perception of aromaticity"
+                       << std::endl;
+  {  // start with zero-order bonds
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMol *mol(SmilesToMol("C1=CC=NC=N1.[Fe]", ps));
+    TEST_ASSERT(mol);
+    mol->addBond(5, 6, Bond::ZERO);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(mol->getAtomWithIdx(5)->getIsAromatic());
+    MolOps::Kekulize(*mol);
+    delete mol;
+  }
+  {  // and dative bonds:
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    RWMol *mol(SmilesToMol("C1=CC=NC=N1->[Fe]", ps));
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 1)->getIsAromatic());
+    TEST_ASSERT(mol->getAtomWithIdx(5)->getIsAromatic());
+    MolOps::Kekulize(*mol);
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -7007,7 +7079,10 @@ int main() {
   testBondSetStereoAtoms();
   testGithub1478();
   testGithub1439();
-#endif
   testGithub1281();
+#endif
+  testGithub1605();
+  testGithub1703();
+
   return 0;
 }

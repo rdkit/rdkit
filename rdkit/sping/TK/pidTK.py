@@ -1,16 +1,16 @@
-""" 
-A Tkinter based backend for piddle. 
-  
-Perry A. Stoll 
-  
-Created: February 15, 1999 
-  
+"""
+A Tkinter based backend for piddle.
+
+Perry A. Stoll
+
+Created: February 15, 1999
+
 Requires PIL for rotated string support.
 
-Known Problems: 
+Known Problems:
      - Doesn't handle the interactive commands yet.
      - PIL based canvas inherits lack of underlining strings from piddlePIL
-     
+
 You can find the latest version of this file:
     via http://piddle.sourceforge.net
 """
@@ -34,7 +34,7 @@ __author__ = "Perry Stoll,  perry.stoll@mail.com "
 #
 # ToDo: for TKCanvas
 #         make sure that fontHeight() is returnng appropriate measure.  Where is this info?
-#     
+#
 # $Log: pidTK.py,v $
 # Revision 1.1  2002/07/12 18:34:47  glandrum
 # added
@@ -182,7 +182,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
                size=(300, 300),
                name="sping.TK",
                master=None,
-               scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport 
+               scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport
                **kw):
     """This canvas allows you to add a tk.Canvas with a sping API for drawing.
         To add scrollbars, the simpliest method is to set the 'scrollingViewPortSize'
@@ -204,7 +204,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
       kw["width"] = size[0]
       kw["height"] = size[1]
 
-    apply(tk.Canvas.__init__, (self, master), kw)  # use kw to pass other tk.Canvas options
+    tk.Canvas.__init__(self, master, **kw)
     self.config(background="white")
     self.width, self.height = size
 
@@ -265,9 +265,9 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
     new_item = self.create_line(x1, y1, x2, y2, fill=color, width=width)
     self._item_ids.append(new_item)
 
-# NYI: curve with fill 
-#def drawCurve(self, x1, y1, x2, y2, x3, y3, x4, y4, 
-#              edgeColor=None, edgeWidth=None, fillColor=None, closed=0): 
+# NYI: curve with fill
+#def drawCurve(self, x1, y1, x2, y2, x3, y3, x4, y4,
+#              edgeColor=None, edgeWidth=None, fillColor=None, closed=0):
 #
 
   def stringWidth(self, s, font=None):
@@ -376,8 +376,8 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
                                      outline=edgeColor)
     self._item_ids.append(new_item)
 
-  # NYI: 
-  #def drawRoundRect(self, x1,y1, x2,y2, rx=5, ry=5, 
+  # NYI:
+  #def drawRoundRect(self, x1,y1, x2,y2, rx=5, ry=5,
   #                  edgeColor=None, edgeWidth=None, fillColor=None):
 
   def drawEllipse(self, x1, y1, x2, y2, edgeColor=None, edgeWidth=None, fillColor=None):
@@ -411,7 +411,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
       if fillColor == self.__TRANSPARENT:
         # draw open-ended set of lines
         d = {'fill': edgeColor, 'width': edgeWidth}
-        new_item = apply(self.create_line, pointlist, d)
+        new_item = self.create_line(pointlist, **d)
       else:
         # open filled shape.
         # draw it twice:
@@ -422,11 +422,11 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         self._item_ids.append(new_item)
 
         d = {'fill': edgeColor, 'width': edgeWidth}
-        new_item = apply(self.create_line, pointlist, d)
+        new_item = self.create_line(pointlist, **d)
 
     self._item_ids.append(new_item)
 
-#def drawFigure(self, partList, 
+#def drawFigure(self, partList,
 #               edgeColor=None, edgeWidth=None, fillColor=None):
 # use default implementation
 
@@ -461,13 +461,13 @@ try:
   class TKCanvasPIL(rdkit.sping.PIL.PILCanvas):
     """This canvas maintains a PILCanvas as its backbuffer.  Drawing calls
         are made to the backbuffer and flush() sends the image to the screen
-        using TKCanvas.  
+        using TKCanvas.
            You can also save what is displayed to a file in any of the formats
         supported by PIL"""
 
     def __init__(self, size=(300, 300), name='TKCanvas', master=None, **kw):
       rdkit.sping.PIL.PILCanvas.__init__(self, size=size, name=name)
-      self._tkcanvas = apply(TKCanvas, (size, name, master), kw)
+      self._tkcanvas = TKCanvas(size, name, master, **kw)
 
     def flush(self):
       rdkit.sping.PIL.PILCanvas.flush(self)  # call inherited one first

@@ -55,10 +55,7 @@ class UnimplementedCodeError(Exception):
 # ---------------------
 # the following block contains stuff used by the
 # testing infrastructure
-if sys.platform == 'win32':
-  pythonExe = sys.executable
-else:
-  pythonExe = "python"
+pythonExe = sys.executable
 
 # ---------------------
 # the following block contains stuff controlling database access:

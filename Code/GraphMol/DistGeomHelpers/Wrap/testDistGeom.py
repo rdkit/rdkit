@@ -7,6 +7,7 @@ import numpy
 from rdkit.six.moves import cPickle as pickle
 from rdkit.six import next
 from rdkit import Chem
+from rdkit.Chem import AllChem
 from rdkit.Chem import rdDistGeom, ChemicalForceFields, rdMolAlign
 from rdkit import RDConfig, rdBase
 from rdkit.Geometry import rdGeometry as geom
@@ -455,6 +456,59 @@ class TestCase(unittest.TestCase):
     params.randomSeed = 42
     self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
     self._compareConfs(mol, ref, 0, 0)
+
+  def test10ETKDGv2(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('n1cccc(C)c1ON'))
+    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
+                      'torsion.etkdg.v2.mol')
+    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.ETKDGv2()
+    params.randomSeed = 42
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+    self._compareConfs(mol, ref, 0, 0)
+
+  def assertDeterministicWithSeed(self, seed):
+    input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')
+
+    params = AllChem.ETKDG()
+    params.pruneRmsThresh = -1.0 # skip internal RMSD pruning
+    if seed is not None:
+      params.randomSeed = seed
+
+    firstMol = Chem.AddHs(input_mol)
+    firstIds = AllChem.EmbedMultipleConfs(firstMol, 11, params)
+
+    secondMol = Chem.AddHs(input_mol)
+    secondIds = AllChem.EmbedMultipleConfs(secondMol, 11, params)
+
+    self.assertEqual(list(firstIds), list(secondIds))
+    self.assertEqual(firstMol.GetNumConformers(), secondMol.GetNumConformers())
+
+    nonDeterministic = False
+    for confIdx in range(firstMol.GetNumConformers()):
+
+      firstConf = firstMol.GetConformer(confIdx)
+      secondConf = secondMol.GetConformer(confIdx)
+
+      firstPositions = firstConf.GetPositions()
+      secondPositions = secondConf.GetPositions()
+
+      d = firstPositions - secondPositions
+      rmsd = numpy.sqrt(numpy.sum(d * d))
+      if seed >= 0:
+        self.assertEquals(rmsd, 0.0)
+      elif rmsd != 0.0:
+        nonDeterministic = True
+    if seed < 0:
+      self.assertTrue(nonDeterministic)
+
+  def testETKDGIsDeterministic(self):
+    self.assertDeterministicWithSeed(-1) # not deterministic
+    self.assertDeterministicWithSeed(0) # deterministic
+    self.assertDeterministicWithSeed(1) # deterministic
+    self.assertDeterministicWithSeed(195225786) # as large as we can go without overflowing since 11 * 195225786 should not overflow the int
+    self.assertDeterministicWithSeed(195225787) # one higher seed will overflow though
+    self.assertDeterministicWithSeed(0x1CEB00DA) # another large seeds that shouldn't overflow internals and make them non-deterministic
 
 
 if __name__ == '__main__':

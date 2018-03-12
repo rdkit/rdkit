@@ -1,3 +1,183 @@
+# Release_2018.03.1
+(Changes relative to Release_2017.09.1)
+
+## Acknowledgements:
+
+## Highlights:
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+
+# Release_2017.09.1
+(Changes relative to Release_2017.03.1)
+
+## Important
+- The fix for bug #1567 changes the way fragment SMILES are canonicalized.
+  MolFragmentToSmiles() and canonicalizeFragment() will now often return
+  different results
+- The fix for bug #1604 changes the behavior of QueryAtom::setQuery(), which
+  now deletes the current query before setting the new value. If you are using
+  QueryAtom::setQuery() from C++ (or possibly Java), be sure that you are not
+  also deleting that memory.
+
+## Acknowledgements:
+Brian Cole, Peter Gedeck, Guillaume Godin, Jan Halborg Jensen, Malitha Kabir,
+Tuomo Kalliokoski, Brian Kelley, Noel O'Boyle, Matthew O'Meara, Pavel
+Polishchuk, Cameron Pye, Christian Ribeaud, Stephen Roughley, Patrick Savery,
+Roger Sayle, Nadine Schneider, Gregor Simm, Matt Swain, Paolo Tosco, Alain
+Vaucher, Sam Webb, 'phenethyl', 'xiaotaw'
+
+## Highlights:
+- The new R-Group decomposition code provides a flexible and powerful tool for
+  building R-group tables or datasets look in $RDBASE/Docs/Notebooks for
+  example notebooks showing how to use this.
+- Drawing of chemical reactions has been greatly improved and is now done using
+  the C++ rendering code.
+- The MaxMinPicker is dramatically faster.
+- New descriptors: the QED descriptor has been added as have a large collection
+  of new 3D descriptors and implementations of the USR and USRCAT fingerprints.
+
+## New Features and Enhancements:
+  - Bring back USR and USRCAT descriptors
+ (github pull #1417 from greglandrum)
+  - Generate a warning for conflicting bond directions
+ (github issue #1423 from greglandrum)
+  - expose and test GetDrawCoords()
+ (github pull #1427 from greglandrum)
+  - Improvement suggestions for SaltRemover
+ (github issue #1431 from ribeaud)
+  - Remove obsolete scripts from Scripts dir
+ (github pull #1440 from greglandrum)
+  - Support drawing reactions from C++
+ (github pull #1444 from greglandrum)
+  - QED code with unit test file
+ (github pull #1445 from gedeck)
+  - Add support for other datatypes to  ConvertToNumpyArray
+ (github issue #1447 from pyeguy)
+  - - updated FindCairo.cmake
+ (github pull #1455 from ptosco)
+  - - fixes PgSQL CMakeLists.txt to enable conda build on Windows
+ (github pull #1457 from ptosco)
+  - Some cleanups to make Travis builds faster
+ (github pull #1464 from greglandrum)
+  - ExplainPairScore does not support includeChirality=True
+ (github issue #1466 from xiaotaw)
+  - Add a collection of new 3D descriptors
+ (github pull #1467 from greglandrum)
+  - Update cartridge documentation to use ChEMBL 23
+ (github issue #1491 from greglandrum)
+  - First entry of the SubstructLibrary module
+ (github pull #1493 from bp-kelley)
+  - assorted fixes to get the current master branch to build on Windows
+ (github pull #1495 from ptosco)
+  - Support assignment of stereochemistry tags to bonds from 3D structure  
+ (github issue #1497 from gncs)
+  - Support black and white molecule drawing
+ (github issue #1510 from greglandrum)
+  - Missing def_readwrite for backgroundColour in rdMolDraw2D.cpp
+ (github issue #1519 from goraj)
+  - Adds canonicalization of atom maps
+ (github pull #1521 from bp-kelley)
+  - Implement stereoisomer enumeration
+ (github pull #1531 from greglandrum)
+  - Add a MolBundle class
+ (github pull #1537 from greglandrum)
+  - Provide support for color palettes in MolDraw2D
+ (github pull #1546 from greglandrum)
+  - A few reaction drawing tweaks
+ (github pull #1549 from greglandrum)
+  - R group improvements
+ (github pull #1552 from greglandrum)
+  - Add a canned Atom query for heavy atom degree
+ (github issue #1563 from greglandrum)
+  - Adds FreeSASA adapter
+ (github pull #1565 from bp-kelley)
+  - Added C++ version of getBestRMS()
+ (github pull #1568 from psavery)
+  - SMILES lexer optimization/enhancement
+ (github pull #1575 from greglandrum)
+  - Update IPythonConsole and PandasTools to use new drawing code
+ (github pull #1577 from greglandrum)
+  - Squashes warnings on cygwin
+ (github pull #1578 from bp-kelley)
+  - Support continuous highlighting in drawMolecules().
+ (github pull #1579 from greglandrum)
+  - Enhanced Similarity Maps depiction
+ (github pull #1594 from gerebtzoff)
+
+## Bug Fixes:
+  - RDKit gets stuck on PubChem CID 102128817
+ (github issue #1281 from TuomoKalliokoski)
+  - MMP code not including molecules with no cuts
+ (github issue #1406 from greglandrum)
+  - Fixes PandasTools to also work with pandas 0.20
+ (github pull #1410 from bp-kelley)
+  - csharp input files out of date
+ (github issue #1413 from greglandrum)
+  - Fix cxsmiles parse on VS2008
+ (github pull #1415 from mcs07)
+  - MaxMinPicker picking non-existent element
+ (github issue #1421 from greglandrum)
+  - _isCallable clashes with Celery
+ (github issue #1434 from momeara)
+  - Impossible to build the RDKit from source without Python installed
+ (github issue #1435 from greglandrum)
+  - RemoveHs() removes H atom attached to dummy if it came from AddHs()
+ (github issue #1439 from DrrDom)
+  - fix a couple failing windows tests related to temp file removal
+ (github pull #1446 from greglandrum)
+  - SanitizeRxn fails with a runtime exception when unused Rlabels are in product
+ (github issue #1448 from bp-kelley)
+  - String module conversion bug
+ (github pull #1452 from coleb)
+  - GetConformerRMS() documentation is misleading
+ (github pull #1459 from greglandrum)
+  - URANGE_CHECK not doing its job in RWMol::addBond
+ (github issue #1461 from baoilleach)
+  - ExplainPairScore does not support includeChirality=True
+ (github issue #1466 from xiaotaw)
+  - MolToSmarts does not include atom-map or isotope info for molecules built from SMILES
+ (github issue #1472 from greglandrum)
+  - AdjustQueryProperties() removing properties from dummy atoms
+ (github issue #1474 from greglandrum)
+  - Fixes lookup for HELM Monomer 'D'
+ (github pull #1477 from bp-kelley)
+  - Aromatic rings composed solely of dummy atoms should not be kekulized
+ (github issue #1478 from bp-kelley)
+  - Directly specify rotor model used in QED.
+ (github pull #1483 from bp-kelley)
+  - Unicode problem with pidPS tests on Mac
+ (github issue #1490 from greglandrum)
+  - Pattern fingerprint setting bad bits with degree zero atoms
+ (github issue #1496 from greglandrum)
+  - Remove xlocale header
+ (github pull #1501 from greglandrum)
+  - Fixes atom documentation
+ (github pull #1505 from bp-kelley)
+  - TypeError from PandasTools.SaveXlsxFromFrame
+ (github issue #1507 from pyeguy)
+  - Removes trailing spaces after \ to fix windows compilation errors
+ (github pull #1516 from bp-kelley)
+  - prepareMolForDrawing() not in SWIG wrappers
+ (github issue #1522 from greglandrum)
+  - Bond is missing IsInRing methods in Java wrapper
+ (github issue #1535 from sroughley)
+  - Fixes blanking of non-query atom data when QueryAtomData was being pi…
+ (github pull #1541 from bp-kelley)
+  - ChemicalReaction code not calling setNoImplicit() when H counts are set.
+ (github issue #1544 from greglandrum)
+  -  Fixes failing build with MSVC
+ (github pull #1547 from ptosco)
+  - Kekulization error with cores from R-Group Decomposition
+ (github issue #1550 from greglandrum)
+  - Fixes double free for Dict::update
+ (github pull #1571 from bp-kelley)
+  - QueryAtom::setQuery() should delete the old query first
+ (github pull #1604 from greglandrum)
+
+
 # Release_2017.03.1
 (Changes relative to Release_2016.09.1)
 

@@ -57,7 +57,7 @@ Mailing list discussion: <http://www.mail-archive.com/rdkit-discuss@lists.source
 
 The code:
 
-    """ contribution from Andrew Dalke """
+    """ original contribution from Andrew Dalke """
     import sys
     from rdkit import Chem
     from rdkit.Chem import AllChem
@@ -83,9 +83,7 @@ The code:
     # The parameters (molecule and number of conformers) are passed via a Python
     def generateconformations(m, n):
         m = Chem.AddHs(m)
-        ids=AllChem.EmbedMultipleConfs(m, numConfs=n)
-        for id in ids:
-            AllChem.UFFOptimizeMolecule(m, confId=id)
+        ids=AllChem.EmbedMultipleConfs(m, numConfs=n, params=AllChem.ETKDG())
         # EmbedMultipleConfs returns a Boost-wrapped type which
         # cannot be pickled. Convert it to a Python list, which can.
         return m, list(ids)

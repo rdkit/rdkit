@@ -8,8 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-"""basic unit testing code for SMILES canonicalization
-
+"""basic unit testing code for SMILES:
+- canonicalization
+- stereo chemistry parsing consistency
 """
 import unittest, os
 from rdkit.six.moves import cPickle
@@ -114,6 +115,82 @@ class TestCase(unittest.TestCase):
     smiList = [('C13C6C1C2C4C2C3C5C4C56', ('C45C1C6C3C6C5C4C2C3C12', 'C45C2C6C3C6C5C4C1C3C12')), ]
     self._testSpellings(smiList)
 
+  def testStereoParsingIsConsistent(self):
+    smiles_that_are_the_same = [
+      # examples from OpenSMILES spec, every toolkits agrees on these at least
+      ('N[C@H](O)C',       '[C@@H](N)(O)C'),
+      ('N[C@@](Br)(C)O',   'N[C@](Br)(O)C'),
+      ('Br[C@](N)(C)O',    'O[C@](Br)(C)N'),
+
+      # examples with attachment points every toolkit agrees on
+      ('[*][C@@H](C)N',    '[C@H]([*])(C)N'),
+      ('[*][C@@](F)(C)N',  '[C@@]([*])(F)(C)N'),
+
+      # examples from Dalke 2017 UGM talk
+      ('[*][C@](N)(O)S', '[C@]([*])(N)(O)S'),
+      ('[*][C@H](O)S',   '[C@@H]([*])(O)S'),
+      ('[*:1][C@]1([*:2])CC1(Cl)Cl', '[C@]([*:1])1([*:2])CC1(Cl)Cl'), # RDKit used to parse these as different isomers, and ChemAxon removes this stereochemistry entirely
+
+      # example from Dalke report here: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg05296.html
+      ('CN[S@](c1ccccc1)=O', 'CN[S@]2=O.c12ccccc1'),
+
+      # non-ring cases with no hydrogen property
+      ('Cl[C@](F)(Br)(O)', '[C@](Cl)(F)(Br)(O)'),
+
+      # OpenBabel and Indigo have issues with sulfur chirality
+      ('Cl[S@](C)=O',      '[S@](Cl)(C)=O'),    # ChemAxon flips this chirality
+      ('Cl[S@](C)=CCCC',   '[S@](Cl)(C)=CCCC'), # ChemAxon removes this chirality entirely
+
+      # ring cases, RDKit parsed these as different isomers before https://github.com/rdkit/rdkit/issues/1652 was fixed
+      ('Cl[C@](F)1CC[C@H](F)CC1',    '[C@](Cl)(F)1CC[C@H](F)CC1'),
+      ('Cl[C@]1(c2ccccc2)NCCCS1',    '[C@](Cl)1(c2ccccc2)NCCCS1'),
+      ('Cl3.[C@]31(c2ccccc2)NCCCS1', '[C@](Cl)1(c2ccccc2)NCCCS1'),
+      ('Cl[C@](F)1C2C(C1)CNC2',      '[C@](Cl)(F)1C2C(C1)CNC2'),
+      ('[*][C@@H]1CO1',              '[C@H]([*])1CO1'),     # with hydrogen property
+      ('[*][C@@]1(C)CCO1',           '[C@@]([*])1(C)CCO1'), # without hydrogen property
+      ('F[C@@]1(C)CCO1',             '[C@@](F)1(C)CCO1'),   # with a real atom to be sure
+
+      # bridge-head ring case, RDKit already agreed with all the other toolkits on this case
+      ('[*][C@@]12CNC[C@H]1C2',   '[C@@]([*])12CNC[C@H]1C2'),
+
+      # ring cases from https://github.com/rdkit/rdkit/commit/a2fe13f85a89cd66903ca63edeec0f99b61e8185#diff-6c7d3f98ef92f3b9cfd041f772c442f9R29
+      ('C1CN[C@](O)(N)1',  'C1CN[C@]1(O)(N)'), # all toolkits agree
+      ('C1CN[C@H]1O',      'C1CN[C@@H](O)1'),
+      ('C1CN[C@]12(O).N2', 'C1CN[C@](O)12.N2'),
+      ('C[C@]1(O)NCC1',    'C[C@@](O)1NCC1'),
+      ('C[C@]1(NCC1)O',    'C[C@](NCC1)(O)1'),
+
+      # ring case from OpenSMILES spec
+      ('N1[C@H](Cl)[C@@H](Cl)C(Cl)CC1', 'ClC1CCN[C@H](Cl)[C@H]1Cl'),     # all toolkits agree
+      ('Cl[C@@H]1[C@@H](Cl)C(Cl)CCN1', '[C@H](Cl)1[C@@H](Cl)C(Cl)CCN1'), # RDKit thinks these are different
+
+      # dot disconnected stereo case all toolkits agree on
+      ('Cl3.[C@]31(c2ccccc2)NCCCS1', 'Cl[C@]1(c2ccccc2)NCCCS1'),
+      ]
+
+    def count_stereo_centers(smi):
+      return smi.count('@') - smi.count('@@')
+
+    for left, rght in smiles_that_are_the_same:
+      # make sure the number of input stereo centers is consistent
+      lcntrs = count_stereo_centers(left)
+      rcntrs = count_stereo_centers(rght)
+      self.assertGreater(lcntrs, 0)
+      self.assertGreater(rcntrs, 0)
+      self.assertEqual(lcntrs, rcntrs)
+
+      # and the number of stereo centers doesn't change through round tripping
+      rdleft = Chem.CanonSmiles(left)
+      self.assertEqual(count_stereo_centers(rdleft), lcntrs)
+      rdrght = Chem.CanonSmiles(rght)
+      self.assertEqual(count_stereo_centers(rdrght), rcntrs)
+
+      msg = None
+      if rdleft != rdrght:
+        msg = "Failed to recognize these as the same:"
+        msg += left + '\t->\t' + rdleft
+        msg += rght + '\t->\t' + rdrght
+      self.assertEqual(rdleft, rdrght, msg)
 
 if __name__ == '__main__':
   unittest.main()

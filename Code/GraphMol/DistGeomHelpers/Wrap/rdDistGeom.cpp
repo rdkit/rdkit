@@ -41,14 +41,21 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     pMapPtr = &pMap;
   }
 
+  bool verbose = printExpTorsionAngles;
+  int numThreads = 1;
+  double pruneRmsThresh = -1.;
+  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
+  bool onlyHeavyAtomsForRMS = false;
+  DGeomHelpers::EmbedParameters params(
+      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
+      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
+
   int res;
   {
     NOGIL gil;
-    res = DGeomHelpers::EmbedMolecule(
-        mol, maxAttempts, seed, clearConfs, useRandomCoords, boxSizeMult,
-        randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-        enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge,
-        printExpTorsionAngles);
+    res = DGeomHelpers::EmbedMolecule(mol, params);
   }
   return res;
 }
@@ -80,15 +87,19 @@ INT_VECT EmbedMultipleConfs(
   if (nKeys) {
     pMapPtr = &pMap;
   }
+  bool verbose = printExpTorsionAngles;
+  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
+  bool onlyHeavyAtomsForRMS = false;
+  DGeomHelpers::EmbedParameters params(
+      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
+      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
+      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
+      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS);
 
   INT_VECT res;
   {
     NOGIL gil;
-    DGeomHelpers::EmbedMultipleConfs(
-        mol, res, numConfs, numThreads, maxAttempts, seed, clearConfs,
-        useRandomCoords, boxSizeMult, randNegEig, numZeroFail, pruneRmsThresh,
-        pMapPtr, forceTol, ignoreSmoothingFailures, enforceChirality,
-        useExpTorsionAnglePrefs, useBasicKnowledge, printExpTorsionAngles);
+    DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
   }
   return res;
 }
@@ -119,8 +130,11 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   return PyArray_Return(res);
 }
-DGeomHelpers::EmbedParameters *getETKDG() {
+DGeomHelpers::EmbedParameters *getETKDG() {  // ET version 1
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDG);
+}
+DGeomHelpers::EmbedParameters *getETKDGv2() {  // ET version 2
+  return new DGeomHelpers::EmbedParameters(DGeomHelpers::ETKDGv2);
 }
 DGeomHelpers::EmbedParameters *getKDG() {
   return new DGeomHelpers::EmbedParameters(DGeomHelpers::KDG);
@@ -148,8 +162,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - maxAttempts : the maximum number of attempts to try embedding \n\
     - randomSeed : provide a seed for the random number generator \n\
                    so that the same coordinates can be obtained \n\
-                   for a molecule on multiple runs. The default \n\
-                   (-1) uses a random seed \n\
+                   for a molecule on multiple runs. If -1, the \n\
+                   RNG will not be seeded. \n\
     - clearConfs : clear all existing conformations on the molecule\n\
     - useRandomCoords : Start the embedding from random coordinates instead of\n\
                         using eigenvalues of the distance matrix.\n\
@@ -202,8 +216,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - maxAttempts : the maximum number of attempts to try embedding \n\
   - randomSeed : provide a seed for the random number generator \n\
                  so that the same coordinates can be obtained \n\
-                 for a molecule on multiple runs. The default \n\
-                 (-1) uses a random seed \n\
+                 for a molecule on multiple runs. If -1, the \n\
+                 RNG will not be seeded. \n\
   - clearConfs : clear all existing conformations on the molecule\n\
   - useRandomCoords : Start the embedding from random coordinates instead of\n\
                       using eigenvalues of the distance matrix.\n\
@@ -306,6 +320,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useBasicKnowledge",
                      &RDKit::DGeomHelpers::EmbedParameters::useBasicKnowledge,
                      "impose basic-knowledge constraints such as flat rings")
+      .def_readwrite("ETversion",
+                     &RDKit::DGeomHelpers::EmbedParameters::ETversion,
+                     "version of the experimental torsion-angle preferences")
       .def_readwrite("verbose", &RDKit::DGeomHelpers::EmbedParameters::verbose,
                      "be verbose about configuration")
       .def_readwrite("pruneRmsThresh",
@@ -346,9 +363,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
-  python::def("ETKDG", RDKit::getETKDG,
-              "Returns an EmbedParameters object for the ETKDG method.",
-              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETKDG", RDKit::getETKDG,
+      "Returns an EmbedParameters object for the ETKDG method - version 1.",
+      python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETKDGv2", RDKit::getETKDGv2,
+      "Returns an EmbedParameters object for the ETKDG method - version 2.",
+      python::return_value_policy<python::manage_new_object>());
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());

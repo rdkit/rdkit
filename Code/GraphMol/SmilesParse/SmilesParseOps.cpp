@@ -21,12 +21,23 @@ namespace SmilesParseOps {
 using namespace RDKit;
 
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
-  // github #786: if the ring closure comes after a branch,
+  // github #786 and #1652: if the ring closure comes after a branch,
   // the stereochem is wrong.
-  // detect the branch (= atom isn't the last one)
-  // and reverse the stereochem if the atom has chiral stereochemistry
-  // and is currently degree two (protects against C1CN[C@](O)(N)1)
-  if (atom->getIdx() != mp->getNumAtoms(true) - 1 && atom->getDegree() == 2 &&
+  // This function is called while closing a branch during construction of
+  // the molecule from SMILES and corrects for what happens when parsing odd
+  // (and arguably wrong) SMILES constructs like:
+  //   1) [C@@](F)1(C)CCO1
+  //   2) C1CN[C@](O)(N)1
+  //   3) [C@](Cl)(F)1CC[C@H](F)CC1
+  // In the first two cases the stereochemistry at the chiral atom
+  // needs to be reversed. In the third case the stereochemistry should be
+  // reversed when the Cl is added, but left alone when the F is added.
+  // We recognize these situations using the index of the chiral atom
+  // and the degree of that chiral atom at the time the ring closure
+  // digit is encountered during parsing.
+  if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
+      (atom->getDegree() == 1 ||
+       (atom->getDegree() == 2 && atom->getIdx() != 0)) &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
        atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
     atom->invertChirality();
@@ -414,7 +425,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
   while (bookmarkIt != mol->getAtomBookmarks()->end()) {
     // don't bother even considering bookmarks outside
     // the range used for loops
-    if (bookmarkIt->first < 100 && bookmarkIt->first >= 0) {
+    if (bookmarkIt->first < 100000 && bookmarkIt->first >= 0) {
       RWMol::ATOM_PTR_LIST::iterator atomIt, atomsEnd;
       RWMol::ATOM_PTR_LIST bookmarkedAtomsToRemove;
       atomIt = bookmarkIt->second.begin();

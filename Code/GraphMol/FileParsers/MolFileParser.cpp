@@ -813,10 +813,8 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
     if (!i) {
       a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
       // replace the query:
-      Atom::QUERYATOM_QUERY *oq = a->getQuery();
       a->setAtomicNum(atNum);
       a->setQuery(makeAtomNumQuery(atNum));
-      delete oq;
     } else {
       a->expandQuery(makeAtomNumQuery(atNum), Queries::COMPOSITE_OR, true);
     }
@@ -1445,15 +1443,31 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
 }
 
 bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
-                             RWMol *mol) {
+                             RWMol *mol, bool strictParsing) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(mol, "bad molecule");
   // older mol files can have an atom list block here
   std::string tempStr = getLine(inStream);
   ++line;
-  if (tempStr[0] != 'M' && tempStr[0] != 'A' && tempStr[0] != 'V' &&
-      tempStr[0] != 'G' && tempStr[0] != 'S') {
-    ParseOldAtomList(mol, tempStr, line);
+  // there is apparently some software out there that puts a
+  // blank line in mol blocks before the "M  END". If we aren't
+  // doing strict parsing, deal with that here.
+  if (!tempStr.size()) {
+    if (!strictParsing) {
+      tempStr = getLine(inStream);
+      ++line;
+    } else {
+      std::ostringstream errout;
+      errout << "Problems encountered parsing Mol data, unexpected blank line "
+                "found at line "
+             << line;
+      throw FileParseException(errout.str());
+    }
+  } else {
+    if (tempStr[0] != 'M' && tempStr[0] != 'A' && tempStr[0] != 'V' &&
+        tempStr[0] != 'G' && tempStr[0] != 'S') {
+      ParseOldAtomList(mol, tempStr, line);
+    }
   }
 
   bool fileComplete = false;
@@ -2295,7 +2309,8 @@ bool ParseV2000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
   ParseMolBlockBonds(inStream, line, nBonds, mol, chiralityPossible);
 
-  bool fileComplete = ParseMolBlockProperties(inStream, line, mol);
+  bool fileComplete =
+      ParseMolBlockProperties(inStream, line, mol, strictParsing);
   return fileComplete;
 }
 

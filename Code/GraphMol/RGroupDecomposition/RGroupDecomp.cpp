@@ -336,7 +336,7 @@ double score(const std::vector<size_t> &permutation,
 #endif
     std::map<std::string, int> matchSet;
     std::map<std::set<int>, int> linkerMatchSet;
-    // std::map<std::vector<int>, int > attachMatch;
+
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
       R_DECOMP::const_iterator rg =
           matches[m][permutation[m]].rgroups.find(l);
@@ -344,7 +344,7 @@ double score(const std::vector<size_t> &permutation,
 #ifdef DEBUG
         std::cerr << " RGroup: " << rg->second->smiles;
 #endif
-        matchSet[rg->second->smiles]++;
+        matchSet[rg->second->smiles]+=1;
 #ifdef DEBUG
         std::cerr << " score: " << matchSet[rg->second->smiles] << std::endl;
 #endif
@@ -361,14 +361,24 @@ double score(const std::vector<size_t> &permutation,
     }
 
     // get the counts for each rgroup found and sort in reverse order
-    std::vector<int> equivalentRGroupCount;
+    std::vector<float> equivalentRGroupCount;
 
     for (std::map<std::string, int>::const_iterator it = matchSet.begin();
          it != matchSet.end(); ++it) {
-      equivalentRGroupCount.push_back(it->second);
+      
+      // if the rgroup is a hydrogens, only consider if the group is all
+      //  hydrogen, otherwise score based on the non hydrogens
+      if(it->first.find("[H]") != std::string::npos) {
+        if(static_cast<size_t>(it->second) == permutation.size())
+          equivalentRGroupCount.push_back(static_cast<float>(it->second));
+        else
+          equivalentRGroupCount.push_back(it->second * 1.0/permutation.size()); // massively downweight hydrogens
+      } else {
+        equivalentRGroupCount.push_back(static_cast<float>(it->second));
+      }
     }
     std::sort(equivalentRGroupCount.begin(), equivalentRGroupCount.end(),
-              std::greater<int>());
+              std::greater<float>());
 
     double tempScore = 1.;
     // score the sets from the largest to the smallest
@@ -567,7 +577,7 @@ struct RGroupDecompData {
     std::vector<std::pair<Atom *, Atom *> > atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
-    for (std::set<int>::iterator it = userLabels.begin();
+    for (std::set<int>::const_iterator it = userLabels.begin();
          it != userLabels.end(); ++it) {
       std::map<int, Atom *>::iterator atm = atoms.find(*it);
       if (atm == atoms.end()) continue;  // label not used in the rgroup
@@ -584,7 +594,7 @@ struct RGroupDecompData {
     }
 
     // Deal with non-user supplied labels
-    for (std::set<int>::iterator it = indexLabels.begin();
+    for (std::set<int>::const_iterator it = indexLabels.begin();
          it != indexLabels.end(); ++it) {
       std::map<int, Atom *>::iterator atm = atoms.find(*it);
       if (atm == atoms.end()) continue;  // label not used in the rgroup

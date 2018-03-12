@@ -66,7 +66,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return round(in * pow(10, factor)) / pow(10, factor);
+  return round(in * pow(10., factor)) / pow(10., factor);
 }
 
 double* retreiveMat(MatrixXd matrix) {
@@ -96,7 +96,7 @@ double round_to_n_digits(double x, int n) {
   return round(x * scale) / scale;
 }
 
-bool IsClose(double a, double b, unsigned int n) {
+bool IsClose(double a, double b, int n) {
   bool isclose = false;
   if (fabs(a - b) <= pow(0.1, n) * 1.1) {
     isclose = true;
@@ -660,7 +660,7 @@ double getMax(double* Rk) {
   // what about linear molecule ie (D=1) ?
   double HIC = 0.0;
   for (int i = 0; i < numAtoms; i++) {
-    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2);
+    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2.);
   }
   res[2] = roundn(HIC, 3);
 
