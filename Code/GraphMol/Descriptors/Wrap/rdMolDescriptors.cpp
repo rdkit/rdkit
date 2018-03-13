@@ -353,6 +353,7 @@ RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(
     res = RDKit::MorganFingerprints::getFingerprint(
         mol, static_cast<unsigned int>(radius), invars, froms, useChirality,
         useBondTypes, useCounts, false, bitInfoMap);
+          throw "Value of nbits is Negative"
   } else {
     res = RDKit::MorganFingerprints::getHashedFingerprint(
         mol, static_cast<unsigned int>(radius),
@@ -385,6 +386,9 @@ RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(
     const RDKit::ROMol &mol, int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo) {
+    if (radius<0){
+            throw "Radius is negative"
+        }
   return MorganFingerprintHelper(mol, radius, -1, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures,
                                  useCounts, bitInfo);
@@ -393,9 +397,13 @@ RDKit::SparseIntVect<boost::uint32_t> *GetHashedMorganFingerprint(
     const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, python::object bitInfo) {
-  return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
+    if (radius<0){
+            throw "Radius is negative"
+        }
+    return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures, true,
                                  bitInfo);
+    
 }
 
 ExplicitBitVect *GetMorganFingerprintBV(
