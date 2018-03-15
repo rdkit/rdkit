@@ -88,7 +88,7 @@ def GetNeighborLists(probes, topN, pool, simMetric=DataStructs.DiceSimilarity, s
   for nm, fp in pool:
     nDone += 1
     if not silent and not nDone % 1000:
-      logger.info('  searched %(d)s rows' % nDone)
+      logger.info('  searched %d rows' % nDone)
     if (simMetric == DataStructs.DiceSimilarity):
       scores = DataStructs.BulkDiceSimilarity(fp, validFps)
       for i, score in enumerate(scores):
@@ -149,7 +149,7 @@ def GetMolsFromSDFile(dataFilename, errFile, nameProp):
       if not nm:
         logger.warning('molecule found with empty name property')
     else:
-      nm = 'Mol_%(d)s' % (idx + 1)
+      nm = 'Mol_%d' % (idx + 1)
     yield nm, smi, m
 
 
@@ -214,13 +214,13 @@ def RunSearch(args, queryFilename):
   if args.smilesQuery:
     mol = Chem.MolFromSmiles(args.smilesQuery)
     if not mol:
-      logger.error('could not build query molecule from smiles "%(s)s"' % args.smilesQuery)
+      logger.error('could not build query molecule from smiles "%s"' % args.smilesQuery)
       sys.exit(-1)
     args.queryMol = mol
   elif args.smartsQuery:
     mol = Chem.MolFromSmarts(args.smartsQuery)
     if not mol:
-      logger.error('could not build query molecule from smarts "%(s)s"' % args.smartsQuery)
+      logger.error('could not build query molecule from smarts "%s"' % args.smartsQuery)
       sys.exit(-1)
     args.queryMol = mol
 
@@ -253,7 +253,7 @@ def RunSearch(args, queryFilename):
     try:
       tmpF = open(queryFilename, 'r')
     except IOError:
-      logger.error('could not open query file %(s)s' % queryFilename)
+      logger.error('could not open query file %s' % queryFilename)
       sys.exit(1)
 
     if args.molFormat == 'smiles':
@@ -273,7 +273,7 @@ def RunSearch(args, queryFilename):
       i += 1
       nms.append(nm)
       if not mol:
-        logger.error('query molecule %(d)s could not be built' % (i))
+        logger.error('query molecule %d could not be built' % (i))
         probes.append((None, None))
         continue
       if fpBuilder:
@@ -281,7 +281,7 @@ def RunSearch(args, queryFilename):
       else:
         probes.append((mol, None))
       if not args.silent and not i % 1000:
-        logger.info("  done %(d)s" % i)
+        logger.info("  done %d" % i)
   else:
     probes = None
 
@@ -301,7 +301,7 @@ def RunSearch(args, queryFilename):
       if not args.silent:
         logger.info('Doing substructure query')
       if args.propQuery:
-        where = 'where %(s)s' % args.propQuery
+        where = 'where %s' % args.propQuery
       else:
         where = ''
       if not args.silent:
@@ -312,14 +312,14 @@ def RunSearch(args, queryFilename):
       doSubstructFPs = False
       fpDbName = os.path.join(args.dbDir, args.fpDbName)
       if os.path.exists(fpDbName) and not args.negateQuery:
-        curs.execute("attach database '%(s)s' as fpdb" % (fpDbName))
+        curs.execute("attach database '%s' as fpdb" % (fpDbName))
         try:
-          curs.execute('select * from fpdb.%(s)s limit 1' % args.layeredTableName)
+          curs.execute('select * from fpdb.%s limit 1' % args.layeredTableName)
         except Exception:
           pass
         else:
           doSubstructFPs = True
-          join = 'join fpdb.%(s)s using (%(s)s)' % (args.layeredTableName, idCol)
+          join = 'join fpdb.%s using (%s)' % (args.layeredTableName, idCol)
           query = LayeredOptions.GetQueryText(args.queryMol)
           if query:
             if not where:
@@ -347,16 +347,15 @@ def RunSearch(args, queryFilename):
         nDone += 1
         if not args.silent and not nDone % 500:
           if not doSubstructFPs:
-            logger.info('  searched %(d)s (of %(d)s) molecules; %(d)s hits so far' %
+            logger.info('  searched %d (of %d) molecules; %d hits so far' %
                         (nDone, nToDo, len(ids)))
           else:
-            logger.info('  searched through %(d)s molecules; %(d)s hits so far' % (nDone, len(ids)))
+            logger.info('  searched through %d molecules; %d hits so far' % (nDone, len(ids)))
         row = curs.fetchone()
       if not args.silent and doSubstructFPs and nToDo:
         nFiltered = nToDo - nDone
-        logger.info('   Fingerprint screenout rate: %(d)s of %(d)s (%%%.2f)' %
+        logger.info('   Fingerprint screenout rate: %d of %d (%%%.2f)' %
                     (nFiltered, nToDo, 100. * nFiltered / nToDo))
-# Please verify %%%.2f in the replacement scheme of %(variable)s
 
     elif args.propQuery:
       if not args.silent:
@@ -365,7 +364,7 @@ def RunSearch(args, queryFilename):
       curs.execute('select %(idCol)s from molecules where %(propQuery)s' % locals())
       ids = [x[0] for x in curs.fetchall()]
     if not args.silent:
-      logger.info('Found %(d)s molecules matching the query' % (len(ids)))
+      logger.info('Found %d molecules matching the query' % (len(ids)))
 
   t1 = time.time()
   if probes:
@@ -445,13 +444,13 @@ def RunSearch(args, queryFilename):
     if not args.transpose:
       for i, nm in ks:
         nbrs = nbrLists[(i, nm)]
-        nbrTxt = args.outputDelim.join([nm] + ['%(s)s%(s)s%.3f' % (nmDict[id], args.outputDelim,
+        nbrTxt = args.outputDelim.join([nm] + ['%s%s%.3f' % (nmDict[id], args.outputDelim,
                                                                 score) for id, score in nbrs])
-# Please check %.3f
+
         if outF:
           print(nbrTxt, file=outF)
     else:
-      labels = ['%(s)s%(s)sSimilarity' % (x[1], args.outputDelim) for x in ks]
+      labels = ['%s%ssSimilarity' % (x[1], args.outputDelim) for x in ks]
       if outF:
         print(args.outputDelim.join(labels), file=outF)
       for i in range(args.topN):
@@ -460,7 +459,7 @@ def RunSearch(args, queryFilename):
           nbr = nbrLists[(idx, nm)][i]
           outL.append(nmDict[nbr[0]])
           outL.append('%.3f' % nbr[1])
-# Please check %.3f
+
         if outF:
           print(args.outputDelim.join(outL), file=outF)
   else:
@@ -504,12 +503,12 @@ def RunSearch(args, queryFilename):
         for i in range(1, len(cns) - 1):
           pn = cns[i]
           pv = str(row[i])
-          print >> sdfOut, '> <%(s)s>\n%(s)s\n' % (pn, pv)
+          print >> sdfOut, '> <%s>\n%s\n' % (pn, pv)
         print('$$$$', file=sdfOut)
       if smilesOut:
         smi = Chem.MolToSmiles(m, args.chiralSmiles)
       if smilesOut:
-        print('%(s)s %(s)s' % (smi, str(row[1])), file=smilesOut)
+        print('%s %s' % (smi, str(row[1])), file=smilesOut)
       row = curs.fetchone()
   if not args.silent:
     logger.info('Done!')
