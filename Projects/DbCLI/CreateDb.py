@@ -74,6 +74,7 @@ import argparse
 
 parser = argparse.ArgumentParser(usage)
 
+parser.add_argument('filename')
 parser.add_argument('-v', '--version', action='version', version='0.13.0')
 parser.add_argument('--outDir', '--dbDir', default='', help='name of the output directory')
 parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
@@ -439,7 +440,8 @@ if __name__ == '__main__':
   if options.loadMols:
     if len(options) != 1:
       parser.error('please provide a filename argument')
-    dataFilename = options[0]
+    dataFilename = args.filename
+  
     try:
       dataFile = open(dataFilename, 'r')
     except IOError:
