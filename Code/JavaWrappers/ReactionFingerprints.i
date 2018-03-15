@@ -1,5 +1,4 @@
 /*
-*
 *  Copyright (c) 2018 Greg Landrum
 *  All rights reserved.
 *
