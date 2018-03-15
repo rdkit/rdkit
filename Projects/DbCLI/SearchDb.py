@@ -153,99 +153,99 @@ def GetMolsFromSDFile(dataFilename, errFile, nameProp):
     yield nm, smi, m
 
 
-def RunSearch(args, queryFilename):
+def RunSearch(options, queryFilename):
   global sigFactory
-  if args.similarityType == 'AtomPairs':
+  if options.similarityType == 'AtomPairs':
     fpBuilder = FingerprintUtils.BuildAtomPairFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(args.dbDir, args.pairDbName)
-    fpTableName = args.pairTableName
-    fpColName = args.pairColName
-  elif args.similarityType == 'TopologicalTorsions':
+    dbName = os.path.join(options.dbDir, options.pairDbName)
+    fpTableName = options.pairTableName
+    fpColName = options.pairColName
+  elif options.similarityType == 'TopologicalTorsions':
     fpBuilder = FingerprintUtils.BuildTorsionsFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(args.dbDir, args.torsionsDbName)
-    fpTableName = args.torsionsTableName
-    fpColName = args.torsionsColName
-  elif args.similarityType == 'RDK':
+    dbName = os.path.join(options.dbDir, options.torsionsDbName)
+    fpTableName = options.torsionsTableName
+    fpColName = options.torsionsColName
+  elif options.similarityType == 'RDK':
     fpBuilder = FingerprintUtils.BuildRDKitFP
     simMetric = DataStructs.FingerprintSimilarity
-    dbName = os.path.join(args.dbDir, args.fpDbName)
-    fpTableName = args.fpTableName
-    if not args.fpColName:
-      args.fpColName = 'rdkfp'
-    fpColName = args.fpColName
-  elif args.similarityType == 'Pharm2D':
+    dbName = os.path.join(options.dbDir, options.fpDbName)
+    fpTableName = options.fpTableName
+    if not options.fpColName:
+      options.fpColName = 'rdkfp'
+    fpColName = options.fpColName
+  elif options.similarityType == 'Pharm2D':
     fpBuilder = FingerprintUtils.BuildPharm2DFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(args.dbDir, args.fpDbName)
-    fpTableName = args.pharm2DTableName
-    if not args.fpColName:
-      args.fpColName = 'pharm2dfp'
-    fpColName = args.fpColName
-    FingerprintUtils.sigFactory = BuildSigFactory(args)
-  elif args.similarityType == 'Gobbi2D':
+    dbName = os.path.join(options.dbDir, options.fpDbName)
+    fpTableName = options.pharm2DTableName
+    if not options.fpColName:
+      options.fpColName = 'pharm2dfp'
+    fpColName = options.fpColName
+    FingerprintUtils.sigFactory = BuildSigFactory(options)
+  elif options.similarityType == 'Gobbi2D':
     from rdkit.Chem.Pharm2D import Gobbi_Pharm2D
     fpBuilder = FingerprintUtils.BuildPharm2DFP
     simMetric = DataStructs.TanimotoSimilarity
-    dbName = os.path.join(args.dbDir, args.fpDbName)
-    fpTableName = args.gobbi2DTableName
-    if not args.fpColName:
-      args.fpColName = 'gobbi2dfp'
-    fpColName = args.fpColName
+    dbName = os.path.join(options.dbDir, options.fpDbName)
+    fpTableName = options.gobbi2DTableName
+    if not options.fpColName:
+      options.fpColName = 'gobbi2dfp'
+    fpColName = options.fpColName
     FingerprintUtils.sigFactory = Gobbi_Pharm2D.factory
-  elif args.similarityType == 'Morgan':
+  elif options.similarityType == 'Morgan':
     fpBuilder = FingerprintUtils.BuildMorganFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(args.dbDir, args.morganFpDbName)
-    fpTableName = args.morganFpTableName
-    fpColName = args.morganFpColName
+    dbName = os.path.join(options.dbDir, options.morganFpDbName)
+    fpTableName = options.morganFpTableName
+    fpColName = options.morganFpColName
 
   extraArgs = {}
-  if args.similarityMetric == 'tanimoto':
+  if options.similarityMetric == 'tanimoto':
     simMetric = DataStructs.TanimotoSimilarity
-  elif args.similarityMetric == 'dice':
+  elif options.similarityMetric == 'dice':
     simMetric = DataStructs.DiceSimilarity
-  elif args.similarityMetric == 'tversky':
+  elif options.similarityMetric == 'tversky':
     simMetric = DataStructs.TverskySimilarity
-    extraArgs['tverskyA'] = args.tverskyA
-    extraArgs['tverskyB'] = args.tverskyB
+    extraArgs['tverskyA'] = options.tverskyA
+    extraArgs['tverskyB'] = options.tverskyB
 
-  if args.smilesQuery:
-    mol = Chem.MolFromSmiles(args.smilesQuery)
+  if options.smilesQuery:
+    mol = Chem.MolFromSmiles(options.smilesQuery)
     if not mol:
-      logger.error('could not build query molecule from smiles "%s"' % args.smilesQuery)
+      logger.error('could not build query molecule from smiles "%s"' % options.smilesQuery)
       sys.exit(-1)
-    args.queryMol = mol
-  elif args.smartsQuery:
-    mol = Chem.MolFromSmarts(args.smartsQuery)
+    options.queryMol = mol
+  elif options.smartsQuery:
+    mol = Chem.MolFromSmarts(options.smartsQuery)
     if not mol:
-      logger.error('could not build query molecule from smarts "%s"' % args.smartsQuery)
+      logger.error('could not build query molecule from smarts "%s"' % options.smartsQuery)
       sys.exit(-1)
-    args.queryMol = mol
+    options.queryMol = mol
 
-  if args.outF == '-':
+  if options.outF == '-':
     outF = sys.stdout
-  elif args.outF == '':
+  elif options.outF == '':
     outF = None
   else:
-    outF = open(args.outF, 'w+')
+    outF = open(options.outF, 'w+')
 
   molsOut = False
-  if args.sdfOut:
+  if options.sdfOut:
     molsOut = True
-    if args.sdfOut == '-':
+    if options.sdfOut == '-':
       sdfOut = sys.stdout
     else:
-      sdfOut = open(args.sdfOut, 'w+')
+      sdfOut = open(options.sdfOut, 'w+')
   else:
     sdfOut = None
-  if args.smilesOut:
+  if options.smilesOut:
     molsOut = True
-    if args.smilesOut == '-':
+    if options.smilesOut == '-':
       smilesOut = sys.stdout
     else:
-      smilesOut = open(args.smilesOut, 'w+')
+      smilesOut = open(options.smilesOut, 'w+')
   else:
     smilesOut = None
 
@@ -256,12 +256,12 @@ def RunSearch(args, queryFilename):
       logger.error('could not open query file %s' % queryFilename)
       sys.exit(1)
 
-    if args.molFormat == 'smiles':
+    if options.molFormat == 'smiles':
       func = GetMolsFromSmilesFile
-    elif args.molFormat == 'sdf':
+    elif options.molFormat == 'sdf':
       func = GetMolsFromSDFile
 
-    if not args.silent:
+    if not options.silent:
       msg = 'Reading query molecules'
       if fpBuilder:
         msg += ' and generating fingerprints'
@@ -269,7 +269,7 @@ def RunSearch(args, queryFilename):
     probes = []
     i = 0
     nms = []
-    for nm, smi, mol in func(queryFilename, None, args.nameProp):
+    for nm, smi, mol in func(queryFilename, None, options.nameProp):
       i += 1
       nms.append(nm)
       if not mol:
@@ -280,47 +280,47 @@ def RunSearch(args, queryFilename):
         probes.append((mol, fpBuilder(mol)))
       else:
         probes.append((mol, None))
-      if not args.silent and not i % 1000:
+      if not options.silent and not i % 1000:
         logger.info("  done %d" % i)
   else:
     probes = None
 
   conn = None
-  idName = args.molIdName
+  idName = options.molIdName
   ids = None
   names = None
-  molDbName = os.path.join(args.dbDir, args.molDbName)
-  molIdName = args.molIdName
+  molDbName = os.path.join(options.dbDir, options.molDbName)
+  molIdName = options.molIdName
   mConn = DbConnect(molDbName)
   cns = [(x.lower(), y) for x, y in mConn.GetColumnNamesAndTypes('molecules')]
   idCol, idTyp = cns[0]
-  if args.propQuery or args.queryMol:
+  if options.propQuery or options.queryMol:
     conn = DbConnect(molDbName)
     curs = conn.GetCursor()
-    if args.queryMol:
-      if not args.silent:
+    if options.queryMol:
+      if not options.silent:
         logger.info('Doing substructure query')
-      if args.propQuery:
-        where = 'where %s' % args.propQuery
+      if options.propQuery:
+        where = 'where %s' % options.propQuery
       else:
         where = ''
-      if not args.silent:
+      if not options.silent:
         curs.execute('select count(*) from molecules %(where)s' % locals())
         nToDo = curs.fetchone()[0]
 
       join = ''
       doSubstructFPs = False
-      fpDbName = os.path.join(args.dbDir, args.fpDbName)
-      if os.path.exists(fpDbName) and not args.negateQuery:
+      fpDbName = os.path.join(options.dbDir, options.fpDbName)
+      if os.path.exists(fpDbName) and not options.negateQuery:
         curs.execute("attach database '%s' as fpdb" % (fpDbName))
         try:
-          curs.execute('select * from fpdb.%s limit 1' % args.layeredTableName)
+          curs.execute('select * from fpdb.%s limit 1' % options.layeredTableName)
         except Exception:
           pass
         else:
           doSubstructFPs = True
-          join = 'join fpdb.%s using (%s)' % (args.layeredTableName, idCol)
-          query = LayeredOptions.GetQueryText(args.queryMol)
+          join = 'join fpdb.%s using (%s)' % (options.layeredTableName, idCol)
+          query = LayeredOptions.GetQueryText(options.queryMol)
           if query:
             if not where:
               where = 'where'
@@ -335,40 +335,40 @@ def RunSearch(args, queryFilename):
       ids = []
       while row:
         id, molpkl = row
-        if not args.zipMols:
+        if not options.zipMols:
           m = _molFromPkl(molpkl)
         else:
           m = Chem.Mol(zlib.decompress(molpkl))
-        matched = m.HasSubstructMatch(args.queryMol)
-        if args.negateQuery:
+        matched = m.HasSubstructMatch(options.queryMol)
+        if options.negateQuery:
           matched = not matched
         if matched:
           ids.append(id)
         nDone += 1
-        if not args.silent and not nDone % 500:
+        if not options.silent and not nDone % 500:
           if not doSubstructFPs:
             logger.info('  searched %d (of %d) molecules; %d hits so far' %
                         (nDone, nToDo, len(ids)))
           else:
             logger.info('  searched through %d molecules; %d hits so far' % (nDone, len(ids)))
         row = curs.fetchone()
-      if not args.silent and doSubstructFPs and nToDo:
+      if not options.silent and doSubstructFPs and nToDo:
         nFiltered = nToDo - nDone
         logger.info('   Fingerprint screenout rate: %d of %d (%%%.2f)' %
                     (nFiltered, nToDo, 100. * nFiltered / nToDo))
 
-    elif args.propQuery:
-      if not args.silent:
+    elif options.propQuery:
+      if not options.silent:
         logger.info('Doing property query')
-      propQuery = args.propQuery.split(';')[0]
+      propQuery = options.propQuery.split(';')[0]
       curs.execute('select %(idCol)s from molecules where %(propQuery)s' % locals())
       ids = [x[0] for x in curs.fetchall()]
-    if not args.silent:
+    if not options.silent:
       logger.info('Found %d molecules matching the query' % (len(ids)))
 
   t1 = time.time()
   if probes:
-    if not args.silent:
+    if not options.silent:
       logger.info('Finding Neighbors')
     conn = DbConnect(dbName)
     cns = conn.GetColumnNames(fpTableName)
@@ -402,8 +402,8 @@ def RunSearch(args, queryFilename):
         yield (id, fp)
         row = curs.fetchone()
 
-    topNLists = GetNeighborLists(probes, args.topN, poolFromCurs(curs, args.similarityType),
-                                 simMetric=simMetric, simThresh=args.simThresh, **extraArgs)
+    topNLists = GetNeighborLists(probes, options.topN, poolFromCurs(curs, options.similarityType),
+                                 simMetric=simMetric, simThresh=options.simThresh, **extraArgs)
     uniqIds = set()
     nbrLists = {}
     for i, nm in enumerate(nms):
@@ -419,12 +419,12 @@ def RunSearch(args, queryFilename):
           nbrs.append((nbrGuid, scores[j]))
       nbrLists[(i, nm)] = nbrs
     t2 = time.time()
-    if not args.silent:
+    if not options.silent:
       logger.info('The search took %.1f seconds' % (t2 - t1))
 
 # Please check %.1f
 
-    if not args.silent:
+    if not options.silent:
       logger.info('Creating output')
 
     curs = mConn.GetCursor()
@@ -441,19 +441,19 @@ def RunSearch(args, queryFilename):
 
     ks = list(nbrLists.keys())
     ks.sort()
-    if not args.transpose:
+    if not options.transpose:
       for i, nm in ks:
         nbrs = nbrLists[(i, nm)]
-        nbrTxt = args.outputDelim.join([nm] + ['%s%s%.3f' % (nmDict[id], args.outputDelim,
+        nbrTxt = options.outputDelim.join([nm] + ['%s%s%.3f' % (nmDict[id], options.outputDelim,
                                                                 score) for id, score in nbrs])
 
         if outF:
           print(nbrTxt, file=outF)
     else:
-      labels = ['%s%ssSimilarity' % (x[1], args.outputDelim) for x in ks]
+      labels = ['%s%ssSimilarity' % (x[1], options.outputDelim) for x in ks]
       if outF:
-        print(args.outputDelim.join(labels), file=outF)
-      for i in range(args.topN):
+        print(options.outputDelim.join(labels), file=outF)
+      for i in range(options.topN):
         outL = []
         for idx, nm in ks:
           nbr = nbrLists[(idx, nm)][i]
@@ -461,15 +461,15 @@ def RunSearch(args, queryFilename):
           outL.append('%.3f' % nbr[1])
 
         if outF:
-          print(args.outputDelim.join(outL), file=outF)
+          print(options.outputDelim.join(outL), file=outF)
   else:
-    if not args.silent:
+    if not options.silent:
       logger.info('Creating output')
     curs = mConn.GetCursor()
     ids = [(x, ) for x in set(ids)]
     curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)' % locals())
     curs.executemany('insert into _tmpTbl values (?)', ids)
-    molIdName = args.molIdName
+    molIdName = options.molIdName
     curs.execute('select %(idCol)s,%(molIdName)s from molecules join _tmpTbl using (%(idCol)s)' %
                  locals())
     nmDict = {}
@@ -478,7 +478,7 @@ def RunSearch(args, queryFilename):
     if outF:
       print('\n'.join(nmDict.values()), file=outF)
   if molsOut and ids:
-    molDbName = os.path.join(args.dbDir, args.molDbName)
+    molDbName = os.path.join(options.dbDir, options.molDbName)
     cns = [x.lower() for x in mConn.GetColumnNames('molecules')]
     if cns[-1] != 'molpkl':
       cns.remove('molpkl')
@@ -506,11 +506,11 @@ def RunSearch(args, queryFilename):
           print >> sdfOut, '> <%s>\n%s\n' % (pn, pv)
         print('$$$$', file=sdfOut)
       if smilesOut:
-        smi = Chem.MolToSmiles(m, args.chiralSmiles)
+        smi = Chem.MolToSmiles(m, options.chiralSmiles)
       if smilesOut:
         print('%s %s' % (smi, str(row[1])), file=smilesOut)
       row = curs.fetchone()
-  if not args.silent:
+  if not options.silent:
     logger.info('Done!')
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
@@ -620,13 +620,13 @@ parser.add_argument(
 if __name__ == '__main__':
   import sys, getopt, time
 
-  args, args = parser.parse_args()
-  if len(args) != 1 and not (args.smilesQuery or args.smartsQuery or args.propQuery):
+  options = parser.parse_args()
+  if len(options) != 1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
     parser.error('please either provide a query filename argument or do a data or smarts query')
 
-  if len(args):
-    queryFilename = args[0]
+  if len(options):
+    queryFilename = options[0]
   else:
     queryFilename = None
-  args.queryMol = None
-  RunSearch(args, queryFilename)
+  options.queryMol = None
+  RunSearch(options, queryFilename)
