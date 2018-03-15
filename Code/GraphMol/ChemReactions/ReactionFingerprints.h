@@ -98,10 +98,8 @@ struct ReactionFingerprintParams {
   FingerprintType fpType;
 };
 
-const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
-                                                          PatternFP);
-const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
-                                                          2048, AtomPairFP);
+extern const ReactionFingerprintParams DefaultStructuralFPParams;
+extern const ReactionFingerprintParams DefaultDifferenceFPParams;
 
 //! Generates a structural fingerprint for a reaction
 //! to use in screening
