@@ -192,7 +192,7 @@ def CreateDb(args, dataFilename='', supplier=None):
                 'Guessing that delimiter is {}. Use --delimiter argument if this is wrong.')
 
         if not args.silent:
-          logger.info('Guessing that mol format is %(s)s. Use --molFormat argument if this is wrong.' %
+          logger.info('Guessing that mol format is %s. Use --molFormat argument if this is wrong.' %
                       repr(args.molFormat))
       if args.molFormat == 'smiles':
         if args.delimiter == '\\t':
@@ -216,52 +216,52 @@ def CreateDb(args, dataFilename='', supplier=None):
     pairConn = DbConnect(os.path.join(args.outDir, args.pairDbName))
     pairCurs = pairConn.GetCursor()
     try:
-      pairCurs.execute('drop table %(s)s' %(args.pairTableName))
+      pairCurs.execute('drop table %s' %(args.pairTableName))
     except Exception:
       pass
     pairCurs.execute(
-      'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,atompairfp blob,torsionfp blob)'
+      'create table %s (guid integer not null primary key,%s varchar not null unique,atompairfp blob,torsionfp blob)'
       % (args.pairTableName, args.molIdName))
 
   if args.doFingerprints or args.doPharm2D or args.doGobbi2D or args.doLayered:
     fpConn = DbConnect(os.path.join(args.outDir, args.fpDbName))
     fpCurs = fpConn.GetCursor()
     try:
-      fpCurs.execute('drop table %(s)s' % (args.fpTableName))
+      fpCurs.execute('drop table %s' % (args.fpTableName))
     except Exception:
       pass
     try:
-      fpCurs.execute('drop table %(s)s' % (args.pharm2DTableName))
+      fpCurs.execute('drop table %s' % (args.pharm2DTableName))
     except Exception:
       pass
     try:
-      fpCurs.execute('drop table %(s)s' % (args.gobbi2DTableName))
+      fpCurs.execute('drop table %s' % (args.gobbi2DTableName))
     except Exception:
       pass
     try:
-      fpCurs.execute('drop table %(s)s' % (args.layeredTableName))
+      fpCurs.execute('drop table %s' % (args.layeredTableName))
     except Exception:
       pass
 
     if args.doFingerprints:
       fpCurs.execute(
-        'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,rdkfp blob)'
+        'create table %s (guid integer not null primary key,%s varchar not null unique,rdkfp blob)'
         % (args.fpTableName, args.molIdName))
     if args.doLayered:
       layeredQs = ','.join('?' * LayeredOptions.nWords)
-      colDefs = ','.join(['Col_%(d)s integer' % (x + 1) for x in range(LayeredOptions.nWords)])
+      colDefs = ','.join(['Col_%d integer' % (x + 1) for x in range(LayeredOptions.nWords)])
       fpCurs.execute(
-        'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,%(s)s)' % (
+        'create table %s (guid integer not null primary key,%s varchar not null unique,%s)' % (
           args.layeredTableName, args.molIdName, colDefs))
 
     if args.doPharm2D:
       fpCurs.execute(
-        'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,pharm2dfp blob)'
+        'create table %s (guid integer not null primary key,%s varchar not null unique,pharm2dfp blob)'
         % (args.pharm2DTableName, args.molIdName))
       sigFactory = BuildSigFactory(args)
     if args.doGobbi2D:
       fpCurs.execute(
-        'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,gobbi2dfp blob)'
+        'create table %s (guid integer not null primary key,%s varchar not null unique,gobbi2dfp blob)'
         % (args.gobbi2DTableName, args.molIdName))
       from rdkit.Chem.Pharm2D import Generate, Gobbi_Pharm2D
 
@@ -269,11 +269,11 @@ def CreateDb(args, dataFilename='', supplier=None):
     fpConn = DbConnect(os.path.join(args.outDir, args.fpDbName))
     fpCurs = fpConn.GetCursor()
     try:
-      fpCurs.execute('drop table %(s)s' % (args.morganFpTableName))
+      fpCurs.execute('drop table %s' % (args.morganFpTableName))
     except Exception:
       pass
     fpCurs.execute(
-      'create table %(s)s (guid integer not null primary key,%(s)s varchar not null unique,morganfp blob)'
+      'create table %s (guid integer not null primary key,%s varchar not null unique,morganfp blob)'
       % (args.morganFpTableName, args.molIdName))
 
   if args.doDescriptors:
@@ -284,13 +284,13 @@ def CreateDb(args, dataFilename='', supplier=None):
     calc = cPickle.load(io.BytesIO(buf))
     nms = [x for x in calc.GetDescriptorNames()]
     descrCurs = descrConn.GetCursor()
-    descrs = ['guid integer not null primary key', '%(s)s varchar not null unique' % args.molIdName]
-    descrs.extend(['%(s)s float' % x for x in nms])
+    descrs = ['guid integer not null primary key', '%s varchar not null unique' % args.molIdName]
+    descrs.extend(['%s float' % x for x in nms])
     try:
-      descrCurs.execute('drop table %(s)s' % (args.descrTableName))
+      descrCurs.execute('drop table %s' % (args.descrTableName))
     except Exception:
       pass
-    descrCurs.execute('create table %(s)s (%(s)s)' % (args.descrTableName, ','.join(descrs)))
+    descrCurs.execute('create table %s (%s)' % (args.descrTableName, ','.join(descrs)))
     descrQuery = ','.join([DbModule.placeHolder] * len(descrs))
   pairRows = []
   fpRows = []
@@ -305,9 +305,9 @@ def CreateDb(args, dataFilename='', supplier=None):
   molConn = DbConnect(os.path.join(args.outDir, args.molDbName))
   molCurs = molConn.GetCursor()
   if not args.skipSmiles:
-    molCurs.execute('select guid,%(s)s,smiles,molpkl from %(s)s' % (args.molIdName, args.regName))
+    molCurs.execute('select guid,%s,smiles,molpkl from %s' % (args.molIdName, args.regName))
   else:
-    molCurs.execute('select guid,%(s)s,molpkl from %(s)s' % (args.molIdName, args.regName))
+    molCurs.execute('select guid,%s,molpkl from %s' % (args.molIdName, args.regName))
   i = 0
   while 1:
     try:
@@ -366,67 +366,67 @@ def CreateDb(args, dataFilename='', supplier=None):
 
     if not i % 500:
       if len(pairRows):
-        pairCurs.executemany('insert into %(s)s values (?,?,?,?)' % args.pairTableName, pairRows)
+        pairCurs.executemany('insert into %s values (?,?,?,?)' % args.pairTableName, pairRows)
         pairRows = []
         pairConn.Commit()
       if len(fpRows):
-        fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.fpTableName, fpRows)
+        fpCurs.executemany('insert into %s values (?,?,?)' % args.fpTableName, fpRows)
         fpRows = []
         fpConn.Commit()
       if len(layeredRows):
-        fpCurs.executemany('insert into %(s)s values (?,?,%(s)s)' % (args.layeredTableName, layeredQs),
+        fpCurs.executemany('insert into %s values (?,?,%s)' % (args.layeredTableName, layeredQs),
                            layeredRows)
         layeredRows = []
         fpConn.Commit()
       if len(descrRows):
-        descrCurs.executemany('insert into %(s)s values (%(s)s)' % (args.descrTableName, descrQuery),
+        descrCurs.executemany('insert into %s values (%s)' % (args.descrTableName, descrQuery),
                               descrRows)
         descrRows = []
         descrConn.Commit()
       if len(pharm2DRows):
-        fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.pharm2DTableName, pharm2DRows)
+        fpCurs.executemany('insert into %s values (?,?,?)' % args.pharm2DTableName, pharm2DRows)
         pharm2DRows = []
         fpConn.Commit()
       if len(gobbi2DRows):
-        fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.gobbi2DTableName, gobbi2DRows)
+        fpCurs.executemany('insert into %s values (?,?,?)' % args.gobbi2DTableName, gobbi2DRows)
         gobbi2DRows = []
         fpConn.Commit()
       if len(morganRows):
-        fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.morganFpTableName, morganRows)
+        fpCurs.executemany('insert into %s values (?,?,?)' % args.morganFpTableName, morganRows)
         morganRows = []
         fpConn.Commit()
 
     if not args.silent and not i % 500:
-      logger.info('  Done: %(d)s' % (i))
+      logger.info('  Done: %d' % (i))
 
   if len(pairRows):
-    pairCurs.executemany('insert into %(s)s values (?,?,?,?)' % args.pairTableName, pairRows)
+    pairCurs.executemany('insert into %s values (?,?,?,?)' % args.pairTableName, pairRows)
     pairRows = []
     pairConn.Commit()
   if len(fpRows):
-    fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.fpTableName, fpRows)
+    fpCurs.executemany('insert into %s values (?,?,?)' % args.fpTableName, fpRows)
     fpRows = []
     fpConn.Commit()
   if len(layeredRows):
-    fpCurs.executemany('insert into %(s)s values (?,?,%(s)s)' % (args.layeredTableName, layeredQs),
+    fpCurs.executemany('insert into %s values (?,?,%s)' % (args.layeredTableName, layeredQs),
                        layeredRows)
     layeredRows = []
     fpConn.Commit()
   if len(descrRows):
-    descrCurs.executemany('insert into %(s)s values (%(s)s)' % (args.descrTableName, descrQuery),
+    descrCurs.executemany('insert into %s values (%s)' % (args.descrTableName, descrQuery),
                           descrRows)
     descrRows = []
     descrConn.Commit()
   if len(pharm2DRows):
-    fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.pharm2DTableName, pharm2DRows)
+    fpCurs.executemany('insert into %s values (?,?,?)' % args.pharm2DTableName, pharm2DRows)
     pharm2DRows = []
     fpConn.Commit()
   if len(gobbi2DRows):
-    fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.gobbi2DTableName, gobbi2DRows)
+    fpCurs.executemany('insert into %s values (?,?,?)' % args.gobbi2DTableName, gobbi2DRows)
     gobbi2DRows = []
     fpConn.Commit()
   if len(morganRows):
-    fpCurs.executemany('insert into %(s)s values (?,?,?)' % args.morganFpTableName, morganRows)
+    fpCurs.executemany('insert into %s values (?,?,?)' % args.morganFpTableName, morganRows)
     morganRows = []
     fpConn.Commit()
 
@@ -443,7 +443,7 @@ if __name__ == '__main__':
     try:
       dataFile = open(dataFilename, 'r')
     except IOError:
-      logger.error('input file %(s)s does not exist' % (dataFilename))
+      logger.error('input file %s does not exist' % (dataFilename))
       sys.exit(0)
     dataFile = None
 
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     try:
       os.mkdir(args.outDir)
     except Exception:
-      logger.error('could not create output directory %(s)s' % args.outDir)
+      logger.error('could not create output directory %s' % args.outDir)
       sys.exit(1)
 
   if 1:
