@@ -622,10 +622,10 @@ if __name__ == '__main__':
   import sys, getopt, time
 
   options = parser.parse_args()
-  if len(options) != 1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
+  if len(vars(options)) != 1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
     parser.error('please either provide a query filename argument or do a data or smarts query')
 
-  if len(options):
+  if len(vars(options)):
     queryFilename = args.filename
   else:
     queryFilename = None
