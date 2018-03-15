@@ -32,8 +32,8 @@
 #  Created by Greg Landrum, July 2007
 #
 from __future__ import print_function
-_version = "0.14.0"
-_usage = """
+
+usage = """
  SearchDb [optional arguments] <sdfilename>
 
      The sd filename argument can be either an SD file or an MDL mol 
@@ -49,7 +49,8 @@ _usage = """
 
     - Property names are not case sensitive in the database.
 
- """
+"""
+
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 
@@ -87,7 +88,7 @@ def GetNeighborLists(probes, topN, pool, simMetric=DataStructs.DiceSimilarity, s
   for nm, fp in pool:
     nDone += 1
     if not silent and not nDone % 1000:
-      logger.info('  searched %d rows' % nDone)
+      logger.info('  searched %(d)s rows' % nDone)
     if (simMetric == DataStructs.DiceSimilarity):
       scores = DataStructs.BulkDiceSimilarity(fp, validFps)
       for i, score in enumerate(scores):
@@ -148,103 +149,103 @@ def GetMolsFromSDFile(dataFilename, errFile, nameProp):
       if not nm:
         logger.warning('molecule found with empty name property')
     else:
-      nm = 'Mol_%d' % (idx + 1)
+      nm = 'Mol_%(d)s' % (idx + 1)
     yield nm, smi, m
 
 
-def RunSearch(options, queryFilename):
+def RunSearch(args, queryFilename):
   global sigFactory
-  if options.similarityType == 'AtomPairs':
+  if args.similarityType == 'AtomPairs':
     fpBuilder = FingerprintUtils.BuildAtomPairFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(options.dbDir, options.pairDbName)
-    fpTableName = options.pairTableName
-    fpColName = options.pairColName
-  elif options.similarityType == 'TopologicalTorsions':
+    dbName = os.path.join(args.dbDir, args.pairDbName)
+    fpTableName = args.pairTableName
+    fpColName = args.pairColName
+  elif args.similarityType == 'TopologicalTorsions':
     fpBuilder = FingerprintUtils.BuildTorsionsFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(options.dbDir, options.torsionsDbName)
-    fpTableName = options.torsionsTableName
-    fpColName = options.torsionsColName
-  elif options.similarityType == 'RDK':
+    dbName = os.path.join(args.dbDir, args.torsionsDbName)
+    fpTableName = args.torsionsTableName
+    fpColName = args.torsionsColName
+  elif args.similarityType == 'RDK':
     fpBuilder = FingerprintUtils.BuildRDKitFP
     simMetric = DataStructs.FingerprintSimilarity
-    dbName = os.path.join(options.dbDir, options.fpDbName)
-    fpTableName = options.fpTableName
-    if not options.fpColName:
-      options.fpColName = 'rdkfp'
-    fpColName = options.fpColName
-  elif options.similarityType == 'Pharm2D':
+    dbName = os.path.join(args.dbDir, args.fpDbName)
+    fpTableName = args.fpTableName
+    if not args.fpColName:
+      args.fpColName = 'rdkfp'
+    fpColName = args.fpColName
+  elif args.similarityType == 'Pharm2D':
     fpBuilder = FingerprintUtils.BuildPharm2DFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(options.dbDir, options.fpDbName)
-    fpTableName = options.pharm2DTableName
-    if not options.fpColName:
-      options.fpColName = 'pharm2dfp'
-    fpColName = options.fpColName
-    FingerprintUtils.sigFactory = BuildSigFactory(options)
-  elif options.similarityType == 'Gobbi2D':
+    dbName = os.path.join(args.dbDir, args.fpDbName)
+    fpTableName = args.pharm2DTableName
+    if not args.fpColName:
+      args.fpColName = 'pharm2dfp'
+    fpColName = args.fpColName
+    FingerprintUtils.sigFactory = BuildSigFactory(args)
+  elif args.similarityType == 'Gobbi2D':
     from rdkit.Chem.Pharm2D import Gobbi_Pharm2D
     fpBuilder = FingerprintUtils.BuildPharm2DFP
     simMetric = DataStructs.TanimotoSimilarity
-    dbName = os.path.join(options.dbDir, options.fpDbName)
-    fpTableName = options.gobbi2DTableName
-    if not options.fpColName:
-      options.fpColName = 'gobbi2dfp'
-    fpColName = options.fpColName
+    dbName = os.path.join(args.dbDir, args.fpDbName)
+    fpTableName = args.gobbi2DTableName
+    if not args.fpColName:
+      args.fpColName = 'gobbi2dfp'
+    fpColName = args.fpColName
     FingerprintUtils.sigFactory = Gobbi_Pharm2D.factory
-  elif options.similarityType == 'Morgan':
+  elif args.similarityType == 'Morgan':
     fpBuilder = FingerprintUtils.BuildMorganFP
     simMetric = DataStructs.DiceSimilarity
-    dbName = os.path.join(options.dbDir, options.morganFpDbName)
-    fpTableName = options.morganFpTableName
-    fpColName = options.morganFpColName
+    dbName = os.path.join(args.dbDir, args.morganFpDbName)
+    fpTableName = args.morganFpTableName
+    fpColName = args.morganFpColName
 
   extraArgs = {}
-  if options.similarityMetric == 'tanimoto':
+  if args.similarityMetric == 'tanimoto':
     simMetric = DataStructs.TanimotoSimilarity
-  elif options.similarityMetric == 'dice':
+  elif args.similarityMetric == 'dice':
     simMetric = DataStructs.DiceSimilarity
-  elif options.similarityMetric == 'tversky':
+  elif args.similarityMetric == 'tversky':
     simMetric = DataStructs.TverskySimilarity
-    extraArgs['tverskyA'] = options.tverskyA
-    extraArgs['tverskyB'] = options.tverskyB
+    extraArgs['tverskyA'] = args.tverskyA
+    extraArgs['tverskyB'] = args.tverskyB
 
-  if options.smilesQuery:
-    mol = Chem.MolFromSmiles(options.smilesQuery)
+  if args.smilesQuery:
+    mol = Chem.MolFromSmiles(args.smilesQuery)
     if not mol:
-      logger.error('could not build query molecule from smiles "%s"' % options.smilesQuery)
+      logger.error('could not build query molecule from smiles "%(s)s"' % args.smilesQuery)
       sys.exit(-1)
-    options.queryMol = mol
-  elif options.smartsQuery:
-    mol = Chem.MolFromSmarts(options.smartsQuery)
+    args.queryMol = mol
+  elif args.smartsQuery:
+    mol = Chem.MolFromSmarts(args.smartsQuery)
     if not mol:
-      logger.error('could not build query molecule from smarts "%s"' % options.smartsQuery)
+      logger.error('could not build query molecule from smarts "%(s)s"' % args.smartsQuery)
       sys.exit(-1)
-    options.queryMol = mol
+    args.queryMol = mol
 
-  if options.outF == '-':
+  if args.outF == '-':
     outF = sys.stdout
-  elif options.outF == '':
+  elif args.outF == '':
     outF = None
   else:
-    outF = open(options.outF, 'w+')
+    outF = open(args.outF, 'w+')
 
   molsOut = False
-  if options.sdfOut:
+  if args.sdfOut:
     molsOut = True
-    if options.sdfOut == '-':
+    if args.sdfOut == '-':
       sdfOut = sys.stdout
     else:
-      sdfOut = open(options.sdfOut, 'w+')
+      sdfOut = open(args.sdfOut, 'w+')
   else:
     sdfOut = None
-  if options.smilesOut:
+  if args.smilesOut:
     molsOut = True
-    if options.smilesOut == '-':
+    if args.smilesOut == '-':
       smilesOut = sys.stdout
     else:
-      smilesOut = open(options.smilesOut, 'w+')
+      smilesOut = open(args.smilesOut, 'w+')
   else:
     smilesOut = None
 
@@ -252,15 +253,15 @@ def RunSearch(options, queryFilename):
     try:
       tmpF = open(queryFilename, 'r')
     except IOError:
-      logger.error('could not open query file %s' % queryFilename)
+      logger.error('could not open query file %(s)s' % queryFilename)
       sys.exit(1)
 
-    if options.molFormat == 'smiles':
+    if args.molFormat == 'smiles':
       func = GetMolsFromSmilesFile
-    elif options.molFormat == 'sdf':
+    elif args.molFormat == 'sdf':
       func = GetMolsFromSDFile
 
-    if not options.silent:
+    if not args.silent:
       msg = 'Reading query molecules'
       if fpBuilder:
         msg += ' and generating fingerprints'
@@ -268,58 +269,58 @@ def RunSearch(options, queryFilename):
     probes = []
     i = 0
     nms = []
-    for nm, smi, mol in func(queryFilename, None, options.nameProp):
+    for nm, smi, mol in func(queryFilename, None, args.nameProp):
       i += 1
       nms.append(nm)
       if not mol:
-        logger.error('query molecule %d could not be built' % (i))
+        logger.error('query molecule %(d)s could not be built' % (i))
         probes.append((None, None))
         continue
       if fpBuilder:
         probes.append((mol, fpBuilder(mol)))
       else:
         probes.append((mol, None))
-      if not options.silent and not i % 1000:
-        logger.info("  done %d" % i)
+      if not args.silent and not i % 1000:
+        logger.info("  done %(d)s" % i)
   else:
     probes = None
 
   conn = None
-  idName = options.molIdName
+  idName = args.molIdName
   ids = None
   names = None
-  molDbName = os.path.join(options.dbDir, options.molDbName)
-  molIdName = options.molIdName
+  molDbName = os.path.join(args.dbDir, args.molDbName)
+  molIdName = args.molIdName
   mConn = DbConnect(molDbName)
   cns = [(x.lower(), y) for x, y in mConn.GetColumnNamesAndTypes('molecules')]
   idCol, idTyp = cns[0]
-  if options.propQuery or options.queryMol:
+  if args.propQuery or args.queryMol:
     conn = DbConnect(molDbName)
     curs = conn.GetCursor()
-    if options.queryMol:
-      if not options.silent:
+    if args.queryMol:
+      if not args.silent:
         logger.info('Doing substructure query')
-      if options.propQuery:
-        where = 'where %s' % options.propQuery
+      if args.propQuery:
+        where = 'where %(s)s' % args.propQuery
       else:
         where = ''
-      if not options.silent:
+      if not args.silent:
         curs.execute('select count(*) from molecules %(where)s' % locals())
         nToDo = curs.fetchone()[0]
 
       join = ''
       doSubstructFPs = False
-      fpDbName = os.path.join(options.dbDir, options.fpDbName)
-      if os.path.exists(fpDbName) and not options.negateQuery:
-        curs.execute("attach database '%s' as fpdb" % (fpDbName))
+      fpDbName = os.path.join(args.dbDir, args.fpDbName)
+      if os.path.exists(fpDbName) and not args.negateQuery:
+        curs.execute("attach database '%(s)s' as fpdb" % (fpDbName))
         try:
-          curs.execute('select * from fpdb.%s limit 1' % options.layeredTableName)
+          curs.execute('select * from fpdb.%(s)s limit 1' % args.layeredTableName)
         except Exception:
           pass
         else:
           doSubstructFPs = True
-          join = 'join fpdb.%s using (%s)' % (options.layeredTableName, idCol)
-          query = LayeredOptions.GetQueryText(options.queryMol)
+          join = 'join fpdb.%(s)s using (%(s)s)' % (args.layeredTableName, idCol)
+          query = LayeredOptions.GetQueryText(args.queryMol)
           if query:
             if not where:
               where = 'where'
@@ -334,40 +335,41 @@ def RunSearch(options, queryFilename):
       ids = []
       while row:
         id, molpkl = row
-        if not options.zipMols:
+        if not args.zipMols:
           m = _molFromPkl(molpkl)
         else:
           m = Chem.Mol(zlib.decompress(molpkl))
-        matched = m.HasSubstructMatch(options.queryMol)
-        if options.negateQuery:
+        matched = m.HasSubstructMatch(args.queryMol)
+        if args.negateQuery:
           matched = not matched
         if matched:
           ids.append(id)
         nDone += 1
-        if not options.silent and not nDone % 500:
+        if not args.silent and not nDone % 500:
           if not doSubstructFPs:
-            logger.info('  searched %d (of %d) molecules; %d hits so far' %
+            logger.info('  searched %(d)s (of %(d)s) molecules; %(d)s hits so far' %
                         (nDone, nToDo, len(ids)))
           else:
-            logger.info('  searched through %d molecules; %d hits so far' % (nDone, len(ids)))
+            logger.info('  searched through %(d)s molecules; %(d)s hits so far' % (nDone, len(ids)))
         row = curs.fetchone()
-      if not options.silent and doSubstructFPs and nToDo:
+      if not args.silent and doSubstructFPs and nToDo:
         nFiltered = nToDo - nDone
-        logger.info('   Fingerprint screenout rate: %d of %d (%%%.2f)' %
+        logger.info('   Fingerprint screenout rate: %(d)s of %(d)s (%%%.2f)' %
                     (nFiltered, nToDo, 100. * nFiltered / nToDo))
+# Please verify %%%.2f in the replacement scheme of %(variable)s
 
-    elif options.propQuery:
-      if not options.silent:
+    elif args.propQuery:
+      if not args.silent:
         logger.info('Doing property query')
-      propQuery = options.propQuery.split(';')[0]
+      propQuery = args.propQuery.split(';')[0]
       curs.execute('select %(idCol)s from molecules where %(propQuery)s' % locals())
       ids = [x[0] for x in curs.fetchall()]
-    if not options.silent:
-      logger.info('Found %d molecules matching the query' % (len(ids)))
+    if not args.silent:
+      logger.info('Found %(d)s molecules matching the query' % (len(ids)))
 
   t1 = time.time()
   if probes:
-    if not options.silent:
+    if not args.silent:
       logger.info('Finding Neighbors')
     conn = DbConnect(dbName)
     cns = conn.GetColumnNames(fpTableName)
@@ -401,8 +403,8 @@ def RunSearch(options, queryFilename):
         yield (id, fp)
         row = curs.fetchone()
 
-    topNLists = GetNeighborLists(probes, options.topN, poolFromCurs(curs, options.similarityType),
-                                 simMetric=simMetric, simThresh=options.simThresh, **extraArgs)
+    topNLists = GetNeighborLists(probes, args.topN, poolFromCurs(curs, args.similarityType),
+                                 simMetric=simMetric, simThresh=args.simThresh, **extraArgs)
     uniqIds = set()
     nbrLists = {}
     for i, nm in enumerate(nms):
@@ -418,10 +420,12 @@ def RunSearch(options, queryFilename):
           nbrs.append((nbrGuid, scores[j]))
       nbrLists[(i, nm)] = nbrs
     t2 = time.time()
-    if not options.silent:
+    if not args.silent:
       logger.info('The search took %.1f seconds' % (t2 - t1))
 
-    if not options.silent:
+# Please check %.1f
+
+    if not args.silent:
       logger.info('Creating output')
 
     curs = mConn.GetCursor()
@@ -438,33 +442,35 @@ def RunSearch(options, queryFilename):
 
     ks = list(nbrLists.keys())
     ks.sort()
-    if not options.transpose:
+    if not args.transpose:
       for i, nm in ks:
         nbrs = nbrLists[(i, nm)]
-        nbrTxt = options.outputDelim.join([nm] + ['%s%s%.3f' % (nmDict[id], options.outputDelim,
+        nbrTxt = args.outputDelim.join([nm] + ['%(s)s%(s)s%.3f' % (nmDict[id], args.outputDelim,
                                                                 score) for id, score in nbrs])
+# Please check %.3f
         if outF:
           print(nbrTxt, file=outF)
     else:
-      labels = ['%s%sSimilarity' % (x[1], options.outputDelim) for x in ks]
+      labels = ['%(s)s%(s)sSimilarity' % (x[1], args.outputDelim) for x in ks]
       if outF:
-        print(options.outputDelim.join(labels), file=outF)
-      for i in range(options.topN):
+        print(args.outputDelim.join(labels), file=outF)
+      for i in range(args.topN):
         outL = []
         for idx, nm in ks:
           nbr = nbrLists[(idx, nm)][i]
           outL.append(nmDict[nbr[0]])
           outL.append('%.3f' % nbr[1])
+# Please check %.3f
         if outF:
-          print(options.outputDelim.join(outL), file=outF)
+          print(args.outputDelim.join(outL), file=outF)
   else:
-    if not options.silent:
+    if not args.silent:
       logger.info('Creating output')
     curs = mConn.GetCursor()
     ids = [(x, ) for x in set(ids)]
     curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)' % locals())
     curs.executemany('insert into _tmpTbl values (?)', ids)
-    molIdName = options.molIdName
+    molIdName = args.molIdName
     curs.execute('select %(idCol)s,%(molIdName)s from molecules join _tmpTbl using (%(idCol)s)' %
                  locals())
     nmDict = {}
@@ -473,7 +479,7 @@ def RunSearch(options, queryFilename):
     if outF:
       print('\n'.join(nmDict.values()), file=outF)
   if molsOut and ids:
-    molDbName = os.path.join(options.dbDir, options.molDbName)
+    molDbName = os.path.join(args.dbDir, args.molDbName)
     cns = [x.lower() for x in mConn.GetColumnNames('molecules')]
     if cns[-1] != 'molpkl':
       cns.remove('molpkl')
@@ -498,127 +504,130 @@ def RunSearch(options, queryFilename):
         for i in range(1, len(cns) - 1):
           pn = cns[i]
           pv = str(row[i])
-          print >> sdfOut, '> <%s>\n%s\n' % (pn, pv)
+          print >> sdfOut, '> <%(s)s>\n%(s)s\n' % (pn, pv)
         print('$$$$', file=sdfOut)
       if smilesOut:
-        smi = Chem.MolToSmiles(m, options.chiralSmiles)
+        smi = Chem.MolToSmiles(m, args.chiralSmiles)
       if smilesOut:
-        print('%s %s' % (smi, str(row[1])), file=smilesOut)
+        print('%(s)s %(s)s' % (smi, str(row[1])), file=smilesOut)
       row = curs.fetchone()
-  if not options.silent:
+  if not args.silent:
     logger.info('Done!')
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
 import os
-from optparse import OptionParser
-parser = OptionParser(_usage, version='%prog ' + _version)
-parser.add_option(
+import argparse
+
+parser = argparse.ArgumentParser(usage)
+parser.add_argument('-v', '--version', action='version', version='0.14.0')
+
+parser.add_argument(
   '--dbDir', default='/db/camm/CURRENT/rdk_db',
-  help='name of the directory containing the database information. The default is %default')
-parser.add_option('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
-parser.add_option('--molIdName', default='compound_id', help='name of the database key column')
-parser.add_option('--regName', default='molecules', help='name of the molecular registry table')
-parser.add_option('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
-parser.add_option('--pairTableName', default='atompairs', help='name of the atom pairs table')
-parser.add_option('--pairColName', default='atompairfp', help='name of the atom pair column')
-parser.add_option(
+  help='name of the directory containing the database information. The default is %(default)s')
+parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
+parser.add_argument('--molIdName', default='compound_id', help='name of the database key column')
+parser.add_argument('--regName', default='molecules', help='name of the molecular registry table')
+parser.add_argument('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
+parser.add_argument('--pairTableName', default='atompairs', help='name of the atom pairs table')
+parser.add_argument('--pairColName', default='atompairfp', help='name of the atom pair column')
+parser.add_argument(
   '--torsionsDbName', default='AtomPairs.sqlt',
   help='name of the topological torsions database (usually the same as the atom pairs database)')
-parser.add_option(
+parser.add_argument(
   '--torsionsTableName', default='atompairs',
   help='name of the topological torsions table (usually the same as the atom pairs table)')
-parser.add_option('--torsionsColName', default='torsionfp', help='name of the atom pair column')
-parser.add_option('--fpDbName', default='Fingerprints.sqlt',
+parser.add_argument('--torsionsColName', default='torsionfp', help='name of the atom pair column')
+parser.add_argument('--fpDbName', default='Fingerprints.sqlt',
                   help='name of the 2D fingerprints database')
-parser.add_option('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
-parser.add_option('--layeredTableName', default='layeredfps',
+parser.add_argument('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
+parser.add_argument('--layeredTableName', default='layeredfps',
                   help='name of the layered fingerprints table')
-parser.add_option('--fpColName', default='',
+parser.add_argument('--fpColName', default='',
                   help='name of the 2D fingerprint column, a sensible default is used')
-parser.add_option('--descrDbName', default='Descriptors.sqlt',
+parser.add_argument('--descrDbName', default='Descriptors.sqlt',
                   help='name of the descriptor database')
-parser.add_option('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
-parser.add_option('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
+parser.add_argument('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
+parser.add_argument('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
                                                                    'DbCLI', 'moe_like.dsc'),
                   help='name of the file containing the descriptor calculator')
-parser.add_option('--outputDelim', default=',',
-                  help='the delimiter for the output file. The default is %default')
-parser.add_option(
-  '--topN', default=20, type='int',
-  help='the number of neighbors to keep for each query compound. The default is %default')
+parser.add_argument('--outputDelim', default=',',
+                  help='the delimiter for the output file. The default is %(default)s')
+parser.add_argument(
+  '--topN', default=20, type=int,
+  help='the number of neighbors to keep for each query compound. The default is %(default)s')
 
-parser.add_option('--outF', '--outFile', default='-',
+parser.add_argument('--outF', '--outFile', default='-',
                   help='The name of the output file. The default is the console (stdout).')
 
-parser.add_option(
+parser.add_argument(
   '--transpose', default=False, action="store_true",
   help='print the results out in a transposed form: e.g. neighbors in rows and probe compounds in columns')
 
-parser.add_option('--molFormat', default='sdf', choices=('smiles', 'sdf'),
+parser.add_argument('--molFormat', default='sdf', choices=('smiles', 'sdf'),
                   help='specify the format of the input file')
-parser.add_option(
+parser.add_argument(
   '--nameProp', default='_Name',
   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
 
-parser.add_option('--smartsQuery', '--smarts', '--sma', default='',
+parser.add_argument('--smartsQuery', '--smarts', '--sma', default='',
                   help='provide a SMARTS to be used as a substructure query')
-parser.add_option('--smilesQuery', '--smiles', '--smi', default='',
+parser.add_argument('--smilesQuery', '--smiles', '--smi', default='',
                   help='provide a SMILES to be used as a substructure query')
-parser.add_option('--negateQuery', '--negate', default=False, action='store_true',
+parser.add_argument('--negateQuery', '--negate', default=False, action='store_true',
                   help='negate the results of the smarts query.')
-parser.add_option('--propQuery', '--query', '-q', default='',
+parser.add_argument('--propQuery', '--query', '-q', default='',
                   help='provide a property query (see the NOTE about property names)')
 
-parser.add_option('--sdfOut', '--sdOut', default='',
+parser.add_argument('--sdfOut', '--sdOut', default='',
                   help='export an SD file with the matching molecules')
-parser.add_option('--smilesOut', '--smiOut', default='',
+parser.add_argument('--smilesOut', '--smiOut', default='',
                   help='export a smiles file with the matching molecules')
-parser.add_option('--nonchiralSmiles', dest='chiralSmiles', default=True, action='store_false',
+parser.add_argument('--nonchiralSmiles', dest='chiralSmiles', default=True, action='store_false',
                   help='do not use chiral SMILES in the output')
-parser.add_option('--silent', default=False, action='store_true',
+parser.add_argument('--silent', default=False, action='store_true',
                   help='Do not generate status messages.')
 
-parser.add_option('--zipMols', '--zip', default=False, action='store_true',
+parser.add_argument('--zipMols', '--zip', default=False, action='store_true',
                   help='read compressed mols from the database')
 
-parser.add_option('--pharm2DTableName', default='pharm2dfps',
+parser.add_argument('--pharm2DTableName', default='pharm2dfps',
                   help='name of the Pharm2D fingerprints table')
-parser.add_option('--fdefFile', '--fdef',
+parser.add_argument('--fdefFile', '--fdef',
                   default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
                   help='provide the name of the fdef file to use for 2d pharmacophores')
-parser.add_option('--gobbi2DTableName', default='gobbi2dfps',
+parser.add_argument('--gobbi2DTableName', default='gobbi2dfps',
                   help='name of the Gobbi2D fingerprints table')
 
-parser.add_option(
+parser.add_argument(
   '--similarityType', '--simType', '--sim', default='RDK', choices=supportedSimilarityMethods,
-  help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Avalon, Morgan. The default is %default')
-parser.add_option('--morganFpDbName', default='Fingerprints.sqlt',
+  help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Avalon, Morgan. The default is %(default)s')
+parser.add_argument('--morganFpDbName', default='Fingerprints.sqlt',
                   help='name of the morgan fingerprints database')
-parser.add_option('--morganFpTableName', default='morganfps',
+parser.add_argument('--morganFpTableName', default='morganfps',
                   help='name of the morgan fingerprints table')
-parser.add_option('--morganFpColName', default='morganfp',
+parser.add_argument('--morganFpColName', default='morganfp',
                   help='name of the morgan fingerprint column')
 
-parser.add_option(
+parser.add_argument(
   '--similarityMetric', '--simMetric', '--metric', default='',
   choices=('tanimoto', 'dice', 'tversky', ''),
   help='Choose the type of similarity to use, possible values: tanimoto, dice, tversky. The default is determined by the fingerprint type')
-parser.add_option('--tverskyA', default=0.5, type='float', help='Tversky A value')
-parser.add_option('--tverskyB', default=0.5, type='float', help='Tversky B value')
-parser.add_option(
-  '--simThresh', default=-1, type='float',
+parser.add_argument('--tverskyA', default=0.5, type=float, help='Tversky A value')
+parser.add_argument('--tverskyB', default=0.5, type=float, help='Tversky B value')
+parser.add_argument(
+  '--simThresh', default=-1, type=float,
   help='threshold to use for similarity searching. If provided, this supersedes the topN argument')
 
 if __name__ == '__main__':
   import sys, getopt, time
 
-  options, args = parser.parse_args()
-  if len(args) != 1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
+  args, args = parser.parse_args()
+  if len(args) != 1 and not (args.smilesQuery or args.smartsQuery or args.propQuery):
     parser.error('please either provide a query filename argument or do a data or smarts query')
 
   if len(args):
     queryFilename = args[0]
   else:
     queryFilename = None
-  options.queryMol = None
-  RunSearch(options, queryFilename)
+  args.queryMol = None
+  RunSearch(args, queryFilename)
