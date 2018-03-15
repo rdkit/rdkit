@@ -438,7 +438,7 @@ def CreateDb(options, dataFilename='', supplier=None):
 if __name__ == '__main__':
   options = parser.parse_args()
   if options.loadMols:
-    if len(options) != 1:
+    if len(vars(options)) != 1:
       parser.error('please provide a filename argument')
     dataFilename = args.filename
   
