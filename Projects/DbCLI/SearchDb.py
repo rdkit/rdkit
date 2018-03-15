@@ -450,7 +450,7 @@ def RunSearch(options, queryFilename):
         if outF:
           print(nbrTxt, file=outF)
     else:
-      labels = ['%s%ssSimilarity' % (x[1], options.outputDelim) for x in ks]
+      labels = ['%s%sSimilarity' % (x[1], options.outputDelim) for x in ks]
       if outF:
         print(options.outputDelim.join(labels), file=outF)
       for i in range(options.topN):
@@ -520,6 +520,7 @@ import argparse
 parser = argparse.ArgumentParser(usage)
 parser.add_argument('-v', '--version', action='version', version='0.14.0')
 
+parser.add_argument('filename')
 parser.add_argument(
   '--dbDir', default='/db/camm/CURRENT/rdk_db',
   help='name of the directory containing the database information. The default is %(default)s')
@@ -625,7 +626,7 @@ if __name__ == '__main__':
     parser.error('please either provide a query filename argument or do a data or smarts query')
 
   if len(options):
-    queryFilename = options[0]
+    queryFilename = args.filename
   else:
     queryFilename = None
   options.queryMol = None
