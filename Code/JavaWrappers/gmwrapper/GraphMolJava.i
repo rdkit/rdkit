@@ -208,6 +208,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../ExplicitBitVect.i"
 %include "../Fingerprints.i"
 %include "../MorganFingerprints.i"
+%include "../ReactionFingerprints.i"
 %include "../Rings.i"
 %include "../transforms.i"
 %include "../DistGeom.i"
