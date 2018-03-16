@@ -4930,150 +4930,151 @@ void testGithub1689() {
     }
     TEST_ASSERT(ok);
   }
+}
 
-  void testWedgeBondToDoublebond() {
-    BOOST_LOG(rdInfoLog) << "Test wedged bonds to double bonds " << std::endl;
-    std::string rdbase = getenv("RDBASE");
-    rdbase += "/Code/GraphMol/FileParsers/test_data/";
-    {  // a second report that came in
-      std::string fName = rdbase + "wedged_single_to_double_bond.mol";
-      bool sanitize = false, removeHs = false;
-      ROMol *m = MolFileToMol(fName, sanitize, removeHs);
-      TEST_ASSERT(m);
-      TEST_ASSERT(m->getNumAtoms() == 49);
-      TEST_ASSERT(m->getNumBonds() == 51);
-      delete m;
-    }
-    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+void testWedgeBondToDoublebond() {
+  BOOST_LOG(rdInfoLog) << "Test wedged bonds to double bonds " << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // a second report that came in
+    std::string fName = rdbase + "wedged_single_to_double_bond.mol";
+    bool sanitize = false, removeHs = false;
+    ROMol *m = MolFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 49);
+    TEST_ASSERT(m->getNumBonds() == 51);
+    delete m;
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
-  void RunTests() {
+void RunTests() {
 #if 1
-    test1();
-    test2();
-    test4();
-    test5();
-    test6();
-    testIssue145();
-    testIssue148();
-    test7();
-    test8();
-    testIssue180();
-    testIssue264();
-    testIssue399();
-    testMolFileChgLines();
-    testDblBondStereochem();
-    testSymmetricDblBondStereochem();
-    testRingDblBondStereochem();
-    testMolFileRGroups();
-    testMolFileDegreeQueries();
-    testMolFileRBCQueries();
-    testMolFileUnsaturationQueries();
-    testMolFileQueryToSmarts();
-    testMissingFiles();
-    testIssue1965035();
-    testRadicals();
-    testBadBondOrders();
-    testAtomParity();
-    testIssue2692246();
-    testKekulizationSkip();
-    testMolFileAtomValues();
-    testMolFileAtomQueries();
-    testListsAndValues();
-    // testCrash();
-    test1V3K();
-    testIssue2963522();
-    testIssue3073163();
-    testIssue3154208();
-    testIssue3228150();
-    testIssue3313540();
-    testIssue3359739();
-    testIssue3374639();
-    testThreeCoordinateChirality();
-    testIssue3375647();
-    testIssue3375684();
-    testChiralPhosphorous();
-    testIssue3392107();
-    testIssue3432136();
-    testIssue3477283();
-    testIssue3484552();
-    testIssue3514824();
-    testIssue3525799();
-    testSkipLines();
-    testIssue269();
-    testMolFileChiralFlag();
-    testMolFileTotalValence();
-    testGithub88();
-    testGithub82();
-    testMolFileWithHs();
-    testMolFileWithRxn();
-    testGithub166();
-    testZBO();
+  test1();
+  test2();
+  test4();
+  test5();
+  test6();
+  testIssue145();
+  testIssue148();
+  test7();
+  test8();
+  testIssue180();
+  testIssue264();
+  testIssue399();
+  testMolFileChgLines();
+  testDblBondStereochem();
+  testSymmetricDblBondStereochem();
+  testRingDblBondStereochem();
+  testMolFileRGroups();
+  testMolFileDegreeQueries();
+  testMolFileRBCQueries();
+  testMolFileUnsaturationQueries();
+  testMolFileQueryToSmarts();
+  testMissingFiles();
+  testIssue1965035();
+  testRadicals();
+  testBadBondOrders();
+  testAtomParity();
+  testIssue2692246();
+  testKekulizationSkip();
+  testMolFileAtomValues();
+  testMolFileAtomQueries();
+  testListsAndValues();
+  // testCrash();
+  test1V3K();
+  testIssue2963522();
+  testIssue3073163();
+  testIssue3154208();
+  testIssue3228150();
+  testIssue3313540();
+  testIssue3359739();
+  testIssue3374639();
+  testThreeCoordinateChirality();
+  testIssue3375647();
+  testIssue3375684();
+  testChiralPhosphorous();
+  testIssue3392107();
+  testIssue3432136();
+  testIssue3477283();
+  testIssue3484552();
+  testIssue3514824();
+  testIssue3525799();
+  testSkipLines();
+  testIssue269();
+  testMolFileChiralFlag();
+  testMolFileTotalValence();
+  testGithub88();
+  testGithub82();
+  testMolFileWithHs();
+  testMolFileWithRxn();
+  testGithub166();
+  testZBO();
 
-    testGithub164();
-    testGithub194();
-    testGithub196();
-    testIssue3557675();
-    test3V3K();
-    test2V3K();
-    testGithub191();
-    testGithub210();
-    testPDBResidues();
-    testGithub337();
-    testGithub360();
-    testGithub741();
-    testGithub188();
-    testRCSBSdf();
-    testParseCHG();
-    testMDLAtomProps();
-    testSupplementalSmilesLabel();
-    testGithub1023();
-    testGithub1049();
-    testPDBFile();
-    testSequences();
+  testGithub164();
+  testGithub194();
+  testGithub196();
+  testIssue3557675();
+  test3V3K();
+  test2V3K();
+  testGithub191();
+  testGithub210();
+  testPDBResidues();
+  testGithub337();
+  testGithub360();
+  testGithub741();
+  testGithub188();
+  testRCSBSdf();
+  testParseCHG();
+  testMDLAtomProps();
+  testSupplementalSmilesLabel();
+  testGithub1023();
+  testGithub1049();
+  testPDBFile();
+  testSequences();
 
-    // testSequenceReaders();
+  // testSequenceReaders();
 
-    testMolFileDativeBonds();
-    testGithub1251();
+  testMolFileDativeBonds();
+  testGithub1251();
 #endif
-    testGithub1034();
-    testGithub1029();
-    testGithub1340();
-    testGithub1689();
-    testWedgeBondToDoublebond();
+  testGithub1034();
+  testGithub1029();
+  testGithub1340();
+  testGithub1689();
+  testWedgeBondToDoublebond();
+}
+
+// must be in German Locale for test...
+void testLocaleSwitcher() {
+  float d = -1.0;
+  char buffer[1024];
+  sprintf(buffer, "%0.2f", d);
+  if (std::string(buffer) != "-1,00") {
+    BOOST_LOG(rdInfoLog) << " ---- no German locale support (skipping) ---- "
+                         << std::endl;
+    return;
   }
 
-  // must be in German Locale for test...
-  void testLocaleSwitcher() {
-    float d = -1.0;
-    char buffer[1024];
+  {
+    RDKit::Utils::LocaleSwitcher ls;
     sprintf(buffer, "%0.2f", d);
-    if (std::string(buffer) != "-1,00") {
-      BOOST_LOG(rdInfoLog) << " ---- no German locale support (skipping) ---- "
-                           << std::endl;
-      return;
-    }
-
+    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
+    // test locale switcher recursion
     {
       RDKit::Utils::LocaleSwitcher ls;
       sprintf(buffer, "%0.2f", d);
       CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-      // test locale switcher recursion
-      {
-        RDKit::Utils::LocaleSwitcher ls;
-        sprintf(buffer, "%0.2f", d);
-        CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-      }
-      // should still be in the "C" variant
-      sprintf(buffer, "%0.2f", d);
-      CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
     }
-
-    // Should be back in German Locale
+    // should still be in the "C" variant
     sprintf(buffer, "%0.2f", d);
-    CHECK_INVARIANT(std::string(buffer) == "-1,00", "Locale Switcher Fail");
+    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
   }
+
+  // Should be back in German Locale
+  sprintf(buffer, "%0.2f", d);
+  CHECK_INVARIANT(std::string(buffer) == "-1,00", "Locale Switcher Fail");
+}
 
 #ifdef RDK_TEST_MULTITHREADED
 
@@ -5081,53 +5082,49 @@ void testGithub1689() {
 #include <boost/thread.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-  namespace {
-  void runblock() { testLocaleSwitcher(); }
-  }
-  void testMultiThreadedSwitcher() {
-    BOOST_LOG(rdErrorLog) << "-------------------------------------"
-                          << std::endl;
-    BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
-                          << std::endl;
+namespace {
+void runblock() { testLocaleSwitcher(); }
+}
+void testMultiThreadedSwitcher() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
+                        << std::endl;
 
-    boost::thread_group tg;
-    unsigned int count = 100;
-    for (unsigned int i = 0; i < count; ++i) {
-      tg.add_thread(new boost::thread(runblock));
-    }
-    tg.join_all();
-    BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
-    BOOST_LOG(rdErrorLog) << "-------------------------------------"
-                          << std::endl;
+  boost::thread_group tg;
+  unsigned int count = 100;
+  for (unsigned int i = 0; i < count; ++i) {
+    tg.add_thread(new boost::thread(runblock));
   }
+  tg.join_all();
+  BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+}
 
 #else
 
-  void testMultiThreadedSwitcher() {
-    BOOST_LOG(rdErrorLog) << "-------------------------------------"
-                          << std::endl;
-    BOOST_LOG(rdInfoLog) << " ---- Multithreaded tests disabled ---- "
-                         << std::endl;
-  }
+void testMultiThreadedSwitcher() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " ---- Multithreaded tests disabled ---- "
+                       << std::endl;
+}
 #endif
 
-  int main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
-    //  std::locale::global(std::locale("de_DE.UTF-8"));
+int main(int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  //  std::locale::global(std::locale("de_DE.UTF-8"));
 
-    RDLog::InitLogs();
-    BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- "
-                         << std::endl;
-    RunTests();  // run with C locale
+  RDLog::InitLogs();
+  BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
+  RunTests();  // run with C locale
 
-    BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- "
-                         << std::endl;
-    setlocale(LC_ALL, "de_DE.UTF-8");
-    std::cout << setlocale(LC_ALL, NULL) << std::endl;
-    testLocaleSwitcher();  // must be the last test
-    testMultiThreadedSwitcher();
-    RunTests();
+  BOOST_LOG(rdInfoLog) << " ---- Running with German locale ----- "
+                       << std::endl;
+  setlocale(LC_ALL, "de_DE.UTF-8");
+  std::cout << setlocale(LC_ALL, NULL) << std::endl;
+  testLocaleSwitcher();  // must be the last test
+  testMultiThreadedSwitcher();
+  RunTests();
 
-    return 0;
-  }
+  return 0;
+}

@@ -1744,8 +1744,7 @@ bool isBondCandidateForStereo(const Bond *bond, const ROMol &mol) {
       shouldDetectDoubleBondStereo(bond)) {
     return true;
   }
-}
-return false;
+  return false;
 }
 }  // end of anonymous namespace
 
