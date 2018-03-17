@@ -105,7 +105,7 @@ double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double b
                         bool ignoreHs) {
   const Conformer &conf1 = mol1.getConformer(confId1);
   const Conformer &conf2 = mol2.getConformer(confId2);
-  return tverskyIndex(conf1, conf2, alpha, beta, gridSpacing = 0.5, bitsPerPoint,
+  return tverskyIndex(conf1, conf2, alpha, beta, gridSpacing, bitsPerPoint,
                           vdwScale, stepSize, maxLayers, ignoreHs);
 }
 
