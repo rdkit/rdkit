@@ -19,7 +19,7 @@ class Point3D;
 //! calculate the tversky index between the shapes encoded on two grids
 /*!
 
-   tanimoto(S1,S2) =  | S1&S2 | / ( alpha * ( | S1 | - | S1&S2 | ) + beta * ( | S2 | - | S1&S2 | )  + | S1&S2 | )
+   tversky(S1,S2) =  | S1&S2 | / ( alpha * ( | S1 | - | S1&S2 | ) + beta * ( | S2 | - | S1&S2 | )  + | S1&S2 | )
 
 */
 
