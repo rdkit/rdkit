@@ -155,6 +155,8 @@ struct uGrid3D_wrapper {
     python::def("WriteGridToFile", writeGridToFile,
                 "Write the grid to a grid file");
 
+    python::def("TverskyIndex", tverskyIndex<UniformGrid3D>,
+                "Compute the tversky index between two grid objects"); 
     python::def("TanimotoDistance", tanimotoDistance<UniformGrid3D>,
                 "Compute the tanimoto distance between two grid objects");
     python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,

@@ -52,6 +52,8 @@ void test2Compare() {
 
   double dist = MolShapes::tanimotoDistance(*m, *mdup);
   CHECK_INVARIANT(dist == 0.0, "");
+  dist = MolShapes::tverskyIndex(*m, *mdup, 1.0, 1.0);
+  CHECK_INVARIANT(dist == 1.0, "");
 
   delete m;
   delete mdup;
@@ -64,6 +66,8 @@ void test2Compare() {
   CHECK_INVARIANT(rmsd >= 0.0, "");
   dist = MolShapes::tanimotoDistance(*m, *m2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.2813), "");
+  dist = MolShapes::tverskyIndex(*m, *m2, 1.0, 1.0);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.7187), "");
   delete m2;
 
   m2 = MolFileToMol(fname2);
