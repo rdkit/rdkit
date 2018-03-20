@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -124,6 +123,11 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
 }
 
 namespace RDKit {
+
+const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
+                                                            PatternFP);
+const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
+                                                            2048, AtomPairFP);
 
 SparseIntVect<boost::uint32_t> *generateFingerprintChemReactionAsCountVect(
     const ChemicalReaction &rxn, unsigned int fpSize, FingerprintType t,
