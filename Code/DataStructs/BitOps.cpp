@@ -197,48 +197,41 @@ int NumOnBitsInCommon(const T1& bv1, const T2& bv2) {
   return static_cast<int>(OnBitsInCommon(bv1, bv2).size());
 }
 
-
+namespace {
 struct bitset_impl {
   std::vector<unsigned long> m_bits;
   std::size_t m_num_bits;
 };
 
-int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
-#ifdef USE_BUILTIN_POPCOUNT
-  // Don't try this at home, we (think we) know what we're doing
-  if (sizeof(boost::dynamic_bitset<>) == sizeof(bitset_impl)) {
-    const bitset_impl *p1 = (const bitset_impl*)(const void*)bv1.dp_bits;
-    const bitset_impl *p2 = (const bitset_impl*)(const void*)bv2.dp_bits;
-    // Run-time sanity check (just in case)
-    if (p1->m_num_bits == bv1.dp_bits->size() &&
-        p2->m_num_bits == bv2.dp_bits->size()) {
-      unsigned int blocks = (unsigned int)p1->m_bits.size();
-      unsigned int temp = (unsigned int)p2->m_bits.size();
-      if (temp < blocks) blocks = temp;
-
-      // use pointers to avoid bounds checking
-      // std::vector::data() is c++11
-      const unsigned long *fp1 = &p1->m_bits[0];
-      const unsigned long *fp2 = &p2->m_bits[0];
-      unsigned int result = 0;
-      for (unsigned int i=0; i<blocks; i++) {
-        unsigned long x = fp1[i] & fp2[i];
-#ifdef __GNUC__
-        result += __builtin_popcountl(x);
-#elif _MSC_VER
-#ifdef _WIN64
-        result += __popcnt64(x);
-#else
-        result += __popcnt(x);
-#endif
-#else
-        result += popcountl(x);
-#endif
-      }
-      return (int)result;
-    }
+bool canUseBitmapHack(){
+  return sizeof(boost::dynamic_bitset<>) == sizeof(bitset_impl);
+}
+bool EBVToBitmap(const ExplicitBitVect &bv,const unsigned char *&fp, unsigned int &nBytes){
+  if(!canUseBitmapHack()) return false;
+  const bitset_impl *p1 = (const bitset_impl*)(const void*)bv.dp_bits;
+  // Run-time sanity check (just in case)
+  if(p1->m_num_bits != bv.dp_bits->size()){
+    return false;
   }
-#endif
+  fp=(const unsigned char *)p1->m_bits.data();
+  nBytes = (unsigned int)p1->m_num_bits / 8;
+  if(p1->m_num_bits%8) ++nBytes;
+  return true;
+}
+} //end of local namespace
+
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp, const unsigned char* bfp,
+                          unsigned int nBytes);
+
+int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
+  // Don't try this at home, we (hope we) know what we're doing
+  const unsigned char *afp, *bfp;
+  unsigned int nBytes;
+  if (EBVToBitmap(bv1,afp,nBytes) && EBVToBitmap(bv2,bfp,nBytes)) {
+    unsigned int result = CalcBitmapNumBitsInCommon(afp,bfp,nBytes);
+    return (int)result;
+  }
+
   return static_cast<int>(((*bv1.dp_bits) & (*bv2.dp_bits)).count());
 }
 
@@ -873,6 +866,29 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
 #endif
   return popcount;
 }
+
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp, const unsigned char* bfp,
+                          unsigned int nBytes) {
+  PRECONDITION(afp, "no afp");
+  PRECONDITION(bfp, "no bfp");
+  unsigned int intersect_popcount = 0;
+#ifndef USE_BUILTIN_POPCOUNT
+  for (unsigned int i = 0; i < nBytes; i++) {
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+  }
+#else
+  BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
+  for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
+    intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
+                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+  }
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+  }
+#endif
+  return intersect_popcount;
+}
+
 double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
                           unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
