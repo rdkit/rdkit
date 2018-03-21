@@ -21,6 +21,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#if _MSC_VER
+#include <intrin.h>
+#endif
+
 using namespace RDKit;
 
 int getBitId(const char*& text, int format, int size, int curr) {
