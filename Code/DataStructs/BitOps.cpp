@@ -193,7 +193,48 @@ int NumOnBitsInCommon(const T1& bv1, const T2& bv2) {
   return static_cast<int>(OnBitsInCommon(bv1, bv2).size());
 }
 
+
+struct bitset_impl {
+  std::vector<unsigned long> m_bits;
+  std::size_t m_num_bits;
+};
+
 int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
+#ifdef USE_BUILTIN_POPCOUNT
+  // Don't try this at home, we (think we) know what we're doing
+  if (sizeof(boost::dynamic_bitset<>) == sizeof(bitset_impl)) {
+    const bitset_impl *p1 = (const bitset_impl*)(const void*)bv1.dp_bits;
+    const bitset_impl *p2 = (const bitset_impl*)(const void*)bv2.dp_bits;
+    // Run-time sanity check (just in case)
+    if (p1->m_num_bits == bv1.dp_bits->size() &&
+        p2->m_num_bits == bv2.dp_bits->size()) {
+      unsigned int blocks = (unsigned int)p1->m_bits.size();
+      unsigned int temp = (unsigned int)p2->m_bits.size();
+      if (temp < blocks) blocks = temp;
+
+      // use pointers to avoid bounds checking
+      // std::vector::data() is c++11
+      const unsigned long *fp1 = &p1->m_bits[0];
+      const unsigned long *fp2 = &p2->m_bits[0];
+      unsigned int result = 0;
+      for (unsigned int i=0; i<blocks; i++) {
+        unsigned long x = fp1[i] & fp2[i];
+#ifdef __GNUC__
+        result += __builtin_popcountl(x);
+#elif _MSC_VER
+#ifdef _WIN64
+        result += __popcnt64(x);
+#else
+        result += __popcnt(x);
+#endif
+#else
+        result += popcountl(x);
+#endif
+      }
+      return (int)result;
+    }
+  }
+#endif
   return static_cast<int>(((*bv1.dp_bits) & (*bv2.dp_bits)).count());
 }
 
@@ -216,13 +257,10 @@ template <typename T1, typename T2>
 double TanimotoSimilarity(const T1& bv1, const T2& bv2) {
   if (bv1.getNumBits() != bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
-  double x = NumOnBitsInCommon(bv1, bv2);
-  double y = bv1.getNumOnBits();
-  double z = bv2.getNumOnBits();
-  if ((y + z - x) == 0.0)
-    return 1.0;
-  else
-    return x / (y + z - x);
+  unsigned int total = bv1.getNumOnBits() + bv2.getNumOnBits();
+  if (total == 0) return 1.0;
+  unsigned int common = NumOnBitsInCommon(bv1, bv2);
+  return (double)common / (double)(total-common);
 }
 
 template <typename T1, typename T2>

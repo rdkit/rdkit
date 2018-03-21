@@ -39,6 +39,9 @@ enum EEndian {
 // parameter (could sizeof be used?).
 template <class T, unsigned int size>
 inline T SwapBytes(T value) {
+  if (size < 2)
+    return value;
+
   union {
     T value;
     char bytes[size];
@@ -46,9 +49,8 @@ inline T SwapBytes(T value) {
 
   in.value = value;
 
-  for (unsigned int i = 0; i < size / 2; ++i) {
+  for (unsigned int i = 0; i < size; ++i) {
     out.bytes[i] = in.bytes[size - 1 - i];
-    out.bytes[size - 1 - i] = in.bytes[i];
   }
 
   return out.value;
