@@ -630,7 +630,7 @@ void testReplaceCore() {
   TEST_ASSERT(mol1);
 
   delete matcher1;
-  sma = "[*]C1CC([*])C1";
+  sma = "*C1CC(*)C1";
   matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
 
@@ -716,10 +716,10 @@ void testReplaceCore2() {
        "[3*]C.[4*]CC"},
 
       {"CNOC", "CONC", false, true, false, false, ""},
-      {"PCNOCS", "CONC", false, true, false, false, "[*]S.[3*]P"},
+      {"PCNOCS", "CONC", false, true, false, false, "*S.[3*]P"},
       {"PCNOCS", "CONC", false, false, false, false, "[1*]S.[2*]P"},
 
-      {"PCONCS", "CONC", false, true, false, false, "[*]P.[3*]S"},
+      {"PCONCS", "CONC", false, true, false, false, "*P.[3*]S"},
       {"PCONCS", "CONC", false, false, false, false, "[1*]P.[2*]S"}
 
   };

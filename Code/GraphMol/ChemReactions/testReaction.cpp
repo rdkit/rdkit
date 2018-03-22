@@ -1474,7 +1474,7 @@ void test15Issue1882749() {
       << "Testing sf.net Issue 1882749: property handling in products."
       << std::endl;
 
-  smi = "[N:1]-!@[*]>>[N;+1,+0:1][#0]";
+  smi = "[N:1]-!@*>>[N;+1,+0:1][#0]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1484,7 +1484,7 @@ void test15Issue1882749() {
   TEST_ASSERT(nError == 0);
 
   delete rxn;
-  smi = "[N:1]-!@[*]>>[N;-1:1]";
+  smi = "[N:1]-!@*>>[N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1507,7 +1507,7 @@ void test15Issue1882749() {
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge() == -1);
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[N;H1:1]";
+  smi = "[N;D3:1]-!@*>>[N;H1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1523,7 +1523,7 @@ void test15Issue1882749() {
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumExplicitHs() == 1);
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[15N:1]";
+  smi = "[N;D3:1]-!@*>>[15N:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1543,7 +1543,7 @@ void test15Issue1882749() {
   TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(0)->getMass(), 15.0001));
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[15N;-1:1]";
+  smi = "[N;D3:1]-!@*>>[15N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -2105,7 +2105,7 @@ void test19Issue2050085() {
       << "Testing sf.net Issue 2050085: recap failing on chiral molecules."
       << std::endl;
 
-  smi = "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[*][*:1].[*:2][*]";
+  smi = "[N;!D1;+0](-!@[*:1])-!@[*:2]>>*[*:1].[*:2]*";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);

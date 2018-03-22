@@ -181,10 +181,10 @@ void testRingMatching() {
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
 
 const char *ringDataRes2[3] = {
-    "Core:[*]1[*][*][*:1](C[*:2])[*]1 R1:[H]c1oc([H])c([*:1])c1[H] R2:Cl[*:2]",
-    "Core:[*]1[*][*][*:1](C[*:2])[*]1 R1:[H]c1c([*:1])c([H])n([H])c1[H] "
+    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1oc([H])c([*:1])c1[H] R2:Cl[*:2]",
+    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1c([*:1])c([H])n([H])c1[H] "
     "R2:I[*:2]",
-    "Core:[*]1[*][*][*:1](C[*:2])[*]1 R1:[H]c1sc([H])c([*:1])c1[H] R2:F[*:2]"};
+    "Core:*1**[*:1](C[*:2])*1 R1:[H]c1sc([H])c([*:1])c1[H] R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -325,7 +325,7 @@ void testGithub1550() {
 
   decomp.process();
   RGroupColumns groups = decomp.getRGroupsAsColumns();
-  
+
   RWMol *coreRes = (RWMol *)groups["Core"][0].get();
   TEST_ASSERT(coreRes->getNumAtoms() == 14);
   MolOps::Kekulize(*coreRes);
@@ -409,7 +409,7 @@ void testGitHubIssue1705() {
 
   TEST_ASSERT(ss.str() == "Rgroup===Core\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nOc1ccc([*:2])cc1[*:1]\nRgroup===R1\n[H][*:1]\nF[*:1]\nF[*:1]\nF[*:1]\nCl[*:1]\nRgroup===R2\n[H][*:2]\n[H][*:2]\n[H][*:2]\n[H]N([H])[*:2]\n[H][*:2]\n");
 
-  
+
 }
 
 
@@ -432,7 +432,7 @@ int main() {
   testRemoveHs();
 
   testGitHubIssue1705();
-  
+
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

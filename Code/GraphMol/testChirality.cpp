@@ -2137,7 +2137,7 @@ void testGithub553() {
   }
 
   {
-    std::string smi = "[*][C@H]([*:2])[*:3]";
+    std::string smi = "*[C@H]([*:2])[*:3]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2178,7 +2178,7 @@ void testGithub803() {
                        << std::endl;
 
   {
-    std::string smi = "[*][C@H]([9*])[8*]";
+    std::string smi = "*[C@H]([9*])[8*]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2192,12 +2192,12 @@ void testGithub803() {
     TEST_ASSERT(cip == "S");
 
     smi = MolToSmiles(*m, true);
-    TEST_ASSERT(smi == "[*][C@@H]([8*])[9*]");
+    TEST_ASSERT(smi == "*[C@@H]([8*])[9*]");
 
     delete m;
   }
   {
-    std::string smi = "[*][C@H]([15*])[9*]";
+    std::string smi = "*[C@H]([15*])[9*]";
     ROMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
@@ -2211,7 +2211,7 @@ void testGithub803() {
     TEST_ASSERT(cip == "S");
 
     smi = MolToSmiles(*m, true);
-    TEST_ASSERT(smi == "[*][C@@H]([9*])[15*]");
+    TEST_ASSERT(smi == "*[C@@H]([9*])[15*]");
 
     delete m;
   }
@@ -2487,7 +2487,7 @@ void testIssue1735() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-  
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");

@@ -69,7 +69,7 @@ FTYPE_CYCLIC_ACYCLIC = 'cyclic_and_acyclic'
 # Global SMARTS used by the program
 
 # acyclic bond smarts
-ACYC_SMARTS = Chem.MolFromSmarts("[*]!@!=!#[*]")
+ACYC_SMARTS = Chem.MolFromSmarts("*!@!=!#*")
 # exocyclic/fused exocyclic bond smarts
 CYC_SMARTS = Chem.MolFromSmarts("[R1,R2]@[r;!R1]")
 
@@ -86,7 +86,7 @@ def delete_bonds(mol, bonds, ftype, hac):
   """ Fragment molecule on bonds and reduce to fraggle fragmentation SMILES.
   If none exists, returns None """
 
-  # Replace the given bonds with attachment points (B1-B2 -> B1-[*].[*]-B2)
+  # Replace the given bonds with attachment points (B1-B2 -> B1-*.*-B2)
   bondIdx = [mol.GetBondBetweenAtoms(*bond).GetIdx() for bond in bonds]
   modifiedMol = Chem.FragmentOnBonds(mol, bondIdx, dummyLabels=[(0, 0)] * len(bondIdx))
 
@@ -188,22 +188,22 @@ def generate_fraggle_fragmentation(mol, verbose=False):
     >>> fragments = generate_fraggle_fragmentation(q)
     >>> fragments = sorted(['.'.join(sorted(s.split('.'))) for s in fragments])
     >>> fragments
-     ['[*]C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
-      '[*]C(=O)c1cncc(C)c1.[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
-      '[*]C(=O)c1cncc(C)c1.[*]Cc1cc(OC)c2ccccc2c1OC',
-      '[*]C(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC',
-      '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
-      '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1',
-      '[*]Cc1cc(OC)c2ccccc2c1OC.[*]NC(=O)c1cncc(C)c1',
-      '[*]Cc1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1',
-      '[*]N1CCC(NC(=O)c2cncc(C)c2)CC1.[*]c1cc(OC)c2ccccc2c1OC',
-      '[*]NC(=O)c1cncc(C)c1.[*]c1cc(OC)c2ccccc2c1OC',
-      '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
-      '[*]NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.[*]c1cncc(C)c1',
-      '[*]c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12',
-      '[*]c1c(OC)cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c1[*]',
-      '[*]c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12',
-      '[*]c1cc(OC)c2ccccc2c1OC.[*]c1cncc(C)c1']
+     ['*C(=O)NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '*C(=O)c1cncc(C)c1.*C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '*C(=O)c1cncc(C)c1.*Cc1cc(OC)c2ccccc2c1OC',
+      '*C(=O)c1cncc(C)c1.*c1cc(OC)c2ccccc2c1OC',
+      '*C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '*C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.*c1cncc(C)c1',
+      '*Cc1cc(OC)c2ccccc2c1OC.*NC(=O)c1cncc(C)c1',
+      '*Cc1cc(OC)c2ccccc2c1OC.*c1cncc(C)c1',
+      '*N1CCC(NC(=O)c2cncc(C)c2)CC1.*c1cc(OC)c2ccccc2c1OC',
+      '*NC(=O)c1cncc(C)c1.*c1cc(OC)c2ccccc2c1OC',
+      '*NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1',
+      '*NC1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1.*c1cncc(C)c1',
+      '*c1c(CN2CCC(NC(=O)c3cncc(C)c3)CC2)cc(OC)c2ccccc12',
+      '*c1c(OC)cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c1*',
+      '*c1cc(CN2CCC(NC(=O)c3cncc(C)c3)CC2)c(OC)c2ccccc12',
+      '*c1cc(OC)c2ccccc2c1OC.*c1cncc(C)c1']
   """
   # query mol heavy atom count
   hac = mol.GetNumAtoms()
@@ -359,21 +359,21 @@ def GetFraggleSimilarity(queryMol, refMol, tverskyThresh=0.8):
     >>> sim
     0.980...
     >>> match
-    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
+    '*C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
 
     >>> m = Chem.MolFromSmiles('COc1cc(CN2CCC(Nc3nc4ccccc4s3)CC2)c(OC)c2ccccc12')
     >>> sim,match = GetFraggleSimilarity(q,m)
     >>> sim
     0.794...
     >>> match
-    '[*]C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
+    '*C1CCN(Cc2cc(OC)c3ccccc3c2OC)CC1'
 
     >>> q = Chem.MolFromSmiles('COc1ccccc1')
     >>> sim,match = GetFraggleSimilarity(q,m)
     >>> sim
     0.347...
     >>> match
-    '[*]c1ccccc1'
+    '*c1ccccc1'
 
     """
   if hasattr(queryMol, '_fraggleDecomp'):

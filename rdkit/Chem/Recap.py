@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -43,16 +43,15 @@ For example:
 >>> res
 <...Chem.Recap.RecapHierarchyNode object at ...>
 >>> sorted(res.children.keys())
-['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1-c1...cc(OC)c...1', '[*]c1ccccc1OC1CC1']
+['*C1CC1', '*c1ccc(OC)cn1', '*c1ccccc1-c1ccc(OC)cn1', '*c1ccccc1OC1CC1']
 >>> sorted(res.GetAllChildren().keys())
-['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1-c1...cc(OC)c...1', '[*]c1ccccc1OC1CC1', '[*]c1ccccc1[*]']
-
+['*C1CC1', '*c1ccc(OC)cn1', '*c1ccccc1*', '*c1ccccc1-c1ccc(OC)cn1', '*c1ccccc1OC1CC1']
 
 To get the standard set of RECAP results, use GetLeaves():
 >>> leaves=res.GetLeaves()
 >>> sorted(leaves.keys())
-['[*]C1CC1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1[*]']
->>> leaf = leaves['[*]C1CC1']
+['*C1CC1', '*c1ccc(OC)cn1', '*c1ccccc1*']
+>>> leaf = leaves['*C1CC1']
 >>> leaf.mol
 <...Chem.rdchem.Mol object at ...>
 
@@ -66,21 +65,21 @@ from rdkit.six import iterkeys, iteritems, next
 
 # These are the definitions that will be applied to fragment molecules:
 reactionDefs = (
-  "[#7;+0;D2,D3:1]!@C(!@=O)!@[#7;+0;D2,D3:2]>>[*][#7:1].[#7:2][*]",  # urea
-  "[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]>>[*][C:1]=[O:2].[*][#7:3]",  # amide
-  "[C:1](=!@[O:2])!@[O;+0:3]>>[*][C:1]=[O:2].[O:3][*]",  # ester
-  "[N;!D1;+0;!$(N-C=[#7,#8,#15,#16])](-!@[*:1])-!@[*:2]>>[*][*:1].[*:2][*]",  # amines
-  #"[N;!D1](!@[*:1])!@[*:2]>>[*][*:1].[*:2][*]", # amines
+  "[#7;+0;D2,D3:1]!@C(!@=O)!@[#7;+0;D2,D3:2]>>*[#7:1].[#7:2]*",  # urea
+  "[C;!$(C([#7])[#7]):1](=!@[O:2])!@[#7;+0;!D1:3]>>*[C:1]=[O:2].*[#7:3]",  # amide
+  "[C:1](=!@[O:2])!@[O;+0:3]>>*[C:1]=[O:2].[O:3]*",  # ester
+  "[N;!D1;+0;!$(N-C=[#7,#8,#15,#16])](-!@[*:1])-!@[*:2]>>*[*:1].[*:2]*",  # amines
+  #"[N;!D1](!@[*:1])!@[*:2]>>*[*:1].[*:2]*", # amines
 
   # again: what about aromatics?
-  "[#7;R;D3;+0:1]-!@[*:2]>>[*][#7:1].[*:2][*]",  # cyclic amines
-  "[#6:1]-!@[O;+0]-!@[#6:2]>>[#6:1][*].[*][#6:2]",  # ether
-  "[C:1]=!@[C:2]>>[C:1][*].[*][C:2]",  # olefin
-  "[n;+0:1]-!@[C:2]>>[n:1][*].[C:2][*]",  # aromatic nitrogen - aliphatic carbon
-  "[O:3]=[C:4]-@[N;+0:1]-!@[C:2]>>[O:3]=[C:4]-[N:1][*].[C:2][*]",  # lactam nitrogen - aliphatic carbon
-  "[c:1]-!@[c:2]>>[c:1][*].[*][c:2]",  # aromatic carbon - aromatic carbon
-  "[n;+0:1]-!@[c:2]>>[n:1][*].[*][c:2]",  # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
-  "[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]>>[#7:1][*].[*][S:2](=[O:3])=[O:4]",  # sulphonamide
+  "[#7;R;D3;+0:1]-!@[*:2]>>*[#7:1].[*:2]*",  # cyclic amines
+  "[#6:1]-!@[O;+0]-!@[#6:2]>>[#6:1]*.*[#6:2]",  # ether
+  "[C:1]=!@[C:2]>>[C:1]*.*[C:2]",  # olefin
+  "[n;+0:1]-!@[C:2]>>[n:1]*.[C:2]*",  # aromatic nitrogen - aliphatic carbon
+  "[O:3]=[C:4]-@[N;+0:1]-!@[C:2]>>[O:3]=[C:4]-[N:1]*.[C:2]*",  # lactam nitrogen - aliphatic carbon
+  "[c:1]-!@[c:2]>>[c:1]*.*[c:2]",  # aromatic carbon - aromatic carbon
+  "[n;+0:1]-!@[c:2]>>[n:1]*.*[c:2]",  # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
+  "[#7;+0;D2,D3:1]-!@[S:2](=[O:3])=[O:4]>>[#7:1]*.*[S:2](=[O:3])=[O:4]",  # sulphonamide
 )
 
 reactions = tuple([Reactions.ReactionFromSmarts(x) for x in reactionDefs])
@@ -190,7 +189,7 @@ def RecapDecompose(mol, allNodes=None, minFragmentSize=0, onlyUseReactions=None)
                 break
             # don't forget after replacing dummy atoms to remove any empty
             # branches:
-            elif pSmi.replace('[*]', '').replace('()', '') in ('', 'C', 'CC', 'CCC'):
+            elif pSmi.replace('*', '').replace('()', '') in ('', 'C', 'CC', 'CCC'):
               seqOk = False
               break
             prod.pSmi = pSmi
@@ -248,8 +247,8 @@ if __name__ == '__main__':
       self.assertTrue(len(res.children.keys()) == 2)
       # we get two more nodes from that:
       self.assertTrue(len(allNodes.keys()) == 5)
-      self.assertTrue('[*]c1ccccc1OC' in allNodes)
-      self.assertTrue('[*]c1ccccc1' in allNodes)
+      self.assertTrue('*c1ccccc1OC' in allNodes)
+      self.assertTrue('*c1ccccc1' in allNodes)
 
       m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncccc1')
       res = RecapDecompose(m, allNodes=allNodes)
@@ -263,9 +262,9 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertFalse('[*]C([*])[*]' in ks)
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]C([*])Oc1ccccc1' in ks)
+      self.assertFalse('*C(*)*' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*C(*)Oc1ccccc1' in ks)
 
     def testSFNetIssue1804418(self):
       m = Chem.MolFromSmiles('C1CCCCN1CCCC')
@@ -273,8 +272,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]N1CCCCC1' in ks)
-      self.assertTrue('[*]CCCC' in ks)
+      self.assertTrue('*N1CCCCC1' in ks)
+      self.assertTrue('*CCCC' in ks)
 
     def testMinFragmentSize(self):
       m = Chem.MolFromSmiles('CCCOCCC')
@@ -285,7 +284,7 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 1)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]CCC' in ks)
+      self.assertTrue('*CCC' in ks)
 
       m = Chem.MolFromSmiles('CCCOCC')
       res = RecapDecompose(m, minFragmentSize=3)
@@ -297,9 +296,9 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]CCC' in ks)
+      self.assertTrue('*CCC' in ks)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]CCOC' in ks)
+      self.assertTrue('*CCOC' in ks)
 
     def testAmideRxn(self):
       m = Chem.MolFromSmiles('C1CC1C(=O)NC1OC1')
@@ -307,24 +306,24 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C(=O)C1CC1' in ks)
-      self.assertTrue('[*]NC1CO1' in ks)
+      self.assertTrue('*C(=O)C1CC1' in ks)
+      self.assertTrue('*NC1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)N(C)C1OC1')
       res = RecapDecompose(m, onlyUseReactions=[1])
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C(=O)C1CC1' in ks)
-      self.assertTrue('[*]N(C)C1CO1' in ks)
+      self.assertTrue('*C(=O)C1CC1' in ks)
+      self.assertTrue('*N(C)C1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)n1cccc1')
       res = RecapDecompose(m, onlyUseReactions=[1])
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C(=O)C1CC1' in ks)
-      self.assertTrue('[*]n1cccc1' in ks)
+      self.assertTrue('*C(=O)C1CC1' in ks)
+      self.assertTrue('*n1cccc1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)CC1OC1')
       res = RecapDecompose(m, onlyUseReactions=[1])
@@ -359,8 +358,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C(=O)C1CC1' in ks)
-      self.assertTrue('[*]OC1CO1' in ks)
+      self.assertTrue('*C(=O)C1CC1' in ks)
+      self.assertTrue('*OC1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)CC1OC1')
       res = RecapDecompose(m, onlyUseReactions=[2])
@@ -378,16 +377,16 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]NC1CC1' in ks)
-      self.assertTrue('[*]NC1CO1' in ks)
+      self.assertTrue('*NC1CC1' in ks)
+      self.assertTrue('*NC1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1NC(=O)N(C)C1OC1')
       res = RecapDecompose(m, onlyUseReactions=[0])
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]NC1CC1' in ks)
-      self.assertTrue('[*]N(C)C1CO1' in ks)
+      self.assertTrue('*NC1CC1' in ks)
+      self.assertTrue('*N(C)C1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CCNC(=O)NC1C')
       res = RecapDecompose(m, onlyUseReactions=[0])
@@ -399,15 +398,15 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]n1cccc1' in ks)
-      self.assertTrue('[*]NC1CO1' in ks)
+      self.assertTrue('*n1cccc1' in ks)
+      self.assertTrue('*NC1CO1' in ks)
 
       m = Chem.MolFromSmiles('c1cccn1C(=O)n1c(C)ccc1')
       res = RecapDecompose(m, onlyUseReactions=[0])
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]n1cccc1C' in ks)
+      self.assertTrue('*n1cccc1C' in ks)
 
     def testAmineRxn(self):
       m = Chem.MolFromSmiles('C1CC1N(C1NC1)C1OC1')
@@ -415,44 +414,44 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 3)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C1CC1' in ks)
-      self.assertTrue('[*]C1CO1' in ks)
-      self.assertTrue('[*]C1CN1' in ks)
+      self.assertTrue('*C1CC1' in ks)
+      self.assertTrue('*C1CO1' in ks)
+      self.assertTrue('*C1CN1' in ks)
 
       m = Chem.MolFromSmiles('c1ccccc1N(C1NC1)C1OC1')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 3)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]C1CO1' in ks)
-      self.assertTrue('[*]C1CN1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*C1CO1' in ks)
+      self.assertTrue('*C1CN1' in ks)
 
       m = Chem.MolFromSmiles('c1ccccc1N(c1ncccc1)C1OC1')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 3)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]c1ccccn1' in ks)
-      self.assertTrue('[*]C1CO1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*c1ccccn1' in ks)
+      self.assertTrue('*C1CO1' in ks)
 
       m = Chem.MolFromSmiles('c1ccccc1N(c1ncccc1)c1ccco1')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 3)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]c1ccccn1' in ks)
-      self.assertTrue('[*]c1ccco1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*c1ccccn1' in ks)
+      self.assertTrue('*c1ccco1' in ks)
 
       m = Chem.MolFromSmiles('C1CCCCN1C1CC1')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]N1CCCCC1' in ks)
-      self.assertTrue('[*]C1CC1' in ks)
+      self.assertTrue('*N1CCCCC1' in ks)
+      self.assertTrue('*C1CC1' in ks)
 
       m = Chem.MolFromSmiles('C1CCC2N1CC2')
       res = RecapDecompose(m)
@@ -465,8 +464,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]C1CC1' in ks)
-      self.assertTrue('[*]C1CO1' in ks)
+      self.assertTrue('*C1CC1' in ks)
+      self.assertTrue('*C1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CCCCO1')
       res = RecapDecompose(m)
@@ -478,16 +477,16 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]C1CO1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*C1CO1' in ks)
 
       m = Chem.MolFromSmiles('c1ccccc1Oc1ncccc1')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]c1ccccn1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*c1ccccn1' in ks)
 
     def testOlefinRxn(self):
       m = Chem.MolFromSmiles('ClC=CBr')
@@ -495,8 +494,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]CCl' in ks)
-      self.assertTrue('[*]CBr' in ks)
+      self.assertTrue('*CCl' in ks)
+      self.assertTrue('*CBr' in ks)
 
       m = Chem.MolFromSmiles('C1CC=CC1')
       res = RecapDecompose(m)
@@ -509,8 +508,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]n1cccc1' in ks)
-      self.assertTrue('[*]CCCC' in ks)
+      self.assertTrue('*n1cccc1' in ks)
+      self.assertTrue('*CCCC' in ks)
 
       m = Chem.MolFromSmiles('c1ccc2n1CCCC2')
       res = RecapDecompose(m)
@@ -523,8 +522,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]N1CCC1=O' in ks)
-      self.assertTrue('[*]CCCC' in ks)
+      self.assertTrue('*N1CCC1=O' in ks)
+      self.assertTrue('*CCCC' in ks)
 
       m = Chem.MolFromSmiles('O=C1CC2N1CCCC2')
       res = RecapDecompose(m)
@@ -537,8 +536,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]c1ccccc1' in ks)
-      self.assertTrue('[*]c1ccccn1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
+      self.assertTrue('*c1ccccn1' in ks)
 
       m = Chem.MolFromSmiles('c1ccccc1C1CC1')
       res = RecapDecompose(m)
@@ -551,8 +550,8 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]n1cccc1' in ks)
-      self.assertTrue('[*]c1ccccc1' in ks)
+      self.assertTrue('*n1cccc1' in ks)
+      self.assertTrue('*c1ccccc1' in ks)
 
     def testSulfonamideRxn(self):
       m = Chem.MolFromSmiles('CCCNS(=O)(=O)CC')
@@ -560,16 +559,16 @@ if __name__ == '__main__':
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]NCCC' in ks)
-      self.assertTrue('[*]S(=O)(=O)CC' in ks)
+      self.assertTrue('*NCCC' in ks)
+      self.assertTrue('*S(=O)(=O)CC' in ks)
 
       m = Chem.MolFromSmiles('c1cccn1S(=O)(=O)CC')
       res = RecapDecompose(m)
       self.assertTrue(res)
       self.assertTrue(len(res.GetLeaves()) == 2)
       ks = res.GetLeaves().keys()
-      self.assertTrue('[*]n1cccc1' in ks)
-      self.assertTrue('[*]S(=O)(=O)CC' in ks)
+      self.assertTrue('*n1cccc1' in ks)
+      self.assertTrue('*S(=O)(=O)CC' in ks)
 
       m = Chem.MolFromSmiles('C1CNS(=O)(=O)CC1')
       res = RecapDecompose(m)

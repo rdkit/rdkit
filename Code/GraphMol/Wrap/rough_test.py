@@ -3171,7 +3171,7 @@ CAS<~>
     self.assertEqual(frags, ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18),
                              (8, 9, 10, 17)))
     smi = Chem.MolToSmiles(nm, True)
-    self.assertEqual(smi, '[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
+    self.assertEqual(smi, '*C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
 
     nm = Chem.FragmentOnBonds(m, bs, dummyLabels=labels)
     frags = Chem.GetMolFrags(nm)
@@ -4343,14 +4343,14 @@ CAS<~>
     self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name,'S')
 
   def testGithub1366(self):
-    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.MolFromSmiles('*C*')
     mol = Chem.RWMol(mol)
     ats = iter(mol.GetAtoms())
     atom = next(ats)
     mol.RemoveAtom(atom.GetIdx())
     self.assertRaises(RuntimeError,next,ats)
 
-    mol = Chem.MolFromSmiles('[*]C[*]')
+    mol = Chem.MolFromSmiles('*C*')
     mol = Chem.RWMol(mol)
     bonds = iter(mol.GetBonds())
     bond = next(bonds)

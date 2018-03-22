@@ -123,12 +123,12 @@ class TestCase(unittest.TestCase):
       ('Br[C@](N)(C)O',    'O[C@](Br)(C)N'),
 
       # examples with attachment points every toolkit agrees on
-      ('[*][C@@H](C)N',    '[C@H]([*])(C)N'),
-      ('[*][C@@](F)(C)N',  '[C@@]([*])(F)(C)N'),
+      ('*[C@@H](C)N',    '[C@H](*)(C)N'),
+      ('*[C@@](F)(C)N',  '[C@@](*)(F)(C)N'),
 
       # examples from Dalke 2017 UGM talk
-      ('[*][C@](N)(O)S', '[C@]([*])(N)(O)S'),
-      ('[*][C@H](O)S',   '[C@@H]([*])(O)S'),
+      ('*[C@](N)(O)S', '[C@](*)(N)(O)S'),
+      ('*[C@H](O)S',   '[C@@H](*)(O)S'),
       ('[*:1][C@]1([*:2])CC1(Cl)Cl', '[C@]([*:1])1([*:2])CC1(Cl)Cl'), # RDKit used to parse these as different isomers, and ChemAxon removes this stereochemistry entirely
 
       # example from Dalke report here: https://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg05296.html
@@ -146,12 +146,12 @@ class TestCase(unittest.TestCase):
       ('Cl[C@]1(c2ccccc2)NCCCS1',    '[C@](Cl)1(c2ccccc2)NCCCS1'),
       ('Cl3.[C@]31(c2ccccc2)NCCCS1', '[C@](Cl)1(c2ccccc2)NCCCS1'),
       ('Cl[C@](F)1C2C(C1)CNC2',      '[C@](Cl)(F)1C2C(C1)CNC2'),
-      ('[*][C@@H]1CO1',              '[C@H]([*])1CO1'),     # with hydrogen property
-      ('[*][C@@]1(C)CCO1',           '[C@@]([*])1(C)CCO1'), # without hydrogen property
+      ('*[C@@H]1CO1',              '[C@H](*)1CO1'),     # with hydrogen property
+      ('*[C@@]1(C)CCO1',           '[C@@](*)1(C)CCO1'), # without hydrogen property
       ('F[C@@]1(C)CCO1',             '[C@@](F)1(C)CCO1'),   # with a real atom to be sure
 
       # bridge-head ring case, RDKit already agreed with all the other toolkits on this case
-      ('[*][C@@]12CNC[C@H]1C2',   '[C@@]([*])12CNC[C@H]1C2'),
+      ('*[C@@]12CNC[C@H]1C2',   '[C@@](*)12CNC[C@H]1C2'),
 
       # ring cases from https://github.com/rdkit/rdkit/commit/a2fe13f85a89cd66903ca63edeec0f99b61e8185#diff-6c7d3f98ef92f3b9cfd041f772c442f9R29
       ('C1CN[C@](O)(N)1',  'C1CN[C@]1(O)(N)'), # all toolkits agree

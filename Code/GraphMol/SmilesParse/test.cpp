@@ -2807,10 +2807,10 @@ void testBug3525799() {
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     m->getAtomWithIdx(2)->setProp(common_properties::dummyLabel, "foo");
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     delete m;
   }
 
@@ -2820,7 +2820,7 @@ void testBug3525799() {
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m, true);
-    TEST_ASSERT(smiles == "[*]CC");
+    TEST_ASSERT(smiles == "*CC");
     m->getAtomWithIdx(2)->setProp(common_properties::smilesSymbol, "Xa");
     smiles = MolToSmiles(*m, true);
     TEST_ASSERT(smiles == "[Xa]CC");
