@@ -6553,6 +6553,29 @@ void testCustomAromaticity() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithubIssue1730() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue "
+                          "#1730: setAromaticity() should work even if "
+                          "there are aromatic atoms present"
+                       << std::endl;
+  {
+    std::string smiles = "C1=CC=CC=C1-c2ccccc2";
+    RWMol *m = SmilesToMol(smiles, 0, false);
+    m->updatePropertyCache();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == false);
+    TEST_ASSERT(m->getBondWithIdx(6)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(6)->getIsAromatic() == true);
+    MolOps::setAromaticity(*m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic() == true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 void testKekulizeErrorReporting() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing error reporting for kekulization"
@@ -7065,6 +7088,7 @@ int main() {
   testKekulizeErrorReporting();
   testGithubIssue868();
   testSimpleAromaticity();
+  testGithubIssue1730();
   testCustomAromaticity();
   testGithubIssue908();
   testGithubIssue962();
