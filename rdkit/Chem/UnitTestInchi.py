@@ -46,7 +46,7 @@ from rdkit.Chem import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem import INCHI_AVAILABLE
 if INCHI_AVAILABLE:
   from rdkit.Chem import InchiReadWriteError
-  from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey
+  from rdkit.Chem import MolToInchi, MolFromInchi, InchiToInchiKey, MolToInchiKey
 
 COLOR_RED = '\033[31m'
 COLOR_GREEN = '\033[32m'
@@ -261,6 +261,13 @@ class TestCase(unittest.TestCase):
   def test3InchiKey(self):
     inchi = 'InChI=1S/C9H12/c1-2-6-9-7-4-3-5-8-9/h3-5,7-8H,2,6H2,1H3'
     self.assertEqual(InchiToInchiKey(inchi), 'ODLMAHJVESYWTB-UHFFFAOYSA-N')
+
+  def test4MolToInchiKey(self):
+    m = MolFromSmiles("CC=C(N)C")
+    inchi = MolToInchi(m)
+    k1 = InchiToInchiKey(inchi)
+    k2 = MolToInchiKey(m)
+    self.assertEqual(k1,k2)
 
 
 if __name__ == '__main__':  # pragma: nocover

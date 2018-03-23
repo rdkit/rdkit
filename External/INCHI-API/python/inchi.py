@@ -161,6 +161,17 @@ def InchiToInchiKey(inchi):
   else:
     return None
 
+def MolToInchiKey(mol, options=""):
+  """Returns the standard InChI key for a molecule
+
+    Returns:
+    the standard InChI key returned by InChI API for the input molecule
+    """
+  return rdinchi.MolToInchiKey(mol,options)
+
+
+
+
 
 __all__ = ['MolToInchiAndAuxInfo', 'MolToInchi', 'MolFromInchi', 'InchiReadWriteError',
-           'InchiToInchiKey', 'INCHI_AVAILABLE']
+           'InchiToInchiKey', 'MolToInchiKey', 'INCHI_AVAILABLE']

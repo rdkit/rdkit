@@ -40,6 +40,8 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
       TEST_ASSERT(inchi == inchis[i]);
       std::string key = InchiToInchiKey(inchi);
       TEST_ASSERT(key == keys[i]);
+      std::string key2 = MolToInchiKey(*mol);
+      TEST_ASSERT(key2 == keys[i]);
       ROMol *mol2 = InchiToMol(inchi, tmp);
       TEST_ASSERT(mol2);
       ExtraInchiReturnValues tmp2;

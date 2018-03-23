@@ -100,5 +100,21 @@ BOOST_PYTHON_MODULE(rdinchi) {
                      (boost::python::arg("inchi")),
                      docString.c_str()
                     );
-}
+  docString = "return the InChI key for a ROMol molecule.\n\
+\n\
+  Arguments:\n\
+    - mol: the molecule to use.\n\
+    - options: the InChI generation options.\n\
+      Options should be prefixed with either a - or a /\n\
+      Available options are explained in the InChI technical FAQ:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14\n\
+      and the User Guide:\n\
+      http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf\n\
+  Returns: the InChI key\n";
+  boost::python::def("MolToInchiKey", RDKit::MolToInchiKey,
+                     (boost::python::arg("mol"),
+                      boost::python::arg("options")=""),
+                     docString.c_str()
+                     );
 
+}
