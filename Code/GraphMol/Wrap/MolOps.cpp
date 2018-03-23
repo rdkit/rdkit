@@ -493,9 +493,9 @@ python::tuple GetMolFragsWithMapping(
       res.append(python::tuple(tpl));
     }
   } else {
-    std::vector<std::vector<int>> fragsMolAtomMappingVec;
+    std::vector<std::vector<int> > fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
-    std::vector<boost::shared_ptr<ROMol>> molFrags;
+    std::vector<boost::shared_ptr<ROMol> > molFrags;
     python::list &fragsList = reinterpret_cast<python::list &>(frags);
     python::list &fragsMolAtomMappingList =
         reinterpret_cast<python::list &>(fragsMolAtomMapping);
