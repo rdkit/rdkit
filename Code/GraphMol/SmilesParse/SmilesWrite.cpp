@@ -27,7 +27,7 @@
 namespace RDKit {
 
 namespace SmilesWrite {
-const int atomicSmiles[] = {5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
+const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
 bool inOrganicSubset(int atomicNumber) {
   unsigned int idx = 0;
   while (atomicSmiles[idx] < atomicNumber && atomicSmiles[idx] != -1) {
@@ -53,7 +53,8 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
 
   bool needsBracket = false;
   std::string symb;
-  if (!atom->getPropIfPresent(common_properties::smilesSymbol, symb)) {
+  bool hasCustomSymbol = atom->getPropIfPresent(common_properties::smilesSymbol, symb);
+  if (!hasCustomSymbol) {
     symb = PeriodicTable::getTable()->getElementSymbol(num);
   }
 
@@ -90,7 +91,7 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *bondIn,
     int totalValence = atom->getTotalValence();
     bool nonStandard = false;
 
-    if (atom->getNumRadicalElectrons()) {
+    if (hasCustomSymbol || atom->getNumRadicalElectrons()) {
       nonStandard = true;
     } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
                atom->getNumExplicitHs()) {

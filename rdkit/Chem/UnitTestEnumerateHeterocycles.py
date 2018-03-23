@@ -193,8 +193,8 @@ class TestCase(unittest.TestCase):
             ('n1ncccc1', 4),
             ('n1cnccc1', 4),
             ('n1ccncc1', 4),
-            ('c1c([*])[nH]c(=O)[nH]c1=O', 1),
-            ('[*]c1c[nH]c(=O)[nH]c1=O', 1),
+            ('c1c(*)[nH]c(=O)[nH]c1=O', 1),
+            ('*c1c[nH]c(=O)[nH]c1=O', 1),
             ]
 
         smarts_mol = Chem.MolFromSmarts(rxn.SMARTS)

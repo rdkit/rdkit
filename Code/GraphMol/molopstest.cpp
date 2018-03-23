@@ -3136,19 +3136,19 @@ void testSFNetIssue2196817() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     smi = MolToSmiles(*m);
-    TEST_ASSERT(smi == "[*]1cc[*][nH]1");
+    TEST_ASSERT(smi == "*1cc*[nH]1");
     delete m;
     smi = "c1***c1";
     m = SmilesToMol(smi);
     TEST_ASSERT(m);
     smi = MolToSmiles(*m);
-    TEST_ASSERT(smi == "[*]1:[*]cc[*]:1");
+    TEST_ASSERT(smi == "*1:*cc*:1");
     delete m;
     smi = "c:1:*:*:*:*1";
     m = SmilesToMol(smi);
     TEST_ASSERT(m);
     smi = MolToSmiles(*m);
-    TEST_ASSERT(smi == "[*]1:[*]:[*]c[*]:1");
+    TEST_ASSERT(smi == "*1:*:*c*:1");
 
     delete m;
     // we don't kekulize rings that are all dummies, this was github #1478
@@ -3156,7 +3156,7 @@ void testSFNetIssue2196817() {
     m = SmilesToMol(smi);
     TEST_ASSERT(m);
     smi = MolToSmiles(*m);
-    TEST_ASSERT(smi == "[*]1:[*]:[*]:[*]:[*]:1");
+    TEST_ASSERT(smi == "*1:*:*:*:*:1");
     delete m;
   }
 
@@ -3183,7 +3183,7 @@ void testSFNetIssue2196817() {
   }
 
   {
-    std::string smi = "c1ccc(C2CC(n4cc[*]c4=C2))cc1";
+    std::string smi = "c1ccc(C2CC(n4cc*c4=C2))cc1";
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getIsAromatic());
@@ -4693,7 +4693,7 @@ void testRenumberAtoms() {
     ROMol *nm = MolOps::renumberAtoms(*m, nVect);
     delete m;
   }
-  
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 void testGithubIssue141() {
