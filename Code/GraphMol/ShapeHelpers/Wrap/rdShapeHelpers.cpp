@@ -187,6 +187,38 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
       docString.c_str());
 
   docString =
+      "Compute the shape tversky index between two molecule based on a predefined alignment\n\
+  \n\
+  ARGUMENTS:\n\
+    - mol1 : The first molecule of interest \n\
+    - mol2 : The second molecule of interest \n\
+    - alpha : first parameter of the Tversky index\n\
+    - beta : second parameter of the Tversky index\n\
+    - confId1 : Conformer in the first molecule (defaults to first conformer) \n\
+    - confId2 : Conformer in the second molecule (defaults to first conformer) \n\
+    - gridSpacing : resolution of the grid used to encode the molecular shapes \n\
+    - bitsPerPoint : number of bits used to encode the occupancy at each grid point \n\
+                          defaults to two bits per grid point \n\
+    - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
+                used in the encoding - grid points inside this sphere carry the maximum occupancy \n\
+    - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
+                 from layer to layer from the maximum value \n\
+    - maxLayers : the maximum number of layers - defaults to the number of bits \n\
+                  used per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
+
+  python::def(
+      "ShapeTverskyIndex", RDKit::tverskyMolShapes,
+      (python::arg("mol1"), python::arg("mol2"), python::arg("alpha"), python::arg("beta"),
+       python::arg("confId1") = -1,
+       python::arg("confId2") = -1, python::arg("gridSpacing") = 0.5,
+       python::arg("bitsPerPoint") = RDKit::DiscreteValueVect::TWOBITVALUE,
+       python::arg("vdwScale") = 0.8, python::arg("stepSize") = 0.25,
+       python::arg("maxLayers") = -1, python::arg("ignoreHs") = true),
+      docString.c_str());
+
+
+  docString =
       "Compute the shape tanimoto distance between two molecule based on a predefined alignment\n\
   \n\
   ARGUMENTS:\n\
