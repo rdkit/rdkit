@@ -237,7 +237,7 @@ void updateV(unsigned int &v) {
 void sanitizeMol(RWMol &mol) {
   unsigned int opFailed;
   MolOps::sanitizeMol(mol, opFailed, MolOps::SANITIZE_FINDRADICALS |
-                                         MolOps::SANITIZE_SETAROMATICITY |
+                                         //MolOps::SANITIZE_SETAROMATICITY |
                                          MolOps::SANITIZE_ADJUSTHS);
 }
 
