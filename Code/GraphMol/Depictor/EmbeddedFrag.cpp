@@ -1693,11 +1693,11 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   bool endSideFlip = true;
   if (nEndAtomsFixed) {
     endSideFlip = false;
-    // if there are fixed atoms on both sides, just return
-    if (nAtomsFixed > endSideFlip) return;
+    // there are fixed atoms on both sides, just return
+    return;
   } else {
-    int nats = d_eatoms.size();
-    int nEndSide = endSideAids.size();
+    size_t nats = d_eatoms.size();
+    size_t nEndSide = endSideAids.size();
     if ((nats - nEndSide) < nEndSide) {
       endSideFlip = false;
     }

@@ -117,6 +117,7 @@ int countZeros(std::string ta) {
 }
 
 bool IsClose2(double a, double b, unsigned int n) {
+  RDUNUSED_PARAM(n);
   bool isclose = false;
 
   std::string sa, sb;
@@ -156,6 +157,7 @@ bool IsClose2(double a, double b, unsigned int n) {
 }
 
 bool IsClose3(double a, double b, unsigned int n) {
+  RDUNUSED_PARAM(n);
   bool isclose = false;
   std::string sa, sb;
   std::string ta, tb;

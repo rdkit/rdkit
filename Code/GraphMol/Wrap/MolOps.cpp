@@ -475,9 +475,10 @@ PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   return PyArray_Return(res);
 }
 
-python::tuple GetMolFragsWithMapping(const ROMol &mol,
-  bool asMols, bool sanitizeFrags, python::object frags = python::object(),
-  python::object fragsMolAtomMapping = python::object()) {
+python::tuple GetMolFragsWithMapping(
+    const ROMol &mol, bool asMols, bool sanitizeFrags,
+    python::object frags = python::object(),
+    python::object fragsMolAtomMapping = python::object()) {
   python::list res;
 
   if (!asMols) {
@@ -496,13 +497,16 @@ python::tuple GetMolFragsWithMapping(const ROMol &mol,
     std::vector<int> fragsVec;
     std::vector<boost::shared_ptr<ROMol> > molFrags;
     python::list &fragsList = reinterpret_cast<python::list &>(frags);
-    python::list &fragsMolAtomMappingList = reinterpret_cast<python::list &>(fragsMolAtomMapping);
+    python::list &fragsMolAtomMappingList =
+        reinterpret_cast<python::list &>(fragsMolAtomMapping);
     bool hasFrags = fragsList != python::object();
     bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
-    molFrags = hasFrags || hasFragsMolAtomMapping
-      ? MolOps::getMolFrags(mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
-      hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
-      : MolOps::getMolFrags(mol, sanitizeFrags);
+    molFrags =
+        hasFrags || hasFragsMolAtomMapping
+            ? MolOps::getMolFrags(
+                  mol, sanitizeFrags, hasFrags ? &fragsVec : NULL,
+                  hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : NULL)
+            : MolOps::getMolFrags(mol, sanitizeFrags);
     if (hasFrags) {
       for (unsigned int i = 0; i < fragsVec.size(); ++i)
         fragsList.append(fragsVec[i]);
@@ -515,8 +519,7 @@ python::tuple GetMolFragsWithMapping(const ROMol &mol,
         fragsMolAtomMappingList.append(python::tuple(perFragMolAtomMappingTpl));
       }
     }
-    for (unsigned int i = 0; i < molFrags.size(); ++i)
-      res.append(molFrags[i]);
+    for (unsigned int i = 0; i < molFrags.size(); ++i) res.append(molFrags[i]);
   }
   return python::tuple(res);
 }

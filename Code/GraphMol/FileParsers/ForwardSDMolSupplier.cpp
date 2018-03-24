@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2009-2012 Greg Landrum
+//  Copyright (C) 2009-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -83,10 +82,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         // situation - so ignore such data items for now
         hasProp = true;
         warningIssued = false;
-        tempStr.erase(0, 1);         // remove the first ">" sign
+        tempStr.erase(0, 1);            // remove the first ">" sign
         size_t sl = tempStr.find("<");  // begin datalabel
         size_t se = tempStr.find(">");  // end datalabel
-        if ((sl == std::string::npos) || (se == std::string::npos) || (se == (sl + 1))) {
+        if ((sl == std::string::npos) || (se == std::string::npos) ||
+            (se == (sl + 1))) {
           // we either do not have a data label or the label is emtpy
           // no data label ignore until next data item
           // i.e. until we hit a blank line
@@ -142,14 +142,16 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           throw FileParseException("Problems encountered parsing data fields");
         } else {
           if (!warningIssued) {
-            if (hasProp)
+            if (hasProp){
               BOOST_LOG(rdWarningLog) << "Property <" << dlabel
                                       << "> will be truncated after "
                                       << "the first blank line" << std::endl;
-            else
+            } else {
               BOOST_LOG(rdWarningLog)
                   << "Spurious data before the first property will be "
-                     "ignored" << std::endl;
+                     "ignored"
+                  << std::endl;
+            }
             warningIssued = true;
           }
         }

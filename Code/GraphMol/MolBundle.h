@@ -72,7 +72,7 @@ class MolBundle : public RDProps {
   virtual size_t size() const { return d_mols.size(); };
   //! returns a particular molecule in the bundle
   virtual const boost::shared_ptr<ROMol> getMol(size_t idx) const {
-    if (idx >= d_mols.size()) throw IndexErrorException(idx);
+    if (idx >= d_mols.size()) throw IndexErrorException(static_cast<int>(idx));
     return d_mols[idx];
   };
   //! returns a particular molecule from the bundle

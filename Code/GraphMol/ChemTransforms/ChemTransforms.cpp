@@ -634,7 +634,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
         for (unsigned int i = 0; i < mol2.getNumAtoms(); ++i) {
           conf1->setAtomPos(i + nAtoms1, conf2->getAtomPos(i) + offset);
         }
-      } catch (ConformerException &ce) {
+      } catch (ConformerException &) {
         BOOST_LOG(rdWarningLog) << "combineMols: conformer id "
                                 << conf1->getId() << " not found in mol2";
       }

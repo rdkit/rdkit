@@ -66,8 +66,6 @@ void EvenSamplePairsStrategy::initializeStrategy(const ChemicalReaction &,
 
   /* Initialize random number generator */
   /* Find modulus */
-  PRECONDITION(m_numPermutations >= 0,
-               "Number of permutations too large to Evenly sample");
   for (M = 1; M < rdcast<size_t>(m_numPermutations); M = 2 * M)
     ;
   /* Set factor */
@@ -141,7 +139,7 @@ bool EvenSamplePairsStrategy::try_add(size_t seed) {
     if (used_count[i] == rdcast<boost::int64_t>(rgroups[i])) {
       // complete variable scan => initialize
       if (nslack > min_nslack && rgroups[i] > 1)  // cleared slack on i
-        nslack = min_nslack;
+        nslack = min_nslack;  
 
       used_count[i] = 0;
       for (size_t j = 0; j < rgroups[i]; ++j) {

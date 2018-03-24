@@ -137,7 +137,7 @@ void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
                              magicVal);
   }
 }
-void CompleteMolQueries(RWMol *mol, int magicVal = -0xDEADBEEF) {
+void CompleteMolQueries(RWMol *mol, int magicVal = 0xDEADBEEF) {
   for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
        ++ai) {
     if ((*ai)->hasQuery()) {
@@ -569,7 +569,7 @@ void ParseRingBondCountLine(RWMol *mol, const std::string &text,
             q->setVal(0);
             break;
           case -2:
-            q->setVal(-0xDEADBEEF);
+            q->setVal(0xDEADBEEF);
             mol->setProp(common_properties::_NeedsQueryScan, 1);
             break;
           case 1:

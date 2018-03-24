@@ -145,14 +145,14 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
        pathIter != path.end(); ++pathIter) {
     const Bond *bond = mol.getBondWithIdx(*pathIter);
     if (atomsUsed[bond->getBeginAtomIdx()] < 0) {
-      atomsUsed[bond->getBeginAtomIdx()] = atoms.size();
+      atomsUsed[bond->getBeginAtomIdx()] = static_cast<int>(atoms.size());
       atoms.push_back(bond->getBeginAtom());
       pathDegrees.push_back(1);
     } else {
       pathDegrees[atomsUsed[bond->getBeginAtomIdx()]] += 1;
     }
     if (atomsUsed[bond->getEndAtomIdx()] < 0) {
-      atomsUsed[bond->getEndAtomIdx()] = atoms.size();
+      atomsUsed[bond->getEndAtomIdx()] = static_cast<int>(atoms.size());
       atoms.push_back(bond->getEndAtom());
       pathDegrees.push_back(1);
     } else {

@@ -46,8 +46,8 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 // this is the Broto-Moreau 2D descriptors (centered or not)
-void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
-                              std::vector<double>& res) {
+void get2DautocorrelationDesc(double* dist, unsigned int numAtoms,
+                              const ROMol& mol, std::vector<double>& res) {
   std::vector<double> wp = moldata3D.GetRelativePol(mol);
   std::vector<double> wm = moldata3D.GetRelativeMW(mol);
   std::vector<double> wv = moldata3D.GetRelativeVdW(mol);
@@ -88,7 +88,7 @@ void get2DautocorrelationDesc(double* dist, int numAtoms, const ROMol& mol,
 
 
   for (unsigned int k = 0; k < 8; k++) {
-    int maxkVertexPairs = 0;
+    unsigned int maxkVertexPairs = 0;
     for (unsigned int i = 0; i < numAtoms; ++i) {
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
         if (dist[j * numAtoms + i] == k + 1) {
