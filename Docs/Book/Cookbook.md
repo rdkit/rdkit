@@ -115,7 +115,7 @@ The code:
 
 ### Neutralizing Charged Molecules
 
-Mailing list discussion: <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg02648.html>
+Mailing list discussion: <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg02669.html>
 
 The code:
 
