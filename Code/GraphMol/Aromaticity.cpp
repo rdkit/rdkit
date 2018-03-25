@@ -621,18 +621,10 @@ namespace {
 // use minRingSize=0 or maxRingSize=0 to ignore these constraints
 int aromaticityHelper(RWMol &mol, unsigned int minRingSize,
                       unsigned int maxRingSize, bool includeFused) {
-  // FIX: we will assume for now that if the input molecule came
-  // with aromaticity information it is correct and we will not
-  // touch it. Loop through the atoms and check if any atom has
-  // arom stuff set.  We may want check this more carefully later
-  // and start from scratch if necessary
-  ROMol::AtomIterator ai;
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-    if ((*ai)->getIsAromatic()) {
-      // found aromatic info
-      return -1;
-    }
-  }
+  // This function used to check if the input molecule came
+  // with aromaticity information, assumed it is correct and
+  // did not touch it. Now it ignores that information entirely.
+
 
   // first find the all the simple rings in the molecule
   VECT_INT_VECT srings;
