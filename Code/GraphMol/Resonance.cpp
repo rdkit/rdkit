@@ -242,10 +242,8 @@ void updateV(unsigned int &v) {
 // sanitize the resonance structure which has been assembled
 void sanitizeMol(RWMol &mol) {
   unsigned int opFailed;
-  MolOps::sanitizeMol(mol, opFailed,
-                      MolOps::SANITIZE_FINDRADICALS |
-                          MolOps::SANITIZE_SETAROMATICITY |
-                          MolOps::SANITIZE_ADJUSTHS);
+  MolOps::sanitizeMol(
+      mol, opFailed, MolOps::SANITIZE_FINDRADICALS | MolOps::SANITIZE_ADJUSTHS);
 }
 
 // fix the number of explicit and implicit Hs in the
