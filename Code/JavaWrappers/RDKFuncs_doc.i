@@ -94,11 +94,21 @@ public";
 <p>
 Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
 <p>
+Does the CIP stereochemistry assignment for the molecule's atoms
+(R/S) and double bond (Z/E). Chiral atoms will have a property
+'_CIPCode' indicating their chiral code.
 <p>
 @param
-mol 	the molecule of interest
-cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
-force 	forces the calculation to be repeated even if it has already been done
+mol     the molecule to use
+cleanIt whether atoms with a chiral specifier that aren't
+        actually chiral (e.g. atoms with duplicate
+        substituents or only 2 substituents, etc.) will have
+        their chiral code set to CHI_UNSPECIFIED. Bonds with
+        STEREOCIS/STEREOTRANS specified that have duplicate
+        substituents based upon the CIP atom ranks will be
+        marked STEREONONE.
+force   causes the calculation to be repeated even if it has
+        already been done
 <p>
 @notes
 <li>Throughout we assume that we're working with a hydrogen-suppressed graph.
