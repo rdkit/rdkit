@@ -830,7 +830,7 @@ void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf = NULL);
   '_CIPCode' indicating their chiral code.
 
   \param mol     the molecule to use
-  \param cleanIt whether atoms with a chiral specifier that aren't
+  \param cleanIt if true, atoms with a chiral specifier that aren't
                  actually chiral (e.g. atoms with duplicate
                  substituents or only 2 substituents, etc.) will have
                  their chiral code set to CHI_UNSPECIFIED. Bonds with
