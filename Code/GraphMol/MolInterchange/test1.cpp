@@ -249,27 +249,31 @@ void test4() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void test5(){
+void test5() {
   BOOST_LOG(rdInfoLog) << "test5: writing partial charges" << std::endl;
 
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CO"));
     TEST_ASSERT(mol);
-    mol->getAtomWithIdx(0)->setProp(common_properties::_GasteigerCharge,0.5);
-    mol->getAtomWithIdx(1)->setProp(common_properties::_GasteigerCharge,-0.5);
+    mol->getAtomWithIdx(0)->setProp(common_properties::_GasteigerCharge, 0.5);
+    mol->getAtomWithIdx(1)->setProp(common_properties::_GasteigerCharge, -0.5);
 
     auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
     TEST_ASSERT(json.find("partial-charges") != std::string::npos);
     auto newMols = MolInterchange::JSONDataToMols(json);
     TEST_ASSERT(newMols.size() == 1);
-    TEST_ASSERT(newMols[0]->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
-    TEST_ASSERT(feq(newMols[0]->getAtomWithIdx(0)->getProp<double>(common_properties::_GasteigerCharge),0.5));
-    TEST_ASSERT(newMols[0]->getAtomWithIdx(1)->hasProp(common_properties::_GasteigerCharge));
-    TEST_ASSERT(feq(newMols[0]->getAtomWithIdx(1)->getProp<double>(common_properties::_GasteigerCharge),-0.5));
+    TEST_ASSERT(newMols[0]->getAtomWithIdx(0)->hasProp(
+        common_properties::_GasteigerCharge));
+    TEST_ASSERT(feq(newMols[0]->getAtomWithIdx(0)->getProp<double>(
+                        common_properties::_GasteigerCharge),
+                    0.5));
+    TEST_ASSERT(newMols[0]->getAtomWithIdx(1)->hasProp(
+        common_properties::_GasteigerCharge));
+    TEST_ASSERT(feq(newMols[0]->getAtomWithIdx(1)->getProp<double>(
+                        common_properties::_GasteigerCharge),
+                    -0.5));
   }
-
-
 }
 
 void benchmarking() {
@@ -281,7 +285,7 @@ void benchmarking() {
     SmilesMolSupplier suppl(fName);
     std::vector<RWMol *> mols;
     auto smir_t1 = std::chrono::system_clock::now();
-    while (mols.size() < 10000) {
+    while (mols.size() < 20000) {
       mols.push_back(static_cast<RWMol *>(suppl.next()));
     }
     auto smir_t2 = std::chrono::system_clock::now();
