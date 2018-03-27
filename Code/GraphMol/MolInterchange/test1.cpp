@@ -340,6 +340,85 @@ void benchmarking() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void test6() {
+  BOOST_LOG(rdInfoLog) << "testing parse options" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+  rdbase + "/Code/GraphMol/MolInterchange/test_data/test3.json";
+  std::ifstream inStream(fName);
+  if (!inStream || (inStream.bad())) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fName;
+    throw BadFileException(errout.str());
+  }
+  const std::string jsond(std::istreambuf_iterator<char>(inStream),{});
+  {
+    MolInterchange::JSONParseParameters ps;
+    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    TEST_ASSERT(mols.size() == 1);
+    auto m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getNumConformers() == 2);
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 2"));
+    TEST_ASSERT(m->hasProp("prop3"));
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
+  }
+  {
+    MolInterchange::JSONParseParameters ps;
+    ps.parseConformers = false;
+    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    TEST_ASSERT(mols.size() == 1);
+    auto m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getNumConformers() == 0);
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 2"));
+    TEST_ASSERT(m->hasProp("prop3"));
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
+  }
+  {
+    MolInterchange::JSONParseParameters ps;
+    ps.parseConformers = false;
+    ps.parseProperties = false;
+    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    TEST_ASSERT(mols.size() == 1);
+    auto m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getNumConformers() == 0);
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 2")); // we always parse the name
+    TEST_ASSERT(!m->hasProp("prop3"));
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
+  }
+  {
+    MolInterchange::JSONParseParameters ps;
+    ps.parseProperties = false;
+    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    TEST_ASSERT(mols.size() == 1);
+    auto m = mols[0].get();
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 6);
+    TEST_ASSERT(m->getNumBonds() == 5);
+    TEST_ASSERT(m->getNumConformers() == 2);
+    TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                std::string("example 2")); // we always parse the name
+    TEST_ASSERT(!m->hasProp("prop3"));
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
+  }
+BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -347,6 +426,8 @@ void RunTests() {
   test3();
   test4();
   test5();
+  test6();
+
 // benchmarking();
 #endif
   // test2();

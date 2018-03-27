@@ -365,7 +365,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
       readBondStereo(bnd, bondVal, bondDefaults);
     }
   }
-  if (molval.HasMember("conformers")) {
+  if (params.parseConformers && molval.HasMember("conformers")) {
     for (const auto &confVal : molval["conformers"].GetArray()) {
       Conformer *conf = new Conformer(mol->getNumAtoms());
       readConformer(conf, confVal);
@@ -373,7 +373,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
     }
   }
 
-  if (molval.HasMember("properties")) {
+  if (params.parseProperties && molval.HasMember("properties")) {
     for (const auto &propVal : molval["properties"].GetObject()) {
       if (propVal.value.IsInt())
         mol->setProp(propVal.name.GetString(), propVal.value.GetInt());

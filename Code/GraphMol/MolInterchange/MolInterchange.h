@@ -28,6 +28,8 @@ struct JSONParseParameters {
       true; /*! toggles setting the BondType of aromatic bonds to Aromatic */
   bool strictValenceCheck =
       false; /*! toggles doing reasonable valence checks */
+  bool parseProperties = true; /*! toggles extracting molecular properties from the JSON block */
+  bool parseConformers = true; /*! toggles extracting conformers from the JSON block */
 };
 static JSONParseParameters defaultJSONParseParameters;
 

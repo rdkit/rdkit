@@ -54,7 +54,16 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite(
           "strictValenceCheck",
           &RDKit::MolInterchange::JSONParseParameters::strictValenceCheck,
-          "be strict when checking atom valences");
+          "be strict when checking atom valences")
+      .def_readwrite(
+          "parseConformers",
+          &RDKit::MolInterchange::JSONParseParameters::parseConformers,
+          "parse conformers in the JSON")
+      .def_readwrite(
+          "parseProperties",
+          &RDKit::MolInterchange::JSONParseParameters::parseProperties,
+          "parse molecular properties in the JSON")
+          ;
 
   std::string docString;
   docString =
