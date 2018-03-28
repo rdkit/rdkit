@@ -1831,9 +1831,24 @@ ARGUMENTS:\n\
   ARGUMENTS:\n\
 \n\
     - molecule: the molecule to update\n\
+    - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
+
+    docString =
+        "Set the wedging on an individual bond from a molecule.\n\
+   The wedging scheme used is that from Mol files.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - bond: the bond to update\n\
+    - atom ID: the atom from which to do the wedging\n\
+    - conformer: the conformer to use to determine wedge direction\n\
+\n\
+\n";
+    python::def("WedgeBond", WedgeBond, docString.c_str());
+
 
     // ------------------------------------------------------------------------
     docString =
