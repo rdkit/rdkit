@@ -28,8 +28,10 @@ struct JSONParseParameters {
       true; /*! toggles setting the BondType of aromatic bonds to Aromatic */
   bool strictValenceCheck =
       false; /*! toggles doing reasonable valence checks */
-  bool parseProperties = true; /*! toggles extracting molecular properties from the JSON block */
-  bool parseConformers = true; /*! toggles extracting conformers from the JSON block */
+  bool parseProperties =
+      true; /*! toggles extracting molecular properties from the JSON block */
+  bool parseConformers =
+      true; /*! toggles extracting conformers from the JSON block */
 };
 static JSONParseParameters defaultJSONParseParameters;
 
@@ -54,20 +56,18 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
 // \brief returns MolJSON for a set of molecules
 /*!
  *   \param mols  - the molecules to work with
- *   \param name  - the name of the molecule set
  */
 template <typename T>
-std::string MolsToJSONData(const std::vector<T> &mols,
-                           const char *name = "rdkit mols");
+std::string MolsToJSONData(const std::vector<T> &mols);
+
 // \brief returns MolJSON for a molecule
 /*!
  *   \param mol   - the molecule to work with
- *   \param name  - the name of the molecule set
  */
 template <typename T>
-std::string MolToJSONData(const T &mol, const char *name = "rdkit mol") {
+std::string MolToJSONData(const T &mol) {
   std::vector<const T *> ms{&mol};
-  return MolsToJSONData(ms, name);
+  return MolsToJSONData(ms);
 };
 
 }  // end of namespace MolInterchange

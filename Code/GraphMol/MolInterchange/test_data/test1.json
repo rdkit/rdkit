@@ -1,4 +1,4 @@
-{"commonchem": {"version": 10, "name": "example molecules"},
+{"commonchem": {"version": 10 },
  "defaults": {
    "atom": {"z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified", "nrad": 0},
    "bond": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []}

@@ -50,11 +50,8 @@ void initBondDefaults(rj::Value &rjDefaults, rj::Document &document) {
   rjDefaults.AddMember("bo", 1, document.GetAllocator());
   rjDefaults.AddMember("stereo", "unspecified", document.GetAllocator());
 }
-void initHeader(rj::Value &rjHeader, rj::Document &document, const char *nm) {
+void initHeader(rj::Value &rjHeader, rj::Document &document) {
   rjHeader.AddMember("version", currentMolJSONVersion, document.GetAllocator());
-  rj::Value nmv;
-  nmv.SetString(rj::StringRef(nm));
-  rjHeader.AddMember("name", nmv, document.GetAllocator());
 }
 
 void addIntVal(rj::Value &dest, const rj::Value &defaults, const char *tag,
@@ -336,13 +333,13 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
 }  // end of anonymous namespace
 
 template <typename T>
-std::string MolsToJSONData(const std::vector<T> &mols, const char *name) {
+std::string MolsToJSONData(const std::vector<T> &mols) {
   std::string res = "";
   rj::Document doc;
   doc.SetObject();
 
   rj::Value header(rj::kObjectType);
-  initHeader(header, doc, name);
+  initHeader(header, doc);
   doc.AddMember("commonchem", header, doc.GetAllocator());
 
   rj::Value defaults(rj::kObjectType);
@@ -373,14 +370,12 @@ std::string MolsToJSONData(const std::vector<T> &mols, const char *name) {
   return buffer.GetString();
 };
 
-template std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &,
-                                             const char *);
-template std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &,
-                                             const char *);
+template std::string MolsToJSONData<ROMol *>(const std::vector<ROMol *> &);
+template std::string MolsToJSONData<RWMol *>(const std::vector<RWMol *> &);
 template std::string MolsToJSONData<const ROMol *>(
-    const std::vector<const ROMol *> &, const char *);
+    const std::vector<const ROMol *> &);
 template std::string MolsToJSONData<const RWMol *>(
-    const std::vector<const RWMol *> &, const char *);
+    const std::vector<const RWMol *> &);
 
 }  // end of namespace MolInterchange
 }  // end of namespace RDKit

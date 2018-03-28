@@ -33,10 +33,9 @@ python::tuple JSONToMols(const std::string &jsonBlock,
   return python::tuple(result);
 }
 
-std::string MolsToJSON(const python::object &mols,
-                       const std::string &datasetName) {
+std::string MolsToJSON(const python::object &mols) {
   auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
-  return RDKit::MolInterchange::MolsToJSONData(*pymols, datasetName.c_str());
+  return RDKit::MolInterchange::MolsToJSONData(*pymols);
 }
 }
 
@@ -62,8 +61,7 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
       .def_readwrite(
           "parseProperties",
           &RDKit::MolInterchange::JSONParseParameters::parseProperties,
-          "parse molecular properties in the JSON")
-          ;
+          "parse molecular properties in the JSON");
 
   std::string docString;
   docString =
@@ -83,11 +81,9 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
 \n\
     ARGUMENTS:\n\
       - mols: the molecules to work with\n\
-      - datasetName: (optional) the name of the molecule set\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolsToJSON", MolsToJSON,
-              (python::arg("mols"), python::arg("datasetName") = "rdkit mols"),
+  python::def("MolsToJSON", MolsToJSON, (python::arg("mols")),
               docString.c_str());
   docString =
       "Convert JSON to a tuple of molecules\n\

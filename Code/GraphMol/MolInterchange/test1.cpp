@@ -103,8 +103,8 @@ void test1() {
 
   {
     std::string json =
-        "{\"commonchem\": {\"version\": 10, \"name\": \"example "
-        "molecules\"}, \"defaults\": {\"atom\": {\"chg\": 0, \"impHs\": 0, "
+        "{\"commonchem\": {\"version\": 10 },"
+        " \"defaults\": {\"atom\": {\"chg\": 0, \"impHs\": 0, "
         "\"stereo\": \"unspecified\", \"nrad\": 0, \"z\": 6}, "
         "\"bond\": {\"bo\": 1, \"stereo\": \"unspecified\", "
         "\"stereoAtoms\": []}}, \"molecules\": [{\"name\": \"no name\", "
@@ -125,7 +125,7 @@ void test1() {
 
   {
     std::string json =
-        "{\"commonchem\":{\"version\":10,\"name\":\"test2 mols\"},"
+        "{\"commonchem\":{\"version\":10 },"
         "\"defaults\":{\"atom\":{\"z\":6,\"impHs\":3,\"chg\":0,\"nRad\":0,"
         "\"isotope\":0,"
         "\"stereo\":\"unspecified\"},\"bond\":{\"bo\":1,\"stereo\":"
@@ -147,7 +147,7 @@ void roundtripSmi(const char *smi) {
   std::unique_ptr<RWMol> mol(SmilesToMol(smi));
   TEST_ASSERT(mol);
   mol->setProp("_Name", "test mol");
-  auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
+  auto json = MolInterchange::MolToJSONData(*mol);
   std::cerr << json << std::endl;
   std::string smi1 = MolToSmiles(*mol);
   auto newMols = MolInterchange::JSONDataToMols(json);
@@ -169,7 +169,7 @@ void test2() {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
     mol->setProp("_Name", "mol1 name");
-    auto json = MolInterchange::MolToJSONData(*mol, "test2 mols");
+    auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
   }
 #endif
@@ -231,7 +231,7 @@ void test4() {
     mol->setProp("foo_string", "bar");
     mol->setProp("foo_int", 1);
     mol->setProp("foo_double", 1.2);
-    auto json = MolInterchange::MolToJSONData(*mol, "test4 mols");
+    auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
     TEST_ASSERT(json.find("foo_string") != std::string::npos);
     TEST_ASSERT(json.find("foo_int") != std::string::npos);
@@ -296,7 +296,7 @@ void benchmarking() {
       MolOps::Kekulize(*m);
     }
     auto jsonw_t1 = std::chrono::system_clock::now();
-    auto json = MolInterchange::MolsToJSONData(mols, "testset");
+    auto json = MolInterchange::MolsToJSONData(mols);
     auto jsonw_t2 = std::chrono::system_clock::now();
     std::cerr << "json generation took "
               << std::chrono::duration<double>(jsonw_t2 - jsonw_t1).count()
@@ -344,17 +344,17 @@ void test6() {
   BOOST_LOG(rdInfoLog) << "testing parse options" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fName =
-  rdbase + "/Code/GraphMol/MolInterchange/test_data/test3.json";
+      rdbase + "/Code/GraphMol/MolInterchange/test_data/test3.json";
   std::ifstream inStream(fName);
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  const std::string jsond(std::istreambuf_iterator<char>(inStream),{});
+  const std::string jsond(std::istreambuf_iterator<char>(inStream), {});
   {
     MolInterchange::JSONParseParameters ps;
-    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    auto mols = MolInterchange::JSONDataToMols(jsond, ps);
     TEST_ASSERT(mols.size() == 1);
     auto m = mols[0].get();
     TEST_ASSERT(m);
@@ -370,7 +370,7 @@ void test6() {
   {
     MolInterchange::JSONParseParameters ps;
     ps.parseConformers = false;
-    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    auto mols = MolInterchange::JSONDataToMols(jsond, ps);
     TEST_ASSERT(mols.size() == 1);
     auto m = mols[0].get();
     TEST_ASSERT(m);
@@ -387,7 +387,7 @@ void test6() {
     MolInterchange::JSONParseParameters ps;
     ps.parseConformers = false;
     ps.parseProperties = false;
-    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    auto mols = MolInterchange::JSONDataToMols(jsond, ps);
     TEST_ASSERT(mols.size() == 1);
     auto m = mols[0].get();
     TEST_ASSERT(m);
@@ -395,7 +395,7 @@ void test6() {
     TEST_ASSERT(m->getNumBonds() == 5);
     TEST_ASSERT(m->getNumConformers() == 0);
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
-                std::string("example 2")); // we always parse the name
+                std::string("example 2"));  // we always parse the name
     TEST_ASSERT(!m->hasProp("prop3"));
     TEST_ASSERT(
         m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
@@ -403,7 +403,7 @@ void test6() {
   {
     MolInterchange::JSONParseParameters ps;
     ps.parseProperties = false;
-    auto mols = MolInterchange::JSONDataToMols(jsond,ps);
+    auto mols = MolInterchange::JSONDataToMols(jsond, ps);
     TEST_ASSERT(mols.size() == 1);
     auto m = mols[0].get();
     TEST_ASSERT(m);
@@ -411,12 +411,12 @@ void test6() {
     TEST_ASSERT(m->getNumBonds() == 5);
     TEST_ASSERT(m->getNumConformers() == 2);
     TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
-                std::string("example 2")); // we always parse the name
+                std::string("example 2"));  // we always parse the name
     TEST_ASSERT(!m->hasProp("prop3"));
     TEST_ASSERT(
         m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
   }
-BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
 void RunTests() {
