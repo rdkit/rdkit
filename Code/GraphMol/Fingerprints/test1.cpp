@@ -3476,6 +3476,36 @@ void testGitHubIssue1496() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue1793() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Github #1793: Fingerprint segfaults with "
+                           "branchedPaths=False and useHs=False"
+                        << std::endl;
+  {
+    std::string smiles = "CC";
+    ROMol *m1 = SmilesToMol(smiles);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms() == 2);
+
+    unsigned int minPath = 1;
+    unsigned int maxPath = 7;
+    unsigned int fpSize = 2048;
+    unsigned int nBitsPerHash = 2;
+    double tgtDensity = 0.0;
+    unsigned int minSize = 128;
+    bool useHs = false;
+    bool branchedPaths = false;
+
+    ExplicitBitVect *bv1 =
+        RDKFingerprintMol(*m1, minPath, maxPath, fpSize, nBitsPerHash, useHs,
+                          tgtDensity, minSize, branchedPaths);
+    TEST_ASSERT(bv1);
+    delete m1;
+    delete bv1;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -3529,8 +3559,9 @@ int main(int argc, char *argv[]) {
   testRDKFPBitInfo();
   testGitHubIssue874();
   testGitHubIssue879();
-#endif
   testGitHubIssue1496();
+#endif
+  testGitHubIssue1793();
 
   return 0;
 }
