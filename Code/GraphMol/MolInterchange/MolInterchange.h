@@ -10,6 +10,18 @@
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
 
+/*! \file MolInterchange.h
+
+\brief Contains the public API for the convertors to/from the commonchem
+interchange format
+
+\b Note that this should be considered beta and that the format and API
+will very likely change in future releases.
+
+More information about CommonChem is available here:
+https://github.com/mcs07/CommonChem
+*/
+
 #include <string>
 #include <iostream>
 #include <vector>

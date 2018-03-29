@@ -110,8 +110,9 @@ void test1() {
         "\"stereoAtoms\": []}}, \"molecules\": [{\"name\": \"no name\", "
         "\"atoms\": [{\"z\": 6, \"impHs\": 2}, {\"z\": 8}, {\"z\": 26}], "
         "\"bonds\": [{\"atoms\": [0, 1], \"bo\": 2}, {\"atoms\": [1, 2], "
-        "\"bo\": 0}], \"representations\": [{\"formatVersion\": 1, "
-        "\"toolkit\": \"RDKit\", \"toolkitVersion\": \"2018.03.1.dev1\", "
+        "\"bo\": 0}], \"extensions\": [{\"formatVersion\": 1, "
+        "\"name\": \"rdkitRepresentation\", \"formatVersion\": 1,"
+        "\"toolkitVersion\": \"2018.03.1.dev1\", "
         "\"aromaticAtoms\": [], \"aromaticBonds\": [], \"cipRanks\": [0, 1, "
         "2], \"cipCodes\": [], \"atomRings\": []}]}]}";
     auto mols = MolInterchange::JSONDataToMols(json);
@@ -260,7 +261,7 @@ void test5() {
 
     auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
-    TEST_ASSERT(json.find("partial-charges") != std::string::npos);
+    TEST_ASSERT(json.find("partialCharges") != std::string::npos);
     auto newMols = MolInterchange::JSONDataToMols(json);
     TEST_ASSERT(newMols.size() == 1);
     TEST_ASSERT(newMols[0]->getAtomWithIdx(0)->hasProp(

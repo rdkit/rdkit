@@ -41,7 +41,9 @@ std::string MolsToJSON(const python::object &mols) {
 
 BOOST_PYTHON_MODULE(rdMolInterchange) {
   python::scope().attr("__doc__") =
-      "Module containing functions for interchange of molecules";
+      "Module containing functions for interchange of molecules.\n"
+      "Note that this should be considered beta and that the format\n"
+      "  and API will very likely change in future releases.";
 
   python::class_<RDKit::MolInterchange::JSONParseParameters,
                  boost::noncopyable>("JSONParseParameters",
@@ -69,13 +71,11 @@ BOOST_PYTHON_MODULE(rdMolInterchange) {
 \n\
     ARGUMENTS:\n\
       - mol: the molecule to work with\n\
-      - datasetName: (optional) the name of the molecule set\n\
     RETURNS:\n\
       a string\n";
-  python::def("MolToJSON", (std::string(*)(const RDKit::ROMol &, const char *))
+  python::def("MolToJSON", (std::string(*)(const RDKit::ROMol &))
                                RDKit::MolInterchange::MolToJSONData,
-              (python::arg("mol"), python::arg("datasetName") = "rdkit mol"),
-              docString.c_str());
+              (python::arg("mol")), docString.c_str());
   docString =
       "Convert a set of molecules to JSON\n\
 \n\

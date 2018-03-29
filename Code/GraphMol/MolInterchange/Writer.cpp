@@ -306,12 +306,13 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   if (mol.getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge)) {
     rj::Value representation(rj::kObjectType);
     representation.AddMember("name", "partialCharges", doc.GetAllocator());
-    representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
-    representation.AddMember("formatVersion", currentChargeRepresentationVersion,
+    representation.AddMember("generator", "RDKit", doc.GetAllocator());
+    representation.AddMember("formatVersion",
+                             currentChargeRepresentationVersion,
                              doc.GetAllocator());
     rj::Value toolkitVersion;
     toolkitVersion.SetString(rj::StringRef(rdkitVersion));
-    representation.AddMember("toolkitVersion", toolkitVersion,
+    representation.AddMember("generatorVersion", toolkitVersion,
                              doc.GetAllocator());
 
     rj::Value rjArr(rj::kArrayType);
