@@ -217,13 +217,13 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
 void readPartialCharges(RWMol *mol, const rj::Value &repVal,
                         const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
-  PRECONDITION(repVal["name"].GetString() == std::string("partial-charges"),
+  PRECONDITION(repVal["name"].GetString() == std::string("partialCharges"),
                "bad charges");
-  if (!repVal.HasMember("version"))
+  if (!repVal.HasMember("formatVersion"))
     throw FileParseException("Bad Format: missing version");
   if (repVal["version"].GetInt() > currentChargeRepresentationVersion) {
-    BOOST_LOG(rdWarningLog) << "partial-charges version "
-                            << repVal["version"].GetInt()
+    BOOST_LOG(rdWarningLog) << "partialCharges version "
+                            << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
     return;
   }
@@ -247,13 +247,13 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(
-      repVal["name"].GetString() == std::string("rdkit-representation"),
+      repVal["name"].GetString() == std::string("rdkitRepresentation"),
       "bad representation");
-  if (!repVal.HasMember("format_version"))
+  if (!repVal.HasMember("formatVersion"))
     throw FileParseException("Bad Format: missing format_version");
   if (repVal["format_version"].GetInt() > 1) {
     BOOST_LOG(rdWarningLog) << "RDKit representation format version "
-                            << repVal["format_version"].GetInt()
+                            << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
     return;
   }
@@ -389,10 +389,10 @@ void processMol(RWMol *mol, const rj::Value &molval,
       if (!propVal.HasMember("name"))
         throw FileParseException(
             "Bad Format: representation has no name member");
-      if (propVal["name"].GetString() == std::string("rdkit-representation")) {
+      if (propVal["name"].GetString() == std::string("rdkitRepresentation")) {
         readRDKitRepresentation(mol, propVal, params);
       }
-      if (propVal["name"].GetString() == std::string("partial-charges")) {
+      if (propVal["name"].GetString() == std::string("partialCharges")) {
         readPartialCharges(mol, propVal, params);
       }
     }

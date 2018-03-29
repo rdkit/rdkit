@@ -110,8 +110,8 @@ void test1() {
         "\"stereoAtoms\": []}}, \"molecules\": [{\"name\": \"no name\", "
         "\"atoms\": [{\"z\": 6, \"impHs\": 2}, {\"z\": 8}, {\"z\": 26}], "
         "\"bonds\": [{\"atoms\": [0, 1], \"bo\": 2}, {\"atoms\": [1, 2], "
-        "\"bo\": 0}], \"representations\": [{\"format_version\": 1, "
-        "\"toolkit\": \"RDKit\", \"toolkit_version\": \"2018.03.1.dev1\", "
+        "\"bo\": 0}], \"representations\": [{\"formatVersion\": 1, "
+        "\"toolkit\": \"RDKit\", \"toolkitVersion\": \"2018.03.1.dev1\", "
         "\"aromaticAtoms\": [], \"aromaticBonds\": [], \"cipRanks\": [0, 1, "
         "2], \"cipCodes\": [], \"atomRings\": []}]}]}";
     auto mols = MolInterchange::JSONDataToMols(json);
