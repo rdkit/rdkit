@@ -24,7 +24,11 @@ from rdkit.Chem.rdchem import *
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
 from rdkit.Chem.inchi import *
-from rdkit.Chem.rdMolInterchange import *
+try:
+    # This is an optional component of the build
+    from rdkit.Chem.rdMolInterchange import *
+except ImportError:
+    pass
 
 # Coordgen needs to know where its template file is.
 # The default install puts it in RDDataDir

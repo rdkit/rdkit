@@ -142,7 +142,8 @@ class TestCase(unittest.TestCase):
         assert not at.IsInRingSize(4), 'atom %d improperly in ring' % (i)
       else:
         assert at.IsInRingSize(4), 'atom %d not in ring of size 4' % (i)
-
+  @unittest.skipIf(not hasattr(Chem,"MolToJSON"),
+                     "MolInterchange support not enabled")
   def testJSON1(self):
     """ JSON test1 """
     for smi in self.bigSmiList:
@@ -151,6 +152,8 @@ class TestCase(unittest.TestCase):
       nm = Chem.JSONToMols(json)[0]
       self.assertEqual(Chem.MolToSmiles(m),Chem.MolToSmiles(nm))
 
+  @unittest.skipIf(not hasattr(Chem,"MolToJSON"),
+                     "MolInterchange support not enabled")
   def testJSON2(self):
     """ JSON test2 """
     ms = [Chem.MolFromSmiles(smi) for smi in self.bigSmiList]
