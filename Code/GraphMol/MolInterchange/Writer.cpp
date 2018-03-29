@@ -222,12 +222,12 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   }
 
   rj::Value representation(rj::kObjectType);
-  representation.AddMember("name", "rdkit-representation", doc.GetAllocator());
-  representation.AddMember("format_version", currentRDKitRepresentationVersion,
+  representation.AddMember("name", "rdkitRepresentation", doc.GetAllocator());
+  representation.AddMember("formatVersion", currentRDKitRepresentationVersion,
                            doc.GetAllocator());
   rj::Value toolkitVersion;
   toolkitVersion.SetString(rj::StringRef(rdkitVersion));
-  representation.AddMember("toolkit_version", toolkitVersion,
+  representation.AddMember("toolkitVersion", toolkitVersion,
                            doc.GetAllocator());
 
   bool hasArom = false;
@@ -305,13 +305,13 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
 
   if (mol.getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge)) {
     rj::Value representation(rj::kObjectType);
-    representation.AddMember("name", "partial-charges", doc.GetAllocator());
+    representation.AddMember("name", "partialCharges", doc.GetAllocator());
     representation.AddMember("toolkit", "RDKit", doc.GetAllocator());
-    representation.AddMember("version", currentChargeRepresentationVersion,
+    representation.AddMember("formatVersion", currentChargeRepresentationVersion,
                              doc.GetAllocator());
     rj::Value toolkitVersion;
     toolkitVersion.SetString(rj::StringRef(rdkitVersion));
-    representation.AddMember("toolkit_version", toolkitVersion,
+    representation.AddMember("toolkitVersion", toolkitVersion,
                              doc.GetAllocator());
 
     rj::Value rjArr(rj::kArrayType);
