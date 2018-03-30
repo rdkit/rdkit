@@ -1,5 +1,12 @@
-rdkit_library(RDBoost Wrap.cpp
-              LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+if(APPLE)
+  # Don't link against Python library on Mac
+  rdkit_library(RDBoost Wrap.cpp
+                LINK_LIBRARIES RDGeneral ${Boost_LIBRARIES})
+  set_target_properties(RDBoost PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
+  rdkit_library(RDBoost Wrap.cpp
+                LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+endif()
 
 rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
