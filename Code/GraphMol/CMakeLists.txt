@@ -82,7 +82,11 @@ add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
-add_subdirectory(SLNParse)
+  if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION GREATER 4.8)
+    message("Skipping SLN build with gcc version <= 4.8")
+  else()
+    add_subdirectory(SLNParse)
+  endif()
 endif()
 
 add_subdirectory(Wrap)
