@@ -250,19 +250,19 @@ Mapped dummy atoms in the product template are replaced by the corresponding ato
 
 but unmapped dummy atoms are left as dummies:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>[*][C:1][*:2]')
+>>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>*[C:1][*:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
-['[*]C(C)O']
+['*C(C)O']
 
 “Any” bonds in the products are replaced by the corresponding bond in the reactant:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>[*][C:1]~[*:2]')
+>>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>*[C:1]~[*:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C=O'),))[0]]
-['[*]C=O']
+['*C=O']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CO'),))[0]]
-['[*]CO']
+['*CO']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C#N'),))[0]]
-['[*]C#N']
+['*C#N']
 
 Intramolecular reactions can be expressed flexibly by including
 reactants in parentheses. This is demonstrated in this ring-closing
