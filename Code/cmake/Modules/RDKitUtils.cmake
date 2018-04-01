@@ -112,8 +112,15 @@ else(WIN32)
                           LIBRARY_OUTPUT_DIRECTORY
                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
 endif(WIN32)
+if(APPLE)
+    # Don't link against Python library on Mac
+    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+                          ${Boost_LIBRARIES} )
+    set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
                           ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
+endif()
 
     INSTALL(TARGETS ${RDKPY_NAME}
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
