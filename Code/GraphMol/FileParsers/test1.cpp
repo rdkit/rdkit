@@ -4677,14 +4677,22 @@ void testGithub1034() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 4);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() != Bond::UNKNOWN);
+    int explicit_unknown_stereo;
+    TEST_ASSERT(
+        m->getBondWithIdx(2)->getPropIfPresent<int>(
+            common_properties::_UnknownStereo, explicit_unknown_stereo) &&
+        explicit_unknown_stereo)
+
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getBondWithIdx(0)->getBondType() == Bond::DOUBLE);
     TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondType() == Bond::SINGLE);
     TEST_ASSERT(m->getBondWithIdx(1)->getBondDir() == Bond::NONE);
     TEST_ASSERT(m->getBondWithIdx(2)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() == Bond::UNKNOWN);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondDir() != Bond::UNKNOWN);
     MolOps::assignStereochemistry(*m, true, true);
     TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREOANY);
   }
@@ -4709,10 +4717,15 @@ void testGithub1034() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 5);
     TEST_ASSERT(m->getBondWithIdx(3)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getBondWithIdx(3)->getBondDir() == Bond::UNKNOWN);
+    TEST_ASSERT(m->getBondWithIdx(3)->getBondDir() != Bond::UNKNOWN);
+    int explicit_unknown_stereo;
+    TEST_ASSERT(
+        m->getBondWithIdx(3)->getPropIfPresent<int>(
+            common_properties::_UnknownStereo, explicit_unknown_stereo) &&
+        explicit_unknown_stereo)
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getBondWithIdx(3)->getBondType() == Bond::SINGLE);
-    TEST_ASSERT(m->getBondWithIdx(3)->getBondDir() == Bond::UNKNOWN);
+    TEST_ASSERT(m->getBondWithIdx(3)->getBondDir() != Bond::UNKNOWN);
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   }
 
@@ -5093,6 +5106,21 @@ void testGithub1689() {
     }
     TEST_ASSERT(ok);
   }
+}
+
+void testWedgeBondToDoublebond() {
+  BOOST_LOG(rdInfoLog) << "Test wedged bonds to double bonds " << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {  // a second report that came in
+    std::string fName = rdbase + "wedged_single_to_double_bond.mol";
+    bool sanitize = false, removeHs = false;
+    ROMol *m = MolFileToMol(fName, sanitize, removeHs);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 49);
+    TEST_ASSERT(m->getNumBonds() == 51);
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -5177,7 +5205,6 @@ void RunTests() {
   testMDLAtomProps();
   testSupplementalSmilesLabel();
   testGithub1023();
-  testGithub1034();
   testGithub1049();
   testPDBFile();
   testSequences();
@@ -5189,10 +5216,12 @@ void RunTests() {
   testMarvinSMATag();
   testGithub1029();
   testGithub1340();
+  testGithub1034();
 #endif
   testMolBlockChirality();
   testMolBlock3DStereochem();
   testGithub1689();
+  testWedgeBondToDoublebond();
 }
 
 // must be in German Locale for test...
