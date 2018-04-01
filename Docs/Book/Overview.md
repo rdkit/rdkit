@@ -99,6 +99,13 @@
 - [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
 
 ### Usage by other open-source projects
+- [Samson Connect](https://www.samson-connect.net) - Software for adaptive modeling and simulation of nanosystems
+- [mol_frame](https://github.com/apahl/mol_frame) - Chemical Structure Handling for Dask and Pandas DataFrames
+- [RDKitjs](https://github.com/cheminfo/RDKitjs) - port of RDKit functionality to JavaScript
+- [DeepChem](https://deepchem.io) - python library for deep learning for chemistry
+- [mmpdb](https://github.com/rdkit/mmpdb) - Matched molecular pair database generation and analysis
+- [CheTo](https://github.com/rdkit/CheTo) ([paper](http://pubs.acs.org/doi/10.1021/acs.jcim.7b00249))- Chemical topic modeling
+- [OCEAN](https://github.com/rdkit/OCEAN) ([paper](http://pubs.acs.org/doi/abs/10.1021/acs.jcim.6b00067))- Optimized cross reactivity estimation
 - [ChEMBL Beaker](https://github.com/mnowotka/chembl_beaker) - standalone web server wrapper for RDKit and OSRA
 - [myChEMBL](https://github.com/chembl/mychembl) ([blog post](http://chembl.blogspot.de/2013/10/chembl-virtual-machine-aka-mychembl.html), [paper](http://bioinformatics.oxfordjournals.org/content/early/2013/11/20/bioinformatics.btt666)) - A virtual machine implementation of open data and cheminformatics tools
 - [ZINC](http://zinc15.docking.org) - Free database of commercially-available compounds for virtual screening

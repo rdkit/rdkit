@@ -1,6 +1,14 @@
 # Release_2018.03.1
 (Changes relative to Release_2017.09.1)
 
+## C++11 notes
+Starting with this release, the RDKit core C++ code is written in modern C++; for this release that means C++11.
+This means that the compilers used to build it cannot be completely ancient. Here are the minimum tested versions:
+
+- g++ v4.8: though note that the SLN parser code cannot be built with v4.8. It will automatically be disabled when this older compiler is used.
+- clang v3.9: it may be that older versions of the compiler also work, but we haven't tested them.
+- Visual Studio 2015: it may be that older versions of the compiler also work, but we haven't tested them.
+
 ## Backwards incompatible changes
 This release includes a set of changes to make the default arguments to common functions less error prone (github #1679).
 - MolToSmiles() now generates isomeric SMILES by default.
