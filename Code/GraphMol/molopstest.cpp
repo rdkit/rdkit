@@ -1431,7 +1431,7 @@ void testIssue183() {
   TEST_ASSERT(m2->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
-  m2->debugMol(std::cerr);
+  // m2->debugMol(std::cerr);
   refSmi = MolToSmiles(*m2, 1);
   BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
   m = SmilesToMol(refSmi);
@@ -7001,6 +7001,222 @@ void testGithub1703() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1614() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue "
+                          "1614: AssignStereochemistry incorrectly removing "
+                          "CIS/TRANS bond stereo"
+                       << std::endl;
+#if 1
+  {
+    RWMol m;
+    m.addAtom(new Atom(9), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(17), true, true);
+    m.addBond(0, 1, Bond::SINGLE);
+    m.addBond(2, 3, Bond::SINGLE);
+    m.addBond(1, 2, Bond::DOUBLE);
+    m.getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m.getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
+    m.updatePropertyCache();
+
+    {
+      RWMol nm(m);
+      bool force = true, cleanIt = true;
+      MolOps::setDoubleBondNeighborDirections(nm);
+
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+      std::string smi = MolToSmiles(nm, true);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi == "F/C=C/Cl");
+    }
+    {
+      RWMol nm(m);
+      MolOps::addHs(nm);
+      bool force = true, cleanIt = true;
+      MolOps::setDoubleBondNeighborDirections(nm);
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+      std::string smi = MolToSmiles(nm, true);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi == "[H]/C(F)=C(/[H])Cl");
+    }
+  }
+
+  {
+    RWMol m;
+    m.addAtom(new Atom(9), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(17), true, true);
+    m.addBond(0, 1, Bond::SINGLE);
+    m.addBond(3, 2, Bond::SINGLE);
+    m.addBond(1, 2, Bond::DOUBLE);
+    m.getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m.getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
+    m.updatePropertyCache();
+
+    {
+      RWMol nm(m);
+      bool force = true, cleanIt = true;
+      MolOps::setDoubleBondNeighborDirections(nm);
+
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+      std::string smi = MolToSmiles(nm, true);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi == "F/C=C/Cl");
+    }
+  }
+  {
+    RWMol m;
+    m.addAtom(new Atom(9), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(17), true, true);
+    m.addBond(1, 0, Bond::SINGLE);
+    m.addBond(2, 3, Bond::SINGLE);
+    m.addBond(1, 2, Bond::DOUBLE);
+    m.getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m.getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
+    m.updatePropertyCache();
+
+    {
+      RWMol nm(m);
+      bool force = true, cleanIt = true;
+      MolOps::setDoubleBondNeighborDirections(nm);
+
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+      std::string smi = MolToSmiles(nm, true);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi == "F/C=C/Cl");
+    }
+  }
+
+  {
+    RWMol m;
+    m.addAtom(new Atom(9), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(17), true, true);
+    m.addBond(0, 1, Bond::SINGLE);
+    m.addBond(2, 3, Bond::SINGLE);
+    m.addBond(1, 2, Bond::DOUBLE);
+    m.addAtom(new Atom(6), true, true);
+    m.addAtom(new Atom(6), true, true);
+    m.addBond(1, 5, Bond::SINGLE);
+    m.addBond(2, 4, Bond::SINGLE);
+
+    m.getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m.getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOTRANS);
+    m.updatePropertyCache();
+
+    {
+      RWMol nm(m);
+      bool force = true, cleanIt = true;
+      MolOps::setDoubleBondNeighborDirections(nm);
+
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() > Bond::STEREOANY);
+      std::string smi = MolToSmiles(nm, true);
+      std::cerr << smi << std::endl;
+      TEST_ASSERT(smi == "C/C(F)=C(/C)Cl");
+    }
+  }
+#endif
+#if 1
+  {
+    RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\F", false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+
+    {
+      RWMol nm(*m);
+      MolOps::setDoubleBondNeighborDirections(nm);
+      // nm.debugMol(std::cerr);
+      bool force = true, cleanIt = true;
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      // nm.debugMol(std::cerr);
+      TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    }
+    delete m;
+  }
+#endif
+
+  {
+    RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\F", false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
+    m->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m->getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOCIS);
+
+    {
+      RWMol nm(*m);
+      MolOps::setDoubleBondNeighborDirections(nm);
+      // nm.debugMol(std::cerr);
+      bool force = true, cleanIt = true;
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    }
+    delete m;
+  }
+
+#if 1
+  {
+    RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\C", false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+
+    {
+      RWMol nm(*m);
+      MolOps::setDoubleBondNeighborDirections(nm);
+      // nm.debugMol(std::cerr);
+      bool force = true, cleanIt = true;
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    }
+    delete m;
+  }
+#endif
+  {
+    RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\C", false, false);
+    TEST_ASSERT(m);
+    MolOps::sanitizeMol(*m);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
+    m->getBondBetweenAtoms(1, 2)->setStereoAtoms(0, 3);
+    m->getBondBetweenAtoms(1, 2)->setStereo(Bond::STEREOCIS);
+
+    {
+      RWMol nm(*m);
+      MolOps::setDoubleBondNeighborDirections(nm);
+      // nm.debugMol(std::cerr);
+      bool force = true, cleanIt = true;
+      MolOps::assignStereochemistry(nm, cleanIt, force);
+      TEST_ASSERT(nm.getBondBetweenAtoms(4, 5)->getStereo() == Bond::STEREOE);
+      TEST_ASSERT(nm.getBondBetweenAtoms(8, 9)->getStereo() == Bond::STEREOZ);
+      TEST_ASSERT(nm.getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    }
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
@@ -7104,9 +7320,10 @@ int main() {
   testGithub1478();
   testGithub1439();
   testGithub1281();
-#endif
   testGithub1605();
   testGithub1703();
+#endif
+  testGithub1614();
 
   return 0;
 }

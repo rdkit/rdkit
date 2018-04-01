@@ -2576,6 +2576,10 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
     } else {
       // we still need to do something about double bond stereochemistry
       // (was github issue 337)
+      // now that atom stereochem has been perceived, the wedging
+      // information is no longer needed, so we clear
+      // single bond dir flags:
+      ClearSingleBondDirFlags(*res);
       MolOps::detectBondStereochemistry(*res);
     }
 
