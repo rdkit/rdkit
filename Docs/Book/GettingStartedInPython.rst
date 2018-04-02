@@ -1631,7 +1631,7 @@ and each node tracks its children using a dictionary keyed by SMILES:
 
 >>> ks=hierarch.children.keys()
 >>> sorted(ks)
-['[*]C(=O)CC', '[*]CCOC(=O)CC', '[*]CCOc1ccccc1', '[*]OCCOc1ccccc1', '[*]c1ccccc1']
+['*C(=O)CC', '*CCOC(=O)CC', '*CCOc1ccccc1', '*OCCOc1ccccc1', '*c1ccccc1']
 
 The nodes at the bottom of the hierarchy (the leaf nodes) are easily
 accessible, also as a dictionary keyed by SMILES:
@@ -1639,7 +1639,7 @@ accessible, also as a dictionary keyed by SMILES:
 >>> ks=hierarch.GetLeaves().keys()
 >>> ks=sorted(ks)
 >>> ks
-['[*]C(=O)CC', '[*]CCO[*]', '[*]CCOc1ccccc1', '[*]c1ccccc1']
+['*C(=O)CC', '*CCO*', '*CCOc1ccccc1', '*c1ccccc1']
 
 Notice that dummy atoms are used to mark points where the molecule was fragmented.
 
@@ -1647,7 +1647,7 @@ The nodes themselves have associated molecules:
 
 >>> leaf = hierarch.GetLeaves()[ks[0]]
 >>> Chem.MolToSmiles(leaf.mol)
-'[*]C(=O)CC'
+'*C(=O)CC'
 
 
 BRICS Implementation
@@ -1744,7 +1744,7 @@ the output is a molecule that has dummy atoms marking the places where
 bonds were broken:
 
 >>> Chem.MolToSmiles(nm,True)
-'[*]C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1'
+'*C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1'
 
 By default the attachment points are labelled (using isotopes) with
 the index of the atom that was removed. We can also provide our own set of
