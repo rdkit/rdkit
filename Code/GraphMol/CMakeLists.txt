@@ -81,6 +81,10 @@ add_subdirectory(Trajectory)
 add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
+if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
+add_subdirectory(MolInterchange)
+endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
+
 if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
   if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION GREATER 4.8)
     message("Skipping SLN build with gcc version <= 4.8")

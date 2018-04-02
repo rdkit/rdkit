@@ -12,9 +12,9 @@
 #include "types.h"
 
 namespace RDKit {
-  namespace detail {
-  const std::string computedPropName = "__computedProps";
-  }
+namespace detail {
+const std::string computedPropName = "__computedProps";
+}
 
 namespace common_properties {
 const std::string TWOD = "2D";
@@ -61,6 +61,8 @@ const std::string _crippenLogP = "_crippenLogP";
 const std::string _crippenLogPContribs = "_crippenLogPContribs";
 const std::string _crippenMR = "_crippenMR";
 const std::string _crippenMRContribs = "_crippenMRContribs";
+const std::string _GasteigerCharge = "_GasteigerCharge";
+const std::string _GasteigerHCharge = "_GasteigerHCharge";
 const std::string _doIsoSmiles = "_doIsoSmiles";
 const std::string _fragSMARTS = "_fragSMARTS";
 const std::string _hasMassQuery = "_hasMassQuery";
@@ -99,6 +101,7 @@ const std::string ringMembership = "ringMembership";
 const std::string smilesSymbol = "smilesSymbol";
 const std::string atomLabel = "atomLabel";
 const std::string internalRgroupSmiles = "internalRgroupSmiles";
+
 }  // end common_properties
 
 const double MAX_DOUBLE = std::numeric_limits<double>::max();

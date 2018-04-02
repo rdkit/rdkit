@@ -1,0 +1,6 @@
+rdkit_python_extension(rdMolInterchange
+                       rdMolInterchange.cpp
+                       DEST Chem
+                       LINK_LIBRARIES MolInterchange GraphMol RDBoost)
+
+add_pytest(pyMolInterchange ${CMAKE_CURRENT_SOURCE_DIR}/testMolInterchange.py)
