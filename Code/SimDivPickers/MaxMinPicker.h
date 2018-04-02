@@ -166,7 +166,7 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
 
   picks.reserve(pickSize);
   unsigned int picked = 0;  // picks.size()
-  unsigned int pick;
+  unsigned int pick = 0;
 
   // pick the first entry
   if (firstPicks.empty()) {
