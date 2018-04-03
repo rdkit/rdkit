@@ -112,7 +112,7 @@ else(WIN32)
                           LIBRARY_OUTPUT_DIRECTORY
                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
 endif(WIN32)
-if(APPLE)
+if(APPLE AND RDK_DONT_LINK_PYTHON)
     # Don't link against Python library on Mac
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
                           ${Boost_LIBRARIES} )
