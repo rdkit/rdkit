@@ -1,6 +1,17 @@
-rdkit_library(RDBoost Wrap.cpp
-              LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
-
+if("${Py_ENABLE_SHARED}" STREQUAL "1")
+  rdkit_library(RDBoost Wrap.cpp
+                LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+else()
+    rdkit_library(RDBoost Wrap.cpp
+                LINK_LIBRARIES RDGeneral ${Boost_LIBRARIES})
+    if("${PYTHON_LDSHARED}" STREQUAL "")
+    else()
+       # fixes an apple issue
+       STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
+       set_target_properties(RDBoost PROPERTIES LINK_FLAGS ${LDSHARED})
+    endif()
+    
+endif()
 rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
               python.h
