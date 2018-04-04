@@ -238,7 +238,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  if(NOT win32)
+  if(NOT WIN32)
     # See https://bugs.python.org/msg277944
     # The "command to create shared modules". Used as variable in the "Makefile (and similar) templates to build python modules"
     # for both in-python and third party modules. Initialized to hold the value which works for third party modules to link

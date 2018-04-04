@@ -12,7 +12,7 @@ else()
     endif()
 endif()
 
-endif()rdkit_headers(Wrap.h PySequenceHolder.h
+rdkit_headers(Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
               python.h
               boost_numpy.h
