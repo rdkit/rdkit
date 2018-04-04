@@ -39,6 +39,8 @@ Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian Co
  (github pull #1608 from apahl)
   - Adding an option to EnumerateStereoisomers to only return unique isomers
  (github pull #1612 from coleb)
+  - Add function wedgeBond()
+  (github issue #1615 from greglandrum)  
   - Dev/substructlibrary docs
  (github pull #1620 from bp-kelley)
   - Turns off exception throwing for certain classes Rlabel sanitization.…
