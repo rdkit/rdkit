@@ -4071,7 +4071,7 @@ CAS<~>
       details = str(e)
       if platform.system() == 'Windows':
         details = details.replace('\\', '/')
-      self.assertTrue("Code/GraphMol/ROMol.cpp" in details)
+      self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())
       self.assertTrue("Failed Expression: 3 < 1" in details)
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
@@ -4571,6 +4571,33 @@ M  END
     m = Chem.RWMol()
     ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
     ranks = Chem.CanonicalRankAtoms(m, breakTies=True)
+
+  def testGithub1615(self):
+    mb="""Issue399a.mol
+  ChemDraw04050615582D
+
+  4  4  0  0  0  0  0  0  0  0999 V2000
+   -0.7697    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  2  3  1  0
+  3  4  1  0
+  2  4  1  0
+M  END"""
+    m = Chem.MolFromMolBlock(mb)
+    self.assertFalse(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.NONE)
+    self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(),Chem.ChiralType.CHI_UNSPECIFIED)
+    m.GetAtomWithIdx(1).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    Chem.AssignStereochemistry(m,force=True)
+    self.assertTrue(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    self.assertEqual(m.GetAtomWithIdx(1).GetProp("_CIPCode"),"S")
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.NONE)
+    Chem.WedgeBond(m.GetBondWithIdx(0),1,m.GetConformer())
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(),Chem.BondDir.BEGINWEDGE)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

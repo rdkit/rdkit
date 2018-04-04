@@ -5124,6 +5124,66 @@ void testWedgeBondToDoublebond() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub1615() {
+  BOOST_LOG(rdInfoLog) << "testing github #1615: add function WedgeBond()"
+                       << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+  {
+    RWMol *m1;
+    std::string fName = rdbase + "Issue399a.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(m1->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    WedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::BEGINWEDGE);
+
+    delete m1;
+  }
+
+  {
+    std::string mb =
+        "example\n"
+        "  ChemDraw04050615582D\n"
+        "\n"
+        "  4  4  0  0  0  0  0  0  0  0999 V2000\n"
+        "   -0.7697    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    0.0553    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    0.7697    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "    0.7697   -0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  "
+        "0\n"
+        "  2  1  1  0\n"
+        "  2  3  1  0\n"
+        "  3  4  1  0\n"
+        "  2  4  1  0\n"
+        "M  END\n";
+    RWMol *m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(!m1->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+    TEST_ASSERT(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    m1->getAtomWithIdx(1)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    MolOps::assignStereochemistry(*m1, true, true);
+    TEST_ASSERT(m1->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+    TEST_ASSERT(m1->getAtomWithIdx(1)->getProp<std::string>(
+                    common_properties::_CIPCode) == "S");
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::NONE);
+
+    WedgeBond(m1->getBondWithIdx(0), 1, &m1->getConformer());
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir() == Bond::BEGINWEDGE);
+
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -5222,6 +5282,7 @@ void RunTests() {
   testMolBlock3DStereochem();
   testGithub1689();
   testWedgeBondToDoublebond();
+  testGithub1615();
 }
 
 // must be in German Locale for test...
