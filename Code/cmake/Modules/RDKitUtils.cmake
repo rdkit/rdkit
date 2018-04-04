@@ -119,8 +119,11 @@ macro(rdkit_python_extension)
     else()
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
                             ${Boost_LIBRARIES} )
-      message("set_target_properties ${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED}")                            
-      set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
+      if("${PYTHON_LDSHARED}" STREQUAL "")
+      else()
+        message("set_target_properties ${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED}")                            
+        set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
+      endif()
     endif()
 
     INSTALL(TARGETS ${RDKPY_NAME}
