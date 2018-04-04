@@ -126,9 +126,9 @@ macro(rdkit_python_extension)
                               ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
     endif(WIN32)
 
-    if("${Py_ENABLE_SHARED}" STREQUAL "1")
+    if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
+                            ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES} )
     else()
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
                             ${Boost_LIBRARIES} )

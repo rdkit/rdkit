@@ -1,4 +1,4 @@
-if("${Py_ENABLE_SHARED}" STREQUAL "1")
+if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
   rdkit_library(RDBoost Wrap.cpp
                 LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 else()
