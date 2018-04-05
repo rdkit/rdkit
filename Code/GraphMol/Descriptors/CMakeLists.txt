@@ -36,6 +36,8 @@ LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges
 if(RDK_BUILD_DESCRIPTORS3D)
   rdkit_test(testPBF testPBF.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
+ rdkit_test(testRDFcustom testRDFcustom.cpp
+LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
  rdkit_test(testRDF testRDF.cpp
 LINK_LIBRARIES  Descriptors FileParsers SmilesParse MolTransforms PartialCharges GraphMol DataStructs EigenSolvers RDGeneral RDGeometryLib ${RDKit_THREAD_LIBS} )
  rdkit_test(testMORSE testMORSE.cpp
