@@ -115,17 +115,29 @@ macro(rdkit_python_extension)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-if(WIN32)
-    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
-                          LIBRARY_OUTPUT_DIRECTORY
-                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
-else(WIN32)
-    set_target_properties(${RDKPY_NAME} PROPERTIES
-                          LIBRARY_OUTPUT_DIRECTORY
-                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
-endif(WIN32)
-    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                          ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES} )
+
+    if(WIN32)
+      set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
+                           LIBRARY_OUTPUT_DIRECTORY
+                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+    else(WIN32)
+        set_target_properties(${RDKPY_NAME} PROPERTIES
+                              LIBRARY_OUTPUT_DIRECTORY
+                              ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+    endif(WIN32)
+
+    if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
+      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+                            ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES} )
+    else()
+      target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+                            ${Boost_IMPORTED_LIBRARIES} )
+      if("${PYTHON_LDSHARED}" STREQUAL "")
+      else()
+        message("set_target_properties ${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED}")
+        set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
+      endif()
+    endif()
 
     INSTALL(TARGETS ${RDKPY_NAME}
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
