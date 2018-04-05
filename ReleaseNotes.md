@@ -195,6 +195,9 @@ Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian Co
  (github pull #1770 from jvansan)
   - Fingerprint segfaults with branchedPaths=False and useHs=False
  (github issue #1793 from chrishmorris)
+  - Fix python linkage (primarily for conda builds)
+ (github pull #1808 from greglandrum)
+
 
 # Release_2017.09.1
 (Changes relative to Release_2017.03.1)
