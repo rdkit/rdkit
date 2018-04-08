@@ -411,9 +411,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms ||
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
-            onlyOnAtoms->end()) {
+    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                  at->getIdx()) != onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -431,9 +430,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms &&
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
-            onlyOnAtoms->end()) {
+    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                 aidx) == onlyOnAtoms->end()) {
       continue;
     }
 
@@ -494,6 +492,8 @@ ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
 //     will not be removed.
 //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
 //   - Hs connected to dummy atoms will not be removed
+//   - Hs that are part of the definition of double bond Stereochemistry
+//     will not be removed
 //
 void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               bool sanitize) {
@@ -525,8 +525,24 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
                  atom->getDegree() == 1) {
         ROMol::ADJ_ITER begin, end;
         boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-        if (mol.getAtomWithIdx(*begin)->getAtomicNum() > 1) {
+        auto nbr = mol.getAtomWithIdx(*begin);
+        if (nbr->getAtomicNum() > 1) {
           removeIt = true;
+          // we're connected to a non-dummy, non H atom. Check to see
+          // if the neighbor has a double bond and we set the stereo
+          if (nbr->getDegree() == 2) {
+            for (const auto &nbri :
+                 boost::make_iterator_range(mol.getAtomBonds(nbr))) {
+              const Bond *bnd = mol[nbri];
+              if (bnd->getBondType() == Bond::DOUBLE &&
+                  (bnd->getStereo() > Bond::STEREOANY ||
+                   mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                           ->getBondDir() > Bond::NONE)) {
+                removeIt = false;
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -738,7 +754,7 @@ bool isQueryH(const Atom *atom) {
   }
   return hasHQuery;
 }
-}
+}  // namespace
 
 //
 //  This routine removes explicit hydrogens (and bonds to them) from

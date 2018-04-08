@@ -977,6 +977,15 @@ struct molops_wrapper {
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
+    - Hydrogens which aren't connected to a heavy atom will not be\n\
+      removed.  This prevents molecules like "[H][H]" from having\n\
+      all atoms removed.\n\
+    - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),\n\
+      will not be removed.\n\
+    - two coordinate Hs, like the central H in C[H-]C, will not be removed\n\
+    - Hs connected to dummy atoms will not be removed\n\
+    - Hs that are part of the definition of double bond Stereochemistry\n\
+      will not be removed\n\
 \n";
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool))MolOps::removeHs,
