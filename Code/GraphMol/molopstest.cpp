@@ -7380,7 +7380,7 @@ int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   test1();
   test2();
   test3();
