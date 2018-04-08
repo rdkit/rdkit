@@ -7359,7 +7359,7 @@ void testGithub1810() {
     TEST_ASSERT(mol->getNumAtoms() == 4);
     TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOZ);
   }
-#if 0
+#if 1
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("FC=C(F)[H]",false, false));
     TEST_ASSERT(mol);
