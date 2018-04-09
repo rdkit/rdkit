@@ -5,7 +5,7 @@ environment:
   RDBASE: "c:/projects/RDKit"
   PATH: "%RDBASE%/lib;%PATH%"
   BOOST_ROOT: c:/Libraries/boost_1_65_1
-  BOOST_LIBRARYDIR: c:/Libraries/boost_1_65_1/lib64-msvc-14.1
+  BOOST_LIBRARYDIR: c:/Libraries/boost_1_65_1/lib64-msvc-14.0
 
 image: Visual Studio 2017
 
@@ -40,8 +40,8 @@ build:
 
 # scripts to run before build
 before_build:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - echo Running cmake...
-  - dir c:\Libraries\boost_1_65_1
   - cd c:\projects\RDKit
   - mkdir c:\projects\RDKit\build
   - cd c:\projects\RDKit\build
