@@ -14,11 +14,13 @@ Authors:
 
 
     Usage:
-       # return the list of IFG (atomIds, atoms & type) for a molecule object:
+    ```python
+        # return the list of IFG (atomIds, atoms & type) for a molecule object:
         m = Chem.MolFromSmiles(smiles)
         fgs = identify_functional_groups(m)
         print fgs
-
+    ```
+    Output example:
         [IFG(atomIds=(2,), atoms='n', type='cnc'),
          IFG(atomIds=(4, 5, 6, 7), atoms='NS(=O)=O', type='cNS(c)(=O)=O'),
          IFG(atomIds=(12,), atoms='N', type='cN'),
