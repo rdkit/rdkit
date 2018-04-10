@@ -46,7 +46,7 @@ before_build:
   - mkdir c:\projects\RDKit\build
   - cd c:\projects\RDKit\build
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" amd64
-  - cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=%P% -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ..
 
 test_script:
   - cd c:\projects\RDKit\build
