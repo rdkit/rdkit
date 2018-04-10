@@ -1,77 +1,76 @@
 add_custom_target(inchi_support ALL)
 
 if(RDK_BUILD_INCHI_SUPPORT)
-  # search system InChI
-  find_package(Inchi)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/ichican2.c)
+    rdkit_library(Inchi
+      src/INCHI_BASE/src/ichi_bns.c
+      src/INCHI_BASE/src/ichi_io.c
+      src/INCHI_BASE/src/ichican2.c
+      src/INCHI_BASE/src/ichicano.c
+      src/INCHI_BASE/src/ichicans.c
+      src/INCHI_BASE/src/ichierr.c
+      src/INCHI_BASE/src/ichiisot.c
+      src/INCHI_BASE/src/ichimak2.c
+      src/INCHI_BASE/src/ichimake.c
+      src/INCHI_BASE/src/ichimap1.c
+      src/INCHI_BASE/src/ichimap2.c
+      src/INCHI_BASE/src/ichimap4.c
+      src/INCHI_BASE/src/ichinorm.c
+      src/INCHI_BASE/src/ichiparm.c
+      src/INCHI_BASE/src/ichiprt1.c
+      src/INCHI_BASE/src/ichiprt2.c
+      src/INCHI_BASE/src/ichiprt3.c
+      src/INCHI_BASE/src/ichiqueu.c
+      src/INCHI_BASE/src/ichiread.c
+      src/INCHI_BASE/src/ichiring.c
+      src/INCHI_BASE/src/ichirvr1.c
+      src/INCHI_BASE/src/ichirvr2.c
+      src/INCHI_BASE/src/ichirvr3.c
+      src/INCHI_BASE/src/ichirvr4.c
+      src/INCHI_BASE/src/ichirvr5.c
+      src/INCHI_BASE/src/ichirvr6.c
+      src/INCHI_BASE/src/ichirvr7.c
+      src/INCHI_BASE/src/ichisort.c
+      src/INCHI_BASE/src/ichister.c
+      src/INCHI_BASE/src/ichitaut.c
+      src/INCHI_BASE/src/ikey_base26.c
+      src/INCHI_BASE/src/ikey_dll.c
+      src/INCHI_BASE/src/mol2atom.c
+      src/INCHI_BASE/src/mol_fmt1.c
+      src/INCHI_BASE/src/mol_fmt2.c
+      src/INCHI_BASE/src/mol_fmt3.c
+      src/INCHI_BASE/src/mol_fmt4.c
+      src/INCHI_BASE/src/readinch.c
+      src/INCHI_BASE/src/runichi.c
+      src/INCHI_BASE/src/runichi2.c
+      src/INCHI_BASE/src/runichi3.c
+      src/INCHI_BASE/src/runichi4.c
+      src/INCHI_BASE/src/sha2.c
+      src/INCHI_BASE/src/strutil.c
+      src/INCHI_BASE/src/util.c
+      src/INCHI_API/libinchi/src/ichilnct.c
+      src/INCHI_API/libinchi/src/inchi_dll.c
+      src/INCHI_API/libinchi/src/inchi_dll_a.c
+      src/INCHI_API/libinchi/src/inchi_dll_a2.c
+      src/INCHI_API/libinchi/src/inchi_dll_b.c
+      src/INCHI_API/libinchi/src/inchi_dll_main.c
+      src/INCHI_API/libinchi/src/ixa/ixa_builder.c
+      src/INCHI_API/libinchi/src/ixa/ixa_inchikey_builder.c
+      src/INCHI_API/libinchi/src/ixa/ixa_mol.c
+      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c 
+      src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
+      src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
+    install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/INCHI_BASE/src/)
+    ADD_DEFINITIONS("-DTARGET_API_LIB")
+  endif()
 
-  # check whether we have custom InChI source
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-    message(STATUS  "Found InChI software locally")
-    if(INCHI_FOUND)
-      message(WARNING "** Local InChI software takes precedence when both system InChI and local InChI are found")
-    endif(INCHI_FOUND)
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-    if (INCHI_FOUND)
-      include_directories(${INCHI_INCLUDE_DIR})
-    else (INCHI_FOUND)
-      # system InChI is missing, download it
-      if(NOT DEFINED INCHI_URL)
-        set(INCHI_URL "http://www.inchi-trust.org/wp/wp-content/uploads/2014/06/INCHI-1-API.zip")
-      endif()
-      if(NOT DEFINED INCHI_MD5SUM)
-        set(INCHI_MD5SUM "8447bf108af12fe66eecba41bbc89918")
-      endif()
-      if(NOT DEFINED INCHI_BASE)
-        string(REGEX REPLACE "^.*/" "" INCHI_BASE "${INCHI_URL}")
-      endif()
-      downloadAndCheckMD5(${INCHI_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${INCHI_BASE}" ${INCHI_MD5SUM})
-      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf
-        ${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API.zip
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-      execute_process(COMMAND "${CMAKE_COMMAND}" -E copy_directory
-          "${CMAKE_CURRENT_SOURCE_DIR}/INCHI-1-API/INCHI_API/inchi_dll" "${CMAKE_CURRENT_SOURCE_DIR}/src")
-    endif(INCHI_FOUND)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-    rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
-                       src/ichicans.c       src/ichiisot.c 
-                       src/ichilnct.c       src/ichimak2.c
-                       src/ichimake.c       src/ichimap1.c 
-                       src/ichimap2.c       src/ichimap4.c 
-                       src/ichinorm.c       src/ichiparm.c 
-                       src/ichiprt1.c       src/ichiprt2.c 
-                       src/ichiprt3.c       src/ichiqueu.c 
-                       src/ichiring.c       src/ichisort.c 
-                       src/ichister.c       src/ichitaut.c 
-                       src/ichi_bns.c       src/inchi_dll.c
-                       src/ichiread.c       src/ichirvr1.c 
-                       src/ichirvr2.c       src/ichirvr3.c 
-                       src/ichirvr4.c       src/ichirvr5.c
-                       src/ichirvr6.c       src/ichirvr7.c 
-                       src/inchi_dll_main.c src/runichi.c  
-                       src/inchi_dll_a.c    src/inchi_dll_a2.c  
-                       src/ikey_dll.c       src/ikey_base26.c  
-                       src/ichi_io.c  
-                       src/sha2.c           src/strutil.c  
-                       src/util.c SHARED)
-      install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
-      set(INCHI_LIBRARIES Inchi)
-      include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-    else()
-      if(NOT INCHI_FOUND)
-        message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
-                "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
-        set(RDK_BUILD_INCHI_SUPPORT OFF)
-      endif()
-    endif()
-
-endif(RDK_BUILD_INCHI_SUPPORT)
-
-# check whether InChI support is ON after the search
-if(RDK_BUILD_INCHI_SUPPORT)
-  rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} 
-                GraphMol RDGeneral Depictor SubstructMatch SmilesParse 
-                ${RDKit_THREAD_LIBS})           
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses")
+     endif()
+  rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
+                GraphMol RDGeneral Depictor SubstructMatch SmilesParse
+                ${RDKit_THREAD_LIBS})
   rdkit_headers(inchi.h DEST GraphMol)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
@@ -79,13 +78,13 @@ if(RDK_BUILD_INCHI_SUPPORT)
 
   add_definitions(-DBUILD_INCHI_SUPPORT)
 
-rdkit_test(testInchi test.cpp 
-LINK_LIBRARIES 
-${INCHI_LIBRARIES} 
-   RDInchiLib ${INCHI_LIBRARIES} 
-   FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol 
-   RDGeneral DataStructs RDGeneral RDGeometryLib 
-   ${RDKit_THREAD_LIBS})
+  rdkit_test(testInchi test.cpp
+    LINK_LIBRARIES
+    ${INCHI_LIBRARIES}
+    RDInchiLib ${INCHI_LIBRARIES}
+    FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol
+    RDGeneral DataStructs RDGeneral RDGeometryLib
+    ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
@@ -103,4 +102,3 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
           "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
 endif(RDK_BUILD_PYTHON_WRAPPERS)
-

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //
 //   @@ All Rights Reserved @@
@@ -14,8 +14,10 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
 
 extern const int ci_LOCAL_INF;
@@ -24,6 +26,7 @@ class ROMol;
 class RWMol;
 class Atom;
 class Bond;
+class Conformer;
 typedef std::vector<double> INVAR_VECT;
 typedef INVAR_VECT::iterator INVAR_VECT_I;
 typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
@@ -161,6 +164,8 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
                 of the added Hs will be used.
     \param onlyOnAtoms   (optional) if provided, this should be a vector of
                 IDs of the atoms that will be considered for H addition.
+    \param addResidueInfo   (optional) if this is true, add residue info to
+                hydrogen atoms (useful for PDB files).
 
     \return the new molecule
 
@@ -172,11 +177,12 @@ double computeBalabanJ(double *distMat, int nb, int nAts);
    returns.
  */
 ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
-             bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL);
+             bool addCoords = false, const UINT_VECT *onlyOnAtoms = NULL,
+             bool addResidueInfo = false);
 //! \overload
 // modifies the molecule in place
 void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
-           const UINT_VECT *onlyOnAtoms = NULL);
+           const UINT_VECT *onlyOnAtoms = NULL, bool addResidueInfo = false);
 
 //! returns a copy of a molecule with hydrogens removed
 /*!
@@ -243,12 +249,14 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,
-  ADJUST_IGNORECHAINATOMS = 0x1,
-  ADJUST_IGNORERINGATOMS = 0x4,
+  ADJUST_IGNORECHAINS = 0x1,
+  ADJUST_IGNORERINGS = 0x4,
   ADJUST_IGNOREDUMMIES = 0x2,
   ADJUST_IGNORENONDUMMIES = 0x8,
+  ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
 } AdjustQueryWhichFlags;
+
 struct AdjustQueryParameters {
   bool adjustDegree; /**< add degree queries */
   boost::uint32_t adjustDegreeFlags;
@@ -257,13 +265,28 @@ struct AdjustQueryParameters {
 
   bool makeDummiesQueries; /**< convert dummy atoms without isotope labels to
                               any-atom queries */
+  bool aromatizeIfPossible;
+  bool makeBondsGeneric; /**< convert bonds to generic queries (any bonds) */
+  boost::uint32_t makeBondsGenericFlags;
+  bool makeAtomsGeneric; /**< convert atoms to generic queries (any atoms) */
+  boost::uint32_t makeAtomsGenericFlags;
+  bool adjustHeavyDegree; /**< adjust the heavy-atom degree instead of overall
+                             degree */
+  boost::uint32_t adjustHeavyDegreeFlags;
 
   AdjustQueryParameters()
       : adjustDegree(true),
-        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
+        adjustDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
         adjustRingCount(false),
-        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINATOMS),
-        makeDummiesQueries(true) {}
+        adjustRingCountFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS),
+        makeDummiesQueries(true),
+        aromatizeIfPossible(true),
+        makeBondsGeneric(false),
+        makeBondsGenericFlags(ADJUST_IGNORENONE),
+        makeAtomsGeneric(false),
+        makeAtomsGenericFlags(ADJUST_IGNORENONE),
+        adjustHeavyDegree(false),
+        adjustHeavyDegreeFlags(ADJUST_IGNOREDUMMIES | ADJUST_IGNORECHAINS) {}
 };
 //! returns a copy of a molecule with query properties adjusted
 /*!
@@ -366,12 +389,14 @@ void sanitizeMol(RWMol &mol);
 Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
+- \c AROMATICITY_MDL
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
+  AROMATICITY_MDL = 0x4,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
 
@@ -777,13 +802,44 @@ void cleanupChirality(RWMol &mol);
 void assignChiralTypesFrom3D(ROMol &mol, int confId = -1,
                              bool replaceExistingTags = true);
 
-//! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
+//! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms and
+//! stereo flags to its bonds
 /*!
 
-  \param mol     the molecule of interest
-  \param cleanIt toggles removal of stereo flags from double bonds that can
-                 not have stereochemistry
-  \param force   forces the calculation to be repeated even if it has
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+  \param replaceExistingTags  if this flag is true, any existing info about
+                              stereochemistry will be replaced
+
+*/
+void assignStereochemistryFrom3D(ROMol &mol, int confId = -1,
+                                 bool replaceExistingTags = true);
+
+//! \brief Uses a conformer to assign directionality to the single bonds
+//!   around double bonds
+/*!
+
+  \param mol                  the molecule of interest
+  \param confId               the conformer to use
+*/
+void detectBondStereochemistry(ROMol &mol, int confId = -1);
+void setDoubleBondNeighborDirections(ROMol &mol, const Conformer *conf = NULL);
+
+//! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
+/*!
+  Does the CIP stereochemistry assignment for the molecule's atoms
+  (R/S) and double bond (Z/E). Chiral atoms will have a property
+  '_CIPCode' indicating their chiral code.
+
+  \param mol     the molecule to use
+  \param cleanIt if true, atoms with a chiral specifier that aren't
+                 actually chiral (e.g. atoms with duplicate
+                 substituents or only 2 substituents, etc.) will have
+                 their chiral code set to CHI_UNSPECIFIED. Bonds with
+                 STEREOCIS/STEREOTRANS specified that have duplicate
+                 substituents based upon the CIP atom ranks will be
+                 marked STEREONONE.
+  \param force   causes the calculation to be repeated even if it has
                  already been done
   \param flagPossibleStereoCenters   set the _ChiralityPossible property on
                                      atoms that are possible stereocenters
@@ -804,19 +860,26 @@ void assignStereochemistry(ROMol &mol, bool cleanIt = false, bool force = false,
 void removeStereochemistry(ROMol &mol);
 
 //! \brief finds bonds that could be cis/trans in a molecule and mark them as
-//!  Bond::STEREONONE
+//!  Bond::STEREOANY.
 /*!
   \param mol     the molecule of interest
   \param cleanIt toggles removal of stereo flags from double bonds that can
                  not have stereochemistry
 
-  This function is usefuly in two situations
+  This function finds any double bonds that can potentially be part of
+  a cis/trans system. No attempt is made here to mark them cis or
+  trans. No attempt is made to detect double bond stereo in ring systems.
+
+  This function is useful in the following situations:
     - when parsing a mol file; for the bonds marked here, coordinate
-  informations
-      on the neighbors can be used to indentify cis or trans states
+      information on the neighbors can be used to indentify cis or trans states
     - when writing a mol file; bonds that can be cis/trans but not marked as
-  either
-      need to be specially marked in the mol file
+      either need to be specially marked in the mol file
+    - finding double bonds with unspecified stereochemistry so they
+      can be enumerated for downstream 3D tools
+
+  The CIPranks on the neighboring atoms are checked in this function. The
+  _CIPCode property if set to any on the double bond.
 */
 void findPotentialStereoBonds(ROMol &mol, bool cleanIt = false);
 //@}

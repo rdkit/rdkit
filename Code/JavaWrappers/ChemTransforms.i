@@ -33,6 +33,8 @@
 
 %{
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+// Fixes annoying compilation namespace issue
+typedef RDKit::MatchVectType MatchVectType;
 %}
 
 %newobject deleteSubstructs;

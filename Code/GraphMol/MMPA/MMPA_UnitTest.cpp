@@ -30,12 +30,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifdef WIN32
-#include <Windows.h>
-#else
+#ifndef _MSC_VER
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#endif
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <sys/resource.h>
 #endif
 
@@ -62,7 +64,7 @@ static unsigned n_failed = 0;
 static unsigned long long T0;
 static unsigned long long t0;
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 
 struct timezone {
@@ -104,7 +106,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
 static inline unsigned long long nanoClock(
     void) {  // actually returns microseconds
   struct timeval t;
-  gettimeofday(&t, (struct timezone*)0);
+  gettimeofday(&t, (struct timezone*)nullptr);
   return t.tv_usec + t.tv_sec * 1000000ULL;
 }
 
@@ -117,7 +119,7 @@ void printTime() {
 
 std::string getSmilesOnly(
     const char* smiles,
-    std::string* id = 0) {  // remove label, because RDKit parse FAILED
+    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) *id = std::string(smiles + (n--));
@@ -671,7 +673,7 @@ int main() {
 
 // use maximum CPU resoures to increase time measuring accuracy and stability in
 // multi process environment
-#ifdef WIN32
+#ifdef _WIN32
   //    SetPriorityClass (GetCurrentProcess(), REALTIME_PRIORITY_CLASS );
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 #else

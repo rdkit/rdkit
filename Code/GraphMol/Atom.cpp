@@ -47,7 +47,7 @@ Atom::Atom(const std::string &what) : RDProps() {
 Atom::Atom(const Atom &other) : RDProps(other) {
   // NOTE: we do *not* copy ownership!
   d_atomicNum = other.d_atomicNum;
-  dp_mol = 0;
+  dp_mol = nullptr;
   d_index = 0;
   d_formalCharge = other.d_formalCharge;
   df_noImplicit = other.df_noImplicit;
@@ -63,7 +63,7 @@ Atom::Atom(const Atom &other) : RDProps(other) {
   if (other.dp_monomerInfo) {
     dp_monomerInfo = other.dp_monomerInfo->copy();
   } else {
-    dp_monomerInfo = 0;
+    dp_monomerInfo = nullptr;
   }
 }
 void Atom::initAtom() {
@@ -76,8 +76,8 @@ void Atom::initAtom() {
   d_isotope = 0;
   d_chiralTag = CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
-  dp_mol = 0;
-  dp_monomerInfo = 0;
+  dp_mol = nullptr;
+  dp_monomerInfo = nullptr;
 
   d_implicitValence = -1;
   d_explicitValence = -1;
@@ -90,7 +90,7 @@ Atom::~Atom() {
 }
 
 Atom *Atom::copy() const {
-  Atom *res = new Atom(*this);
+  auto *res = new Atom(*this);
   return res;
 }
 
@@ -205,8 +205,7 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi != -1;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
         break;
@@ -356,8 +355,7 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi > 0;
-           ++vi) {
+      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -377,8 +375,7 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi >= 0;
-         ++vi) {
+    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
@@ -424,7 +421,7 @@ void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
-Atom::QUERYATOM_QUERY *Atom::getQuery() const { return NULL; };
+Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
 void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
                        Queries::CompositeQueryType how, bool maintainOrder) {
   RDUNUSED_PARAM(what);
@@ -517,6 +514,75 @@ void Atom::invertChirality() {
       break;
   }
 }
+
+void setAtomRLabel(Atom *atm, int rlabel) {
+  PRECONDITION(atm, "bad atom");
+  // rlabel ==> n2 => 0..99
+  PRECONDITION(rlabel >= 0 && rlabel < 100,
+               "rlabel out of range for MDL files");
+  if (rlabel) {
+    atm->setProp(common_properties::_MolFileRLabel,
+                 static_cast<unsigned int>(rlabel));
+  } else if (atm->hasProp(common_properties::_MolFileRLabel)) {
+    atm->clearProp(common_properties::_MolFileRLabel);
+  }
+}
+//! Gets the atom's RLabel
+int getAtomRLabel(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  unsigned int rlabel = 0;
+  atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
+  return static_cast<int>(rlabel);
+}
+
+void setAtomAlias(Atom *atom, const std::string &alias) {
+  PRECONDITION(atom, "bad atom");
+  if (alias != "") {
+    atom->setProp(common_properties::molFileAlias, alias);
+  } else if (atom->hasProp(common_properties::molFileAlias)) {
+    atom->clearProp(common_properties::molFileAlias);
+  }
+}
+
+std::string getAtomAlias(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string alias;
+  atom->getPropIfPresent(common_properties::molFileAlias, alias);
+  return alias;
+}
+
+void setAtomValue(Atom *atom, const std::string &value) {
+  PRECONDITION(atom, "bad atom");
+  if (value != "") {
+    atom->setProp(common_properties::molFileValue, value);
+  } else if (atom->hasProp(common_properties::molFileValue)) {
+    atom->clearProp(common_properties::molFileValue);
+  }
+}
+
+std::string getAtomValue(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string value;
+  atom->getPropIfPresent(common_properties::molFileValue, value);
+  return value;
+}
+
+void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
+  PRECONDITION(atom, "bad atom");
+  if (label != "") {
+    atom->setProp(common_properties::_supplementalSmilesLabel, label);
+  } else if (atom->hasProp(common_properties::_supplementalSmilesLabel)) {
+    atom->clearProp(common_properties::_supplementalSmilesLabel);
+  }
+}
+
+std::string getSupplementalSmilesLabel(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  std::string label;
+  atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label);
+  return label;
+}
+
 }  // end o' namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
@@ -545,6 +611,9 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   }
   if (at.getIsotope()) {
     target << " iso: " << at.getIsotope();
+  }
+  if (at.getAtomMapNum()) {
+    target << " mapno: " << at.getAtomMapNum();
   }
   return target;
 };

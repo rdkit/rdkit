@@ -21,6 +21,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#if _MSC_VER
+#include <intrin.h>
+#endif
+
 using namespace RDKit;
 
 int getBitId(const char*& text, int format, int size, int curr) {
@@ -190,11 +194,47 @@ bool AllProbeBitsMatch(const ExplicitBitVect& probe,
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
 int NumOnBitsInCommon(const T1& bv1, const T2& bv2) {
-  return OnBitsInCommon(bv1, bv2).size();
+  return static_cast<int>(OnBitsInCommon(bv1, bv2).size());
 }
 
+namespace {
+struct bitset_impl {
+  std::vector<unsigned long> m_bits;
+  std::size_t m_num_bits;
+};
+
+const bool canUseBitmapHack =
+    sizeof(boost::dynamic_bitset<>) == sizeof(bitset_impl);
+
+bool EBVToBitmap(const ExplicitBitVect& bv, const unsigned char*& fp,
+                 unsigned int& nBytes) {
+  if (!canUseBitmapHack) return false;
+  const bitset_impl* p1 = (const bitset_impl*)(const void*)bv.dp_bits;
+  // Run-time sanity check (just in case)
+  if (p1->m_num_bits != bv.dp_bits->size()) {
+    return false;
+  }
+  fp = (const unsigned char*)p1->m_bits.data();
+  nBytes = (unsigned int)p1->m_num_bits / 8;
+  if (p1->m_num_bits % 8) ++nBytes;
+  return true;
+}
+}  // end of local namespace
+
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
+                                       const unsigned char* bfp,
+                                       unsigned int nBytes);
+
 int NumOnBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
-  return ((*bv1.dp_bits) & (*bv2.dp_bits)).count();
+  // Don't try this at home, we (hope we) know what we're doing
+  const unsigned char *afp, *bfp;
+  unsigned int nBytes;
+  if (EBVToBitmap(bv1, afp, nBytes) && EBVToBitmap(bv2, bfp, nBytes)) {
+    unsigned int result = CalcBitmapNumBitsInCommon(afp, bfp, nBytes);
+    return (int)result;
+  }
+
+  return static_cast<int>(((*bv1.dp_bits) & (*bv2.dp_bits)).count());
 }
 
 // In all these similarity metrics the notation is selected to be
@@ -216,13 +256,10 @@ template <typename T1, typename T2>
 double TanimotoSimilarity(const T1& bv1, const T2& bv2) {
   if (bv1.getNumBits() != bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
-  double x = NumOnBitsInCommon(bv1, bv2);
-  double y = bv1.getNumOnBits();
-  double z = bv2.getNumOnBits();
-  if ((y + z - x) == 0.0)
-    return 1.0;
-  else
-    return x / (y + z - x);
+  unsigned int total = bv1.getNumOnBits() + bv2.getNumOnBits();
+  if (total == 0) return 1.0;
+  unsigned int common = NumOnBitsInCommon(bv1, bv2);
+  return (double)common / (double)(total - common);
 }
 
 template <typename T1, typename T2>
@@ -426,7 +463,8 @@ int NumBitsInCommon(const T1& bv1, const T2& bv2) {
 }
 
 int NumBitsInCommon(const ExplicitBitVect& bv1, const ExplicitBitVect& bv2) {
-  return bv1.getNumBits() - ((*bv1.dp_bits) ^ (*bv2.dp_bits)).count();
+  return bv1.getNumBits() -
+         static_cast<int>(((*bv1.dp_bits) ^ (*bv2.dp_bits)).count());
 }
 
 // """ -------------------------------------------------------
@@ -580,12 +618,12 @@ T1* FoldFingerprint(const T1& bv1, unsigned int factor) {
 
   int initSize = bv1.getNumBits();
   int resSize = initSize / factor;
-  T1* res = new T1(resSize);
+  auto* res = new T1(resSize);
 
   IntVect onBits;
   bv1.getOnBits(onBits);
-  for (IntVectIter iv = onBits.begin(); iv != onBits.end(); iv++) {
-    int pos = (*iv) % resSize;
+  for (int& onBit : onBits) {
+    int pos = onBit % resSize;
     res->setBit(pos);
   }
   return res;
@@ -659,7 +697,7 @@ void UpdateBitVectFromFPSText(T1& bv1, const std::string& fps) {
     try {
       tptr[0] = fps[i];
       tptr[1] = fps[i + 1];
-      c = strtol(tptr, NULL, 16);
+      c = static_cast<unsigned short>(strtol(tptr, nullptr, 16));
     } catch (...) {
       std::ostringstream errout;
       errout << "Cannot convert FPS word: " << fps.substr(i, 2) << " to int";
@@ -823,7 +861,8 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
 #else
   unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
-    popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
+    popcount += static_cast<unsigned int>(
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
   }
   for (unsigned int i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
     popcount += byte_popcounts[afp[i]];
@@ -831,11 +870,36 @@ unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
 #endif
   return popcount;
 }
+
+unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
+                                       const unsigned char* bfp,
+                                       unsigned int nBytes) {
+  PRECONDITION(afp, "no afp");
+  PRECONDITION(bfp, "no bfp");
+  unsigned int intersect_popcount = 0;
+#ifndef USE_BUILTIN_POPCOUNT
+  for (unsigned int i = 0; i < nBytes; i++) {
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+  }
+#else
+  BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
+  for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
+    intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+  }
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
+  }
+#endif
+  return intersect_popcount;
+}
+
 double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
                           unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
-  int union_popcount = 0, intersect_popcount = 0;
+  unsigned int union_popcount = 0, intersect_popcount = 0;
 #ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i = 0; i < nBytes; i++) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
@@ -844,12 +908,13 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
 #else
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
-    union_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] |
-                                           ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    union_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] | ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+    intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
@@ -865,7 +930,7 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
                       unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
-  int intersect_popcount = 0, a_popcount = 0, b_popcount = 0;
+  unsigned int intersect_popcount = 0, a_popcount = 0, b_popcount = 0;
 
 #ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i = 0; i < nBytes; i++) {
@@ -876,12 +941,15 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
 #else
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
-    a_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
-    b_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    a_popcount += static_cast<unsigned int>(
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
+    b_popcount += static_cast<unsigned int>(
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+    intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
@@ -898,7 +966,7 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
                          unsigned int nBytes, double ca, double cb) {
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
-  int intersect_popcount = 0, acount = 0, bcount = 0;
+  unsigned int intersect_popcount = 0, acount = 0, bcount = 0;
 
 #ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i = 0; i < nBytes; i++) {
@@ -909,12 +977,15 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
 #else
   BUILTIN_POPCOUNT_TYPE eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (BUILTIN_POPCOUNT_TYPE i = 0; i < eidx; ++i) {
-    intersect_popcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i] &
-                                               ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
-    acount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]);
-    bcount += BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]);
+    intersect_popcount += static_cast<unsigned int>(BUILTIN_POPCOUNT_INSTR(
+        ((BUILTIN_POPCOUNT_TYPE*)afp)[i] & ((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
+    acount += static_cast<unsigned int>(
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)afp)[i]));
+    bcount += static_cast<unsigned int>(
+        BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)bfp)[i]));
   }
-  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE); i < nBytes; ++i) {
+  for (BUILTIN_POPCOUNT_TYPE i = eidx * sizeof(BUILTIN_POPCOUNT_TYPE);
+       i < nBytes; ++i) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
     acount += byte_popcounts[afp[i]];
     bcount += byte_popcounts[bfp[i]];
@@ -943,7 +1014,7 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
   unsigned int eidx = nBytes / sizeof(BUILTIN_POPCOUNT_TYPE);
   for (unsigned int i = 0; i < eidx; ++i) {
     if (BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i] &
-                           ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
+                               ((BUILTIN_POPCOUNT_TYPE*)ref)[i]) !=
         BUILTIN_POPCOUNT_INSTR(((BUILTIN_POPCOUNT_TYPE*)probe)[i])) {
       return false;
     }

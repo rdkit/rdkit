@@ -12,9 +12,11 @@
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <iostream>
 #include <cassert>
@@ -287,6 +289,7 @@ class AtomCompareFunctor {
       else
         return 0;
     }
+
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
@@ -348,6 +351,7 @@ class AtomCompareFunctor {
       else if (ivi > ivj)
         return 1;
     }
+
     if (df_useChiralityRings) {
       // ring stereochemistry
       ivi = getAtomRingNbrCode(i);

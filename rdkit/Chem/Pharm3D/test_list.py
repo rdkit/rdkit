@@ -1,16 +1,13 @@
+tests = [
+  ("python", "UnitTestEmbed.py", {}),
+  ("python", "UnitTestExcludedVolume.py", {}),
+  ("python", "UnitTestPharmacophore.py", {}),
+]
 
-tests=[
-  ("python","EmbedLib.py",{}),
-  ("python","UnitTestEmbed.py",{}),
-  ("python","UnitTestPharmacophore.py",{}),
-  ]
+longTests = []
 
-
-
-longTests=[]
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import sys
   from rdkit import TestRunner
-  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  failed, tests = TestRunner.RunScript('test_list.py', 0, 1)
   sys.exit(len(failed))

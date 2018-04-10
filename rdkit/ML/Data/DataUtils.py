@@ -1,10 +1,7 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #
 #  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
-
 """ Utilities for data manipulation
 
 **FILE FORMATS:**
@@ -39,7 +36,7 @@
  - *.dat files* contain the same information as .qdat files, but the variable
    values can be anything (floats, ints, strings).  **These files should
    still contain quant_bounds!**
-   
+
  - *.qdat.pkl file* contain a pickled (binary) representation of
    the data read in.  They stores, in order:
 
@@ -48,29 +45,32 @@
     2) A python list of lists with the quantization bounds
 
     3) A python list of the point names
-    
+
     4) A python list of lists with the data points
 
 """
 from __future__ import print_function
-import re,csv
-import random
 
-from rdkit import six
-from rdkit.six.moves import cPickle
-from rdkit.six.moves import xrange, map
-from rdkit import RDConfig
-from rdkit.utils import fileutils
-from rdkit.ML.Data import MLData
-from rdkit.Dbase.DbConnection import DbConnect
+import csv
+import random
+import re
+
+import numpy
+
 from rdkit.DataStructs import BitUtils
+from rdkit.ML.Data import MLData
+from rdkit.six import integer_types
+from rdkit.six.moves import cPickle
+from rdkit.utils import fileutils
+
 
 def permutation(nToDo):
-  res = list(xrange(nToDo))
-  random.shuffle(res,random=random.random)
+  res = list(range(nToDo))
+  random.shuffle(res, random=random.random)
   return res
 
-def WriteData(outFile,varNames,qBounds,examples):
+
+def WriteData(outFile, varNames, qBounds, examples):
   """ writes out a .qdat file
 
     **Arguments**
@@ -88,12 +88,12 @@ def WriteData(outFile,varNames,qBounds,examples):
   outFile.write('# Quantized data from DataUtils\n')
   outFile.write('# ----------\n')
   outFile.write('# Variable Table\n')
-  for i in xrange(len(varNames)):
-    outFile.write('# %s %s\n'%(varNames[i],str(qBounds[i])))
+  for i in range(len(varNames)):
+    outFile.write('# %s %s\n' % (varNames[i], str(qBounds[i])))
   outFile.write('# ----------\n')
   for example in examples:
-    outFile.write(' '.join(map(str,example))+'\n')
-    
+    outFile.write(' '.join([str(e) for e in example]) + '\n')
+
 
 def ReadVars(inFile):
   """ reads the variables and quantization bounds from a .qdat or .dat file
@@ -113,15 +113,15 @@ def ReadVars(inFile):
   """
   varNames = []
   qBounds = []
-  fileutils.MoveToMatchingLine(inFile,'Variable Table')
+  fileutils.MoveToMatchingLine(inFile, 'Variable Table')
   inLine = inFile.readline()
   while inLine.find('# ----') == -1:
     splitLine = inLine[2:].split('[')
     varNames.append(splitLine[0].strip())
     qBounds.append(splitLine[1][:-2])
     inLine = inFile.readline()
-  for i in xrange(len(qBounds)):
-    
+  for i in range(len(qBounds)):
+
     if qBounds[i] != '':
       l = qBounds[i].split(',')
       qBounds[i] = []
@@ -129,7 +129,8 @@ def ReadVars(inFile):
         qBounds[i].append(float(item))
     else:
       qBounds[i] = []
-  return varNames,qBounds
+  return varNames, qBounds
+
 
 def ReadQuantExamples(inFile):
   """ reads the examples from a .qdat file
@@ -150,21 +151,22 @@ def ReadQuantExamples(inFile):
 
       because this is reading a .qdat file, it assumed that all variable values
       are integers
-      
+
   """
   expr1 = re.compile(r'^#')
-  expr2 = re.compile(r'[\ ]*|[\t]*')
+  expr2 = re.compile(r'[\ ]+|[\t]+')
   examples = []
   names = []
   inLine = inFile.readline()
   while inLine:
     if expr1.search(inLine) is None:
       resArr = expr2.split(inLine)
-      if len(resArr)>1:
-        examples.append(list(map(lambda x: int(x),resArr[1:])))
+      if len(resArr) > 1:
+        examples.append([int(x) for x in resArr[1:]])
         names.append(resArr[0])
     inLine = inFile.readline()
-  return names,examples
+  return names, examples
+
 
 def ReadGeneralExamples(inFile):
   """ reads the examples from a .dat file
@@ -188,15 +190,15 @@ def ReadGeneralExamples(inFile):
 
   """
   expr1 = re.compile(r'^#')
-  expr2 = re.compile(r'[\ ]*|[\t]*')
+  expr2 = re.compile(r'[\ ]+|[\t]+')
   examples = []
   names = []
   inLine = inFile.readline()
   while inLine:
     if expr1.search(inLine) is None:
       resArr = expr2.split(inLine)[:-1]
-      if len(resArr)>1:
-        for i in xrange(1,len(resArr)):
+      if len(resArr) > 1:
+        for i in range(1, len(resArr)):
           d = resArr[i]
           try:
             resArr[i] = int(d)
@@ -208,7 +210,8 @@ def ReadGeneralExamples(inFile):
         examples.append(resArr[1:])
         names.append(resArr[0])
     inLine = inFile.readline()
-  return names,examples
+  return names, examples
+
 
 def BuildQuantDataSet(fileName):
   """ builds a data set from a .qdat file
@@ -220,13 +223,12 @@ def BuildQuantDataSet(fileName):
     **Returns**
 
       an _MLData.MLQuantDataSet_
-      
+
   """
-  with open(fileName,'r') as inFile:
-    varNames,qBounds = ReadVars(inFile)
-    ptNames,examples = ReadQuantExamples(inFile)
-  data = MLData.MLQuantDataSet(examples,qBounds=qBounds,varNames=varNames,
-                               ptNames=ptNames)
+  with open(fileName, 'r') as inFile:
+    varNames, qBounds = ReadVars(inFile)
+    ptNames, examples = ReadQuantExamples(inFile)
+  data = MLData.MLQuantDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
   return data
 
 
@@ -240,17 +242,16 @@ def BuildDataSet(fileName):
     **Returns**
 
       an _MLData.MLDataSet_
-      
+
   """
-  with open(fileName,'r') as inFile: 
-    varNames,qBounds = ReadVars(inFile)
-    ptNames,examples = ReadGeneralExamples(inFile)
-  data = MLData.MLDataSet(examples,qBounds=qBounds,varNames=varNames,
-                          ptNames=ptNames)
+  with open(fileName, 'r') as inFile:
+    varNames, qBounds = ReadVars(inFile)
+    ptNames, examples = ReadGeneralExamples(inFile)
+  data = MLData.MLDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
   return data
 
 
-def CalcNPossibleUsingMap(data,order,qBounds,nQBounds=None):
+def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
   """ calculates the number of possible values for each variable in a data set
 
    **Arguments**
@@ -273,46 +274,44 @@ def CalcNPossibleUsingMap(data,order,qBounds,nQBounds=None):
      - _nPossible_ for other numeric variables will be calculated
 
   """
-  numericTypes = [int, float]
-  if six.PY2:
-    numericTypes.append(long)
-    
-  print('order:',order, len(order))
-  print('qB:',qBounds)
-  #print('nQB:',nQBounds, len(nQBounds))
-  assert (qBounds and len(order)==len(qBounds)) or (nQBounds and len(order)==len(nQBounds)),\
-         'order/qBounds mismatch'
+  numericTypes = integer_types + (float, numpy.int64, numpy.int32, numpy.int16)
+
+  if not silent:
+    print('order:', order, len(order))
+    print('qB:', qBounds)
+    # print('nQB:',nQBounds, len(nQBounds))
+  assert (qBounds and len(order) == len(qBounds)) or (nQBounds and len(order) == len(nQBounds)), \
+      'order/qBounds mismatch'
   nVars = len(order)
-  nPossible = [-1]*nVars
-  cols = range(nVars)
-  for i in xrange(nVars):
+  nPossible = [-1] * nVars
+  cols = list(range(nVars))
+  for i in range(nVars):
     if nQBounds and nQBounds[i] != 0:
       nPossible[i] = -1
       cols.remove(i)
-    elif len(qBounds[i])>0:
+    elif len(qBounds[i]) > 0:
       nPossible[i] = len(qBounds[i])
       cols.remove(i)
 
   nPts = len(data)
-  for i in xrange(nPts):
+  for i in range(nPts):
     for col in cols[:]:
       d = data[i][order[col]]
       if type(d) in numericTypes:
         if int(d) == d:
-          nPossible[col] = max(int(d),nPossible[col])
+          nPossible[col] = max(int(d), nPossible[col])
         else:
           nPossible[col] = -1
           cols.remove(col)
       else:
-        print('bye bye col %d: %s'%(col,repr(d)))
+        if not silent:
+          print('bye bye col %d: %s' % (col, repr(d)))
         nPossible[col] = -1
         cols.remove(col)
-
-  return list(map(lambda x:int(x)+1,nPossible))
-
+  return [int(x) + 1 for x in nPossible]
 
 
-def WritePickledData(outName,data):
+def WritePickledData(outName, data):
   """ writes either a .qdat.pkl or a .dat.pkl file
 
     **Arguments**
@@ -326,13 +325,14 @@ def WritePickledData(outName,data):
   qBounds = data.GetQuantBounds()
   ptNames = data.GetPtNames()
   examples = data.GetAllData()
-  with open(outName,'wb+') as outFile:
-    cPickle.dump(varNames,outFile)
-    cPickle.dump(qBounds,outFile)  
-    cPickle.dump(ptNames,outFile)  
-    cPickle.dump(examples,outFile)
+  with open(outName, 'wb+') as outFile:
+    cPickle.dump(varNames, outFile)
+    cPickle.dump(qBounds, outFile)
+    cPickle.dump(ptNames, outFile)
+    cPickle.dump(examples, outFile)
 
-def TakeEnsemble(vect,ensembleIds,isDataVect=False):
+
+def TakeEnsemble(vect, ensembleIds, isDataVect=False):
   """
 
   >>> v = [10,20,30,40,50]
@@ -341,22 +341,18 @@ def TakeEnsemble(vect,ensembleIds,isDataVect=False):
   >>> v = ['foo',10,20,30,40,50,1]
   >>> TakeEnsemble(v,(1,2,3),isDataVect=True)
   ['foo', 20, 30, 40, 1]
-  
-
 
   """
   if isDataVect:
-    ensembleIds = [x+1 for x in ensembleIds]
-    vect = [vect[0]]+[vect[x] for x in ensembleIds]+[vect[-1]]
+    ensembleIds = [x + 1 for x in ensembleIds]
+    vect = [vect[0]] + [vect[x] for x in ensembleIds] + [vect[-1]]
   else:
     vect = [vect[x] for x in ensembleIds]
   return vect
-    
 
 
-def DBToData(dbName,tableName,user='sysdba',password='masterkey',dupCol=-1,
-             what='*',where='',join='',pickleCol=-1,pickleClass=None,
-             ensembleIds=None):
+def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, what='*', where='',
+             join='', pickleCol=-1, pickleClass=None, ensembleIds=None):
   """ constructs  an _MLData.MLDataSet_ from a database
 
     **Arguments**
@@ -381,17 +377,17 @@ def DBToData(dbName,tableName,user='sysdba',password='masterkey',dupCol=-1,
       - this uses Dbase.DataUtils functionality
 
   """
-  conn = DbConnect(dbName,tableName,user,password)
-  res = conn.GetData(fields=what,where=where,join=join,removeDups=dupCol,
-                     forceList=1)
+  from rdkit.Dbase.DbConnection import DbConnect
+  conn = DbConnect(dbName, tableName, user, password)
+  res = conn.GetData(fields=what, where=where, join=join, removeDups=dupCol, forceList=1)
   nPts = len(res)
-  vals = [None]*nPts
-  ptNames = [None]*nPts
-  classWorks=True
+  vals = [None] * nPts
+  ptNames = [None] * nPts
+  classWorks = True
   for i in range(nPts):
     tmp = list(res[i])
     ptNames[i] = tmp.pop(0)
-    if pickleCol>=0:
+    if pickleCol >= 0:
       if not pickleClass or not classWorks:
         tmp[pickleCol] = cPickle.loads(str(tmp[pickleCol]))
       else:
@@ -399,18 +395,19 @@ def DBToData(dbName,tableName,user='sysdba',password='masterkey',dupCol=-1,
           tmp[pickleCol] = pickleClass(str(tmp[pickleCol]))
         except Exception:
           tmp[pickleCol] = cPickle.loads(str(tmp[pickleCol]))
-          classWorks=False
+          classWorks = False
       if ensembleIds:
-        tmp[pickleCol] = BitUtils.ConstructEnsembleBV(tmp[pickleCol],ensembleIds)
+        tmp[pickleCol] = BitUtils.ConstructEnsembleBV(tmp[pickleCol], ensembleIds)
     else:
       if ensembleIds:
-        tmp = TakeEnsemble(tmp,ensembleIds,isDataVect=True)
-    vals[i] = tmp  
-  varNames = conn.GetColumnNames(join=join,what=what)
-  data = MLData.MLDataSet(vals,varNames=varNames,ptNames=ptNames)
+        tmp = TakeEnsemble(tmp, ensembleIds, isDataVect=True)
+    vals[i] = tmp
+  varNames = conn.GetColumnNames(join=join, what=what)
+  data = MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
   return data
 
-def TextToData(reader,ignoreCols=[],onlyCols=None):
+
+def TextToData(reader, ignoreCols=[], onlyCols=None):
   """ constructs  an _MLData.MLDataSet_ from a bunch of text
 #DOC
     **Arguments**
@@ -426,14 +423,14 @@ def TextToData(reader,ignoreCols=[],onlyCols=None):
   varNames = next(reader)
   if not onlyCols:
     keepCols = []
-    for i,name in enumerate(varNames):
+    for i, name in enumerate(varNames):
       if name not in ignoreCols:
         keepCols.append(i)
   else:
-    keepCols = [-1]*len(onlyCols)
-    for i,name in enumerate(varNames):
+    keepCols = [-1] * len(onlyCols)
+    for i, name in enumerate(varNames):
       if name in onlyCols:
-        keepCols[onlyCols.index(name)]=i
+        keepCols[onlyCols.index(name)] = i
 
   nCols = len(varNames)
   varNames = tuple([varNames[x] for x in keepCols])
@@ -442,38 +439,40 @@ def TextToData(reader,ignoreCols=[],onlyCols=None):
   ptNames = []
   for splitLine in reader:
     if len(splitLine):
-      if len(splitLine)!=nCols:
+      if len(splitLine) != nCols:
         raise ValueError('unequal line lengths')
       tmp = [splitLine[x] for x in keepCols]
       ptNames.append(tmp[0])
-      pt = [None]*(nVars-1)
-      for j in range(nVars-1):
+      pt = [None] * (nVars - 1)
+      for j in range(nVars - 1):
         try:
-          val = int(tmp[j+1])
+          val = int(tmp[j + 1])
         except ValueError:
           try:
-            val = float(tmp[j+1])
+            val = float(tmp[j + 1])
           except ValueError:
-            val = str(tmp[j+1])
-        pt[j] = val    
+            val = str(tmp[j + 1])
+        pt[j] = val
       vals.append(pt)
-  data = MLData.MLDataSet(vals,varNames=varNames,ptNames=ptNames)
+  data = MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
   return data
 
-def TextFileToData(fName,onlyCols=None):
+
+def TextFileToData(fName, onlyCols=None):
   """
   #DOC
 
   """
   ext = fName.split('.')[-1]
-  with open(fName,'r') as inF:
+  with open(fName, 'r') as inF:
     if ext.upper() == 'CSV':
       #  CSV module distributed with python2.3 and later
       splitter = csv.reader(inF)
     else:
-      splitter = csv.reader(inF,delimiter='\t')
-    res = TextToData(splitter,onlyCols=onlyCols)
+      splitter = csv.reader(inF, delimiter='\t')
+    res = TextToData(splitter, onlyCols=onlyCols)
   return res
+
 
 def InitRandomNumbers(seed):
   """ Seeds the random number generators
@@ -490,29 +489,27 @@ def InitRandomNumbers(seed):
   """
   from rdkit import RDRandom
   RDRandom.seed(seed[0])
-  import random
   random.seed(seed[0])
 
-def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
+
+def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
   """
 #DOC
   """
-  if frac<0 or frac>1: raise ValueError('filter fraction out of bounds')
+  if frac < 0 or frac > 1:
+    raise ValueError('filter fraction out of bounds')
   try:
     inData[0][col]
   except IndexError:
     raise ValueError('target column index out of range')
 
-  
   # convert the input data to a list and sort them
   if indicesToUse:
     tmp = [inData[x] for x in indicesToUse]
   else:
     tmp = list(inData)
   nOrig = len(tmp)
-  sortOrder = list(xrange(nOrig))
-  #sortOrder.sort(lambda x,y,col=col,tmp=tmp:cmp(tmp[x][col],tmp[y][col]))
-  # no more cmp in python3, must use a key function
+  sortOrder = list(range(nOrig))
   sortOrder.sort(key=lambda x: tmp[x][col])
   tmp = [tmp[x] for x in sortOrder]
 
@@ -520,25 +517,25 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
   start = 0
   while start < nOrig and tmp[start][col] != val:
     start += 1
-  if  start >= nOrig:
-    raise ValueError('target value (%d) not found in data'%(val))
-  
+  if start >= nOrig:
+    raise ValueError('target value (%d) not found in data' % (val))
+
   # find the end of the entries with value val
-  finish = start+1
-  while finish<nOrig and tmp[finish][col] ==val:
+  finish = start + 1
+  while finish < nOrig and tmp[finish][col] == val:
     finish += 1
 
   # how many entries have the target value?
-  nWithVal = finish-start
+  nWithVal = finish - start
 
   # how many don't?
-  nOthers = len(tmp)-nWithVal
+  nOthers = len(tmp) - nWithVal
 
   currFrac = float(nWithVal) / nOrig
   if currFrac < frac:
     #
     # We're going to keep most of (all) the points with the target value,
-    #  We need to figure out how many of the other points we'll 
+    #  We need to figure out how many of the other points we'll
     #  toss out
     #
     nTgtFinal = nWithVal
@@ -561,7 +558,7 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
     #  selection of the target value points
     #
     nOthersFinal = nOthers
-    nFinal = int(round(nOthers/(1-frac)))
+    nFinal = int(round(nOthers / (1 - frac)))
     nTgtFinal = nFinal - nOthersFinal
 
     #
@@ -572,19 +569,17 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
     while float(nTgtFinal) / nFinal < frac:
       nOthersFinal -= 1
       nFinal -= 1
-    
-  others = list(xrange(start)) + list(xrange(finish,nOrig))
+
+  others = list(range(start)) + list(range(finish, nOrig))
   othersTake = permutation(nOthers)
   others = [others[x] for x in othersTake[:nOthersFinal]]
 
-  targets = list(xrange(start,finish))
+  targets = list(range(start, finish))
   targetsTake = permutation(nWithVal)
   targets = [targets[x] for x in targetsTake[:nTgtFinal]]
-    
+
   # these are all the indices we'll be keeping
-  indicesToKeep = targets+others
-  nToKeep = len(indicesToKeep)
-  nRej = nOrig-nToKeep
+  indicesToKeep = targets + others
 
   res = []
   rej = []
@@ -606,9 +601,10 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
         res.append(idx)
       else:
         rej.append(idx)
-  return res,rej
+  return res, rej
 
-def CountResults(inData,col=-1,bounds=None):
+
+def CountResults(inData, col=-1, bounds=None):
   """ #DOC
   """
   counts = {}
@@ -628,11 +624,11 @@ def CountResults(inData,col=-1,bounds=None):
       if not placed:
         r = bound
 
-    counts[r] = counts.get(r,0)+1
+    counts[r] = counts.get(r, 0) + 1
   return counts
 
 
-def RandomizeActivities(dataSet,shuffle=0,runDetails=None):
+def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
   """ randomizes the activity values of a dataset
 
     **Arguments**
@@ -648,35 +644,37 @@ def RandomizeActivities(dataSet,shuffle=0,runDetails=None):
 
       - _examples_ are randomized in place
 
-      
+
   """
-  nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
   if shuffle:
-    if runDetails: runDetails.shuffled = 1
+    if runDetails:
+      runDetails.shuffled = 1
     acts = dataSet.GetResults()[:]
-    random.shuffle(acts,random=random.random)
-  else:
-    if runDetails: runDetails.randomized = 1
-    acts = [random.randint(0,nPossible) for x in len(examples)]
+    # While the random argument is the default, removing it will cause the shuffle
+    # tests in UnitTestScreenComposite to fail.
+    random.shuffle(acts, random=random.random)
+  else:  # This part of the code isn't working as examples is not defined
+    if runDetails:
+      runDetails.randomized = 1
+    nPossible = dataSet.GetNPossibleVals()[-1]
+    acts = [random.randint(0, nPossible) for _ in len(examples)]
   for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]
     dataSet[i] = tmp
 
 
-
-
-
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

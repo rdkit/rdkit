@@ -1,33 +1,37 @@
-# $Id: AlignDepict.py 736 2008-02-14 14:09:36Z landrgr1 $
 #
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
 from __future__ import print_function
+
+import argparse
+import sys
+
 from rdkit import Chem
-from rdkit.Chem import rdDepictor
 from rdkit import Geometry
+from rdkit.Chem import rdDepictor
 
-def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
+
+def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
   """
-
   Arguments:
     - mol:          the molecule to be aligned, this will come back
                     with a single conformer.
     - core:         a molecule with the core atoms to align to;
                     this should have a depiction.
-    - corePattern:  (optional) an optional molecule to be used to 
+    - corePattern:  (optional) an optional molecule to be used to
                     generate the atom mapping between the molecule
                     and the core.
   """
   if core and corePattern:
-    if not core.GetNumAtoms(onlyExplicit=True)==corePattern.GetNumAtoms(onlyExplicit=True):
-      raise ValueError('When a pattern is provided, it must have the same number of atoms as the core')
+    if not core.GetNumAtoms(onlyExplicit=True) == corePattern.GetNumAtoms(onlyExplicit=True):
+      raise ValueError(
+        'When a pattern is provided, it must have the same number of atoms as the core')
     coreMatch = core.GetSubstructMatch(corePattern)
     if not coreMatch:
       raise ValueError("Core does not map to itself")
   else:
-    coreMatch = range(core.GetNumAtoms(onlyExplicit=True))
+    coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:
@@ -37,60 +41,54 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')
     else:
-      coordMap={}
+      coordMap = {}
   else:
     conf = core.GetConformer()
-    coordMap={}
-    for i,idx in enumerate(match):
+    coordMap = {}
+    for i, idx in enumerate(match):
       pt3 = conf.GetAtomPosition(coreMatch[i])
-      pt2 = Geometry.Point2D(pt3.x,pt3.y)
+      pt2 = Geometry.Point2D(pt3.x, pt3.y)
       coordMap[idx] = pt2
-  rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap,canonOrient=False)
+  rdDepictor.Compute2DCoords(mol, clearConfs=True, coordMap=coordMap, canonOrient=False)
 
-if __name__=='__main__':
-  import sys,getopt
 
-  def Usage():
-    pass
-  
-  args,extras = getopt.getopt(sys.argv[1:],'p:ho:',['smiles','pattern='])
-  if len(extras)!=2:
-    print('ERROR: Not enough arguments', file=sys.stderr)
-    Usage()
-    sys.exit(1)
-  patt = None
-  useSmiles = False
-  outF=None
-  for arg,val in args:
-    if arg=='-h':
-      Usage()
-      sys.exit(0)
-    elif arg=='-p' or arg=='--pattern':
-      patt = Chem.MolFromSmarts(val)
-    elif arg=='--smiles':
-      useSmiles = True
-    elif arg=='-o':
-      outF = val
-  
-  if not useSmiles:
-    core = Chem.MolFromMolFile(extras[0])
-  else:
-    core = Chem.MolFromSmiles(extras[0])
+def initParser():
+  """ Initialize the parser """
+  parser = argparse.ArgumentParser(description='Create aligned depiction')
+  parser.add_argument('--pattern', '-p', metavar='SMARTS', default=None, dest='patt')
+  parser.add_argument('--smiles', default=False, action='store_true', dest='useSmiles',
+                      help='Set if core and input are SMILES strings')
+  parser.add_argument('-o', dest='outF', type=argparse.FileType('w'), default=sys.stdout,
+                      metavar='OUTFILE',
+                      help='Specify a file to take the output. If missing, uses stdout.')
+  parser.add_argument('core', metavar='core')
+  parser.add_argument('mol', metavar='molecule', help='')
+  return parser
+
+
+def processArgs(args):
+  patt = args.patt
+  if patt:
+    patt = Chem.MolFromSmarts(patt)
+
+  if args.useSmiles:
+    core = Chem.MolFromSmiles(args.core)
+    mol = Chem.MolFromSmiles(args.mol)
     rdDepictor.Compute2DCoords(core)
-
-  if not useSmiles:
-    mol = Chem.MolFromMolFile(extras[1])
   else:
-    mol = Chem.MolFromSmiles(extras[1])
+    core = Chem.MolFromMolFile(args.core)
+    mol = Chem.MolFromMolFile(args.mol)
 
-  AlignDepict(mol,core,patt)
-  
-  if outF:
-    outF = open(outF,'w+')
-  else:
-    outF = sys.stdout
+  AlignDepict(mol, core, patt)
+  print(Chem.MolToMolBlock(mol), file=args.outF)
 
-  print(Chem.MolToMolBlock(mol), file=outF)
-  
-  
-  
+
+def main():
+  """ Main application """
+  parser = initParser()
+  args = parser.parse_args()
+  processArgs(args)
+
+
+if __name__ == '__main__':
+  main()

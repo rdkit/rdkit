@@ -62,7 +62,7 @@ void readChunkData(std::istream &istrm, boost::uint64_t &sz,
     data = new boost::uint8_t[sz];
     istrm.read(reinterpret_cast<char *>(data), sz);
   } else {
-    data = NULL;
+    data = nullptr;
   }
   // std::cerr << "  CHUNKSZ: " << sz << " name: " << nm << std::endl;
 }
@@ -188,7 +188,7 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
   boost::uint8_t *res;
   res = new boost::uint8_t[dp_impl->numBytesStoredPerFingerprint];
   if (!dp_impl->df_lazy) {
-    boost::uint8_t *fpData = NULL;
+    boost::uint8_t *fpData = nullptr;
     extractBytes(dp_impl, which, fpData);
     memcpy(static_cast<void *>(res), fpData,
            dp_impl->numBytesStoredPerFingerprint);
@@ -219,7 +219,7 @@ boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 
-  boost::uint8_t *res = new boost::uint8_t[nBytes];
+  auto *res = new boost::uint8_t[nBytes];
   boost::to_block_range(
       bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
   return res;
@@ -566,7 +566,7 @@ void FPBReader::init() {
     if (dp_istrm->eof()) throw BadFileException("EOF hit before FEND record");
     std::string chunkNm;
     boost::uint64_t chunkSz;
-    boost::uint8_t *chunk = NULL;
+    boost::uint8_t *chunk = nullptr;
     detail::readChunkDetails(*dp_istrm, chunkNm, chunkSz);
     // std::cerr << " Chunk: " << chunkNm << " " << chunkSz << std::endl;
     if (!df_lazyRead || (chunkNm != "AREN" && chunkNm != "FPID")) {
@@ -578,11 +578,11 @@ void FPBReader::init() {
       } else if (chunkNm == "AREN") {
         dp_impl->dp_arenaChunk.reset(chunk);
         detail::extractArena(dp_impl, chunkSz, chunk);
-        chunk = NULL;
+        chunk = nullptr;
       } else if (chunkNm == "FPID") {
         dp_impl->dp_idChunk.reset(chunk);
         detail::extractIds(dp_impl, chunkSz, chunk);
-        chunk = NULL;
+        chunk = nullptr;
       } else if (chunkNm == "META") {
         // currently ignored
       } else if (chunkNm == "HASH") {
@@ -618,11 +618,11 @@ void FPBReader::destroy() {
     dp_impl->dp_arenaChunk.reset();
     dp_impl->dp_idChunk.reset();
 
-    dp_impl->dp_fpData = NULL;
-    dp_impl->dp_idOffsets = NULL;
+    dp_impl->dp_fpData = nullptr;
+    dp_impl->dp_idOffsets = nullptr;
   }
   delete dp_impl;
-  dp_impl = NULL;
+  dp_impl = nullptr;
 };
 
 boost::shared_ptr<ExplicitBitVect> FPBReader::getFP(unsigned int idx) const {

@@ -7,19 +7,20 @@
   as described in Tom Mitchell's book "Machine Learning"
 
   It relies upon the _Tree.TreeNode_ data structure (or something
-    with the same API) defined locally to represent the trees 
+    with the same API) defined locally to represent the trees
 
 """
 
 import numpy
+
 from rdkit.ML.DecTree import DecTree
 from rdkit.ML.InfoTheory import entropy
-from rdkit.six.moves import range, xrange
 
-def CalcTotalEntropy(examples,nPossibleVals):
+
+def CalcTotalEntropy(examples, nPossibleVals):
   """ Calculates the total entropy of the data set (w.r.t. the results)
 
-   **Arguments** 
+   **Arguments**
 
     - examples: a list (nInstances long) of lists of variable values + instance
               values
@@ -29,23 +30,24 @@ def CalcTotalEntropy(examples,nPossibleVals):
    **Returns**
 
      a float containing the informational entropy of the data set.
-    
+
   """
   nRes = nPossibleVals[-1]
-  resList = numpy.zeros(nRes,'i')
+  resList = numpy.zeros(nRes, 'i')
   for example in examples:
     res = int(example[-1])
     resList[res] += 1
   return entropy.InfoEntropy(resList)
-         
-def GenVarTable(examples,nPossibleVals,vars):
+
+
+def GenVarTable(examples, nPossibleVals, vars):
   """Generates a list of variable tables for the examples passed in.
 
     The table for a given variable records the number of times each possible value
     of that variable appears for each possible result of the function.
 
   **Arguments**
-  
+
     - examples: a list (nInstances long) of lists of variable values + instance
               values
 
@@ -61,20 +63,20 @@ def GenVarTable(examples,nPossibleVals,vars):
         which is varValues x nResults
   """
   nVars = len(vars)
-  res = [None]*nVars
+  res = [None] * nVars
   nFuncVals = nPossibleVals[-1]
 
-  for i in xrange(nVars):
-    res[i] = numpy.zeros((nPossibleVals[vars[i]],nFuncVals),'i')
+  for i in range(nVars):
+    res[i] = numpy.zeros((nPossibleVals[vars[i]], nFuncVals), 'i')
   for example in examples:
     val = int(example[-1])
-    for i in xrange(nVars):
-      res[i][int(example[vars[i]]),val] += 1
+    for i in range(nVars):
+      res[i][int(example[vars[i]]), val] += 1
 
   return res
 
-def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
-        **kwargs):
+
+def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
   """ Implements the ID3 algorithm for constructing decision trees.
 
     From Mitchell's book, page 56
@@ -83,7 +85,7 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
       multivalued (non-binary) results.
 
     **Arguments**
-    
+
       - examples: a list (nInstances long) of lists of variable values + instance
               values
 
@@ -100,24 +102,24 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
                    will be grown
 
     **Returns**
-    
+
      a DecTree.DecTreeNode with the decision tree
 
     **NOTE:** This code cannot bootstrap (start from nothing...)
           use _ID3Boot_ (below) for that.
   """
-  varTable = GenVarTable(examples,nPossibleVals,attrs)
-  tree=DecTree.DecTreeNode(None,'node')
+  varTable = GenVarTable(examples, nPossibleVals, attrs)
+  tree = DecTree.DecTreeNode(None, 'node')
 
   # store the total entropy... in case that is interesting
-  totEntropy = CalcTotalEntropy(examples,nPossibleVals)
+  totEntropy = CalcTotalEntropy(examples, nPossibleVals)
   tree.SetData(totEntropy)
-  #tree.SetExamples(examples)
+  # tree.SetExamples(examples)
 
   # the matrix of results for this target:
-  tMat = GenVarTable(examples,nPossibleVals,[target])[0] 
+  tMat = GenVarTable(examples, nPossibleVals, [target])[0]
   # counts of each result code:
-  counts = sum(tMat)  
+  counts = sum(tMat)
   nzCounts = numpy.nonzero(counts)[0]
 
   if len(nzCounts) == 1:
@@ -128,14 +130,14 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
     tree.SetLabel(res)
     tree.SetName(str(res))
     tree.SetTerminal(1)
-  elif len(attrs) == 0 or (maxDepth>=0 and depth>=maxDepth):
+  elif len(attrs) == 0 or (maxDepth >= 0 and depth >= maxDepth):
     # Bottomed out: no variables left or max depth hit
     #  We don't really know what to do here, so
     #  use the heuristic of picking the most prevalent
     #  result
-    v =  numpy.argmax(counts)
+    v = numpy.argmax(counts)
     tree.SetLabel(v)
-    tree.SetName('%d?'%v)
+    tree.SetName('%d?' % v)
     tree.SetTerminal(1)
   else:
     # find the variable which gives us the largest information gain
@@ -143,21 +145,20 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
     gains = [entropy.InfoGain(x) for x in varTable]
     best = attrs[numpy.argmax(gains)]
 
-
     # remove that variable from the lists of possible variables
     nextAttrs = attrs[:]
-    if not kwargs.get('recycleVars',0):
+    if not kwargs.get('recycleVars', 0):
       nextAttrs.remove(best)
 
     # set some info at this node
-    tree.SetName('Var: %d'%best)
+    tree.SetName('Var: %d' % best)
     tree.SetLabel(best)
-    #tree.SetExamples(examples)
+    # tree.SetExamples(examples)
     tree.SetTerminal(0)
 
     # loop over possible values of the new variable and
     #  build a subtree for each one
-    for val in xrange(nPossibleVals[best]):
+    for val in range(nPossibleVals[best]):
       nextExamples = []
       for example in examples:
         if example[best] == val:
@@ -166,16 +167,16 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
         # this particular value of the variable has no examples,
         #  so there's not much sense in recursing.
         #  This can (and does) happen.
-        v =  numpy.argmax(counts)
-        tree.AddChild('%d'%v,label=v,data=0.0,isTerminal=1)
+        v = numpy.argmax(counts)
+        tree.AddChild('%d' % v, label=v, data=0.0, isTerminal=1)
       else:
         # recurse
-        tree.AddChildNode(ID3(nextExamples,best,nextAttrs,nPossibleVals,depth+1,maxDepth,
-                              **kwargs))
+        tree.AddChildNode(
+          ID3(nextExamples, best, nextAttrs, nPossibleVals, depth + 1, maxDepth, **kwargs))
   return tree
 
-def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
-            **kwargs):
+
+def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-1, **kwargs):
   """ Bootstrapping code for the ID3 algorithm
 
     see ID3 for descriptions of the arguments
@@ -184,13 +185,13 @@ def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
      choose the first variable in the tree (the standard greedy
      approach).  Otherwise, _initialVar_ will be used as the first
      split.
-     
-  """
-  totEntropy = CalcTotalEntropy(examples,nPossibleVals)
-  varTable = GenVarTable(examples,nPossibleVals,attrs)
 
-  tree=DecTree.DecTreeNode(None,'node')
-  #tree.SetExamples(examples)
+  """
+  totEntropy = CalcTotalEntropy(examples, nPossibleVals)
+  varTable = GenVarTable(examples, nPossibleVals, attrs)
+
+  tree = DecTree.DecTreeNode(None, 'node')
+  # tree.SetExamples(examples)
   tree._nResultCodes = nPossibleVals[-1]
 
   # <perl>you've got to love any language which will let you
@@ -200,20 +201,19 @@ def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
   else:
     best = initialVar
 
-  tree.SetName('Var: %d'%best)
+  tree.SetName('Var: %d' % best)
   tree.SetData(totEntropy)
   tree.SetLabel(best)
   tree.SetTerminal(0)
   nextAttrs = list(attrs)
-  if not kwargs.get('recycleVars',0):
+  if not kwargs.get('recycleVars', 0):
     nextAttrs.remove(best)
 
-  for val in xrange(nPossibleVals[best]):
+  for val in range(nPossibleVals[best]):
     nextExamples = []
     for example in examples:
       if example[best] == val:
         nextExamples.append(example)
 
-    tree.AddChildNode(ID3(nextExamples,best,nextAttrs,nPossibleVals,depth,maxDepth,
-                          **kwargs))
+    tree.AddChildNode(ID3(nextExamples, best, nextAttrs, nPossibleVals, depth, maxDepth, **kwargs))
   return tree

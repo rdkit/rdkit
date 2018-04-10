@@ -80,8 +80,8 @@ class SymmMatrix {
   }
 
   TYPE getVal(unsigned int i, unsigned int j) const {
-    URANGE_CHECK(i, d_size - 1);
-    URANGE_CHECK(j, d_size - 1);
+    URANGE_CHECK(i, d_size);
+    URANGE_CHECK(j, d_size);
     unsigned int id;
     if (i >= j) {
       id = i * (i + 1) / 2 + j;
@@ -92,8 +92,8 @@ class SymmMatrix {
   }
 
   void setVal(unsigned int i, unsigned int j, TYPE val) {
-    URANGE_CHECK(i, d_size - 1);
-    URANGE_CHECK(j, d_size - 1);
+    URANGE_CHECK(i, d_size);
+    URANGE_CHECK(j, d_size);
     unsigned int id;
     if (i >= j) {
       id = i * (i + 1) / 2 + j;

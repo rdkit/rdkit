@@ -44,15 +44,52 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
 
   const DashPattern &dashes = dash();
   if (dashes.size()) {
-    double dd[dashes.size()];
+    double *dd = new double[dashes.size()];
     std::copy(dashes.begin(), dashes.end(), dd);
     cairo_set_dash(dp_cr, dd, dashes.size(), 0);
+    delete[] dd;
   } else {
-    cairo_set_dash(dp_cr, 0, 0, 0);
+    cairo_set_dash(dp_cr, nullptr, 0, 0);
   }
 
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_line_to(dp_cr, c2.x, c2.y);
+  cairo_stroke(dp_cr);
+}
+
+void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                                  const DrawColour &col1,
+                                  const DrawColour &col2,
+                                  unsigned int nSegments, double vertOffset) {
+  PRECONDITION(dp_cr, "no draw context");
+  PRECONDITION(nSegments > 1, "too few segments");
+  RDUNUSED_PARAM(col2);
+
+  if (nSegments % 2)
+    ++nSegments;  // we're going to assume an even number of segments
+
+  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D delta = (cds2 - cds1);
+  perp *= vertOffset;
+  delta /= nSegments;
+
+  Point2D c1 = getDrawCoords(cds1);
+
+  unsigned int width = lineWidth();
+  cairo_set_line_width(dp_cr, width);
+  cairo_set_dash(dp_cr, nullptr, 0, 0);
+  setColour(col1);
+  cairo_move_to(dp_cr, c1.x, c1.y);
+  for (unsigned int i = 0; i < nSegments; ++i) {
+    Point2D startpt = cds1 + delta * i;
+    Point2D segpt = getDrawCoords(startpt + delta);
+    Point2D cpt1 =
+        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D cpt2 =
+        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    // if (i == nSegments / 2 && col2 != col1) setColour(col2);
+    cairo_curve_to(dp_cr, cpt1.x, cpt1.y, cpt2.x, cpt2.y, segpt.x, segpt.y);
+  }
   cairo_stroke(dp_cr);
 }
 
@@ -83,7 +120,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
   cairo_set_line_width(dp_cr, lineWidth());
-  cairo_set_dash(dp_cr, 0, 0, 0);
+  cairo_set_dash(dp_cr, nullptr, 0, 0);
 
   for (unsigned int i = 0; i < cds.size(); ++i) {
     Point2D lc = getDrawCoords(cds[i]);

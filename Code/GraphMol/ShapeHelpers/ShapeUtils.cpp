@@ -62,7 +62,7 @@ std::vector<double> getConfDimensions(const Conformer &conf, double padding,
                                       const RDGeom::Point3D *center,
                                       bool ignoreHs) {
   RDGeom::Point3D lb, rb;
-  computeConfBox(conf, lb, rb, 0, padding);
+  computeConfBox(conf, lb, rb, nullptr, padding);
 
   if (!center) {
     RDGeom::Point3D cpt = MolTransforms::computeCentroid(conf, ignoreHs);
@@ -97,6 +97,49 @@ void computeUnionBox(const RDGeom::Point3D &leftBottom1,
   uRightTop.y = std::max(rightTop1.y, rightTop2.y);
   uRightTop.z = std::max(rightTop1.z, rightTop2.z);
 }
+
+double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1,
+                        int confId2, double gridSpacing,
+                        DiscreteValueVect::DiscreteValueType bitsPerPoint,
+                        double vdwScale, double stepSize, int maxLayers,
+                        bool ignoreHs) {
+  const Conformer &conf1 = mol1.getConformer(confId1);
+  const Conformer &conf2 = mol2.getConformer(confId2);
+  return tverskyIndex(conf1, conf2, alpha, beta, gridSpacing, bitsPerPoint,
+                          vdwScale, stepSize, maxLayers, ignoreHs);
+}
+
+double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
+                        double gridSpacing,
+                        DiscreteValueVect::DiscreteValueType bitsPerPoint,
+                        double vdwScale, double stepSize, int maxLayers,
+                        bool ignoreHs) {
+  RDGeom::Transform3D *trans = MolTransforms::computeCanonicalTransform(conf1);
+
+  // now use this transform and figure out what size grid we will need
+  // find the lower-left and upper-right corners for each of the conformers
+  // and take a union of these boxes - we will use this fo grid dimensions
+  RDGeom::Point3D leftBottom1, rightTop1, leftBottom2, rightTop2, uLeftBottom,
+      uRightTop;
+  computeConfBox(conf1, leftBottom1, rightTop1, trans);
+  computeConfBox(conf2, leftBottom2, rightTop2, trans);
+
+  computeUnionBox(leftBottom1, rightTop1, leftBottom2, rightTop2, uLeftBottom,
+                  uRightTop);
+
+  // make the grid object to store the encoding
+  uRightTop -= uLeftBottom;  // uRightTop now has grid dimensions
+
+  RDGeom::UniformGrid3D grd1(uRightTop.x, uRightTop.y, uRightTop.z, gridSpacing,
+                             bitsPerPoint, &uLeftBottom);
+  RDGeom::UniformGrid3D grd2(uRightTop.x, uRightTop.y, uRightTop.z, gridSpacing,
+                             bitsPerPoint, &uLeftBottom);
+
+  EncodeShape(conf1, grd1, trans, vdwScale, stepSize, maxLayers, ignoreHs);
+  EncodeShape(conf2, grd2, trans, vdwScale, stepSize, maxLayers, ignoreHs);
+  return RDGeom::tverskyIndex(grd1, grd2, alpha, beta);
+}
+
 
 double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1,
                         int confId2, double gridSpacing,

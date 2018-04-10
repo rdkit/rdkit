@@ -463,17 +463,12 @@ void testAddConformersFromTrajectory() {
   SDWriter w(fName);
   ForceFields::ForceField *field = MMFF::constructForceField(*mol);
   field->initialize();
-  SnapshotVect *sv = new SnapshotVect;
+  auto *sv = new SnapshotVect;
   int res = field->minimize(everySteps, sv, maxIts, gradTol);
   TEST_ASSERT(res == 0);
   Trajectory traj(3, mol->getNumAtoms(), sv);
   mol->removeConformer(0);
   traj.addConformersToMol(*mol);
-  traj.clear();
-  unsigned int n1 = mol->getNumConformers();
-  traj.addConformersToMol(*mol);
-  unsigned int n2 = mol->getNumConformers();
-  TEST_ASSERT(n1 == n2);
   for (unsigned int nConf = 0;
     nConf < mol->getNumConformers(); ++nConf) {
     std::stringstream ss;
@@ -483,6 +478,21 @@ void testAddConformersFromTrajectory() {
     w.write(*mol, nConf);
   }
   w.close();
+  traj.clear();
+  unsigned int n1 = mol->getNumConformers();
+  traj.addConformersToMol(*mol);
+  unsigned int n2 = mol->getNumConformers();
+  TEST_ASSERT(n1 == n2);
+  // getSnapshot should raise exception after Clear()
+  bool ok = false;
+  try {
+    traj.getSnapshot(0);
+  }
+  catch (Invar::Invariant &e) {
+    BOOST_LOG(rdErrorLog) << e.getMessage() << std::endl;
+    ok = true;
+  }
+  TEST_ASSERT(ok);
   delete field;
   delete mol;
 }

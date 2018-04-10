@@ -20,8 +20,9 @@ using namespace std;
 namespace RDKit {
 
 // ****************************************************************************
-MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp)
-    : MolDraw2D(width, height), qp_(qp) {}
+MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth,
+                         int panelHeight)
+    : MolDraw2D(width, height, panelWidth, panelHeight), qp_(qp) {}
 
 // ****************************************************************************
 void MolDraw2DQt::setColour(const DrawColour &col) {

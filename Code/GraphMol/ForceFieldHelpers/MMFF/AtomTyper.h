@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
+//  Copyright (C) 2013-2016 Paolo Tosco
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -25,6 +25,7 @@ class Atom;
 class Bond;
 
 namespace MMFF {
+class RingMembershipSize;
 using namespace ForceFields::MMFF;
 class MMFFAtomProperties {
  public:
@@ -62,17 +63,17 @@ class MMFFMolProperties {
   const ForceFields::MMFF::MMFFBond *getMMFFBondStretchEmpiricalRuleParams(
       const ROMol &mol, const Bond *bond);
   boost::uint8_t getMMFFAtomType(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffAtomType;
   };
   double getMMFFFormalCharge(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge;
   };
   double getMMFFPartialCharge(const unsigned int idx) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     return this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge;
   };
@@ -144,15 +145,15 @@ class MMFFMolProperties {
                         MMFFVdWRijstarEps &mmffVdWParams);
 
  private:
-  void setMMFFHeavyAtomType(const Atom *atom);
+  void setMMFFHeavyAtomType(const RingMembershipSize &rmSize, const Atom *atom);
   void setMMFFHydrogenType(const Atom *atom);
   void setMMFFFormalCharge(const unsigned int idx, const double fChg) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffFormalCharge = fChg;
   };
   void setMMFFPartialCharge(const unsigned int idx, const double pChg) {
-    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size() - 1);
+    URANGE_CHECK(idx, this->d_MMFFAtomPropertiesPtrVect.size());
 
     this->d_MMFFAtomPropertiesPtrVect[idx]->mmffPartialCharge = pChg;
   };
@@ -180,6 +181,7 @@ unsigned int isTorsionInRingOfSize4or5(const ROMol &mol,
                                        const unsigned int idx2,
                                        const unsigned int idx3,
                                        const unsigned int idx4);
+bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect);
 bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize);
 bool isAtomNOxide(const Atom *atom);
 bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,

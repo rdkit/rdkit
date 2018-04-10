@@ -1,20 +1,19 @@
-# $Id$
 #
 #  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -31,20 +30,60 @@
 #
 # Created by Greg Landrum, Dec 2006
 #
+import os
+import re
+from collections import namedtuple
+from contextlib import closing
 
-from rdkit import Chem
-import os,re
+from rdkit import Chem, RDConfig
+from rdkit.Chem.rdmolfiles import SDMolSupplier, SmilesMolSupplier
 
-from rdkit import RDConfig
+class InputFormat:
+  SMARTS = 'smarts'
+  MOL = 'mol'
+  SMILES = 'smiles'
+
+def _smartsFromSmartsLine(line):
+  """
+  Converts given line into a molecule using 'Chem.MolFromSmarts'.
+  """
+  # Name the regular expression (better than inlining it)
+  whitespace = re.compile(r'[\t ]+')
+  # Reflects the specialisation of this method to read the rather unusual
+  # SMARTS files with the // comments.
+  line = line.strip().split('//')[0]
+  if line:
+    smarts = whitespace.split(line)
+    salt = Chem.MolFromSmarts(smarts[0])
+    if salt is None:
+      raise ValueError(line)
+    return salt
+
+def _getSmartsSaltsFromStream(stream):
+  """
+  Yields extracted SMARTS salts from given stream.
+  """
+  with closing(stream) as lines:
+    for line in lines:
+      smarts = _smartsFromSmartsLine(line)
+      if smarts:
+        yield smarts
+
+def _getSmartsSaltsFromFile(filename):
+  """
+  Extracts SMARTS salts from given file object.
+  """
+  return _getSmartsSaltsFromStream(open(filename, 'r'))
 
 class SaltRemover(object):
-  defnFilename=os.path.join(RDConfig.RDDataDir,'Salts.txt')
-  defnData = None
-  salts = None
-  def __init__(self,defnFilename=None,defnData=None):
+  defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
+
+  def __init__(self, defnFilename=None, defnData=None, defnFormat=InputFormat.SMARTS):
     if defnFilename:
       self.defnFilename = defnFilename
     self.defnData = defnData
+    self.salts = None
+    self.defnFormat = defnFormat
     self._initPatterns()
 
   def _initPatterns(self):
@@ -54,33 +93,51 @@ class SaltRemover(object):
     >>> len(remover.salts)>0
     True
 
+    Default input format is SMARTS
     >>> remover = SaltRemover(defnData="[Cl,Br]")
     >>> len(remover.salts)
     1
 
+    >>> remover = SaltRemover(defnData="[Na+]\\nCC(=O)O", defnFormat=InputFormat.SMILES)
+    >>> len(remover.salts)
+    2
+
+    >>> from rdkit import RDLogger
+    >>> RDLogger.DisableLog('rdApp.error')
     >>> remover = SaltRemover(defnData="[Cl,fail]")
     Traceback (most recent call last):
       ...
     ValueError: [Cl,fail]
-    
+
+    >>> RDLogger.EnableLog('rdApp.error')
     """
-    whitespace = re.compile(r'[\t ]+')
     if self.defnData:
       from rdkit.six.moves import cStringIO as StringIO
       inF = StringIO(self.defnData)
+      with closing(inF):
+        self.salts = []
+        for line in inF:
+          if line:
+            if self.defnFormat == InputFormat.SMARTS:
+              salt = _smartsFromSmartsLine(line)
+            elif self.defnFormat == InputFormat.SMILES:
+              salt = Chem.MolFromSmiles(line)
+            else:
+              raise ValueError('Unsupported format for supplier.')
+            if salt is None:
+              raise ValueError(line)
+            self.salts.append(salt)
     else:
-      inF = open(self.defnFilename,'r')
-    self.salts = []
-    for line in inF:
-      line = line.strip().split('//')[0]
-      if line:
-        splitL = whitespace.split(line)
-        salt = Chem.MolFromSmarts(splitL[0])
-        if salt is None:
-          raise ValueError(line)
-        self.salts.append(salt)
+      if self.defnFormat == InputFormat.SMARTS:
+        self.salts = [mol for mol in _getSmartsSaltsFromFile(self.defnFilename)]
+      elif self.defnFormat == InputFormat.MOL:
+        self.salts = [mol for mol in SDMolSupplier(self.defnFilename)]
+      elif self.defnFormat == InputFormat.SMILES:
+        self.salts = [mol for mol in SmilesMolSupplier(self.defnFilename)]
+      else:
+        raise ValueError('Unsupported format for supplier.')
 
-  def StripMol(self,mol,dontRemoveEverything=False):
+  def StripMol(self, mol, dontRemoveEverything=False):
     """
 
     >>> remover = SaltRemover(defnData="[Cl,Br]")
@@ -140,46 +197,96 @@ class SaltRemover(object):
     2
 
     """
-    def _applyPattern(m,salt,notEverything):
+    strippedMol = self._StripMol(mol, dontRemoveEverything)
+    return strippedMol.mol
+
+  def StripMolWithDeleted(self, mol, dontRemoveEverything=False):
+    """
+    Strips given molecule and returns it, with the fragments which have been deleted.
+
+    >>> remover = SaltRemover(defnData="[Cl,Br]")
+    >>> len(remover.salts)
+    1
+
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Br')
+    >>> res, deleted = remover.StripMolWithDeleted(mol)
+    >>> Chem.MolToSmiles(res)
+    'CN(C)C'
+    >>> [Chem.MolToSmarts(m) for m in deleted]
+    ['[Cl,Br]']
+
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl')
+    >>> res, deleted = remover.StripMolWithDeleted(mol)
+    >>> res.GetNumAtoms()
+    4
+    >>> len(deleted)
+    1
+    >>> deleted[0].GetNumAtoms()
+    1
+    >>> Chem.MolToSmiles(deleted[0])
+    'Cl'
+
+    Multiple occurrences of 'Cl' and without tuple destructuring
+    >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl')
+    >>> tup = remover.StripMolWithDeleted(mol)
+
+    >>> tup.mol.GetNumAtoms()
+    4
+    >>> len(tup.deleted)
+    1
+    >>> tup.deleted[0].GetNumAtoms()
+    1
+    >>> Chem.MolToSmiles(deleted[0])
+    'Cl'
+    """
+    return self._StripMol(mol, dontRemoveEverything)
+
+  def _StripMol(self, mol, dontRemoveEverything=False):
+
+    def _applyPattern(m, salt, notEverything):
       nAts = m.GetNumAtoms()
       if not nAts:
         return m
       res = m
 
-      t = Chem.DeleteSubstructs(res,salt,True)
-      if not t or (notEverything and t.GetNumAtoms()==0):
-        return res;
-      else:
-        res = t
-      while res.GetNumAtoms() and nAts>res.GetNumAtoms():
+      t = Chem.DeleteSubstructs(res, salt, True)
+      if not t or (notEverything and t.GetNumAtoms() == 0):
+        return res
+      res = t
+      while res.GetNumAtoms() and nAts > res.GetNumAtoms():
         nAts = res.GetNumAtoms()
-        t = Chem.DeleteSubstructs(res,salt,True)
-        if notEverything and t.GetNumAtoms()==0:
+        t = Chem.DeleteSubstructs(res, salt, True)
+        if notEverything and t.GetNumAtoms() == 0:
           break
-        else:
-          res = t
+        res = t
       return res
 
-    if dontRemoveEverything and len(Chem.GetMolFrags(mol))<=1:
-      return mol
-    modified=False
-    for i,salt in enumerate(self.salts):
-      tMol = _applyPattern(mol,salt,dontRemoveEverything)
-      if tMol is not mol:
-        mol = tMol
-        modified=True
-        if dontRemoveEverything and len(Chem.GetMolFrags(mol))<=1:
+    StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
+    deleted = []
+    if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
+      return StrippedMol(mol, deleted)
+    modified = False
+    natoms = mol.GetNumAtoms()
+    for salt in self.salts:
+      mol = _applyPattern(mol, salt, dontRemoveEverything)
+      if natoms != mol.GetNumAtoms():
+        natoms = mol.GetNumAtoms()
+        modified = True
+        deleted.append(salt)
+        if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
           break
-    if modified and mol.GetNumAtoms()>0:
+    if modified and mol.GetNumAtoms() > 0:
       Chem.SanitizeMol(mol)
-    return mol
+    return StrippedMol(mol, deleted)
 
-  def __call__(self,mol,dontRemoveEverything=False):
+  def __call__(self, mol, dontRemoveEverything=False):
     """
 
     >>> remover = SaltRemover(defnData="[Cl,Br]")
     >>> len(remover.salts)
     1
+    >>> Chem.MolToSmiles(remover.salts[0])
+    'Cl'
 
     >>> mol = Chem.MolFromSmiles('CN(C)C.Cl')
     >>> res = remover(mol)
@@ -189,19 +296,19 @@ class SaltRemover(object):
     4
 
     """
-    return self.StripMol(mol,dontRemoveEverything=dontRemoveEverything)
+    return self.StripMol(mol, dontRemoveEverything=dontRemoveEverything)
 
-  
-#------------------------------------
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

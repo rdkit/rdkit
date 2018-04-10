@@ -5,21 +5,32 @@
 
 """
 from __future__ import print_function
-from rdkit import RDConfig
+from rdkit.six.moves import cPickle
+
 
 class DescriptorCalculator:
   """ abstract base class for descriptor calculators
 
   """
-  
-  #------------
+
+  def __init__(self, *args, **kwargs):
+    """ Constructor
+
+    """
+    self.simpleList = None
+    self.descriptorNames = None
+    self.compoundList = None
+
+  # ------------
   #  methods used to calculate descriptors
-  #------------
+  # ------------
 
   def ShowDescriptors(self):
     """ prints out a list of the descriptors
 
     """
+    if self.simpleList is None:
+      raise NotImplementedError('Need to have a simpleList defined')
     print('#---------')
     print('Simple:')
     for desc in self.simpleList:
@@ -29,38 +40,28 @@ class DescriptorCalculator:
       print('Compound:')
       for desc in self.compoundList:
         print(desc)
-      
+
   def GetDescriptorNames(self):
     """ returns a list of the names of the descriptors this calculator generates
 
     """
-    pass
+    raise NotImplementedError('abstract base class')
 
-  def SaveState(self,fileName):
+  def SaveState(self, fileName):
     """ Writes this calculator off to a file so that it can be easily loaded later
 
      **Arguments**
 
        - fileName: the name of the file to be written
-       
+
     """
-    from rdkit.six.moves import cPickle
     try:
-      f = open(fileName,'wb+')
+      f = open(fileName, 'wb+')
     except Exception:
-      print('cannot open output file %s for writing'%(fileName))
+      print('cannot open output file %s for writing' % (fileName))
       return
-    cPickle.dump(self,f)
+    cPickle.dump(self, f)
     f.close()
 
-  def CalcDescriptors(self,what,*args,**kwargs):
-    pass
-    
-  def __init__(self,*args,**kwargs):
-    """ Constructor
-
-    """
-    self.simpleList = None
-    self.descriptorNames = None
-    self.compoundList = None
-    
+  def CalcDescriptors(self, what, *args, **kwargs):
+    raise NotImplementedError('abstract base class')

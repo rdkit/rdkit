@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2005-2006 Rational Discovery LLC
 #
@@ -10,108 +9,99 @@
 #
 from __future__ import print_function
 
-_version = "$Rev$"
-_splashMessage="""
--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-  FeatFinderCLI version %s
-
-  Copyright (C) 2005 Rational Discovery LLC
-
-  This software is copyrighted.  The software may not be copied,
-  reproduced, translated or reduced to any electronic medium or
-  machine-readable form without the prior written consent of
-  Rational Discovery LLC.
--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-"""%_version
-from rdkit import Chem
-from rdkit.Chem import ChemicalFeatures
-from rdkit import RDLogger
-logger = RDLogger.logger()
-import sys,os
+import argparse
 import re
+import os
+
+from rdkit import Chem
+from rdkit import RDLogger
+from rdkit.Chem import ChemicalFeatures
+
+logger = RDLogger.logger()
 splitExpr = re.compile(r'[ \t,]')
 
-def GetAtomFeatInfo(factory,mol):
-  res = [None]*mol.GetNumAtoms()
+
+def GetAtomFeatInfo(factory, mol):
+  res = [None] * mol.GetNumAtoms()
   feats = factory.GetFeaturesForMol(mol)
   for feat in feats:
     ids = feat.GetAtomIds()
-    for id in ids:
-      if res[id] is None:
-        res[id] = []
-      res[id].append("%s-%s"%(feat.GetFamily(),feat.GetType()))
+    feature = "%s-%s" % (feat.GetFamily(), feat.GetType())
+    for id_ in ids:
+      if res[id_] is None:
+        res[id_] = []
+      res[id_].append(feature)
   return res
 
-if __name__ == '__main__':
-  def Usage():
-    message="""
-    Usage: FeatFinderCLI [-r] <fdefFilename> <smilesFilename>
-    
-    NOTE:
-      - the smiles file should have SMILES in the first column
 
-    """
-    print(message, file=sys.stderr)
+def initParser():
+  """ Initialize the parser """
+  parser = argparse.ArgumentParser(description='Determine pharmacophore features of molecules',
+                                   epilog=_splashMessage,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
+  parser.add_argument('-r', dest='reverseIt', default=False, action='store_true',
+                      help='Set to get atoms lists for each feature.')
+  parser.add_argument('-n', dest='maxLines', default=-1, help=argparse.SUPPRESS, type=int)
+  parser.add_argument('fdefFilename', type=existingFile,
+                      help='Pharmacophore feature definition file')
+  parser.add_argument('smilesFilename', type=existingFile,
+                      help='The smiles file should have SMILES in the first column')
+  return parser
 
 
-  import getopt
-  args,extras = getopt.getopt(sys.argv[1:],'r')
-  reverseIt=False
-  for arg,val in args:
-    if arg=='-r':
-      reverseIt=True
-      
-  if len(extras)<2:
-    Usage()
-    sys.exit(-1)
-  print(_splashMessage, file=sys.stderr)
-  fdefFilename = extras[0]
-  if not os.path.exists(fdefFilename):
-    logger.error("Fdef file %s does not exist."%fdefFilename)
-    sys.exit(-1)
+_splashMessage = """
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+  FeatFinderCLI
+  Part of the RDKit (http://www.rdkit.org)
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+"""
+
+
+def existingFile(filename):
+  """ 'type' for argparse - check that filename exists """
+  if not os.path.exists(filename):
+    raise argparse.ArgumentTypeError("{0} does not exist".format(filename))
+  return filename
+
+
+def processArgs(args, parser):
   try:
-    factory = ChemicalFeatures.BuildFeatureFactory(fdefFilename)
+    factory = ChemicalFeatures.BuildFeatureFactory(args.fdefFilename)
   except Exception:
-    logger.error("Could not parse Fdef file %s."%fdefFilename,exc_info=True)
-    sys.exit(-1)
-    
-  smilesFilename = extras[1]
-  if not os.path.exists(smilesFilename):
-    logger.error("Smiles file %s does not exist."%smilesFilename)
-    sys.exit(-1)
+    parser.error("Could not parse Fdef file {0.fdefFilename}.".format(args))
 
-  try:
-    inF = file(smilesFilename,'r')
-  except Exception:
-    logger.error("Could not open smiles file %s."%smilesFilename,exc_info=True)
-    sys.exit(-1)
+  with open(args.smilesFilename) as inF:
+    for lineNo, line in enumerate(inF, 1):
+      if lineNo == args.maxLines + 1:
+        break
+      smi = splitExpr.split(line.strip())[0].strip()
+      mol = Chem.MolFromSmiles(smi)
+      if mol is None:
+        logger.warning("Could not process smiles '%s' on line %d." % (smi, lineNo))
+        continue
 
-  lineNo=0
-  for line in inF.readlines():
-    lineNo+=1
-    line = line.strip()
-    smi = splitExpr.split(line)[0].strip()
-    mol = Chem.MolFromSmiles(smi)
-
-    if mol is not None:
-      print('Mol-%d\t%s'%(lineNo,smi))
-
-      if not reverseIt:
-        featInfo = GetAtomFeatInfo(factory,mol)
-        for i,v in enumerate(featInfo):
-          print('\t% 2s(%d)'%(mol.GetAtomWithIdx(i).GetSymbol(),i+1),end='')
-          if v:
-            print('\t',', '.join(v))
-          else:
-            print()
-      else:
+      print('Mol-%d\t%s' % (lineNo, smi))
+      if args.reverseIt:
         feats = factory.GetFeaturesForMol(mol)
         for feat in feats:
-          print('\t%s-%s: '%(feat.GetFamily(),feat.GetType()),end='')
+          print('\t%s-%s: ' % (feat.GetFamily(), feat.GetType()), end='')
           print(', '.join([str(x) for x in feat.GetAtomIds()]))
-    else:
-      logger.warning("Could not process smiles '%s' on line %d."%(smi,lineNo))
+      else:
+        featInfo = GetAtomFeatInfo(factory, mol)
+        for i, v in enumerate(featInfo):
+          print('\t% 2s(%d)' % (mol.GetAtomWithIdx(i).GetSymbol(), i + 1), end='')
+          if v:
+            print('\t', ', '.join(v))
+          else:
+            print()
 
 
-      
-    
+def main():
+  """ Main application """
+  parser = initParser()
+  args = parser.parse_args()
+  processArgs(args, parser)
+
+
+if __name__ == '__main__':
+  main()

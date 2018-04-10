@@ -16,7 +16,7 @@
 
 namespace RDKit {
 
-bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
+bool atomCompat(const Atom* a1, const Atom* a2,
                 bool useQueryQueryMatches) {
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
@@ -24,19 +24,21 @@ bool atomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2,
   // " " << a2->getIdx() << std::endl;
   bool res;
   if (useQueryQueryMatches && a1->hasQuery() && a2->hasQuery()) {
-    res = static_cast<QueryAtom *>(a1.get())
-              ->QueryMatch(static_cast<QueryAtom *>(a2.get()));
+    res = static_cast<const QueryAtom *>(a1)->QueryMatch(
+        static_cast<const QueryAtom *>(a2));
   } else {
     res = a1->Match(a2);
   }
   return res;
+  std::cerr << "\t\tatomCompat: " << a1 << " " << a1->getIdx() << "-" << a2
+            << " " << a2->getIdx() << std::endl;
+  std::cerr << "\t\t    " << res << std::endl;
+  return res;
 }
 
-bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
+bool chiralAtomCompat(const Atom* &a1, const Atom* &a2) {
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
-  // std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 <<
-  // " " << a2->getIdx() << std::endl;
   bool res = a1->Match(a2);
   if (res) {
     std::string s1, s2;
@@ -46,19 +48,30 @@ bool chiralAtomCompat(const ATOM_SPTR &a1, const ATOM_SPTR &a2) {
       res = hascode1 && hascode2 && s1 == s2;
     }
   }
+  std::cerr << "\t\tchiralAtomCompat: " << a1 << " " << a1->getIdx() << "-"
+            << a2 << " " << a2->getIdx() << std::endl;
+  std::cerr << "\t\t    " << res << std::endl;
   return res;
 }
 
-bool bondCompat(const BOND_SPTR &b1, const BOND_SPTR &b2,
+bool bondCompat(const Bond* b1, const Bond* b2,
                 bool useQueryQueryMatches) {
   PRECONDITION(b1, "bad bond");
   PRECONDITION(b2, "bad bond");
   bool res;
   if (useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
-    res = static_cast<QueryBond *>(b1.get())
-              ->QueryMatch(static_cast<QueryBond *>(b2.get()));
+    res = static_cast<const QueryBond *>(b1)->QueryMatch(
+        static_cast<const QueryBond *>(b2));
   } else {
     res = b1->Match(b2);
+  }
+  if (res && b1->getBondType() == Bond::DATIVE &&
+      b2->getBondType() == Bond::DATIVE) {
+    // for dative bonds we need to make sure that the direction also matches:
+    if (!b1->getBeginAtom()->Match(b1->getBeginAtom()) ||
+        !b1->getEndAtom()->Match(b2->getEndAtom())) {
+      res = false;
+    }
   }
   // std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ":
   // " << res << std::endl;
@@ -82,8 +95,8 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   for (std::vector<MatchVectType>::const_iterator i = v.begin(); i != v.end();
        ++i) {
     boost::dynamic_bitset<> val(nAtoms);
-    for (MatchVectType::const_iterator ci = i->begin(); ci != i->end(); ++ci) {
-      val.set(ci->second);
+    for (const auto &ci : *i) {
+      val.set(ci.second);
     }
     if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
       // it's something new

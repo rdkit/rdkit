@@ -29,18 +29,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "LocaleSwitcher.h"
+#include <string>
 
 // LocaleSwitcher Dependencies
 #include <clocale>
-#ifndef _MSC_VER
+#ifdef __APPLE__
 #include <xlocale.h>
-#include <string>
-#else
-#include <locale.h>
 #endif
-
 #ifdef RDK_THREADSAFE_SSS
-#include <boost/thread/tss.hpp>
+#include <thread>
 #endif
 
 namespace RDKit {
@@ -50,9 +47,9 @@ namespace detail {
 //  The locale switcher has state to indicate how many times
 //   it has been used (in a thread if thread safe RDKIT)
 
-const static int CurrentState  = 0; // return current state
-const static int SwitchLocale  = 1; // indicate we are now switched to "C"
-const static int ResetLocale   = -1;// return to previous locale (not "C")
+const static int CurrentState = 0;  // return current state
+const static int SwitchLocale = 1;  // indicate we are now switched to "C"
+const static int ResetLocale = -1;  // return to previous locale (not "C")
 
 // Returns how many LocaleSwitches we have gone down.
 //  Such as
@@ -66,36 +63,36 @@ const static int ResetLocale   = -1;// return to previous locale (not "C")
 //
 static int recurseLocale(int state) {
 #ifndef RDK_THREADSAFE_SSS
-  static int recursion = 0;  
-  if      (state==SwitchLocale) recursion++;
-  else if (state==ResetLocale)  recursion--;
+  static int recursion = 0;
+  if (state == SwitchLocale)
+    recursion++;
+  else if (state == ResetLocale)
+    recursion--;
   return recursion;
 #else
-  static boost::thread_specific_ptr<int> recursion;
-  if( ! recursion.get() ) {
-    recursion.reset( new int(0));
-  }
-  if      (state==SwitchLocale) (*recursion)++;
-  else if (state==ResetLocale)  (*recursion)--;
-  return (*recursion);
+  static thread_local int recursion = 0;
+  if (state == SwitchLocale)
+    recursion++;
+  else if (state == ResetLocale)
+    recursion--;
+  return recursion;
 #endif
 }
-
 
 // allows an RAII-like approach to ensuring the locale is temporarily "C"
 // instead of whatever we started in.
 class LocaleSwitcherImpl {
  public:
-#ifdef _MSC_VER
+#ifdef _WIN32
 
   LocaleSwitcherImpl() {
     if (!recurseLocale(CurrentState)) {
 #ifdef RDK_THREADSAFE_SSS
       _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-      ::setlocale(LC_ALL, "C"); // thread safe on windows
+      ::setlocale(LC_ALL, "C");  // thread safe on windows
 #else
       std::setlocale(LC_ALL, "C");
-#endif // RDK_THREADSAFE_SSS
+#endif  // RDK_THREADSAFE_SSS
       recurseLocale(SwitchLocale);
       switched = true;
     }
@@ -105,29 +102,29 @@ class LocaleSwitcherImpl {
 #ifdef RDK_THREADSAFE_SSS
       ::setlocale(LC_ALL, "C");
 #else
-      std::setlocale(LC_ALL, ""); // back to last (global?) locale
-#endif // RDK_THREADSAFE_SSS
+      std::setlocale(LC_ALL, "");  // back to last (global?) locale
+#endif  // RDK_THREADSAFE_SSS
       recurseLocale(ResetLocale);
     }
   }
 
  public:
   bool switched;
-#else // _MSC_VER
-  locale_t loc;     // current "C" locale
-  locale_t old_loc; // locale we came frome
+#else  // _WIN32
+  locale_t loc;      // current "C" locale
+  locale_t old_loc;  // locale we came frome
 
-  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, NULL)) {
+  LocaleSwitcherImpl() : old_locale(setlocale(LC_ALL, nullptr)) {
     // set locale for this thread
 
     if (!recurseLocale(CurrentState) && old_locale != "C") {
       recurseLocale(SwitchLocale);
-      old_loc = uselocale(0);
-      loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+      old_loc = uselocale(nullptr);
+      loc = newlocale(LC_ALL_MASK, "C", (locale_t) nullptr);
       uselocale(loc);
       // Don't free "C" or "GLOBAL" Locales
     } else
-      old_locale = "C"; // prevents recursion
+      old_locale = "C";  // prevents recursion
   }
   ~LocaleSwitcherImpl() {
     if (old_locale != "C") {
@@ -140,7 +137,7 @@ class LocaleSwitcherImpl {
  public:
   std::string old_locale;
 
-#endif // _MSC_VER
+#endif  // _WIN32
 };
 }
 

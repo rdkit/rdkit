@@ -33,6 +33,11 @@ True
 >>> m.GetBondBetweenAtoms(3,6).GetIsAromatic()
 False
 
+The RDKit supports a number of different aromaticity models and allows the user to define their own by providing a function that assigns aromaticity.
+
+The RDKit Aromaticity Model
+---------------------------
+
 A ring, or fused ring system, is considered to be aromatic if it obeys the 4N+2 rule.
 Contributions to the electron count are determined by atom type and environment.
 Some examples:
@@ -106,8 +111,94 @@ True
 >>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
 1
 
+The Simple Aromaticity Model
+----------------------------
 
-**Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+This one is quite simple: only five- and six-membered simple rings are considered candidates for aromaticity.
+The same electron-contribution counts listed above are used.
+
+
+The MDL Aromaticity Model
+-------------------------
+
+This isn't well documented (at least not publicly), so we tried to reproduce what's provided in the oechem documentation (https://docs.eyesopen.com/toolkits/python/oechemtk/aromaticity.html)
+
+- fused rings (i.e. azulene) can be aromatic
+- five-membered rings are not aromatic (though they can be part of fused aromatic systems)
+- only C and N can be aromatic
+- only one electron donors are accepted
+- atoms with exocyclic double bonds are not aromatic
+
+
+**Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+
+SMILES Support and Extensions
+=============================
+
+The RDKit covers all of the standard features of Daylight SMILES [#smiles]_ as well as some useful extensions.
+
+Here's the (likely partial) list of extensions:
+
+- **Aromaticity**: ``te`` (aromatic Te) is accepted
+- **Dative bonds**: ``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
+- **Specifying atoms by atomic number**: the ``[#6]`` construct from SMARTS is supported in SMILES.
+
+
+SMARTS Support and Extensions
+=============================
+
+The RDKit covers most of the standard features of Daylight SMARTS [#smarts]_ as well as some useful extensions.
+
+Here's the (hopefully complete) list of SMARTS features that are *not* supported:
+
+- Non-tetrahedral chiral classes
+- the ``@?`` operator
+- explicit atomic masses (though isotope queries are supported)
+- component level grouping requiring matches in different components, i.e. ``(C).(C)``
+
+Here's the (likely partial) list of extensions:
+
+- **Hybridization queries**:
+   - ``^0`` matches S hybridized atoms
+   - ``^1`` matches SP hybridized atoms
+   - ``^2`` matches SP2 hybridized atoms
+   - ``^3`` matches SP3 hybridized atoms
+   - ``^4`` matches SP3D hybridized atoms
+   - ``^5`` matches SP3D2 hybridized atoms
+
+>> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
+((1,), (2,))
+
+- **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
+
+>>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('[#7]->*'))
+((5, 6),)
+>>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
+((6, 5),)
+
+- **Heteroatom neighbor queries**:
+   - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
+   - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
+
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
+((1,), (3,), (5,))
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z2]'))
+((1,),)
+>>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
+((5,),)
+
+- **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
+   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
+   - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
+   - ``D{2-}`` matches atoms that have at least 2 explicit connections.
+
+>>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
+((1,), (4,))
+>>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[D{2-3}]'))
+((1,), (3,))
+>>> Chem.MolFromSmiles('CC(=O)OC.C').GetSubstructMatches(Chem.MolFromSmarts('[D{-2}]'))
+((0,), (2,), (3,), (4,), (5,))
+
 
 
 Ring Finding and SSSR
@@ -159,19 +250,19 @@ Mapped dummy atoms in the product template are replaced by the corresponding ato
 
 but unmapped dummy atoms are left as dummies:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>[*][C:1][*:2]')
+>>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>*[C:1][*:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
-['[*]C(C)O']
+['*C(C)O']
 
 “Any” bonds in the products are replaced by the corresponding bond in the reactant:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>[*][C:1]~[*:2]')
+>>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>*[C:1]~[*:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C=O'),))[0]]
-['[*]C=O']
+['*C=O']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CO'),))[0]]
-['[*]CO']
+['*CO']
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C#N'),))[0]]
-['[*]C#N']
+['*C#N']
 
 Intramolecular reactions can be expressed flexibly by including
 reactants in parentheses. This is demonstrated in this ring-closing
@@ -778,10 +869,10 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2016 by Greg Landrum
+This document is copyright (C) 2007-2018 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
-To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
+To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 
 The intent of this license is similar to that of the RDKit itself.

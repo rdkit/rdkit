@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,9 +14,7 @@
 
 namespace RDKit {
 
-Bond::Bond() : RDProps() {
-  initBond();
-};
+Bond::Bond() : RDProps() { initBond(); };
 
 Bond::Bond(BondType bT) : RDProps() {
   initBond();
@@ -26,7 +23,7 @@ Bond::Bond(BondType bT) : RDProps() {
 
 Bond::Bond(const Bond &other) : RDProps(other) {
   // NOTE: we do *not* copy ownership!
-  dp_mol = 0;
+  dp_mol = nullptr;
   d_bondType = other.d_bondType;
   d_beginAtomIdx = other.d_beginAtomIdx;
   d_endAtomIdx = other.d_endAtomIdx;
@@ -35,16 +32,14 @@ Bond::Bond(const Bond &other) : RDProps(other) {
   if (other.dp_stereoAtoms) {
     dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
   } else {
-    dp_stereoAtoms = NULL;
+    dp_stereoAtoms = nullptr;
   }
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
 }
 
-Bond::~Bond() {
-  delete dp_stereoAtoms;
-}
+Bond::~Bond() { delete dp_stereoAtoms; }
 
 Bond &Bond::operator=(const Bond &other) {
   dp_mol = other.dp_mol;
@@ -55,7 +50,7 @@ Bond &Bond::operator=(const Bond &other) {
   if (other.dp_stereoAtoms) {
     dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
   } else {
-    dp_stereoAtoms = NULL;
+    dp_stereoAtoms = nullptr;
   }
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
@@ -66,7 +61,7 @@ Bond &Bond::operator=(const Bond &other) {
 }
 
 Bond *Bond::copy() const {
-  Bond *res = new Bond(*this);
+  auto *res = new Bond(*this);
   return res;
 }
 
@@ -87,43 +82,34 @@ unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms() - 1);
+  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
   d_beginAtomIdx = what;
 };
 
 void Bond::setEndAtomIdx(unsigned int what) {
-  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms() - 1);
+  if (dp_mol) URANGE_CHECK(what, getOwningMol().getNumAtoms());
   d_endAtomIdx = what;
 };
 
 void Bond::setBeginAtom(Atom *at) {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   setBeginAtomIdx(at->getIdx());
 }
-void Bond::setBeginAtom(Atom::ATOM_SPTR at) {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
-  setBeginAtomIdx(at->getIdx());
-}
-
 void Bond::setEndAtom(Atom *at) {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
-  setEndAtomIdx(at->getIdx());
-}
-void Bond::setEndAtom(Atom::ATOM_SPTR at) {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   setEndAtomIdx(at->getIdx());
 }
 
 Atom *Bond::getBeginAtom() const {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   return dp_mol->getAtomWithIdx(d_beginAtomIdx);
 };
 Atom *Bond::getEndAtom() const {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
   return dp_mol->getAtomWithIdx(d_endAtomIdx);
 };
 Atom *Bond::getOtherAtom(Atom const *what) const {
-  PRECONDITION(dp_mol != 0, "no owning molecule for bond");
+  PRECONDITION(dp_mol != nullptr, "no owning molecule for bond");
 
   return dp_mol->getAtomWithIdx(getOtherAtomIdx(what->getIdx()));
 };
@@ -184,10 +170,6 @@ double Bond::getBondTypeAsDouble() const {
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
-}
-
-double Bond::getValenceContrib(Atom::ATOM_SPTR at) const {
-  return getValenceContrib(at.get());
 }
 
 double Bond::getValenceContrib(const Atom *atom) const {
@@ -266,7 +248,7 @@ void Bond::setQuery(QUERYBOND_QUERY *what) {
 
 Bond::QUERYBOND_QUERY *Bond::getQuery() const {
   PRECONDITION(0, "plain bonds have no Query");
-  return NULL;
+  return nullptr;
 };
 
 bool Bond::Match(Bond const *what) const {
@@ -278,10 +260,6 @@ bool Bond::Match(Bond const *what) const {
     res = getBondType() == what->getBondType();
   }
   return res;
-};
-
-bool Bond::Match(const Bond::BOND_SPTR what) const {
-  return Match(what.get());
 };
 
 void Bond::expandQuery(Bond::QUERYBOND_QUERY *what,
@@ -296,13 +274,27 @@ void Bond::initBond() {
   d_bondType = UNSPECIFIED;
   d_dirTag = NONE;
   d_stereo = STEREONONE;
-  dp_mol = 0;
+  dp_mol = nullptr;
   d_beginAtomIdx = 0;
   d_endAtomIdx = 0;
   df_isAromatic = 0;
   d_index = 0;
   df_isConjugated = 0;
-  dp_stereoAtoms = NULL;
+  dp_stereoAtoms = nullptr;
+};
+
+void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
+  PRECONDITION(
+      getOwningMol().getBondBetweenAtoms(getBeginAtomIdx(), bgnIdx) != nullptr,
+      "bgnIdx not connected to begin atom of bond");
+  PRECONDITION(
+      getOwningMol().getBondBetweenAtoms(getEndAtomIdx(), endIdx) != nullptr,
+      "endIdx not connected to end atom of bond");
+
+  INT_VECT &atoms = getStereoAtoms();
+  atoms.clear();
+  atoms.push_back(bgnIdx);
+  atoms.push_back(endIdx);
 };
 
 };  // end o' namespace

@@ -65,15 +65,13 @@ void getNextLine(std::istream &inStream, std::string &line,
 bool expandAndTestSmarts(
     std::string &smarts,
     const std::map<std::string, std::string> &atomTypeDefs) {
-  for (std::map<std::string, std::string>::const_iterator mapIt =
-           atomTypeDefs.begin();
-       mapIt != atomTypeDefs.end(); mapIt++) {
-    std::string atomName = mapIt->first;
-    std::string atomSma = mapIt->second;
+  for (const auto &atomTypeDef : atomTypeDefs) {
+    std::string atomName = atomTypeDef.first;
+    std::string atomSma = atomTypeDef.second;
     boost::replace_all(smarts, atomName, atomSma);
   }
 
-  RWMol *mol = 0;
+  RWMol *mol = nullptr;
   try {
     mol = SmartsToMol(smarts);
   } catch (SmilesParseException &) {
@@ -153,7 +151,7 @@ MolChemicalFeatureDef *parseFeatureDef(
     std::istream &inStream, const std::string &inLine, unsigned int &lineNo,
     const std::map<std::string, std::string> &atomTypeDefs) {
   std::string nextLine = inLine;
-  MolChemicalFeatureDef *res = 0;
+  MolChemicalFeatureDef *res = nullptr;
 
   // handle a blank or comment first line:
   boost::trim_if(nextLine, boost::is_any_of(" \t\r\n"));

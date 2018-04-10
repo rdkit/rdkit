@@ -54,7 +54,7 @@ python::tuple getConformerDimsAndOffset(const Conformer &conf,
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans, padding);
   } else {
-    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, 0, padding);
+    MolShapes::computeConfDimsAndOffset(conf, dims, offSet, nullptr, padding);
   }
 
   python::tuple res = python::make_tuple(dims, offSet);
@@ -72,7 +72,7 @@ python::tuple getConfBox(const Conformer &conf,
     _copyTransform(transMat, ctrans);
     MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans, padding);
   } else {
-    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, 0, padding);
+    MolShapes::computeConfBox(conf, lowerCorner, upperCorner, nullptr, padding);
   }
   python::tuple res = python::make_tuple(lowerCorner, upperCorner);
   return res;
@@ -116,9 +116,19 @@ void EncodeMolShape(
     MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                            maxLayers, ignoreHs);
   } else {
-    MolShapes::EncodeShape(mol, grid, confId, 0, vdwScale, stepSize, maxLayers,
-                           ignoreHs);
+    MolShapes::EncodeShape(mol, grid, confId, nullptr, vdwScale, stepSize,
+                           maxLayers, ignoreHs);
   }
+}
+double tverskyMolShapes(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
+                         int confId2 = -1, double gridSpacing = 0.5,
+                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
+                             DiscreteValueVect::TWOBITVALUE,
+                         double vdwScale = 0.8, double stepSize = 0.25,
+                         int maxLayers = -1, bool ignoreHs = true) {
+  return MolShapes::tverskyIndex(mol1, mol2, alpha, beta, confId1, confId2, gridSpacing,
+                                     bitsPerPoint, vdwScale, stepSize,
+                                     maxLayers, ignoreHs);
 }
 
 double tanimotoMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,

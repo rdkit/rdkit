@@ -45,7 +45,7 @@ bool BondIterator_::operator!=(const BondIterator_ &other) const {
   return _mol != other._mol || _pos != other._pos;
 }
 
-Bond *BondIterator_::operator*() const { return (*_mol)[*_pos].get(); }
+Bond *BondIterator_::operator*() const { return (*_mol)[*_pos]; }
 // pre-increment
 BondIterator_ &BondIterator_::operator++() {
   PRECONDITION(_pos != _end, "bad initial position")
@@ -109,7 +109,7 @@ bool ConstBondIterator_::operator!=(const ConstBondIterator_ &other) const {
 }
 
 Bond const *ConstBondIterator_::operator*() const {
-  return (*_mol)[*_pos].get();
+  return (*_mol)[*_pos];
 }
 // pre-increment
 ConstBondIterator_ &ConstBondIterator_::operator++() {

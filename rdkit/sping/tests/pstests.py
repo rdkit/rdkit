@@ -1,22 +1,20 @@
-# $Id$
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 import pidtest
 
 def testLatin1Chars(can):
-    curx,cury = 10,20
-    can.drawString("hola M·laga amigos niÒos", curx,cury)
-    cury = cury + 20
-    can.drawString("Como estan?", curx, cury)
+  curx, cury = 10, 20
+  can.drawString(u"a√±os luz detr√°s", curx, cury)
+  cury = cury + 20
+  can.drawString("Como estan?", curx, cury)
 
-    can.flush()
-    can.clear()  # get our next page ???
-    curx,cury = 10,20
-    can.drawString("hola M·laga amigos niÒos: Page 2", curx,cury)
+  can.flush()
+  can.clear()  # get our next page ???
+  curx, cury = 10, 20
+  can.drawString(u"a√±os luz detr√°s: page 2", curx, cury)
 
-    str = "sometextƒÀ÷ with ·cÎnts"
-    print(len("ƒÀ÷"))
-    pidtest.CenterAndBox(can, str, y=150)
+  str = u"some text with √°cce√±ts"
+  pidtest.CenterAndBox(can, str, y=150)
 
-    can.flush()
-
-
+  can.flush()

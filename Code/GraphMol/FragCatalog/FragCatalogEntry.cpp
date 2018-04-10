@@ -39,17 +39,16 @@ FragCatalogEntry::FragCatalogEntry(const ROMol *omol, const PATH_TYPE &path,
 
   // using aIdxMap initialize the location (and their IDs) of the
   // functional groups on dp_mol
-  for (MatchVectType::const_iterator mvtci = aidToFid.begin();
-       mvtci != aidToFid.end(); mvtci++) {
-    int oldAid = mvtci->first;
+  for (const auto &mvtci : aidToFid) {
+    int oldAid = mvtci.first;
     if (aIdxMap.find(oldAid) != aIdxMap.end()) {
       int newAid = aIdxMap[oldAid];
       if (d_aToFmap.find(newAid) != d_aToFmap.end()) {
-        d_aToFmap[newAid].push_back(mvtci->second);
+        d_aToFmap[newAid].push_back(mvtci.second);
       } else {
         INT_VECT tmpVect;
         tmpVect.clear();
-        tmpVect.push_back(mvtci->second);
+        tmpVect.push_back(mvtci.second);
         d_aToFmap[newAid] = tmpVect;
       }
     }
@@ -169,7 +168,7 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
          atomIt != dp_mol->endAtoms(); ++atomIt) {
       unsigned int aid = (*atomIt)->getIdx();
       boost::uint32_t invar = 0;
-      INT_INT_VECT_MAP_CI mapPos = d_aToFmap.find(aid);
+      auto mapPos = d_aToFmap.find(aid);
       if (mapPos != d_aToFmap.end()) {
         INT_VECT fGroups = mapPos->second;
         std::sort(fGroups.begin(), fGroups.end());
@@ -203,11 +202,10 @@ void FragCatalogEntry::toStream(std::ostream &ss) const {
 
   tmpInt = d_aToFmap.size();
   streamWrite(ss, tmpInt);
-  for (INT_INT_VECT_MAP::const_iterator iivmci = d_aToFmap.begin();
-       iivmci != d_aToFmap.end(); iivmci++) {
-    tmpInt = iivmci->first;
+  for (const auto &iivmci : d_aToFmap) {
+    tmpInt = iivmci.first;
     streamWrite(ss, tmpInt);
-    INT_VECT tmpVect = iivmci->second;
+    INT_VECT tmpVect = iivmci.second;
     tmpInt = tmpVect.size();
     streamWrite(ss, tmpInt);
     for (INT_VECT_CI ivci = tmpVect.begin(); ivci != tmpVect.end(); ivci++) {
@@ -236,7 +234,7 @@ void FragCatalogEntry::initFromStream(std::istream &ss) {
 
   // the description:
   streamRead(ss, tmpInt);
-  char *tmpText = new char[tmpInt + 1];
+  auto *tmpText = new char[tmpInt + 1];
   ss.read(tmpText, tmpInt * sizeof(char));
   tmpText[tmpInt] = 0;
   d_descrip = tmpText;

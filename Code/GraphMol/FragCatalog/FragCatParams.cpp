@@ -44,7 +44,7 @@ FragCatParams::FragCatParams(const FragCatParams &other) {
   MOL_SPTR_VECT::const_iterator fgi;
   // MOL_PTR_VECT_CI fgi;
   for (fgi = ofgrps.begin(); fgi != ofgrps.end(); fgi++) {
-    ROMol *nmol = new ROMol(*(fgi->get()));
+    auto *nmol = new ROMol(*(fgi->get()));
     // ROMol *nmol = new ROMol(*(*fgi));
     d_funcGroups.push_back(ROMOL_SPTR(nmol));
     // d_funcGroups.push_back(nmol);
@@ -71,13 +71,12 @@ const ROMol *FragCatParams::getFuncGroup(unsigned int fid) const {
 void FragCatParams::toStream(std::ostream &ss) const {
   ss << d_lowerFragLen << " " << d_upperFragLen << " " << d_tolerance << "\n";
   ss << d_funcGroups.size() << "\n";
-  for (MOL_SPTR_VECT::const_iterator funcGroup = d_funcGroups.begin();
-       funcGroup != d_funcGroups.end(); funcGroup++) {
+  for (const auto &d_funcGroup : d_funcGroups) {
     std::string text;
-    (*funcGroup)->getProp(common_properties::_Name, text);
+    d_funcGroup->getProp(common_properties::_Name, text);
     ss << text;
     ss << "\t";
-    (*funcGroup)->getProp(common_properties::_fragSMARTS, text);
+    d_funcGroup->getProp(common_properties::_fragSMARTS, text);
     ss << text;
     ss << "\n";
   }

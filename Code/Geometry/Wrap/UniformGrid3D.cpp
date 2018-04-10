@@ -36,9 +36,8 @@ UniformGrid3D *makeUnformGrid3D(double dimX, double dimY, double dimZ,
                                 double spacing = 0.5,
                                 DiscreteValueVect::DiscreteValueType valType =
                                     DiscreteValueVect::TWOBITVALUE,
-                                const Point3D *offSet = 0) {
-  UniformGrid3D *grd =
-      new UniformGrid3D(dimX, dimY, dimZ, spacing, valType, offSet);
+                                const Point3D *offSet = nullptr) {
+  auto *grd = new UniformGrid3D(dimX, dimY, dimZ, spacing, valType, offSet);
   return grd;
 }
 
@@ -79,8 +78,8 @@ python::tuple findGridTerminalPointsWrap(const UniformGrid3D &grid,
   std::vector<Point3D> res =
       findGridTerminalPoints(grid, windowRadius, inclusionFraction);
   python::list pyRes;
-  for (std::vector<Point3D>::iterator it = res.begin(); it != res.end(); ++it) {
-    pyRes.append(*it);
+  for (auto &re : res) {
+    pyRes.append(re);
   }
   return python::tuple(pyRes);
 }
@@ -149,13 +148,15 @@ struct uGrid3D_wrapper {
                 (python::arg("dimX"), python::arg("dimY"), python::arg("dimZ"),
                  python::arg("spacing") = 0.5,
                  python::arg("valType") = DiscreteValueVect::TWOBITVALUE,
-                 python::arg("offSet") = (const Point3D *)(0)),
+                 python::arg("offSet") = (const Point3D *)nullptr),
                 "Faking the constructor",
                 python::return_value_policy<python::manage_new_object>());
 
     python::def("WriteGridToFile", writeGridToFile,
                 "Write the grid to a grid file");
 
+    python::def("TverskyIndex", tverskyIndex<UniformGrid3D>,
+                "Compute the tversky index between two grid objects"); 
     python::def("TanimotoDistance", tanimotoDistance<UniformGrid3D>,
                 "Compute the tanimoto distance between two grid objects");
     python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,

@@ -23,22 +23,22 @@ Other compatibility notes:
 
 """
 from __future__ import print_function
-import math
 import numpy
 from rdkit.six.moves import cPickle
 from rdkit.ML.Data import DataUtils
+
 
 class Composite(object):
   """a composite model
 
 
     **Notes**
-    
+
     - adding a model which is already present just results in its count
        field being incremented and the errors being averaged.
 
     - typical usage:
-    
+
        1) grow the composite with AddModel until happy with it
 
        2) call AverageErrors to calculate the average error values
@@ -59,23 +59,24 @@ class Composite(object):
       model needs to take the same set of descriptors as inputs.  This could be changed.
 
   """
+
   def __init__(self):
-    self.modelList=[]
-    self.errList=[]
-    self.countList=[]
-    self.modelVotes=[]
+    self.modelList = []
+    self.errList = []
+    self.countList = []
+    self.modelVotes = []
     self.quantBounds = None
     self.nPossibleVals = None
-    self.quantizationRequirements=[]
+    self.quantizationRequirements = []
     self._descNames = []
     self._mapOrder = None
-    self.activityQuant=[]
+    self.activityQuant = []
 
-  def SetModelFilterData(self, modelFilterFrac=0.0, modelFilterVal=0.0) :
+  def SetModelFilterData(self, modelFilterFrac=0.0, modelFilterVal=0.0):
     self._modelFilterFrac = modelFilterFrac
     self._modelFilterVal = modelFilterVal
-    
-  def SetDescriptorNames(self,names):
+
+  def SetDescriptorNames(self, names):
     """ registers the names of the descriptors this composite uses
 
       **Arguments**
@@ -89,19 +90,20 @@ class Composite(object):
 
     """
     self._descNames = names
+
   def GetDescriptorNames(self):
     """ returns the names of the descriptors this composite uses
 
     """
     return self._descNames
-  
-  def SetQuantBounds(self,qBounds,nPossible=None):
+
+  def SetQuantBounds(self, qBounds, nPossible=None):
     """ sets the quantization bounds that the composite will use
 
       **Arguments**
 
        - qBounds:  a list of quantization bounds, each quantbound is a
-             list of boundaries 
+             list of boundaries
 
        - nPossible:  a list of integers indicating how many possible values
           each descriptor can take on.
@@ -109,14 +111,13 @@ class Composite(object):
       **NOTE**
 
          - if the two lists are of different lengths, this will assert out
-         
+
          - neither list is copied, so if you modify it later, the composite
            itself will also be modified.
-           
 
     """
     if nPossible is not None:
-      assert len(qBounds)==len(nPossible),'qBounds/nPossible mismatch'
+      assert len(qBounds) == len(nPossible), 'qBounds/nPossible mismatch'
     self.quantBounds = qBounds
     self.nPossibleVals = nPossible
 
@@ -132,17 +133,19 @@ class Composite(object):
          2) the nPossibleVals list
 
     """
-    return self.quantBounds,self.nPossibleVals
+    return self.quantBounds, self.nPossibleVals
 
   def GetActivityQuantBounds(self):
-    if not hasattr(self,'activityQuant'):
-      self.activityQuant=[]
+    if not hasattr(self, 'activityQuant'):
+      self.activityQuant = []
     return self.activityQuant
-  def SetActivityQuantBounds(self,bounds):
-    self.activityQuant=bounds
-  def QuantizeActivity(self,example,activityQuant=None,actCol=-1):
+
+  def SetActivityQuantBounds(self, bounds):
+    self.activityQuant = bounds
+
+  def QuantizeActivity(self, example, activityQuant=None, actCol=-1):
     if activityQuant is None:
-      activityQuant=self.activityQuant
+      activityQuant = self.activityQuant
     if activityQuant:
       example = example[:]
       act = example[actCol]
@@ -154,14 +157,14 @@ class Composite(object):
         act = box + 1
       example[actCol] = act
     return example
-      
-  def QuantizeExample(self,example,quantBounds=None):
+
+  def QuantizeExample(self, example, quantBounds=None):
     """ quantizes an example
 
       **Arguments**
 
        - example: a data point (list, tuple or numpy array)
-       
+
        - quantBounds:  a list of quantization bounds, each quantbound is a
              list of boundaries.  If this argument is not provided, the composite
              will use its own quantBounds
@@ -180,8 +183,8 @@ class Composite(object):
     """
     if quantBounds is None:
       quantBounds = self.quantBounds
-    assert len(example)==len(quantBounds),'example/quantBounds mismatch'
-    quantExample = [None]*len(example)
+    assert len(example) == len(quantBounds), 'example/quantBounds mismatch'
+    quantExample = [None] * len(example)
     for i in range(len(quantBounds)):
       bounds = quantBounds[i]
       p = example[i]
@@ -196,7 +199,7 @@ class Composite(object):
         if i != 0:
           p = int(p)
       quantExample[i] = p
-    return quantExample 
+    return quantExample
 
   def MakeHistogram(self):
     """ creates a histogram of error/count pairs
@@ -204,7 +207,6 @@ class Composite(object):
      **Returns**
 
        the histogram as a series of (error, count) 2-tuples
-       
 
     """
     nExamples = len(self.modelList)
@@ -214,18 +216,17 @@ class Composite(object):
     countHere = self.countList[0]
     eps = 0.001
     while i < nExamples:
-      if self.errList[i]-lastErr > eps:
-        histo.append((lastErr,countHere))
+      if self.errList[i] - lastErr > eps:
+        histo.append((lastErr, countHere))
         lastErr = self.errList[i]
         countHere = self.countList[i]
       else:
-        countHere = countHere + self.countList[i]        
+        countHere = countHere + self.countList[i]
       i = i + 1
 
     return histo
 
-  def CollectVotes(self,example,quantExample,appendExample=0,
-                   onlyModels=None):
+  def CollectVotes(self, example, quantExample, appendExample=0, onlyModels=None):
     """ collects votes across every member of the composite for the given example
 
      **Arguments**
@@ -233,7 +234,7 @@ class Composite(object):
        - example: the example to be voted upon
 
        - quantExample: the quantized form of the example
-    
+
        - appendExample: toggles saving the example on the models
 
        - onlyModels: if provided, this should be a sequence of model
@@ -243,25 +244,23 @@ class Composite(object):
      **Returns**
 
        a list with a vote from each member
-      
+
     """
     if not onlyModels:
-      onlyModels = range(len(self))
-      
-    nModels = len(onlyModels)
-    votes = [-1]*len(self)
+      onlyModels = list(range(len(self)))
+
+    votes = [-1] * len(self)
     for i in onlyModels:
       if self.quantizationRequirements[i]:
-        votes[i] = int(round(self.modelList[i].ClassifyExample(quantExample,
-                                                               appendExamples=appendExample)))
+        votes[i] = int(
+          round(self.modelList[i].ClassifyExample(quantExample, appendExamples=appendExample)))
       else:
-        votes[i] = int(round(self.modelList[i].ClassifyExample(example,
-                                                                 appendExamples=appendExample)))
+        votes[i] = int(
+          round(self.modelList[i].ClassifyExample(example, appendExamples=appendExample)))
 
     return votes
 
-  def ClassifyExample(self,example,threshold=0,appendExample=0,
-                      onlyModels=None):
+  def ClassifyExample(self, example, threshold=0, appendExample=0, onlyModels=None):
     """ classifies the given example using the entire composite
 
       **Arguments**
@@ -284,7 +283,7 @@ class Composite(object):
 
 
       **FIX:**
-        statistics sucks... I'm not seeing an obvious way to get 
+        statistics sucks... I'm not seeing an obvious way to get
            the confidence intervals.  For that matter, I'm not seeing
            an unobvious way.
 
@@ -297,27 +296,27 @@ class Composite(object):
     if self.GetActivityQuantBounds():
       example = self.QuantizeActivity(example)
     if self.quantBounds is not None and 1 in self.quantizationRequirements:
-      quantExample = self.QuantizeExample(example,self.quantBounds)
+      quantExample = self.QuantizeExample(example, self.quantBounds)
     else:
       quantExample = []
 
     if not onlyModels:
-      onlyModels = range(len(self))
-    self.modelVotes = self.CollectVotes(example,quantExample,appendExample=appendExample,
+      onlyModels = list(range(len(self)))
+    self.modelVotes = self.CollectVotes(example, quantExample, appendExample=appendExample,
                                         onlyModels=onlyModels)
 
-    votes = [0]*self.nPossibleVals[-1]
+    votes = [0] * self.nPossibleVals[-1]
     for i in onlyModels:
       res = self.modelVotes[i]
       votes[res] = votes[res] + self.countList[i]
 
     totVotes = sum(votes)
     res = numpy.argmax(votes)
-    conf = float(votes[res])/float(totVotes)
+    conf = float(votes[res]) / float(totVotes)
     if conf > threshold:
-      return res,conf
+      return res, conf
     else:
-      return -1,conf
+      return -1, conf
 
   def GetVoteDetails(self):
     """ returns the votes from the last classification
@@ -325,8 +324,8 @@ class Composite(object):
       This will be _None_ if nothing has yet be classified
     """
     return self.modelVotes
-  
-  def _RemapInput(self,inputVect):
+
+  def _RemapInput(self, inputVect):
     """ remaps the input so that it matches the expected internal ordering
 
       **Arguments**
@@ -348,9 +347,9 @@ class Composite(object):
 
     if order is None:
       return inputVect
-    remappedInput = [None]*len(order)
+    remappedInput = [None] * len(order)
 
-    for i in range(len(order)-1):
+    for i in range(len(order) - 1):
       remappedInput[i] = inputVect[order[i]]
     if order[-1] == -1:
       remappedInput[-1] = 0
@@ -364,9 +363,9 @@ class Composite(object):
     """
     return self._mapOrder
 
-  def SetInputOrder(self,colNames):
+  def SetInputOrder(self, colNames):
     """ sets the input order
-    
+
       **Arguments**
 
         - colNames: a list of the names of the data columns that will be passed in
@@ -378,10 +377,10 @@ class Composite(object):
         - if the local descriptor names do not appear in _colNames_, this will
           raise an _IndexError_ exception.
     """
-    if type(colNames)!=list:
+    if type(colNames) != list:
       colNames = list(colNames)
     descs = [x.upper() for x in self.GetDescriptorNames()]
-    self._mapOrder = [None]*len(descs)
+    self._mapOrder = [None] * len(descs)
     colNames = [x.upper() for x in colNames]
 
     # FIX: I believe that we're safe assuming that field 0
@@ -392,23 +391,22 @@ class Composite(object):
     except ValueError:
       self._mapOrder[0] = 0
 
-    for i in range(1,len(descs)-1):
+    for i in range(1, len(descs) - 1):
       try:
         self._mapOrder[i] = colNames.index(descs[i])
       except ValueError:
-        raise ValueError('cannot find descriptor name: %s in set %s'%(repr(descs[i]),repr(colNames)))
+        raise ValueError('cannot find descriptor name: %s in set %s' %
+                         (repr(descs[i]), repr(colNames)))
     try:
       self._mapOrder[-1] = colNames.index(descs[-1])
     except ValueError:
       # ok, there's no obvious match for the final column (activity)
       #  We'll take the last one:
-      #self._mapOrder[-1] = len(descs)-1
+      # self._mapOrder[-1] = len(descs)-1
       self._mapOrder[-1] = -1
 
-  def Grow(self,examples,attrs,nPossibleVals,buildDriver,pruner=None,
-           nTries=10,pruneIt=0,
-           needsQuantization=1,progressCallback=None,
-           **buildArgs):
+  def Grow(self, examples, attrs, nPossibleVals, buildDriver, pruner=None, nTries=10, pruneIt=0,
+           needsQuantization=1, progressCallback=None, **buildArgs):
     """ Grows the composite
 
       **Arguments**
@@ -426,7 +424,7 @@ class Composite(object):
 
        - pruner: a function used to "prune" (reduce the complexity of)
           the resulting model.
-       
+
        - nTries: the number of new models to add
 
        - pruneIt: toggles whether or not pruning is done
@@ -441,57 +439,55 @@ class Composite(object):
         - new models are *added* to the existing ones
 
     """
-    silent = buildArgs.get('silent',0)
-    buildArgs['silent']=1
-    buildArgs['calcTotalError']=1
+    silent = buildArgs.get('silent', 0)
+    buildArgs['silent'] = 1
+    buildArgs['calcTotalError'] = 1
 
     if self._mapOrder is not None:
-      examples = map(self._RemapInput,examples)
+      examples = map(self._RemapInput, examples)
     if self.GetActivityQuantBounds():
       for i in range(len(examples)):
         examples[i] = self.QuantizeActivity(examples[i])
-        nPossibleVals[-1]=len(self.GetActivityQuantBounds())+1  
+        nPossibleVals[-1] = len(self.GetActivityQuantBounds()) + 1
     if self.nPossibleVals is None:
       self.nPossibleVals = nPossibleVals[:]
     if needsQuantization:
-      trainExamples = [None]*len(examples)
+      trainExamples = [None] * len(examples)
       nPossibleVals = self.nPossibleVals
       for i in range(len(examples)):
-        trainExamples[i] = self.QuantizeExample(examples[i],self.quantBounds)
+        trainExamples[i] = self.QuantizeExample(examples[i], self.quantBounds)
     else:
       trainExamples = examples
 
     for i in range(nTries):
       trainSet = None
-      
-      if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0) :
-        trainIdx, temp = DataUtils.FilterData(trainExamples, self._modelFilterVal,
-                                              self._modelFilterFrac,-1, indicesOnly=1)
+
+      if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0):
+        trainIdx, _ = DataUtils.FilterData(trainExamples, self._modelFilterVal,
+                                           self._modelFilterFrac, -1, indicesOnly=1)
         trainSet = [trainExamples[x] for x in trainIdx]
 
       else:
         trainSet = trainExamples
 
-      #print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
-      model,frac = buildDriver(*(trainSet,attrs,nPossibleVals), **buildArgs)
+      # print("Training model %i with %i out of %i examples"%(i, len(trainSet), len(trainExamples)))
+      model, frac = buildDriver(*(trainSet, attrs, nPossibleVals), **buildArgs)
       if pruneIt:
-        model,frac2 = pruner(model,model.GetTrainingExamples(),
-                            model.GetTestExamples(),
-                            minimizeTestErrorOnly=0)
+        model, frac2 = pruner(model, model.GetTrainingExamples(), model.GetTestExamples(),
+                              minimizeTestErrorOnly=0)
         frac = frac2
-      if hasattr(self, '_modelFilterFrac') and self._modelFilterFrac!=0 and \
-         hasattr(model,'_trainIndices'):
+      if (hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0 and
+          hasattr(model, '_trainIndices')):
         # correct the model's training indices:
         trainIndices = [trainIdx[x] for x in model._trainIndices]
         model._trainIndices = trainIndices
-        
-      self.AddModel(model,frac,needsQuantization)
-      if not silent and (nTries < 10 or i % (nTries/10) == 0):
-        print('Cycle: % 4d'%(i))
+
+      self.AddModel(model, frac, needsQuantization)
+      if not silent and (nTries < 10 or i % (nTries / 10) == 0):
+        print('Cycle: % 4d' % (i))
       if progressCallback is not None:
         progressCallback(i)
 
-  
   def ClearModelExamples(self):
     for i in range(len(self)):
       m = self.GetModel(i)
@@ -500,7 +496,7 @@ class Composite(object):
       except AttributeError:
         pass
 
-  def Pickle(self,fileName='foo.pkl',saveExamples=0):
+  def Pickle(self, fileName='foo.pkl', saveExamples=0):
     """ Writes this composite off to a file so that it can be easily loaded later
 
      **Arguments**
@@ -509,18 +505,18 @@ class Composite(object):
 
        - saveExamples: if this is zero, the individual models will have
          their stored examples cleared.
-       
+
     """
     if not saveExamples:
       self.ClearModelExamples()
-        
-    pFile = open(fileName,'wb+')
-    cPickle.dump(self,pFile,1)
+
+    pFile = open(fileName, 'wb+')
+    cPickle.dump(self, pFile, 1)
     pFile.close()
-    
-  def AddModel(self,model,error,needsQuantization=1):
+
+  def AddModel(self, model, error, needsQuantization=1):
     """ Adds a model to the composite
-    
+
      **Arguments**
 
        - model: the model to be added
@@ -549,7 +545,7 @@ class Composite(object):
         self.countList.append(1)
         self.quantizationRequirements.append(needsQuantization)
       else:
-        self.errList[idx] = self.errList[idx]+error
+        self.errList[idx] = self.errList[idx] + error
         self.countList[idx] = self.countList[idx] + 1
     else:
       self.modelList.append(model)
@@ -561,9 +557,9 @@ class Composite(object):
     """ convert local summed error to average error
 
     """
-    self.errList = list(map(lambda x,y:x/y,self.errList,self.countList))
+    self.errList = list(map(lambda x, y: x / y, self.errList, self.countList))
 
-  def SortModels(self,sortOnError=1):
+  def SortModels(self, sortOnError=True):
     """ sorts the list of models
 
       **Arguments**
@@ -575,22 +571,22 @@ class Composite(object):
     if sortOnError:
       order = numpy.argsort(self.errList)
     else:
-      order = numpy.argsort(self.countList)      
+      order = numpy.argsort(self.countList)
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
-    #print(order,sortOnError,self.errList,self.countList)
+    # print(order,sortOnError,self.errList,self.countList)
     self.modelList = [self.modelList[x] for x in order]
     self.countList = [self.countList[x] for x in order]
     self.errList = [self.errList[x] for x in order]
 
-    
-  def GetModel(self,i):
+  def GetModel(self, i):
     """ returns a particular model
 
     """
     return self.modelList[i]
-  def SetModel(self,i,val):
+
+  def SetModel(self, i, val):
     """ replaces a particular model
 
       **Note**
@@ -600,30 +596,32 @@ class Composite(object):
 
     """
     self.modelList[i] = val
-    
-  def GetCount(self,i):
+
+  def GetCount(self, i):
     """ returns the count of the _i_th model
 
     """
-    return self.countList[i]    
-  def SetCount(self,i,val):
+    return self.countList[i]
+
+  def SetCount(self, i, val):
     """ sets the count of the _i_th model
 
     """
     self.countList[i] = val
 
-  def GetError(self,i):
+  def GetError(self, i):
     """ returns the error of the _i_th model
 
     """
-    return self.errList[i]    
-  def SetError(self,i,val):
+    return self.errList[i]
+
+  def SetError(self, i, val):
     """ sets the error of the _i_th model
 
     """
     self.errList[i] = val
 
-  def GetDataTuple(self,i):
+  def GetDataTuple(self, i):
     """ returns all relevant data about a particular model
 
       **Arguments**
@@ -640,8 +638,9 @@ class Composite(object):
 
           3) its error
     """
-    return (self.modelList[i],self.countList[i],self.errList[i])
-  def SetDataTuple(self,i,tup):
+    return (self.modelList[i], self.countList[i], self.errList[i])
+
+  def SetDataTuple(self, i, tup):
     """ sets all relevant data for a particular tree in the forest
 
       **Arguments**
@@ -662,8 +661,8 @@ class Composite(object):
         *very* careful when you use it.
 
     """
-    self.modelList[i],self.countList[i],self.errList[i] = tup
-    
+    self.modelList[i], self.countList[i], self.errList[i] = tup
+
   def GetAllData(self):
     """ Returns everything we know
 
@@ -678,47 +677,47 @@ class Composite(object):
           3) our list of model errors
 
     """
-    return (self.modelList,self.countList,self.errList)
-  
+    return (self.modelList, self.countList, self.errList)
+
   def __len__(self):
     """ allows len(composite) to work
 
     """
     return len(self.modelList)
-  
-  def __getitem__(self,which):
+
+  def __getitem__(self, which):
     """ allows composite[i] to work, returns the data tuple
 
     """
     return self.GetDataTuple(which)
-  
+
   def __str__(self):
     """ returns a string representation of the composite
 
     """
-    outStr= 'Composite\n'
+    outStr = 'Composite\n'
     for i in range(len(self.modelList)):
-      outStr = outStr + \
-         '  Model % 4d:  % 5d occurances  %%% 5.2f average error\n'%(i,self.countList[i],
-                                                                     100.*self.errList[i])
-    return outStr    
-    
-if __name__ == '__main__':
+      outStr = (outStr + '  Model %4d:  %5d occurances  %%%5.2f average error\n' %
+                (i, self.countList[i], 100. * self.errList[i]))
+    return outStr
+
+
+if __name__ == '__main__':  # pragma: nocover
   if 0:
     from rdkit.ML.DecTree import DecTree
     c = Composite()
-    n = DecTree.DecTreeNode(None,'foo')
-    c.AddModel(n,0.5)
-    c.AddModel(n,0.5)
+    n = DecTree.DecTreeNode(None, 'foo')
+    c.AddModel(n, 0.5)
+    c.AddModel(n, 0.5)
     c.AverageErrors()
     c.SortModels()
     print(c)
 
-    qB = [[],[.5,1,1.5]]
-    exs = [['foo',0],['foo',.4],['foo',.6],['foo',1.1],['foo',2.0]]
-    print('quantBounds:',qB)
+    qB = [[], [.5, 1, 1.5]]
+    exs = [['foo', 0], ['foo', .4], ['foo', .6], ['foo', 1.1], ['foo', 2.0]]
+    print('quantBounds:', qB)
     for ex in exs:
-      q = c.QuantizeExample(ex,qB)
-      print(ex,q)
+      q = c.QuantizeExample(ex, qB)
+      print(ex, q)
   else:
     pass

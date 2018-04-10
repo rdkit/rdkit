@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum
+//  Copyright (C) 2013-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -305,9 +304,9 @@ boost::uint64_t nextBitCombo(boost::uint64_t v) {
 void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     std::vector<ROMOL_SPTR> &resMols, unsigned int maxToCut, bool addDummies,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
-    std::vector<std::vector<unsigned int> > *nCutsPerAtom) {
+    std::vector<std::vector<unsigned int>> *nCutsPerAtom) {
   PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
@@ -316,29 +315,29 @@ void fragmentOnSomeBonds(
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
   if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) return;
 
-  boost::uint64_t state = (0x1 << maxToCut) - 1;
-  boost::uint64_t stop = 0x1 << bondIndices.size();
+  boost::uint64_t state = (0x1L << maxToCut) - 1;
+  boost::uint64_t stop = 0x1L << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
-  std::vector<std::pair<unsigned int, unsigned int> > *dummyLabelsHere = NULL;
+  std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
     dummyLabelsHere =
-        new std::vector<std::pair<unsigned int, unsigned int> >(maxToCut);
+        new std::vector<std::pair<unsigned int, unsigned int>>(maxToCut);
   }
-  std::vector<Bond::BondType> *bondTypesHere = NULL;
+  std::vector<Bond::BondType> *bondTypesHere = nullptr;
   if (bondTypes) {
     bondTypesHere = new std::vector<Bond::BondType>(maxToCut);
   }
   while (state < stop) {
     unsigned int nSeen = 0;
     for (unsigned int i = 0; i < bondIndices.size() && nSeen < maxToCut; ++i) {
-      if (state & (0x1 << i)) {
+      if (state & (0x1L << i)) {
         fragmentHere[nSeen] = bondIndices[i];
         if (dummyLabelsHere) (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
         if (bondTypesHere) (*bondTypesHere)[nSeen] = (*bondTypes)[i];
         ++nSeen;
       }
     }
-    std::vector<unsigned int> *lCutsPerAtom = 0;
+    std::vector<unsigned int> *lCutsPerAtom = nullptr;
     if (nCutsPerAtom) {
       nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
       lCutsPerAtom = &(nCutsPerAtom->back());
@@ -356,19 +355,40 @@ void fragmentOnSomeBonds(
 namespace {
 void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
                             const Bond *bond) {
+  static const std::string newBondOrder = "_newBondOrder";
   INT_LIST newOrder;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(oAt);
-  while (beg != end) {
-    const BOND_SPTR obond = mol[*beg];
-    ++beg;
-    if (obond.get() == bond) {
-      continue;
+  INT_LIST incomingOrder;
+  // since we may call this function more than once, we need to keep track of
+  // whether or not we've already been called and what the new atom order is.
+  // we do this with a property.
+  // this was github #1734
+  if (nAt->getPropIfPresent(newBondOrder, incomingOrder)) {
+    BOOST_FOREACH (int bidx, incomingOrder) {
+      if (bidx != bond->getIdx()) {
+        newOrder.push_back(bidx);
+      }
     }
-    newOrder.push_back(obond->getIdx());
+  } else {
+    ROMol::OEDGE_ITER beg, end;
+    boost::tie(beg, end) = mol.getAtomBonds(oAt);
+    while (beg != end) {
+      const Bond *obond = mol[*beg];
+      ++beg;
+      if (obond == bond) {
+        continue;
+      }
+      newOrder.push_back(obond->getIdx());
+    }
   }
   newOrder.push_back(bond->getIdx());
+  nAt->setProp(newBondOrder, newOrder, true);
   unsigned int nSwaps = oAt->getPerturbationOrder(newOrder);
+  // std::copy(newOrder.begin(), newOrder.end(),
+  //           std::ostream_iterator<int>(std::cerr, ", "));
+  // std::cerr << std::endl;
+  // std::cerr<<"ccpm: "<<oAt->getIdx()<<"->"<<nAt->getIdx()<<" bond:
+  // "<<bond->getIdx()<<" swaps: "<<nSwaps<<std::endl;
+  nAt->setChiralTag(oAt->getChiralTag());
   if (nSwaps % 2) nAt->invertChirality();
 }
 }
@@ -376,7 +396,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
 ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     bool addDummies,
-    const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels,
+    const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<unsigned int> *nCutsPerAtom) {
   PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
@@ -388,7 +408,7 @@ ROMol *fragmentOnBonds(
   if (nCutsPerAtom) {
     BOOST_FOREACH (unsigned int &nCuts, *nCutsPerAtom) { nCuts = 0; }
   }
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   if (!mol.getNumAtoms()) return res;
 
   std::vector<Bond *> bondsToRemove;
@@ -441,8 +461,8 @@ ROMol *fragmentOnBonds(
                                mol.getBondBetweenAtoms(bidx, eidx));
       }
 
-      for (ROMol::ConformerIterator confIt = res->beginConformers();
-           confIt != res->endConformers(); ++confIt) {
+      for (auto confIt = res->beginConformers(); confIt != res->endConformers();
+           ++confIt) {
         Conformer *conf = (*confIt).get();
         conf->setAtomPos(idx1, conf->getAtomPos(bidx));
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
@@ -470,16 +490,15 @@ ROMol *fragmentOnBonds(const ROMol &mol,
   PRECONDITION((!nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms()),
                "bad nCutsPerAtom vector");
   std::vector<unsigned int> bondIndices;
-  std::vector<std::pair<unsigned int, unsigned int> > dummyLabels;
+  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
   std::vector<Bond::BondType> bondTypes;
 
   std::map<unsigned int, bool> environsMatch;
   if (atomEnvirons) {
-    for (std::map<unsigned int, ROMOL_SPTR>::const_iterator iter =
-             atomEnvirons->begin();
-         iter != atomEnvirons->end(); ++iter) {
+    for (const auto &atomEnviron : *atomEnvirons) {
       MatchVectType mv;
-      environsMatch[iter->first] = SubstructMatch(mol, *(iter->second), mv);
+      environsMatch[atomEnviron.first] =
+          SubstructMatch(mol, *(atomEnviron.second), mv);
     }
   }
 

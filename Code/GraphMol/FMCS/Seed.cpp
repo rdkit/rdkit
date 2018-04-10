@@ -70,8 +70,9 @@ void Seed::fillNewBonds(const ROMol& qmol) {
             end_atom_idx = i;
             break;
           }
-        NewBonds.push_back(NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
-                                   NotSet == end_atom_idx ? end_atom : 0));
+        NewBonds.push_back(
+            NewBond(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
+                    NotSet == end_atom_idx ? end_atom : nullptr));
       }
     }
   }
@@ -155,8 +156,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
   // check each single bond first: if (this seed + single bond) does not exist
   // in MCS, exclude this new bond from growing this seed.
   unsigned numErasedNewBonds = 0;
-  for (std::vector<NewBond>::iterator nbi = NewBonds.begin();
-       nbi != NewBonds.end(); nbi++) {
+  for (auto& nbi : NewBonds) {
 #ifdef VERBOSE_STATISTICS_ON
     { ++mcs.VerboseStatistics.Seed; }
 #endif
@@ -164,12 +164,12 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
     seed.createFromParent(this);
 
     // existed in this parent seed (ring) or -1
-    unsigned aIdx = nbi->EndAtomIdx;
+    unsigned aIdx = nbi.EndAtomIdx;
     if (NotSet == aIdx) {  // new atom
-      const Atom* end_atom = nbi->NewAtom;
+      const Atom* end_atom = nbi.NewAtom;
       aIdx = seed.addAtom(end_atom);
     }
-    const Bond* src_bond = qmol.getBondWithIdx(nbi->BondIdx);
+    const Bond* src_bond = qmol.getBondWithIdx(nbi.BondIdx);
     seed.addBond(src_bond);
     seed.computeRemainingSize(qmol);
 
@@ -177,8 +177,8 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
                                mcs.getMaxNumberAtoms())) {  // prune()
       if (!MatchResult.empty()) seed.MatchResult = MatchResult;
       if (!mcs.checkIfMatchAndAppend(seed)) {
-        nbi->BondIdx = NotSet;  // exclude this new bond from growing this seed
-                                // - decrease 2^^N-1 to 2^^k-1, k<N.
+        nbi.BondIdx = NotSet;  // exclude this new bond from growing this seed
+                               // - decrease 2^^N-1 to 2^^k-1, k<N.
         ++numErasedNewBonds;
 #ifdef VERBOSE_STATISTICS_ON
         ++mcs.VerboseStatistics.SingleBondExcluded;
@@ -303,7 +303,7 @@ void Seed::computeRemainingSize(const ROMol& qmol) {
   std::vector<bool> visitedBonds = ExcludedBonds;
   std::vector<bool> visitedAtoms(qmol.getNumAtoms());
 
-  for (size_t i = 0; i < visitedAtoms.size(); i++) visitedAtoms[i] = false;
+  for (auto&& visitedAtom : visitedAtoms) visitedAtom = false;
   for (std::vector<unsigned>::const_iterator it =
            MoleculeFragment.AtomsIdx.begin();
        it != MoleculeFragment.AtomsIdx.end(); it++)

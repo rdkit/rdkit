@@ -41,6 +41,19 @@
 namespace python = boost::python;
 
 namespace RDKit {
+
+struct filtercatalog_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(const FilterCatalog &self) {
+    std::string res;
+    if (!FilterCatalogCanSerialize()) {
+      throw_runtime_error("Pickling of FilterCatalog instances is not enabled");
+    }
+    res = self.Serialize();
+    return python::make_tuple(python::object(python::handle<>(
+        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
+  };
+};
+
 template <typename T>
 void python_to_vector(boost::python::object o, std::vector<T> &v) {
   python::stl_input_iterator<T> begin(o);
@@ -58,7 +71,7 @@ void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
   std::vector<boost::shared_ptr<FilterMatcherBase> > temp;
 
   for (; begin != end; ++begin) {
-    temp.push_back((*begin)->Clone());
+    temp.push_back((*begin)->copy());
   }
   fc.setExclusionPatterns(temp);
 }
@@ -134,34 +147,34 @@ class PythonFilterMatch : public FilterMatcherBase {
         functor(self),
         incref(false){};
 
-  // ONLY CALLED FROM C++ from the Clone operation
+  // ONLY CALLED FROM C++ from the copy operation
   PythonFilterMatch(const PythonFilterMatch &rhs)
       : FilterMatcherBase(rhs), functor(rhs.functor), incref(true) {
     python::incref(functor);
   }
 
-  ~PythonFilterMatch() {
+  ~PythonFilterMatch() override {
     if (incref) python::decref(functor);
   }
-  virtual bool isValid() const {
+  bool isValid() const override {
     return python::call_method<bool>(functor, "IsValid");
   }
 
-  virtual std::string getName() const {
+  std::string getName() const override {
     return python::call_method<std::string>(functor, "GetName");
   }
 
-  virtual bool getMatches(const ROMol &mol,
-                          std::vector<FilterMatch> &matchVect) const {
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matchVect) const override {
     return python::call_method<bool>(functor, "GetMatches", boost::ref(mol),
                                      boost::ref(matchVect));
   }
 
-  virtual bool hasMatch(const ROMol &mol) const {
+  bool hasMatch(const ROMol &mol) const override {
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
     return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
   }
 };
@@ -274,15 +287,12 @@ const char *FilterCatalogEntryDoc =
     "hzone_phenol_A(479)\n"
     "\n\n";
 
-
-python::dict GetFlattenedFunctionalGroupHierarchyHelper() {
-  const std::map<std::string, ROMOL_SPTR> &flattened = \
-      GetFlattenedFunctionalGroupHierarchy();
+python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
+  const std::map<std::string, ROMOL_SPTR> &flattened =
+      GetFlattenedFunctionalGroupHierarchy(normalize);
   python::dict dict;
-  for(std::map<std::string, ROMOL_SPTR>::const_iterator it=flattened.begin();
-      it!=flattened.end();
-      ++it) {
-    dict[it->first] = it->second;
+  for (const auto &it : flattened) {
+    dict[it.first] = it.second;
   }
   return dict;
 }
@@ -323,8 +333,7 @@ struct filtercat_wrapper {
 
     python::class_<SmartsMatcher, SmartsMatcher *,
                    python::bases<FilterMatcherBase> >(
-                       "SmartsMatcher", SmartsMatcherDoc,
-                       python::init<const std::string &>())
+        "SmartsMatcher", SmartsMatcherDoc, python::init<const std::string &>())
         .def(python::init<const ROMol &>("Construct from a molecule"))
         .def(python::init<const std::string &, const ROMol &>(
             "Construct from a name and a molecule"))
@@ -378,25 +387,26 @@ struct filtercat_wrapper {
              "Add a FilterMatcherBase that should not appear in a molecule");
 
     python::class_<FilterHierarchyMatcher, FilterHierarchyMatcher *,
-                   python::bases<FilterMatcherBase> >("FilterHierarchyMatcher",
-                                                      FilterHierarchyMatcherDoc,
-                                                      python::init<>())
-        .def(python::init<const FilterMatcherBase &>("Construct from a filtermatcher"))
+                   python::bases<FilterMatcherBase> >(
+        "FilterHierarchyMatcher", FilterHierarchyMatcherDoc, python::init<>())
+        .def(python::init<const FilterMatcherBase &>(
+            "Construct from a filtermatcher"))
         .def("SetPattern", &FilterHierarchyMatcher::setPattern,
-             "Set the filtermatcher pattern for this node.  An empty node is considered "
+             "Set the filtermatcher pattern for this node.  An empty node is "
+             "considered "
              "a root node and passes along the matches to the children.")
         .def("AddChild", &FilterHierarchyMatcher::addChild,
              "Add a child node to this hierarchy.");
 
-    python::register_ptr_to_python<boost::shared_ptr<FilterHierarchyMatcher> >();
-    
-    python::class_<std::vector<RDKit::ROMol *> >("MolList")
-        .def(python::vector_indexing_suite<std::vector<ROMol *>, true>());
+    python::register_ptr_to_python<
+        boost::shared_ptr<FilterHierarchyMatcher> >();
+
+    python::class_<std::vector<RDKit::ROMol *> >("MolList").def(
+        python::vector_indexing_suite<std::vector<ROMol *>, true>());
 
     python::class_<FilterCatalogEntry, FilterCatalogEntry *,
-                   const FilterCatalogEntry *>("FilterCatalogEntry",
-                                               FilterCatalogEntryDoc,
-                                               python::init<>())
+                   const FilterCatalogEntry *>(
+        "FilterCatalogEntry", FilterCatalogEntryDoc, python::init<>())
         .def(python::init<const std::string &, FilterMatcherBase &>())
         .def("IsValid", &FilterCatalogEntry::isValid)
 
@@ -425,13 +435,16 @@ struct filtercat_wrapper {
                               FilterCatalogEntry::clearProp);
 
     python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry> >();
-    python::def("GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
-                "Returns the functional group hierarchy filter catalog",
-                python::return_value_policy<python::reference_existing_object>());
-    python::def("GetFlattenedFunctionalGroupHierarchy",
-                GetFlattenedFunctionalGroupHierarchyHelper,
-                "Returns the flattened functional group hierarchy as a dictionary "
-                " of name:ROMOL_SPTR substructure items");
+    python::def(
+        "GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
+        "Returns the functional group hierarchy filter catalog",
+        python::return_value_policy<python::reference_existing_object>());
+    python::def(
+        "GetFlattenedFunctionalGroupHierarchy",
+        GetFlattenedFunctionalGroupHierarchyHelper,
+        (python::args("normalized")=false),
+        "Returns the flattened functional group hierarchy as a dictionary "
+        " of name:ROMOL_SPTR substructure items");
 
 #ifdef BOOST_PYTHON_SUPPORT_SHARED_CONST
     python::register_ptr_to_python<
@@ -492,8 +505,12 @@ struct filtercat_wrapper {
              "Return the first catalog entry that matches mol")
         .def("GetMatches", &FilterCatalog::getMatches, (python::arg("mol")),
              "Return all catalog entries that match mol")
-        .def("GetFilterMatches", &FilterCatalog::getFilterMatches, (python::arg("mol")),
-             "Return every matching filter from all catalog entries that match mol");
+        .def("GetFilterMatches", &FilterCatalog::getFilterMatches,
+             (python::arg("mol")),
+             "Return every matching filter from all catalog entries that match "
+             "mol")
+        // enable pickle support
+        .def_pickle(filtercatalog_pickle_suite());
 
     python::class_<PythonFilterMatch, python::bases<FilterMatcherBase> >(
         "PythonFilterMatcher", python::init<PyObject *>());
@@ -520,8 +537,6 @@ struct filtercat_wrapper {
     python::class_<FilterMatchOps::Not, FilterMatchOps::Not *,
                    python::bases<FilterMatcherBase> >(
         "Not", python::init<FilterMatcherBase &>());
-
-
   };
 };
 

@@ -21,13 +21,13 @@ QueryBond::QueryBond(BondType bT) : Bond(bT) {
 
 QueryBond::~QueryBond() {
   delete dp_query;
-  dp_query = NULL;
+  dp_query = nullptr;
 };
 
 QueryBond &QueryBond::operator=(const QueryBond &other) {
   // FIX: should we copy molecule ownership?  I don't think so.
   // FIX: how to deal with atom indices?
-  dp_mol = 0;
+  dp_mol = nullptr;
   d_bondType = other.d_bondType;
   dp_query = other.dp_query->copy();
   dp_props = other.dp_props;
@@ -35,7 +35,7 @@ QueryBond &QueryBond::operator=(const QueryBond &other) {
 }
 
 Bond *QueryBond::copy() const {
-  QueryBond *res = new QueryBond(*this);
+  auto *res = new QueryBond(*this);
   return res;
 }
 
@@ -43,7 +43,7 @@ void QueryBond::setBondType(BondType bT) {
   // NOTE: calling this blows out any existing query
   d_bondType = bT;
   delete dp_query;
-  dp_query = NULL;
+  dp_query = nullptr;
 
   dp_query = makeBondOrderEqualsQuery(bT);
 }
@@ -95,10 +95,6 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
   }
 }
 
-bool QueryBond::Match(const Bond::BOND_SPTR what) const {
-  return Match(what.get());
-}
-
 namespace {
 bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
   if (q1->getNegation() == q2->getNegation()) {
@@ -125,12 +121,11 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     res = true;
   } else if (d1 == "BondOr") {
     // FIX: handle negation on BondOr and BondAnd
-    for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       if (d2 == "BondOr") {
-        for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             res = true;
             break;
@@ -145,13 +140,12 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     }
   } else if (d1 == "BondAnd") {
     res = true;
-    for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter1 = q1->beginChildren();
-         iter1 != q1->endChildren(); ++iter1) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
       bool matched = false;
       if (d2 == "BondAnd") {
-        for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2 =
-                 q2->beginChildren();
-             iter2 != q2->endChildren(); ++iter2) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
           if (queriesMatch(iter1->get(), iter2->get())) {
             matched = true;
             break;
@@ -168,8 +162,8 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     // FIX : handle BondXOr
   } else if (d2 == "BondOr") {
     // FIX: handle negation on BondOr and BondAnd
-    for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (queriesMatch(q1, iter2->get())) {
         res = true;
         break;
@@ -177,8 +171,8 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     }
   } else if (d2 == "BondAnd") {
     res = true;
-    for (QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2 = q2->beginChildren();
-         iter2 != q2->endChildren(); ++iter2) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
       if (queriesMatch(q1, iter2->get())) {
         res = false;
         break;

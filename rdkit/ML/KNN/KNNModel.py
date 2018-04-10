@@ -3,11 +3,12 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #      All Rights Reserved
 #
-
 """ Define the class _KNNModel_, used to represent a k-nearest neighbhors model
 
 """
 from rdkit.DataStructs.TopNContainer import TopNContainer
+
+
 class KNNModel(object):
   """ This is a base class used by KNNClassificationModel
   and KNNRegressionModel to represent a k-nearest neighbor predictor. In general
@@ -27,10 +28,11 @@ class KNNModel(object):
     4) _k_: the number of closest neighbors used for prediction
 
   """
-  def __init__(self, k, attrs, dfunc, radius=None) :
+
+  def __init__(self, k, attrs, dfunc, radius=None):
     self._setup(k, attrs, dfunc, radius)
-      
-  def _setup(self, k, attrs, dfunc, radius) :
+
+  def _setup(self, k, attrs, dfunc, radius):
     self._examples = []
     self._trainingExamples = []
     self._testExamples = []
@@ -40,13 +42,13 @@ class KNNModel(object):
     self._name = ""
     self._radius = radius
 
-  def GetName(self) :
-    return self_name
+  def GetName(self):
+    return self._name
 
-  def SetName(self, name) :
+  def SetName(self, name):
     self._name = name
 
-  def GetExamples(self) :
+  def GetExamples(self):
     return self._examples
 
   def SetExamples(self, examples):
@@ -55,24 +57,23 @@ class KNNModel(object):
   def GetTrainingExamples(self):
     return self._trainingExamples
 
-  def SetTrainingExamples(self,examples):
+  def SetTrainingExamples(self, examples):
     self._trainingExamples = examples
 
-  def GetTestExamples(self) :
+  def GetTestExamples(self):
     return self._testExamples
 
-  def SetTestExamples(self, examples) :
+  def SetTestExamples(self, examples):
     self._testExamples = examples
 
-  def GetNeighbors(self,example):
+  def GetNeighbors(self, example):
     """ Returns the k nearest neighbors of the example
 
     """
     nbrs = TopNContainer(self._k)
     for trex in self._trainingExamples:
       dist = self._dfunc(trex, example, self._attrs)
-      if self._radius is None or dist<self._radius:
-        nbrs.Insert(-dist,trex)
+      if self._radius is None or dist < self._radius:
+        nbrs.Insert(-dist, trex)
     nbrs.reverse()
     return [x for x in nbrs]
-    

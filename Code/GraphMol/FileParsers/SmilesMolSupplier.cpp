@@ -36,8 +36,7 @@ SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName,
   // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   // Need to check if this has been fixed in VC++ 7.0
-  std::ifstream *tmpStream =
-      new std::ifstream(fileName.c_str(), std::ios_base::binary);
+  auto *tmpStream = new std::ifstream(fileName.c_str(), std::ios_base::binary);
 
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
     std::ostringstream errout;
@@ -87,7 +86,7 @@ SmilesMolSupplier::~SmilesMolSupplier() {
 }
 
 void SmilesMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = true;
   df_end = false;
 
@@ -146,7 +145,7 @@ void SmilesMolSupplier::reset() {
 }
 
 ROMol *SmilesMolSupplier::processLine(std::string inLine) {
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   try {
     // -----------
@@ -170,7 +169,11 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     // -----------
     // get the smiles and create a molecule
     // -----------
-    res = SmilesToMol(recs[d_smi], 0, df_sanitize);
+    SmilesParserParams params;
+    params.sanitize = df_sanitize;
+    params.allowCXSMILES = false;
+    params.parseName = false;
+    res = SmilesToMol(recs[d_smi], params);
     if (!res) {
       std::stringstream errout;
       errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
@@ -223,19 +226,19 @@ ROMol *SmilesMolSupplier::processLine(std::string inLine) {
     BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line
                           << "\n";
     BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
-    res = NULL;
+    res = nullptr;
   } catch (const MolSanitizeException &se) {
     // We couldn't sanitize the molecule
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line "
                           << d_line << std::endl;
     BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
-    res = NULL;
+    res = nullptr;
   } catch (...) {
     //  write out an error message
     BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line "
                           << d_line << std::endl;
-    res = NULL;
+    res = nullptr;
   }
 
   return res;
@@ -430,7 +433,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 //
 ROMol *SmilesMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   if (d_next < 0) {
     d_next = 0;

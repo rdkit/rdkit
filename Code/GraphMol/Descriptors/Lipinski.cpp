@@ -54,7 +54,7 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(0){};
+  ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(nullptr){};
   std::string m_pattern;
   bool m_needCopies;
   const RDKit::ROMol *m_matcher;
@@ -160,12 +160,11 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
     BOOST_FOREACH (const MatchVectType &iv, matches) {
       bool distinct = true;
-      for (MatchVectType::const_iterator mIt = iv.begin(); mIt != iv.end();
-           ++mIt) {
-        if (atomsSeen[mIt->second]) {
+      for (const auto &mIt : iv) {
+        if (atomsSeen[mIt.second]) {
           distinct = false;
         }
-        atomsSeen.set(mIt->second);
+        atomsSeen.set(mIt.second);
       }
       if (distinct && res > 0) --res;
     }
@@ -204,7 +203,7 @@ double calcFractionCSP3(const ROMol &mol) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    ATOM_SPTR at = mol[*atBegin];
+    const Atom* at = mol[*atBegin];
     if (at->getAtomicNum() == 6) {
       ++nC;
       if (at->getTotalDegree() == 4) {

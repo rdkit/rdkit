@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,7 +32,7 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#define VERBOSE_FINGERPRINTING 1
+// #define VERBOSE_FINGERPRINTING 1
 
 namespace {
 class ss_matcher {
@@ -73,6 +72,7 @@ const char *pqs[] = {
     //"[*]!@[R]~[R]!@[*]",  Github #151: can't have !@ in an SSS pattern
     //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
+    "[*]",  // single atom fragment
 #if 0
                       "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
@@ -96,7 +96,8 @@ const char *pqs[] = {
 #endif
     ""};
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 namespace detail {
 void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
@@ -114,8 +115,7 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
   } else if (descr == "AtomXor") {
     return;
   } else if (descr == "AtomAnd") {
-    Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt =
-        a->getQuery()->beginChildren();
+    auto childIt = a->getQuery()->beginChildren();
     if ((*childIt)->getDescription() == "AtomAtomicNum" &&
         ((*(childIt + 1))->getDescription() == "AtomIsAliphatic" ||
          (*(childIt + 1))->getDescription() == "AtomIsAromatic") &&
@@ -125,15 +125,13 @@ void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {
       return;
     }
   } else if (descr == "AtomOr") {
-    Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt =
-        a->getQuery()->beginChildren();
+    auto childIt = a->getQuery()->beginChildren();
     while (childIt != a->getQuery()->endChildren()) {
       if ((*childIt)->getDescription() == "AtomAtomicNum") {
         atomNums.push_back(
             static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
       } else if ((*childIt)->getDescription() == "AtomAnd") {
-        Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt2 =
-            (*childIt)->beginChildren();
+        auto childIt2 = (*childIt)->beginChildren();
         if ((*childIt2)->getDescription() == "AtomAtomicNum" &&
             ((*(childIt2 + 1))->getDescription() == "AtomIsAliphatic" ||
              (*(childIt2 + 1))->getDescription() == "AtomIsAromatic") &&
@@ -199,7 +197,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   ROMol::VERTEX_ITER firstA, lastA;
   boost::tie(firstA, lastA) = mol.getVertices();
   while (firstA != lastA) {
-    const Atom *at = mol[*firstA].get();
+    const Atom *at = mol[*firstA];
     if (isComplexQuery(at)) {
       isQueryAtom.set(at->getIdx());
       // std::cerr<<"   complex atom: "<<at->getIdx()<<std::endl;
@@ -209,7 +207,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond *bond = mol[*firstB].get();
+    const Bond *bond = mol[*firstB];
     // if( isComplexQuery(bond) ){
     if (isPatternComplexQuery(bond)) {
       isQueryBond.set(bond->getIdx());
@@ -218,7 +216,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
     ++firstB;
   }
 
-  ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+  auto *res = new ExplicitBitVect(fpSize);
   unsigned int pIdx = 0;
   BOOST_FOREACH (const ROMol *patt, patts) {
     ++pIdx;
@@ -264,7 +262,7 @@ ExplicitBitVect *PatternFingerprintMol(const ROMol &mol, unsigned int fpSize,
       std::cerr << " bs:|| ";
 #endif
       while (!isQuery && firstB != lastB) {
-        BOND_SPTR pbond = (*patt)[*firstB];
+        const Bond* pbond = (*patt)[*firstB];
         ++firstB;
         const Bond *mbond = mol.getBondBetweenAtoms(
             amap[pbond->getBeginAtomIdx()], amap[pbond->getEndAtomIdx()]);

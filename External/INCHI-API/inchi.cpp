@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -66,17 +65,19 @@
 #include <vector>
 #include <stack>
 #include <set>
+#include <queue>
 #include "inchi.h"
 #include <algorithm>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
-#if RDK_TEST_MULTITHREADED
-#include <boost/thread.hpp>
-#endif
 #include <RDGeneral/BoostEndInclude.h>
+#if RDK_TEST_MULTITHREADED
+#include <mutex>
+#endif
 
+//#define DEBUG 1
 namespace RDKit {
 namespace {
 /* assignBondDirs
@@ -103,7 +104,7 @@ bool assignBondDirs(RWMol& mol, INT_PAIR_VECT& zBondPairs,
     pending.insert(pair.second);
   }
   // a queue for pending assignments
-  typedef std::queue<std::pair<int, Bond::BondDir> > ASSIGNMENTQTYPE;
+  typedef std::queue<std::pair<int, Bond::BondDir>> ASSIGNMENTQTYPE;
   ASSIGNMENTQTYPE queue;
   // in a loop, modify one bond at a time, until all bonds are assigned
   while (!pending.empty() || !queue.empty()) {
@@ -425,11 +426,25 @@ bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
       mol, atom, 7, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1, NULL, stack, _visited);
   if (target == NULL) return false;
 
-  target->setFormalCharge(-1);
-  target->calcExplicitValence(false);
-  stack.top()->setBondType(Bond::SINGLE);
-  atom->setFormalCharge(1);
-  atom->calcExplicitValence(false);
+  // we are double bonded to a neighboring N. Check to see if we are also
+  // double bonded to an O. If so, we don't want to mess with the other N
+  // this occurs because the InChI code produces this structure:
+  //  CN(=O)=N(=O)C
+  // and we don't want to mess with that.
+  // this was github #1572
+
+  std::stack<Bond*> stack2;
+  std::set<int> _visited2;
+  Atom* target2 =
+      findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE, Bond::DOUBLE, 0, 1,
+                           NULL, stack2, _visited2);
+  if (target2 == NULL) {
+    target->setFormalCharge(-1);
+    target->calcExplicitValence(false);
+    stack.top()->setBondType(Bond::SINGLE);
+    atom->setFormalCharge(1);
+    atom->calcExplicitValence(false);
+  }
   return true;
 }
 
@@ -1152,7 +1167,7 @@ void cleanUp(RWMol& mol) {
 }  // end inner namespace
 
 #if RDK_TEST_MULTITHREADED
-boost::mutex inchiMutex;
+std::mutex inchiMutex;
 #endif
 
 RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
@@ -1171,7 +1186,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     // output structure
     inchi_OutputStruct inchiOutput;
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     // DLL call
     int retcode = GetStructFromINCHI(&inchiInput, &inchiOutput);
@@ -1183,7 +1198,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
     if (inchiOutput.szLog) rv.logPtr = std::string(inchiOutput.szLog);
 
     // for isotopes of H
-    typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int> >
+    typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int>>
         ISOTOPES_t;
     ISOTOPES_t isotopes;
     if (retcode == inchi_Ret_OKAY || retcode == inchi_Ret_WARNING) {
@@ -1232,14 +1247,15 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
         unsigned int aid = m->addAtom(atom, false, true);
         indexToAtomIndexMapping.push_back(aid);
 #ifdef DEBUG
-        BOOST_LOG(rdWarningLog) << "adding " << aid << ":"
-                                << atom->getAtomicNum() << ":"
-                                << (int)inchiAtom->num_iso_H[0] << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "adding " << aid << ":" << atom->getAtomicNum() << ":"
+            << (int)inchiAtom->num_iso_H[0]
+            << " charge: " << (int)inchiAtom->charge << std::endl;
 #endif
       }
 
       // adding bonds
-      std::set<std::pair<unsigned int, unsigned int> > bondRegister;
+      std::set<std::pair<unsigned int, unsigned int>> bondRegister;
       for (unsigned int i = 0; i < nAtoms; i++) {
         inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
         unsigned int nBonds = inchiAtom->num_bonds;
@@ -1706,7 +1722,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
       stereo0D.type = INCHI_StereoType_Tetrahedral;
       ROMol::ADJ_ITER nbrIter, endNbrIter;
       boost::tie(nbrIter, endNbrIter) = m->getAtomNeighbors(atom);
-      std::vector<std::pair<unsigned int, unsigned int> > neighbors;
+      std::vector<std::pair<unsigned int, unsigned int>> neighbors;
       while (nbrIter != endNbrIter) {
         int cip = 0;
         // if (m->getAtomWithIdx(*nbrIter)->hasProp("_CIPRank"))
@@ -1858,11 +1874,11 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
     // single bond in the big ring will get E/Z assigned as well. Though rdkit
     // will eventually remove it, I added it any way
     if (  // bondType == Bond::DOUBLE and
-        (bond->getStereo() == Bond::STEREOZ ||
-         bond->getStereo() == Bond::STEREOE) &&
+        bond->getStereo() > Bond::STEREOANY &&
         bond->getStereoAtoms().size() >= 2) {
       inchi_Stereo0D stereo0D;
-      if (bond->getStereo() == Bond::STEREOZ)
+      if (bond->getStereo() == Bond::STEREOZ ||
+          bond->getStereo() == Bond::STEREOCIS)
         stereo0D.parity = INCHI_PARITY_ODD;
       else
         stereo0D.parity = INCHI_PARITY_EVEN;
@@ -1922,7 +1938,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   std::string inchi;
   {
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     int retcode = GetINCHI(&input, &output);
 
@@ -1950,7 +1966,7 @@ std::string InchiToInchiKey(const std::string& inchi) {
   int ret = 0;
   {
 #if RDK_TEST_MULTITHREADED
-    boost::lock_guard<boost::mutex> lock(inchiMutex);
+    std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   }

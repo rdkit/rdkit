@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -63,16 +63,17 @@ extern int yysmiles_debug;
     AT_TOKEN = 273,
     PERCENT_TOKEN = 274,
     COLON_TOKEN = 275,
-    BOND_TOKEN = 276,
-    ATOM_OPEN_TOKEN = 277,
-    ATOM_CLOSE_TOKEN = 278,
-    EOS_TOKEN = 279
+    HASH_TOKEN = 276,
+    BOND_TOKEN = 277,
+    ATOM_OPEN_TOKEN = 278,
+    ATOM_CLOSE_TOKEN = 279,
+    EOS_TOKEN = 280
   };
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
 #line 57 "smiles.yy" /* yacc.c:1909  */
@@ -82,8 +83,10 @@ union YYSTYPE
   RDKit::Bond * bond;
   int                      ival;
 
-#line 86 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
+#line 87 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smiles.tab.hpp" /* yacc.c:1909  */
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

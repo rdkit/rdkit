@@ -1,14 +1,12 @@
+tests = [
+  ("python", "test_list.py", {'dir': 'InfoTheory/Wrap'}),
+  ("python", "test_list.py", {'dir': 'FeatureSelect/Wrap'}),
+]
 
-tests=[
-  ("python","test_list.py",{'dir':'InfoTheory/Wrap'}),
-  ("python","test_list.py",{'dir':'FeatureSelect/Wrap'}),
-  ]
+longTests = []
 
-longTests = [
-  ]
-
-if __name__=='__main__':
+if __name__ == '__main__':
   import sys
   from rdkit import TestRunner
-  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  failed, tests = TestRunner.RunScript('test_list.py', 0, 1)
   sys.exit(len(failed))

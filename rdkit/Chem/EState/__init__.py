@@ -10,5 +10,5 @@ Unless otherwise noted, all definitions here can be found in:
 
 """
 
-from rdkit.Chem.EState.EState import  *
+from rdkit.Chem.EState.EState import *
 from rdkit.Chem.EState.AtomTypes import *

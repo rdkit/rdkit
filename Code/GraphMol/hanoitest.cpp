@@ -45,7 +45,7 @@ class int_compare_ftor {
   const int *dp_ints;
 
  public:
-  int_compare_ftor() : dp_ints(NULL){};
+  int_compare_ftor() : dp_ints(nullptr){};
   int_compare_ftor(const int *ints) : dp_ints(ints){};
   int operator()(int i, int j) const {
     PRECONDITION(dp_ints, "no ints");
@@ -62,8 +62,7 @@ class int_compare_ftor {
 
 void qs1(const std::vector<std::vector<int> > &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (qsort) vectors" << std::endl;
-  for (unsigned int i = 0; i < vects.size(); ++i) {
-    std::vector<int> tv = vects[i];
+  for (auto tv : vects) {
     int *data = &tv.front();
     qsort(data, tv.size(), sizeof(int), pcmp);
     for (unsigned int j = 1; j < tv.size(); ++j) {
@@ -75,16 +74,16 @@ void qs1(const std::vector<std::vector<int> > &vects) {
 
 void hs1(const std::vector<std::vector<int> > &vects) {
   BOOST_LOG(rdInfoLog) << "sorting (hanoi sort) vectors" << std::endl;
-  for (unsigned int i = 0; i < vects.size(); ++i) {
-    const int *data = &vects[i].front();
+  for (const auto &vect : vects) {
+    const int *data = &vect.front();
     int_compare_ftor icmp(data);
-    int *indices = (int *)malloc(vects[i].size() * sizeof(int));
-    for (unsigned int j = 0; j < vects[i].size(); ++j) indices[j] = j;
-    int *count = (int *)malloc(vects[i].size() * sizeof(int));
-    int *changed = (int *)malloc(vects[i].size() * sizeof(int));
-    memset(changed, 1, vects[i].size() * sizeof(int));
-    RDKit::hanoisort(indices, vects[i].size(), count, changed, icmp);
-    for (unsigned int j = 1; j < vects[i].size(); ++j) {
+    int *indices = (int *)malloc(vect.size() * sizeof(int));
+    for (unsigned int j = 0; j < vect.size(); ++j) indices[j] = j;
+    int *count = (int *)malloc(vect.size() * sizeof(int));
+    int *changed = (int *)malloc(vect.size() * sizeof(int));
+    memset(changed, 1, vect.size() * sizeof(int));
+    RDKit::hanoisort(indices, vect.size(), count, changed, icmp);
+    for (unsigned int j = 1; j < vect.size(); ++j) {
       TEST_ASSERT(data[indices[j]] >= data[indices[j - 1]]);
     }
     free(count);
@@ -98,7 +97,8 @@ void test1() {
 
   typedef boost::random::mersenne_twister<boost::uint32_t, 32, 4, 2, 31,
                                           0x9908b0df, 11, 7, 0x9d2c5680, 15,
-                                          0xefc60000, 18, 3346425566U> rng_type;
+                                          0xefc60000, 18, 3346425566U>
+      rng_type;
   typedef boost::uniform_int<> distrib_type;
   typedef boost::variate_generator<rng_type &, distrib_type> source_type;
   rng_type generator(42u);
@@ -128,7 +128,7 @@ class atomcomparefunctor {
   Canon::canon_atom *d_atoms;
 
  public:
-  atomcomparefunctor() : d_atoms(NULL){};
+  atomcomparefunctor() : d_atoms(nullptr){};
   atomcomparefunctor(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -156,7 +156,7 @@ class atomcomparefunctor2 {
   Canon::canon_atom *d_atoms;
 
  public:
-  atomcomparefunctor2() : d_atoms(NULL){};
+  atomcomparefunctor2() : d_atoms(nullptr){};
   atomcomparefunctor2(Canon::canon_atom *atoms) : d_atoms(atoms){};
   int operator()(int i, int j) const {
     PRECONDITION(d_atoms, "no atoms");
@@ -343,7 +343,7 @@ class atomcomparefunctor3 {
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = dp_mol->getAtomBonds(at);
     while (beg != end) {
-      const BOND_SPTR bond = (*dp_mol)[*beg];
+      const Bond* bond = (*dp_mol)[*beg];
       nbrs[nbridx] =
           static_cast<unsigned int>(100 * bond->getBondTypeAsDouble()) +
           dp_atoms[bond->getOtherAtomIdx(i)].index;
@@ -389,7 +389,8 @@ class atomcomparefunctor3 {
 
  public:
   bool df_useNbrs;
-  atomcomparefunctor3() : dp_atoms(NULL), dp_mol(NULL), df_useNbrs(false){};
+  atomcomparefunctor3()
+      : dp_atoms(nullptr), dp_mol(nullptr), df_useNbrs(false){};
   atomcomparefunctor3(Canon::canon_atom *atoms, const ROMol &m)
       : dp_atoms(atoms), dp_mol(&m), df_useNbrs(false){};
   int operator()(int i, int j) const {
@@ -888,8 +889,8 @@ void _renumberTest2(const ROMol *m, std::string inSmiles,
     Canon::rankMolAtoms(*nm, ranks, true);
     char *ranksSet = (char *)malloc(nAtoms * sizeof(char));
     memset(ranksSet, 0, nAtoms * sizeof(char));
-    for (unsigned int i = 0; i < ranks.size(); i++) {
-      ranksSet[ranks[i]] = 1;
+    for (unsigned int rank : ranks) {
+      ranksSet[rank] = 1;
     }
     for (unsigned int i = 0; i < nAtoms; i++) {
       if (ranksSet[i] != 1) {
@@ -995,7 +996,7 @@ std::string smis[] = {
     // doubled house
     "C12C3C45C67C8C9C66C14C21C35C78C961", "C12C3C45C6C7C11C27C41C356",
     // Problematic round-tripping
-    "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(/C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
+    "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
     "COC(=O)/C=C/C(C)=C/C=C/C(C)=C/C=C/C=C(\\C)/C=C/C=C(\\C)/C=C/C(=O)[O-]",
     "c1cc2ccc(ccc3ccc1cc3)cc2", "C13C6C1C2C4C2C3C5C4C56",
     "C45C1C6C3C6C5C4C2C3C12", "C45C2C6C3C6C5C4C1C3C12",
@@ -1419,7 +1420,8 @@ void test11() {
     std::vector<std::vector<int> > frags;
     unsigned int numFrag = MolOps::getMolFrags(*m, frags);
     for (unsigned i = 0; i < numFrag; ++i) {
-      std::string smii = MolFragmentToSmiles(*m, frags[i], 0, 0, 0, true);
+      std::string smii =
+          MolFragmentToSmiles(*m, frags[i], nullptr, nullptr, nullptr, true);
       // std::cout << "Test "<< smii << std::endl;
       vfragsmi.push_back(smii);
     }
@@ -1458,6 +1460,35 @@ void test12() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1567() {
+  BOOST_LOG(rdInfoLog)
+      << "testing github #1567: Non-canonical result from MolFragmentToSmiles()"
+      << std::endl;
+  {
+    ROMol *m1 = SmilesToMol("CC1CN(Cc2cccc(C)c2)C1");
+    TEST_ASSERT(m1);
+    int m1Ats_a[6] = {1, 12, 3, 4, 5, 11};
+    std::vector<int> m1Ats(m1Ats_a, m1Ats_a + 6);
+    int m1Bnds_a[5] = {12, 11, 3, 4, 13};
+    std::vector<int> m1Bnds(m1Bnds_a, m1Bnds_a + 5);
+    std::string smi1 = MolFragmentToSmiles(*m1, m1Ats, &m1Bnds);
+
+    ROMol *m2 = SmilesToMol("CN(CCC)Cc1cccc(C)c1");
+    TEST_ASSERT(m2);
+    int m2Ats_a[6] = {3, 2, 1, 5, 6, 12};
+    std::vector<int> m2Ats(m2Ats_a, m2Ats_a + 6);
+    int m2Bnds_a[5] = {2, 1, 4, 5, 12};
+    std::vector<int> m2Bnds(m2Bnds_a, m2Bnds_a + 5);
+    std::string smi2 = MolFragmentToSmiles(*m2, m2Ats, &m2Bnds);
+
+    TEST_ASSERT(smi1 == smi2);
+
+    delete m1;
+    delete m2;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1475,6 +1506,7 @@ int main() {
   test7();
   test8();
 #endif
+  testGithub1567();
 
   return 0;
 }

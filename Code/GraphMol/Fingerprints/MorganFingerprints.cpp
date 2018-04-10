@@ -127,9 +127,8 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
     SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
     for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
          mvIt != matchVect.end(); ++mvIt) {
-      for (MatchVectType::const_iterator mIt = mvIt->begin();
-           mIt != mvIt->end(); ++mIt) {
-        invars[mIt->second] |= mask;
+      for (const auto &mIt : *mvIt) {
+        invars[mIt.second] |= mask;
       }
     }
   }
@@ -262,7 +261,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
         while (beg != end) {
-          const BOND_SPTR bond = mol[*beg];
+          const Bond*  bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
 
           unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
@@ -413,7 +412,7 @@ ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol, unsigned int radius,
                                          bool useChirality, bool useBondTypes,
                                          bool onlyNonzeroInvariants,
                                          BitInfoMap *atomsSettingBits) {
-  ExplicitBitVect *res = new ExplicitBitVect(nBits);
+  auto *res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
                   *res);

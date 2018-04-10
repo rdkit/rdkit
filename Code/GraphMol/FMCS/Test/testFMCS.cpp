@@ -67,7 +67,7 @@ void printTime() {
 
 std::string getSmilesOnly(
     const char* smiles,
-    std::string* id = 0) {  // remove label, because RDKit parse FAILED
+    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) *id = std::string(smiles + n);
@@ -76,8 +76,8 @@ std::string getSmilesOnly(
 
 std::string getSmilesOnlyTxt(
     const char* smiles,
-    std::string* id = 0) {  // remove label from string like "CHEMBL90218
-                            // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
+    std::string* id = nullptr) {  // remove label from string like "CHEMBL90218
+  // NS(=O)(=O)c1ccc(NC(=O)c2cccc(C(=O)O)n2)c(Cl)c1"
   const char* sp = strchr(smiles, ' ');
   if (sp && '\0' != *sp) {
     if (id) *id = std::string(smiles, sp - smiles);
@@ -91,7 +91,7 @@ std::string getSmilesOnlyTxt(
 
 std::string getSmilesOnlyChEMBL(
     const char* smiles,
-    std::string* id = 0) {  // remove label, because RDKit parse FAILED
+    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, '\t');
   if (sp) {
     unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
@@ -226,9 +226,9 @@ void testFileMCSB(
     perror("Could not create output file");
     exit(1);
   }
-  setvbuf(f, 0, _IOFBF, 4 * 1024);
-  FILE* fs = 0;  // fopen(outSmilesFile.c_str(), "wt");
-  if (fs) setvbuf(fs, 0, _IOFBF, 4 * 1024);
+  setvbuf(f, nullptr, _IOFBF, 4 * 1024);
+  FILE* fs = nullptr;  // fopen(outSmilesFile.c_str(), "wt");
+  if (fs) setvbuf(fs, nullptr, _IOFBF, 4 * 1024);
 #ifdef xxVERBOSE_STATISTICS_ON
   FILE* ft = fopen((outFile + ".stat.csv").c_str(), "wt");
   setvbuf(ft, 0, _IOFBF, 4 * 1024);  // small file
@@ -258,14 +258,13 @@ void testFileMCSB(
     std::vector<ROMOL_SPTR> tcmols;
     fprintf(f, "# %u Using ", n + 1);
     if (fs) fprintf(fs, "\n//TEST %u\n", n + 1);
-    for (std::vector<std::string>::const_iterator mid = tc->begin();
-         mid != tc->end(); mid++) {
-      std::map<std::string, size_t>::const_iterator id = molIdMap.find(*mid);
+    for (const auto& mid : *tc) {
+      std::map<std::string, size_t>::const_iterator id = molIdMap.find(mid);
       if (molIdMap.end() == id) continue;
       size_t i = id->second;
       tcmols.push_back(mols[i]);
-      fprintf(f, "%s ", mid->c_str());
-      if (fs) fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid->c_str());
+      fprintf(f, "%s ", mid.c_str());
+      if (fs) fprintf(fs, "\"%s%s\",\n", smilesList[i].c_str(), mid.c_str());
     }
     fprintf(f, "\n");
     //        ExecStatistics curStat = stat;          //to compute the
@@ -864,8 +863,8 @@ void testChEMBL_TxtALL_chembl_II_sets(double th = 1.0) {
   p.Timeout = 60;
   p.Verbose = false;
 
-  for (size_t i = 0; i < sizeof(test) / sizeof(test[0]); i++) {
-    std::string smiName = std::string("chembl_II_sets/") + test[i];
+  for (auto& i : test) {
+    std::string smiName = std::string("chembl_II_sets/") + i;
     std::string testsmi =
         testChEMBL_Txt(smiName.c_str(), th, "chembl_II_sets.C.res.csv");
     fprintf(fcmd, "fmcs_bench.py --timeout %u %s >>%s\n", p.Timeout,
@@ -911,8 +910,8 @@ void testChEMBL_TxtSLOW_chembl_II_sets(double th = 1.0) {
       "Target_no_10193_46700.txt", "Target_no_10980_30994.txt",
       "Target_no_11140_37038.txt",
   };
-  for (size_t i = 0; i < sizeof(test) / sizeof(test[0]); i++)
-    testChEMBL_Txt((std::string("chembl_II_sets/") + test[i]).c_str(), th,
+  for (auto& i : test)
+    testChEMBL_Txt((std::string("chembl_II_sets/") + i).c_str(), th,
                    "chembl_II_sets.SLOW.C++.res.csv");
 }
 
@@ -1031,10 +1030,10 @@ void testChEMBLdatALL(double th = 1.0) {
       "cmp_list_ChEMBL_93_actives.dat",
       "cmp_list_ChEMBL_zinc_decoys.dat",
   };
-  for (size_t i = 0; i < sizeof(test) / sizeof(test[0]); i++)
+  for (auto& i : test)
     testChEMBLdat(
         (std::string("benchmarking_platform-master/compounds/ChEMBL/") +
-         test[i]).c_str(),
+         i).c_str(),
         th);
 }
 
@@ -1054,8 +1053,7 @@ void testTarget_no_10188_30149() {
       "COc1ccccc1Nc1ccc2c(c1)[nH]nc2-c1ccccc1 CHEMBL254443",
       "CN(C)CCNC(=O)c1cccc(-c2[nH]nc3cc(Nc4ccccc4Cl)ccc32)c1 CHEMBL198821",
   };
-  for (size_t i = 0; i < sizeof(smi) / sizeof(smi[0]); i++)
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i]))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
   t0 = nanoClock();
 #ifdef _DEBUG  // check memory leaks
   _CrtMemState _ms;
@@ -1097,8 +1095,7 @@ void testTarget_no_10188_49064() {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(I)cc3)nc21",
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
-  for (size_t i = 0; i < sizeof(smi) / sizeof(smi[0]); i++)
-    mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(smi[i]))));
+  for (auto& i : smi) mols.push_back(ROMOL_SPTR(SmilesToMol(getSmilesOnly(i))));
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
   std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
@@ -1213,7 +1210,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
           "test;Nmols;status;t,sec;nAtoms;nBonds;C++ MCS; E status;E t,sec;E "
           "nAtoms;E nBonds;E C++ MCS\n");
   std::string fn(std::string(path) + "/" + test);
-  RDKit::MolSupplier* suppl = 0;
+  RDKit::MolSupplier* suppl = nullptr;
   try {
     if ('f' == test[strlen(test) - 1])  // sdf file
       suppl = new RDKit::SDMolSupplier(fn);
@@ -1250,7 +1247,7 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
       std::cout << "ERROR: could not create SMI file " << smiName << "\n";
       return;
     }
-    ROMol* m = 0;
+    ROMol* m = nullptr;
     for (int i = 0; i < 2 && !suppl->atEnd(); i++) {  // load sequential pair
       m = suppl->next();
       if (m) {
@@ -1352,9 +1349,8 @@ void testFileSDF_RandomSet(const char* test = "chembl13-10000-random-pairs.sdf",
   std::cout << "\n****** BIG MCS RANDOM SET test *********\n\n";
 
   unsigned maxMol = 0;
-  for (unsigned i = 0; i < all_mols.size(); i++) {
-    if (maxMol < all_mols[i]->getNumBonds())
-      maxMol = all_mols[i]->getNumBonds();
+  for (auto& all_mol : all_mols) {
+    if (maxMol < all_mol->getNumBonds()) maxMol = all_mol->getNumBonds();
   }
   const unsigned N_BigRandomTests =
       all_mols.size() > 2000 ? all_mols.size() / 2 : all_mols.size() * 2;
@@ -1535,8 +1531,7 @@ void testGregSDFFileSetFiltered() {
   };
 
   double totalT = 0.;
-  for (size_t i = 0; i < sizeof(sdf) / sizeof(sdf[0]); i++)
-    totalT += testFileSDF((sdf_dir + sdf[i]).c_str());
+  for (auto& i : sdf) totalT += testFileSDF((sdf_dir + i).c_str());
   printf(
       "\nTOTAL Time elapsed %.2lf "
       "seconds\n================================================\n",

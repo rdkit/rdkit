@@ -59,19 +59,18 @@ void getCrippenAtomContribs(const ROMol &mol, std::vector<double> &logpContribs,
   boost::dynamic_bitset<> atomNeeded(mol.getNumAtoms());
   atomNeeded.set();
   const CrippenParamCollection *params = CrippenParamCollection::getParams();
-  for (CrippenParamCollection::ParamsVect::const_iterator it = params->begin();
-       it != params->end(); ++it) {
+  for (const auto &param : *params) {
     std::vector<MatchVectType> matches;
-    SubstructMatch(mol, *(it->dp_pattern.get()), matches, false, true);
+    SubstructMatch(mol, *(param.dp_pattern.get()), matches, false, true);
     for (std::vector<MatchVectType>::const_iterator matchIt = matches.begin();
          matchIt != matches.end(); ++matchIt) {
       int idx = (*matchIt)[0].second;
       if (atomNeeded[idx]) {
         atomNeeded[idx] = 0;
-        logpContribs[idx] = it->logp;
-        mrContribs[idx] = it->mr;
-        if (atomTypes) (*atomTypes)[idx] = it->idx;
-        if (atomTypeLabels) (*atomTypeLabels)[idx] = it->label;
+        logpContribs[idx] = param.logp;
+        mrContribs[idx] = param.mr;
+        if (atomTypes) (*atomTypes)[idx] = param.idx;
+        if (atomTypeLabels) (*atomTypeLabels)[idx] = param.label;
       }
     }
     // no need to keep matching stuff if we already found all the atoms:

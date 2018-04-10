@@ -19,14 +19,6 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <memory>
-// ha ha... we don't actually want to use this, but we need to keep support old
-// C++ versions:
-#if __cplusplus < 201103L
-#define rdk_auto_ptr std::auto_ptr
-#else
-template <typename T>
-using rdk_auto_ptr = std::unique_ptr<T>;
-#endif
 
 // code for windows DLL handling taken from
 // http://www.boost.org/more/separate_compilation.html
@@ -75,7 +67,7 @@ RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const &e);
 RDKIT_WRAP_DECL void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
-#endif                                               
+#endif
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()
@@ -87,11 +79,11 @@ void RegisterVectorConverter(bool noproxy = false) {
   name += typeid(T).name();
 
   if (noproxy) {
-    python::class_<std::vector<T> >(name.c_str())
+    python::class_<std::vector<T>>(name.c_str())
         .def(python::vector_indexing_suite<std::vector<T>, 1>());
   } else {
-    python::class_<std::vector<T> >(name.c_str())
-        .def(python::vector_indexing_suite<std::vector<T> >());
+    python::class_<std::vector<T>>(name.c_str())
+        .def(python::vector_indexing_suite<std::vector<T>>());
   }
 }
 
@@ -106,18 +98,18 @@ void RegisterListConverter(bool noproxy = false) {
   name += typeid(T).name();
 
   if (noproxy) {
-    python::class_<std::list<T> >(name.c_str())
+    python::class_<std::list<T>>(name.c_str())
         .def(python::list_indexing_suite<std::list<T>, 1>());
   } else {
-    python::class_<std::list<T> >(name.c_str())
-        .def(python::list_indexing_suite<std::list<T> >());
+    python::class_<std::list<T>>(name.c_str())
+        .def(python::list_indexing_suite<std::list<T>>());
   }
 }
 
 template <typename T>
-rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj,
-                                                 T maxV) {
-  rdk_auto_ptr<std::vector<T> > res;
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
+                                                   T maxV) {
+  std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
     python::stl_input_iterator<T> beg(obj), end;
@@ -133,8 +125,8 @@ rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj,
   return res;
 }
 template <typename T>
-rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj) {
-  rdk_auto_ptr<std::vector<T> > res;
+std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
+  std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
     unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
@@ -144,6 +136,18 @@ rdk_auto_ptr<std::vector<T> > pythonObjectToVect(const python::object &obj) {
     }
   }
   return res;
+}
+template <typename T>
+void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
+  if (obj) {
+    res.clear();
+    python::stl_input_iterator<T> beg(obj), end;
+    while (beg != end) {
+      T v = *beg;
+      res.push_back(v);
+      ++beg;
+    }
+  }
 }
 
 // Quiet warnings on GCC

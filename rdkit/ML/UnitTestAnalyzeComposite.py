@@ -11,28 +11,28 @@
 """unit testing code for the AnalyzeComposite functionality
 
 """
+import os
+import unittest
+
 from rdkit import RDConfig
-import unittest,os
 from rdkit.ML import AnalyzeComposite
 from rdkit.six.moves import cPickle as pickle
 
-def feq(a,b,tol=1e-4):
-  if abs(a-b)>tol: return 0
-  else: return 1
 
 class TestCase(unittest.TestCase):
+
   def setUp(self):
-    #print '\n%s: '%self.shortDescription(),
-    self.baseDir = os.path.join(RDConfig.RDCodeDir,'ML','test_data')
+    self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
+
   def test1_Issue163(self):
-    name1 = os.path.join(self.baseDir,'humanoral.1.pkl')
+    name1 = os.path.join(self.baseDir, 'humanoral.1.pkl')
     try:
-      with open(name1,'rb') as pklF:
+      with open(name1, 'rb') as pklF:
         c1 = pickle.load(pklF)
     except Exception:
       c1 = None
     self.assertTrue(c1)
-    name2 = os.path.join(self.baseDir,'humanoral.2.pkl')
+    name2 = os.path.join(self.baseDir, 'humanoral.2.pkl')
     try:
       with open(name2, 'rb') as pklF:
         c2 = pickle.load(pklF)
@@ -41,21 +41,21 @@ class TestCase(unittest.TestCase):
     self.assertTrue(c2)
 
     try:
-      res = AnalyzeComposite.ProcessIt([c1,c2],verbose=-1)
+      res = sorted(AnalyzeComposite.ProcessIt([c1, c2], verbose=-1))
     except Exception:
       import traceback
       traceback.print_exc()
-      ok=0
+      ok = 0
     else:
-      ok=1
+      ok = 1
     self.assertTrue(ok)
 
-    self.assertTrue(res[0][0]=='BALABANJ')
-    self.assertTrue(res[1][0]=='BERTZCT')
-    self.assertTrue(res[-1][0]=='FR_ALLYLIC_OXID')
+    self.assertEqual(res[0][0],'BALABANJ')
+    self.assertEqual(res[1][0],'BERTZCT')
+    self.assertEqual(res[-1][0],'VSA_ESTATE9')
     for entry in res:
-      self.assertTrue(len(entry)==5)
-    
-if __name__ == '__main__':
-  unittest.main()
+      self.assertEqual(len(entry),5)
 
+
+if __name__ == '__main__':  # pragma: nocover
+  unittest.main()

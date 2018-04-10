@@ -3,7 +3,6 @@
 #  Copyright (C) 2001-2008  Greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
-
 """ Automatic search for quantization bounds
 
 This uses the expected informational gain to determine where quantization bounds should
@@ -24,10 +23,12 @@ try:
 except ImportError:
   hascQuantize = 0
 else:
-  hascQuantize = 1  
-  
+  hascQuantize = 1
+
 _float_tol = 1e-8
-def feq(v1,v2,tol=_float_tol):
+
+
+def feq(v1, v2, tol=_float_tol):
   """ floating point equality with a tolerance factor
 
     **Arguments**
@@ -41,18 +42,19 @@ def feq(v1,v2,tol=_float_tol):
     **Returns**
 
       0 or 1
- 
-  """
-  return abs(v1-v2) < tol
 
-def FindVarQuantBound(vals,results,nPossibleRes):
+  """
+  return abs(v1 - v2) < tol
+
+
+def FindVarQuantBound(vals, results, nPossibleRes):
   """ Uses FindVarMultQuantBounds, only here for historic reasons
   """
-  bounds,gain = FindVarMultQuantBounds(vals,1,results,nPossibleRes)
-  return (bounds[0],gain)
+  bounds, gain = FindVarMultQuantBounds(vals, 1, results, nPossibleRes)
+  return (bounds[0], gain)
 
 
-def _GenVarTable(vals,cuts,starts,results,nPossibleRes):
+def _GenVarTable(vals, cuts, starts, results, nPossibleRes):
   """ Primarily intended for internal use
 
    constructs a variable table for the data passed in
@@ -79,22 +81,23 @@ def _GenVarTable(vals,cuts,starts,results,nPossibleRes):
    **Notes**
 
      - _vals_ should be sorted!
-     
+
   """
-  nVals = len(cuts)+1
-  varTable = numpy.zeros((nVals,nPossibleRes),'i')
+  nVals = len(cuts) + 1
+  varTable = numpy.zeros((nVals, nPossibleRes), 'i')
   idx = 0
-  for i in range(nVals-1):
+  for i in range(nVals - 1):
     cut = cuts[i]
     while idx < starts[cut]:
-      varTable[i,results[idx]] += 1
+      varTable[i, results[idx]] += 1
       idx += 1
   while idx < len(vals):
-    varTable[-1,results[idx]] += 1
+    varTable[-1, results[idx]] += 1
     idx += 1
   return varTable
 
-def _PyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=None):
+
+def _PyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varTable=None):
   """ Primarily intended for internal use
 
    Recursively finds the best quantization boundaries
@@ -123,7 +126,7 @@ def _PyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=None
        1) the best information gain found so far
 
        2) a list of the quantization bound indices ( _cuts_ for the best case)
-   
+
    **Notes**
 
     - this is not even remotely efficient, which is why a C replacement
@@ -135,29 +138,30 @@ def _PyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=None
   bestCuts = None
   highestCutHere = len(starts) - nBounds + which
   if varTable is None:
-    varTable = _GenVarTable(vals,cuts,starts,results,nPossibleRes)
+    varTable = _GenVarTable(vals, cuts, starts, results, nPossibleRes)
   while cuts[which] <= highestCutHere:
-    varTable = _GenVarTable(vals,cuts,starts,results,nPossibleRes)
+    varTable = _GenVarTable(vals, cuts, starts, results, nPossibleRes)
     gainHere = entropy.InfoGain(varTable)
     if gainHere > maxGain:
       maxGain = gainHere
       bestCuts = cuts[:]
     # recurse on the next vars if needed
-    if which < nBounds-1: 
-      gainHere,cutsHere=_RecurseOnBounds(vals,cuts[:],which+1,starts,results,nPossibleRes,
-                                         varTable = varTable)
+    if which < nBounds - 1:
+      gainHere, cutsHere = _RecurseOnBounds(vals, cuts[:], which + 1, starts, results, nPossibleRes,
+                                            varTable=varTable)
       if gainHere > maxGain:
         maxGain = gainHere
         bestCuts = cutsHere
     # update this cut
     cuts[which] += 1
-    for i in range(which+1,nBounds):
-      if cuts[i] == cuts[i-1]:
+    for i in range(which + 1, nBounds):
+      if cuts[i] == cuts[i - 1]:
         cuts[i] += 1
 
-  return maxGain,bestCuts
+  return maxGain, bestCuts
 
-def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=None):
+
+def _NewPyRecurseOnBounds(vals, cuts, which, starts, results, nPossibleRes, varTable=None):
   """ Primarily intended for internal use
 
    Recursively finds the best quantization boundaries
@@ -186,7 +190,7 @@ def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=N
        1) the best information gain found so far
 
        2) a list of the quantization bound indices ( _cuts_ for the best case)
-   
+
    **Notes**
 
     - this is not even remotely efficient, which is why a C replacement
@@ -198,16 +202,16 @@ def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=N
   bestCuts = None
   highestCutHere = len(starts) - nBounds + which
   if varTable is None:
-    varTable = _GenVarTable(vals,cuts,starts,results,nPossibleRes)
+    varTable = _GenVarTable(vals, cuts, starts, results, nPossibleRes)
   while cuts[which] <= highestCutHere:
     gainHere = entropy.InfoGain(varTable)
     if gainHere > maxGain:
       maxGain = gainHere
       bestCuts = cuts[:]
     # recurse on the next vars if needed
-    if which < nBounds-1: 
-      gainHere,cutsHere=_RecurseOnBounds(vals,cuts[:],which+1,starts,results,nPossibleRes,
-                                         varTable = None)
+    if which < nBounds - 1:
+      gainHere, cutsHere = _RecurseOnBounds(vals, cuts[:], which + 1, starts, results, nPossibleRes,
+                                            varTable=None)
       if gainHere > maxGain:
         maxGain = gainHere
         bestCuts = cutsHere
@@ -215,22 +219,22 @@ def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=N
     oldCut = cuts[which]
     cuts[which] += 1
     bot = starts[oldCut]
-    if oldCut+1 < len(starts):
-      top = starts[oldCut+1]
+    if oldCut + 1 < len(starts):
+      top = starts[oldCut + 1]
     else:
       top = starts[-1]
-    for i in range(bot,top):
+    for i in range(bot, top):
       v = results[i]
-      varTable[which,v] += 1
-      varTable[which+1,v] -= 1
-    for i in range(which+1,nBounds):
-      if cuts[i] == cuts[i-1]:
+      varTable[which, v] += 1
+      varTable[which + 1, v] -= 1
+    for i in range(which + 1, nBounds):
+      if cuts[i] == cuts[i - 1]:
         cuts[i] += 1
 
+  return maxGain, bestCuts
 
-  return maxGain,bestCuts
 
-
+def _NewPyFindStartPoints(sortVals, sortResults, nData):
   # --------------------------------
   #
   # find all possible dividing points
@@ -243,42 +247,42 @@ def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=N
   #    we should divide before (1,0) and (2,1)
   #
   # --------------------------------
-def _NewPyFindStartPoints(sortVals,sortResults,nData):
   startNext = []
   tol = 1e-8
-  blockAct=sortResults[0]
-  lastBlockAct=None
-  lastDiv=None
+  blockAct = sortResults[0]
+  lastBlockAct = None
+  lastDiv = None
   i = 1
-  while i<nData:
+  while i < nData:
     # move to the end of this block:
-    while i<nData and sortVals[i]-sortVals[i-1]<=tol:
+    while i < nData and sortVals[i] - sortVals[i - 1] <= tol:
       if sortResults[i] != blockAct:
         # this block is heterogeneous
-        blockAct=-1
-      i+=1
+        blockAct = -1
+      i += 1
     if lastBlockAct is None:
       # first time through:
       lastBlockAct = blockAct
       lastDiv = i
     else:
-      if blockAct==-1 or lastBlockAct==-1 or blockAct!=lastBlockAct:
+      if blockAct == -1 or lastBlockAct == -1 or blockAct != lastBlockAct:
         startNext.append(lastDiv)
         lastDiv = i
         lastBlockAct = blockAct
       else:
-        lastDiv=i
-    if i<nData:
-      blockAct=sortResults[i]
-    i+=1
+        lastDiv = i
+    if i < nData:
+      blockAct = sortResults[i]
+    i += 1
   # catch the case that the last point also sets a bin:
-  if blockAct != lastBlockAct :
+  if blockAct != lastBlockAct:
     startNext.append(lastDiv)
   return startNext
 
-def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
+
+def FindVarMultQuantBounds(vals, nBounds, results, nPossibleRes):
   """ finds multiple quantization bounds for a single variable
-  
+
    **Arguments**
 
      - vals: sequence of variable values (assumed to be floats)
@@ -304,22 +308,21 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
 
   nData = len(vals)
   if nData == 0:
-    return [],-1e8
-  
+    return [], -1e8
+
   # sort the variable values:
-  svs = list(zip(vals,results))
+  svs = list(zip(vals, results))
   svs.sort()
-  sortVals,sortResults = zip(*svs)
-  startNext=_FindStartPoints(sortVals,sortResults,nData)
+  sortVals, sortResults = zip(*svs)
+  startNext = _FindStartPoints(sortVals, sortResults, nData)
   if not len(startNext):
-    return [0],0.0
-  if len(startNext)<nBounds:
-    nBounds = len(startNext)-1
+    return [0], 0.0
+  if len(startNext) < nBounds:
+    nBounds = len(startNext) - 1
   if nBounds == 0:
-    nBounds=1
+    nBounds = 1
   initCuts = list(range(nBounds))
-  maxGain,bestCuts = _RecurseOnBounds(sortVals,initCuts,0,startNext,
-                                      sortResults,nPossibleRes)
+  maxGain, bestCuts = _RecurseOnBounds(sortVals, initCuts, 0, startNext, sortResults, nPossibleRes)
   quantBounds = []
   nVs = len(sortVals)
   for cut in bestCuts:
@@ -329,76 +332,48 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
     elif idx == 0:
       quantBounds.append(sortVals[idx])
     else:
-      quantBounds.append((sortVals[idx]+sortVals[idx-1])/2.)
-      
-  return quantBounds,maxGain
+      quantBounds.append((sortVals[idx] + sortVals[idx - 1]) / 2.)
 
-#hascQuantize=0
+  return quantBounds, maxGain
+
+# hascQuantize=0
 if hascQuantize:
   _RecurseOnBounds = cQuantize._RecurseOnBounds
   _FindStartPoints = cQuantize._FindStartPoints
 else:
-  _RecurseOnBounds = _NewPyRecurseOnBounds  
+  _RecurseOnBounds = _NewPyRecurseOnBounds
   _FindStartPoints = _NewPyFindStartPoints
 
 if __name__ == '__main__':
-  import sys
   if 1:
-    d = [(1.,0),
-         (1.1,0),
-         (1.2,0),
-         (1.4,1),
-         (1.4,0),
-         (1.6,1),
-         (2.,1),
-         (2.1,0),
-         (2.1,0),
-         (2.1,0),
-         (2.2,1),
-         (2.3,0)]
-    varValues = list(map(lambda x:x[0],d))
-    resCodes = list(map(lambda x:x[1],d))
+    d = [(1., 0), (1.1, 0), (1.2, 0), (1.4, 1), (1.4, 0), (1.6, 1), (2., 1), (2.1, 0), (2.1, 0),
+         (2.1, 0), (2.2, 1), (2.3, 0)]
+    varValues = list(map(lambda x: x[0], d))
+    resCodes = list(map(lambda x: x[1], d))
     nPossibleRes = 2
-    res = FindVarMultQuantBounds(varValues,2,resCodes,nPossibleRes)
-    print('RES:',res)
-    target = ([1.3, 2.05],.34707 )
+    res = FindVarMultQuantBounds(varValues, 2, resCodes, nPossibleRes)
+    print('RES:', res)
+    target = ([1.3, 2.05], .34707)
   else:
-    d = [(1.,0),
-         (1.1,0),
-         (1.2,0),
-         (1.4,1),
-         (1.4,0),
-         (1.6,1),
-         (2.,1),
-         (2.1,0),
-         (2.1,0),
-         (2.1,0),
-         (2.2,1),
-         (2.3,0)]
-    varValues = list(map(lambda x:x[0],d))
-    resCodes = list(map(lambda x:x[1],d))
-    nPossibleRes =2
-    res = FindVarMultQuantBounds(varValues,1,resCodes,nPossibleRes)
+    d = [(1., 0), (1.1, 0), (1.2, 0), (1.4, 1), (1.4, 0), (1.6, 1), (2., 1), (2.1, 0), (2.1, 0),
+         (2.1, 0), (2.2, 1), (2.3, 0)]
+    varValues = list(map(lambda x: x[0], d))
+    resCodes = list(map(lambda x: x[1], d))
+    nPossibleRes = 2
+    res = FindVarMultQuantBounds(varValues, 1, resCodes, nPossibleRes)
     print(res)
-    #sys.exit(1)
-    d = [(1.4,1),
-         (1.4,0)]
+    # sys.exit(1)
+    d = [(1.4, 1), (1.4, 0)]
 
-    varValues = list(map(lambda x:x[0],d))
-    resCodes = list(map(lambda x:x[1],d))
-    nPossibleRes =2
-    res = FindVarMultQuantBounds(varValues,1,resCodes,nPossibleRes)
+    varValues = list(map(lambda x: x[0], d))
+    resCodes = list(map(lambda x: x[1], d))
+    nPossibleRes = 2
+    res = FindVarMultQuantBounds(varValues, 1, resCodes, nPossibleRes)
     print(res)
 
-    d = [(1.4,0),
-         (1.4,0),(1.6,1)]
-    varValues = list(map(lambda x:x[0],d))
-    resCodes = list(map(lambda x:x[1],d))
-    nPossibleRes =2
-    res = FindVarMultQuantBounds(varValues,2,resCodes,nPossibleRes)
+    d = [(1.4, 0), (1.4, 0), (1.6, 1)]
+    varValues = list(map(lambda x: x[0], d))
+    resCodes = list(map(lambda x: x[1], d))
+    nPossibleRes = 2
+    res = FindVarMultQuantBounds(varValues, 2, resCodes, nPossibleRes)
     print(res)
-  
-
-  
-   
- 

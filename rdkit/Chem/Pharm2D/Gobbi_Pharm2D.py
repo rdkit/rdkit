@@ -1,4 +1,3 @@
-# $Id$
 #
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #
@@ -12,11 +11,10 @@
   Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
 
 """
-from rdkit import Chem
-from rdkit.Chem.Pharm2D.SigFactory import SigFactory
 from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem.Pharm2D.SigFactory import SigFactory
 
-fdef="""
+fdef = """
 DefineFeature Hydrophobic [$([C;H2,H1](!=*)[C;H2,H1][C;H2,H1][$([C;H1,H2,H3]);!$(C=*)]),$(C([C;H2,H3])([C;H2,H3])[C;H2,H3])]
   Family LH
   Weights 1.0
@@ -50,13 +48,15 @@ DefineFeature AcidicGroup [$([C,S](=[O,S,P])-[O;H1])]
   Weights 1.0
 EndFeature
 """
-defaultBins = [(2,3),(3,4),(4,5),(5,6),(6,7),(7,8),(8,100)]
+defaultBins = [(2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 100)]
+
 
 def _init():
-  global labels,patts,factory
+  global labels, patts, factory
   featFactory = ChemicalFeatures.BuildFeatureFactoryFromString(fdef)
-  factory = SigFactory(featFactory,minPointCount=2,maxPointCount=3)
+  factory = SigFactory(featFactory, minPointCount=2, maxPointCount=3)
   factory.SetBins(defaultBins)
   factory.Init()
-  
+
+
 _init()

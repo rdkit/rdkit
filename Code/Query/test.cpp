@@ -66,10 +66,10 @@ void test2() {
 
 void test3() {
   cout << "And" << endl;
-  AndQuery<int> *q = new AndQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new AndQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));
@@ -90,10 +90,10 @@ void test3() {
 
 void test4() {
   cout << "Or" << endl;
-  OrQuery<int> *q = new OrQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new OrQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));
@@ -114,10 +114,10 @@ void test4() {
 
 void test5() {
   cout << "XOr" << endl;
-  XOrQuery<int> *q = new XOrQuery<int>;
-  LessQuery<int> *l = new LessQuery<int>;
+  auto *q = new XOrQuery<int>;
+  auto *l = new LessQuery<int>;
   l->setVal(0);
-  GreaterEqualQuery<int> *g = new GreaterEqualQuery<int>;
+  auto *g = new GreaterEqualQuery<int>;
   g->setVal(3);
 
   q->addChild(Query<int>::CHILD_TYPE(l));

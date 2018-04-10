@@ -1,4 +1,3 @@
-# $Id$
 #
 # Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 #
@@ -21,13 +20,15 @@
 from rdkit import Chem
 from rdkit.Chem.Pharm2D import Utils
 
-import types
 
 class MatchError(Exception):
   pass
 
+
 _verbose = 0
-def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
+
+
+def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingAtoms=None):
   """ Returns a list of lists of atom indices for a bit
 
     **Arguments**
@@ -52,18 +53,18 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
 
       a list of tuples with the matching atoms
   """
-  assert sigFactory.shortestPathsOnly,'not implemented for non-shortest path signatures'
-  nPts,featCombo,scaffold = sigFactory.GetBitInfo(bitIdx)
+  assert sigFactory.shortestPathsOnly, 'not implemented for non-shortest path signatures'
+  nPts, featCombo, scaffold = sigFactory.GetBitInfo(bitIdx)
   if _verbose:
-    print('info:',nPts)
-    print('\t',featCombo)
-    print('\t',scaffold)
-  
+    print('info:', nPts)
+    print('\t', featCombo)
+    print('\t', scaffold)
+
   if matchingAtoms is None:
     matchingAtoms = sigFactory.GetMolFeats(mol)
 
   # find the atoms that match each features
-  fams = sigFactory.GetFeatFamilies()
+  # fams = sigFactory.GetFeatFamilies()
   choices = []
   for featIdx in featCombo:
     tmp = matchingAtoms[featIdx]
@@ -72,77 +73,75 @@ def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose: print('no match found for feature:',featIdx)
+      if _verbose:
+        print('no match found for feature:', featIdx)
       return []
- 
+
   if _verbose:
     print('choices:')
     print(choices)
 
   if dMat is None:
-    dMat = Chem.GetDistanceMatrix(mol,sigFactory.includeBondOrder)
+    dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
-  matches = []
   distsToCheck = Utils.nPointDistDict[nPts]
 
-  protoPharmacophores = Utils.GetAllCombinations(choices,noDups=1)
+  protoPharmacophores = Utils.GetAllCombinations(choices, noDups=1)
 
   res = []
   for protoPharm in protoPharmacophores:
-    if _verbose: print('protoPharm:',protoPharm)
+    if _verbose:
+      print('protoPharm:', protoPharm)
     for i in range(len(distsToCheck)):
-      dLow,dHigh = sigFactory.GetBins()[scaffold[i]]
-      a1,a2 = distsToCheck[i]
+      dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
+      a1, a2 = distsToCheck[i]
       #
       # FIX: this is making all kinds of assumptions about
       #  things being single-atom matches (or at least that
       #  only the first atom matters
       #
-      idx1,idx2 = protoPharm[a1][0],protoPharm[a2][0]
-      dist = dMat[idx1,idx2]
-      if _verbose: print('\t dist: %d->%d = %d (%d,%d)'%(idx1,idx2,dist,dLow,dHigh))
+      idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
+      dist = dMat[idx1, idx2]
+      if _verbose:
+        print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
       if dist < dLow or dist >= dHigh:
         break
     else:
-      if _verbose: print('Found one')
+      if _verbose:
+        print('Found one')
       # we found it
       protoPharm.sort()
       protoPharm = tuple(protoPharm)
       if protoPharm not in res:
         res.append(protoPharm)
-        if justOne: break
+        if justOne:
+          break
   return res
 
-if __name__ == '__main__':
-  from rdkit import Chem
-  from rdkit.Chem.Pharm2D import SigFactory,Generate
-      
-  factory = SigFactory.SigFactory()
-  factory.SetBins([(1,2),(2,5),(5,8)])
-  factory.SetPatternsFromSmarts(['O','N'])
-  factory.SetMinCount(2)
-  factory.SetMaxCount(3)
-  sig = factory.GetSignature()
-  
+
+def _exampleCode():
+  import os
+  from rdkit import RDConfig
+  from rdkit.Chem import ChemicalFeatures
+  from rdkit.Chem.Pharm2D import SigFactory, Generate
+
+  fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Pharm2D', 'test_data', 'BaseFeatures.fdef')
+  featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+  factory = SigFactory.SigFactory(featFactory)
+  factory.SetBins([(1, 2), (2, 5), (5, 8)])
+  factory.Init()
+
   mol = Chem.MolFromSmiles('OCC(=O)CCCN')
-  Generate.Gen2DFingerprint(mol,sig)
-  print('onbits:',list(sig.GetOnBits()))
+  sig = Generate.Gen2DFingerprint(mol, factory)
+  print('onbits:', list(sig.GetOnBits()))
 
-  _verbose=0
+  _verbose = 0
   for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig,bit,mol)
-    print('\tBit %d: '%(bit),atoms)
+    atoms = GetAtomsMatchingBit(factory, bit, mol)
+    print('\tBit %d: ' % (bit), atoms)
 
-    
-  print('--------------------------')
-  sig = factory.GetSignature()
-  sig.SetIncludeBondOrder(1)
-  Generate.Gen2DFingerprint(mol,sig)
-  print('onbits:',list(sig.GetOnBits()))
+  print('finished')
 
-  for bit in sig.GetOnBits():
-    atoms = GetAtomsMatchingBit(sig,bit,mol)
-    print('\tBit %d: '%(bit),atoms)
 
-  
-  
+if __name__ == '__main__':  # pragma: nocover
+  _exampleCode()

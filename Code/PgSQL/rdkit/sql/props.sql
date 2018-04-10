@@ -50,3 +50,8 @@ SELECT mol_numrings('CCC'::mol) val;
 SELECT mol_numrings('C1CC1'::mol) val;
 SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
 SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
+
+SELECT mol_to_svg('CCO'::mol) svg;
+SELECT mol_to_svg('CCO'::mol,'legend') svg;
+SELECT mol_to_svg('CCO'::mol,'legend',250,200,
+  '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}') svg;

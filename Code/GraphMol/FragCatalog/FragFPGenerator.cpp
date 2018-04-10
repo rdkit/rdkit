@@ -26,7 +26,7 @@ ExplicitBitVect *FragFPGenerator::getFPForMol(const ROMol &mol,
                                               const FragCatalog &fcat) {
   INT_PATH_LIST_MAP allPaths;
 
-  ExplicitBitVect *fp = new ExplicitBitVect(fcat.getFPLength());
+  auto *fp = new ExplicitBitVect(fcat.getFPLength());
   const FragCatParams *fparams = fcat.getCatalogParams();
 
   // prepare the molecule for fingerprinting
@@ -65,7 +65,7 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
   double invar;
   for (pi = allPathsMap[1].begin(); pi != allPathsMap[1].end(); pi++) {
     // std::cout << "-*-*-* Fragment *-*-*-*-" << std::endl;
-    FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
+    auto *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
     nent->setDescription(fparams);
     invar = computeIntVectPrimesProduct(*pi);
     // ok here is the plan - initialize the entry for this path in mapkm1 to -1
@@ -113,7 +113,7 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     for (pi = ordi->second.begin(); pi != ordi->second.end(); pi++) {
       invar = computeIntVectPrimesProduct(*pi);
       mapk[invar] = -1;
-      FragCatalogEntry *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
+      auto *nent = new FragCatalogEntry(&mol, (*pi), aidToFid);
       nent->setDescription(fparams);
       // std::cout << "Testing 2nd order fragment: " << nent->getDescription()
       // << std::endl;

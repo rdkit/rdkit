@@ -28,7 +28,7 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace ForceFields {
 namespace MMFF {
 
-class MMFFAromCollection *MMFFAromCollection::ds_instance = NULL;
+class MMFFAromCollection *MMFFAromCollection::ds_instance = nullptr;
 
 extern const boost::uint8_t defaultMMFFArom[];
 
@@ -55,7 +55,7 @@ MMFFAromCollection::MMFFAromCollection(const boost::uint8_t *mmffArom) {
 const boost::uint8_t defaultMMFFArom[] = {37, 38, 39, 44, 58, 59, 63, 64, 65,
                                           66, 69, 76, 78, 79, 80, 81, 82};
 
-class MMFFDefCollection *MMFFDefCollection::ds_instance = NULL;
+class MMFFDefCollection *MMFFDefCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFDef;
 
@@ -449,7 +449,7 @@ const std::string defaultMMFFDef =
     "MG+2	99	99	99	99	99	DIPOSITIVE	"
     "MAGNESIUM	CATION\n";
 
-class MMFFPropCollection *MMFFPropCollection::ds_instance = NULL;
+class MMFFPropCollection *MMFFPropCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFProp;
 
@@ -621,7 +621,7 @@ const std::string defaultMMFFProp =
     "98	29	0	0	0	0	0	0	0\n"
     "99	12	0	0	0	0	0	0	0\n";
 
-class MMFFPBCICollection *MMFFPBCICollection::ds_instance = NULL;
+class MMFFPBCICollection *MMFFPBCICollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFPBCI;
 
@@ -780,7 +780,7 @@ const std::string defaultMMFFPBCI =
     "0	98	2.000	0.000	Ionic	charge\n"
     "0	99	2.000	0.000	Ionic	charge\n";
 
-class MMFFChgCollection *MMFFChgCollection::ds_instance = NULL;
+class MMFFChgCollection *MMFFChgCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFChg;
 
@@ -1352,7 +1352,7 @@ const std::string defaultMMFFChg =
     "0	79	81	-0.0430	E94\n"
     "0	80	81	-0.4000	#C94\n";
 
-class MMFFBondCollection *MMFFBondCollection::ds_instance = NULL;
+class MMFFBondCollection *MMFFBondCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFBond;
 
@@ -1923,7 +1923,7 @@ const std::string defaultMMFFBond =
     "0	79	81	4.305	1.356	E94\n"
     "0	80	81	8.237	1.335	C94\n";
 
-class MMFFBndkCollection *MMFFBndkCollection::ds_instance = NULL;
+class MMFFBndkCollection *MMFFBndkCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFBndk;
 
@@ -2048,8 +2048,8 @@ const std::string defaultMMFFBndk =
     "35	35	2.28	2.4	E94\n"
     "53	53	2.67	1.6	E94\n";
 
-class MMFFHerschbachLaurieCollection *
-    MMFFHerschbachLaurieCollection::ds_instance = NULL;
+class MMFFHerschbachLaurieCollection
+    *MMFFHerschbachLaurieCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFHerschbachLaurie;
 
@@ -2140,7 +2140,7 @@ const std::string defaultMMFFHerschbachLaurie =
     "4	5	2.76	1.25	1.51\n";
 
 class MMFFCovRadPauEleCollection *MMFFCovRadPauEleCollection::ds_instance =
-    NULL;
+    nullptr;
 
 extern const std::string defaultMMFFCovRadPauEle;
 
@@ -2211,7 +2211,7 @@ const std::string defaultMMFFCovRadPauEle =
     "35	1.15	2.74\n"
     "53	1.33	2.21\n";
 
-class MMFFAngleCollection *MMFFAngleCollection::ds_instance = NULL;
+class MMFFAngleCollection *MMFFAngleCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFAngleData[];
 
@@ -4645,7 +4645,7 @@ const std::string defaultMMFFAngleData[] = {
     "0	64	82	65	1.281	112.955	E94\n",
     "EOS"};
 
-class MMFFStbnCollection *MMFFStbnCollection::ds_instance = NULL;
+class MMFFStbnCollection *MMFFStbnCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFStbn;
 
@@ -5008,7 +5008,7 @@ const std::string defaultMMFFStbn =
     "0	36	81	80	0.018	0.422	C94\n"
     "0	78	81	80	0.366	0.419	C94\n";
 
-class MMFFDfsbCollection *MMFFDfsbCollection::ds_instance = NULL;
+class MMFFDfsbCollection *MMFFDfsbCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFDfsb;
 
@@ -5091,7 +5091,7 @@ const std::string defaultMMFFDfsb =
     "3	2	4	0.25	0.25\n"
     "4	2	4	0.25	0.25\n";
 
-class MMFFOopCollection *MMFFOopCollection::ds_instance[2] = {NULL, NULL};
+class MMFFOopCollection *MMFFOopCollection::ds_instance[2] = {nullptr, nullptr};
 
 extern const std::string defaultMMFFOop;
 extern const std::string defaultMMFFsOop;
@@ -5417,7 +5417,7 @@ const std::string defaultMMFFsOop =
     "36	81	78	80	0.016	C94\n"
     "0	82	0	0	0.000	*-82-*-*	E94	DEF\n";
 
-class MMFFTorCollection *MMFFTorCollection::ds_instance[2] = {NULL, NULL};
+class MMFFTorCollection *MMFFTorCollection::ds_instance[2] = {nullptr, nullptr};
 
 extern const std::string defaultMMFFTor;
 extern const std::string defaultMMFFsTor;
@@ -8429,7 +8429,7 @@ const std::string defaultMMFFsTor =
     "0	0	80	81	0	0.000	4.000	0.000	C94	"
     "0:*-80-81-*	Def\n";
 
-class MMFFVdWCollection *MMFFVdWCollection::ds_instance = NULL;
+class MMFFVdWCollection *MMFFVdWCollection::ds_instance = nullptr;
 
 extern const std::string defaultMMFFVdW;
 

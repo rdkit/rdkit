@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,7 +28,7 @@
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
 
@@ -278,7 +277,7 @@ void test4() {
   // MolToMolFile(m1, "junk1.mol");
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  RDDepict::compute2DCoords(*mref, 0, false);
+  RDDepict::compute2DCoords(*mref, nullptr, false);
   _compareCoords(m1, cid1, mref, cid2);
   delete m1;
 
@@ -312,7 +311,7 @@ void test4() {
 
   delete mref;
   mref = SmilesToMol(smi, 0, 1);
-  cid2 = RDDepict::compute2DCoords(*mref, 0, false);
+  cid2 = RDDepict::compute2DCoords(*mref, nullptr, false);
   crdMap.erase(crdMap.find(5));
   // MolToMolFile(mref, "junk1.mol");
   m1 = SmilesToMol(smi, 0, 1);
@@ -493,7 +492,7 @@ void testIssue2821647() {
   {
     std::string smi = "CCCCC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -507,7 +506,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccccc1CCCCCC1CC1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -521,7 +520,7 @@ void testIssue2821647() {
   {
     std::string smi = "c1ccc2c(c1)oc1c3ccccc3oc21";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -535,7 +534,7 @@ void testIssue2821647() {
   {
     std::string smi = "[H]n1c2ccccc2c2n([H])c3ccccc3c12";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     double xx = 0, yy = 0;
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
       const Conformer &conf = m1->getConformer(cid1);
@@ -552,7 +551,7 @@ void testIssue2948402() {
   {
     std::string smi = "C1C2CC3=CC=CC(C2)CC(O3)C1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     (void)cid1;
     // TEST_ASSERT(cid1>=0);
     delete m1;
@@ -564,7 +563,7 @@ void testIssue2995724() {
     // the original problem from Thomas Heller:
     std::string smi = "OC(=O)[C@@H]1CCCN1";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -583,9 +582,9 @@ void testIssue2995724() {
                           "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
                           "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
                           "CC1(OC(=C(C(=O)O1)C2=NCCC2)O)C"};
-    for (unsigned int j = 0; j < 4; j++) {
-      RWMol *m1 = SmilesToMol(smis[j]);
-      unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    for (const auto &smi : smis) {
+      RWMol *m1 = SmilesToMol(smi);
+      unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
       const Conformer &conf = m1->getConformer(cid1);
       for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
@@ -604,7 +603,7 @@ void testBondLengthChange() {
   {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.75));
@@ -616,7 +615,7 @@ void testBondLengthChange() {
     std::string smi = "CC";
     RWMol *m1 = SmilesToMol(smi);
     RDDepict::BOND_LEN = 1.0;
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
 
     const Conformer &conf = m1->getConformer(cid1);
     TEST_ASSERT(feq(conf.getAtomPos(0).x, -0.5));
@@ -674,7 +673,7 @@ void testIssue3487469() {
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getAtomWithIdx(1)->getHybridization() == Atom::UNSPECIFIED);
-    unsigned int cid1 = RDDepict::compute2DCoords(*m1, 0, true);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, nullptr, true);
     const Conformer &conf = m1->getConformer(cid1);
     RDGeom::Point3D p0 = conf.getAtomPos(0);
     RDGeom::Point3D p1 = conf.getAtomPos(1);
@@ -738,8 +737,8 @@ void testGitHubIssue78() {
                            "C1=CC=C2C(=C1)C=C3C=CC4=C5C3=C2C6C(C5=CC=C4)O6"};
     RWMol *p = SmartsToMol("[#6]~[#6]~1-[#8]-[#6]~1~[#6]");
     TEST_ASSERT(p);
-    for (unsigned int i = 0; i < 4; ++i) {
-      RWMol *m = SmilesToMol(smis[i]);
+    for (const auto &smi : smis) {
+      RWMol *m = SmilesToMol(smi);
       TEST_ASSERT(m);
       MatchVectType mv;
       TEST_ASSERT(SubstructMatch(*m, *p, mv));
@@ -788,8 +787,11 @@ void testGitHubIssue910() {
       }
     }
     MolOps::addHs(*m, false, false, &chiralAts);
-    RDDepict::compute2DCoords(*m, NULL, true);
-
+    RDDepict::compute2DCoords(*m, nullptr, true);
+#if 0
+    m->setProp("_Name", "github910");
+    std::cerr << MolToMolBlock(*m);
+#endif
     // now look for close contacts.
     const Conformer &conf = m->getConformer();
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
@@ -802,7 +804,237 @@ void testGitHubIssue910() {
     delete m;
   }
 }
+
+void testGitHubIssue1073() {
+  // computeInitialCoords() should call the SSSR code before it calls
+  // assignStereochemistry()
+  {
+    std::string smarts = "[a]12[a][a][a][a][a]1[a][a][a]2";
+    RWMol *m = SmartsToMol(smarts);
+    TEST_ASSERT(m);
+
+    RDDepict::compute2DCoords(*m);
+
+    RingInfo *ri = m->getRingInfo();
+    TEST_ASSERT(ri->isInitialized());
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 6));
+    TEST_ASSERT(ri->isAtomInRingOfSize(0, 5));
+    TEST_ASSERT(!ri->isAtomInRingOfSize(0, 9));
+
+    delete m;
+  }
+}
+
+void testConstrainedCoords() {
+  std::string rdbase = getenv("RDBASE");
+  std::string ofile =
+      rdbase + "/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf";
+  SDWriter writer(ofile);
+
+  std::string templ_smiles = "c1nccc2n1ccc2";
+  ROMol *templ = SmilesToMol(templ_smiles);
+  TEST_ASSERT(templ);
+  RDDepict::compute2DCoords(*templ);
+  std::string smiles = "c1cccc2ncn3cccc3c21";
+  ROMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  RDDepict::generateDepictionMatching2DStructure(*m, *templ);
+  writer.write(*m);
+
+  std::string smarts = "*1****2*1***2";
+  ROMol *refPatt = SmartsToMol(smarts);
+  RDDepict::generateDepictionMatching2DStructure(*m, *templ, -1, refPatt);
+  writer.write(*m);
+
+  delete templ;
+  delete m;
+  delete refPatt;
+
+  std::string xp0_file =
+      rdbase + "/Code/GraphMol/Depictor/test_data/1XP0_ligand.sdf";
+  RDKit::ROMol *xp0_lig = RDKit::MolFileToMol(xp0_file);
+  auto *xp0_lig_2d = new RDKit::ROMol(*xp0_lig);
+  RDDepict::compute2DCoords(*xp0_lig_2d);
+  writer.write(*xp0_lig_2d);
+  RDDepict::generateDepictionMatching3DStructure(*xp0_lig_2d, *xp0_lig);
+  writer.write(*xp0_lig_2d);
+
+  delete xp0_lig;
+  delete xp0_lig_2d;
+}
+void testGitHubIssue1112() {
+  // Bad coordinate generation for H2
+  {
+    std::string smiles = "[H][H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+
+    RDDepict::compute2DCoords(*m);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).x, 0));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).y, -1));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(1).z, 0));
+
+    delete m;
+  }
+}
+
+void testGitHubIssue1286() {
+  // GenerateDepictionMatching2DStructure isn't matching 2D structure
+  {  // the original report
+    std::string smiles = "C(=O)C(C)NC=O";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 7);
+
+    smiles = "C(=O)C(C)NC(=O)C1CC1";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 10);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(i);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(i);
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
+  }
+  {  // extremely crowded. This one tests bond shortening and angle opening
+    std::string smiles = "CC(=O)C1=CC=CC2=C1C=CC=C2";
+    RWMol *templ = SmilesToMol(smiles);
+    TEST_ASSERT(templ);
+    TEST_ASSERT(templ->getNumAtoms() == 13);
+
+    smiles = "O=C(N)C1=C(C=CC2=C1C(=CC=C2)C(C)=O)C(C)(C)C";
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 20);
+
+    RDDepict::compute2DCoords(*templ);
+    TEST_ASSERT(templ->getNumConformers() == 1);
+    RDDepict::generateDepictionMatching2DStructure(*mol, *templ);
+    TEST_ASSERT(mol->getNumConformers() == 1);
+
+    // std::cout << MolToMolBlock(*templ) << std::endl;
+    // std::cout << MolToMolBlock(*mol) << std::endl;
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*mol, *templ, mv));
+
+    const Conformer &tconf = templ->getConformer();
+    const Conformer &mconf = mol->getConformer();
+    for (unsigned int i = 0; i < templ->getNumAtoms(); ++i) {
+      const RDGeom::Point3D &tp = tconf.getAtomPos(mv[i].first);
+      const RDGeom::Point3D &mp = mconf.getAtomPos(mv[i].second);
+      // std::cerr << i << ": " << tp << " | " << mp << std::endl;
+      TEST_ASSERT(feq(tp.x, mp.x));
+      TEST_ASSERT(feq(tp.y, mp.y));
+    }
+
+    delete templ;
+    delete mol;
+  }
+}
+
+void testGithub1691() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing Github issue "
+         "1691: Acetylenic hydrogens not given appropriate 2D coordinates"
+      << std::endl;
+#if 1
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[F]1.[F]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+#endif
+  {
+    SmilesParserParams ps;
+    ps.removeHs = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C1#C2.[H]1.[H]2", ps));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("C#C"));
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 2);
+    MolOps::addHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0, 2));
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 3));
+    RDDepict::compute2DCoords(*mol);
+
+    // std::cerr << MolToMolBlock(*mol) << std::endl;
+    const Conformer &conf = mol->getConformer();
+    RDGeom::Point3D v20 = conf.getAtomPos(2) - conf.getAtomPos(0);
+    RDGeom::Point3D v10 = conf.getAtomPos(1) - conf.getAtomPos(0);
+    RDGeom::Point3D v31 = conf.getAtomPos(3) - conf.getAtomPos(1);
+    RDGeom::Point3D v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    // std::cerr << v20.dotProduct(v10) << std::endl;
+    // std::cerr << v31.dotProduct(v01) << std::endl;
+    TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
+    TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
+#ifdef BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = false;
+#endif
+
   RDLog::InitLogs();
 #if 1
   BOOST_LOG(rdInfoLog)
@@ -891,13 +1123,6 @@ int main() {
 
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
-  testIssue2303566();
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
-
-  BOOST_LOG(rdInfoLog)
-      << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test Issue 2821647\n";
   testIssue2821647();
   BOOST_LOG(rdInfoLog)
@@ -951,7 +1176,7 @@ int main() {
   testGitHubIssue8();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
-#endif
+
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 78\n";
@@ -965,5 +1190,45 @@ int main() {
   testGitHubIssue910();
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1073\n";
+  testGitHubIssue1073();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   testConstrainedCoords\n";
+  testConstrainedCoords();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "   Test GitHub Issue 1112: Bad coordinate generation for H2\n";
+  testGitHubIssue1112();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test Issue 2303566\n";
+  testIssue2303566();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "   Test GitHub Issue 1286: "
+                          "GenerateDepictionMatching2DStructure isn't matching "
+                          "2D structure\n";
+  testGitHubIssue1286();
+  BOOST_LOG(rdInfoLog)
+      << "***********************************************************\n";
+#endif
+  testGithub1691();
+
   return (0);
 }

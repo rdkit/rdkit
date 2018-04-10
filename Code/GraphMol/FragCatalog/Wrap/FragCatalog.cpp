@@ -56,10 +56,9 @@ INT_VECT GetEntryFuncGroupIds(const FragCatalog *self, unsigned int idx) {
   if (idx > self->getNumEntries()) throw_index_error(idx);
   INT_VECT res;
   INT_INT_VECT_MAP gps = self->getEntryWithIdx(idx)->getFuncGroupMap();
-  for (INT_INT_VECT_MAP::const_iterator i = gps.begin(); i != gps.end(); i++) {
-    for (INT_VECT_CI ivci = i->second.begin(); ivci != i->second.end();
-         ivci++) {
-      res.push_back(*ivci);
+  for (const auto &iv : gps) {
+    for (int ivci : iv.second) {
+      res.push_back(ivci);
     }
   }
   return res;
@@ -68,10 +67,9 @@ INT_VECT GetBitFuncGroupIds(const FragCatalog *self, unsigned int idx) {
   if (idx > self->getFPLength()) throw_index_error(idx);
   INT_VECT res;
   INT_INT_VECT_MAP gps = self->getEntryWithBitId(idx)->getFuncGroupMap();
-  for (INT_INT_VECT_MAP::const_iterator i = gps.begin(); i != gps.end(); i++) {
-    for (INT_VECT_CI ivci = i->second.begin(); ivci != i->second.end();
-         ivci++) {
-      res.push_back(*ivci);
+  for (const auto &iv : gps) {
+    for (int ivci : iv.second) {
+      res.push_back(ivci);
     }
   }
   return res;

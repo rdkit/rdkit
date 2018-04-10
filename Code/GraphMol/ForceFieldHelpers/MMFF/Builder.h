@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
+//  Copyright (C) 2013-2018 Paolo Tosco
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -9,12 +9,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_MMFFBUILDER_H_
-#define _RD_MMFFBUILDER_H_
+#ifndef RD_MMFFBUILDER_H
+#define RD_MMFFBUILDER_H
 
 #include <vector>
 #include <string>
 #include <boost/shared_array.hpp>
+#include <boost/scoped_ptr.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <mutex>
+#endif
+#include <boost/noncopyable.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/cstdint.hpp>
 
@@ -75,8 +80,24 @@ ForceFields::ForceField *constructForceField(
     bool ignoreInterfragInteractions = true);
 
 namespace Tools {
+class DefaultTorsionBondSmarts : private boost::noncopyable {
+ public:
+  static const std::string &string() { return ds_string; }
+  static const ROMol *query();
+
+ private:
+  DefaultTorsionBondSmarts() {}
+  static void create();
+  static const std::string ds_string;
+  static boost::scoped_ptr<const ROMol> ds_instance;
+#ifdef RDK_THREADSAFE_SSS
+  static std::once_flag ds_flag;
+#endif
+};
+
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
+unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
 void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
                    boost::uint8_t value);
 boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
@@ -90,9 +111,10 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                     ForceFields::ForceField *field);
 void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field);
-void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
-                 ForceFields::ForceField *field,
-                 std::string torsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]");
+void addTorsions(
+    const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+    ForceFields::ForceField *field,
+    const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
 void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
             boost::shared_array<boost::uint8_t> neighborMatrix,

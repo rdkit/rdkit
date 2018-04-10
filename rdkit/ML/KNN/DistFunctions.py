@@ -7,8 +7,8 @@
 import math
 
 
-def EuclideanDist(ex1, ex2, attrs) :
-    """
+def EuclideanDist(ex1, ex2, attrs):
+  """
     >>> v1 = [0,1,0,1]
     >>> v2 = [1,0,1,0]
     >>> EuclideanDist(v1,v2,range(4))
@@ -23,14 +23,15 @@ def EuclideanDist(ex1, ex2, attrs) :
     1
 
     """
-    dist = 0.0
-    for i in attrs:
-        dist += (ex1[i] - ex2[i])**2
-    dist = math.sqrt(dist)
-    return dist
+  dist = 0.0
+  for i in attrs:
+    dist += (ex1[i] - ex2[i])**2
+  dist = math.sqrt(dist)
+  return dist
 
-def TanimotoDist(ex1, ex2, attrs) :
-    """
+
+def TanimotoDist(ex1, ex2, attrs):
+  """
     >>> v1 = [0,1,0,1]
     >>> v2 = [1,0,1,0]
     >>> TanimotoDist(v1,v2,range(4))
@@ -47,28 +48,29 @@ def TanimotoDist(ex1, ex2, attrs) :
     1.0
 
     """
-    inter = 0.0
-    unin = 0.0
-    for i in attrs:
-        if (ex1[i] or ex2[i]) :
-            unin += 1
-            if (ex1[i] and ex2[i]) :
-                inter += 1
-    if(unin != 0.0):
-        return (1 - inter/unin)
-    else:
-        return 1.0
+  inter = 0.0
+  unin = 0.0
+  for i in attrs:
+    if (ex1[i] or ex2[i]):
+      unin += 1
+      if (ex1[i] and ex2[i]):
+        inter += 1
+  if (unin != 0.0):
+    return (1 - inter / unin)
+  else:
+    return 1.0
 
-#------------------------------------
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

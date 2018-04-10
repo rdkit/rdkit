@@ -24,7 +24,8 @@ namespace RDKit {
 
 class MolDraw2DQt : public MolDraw2D {
  public:
-  MolDraw2DQt(int width, int height, QPainter &qp);
+  MolDraw2DQt(int width, int height, QPainter &qp, int panelWidth = -1,
+              int panelHeight = -1);
 
   // set font size in molecule coordinate units. That's probably Angstrom for
   // RDKit. It will turned into drawing units using scale_, which might be

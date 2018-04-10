@@ -6,7 +6,29 @@ rdkit_library(RDGeneral
               LocaleSwitcher.cpp versions.cpp SHARED
               LINK_LIBRARIES ${RDKit_THREAD_LIBS})
 
-target_link_libraries(RDGeneral ${RDKit_THREAD_LIBS})
+if(MINGW)
+  set(hasMSVCRuntime "FALSE")
+  if(RDK_BUILD_THREADSAFE_SSS)
+    set(needMSVCRuntime "TRUE")
+  else()
+    set(needMSVCRuntime "FALSE")
+  endif()
+  if(needMSVCRuntime AND MSVC_RUNTIME_DLL)
+    if(EXISTS "${MSVC_RUNTIME_DLL}")
+      set(hasMSVCRuntime "TRUE")
+    endif()
+  endif()
+  if(needMSVCRuntime AND (NOT hasMSVCRuntime))
+    set(systemRootPath "$ENV{SystemRoot}")
+    string(REGEX REPLACE "\\\\" "/" systemRootPath "${systemRootPath}")
+    message(FATAL_ERROR "Please set MSVC_RUNTIME_DLL to the full path to a msvcrXXX.dll "
+      "Microsoft Visual C Runtime DLL appropriate for your system; the most likely path is "
+      "${systemRootPath}/System32, or ${systemRootPath}/SysWOW64 in case you are building "
+      "32-bit RDKit under a 64-bit Windows OS.")
+  endif()
+endif(MINGW)
+
+target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL})
 
 rdkit_headers(Exceptions.h
               BadFileException.h
@@ -21,6 +43,7 @@ rdkit_headers(Exceptions.h
               RDValue-taggedunion.h
               RDLog.h
               RDProps.h
+              RDThreads.h
               StreamOps.h
               types.h
               utils.h

@@ -12,6 +12,7 @@
 
 #include "MolDraw2DSVG.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
 namespace RDKit {
@@ -23,12 +24,21 @@ std::string DrawColourToSVG(const DrawColour &col) {
   unsigned int v;
   unsigned int i = 1;
   v = int(255 * col.get<0>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.get<1>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   v = int(255 * col.get<2>());
+  if (v > 255)
+    throw ValueErrorException(
+        "elements of the color should be between 0 and 1");
   res[i++] = convert[v / 16];
   res[i++] = convert[v % 16];
   return res;
@@ -56,6 +66,45 @@ void MolDraw2DSVG::finishDrawing() {
 // ****************************************************************************
 void MolDraw2DSVG::setColour(const DrawColour &col) {
   MolDraw2D::setColour(col);
+}
+
+void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                                const DrawColour &col1, const DrawColour &col2,
+                                unsigned int nSegments, double vertOffset) {
+  PRECONDITION(nSegments > 1, "too few segments");
+  RDUNUSED_PARAM(col2);
+
+  if (nSegments % 2)
+    ++nSegments;  // we're going to assume an even number of segments
+  setColour(col1);
+
+  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D delta = (cds2 - cds1);
+  perp *= vertOffset;
+  delta /= nSegments;
+
+  Point2D c1 = getDrawCoords(cds1);
+
+  std::string col = DrawColourToSVG(colour());
+  unsigned int width = lineWidth();
+  d_os << "<svg:path ";
+  d_os << "d='M" << c1.x << "," << c1.y;
+  for (unsigned int i = 0; i < nSegments; ++i) {
+    Point2D startpt = cds1 + delta * i;
+    Point2D segpt = getDrawCoords(startpt + delta);
+    Point2D cpt1 =
+        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D cpt2 =
+        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
+         << " " << segpt.x << "," << segpt.y;
+  }
+  d_os << "' ";
+
+  d_os << "style='fill:none;stroke:" << col << ";stroke-width:" << width
+       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       << "'";
+  d_os << " />\n";
 }
 
 // ****************************************************************************
@@ -221,6 +270,16 @@ void MolDraw2DSVG::getStringSize(const std::string &label, double &label_width,
   }
 }
 
+namespace {
+void escape_xhtml(std::string &data) {
+  boost::algorithm::replace_all(data, "&", "&amp;");
+  boost::algorithm::replace_all(data, "\"", "&quot;");
+  boost::algorithm::replace_all(data, "\'", "&apos;");
+  boost::algorithm::replace_all(data, "<", "&lt;");
+  boost::algorithm::replace_all(data, ">", "&gt;");
+}
+}
+
 // ****************************************************************************
 // draws the string centred on cds
 void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
@@ -268,6 +327,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     // markup
     if ('<' == str[i] && setStringDrawMode(str, draw_mode, i)) {
       if (!first_span) {
+        escape_xhtml(span);
         d_os << span << "</svg:tspan>";
         span = "";
       }
@@ -297,6 +357,7 @@ void MolDraw2DSVG::drawString(const std::string &str, const Point2D &cds) {
     }
     span += str[i];
   }
+  escape_xhtml(span);
   d_os << span << "</svg:tspan>";
   d_os << "</svg:text>\n";
 }

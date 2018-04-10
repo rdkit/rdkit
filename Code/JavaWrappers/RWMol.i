@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -36,6 +36,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
@@ -54,7 +55,7 @@
 %include <GraphMol/FileParsers/FileParsers.h>
 %include <GraphMol/RWMol.h>
 
-%extend RDKit::RWMol {  
+%extend RDKit::RWMol {
   static RDKit::RWMOL_SPTR MolFromSmiles(std::string smi,int debugParse=0,bool sanitize=1,
                                          std::map<std::string,std::string> *replacements=0){
     return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, debugParse, sanitize,replacements));
@@ -96,21 +97,39 @@ static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanit
 
 static RDKit::RWMOL_SPTR MolFromPDBBlock(std::string molB,
                                          bool sanitize=true,bool removeHs=true,
-                                         unsigned int flavor=0){
+                                         unsigned int flavor=0,bool proximityBonding=true){
   RDKit::RWMol *mol=0;
-  mol=RDKit::PDBBlockToMol(molB,sanitize,removeHs,flavor);
+  mol=RDKit::PDBBlockToMol(molB,sanitize,removeHs,flavor,proximityBonding);
   return RDKit::RWMOL_SPTR(mol);
 }
 
 static RDKit::RWMOL_SPTR MolFromPDBFile(std::string fName,
                                         bool sanitize=true,bool removeHs=true,
-                                        unsigned int flavor=0){
+                                        unsigned int flavor=0,bool proximityBonding=true){
   RDKit::RWMol *mol=0;
-  mol=RDKit::PDBFileToMol(fName,sanitize,removeHs,flavor);
+  mol=RDKit::PDBFileToMol(fName,sanitize,removeHs,flavor,proximityBonding);
+  return RDKit::RWMOL_SPTR(mol);
+}
+static RDKit::RWMOL_SPTR MolFromSequence(std::string text,
+                                  bool sanitize=true,int flavor=0){
+  RDKit::RWMol *mol=0;
+  mol=RDKit::SequenceToMol(text,sanitize,flavor);
+  return RDKit::RWMOL_SPTR(mol);
+}
+static RDKit::RWMOL_SPTR MolFromFASTA(std::string text,
+                                  bool sanitize=true,int flavor=0){
+  RDKit::RWMol *mol=0;
+  mol=RDKit::FASTAToMol(text,sanitize,flavor);
+  return RDKit::RWMOL_SPTR(mol);
+}
+static RDKit::RWMOL_SPTR MolFromHELM(std::string text,
+                                  bool sanitize=true){
+  RDKit::RWMol *mol=0;
+  mol=RDKit::HELMToMol(text,sanitize);
   return RDKit::RWMOL_SPTR(mol);
 }
 
- 
+
   /* Methods from MolFileStereoChem.h */
   void DetectAtomStereoChemistry(const RDKit::Conformer *conf) {
 	RDKit::DetectAtomStereoChemistry(*($self), conf);

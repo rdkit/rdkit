@@ -29,7 +29,7 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery) {
 
 ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
                     INT_MAP_INT &atomIdxMap) {
-  RWMol *subMol = new RWMol();
+  auto *subMol = new RWMol();
   PATH_TYPE::const_iterator pathIter;
   atomIdxMap.clear();
 
@@ -44,13 +44,13 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
       int endIdx = bond->getEndAtomIdx();
 
       if (atomIdxMap.find(begIdx) == atomIdxMap.end()) {
-        QueryAtom *atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
+        auto *atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
         int newAtomIdx = subMol->addAtom(atom, false, true);
         atomIdxMap[begIdx] = newAtomIdx;
       }
       begIdx = atomIdxMap.find(begIdx)->second;
       if (atomIdxMap.find(endIdx) == atomIdxMap.end()) {
-        QueryAtom *atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
+        auto *atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
         int newAtomIdx = subMol->addAtom(atom, false, true);
         atomIdxMap[endIdx] = newAtomIdx;
       }
@@ -90,9 +90,9 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   }
   if (mol.getNumConformers()) {
     // copy coordinates over:
-    for (ROMol::ConstConformerIterator confIt = mol.beginConformers();
-         confIt != mol.endConformers(); ++confIt) {
-      Conformer *conf = new Conformer(subMol->getNumAtoms());
+    for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
+         ++confIt) {
+      auto *conf = new Conformer(subMol->getNumAtoms());
       conf->set3D((*confIt)->is3D());
       for (INT_MAP_INT::const_iterator mapIt = atomIdxMap.begin();
            mapIt != atomIdxMap.end(); ++mapIt) {
@@ -141,18 +141,17 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
                                  -1);  // map from atom index->path index
   std::vector<const Atom *> atoms;     // to contain the atoms in the path
   std::vector<uint32_t> pathDegrees;   // degrees of each atom *in the path*
-  for (PATH_TYPE::const_iterator pathIter = path.begin();
-       pathIter != path.end(); ++pathIter) {
-    const Bond *bond = mol.getBondWithIdx(*pathIter);
+  for (int pathIter : path) {
+    const Bond *bond = mol.getBondWithIdx(pathIter);
     if (atomsUsed[bond->getBeginAtomIdx()] < 0) {
-      atomsUsed[bond->getBeginAtomIdx()] = atoms.size();
+      atomsUsed[bond->getBeginAtomIdx()] = static_cast<int>(atoms.size());
       atoms.push_back(bond->getBeginAtom());
       pathDegrees.push_back(1);
     } else {
       pathDegrees[atomsUsed[bond->getBeginAtomIdx()]] += 1;
     }
     if (atomsUsed[bond->getEndAtomIdx()] < 0) {
-      atomsUsed[bond->getEndAtomIdx()] = atoms.size();
+      atomsUsed[bond->getEndAtomIdx()] = static_cast<int>(atoms.size());
       atoms.push_back(bond->getEndAtom());
       pathDegrees.push_back(1);
     } else {
@@ -192,9 +191,8 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
   for (unsigned int cycle = 0; cycle < nCycles; ++cycle) {
     // let each atom feel it's neighbors:
     std::vector<std::vector<uint32_t> > locInvars(nAtoms);
-    for (PATH_TYPE::const_iterator pathIter = path.begin();
-         pathIter != path.end(); ++pathIter) {
-      const Bond *bond = mol.getBondWithIdx(*pathIter);
+    for (int pathIter : path) {
+      const Bond *bond = mol.getBondWithIdx(pathIter);
       uint32_t v1 = invars[atomsUsed[bond->getBeginAtomIdx()]];
       uint32_t v2 = invars[atomsUsed[bond->getEndAtomIdx()]];
       if (useBO) {
@@ -230,13 +228,12 @@ PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPaths,
                         bool useBO) {
   PATH_LIST res;
   std::vector<DiscrimTuple> discrimsSeen;
-  for (PATH_LIST::const_iterator path = allPaths.begin();
-       path != allPaths.end(); ++path) {
-    DiscrimTuple discrims = calcPathDiscriminators(mol, *path, useBO);
+  for (const auto &allPath : allPaths) {
+    DiscrimTuple discrims = calcPathDiscriminators(mol, allPath, useBO);
     if (std::find(discrimsSeen.begin(), discrimsSeen.end(), discrims) ==
         discrimsSeen.end()) {
       discrimsSeen.push_back(discrims);
-      res.push_back(*path);
+      res.push_back(allPath);
     }
   }
   return res;

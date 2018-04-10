@@ -59,9 +59,7 @@ bool FilterCatalogParams::addCatalog(FilterCatalogs catalog) {
 }
 
 void FilterCatalogParams::fillCatalog(FilterCatalog &catalog) {
-  for (size_t i = 0; i < getCatalogs().size(); ++i) {
-    const FilterCatalogs catalogToAdd = getCatalogs()[i];
-
+  for (auto catalogToAdd : getCatalogs()) {
     const unsigned int entries = GetNumEntries(catalogToAdd);
     const unsigned int propEntries = GetNumPropertyEntries(catalogToAdd);
     // XXX Fix Me -> these should probably be shared to save memory
@@ -147,7 +145,7 @@ unsigned int FilterCatalog::addEntry(SENTRY entry, bool updateFPLength) {
 const FilterCatalog::entryType_t *FilterCatalog::getEntryWithIdx(
     unsigned int idx) const {
   if (idx < d_entries.size()) return d_entries[idx].get();
-  return 0;
+  return nullptr;
 }
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getEntry(unsigned int idx) const {
@@ -165,8 +163,7 @@ bool FilterCatalog::removeEntry(unsigned int idx) {
 }
 
 bool FilterCatalog::removeEntry(FilterCatalog::CONST_SENTRY entry) {
-  std::vector<SENTRY>::iterator it =
-      std::find(d_entries.begin(), d_entries.end(), entry);
+  auto it = std::find(d_entries.begin(), d_entries.end(), entry);
   if (it != d_entries.end()) {
     d_entries.erase(it);
     return true;
@@ -195,13 +192,13 @@ void FilterCatalog::setCatalogParams(paramType_t *params) {
 }
 
 bool FilterCatalog::hasMatch(const ROMol &mol) const {
-  return getFirstMatch(mol) != 0;
+  return getFirstMatch(mol) != nullptr;
 }
 
 FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
     const ROMol &mol) const {
-  for (size_t i = 0; i < d_entries.size(); ++i) {
-    if (d_entries[i]->hasFilterMatch(mol)) return d_entries[i];
+  for (const auto &d_entry : d_entries) {
+    if (d_entry->hasFilterMatch(mol)) return d_entry;
   }
   return CONST_SENTRY();
 }
@@ -209,8 +206,8 @@ FilterCatalog::CONST_SENTRY FilterCatalog::getFirstMatch(
 const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
     const ROMol &mol) const {
   std::vector<CONST_SENTRY> result;
-  for (size_t i = 0; i < d_entries.size(); ++i) {
-    if (d_entries[i]->hasFilterMatch(mol)) result.push_back(d_entries[i]);
+  for (const auto &d_entry : d_entries) {
+    if (d_entry->hasFilterMatch(mol)) result.push_back(d_entry);
   }
   return result;
 }
@@ -218,8 +215,8 @@ const std::vector<FilterCatalog::CONST_SENTRY> FilterCatalog::getMatches(
 const std::vector<FilterMatch> FilterCatalog::getFilterMatches(
     const ROMol &mol) const {
   std::vector<FilterMatch> result;
-  for (size_t i = 0; i < d_entries.size(); ++i) {
-    d_entries[i]->getFilterMatches(mol, result);
+  for (const auto &d_entry : d_entries) {
+    d_entry->getFilterMatches(mol, result);
   }
   return result;
 }

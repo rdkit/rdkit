@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +42,7 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Atom.h>
 #include <fstream>
@@ -50,7 +50,7 @@
 using namespace RDKit;
 
 void test1Basics() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -124,7 +124,7 @@ void test1Basics() {
 }
 
 void test2SimpleReactions() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -232,7 +232,7 @@ void test2SimpleReactions() {
 }
 
 void test3RingFormation() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -345,7 +345,7 @@ void test3RingFormation() {
 }
 
 void test4MultipleProducts() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -428,7 +428,7 @@ void test4MultipleProducts() {
 }
 
 void test5Salts() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -476,7 +476,7 @@ void test5Salts() {
 }
 
 void test6DaylightParser() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -568,7 +568,7 @@ void test6DaylightParser() {
 }
 
 void test7MDLParser() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -781,7 +781,7 @@ void test8Validation() {
 }
 
 void test9ProductQueries() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1185,7 +1185,7 @@ void test10ChiralityDaylight() {
 }
 
 void test11ChiralityRxn() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1268,7 +1268,7 @@ void test11ChiralityRxn() {
 }
 
 void test12DoubleBondStereochem() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1343,7 +1343,7 @@ void test12DoubleBondStereochem() {
 }
 
 void test13Issue1748846() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1416,7 +1416,7 @@ void test13Issue1748846() {
 }
 
 void test14Issue1804420() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1462,7 +1462,7 @@ void test14Issue1804420() {
 }
 
 void test15Issue1882749() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   unsigned int nWarn, nError;
@@ -1474,7 +1474,7 @@ void test15Issue1882749() {
       << "Testing sf.net Issue 1882749: property handling in products."
       << std::endl;
 
-  smi = "[N:1]-!@[*]>>[N;+1,+0:1][#0]";
+  smi = "[N:1]-!@*>>[N;+1,+0:1][#0]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1484,7 +1484,7 @@ void test15Issue1882749() {
   TEST_ASSERT(nError == 0);
 
   delete rxn;
-  smi = "[N:1]-!@[*]>>[N;-1:1]";
+  smi = "[N:1]-!@*>>[N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1507,7 +1507,7 @@ void test15Issue1882749() {
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge() == -1);
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[N;H1:1]";
+  smi = "[N;D3:1]-!@*>>[N;H1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1523,7 +1523,7 @@ void test15Issue1882749() {
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumExplicitHs() == 1);
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[15N:1]";
+  smi = "[N;D3:1]-!@*>>[15N:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1543,7 +1543,7 @@ void test15Issue1882749() {
   TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(0)->getMass(), 15.0001));
 
   delete rxn;
-  smi = "[N;D3:1]-!@[*]>>[15N;-1:1]";
+  smi = "[N;D3:1]-!@*>>[15N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -1683,14 +1683,14 @@ void test16Exceptions() {
   try {
     rxn = RxnBlockToChemicalReaction(rxnB);
   } catch (ChemicalReactionParserException &) {
-    rxn = (ChemicalReaction *)0x0;
+    rxn = (ChemicalReaction *)nullptr;
   }
   TEST_ASSERT(!rxn);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test17Issue1920627() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -1885,7 +1885,7 @@ void test17Issue1920627() {
 }
 
 void test18PropertyTransfer() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -2093,7 +2093,7 @@ void test18PropertyTransfer() {
 }
 
 void test19Issue2050085() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -2105,7 +2105,7 @@ void test19Issue2050085() {
       << "Testing sf.net Issue 2050085: recap failing on chiral molecules."
       << std::endl;
 
-  smi = "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[*][*:1].[*:2][*]";
+  smi = "[N;!D1;+0](-!@[*:1])-!@[*:2]>>*[*:1].[*:2]*";
   rxn = RxnSmartsToChemicalReaction(smi);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
@@ -2135,7 +2135,7 @@ void test19Issue2050085() {
 }
 
 void test20BondQueriesInProduct() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -2668,7 +2668,7 @@ void test25Conformers() {
 }
 
 void test26V3000MDLParser() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -3539,41 +3539,41 @@ void test35ParensInReactants1() {
   }
   {
     std::string smi = "([C:1](=O)O.[C:2]>>[C:1][C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O.([C:2]>>[C:1][C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O).[C:2]>>[C:1][C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O.[C:2])>>[C:1][C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
@@ -3656,7 +3656,7 @@ void test38AddRecursiveQueriesToReaction() {
       << "Testing use of adding recursive queries to a reaction." << std::endl;
 
   {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     ChemicalReaction rxn;
     MOL_SPTR_VECT reacts;
     std::string smi;
@@ -3707,7 +3707,7 @@ void test38AddRecursiveQueriesToReaction() {
   }
 
   {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     ChemicalReaction rxn;
     MOL_SPTR_VECT reacts;
     std::string smi;
@@ -3737,14 +3737,14 @@ void test38AddRecursiveQueriesToReaction() {
     mp["foo"] = q1;
 
     rxn.initReactantMatchers();
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
     TEST_ASSERT(labels.size() == 2);
     TEST_ASSERT(labels[0][0].second == "foo");
   }
 
   {
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     ChemicalReaction rxn;
     MOL_SPTR_VECT reacts;
     std::string smi;
@@ -3774,7 +3774,7 @@ void test38AddRecursiveQueriesToReaction() {
     mp["foo"] = q1;
 
     rxn.initReactantMatchers();
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
     TEST_ASSERT(labels.size() == 2);
     TEST_ASSERT(labels[1][0].second == "foo");
@@ -3806,7 +3806,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3820,7 +3820,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3834,7 +3834,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(Cl)C=S");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@@H](Cl)C=S");
@@ -3862,7 +3862,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FC(S)Cl");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "F[C@H](S)Cl");
@@ -3887,7 +3887,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 1);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "FCCl");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "FCCl");
@@ -3914,7 +3914,7 @@ void test39InnocentChiralityLoss() {
       prods = rxn->runReactants(reacts);
       TEST_ASSERT(prods.size() == 1);
       TEST_ASSERT(prods[0].size() == 2);
-      smi = MolToSmiles(*prods[0][0]);
+      smi = MolToSmiles(*prods[0][0], false);
       TEST_ASSERT(smi == "[H]C(N)(F)C(C)=O");
       smi = MolToSmiles(*prods[0][0], true);
       TEST_ASSERT(smi == "[H][C@](N)(F)C(C)=O");
@@ -3977,7 +3977,7 @@ void test41Github233() {
 }
 
 void test42ReactionSmiles() {
-  ROMol *mol = 0;
+  ROMol *mol = nullptr;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
   std::vector<MOL_SPTR_VECT> prods;
@@ -3987,7 +3987,7 @@ void test42ReactionSmiles() {
   BOOST_LOG(rdInfoLog) << "Testing Daylight parser" << std::endl;
 
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:4]";
-  rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+  rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4014,7 +4014,7 @@ void test42ReactionSmiles() {
   smi =
       "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2]["
       "C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
-  rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+  rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
   TEST_ASSERT(rxn);
 
   TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
@@ -4045,7 +4045,7 @@ void test42ReactionSmiles() {
       "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10].[N:1]1[C:2]["
       "C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
   try {
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
   } catch (ChemicalReactionParserException &) {
   }
 
@@ -4053,7 +4053,7 @@ void test42ReactionSmiles() {
       "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2]["
       "C:3](=[O:4])[N:6][C:7][C:8]1=[O:9]>>[O:5][O:10]";
   try {
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
   } catch (ChemicalReactionParserException &) {
   }
 
@@ -4061,7 +4061,7 @@ void test42ReactionSmiles() {
       "[Q:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:2]["
       "C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
   try {
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
   } catch (ChemicalReactionParserException &) {
   }
 
@@ -4114,7 +4114,7 @@ void test44Github290() {
   BOOST_LOG(rdInfoLog) << "Testing github 290: seg fault while parsing rxn"
                        << std::endl;
   {
-    ChemicalReaction *rxn = new ChemicalReaction();
+    auto *rxn = new ChemicalReaction();
     delete rxn;
   }
   {
@@ -4141,7 +4141,7 @@ void test45SmilesWriter() {
   {
     std::string smi;
     smi = "[C:1]=[O:2].[N:3]>>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4168,7 +4168,7 @@ void test45SmilesWriter() {
     TEST_ASSERT(smi == "[C:1]=[O:2].[N:3]>>[C:1](=[O:2])~[N:3]");
 
     delete rxn;
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4180,7 +4180,7 @@ void test45SmilesWriter() {
   {
     std::string smi;
     smi = "C=O.N>>N~C=O";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4203,7 +4203,7 @@ void test45SmilesWriter() {
     TEST_ASSERT(smi == "C=O.N>>N~C=O");
 
     delete rxn;
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4211,7 +4211,7 @@ void test45SmilesWriter() {
   {
     std::string smi;
     smi = "[S,C]=O.N>>N~[S,C]=O";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, false);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, false);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4235,7 +4235,7 @@ void test45SmilesWriter() {
     TEST_ASSERT(smi == "O=S.N>>N~S=O");
 
     delete rxn;
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4251,10 +4251,10 @@ void test46Agents() {
 
   {
     std::string smi;
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
 
     smi = "[C:1]=[O:2].[N:3]>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4276,7 +4276,7 @@ void test46Agents() {
     std::string smi;
 
     smi = ">[OH2].[Na].[Cl]>";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 0);
     TEST_ASSERT(rxn->getNumProductTemplates() == 0);
@@ -4286,11 +4286,11 @@ void test46Agents() {
   }
   {
     std::string smi;
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     MOL_SPTR_VECT agents;
 
     smi = "[C:1]=[O:2].[N:3]>>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4310,12 +4310,12 @@ void test46Agents() {
   }
   {
     std::string smi;
-    ROMol *mol = 0;
+    ROMol *mol = nullptr;
     unsigned int nWarn, nError, which;
     MOL_SPTR_VECT agents;
 
     smi = "[C:1]=[O:2].[N:3]>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4368,7 +4368,7 @@ void test46Agents() {
     std::string smi1, smi2;
 
     smi1 = "[C:1]=[O:2].[N:3]>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4379,7 +4379,7 @@ void test46Agents() {
     TEST_ASSERT(nError == 0);
 
     smi2 = "[C:1]=[O:2].[N:3]>>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxnq = RxnSmartsToChemicalReaction(smi2, 0, true);
+    ChemicalReaction *rxnq = RxnSmartsToChemicalReaction(smi2, nullptr, true);
     TEST_ASSERT(rxnq);
     TEST_ASSERT(rxnq->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxnq->getNumProductTemplates() == 1);
@@ -4398,7 +4398,7 @@ void test46Agents() {
     std::string smi1;
 
     smi1 = "[C:1]=[O:2].[N:3].C(=O)O>[OH2].[Na].[Cl]>[N:3]~[C:1]=[O:2]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi1, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 3);
     TEST_ASSERT(rxn->getNumProductTemplates() == 1);
@@ -4640,41 +4640,41 @@ void test48ParensInProducts1() {
   }
   {
     std::string smi = "[C:1](=O)O.[C:2]>>([C:1][C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O.[C:2]>>[C:1].([C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O.[C:2]>>[C:1][C:2])";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
   {
     std::string smi = "[C:1](=O)O.[C:2]>>[C:1]).[C:2]";
-    ChemicalReaction *rxn = 0;
+    ChemicalReaction *rxn = nullptr;
     try {
       rxn = RxnSmartsToChemicalReaction(smi);
     } catch (const ChemicalReactionParserException &e) {
-      rxn = 0;
+      rxn = nullptr;
     }
     TEST_ASSERT(!rxn);
   }
@@ -4731,8 +4731,10 @@ void test49ParensInProducts2() {
     TEST_ASSERT(prods[0][0]->getNumAtoms() == 11);
     TEST_ASSERT(prods[0][0]->getNumBonds() == 11);
 
-    smi = "CCCOc1ccn(c1)NC";
-    TEST_ASSERT(MolToSmiles(*prods[0][0]) == smi);
+    smi = "CCCOc1ccn(NC)c1";
+    RWMol *p00 = static_cast<RWMol *>(prods[0][0].get());
+    MolOps::sanitizeMol(*p00);
+    TEST_ASSERT(MolToSmiles(*p00) == smi);
 
     delete rxn;
   }
@@ -4776,7 +4778,7 @@ void test51RNXSmilesFromPatentData() {
         "[CH2:21][CH2:20][CH2:19][CH2:18][CH2:17][CH2:16][CH2:15][CH2:14][NH:"
         "13][c:2]1[n:3][cH:4][n:5][c:6]2[cH:7][c:8]([Cl:12])[cH:9][cH:10][c:11]"
         "21";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -4791,7 +4793,7 @@ void test51RNXSmilesFromPatentData() {
         "CH3:13].c1ccc2ncccc2c1>[Pd+2].[Ba+2].O=S(=O)([O-])[O-].O=S(=O)([O-])["
         "O-]>[CH3:2][CH2:1][O:3][C:4](=[O:20])[c:5]1[c:6]([O:17][CH2:18][CH3:"
         "19])[cH:7][c:8]([CH:14]=[O:15])[cH:9][c:10]1[O:11][CH2:12][CH3:13]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     rxn->initReactantMatchers();
     rxn->removeUnmappedReactantTemplates();
     rxn->removeUnmappedProductTemplates();
@@ -4808,7 +4810,7 @@ void test51RNXSmilesFromPatentData() {
         "[CH2:22][CH2:21][CH2:20][C:19](=[O:25])[O:2][c:3]1[cH:8][cH:7][cH:6]["
         "c:5]([C:9]23[CH2:18][CH:13]([CH2:12][CH2:11][CH2:10]2)[N:14]([CH3:17])"
         "[CH:15]3[CH3:16])[cH:4]1";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(!rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn == 0);
     TEST_ASSERT(nError != 0);
@@ -4827,7 +4829,7 @@ void test52RedundantProductMappingNumbersAndRunReactants() {
   unsigned int nWarn, nError;
   {
     std::string smi = "[C:1]-[OH:2]>>[C:1]-[O:2]-[C:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -4853,7 +4855,7 @@ void test52RedundantProductMappingNumbersAndRunReactants() {
   }
   {
     std::string smi = "[C:1]-[OH:2]>>[C:1]-[O:2]-[C:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -4881,7 +4883,7 @@ void test52RedundantProductMappingNumbersAndRunReactants() {
   }
   {
     std::string smi = "[O:1]-[C:2]>>[O:1]-[C:2]-C-[C:2]-[O:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -4918,14 +4920,15 @@ void test53ReactionSubstructureMatching() {
                        << std::endl;
   {
     std::string smi = "c1ccccc1>>c1ccncc1";
-    ChemicalReaction *query_rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *query_rxn =
+        RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(query_rxn);
     TEST_ASSERT(query_rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(query_rxn->getNumProductTemplates() == 1);
     TEST_ASSERT(query_rxn->getNumAgentTemplates() == 0);
 
     smi = "CCC.c1ccccc1>>CCC.c1ccncc1";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
     TEST_ASSERT(rxn->getNumProductTemplates() == 2);
@@ -4935,19 +4938,19 @@ void test53ReactionSubstructureMatching() {
     delete rxn;
 
     smi = "c1ccccc1.CCC>>CCC.c1ccncc1";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, false));
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, true));
     delete rxn;
 
     smi = "c1ccccc1.CCC>>c1ccncc1.CCC";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, false));
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, true));
     delete rxn;
 
     smi = "CCC.c1ccccc1.C(=O)O>>CCC.c1ccncc1.C(=O)O";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 3);
     TEST_ASSERT(rxn->getNumProductTemplates() == 3);
@@ -4957,19 +4960,19 @@ void test53ReactionSubstructureMatching() {
     delete rxn;
 
     smi = "CCC.C(=O)O.c1ccccc1>>CCC.c1ccncc1.C(=O)O";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, false));
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, true));
     delete rxn;
 
     smi = "CCC.C(=O)O.c1ccccc1>>CCC.C(=O)O.c1ccncc1";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, false));
     TEST_ASSERT(hasReactionSubstructMatch(*rxn, *query_rxn, true));
     delete rxn;
 
     smi = "CCC.c1ccccc1.C(=O)O>NC=O>CCC.c1ccncc1.C(=O)O";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 3);
     TEST_ASSERT(rxn->getNumProductTemplates() == 3);
@@ -4979,7 +4982,7 @@ void test53ReactionSubstructureMatching() {
 
     delete query_rxn;
     smi = "c1ccccc1>NC=O>c1ccncc1";
-    query_rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    query_rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(query_rxn);
     TEST_ASSERT(query_rxn->getNumReactantTemplates() == 1);
     TEST_ASSERT(query_rxn->getNumProductTemplates() == 1);
@@ -4989,7 +4992,7 @@ void test53ReactionSubstructureMatching() {
     delete rxn;
 
     smi = "CCC.c1ccccc1.C(=O)O>>CCC.c1ccncc1.C(=O)O";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 3);
     TEST_ASSERT(rxn->getNumProductTemplates() == 3);
@@ -4999,7 +5002,7 @@ void test53ReactionSubstructureMatching() {
     delete rxn;
 
     smi = "CCC.c1ccccc1.C(=O)O>>CCC.c1ncncc1.C(=O)O";
-    rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates() == 3);
     TEST_ASSERT(rxn->getNumProductTemplates() == 3);
@@ -5024,7 +5027,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
   {
     // perserve the stereo chemistry of the reactant in the product
     smi = "[C:1][O:2]>>[C:1][O:2]N[O:2][C:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5067,7 +5070,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
   {
     // invert the stereo chemistry of one carbon of the reactant in the product
     smi = "[C@:1][O:2]>>[C@:1][O:2]N[O:2][C@@:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5111,7 +5114,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     smi =
         "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]N["
         "O:5][C@:2]([F:3])([Cl:1])[Br:4]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5157,7 +5160,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     smi =
         "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]N["
         "O:5][C@@:2]([F:3])([Cl:1])[Br:4]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5203,7 +5206,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     smi =
         "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]["
         "C@:2]([F:3])([Cl:1])[Br:4]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5249,7 +5252,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     smi =
         "[OH:5][C@:2]([F:3])([Cl:1])[Br:4]>>[F:3][C@@:2]([Cl:1])([Br:4])[O:5]["
         "C@@:2]([F:3])([Cl:1])[Br:4]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5306,7 +5309,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
     smi =
         "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH2:4][CH2:"
         "4]\\[CH:3]=[CH:2]\\[CH3:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5351,7 +5354,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
     smi =
         "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH2:4][CH2:"
         "4]\\[CH:3]=[CH:2]/[CH3:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5397,7 +5400,7 @@ void test55RedundantProductMappingNumbersAndEZStereochemistry() {
     smi =
         "[CH3:1]\\[CH:2]=[CH:3]\\[CH3:4]>>[CH3:1]\\[CH:2]=[CH:3]\\[CH:3]=[CH:2]"
         "\\[CH3:1]";
-    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, 0, true);
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi, nullptr, true);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn != 0);
     TEST_ASSERT(nError == 0);
@@ -5450,7 +5453,7 @@ void test56TestOldPickleVersion() {
     pklName += "/Code/GraphMol/ChemReactions/testData/testpickle.bin";
     std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
 
-    ChemicalReaction *rxn = new ChemicalReaction();
+    auto *rxn = new ChemicalReaction();
     ReactionPickler::reactionFromPickle(inStream, rxn);
     TEST_ASSERT(rxn->validate(nWarn, nError, false));
     TEST_ASSERT(nWarn == 0);
@@ -5533,7 +5536,7 @@ void test57IntroductionOfNewChiralCenters() {
     fName =
         rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality2.sdf";
     ROMol *mol = MolFileToMol(fName);
-    ChemicalReaction *rxn = new ChemicalReaction();
+    auto *rxn = new ChemicalReaction();
     rxn->addReactantTemplate(ROMOL_SPTR(mol));
     fName =
         rdbase + "/Code/GraphMol/ChemReactions/testData/testRXNChirality3.sdf";
@@ -5724,11 +5727,11 @@ void test60RunSingleReactant() {
     prods = rxn->runReactant(reag1, 0);
     TEST_ASSERT(prods.size() > 0);
 
-    for (size_t i = 0; i < prods.size(); i++) {
-      for (size_t prodidx = 0; prodidx < prods[i].size(); prodidx++) {
+    for (auto &prod : prods) {
+      for (size_t prodidx = 0; prodidx < prod.size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
-        TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
-        ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
+        TEST_ASSERT(MolToSmiles(*prod[prodidx]) == expected);
+        ROMol *sidechain = reduceProductToSideChains(prod[prodidx]);
         std::string smi = MolToSmiles(*sidechain, isomericSmiles);
         TEST_ASSERT(smi == expected_sidechain);
       }
@@ -5749,11 +5752,11 @@ void test60RunSingleReactant() {
     prods = rxn->runReactant(reag2, 1);
     TEST_ASSERT(prods.size() > 0);
 
-    for (size_t i = 0; i < prods.size(); i++) {
-      for (size_t prodidx = 0; prodidx < prods[i].size(); prodidx++) {
+    for (auto &prod : prods) {
+      for (size_t prodidx = 0; prodidx < prod.size(); prodidx++) {
         TEST_ASSERT(prodidx < 1);
-        TEST_ASSERT(MolToSmiles(*prods[i][prodidx]) == expected);
-        ROMol *sidechain = reduceProductToSideChains(prods[i][prodidx]);
+        TEST_ASSERT(MolToSmiles(*prod[prodidx]) == expected);
+        ROMol *sidechain = reduceProductToSideChains(prod[prodidx]);
         std::string smi = MolToSmiles(*sidechain, isomericSmiles);
         TEST_ASSERT(smi == expected_sidechain);
       }
@@ -5863,6 +5866,707 @@ void test61Github685() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void test62Github975() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing github975: Unnecessary warnings in rxn.validate()"
+      << std::endl;
+
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[N+0,O+0:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[N+0,O+0:1][C+0,N+1:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[NH,OH:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[NH,OH:1][CH2,NH:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+  {
+    unsigned int nWarn, nError;
+    std::string smi = "[N,O:1]>>[14N,14O:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 0);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+    smi = "[N,O:1][C,N:2]>>[14N,14O:1][12C,14N:2]";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->validate(nWarn, nError, true));
+    TEST_ASSERT(nWarn == 1);
+    TEST_ASSERT(nError == 0);
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test63CopyConstructor() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing copy constructor" << std::endl;
+
+  {
+    std::string smi =
+        "[C:1][C:2][C:3]([O:4])([N:5])[Cl:6]>>[Cl:6].[C:2][C:3]([O:4])([N:5])["
+        "C:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    std::string smi1 = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(rxn);
+    auto *rxn_new = new ChemicalReaction(*rxn);
+    removeMappingNumbersFromReactions(*rxn_new);
+    std::string smi2 = ChemicalReactionToRxnSmiles(*rxn);
+    std::string new_smi = ChemicalReactionToRxnSmiles(*rxn_new);
+    std::cerr << "smi1 " << smi1 << std::endl;
+    std::cerr << "smi2 " << smi2 << std::endl;
+    TEST_ASSERT(smi1 == smi2);
+    TEST_ASSERT(smi2 != new_smi);
+    TEST_ASSERT(new_smi == "CCC(N)(O)Cl>>CC(C)(N)O.Cl");
+
+    delete rxn;
+    delete rxn_new;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test64Github1266() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github 1266: Reactions don't modify isotope "
+                          "unless chemical element is specified for the product"
+                       << std::endl;
+
+  {
+    std::string smi = "[13:1]>>[14:1]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      smi = "C[13CH3]";
+      RWMol *mol = SmilesToMol(smi);
+      TEST_ASSERT(mol);
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getIsotope() == 14);
+    }
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test65SanitizeUnmappedHs() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Tests sanitize reaction (unmapped Hs) " << std::endl;
+
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701170941\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -2.5620    0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4235   -0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -3.0587   -0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.8322   -0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.3355    0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -1.7581    0.7120    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.0942    1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.5124    0.9090    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.3663   -1.1553    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.3000   -1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.8242    1.4780    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -2.2307    1.2821    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -3.9706    0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -2.5700   -1.4780    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -1.6500   -0.5736    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "   -4.6278   -0.3082    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      "  6  6  0  0  0  0            999 V2000\n"
+      "    3.8966    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.6111    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.6111   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    3.8966   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.1821   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.1821    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "M  END";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test66SanitizeMappedHs() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests sanitize reaction (mapped hs in react but not prod) "
+      << std::endl;
+
+  // H's are mapped in reactant but do not exist in product,
+  //  they can be merged
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701170941\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -2.5620    0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4235   -0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -3.0587   -0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.8322   -0.5265    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.3355    0.8133    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -1.7581    0.7120    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "   -3.0942    1.6022    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "   -4.5124    0.9090    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "   -4.3663   -1.1553    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "   -3.3000   -1.6022    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "   -3.8242    1.4780    0.0000 H   0  0  0  0  0  0  0  0  0 12  0  0\n"
+      "   -2.2307    1.2821    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "   -3.9706    0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -2.5700   -1.4780    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "   -1.6500   -0.5736    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "   -4.6278   -0.3082    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171709412D          \n"
+      "\n"
+      "  6  6  0  0  0  0            999 V2000\n"
+      "    3.8966    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.6111    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.6111   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    3.8966   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.1821   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.1821    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "M  END";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test67SanitizeMappedHsInReactantAndProd() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests sanitize reaction (mapped hs in react and prod) " << std::endl;
+
+  // H's are mapped in reactant and in prod
+  //  they can be merged
+  const std::string unmappedHs =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701171002\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710022D          \n"
+      "\n"
+      " 16 16  0  0  0  0            999 V2000\n"
+      "   -3.1881    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -2.4736    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -2.4736   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "   -3.1881   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "   -3.9025    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "   -2.8178    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "   -4.3559    1.1018    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "   -4.6170   -0.8250    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "   -3.5583   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "   -2.0203   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "   -4.7262    0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 12  0  0\n"
+      "   -3.5583    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "   -3.9025   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "   -1.6500   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "   -1.7591    0.8250    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "   -2.8178   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  5  1  1  0  0  0  0\n"
+      "  1  6  1  0  0  0  0\n"
+      "  1 12  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  2 15  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 10  1  0  0  0  0\n"
+      "  3 14  1  0  0  0  0\n"
+      "  4  9  1  0  0  0  0\n"
+      "  4 13  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  7  1  0  0  0  0\n"
+      "  5 11  1  0  0  0  0\n"
+      " 13  5  1  0  0  0  0\n"
+      " 13  8  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710022D          \n"
+      "\n"
+      " 17 17  0  0  0  0            999 V2000\n"
+      "    4.1309    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    4.8454    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    4.8454   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "    4.1309   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+      "    3.4165   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+      "    3.4165    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  6  0  0\n"
+      "    4.5012    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 13  0  0\n"
+      "    3.7607    1.5622    0.0000 H   0  0  0  0  0  0  0  0  0  7  0  0\n"
+      "    5.6690    0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 15  0  0\n"
+      "    5.2987    1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 17  0  0\n"
+      "    5.2987   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0 14  0  0\n"
+      "    3.7607   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 16  0  0\n"
+      "    2.9631   -1.1018    0.0000 H   0  0  0  0  0  0  0  0  0  9  0  0\n"
+      "    2.5929   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 18  0  0\n"
+      "    2.7020    0.8250    0.0000 H   0  0  0  0  0  0  0  0  0  8  0  0\n"
+      "    4.5012   -1.5622    0.0000 H   0  0  0  0  0  0  0  0  0 10  0  0\n"
+      "    5.6690   -0.4605    0.0000 H   0  0  0  0  0  0  0  0  0 11  0  0\n"
+      "  1  2  1  0  0  0  0\n"
+      "  6  1  1  0  0  0  0\n"
+      "  1  7  1  0  0  0  0\n"
+      "  1  8  1  0  0  0  0\n"
+      "  2  9  1  0  0  0  0\n"
+      "  2 10  1  0  0  0  0\n"
+      "  2  3  1  0  0  0  0\n"
+      "  3  4  1  0  0  0  0\n"
+      "  3 11  1  0  0  0  0\n"
+      "  3 17  1  0  0  0  0\n"
+      "  4  5  1  0  0  0  0\n"
+      "  4 12  1  0  0  0  0\n"
+      "  4 16  1  0  0  0  0\n"
+      "  5  6  1  0  0  0  0\n"
+      "  5 14  1  0  0  0  0\n"
+      "  5 13  1  0  0  0  0\n"
+      "  6 15  1  0  0  0  0\n"
+      "M  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(unmappedHs);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  reacts2.push_back(ROMOL_SPTR(SmilesToMol("C1CCCCC1Cl")));
+  hreacts2.push_back(ROMOL_SPTR(MolOps::addHs(*reacts2[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 768);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts2);
+  TEST_ASSERT(prods.size() == 128);
+
+  // Test after sanitization (way fewer matches than with AddHs..)
+  RxnOps::sanitizeRxn(*rxn);
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 12);
+
+  prods = rxn->runReactants(reacts2);
+  TEST_ASSERT(prods.size() == 4);
+
+  delete rxn;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+void test68MappedHToHeavy() {
+  const std::string rxnblock =
+      "$RXN\n"
+      "\n"
+      "  Marvin       031701171005\n"
+      "\n"
+      "  1  1\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710052D          \n"
+      "\n"
+      "  3  2  0  0  0  0            999 V2000\n"
+      "   -1.2721   -0.0116    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "   -1.9866   -0.4241    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "   -1.2721    0.8134    0.0000 H   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "  2  1  1  0  0  0  0\n"
+      "  1  3  1  0  0  0  0\n"
+      "M  END\n"
+      "$MOL\n"
+      "\n"
+      "  Mrv1583 03171710052D          \n"
+      "\n"
+      "  3  2  0  0  0  0            999 V2000\n"
+      "    2.3886   -0.0563    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n"
+      "    1.6741   -0.4688    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+      "    2.3886    0.7688    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+      "  2  1  1  0  0  0  0\n"
+      "  1  3  1  0  0  0  0\n"
+      "M  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxnblock);
+  TEST_ASSERT(rxn);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts1, hreacts1, reacts2, hreacts2;
+  std::vector<MOL_SPTR_VECT> prods;
+
+  reacts1.push_back(ROMOL_SPTR(SmilesToMol("CC")));
+  hreacts1.push_back(ROMOL_SPTR(MolOps::addHs(*reacts1[0].get())));
+
+  // test with and without AddHs
+  prods = rxn->runReactants(reacts1);
+  TEST_ASSERT(prods.size() == 0);
+
+  prods = rxn->runReactants(hreacts1);
+  TEST_ASSERT(prods.size() == 6);
+
+  std::stringstream sstrm;
+  rdWarningLog->SetTee(sstrm);
+  RxnOps::sanitizeRxn(*rxn);
+  std::string s = sstrm.str();
+  std::cerr << s << std::endl;
+  TEST_ASSERT(s.find("Reaction has explicit hydrogens, reactants will need "
+                     "explicit hydrogens (addHs)") != std::string::npos);
+  rdWarningLog->ClearTee();
+
+  delete rxn;
+}
+
+void test69Github1387() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Tests github1387: Bond from reactant not added to product"
+      << std::endl;
+
+  {
+    const std::string smarts =
+        "([*:1]-[O:2][CH3:3].[*:4]-[O:5][CH3:6])>>([*:1]-[O:2][C:3]C.[*:4]-[O:"
+        "5][C:6]C)";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {  // this always worked
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) == nullptr);
+    }
+    {  // the bug:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != nullptr);
+    }
+    {  // the bug, plus a ring closure:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COC1CCC1OC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0, 4) != nullptr);
+    }
+    delete rxn;
+  }
+  {  // reorder the same reaction
+    const std::string smarts =
+        "([O:2](-[*:1])[CH3:3].[CH3:6][O:5]-[*:4])>>(C[C:3][O:2]-[*:1].[*:4]"
+        "-[O:5][C:6]C)";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {  // this always worked
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) == nullptr);
+    }
+    {  // the bug:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COCCOC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != nullptr);
+    }
+    {  // the bug, plus a ring closure:
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("COC1CCC1OC")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 2);
+      TEST_ASSERT(prods[0].size() == 1);
+      std::vector<int> mapping;
+      unsigned int nPieces = MolOps::getMolFrags(*prods[0][0], mapping);
+      TEST_ASSERT(nPieces = 2);
+      TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(3, 4) != nullptr);
+    }
+
+    delete rxn;
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void test70Github1544() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Tests github1544: ChemicalReaction code not calling "
+                          "setNoImplicit() when H counts are set"
+                       << std::endl;
+  {
+    const std::string smarts = "[CH3:1]>>[CH2:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("Cc1ccccc1")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 1);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNoImplicit());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "[CH2]c1ccccc1");
+    }
+    delete rxn;
+  }
+  {  // test that the change also works when the degree on the atom changes
+    const std::string smarts = "[CH3:1][*:2]>>[CH2:1].[*:2]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    {
+      MOL_SPTR_VECT reacts;
+      std::vector<MOL_SPTR_VECT> prods;
+      reacts.push_back(ROMOL_SPTR(SmilesToMol("Cc1ccccc1")));
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size() == 1);
+      TEST_ASSERT(prods[0].size() == 2);
+      TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNoImplicit());
+      TEST_ASSERT(MolToSmiles(*prods[0][0]) == "[CH2]");
+      TEST_ASSERT(MolToSmiles(*prods[0][1]) == "c1ccccc1");
+    }
+    delete rxn;
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
+void testSanitizeException() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sanitizerxn exception" << std::endl;
+
+  // This is a marvinjs conversion of the following smirks:
+  // {indole}\t[*;Br,I;$(*c1ccccc1)]-[c:1]:[c:2]-[NH2:3].[CH1:5]#[C;$(C-[#6]):4]>>[c:1]1:[c:2]-[N:3]-[C:4]=[C:5]-1\tc1cc(I)c(N)cc1\tCC#C
+  // From Hartenfeller et. al., J. Chem. Inf. Model., 2012, 52 (5), p 1167-1178
+  std::string rxnB =
+      "$RXN\n\n  Marvin       102501170854\n\n  2  1\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  4  3  0  0  0  0            999 V2000\n   "
+      "-4.2429   -0.3572    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0\n   "
+      "-5.0679   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n   "
+      "-5.4804    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n   "
+      "-6.3054    0.3572    0.0000 N   0  0  0  3  0  0  0  0  0  3  0  0\n  1 "
+      " 2  1  0  0  0  0\n  2  3  4  0  0  0  0\n  3  4  1  0  0  0  0\nM  MRV "
+      "SMA   1 [*;A]\nM  MRV SMA   4 [#7H2;A:3]\nM  END\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  2  1  0  0  0  0            999 V2000\n   "
+      "-1.6500    0.0000    0.0000 C   0  0  0  2  0  0  0  0  0  5  0  0\n   "
+      "-2.4750    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n  1 "
+      " 2  3  0  0  0  0\nM  MRV SMA   1 [#6H1:5]\nM  END\n$MOL\n\n  Mrv1583 "
+      "10251708542D          \n\n  5  5  0  0  0  0            999 V2000\n    "
+      "3.3782    0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n    "
+      "4.0456    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n    "
+      "3.7907   -0.6348    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n    "
+      "2.9657   -0.6348    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n    "
+      "2.7107    0.1498    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n  1  "
+      "2  4  0  0  0  0\n  1  5  1  0  0  0  0\n  2  3  1  0  0  0  0\n  3  4  "
+      "1  0  0  0  0\n  4  5  2  0  0  0  0\nM  END\n";
+
+  ChemicalReaction *rxn = RxnBlockToChemicalReaction(rxnB);
+  RxnOps::sanitizeRxn(*rxn);
+  delete rxn;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -5916,7 +6620,6 @@ int main() {
   test40AgentsInSmarts();
   test41Github233();
   test42ReactionSmiles();
-  test43Github243();
   test44Github290();
   test45SmilesWriter();
   test46Agents();
@@ -5933,10 +6636,21 @@ int main() {
   test57IntroductionOfNewChiralCenters();
   test58MolFileValueRoundTrip();
   test59ReactionCanonicalization();
-#endif
-
   test60RunSingleReactant();
   test61Github685();
+  test62Github975();
+  test63CopyConstructor();
+  test43Github243();
+  test64Github1266();
+  test65SanitizeUnmappedHs();
+  test66SanitizeMappedHs();
+  test67SanitizeMappedHsInReactantAndProd();
+  test68MappedHToHeavy();
+#endif
+
+  test69Github1387();
+  test70Github1544();
+  testSanitizeException();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

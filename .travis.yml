@@ -3,14 +3,16 @@ language: python
 python:
  # We don't actually use the Travis Python, but this keeps it organized.
  - "2.7"
- - "3.4"
+ - "3.6"
+
+dist: trusty
 
 # switch to new infrastructure
 sudo: false
 
 before_install:
  # download and install miniconda
- - wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh;
+ - wget https://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O miniconda.sh;
  - bash miniconda.sh -b -p $HOME/conda
  - export PATH="$HOME/conda/bin:$PATH"
  - hash -r
@@ -20,24 +22,30 @@ before_install:
  - conda info -a
 
  # create and activate the build/test environment
- - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION pip cmake
+ - conda create -q -n tenv python=$TRAVIS_PYTHON_VERSION cmake
  - source activate tenv
 
 # additional .debs we need:
 addons:
- apt:
-  packages:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-trusty-3.9
+    packages:
     - build-essential
     - openjdk-7-jdk
     - swig
     - libjpeg-dev
+    - clang-3.9
+    - libc++-dev
 
 install:
  - conda install -q numpy pillow pandas # matplotlib
 
  # install the conda boost packages from the RDKit binstar channel.
- - conda install -q -c rdkit boost=1.55.0
-
+ - conda install -q -c rdkit boost=1.61.0
+ # install eigen from conda-forge
+ - conda install -q -c conda-forge eigen
 
 before_script:
  # RDKit
@@ -53,13 +61,13 @@ before_script:
  - export PY_SP_DIR=$PY_PREFIX/lib/python$TRAVIS_PYTHON_VERSION/site-packages
  - echo $PY_SP_DIR
 
-
 script:
  - cd $RDBASE
  - mkdir build
  - cd build
- - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_SWIG_WRAPPERS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on ..
- - cat CMakeCache.txt # useful for debugging/troubleshooting
+ - export CXX="clang++-3.9 -std=c++11"  # note that at the moment trying to use c++-14 leads to problems with our conda boost builds and libc++
+ - export CC=clang-3.9
+ - cmake -D Python_ADDITIONAL_VERSIONS=$TRAVIS_PYTHON_VERSION -D PYTHON_EXECUTABLE=$PYTHON -D PYTHON_LIBRARY=`find $PY_PREFIX -name "libpython$TRAVIS_PYTHON_VERSION*.so"` -D PYTHON_NUMPY_INCLUDE_PATH=$PY_SP_DIR/numpy/core/include -D BOOST_ROOT=$PY_PREFIX -D Boost_NO_SYSTEM_PATHS=ON -D RDK_BUILD_AVALON_SUPPORT=ON -D RDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_THREADSAFE_SSS=on -DRDK_TEST_MULTITHREADED=on -DRDK_INSTALL_STATIC_LIBS=OFF -DRDK_BUILD_SWIG_WRAPPERS=OFF -DRDK_SWIG_STATIC=OFF -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_FREESASA_SUPPORT=ON ..
 
  - make -j2
  - make install

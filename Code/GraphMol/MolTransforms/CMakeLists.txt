@@ -3,11 +3,10 @@ rdkit_library(MolTransforms MolTransforms.cpp
 
 rdkit_headers(MolTransforms.h DEST GraphMol/MolTransforms)
 
-rdkit_test(testMolTransforms test1.cpp 
-           LINK_LIBRARIES MolTransforms 
-FileParsers SmilesParse 
-EigenSolvers 
-GraphMol RDGeometryLib RDGeneral 
-)
+rdkit_test(testMolTransforms test1.cpp
+           LINK_LIBRARIES MolTransforms
+	   SubstructMatch
+           FileParsers SmilesParse
+	   EigenSolvers GraphMol RDGeometryLib RDGeneral )
 
 add_subdirectory(Wrap)

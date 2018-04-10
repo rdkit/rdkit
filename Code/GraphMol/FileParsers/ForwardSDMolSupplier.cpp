@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2009-2012 Greg Landrum
+//  Copyright (C) 2009-2017 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,8 +12,10 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SanitException.h>
-
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include "MolSupplier.h"
 #include "FileParsers.h"
 
@@ -47,7 +48,7 @@ ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
 }
 
 void ForwardSDMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = false;
   df_end = false;
   d_line = 0;
@@ -81,10 +82,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         // situation - so ignore such data items for now
         hasProp = true;
         warningIssued = false;
-        tempStr.erase(0, 1);         // remove the first ">" sign
-        int sl = tempStr.find("<");  // begin datalabel
-        int se = tempStr.find(">");  // end datalabel
-        if ((sl == -1) || (se == -1) || (se == (sl + 1))) {
+        tempStr.erase(0, 1);            // remove the first ">" sign
+        size_t sl = tempStr.find("<");  // begin datalabel
+        size_t se = tempStr.find(">");  // end datalabel
+        if ((sl == std::string::npos) || (se == std::string::npos) ||
+            (se == (sl + 1))) {
           // we either do not have a data label or the label is emtpy
           // no data label ignore until next data item
           // i.e. until we hit a blank line
@@ -140,14 +142,16 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           throw FileParseException("Problems encountered parsing data fields");
         } else {
           if (!warningIssued) {
-            if (hasProp)
+            if (hasProp){
               BOOST_LOG(rdWarningLog) << "Property <" << dlabel
                                       << "> will be truncated after "
                                       << "the first blank line" << std::endl;
-            else
+            } else {
               BOOST_LOG(rdWarningLog)
                   << "Spurious data before the first property will be "
-                     "ignored" << std::endl;
+                     "ignored"
+                  << std::endl;
+            }
             warningIssued = true;
           }
         }
@@ -160,7 +164,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
 
 ROMol *ForwardSDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
 
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
@@ -176,7 +180,7 @@ ROMol *ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
   if (dp_inStream->eof()) {
     df_end = true;
     return res;

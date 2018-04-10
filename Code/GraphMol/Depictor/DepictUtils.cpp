@@ -158,7 +158,7 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
   // list
   RDKit::INT_VECT res;
   res.reserve(thold.size());
-  RDKit::INT_VECT_I pos = std::find(thold.begin(), thold.end(), ref);
+  auto pos = std::find(thold.begin(), thold.end(), ref);
   if (pos != thold.end()) {
     res.insert(res.end(), pos + 1, thold.end());
   }
@@ -178,11 +178,10 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   unsigned int maxSize = 0;
   int subs, minsubs = static_cast<int>(1e8);
   int cnt = 0;
-  for (RDKit::VECT_INT_VECT_CI ri = fusedRings.begin(); ri != fusedRings.end();
-       ri++) {
+  for (const auto &fusedRing : fusedRings) {
     subs = 0;
-    for (RDKit::INT_VECT_CI rii = ri->begin(); rii != ri->end(); rii++) {
-      int deg = mol.getAtomWithIdx(*rii)->getDegree();
+    for (auto rii : fusedRing) {
+      int deg = mol.getAtomWithIdx(rii)->getDegree();
       if (deg > 2) {
         subs++;
       }
@@ -190,11 +189,11 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
     if (subs < minsubs) {
       res = cnt;
       minsubs = subs;
-      maxSize = ri->size();
+      maxSize = fusedRing.size();
     } else if (subs == minsubs) {
-      if (ri->size() > maxSize) {
+      if (fusedRing.size() > maxSize) {
         res = cnt;
-        maxSize = ri->size();
+        maxSize = fusedRing.size();
       }
     }
     cnt++;
@@ -239,8 +238,7 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   int maxCommonAtoms = 0;
 
   int currRingId = 0;
-  for (RDKit::VECT_INT_VECT_CI ri = fusedRings.begin(); ri != fusedRings.end();
-       ri++) {
+  for (const auto &fusedRing : fusedRings) {
     if (std::find(doneRings.begin(), doneRings.end(), currRingId) !=
         doneRings.end()) {
       currRingId++;
@@ -248,10 +246,10 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
     }
     commonAtoms.clear();
     int numCommonAtoms = 0;
-    for (RDKit::INT_VECT_CI rii = ri->begin(); rii != ri->end(); rii++) {
-      if (std::find(doneAtoms.begin(), doneAtoms.end(), (*rii)) !=
+    for (auto rii : fusedRing) {
+      if (std::find(doneAtoms.begin(), doneAtoms.end(), (rii)) !=
           doneAtoms.end()) {
-        commonAtoms.push_back(*rii);
+        commonAtoms.push_back(rii);
         numCommonAtoms++;
       }
     }
@@ -366,7 +364,7 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
                           RDKit::INT_VECT &aids, RDKit::INT_VECT &bids) {
   CHECK_INVARIANT(mol, "");
   unsigned int na = mol->getNumAtoms();
-  URANGE_CHECK(aid, na - 1);
+  URANGE_CHECK(aid, na);
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
@@ -466,7 +464,7 @@ int _pairCompAscending(const INT_PAIR &arg1, const INT_PAIR &arg2) {
 
 template <class T>
 T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
-  int natms = commAtms.size();
+  size_t natms = commAtms.size();
   INT_PAIR_VECT rankAid;
   rankAid.reserve(natms);
   T res;

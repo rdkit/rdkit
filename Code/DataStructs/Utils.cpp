@@ -16,10 +16,10 @@
 //! Convert a SparseBitVector to an ExplicitBitVector
 ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv) {
   unsigned int sl = sbv->getNumBits();
-  ExplicitBitVect *ebv = new ExplicitBitVect(sl);
+  auto *ebv = new ExplicitBitVect(sl);
   const IntSet *bset = sbv->getBitSet();
-  for (IntSetConstIter it = bset->begin(); it != bset->end(); it++) {
-    ebv->setBit(*it);
+  for (int it : *bset) {
+    ebv->setBit(it);
   }
   return ebv;
 }
@@ -31,8 +31,8 @@ void a2b(const char *, char *);
 template <typename T>
 void FromDaylightString(T &sbv, const std::string &s) {
   sbv.clearBits();
-  int length = s.length();
-  int nBits;
+  size_t length = s.length();
+  size_t nBits;
 
   if (s[length - 1] == '\n') length -= 1;
 
@@ -53,13 +53,13 @@ void FromDaylightString(T &sbv, const std::string &s) {
     default:
       throw "ValueError bad daylight fingerprint string";
   }
-  int i = 0, nBitsDone = 0;
+  size_t i = 0, nBitsDone = 0;
   while (i < length) {
     char bytes[3];
     a2b(s.c_str() + i, bytes);
-    for (int j = 0; j < 3 && nBitsDone < nBits; j++) {
+    for (size_t j = 0; j < 3 && nBitsDone < nBits; j++) {
       unsigned char query = 0x80;
-      for (int k = 0; k < 8; k++) {
+      for (size_t k = 0; k < 8; k++) {
         if (bytes[j] & query) {
           sbv.setBit(nBitsDone);
         }

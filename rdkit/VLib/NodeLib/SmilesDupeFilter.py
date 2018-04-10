@@ -3,11 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import RDConfig
-from rdkit import six
-import sys,os
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
+
 
 class DupeFilter(FilterNode):
   """ canonical-smiles based duplicate filter
@@ -18,6 +16,8 @@ class DupeFilter(FilterNode):
 
 
   Sample Usage:
+    >>> import os
+    >>> from rdkit import RDConfig
     >>> from rdkit.VLib.NodeLib.SDSupply import SDSupplyNode
     >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
                              'test_data','NCI_aids.10.sdf')
@@ -37,33 +37,34 @@ class DupeFilter(FilterNode):
 
 
   """
-  def __init__(self,**kwargs):
-    FilterNode.__init__(self,func=self.filter,**kwargs)
-    self._smisSeen = []
-    
+
+  def __init__(self, **kwargs):
+    FilterNode.__init__(self, func=self.filter, **kwargs)
+    self._smisSeen = set()
+
   def reset(self):
     FilterNode.reset(self)
-    self._smisSeen = []
+    self._smisSeen = set()
 
-  def filter(self,cmpd):
+  def filter(self, cmpd):
     smi = Chem.MolToSmiles(cmpd)
     if smi not in self._smisSeen:
-      self._smisSeen.append(smi)
+      self._smisSeen.add(smi)
       return 1
     else:
       return 0
-  
-#------------------------------------
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
-  
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

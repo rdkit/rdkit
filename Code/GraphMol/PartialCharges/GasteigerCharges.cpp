@@ -255,9 +255,11 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
   }
 
   for (aix = 0; aix < natms; aix++) {
-    mol.getAtomWithIdx(aix)->setProp("_GasteigerCharge", charges[aix], true);
+    mol.getAtomWithIdx(aix)->setProp(common_properties::_GasteigerCharge,
+                                     charges[aix], true);
     // set the implicit hydrogen charges
-    mol.getAtomWithIdx(aix)->setProp("_GasteigerHCharge", hChrg[aix], true);
+    mol.getAtomWithIdx(aix)->setProp(common_properties::_GasteigerHCharge,
+                                     hChrg[aix], true);
   }
 }
 }

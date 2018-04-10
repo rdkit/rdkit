@@ -30,7 +30,7 @@
 // """ -------------------------------------------------------
 SparseBitVect::SparseBitVect(const std::string &s) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   initFromText(s.c_str(), s.length());
 }
 
@@ -43,7 +43,7 @@ SparseBitVect::SparseBitVect(const std::string &s) {
 // """ -------------------------------------------------------
 SparseBitVect::SparseBitVect(const char *data, const unsigned int dataLen) {
   d_size = 0;
-  dp_bits = 0;
+  dp_bits = nullptr;
   initFromText(data, dataLen);
 }
 
@@ -305,10 +305,10 @@ std::string SparseBitVect::toString() const {
 
   int prev = -1;
   unsigned int zeroes;
-  for (IntSetIter i = dp_bits->begin(); i != dp_bits->end(); i++) {
-    zeroes = *i - prev - 1;
+  for (int dp_bit : *dp_bits) {
+    zeroes = dp_bit - prev - 1;
     RDKit::appendPackedIntToStream(ss, zeroes);
-    prev = *i;
+    prev = dp_bit;
   }
   zeroes = d_size - prev - 1;
   RDKit::appendPackedIntToStream(ss, zeroes);

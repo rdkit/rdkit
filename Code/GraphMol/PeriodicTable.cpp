@@ -11,17 +11,17 @@
 #include "PeriodicTable.h"
 #include <string>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <sstream>
 #include <locale>
 
 #if RDK_BUILD_THREADSAFE_SSS
-#include <boost/thread/once.hpp>
+#include <mutexp>
 #endif
 
 namespace RDKit {
 
-class PeriodicTable *PeriodicTable::ds_instance = 0;
+class PeriodicTable *PeriodicTable::ds_instance = nullptr;
 
 PeriodicTable::PeriodicTable() {
   // it is assumed that the atomic atomData string constains atoms
@@ -87,14 +87,10 @@ void PeriodicTable::initInstance() { ds_instance = new PeriodicTable(); }
 
 PeriodicTable *PeriodicTable::getTable() {
 #if RDK_BUILD_THREADSAFE_SSS
-#ifdef BOOST_THREAD_PROVIDES_ONCE_CXX11
-  boost::once_flag pt_init_once;
+  static std::once_flag pt_init_once;
+  std::call_once(pt_init_once, initInstance);
 #else
-  boost::once_flag pt_init_once = BOOST_ONCE_INIT;
-#endif
-  boost::call_once(initInstance, pt_init_once);
-#else
-  if (ds_instance == NULL) initInstance();
+  if (ds_instance == nullptr) initInstance();
 #endif
   return ds_instance;
 }

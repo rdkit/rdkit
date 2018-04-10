@@ -1,21 +1,21 @@
-/* 
+/*
 * $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
-* 
+*
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
-* met: 
+* met:
 *
-*     * Redistributions of source code must retain the above copyright 
+*     * Redistributions of source code must retain the above copyright
 *       notice, this list of conditions and the following disclaimer.
 *     * Redistributions in binary form must reproduce the above
-*       copyright notice, this list of conditions and the following 
-*       disclaimer in the documentation and/or other materials provided 
+*       copyright notice, this list of conditions and the following
+*       disclaimer in the documentation and/or other materials provided
 *       with the distribution.
-*     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-*       nor the names of its contributors may be used to endorse or promote 
+*     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+*       nor the names of its contributors may be used to endorse or promote
 *       products derived from this software without specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -32,7 +32,7 @@
 */
 
 %typemap(javaimports) RDKit::MolOps "
-/** 
+/**
 Groups a variety of molecular query and transformation operations. */"
 
 %javamethodmodifiers RDKit::MolOps::addHs 	( 	const ROMol &  	mol, 		bool  	explicitOnly = false, 		bool  	addCoords = false	  	) 			"
@@ -94,11 +94,21 @@ public";
 <p>
 Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E).
 <p>
+Does the CIP stereochemistry assignment for the molecule's atoms
+(R/S) and double bond (Z/E). Chiral atoms will have a property
+'_CIPCode' indicating their chiral code.
 <p>
 @param
-mol 	the molecule of interest
-cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
-force 	forces the calculation to be repeated even if it has already been done
+mol     the molecule to use
+cleanIt whether atoms with a chiral specifier that aren't
+        actually chiral (e.g. atoms with duplicate
+        substituents or only 2 substituents, etc.) will have
+        their chiral code set to CHI_UNSPECIFIED. Bonds with
+        STEREOCIS/STEREOTRANS specified that have duplicate
+        substituents based upon the CIP atom ranks will be
+        marked STEREONONE.
+force   causes the calculation to be repeated even if it has
+        already been done
 <p>
 @notes
 <li>Throughout we assume that we're working with a hydrogen-suppressed graph.
@@ -170,17 +180,13 @@ public";
 %javamethodmodifiers RDKit::MolOps::findPotentialStereoBonds 	( 	ROMol &  	mol, 		bool  	cleanIt = false	  	) 			"
 /**
 <p>
-finds bonds that could be cis/trans in a molecule and mark them as Bond::STEREONONE
+finds bonds that could be cis/trans in a molecule and mark them as Bond::STEREOANY
 <p>
 <p>
 @param
 mol 	the molecule of interest
 cleanIt 	toggles removal of stereo flags from double bonds that can not have stereochemistry
-This function is usefuly in two situations
 <p>
-    * when parsing a mol file; for the bonds marked here, coordinate informations on the neighbors can be used to indentify cis or trans states
-    * when writing a mol file; bonds that can be cis/trans but not marked as either need to be specially marked in the mol file
-
 */
 public";
 

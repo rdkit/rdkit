@@ -53,13 +53,13 @@ INT_VECT GetEntryDownIds(const MolCatalog *self, unsigned int idx) {
 }
 
 unsigned int AddEntry(MolCatalog *self, MolCatalogEntry *entry) {
-  MolCatalogEntry *cpy = new MolCatalogEntry(*entry);
+  auto *cpy = new MolCatalogEntry(*entry);
   return self->addEntry(cpy);
   // return self->addEntry(entry);
 }
 
 void catalogEntrySetMol(MolCatalogEntry *self, const ROMol *mol) {
-  ROMol *cpy = new ROMol(*mol);
+  auto *cpy = new ROMol(*mol);
   self->setMol(cpy);
 }
 

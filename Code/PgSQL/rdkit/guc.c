@@ -29,11 +29,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include "postgres.h"
-#include "fmgr.h"
-#include "utils/guc.h"
+#include <postgres.h>
+#include <fmgr.h>
+#include <utils/guc.h>
 
-#include "rdkit.h"
+#include "guc.h"
 
 static double rdkit_tanimoto_smlar_limit = 0.5;
 static double rdkit_dice_smlar_limit = 0.5;
@@ -75,8 +75,8 @@ static int rdkit_reaction_difference_fp_type = REACTION_DIFFERENCE_FP_TYPE;
 static int rdkit_difference_FP_weight_agents = REACTION_DFP_WEIGHT_AGENTS;
 static int rdkit_difference_FP_weight_nonagents = REACTION_DFP_WEIGHT_NONAGENTS;
 
-#if PG_VERSION_NUM < 80400
-#error The earliest supported postgresql version is 8.4
+#if PG_VERSION_NUM < 90100
+#error The earliest supported postgresql version is 9.1
 #endif
 
 static void
@@ -96,9 +96,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomRealVariable(
@@ -112,9 +110,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomBoolVariable(
@@ -126,9 +122,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
 
@@ -143,9 +137,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -159,9 +151,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -175,9 +165,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -191,9 +179,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -207,9 +193,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -223,9 +207,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -239,9 +221,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -255,9 +235,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -271,9 +249,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -287,9 +263,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
@@ -303,89 +277,77 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomBoolVariable(
-                             "rdkit.ignore_reaction_agents",
-                             "Should agents of a chemical reaction be taken into account ",
-                             "If false (the default), agents (if provided) are taken into account for calculations/requests/similarity measures.",
-                             &rdkit_ignore_reaction_agents,
-                             false,
-                             PGC_USERSET,
-                             0,
-  			   NULL,
-  #if PG_VERSION_NUM >= 90000
-                             NULL,
-  #endif
-                             NULL
-                             );
+			   "rdkit.ignore_reaction_agents",
+			   "Should agents of a chemical reaction be taken into account ",
+			   "If false (the default), agents (if provided) are taken into account for calculations/requests/similarity measures.",
+			   &rdkit_ignore_reaction_agents,
+			   false,
+			   PGC_USERSET,
+			   0,
+			   NULL,
+			   NULL,
+			   NULL
+			   );
   DefineCustomRealVariable(
-                            "rdkit.agent_FP_bit_ratio",
-                            "Allow to weight the impact of agents contained in a chemical reaction fingerprint",
-                            "A scaling factor below 1.0 down weighted the agents of a chemical reaction",
-                            &rdkit_agent_FP_bit_ratio,
-                            0.2,
-                            0.0,
-                            3.0,
-                            PGC_USERSET,
-                            0,
- 			   NULL,
- #if PG_VERSION_NUM >= 90000
-                            NULL,
- #endif
-                            NULL
-                            );
+			   "rdkit.agent_FP_bit_ratio",
+			   "Allow to weight the impact of agents contained in a chemical reaction fingerprint",
+			   "A scaling factor below 1.0 down weighted the agents of a chemical reaction",
+			   &rdkit_agent_FP_bit_ratio,
+			   0.2,
+			   0.0,
+			   3.0,
+			   PGC_USERSET,
+			   0,
+			   NULL,
+			   NULL,
+			   NULL
+			   );
   DefineCustomBoolVariable(
-                             "rdkit.move_unmmapped_reactants_to_agents",
-                             "Should unmapped reactant  agents of a chemical reaction be taken into account ",
-                             "If true (the default), agents (if provided) are taken into account for calculations/requests/similarity measures.",
-                             &rdkit_move_unmmapped_reactants_to_agents,
-                             true,
-                             PGC_USERSET,
-                             0,
+			   "rdkit.move_unmmapped_reactants_to_agents",
+			   "Should unmapped reactant  agents of a chemical reaction be taken into account ",
+			   "If true (the default), agents (if provided) are taken into account for calculations/requests/similarity measures.",
+			   &rdkit_move_unmmapped_reactants_to_agents,
+			   true,
+			   PGC_USERSET,
+			   0,
   			   NULL,
-  #if PG_VERSION_NUM >= 90000
-                             NULL,
-  #endif
-                             NULL
-                             );
+			   NULL,
+			   NULL
+			   );
   DefineCustomRealVariable(
-                             "rdkit.threshold_unmapped_reactant_atoms",
-                             "Set the ratio of allowed unmapped reactant atoms",
-                             "If the ratio of unmapped atoms in a reactant is larger than this the reactant is removed and added to the agents.",
-                             &rdkit_threshold_unmapped_reactant_atoms,
-                             0.2,
-                             0.0,
-                             1.0,
-                             PGC_USERSET,
-                             0,
+			   "rdkit.threshold_unmapped_reactant_atoms",
+			   "Set the ratio of allowed unmapped reactant atoms",
+			   "If the ratio of unmapped atoms in a reactant is larger than this the reactant is removed and added to the agents.",
+			   &rdkit_threshold_unmapped_reactant_atoms,
+			   0.2,
+			   0.0,
+			   1.0,
+			   PGC_USERSET,
+			   0,
   			   NULL,
-  #if PG_VERSION_NUM >= 90000
-                             NULL,
-  #endif
-                             NULL
-                             );
+			   NULL,
+			   NULL
+			   );
   DefineCustomBoolVariable(
-                             "rdkit.init_reaction",
-                             "Checks if the reaction is ready for use",
-                             "By default it is true, however reactions can be used uninitialized too but be aware of potential upcoming errors.",
-                             &rdkit_init_reaction,
-                             true,
-                             PGC_USERSET,
-                             0,
+			   "rdkit.init_reaction",
+			   "Checks if the reaction is ready for use",
+			   "By default it is true, however reactions can be used uninitialized too but be aware of potential upcoming errors.",
+			   &rdkit_init_reaction,
+			   true,
+			   PGC_USERSET,
+			   0,
   			   NULL,
-  #if PG_VERSION_NUM >= 90000
-                             NULL,
-  #endif
-                             NULL
-                             );
+			   NULL,
+			   NULL
+			   );
   DefineCustomIntVariable(
-                           "rdkit.difference_FP_weight_agents",
-                           "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
-                           "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
+			  "rdkit.difference_FP_weight_agents",
+			  "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
+			  "In reaction difference fingerprints weight factor for agents comapred to reactants and products",
                            &rdkit_difference_FP_weight_agents,
                            REACTION_DFP_WEIGHT_AGENTS,
                            -10,
@@ -393,15 +355,13 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   DefineCustomIntVariable(
-                           "rdkit.difference_FP_weight_nonagents",
-                           "In reaction difference fingerprints weight factor for reactants and products comapred to agents",
-                           "In reaction difference fingerprints weight factor for reactants and products comapred to agents",
+			  "rdkit.difference_FP_weight_nonagents",
+			  "In reaction difference fingerprints weight factor for reactants and products comapred to agents",
+			  "In reaction difference fingerprints weight factor for reactants and products comapred to agents",
                            &rdkit_difference_FP_weight_nonagents,
                            REACTION_DFP_WEIGHT_NONAGENTS,
                            1,
@@ -409,16 +369,14 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
 
   DefineCustomIntVariable(
-                           "rdkit.avalon_fp_size",
-                           "Size (in bits) of avalon fingerprints",
-                           "Size (in bits) of avalon fingerprints",
+			  "rdkit.avalon_fp_size",
+			  "Size (in bits) of avalon fingerprints",
+			  "Size (in bits) of avalon fingerprints",
                            &rdkit_avalon_fp_size,
                            AVALON_FP_SIZE,
                            64,
@@ -426,9 +384,7 @@ initRDKitGUC()
                            PGC_USERSET,
                            0,
 			   NULL,
-#if PG_VERSION_NUM >= 90000
                            NULL,
-#endif
                            NULL
                            );
   rdkit_guc_inited = true;
@@ -464,108 +420,126 @@ getSubstructFpSize(void) {
     initRDKitGUC();
   return rdkit_sss_fp_size;
 }
+
 int
 getMorganFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_morgan_fp_size;
 }
+
 int
 getFeatMorganFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_featmorgan_fp_size;
 }
+
 int
 getLayeredFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_layered_fp_size;
 }
+
 int
 getRDKitFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_rdkit_fp_size;
 }
+
 int
 getHashedTorsionFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_hashed_torsion_fp_size;
 }
+
 int
 getHashedAtomPairFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_hashed_atompair_fp_size;
 }
+
 int
 getAvalonFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_avalon_fp_size;
 }
+
 int
 getReactionSubstructFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_reaction_sss_fp_size;
 }
+
 int
 getReactionDifferenceFpSize(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_reaction_difference_fp_size;
 }
+
 int
 getReactionSubstructFpType(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_reaction_sss_fp_type;
 }
+
 int
 getReactionDifferenceFpType(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_reaction_difference_fp_type;
 }
+
 bool
 getIgnoreReactionAgents(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_ignore_reaction_agents;
 }
+
 double
 getReactionStructuralFPAgentBitRatio(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_agent_FP_bit_ratio;
 }
+
 bool
 getMoveUnmappedReactantsToAgents(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_move_unmmapped_reactants_to_agents;
 }
+
 double
 getThresholdUnmappedReactantAtoms(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_threshold_unmapped_reactant_atoms;
 }
+
 bool
 getInitReaction(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_init_reaction;
 }
+
 int
 getReactionDifferenceFPWeightAgents(void) {
   if (!rdkit_guc_inited)
     initRDKitGUC();
   return rdkit_difference_FP_weight_agents;
 }
+
 int
 getReactionDifferenceFPWeightNonagents(void) {
   if (!rdkit_guc_inited)

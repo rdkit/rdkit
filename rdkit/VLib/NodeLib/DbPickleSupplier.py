@@ -5,12 +5,13 @@
 #
 from __future__ import print_function
 from rdkit import RDConfig
-import sys,os.path
+import sys, os.path
 from rdkit.VLib.Supply import SupplyNode
 from rdkit.six.moves import cPickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
+
   class _lazyDataSeq:
     """
     These classes are used to speed up (a lot) the process of
@@ -20,13 +21,15 @@ if RDConfig.usePgSQL:
     The results can lead to drastic improvements in perfomance.
     
     """
-    def __init__(self,cursor,cmd,pickleCol=1,depickle=1,klass=None):
+
+    def __init__(self, cursor, cmd, pickleCol=1, depickle=1, klass=None):
       self.cursor = cursor
       self.cmd = cmd
-      self._first=0
-      self._pickleCol=pickleCol
-      self._depickle=depickle
-      self._klass=klass
+      self._first = 0
+      self._pickleCol = pickleCol
+      self._depickle = depickle
+      self._klass = klass
+
     def _validate(self):
       curs = self.cursor
       if not curs or \
@@ -35,12 +38,12 @@ if RDConfig.usePgSQL:
              (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
         raise ValueError('bad cursor')
       if curs.res.nfields and curs.res.nfields < 2:
-        raise ValueError(
-          'invalid number of results returned (%d), must be at least 2'%curs.res.nfields)
+        raise ValueError('invalid number of results returned (%d), must be at least 2' %
+                         curs.res.nfields)
       desc1 = curs.description[self._pickleCol]
       ftv = desc1[self._pickleCol].value
-      if  ftv != sql.BINARY:
-        raise TypeError('pickle column (%d) of bad type'%self._pickleCol)
+      if ftv != sql.BINARY:
+        raise TypeError('pickle column (%d) of bad type' % self._pickleCol)
 
     def __iter__(self):
       try:
@@ -48,11 +51,12 @@ if RDConfig.usePgSQL:
       except Exception:
         import traceback
         traceback.print_exc()
-        print('COMMAND:',self.cmd)
+        print('COMMAND:', self.cmd)
         raise
-      self._first=1
+      self._first = 1
       self._validate()
       return self
+
     def next(self):
       curs = self.cursor
       if not curs or \
@@ -62,14 +66,14 @@ if RDConfig.usePgSQL:
              (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
         raise StopIteration
       if not self._first:
-        res = curs.conn.conn.query('fetch 1 from "%s"'%self.cursor.name)
+        res = curs.conn.conn.query('fetch 1 from "%s"' % self.cursor.name)
 
         if res.ntuples == 0:
           raise StopIteration
         else:
           if res.nfields < 2:
-            raise ValueError('bad result: %s'%str(res))
-          t = [res.getvalue(0,x) for x in range(res.nfields)]
+            raise ValueError('bad result: %s' % str(res))
+          t = [res.getvalue(0, x) for x in range(res.nfields)]
           val = t[self._pickleCol]
       else:
         t = curs.fetchone()
@@ -88,25 +92,28 @@ if RDConfig.usePgSQL:
       return fp
 
   class _dataSeq(_lazyDataSeq):
-    def __init__(self,cursor,cmd,pickleCol=1,depickle=1):
-      self.cursor=cursor
+
+    def __init__(self, cursor, cmd, pickleCol=1, depickle=1):
+      self.cursor = cursor
       self.cmd = cmd
       self.res = None
       self.rowCount = -1
       self.idx = 0
-      self._pickleCol=pickleCol
+      self._pickleCol = pickleCol
       self._depickle = depickle
+
     def __iter__(self):
       self.cursor.execute(self.cmd)
       self._first = self.cursor.fetchone()
       self._validate()
-      self.res = self.cursor.conn.conn.query('fetch all from "%s"'%self.cursor.name)
-      self.rowCount = self.res.ntuples+1
-      self.idx=0
+      self.res = self.cursor.conn.conn.query('fetch all from "%s"' % self.cursor.name)
+      self.rowCount = self.res.ntuples + 1
+      self.idx = 0
       if self.res.nfields < 2:
-        raise ValueError('bad query result'%str(res))
+        raise ValueError('bad query result' % str(res))
 
       return self
+
     def next(self):
       if self.idx >= self.rowCount:
         raise StopIteration
@@ -118,34 +125,35 @@ if RDConfig.usePgSQL:
 
     def __len__(self):
       return self.rowCount
-    def __getitem__(self,idx):
+
+    def __getitem__(self, idx):
       if self.res is None:
         self.cursor.execute(self.cmd)
         self._first = self.cursor.fetchone()
         self._validate()
-        self.res = self.cursor.conn.conn.query('fetch all from "%s"'%self.cursor.name)
-        self.rowCount = self.res.ntuples+1
-        self.idx=0
+        self.res = self.cursor.conn.conn.query('fetch all from "%s"' % self.cursor.name)
+        self.rowCount = self.res.ntuples + 1
+        self.idx = 0
         if self.res.nfields < 2:
-          raise ValueError('bad query result'%str(res))
+          raise ValueError('bad query result' % str(res))
 
       if idx < 0:
-        idx = self.rowCount+idx
-      if idx<0 or (idx >= 0 and idx >= self.rowCount):
+        idx = self.rowCount + idx
+      if idx < 0 or (idx >= 0 and idx >= self.rowCount):
         raise IndexError
-      if idx==0:
+      if idx == 0:
         val = str(self._first[self._pickleCol])
         t = list(self._first)
       else:
-        val = self.res.getvalue(self.idx-1,self._pickleCol)
-        t = [self.res.getvalue(self.idx-1,x) for x in range(self.res.nfields)]
+        val = self.res.getvalue(self.idx - 1, self._pickleCol)
+        t = [self.res.getvalue(self.idx - 1, x) for x in range(self.res.nfields)]
       if self._depickle:
         try:
           fp = cPickle.loads(val)
         except Exception:
           import logging
           del t[self._pickleCol]
-          logging.exception('Depickling failure in row: %s'%str(t))
+          logging.exception('Depickling failure in row: %s' % str(t))
           raise
         del t[self._pickleCol]
         fp._fieldsFromDb = t
@@ -153,7 +161,7 @@ if RDConfig.usePgSQL:
         fp = t
       return fp
 else:
-  _dataSeq=None
+  _dataSeq = None
 
 
 class DbPickleSupplyNode(SupplyNode):
@@ -163,37 +171,39 @@ class DbPickleSupplyNode(SupplyNode):
     >>> from rdkit.Dbase.DbConnection import DbConnect
   
   """
-  def __init__(self,cursor,cmd,binaryCol,**kwargs):
-    SupplyNode.__init__(self,**kwargs)
+
+  def __init__(self, cursor, cmd, binaryCol, **kwargs):
+    SupplyNode.__init__(self, **kwargs)
     self._dbResults = dbResults
-    self._supplier = DbMolSupplier.RandomAccessDbMolSupplier(self._dbResults,**kwargs)
+    self._supplier = DbMolSupplier.RandomAccessDbMolSupplier(self._dbResults, **kwargs)
 
   def reset(self):
     SupplyNode.reset(self)
     self._supplier.Reset()
+
   def next(self):
     """
 
     """
     return self._supplier.next()
 
-def GetNode(dbName,tableName):
+
+def GetNode(dbName, tableName):
   from rdkit.Dbase.DbConnection import DbConnect
-  conn = DbConnect(dbName,tableName)
+  conn = DbConnect(dbName, tableName)
   return DbMolSupplyNode(conn.GetData())
-  
+
+
 #------------------------------------
 #
 #  doctest boilerplate
 #
 def _test():
-  import doctest,sys
+  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
   import sys
-  failed,tried = _test()
+  failed, tried = _test()
   sys.exit(failed)
-
-  

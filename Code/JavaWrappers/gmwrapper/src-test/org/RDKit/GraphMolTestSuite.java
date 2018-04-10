@@ -60,6 +60,7 @@ import org.junit.runners.Suite;
 	SmilesDetailsTests.class,
 	SmilesTests.class,
 	SuppliersTests.class,
+	TrajectoryTests.class,
 	WrapperTests.class
 	,MemoryTests.class		// Comment for speed
 	})

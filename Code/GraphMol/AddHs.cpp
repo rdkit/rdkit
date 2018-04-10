@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,9 +11,11 @@
 #include <list>
 #include "QueryAtom.h"
 #include "QueryOps.h"
+#include "MonomerInfo.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit {
 
@@ -25,7 +26,7 @@ Atom *getAtomNeighborNot(ROMol *mol, const Atom *atom, const Atom *other) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(atom->getDegree() > 1, "bad degree");
   PRECONDITION(other, "bad atom");
-  Atom *res = 0;
+  Atom *res = nullptr;
 
   ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
@@ -62,7 +63,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
   RDGeom::Transform3D tform;
   RDGeom::Point3D heavyPos, hydPos;
 
-  const Atom *nbr1 = 0, *nbr2 = 0, *nbr3 = 0;
+  const Atom *nbr1 = nullptr, *nbr2 = nullptr, *nbr3 = nullptr;
   const Bond *nbrBond;
   ROMol::ADJ_ITER nbrIdx, endNbrs;
 
@@ -73,8 +74,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // --------------------------------------------------------------------------
       dirVect.z = 1;
       // loop over the conformations and set the coordinates
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
-           cfi != mol->endConformers(); cfi++) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           cfi++) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         hydPos = heavyPos + dirVect * bondLength;
         (*cfi)->setAtomPos(hydIdx, hydPos);
@@ -86,8 +87,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       //  One other neighbor:
       // --------------------------------------------------------------------------
       nbr1 = getAtomNeighborNot(mol, heavyAtom, hydAtom);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
@@ -166,8 +167,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       }
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         // start along the average of the two vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
@@ -222,7 +223,7 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       if (heavyAtom->hasProp(common_properties::_CIPCode)) {
         // if the central atom is chiral, we'll order the neighbors
         // by CIP rank:
-        std::vector<std::pair<unsigned int, int> > nbrs;
+        std::vector<std::pair<unsigned int, int>> nbrs;
         while (nbrIdx != endNbrs) {
           if (*nbrIdx != hydIdx) {
             const Atom *tAtom = mol->getAtomWithIdx(*nbrIdx);
@@ -255,8 +256,8 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         // use the average of the three vectors:
         heavyPos = (*cfi)->getAtomPos(heavyIdx);
         nbr1Vect = heavyPos - (*cfi)->getAtomPos(nbr1->getIdx());
@@ -279,27 +280,45 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
         // direction...
         // correct for this (issue 2951221):
         if (fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) < 0.1) {
-          // compute the normal:
-          dirVect = nbr1Vect.crossProduct(nbr2Vect);
-          std::string cipCode;
-          if (heavyAtom->getPropIfPresent(common_properties::_CIPCode,
-                                          cipCode)) {
-            // the heavy atom is a chiral center, make sure
-            // that we went go the right direction to preserve
-            // its chirality. We use the chiral volume for this:
-            RDGeom::Point3D v1 = dirVect - nbr3Vect;
-            RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
-            RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
-            double vol = v1.dotProduct(v2.crossProduct(v3));
-            // FIX: this is almost certainly wrong and should use the chiral tag
-            if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
-              dirVect *= -1;
+          if ((*cfi)->is3D()) {
+            // compute the normal:
+            dirVect = nbr1Vect.crossProduct(nbr2Vect);
+            std::string cipCode;
+            if (heavyAtom->getPropIfPresent(common_properties::_CIPCode,
+                                            cipCode)) {
+              // the heavy atom is a chiral center, make sure
+              // that we went go the right direction to preserve
+              // its chirality. We use the chiral volume for this:
+              RDGeom::Point3D v1 = dirVect - nbr3Vect;
+              RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
+              RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
+              double vol = v1.dotProduct(v2.crossProduct(v3));
+              // FIX: this is almost certainly wrong and should use the chiral
+              // tag
+              if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
+                dirVect *= -1;
+              }
             }
+          } else {
+            // this was github #908
+            // We're in a 2D conformation, put the H between the two neighbors
+            // that have the widest angle between them:
+            double minDot = nbr1Vect.dotProduct(nbr2Vect);
+            dirVect = nbr1Vect + nbr2Vect;
+            if (nbr2Vect.dotProduct(nbr3Vect) < minDot) {
+              minDot = nbr2Vect.dotProduct(nbr3Vect);
+              dirVect = nbr2Vect + nbr3Vect;
+            }
+            if (nbr1Vect.dotProduct(nbr3Vect) < minDot) {
+              minDot = nbr1Vect.dotProduct(nbr3Vect);
+              dirVect = nbr1Vect + nbr3Vect;
+            }
+            dirVect *= -1;
           }
         } else {
           dirVect = nbr1Vect + nbr2Vect + nbr3Vect;
-          dirVect.normalize();
         }
+        dirVect.normalize();
         hydPos = heavyPos + dirVect * bondLength;
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
@@ -309,18 +328,78 @@ void setHydrogenCoords(ROMol *mol, unsigned int hydIdx, unsigned int heavyIdx) {
       // FIX: figure out what to do here
       // --------------------------------------------------------------------------
       hydPos = heavyPos + dirVect * bondLength;
-      for (ROMol::ConformerIterator cfi = mol->beginConformers();
-           cfi != mol->endConformers(); ++cfi) {
+      for (auto cfi = mol->beginConformers(); cfi != mol->endConformers();
+           ++cfi) {
         (*cfi)->setAtomPos(hydIdx, hydPos);
       }
       break;
   }
 }
+
+void AssignHsResidueInfo(RWMol &mol) {
+  int max_serial = 0;
+  unsigned int stopIdx = mol.getNumAtoms();
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    AtomPDBResidueInfo *info =
+        (AtomPDBResidueInfo *)(mol.getAtomWithIdx(aidx)->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE &&
+        info->getSerialNumber() > max_serial) {
+      max_serial = info->getSerialNumber();
+    }
+  }
+
+  AtomPDBResidueInfo *current_info = 0;
+  int current_h_id = 0;
+  for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
+    Atom *newAt = mol.getAtomWithIdx(aidx);
+    AtomPDBResidueInfo *info = (AtomPDBResidueInfo *)(newAt->getMonomerInfo());
+    if (info && info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE) {
+      ROMol::ADJ_ITER begin, end;
+      boost::tie(begin, end) = mol.getAtomNeighbors(newAt);
+      while (begin != end) {
+        if (mol.getAtomWithIdx(*begin)->getAtomicNum() == 1) {
+          // Make all Hs unique - increment id even for existing
+          ++current_h_id;
+          // skip if hyrogen already has PDB info
+          AtomPDBResidueInfo *h_info =
+              (AtomPDBResidueInfo *)mol.getAtomWithIdx(*begin)
+                  ->getMonomerInfo();
+          if (h_info && h_info->getMonomerType() == AtomMonomerInfo::PDBRESIDUE)
+            continue;
+          // the hydrogens have unique names on residue basis (H1, H2, ...)
+          if (!current_info ||
+              current_info->getResidueNumber() != info->getResidueNumber() ||
+              current_info->getChainId() != info->getChainId()) {
+            current_h_id = 1;
+            current_info = info;
+          }
+          std::string h_label = boost::lexical_cast<std::string>(current_h_id);
+          if (h_label.length() > 3)
+            h_label = h_label.substr(h_label.length() - 3, 3);
+          while (h_label.length() < 3) h_label = h_label + " ";
+          h_label = "H" + h_label;
+          // wrap around id to '3H12'
+          h_label = h_label.substr(3, 1) + h_label.substr(0, 3);
+          AtomPDBResidueInfo *newInfo = new AtomPDBResidueInfo(
+              h_label, max_serial, "", info->getResidueName(),
+              info->getResidueNumber(), info->getChainId(), "",
+              info->getIsHeteroAtom());
+          mol.getAtomWithIdx(*begin)->setMonomerInfo(newInfo);
+
+          ++max_serial;
+        }
+        ++begin;
+      }
+    }
+  }
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
+
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
-           const UINT_VECT *onlyOnAtoms) {
+           const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -331,13 +410,13 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // pre-allocate the necessary space on the conformations of the molecule
   // for their coordinates
   unsigned int numAddHyds = 0;
-  for (ROMol::AtomIterator at = mol.beginAtoms(); at != mol.endAtoms(); ++at) {
+  for (auto at : mol.atoms()) {
     if (!onlyOnAtoms ||
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), (*at)->getIdx()) !=
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
             onlyOnAtoms->end()) {
-      numAddHyds += (*at)->getNumExplicitHs();
+      numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
-        numAddHyds += (*at)->getNumImplicitHs();
+        numAddHyds += at->getNumImplicitHs();
       }
     }
   }
@@ -346,8 +425,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // loop over the conformations of the molecule and allocate new space
   // for the H locations (need to do this even if we aren't adding coords so
   // that the conformers have the correct number of atoms).
-  for (ROMol::ConformerIterator cfi = mol.beginConformers();
-       cfi != mol.endConformers(); ++cfi) {
+  for (auto cfi = mol.beginConformers(); cfi != mol.endConformers(); ++cfi) {
     (*cfi)->reserve(nSize);
   }
 
@@ -393,11 +471,14 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // update the atom's derived properties (valence count, etc.)
     newAt->updatePropertyCache();
   }
+  // take care of AtomPDBResidueInfo for Hs if root atom has it
+  if (addResidueInfo) AssignHsResidueInfo(mol);
 }
+
 ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
-             const UINT_VECT *onlyOnAtoms) {
-  RWMol *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords, onlyOnAtoms);
+             const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
+  auto *res = new RWMol(mol);
+  addHs(*res, explicitOnly, addCoords, onlyOnAtoms, addResidueInfo);
   return static_cast<ROMol *>(res);
 };
 
@@ -429,9 +510,17 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
     ++origIdx;
     if (atom->getAtomicNum() == 1) {
       bool removeIt = false;
-
       if (atom->hasProp(common_properties::isImplicit)) {
         removeIt = true;
+        if (atom->getDegree() == 1) {
+          // by default we remove implicit Hs, but not if they are
+          // attached to dummy atoms. This was Github #1439
+          ROMol::ADJ_ITER begin, end;
+          boost::tie(begin, end) = mol.getAtomNeighbors(atom);
+          if (mol.getAtomWithIdx(*begin)->getAtomicNum() < 1) {
+            removeIt = false;
+          }
+        }
       } else if (!implicitOnly && !atom->getIsotope() &&
                  atom->getDegree() == 1) {
         ROMol::ADJ_ITER begin, end;
@@ -447,7 +536,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         // note the assumption that the H only has one neighbor... I
         // feel no need to handle the case of hypervalent hydrogen!
         // :-)
-        const BOND_SPTR bond = mol[*beg];
+        const Bond *bond = mol[*beg];
         Atom *heavyAtom = bond->getOtherAtom(atom);
         int heavyAtomNum = heavyAtom->getAtomicNum();
         const INT_VECT &defaultVs =
@@ -515,20 +604,20 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
             bond->getBondDir() == Bond::ENDUPRIGHT) {
           bool foundADir = false;
-          Bond *oBond = NULL;
+          Bond *oBond = nullptr;
           boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
           while (beg != end) {
             if (mol[*beg]->getIdx() != bond->getIdx() &&
                 mol[*beg]->getBondType() == Bond::SINGLE) {
               if (mol[*beg]->getBondDir() == Bond::NONE) {
-                oBond = mol[*beg].get();
+                oBond = mol[*beg];
               } else {
                 foundADir = true;
               }
             }
             ++beg;
           }
-          if (!foundADir && oBond != NULL) {
+          if (!foundADir && oBond != nullptr) {
             bool flipIt = (oBond->getBeginAtom() == heavyAtom) &&
                           (bond->getBeginAtom() == heavyAtom);
             if (flipIt) {
@@ -577,7 +666,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   try {
     removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
   } catch (MolSanitizeException &se) {
@@ -715,7 +804,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           // it wasn't a query atom, we need to replace it so that we can add a
           // query:
           ATOM_EQUALS_QUERY *tmp = makeAtomNumQuery(atom->getAtomicNum());
-          QueryAtom *newAt = new QueryAtom;
+          auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
           mol.replaceAtom(atom->getIdx(), newAt);
           delete newAt;
@@ -772,7 +861,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
   }
 };
 ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
-  RWMol *res = new RWMol(mol);
+  auto *res = new RWMol(mol);
   mergeQueryHs(*res, mergeUnmappedOnly);
   return static_cast<ROMol *>(res);
 };

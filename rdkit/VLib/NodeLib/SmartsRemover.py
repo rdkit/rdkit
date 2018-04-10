@@ -3,11 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from rdkit import RDConfig
-from rdkit import six
-import sys,os,types
 from rdkit import Chem
 from rdkit.VLib.Transform import TransformNode
+
 
 class SmartsRemover(TransformNode):
   """ transforms molecules by removing atoms matching smarts patterns
@@ -75,33 +73,35 @@ class SmartsRemover(TransformNode):
 
 
   """
-  def __init__(self,patterns=[],wholeFragments=1,**kwargs):
-    TransformNode.__init__(self,func=self.transform,**kwargs)
+
+  def __init__(self, patterns=[], wholeFragments=1, **kwargs):
+    TransformNode.__init__(self, func=self.transform, **kwargs)
     self._wholeFragments = wholeFragments
     self._initPatterns(patterns)
 
-  def _initPatterns(self,patterns):
+  def _initPatterns(self, patterns):
     nPatts = len(patterns)
-    targets = [None]*nPatts
+    targets = [None] * nPatts
     for i in range(nPatts):
       p = patterns[i]
-      if type(p) in (str,bytes):
+      if type(p) in (str, bytes):
         m = Chem.MolFromSmarts(p)
         if not m:
-          raise ValueError('bad smarts: %s'%(p))
+          raise ValueError('bad smarts: %s' % (p))
         p = m
       targets[i] = p
-    self._patterns = tuple(targets)  
-      
-  def transform(self,cmpd):
-    #sys.stderr.write('\tTRANSFORM: %s\n'%(Chem.MolToSmiles(cmpd)))
+    self._patterns = tuple(targets)
+
+  def transform(self, cmpd):
+    # sys.stderr.write('\tTRANSFORM: %s\n'%(Chem.MolToSmiles(cmpd)))
     for patt in self._patterns:
-      cmpd = Chem.DeleteSubstructs(cmpd,patt,onlyFrags=self._wholeFragments)
-      #sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
-      
+      cmpd = Chem.DeleteSubstructs(cmpd, patt, onlyFrags=self._wholeFragments)
+      # sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
+
     return cmpd
 
-biggerTest="""
+
+biggerTest = """
 >>> smis = ['CCOC','CCO.Cl','CC(=O)[O-].[Na+]','OCC','C[N+](C)(C)C.[Cl-]']
 >>> mols = [Chem.MolFromSmiles(x) for x in smis]
 >>> from rdkit.VLib.Supply import SupplyNode
@@ -135,17 +135,23 @@ biggerTest="""
 
 """
 
-#------------------------------------
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-__test__={'bigger':biggerTest}
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
+__test__ = {'bigger': biggerTest}
 
 
-if __name__ == '__main__':
+# ------------------------------------
+#
+#  doctest boilerplate
+#
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
+
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

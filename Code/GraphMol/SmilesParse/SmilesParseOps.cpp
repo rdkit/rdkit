@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2016 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,36 +20,54 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+void ClearAtomChemicalProps(RDKit::Atom *atom) {
+  TEST_ASSERT(atom);
+  atom->setIsotope(0);
+  atom->setFormalCharge(0);
+  atom->setNumExplicitHs(0);
+}
+
 void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
-  // github #786: if the ring closure comes after a branch,
+  // github #786 and #1652: if the ring closure comes after a branch,
   // the stereochem is wrong.
-  // detect the branch (= atom isn't the last one)
-  // and reverse the stereochem if the atom has chiral stereochemistry
-  // and is currently degree two (protects against C1CN[C@](O)(N)1)
-  if (atom->getIdx() != mp->getNumAtoms(true) - 1 && atom->getDegree() == 2 &&
+  // This function is called while closing a branch during construction of
+  // the molecule from SMILES and corrects for what happens when parsing odd
+  // (and arguably wrong) SMILES constructs like:
+  //   1) [C@@](F)1(C)CCO1
+  //   2) C1CN[C@](O)(N)1
+  //   3) [C@](Cl)(F)1CC[C@H](F)CC1
+  // In the first two cases the stereochemistry at the chiral atom
+  // needs to be reversed. In the third case the stereochemistry should be
+  // reversed when the Cl is added, but left alone when the F is added.
+  // We recognize these situations using the index of the chiral atom
+  // and the degree of that chiral atom at the time the ring closure
+  // digit is encountered during parsing.
+  if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
+      (atom->getDegree() == 1 ||
+       (atom->getDegree() == 2 && atom->getIdx() != 0)) &&
       (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) ) {
+       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)) {
     atom->invertChirality();
   }
 }
 
 void ReportParseError(const char *message, bool throwIt) {
-  if (!throwIt)
+  if (!throwIt) {
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << message << std::endl;
-  else
+  } else {
     throw SmilesParseException(message);
+  }
 }
 
 void CleanupAfterParseError(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   // blow out any partial bonds:
   RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
-  RWMol::BOND_BOOKMARK_MAP::iterator markI = marks->begin();
+  auto markI = marks->begin();
   while (markI != marks->end()) {
     RWMol::BOND_PTR_LIST &bonds = markI->second;
-    for (RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
-         bondIt != bonds.end(); ++bondIt) {
-      delete *bondIt;
+    for (auto &bond : bonds) {
+      delete bond;
     }
     ++markI;
   }
@@ -148,7 +165,7 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
         // semantics are different in SMARTS, unspecified bonds can be single or
         // aromatic:
         if (bondOrder == Bond::UNSPECIFIED) {
-          QueryBond *newB = new QueryBond(Bond::SINGLE);
+          auto *newB = new QueryBond(Bond::SINGLE);
           newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
                             Queries::COMPOSITE_OR, true);
           newB->setOwningMol(mol);
@@ -217,8 +234,10 @@ void _invChiralRingAtomWithHs(Atom *atom) {
     atom->invertChirality();
   }
 }
+typedef std::pair<size_t, size_t> SIZET_PAIR;
 typedef std::pair<int, int> INT_PAIR;
-bool operator<(const INT_PAIR &p1, const INT_PAIR &p2) {
+template <typename T>
+bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
   return p1.first < p2.first;
 }
 namespace {
@@ -226,13 +245,48 @@ bool isUnsaturated(const Atom *atom, const RWMol *mol) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol->getAtomBonds(atom);
   while (beg != end) {
-    const BOND_SPTR bond = (*mol)[*beg];
+    const Bond *bond = (*mol)[*beg];
     ++beg;
     if (bond->getBondType() != Bond::SINGLE) return true;
   }
   return false;
 }
+
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
+  // list queries are series of nested ors of AtomAtomicNum queries
+  PRECONDITION(q, "bad query");
+  bool res = false;
+  std::string descr = q->getDescription();
+  if (descr == "AtomAnd") {
+    for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
+      std::string descr = (*cIt)->getDescription();
+      if (descr == "AtomHCount") {
+        if (!(*cIt)->getNegation() &&
+            ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
+          return true;
+        }
+        return false;
+      } else if (descr == "AtomAnd") {
+        res = hasSingleHQuery((*cIt).get());
+        if (res) return true;
+      }
+    }
+  }
+  return res;
 }
+
+bool atomHasExplicitHs(const Atom *atom) {
+  if (atom->getNumExplicitHs()) return true;
+  if (atom->hasQuery()) {
+    // the SMARTS [C@@H] produces an atom with a H query, but we also
+    // need to treat this like an explicit H for chirality purposes
+    // This was Github #1489
+    bool res = hasSingleHQuery(atom->getQuery());
+    return res;
+  }
+  return false;
+}
+}  // end of anonymous namespace
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (RWMol::AtomIterator atomIt = mol->beginAtoms();
@@ -252,16 +306,16 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
                                   ringClosures);
 
 #if 0
-        std::cout << "CLOSURES: ";
-        std::copy(ringClosures.begin(),ringClosures.end(),
-            std::ostream_iterator<int>(std::cout," "));
-        std::cout << std::endl;
+      std::cout << "CLOSURES: ";
+      std::copy(ringClosures.begin(), ringClosures.end(),
+                std::ostream_iterator<int>(std::cout, " "));
+      std::cout << std::endl;
 #endif
-      std::list<INT_PAIR> neighbors;
+      std::list<SIZET_PAIR> neighbors;
       // push this atom onto the list of neighbors (we'll use this
       // to find our place later):
       neighbors.push_back(std::make_pair((*atomIt)->getIdx(), -1));
-      std::list<int> bondOrder;
+      std::list<size_t> bondOrder;
       RWMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
       while (nbrIdx != endNbrs) {
@@ -279,19 +333,19 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       // find the location of this atom.  it pretty much has to be
       // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
       // second (everything else).
-      std::list<INT_PAIR>::iterator selfPos = neighbors.begin();
-      if (selfPos->first != static_cast<int>((*atomIt)->getIdx())) {
+      auto selfPos = neighbors.begin();
+      if (selfPos->first != (*atomIt)->getIdx()) {
         ++selfPos;
       }
-      CHECK_INVARIANT(selfPos->first == static_cast<int>((*atomIt)->getIdx()),
+      CHECK_INVARIANT(selfPos->first == (*atomIt)->getIdx(),
                       "weird atom ordering");
 
       // copy over the bond ids:
       INT_LIST bondOrdering;
-      for (std::list<INT_PAIR>::iterator neighborIt = neighbors.begin();
-           neighborIt != neighbors.end(); ++neighborIt) {
+      for (auto neighborIt = neighbors.begin(); neighborIt != neighbors.end();
+           ++neighborIt) {
         if (neighborIt != selfPos) {
-          bondOrdering.push_back(neighborIt->second);
+          bondOrdering.push_back(rdcast<int>(neighborIt->second));
         } else {
           // we are not going to add the atom itself, but we will push on
           // ring closure bonds at this point (if required):
@@ -332,7 +386,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       if ((*atomIt)->getDegree() == 3 &&
           (((*atomIt)->getNumExplicitHs() &&
             (*atomIt)->hasProp(common_properties::_SmilesStart)) ||
-           (!(*atomIt)->getNumExplicitHs() && ringClosures.size() == 1 &&
+           (!atomHasExplicitHs(*atomIt) && ringClosures.size() == 1 &&
             !isUnsaturated(*atomIt, mol)))) {
         ++nSwaps;
       }
@@ -377,7 +431,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
   while (bookmarkIt != mol->getAtomBookmarks()->end()) {
     // don't bother even considering bookmarks outside
     // the range used for loops
-    if (bookmarkIt->first < 100 && bookmarkIt->first >= 0) {
+    if (bookmarkIt->first < 100000 && bookmarkIt->first >= 0) {
       RWMol::ATOM_PTR_LIST::iterator atomIt, atomsEnd;
       RWMol::ATOM_PTR_LIST bookmarkedAtomsToRemove;
       atomIt = bookmarkIt->second.begin();
@@ -409,7 +463,7 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
           // atom set already:
           RWMol::BOND_PTR_LIST bonds =
               mol->getAllBondsWithBookmark(bookmarkIt->first);
-          RWMol::BOND_PTR_LIST::iterator bondIt = bonds.begin();
+          auto bondIt = bonds.begin();
           CHECK_INVARIANT(bonds.size() >= 2, "Missing bond");
 
           // get pointers to the two bonds:
@@ -492,8 +546,8 @@ void CloseMolRings(RWMol *mol, bool toleratePartials) {
                 "somehow atom doesn't have _RingClosures property.");
             INT_VECT closures;
             atom1->getProp(common_properties::_RingClosures, closures);
-            INT_VECT::iterator closurePos = std::find(
-                closures.begin(), closures.end(), -(bookmarkIt->first + 1));
+            auto closurePos = std::find(closures.begin(), closures.end(),
+                                        -(bookmarkIt->first + 1));
             CHECK_INVARIANT(closurePos != closures.end(),
                             "could not find bookmark in atom _RingClosures");
             *closurePos = bondIdx - 1;

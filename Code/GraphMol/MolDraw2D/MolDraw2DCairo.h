@@ -25,12 +25,15 @@ namespace RDKit {
 class MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
-  MolDraw2DCairo(int width, int height, cairo_t *cr)
-      : MolDraw2D(width, height), dp_cr(cr) {
+  MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,
+                 int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
     initDrawing();
   };
-  MolDraw2DCairo(int width, int height) : MolDraw2D(width, height) {
+  MolDraw2DCairo(int width, int height, int panelWidth = -1,
+                 int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight) {
     cairo_surface_t *surf =
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     dp_cr = cairo_create(surf);
@@ -62,6 +65,10 @@ class MolDraw2DCairo : public MolDraw2D {
   // void drawString( const std::string &str, const Point2D &cds );
   void drawPolygon(const std::vector<Point2D> &cds);
   void clearDrawing();
+
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05);
 
   // using the current scale, work out the size of the label in molecule
   // coordinates

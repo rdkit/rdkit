@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2018 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,12 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_UFFBUILDER_H_
-#define _RD_UFFBUILDER_H_
+#ifndef RD_UFFBUILDER_H
+#define RD_UFFBUILDER_H
 
 #include <vector>
 #include <string>
 #include <boost/shared_array.hpp>
+#include <boost/scoped_ptr.hpp>
+#ifdef RDK_THREADSAFE_SSS
+#include <mutex>
+#endif
+#include <boost/noncopyable.hpp>
 
 namespace ForceFields {
 class ForceField;
@@ -71,8 +76,24 @@ ForceFields::ForceField *constructForceField(
     int confId = -1, bool ignoreInterfragInteractions = true);
 
 namespace Tools {
+class DefaultTorsionBondSmarts : private boost::noncopyable {
+ public:
+  static const std::string &string() { return ds_string; }
+  static const ROMol *query();
+
+ private:
+  DefaultTorsionBondSmarts() {}
+  static void create();
+  static const std::string ds_string;
+  static boost::scoped_ptr<const ROMol> ds_instance;
+#ifdef RDK_THREADSAFE_SSS
+  static std::once_flag ds_flag;
+#endif
+};
+
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
+unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
 void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
                    boost::uint8_t value);
 boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
@@ -87,9 +108,10 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
                   boost::shared_array<boost::uint8_t> neighborMatrix,
                   double vdwThresh = 100.0,
                   bool ignoreInterfragInteractions = true);
-void addTorsions(const ROMol &mol, const AtomicParamVect &params,
-                 ForceFields::ForceField *field,
-                 std::string torsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]");
+void addTorsions(
+    const ROMol &mol, const AtomicParamVect &params,
+    ForceFields::ForceField *field,
+    const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
 void addInversions(const ROMol &mol, const AtomicParamVect &params,
                    ForceFields::ForceField *field);
 }

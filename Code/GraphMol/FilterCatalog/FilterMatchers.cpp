@@ -32,6 +32,8 @@
 #include "FilterMatchers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
+#include <utility>
+
 namespace RDKit {
 const char *DEFAULT_FILTERMATCHERBASE_NAME = "Unnamed FilterMatcherBase";
 const char *SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
@@ -63,7 +65,7 @@ SmartsMatcher::SmartsMatcher(const std::string &name, const std::string &smarts,
 SmartsMatcher::SmartsMatcher(const std::string &name, ROMOL_SPTR pattern,
                              unsigned int minCount, unsigned int maxCount)
     : FilterMatcherBase(name),
-      d_pattern(pattern),
+      d_pattern(std::move(pattern)),
       d_min_count(minCount),
       d_max_count(maxCount) {}
 
@@ -91,7 +93,7 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
   if (d_min_count == 1 && d_max_count == UINT_MAX) {
     RDKit::MatchVectType match;
     onPatExists = RDKit::SubstructMatch(mol, *d_pattern.get(), match);
-    if (onPatExists) matchVect.push_back(FilterMatch(Clone(), match));
+    if (onPatExists) matchVect.push_back(FilterMatch(copy(), match));
   } else {  // need to count
     const bool uniquify = true;
     unsigned int count =
@@ -99,9 +101,9 @@ bool SmartsMatcher::getMatches(const ROMol &mol,
     onPatExists = (count >= d_min_count &&
                    (d_max_count == UINT_MAX || count <= d_max_count));
     if (onPatExists) {
-      boost::shared_ptr<FilterMatcherBase> clone = Clone();
-      for (size_t i = 0; i < matches.size(); ++i) {
-        matchVect.push_back(FilterMatch(clone, matches[i]));
+      boost::shared_ptr<FilterMatcherBase> clone = copy();
+      for (auto &match : matches) {
+        matchVect.push_back(FilterMatch(clone, match));
       }
     }
   }
@@ -134,12 +136,13 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
   if (result) {
     std::vector<FilterMatch> children;
 
-    BOOST_FOREACH(boost::shared_ptr<FilterHierarchyMatcher> matcher, d_children) {
+    BOOST_FOREACH (boost::shared_ptr<FilterHierarchyMatcher> matcher,
+                   d_children) {
       matcher->getMatches(mol, children);
     }
 
     if (children.size()) {
-        m.insert(m.end(), children.begin(), children.end());      
+      m.insert(m.end(), children.begin(), children.end());
     } else {
       m.insert(m.end(), temp.begin(), temp.end());
     }
@@ -147,5 +150,4 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
 
   return result;
 }
-
 }

@@ -92,9 +92,9 @@ AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
   PRECONDITION(owner, "bad owner");
   PRECONDITION(((idx1 != idx2) && (idx2 != idx3) && (idx1 != idx3)),
                "degenerate points");
-  URANGE_CHECK(idx1, owner->positions().size() - 1);
-  URANGE_CHECK(idx2, owner->positions().size() - 1);
-  URANGE_CHECK(idx3, owner->positions().size() - 1);
+  URANGE_CHECK(idx1, owner->positions().size());
+  URANGE_CHECK(idx2, owner->positions().size());
+  URANGE_CHECK(idx3, owner->positions().size());
 
   dp_forceField = owner;
   d_at1Idx = idx1;

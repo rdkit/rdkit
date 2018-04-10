@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2013 Greg Landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2017 Greg Landrum, Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -56,12 +56,12 @@ class SmilesWriter : public MolWriter {
    */
   SmilesWriter(const std::string &fileName, const std::string &delimiter = " ",
                const std::string &nameHeader = "Name",
-               bool includeHeader = true, bool isomericSmiles = false,
+               bool includeHeader = true, bool isomericSmiles = true,
                bool kekuleSmiles = false);
   //! \overload
   SmilesWriter(std::ostream *outStream, std::string delimiter = " ",
                std::string nameHeader = "Name", bool includeHeader = true,
-               bool takeOwnership = false, bool isomericSmiles = false,
+               bool takeOwnership = false, bool isomericSmiles = true,
                bool kekuleSmiles = false);
 
   ~SmilesWriter();
@@ -80,9 +80,8 @@ class SmilesWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &) {
       }
     }
   };
@@ -158,9 +157,8 @@ class SDWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &) {
       }
     }
   };
@@ -229,9 +227,8 @@ class TDTWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &) {
       }
     }
   };
@@ -293,9 +290,8 @@ class PDBWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good())
-          dp_ostream->setstate(std::ios::badbit);
-      } catch (const std::runtime_error& e) {
+        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+      } catch (const std::runtime_error &) {
       }
     }
   };

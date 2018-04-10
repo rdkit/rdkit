@@ -42,7 +42,7 @@ void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
 
   // finally make sure all the class ID in d_biasList are within range
   for (bi = d_biasList.begin(); bi != d_biasList.end(); bi++) {
-    URANGE_CHECK(static_cast<unsigned int>(*bi), d_classes - 1);
+    URANGE_CHECK(static_cast<unsigned int>(*bi), d_classes);
   }
 }
 
@@ -83,9 +83,8 @@ bool InfoBitRanker::BiasCheckBit(RDKit::USHORT *resMat) const {
   }
 
   bool bitOk = false;
-  for (RDKit::INT_VECT_CI bci = d_biasList.begin(); bci != d_biasList.end();
-       ++bci) {
-    if (fracs[*bci] >= maxCor) {
+  for (int bci : d_biasList) {
+    if (fracs[bci] >= maxCor) {
       bitOk = true;
       break;
     }
@@ -115,7 +114,7 @@ double InfoBitRanker::BiasInfoEntropyGain(RDKit::USHORT *resMat) const {
 
 void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv,
                                     unsigned int label) {
-  URANGE_CHECK(label, d_classes - 1);
+  URANGE_CHECK(label, d_classes);
   CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
   d_nInst += 1;
@@ -129,15 +128,14 @@ void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv,
 
 void InfoBitRanker::accumulateVotes(const SparseBitVect &bv,
                                     unsigned int label) {
-  URANGE_CHECK(label, d_classes - 1);
+  URANGE_CHECK(label, d_classes);
   CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
   d_nInst += 1;
   d_clsCount[label] += 1;
-  for (IntSet::const_iterator obi = bv.dp_bits->begin();
-       obi != bv.dp_bits->end(); ++obi) {
-    if (!dp_maskBits || dp_maskBits->getBit(*obi)) {
-      d_counts[label][(*obi)] += 1;
+  for (int dp_bit : *bv.dp_bits) {
+    if (!dp_maskBits || dp_maskBits->getBit(dp_bit)) {
+      d_counts[label][dp_bit] += 1;
     }
   }
 }
@@ -156,7 +154,7 @@ double *InfoBitRanker::getTopN(unsigned int num) {
   if (dp_maskBits)
     CHECK_INVARIANT(num <= dp_maskBits->getNumOnBits(),
                     "Can't rank more bits than the ensemble size");
-  RDKit::USHORT *resMat = new RDKit::USHORT[2 * d_classes];
+  auto *resMat = new RDKit::USHORT[2 * d_classes];
 
   PR_QUEUE topN;
 

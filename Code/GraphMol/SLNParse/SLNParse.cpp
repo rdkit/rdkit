@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -40,7 +39,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
+#include <regex>
 
 int yysln_parse(const char *, std::vector<RDKit::RWMol *> *, bool, void *);
 int yysln_lex_init(void **);
@@ -73,8 +72,8 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
          atomIt != mol->endAtoms(); ++atomIt) {
       // set a query for the H count:
       if ((*atomIt)->getNumExplicitHs()) {
-        (*atomIt)
-            ->expandQuery(makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
+        (*atomIt)->expandQuery(
+            makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
       }
     }
   }
@@ -104,13 +103,14 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
 
 std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
   RDUNUSED_PARAM(debugParse);
-  const boost::regex defn("\\{(.+?):(.+?)\\}");
+  const std::regex defn("\\{(.+?):(.+?)\\}");
   const char *empty = "";
 
   std::string res;
   // remove any macro definitions:
-  res = boost::regex_replace(inp, defn, empty,
-                             boost::match_default | boost::format_all);
+  res = std::regex_replace(
+      inp, defn, empty,
+      std::regex_constants::match_default | std::regex_constants::format_sed);
 
   if (res != inp) {
     // there are macro definitions, we're going to replace
@@ -118,18 +118,19 @@ std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
     std::string::const_iterator start, end;
     start = inp.begin();
     end = inp.end();
-    boost::match_results<std::string::const_iterator> what;
-    boost::match_flag_type flags = boost::match_default;
-    while (regex_search(start, end, what, defn, flags)) {
+    std::match_results<std::string::const_iterator> what;
+    std::regex_constants::match_flag_type flags =
+        std::regex_constants::match_default;
+    while (std::regex_search(start, end, what, defn, flags)) {
       std::string macroNm(what[1].first, what[1].second);
       std::string macroVal(what[2].first, what[2].second);
-      res = boost::regex_replace(res, boost::regex(macroNm), macroVal.c_str(),
-                                 boost::match_default | boost::format_all);
+      res = std::regex_replace(res, std::regex(macroNm), macroVal.c_str(),
+                               std::regex_constants::match_default |
+                                   std::regex_constants::format_sed);
       // update search position:
       start = what[0].second;
       // update flags:
-      flags |= boost::match_prev_avail;
-      flags |= boost::match_not_bob;
+      flags |= std::regex_constants::match_prev_avail;
     }
   }
   return res;
@@ -146,10 +147,10 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
   try {
     sln_parse(inp, doQueries, molVect);
     if (molVect.size() <= 0) {
-      res = 0;
+      res = nullptr;
     } else {
       res = molVect[0];
-      molVect[0] = 0;
+      molVect[0] = nullptr;
       for (ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt =
                res->getBondBookmarks()->begin();
            bmIt != res->getBondBookmarks()->end(); ++bmIt) {
@@ -164,7 +165,7 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     }
   } catch (SLNParseException &e) {
     BOOST_LOG(rdErrorLog) << e.message() << std::endl;
-    res = 0;
+    res = nullptr;
   }
   if (res) {
     // cleanup:
@@ -175,9 +176,8 @@ RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
     // since we'll be removing Hs later and that will break things:
     adjustAtomChiralities(res);
   }
-  for (std::vector<RDKit::RWMol *>::iterator iter = molVect.begin();
-       iter != molVect.end(); ++iter) {
-    if (*iter) delete *iter;
+  for (auto &iter : molVect) {
+    if (iter) delete iter;
   }
   return res;
 };

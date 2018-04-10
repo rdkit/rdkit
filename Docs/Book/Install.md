@@ -1,6 +1,6 @@
 # Installation
 
-Below a number of installation recipies is presented, with varying degree of complexity.
+Below a number of installation recipes is presented, with varying degree of complexity.
 
 ## Cross-platform under anaconda python (fastest install)
 
@@ -10,15 +10,15 @@ Conda is an open-source, cross-platform, software package manager. It supports t
 
 ### How to get conda
 
-The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](http://docs.continuum.io/anaconda/install.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](http://conda.pydata.org/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](http://conda.pydata.org/).
+The easiest way to get Conda is having it installed as part of the [Anaconda Python distribution](https://conda.io/docs/user-guide/install/index.html). A possible (but a bit more complex to use) alternative is provided with the smaller and more self-contained [Miniconda](https://conda.io/miniconda.html). The conda source code repository is available on [github](https://github.com/conda) and additional documentation is provided by the project [website](https://conda.io/docs/).
 
 ### How to install RDKit with Conda
 
-Creating a new conda environment with the RDKit installed using these  packages requires one single command similar to the following::
+Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
-  $ conda create -c https://conda.anaconda.org/rdkit -n my-rdkit-env rdkit
+  $ conda create -c rdkit -n my-rdkit-env rdkit
 
-Finally, the new environment must be activated, so that the corresponding python interpreter becomes available in the same shell:
+Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
   $ source activate my-rdkit-env
 
@@ -33,7 +33,39 @@ Windows users will use a slightly different command:
 
 ### How to build from source with Conda
 
-For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit)
+For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
+
+#### macOS 10.12 (Sierra): Python 3 environment
+
+The following commands will create a development environment for macOS Sierra and Python 3. Download
+Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
+following commands:
+
+	bash Miniconda3-latest-MacOSX-x86_64.sh
+    conda install numpy matplotlib
+    conda install cmake cairo pillow eigen pkg-config
+    conda install boost-cpp boost py-boost
+
+Optionally, add the following packages to your environment as useful development tools.
+
+	pip install yapf==0.11.1
+	pip install coverage==3.7.1
+
+Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set in the
+cmake command.
+
+	PYROOT=<path to miniconda3>
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.6m  \
+      -DRDK_BUILD_AVALON_SUPPORT=ON \
+      -DRDK_BUILD_CAIRO_SUPPORT=ON \
+      -DRDK_BUILD_INCHI_SUPPORT=ON \
+	  ..
+Once "make" and "make install" completed successfully, use the following command to run the tests:
+
+	RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+
+This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection)
+introduced in more recent macOS versions.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
@@ -41,7 +73,7 @@ Due to the conda python distribution being a different version to the system pyt
 
 With your environment activated, this is done simply by:
 
-    conda install -c https://conda.binstar.org/rdkit rdkit-postgresql
+    conda install -c rdkit rdkit-postgresql
 
 The conda packages PostgreSQL version needs to be initialized by running the initdb command found in [conda folder]/envs/my-rdkit-env/bin
 
@@ -78,7 +110,8 @@ Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu re
 
 #### Fedora, CentOS, and RHEL
 
-Gianluca Sforna creates binary RPMs that can be found here: [http://giallu.fedorapeople.org/rdkit-20XX.XX/](http://giallu.fedorapeople.org/rdkit-20XX.XX/)
+Thanks to Gianluca Sforna's work, binary RPMs for the RDKit are now part of the official Fedora repositories:
+https://admin.fedoraproject.org/pkgdb/package/rpms/rdkit/
 
 #### OS X
 
@@ -86,41 +119,17 @@ Eddie Cao has produced a homebrew formula that can be used to easily build the R
 
 ### Building from Source
 
-#### Prerequisites
+Starting with the `2018_03` release, the RDKit core C++ code is written in modern C++; for this release that means C++11.
+This means that the compilers used to build it cannot be completely ancient. Here are the minimum tested versions:
 
-##### Installing prerequisites as packages
+- g++ v4.8: though note that the SLN parser code cannot be built with v4.8. It will automatically be disabled when this older compiler is used.
+- clang v3.9: it may be that older versions of the compiler also work, but we haven't tested them.
+- Visual Studio 2015: it may be that older versions of the compiler also work, but we haven't tested them.
 
-###### Ubuntu and other debian-derived systems
-
-Install the following packages using apt-get:
-
-    build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev libboost-dev libboost-system-dev libboost-thread-dev libboost-serialization-dev libboost-python-dev libboost-regex-dev
-
-###### Fedora, CentOS (5.7+), and RHEL
-
-Install the following packages using yum:
-
-    cmake tk-devel readline-devel zlib-devel bzip2-devel sqlite-devel @development-tools
-
-Packages to install from source (not required on RHEL/CentOS 6.x):
-
--   python 2.7 : use `./configure CFLAGS=-fPIC --enable-unicode=ucs4 --enable-shared`
--   numpy : do `export LD\_LIBRARY\_PATH="/usr/local/lib"` before `python setup.py install`
--   boost 1.48.0 or later: do `./bootstrap.sh --with-libraries=python,regex; ./b2; ./b2 install`
-
-###### Older versions of CentOS
-
-Here things are more difficult. Check this wiki page for information: https://code.google.com/p/rdkit/wiki/BuildingOnCentOS
-
-##### Installing prerequisites from source
+#### Installing prerequisites from source
 
 -   Required packages:
-  -   cmake. You need version 2.6 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
-
-         > **note**
-         >
-         > It seems that v2.8 is a better bet than v2.6. It might be worth compiling your own copy of v2.8 even if v2.6 is already installed.
-
+  -   cmake. You need version 3.1 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
   - The following are required if you are planning on using the Python wrappers
       -   The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
       -   sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
@@ -133,7 +142,7 @@ Here things are more difficult. Check this wiki page for information: https://co
 
 ###### Installing Boost
 
-If your linux distribution has a boost-devel package including the python, regex, threading, and serialization libraries, you can use that and save yourself the steps below.
+If your linux distribution has a boost-devel package with a version >= 1.58 including the python and serialization libraries, you can use that and save yourself the steps below.
 
 > **note**
 >
@@ -143,8 +152,8 @@ If your linux distribution has a boost-devel package including the python, regex
 -   extract the source somewhere on your machine (e.g. `/usr/local/src/boost_1_58_0`)
 -   build the required boost libraries. The boost site has [detailed instructions](http://www.boost.org/doc/libs/1_58_0/more/getting_started/index.html) for this, but here's an overview:
    -   `cd $BOOST`
-   -   If you want to use the python wrappers: `./bootstrap.sh --with-libraries=python,regex,thread,serialization`
-   -   If not using the python wrappers: `./bootstrap.sh --with-libraries=regex,thread,serialization`
+   -   If you want to use the python wrappers: `./bootstrap.sh --with-libraries=python,serialization`
+   -   If not using the python wrappers: `./bootstrap.sh --with-libraries=serialization`
    -   `./b2 install`
 
      If you have any problems with this step, check the boost [installation instructions](http://www.boost.org/more/getting_started/unix-variants.html).
@@ -209,13 +218,14 @@ You can completely disable building of the python wrappers:
 
 - You can enable support for generating InChI strings and InChI keys by adding the argument `-DRDK_BUILD_INCHI_SUPPORT=ON` to your cmake command line.
 - You can enable support for the Avalon toolkit by adding the argument `-DRDK_BUILD_AVALON_SUPPORT=ON` to your cmake command line.
-- If you'd like to be able to generate high-quality PNGs for structure depiction cairo (for use with Python2) or cairocffi (for use with Python3) and their respective Python bindings are recommended.
+- If you'd like to be able to generate high-quality PNGs for structure depiction, you should have cairo installed on your system and build the RDKit with cairo support enabled: `-DRDK_BUILD_CAIRO_SUPPORT=ON`
+- If you'd like to be able to use the 3D descriptors, you need to have a copy of eigen3 installed. Most operating systems have an appropriate package.
 
 ##### Building the Java wrappers
 
 *Additional Requirements*
 
--   SWIG v2.0.x: http://www.swig.org
+-   SWIG >v2.0: http://www.swig.org
 
 *Building*
 
@@ -284,7 +294,7 @@ Your system has a version of boost installed in /usr/lib, but you would like to 
 
 *Solution:*
 
-This can be solved by using cmake version 2.8.3 (or more recent) and providing the `-D Boost_NO_SYSTEM_PATHS=ON` argument:
+This can be solved by providing the `-D Boost_NO_SYSTEM_PATHS=ON` argument:
 
     cmake -D BOOST_ROOT=/usr/local -D Boost_NO_SYSTEM_PATHS=ON ..
 
@@ -347,9 +357,9 @@ In Win7 systems, you may run into trouble due to missing DLLs, see one thread fr
 
 #### Extra software to install
 
--   Microsoft Visual C++ : The Community version has everything necessary and can be downloaded for free (<https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx>). This is a big installation and will take a while. The RDKit has been successfully built with all version of Visual C++ since 6.0, so the current version of VC++ (2015 as of this writing) should be fine.
+-   Microsoft Visual C++ : The Community version has everything necessary and can be downloaded for free (<https://www.visualstudio.com/vs/community>). This is a big installation and will take a while. The RDKit has been built with Visual Studio 2015 and 2017. More recent versions should be fine.
 -   cmake : (<http://www.cmake.org/cmake/resources/software.html>) should be installed.
--   boost : It is strongly recommended to download and use a precompiled version of the boost libraries from <http://sourceforge.net/projects/boost/files/boost-binaries/> . When you run the installer, the only binary libraries you need are python, regex, and system. If you want to install boost from source, download a copy from <http://www.boost.org> and follow the instructions in the "Getting Started" section of the documentation. Make sure the libraries and headers are installed to C:\boost
+-   boost : It is strongly recommended to download and use a precompiled version of the boost libraries from <http://sourceforge.net/projects/boost/files/boost-binaries/> . When you run the installer, the only binary libraries you need are python and serialization. If you want to install boost from source, download a copy from <http://www.boost.org> and follow the instructions in the "Getting Started" section of the documentation. Make sure the libraries and headers are installed to C:\boost
 -   a git client : *This is only necessary if you are planning on building development versions of the RDKit.* This can be downloaded from <http://git-scm.com/downloads>; git is also included as an optional add-on of Microsoft Visual Studio 2015.
 
 #### Setup and Preparation
@@ -386,8 +396,8 @@ This section assumes that python is installed in `C:\Python27`, that the boost l
 
 ## License
 
-This document is copyright (C) 2012-2015 by Greg Landrum
+This document is copyright (C) 2012-2018 by Greg Landrum
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/3.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."

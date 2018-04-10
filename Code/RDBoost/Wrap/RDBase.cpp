@@ -65,7 +65,7 @@ void LogMessage(std::string spec, std::string msg) {
   } else if (spec == "rdApp.debug") {
     dest = rdDebugLog;
   } else {
-    dest = 0;
+    dest = nullptr;
   }
 
   if (dest) {
@@ -131,6 +131,7 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python::scope().attr("rdkitVersion") = RDKit::rdkitVersion;
   python::scope().attr("boostVersion") = RDKit::boostVersion;
+  python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
 
   python::def("EnableLog", EnableLog);
   python::def("DisableLog", DisableLog);

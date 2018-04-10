@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2017, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -75,7 +74,7 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
 
   bool res = true;
   unsigned int i = 0;
-  for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
+  for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
       std::vector<MatchVectType> matchesHere;
@@ -132,10 +131,9 @@ void recurseOverReactantCombinations(
     VectVectMatchVectType &matchesPerProduct, unsigned int level,
     VectMatchVectType combination) {
   unsigned int nReactants = matchesByReactant.size();
-  URANGE_CHECK(level, nReactants - 1);
+  URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
-  for (VectMatchVectType::const_iterator reactIt =
-           matchesByReactant[level].begin();
+  for (auto reactIt = matchesByReactant[level].begin();
        reactIt != matchesByReactant[level].end(); ++reactIt) {
     VectMatchVectType prod = combination;
     prod[level] = *reactIt;
@@ -166,8 +164,8 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
   if (!prodAtom->hasProp(common_properties::_ReactionDegreeChanged)) {
     if (!prodAtom->hasProp(common_properties::_QueryHCount)) {
       prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
+      prodAtom->setNoImplicit(reactAtom->getNoImplicit());
     }
-    prodAtom->setNoImplicit(reactAtom->getNoImplicit());
   }
 }
 
@@ -183,7 +181,7 @@ void generateReactantCombinations(
 
 RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   const ROMol *prodTemplate = prodTemplateSptr.get();
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
 
   // --------- --------- --------- --------- --------- ---------
   // Initialize by making a copy of the product template as a normal molecule.
@@ -193,8 +191,8 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   // copy in the atoms:
   ROMol::ATOM_ITER_PAIR atItP = prodTemplate->getVertices();
   while (atItP.first != atItP.second) {
-    Atom *oAtom = (*prodTemplate)[*(atItP.first++)].get();
-    Atom *newAtom = new Atom(*oAtom);
+    const Atom *oAtom = (*prodTemplate)[*(atItP.first++)];
+    auto *newAtom = new Atom(*oAtom);
     res->addAtom(newAtom, false, true);
     int mapNum;
     if (newAtom->getPropIfPresent(common_properties::molAtomMapNumber,
@@ -223,6 +221,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     }
     if (newAtom->getPropIfPresent(common_properties::_QueryHCount, val)) {
       newAtom->setNumExplicitHs(val);
+      newAtom->setNoImplicit(true);  // this was github #1544
     }
     if (newAtom->getPropIfPresent(common_properties::_QueryMass, val)) {
       // FIX: technically should do something with this
@@ -235,7 +234,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
   while (bondItP.first != bondItP.second) {
-    const BOND_SPTR oldB = (*prodTemplate)[*(bondItP.first++)];
+    const Bond* oldB = (*prodTemplate)[*(bondItP.first++)];
     unsigned int bondIdx;
     bondIdx = res->addBond(oldB->getBeginAtomIdx(), oldB->getEndAtomIdx(),
                            oldB->getBondType()) -
@@ -279,41 +278,63 @@ struct ReactantProductAtomMapping {
 
   boost::dynamic_bitset<> mappedAtoms;
   boost::dynamic_bitset<> skippedAtoms;
-  std::map<unsigned int, std::vector<unsigned int> > reactProdAtomMap;
+  std::map<unsigned int, std::vector<unsigned int>> reactProdAtomMap;
   std::map<unsigned int, unsigned int> prodReactAtomMap;
   std::map<unsigned int, unsigned int> prodAtomBondMap;
+
+  // maps (atom map number,atom map number) pairs in the reactant template
+  // to whether or not they are bonded in the template.
+  std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+      reactantTemplateAtomBonds;
 };
 
 ReactantProductAtomMapping *getAtomMappingsReactantProduct(
     const MatchVectType &match, const ROMol &reactantTemplate,
     RWMOL_SPTR product, unsigned numReactAtoms) {
-  ReactantProductAtomMapping *mapping =
-      new ReactantProductAtomMapping(numReactAtoms);
-  for (unsigned int i = 0; i < match.size(); i++) {
-    const Atom *templateAtom = reactantTemplate.getAtomWithIdx(match[i].first);
+  auto *mapping = new ReactantProductAtomMapping(numReactAtoms);
+
+  // keep track of which mapped atoms in the reactant template are bonded to
+  // each other.
+  // This is part of the fix for #1387
+  {
+    ROMol::EDGE_ITER firstB, lastB;
+    boost::tie(firstB, lastB) = reactantTemplate.getEdges();
+    while (firstB != lastB) {
+      const Bond* bond = reactantTemplate[*firstB];
+      // this will put in pairs with 0s for things that aren't mapped, but we
+      // don't care about that
+      int a1mapidx = bond->getBeginAtom()->getAtomMapNum();
+      int a2mapidx = bond->getEndAtom()->getAtomMapNum();
+      if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+      mapping->reactantTemplateAtomBonds[std::make_pair(a1mapidx, a2mapidx)] =
+          1;
+      ++firstB;
+    }
+  }
+
+  for (const auto &i : match) {
+    const Atom *templateAtom = reactantTemplate.getAtomWithIdx(i.first);
     int molAtomMapNumber;
     if (templateAtom->getPropIfPresent(common_properties::molAtomMapNumber,
                                        molAtomMapNumber)) {
       if (product->hasAtomBookmark(molAtomMapNumber)) {
         RWMol::ATOM_PTR_LIST atomIdxs =
             product->getAllAtomsWithBookmark(molAtomMapNumber);
-        for (RWMol::ATOM_PTR_LIST::iterator iter = atomIdxs.begin();
-             iter != atomIdxs.end(); ++iter) {
-          Atom *a = *iter;
+        for (auto a : atomIdxs) {
           unsigned int pIdx = a->getIdx();
-          mapping->reactProdAtomMap[match[i].second].push_back(pIdx);
-          mapping->mappedAtoms[match[i].second] = 1;
+          mapping->reactProdAtomMap[i.second].push_back(pIdx);
+          mapping->mappedAtoms[i.second] = 1;
           CHECK_INVARIANT(pIdx < product->getNumAtoms(), "yikes!");
-          mapping->prodReactAtomMap[pIdx] = match[i].second;
+          mapping->prodReactAtomMap[pIdx] = i.second;
         }
       } else {
         // this skippedAtom has an atomMapNumber, but it's not in this product
         // (it's either in another product or it's not mapped at all).
-        mapping->skippedAtoms[match[i].second] = 1;
+        mapping->skippedAtoms[i.second] = 1;
       }
     } else {
       // This skippedAtom appears in the match, but not in a product:
-      mapping->skippedAtoms[match[i].second] = 1;
+      mapping->skippedAtoms[i.second] = 1;
     }
   }
   return mapping;
@@ -324,7 +345,7 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         ReactantProductAtomMapping *mapping) {
   ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
   while (bondItP.first != bondItP.second) {
-    BOND_SPTR pBond = (*product)[*(bondItP.first)];
+    Bond* pBond = (*product)[*(bondItP.first)];
     ++bondItP.first;
     if (pBond->hasProp(common_properties::NullBond)) {
       if (mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx()) !=
@@ -393,8 +414,11 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     productAtom->setAtomicNum(reactantAtom.getAtomicNum());
     productAtom->setIsAromatic(reactantAtom.getIsAromatic());
     // don't copy isotope information over from dummy atoms
-    productAtom->setIsotope(reactantAtom.getIsotope());
-
+    // (part of github #243) unless we're setting implicit properties,
+    // in which case we do need to copy them in (github #1269)
+    if (!setImplicitProperties) {
+      productAtom->setIsotope(reactantAtom.getIsotope());
+    }
     // remove dummy labels (if present)
     if (productAtom->hasProp(common_properties::dummyLabel)) {
       productAtom->clearProp(common_properties::dummyLabel);
@@ -456,7 +480,7 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            unsigned prodNeighborIdx, RWMOL_SPTR product,
                            const ROMol &reactant,
                            ReactantProductAtomMapping *mapping) {
-  Atom *newAtom = new Atom(reactAtom);
+  auto *newAtom = new Atom(reactAtom);
   unsigned reactAtomIdx = reactAtom.getIdx();
   newAtom->setProp<unsigned int>(REACT_ATOM_IDX, reactAtomIdx);
   unsigned productIdx = product->addAtom(newAtom, false, true);
@@ -480,8 +504,19 @@ void addReactantNeighborsToProduct(
     ReactantProductAtomMapping *mapping) {
   std::list<const Atom *> atomStack;
   atomStack.push_back(&reactantAtom);
+
+  // std::cerr << "-------------------" << std::endl;
+  // std::cerr << "  add reactant neighbors from: " << reactantAtom.getIdx()
+  //           << std::endl;
+  // #if 1
+  //   product->updatePropertyCache(false);
+  //   product->debugMol(std::cerr);
+  //   std::cerr << "-------------------" << std::endl;
+  // #endif
+
   while (!atomStack.empty()) {
     const Atom *lReactantAtom = atomStack.front();
+    // std::cerr << "    front: " << lReactantAtom->getIdx() << std::endl;
     atomStack.pop_front();
 
     // each atom in the stack is guaranteed to already be in the product:
@@ -504,6 +539,12 @@ void addReactantNeighborsToProduct(
       //  2) has been added: set a bond to it
       //  3) has not yet been added: add it, set a bond to it, and push it
       //     onto the stack
+      // std::cerr << "       nbr: " << *nbrIdx << std::endl;
+      // std::cerr << "              visited: " << visitedAtoms[*nbrIdx]
+      //           << "  skipped: " << mapping->skippedAtoms[*nbrIdx]
+      //           << " mapped: " << mapping->mappedAtoms[*nbrIdx]
+      //           << " mappedO: " << mapping->mappedAtoms[lreactIdx] <<
+      //           std::endl;
       if (!visitedAtoms[*nbrIdx] && !mapping->skippedAtoms[*nbrIdx]) {
         if (mapping->mappedAtoms[*nbrIdx]) {
           // this is case 1 (neighbor in match); set a bond to the neighbor if
@@ -518,6 +559,38 @@ void addReactantNeighborsToProduct(
             const Bond *origB =
                 reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
             addMissingProductBonds(*origB, product, mapping);
+          } else {
+            // both mapped atoms are in the match.
+            // they are bonded in the reactant (otherwise we wouldn't be here),
+            //
+            // If they do not have already have a bond in the product and did
+            // not have one in the reactant template then set one here
+            // If they do have a bond in the reactant template, then we
+            // assume that this is an intentional bond break, so we don't do
+            // anything
+            //
+            // this was github #1387
+            unsigned prodBeginIdx = mapping->reactProdAtomMap[lreactIdx][0];
+            unsigned prodEndIdx = mapping->reactProdAtomMap[*nbrIdx][0];
+            if (!product->getBondBetweenAtoms(prodBeginIdx, prodEndIdx)) {
+              // They must be mapped
+              CHECK_INVARIANT(
+                  product->getAtomWithIdx(prodBeginIdx)->hasProp(OLD_MAPNO) &&
+                      product->getAtomWithIdx(prodEndIdx)->hasProp(OLD_MAPNO),
+                  "atoms should be mapped in product");
+              int a1mapidx = product->getAtomWithIdx(prodBeginIdx)
+                                 ->getProp<int>(OLD_MAPNO);
+              int a2mapidx =
+                  product->getAtomWithIdx(prodEndIdx)->getProp<int>(OLD_MAPNO);
+              if (a1mapidx > a2mapidx) std::swap(a1mapidx, a2mapidx);
+              if (mapping->reactantTemplateAtomBonds.find(
+                      std::make_pair(a1mapidx, a2mapidx)) ==
+                  mapping->reactantTemplateAtomBonds.end()) {
+                const Bond *origB =
+                    reactant.getBondBetweenAtoms(lreactIdx, *nbrIdx);
+                addMissingProductBonds(*origB, product, mapping);
+              }
+            }
           }
         } else if (mapping->reactProdAtomMap.find(*nbrIdx) !=
                    mapping->reactProdAtomMap.end()) {
@@ -529,10 +602,9 @@ void addReactantNeighborsToProduct(
           // case 3, add the atom, a bond to it, and push the atom onto the
           // stack
           const Atom *neighbor = reactant.getAtomWithIdx(*nbrIdx);
-          for (unsigned i = 0; i < lReactantAtomProductIndex.size(); i++) {
-            addMissingProductAtom(*neighbor, lreactIdx,
-                                  lReactantAtomProductIndex[i], product,
-                                  reactant, mapping);
+          for (unsigned int i : lReactantAtomProductIndex) {
+            addMissingProductAtom(*neighbor, lreactIdx, i, product, reactant,
+                                  mapping);
           }
           // update the stack:
           atomStack.push_back(neighbor);
@@ -607,7 +679,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
       // what must be true at this point:
       //  1) there's a -1 in pOrder that we'll substitute for
       //  2) unmatchedBond contains the index of the substitution
-      INT_LIST::iterator bPos = std::find(pOrder.begin(), pOrder.end(), -1);
+      auto bPos = std::find(pOrder.begin(), pOrder.end(), -1);
       if (unmatchedBond >= 0 && bPos != pOrder.end()) {
         *bPos = unmatchedBond;
       }
@@ -628,10 +700,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
 void checkAndCorrectChiralityOfProduct(
     const std::vector<const Atom *> &chiralAtomsToCheck, RWMOL_SPTR product,
     ReactantProductAtomMapping *mapping) {
-  for (std::vector<const Atom *>::const_iterator atomIt =
-           chiralAtomsToCheck.begin();
-       atomIt != chiralAtomsToCheck.end(); ++atomIt) {
-    const Atom *reactantAtom = *atomIt;
+  for (auto reactantAtom : chiralAtomsToCheck) {
     CHECK_INVARIANT(reactantAtom->getChiralTag() != Atom::CHI_UNSPECIFIED,
                     "missing atom chirality.");
     unsigned int reactAtomDegree =
@@ -665,7 +734,7 @@ void checkAndCorrectChiralityOfProduct(
         boost::tie(beg, end) =
             reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
         while (beg != end) {
-          const BOND_SPTR reactantBond = reactantAtom->getOwningMol()[*beg];
+          const Bond* reactantBond = reactantAtom->getOwningMol()[*beg];
           unsigned int oAtomIdx =
               reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
           CHECK_INVARIANT(mapping->reactProdAtomMap.find(oAtomIdx) !=
@@ -699,7 +768,7 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
   if (reactConf.is3D()) {
     productConf->set3D(true);
   }
-  for (std::map<unsigned int, std::vector<unsigned int> >::const_iterator pr =
+  for (std::map<unsigned int, std::vector<unsigned int>>::const_iterator pr =
            mapping->reactProdAtomMap.begin();
        pr != mapping->reactProdAtomMap.end(); ++pr) {
     std::vector<unsigned> prodIdxs = pr->second;
@@ -708,8 +777,8 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
                                  "atom, coordinates need to be revised\n";
     }
     // is this reliable when multiple product atom mapping occurs????
-    for (unsigned i = 0; i < prodIdxs.size(); i++) {
-      productConf->setAtomPos(prodIdxs[i], reactConf.getAtomPos(pr->first));
+    for (unsigned int prodIdx : prodIdxs) {
+      productConf->setAtomPos(prodIdx, reactConf.getAtomPos(pr->first));
     }
   }
 }
@@ -744,8 +813,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // to find other connected atoms that should be added:
 
   std::vector<const Atom *> chiralAtomsToCheck;
-  for (unsigned matchIdx = 0; matchIdx < match.size(); matchIdx++) {
-    int reactantAtomIdx = match[matchIdx].second;
+  for (const auto &matchIdx : match) {
+    int reactantAtomIdx = matchIdx.second;
     if (mapping->mappedAtoms[reactantAtomIdx]) {
       CHECK_INVARIANT(mapping->reactProdAtomMap.find(reactantAtomIdx) !=
                           mapping->reactProdAtomMap.end(),
@@ -808,18 +877,18 @@ MOL_SPTR_VECT generateOneProductSet(
   MOL_SPTR_VECT res;
   res.resize(rxn.getNumProductTemplates());
   unsigned int prodId = 0;
-  for (MOL_SPTR_VECT::const_iterator pTemplIt = rxn.beginProductTemplates();
+  for (auto pTemplIt = rxn.beginProductTemplates();
        pTemplIt != rxn.endProductTemplates(); ++pTemplIt) {
     // copy product template and its properties to a new product RWMol
     RWMOL_SPTR product = convertTemplateToMol(*pTemplIt);
-    Conformer *conf = 0;
+    Conformer *conf = nullptr;
     if (doConfs) {
       conf = new Conformer();
       conf->set3D(false);
     }
 
     unsigned int reactantId = 0;
-    for (MOL_SPTR_VECT::const_iterator iter = rxn.beginReactantTemplates();
+    for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
                                reactantsMatch.at(reactantId), *iter, conf);
@@ -945,8 +1014,7 @@ int getAtomMapNo(ROMol::ATOM_BOOKMARK_MAP *map, Atom *atom) {
   if (map) {
     for (ROMol::ATOM_BOOKMARK_MAP::const_iterator it = map->begin();
          it != map->end(); ++it) {
-      for (ROMol::ATOM_PTR_LIST::const_iterator ait = it->second.begin();
-           ait != it->second.end(); ++ait) {
+      for (auto ait = it->second.begin(); ait != it->second.end(); ++ait) {
         if (*ait == atom) return it->first;
       }
     }
@@ -969,7 +1037,7 @@ struct RGroup {
 ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
                                  bool addDummyAtoms) {
   CHECK_INVARIANT(product, "bad molecule");
-  RWMol *mol = new RWMol(*product.get());
+  auto *mol = new RWMol(*product.get());
 
   // CHECK_INVARIANT(productID < rxn.getProducts().size());
 
@@ -1025,12 +1093,9 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
         if (addDummyAtoms) {
           // add dummy atom where the reaction scaffold would have been
           unsigned int idx = mol->addAtom();
-          for (size_t i = 0; i < bonds_to_product.size(); ++i) {
-            mol->addBond(idx, bonds_to_product[i].rAtom->getIdx(),
-                         bonds_to_product[i].bond_type);
-            int atommapno = bonds_to_product[i].mapno == -1
-                                ? mapno
-                                : bonds_to_product[i].mapno;
+          for (const auto &bi : bonds_to_product) {
+            mol->addBond(idx, bi.rAtom->getIdx(), bi.bond_type);
+            int atommapno = bi.mapno == -1 ? mapno : bi.mapno;
 
             if (atommapno) {
               Atom *at = mol->getAtomWithIdx(idx);
@@ -1041,25 +1106,21 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
             }
           }
         } else {
-          for (size_t i = 0; i < bonds_to_product.size(); ++i) {
-            int atommapno = bonds_to_product[i].mapno == -1
-                                ? mapno
-                                : bonds_to_product[i].mapno;
+          for (const auto &bi : bonds_to_product) {
+            int atommapno = bi.mapno == -1 ? mapno : bi.mapno;
             if (mapno != -1) {
               std::vector<int> rgroups;
               std::vector<int> bonds;
-              bonds_to_product[i].rAtom->getPropIfPresent(
-                  common_properties::_rgroupAtomMaps, rgroups);
-              bonds_to_product[i].rAtom->getPropIfPresent(
-                  common_properties::_rgroupBonds, bonds);
+              bi.rAtom->getPropIfPresent(common_properties::_rgroupAtomMaps,
+                                         rgroups);
+              bi.rAtom->getPropIfPresent(common_properties::_rgroupBonds,
+                                         bonds);
 
               rgroups.push_back(atommapno);
               // XXX THIS MAY NOT BE SAFE
-              bonds.push_back(static_cast<int>(bonds_to_product[i].bond_type));
-              bonds_to_product[i].rAtom->setProp(
-                  common_properties::_rgroupAtomMaps, rgroups);
-              bonds_to_product[i].rAtom->setProp(
-                  common_properties::_rgroupBonds, bonds);
+              bonds.push_back(static_cast<int>(bi.bond_type));
+              bi.rAtom->setProp(common_properties::_rgroupAtomMaps, rgroups);
+              bi.rAtom->setProp(common_properties::_rgroupBonds, bonds);
             }
           }
         }
@@ -1067,8 +1128,8 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
     }
   }
 
-  for (size_t i = 0; i < atomsToRemove.size(); ++i) {
-    mol->removeAtom(atomsToRemove[i]);
+  for (unsigned int ai : atomsToRemove) {
+    mol->removeAtom(ai);
   }
   return mol;
 }

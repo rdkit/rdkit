@@ -83,14 +83,14 @@ void testBaseFunctionality() {
   resMolSuppl =
       new ResonanceMolSupplier((ROMol &)*mol, ResonanceMolSupplier::KEKULE_ALL);
   TEST_ASSERT(resMolSuppl->length() == 8);
-  std::map<Bond::BondType, bool> bondTypeMap;
+  std::set<Bond::BondType> bondTypeSet;
   // check that we actually have two alternate Kekule structures
-  bondTypeMap[(*resMolSuppl)[0]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  bondTypeMap[(*resMolSuppl)[1]->getBondBetweenAtoms(3, 4)->getBondType()] =
-      true;
-  TEST_ASSERT(bondTypeMap.size() == 2);
-  bondTypeMap.clear();
+  bondTypeSet.insert(
+      (*resMolSuppl)[0]->getBondBetweenAtoms(3, 4)->getBondType());
+  bondTypeSet.insert(
+      (*resMolSuppl)[1]->getBondBetweenAtoms(3, 4)->getBondType());
+  TEST_ASSERT(bondTypeSet.size() == 2);
+  bondTypeSet.clear();
   delete resMolSuppl;
 
   resMolSuppl = new ResonanceMolSupplier(
@@ -145,9 +145,9 @@ void testBenzylCation() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int &idx : indices) {
+    TEST_ASSERT(fcMap.find(idx) != fcMap.end());
+    TEST_ASSERT(fcMap[idx] == 1);
   }
   delete resMolSuppl;
 }
@@ -166,9 +166,9 @@ void testBenzylAnion() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == -1);
+  for (unsigned int &idx : indices) {
+    TEST_ASSERT(fcMap.find(idx) != fcMap.end());
+    TEST_ASSERT(fcMap[idx] == -1);
   }
   delete resMolSuppl;
 }
@@ -196,9 +196,9 @@ void testButadiene() {
     delete resMol;
   }
   unsigned int indices[] = {0, 3};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 0);
+  for (unsigned int &idx : indices) {
+    TEST_ASSERT(fcMap.find(idx) != fcMap.end());
+    TEST_ASSERT(fcMap[idx] == 0);
   }
   delete resMolSuppl;
 }
@@ -242,9 +242,9 @@ void testChargeMigration() {
     delete resMol;
   }
   unsigned int indices[] = {0, 2, 4, 6};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int &idx : indices) {
+    TEST_ASSERT(fcMap.find(idx) != fcMap.end());
+    TEST_ASSERT(fcMap[idx] == 1);
   }
   delete resMolSuppl;
 }
@@ -264,9 +264,9 @@ void testChargeSeparation1() {
     delete resMol;
   }
   unsigned int indices[] = {0, 8, 10};
-  for (unsigned int i = 0; i < sizeof(indices) / sizeof(unsigned int); ++i) {
-    TEST_ASSERT(fcMap.find(indices[i]) != fcMap.end());
-    TEST_ASSERT(fcMap[indices[i]] == 1);
+  for (unsigned int &idx : indices) {
+    TEST_ASSERT(fcMap.find(idx) != fcMap.end());
+    TEST_ASSERT(fcMap[idx] == 1);
   }
   delete resMolSuppl;
   resMolSuppl = new ResonanceMolSupplier(
@@ -560,7 +560,7 @@ void setResidueFormalCharge(RWMol *mol, std::vector<RWMol *> &res, int fc) {
 }
 
 void getBtVectVect(ResonanceMolSupplier *resMolSuppl,
-                   std::vector<std::vector<unsigned int> > &btVect2) {
+                   std::vector<std::vector<unsigned int>> &btVect2) {
   while (!resMolSuppl->atEnd()) {
     ROMol *resMol = resMolSuppl->next();
     std::vector<unsigned int> bt;
@@ -612,8 +612,7 @@ void testCrambin() {
   for (std::vector<RWMol *>::const_iterator it = res.begin(); it != res.end();
        ++it)
     delete *it;
-  ResonanceMolSupplier *resMolSupplST =
-      new ResonanceMolSupplier((ROMol &)*crambin);
+  auto *resMolSupplST = new ResonanceMolSupplier((ROMol &)*crambin);
   TEST_ASSERT(resMolSupplST);
   // crambin has 2 Arg (3 resonance structures each); 1 Asp, 1 Glu
   // and 1 terminal COO- (2 resonance structures each)
@@ -648,14 +647,13 @@ void testCrambin() {
                      false, false, 1000);
   TEST_ASSERT(n == 2);
 #ifdef RDK_TEST_MULTITHREADED
-  std::vector<std::vector<unsigned int> > btVect2ST;
+  std::vector<std::vector<unsigned int>> btVect2ST;
   getBtVectVect(resMolSupplST, btVect2ST);
-  ResonanceMolSupplier *resMolSupplMT =
-      new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
+  auto *resMolSupplMT = new ResonanceMolSupplier((ROMol &)*crambin, 0, 1000);
   TEST_ASSERT(resMolSupplMT);
   resMolSupplMT->setNumThreads(0);
   TEST_ASSERT(resMolSupplST->length() == resMolSupplMT->length());
-  std::vector<std::vector<unsigned int> > btVect2MT;
+  std::vector<std::vector<unsigned int>> btVect2MT;
   getBtVectVect(resMolSupplMT, btVect2MT);
   TEST_ASSERT(btVect2ST.size() == btVect2MT.size());
   for (unsigned int i = 0; i < btVect2ST.size(); ++i) {
@@ -663,19 +661,18 @@ void testCrambin() {
       TEST_ASSERT(btVect2ST[i][j] == btVect2MT[i][j]);
   }
   ResonanceMolSupplier *ptr[2] = {resMolSupplST, resMolSupplMT};
-  for (unsigned int i = 0; i < sizeof(ptr) / sizeof(ResonanceMolSupplier *);
-       ++i) {
-    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect, false, true,
-                       false, false, 1000, 0);
+  for (auto &i : ptr) {
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, false, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 6);
-    n = SubstructMatch(*(ptr[i]), *carboxylateQuery, matchVect, true, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *carboxylateQuery, matchVect, true, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 3);
-    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect, false, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, false, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 8);
-    n = SubstructMatch(*(ptr[i]), *guanidiniumQuery, matchVect, true, true,
-                       false, false, 1000, 0);
+    n = SubstructMatch(*i, *guanidiniumQuery, matchVect, true, true, false,
+                       false, 1000, 0);
     TEST_ASSERT(n == 2);
   }
   delete resMolSupplMT;
@@ -684,6 +681,46 @@ void testCrambin() {
   delete carboxylateQuery;
   delete guanidiniumQuery;
   delete crambin;
+}
+
+void testGitHub1166() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                       << "testGitHub1166" << std::endl;
+  RWMol *mol = SmilesToMol("NC(=[NH2+])c1ccc(cc1)C(=O)[O-]");
+  auto *resMolSuppl = new ResonanceMolSupplier(
+      static_cast<ROMol &>(*mol), ResonanceMolSupplier::KEKULE_ALL);
+  TEST_ASSERT(resMolSuppl->length() == 8);
+  // check that formal charges on odd indices are in the same position
+  // as on even indices
+  for (unsigned int i = 0; i < resMolSuppl->length(); i += 2) {
+    TEST_ASSERT((*resMolSuppl)[i]->getNumAtoms() ==
+                (*resMolSuppl)[i + 1]->getNumAtoms());
+    for (unsigned int atomIdx = 0; atomIdx < (*resMolSuppl)[i]->getNumAtoms();
+         ++atomIdx)
+      TEST_ASSERT(
+          (*resMolSuppl)[i]->getAtomWithIdx(atomIdx)->getFormalCharge() ==
+          (*resMolSuppl)[i + 1]->getAtomWithIdx(atomIdx)->getFormalCharge());
+    // check that bond orders are alternate on aromatic bonds between
+    // structures on odd indices and structures on even indices
+    TEST_ASSERT((*resMolSuppl)[i]->getNumBonds() ==
+                (*resMolSuppl)[i + 1]->getNumBonds());
+    for (unsigned int bondIdx = 0; bondIdx < (*resMolSuppl)[i]->getNumBonds();
+         ++bondIdx)
+      TEST_ASSERT(
+          (!(*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getIsAromatic() &&
+           !(*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getIsAromatic() &&
+           ((*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getBondType() ==
+            (*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getBondType())) ||
+          ((*resMolSuppl)[i]->getBondWithIdx(bondIdx)->getIsAromatic() &&
+           (*resMolSuppl)[i + 1]->getBondWithIdx(bondIdx)->getIsAromatic() &&
+           (static_cast<int>((*resMolSuppl)[i]
+                                 ->getBondWithIdx(bondIdx)
+                                 ->getBondTypeAsDouble() +
+                             (*resMolSuppl)[i + 1]
+                                 ->getBondWithIdx(bondIdx)
+                                 ->getBondTypeAsDouble()) == 3)));
+  }
+  delete resMolSuppl;
 }
 
 int main() {
@@ -705,6 +742,7 @@ int main() {
   testSubstructMatchAcetate();
   testSubstructMatchDMAP();
   testCrambin();
+  testGitHub1166();
 #endif
   return 0;
 }

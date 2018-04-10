@@ -36,6 +36,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/PreprocessRxn.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
@@ -149,7 +150,7 @@ ROMol *GetProductTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumProductTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginProductTemplates();
+  auto iter = self->beginProductTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -158,7 +159,7 @@ ROMol *GetReactantTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumReactantTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginReactantTemplates();
+  auto iter = self->beginReactantTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -167,7 +168,7 @@ ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
   if (which >= self->getNumAgentTemplates()) {
     throw_value_error("requested template index too high");
   }
-  MOL_SPTR_VECT::const_iterator iter = self->beginAgentTemplates();
+  auto iter = self->beginAgentTemplates();
   iter += which;
   ROMol *res = const_cast<ROMol *>(iter->get());
   return res;
@@ -186,8 +187,8 @@ void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
                                           moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp.at(i));
+      for (auto &i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -206,8 +207,8 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
                                          moveToAgentTemplates, &tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp.at(i));
+      for (auto &i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -221,8 +222,8 @@ void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList) {
     self.removeAgentTemplates(&tmp);
     python::list molList = python::extract<python::list>(targetList);
     if (tmp.size() > 0) {
-      for (unsigned int i = 0; i < tmp.size(); i++) {
-        molList.append(tmp[i]);
+      for (auto &i : tmp) {
+        molList.append(i);
       }
     }
   }
@@ -281,8 +282,8 @@ python::object GetReactingAtoms(const ChemicalReaction &self,
                                 bool mappedAtomsOnly) {
   python::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
-  for (VECT_INT_VECT_I rIt = rAs.begin(); rIt != rAs.end(); ++rIt) {
-    res.append(python::tuple(*rIt));
+  for (auto &rA : rAs) {
+    res.append(python::tuple(rA));
   }
   return python::tuple(res);
 }
@@ -303,17 +304,17 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
   }
 
   if (getLabels) {
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
     addRecursiveQueriesToReaction(self, queries, propName, &labels);
 
     // transform labels into python::tuple(python::tuple(python::tuple))
     python::list reactantLabels;
-    for (unsigned int i = 0; i < labels.size(); ++i) {
+    for (auto &label : labels) {
       python::list tmpLabels;
-      for (unsigned int j = 0; j < labels[i].size(); ++j) {
+      for (auto &j : label) {
         python::list tmpPair;
-        tmpPair.append(labels[i][j].first);
-        tmpPair.append(labels[i][j].second);
+        tmpPair.append(j.first);
+        tmpPair.append(j.second);
         tmpLabels.append(python::tuple(tmpPair));
       }
       reactantLabels.append(python::tuple(tmpLabels));
@@ -328,18 +329,15 @@ python::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 python::object PreprocessReaction(ChemicalReaction &reaction,
                                   python::dict queryDict,
                                   std::string propName) {
-  
   // transform dictionary into map
   std::map<std::string, ROMOL_SPTR> queries;
-  unsigned int size = python::extract<unsigned int>(queryDict.keys().attr("__len__")());
+  unsigned int size =
+      python::extract<unsigned int>(queryDict.keys().attr("__len__")());
   if (!size) {
     const bool normalized = true;
     queries = GetFlattenedFunctionalGroupHierarchy(normalized);
-  }
-  else {
-    for (unsigned int i = 0;
-         i < size;
-         ++i) {
+  } else {
+    for (unsigned int i = 0; i < size; ++i) {
       ROMol *m = python::extract<ROMol *>(queryDict.values()[i]);
       ROMOL_SPTR nm(new ROMol(*m));
       std::string k = python::extract<std::string>(queryDict.keys()[i]);
@@ -349,31 +347,46 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
 
   unsigned int nReactants = reaction.getNumReactantTemplates();
   unsigned int nProducts = reaction.getNumProductTemplates();
-  unsigned int nWarn,nError;
+  unsigned int nWarn, nError;
   reaction.validate(nWarn, nError);
-  std::vector<
-    std::vector<std::pair<unsigned int,std::string> > > labels;
-  
+  std::vector<std::vector<std::pair<unsigned int, std::string>>> labels;
+
   if (!nError) {
-      preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
+    preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
   }
-  
+
   // transform labels into python::tuple(python::tuple(python::tuple))
   python::list reactantLabels;
-  for (unsigned int i = 0; i < labels.size(); ++i) {
+  for (auto &label : labels) {
     python::list tmpLabels;
-    for (unsigned int j = 0; j < labels[i].size(); ++j) {
+    for (auto &j : label) {
       python::list tmpPair;
-      tmpPair.append(labels[i][j].first);
-      tmpPair.append(labels[i][j].second);
+      tmpPair.append(j.first);
+      tmpPair.append(j.second);
       tmpLabels.append(python::tuple(tmpPair));
     }
     reactantLabels.append(python::tuple(tmpLabels));
   }
   return python::make_tuple(nWarn, nError, nReactants, nProducts,
                             python::tuple(reactantLabels));
-
 }
+
+typedef boost::uint64_t sanitize_ops;
+
+RxnOps::SanitizeRxnFlags sanitizeReaction(
+    ChemicalReaction &rxn, sanitize_ops sanitizeOps,
+    const MolOps::AdjustQueryParameters &params, bool catchErrors) {
+  unsigned int operationsThatFailed = 0;
+  try {
+    RxnOps::sanitizeRxn(rxn, operationsThatFailed, sanitizeOps, params);
+  } catch (...) {
+    if (!catchErrors) throw;
+  }
+  return static_cast<RxnOps::SanitizeRxnFlags>(operationsThatFailed);
+}
+}
+
+void wrap_enumeration();
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
   python::scope().attr("__doc__") =
@@ -429,8 +442,15 @@ Sample Usage:\n\
 \n\
 ";
 
-  python::class_<RDKit::MOL_SPTR_VECT>("ROMolList")
-      .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+  // logic from https://stackoverflow.com/a/13017303
+  boost::python::type_info info =
+      boost::python::type_id<RDKit::MOL_SPTR_VECT>();
+  const boost::python::converter::registration *reg =
+      boost::python::converter::registry::query(info);
+  if (reg == NULL || (*reg).m_to_python == NULL) {
+    python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
+        .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
+  }
 
   python::class_<RDKit::ChemicalReaction>(
       "ChemicalReaction", docString.c_str(),
@@ -661,7 +681,7 @@ of the replacements argument.",
       "Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.\
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.\
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction");
-  
+
   python::def(
       "ReduceProductToSideChains", RDKit::reduceProductToSideChains,
       (python::arg("product"), python::arg("addDummyAtoms") = true),
@@ -669,7 +689,7 @@ of the replacements argument.",
               The output is a molecule with attached wildcards indicating where the product was attached.\
               The dummy atom has the same reaction-map number as the product atom (if available).",
       python::return_value_policy<python::manage_new_object>());
-  
+
   python::def("RemoveMappingNumbersFromReactions",
               RDKit::removeMappingNumbersFromReactions,
               (python::arg("reaction")),
@@ -774,10 +794,45 @@ Sample Usage:\n\
   True\n\
 ";
 
-  python::def("PreprocessReaction", PreprocessReaction,
-              (python::arg("reaction"),
-               python::arg("queries")=python::dict(),
-               python::arg("propName")=common_properties::molFileValue),
+  python::def(
+      "PreprocessReaction", RDKit::PreprocessReaction,
+      (python::arg("reaction"), python::arg("queries") = python::dict(),
+       python::arg("propName") = RDKit::common_properties::molFileValue),
+      docString.c_str());
+
+  python::enum_<RDKit::RxnOps::SanitizeRxnFlags>("SanitizeFlags")
+      .value("SANITIZE_NONE", RDKit::RxnOps::SANITIZE_NONE)
+      .value("SANITIZE_ATOM_MAPS", RDKit::RxnOps::SANITIZE_ATOM_MAPS)
+      .value("SANITIZE_RGROUP_NAMES", RDKit::RxnOps::SANITIZE_RGROUP_NAMES)
+      .value("SANITIZE_ADJUST_REACTANTS",
+             RDKit::RxnOps::SANITIZE_ADJUST_REACTANTS)
+      .value("SANITIZE_MERGEHS", RDKit::RxnOps::SANITIZE_MERGEHS)
+      .value("SANITIZE_ALL", RDKit::RxnOps::SANITIZE_ALL)
+      .export_values();
+  ;
+
+  python::def(
+      "GetDefaultAdjustParams", RDKit::RxnOps::DefaultRxnAdjustParams,
+      "Returns the default adjustment parameters for reactant templates");
+
+  python::def("GetChemDrawRxnAdjustParams",
+              RDKit::RxnOps::ChemDrawRxnAdjustParams,
+              "(deprecated, see MatchOnlyAtRgroupsAdjustParams)\n\tReturns the "
+              "chemdraw style adjustment parameters for reactant templates");
+
+  python::def(
+      "MatchOnlyAtRgroupsAdjustParams",
+      RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
+      "Only match at the specified rgroup locations in the reactant templates");
+
+  std::string docstring = "feed me";
+  python::def("SanitizeRxn", RDKit::sanitizeReaction,
+              (python::arg("rxn"),
+               python::arg("sanitizeOps") =
+                   rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
+               python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
+               python::arg("catchErrors") = false),
               docString.c_str());
-}
+
+  wrap_enumeration();
 }

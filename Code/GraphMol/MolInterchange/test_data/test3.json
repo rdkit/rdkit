@@ -1,0 +1,25 @@
+{"commonchem": {"version": 10},
+ "defaults": {
+   "atom": {"z": 6, "impHs": 0, "chg": 0, "stereo": "unspecified", "nrad": 0},
+   "bond": {"bo": 1, "stereo": "unspecified", "stereoAtoms": []}
+ },
+ "molecules": [{"name": "example 2", "atoms": [{"z": 8},
+ {"z": 6, "stereo": "cw"},
+ {"z": 17, "isotope": 35},
+ {"z": 9},
+ {"z": 1},
+ {"z": 1}],
+"bonds": [{"atoms": [0, 1]},
+ {"atoms": [1, 2]},
+ {"atoms": [1, 3]},
+ {"atoms": [0, 4]},
+ {"atoms": [1, 5]}],
+"properties": {"prop1": 1, "prop2": 3.14, "prop3": "foo"},
+"conformers": [{"dim": 2, "coords": [[-1.1988, -0.0452], [-0.3332, 0.4556], [0.166, 1.322], [0.5332, -0.0438], [-2.0652, 0.4542], [-0.834, 1.3212]]},
+ {"dim": 3, "coords": [[0.9554, -0.3743, -0.4679], [-0.3616, -0.1311, -0.0795], [-0.5097, 1.6256, 0.1706], [-0.5779, -0.792, 1.1042], [1.5277, 0.1064, 0.1628], [-1.0339, -0.4346, -0.8902]]}],
+"extensions": [{"name": "rdkitRepresentation", "toolkitVersion": "2018.03.1.dev1", "formatVersion": 1, "aromaticAtoms": [],
+"aromaticBonds": [],
+"cipCodes": [[1, "S"]],
+"atomRings": []},
+{"name": "partialCharges", "chargeType":"gasteiger", "formatVersion":10, "generator":"RDKit", "generatorVersion": "2018.03.1.dev1", "values": [-0.352, 0.273, -0.055, -0.198, 0.215, 0.117]}
+]}]}

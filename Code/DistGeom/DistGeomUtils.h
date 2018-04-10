@@ -175,6 +175,24 @@ ForceFields::ForceField *constructPlain3DForceField(
     const std::vector<std::pair<std::vector<int>, std::vector<double> > > &
         expTorsionAngles,
     const std::vector<int> &atomNums);
+
+//! Force field with only improper terms
+/*!
+
+  \param mmat            Distance bounds matrix
+  \param positions       A vector of pointers to 3D Points to write out the resulting coordinates
+  \param improperAtoms   A list of groups of 4 atom indices for inversion terms
+  \param atomNums        A list of atomic numbers for all atoms in the molecule
+
+  \return a pointer to a ForceField with improper terms
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+ForceFields::ForceField *construct3DImproperForceField(
+    const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
+    const std::vector<std::vector<int> > &improperAtoms,
+    const std::vector<int> &atomNums);
+
 }
 
 #endif

@@ -8,6 +8,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
@@ -16,9 +22,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -38,7 +41,7 @@ typedef boost::tokenizer<boost::escaped_list_separator<char> > CommaTokenizer;
  */
 template <typename T>
 void ParseNumberList(std::string inLine, std::vector<T> &res,
-                     std::istream *inStream = 0) {
+                     std::istream *inStream = nullptr) {
   bool foundEnd = false;
   while (!foundEnd) {
     CommaTokenizer commaTok(inLine);
@@ -80,7 +83,7 @@ TDTMolSupplier::TDTMolSupplier(const std::string &fileName,
   // FIX: this binary moe of opening file is here because of a bug in VC++ 6.0
   // the function "tellg" does not work correctly if we do not open it this way
   // Need to check if this has been fixed in VC++ 7.0
-  std::istream *tmpStream = 0;
+  std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::ifstream(fileName.c_str(), std::ios_base::binary));
   if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {
@@ -115,7 +118,7 @@ TDTMolSupplier::TDTMolSupplier(std::istream *inStream, bool takeOwnership,
 }
 
 void TDTMolSupplier::init() {
-  dp_inStream = 0;
+  dp_inStream = nullptr;
   df_owner = false;
   df_end = false;
   d_len = -1;
@@ -136,7 +139,7 @@ void TDTMolSupplier::setData(const std::string &text,
   d_confId2D = confId2D;
   d_confId3D = confId3D;
   d_nameProp = nameRecord;
-  std::istream *tmpStream = 0;
+  std::istream *tmpStream = nullptr;
   tmpStream = static_cast<std::istream *>(
       new std::istringstream(text, std::ios_base::binary));
   dp_inStream = tmpStream;
@@ -181,7 +184,9 @@ void TDTMolSupplier::checkForEnd() {
   // we are not at the end of file, but check for blank lines:
   std::string tempStr;
   std::getline(*dp_inStream, tempStr);
-  boost::trim_left_if(tempStr, boost::is_any_of(" \t\r\n"));
+
+  boost::trim_left_if(tempStr, boost::is_any_of(std::string(" \t\r\n")));
+
   if (tempStr.length() == 0) {
     df_end = true;
     // the -1 here is because by the time we get here we've already pushed on
@@ -225,7 +230,7 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
         std::string rest = inLine.substr(startP, inLine.size() - startP);
         std::vector<double> coords;
         TDTParseUtils::ParseNumberList(rest, coords, dp_inStream);
-        Conformer *conf = new Conformer(res->getNumAtoms());
+        auto *conf = new Conformer(res->getNumAtoms());
         conf->setId(d_confId2D);
         conf->set3D(false);
         for (unsigned int atIdx = 0; atIdx < res->getNumAtoms(); atIdx++) {
@@ -243,7 +248,7 @@ ROMol *TDTMolSupplier::parseMol(std::string inLine) {
         std::string rest = inLine.substr(startP, inLine.size() - startP);
         std::vector<double> coords;
         TDTParseUtils::ParseNumberList(rest, coords, dp_inStream);
-        Conformer *conf = new Conformer(res->getNumAtoms());
+        auto *conf = new Conformer(res->getNumAtoms());
         conf->setId(d_confId3D);
         conf->set3D(true);
         for (unsigned int atIdx = 0; atIdx < res->getNumAtoms(); atIdx++) {
@@ -283,7 +288,7 @@ ROMol *TDTMolSupplier::next() {
   dp_inStream->seekg(d_molpos[d_last]);
 
   std::string tempStr;
-  ROMol *res = NULL;
+  ROMol *res = nullptr;
   // finally if we reached the end of the file set end to be true
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
@@ -342,7 +347,7 @@ std::string TDTMolSupplier::getItemText(unsigned int idx) {
   }
   d_last = holder;
   df_end = endHolder;
-  char *buff = new char[endP - begP];
+  auto *buff = new char[endP - begP];
   dp_inStream->seekg(begP);
   dp_inStream->read(buff, endP - begP);
   std::string res(buff, endP - begP);

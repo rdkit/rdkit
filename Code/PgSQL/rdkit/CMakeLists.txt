@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8.8)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
   set (EXTENSION_SUFFIX ".so")
@@ -7,10 +9,17 @@ else(APPLE)
 endif(APPLE)
 
 if(RDK_OPTIMIZE_NATIVE)
-add_definitions(-DUSE_BUILTIN_POPCOUNT)
+  add_definitions(-DUSE_BUILTIN_POPCOUNT)
 endif(RDK_OPTIMIZE_NATIVE)
 
 set(EXTENSION rdkit)
+if(NOT DEFINED Boost_INCLUDE_DIRS)
+  find_package(Boost 1.39.0 REQUIRED)
+endif(NOT DEFINED Boost_INCLUDE_DIRS)
+include_directories(${Boost_INCLUDE_DIRS})
+if(NOT DEFINED PostgreSQL_LIBRARY_DIRS)
+  find_package(PostgreSQL REQUIRED)
+endif(NOT DEFINED PostgreSQL_LIBRARY_DIRS)
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 if(WIN32)
   include_directories(${PostgreSQL_INCLUDE_DIR}/server/port/win32)
@@ -63,13 +72,13 @@ if(APPLE)
               "-Wl,-dead_strip_dylibs -bundle_loader ${PG_BINDIR}/postgres")
   add_executable("${EXTENSION}${EXTENSION_SUFFIX}"
               adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
-              rdkit_gist.c rdkit_io.c rxn_op.c sfp_op.c)
+              rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
 else(APPLE)
   link_directories(${PostgreSQL_LIBRARY_DIRS})
   link_directories(${RDKit_LibDir})
   add_library(${EXTENSION} SHARED
               adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
-              rdkit_gist.c rdkit_io.c rxn_op.c sfp_op.c)
+              rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
   target_link_libraries(${EXTENSION} ${PostgreSQL_LIBRARIES})
   if(WIN32)
     target_link_libraries(${EXTENSION} postgres)
@@ -87,13 +96,21 @@ if(RDK_BUILD_AVALON_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}AvalonLib;avalon_clib;")
 endif(RDK_BUILD_AVALON_SUPPORT)
 if(RDK_BUILD_INCHI_SUPPORT)
+  if(NOT DEFINED INCHI_LIBRARIES)
+    set(CMAKE_MODULE_PATH
+        ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/Modules/")
+    if(NOT DEFINED RDKit_RELEASENAME)
+      include(RDKitUtils)
+    endif(NOT DEFINED RDKit_RELEASENAME)
+    find_package(Inchi)
+  endif(NOT DEFINED INCHI_LIBRARIES)
   set(inchiRegress "inchi")
-  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;Inchi;")
+  set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
-    "PartialCharges;SubstructMatch;GraphMol;DataStructs;Depictor;"
+    "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
 foreach(pgRDKitLib ${pgRDKitLibList})
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix};")
@@ -170,12 +187,28 @@ string(REPLACE " " ";" tokList ${PG_EXTVERSION})
 list(GET tokList -1 PG_EXTVERSION)
 string(REGEX REPLACE "'" "" PG_EXTVERSION ${PG_EXTVERSION})
 if(MSVC)
-  set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
+  if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+    set(PG_RDKIT_LIB_SRC "${PG_RDKIT_LIB_SRC}")
+  else(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+    set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
+  endif(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
 endif(MSVC)
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+    set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
+
+if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+  set(RDKIT_RDK_GIN_BFP_TRICONSISTENT "")
+else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+  set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
+endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+
+configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
+               "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql91.in\" "
-    "\"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")

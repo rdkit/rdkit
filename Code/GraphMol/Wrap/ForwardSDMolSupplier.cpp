@@ -35,7 +35,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
   LocalForwardSDMolSupplier(python::object &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
     // FIX: minor leak here
-    streambuf *sb = new streambuf(input);
+    auto *sb = new streambuf(input);
     dp_inStream = new streambuf::istream(*sb);
     df_owner = true;
     df_sanitize = sanitize;
@@ -54,7 +54,7 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
   }
   LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    std::istream *tmpStream = 0;
+    std::istream *tmpStream = nullptr;
     tmpStream = static_cast<std::istream *>(
         new std::ifstream(filename.c_str(), std::ios_base::binary));
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad())) {

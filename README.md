@@ -1,6 +1,8 @@
 # RDKit
 [![Build status](https://travis-ci.org/rdkit/rdkit.svg)](https://travis-ci.org/rdkit/rdkit)
 [![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](http://rdkit.readthedocs.org/en/latest/)
+[![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)
+
 
 [RDKit](https://github.com/rdkit/rdkit) is a collection of cheminformatics and machine-learning software written in C++ and Python.
 
@@ -36,6 +38,9 @@
   * [2012 UGM](http://www.rdkit.org/UGM/2012/)
   * [2013 UGM](https://github.com/rdkit/UGM_2013)
   * [2014 UGM](https://github.com/rdkit/UGM_2014)
+  * [2015 UGM](https://github.com/rdkit/UGM_2015)
+  * [2016 UGM](https://github.com/rdkit/UGM_2016)
+  * [2017 UGM](https://github.com/rdkit/UGM_2017)
 
 ## Documentation
 Available on the [RDKit page](http://www.rdkit.org/docs/index.html)
@@ -63,6 +68,7 @@ Installation instructions are available in [Docs/Book/Install.md](https://github
   * [shape-it-rdkit](https://github.com/jandom/shape-it-rdkit) - Gaussian molecular overlap code shape-it (from silicos it) ported to RDKit backend
   * [WONKA](http://wonka.sgc.ox.ac.uk/WONKA/) - Tool for analysis and interrogation of protein-ligand crystal structures
   * [OOMMPPAA](http://oommppaa.sgc.ox.ac.uk/OOMMPPAA/) - Tool for directed synthesis and data analysis based on protein-ligand crystal structures
+  * [DeepChem](https://deepchem.io) - Machine learning library for small molecules
 
 
 ## License

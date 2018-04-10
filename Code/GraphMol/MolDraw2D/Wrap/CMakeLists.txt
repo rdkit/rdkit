@@ -1,8 +1,8 @@
 rdkit_python_extension(rdMolDraw2D
                        rdMolDraw2D.cpp
-                       DEST Chem/Draw 
+                       DEST Chem/Draw
                        LINK_LIBRARIES MolDraw2D
-Depictor FileParsers GraphMol DataStructs RDGeometryLib RDGeneral 
-RDBoost)
+Depictor ChemReactions SmilesParse FileParsers SubstructMatch MolTransforms GraphMol
+DataStructs EigenSolvers RDGeometryLib RDGeneral RDBoost ${EXTRA_LOCAL_LIBS})
 
 add_pytest(pyMolDraw2D ${CMAKE_CURRENT_SOURCE_DIR}/testMolDraw2D.py)

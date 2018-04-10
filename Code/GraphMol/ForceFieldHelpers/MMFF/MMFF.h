@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -60,7 +60,7 @@ std::pair<int, double> MMFFOptimizeMolecule(
 #ifdef RDK_THREADSAFE_SSS
 namespace detail {
 void MMFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
-                                      std::vector<std::pair<int, double> > *res,
+                                      std::vector<std::pair<int, double>> *res,
                                       unsigned int threadIdx,
                                       unsigned int numThreads, int maxIters) {
   unsigned int i = 0;
@@ -102,7 +102,7 @@ void MMFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
 
 */
 void MMFFOptimizeMoleculeConfs(ROMol &mol,
-                               std::vector<std::pair<int, double> > &res,
+                               std::vector<std::pair<int, double>> &res,
                                int numThreads = 1, int maxIters = 1000,
                                std::string mmffVariant = "MMFF94",
                                double nonBondedThresh = 10.0,
@@ -128,13 +128,14 @@ void MMFFOptimizeMoleculeConfs(ROMol &mol,
     }
 #ifdef RDK_THREADSAFE_SSS
     else {
-      boost::thread_group tg;
+      std::vector<std::thread> tg;
       for (int ti = 0; ti < numThreads; ++ti) {
-        tg.add_thread(
-            new boost::thread(detail::MMFFOptimizeMoleculeConfsHelper_, *ff,
-                              &mol, &res, ti, numThreads, maxIters));
+        tg.emplace_back(std::thread(detail::MMFFOptimizeMoleculeConfsHelper_,
+                                    *ff, &mol, &res, ti, numThreads, maxIters));
       }
-      tg.join_all();
+      for (auto &thread : tg) {
+        if (thread.joinable()) thread.join();
+      }
     }
 #endif
     delete ff;

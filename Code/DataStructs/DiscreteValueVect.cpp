@@ -27,7 +27,7 @@ DiscreteValueVect::DiscreteValueVect(const DiscreteValueVect &other) {
   d_valsPerInt = other.d_valsPerInt;
   d_mask = other.d_mask;
   const boost::uint32_t *odata = other.getData();
-  boost::uint32_t *data = new boost::uint32_t[d_numInts];
+  auto *data = new boost::uint32_t[d_numInts];
   memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
          d_numInts * sizeof(boost::uint32_t));
   d_data.reset(data);
@@ -183,7 +183,7 @@ void DiscreteValueVect::initFromText(const char *pkl, const unsigned int len) {
   d_length = tInt;
   streamRead(ss, tInt);
   d_numInts = tInt;
-  boost::uint32_t *data = new boost::uint32_t[d_numInts];
+  auto *data = new boost::uint32_t[d_numInts];
   ss.read((char *)data, d_numInts * sizeof(boost::uint32_t));
 
 #if defined(BOOST_BIG_ENDIAN)

@@ -6,10 +6,12 @@
 
 """
 
+
 class NoMatchFoundError(RuntimeError):
   pass
 
-def MoveToMatchingLine(inFile,matchStr,fullMatch=0):
+
+def MoveToMatchingLine(inFile, matchStr, fullMatch=0):
   """ skip forward in a file until a given string is found
 
      **Arguments**
@@ -42,8 +44,3 @@ def MoveToMatchingLine(inFile,matchStr,fullMatch=0):
     return inLine
   else:
     raise NoMatchFoundError(matchStr)
-      
-    
-      
-      
-      

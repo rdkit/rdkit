@@ -24,13 +24,13 @@ using namespace RDKit;
 void testBasics() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Basic Allocations"
                        << std::endl;
-  Atom *a1 = new Atom(6);
-  Bond *b1 = new Bond();
-  ROMol *m1 = new ROMol();
+  auto *a1 = new Atom(6);
+  auto *b1 = new Bond();
+  auto *m1 = new ROMol();
   (void)a1;
   (void)b1;
   (void)m1;
-  a1 = NULL;  // intentional leak
+  a1 = nullptr;  // intentional leak
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -66,7 +66,7 @@ void testSMILES() {
 }
 
 void testMol() {
-  RWMol *m1 = new RWMol();
+  auto *m1 = new RWMol();
   m1->addAtom(new Atom(6), true, true);
   m1->addAtom(new Atom(6), true, true);
   m1->addAtom(new Atom(7), true, true);
@@ -149,7 +149,7 @@ void testProps() {
 void testDict() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n dict" << std::endl;
   int val = 1;
-  Dict *d = new Dict();
+  auto *d = new Dict();
   d = new Dict();
   d->setVal<int>("foo", val);
   d = new Dict();

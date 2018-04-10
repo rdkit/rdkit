@@ -83,7 +83,7 @@ int numBondsPlusLonePairs(Atom *at) {
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = at->getOwningMol().getAtomBonds(at);
   while (beg != end) {
-    BOND_SPTR bond = at->getOwningMol()[*beg];
+    Bond* bond = at->getOwningMol()[*beg];
     if (bond->getBondType() == Bond::ZERO) --deg;
     ++beg;
   }

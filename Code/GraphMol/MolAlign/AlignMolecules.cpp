@@ -27,7 +27,7 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
   const Conformer &prbCnf = prbMol.getConformer(prbCid);
   const Conformer &refCnf = refMol.getConformer(refCid);
-  if (atomMap == 0) {
+  if (atomMap == nullptr) {
     // we have to figure out the mapping between the two molecule
     MatchVectType match;
     const bool recursionPossible = true;
@@ -69,11 +69,53 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
+double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
+                  const std::vector<MatchVectType> &map, int maxMatches) {
+  std::vector<MatchVectType> matches = map;
+  if (matches.empty()) {
+    bool uniquify = false;
+    bool recursionPossible = true;
+    bool useChirality = false;
+    bool useQueryQueryMatches = false;
+
+    SubstructMatch(refMol, probeMol, matches, uniquify, recursionPossible,
+                   useChirality, useQueryQueryMatches, maxMatches);
+
+    if (matches.empty()) {
+      throw MolAlignException(
+          "No sub-structure match found between the reference and probe mol");
+    }
+
+    if (matches.size() > 1e6) {
+      std::string name;
+      probeMol.getPropIfPresent(common_properties::_Name, name);
+      std::cerr << "Warning in " << __FUNCTION__ << ": " << matches.size()
+                << " matches detected for molecule " << name << ", this may "
+                << "lead to a performance slowdown.\n";
+    }
+  }
+
+  double bestRMS = 1.e300;
+  MatchVectType &bestMatch = matches[0];
+  for (auto &matche : matches) {
+    double rms = alignMol(probeMol, refMol, probeId, refId, &matche);
+    if (rms < bestRMS) {
+      bestRMS = rms;
+      bestMatch = matche;
+    }
+  }
+
+  // Perform a final alignment to the best alignment...
+  if (&bestMatch != &matches.back())
+    alignMol(probeMol, refMol, probeId, refId, &bestMatch);
+  return bestRMS;
+}
+
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
-                        const std::vector<unsigned int> *atomIds = 0) {
+                        const std::vector<unsigned int> *atomIds = nullptr) {
   unsigned int na = conf.getNumAtoms();
   pts.clear();
-  if (atomIds == 0) {
+  if (atomIds == nullptr) {
     unsigned int ai;
     pts.reserve(na);
     for (ai = 0; ai < na; ++ai) {
@@ -99,7 +141,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
 
   RDGeom::Point3DConstPtrVect refPoints, prbPoints;
   int cid = -1;
-  if ((confIds != 0) && (confIds->size() > 0)) {
+  if ((confIds != nullptr) && (confIds->size() > 0)) {
     cid = confIds->front();
   }
   const Conformer &refCnf = mol.getConformer(cid);
@@ -108,7 +150,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
   // now loop throught the remaininf conformations and transform them
   RDGeom::Transform3D trans;
   double ssd;
-  if (confIds == 0) {
+  if (confIds == nullptr) {
     unsigned int i = 0;
     ROMol::ConformerIterator cnfi;
     // Conformer *conf;

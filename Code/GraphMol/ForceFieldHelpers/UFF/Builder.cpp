@@ -1,6 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -54,6 +52,12 @@ void addBonds(const ROMol &mol, const AtomicParamVect &params,
   }
 }
 
+unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
+  if (j < i) std::swap(i, j);
+
+  return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
+}
+
 void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
                    boost::uint8_t value) {
   unsigned int twoBitPos = pos / 4;
@@ -76,6 +80,7 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 // the two-bit matrix returned by this contains:
 //   0: if atoms i and j are directly connected
 //   1: if atoms i and j are connected via an atom
+//   2: if atoms i and j are in a 1,4 relationship
 //   3: otherwise
 //
 //  NOTE: the caller is responsible for calling delete []
@@ -83,49 +88,40 @@ boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
 //
 // ------------------------------------------------------------------------
 boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol) {
+  const boost::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
+                                           (RELATION_1_X << 4) |
+                                           (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
-  unsigned nTwoBitCells = (nAtoms * nAtoms - 1) / 4 + 1;
+  unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<boost::uint8_t> res(new boost::uint8_t[nTwoBitCells]);
-  for (unsigned int i = 0; i < nTwoBitCells; ++i) {
-    res[i] = 0;
-  }
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    unsigned int iTab = i * nAtoms;
-    for (unsigned int j = i; j < nAtoms; ++j) {
-      setTwoBitCell(res, iTab + j, RELATION_1_X);
-      setTwoBitCell(res, i + j * nAtoms, RELATION_1_X);
-    }
-  }
-  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
-    const Bond *bondi = mol.getBondWithIdx(i);
-
-    setTwoBitCell(res,
-                  bondi->getBeginAtomIdx() * nAtoms + bondi->getEndAtomIdx(),
+  std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
+  for (ROMol::ConstBondIterator bondi = mol.beginBonds();
+       bondi != mol.endBonds(); ++bondi) {
+    setTwoBitCell(res, twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
+                                     (*bondi)->getEndAtomIdx()),
                   RELATION_1_2);
-    setTwoBitCell(res,
-                  bondi->getEndAtomIdx() * nAtoms + bondi->getBeginAtomIdx(),
-                  RELATION_1_2);
-
-    for (unsigned int j = i + 1; j < mol.getNumBonds(); ++j) {
-      const Bond *bondj = mol.getBondWithIdx(j);
+    unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
+    unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
+    for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
       int idx1 = -1;
       int idx3 = -1;
-      if (bondi->getBeginAtomIdx() == bondj->getBeginAtomIdx()) {
-        idx1 = bondi->getEndAtomIdx();
-        idx3 = bondj->getEndAtomIdx();
-      } else if (bondi->getBeginAtomIdx() == bondj->getEndAtomIdx()) {
-        idx1 = bondi->getEndAtomIdx();
-        idx3 = bondj->getBeginAtomIdx();
-      } else if (bondi->getEndAtomIdx() == bondj->getBeginAtomIdx()) {
-        idx1 = bondi->getBeginAtomIdx();
-        idx3 = bondj->getEndAtomIdx();
-      } else if (bondi->getEndAtomIdx() == bondj->getEndAtomIdx()) {
-        idx1 = bondi->getBeginAtomIdx();
-        idx3 = bondj->getBeginAtomIdx();
+      unsigned int bondjBeginAtomIdx = (*bondj)->getBeginAtomIdx();
+      unsigned int bondjEndAtomIdx = (*bondj)->getEndAtomIdx();
+      if (bondiBeginAtomIdx == bondjBeginAtomIdx) {
+        idx1 = bondiEndAtomIdx;
+        idx3 = bondjEndAtomIdx;
+      } else if (bondiBeginAtomIdx == bondjEndAtomIdx) {
+        idx1 = bondiEndAtomIdx;
+        idx3 = bondjBeginAtomIdx;
+      } else if (bondiEndAtomIdx == bondjBeginAtomIdx) {
+        idx1 = bondiBeginAtomIdx;
+        idx3 = bondjEndAtomIdx;
+      } else if (bondiEndAtomIdx == bondjEndAtomIdx) {
+        idx1 = bondiBeginAtomIdx;
+        idx3 = bondjBeginAtomIdx;
       }
       if (idx1 > -1) {
-        setTwoBitCell(res, idx1 * nAtoms + idx3, RELATION_1_3);
-        setTwoBitCell(res, idx3 * nAtoms + idx1, RELATION_1_3);
+        setTwoBitCell(res, twoBitCellPos(nAtoms, idx1, idx3), RELATION_1_3);
       }
     }
   }
@@ -154,7 +150,7 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
     if (atomJ->getDegree() == 1) continue;
     boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(atomJ);
     for (; nbr1Idx != end1Nbrs; nbr1Idx++) {
-      const Atom *atomI = mol[*nbr1Idx].get();
+      const Atom *atomI = mol[*nbr1Idx];
       unsigned int i = atomI->getIdx();
       if (!params[i]) continue;
       boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(atomJ);
@@ -162,7 +158,7 @@ void addAngles(const ROMol &mol, const AtomicParamVect &params,
         if (nbr2Idx < (nbr1Idx + 1)) {
           continue;
         }
-        const Atom *atomK = mol[*nbr2Idx].get();
+        const Atom *atomK = mol[*nbr2Idx];
         unsigned int k = atomK->getIdx();
         if (!params[k]) continue;
         // skip special cases:
@@ -252,8 +248,8 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
-  const Bond *ax1 = 0, *ax2 = 0;
-  const Bond *eq1 = 0, *eq2 = 0, *eq3 = 0;
+  const Bond *ax1 = nullptr, *ax2 = nullptr;
+  const Bond *eq1 = nullptr, *eq2 = nullptr, *eq3 = nullptr;
 
   const Conformer &conf = mol.getConformer(confId);
   //------------------------------------------------------------
@@ -263,7 +259,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
   boost::tie(beg1, end1) = mol.getAtomBonds(atom);
   unsigned int aid = atom->getIdx();
   while (beg1 != end1) {
-    const Bond *bond1 = mol[*beg1].get();
+    const Bond *bond1 = mol[*beg1];
     unsigned int oaid = bond1->getOtherAtomIdx(aid);
     RDGeom::Point3D v1 =
         conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid));
@@ -271,7 +267,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
     ROMol::OEDGE_ITER beg2, end2;
     boost::tie(beg2, end2) = mol.getAtomBonds(atom);
     while (beg2 != end2) {
-      const Bond *bond2 = mol[*beg2].get();
+      const Bond *bond2 = mol[*beg2];
       if (bond2->getIdx() > bond1->getIdx()) {
         unsigned int oaid2 = bond2->getOtherAtomIdx(aid);
         RDGeom::Point3D v2 =
@@ -292,7 +288,7 @@ void addTrigonalBipyramidAngles(const Atom *atom, const ROMol &mol, int confId,
 
   boost::tie(beg1, end1) = mol.getAtomBonds(atom);
   while (beg1 != end1) {
-    const Bond *bond = mol[*beg1].get();
+    const Bond *bond = mol[*beg1];
     ++beg1;
     if (bond == ax1 || bond == ax2) continue;
     if (!eq1)
@@ -447,10 +443,11 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
           (ignoreInterfragInteractions && fragMapping[i] != fragMapping[j])) {
         continue;
       }
-      if (getTwoBitCell(neighborMatrix, i * nAtoms + j) >= RELATION_1_4) {
+      if (getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j)) >=
+          RELATION_1_4) {
         double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        if (dist <
-            vdwThresh * UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
+        if (dist < vdwThresh *
+                       UFF::Utils::calcNonbondedMinimum(params[i], params[j])) {
           vdWContrib *contrib;
           contrib = new vdWContrib(field, i, j, params[i], params[j]);
           field->contribs().push_back(ForceFields::ContribPtr(contrib));
@@ -480,6 +477,30 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
         return res;
       }
 #endif
+
+const std::string DefaultTorsionBondSmarts::ds_string =
+    "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
+boost::scoped_ptr<const ROMol> DefaultTorsionBondSmarts::ds_instance;
+#ifdef RDK_THREADSAFE_SSS
+std::once_flag DefaultTorsionBondSmarts::ds_flag;
+#endif
+void DefaultTorsionBondSmarts::create() {
+  ds_instance.reset(SmartsToMol(ds_string));
+}
+
+const ROMol *DefaultTorsionBondSmarts::query() {
+#ifdef RDK_THREADSAFE_SSS
+  std::call_once(ds_flag, create);
+#else
+  static bool created = false;
+  if (!created) {
+    created = true;
+    create();
+  }
+#endif
+  return ds_instance.get();
+}
+
 // ------------------------------------------------------------------------
 //
 //
@@ -487,16 +508,19 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
 // ------------------------------------------------------------------------
 void addTorsions(const ROMol &mol, const AtomicParamVect &params,
                  ForceFields::ForceField *field,
-                 std::string torsionBondSmarts) {
+                 const std::string &torsionBondSmarts) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
   PRECONDITION(field, "bad forcefield");
 
   // find all of the torsion bonds:
   std::vector<MatchVectType> matchVect;
-  ROMol *query = SmartsToMol(torsionBondSmarts);
+  const ROMol *defaultQuery = DefaultTorsionBondSmarts::query();
+  const ROMol *query = (torsionBondSmarts == DefaultTorsionBondSmarts::string())
+                           ? defaultQuery
+                           : SmartsToMol(torsionBondSmarts);
   TEST_ASSERT(query);
   unsigned int nHits = SubstructMatch(mol, *query, matchVect);
-  delete query;
+  if (query != defaultQuery) delete query;
 
   for (unsigned int i = 0; i < nHits; i++) {
     MatchVectType match = matchVect[i];
@@ -517,13 +541,13 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
       ROMol::OEDGE_ITER beg1, end1;
       boost::tie(beg1, end1) = mol.getAtomBonds(atom1);
       while (beg1 != end1) {
-        const Bond *tBond1 = mol[*beg1].get();
+        const Bond *tBond1 = mol[*beg1];
         if (tBond1 != bond) {
           int bIdx = tBond1->getOtherAtomIdx(idx1);
           ROMol::OEDGE_ITER beg2, end2;
           boost::tie(beg2, end2) = mol.getAtomBonds(atom2);
           while (beg2 != end2) {
-            const Bond *tBond2 = mol[*beg2].get();
+            const Bond *tBond2 = mol[*beg2];
             if (tBond2 != bond && tBond2 != tBond1) {
               int eIdx = tBond2->getOtherAtomIdx(idx2);
               // make sure this isn't a three-membered ring:
@@ -561,9 +585,7 @@ void addTorsions(const ROMol &mol, const AtomicParamVect &params,
     }
     // now divide the force constant for each contribution to the torsion energy
     // about this bond by the number of contribs about this bond:
-    for (std::vector<TorsionAngleContrib *>::iterator chI =
-             contribsHere.begin();
-         chI != contribsHere.end(); ++chI) {
+    for (auto chI = contribsHere.begin(); chI != contribsHere.end(); ++chI) {
       (*chI)->scaleForceConstant(contribsHere.size());
     }
   }
@@ -606,7 +628,7 @@ void addInversions(const ROMol &mol, const AtomicParamVect &params,
     unsigned int i = 0;
     bool isBoundToSP2O = false;
     for (; nbrIdx != endNbrs; ++nbrIdx) {
-      atom[i] = mol[*nbrIdx].get();
+      atom[i] = mol[*nbrIdx];
       idx[i] = atom[i]->getIdx();
       // if the central atom is sp2 carbon and is
       // bound to sp2 oxygen, set a flag
@@ -661,7 +683,7 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
                                              bool ignoreInterfragInteractions) {
   PRECONDITION(mol.getNumAtoms() == params.size(), "bad parameters");
 
-  ForceFields::ForceField *res = new ForceFields::ForceField();
+  auto *res = new ForceFields::ForceField();
 
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);

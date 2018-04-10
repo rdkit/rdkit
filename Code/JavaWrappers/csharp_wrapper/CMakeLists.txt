@@ -2,7 +2,6 @@ project (GraphMolCSharp)
 
 include_directories( ${RDKit_ExternalDir} )
 
-
 # find the gmcs executables on non-windows systems:
 if(NOT WIN32)
   find_program(GMCS_EXE gmcs)
@@ -33,7 +32,11 @@ endif(APPLE)
 if(CMAKE_SIZEOF_VOID_P MATCHES 4)
   SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
 else()
-  SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64")
+  if (WIN32)
+    SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64" "-DSWIGWIN")
+  else()
+      SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64")
+  endif()
 endif()
 SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/swig_csharp )
 
@@ -65,7 +68,7 @@ SWIG_ADD_MODULE(RDKFuncs "CSharp" GraphMolCSharp.i )
 SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       ${RDKit_THREAD_LIBS} )
 
-INSTALL(TARGETS RDKFuncs 
+INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
 

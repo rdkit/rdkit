@@ -7,9 +7,11 @@ _share = os.path.join(r'${CMAKE_INSTALL_PREFIX}', r'${RDKit_ShareDir}')
 RDDataDir=os.path.join(_share,'Data')
 RDDocsDir=os.path.join(_share,'Docs')
 RDProjDir=os.path.join(_share,'Projects')
+RDContribDir=os.path.join(_share,'Contrib')
 ")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py 
-        DESTINATION ${RDKit_PythonDir})
+  DESTINATION ${RDKit_PythonDir}
+  COMPONENT python)
 
 add_pytest(pythonTestDirML
          ${CMAKE_CURRENT_SOURCE_DIR}/ML/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/ML )
@@ -23,4 +25,6 @@ add_pytest(pythonTestDirVLib
          ${CMAKE_CURRENT_SOURCE_DIR}/VLib/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/VLib )
 add_pytest(pythonTestDirChem
          ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/Chem )
+add_pytest(pythonTestSping
+         ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
 

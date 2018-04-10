@@ -114,37 +114,32 @@ void FloydWarshall(int dim, T *adjMat, int *pathMat,
          dim * dim * sizeof(T));
 
   // initialize the paths
-  for (std::vector<int>::const_iterator i = activeAtoms.begin();
-       i != activeAtoms.end(); i++) {
-    int itab = (*i) * dim;
-    for (std::vector<int>::const_iterator j = activeAtoms.begin();
-         j != activeAtoms.end(); j++) {
-      if ((*i) == (*j) || adjMat[itab + (*j)] == LOCAL_INF) {
-        pathMat[itab + (*j)] = -1;
+  for (auto ai : activeAtoms) {
+    int itab = ai * dim;
+    for (int activeAtom : activeAtoms) {
+      if (ai == activeAtom || adjMat[itab + activeAtom] == LOCAL_INF) {
+        pathMat[itab + activeAtom] = -1;
       } else {
-        pathMat[itab + (*j)] = (*i);
+        pathMat[itab + activeAtom] = ai;
       }
     }
   }
   memcpy(static_cast<void *>(lastP), static_cast<void *>(pathMat),
          dim * dim * sizeof(int));
 
-  for (std::vector<int>::const_iterator k = activeAtoms.begin();
-       k != activeAtoms.end(); k++) {
-    int ktab = (*k) * dim;
-    for (std::vector<int>::const_iterator i = activeAtoms.begin();
-         i != activeAtoms.end(); i++) {
-      int itab = (*i) * dim;
-      for (std::vector<int>::const_iterator j = activeAtoms.begin();
-           j != activeAtoms.end(); j++) {
-        T v1 = lastD[itab + (*j)];
-        T v2 = lastD[itab + (*k)] + lastD[ktab + (*j)];
+  for (auto ak : activeAtoms) {
+    int ktab = ak * dim;
+    for (auto ai : activeAtoms) {
+      int itab = ai * dim;
+      for (int activeAtom : activeAtoms) {
+        T v1 = lastD[itab + activeAtom];
+        T v2 = lastD[itab + ak] + lastD[ktab + activeAtom];
         if (v1 <= v2) {
-          currD[itab + (*j)] = v1;
-          currP[itab + (*j)] = lastP[itab + (*j)];
+          currD[itab + activeAtom] = v1;
+          currP[itab + activeAtom] = lastP[itab + activeAtom];
         } else {
-          currD[itab + (*j)] = v2;
-          currP[itab + (*j)] = lastP[ktab + (*j)];
+          currD[itab + activeAtom] = v2;
+          currP[itab + activeAtom] = lastP[ktab + activeAtom];
         }
       }
     }
@@ -186,7 +181,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
     return sptr.get();
   }
   int nAts = mol.getNumAtoms();
-  double *dMat = new double[nAts * nAts];
+  auto *dMat = new double[nAts * nAts];
   int i, j;
   // initialize off diagonals to LOCAL_INF and diagonals to 0
   for (i = 0; i < nAts * nAts; i++) dMat[i] = LOCAL_INF;
@@ -195,7 +190,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const BOND_SPTR bond = mol[*firstB];
+    const Bond* bond = mol[*firstB];
     i = bond->getBeginAtomIdx();
     j = bond->getEndAtomIdx();
     double contrib;
@@ -213,7 +208,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
     ++firstB;
   }
 
-  int *pathMat = new int[nAts * nAts];
+  auto *pathMat = new int[nAts * nAts];
   memset(static_cast<void *>(pathMat), 0, nAts * nAts * sizeof(int));
   FloydWarshall(nAts, dMat, pathMat);
 
@@ -236,21 +231,19 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
                        bool useAtomWts) {
   const int nAts = rdcast<int>(activeAtoms.size());
 
-  double *dMat = new double[nAts * nAts];
+  auto *dMat = new double[nAts * nAts];
   int i, j;
   // initialize off diagonals to LOCAL_INF and diagonals to 0
   for (i = 0; i < nAts * nAts; i++) dMat[i] = LOCAL_INF;
   for (i = 0; i < nAts; i++) dMat[i * nAts + i] = 0.0;
 
-  for (std::vector<const Bond *>::const_iterator bi = bonds.begin();
-       bi != bonds.end(); bi++) {
-    const Bond *bond = *bi;
+  for (auto bond : bonds) {
     i = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
-                  static_cast<int>(bond->getBeginAtomIdx())) -
-                                   activeAtoms.begin());
+                              static_cast<int>(bond->getBeginAtomIdx())) -
+                    activeAtoms.begin());
     j = rdcast<int>(std::find(activeAtoms.begin(), activeAtoms.end(),
-                  static_cast<int>(bond->getEndAtomIdx())) -
-                                   activeAtoms.begin());
+                              static_cast<int>(bond->getEndAtomIdx())) -
+                    activeAtoms.begin());
     double contrib;
     if (useBO) {
       if (!bond->getIsAromatic()) {
@@ -265,7 +258,7 @@ double *getDistanceMat(const ROMol &mol, const std::vector<int> &activeAtoms,
     dMat[j * nAts + i] = contrib;
   }
 
-  int *pathMat = new int[nAts * nAts];
+  auto *pathMat = new int[nAts * nAts];
   memset(static_cast<void *>(pathMat), 0, nAts * nAts * sizeof(int));
   FloydWarshall(nAts, dMat, pathMat);
   delete[] pathMat;
@@ -297,7 +290,7 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO, int emptyVal,
   }
 
   int nAts = mol.getNumAtoms();
-  double *res = new double[nAts * nAts];
+  auto *res = new double[nAts * nAts];
   memset(static_cast<void *>(res), emptyVal, nAts * nAts * sizeof(double));
 
   for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
@@ -331,9 +324,9 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
   RANGE_CHECK(0, aid2, nats - 1);
   CHECK_INVARIANT(aid1 != aid2, "");
 
-  INT_VECT pred(nats, -1); // set all atoms to unprocessed state
-  pred[aid1] = -2; // marks begin
-  pred[aid2] = -3; // marks end
+  INT_VECT pred(nats, -1);  // set all atoms to unprocessed state
+  pred[aid1] = -2;          // marks begin
+  pred[aid2] = -3;          // marks end
 
   std::deque<int> bfsQ;
 
@@ -350,13 +343,13 @@ INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2) {
           pred[*nbrIdx] = curAid;
           bfsQ.push_back(rdcast<int>(*nbrIdx));
           break;
-        case -3: // end found
+        case -3:  // end found
           pred[*nbrIdx] = curAid;
           done = true;
           break;
-        default: // already processed (or begin)
+        default:  // already processed (or begin)
           break;
-        }
+      }
       ++nbrIdx;
     }
     bfsQ.pop_front();
@@ -391,8 +384,7 @@ double *get3DDistanceMat(const ROMol &mol, int confId, bool useAtomWts,
     propName = "_";
   }
   if (propName != "") {
-    propName += "3DDistanceMatrix_Conf" +
-                boost::lexical_cast<std::string>(conf.getId());
+    propName += "3DDistanceMatrix_Conf" + std::to_string(conf.getId());
     if (!force && mol.hasProp(propName)) {
       mol.getProp(propName, sptr);
       return sptr.get();
@@ -400,7 +392,7 @@ double *get3DDistanceMat(const ROMol &mol, int confId, bool useAtomWts,
   }
 
   unsigned int nAts = mol.getNumAtoms();
-  double *dMat = new double[nAts * nAts];
+  auto *dMat = new double[nAts * nAts];
 
   for (unsigned int i = 0; i < nAts; ++i) {
     if (useAtomWts) {

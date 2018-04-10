@@ -70,5 +70,21 @@ namespace RDKit {
    * \param inchi The input InChI string, which can be standard or not.
    */
   std::string InchiToInchiKey(const std::string &inchi);
+
+  /*! Get the InChI key for a given molecule directly
+   * \param mol The input molecule
+   * \param options An null-terminated character string of space-deliminated
+   * InChI options that is passed to InChI API as is (except that / is naively
+   * converted to - to non-Windows platforms and - is converted to / on Windows)
+   * Available options are explained in the InChI technical FAQ:
+   * http://www.inchi-trust.org/fileadmin/user_upload/html/inchifaq/inchi-faq.html#15.14
+   * and the User Guide:
+   * http://www.inchi-trust.org/fileadmin/user_upload/software/inchi-v1.04/InChI_UserGuide.pdf
+   */
+  inline std::string MolToInchiKey(const ROMol& mol, const char *options=NULL){
+    ExtraInchiReturnValues rv;
+    return InchiToInchiKey(MolToInchi(mol,rv,options));
+  };
+
 }
 #endif

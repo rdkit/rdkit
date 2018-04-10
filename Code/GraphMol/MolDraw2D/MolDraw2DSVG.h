@@ -26,12 +26,14 @@ namespace RDKit {
 class MolDraw2DSVG : public MolDraw2D {
  public:
   // initialize to use a particular ostream
-  MolDraw2DSVG(int width, int height, std::ostream &os)
-      : MolDraw2D(width, height), d_os(os) {
+  MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,
+               int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
     initDrawing();
   };
   // initialize to use the internal stringstream
-  MolDraw2DSVG(int width, int height) : MolDraw2D(width, height), d_os(d_ss) {
+  MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1)
+      : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
     initDrawing();
   };
 
@@ -51,6 +53,10 @@ class MolDraw2DSVG : public MolDraw2D {
   void drawPolygon(const std::vector<Point2D> &cds);
   void drawEllipse(const Point2D &cds1, const Point2D &cds2);
   void clearDrawing();
+
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05);
 
   // using the current scale, work out the size of the label in molecule
   // coordinates

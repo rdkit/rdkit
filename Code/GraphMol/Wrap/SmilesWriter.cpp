@@ -27,11 +27,11 @@ SmilesWriter *getSmilesWriter(python::object &fileobj,
                               std::string delimiter = " ",
                               std::string nameHeader = "Name",
                               bool includeHeader = true,
-                              bool isomericSmiles = false,
+                              bool isomericSmiles = true,
                               bool kekuleSmiles = false) {
   // FIX: minor leak here
-  streambuf *sb = new streambuf(fileobj);
-  streambuf::ostream *ost = new streambuf::ostream(*sb);
+  auto *sb = new streambuf(fileobj);
+  auto *ost = new streambuf::ostream(*sb);
   return new SmilesWriter(ost, delimiter, nameHeader, includeHeader, true,
                           isomericSmiles, kekuleSmiles);
 }
@@ -73,14 +73,14 @@ struct smiwriter_wrap {
                  (python::arg("fileObj"), python::arg("delimiter") = " ",
                   python::arg("nameHeader") = "Name",
                   python::arg("includeHeader") = true,
-                  python::arg("isomericSmiles") = false,
+                  python::arg("isomericSmiles") = true,
                   python::arg("kekuleSmiles") = false)))
         .def(python::init<std::string, std::string, std::string, bool, bool,
                           bool>(
             (python::arg("fileName"), python::arg("delimiter") = " ",
              python::arg("nameHeader") = "Name",
              python::arg("includeHeader") = true,
-             python::arg("isomericSmiles") = false,
+             python::arg("isomericSmiles") = true,
              python::arg("kekuleSmiles") = false),
             swDocStr.c_str()))
         .def("SetProps", SetSmiWriterProps,

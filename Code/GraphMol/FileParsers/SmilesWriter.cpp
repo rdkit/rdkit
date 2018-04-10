@@ -27,7 +27,7 @@ SmilesWriter::SmilesWriter(const std::string &fileName,
                            const std::string &nameHeader, bool includeHeader,
                            bool isomericSmiles, bool kekuleSmiles) {
   if (fileName != "-") {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+    auto *tmpStream = new std::ofstream(fileName.c_str());
     if (!tmpStream || !(*tmpStream) || (tmpStream->bad())) {
       std::ostringstream errout;
       errout << "Bad output file " << fileName;
@@ -88,7 +88,7 @@ void SmilesWriter::dumpHeader() const {
     if (d_nameHeader != "") (*dp_ostream) << d_nameHeader << d_delim;
 
     if (d_props.size() > 0) {
-      STR_VECT_CI pi = d_props.begin();
+      auto pi = d_props.begin();
       (*dp_ostream) << (*pi);
       pi++;
       while (pi != d_props.end()) {

@@ -6,10 +6,12 @@
 """
 import math
 
-def log2(x):
-  return math.log(x)/math.log(2.)
 
-def BurgesRiskBound(VCDim,nData,nWrong,conf):
+def log2(x):
+  return math.log(x) / math.log(2.)
+
+
+def BurgesRiskBound(VCDim, nData, nWrong, conf):
   """ Calculates Burges's formulation of the risk bound
 
     The formulation is from Eqn. 3 of Burges's review
@@ -31,7 +33,7 @@ def BurgesRiskBound(VCDim,nData,nWrong,conf):
     **Returns**
 
       - a float
-      
+
     **Notes**
 
      - This has been validated against the Burges paper
@@ -43,15 +45,16 @@ def BurgesRiskBound(VCDim,nData,nWrong,conf):
   h = VCDim
   l = nData
   eta = conf
-  
-  numerator = h * (math.log(2.*l/h) + 1.) - math.log(eta/4.)
-  structRisk = math.sqrt(numerator/l)
 
-  rEmp = float(nWrong)/l
-  
+  numerator = h * (math.log(2. * l / h) + 1.) - math.log(eta / 4.)
+  structRisk = math.sqrt(numerator / l)
+
+  rEmp = float(nWrong) / l
+
   return rEmp + structRisk
 
-def CristianiRiskBound(VCDim,nData,nWrong,conf):
+
+def CristianiRiskBound(VCDim, nData, nWrong, conf):
   """
     the formulation here is from pg 58, Theorem 4.6 of the book
     "An Introduction to Support Vector Machines" by Cristiani and Shawe-Taylor
@@ -72,7 +75,7 @@ def CristianiRiskBound(VCDim,nData,nWrong,conf):
     **Returns**
 
       - a float
-      
+
     **Notes**
 
       - this generates odd (mismatching) values
@@ -85,11 +88,12 @@ def CristianiRiskBound(VCDim,nData,nWrong,conf):
   l = nData
   k = nWrong
 
-  structRisk = math.sqrt((4./nData) * ( d*log2((2.*math.e*l)/d) + log2(4./delta) ))
-  rEmp = 2.*k/l
+  structRisk = math.sqrt((4. / nData) * (d * log2((2. * math.e * l) / d) + log2(4. / delta)))
+  rEmp = 2. * k / l
   return rEmp + structRisk
 
-def CherkasskyRiskBound(VCDim,nData,nWrong,conf,a1=1.0,a2=2.0):
+
+def CherkasskyRiskBound(VCDim, nData, nWrong, conf, a1=1.0, a2=2.0):
   """
 
     The formulation here is from Eqns 4.22 and 4.23 on pg 108 of
@@ -114,12 +118,12 @@ def CherkasskyRiskBound(VCDim,nData,nWrong,conf,a1=1.0,a2=2.0):
     **Returns**
 
       - a float
-      
+
 
     **Notes**
 
      - This appears to behave reasonably
-    
+
      - the equality a1=1.0 is by analogy to Burges's paper.
 
   """
@@ -127,11 +131,11 @@ def CherkasskyRiskBound(VCDim,nData,nWrong,conf,a1=1.0,a2=2.0):
   h = VCDim
   n = nData
   eta = conf
-  rEmp = float(nWrong)/nData
-  
-  numerator = h * (math.log(float(a2*n)/h) + 1) - math.log(eta/4.)
+  rEmp = float(nWrong) / nData
+
+  numerator = h * (math.log(float(a2 * n) / h) + 1) - math.log(eta / 4.)
   eps = a1 * numerator / n
-  
-  structRisk = eps/2. * (1. + math.sqrt(1. + (4.*rEmp/eps)))
+
+  structRisk = eps / 2. * (1. + math.sqrt(1. + (4. * rEmp / eps)))
 
   return rEmp + structRisk

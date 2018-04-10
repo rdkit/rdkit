@@ -32,41 +32,42 @@
 from __future__ import print_function
 from rdkit.ML.Cluster import Butina
 from rdkit import DataStructs
-import sys,cPickle
+import sys, cPickle
 
 # sims is the list of similarity thresholds used to generate clusters
-sims=[.9,.8,.7,.6]
-smis=[]
-uniq=[]
-uFps=[] 
+sims = [.9, .8, .7, .6]
+smis = []
+uniq = []
+uFps = []
 
 for fileN in sys.argv[1:]:
-    inF = file(sys.argv[1],'r')
-    cols = cPickle.load(inF)
-    fps = cPickle.load(inF)
+  inF = file(sys.argv[1], 'r')
+  cols = cPickle.load(inF)
+  fps = cPickle.load(inF)
 
-    for row in fps:
-        nm,smi,fp = row[:3]
-        if smi not in smis:
-            try:
-                fpIdx = uFps.index(fp)
-            except ValueError:
-                fpIdx=len(uFps)
-                uFps.append(fp)
-            uniq.append([fp,nm,smi,'FP_%d'%fpIdx]+row[3:])
-            smis.append(smi)
-            
+  for row in fps:
+    nm, smi, fp = row[:3]
+    if smi not in smis:
+      try:
+        fpIdx = uFps.index(fp)
+      except ValueError:
+        fpIdx = len(uFps)
+        uFps.append(fp)
+      uniq.append([fp, nm, smi, 'FP_%d' % fpIdx] + row[3:])
+      smis.append(smi)
 
-def distFunc(a,b):
-    return 1.-DataStructs.DiceSimilarity(a[0],b[0])
+
+def distFunc(a, b):
+  return 1. - DataStructs.DiceSimilarity(a[0], b[0])
+
 
 for sim in sims:
-    clusters=Butina.ClusterData(uniq,len(uniq),1.-sim,False,distFunc)
-    print('Sim: %.2f, nClusters: %d'%(sim,len(clusters)), file=sys.stderr)
-    for i,cluster in enumerate(clusters):
-        for pt in cluster:
-            uniq[pt].append(str(i+1))
-    cols.append('cluster_thresh_%d'%(int(100*sim)))
+  clusters = Butina.ClusterData(uniq, len(uniq), 1. - sim, False, distFunc)
+  print('Sim: %.2f, nClusters: %d' % (sim, len(clusters)), file=sys.stderr)
+  for i, cluster in enumerate(clusters):
+    for pt in cluster:
+      uniq[pt].append(str(i + 1))
+  cols.append('cluster_thresh_%d' % (int(100 * sim)))
 print(' '.join(cols))
 for row in uniq:
-    print(' '.join(row[1:]))
+  print(' '.join(row[1:]))

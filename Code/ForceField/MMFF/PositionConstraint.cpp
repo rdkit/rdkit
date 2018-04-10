@@ -23,7 +23,7 @@ PositionConstraintContrib::PositionConstraintContrib(ForceField *owner,
                                                      double forceConst) {
   PRECONDITION(owner, "bad owner");
   const RDGeom::PointPtrVect &pos = owner->positions();
-  URANGE_CHECK(idx, pos.size() - 1);
+  URANGE_CHECK(idx, pos.size());
 
   dp_forceField = owner;
   d_atIdx = idx;

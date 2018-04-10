@@ -212,7 +212,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     // finally the adjacency list:
     for (unsigned int i = 0; i < getNumEntries(); i++) {
       RDKit::INT_VECT children = this->getDownEntryList(i);
-      tmpUInt = children.size();
+      tmpUInt = static_cast<unsigned int>(children.size());
       RDKit::streamWrite(ss, tmpUInt);
       for (RDKit::INT_VECT::const_iterator ivci = children.begin();
            ivci != children.end(); ivci++) {
@@ -279,7 +279,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const { return boost::num_vertices(d_graph); }
+  unsigned int getNumEntries() const { return static_cast<unsigned int>(boost::num_vertices(d_graph)); }
 
   //------------------------------------
   //! fills the contents of this object from a string containing a \c pickle
@@ -309,7 +309,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
       fpl++;
       this->setFPLength(fpl);
     }
-    unsigned int eid = boost::add_vertex(EntryProperty(entry), d_graph);
+    unsigned int eid = static_cast<unsigned int>(boost::add_vertex(EntryProperty(entry), d_graph));
     orderType etype = entry->getOrder();
     // REVIEW: this initialization is not required: the STL map, in
     // theory, will create a new object when operator[] is called
@@ -334,8 +334,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   */
   void addEdge(unsigned int id1, unsigned int id2) {
     unsigned int nents = getNumEntries();
-    URANGE_CHECK(id1, nents - 1);
-    URANGE_CHECK(id2, nents - 1);
+    URANGE_CHECK(id1, nents);
+    URANGE_CHECK(id2, nents);
     // FIX: if we boost::setS for the edgeList BGL will
     // do the checking for duplicity (parallel edges)
     // But for reasons unknown setS results in compile
@@ -352,8 +352,8 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns a pointer to our entry with a particular index
   const entryType *getEntryWithIdx(unsigned int idx) const {
-    URANGE_CHECK(idx, getNumEntries() - 1);
-    int vd = boost::vertex(idx, d_graph);
+    URANGE_CHECK(idx, getNumEntries());
+    int vd = static_cast<int>(boost::vertex(idx, d_graph));
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
     return pMap[vd];
@@ -362,7 +362,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns a pointer to our entry with a particular bit ID
   const entryType *getEntryWithBitId(unsigned int idx) const {
-    URANGE_CHECK(idx, this->getFPLength() - 1);
+    URANGE_CHECK(idx, this->getFPLength());
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
     const entryType *res = NULL;
@@ -379,7 +379,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //------------------------------------
   //! returns the index of the entry with a particular bit ID
   int getIdOfEntryWithBitId(unsigned int idx) const {
-    URANGE_CHECK(idx, this->getFPLength() - 1);
+    URANGE_CHECK(idx, this->getFPLength());
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type
         pMap = boost::get(vertex_entry_t(), d_graph);
     int res = -1;
@@ -400,7 +400,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     DOWN_ENT_ITER nbrIdx, endIdx;
     boost::tie(nbrIdx, endIdx) = boost::adjacent_vertices(idx, d_graph);
     while (nbrIdx != endIdx) {
-      res.push_back(*nbrIdx);
+      res.push_back(static_cast<int>(*nbrIdx));
       nbrIdx++;
     }
     // std::cout << res.size() << "\n";

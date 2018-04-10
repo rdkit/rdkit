@@ -1,6 +1,5 @@
-//  $Id$
 //
-//   Copyright (C) 2003-2006 Rational Discovery LLC
+//   Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,7 +28,7 @@ bool comparePts(const RDGeom::Point3D &pt1, const RDGeom::Point3D &pt2,
 
 void test1Canonicalization() {
   ROMol *mol = SmilesToMol("C", 0, 1);
-  Conformer *conf = new Conformer(1);
+  auto *conf = new Conformer(1);
   conf->setAtomPos(0, RDGeom::Point3D(4.0, 5.0, 6.0));
   int cid = mol->addConformer(conf, true);
   CHECK_INVARIANT(cid >= 0, "")
@@ -168,7 +167,7 @@ void testGetSetAngle() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double angle = getAngleDeg(conf, 0, 19, 21);
-  TEST_ASSERT(RDKit::feq(RDKit::round(angle * 10) / 10, 109.7));
+  TEST_ASSERT(RDKit::feq(angle, 109.7, 0.05));
   setAngleDeg(conf, 0, 19, 21, 125.0);
   angle = getAngleDeg(conf, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(angle, 125.0));
@@ -188,7 +187,7 @@ void testGetSetDihedral() {
   TEST_ASSERT(m);
   Conformer &conf = m->getConformer();
   double dihedral = getDihedralDeg(conf, 0, 19, 21, 24);
-  TEST_ASSERT(RDKit::feq(RDKit::round(dihedral * 100) / 100, 176.05));
+  TEST_ASSERT(RDKit::feq(dihedral, 176.05, 0.05));
   setDihedralDeg(conf, 8, 0, 19, 21, 65.0);
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, 65.0));
@@ -201,6 +200,103 @@ void testGetSetDihedral() {
   dihedral = getDihedralDeg(conf, 8, 0, 19, 21);
   TEST_ASSERT(RDKit::feq(dihedral, -120.0));
 }
+
+void testGetSetDihedralThroughTripleBond() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fName =
+      rdbase +
+      "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+  RWMol *m = MolFileToMol(fName, true, false);
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  setDihedralDeg(conf, 6, 1, 2, 9, 0.0);
+  double dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 0.0));
+  double dist = getBondLength(conf, 6, 9);
+  setDihedralDeg(conf, 6, 1, 2, 9, 120.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 120.0));
+  double dist2 = getBondLength(conf, 6, 7);
+  TEST_ASSERT(RDKit::feq(dist, dist2, 0.05));
+  setDihedralDeg(conf, 6, 1, 2, 9, 180.0);
+  dihedral = getDihedralDeg(conf, 6, 1, 2, 9);
+  TEST_ASSERT(RDKit::feq(dihedral, 180.0));
+  double dist3 = getBondLength(conf, 6, 9);
+  TEST_ASSERT(!RDKit::feq(dist, dist3, 0.3));
+  bool exceptionRaised = false;
+  try {
+    setDihedralDeg(conf, 6, 0, 3, 9, 0.0);
+  }
+  catch (ValueErrorException &e) {
+    exceptionRaised = true;
+  }
+  TEST_ASSERT(exceptionRaised);
+}
+
+#ifndef RDK_HAS_EIGEN3
+void testGithub1262() {}
+#else
+void _calcAxesAndMoments(RWMol *m, Eigen::Matrix3d &axes,
+                         Eigen::Vector3d &moments) {
+  TEST_ASSERT(m);
+  Conformer &conf = m->getConformer();
+  std::vector<double> weights;
+  weights.resize(m->getNumAtoms());
+  for (ROMol::AtomIterator cai = m->beginAtoms(); cai != m->endAtoms(); ++cai) {
+    weights[(*cai)->getIdx()] = (*cai)->getMass();
+  }
+
+  bool ignoreHs = false, force = true;
+  computePrincipalAxesAndMoments(conf, axes, moments, ignoreHs, force,
+                                 &weights);
+}
+
+void testGithub1262() {
+  std::string rdbase = getenv("RDBASE");
+  {  // a disc (benzene)
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_1.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    Eigen::Matrix3d axes;
+    Eigen::Vector3d moments;
+    _calcAxesAndMoments(m, axes, moments);
+    TEST_ASSERT((moments(2) - moments(0)) > 10.);
+    TEST_ASSERT((moments(2) - moments(1)) > 10.);
+    TEST_ASSERT((moments(1) - moments(0)) < 1e-2);
+
+    delete m;
+  }
+  {  // a rod
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_2.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    Eigen::Matrix3d axes;
+    Eigen::Vector3d moments;
+    _calcAxesAndMoments(m, axes, moments);
+    TEST_ASSERT((moments(2) - moments(0)) > 10.);
+    TEST_ASSERT((moments(2) - moments(1)) < 1e-2);
+    TEST_ASSERT((moments(1) - moments(0)) > 10);
+
+    delete m;
+  }
+  {  // adamantane
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolTransforms/test_data/github1262_3.mol";
+    RWMol *m = MolFileToMol(fName, true, false);
+    TEST_ASSERT(m);
+    Eigen::Matrix3d axes;
+    Eigen::Vector3d moments;
+    _calcAxesAndMoments(m, axes, moments);
+    TEST_ASSERT((moments(2) - moments(0)) < 1e-2);
+    TEST_ASSERT((moments(2) - moments(1)) < 1e-2);
+    TEST_ASSERT((moments(1) - moments(0)) < 1e-2);
+
+    delete m;
+  }
+}
+#endif
 
 int main() {
   // test1();
@@ -219,6 +315,12 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testGetSetDihedral \n\n";
   testGetSetDihedral();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGetSetDihedralThroughTripleBond \n\n";
+  testGetSetDihedralThroughTripleBond();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGithub1262: PMI descriptors incorrect  \n\n";
+  testGithub1262();
   std::cout << "***********************************************************\n";
   return (0);
 }

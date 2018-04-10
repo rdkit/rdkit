@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -171,7 +170,7 @@ void timeTest(bool doLong = 0) {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Timing reads." << std::endl;
 
-  t1 = std::time(0);
+  t1 = std::time(nullptr);
   SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
   int count = 0;
   while (!suppl.atEnd()) {
@@ -181,20 +180,20 @@ void timeTest(bool doLong = 0) {
     if (!doLong && count >= 100) break;
     delete m1;
   }
-  t2 = std::time(0);
+  t2 = std::time(nullptr);
   BOOST_LOG(rdInfoLog) << " Smiles time: " << std::difftime(t2, t1)
                        << std::endl;
   ;
 
   std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
-  t1 = std::time(0);
+  t1 = std::time(nullptr);
   while (count > 0) {
     ROMol m2;
     MolPickler::molFromPickle(inStream, m2);
     count--;
     if (!doLong && count >= 100) break;
   }
-  t2 = std::time(0);
+  t2 = std::time(nullptr);
   BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
                        << std::endl;
   ;
@@ -286,7 +285,7 @@ void testIssue219() {
   MolPickler::molFromPickle(pickle, *m2);
   TEST_ASSERT(m1->getNumAtoms() == m2->getNumAtoms());
 
-  Conformer *conf = new Conformer(2);
+  auto *conf = new Conformer(2);
   conf->setId(23);
   m1->addConformer(conf);
   MolPickler::pickleMol(*m1, pickle);
@@ -709,7 +708,7 @@ void testIssue2788233(bool doLong = 0) {
 
     std::string pickle;
     MolPickler::pickleMol(*m, pickle);
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(m2->getNumAtoms() == 2);
     TEST_ASSERT(m2->getNumBonds() == 0);
@@ -730,7 +729,7 @@ void testIssue3202580() {
     TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(), 12.011, .001));
     std::string pickle;
     MolPickler::pickleMol(*m1, pickle);
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(), 12.011, .001));
     delete m1;
@@ -742,7 +741,7 @@ void testIssue3202580() {
     TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(), 12.000, .001));
     std::string pickle;
     MolPickler::pickleMol(*m1, pickle);
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(), 12.000, .001));
     delete m1;
@@ -757,7 +756,7 @@ void testIssue3202580() {
     TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(), 13.003, .001));
     std::string pickle;
     MolPickler::pickleMol(*m1, pickle);
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(), 13.003, .001));
     delete m1;
@@ -781,7 +780,7 @@ void testIssue3316407() {
 
     std::string pickle;
     MolPickler::pickleMol(*m, pickle);
-    RWMol *m2 = new RWMol();
+    auto *m2 = new RWMol();
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(m2->getNumAtoms() == 5);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
@@ -833,7 +832,7 @@ void testIssue3496759() {
       if (inl[0] == '#' || inl.size() < 2) continue;
       std::vector<std::string> tokens;
       boost::split(tokens, inl, boost::is_any_of(" \t"));
-      // std::cerr<<"smarts: "<<tokens[0]<<std::endl;
+      // std::cerr << "smarts: " << tokens[0] << std::endl;
       ROMol *m1 = SmartsToMol(tokens[0]);
       TEST_ASSERT(m1);
       std::string smi1 = MolToSmiles(*m1, 1);
@@ -847,7 +846,7 @@ void testIssue3496759() {
       std::string smi2 = MolToSmiles(*m2, 1);
       std::string sma2 = MolToSmarts(*m2);
 
-      // std::cerr<<"smi match: "<<smi1<<" "<<smi2<<std::endl;
+      std::cerr << "smi match: " << smi1 << " " << smi2 << std::endl;
       TEST_ASSERT(smi1 == smi2);
       // std::cerr<<"sma match: "<<sma1<<" "<<sma2<<std::endl;
       TEST_ASSERT(sma1 == sma2);
@@ -937,7 +936,7 @@ void testAtomResidues() {
   BOOST_LOG(rdInfoLog) << "Testing residue information handling on atoms"
                        << std::endl;
   {
-    RWMol *m = new RWMol();
+    auto *m = new RWMol();
 
     m->addAtom(new Atom(6));
     m->addAtom(new Atom(6));
@@ -947,8 +946,8 @@ void testAtomResidues() {
     m->addAtom(new Atom(6));
     m->addBond(2, 3, Bond::SINGLE);
 
-    m->getAtomWithIdx(0)
-        ->setMonomerInfo(new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
+    m->getAtomWithIdx(0)->setMonomerInfo(
+        new AtomMonomerInfo(AtomMonomerInfo::OTHER, "m1"));
     m->getAtomWithIdx(1)->setMonomerInfo(new AtomPDBResidueInfo("Ca", 3));
     MolOps::sanitizeMol(*m);
 
@@ -1015,6 +1014,263 @@ void testGithub713() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testPickleProps() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing pickling of properties" << std::endl;
+
+  std::vector<double> v;
+  v.push_back(1234.);
+  v.push_back(444.);
+  v.push_back(1123.);
+
+  ROMol *m = SmilesToMol("CC");
+  m->setProp("double", 1.0);
+  m->setProp("int", 100);
+  m->setProp("bool", true);
+  m->setProp("boolfalse", false);
+  m->setProp("dvec", v);
+
+  Atom *a = m->getAtomWithIdx(0);
+  a->setProp("double", 1.0);
+  a->setProp("int", 100);
+  a->setProp("bool", true);
+  a->setProp("boolfalse", false);
+  a->setProp("dvec", v);
+  a->setProp("_private", true);
+
+  Bond *b = m->getBondWithIdx(0);
+  b->setProp("double", 1.0);
+  b->setProp("int", 100);
+  b->setProp("bool", true);
+  b->setProp("boolfalse", false);
+  b->setProp("dvec", v);
+  b->setProp("_private", true);
+
+  std::string pkl;
+  {
+    MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getProp<double>("double") == 1.0);
+    TEST_ASSERT(m2->getProp<int>("int") == 100);
+    TEST_ASSERT(m2->getProp<bool>("bool") == true);
+    TEST_ASSERT(m2->getProp<bool>("boolfalse") == false);
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(a->getProp<bool>("_private") == true);
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(b->getProp<bool>("_private") == true);
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PicklerOps::MolProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getProp<double>("double") == 1.0);
+    TEST_ASSERT(m2->getProp<int>("int") == 100);
+    TEST_ASSERT(m2->getProp<bool>("bool") == true);
+    TEST_ASSERT(m2->getProp<bool>("boolfalse") == false);
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PicklerOps::AtomProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(!a->hasProp("_private"));
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl,
+                          PicklerOps::AtomProps | PicklerOps::PrivateProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(a->getProp<double>("double") == 1.0);
+    TEST_ASSERT(a->getProp<int>("int") == 100);
+    TEST_ASSERT(a->getProp<bool>("bool") == true);
+    TEST_ASSERT(a->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(a->getProp<bool>("_private") == true);
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(!b->hasProp("double"));
+    TEST_ASSERT(!b->hasProp("int"));
+    TEST_ASSERT(!b->hasProp("bool"));
+    TEST_ASSERT(!b->hasProp("boolfalse"));
+    TEST_ASSERT(!b->hasProp("_private"));
+
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl, PicklerOps::BondProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(!b->hasProp("_private"));
+    delete m2;
+  }
+
+  {
+    MolPickler::pickleMol(*m, pkl,
+                          PicklerOps::BondProps | PicklerOps::PrivateProps);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->hasProp("double"));
+    TEST_ASSERT(!m2->hasProp("int"));
+    TEST_ASSERT(!m2->hasProp("bool"));
+    TEST_ASSERT(!m2->hasProp("boolfalse"));
+
+    a = m2->getAtomWithIdx(0);
+    TEST_ASSERT(!a->hasProp("double"));
+    TEST_ASSERT(!a->hasProp("int"));
+    TEST_ASSERT(!a->hasProp("bool"));
+    TEST_ASSERT(!a->hasProp("boolfalse"));
+    TEST_ASSERT(!a->hasProp("_private"));
+
+    b = m2->getBondWithIdx(0);
+    TEST_ASSERT(b->getProp<double>("double") == 1.0);
+    TEST_ASSERT(b->getProp<int>("int") == 100);
+    TEST_ASSERT(b->getProp<bool>("bool") == true);
+    TEST_ASSERT(b->getProp<bool>("boolfalse") == false);
+    TEST_ASSERT(b->getProp<bool>("_private") == true);
+    delete m2;
+  }
+
+  delete m;
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testGithub1563() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github 1563: Add a canned Atom query for heavy atom degree"
+      << std::endl;
+  RWMol m;
+  auto *qa = new QueryAtom();
+  qa->setQuery(makeAtomHeavyAtomDegreeQuery(3));
+  m.addAtom(qa);
+  TEST_ASSERT(m.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+  RWMol nm(m);
+  TEST_ASSERT(nm.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(nm.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+  std::string pkl;
+  MolPickler::pickleMol(m, pkl);
+  RWMol nm2(pkl);
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(nm2.getAtomWithIdx(0)->getQuery()->getDescription() ==
+              "AtomHeavyAtomDegree");
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testGithub1710() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing Github 1710: bonds that are STEREOCIS or "
+                          "STEREOTRANS cannot be depickled"
+                       << std::endl;
+
+  RWMol m;
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addAtom(new Atom(6), false, true);
+  m.addBond(0, 1, Bond::SINGLE);
+  m.addBond(1, 2, Bond::DOUBLE);
+  m.addBond(2, 3, Bond::SINGLE);
+  m.getBondWithIdx(1)->setStereoAtoms(0, 3);
+
+  {
+    m.getBondWithIdx(1)->setStereo(Bond::STEREOCIS);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    delete m2;
+  }
+  {
+    m.getBondWithIdx(1)->setStereo(Bond::STEREOTRANS);
+    std::string pkl;
+    MolPickler::pickleMol(m, pkl);
+    RWMol *m2 = new RWMol(pkl);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+    TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    delete m2;
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1036,6 +1292,7 @@ int main(int argc, char *argv[]) {
   // timeTest(doLong);
   testQueries();
   testRadicals();
+  testPickleProps();
 #endif
   testIssue2788233();
   testIssue3202580();
@@ -1046,4 +1303,6 @@ int main(int argc, char *argv[]) {
   testAtomResidues();
   testGithub149();
   testGithub713();
+  testGithub1563();
+  testGithub1710();
 }

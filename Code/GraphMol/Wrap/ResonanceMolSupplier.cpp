@@ -23,21 +23,11 @@
 #include <RDBoost/iterator_next.h>
 
 #include "MolSupplier.h"
+#include "substructmethods.h"
 
 namespace python = boost::python;
 
 namespace RDKit {
-PyObject *convertMatches(MatchVectType &matches);
-PyObject *GetResonanceSubstructMatch(ResonanceMolSupplier &suppl,
-                                     const ROMol &query,
-                                     bool useChirality = false,
-                                     bool useQueryQueryMatches = false) {
-  NOGIL gil;
-  MatchVectType matches;
-  SubstructMatch(suppl, query, matches, true, useChirality,
-                 useQueryQueryMatches);
-  return convertMatches(matches);
-}
 
 PyObject *GetResonanceSubstructMatches(
     ResonanceMolSupplier &suppl, const ROMol &query, bool uniquify = false,
@@ -149,7 +139,9 @@ struct resmolsup_wrap {
         .def("GetIsEnumerated", &ResonanceMolSupplier::getIsEnumerated,
              "Returns true if resonance structure enumeration has already "
              "happened\n")
-        .def("GetSubstructMatch", GetResonanceSubstructMatch,
+        .def("GetSubstructMatch",
+             (PyObject * (*)(ResonanceMolSupplier & m, const ROMol &query, bool,
+                             bool))GetSubstructMatch,
              (python::arg("self"), python::arg("query"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false),

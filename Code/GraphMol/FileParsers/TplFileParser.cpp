@@ -8,6 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
@@ -15,9 +20,7 @@
 #include <RDGeneral/StreamOps.h>
 
 #include <fstream>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/trim.hpp>
+
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <typeinfo>
@@ -36,7 +39,7 @@ void ParseTPLAtomLine(std::string text, unsigned int lineNum, RWMol *mol,
            << " tokens. 8 are required." << std::endl;
     throw FileParseException(errout.str());
   }
-  Atom *atom = new Atom(splitLine[1]);
+  auto *atom = new Atom(splitLine[1]);
   unsigned int atomId;
   atomId = mol->addAtom(atom, false, true);
 
@@ -131,7 +134,7 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
   mol->setProp(propName.str(),
                boost::trim_copy(tempStr.substr(4, tempStr.size() - 4)));
 
-  Conformer *conf = new Conformer(mol->getNumAtoms());
+  auto *conf = new Conformer(mol->getNumAtoms());
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
     line++;
     tempStr = getLine(inStream);
@@ -176,21 +179,21 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return NULL;
+    return nullptr;
   }
   // comment line:
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return NULL;
+    return nullptr;
   }
   // optional name line:
   line++;
   tempStr = getLine(inStream);
   if (inStream->eof()) {
-    return NULL;
+    return nullptr;
   }
-  RWMol *res = new RWMol();
+  auto *res = new RWMol();
   if (tempStr.size() >= 4 && tempStr.substr(0, 4) == "NAME") {
     tempStr = boost::trim_copy(tempStr.substr(4, tempStr.size() - 4));
     res->setProp(common_properties::_Name, tempStr);
@@ -215,7 +218,7 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
   nAtoms = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[0]);
   nBonds = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[1]);
 
-  Conformer *conf = new Conformer(nAtoms);
+  auto *conf = new Conformer(nAtoms);
   conf->setId(0);
   for (unsigned int i = 0; i < nAtoms; ++i) {
     line++;
@@ -283,7 +286,7 @@ RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = NULL;
+  RWMol *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
     res = TPLDataStreamToMol(&inStream, line, sanitize, skipFirstConf);

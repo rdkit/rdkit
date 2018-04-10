@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -90,7 +89,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(atom);
   while (beg != end) {
-    Bond *nbrBond = mol[*beg].get();
+    const Bond *nbrBond = mol[*beg];
     if (nbrBond->getBondType() != Bond::SINGLE) {
       allSingle = false;
       // break;
@@ -103,7 +102,7 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
     }
     ++beg;
   }
-  int nNbrs = neighborBondIndices.size();
+  size_t nNbrs = neighborBondIndices.size();
 
   //----------------------------------------------------------
   //
@@ -347,6 +346,17 @@ Atom::ChiralType FindAtomStereochemistry(const RWMol &mol, const Bond *bond,
   return res;
 }
 
+void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
+  PRECONDITION(bond, "no bond");
+  PRECONDITION(conf, "no conformer");
+  PRECONDITION(&conf->getOwningMol() == &bond->getOwningMol(),"bond and conformer do not belong to same molecule");
+  if(bond->getBondType() != Bond::SINGLE) return;
+  Bond::BondDir dir = DetermineBondWedgeState(bond, fromAtomIdx, conf);
+  if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
+    bond->setBondDir(dir);
+  }
+}
+
 void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
   INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
@@ -379,8 +389,12 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (bond->getBondDir() == Bond::BEGINWEDGE ||
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
-      nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
-      // std::cerr<<"skip: "<<bond->getBeginAtomIdx()<<std::endl;
+      if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+          bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+        nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
+      else if (bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+               bond->getEndAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
+        nChiralNbrs[bond->getEndAtomIdx()] = noNbrs + 1;
     }
   }
 
@@ -390,7 +404,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
        ++cai) {
     const Atom *at = *cai;
     if (nChiralNbrs[at->getIdx()] > noNbrs) {
-      // std::cerr<<" SKIPPING1: "<<at->getIdx()<<std::endl;
+      // std::cerr << " SKIPPING1: " << at->getIdx() << std::endl;
       continue;
     }
     Atom::ChiralType type = at->getChiralTag();
@@ -401,7 +415,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
     while (nbrIdx != endNbrs) {
-      const ATOM_SPTR nat = mol[*nbrIdx];
+      const Atom* nat = mol[*nbrIdx];
       ++nbrIdx;
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
@@ -421,12 +435,14 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
               Rankers::argless<INT_VECT>(nChiralNbrs));
   }
 #if 0
-    std::cerr<<"  nbrs: ";
-    std::copy(nChiralNbrs.begin(),nChiralNbrs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<std::endl;
-    std::cerr<<"  order: ";
-    std::copy(indices.begin(),indices.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<std::endl;
+  std::cerr << "  nbrs: ";
+  std::copy(nChiralNbrs.begin(), nChiralNbrs.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
+  std::cerr << "  order: ";
+  std::copy(indices.begin(), indices.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
 #endif
   // picks a bond for each atom that we will wedge when we write the mol file
   // here is what we are going to do
@@ -440,7 +456,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   INT_MAP_INT res;
   BOOST_FOREACH (unsigned int idx, indices) {
     if (nChiralNbrs[idx] > noNbrs) {
-      // std::cerr<<" SKIPPING2: "<<idx<<std::endl;
+      // std::cerr << " SKIPPING2: " << idx << std::endl;
       continue;  // already have a wedged bond here
     }
     const Atom *atom = mol.getAtomWithIdx(idx);
@@ -450,9 +466,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW)
       break;
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
-    std::vector<std::pair<int, int> > nbrScores;
+    std::vector<std::pair<int, int>> nbrScores;
     while (atomBonds.first != atomBonds.second) {
-      const Bond *bond = mol[*atomBonds.first].get();
+      const Bond *bond = mol[*atomBonds.first];
       ++atomBonds.first;
 
       // can only wedge single bonds:
@@ -462,20 +478,29 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       if (res.find(bid) == res.end()) {
         // very strong preference for Hs:
         if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
-          nbrScores.push_back(
-              std::make_pair(-1000, bid));  // lower than anything else can be
+          nbrScores.push_back(std::make_pair(
+              -1000000, bid));  // lower than anything else can be
           continue;
         }
-        int nbrScore = 0;
+        // prefer lower atomic numbers with lower degrees and no specified
+        // chirality:
+        const Atom *oatom = bond->getOtherAtom(atom);
+        int nbrScore = oatom->getAtomicNum() + 10 * oatom->getDegree() +
+                       100 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
         // prefer neighbors that are nonchiral or have as few chiral neighbors
         // as possible:
-        int oIdx = bond->getOtherAtomIdx(idx);
+        int oIdx = oatom->getIdx();
         if (nChiralNbrs[oIdx] < noNbrs) {
           // the counts are negative, so we have to subtract them off
-          nbrScore -= 10 * nChiralNbrs[oIdx];
+          nbrScore -= 10000 * nChiralNbrs[oIdx];
         }
+        // prefer bonds to non-ring atoms:
+        nbrScore += 1000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
-        nbrScore += mol.getRingInfo()->numBondRings(bid);
+        nbrScore += 1000 * mol.getRingInfo()->numBondRings(bid);
+        // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
+        //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
+        //           << std::endl;
         nbrScores.push_back(std::make_pair(nbrScore, bid));
       }
     }
@@ -499,144 +524,144 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
 // Determine bond wedge state
 ///
 Bond::BondDir DetermineBondWedgeState(const Bond *bond,
-                                      const INT_MAP_INT &wedgeBonds,
+                                      unsigned int fromAtomIdx,
                                       const Conformer *conf) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE,
                "bad bond order for wedging");
-  const ROMol *mol = &(bond->getOwningMol());
-  PRECONDITION(mol, "no mol");
+   const ROMol *mol = &(bond->getOwningMol());
+   PRECONDITION(mol, "no mol");
 
-  Bond::BondDir res = bond->getBondDir();
-  if (!conf) {
-    return res;
-  }
+   Bond::BondDir res = bond->getBondDir();
+   if (!conf) {
+     return res;
+   }
 
+
+   Atom *atom, *bondAtom;  // = bond->getBeginAtom();
+   if (bond->getBeginAtom()->getIdx() == fromAtomIdx) {
+     atom = bond->getBeginAtom();
+     bondAtom = bond->getEndAtom();
+   } else {
+     atom = bond->getEndAtom();
+     bondAtom = bond->getBeginAtom();
+   }
+
+   Atom::ChiralType chiralType = atom->getChiralTag();
+   CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
+                       chiralType == Atom::CHI_TETRAHEDRAL_CCW,
+                   "");
+
+   // if we got this far, we really need to think about it:
+   INT_LIST neighborBondIndices;
+   DOUBLE_LIST neighborBondAngles;
+   RDGeom::Point3D centerLoc, tmpPt;
+   centerLoc = conf->getAtomPos(atom->getIdx());
+   tmpPt = conf->getAtomPos(bondAtom->getIdx());
+   centerLoc.z = 0.0;
+   tmpPt.z = 0.0;
+   RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
+
+   neighborBondIndices.push_back(bond->getIdx());
+   neighborBondAngles.push_back(0.0);
+
+   ROMol::OEDGE_ITER beg, end;
+   boost::tie(beg, end) = mol->getAtomBonds(atom);
+   while (beg != end) {
+     const Bond *nbrBond = (*mol)[*beg];
+     Atom *otherAtom = nbrBond->getOtherAtom(atom);
+     if (nbrBond != bond) {
+       tmpPt = conf->getAtomPos(otherAtom->getIdx());
+       tmpPt.z = 0.0;
+       RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
+       double angle = refVect.signedAngleTo(tmpVect);
+       if (angle < 0.0) angle += 2. * M_PI;
+       auto nbrIt = neighborBondIndices.begin();
+       auto angleIt = neighborBondAngles.begin();
+       // find the location of this neighbor in our angle-sorted list
+       // of neighbors:
+       while (angleIt != neighborBondAngles.end() && angle > (*angleIt)) {
+         ++angleIt;
+         ++nbrIt;
+       }
+       neighborBondAngles.insert(angleIt, angle);
+       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
+     }
+     ++beg;
+   }
+
+   // at this point, neighborBondIndices contains a list of bond
+   // indices from the central atom.  They are arranged starting
+   // at the reference bond in CCW order (based on the current
+   // depiction).
+   int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
+
+   // in the case of three-coordinated atoms we may have to worry about
+   // the location of the implicit hydrogen - Issue 209
+   // Check if we have one of these situation
+   //
+   //      0        1 0 2
+   //      *         \*/
+   //  1 - C - 2      C
+   //
+   // here the hydrogen will be between 1 and 2 and we need to add an additional
+   // swap
+   if (neighborBondAngles.size() == 3) {
+     // three coordinated
+     auto angleIt = neighborBondAngles.begin();
+     ++angleIt;  // the first is the 0 (or reference bond - we will ignoire that
+     double angle1 = (*angleIt);
+     ++angleIt;
+     double angle2 = (*angleIt);
+     if (angle2 - angle1 >= (M_PI - 1e-4)) {
+       // we have the above situation
+       nSwaps++;
+     }
+   }
+
+ #ifdef VERBOSE_STEREOCHEM
+   BOOST_LOG(rdDebugLog) << "--------- " << nSwaps << std::endl;
+   std::copy(neighborBondIndices.begin(), neighborBondIndices.end(),
+             std::ostream_iterator<int>(BOOST_LOG(rdDebugLog), " "));
+   BOOST_LOG(rdDebugLog) << std::endl;
+   std::copy(neighborBondAngles.begin(), neighborBondAngles.end(),
+             std::ostream_iterator<double>(BOOST_LOG(rdDebugLog), " "));
+   BOOST_LOG(rdDebugLog) << std::endl;
+ #endif
+   if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
+     if (nSwaps % 2 == 1) {  // ^ reverse) {
+       res = Bond::BEGINDASH;
+     } else {
+       res = Bond::BEGINWEDGE;
+     }
+   } else {
+     if (nSwaps % 2 == 1) {  // ^ reverse) {
+       res = Bond::BEGINWEDGE;
+     } else {
+       res = Bond::BEGINDASH;
+     }
+   }
+
+   return res;
+}
+Bond::BondDir DetermineBondWedgeState(const Bond *bond,
+                                      const INT_MAP_INT &wedgeBonds,
+                                      const Conformer *conf) {
+  PRECONDITION(bond, "no bond");
   int bid = bond->getIdx();
-  INT_MAP_INT_CI wbi = wedgeBonds.find(bid);
+  auto wbi = wedgeBonds.find(bid);
   if (wbi == wedgeBonds.end()) {
-    return res;
+    return bond->getBondDir();
   }
 
   unsigned int waid = wbi->second;
-
-  Atom *atom, *bondAtom;  // = bond->getBeginAtom();
-  if (bond->getBeginAtom()->getIdx() == waid) {
-    atom = bond->getBeginAtom();
-    bondAtom = bond->getEndAtom();
-  } else {
-    atom = bond->getEndAtom();
-    bondAtom = bond->getBeginAtom();
-  }
-
-  Atom::ChiralType chiralType = atom->getChiralTag();
-  CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
-                      chiralType == Atom::CHI_TETRAHEDRAL_CCW,
-                  "");
-
-  // if we got this far, we really need to think about it:
-  INT_LIST neighborBondIndices;
-  DOUBLE_LIST neighborBondAngles;
-  RDGeom::Point3D centerLoc, tmpPt;
-  centerLoc = conf->getAtomPos(atom->getIdx());
-  tmpPt = conf->getAtomPos(bondAtom->getIdx());
-  centerLoc.z = 0.0;
-  tmpPt.z = 0.0;
-  RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
-
-  neighborBondIndices.push_back(bond->getIdx());
-  neighborBondAngles.push_back(0.0);
-
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol->getAtomBonds(atom);
-  while (beg != end) {
-    Bond *nbrBond = (*mol)[*beg].get();
-    Atom *otherAtom = nbrBond->getOtherAtom(atom);
-    if (nbrBond != bond) {
-      tmpPt = conf->getAtomPos(otherAtom->getIdx());
-      tmpPt.z = 0.0;
-      RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
-      double angle = refVect.signedAngleTo(tmpVect);
-      if (angle < 0.0) angle += 2. * M_PI;
-      INT_LIST::iterator nbrIt = neighborBondIndices.begin();
-      DOUBLE_LIST::iterator angleIt = neighborBondAngles.begin();
-      // find the location of this neighbor in our angle-sorted list
-      // of neighbors:
-      while (angleIt != neighborBondAngles.end() && angle > (*angleIt)) {
-        ++angleIt;
-        ++nbrIt;
-      }
-      neighborBondAngles.insert(angleIt, angle);
-      neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
-    }
-    ++beg;
-  }
-
-  // at this point, neighborBondIndices contains a list of bond
-  // indices from the central atom.  They are arranged starting
-  // at the reference bond in CCW order (based on the current
-  // depiction).
-  int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
-
-  // in the case of three-coordinated atoms we may have to worry about
-  // the location of the implicit hydrogen - Issue 209
-  // Check if we have one of these situation
-  //
-  //      0        1 0 2
-  //      *         \*/
-  //  1 - C - 2      C
-  //
-  // here the hydrogen will be between 1 and 2 and we need to add an additional
-  // swap
-  if (neighborBondAngles.size() == 3) {
-    // three coordinated
-    DOUBLE_LIST::iterator angleIt = neighborBondAngles.begin();
-    ++angleIt;  // the first is the 0 (or reference bond - we will ignoire that
-    double angle1 = (*angleIt);
-    ++angleIt;
-    double angle2 = (*angleIt);
-    if (angle2 - angle1 >= (M_PI - 1e-4)) {
-      // we have the above situation
-      nSwaps++;
-    }
-  }
-
-#ifdef VERBOSE_STEREOCHEM
-  BOOST_LOG(rdDebugLog) << "--------- " << nSwaps << std::endl;
-  std::copy(neighborBondIndices.begin(), neighborBondIndices.end(),
-            std::ostream_iterator<int>(BOOST_LOG(rdDebugLog), " "));
-  BOOST_LOG(rdDebugLog) << std::endl;
-  std::copy(neighborBondAngles.begin(), neighborBondAngles.end(),
-            std::ostream_iterator<double>(BOOST_LOG(rdDebugLog), " "));
-  BOOST_LOG(rdDebugLog) << std::endl;
-#endif
-  if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-    if (nSwaps % 2 == 1) {  // ^ reverse) {
-      res = Bond::BEGINDASH;
-    } else {
-      res = Bond::BEGINWEDGE;
-    }
-  } else {
-    if (nSwaps % 2 == 1) {  // ^ reverse) {
-      res = Bond::BEGINWEDGE;
-    } else {
-      res = Bond::BEGINDASH;
-    }
-  }
-
-  return res;
+  return DetermineBondWedgeState(bond,waid,conf);
 }
 
 // handles stereochem markers set by the Mol file parser and
 // converts them to the RD standard:
 void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
-
-  // make sure we've calculated the implicit valence on each atom:
-  for (RWMol::AtomIterator atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
-       ++atomIt) {
-    (*atomIt)->calcImplicitValence(false);
-  }
 
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
@@ -647,8 +672,8 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         Atom *atom = bond->getBeginAtom();
         if (atom->getImplicitValence() == -1) {
-          atom->calcExplicitValence();
-          atom->calcImplicitValence();
+          atom->calcExplicitValence(false);
+          atom->calcImplicitValence(false);
         }
         Atom::ChiralType code = FindAtomStereochemistry(mol, bond, conf);
         atom->setChiralTag(code);
@@ -665,316 +690,6 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
   }
 }
 
-void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
-                              bool reverse, boost::dynamic_bitset<> &needsDir) {
-  PRECONDITION(bond, "bad bond");
-  PRECONDITION(atom, "bad atom");
-  PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
-  PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
-               "atom doesn't belong to bond");
-  // std::cerr << "\t\t>sbdra :  bond " << bond->getIdx() << " atom "
-  //           << atom->getIdx() << " dir : " << dir << " reverse: " << reverse
-  //           << std::endl;
-  Atom *oAtom;
-  if (bond->getBeginAtom() != atom) {
-    reverse = !reverse;
-    oAtom = bond->getBeginAtom();
-  } else {
-    oAtom = bond->getEndAtom();
-  }
-  if (reverse) {
-    dir = (dir == Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
-  }
-  // to ensure maximum compatibility, even when a bond has unknown stereo (set
-  // explicitly and recorded in _UnknownStereo property), I will still let a
-  // direction to be computed. You must check the _UnknownStereo property to
-  // make sure whether this bond is explictly set to have no direction info.
-  // This makes sense because the direction info are all derived from
-  // coordinates, the _UnknownStereo property is like extra metadata to be
-  // used with the direction info.
-  bond->setBondDir(dir);
-  // std::cerr<<"\t\t\t\t -> dir "<<dir<<std::endl;
-  // check for other single bonds around the other atom who need their
-  // direction set and set it as demanded by the direction of this one:
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = oAtom->getOwningMol().getAtomBonds(oAtom);
-  while (beg != end) {
-    Bond *nbrBond = oAtom->getOwningMol()[*beg].get();
-    ++beg;
-    if (nbrBond != bond && nbrBond->getBondType() != Bond::DOUBLE &&
-        needsDir[nbrBond->getIdx()]) {
-      Bond::BondDir nbrDir = Bond::NONE;
-      if ((nbrBond->getBeginAtom() == oAtom && bond->getBeginAtom() == oAtom) ||
-          (nbrBond->getEndAtom() == oAtom && bond->getEndAtom() == oAtom)) {
-        // both bonds either start or end here; they *must* have different
-        // directions:
-        nbrDir =
-            (dir == Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
-      } else {
-        // one starts here, the other ends here, they need to have the same
-        // direction:
-        nbrDir = dir;
-      }
-      nbrBond->setBondDir(nbrDir);
-      needsDir[nbrBond->getIdx()] = 0;
-      // std::cerr << "\t\t\t\t update bond " << nbrBond->getIdx() << " to dir "
-      //           << nbrDir << std::endl;
-    }
-  }
-}
-
-bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
-                         double tol = 0.035) {  // tolerance of 2 degrees
-  return fabs(v2.angleTo(v1) - M_PI) < tol;
-}
-
-void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
-                               boost::dynamic_bitset<> &needsDir,
-                               std::vector<unsigned int> &singleBondCounts,
-                               const VECT_INT_VECT &singleBondNbrs) {
-  // we want to deal only with double bonds:
-  PRECONDITION(dblBond, "bad bond");
-  PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
-  PRECONDITION(conf, "no conformer");
-  if (!needsDir[dblBond->getIdx()]) return;
-  needsDir.set(dblBond->getIdx(), 0);
-#if 0
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "UDBN: " << dblBond->getIdx() << " "
-            << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
-            << "\n";
-#endif
-
-  ROMol::OEDGE_ITER beg, end;
-  std::vector<Bond *> followupBonds;
-
-  Bond *bond1 = 0, *obond1 = 0;
-  boost::tie(beg, end) = mol.getAtomBonds(dblBond->getBeginAtom());
-  while (beg != end) {
-    Bond *tBond = mol[*beg].get();
-    if (tBond->getBondType() == Bond::SINGLE ||
-        tBond->getBondType() == Bond::AROMATIC) {
-      // prefer bonds that already have their directionality set
-      // or that are adjacent to more double bonds:
-      if (!bond1) {
-        bond1 = tBond;
-      } else if (needsDir[tBond->getIdx()]) {
-        if (singleBondCounts[tBond->getIdx()] >
-            singleBondCounts[bond1->getIdx()]) {
-          obond1 = bond1;
-          bond1 = tBond;
-        } else {
-          obond1 = tBond;
-        }
-      } else {
-        obond1 = bond1;
-        bond1 = tBond;
-      }
-    }
-    ++beg;
-  }
-  if (!bond1) {
-    // no single bonds from the beginning atom, mark
-    // the double bond as directionless and return:
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
-    return;
-  }
-
-  Bond *bond2 = 0, *obond2 = 0;
-  boost::tie(beg, end) = mol.getAtomBonds(dblBond->getEndAtom());
-  while (beg != end) {
-    Bond *tBond = mol[*beg].get();
-    if (tBond->getBondType() == Bond::SINGLE ||
-        tBond->getBondType() == Bond::AROMATIC) {
-      if (!bond2) {
-        bond2 = tBond;
-      } else if (needsDir[tBond->getIdx()]) {
-        if (singleBondCounts[tBond->getIdx()] >
-            singleBondCounts[bond2->getIdx()]) {
-          obond2 = bond2;
-          bond2 = tBond;
-        } else {
-          obond2 = tBond;
-        }
-      } else {
-        // we already had a bond2 and we don't need to set the direction
-        // on the new one, so swap.
-        obond2 = bond2;
-        bond2 = tBond;
-      }
-    }
-    ++beg;
-  }
-  if (!bond2) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
-    return;
-  }
-
-  CHECK_INVARIANT(bond1 && bond2, "no bonds found");
-  RDGeom::Point3D beginP = conf->getAtomPos(dblBond->getBeginAtomIdx());
-  RDGeom::Point3D endP = conf->getAtomPos(dblBond->getEndAtomIdx());
-  RDGeom::Point3D bond1P =
-      conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
-  RDGeom::Point3D bond2P =
-      conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
-  // check for a linear arrangement of atoms on either end:
-  bool linear = false;
-  RDGeom::Point3D p1;
-  RDGeom::Point3D p2;
-  p1 = bond1P - beginP;
-  p2 = endP - beginP;
-  if (isLinearArrangement(p1, p2)) {
-    if (!obond1) {
-      linear = true;
-    } else {
-      // one of the bonds was linear; what about the other one?
-      Bond *tBond = bond1;
-      bond1 = obond1;
-      obond1 = tBond;
-      bond1P =
-          conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
-      p1 = bond1P - beginP;
-      if (isLinearArrangement(p1, p2)) {
-        linear = true;
-      }
-    }
-  }
-  if (!linear) {
-    p1 = bond2P - endP;
-    p2 = beginP - endP;
-    if (isLinearArrangement(p1, p2)) {
-      if (!obond2) {
-        linear = true;
-      } else {
-        Bond *tBond = bond2;
-        bond2 = obond2;
-        obond2 = tBond;
-        bond2P =
-            conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
-        p1 = bond2P - beginP;
-        if (isLinearArrangement(p1, p2)) {
-          linear = true;
-        }
-      }
-    }
-  }
-  if (linear) {
-    dblBond->setBondDir(Bond::EITHERDOUBLE);
-    return;
-  }
-
-  double ang = RDGeom::computeDihedralAngle(bond1P, beginP, endP, bond2P);
-  bool sameTorsionDir;
-  if (ang < M_PI / 2) {
-    sameTorsionDir = false;
-  } else {
-    sameTorsionDir = true;
-  }
-  // std::cerr << "   angle: " << ang << " sameTorsionDir: " << sameTorsionDir
-  // << "\n";
-
-  /*
-     Time for some clarificatory text, because this gets really
-     confusing really fast.
-
-     The dihedral angle analysis above is based on viewing things
-     with an atom order as follows:
-
-     1
-      \
-       2 = 3
-            \
-             4
-
-     so dihedrals > 90 correspond to sameDir=true
-
-     however, the stereochemistry representation is
-     based on something more like this:
-
-     2
-      \
-       1 = 3
-            \
-             4
-     (i.e. we consider the direction-setting single bonds to be
-      starting at the double-bonded atom)
-
-  */
-  bool reverseBondDir = sameTorsionDir;
-
-  Atom *atom1 = dblBond->getBeginAtom(), *atom2 = dblBond->getEndAtom();
-  if (needsDir[bond1->getIdx()]) {
-    BOOST_FOREACH (int bidx, singleBondNbrs[bond1->getIdx()]) {
-      // std::cerr << "       neighbor from: " << bond1->getIdx() << " " << bidx
-      //           << ": " << needsDir[bidx] << std::endl;
-      if (needsDir[bidx]) followupBonds.push_back(mol.getBondWithIdx(bidx));
-    }
-  }
-  if (needsDir[bond2->getIdx()]) {
-    BOOST_FOREACH (int bidx, singleBondNbrs[bond2->getIdx()]) {
-      // std::cerr << "       neighbor from: " << bond2->getIdx() << " " << bidx
-      //           << ": " << needsDir[bidx] << std::endl;
-      if (needsDir[bidx]) followupBonds.push_back(mol.getBondWithIdx(bidx));
-    }
-  }
-  if (!needsDir[bond1->getIdx()]) {
-    if (!needsDir[bond2->getIdx()]) {
-      // check that we agree
-    } else {
-      if (bond1->getBeginAtom() != atom1) {
-        reverseBondDir = !reverseBondDir;
-      }
-      setBondDirRelativeToAtom(bond2, atom2, bond1->getBondDir(),
-                               reverseBondDir, needsDir);
-    }
-  } else if (!needsDir[bond2->getIdx()]) {
-    if (bond2->getBeginAtom() != atom2) {
-      reverseBondDir = !reverseBondDir;
-    }
-    setBondDirRelativeToAtom(bond1, atom1, bond2->getBondDir(), reverseBondDir,
-                             needsDir);
-  } else {
-    setBondDirRelativeToAtom(bond1, atom1, Bond::ENDDOWNRIGHT, false, needsDir);
-    setBondDirRelativeToAtom(bond2, atom2, Bond::ENDDOWNRIGHT, reverseBondDir,
-                             needsDir);
-  }
-  needsDir[bond1->getIdx()] = 0;
-  needsDir[bond2->getIdx()] = 0;
-  if (obond1 && needsDir[obond1->getIdx()]) {
-    setBondDirRelativeToAtom(obond1, atom1, bond1->getBondDir(),
-                             bond1->getBeginAtom() == atom1, needsDir);
-    needsDir[obond1->getIdx()] = 0;
-  }
-  if (obond2 && needsDir[obond2->getIdx()]) {
-    setBondDirRelativeToAtom(obond2, atom2, bond2->getBondDir(),
-                             bond2->getBeginAtom() == atom2, needsDir);
-    needsDir[obond2->getIdx()] = 0;
-  }
-#if 0
-  std::cerr << "  1:" << bond1->getIdx() << " ";
-  if (obond1)
-    std::cerr << obond1->getIdx() << std::endl;
-  else
-    std::cerr << "N/A" << std::endl;
-  std::cerr << "  2:" << bond2->getIdx() << " ";
-  if (obond2)
-    std::cerr << obond2->getIdx() << std::endl;
-  else
-    std::cerr << "N/A" << std::endl;
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-#endif
-  BOOST_FOREACH (Bond *oDblBond, followupBonds) {
-    // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
-    //           << needsDir[oDblBond->getIdx()] << std::endl;
-    updateDoubleBondNeighbors(mol, oDblBond, conf, needsDir, singleBondCounts,
-                              singleBondNbrs);
-  }
-}
-
 void ClearSingleBondDirFlags(ROMol &mol) {
   for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
@@ -988,126 +703,8 @@ void ClearSingleBondDirFlags(ROMol &mol) {
 
 void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
-#if 0
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-    std::cerr << "DBSN: "<<"\n";
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
-#endif
-  // used to store the number of single bonds a given
-  // single bond is adjacent to
-  std::vector<unsigned int> singleBondCounts(mol.getNumBonds(), 0);
-  std::vector<Bond *> bondsInPlay;
-  // keeps track of which single bonds are adjacent to each double bond:
-  VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
-  // keeps track of which double bonds are adjacent to each single bond:
-  VECT_INT_VECT singleBondNbrs(mol.getNumBonds());
-  // keeps track of which single bonds need a dir set and which double bonds
-  // need to have their neighbors' dirs set
-  boost::dynamic_bitset<> needsDir(mol.getNumBonds());
-
-  // find double bonds that should be considered for
-  // stereochemistry
-  // NOTE that we are explicitly excluding double bonds in rings
-  // with this test.
-  bool resetRings = false;
-  if (!mol.getRingInfo()->isInitialized()) {
-    resetRings = true;
-    MolOps::fastFindRings(mol);
-  }
-
-  for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    if ((*bondIt)->getBondType() == Bond::DOUBLE &&
-        (*bondIt)->getStereo() != Bond::STEREOANY &&
-        (*bondIt)->getBondDir() != Bond::EITHERDOUBLE &&
-        (*bondIt)->getBeginAtom()->getDegree() > 1 &&
-        (*bondIt)->getEndAtom()->getDegree() > 1 &&
-        !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
-      const Atom *a1 = (*bondIt)->getBeginAtom();
-      const Atom *a2 = (*bondIt)->getEndAtom();
-
-      ROMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(a1);
-      while (beg != end) {
-        const Bond *nbrBond = mol[*beg].get();
-        if (nbrBond->getBondType() == Bond::SINGLE ||
-            nbrBond->getBondType() == Bond::AROMATIC) {
-          singleBondCounts[nbrBond->getIdx()] += 1;
-          needsDir[nbrBond->getIdx()] = 1;
-          needsDir[(*bondIt)->getIdx()] = 1;
-          dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
-          // the search may seem inefficient, but these vectors are going to be
-          // at most 2 long (with very few exceptions). It's just not worth
-          // using a different data structure
-          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
-                        singleBondNbrs[nbrBond->getIdx()].end(),
-                        (*bondIt)->getIdx()) ==
-              singleBondNbrs[nbrBond->getIdx()].end()) {
-            singleBondNbrs[nbrBond->getIdx()].push_back((*bondIt)->getIdx());
-          }
-        }
-        ++beg;
-      }
-      boost::tie(beg, end) = mol.getAtomBonds(a2);
-      while (beg != end) {
-        const Bond *nbrBond = mol[*beg].get();
-        if (nbrBond->getBondType() == Bond::SINGLE ||
-            nbrBond->getBondType() == Bond::AROMATIC) {
-          singleBondCounts[nbrBond->getIdx()] += 1;
-          needsDir[nbrBond->getIdx()] = 1;
-          needsDir[(*bondIt)->getIdx()] = 1;
-          dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
-
-          // the search may seem inefficient, but these vectors are going to be
-          // at most 2 long (with very few exceptions). It's just not worth
-          // using a different data structure
-          if (std::find(singleBondNbrs[nbrBond->getIdx()].begin(),
-                        singleBondNbrs[nbrBond->getIdx()].end(),
-                        (*bondIt)->getIdx()) ==
-              singleBondNbrs[nbrBond->getIdx()].end()) {
-
-            singleBondNbrs[nbrBond->getIdx()].push_back((*bondIt)->getIdx());
-          }
-        }
-        ++beg;
-      }
-      bondsInPlay.push_back(*bondIt);
-    }
-  }
-
-  if (!bondsInPlay.size()) {
-    if (resetRings) mol.getRingInfo()->reset();
-    return;
-  }
-
-  // order the double bonds based on the singleBondCounts of their neighbors:
-  std::vector<std::pair<unsigned int, Bond *> > orderedBondsInPlay;
-  for (unsigned int i = 0; i < bondsInPlay.size(); ++i) {
-    Bond *dblBond = bondsInPlay[i];
-    unsigned int countHere =
-        std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
-                        dblBondNbrs[dblBond->getIdx()].end(), 0);
-    // and favor double bonds that are *not* in rings. The combination of using
-    // the sum
-    // above (instead of the max) and this ring-membershipt test seem to fix
-    // sf.net issue 3009836
-    if (!(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) countHere *= 10;
-    orderedBondsInPlay.push_back(std::make_pair(countHere, dblBond));
-  }
-  std::sort(orderedBondsInPlay.begin(), orderedBondsInPlay.end());
-
-  // oof, now loop over the double bonds in that order and
-  // update their neighbor directionalities:
-  std::vector<std::pair<unsigned int, Bond *> >::reverse_iterator pairIter;
-  for (pairIter = orderedBondsInPlay.rbegin();
-       pairIter != orderedBondsInPlay.rend(); ++pairIter) {
-    updateDoubleBondNeighbors(mol, pairIter->second, conf, needsDir,
-                              singleBondCounts, singleBondNbrs);
-  }
-  if (resetRings) mol.getRingInfo()->reset();
+  PRECONDITION(&(conf->getOwningMol()) == &mol,
+               "conformer does not belong to molecule");
+  MolOps::detectBondStereochemistry(mol, conf->getId());
 }
 }

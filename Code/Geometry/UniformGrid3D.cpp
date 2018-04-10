@@ -25,8 +25,7 @@ unsigned int ci_GRIDPICKLE_VERSION = 0x1;
 
 UniformGrid3D::UniformGrid3D(const UniformGrid3D &other) : Grid3D(other) {
   PRECONDITION(other.dp_storage, "cannot copy an unintialized grid");
-  RDKit::DiscreteValueVect *data =
-      new RDKit::DiscreteValueVect(*other.dp_storage);
+  auto *data = new RDKit::DiscreteValueVect(*other.dp_storage);
   initGrid(other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
            other.d_numZ * other.d_spacing, other.d_spacing,
            other.dp_storage->getValueType(), other.d_offSet, data);
@@ -59,17 +58,17 @@ void UniformGrid3D::initGrid(
 }
 
 UniformGrid3D::UniformGrid3D(const std::string &pkl) {
-  dp_storage = 0;
+  dp_storage = nullptr;
   this->initFromText(pkl.c_str(), pkl.size());
 }
 UniformGrid3D::UniformGrid3D(const char *pkl, const unsigned int len) {
-  dp_storage = 0;
+  dp_storage = nullptr;
   this->initFromText(pkl, len);
 }
 
 UniformGrid3D::~UniformGrid3D() {
   delete dp_storage;
-  dp_storage = NULL;
+  dp_storage = nullptr;
 }
 
 int UniformGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
@@ -361,7 +360,7 @@ void UniformGrid3D::initFromText(const char *pkl, const unsigned int length) {
 
   boost::uint32_t pklSz;
   streamRead(ss, pklSz);
-  char *buff = new char[pklSz];
+  auto *buff = new char[pklSz];
   ss.read(buff, pklSz * sizeof(char));
   delete dp_storage;
   dp_storage = new RDKit::DiscreteValueVect(buff, pklSz);
@@ -410,7 +409,7 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
 
 void writeGridToFile(const UniformGrid3D &grid, const std::string &filename) {
   // std::ofstream ofStrm(filename.c_str());
-  std::ofstream *ofStrm = new std::ofstream(filename.c_str());
+  auto *ofStrm = new std::ofstream(filename.c_str());
   std::ostream *oStrm = static_cast<std::ostream *>(ofStrm);
   writeGridToStream(grid, *oStrm);
   delete ofStrm;

@@ -71,8 +71,8 @@ class SparseBitVect : public BitVect {
   bool getBit(const IntVectIter which) const;
   bool getBit(const IntSetIter which) const;
 
-  unsigned int getNumOnBits() const { return dp_bits->size(); };
-  unsigned int getNumOffBits() const { return d_size - dp_bits->size(); };
+  unsigned int getNumOnBits() const { return static_cast<unsigned int>(dp_bits->size()); };
+  unsigned int getNumOffBits() const { return d_size - static_cast<unsigned int>(dp_bits->size()); };
 
   std::string toString() const;
 

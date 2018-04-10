@@ -80,6 +80,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_definitions(-D_GNU_SOURCE=1)
 endif()
 
+     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
+     endif()
+
+
 rdkit_library(avalon_clib ${avalon_clib_srcs})
 
 
@@ -89,7 +94,9 @@ include_directories(${AVALON_SRC_PATH})
 rdkit_library(AvalonLib AvalonTools.cpp SHARED LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral )
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
-           LINK_LIBRARIES AvalonLib avalon_clib FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
+           LINK_LIBRARIES AvalonLib avalon_clib
+	   SubstructMatch
+	   FileParsers SmilesParse GraphMol DataStructs RDGeometryLib RDGeneral)
 
 add_subdirectory(Wrap)
 

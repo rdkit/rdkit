@@ -29,12 +29,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include "postgres.h"
-#include "fmgr.h"
-#include "access/gist.h"
-#include "access/skey.h"
-#include "access/tuptoaster.h"
-#include "utils/memutils.h"
+#include <postgres.h>
+#include <fmgr.h>
+#include <access/gist.h>
+#include <access/skey.h>
+#include <access/tuptoaster.h>
+#include <utils/memutils.h>
 
 #include "rdkit.h"
 
@@ -49,14 +49,14 @@ gslfp_compress(PG_FUNCTION_ARGS)
   GISTENTRY  *retval = entry;
 
   if (entry->leafkey) {
-    MolSparseFingerPrint fp = constructMolSparseFingerPrint(DatumGetSparseFingerPrintP(entry->key));
+    CSfp fp = constructCSfp(DatumGetSfpP(entry->key));
 
     retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 
     gistentryinit(*retval, PointerGetDatum(makeLowSparseFingerPrint(fp, NUMRANGE)),
                   entry->rel, entry->page,
                   entry->offset, FALSE);
-    freeMolSparseFingerPrint(fp);
+    freeCSfp(fp);
   }       
                 
   PG_RETURN_POINTER(retval);
@@ -401,17 +401,17 @@ gslfp_consistent(PG_FUNCTION_ARGS)
   StrategyNumber  strategy = (StrategyNumber) PG_GETARG_UINT16(2);
   bool                    *recheck = (bool *) PG_GETARG_POINTER(4);
   bytea                   *key = (bytea*)DatumGetPointer(entry->key);
-  MolSparseFingerPrint data;
+  CSfp data;
   int querySum,
     keySum,
     overlapUp,
     overlapDown;
 
-  fcinfo->flinfo->fn_extra = SearchSparseFPCache(
-                                                 fcinfo->flinfo->fn_extra,
-                                                 fcinfo->flinfo->fn_mcxt,
-                                                 PG_GETARG_DATUM(1), 
-                                                 NULL, &data, NULL);
+  fcinfo->flinfo->fn_extra = searchSfpCache(
+					    fcinfo->flinfo->fn_extra,
+					    fcinfo->flinfo->fn_mcxt,
+					    PG_GETARG_DATUM(1), 
+					    NULL, &data, NULL);
 
   *recheck = true; /* we use signature, so it's needed to recheck */
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2018 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -49,7 +49,7 @@ std::pair<int, double> UFFOptimizeMolecule(
 #ifdef RDK_THREADSAFE_SSS
 namespace detail {
 void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
-                                     std::vector<std::pair<int, double> > *res,
+                                     std::vector<std::pair<int, double>> *res,
                                      unsigned int threadIdx,
                                      unsigned int numThreads, int maxIters) {
   unsigned int i = 0;
@@ -88,7 +88,7 @@ void UFFOptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
 
 */
 void UFFOptimizeMoleculeConfs(ROMol &mol,
-                              std::vector<std::pair<int, double> > &res,
+                              std::vector<std::pair<int, double>> &res,
                               int numThreads = 1, int maxIters = 1000,
                               double vdwThresh = 10.0,
                               bool ignoreInterfragInteractions = true) {
@@ -106,13 +106,14 @@ void UFFOptimizeMoleculeConfs(ROMol &mol,
   else {
     ForceFields::ForceField *ff = UFF::constructForceField(
         mol, vdwThresh, -1, ignoreInterfragInteractions);
-    boost::thread_group tg;
+    std::vector<std::thread> tg;
     for (int ti = 0; ti < numThreads; ++ti) {
-      tg.add_thread(new boost::thread(detail::UFFOptimizeMoleculeConfsHelper_,
-                                      *ff, &mol, &res, ti, numThreads,
-                                      maxIters));
+      tg.emplace_back(std::thread(detail::UFFOptimizeMoleculeConfsHelper_, *ff,
+                                  &mol, &res, ti, numThreads, maxIters));
     }
-    tg.join_all();
+    for (auto &thread : tg) {
+      if (thread.joinable()) thread.join();
+    }
     delete ff;
   }
 #endif

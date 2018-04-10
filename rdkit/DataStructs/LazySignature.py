@@ -6,17 +6,18 @@
 
 
 class LazySig:
-  def __init__(self,computeFunc,sigSize):
+
+  def __init__(self, computeFunc, sigSize):
     """
     computeFunc should take a single argument, the integer bit id
     to compute
 
     """
-    if sigSize<=0:
+    if sigSize <= 0:
       raise ValueError('zero size')
-    self.computeFunc=computeFunc
-    self.size=sigSize
-    self._cache={}
+    self.computeFunc = computeFunc
+    self.size = sigSize
+    self._cache = {}
 
   def __len__(self):
     """
@@ -28,7 +29,7 @@ class LazySig:
     """
     return self.size
 
-  def __getitem__(self,which):
+  def __getitem__(self, which):
     """
 
      >>> obj = LazySig(lambda x:x,10)
@@ -50,33 +51,33 @@ class LazySig:
      ... else:
      ...   0
      1
-     
+
     """
-    if which<0:
+    if which < 0:
       # handle negative indices
-      which = self.size+which
-    
-    if which<=0 or which>=self.size:
+      which = self.size + which
+
+    if which <= 0 or which >= self.size:
       raise IndexError('bad index')
-    
+
     if which in self._cache:
-      v= self._cache[which]
+      v = self._cache[which]
     else:
       v = self.computeFunc(which)
-      self._cache[which]=v
+      self._cache[which] = v
     return v
-  
-#------------------------------------
+
+
+# ------------------------------------
 #
 #  doctest boilerplate
 #
-def _test():
-  import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
+def _runDoctests(verbose=None):  # pragma: nocover
   import sys
-  failed,tried = _test()
+  import doctest
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
+
+if __name__ == '__main__':  # pragma: nocover
+  _runDoctests()

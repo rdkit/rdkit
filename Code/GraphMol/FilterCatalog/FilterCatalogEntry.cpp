@@ -81,7 +81,7 @@ FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
   const int debugParse = 0;
   const bool mergeHs = true;
   ROMOL_SPTR pattern(SmartsToMol(data.smarts, debugParse, mergeHs));
-  if (!pattern.get()) return 0;
+  if (!pattern.get()) return nullptr;
 
   // The filter has the concept of the maximum number of times the pattern is
   // allowed
@@ -96,7 +96,7 @@ FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
 
   if (!entry->isValid()) {
     delete entry;
-    return 0;
+    return nullptr;
   }
 
   // add the props

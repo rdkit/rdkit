@@ -15,13 +15,15 @@
 """
 from __future__ import print_function
 import SimpleXMLRPCServer
-import threading,sys,time,types,os,tempfile
-from pymol import cmd,cgo
- 
+import threading, sys, time, types, os, tempfile
+from pymol import cmd, cgo
+
 # initial port to try for the server
-_xmlPort=9123
+_xmlPort = 9123
 # number of alternate ports to try if the first fails
-_nPortsToTry=5
+_nPortsToTry = 5
+
+
 def rpcCmd(cmdText):
   """ executes a PyMol API command
  
@@ -33,42 +35,46 @@ def rpcCmd(cmdText):
     return res
   else:
     return ''
- 
+
+
 def rpcQuit():
   """ causes PyMol to quit """
   cmd.quit()
   return 1
- 
+
+
 def rpcZoom(what=''):
   """ executes cmd.zoom(what) """
   cmd.zoom(what)
   return 1
- 
- 
-def rpcSet(prop,val,obj):
+
+
+def rpcSet(prop, val, obj):
   """ executes a PyMol set command
  
    return value is either the result of the command or the empty string
  
   """
-  res = cmd.set(prop,val,obj)
+  res = cmd.set(prop, val, obj)
   if res is not None:
     return res
   else:
     return ''
- 
-def rpcGet(prop,obj):
+
+
+def rpcGet(prop, obj):
   """ executes a PyMol get command
  
    return value is either the result of the command or the empty string
  
   """
-  res = cmd.get(prop,obj)
+  res = cmd.get(prop, obj)
   if res is not None:
     return res
   else:
     return ''
- 
+
+
 def rpcPing():
   """ Used to establish whether or not the server is alive.
  
@@ -79,8 +85,9 @@ def rpcPing():
  
   """
   return 1
- 
-def rpcLabel(pos,labelText,id='lab1',color=(1,1,1)):
+
+
+def rpcLabel(pos, labelText, id='lab1', color=(1, 1, 1)):
   """ create a text label
  
     Arguments:
@@ -93,37 +100,38 @@ def rpcLabel(pos,labelText,id='lab1',color=(1,1,1)):
       at the moment this is, how you say, a hack
  
   """
-  x,y,z = pos
-  text="""
+  x, y, z = pos
+  text = """
 Atom
  
   1  0  0  0  0  0  0  0  0  0999 V2000
 % 10.4f% 10.4f%10.4f C   0  0  0  0  0  0  0  0  0  0  0  0
-M  END"""%(x,y,z)
-  cmd.read_molstr(text,id)
-  cmd.label("%s"%(id),'"%s"'%labelText)
-  cmd.hide("nonbonded",id)
-  cmd.set_color("%s-color"%id,color)
-  cmd.color("%s-color"%id,id)
+M  END""" % (x, y, z)
+  cmd.read_molstr(text, id)
+  cmd.label("%s" % (id), '"%s"' % labelText)
+  cmd.hide("nonbonded", id)
+  cmd.set_color("%s-color" % id, color)
+  cmd.color("%s-color" % id, id)
   return 1
- 
+
+
 def rpcResetCGO(id):
   """ removes a CGO from the local dictionary
  
   """
   global cgoDict
-  if id=="*":
-    cgoDict={}
+  if id == "*":
+    cgoDict = {}
     res = 1
-  elif cgoDict.has_key(id):
-    del(cgoDict[id])
+  elif id in cgoDict:
+    del (cgoDict[id])
     res = 1
   else:
     res = 0
   return res
- 
-def rpcSphere(pos,rad,color,id='cgo',extend=1,
-              transparent=0,transparency=0.5):
+
+
+def rpcSphere(pos, rad, color, id='cgo', extend=1, transparent=0, transparency=0.5):
   """ create a sphere
  
     Arguments:
@@ -137,24 +145,24 @@ def rpcSphere(pos,rad,color,id='cgo',extend=1,
       transparent: (OPTIONAL) sets the object to be transparent
       transparency: (OPTIONAL) the percent transparency of the object
   """
-  r,g,b = color
-  x,y,z = pos
+  r, g, b = color
+  x, y, z = pos
   if extend:
-    obj = cgoDict.get(id,[])
+    obj = cgoDict.get(id, [])
   else:
     obj = []
   if not transparent:
     o = []
   else:
-    o = [cgo.ALPHA,1-transparency]
-  o.extend([cgo.COLOR,r,g,b,cgo.SPHERE,x,y,z,rad])
+    o = [cgo.ALPHA, 1 - transparency]
+  o.extend([cgo.COLOR, r, g, b, cgo.SPHERE, x, y, z, rad])
   obj.extend(o)
   cgoDict[id] = obj
-  cmd.load_cgo(obj,id,1)
+  cmd.load_cgo(obj, id, 1)
   return 1
 
-def rpcRenderCGO(cgoV,id='cgo',extend=1):
 
+def rpcRenderCGO(cgoV, id='cgo', extend=1):
   """ renders a CGO vector
  
     Arguments:
@@ -165,15 +173,15 @@ def rpcRenderCGO(cgoV,id='cgo',extend=1):
         to the ojbect
   """
   if extend:
-    obj = cgoDict.get(id,[])
+    obj = cgoDict.get(id, [])
   else:
     obj = []
   obj.extend(cgoV)
-  cmd.load_cgo(obj,id,1)
+  cmd.load_cgo(obj, id, 1)
   return 1
 
- 
-def rpcSpheres(sphereD,id='cgo',extend=1):
+
+def rpcSpheres(sphereD, id='cgo', extend=1):
   """ create a sphere
  
     Arguments:
@@ -184,24 +192,25 @@ def rpcSpheres(sphereD,id='cgo',extend=1):
         to the ojbect
   """
   if extend:
-    obj = cgoDict.get(id,[])
+    obj = cgoDict.get(id, [])
   else:
     obj = []
-  for pos,rad,color,transparent,transparency in sphereD:
-    r,g,b = color
-    x,y,z = pos
+  for pos, rad, color, transparent, transparency in sphereD:
+    r, g, b = color
+    x, y, z = pos
     if not transparent:
       o = []
     else:
-      o = [cgo.ALPHA,1-transparency]
-    o.extend([cgo.COLOR,r,g,b,cgo.SPHERE,x,y,z,rad])
+      o = [cgo.ALPHA, 1 - transparency]
+    o.extend([cgo.COLOR, r, g, b, cgo.SPHERE, x, y, z, rad])
     obj.extend(o)
   cgoDict[id] = obj
-  cmd.load_cgo(obj,id,1)
+  cmd.load_cgo(obj, id, 1)
   return 1
- 
-def rpcCylinder(end1,end2,rad,color1,id='cgo',color2=None,extend=1,
-                transparent=0,transparency=0.5):
+
+
+def rpcCylinder(end1, end2, rad, color1, id='cgo', color2=None, extend=1, transparent=0,
+                transparency=0.5):
   """ create a cylinder
  
     Arguments:
@@ -224,31 +233,46 @@ is white
  
   """
   global cgoDict
- 
-  if color2 is None: color2 = color1
-  r1,g1,b1 = color1
-  r2,g2,b2 = color2
-  x1,y1,z1 = end1
-  x2,y2,z2 = end2
+
+  if color2 is None:
+    color2 = color1
+  r1, g1, b1 = color1
+  r2, g2, b2 = color2
+  x1, y1, z1 = end1
+  x2, y2, z2 = end2
   if extend:
-    obj = cgoDict.get(id,[])
+    obj = cgoDict.get(id, [])
   else:
     obj = []
   if not transparent:
     o = []
   else:
-    o = [cgo.ALPHA,1-transparency]
-  o.extend([cgo.CYLINDER,x1,y1,z1,x2,y2,z2,rad,r1,g1,b1,r2,g2,b2,])
+    o = [cgo.ALPHA, 1 - transparency]
+  o.extend([cgo.CYLINDER,
+            x1,
+            y1,
+            z1,
+            x2,
+            y2,
+            z2,
+            rad,
+            r1,
+            g1,
+            b1,
+            r2,
+            g2,
+            b2, ])
   obj.extend(o)
   cgoDict[id] = obj
-  cmd.load_cgo(obj,id,1)
+  cmd.load_cgo(obj, id, 1)
   return 1
- 
+
+
 def rpcShow(objs):
   """ shows (enables) an object (or objects)"""
-  if type(objs) not in (types.ListType,types.TupleType):
-    objs = (objs,)
- 
+  if type(objs) not in (types.ListType, types.TupleType):
+    objs = (objs, )
+
   for objName in objs:
     try:
       cmd.enable(objName)
@@ -257,13 +281,14 @@ def rpcShow(objs):
       break
     else:
       res = 1
-  return res  
- 
+  return res
+
+
 def rpcHide(objs):
   """ hides (disables) an object (or objects) """
-  if type(objs) not in (types.ListType,types.TupleType):
-    objs = (objs,)
- 
+  if type(objs) not in (types.ListType, types.TupleType):
+    objs = (objs, )
+
   for objName in objs:
     try:
       cmd.disable(objName)
@@ -272,8 +297,9 @@ def rpcHide(objs):
       break
     else:
       res = 1
-  return res  
- 
+  return res
+
+
 def rpcDeleteObject(objName):
   """ deletes an object """
   try:
@@ -282,8 +308,9 @@ def rpcDeleteObject(objName):
     res = 0
   else:
     res = 1
-  return res  
- 
+  return res
+
+
 def rpcDeleteAll():
   """ deletes all objects """
   res = cmd.delete('all')
@@ -291,8 +318,9 @@ def rpcDeleteAll():
     return res
   else:
     return ''
- 
-def colorObj(objName,colorScheme):
+
+
+def colorObj(objName, colorScheme):
   """ sets an molecule's color scheme
     Arguments:
       - objName: the object (molecule) to change
@@ -304,21 +332,22 @@ def colorObj(objName,colorScheme):
     if colorScheme == 'std':
       # this is an adaptation of the cbag scheme from util.py, but
       # with a gray carbon.
-      cmd.color("magenta","("+objName+")",quiet=1)
-      cmd.color("oxygen","(elem O and "+objName+")",quiet=1)
-      cmd.color("nitrogen","(elem N and "+objName+")",quiet=1)
-      cmd.color("sulfur","(elem S and "+objName+")",quiet=1)
-      cmd.color("hydrogen","(elem H and "+objName+")",quiet=1)
-      cmd.color("gray","(elem C and "+objName+")",quiet=1)
-    elif hasattr(utils,colorScheme):
-      fn = getattr(utils,colorScheme)
-      fn(objName,quiet=1)
+      cmd.color("magenta", "(" + objName + ")", quiet=1)
+      cmd.color("oxygen", "(elem O and " + objName + ")", quiet=1)
+      cmd.color("nitrogen", "(elem N and " + objName + ")", quiet=1)
+      cmd.color("sulfur", "(elem S and " + objName + ")", quiet=1)
+      cmd.color("hydrogen", "(elem H and " + objName + ")", quiet=1)
+      cmd.color("gray", "(elem C and " + objName + ")", quiet=1)
+    elif hasattr(utils, colorScheme):
+      fn = getattr(utils, colorScheme)
+      fn(objName, quiet=1)
     res = 1
   else:
     res = 0
   return res
- 
-def rpcLoadPDB(data,objName,colorScheme='',replace=1):
+
+
+def rpcLoadPDB(data, objName, colorScheme='', replace=1):
   """ loads a molecule from a pdb string
  
     Arguments:
@@ -335,15 +364,15 @@ def rpcLoadPDB(data,objName,colorScheme='',replace=1):
   from pymol import util
   if replace:
     cmd.delete(objName)
-  res = cmd.read_pdbstr(data,objName)
-  colorObj(objName,colorScheme)
+  res = cmd.read_pdbstr(data, objName)
+  colorObj(objName, colorScheme)
   if res is not None:
     return res
   else:
     return ''
 
- 
-def rpcLoadMolBlock(data,objName,colorScheme='',replace=1):
+
+def rpcLoadMolBlock(data, objName, colorScheme='', replace=1):
   """ loads a molecule from a mol block
  
     Arguments:
@@ -359,15 +388,15 @@ def rpcLoadMolBlock(data,objName,colorScheme='',replace=1):
   from pymol import util
   if replace:
     cmd.delete(objName)
-  res = cmd.read_molstr(data,objName)
-  colorObj(objName,colorScheme)
+  res = cmd.read_molstr(data, objName)
+  colorObj(objName, colorScheme)
   if res is not None:
     return res
   else:
     return ''
 
- 
-def rpcLoadFile(fileName,objName='',format='',colorScheme='',replace=1):
+
+def rpcLoadFile(fileName, objName='', format='', colorScheme='', replace=1):
   """ loads an object from a file
  
     Arguments:
@@ -384,15 +413,15 @@ def rpcLoadFile(fileName,objName='',format='',colorScheme='',replace=1):
     objName = fileName.split('.')[0]
   if replace:
     cmd.delete(objName)
-  res = cmd.load(fileName,objName,format=format)
-  colorObj(objName,colorScheme)
+  res = cmd.load(fileName, objName, format=format)
+  colorObj(objName, colorScheme)
   if res is not None:
     return res
   else:
     return ''
 
- 
-def rpcLoadSurface(fileName,objName,format='',surfaceLevel=1.0):
+
+def rpcLoadSurface(fileName, objName, format='', surfaceLevel=1.0):
   """ loads surface data from a file and adds an isosurface
  
     Arguments:
@@ -401,18 +430,19 @@ def rpcLoadSurface(fileName,objName,format='',surfaceLevel=1.0):
       format: (OPTIONAL) the format of the input file
       surfaceLevel: (OPTIONAL) the isosurface level
  
-   """   
+   """
   if not objName:
     objName = fileName.split('.')[0]
-  gridName = 'grid-%s'%objName
-  res = cmd.load(fileName,gridName,format='')
-  cmd.isosurface(objName,gridName,level=surfaceLevel)
+  gridName = 'grid-%s' % objName
+  res = cmd.load(fileName, gridName, format='')
+  cmd.isosurface(objName, gridName, level=surfaceLevel)
   if res is not None:
     return res
   else:
     return ''
- 
-def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
+
+
+def rpcLoadSurfaceData(data, objName='surface', format='', surfaceLevel=1.0):
   """ loads surface data from a string and adds an isosurface
  
     Arguments:
@@ -421,21 +451,21 @@ def rpcLoadSurfaceData(data,objName='surface',format='',surfaceLevel=1.0):
       format: (OPTIONAL) the format of the input file
       surfaceLevel: (OPTIONAL) the isosurface level
  
-   """   
-  gridName = 'grid-%s'%objName
+   """
+  gridName = 'grid-%s' % objName
   # it would be nice if we didn't have to go by way of the temporary file,
   # but at the moment pymol will only read shapes from files
   tempnm = tempfile.mktemp('.grd')
-  open(tempnm,'w+').write(data)
-  res = rpcLoadSurface(tempnm,objName,format='',surfaceLevel=surfaceLevel)
+  open(tempnm, 'w+').write(data)
+  res = rpcLoadSurface(tempnm, objName, format='', surfaceLevel=surfaceLevel)
   os.unlink(tempnm)
   if res is not None:
     return res
   else:
     return ''
 
- 
-def rpcSave(filename,objName='all',state=0,format=''):
+
+def rpcSave(filename, objName='all', state=0, format=''):
   """ executes a cmd.save command
  
     Arguments:
@@ -445,14 +475,14 @@ def rpcSave(filename,objName='all',state=0,format=''):
      - format: (OPTIONAL) output format
  
   """
-  res = cmd.save(filename,objName,state,format)
+  res = cmd.save(filename, objName, state, format)
   if res is not None:
     return res
   else:
     return ''
 
- 
-def rpcRotate(vect,objName='',state=-1):
+
+def rpcRotate(vect, objName='', state=-1):
   """ rotates objects
  
     Arguments:
@@ -462,12 +492,13 @@ def rpcRotate(vect,objName='',state=-1):
        if -1 (the default), all states are rotated
  
   """
-  cmd.rotate('x',vect[0],objName,state=state)
-  cmd.rotate('y',vect[1],objName,state=state)
-  cmd.rotate('z',vect[2],objName,state=state)
+  cmd.rotate('x', vect[0], objName, state=state)
+  cmd.rotate('y', vect[1], objName, state=state)
+  cmd.rotate('z', vect[2], objName, state=state)
   return 1
 
-def rpcTranslate(vect,objName='all',state=-1):
+
+def rpcTranslate(vect, objName='all', state=-1):
   """ translates objects
  
     Arguments:
@@ -476,34 +507,40 @@ def rpcTranslate(vect,objName='all',state=-1):
      - state: (OPTIONAL) if zero only visible states are translated,
        if -1 (the default), all states are translated
   """
-  cmd.translate(vect,objNAme,state=state)
+  cmd.translate(vect, objNAme, state=state)
   return 1
 
-def rpcGetNames(what='selections',enabledOnly=1):
+
+def rpcGetNames(what='selections', enabledOnly=1):
   """ returns the results of cmd.get_names(what) """
-  return cmd.get_names(what,enabled_only=enabledOnly)
- 
-def rpcIdentify(what='all',mode=0):
+  return cmd.get_names(what, enabled_only=enabledOnly)
+
+
+def rpcIdentify(what='all', mode=0):
   """ returns the results of cmd.identify(what,mode) """
-  return cmd.identify(what,mode=mode)
- 
+  return cmd.identify(what, mode=mode)
+
+
 def rpcIndex(what='all'):
   """ returns the results of cmd.index(what) """
   return cmd.index(what)
- 
+
+
 def rpcCountAtoms(what='all'):
   """ returns the results of cmd.count_atoms(what) """
   return cmd.count_atoms(what)
- 
-def rpcIdAtom(what='all',mode=0):
+
+
+def rpcIdAtom(what='all', mode=0):
   """ returns the results of cmd.id_atom(what) """
-  return cmd.id_atom(what,mode=mode)
- 
-def rpcGetAtomCoords(what='all',state=0):
+  return cmd.id_atom(what, mode=mode)
+
+
+def rpcGetAtomCoords(what='all', state=0):
   """ returns the results of cmd.get_atom_coords(what,state) """
-  return cmd.get_atom_coords(what,state=state)
- 
- 
+  return cmd.get_atom_coords(what, state=state)
+
+
 def rpcHelp(what=''):
   """ returns general help text or help on a particular command """
   global serv
@@ -512,9 +549,9 @@ def rpcHelp(what=''):
     res = serv.funcs.keys()
   else:
     funcs = serv.funcs
-    if funcs.has_key(what):
+    if what in funcs:
       fn = funcs[what]
-      res = "Function: %s("%what
+      res = "Function: %s(" % what
       defs = fn.func_defaults
       if defs:
         code = fn.func_code
@@ -524,16 +561,16 @@ def rpcHelp(what=''):
         for i in range(code.co_argcount - nDefs):
           args.append(code.co_varnames[i])
         for j in range(nDefs):
-          vName = code.co_varnames[j+i+1]
-          args.append("%s=%s"%(vName,repr(defs[j])))
+          vName = code.co_varnames[j + i + 1]
+          args.append("%s=%s" % (vName, repr(defs[j])))
         res += ','.join(args)
       res += ')\n'
       if fn.func_doc:
         res += fn.func_doc
-  return res  
- 
- 
-def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
+  return res
+
+
+def launch_XMLRPC(hostname='', port=_xmlPort, nToTry=_nPortsToTry):
   """ launches the xmlrpc server into a separate thread
  
     Arguments:
@@ -546,59 +583,58 @@ def launch_XMLRPC(hostname='',port=_xmlPort,nToTry=_nPortsToTry):
   """
   if not hostname:
     import os
-    hostname = os.environ.get('PYMOL_RPCHOST','')
-    if not hostname or hostname.upper()=='LOCALHOST':
+    hostname = os.environ.get('PYMOL_RPCHOST', '')
+    if not hostname or hostname.upper() == 'LOCALHOST':
       hostname = 'localhost'
     else:
       import socket
-      hostname=socket.gethostbyname(socket.gethostname())
- 
-  global cgoDict,serv
+      hostname = socket.gethostbyname(socket.gethostname())
+
+  global cgoDict, serv
   cgoDict = {}
   for i in range(nToTry):
     try:
-      serv = SimpleXMLRPCServer.SimpleXMLRPCServer((hostname,port+i),logRequests=0)
+      serv = SimpleXMLRPCServer.SimpleXMLRPCServer((hostname, port + i), logRequests=0)
     except Exception:
       serv = None
     else:
       break
   if serv:
-    print('xml-rpc server running on host %s, port %d'%(hostname,port+i))
-    serv.register_function(rpcCmd,'do')
-    serv.register_function(rpcQuit,'quit')
-    serv.register_function(rpcSet,'set')
-    serv.register_function(rpcGet,'get')
-    serv.register_function(rpcPing,'ping')
-    serv.register_function(rpcResetCGO,'resetCGO')
-    serv.register_function(rpcRenderCGO,'renderCGO')
-    serv.register_function(rpcSphere,'sphere')
-    serv.register_function(rpcSpheres,'spheres')
-    serv.register_function(rpcCylinder,'cylinder')
-    serv.register_function(rpcHide,'hide')
-    serv.register_function(rpcShow,'show')
-    serv.register_function(rpcZoom,'zoom')
-    serv.register_function(rpcDeleteObject,'deleteObject')
-    serv.register_function(rpcDeleteAll,'deleteAll')
-    serv.register_function(rpcLoadPDB,'loadPDB')
-    serv.register_function(rpcLoadMolBlock,'loadMolBlock')
-    serv.register_function(rpcLoadSurface,'loadSurface')
-    serv.register_function(rpcLoadSurfaceData,'loadSurfaceData')
-    serv.register_function(rpcLoadFile,'loadFile')
-    serv.register_function(rpcSave,'save')
-    serv.register_function(rpcLabel,'label')
-    serv.register_function(rpcRotate,'rotate')
-    serv.register_function(rpcTranslate,'translate')
-    serv.register_function(rpcGetNames,'getNames')
-    serv.register_function(rpcIdentify,'identify')
-    serv.register_function(rpcIndex,'index')
-    serv.register_function(rpcCountAtoms,'countAtoms')
-    serv.register_function(rpcIdAtom,'idAtom')
-    serv.register_function(rpcHelp,'help')
-    serv.register_function(rpcGetAtomCoords,'getAtomCoords')
+    print('xml-rpc server running on host %s, port %d' % (hostname, port + i))
+    serv.register_function(rpcCmd, 'do')
+    serv.register_function(rpcQuit, 'quit')
+    serv.register_function(rpcSet, 'set')
+    serv.register_function(rpcGet, 'get')
+    serv.register_function(rpcPing, 'ping')
+    serv.register_function(rpcResetCGO, 'resetCGO')
+    serv.register_function(rpcRenderCGO, 'renderCGO')
+    serv.register_function(rpcSphere, 'sphere')
+    serv.register_function(rpcSpheres, 'spheres')
+    serv.register_function(rpcCylinder, 'cylinder')
+    serv.register_function(rpcHide, 'hide')
+    serv.register_function(rpcShow, 'show')
+    serv.register_function(rpcZoom, 'zoom')
+    serv.register_function(rpcDeleteObject, 'deleteObject')
+    serv.register_function(rpcDeleteAll, 'deleteAll')
+    serv.register_function(rpcLoadPDB, 'loadPDB')
+    serv.register_function(rpcLoadMolBlock, 'loadMolBlock')
+    serv.register_function(rpcLoadSurface, 'loadSurface')
+    serv.register_function(rpcLoadSurfaceData, 'loadSurfaceData')
+    serv.register_function(rpcLoadFile, 'loadFile')
+    serv.register_function(rpcSave, 'save')
+    serv.register_function(rpcLabel, 'label')
+    serv.register_function(rpcRotate, 'rotate')
+    serv.register_function(rpcTranslate, 'translate')
+    serv.register_function(rpcGetNames, 'getNames')
+    serv.register_function(rpcIdentify, 'identify')
+    serv.register_function(rpcIndex, 'index')
+    serv.register_function(rpcCountAtoms, 'countAtoms')
+    serv.register_function(rpcIdAtom, 'idAtom')
+    serv.register_function(rpcHelp, 'help')
+    serv.register_function(rpcGetAtomCoords, 'getAtomCoords')
     serv.register_introspection_functions()
     t = threading.Thread(target=serv.serve_forever)
     t.setDaemon(1)
     t.start()
   else:
     print('xml-rpc server could not be started')
-    

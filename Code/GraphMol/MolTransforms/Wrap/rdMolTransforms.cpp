@@ -23,7 +23,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 PyObject *computeCanonTrans(const Conformer &conf,
-                            const RDGeom::Point3D *center = 0,
+                            const RDGeom::Point3D *center = nullptr,
                             bool normalizeCovar = false, bool ignoreHs = true) {
   RDGeom::Transform3D *trans;
   trans = MolTransforms::computeCanonicalTransform(conf, center, normalizeCovar,
@@ -39,6 +39,67 @@ PyObject *computeCanonTrans(const Conformer &conf,
   delete trans;
   return PyArray_Return(res);
 }
+
+#ifdef RDK_HAS_EIGEN3
+PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
+                            Eigen::Matrix3d &, Eigen::Vector3d &,
+                            bool, bool, const std::vector<double> *),
+                            const Conformer &conf,
+                            bool ignoreHs, const python::object &weights) {
+  Eigen::Matrix3d axes;
+  Eigen::Vector3d moments;
+  std::vector<double> *weightsVecPtr = NULL;
+  std::vector<double> weightsVec;
+  size_t i;
+  if (weights != python::object()) {
+    size_t numElements = python::extract<int>(weights.attr("__len__")());
+    if (numElements != conf.getNumAtoms())
+      throw ValueErrorException("The Python container must have length equal to conf.GetNumAtoms()");
+    weightsVec.resize(numElements);
+    for (i = 0; i < numElements; ++i)
+      weightsVec[i] = python::extract<double>(weights[i]);
+    weightsVecPtr = &weightsVec;
+  }
+  PyObject *res = PyTuple_New(2);
+  bool success = func(conf, axes, moments, ignoreHs, true, weightsVecPtr);
+  if (success) {
+    npy_intp dims[2];
+    dims[0] = 3;
+    dims[1] = 3;
+    PyArrayObject *axesNpy = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+    double *axesNpyData = reinterpret_cast<double *>(PyArray_DATA(axesNpy));
+    i = 0;
+    for (size_t y = 0; y < 3; ++y) {
+      for (size_t x = 0; x < 3; ++x)
+        axesNpyData[i++] = axes(y, x);
+    }
+    PyArrayObject *momentsNpy = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    double *momentsNpyData = reinterpret_cast<double *>(PyArray_DATA(momentsNpy));
+    for (size_t y = 0; y < 3; ++y)
+      momentsNpyData[y] = moments(y);
+    res = PyTuple_New(2);
+    PyTuple_SetItem(res, 0, (PyObject *)axesNpy);
+    PyTuple_SetItem(res, 1, (PyObject *)momentsNpy);
+  }
+  else {
+    PyTuple_SetItem(res, 0, Py_None);
+    PyTuple_SetItem(res, 1, Py_None);
+  }
+  return res;
+}
+
+PyObject *computePrincAxesMoments(const Conformer &conf,
+                            bool ignoreHs, const python::object &weights) {
+  return computePrincAxesMomentsHelper(
+         MolTransforms::computePrincipalAxesAndMoments, conf, ignoreHs, weights);
+}
+
+PyObject *computePrincAxesMomentsFromGyrationMatrix(const Conformer &conf,
+                            bool ignoreHs, const python::object &weights) {
+  return computePrincAxesMomentsHelper(
+         MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix, conf, ignoreHs, weights);
+}
+#endif
 
 void transConformer(Conformer &conf, python::object trans) {
   PyObject *transObj = trans.ptr();
@@ -81,9 +142,47 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - normalizeCovar : optionally normalize the covariance matrix by the number of atoms\n";
   python::def(
       "ComputeCanonicalTransform", RDKit::computeCanonTrans,
-      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)(0),
+      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)nullptr,
        python::arg("normalizeCovar") = false, python::arg("ignoreHs") = true),
       docString.c_str());
+
+#ifdef RDK_HAS_EIGEN3
+  docString =
+      "Compute principal axes and moments of inertia for a conformer\n\
+       These values are calculated from the inertia tensor:\n\
+       Iij = - sum_{s=1..N}(w_s * r_{si} * r_{sj}) i != j\n\
+       Iii = sum_{s=1..N} sum_{j!=i} (w_s * r_{sj} * r_{sj})\n\
+       where the coordinates are relative to the center of mass.\n\
+\n\
+  ARGUMENTS:\n\
+    - conf : the conformer of interest\n\
+    - ignoreHs : if True, ignore hydrogen atoms\n\
+    - weights : if present, used to weight the atomic coordinates\n\n\
+  Returns a (principal axes, principal moments) tuple\n";
+  python::def(
+      "ComputePrincipalAxesAndMoments", RDKit::computePrincAxesMoments,
+      (python::arg("conf"), python::arg("ignoreHs") = true,
+      python::arg("weights") = python::object()),
+      docString.c_str());
+
+  docString =
+      "Compute principal axes and moments from the gyration matrix of a conformer\n\
+       These values are calculated from the gyration matrix/tensor:\n\
+       Iij = sum_{s=1..N}(w_s * r_{si} * r_{sj}) i != j\n\
+       Iii = sum_{s=1..N} sum_{t!=s}(w_s * r_{si} * r_{ti})\n\
+       where the coordinates are relative to the center of mass.\n\
+\n\
+  ARGUMENTS:\n\
+    - conf : the conformer of interest\n\
+    - ignoreHs : if True, ignore hydrogen atoms\n\
+    - weights : if present, used to weight the atomic coordinates\n\n\
+  Returns a (principal axes, principal moments) tuple\n";
+  python::def(
+      "ComputePrincipalAxesAndMomentsFromGyrationMatrix", RDKit::computePrincAxesMomentsFromGyrationMatrix,
+      (python::arg("conf"), python::arg("ignoreHs") = true,
+      python::arg("weights") = python::object()),
+      docString.c_str());
+#endif
 
   python::def("TransformConformer", RDKit::transConformer,
               "Transform the coordinates of a conformer");
@@ -99,7 +198,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - normalizeCovar : Optionally normalize the covariance matrix by the number of atoms\n";
   python::def(
       "CanonicalizeConformer", MolTransforms::canonicalizeConformer,
-      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)(0),
+      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)nullptr,
        python::arg("normalizeCovar") = false, python::arg("ignoreHs") = true),
       docString.c_str());
 

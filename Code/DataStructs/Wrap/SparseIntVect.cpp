@@ -49,8 +49,7 @@ void pyUpdateFromSequence(SparseIntVect<IndexType> &vect, python::object &seq) {
 template <typename IndexType>
 python::dict pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
   python::dict res;
-  typename SparseIntVect<IndexType>::StorageType::const_iterator iter =
-      vect.getNonzeroElements().begin();
+  auto iter = vect.getNonzeroElements().begin();
   while (iter != vect.getNonzeroElements().end()) {
     res[iter->first] = iter->second;
     ++iter;

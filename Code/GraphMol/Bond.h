@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +14,7 @@
 #include <iostream>
 
 // Ours
-// FIX: grn...
+#include <RDGeneral/Invariant.h>
 #include <Query/QueryObjects.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
@@ -25,7 +25,6 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class Atom;
-typedef boost::shared_ptr<Atom> ATOM_SPTR;
 
 //! class for representing a bond
 /*!
@@ -44,12 +43,11 @@ typedef boost::shared_ptr<Atom> ATOM_SPTR;
           clients who need to store extra data on Bond objects.
 
 */
-class Bond : public RDProps{
+class Bond : public RDProps {
   friend class RWMol;
   friend class ROMol;
 
  public:
-  typedef boost::shared_ptr<Bond> BOND_SPTR;
   // FIX: grn...
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
@@ -98,8 +96,10 @@ class Bond : public RDProps{
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
-    STEREOZ,  // Z double bond
-    STEREOE,  // E double bond
+    STEREOZ,     // Z double bond
+    STEREOE,     // E double bond
+    STEREOCIS,   // cis double bond
+    STEREOTRANS  // trans double bond
   } BondStereo;
 
   Bond();
@@ -130,8 +130,6 @@ class Bond : public RDProps{
       - requires an owning molecule
   */
   double getValenceContrib(const Atom *at) const;
-  // \overload
-  double getValenceContrib(ATOM_SPTR at) const;
 
   //! sets our \c isAromatic flag
   void setIsAromatic(bool what) { df_isAromatic = what; };
@@ -144,7 +142,10 @@ class Bond : public RDProps{
   bool getIsConjugated() const { return df_isConjugated; };
 
   //! returns a reference to the ROMol that owns this Bond
-  ROMol &getOwningMol() const { return *dp_mol; };
+  ROMol &getOwningMol() const {
+    PRECONDITION(dp_mol, "no owner");
+    return *dp_mol;
+  };
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
@@ -205,16 +206,12 @@ class Bond : public RDProps{
       - requires an owning molecule
   */
   void setBeginAtom(Atom *at);
-  //! \overload
-  void setBeginAtom(ATOM_SPTR at);
   //! sets our end Atom
   /*!
     <b>Notes:</b>
       - requires an owning molecule
   */
   void setEndAtom(Atom *at);
-  //! \overload
-  void setEndAtom(ATOM_SPTR at);
 
   //! returns a pointer to our begin Atom
   /*!
@@ -263,8 +260,6 @@ class Bond : public RDProps{
           same \c bondType.
   */
   virtual bool Match(Bond const *what) const;
-  //! \overload
-  virtual bool Match(const Bond::BOND_SPTR what) const;
 
   //! sets our direction
   void setBondDir(BondDir what) { d_dirTag = what; };
@@ -272,9 +267,39 @@ class Bond : public RDProps{
   BondDir getBondDir() const { return static_cast<BondDir>(d_dirTag); };
 
   //! sets our stereo code
-  void setStereo(BondStereo what) { d_stereo = what; };
+  /*!
+      STEREONONE, STEREOANY, STEREOE and STEREOZ can be set without
+      neighboring atoms specified in getStereoAtoms since they are
+      defined by the topology of the molecular graph. In order to set
+      STEREOCIS or STEREOTRANS the neighboring atoms must be set first
+      (using setStereoBonds()) to know what atoms are being considered.
+
+      <b>Notes:</b>
+        - MolOps::findPotentialStereoBonds can be used to set
+          getStereoAtoms before setting CIS/TRANS
+  */
+  void setStereo(BondStereo what) {
+    PRECONDITION(what <= STEREOE || getStereoAtoms().size() == 2,
+                 "Stereo atoms should be specified before specifying CIS/TRANS "
+                 "bond stereochemistry")
+    d_stereo = what;
+  };
   //! returns our stereo code
   BondStereo getStereo() const { return static_cast<BondStereo>(d_stereo); };
+
+  //! sets the atoms to be considered as reference points for bond stereo
+  /*!
+      These do not necessarily need to be the highest 'ranking' atoms
+      like CIP stereo requires. They can be any arbitrary atoms
+      neighboring the begin and end atoms of this bond
+      respectively. STEREOCIS or STEREOTRANS is then set relative to
+      only these atoms.
+
+      If CIP rankings are desired, use
+      MolOps::findPotentialStereoBonds, but this is a more costly
+      function as it takes the whole molecule topology into account.
+  */
+  void setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx);
 
   //! returns the indices of our stereo atoms
   const INT_VECT &getStereoAtoms() const {

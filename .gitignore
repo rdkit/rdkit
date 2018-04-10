@@ -1,0 +1,82 @@
+/Code/docs/
+/Code/JavaWrappers/gmwrapper/src/*
+/Code/JavaWrappers/gmwrapper/doc/*
+
+#- Eclipse files
+/.project
+/.pydevproject
+
+#- CLion files
+/cmake-build-*
+
+#- IDEA files
+/.idea
+
+#- Binary files
+__pycache__/
+*.so
+*.pyc
+/lib/
+*.pyd
+
+#- autosaves and backups
+*~
+
+#- Files created during build phase
+/build*/
+/Docs/Book/_build*/
+
+/Code/RDGeneral/versions.cpp
+
+/Code/GraphMol/SLNParse/lex.yysln.cpp
+/Code/GraphMol/SLNParse/sln.tab.cpp
+/Code/GraphMol/SLNParse/sln.tab.hpp
+
+/Code/GraphMol/SmilesParse/lex.yysmarts.cpp
+/Code/GraphMol/SmilesParse/lex.yysmiles.cpp
+/Code/GraphMol/SmilesParse/smarts.tab.cpp
+/Code/GraphMol/SmilesParse/smarts.tab.hpp
+/Code/GraphMol/SmilesParse/smiles.tab.cpp
+/Code/GraphMol/SmilesParse/smiles.tab.hpp
+
+/rdkit/RDPaths.py
+/rdkit/Chem/inchi.py
+
+#- Files created during tests
+/Code/ForceField/MMFF/test_data/MMFF94_dative_min.sdf
+/Code/ForceField/MMFF/test_data/MMFF94_dative_min_from_SMILES.sdf
+/Code/ForceField/MMFF/test_data/MMFF94_hypervalent_min.sdf
+/Code/ForceField/MMFF/test_data/MMFF94_hypervalent_min_from_SMILES.sdf
+/Code/ForceField/MMFF/test_data/MMFF94_reference.log
+/Code/ForceField/MMFF/test_data/MMFF94s_reference.log
+/Code/ForceField/MMFF/test_data/testMMFFForceField.log
+
+/Code/GraphMol/Depictor/test_data/cis_trans_cpp.out.sdf
+/Code/GraphMol/Depictor/test_data/collisions.out.sdf
+/Code/GraphMol/Depictor/test_data/first_200.out.sdf
+/Code/GraphMol/Depictor/test_data/test1.out.sdf
+/Code/GraphMol/Depictor/test_data/constrainedCoords.out.sdf
+
+
+/Code/GraphMol/FileParsers/test_data/blah.sdf
+/Code/GraphMol/FileParsers/test_data/cdk2_stereo.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf
+/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt
+/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf
+/Code/GraphMol/FileParsers/test_data/outSmiles.csv
+
+/Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
+
+/Code/GraphMol/MolAlign/test_data/ref_e2_pyCrippenO3A.sdf
+
+/Code/GraphMol/Wrap/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/Wrap/test_data/outNCI_few.sdf
+/Code/GraphMol/Wrap/test_data/outSmiles.txt
+
+/Code/GraphMol/test_data/bilastine_trajectory.sdf
+/Code/GraphMol/test_data/prop.pkl
+
+/Projects/DbCLI/testData/bzr/
+/rdkit/ML/Data/test_data/testgeneral.dat.pkl
+/rdkit/ML/Data/test_data/testquant.qdat.pkl
+.DS_Store

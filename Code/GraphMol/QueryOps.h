@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,9 +20,7 @@
 #include <Query/Query.h>
 
 #ifdef RDK_THREADSAFE_SSS
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread/mutex.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include <mutex>
 #endif
 
 namespace RDKit {
@@ -117,6 +115,73 @@ static inline int queryAtomFormalCharge(Atom const *at) {
 static inline int queryAtomHybridization(Atom const *at) {
   return at->getHybridization();
 };
+static inline int queryAtomNumRadicalElectrons(Atom const *at) {
+  return at->getNumRadicalElectrons();
+};
+static inline int queryAtomHasChiralTag(Atom const *at) {
+  return at->getChiralTag() != Atom::CHI_UNSPECIFIED;
+};
+static inline int queryAtomMissingChiralTag(Atom const *at) {
+  return at->getChiralTag() == Atom::CHI_UNSPECIFIED &&
+         at->hasProp(common_properties::_ChiralityPossible);
+};
+
+static inline int queryAtomHasHeteroatomNbrs(Atom const *at) {
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+    if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
+      return 1;
+    }
+    ++nbrIdx;
+  }
+  return 0;
+};
+
+static inline int queryAtomNumHeteroatomNbrs(Atom const *at) {
+  int res = 0;
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+    if (nbr->getAtomicNum() != 6 && nbr->getAtomicNum() != 1) {
+      ++res;
+    }
+    ++nbrIdx;
+  }
+  return res;
+};
+
+static inline int queryAtomHasAliphaticHeteroatomNbrs(Atom const *at) {
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+    if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
+        nbr->getAtomicNum() != 1) {
+      return 1;
+    }
+    ++nbrIdx;
+  }
+  return 0;
+};
+
+static inline int queryAtomNumAliphaticHeteroatomNbrs(Atom const *at) {
+  int res = 0;
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = at->getOwningMol().getAtomNeighbors(at);
+  while (nbrIdx != endNbrs) {
+    const Atom *nbr = at->getOwningMol()[*nbrIdx];
+    if ((!nbr->getIsAromatic()) && nbr->getAtomicNum() != 6 &&
+        nbr->getAtomicNum() != 1) {
+      ++res;
+    }
+    ++nbrIdx;
+  }
+  return res;
+};
+
 unsigned int queryAtomBondProduct(Atom const *at);
 unsigned int queryAtomAllBondProduct(Atom const *at);
 
@@ -131,6 +196,9 @@ static inline int queryBondDir(Bond const *bond) {
 };
 static inline int queryIsBondInNRings(Bond const *at) {
   return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
+};
+static inline int queryBondHasStereo(Bond const *bnd) {
+  return bnd->getStereo() > Bond::STEREONONE;
 };
 
 // -------------------------------------------------
@@ -207,6 +275,16 @@ T *makeAtomSimpleQuery(int what, int func(Atom const *),
   return res;
 }
 
+static inline ATOM_RANGE_QUERY *makeAtomRangeQuery(
+    int lower, int upper, bool lowerOpen, bool upperOpen,
+    int func(Atom const *), const std::string &description = "Atom Range") {
+  ATOM_RANGE_QUERY *res = new ATOM_RANGE_QUERY(lower, upper);
+  res->setDataFunc(func);
+  res->setDescription(description);
+  res->setEndsOpen(lowerOpen, upperOpen);
+  return res;
+}
+
 //! returns a Query for matching atomic number
 template <class T>
 T *makeAtomNumQuery(int what, const std::string &descr) {
@@ -254,6 +332,14 @@ T *makeAtomTotalDegreeQuery(int what, const std::string &descr) {
 }
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what);
+
+//! returns a Query for matching heavy atom degree
+template <class T>
+T *makeAtomHeavyAtomDegreeQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomHeavyAtomDegree, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHeavyAtomDegreeQuery(int what);
 
 //! returns a Query for matching hydrogen count
 template <class T>
@@ -328,6 +414,32 @@ T *makeAtomHybridizationQuery(int what, const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what);
 
+//! returns a Query for matching the number of radical electrons
+template <class T>
+T *makeAtomNumRadicalElectronsQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNumRadicalElectrons, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomNumRadicalElectronsQuery(int what);
+
+//! returns a Query for matching whether or not chirality has been set on the
+//! atom
+template <class T>
+T *makeAtomHasChiralTagQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(true, queryAtomHasChiralTag, descr);
+}
+//! \overloadquery
+ATOM_EQUALS_QUERY *makeAtomHasChiralTagQuery();
+
+//! returns a Query for matching whether or not a potentially chiral atom is
+//! missing a chiral tag
+template <class T>
+T *makeAtomMissingChiralTagQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(true, queryAtomMissingChiralTag, descr);
+}
+//! \overloadquery
+ATOM_EQUALS_QUERY *makeAtomMissingChiralTagQuery();
+
 //! returns a Query for matching atoms with unsaturation:
 template <class T>
 T *makeAtomUnsaturatedQuery(const std::string &descr) {
@@ -341,8 +453,8 @@ template <class T>
 T *makeAtomInRingQuery(const std::string &descr) {
   return makeAtomSimpleQuery<T>(true, queryIsAtomInRing, descr);
 }
-//! \overload
 ATOM_EQUALS_QUERY *makeAtomInRingQuery();
+//! \overload
 
 //! returns a Query for matching atoms in a particular number of rings
 template <class T>
@@ -371,7 +483,24 @@ T *makeAtomRingBondCountQuery(int what, const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
-//! returns a Query for matching atoms with a particular number of ring bonds
+//! returns a Query for matching generic A atoms (heavy atoms)
+ATOM_EQUALS_QUERY *makeAAtomQuery();
+//! returns a Query for matching generic AH atoms (any atom)
+ATOM_EQUALS_QUERY *makeAHAtomQuery();
+//! returns a Query for matching generic Q atoms (heteroatoms)
+ATOM_OR_QUERY *makeQAtomQuery();
+//! returns a Query for matching generic QH atoms (heteroatom or H)
+ATOM_EQUALS_QUERY *makeQHAtomQuery();
+//! returns a Query for matching generic X atoms (halogens)
+ATOM_OR_QUERY *makeXAtomQuery();
+//! returns a Query for matching generic XH atoms (halogen or H)
+ATOM_OR_QUERY *makeXHAtomQuery();
+//! returns a Query for matching generic M atoms (metals)
+ATOM_OR_QUERY *makeMAtomQuery();
+//! returns a Query for matching generic MH atoms (metals or H)
+ATOM_OR_QUERY *makeMHAtomQuery();
+
+//! returns a Query for matching atoms that have ring bonds
 template <class T>
 T *makeAtomHasRingBondQuery(const std::string &descr) {
   return makeAtomSimpleQuery<T>(1, queryAtomHasRingBond, descr);
@@ -379,10 +508,45 @@ T *makeAtomHasRingBondQuery(const std::string &descr) {
 //! \overload
 ATOM_EQUALS_QUERY *makeAtomHasRingBondQuery();
 
+//! returns a Query for matching the number of heteroatom neighbors
+template <class T>
+T *makeAtomNumHeteroatomNbrsQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNumHeteroatomNbrs, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomNumHeteroatomNbrsQuery(int what);
+
+//! returns a Query for matching atoms that have heteroatom neighbors
+template <class T>
+T *makeAtomHasHeteroatomNbrsQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(1, queryAtomHasHeteroatomNbrs, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHasHeteroatomNbrsQuery();
+
+//! returns a Query for matching the number of aliphatic heteroatom neighbors
+template <class T>
+T *makeAtomNumAliphaticHeteroatomNbrsQuery(int what, const std::string &descr) {
+  return makeAtomSimpleQuery<T>(what, queryAtomNumAliphaticHeteroatomNbrs,
+                                descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomNumAliphaticHeteroatomNbrsQuery(int what);
+
+//! returns a Query for matching atoms that have heteroatom neighbors
+template <class T>
+T *makeAtomHasAliphaticHeteroatomNbrsQuery(const std::string &descr) {
+  return makeAtomSimpleQuery<T>(1, queryAtomHasAliphaticHeteroatomNbrs, descr);
+}
+//! \overload
+ATOM_EQUALS_QUERY *makeAtomHasAliphaticHeteroatomNbrsQuery();
+
 //! returns a Query for matching bond orders
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);
 //! returns a Query for matching bond directions
 BOND_EQUALS_QUERY *makeBondDirEqualsQuery(Bond::BondDir what);
+//! returns a Query for matching bonds with stereo set
+BOND_EQUALS_QUERY *makeBondHasStereoQuery();
 //! returns a Query for matching ring bonds
 BOND_EQUALS_QUERY *makeBondIsInRingQuery();
 //! returns a Query for matching bonds in rings of a particular size
@@ -500,7 +664,7 @@ class RecursiveStructureQuery
   unsigned int getSerialNumber() const { return d_serialNumber; };
 
 #ifdef RDK_THREADSAFE_SSS
-  boost::mutex d_mutex;
+  std::mutex d_mutex;
 #endif
  private:
   boost::shared_ptr<const ROMol> dp_queryMol;
@@ -597,25 +761,23 @@ class HasPropWithValueQuery
         res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
       } catch (KeyErrorException e) {
         res = false;
-        }
-        catch (boost::bad_any_cast) {
-          res = false;
-        }
+      } catch (boost::bad_any_cast) {
+        res = false;
+      }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                            \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
         res = false;
       }
 #endif
-#endif        
+#endif
     }
     if (this->getNegation()) {
       res = !res;
@@ -667,18 +829,17 @@ class HasPropWithValueQuery<TargetPtr, std::string>
         res = false;
       }
 #ifdef __GNUC__
-#if (__GNUC__ < 4 ||                             \
-     (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-        catch (...) {
-          // catch all -- this is currently necessary to
-          //  trap some bugs in boost+gcc configurations
-          //  Normally, this is not the correct thing to
-          //  do, but the only exception above is due
-          //  to the boost any_cast which is trapped
-          //  by the Boost python wrapper when it shouldn't
-          //  be.
-          res = false;
-        }
+#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+      catch (...) {
+        // catch all -- this is currently necessary to
+        //  trap some bugs in boost+gcc configurations
+        //  Normally, this is not the correct thing to
+        //  do, but the only exception above is due
+        //  to the boost any_cast which is trapped
+        //  by the Boost python wrapper when it shouldn't
+        //  be.
+        res = false;
+      }
 #endif
 #endif
     }

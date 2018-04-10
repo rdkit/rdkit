@@ -3,7 +3,6 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #      All Rights Reserved
 #
-
 """ Define the class _KNNRegressionModel_, used to represent a k-nearest neighbhors
 regression model
 
@@ -13,29 +12,29 @@ regression model
 from rdkit.ML.KNN import KNNModel
 
 
-class KNNRegressionModel(KNNModel.KNNModel) :
+class KNNRegressionModel(KNNModel.KNNModel):
   """ This is used to represent a k-nearest neighbor classifier
 
   """
 
-  def __init__(self, k, attrs, dfunc, radius=None) :
-    self._setup(k, attrs, dfunc,radius)
+  def __init__(self, k, attrs, dfunc, radius=None):
+    self._setup(k, attrs, dfunc, radius)
 
-    self._badExamples = [] # list of examples incorrectly classified
+    self._badExamples = []  # list of examples incorrectly classified
 
   def type(self):
     return "Regression Model"
 
-  def SetBadExamples(self, examples) :
+  def SetBadExamples(self, examples):
     self._badExamples = examples
 
-  def GetBadExamples(self) :
+  def GetBadExamples(self):
     return self._badExamples
 
-  def NameModel(self, varNames) :
+  def NameModel(self, varNames):
     self.SetName(self.type())
 
-  def PredictExample(self, example, appendExamples=0, weightedAverage=0,neighborList=None) :
+  def PredictExample(self, example, appendExamples=0, weightedAverage=0, neighborList=None):
     """ Generates a prediction for an example by looking at its closest neighbors
 
     **Arguments**
@@ -63,20 +62,20 @@ class KNNRegressionModel(KNNModel.KNNModel) :
     accum = 0.0
     denom = 0.0
     for knn in knnLst:
-      if knn[1] is None: continue
+      if knn[1] is None:
+        continue
       if weightedAverage:
         dist = knn[0]
-        if dist==0.0:
+        if dist == 0.0:
           w = 1.
         else:
-          w = 1./dist
+          w = 1. / dist
       else:
-        w=1.0
-      accum += w*knn[1][-1]
+        w = 1.0
+      accum += w * knn[1][-1]
       denom += w
     if denom:
       accum /= denom
     if neighborList is not None:
       neighborList.extend(knnLst)
     return accum
-
