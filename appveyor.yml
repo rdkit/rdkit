@@ -23,6 +23,8 @@ os: unstable
 # scripts that are called at very beginning, before repo cloning
 init:
   - git config --global core.autocrlf input
+  - cmake -version
+  - C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017\Community\VC\Auxiliary\Build\vcvarsall.bat amd64
 
 # clone directory
 clone_folder: c:\projects\RDKit
@@ -37,10 +39,6 @@ build:
   project: c:\projects\RDKit\build\INSTALL.vcxproj      # path to Visual Studio solution or project
   parallel: true
   verbosity: quiet
-
-init:
-  - cmake -version
-  - C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017\Community\VC\Auxiliary\Build\vcvarsall.bat amd64
 
 # scripts to run before build
 before_build:
