@@ -63,7 +63,8 @@ MatrixXd GetCovMatrix(MatrixXd &X, MatrixXd &Weigth, double weigth) {
 }
 
 JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  auto *svd = new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
+  JacobiSVD<MatrixXd> *svd =
+      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
   return svd;
 }
 
@@ -149,54 +150,54 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
                             3);  // round the matrix! same as eigen tolerance !
     }
   }
-
-  // we should take into account atoms that are in the axis too!!! which is not
-  //trivial
+  
+	  
+// we should take into account atoms that are in the axis too!!! which is not trivial
   for (int i = 0; i < 3; i++) {
-    std::vector<double> Symetric(2 * numAtoms, 0.0);
+    std::vector<double> Symetric(2*numAtoms, 0.0);
     double ns = 0.0;
     double na = 0.0;
     for (int j = 0; j < numAtoms; j++) {
       bool amatch = false;
       for (int k = 0; k < numAtoms; k++) {
-        if (j == k) {
+	      if (j==k) {
           continue;
         }
-        if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
-          // those that are close opposite & not close to the axis!
-          ns += 1;  // check only once the symetric none null we need to add +2!
-          // (reduce the loop duration)
-          amatch = true;
-          Symetric[j] = 1.0;
-          Symetric[j + numAtoms] = 2.0;
-          Symetric[k] = 1.0;
-          Symetric[k + numAtoms] = 2.0;
-          break;
+	      if (std::abs(Scores(j, i) + Scores(k, i)) <= th) {
+		      // those that are close opposite & not close to the axis!
+	        ns += 1;  // check only once the symetric none null we need to add +2!
+		      // (reduce the loop duration)
+		      amatch = true;
+		      Symetric[j]=1.0;
+		      Symetric[j+numAtoms]=2.0;
+		      Symetric[k]=1.0;
+		      Symetric[k+numAtoms]=2.0;
+		      break;
         }
       }
       if (!amatch) {
-        na += 1;
-        Symetric[j] = 0.0;
-        Symetric[j + numAtoms] = std::abs(Scores(j, i));
+        na +=1;
+        Symetric[j]=0.0;
+        Symetric[j+numAtoms]=std::abs(Scores(j, i));
       }
     }
     // take into account the atoms close to the axis
     for (int aj = 0; aj < numAtoms; aj++) {
-      if (Symetric[aj + numAtoms] < th && Symetric[aj] < 1.0) {
-        ns += 1;
-        na -= 1;
+	    if (Symetric[aj+numAtoms]<th && Symetric[aj]<1.0) {
+		    ns +=1;
+        na -=1;	
       }
     }
     gamma[i] = 0.0;
-    double gammainv = 1.0;
+    double gammainv=1.0;
     if (ns == 0) {
-      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);
+      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);  
     }
     if (ns > 0) {
       gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2.) +
-                        (na / nAT) * log(1.0 / nAT) / log(2.));
+                       (na / nAT) * log(1.0 / nAT) / log(2.));   
     }
-    gamma[i] = 1.0 / gammainv;
+    gamma[i]=1.0/gammainv;
   }
   w[14] = gamma[0];  // G1
   w[15] = gamma[1];  // G2
@@ -266,11 +267,86 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
   ws.clear();
 }
 
-void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
-             double th) {
+    void GetWHIMsCustom(const Conformer &conf, std::vector<double> &result,
+                  double *Vpoints, double th,
+                        const std::string customAtomPropName) {
+      std::vector<double> wc(18);
+
+      int numAtoms = conf.getNumAtoms();
+      Map<MatrixXd> matorigin(Vpoints, 3, numAtoms);
+      MatrixXd MatOrigin = matorigin.transpose();
+
+      // intermediate 18 values stored in this order per weighted vector :
+      // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
+      std::vector<double>  weigthvector = moldata3D.GetCustomAtomProp(conf.getOwningMol(),customAtomPropName);
+
+      wc = getWhimD(weigthvector, MatOrigin, numAtoms, th);
+
+      result.clear();
+      result.resize(18);
+
+      for (int i = 0; i < 18; i++) {
+        result[i] = wc[i];
+
+      }
+      wc.clear();
+
+    }
+
+    void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
+                 double th) {
+      int numAtoms = mol.getNumAtoms();
+      const Conformer &conf = mol.getConformer(confId);
+      double *Vpoints = new double[3 * numAtoms];
+
+      for (int i = 0; i < numAtoms; ++i) {
+        Vpoints[3 * i] = conf.getAtomPos(i).x;
+        Vpoints[3 * i + 1] = conf.getAtomPos(i).y;
+        Vpoints[3 * i + 2] = conf.getAtomPos(i).z;
+      }
+
+      std::vector<double> w(126);
+      GetWHIMs(conf, w, Vpoints, th);
+      delete [] Vpoints;
+
+      // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2
+      // E3
+      int map1[11] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12};
+
+      for (int k = 0; k < 7; k++) {
+        for (int i = 0; i < 11; i++) {
+          res[i + 11 * k] = roundn(w[map1[i] + 18 * k], 3);
+        }
+      }
+
+      for (int i = 0; i < 2; i++) {
+        res[i + 13 * 7] = roundn(w[17 + 18 * i], 3);  // 92  93 for Gu  Gm
+      }
+
+      for (int i = 0; i < 7; i++) {
+        res[i + 11 * 7] =
+                roundn(w[3 + 18 * i],
+                       3);  // 78  79  80  81  82  83  84  for Tu  Tm  Tv  Te  Tp  Ti Ts
+        res[i + 12 * 7] =
+                roundn(w[4 + 18 * i],
+                       3);  // 85  86  87  88  89  90  91  for Tu  Am  Av  Ae  Ap  Ai As
+        res[i + 13 * 7 + 2] =
+                roundn(w[9 + 18 * i],
+                       3);  // 94  95  96  97  98  99  100 for Ku  Km  Kv  Ke  Kp  Ki Ks
+        res[i + 14 * 7 + 2] =
+                roundn(w[13 + 18 * i],
+                       3);  // 101 102 103 104 105 106 107 for Du  Dm  Dv  De  Dp  Di Ds
+        res[i + 15 * 7 + 2] =
+                roundn(w[5 + 18 * i],
+                       3);  // 108 109 110 111 112 113 114 for Vu  Vm  Vv  Ve  Vp  Vi Vs
+      }
+    }
+
+void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
+             double th, const std::string customAtomPropName) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  auto *Vpoints = new double[3 * numAtoms];
+  double *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;
@@ -278,58 +354,39 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
     Vpoints[3 * i + 2] = conf.getAtomPos(i).z;
   }
 
-  std::vector<double> w(126);
-  GetWHIMs(conf, w, Vpoints, th);
-  delete[] Vpoints;
+  std::vector<double> w(18);
+  GetWHIMsCustom(conf, w, Vpoints, th, customAtomPropName);
+  delete [] Vpoints;
 
   // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2
   // E3
-  int map1[11] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12};
+  // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
 
-  for (int k = 0; k < 7; k++) {
-    for (int i = 0; i < 11; i++) {
-      res[i + 11 * k] = roundn(w[map1[i] + 18 * k], 3);
-    }
+  int map1[17] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12, 3 , 4, 17 , 9 , 13 ,5};
+
+    for (int i = 0; i < 17; i++) {
+      res[i] = roundn(w[map1[i]], 3);
   }
 
-  for (int i = 0; i < 2; i++) {
-    res[i + 13 * 7] = roundn(w[17 + 18 * i], 3);  // 92  93 for Gu  Gm
-  }
-
-  for (int i = 0; i < 7; i++) {
-    res[i + 11 * 7] =
-        roundn(w[3 + 18 * i],
-               3);  // 78  79  80  81  82  83  84  for Tu  Tm  Tv  Te  Tp  Ti Ts
-    res[i + 12 * 7] =
-        roundn(w[4 + 18 * i],
-               3);  // 85  86  87  88  89  90  91  for Tu  Am  Av  Ae  Ap  Ai As
-    res[i + 13 * 7 + 2] =
-        roundn(w[9 + 18 * i],
-               3);  // 94  95  96  97  98  99  100 for Ku  Km  Kv  Ke  Kp  Ki Ks
-    res[i + 14 * 7 + 2] =
-        roundn(w[13 + 18 * i],
-               3);  // 101 102 103 104 105 106 107 for Du  Dm  Dv  De  Dp  Di Ds
-    res[i + 15 * 7 + 2] =
-        roundn(w[5 + 18 * i],
-               3);  // 108 109 110 111 112 113 114 for Vu  Vm  Vv  Ve  Vp  Vi Vs
-  }
 }
 
 }  // end of anonymous namespace
 
-void WHIM(const ROMol &mol, std::vector<double> &res, int confId, double th) {
+void WHIM(const ROMol &mol, std::vector<double> &res, int confId, double th,
+          const std::string customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m
-  // L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v
-  // E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p
-  // G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s
-  // P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap
-  // Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu
-  // Vm  Vv  Ve  Vp  Vi  Vs
-
-  res.clear();
-  res.resize(114);
-  getWHIM(mol, res, confId, th);
+  // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
+  // Tu   Au    Gu   Ku    Du   Vu
+  if (customAtomPropName.size()>0) {
+    res.clear();
+    res.resize(17);
+    getWHIMone(mol, res, confId, th,
+                  customAtomPropName);
+  } else {
+    res.clear();
+    res.resize(114);
+    getWHIM(mol, res, confId, th);
+  }
 }
 }  // end of Descriptors namespace
 }  // end of RDKit namespace

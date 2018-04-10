@@ -38,11 +38,13 @@
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
-class ROMol;
-namespace Descriptors {
-const std::string RDFVersion = "1.0.0";
-void RDF(const ROMol&, std::vector<double>& res, int confId = -1);
-}
+  class ROMol;
+  namespace Descriptors {
+    const std::string RDFVersion = "1.0.0";
+      void RDF(const ROMol& , std::vector<double> &res, int confId=-1,
+               const std::string customAtomPropName="");
+
+  }
 }
 #endif
 #endif

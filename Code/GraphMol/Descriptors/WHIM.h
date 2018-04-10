@@ -38,12 +38,12 @@
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
-class ROMol;
-namespace Descriptors {
-const std::string WHIMVersion = "1.0.0";
-void WHIM(const ROMol &, std::vector<double> &res, int confId = -1,
-          double th = 0.001);
-}
+  class ROMol;
+  namespace Descriptors {
+    const std::string WHIMVersion = "1.0.0";
+    void WHIM(const ROMol&, std::vector<double> &res, int confId=-1, double th=0.001,
+              const std::string customAtomPropName="");
+  }
 }
 #endif
 #endif

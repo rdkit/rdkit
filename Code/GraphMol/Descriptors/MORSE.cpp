@@ -56,15 +56,16 @@ std::vector<double> getG(int n) {
 }
 
 std::vector<double> prepareIState(const ROMol &mol, const Conformer &conf) {
-  RDUNUSED_PARAM(conf);
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
   std::vector<double> IState = moldata3D.GetIState(mol);
   return IState;
 }
 
 void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
                   std::vector<double> &res) {
-  unsigned int numAtoms = conf.getNumAtoms();
-  unsigned int confId = conf.getId();
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
   std::vector<double> R = getG(32);
   std::vector<double> R1(32);
@@ -83,7 +84,7 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
   std::vector<double> IState = prepareIState(mol, confId);
 
   double p;
-  for (unsigned int i = 0; i < R.size(); i++) {
+  for (int i = 0; i < R.size(); i++) {
     double res1 = 0.0;
     double res2 = 0.0;
     double res3 = 0.0;
@@ -92,8 +93,8 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
     double res6 = 0.0;
     double res7 = 0.0;
 
-    for (unsigned int j = 0; j < numAtoms - 1; j++) {
-      for (unsigned int k = j + 1; k < numAtoms; k++) {
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
         if (i == 0) {
           p = 1;
         } else {
@@ -127,14 +128,50 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
   res = R1;
 }
 
+
+void getMORSEDescCustom(double *DM, const ROMol &mol, const Conformer &conf,
+                      std::vector<double> &res, const std::string customAtomPropName) {
+      int numAtoms = conf.getNumAtoms();
+      int confId = conf.getId();
+
+      std::vector<double> R = getG(32);
+      std::vector<double> R1(32);
+      std::vector<double> customAtomArray = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
+
+      double p;
+      for (int i = 0; i < R.size(); i++) {
+        double res1 = 0.0;
+
+        for (int j = 0; j < numAtoms - 1; j++) {
+          for (int k = j + 1; k < numAtoms; k++) {
+            if (i == 0) {
+              p = 1;
+            } else {
+              p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+            }
+            res1 += customAtomArray[j] * customAtomArray[k] * p; // "custom"
+          }
+        }
+        R1[i] = round(1000 * res1) / 1000;
+
+      }
+      res = R1;
+    }
+
 void GetMORSE(double *dist3D, const ROMol &mol, const Conformer &conf,
               std::vector<double> &res) {
   getMORSEDesc(dist3D, mol, conf, res);
 }
 
+
+void GetMORSEone(double *dist3D, const ROMol &mol, const Conformer &conf,
+              std::vector<double> &res, const std::string customAtomPropName) {
+  getMORSEDescCustom(dist3D, mol, conf, res, customAtomPropName);
+}
+
 }  // end of anonymous namespace
 
-void MORSE(const ROMol &mol, std::vector<double> &res, int confId) {
+void MORSE(const ROMol &mol, std::vector<double> &res, int confId, const std::string customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
 
   // Mor01u Mor02u  Mor03u  Mor04u  Mor05u  Mor06u  Mor07u  Mor08u  Mor09u
@@ -170,10 +207,16 @@ void MORSE(const ROMol &mol, std::vector<double> &res, int confId) {
 
   double *dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
+ if (customAtomPropName.size()>0) {
+  res.clear();
+  res.resize(32);  // 7 * 32
+  GetMORSEone(dist3D, mol, conf, res, customAtomPropName);
 
+ } else {
   res.clear();
   res.resize(224);  // 7 * 32
   GetMORSE(dist3D, mol, conf, res);
+  }
 }
 
 }  // end of Descriptors namespace
