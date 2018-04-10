@@ -192,5 +192,5 @@ std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-  testEEM2();
+  testEEM1();
 }
