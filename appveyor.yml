@@ -50,7 +50,7 @@ before_build:
 
 test_script:
   - cd c:\projects\RDKit\build
-  - ctest -j2 -output-on-failure
+  - ctest -j2 --output-on-failure
 
 # scripts to run after build
 #after_build:
