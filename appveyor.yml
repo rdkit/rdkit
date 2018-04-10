@@ -24,7 +24,9 @@ os: unstable
 init:
   - git config --global core.autocrlf input
   - cmake -version
-  - C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017\Community\VC\Auxiliary\Build\vcvarsall.bat amd64
+  - dir C:\"Program Files (x86)"
+  - dir C:\"Program Files (x86)"\"Microsoft Visual Studio"
+  - dir C:\"Program Files (x86)"\"Microsoft Visual Studio"\2017
 
 # clone directory
 clone_folder: c:\projects\RDKit
