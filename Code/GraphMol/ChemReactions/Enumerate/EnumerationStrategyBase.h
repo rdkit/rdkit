@@ -37,12 +37,14 @@
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/cstdint.hpp>
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/serialization/vector.hpp>
 // the next two includes need to be there for boost 1.56
 #include <boost/serialization/singleton.hpp>
 #include <boost/serialization/extended_type_info.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -198,10 +200,13 @@ class EnumerationStrategyBase {
     ar &m_numPermutations;
   }
 };
-
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(EnumerationStrategyBase)
+#endif
 }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
 BOOST_CLASS_VERSION(RDKit::EnumerationStrategyBase, 1)
+#endif
 
 #endif
