@@ -43,14 +43,8 @@ following commands:
 
 	bash Miniconda3-latest-MacOSX-x86_64.sh
     conda install numpy matplotlib
-    conda install cmake
-    conda install --channel rdkit boost
-    conda install --channel rdkit nox
-    conda install --channel rdkit cairo
-    conda install pillow
-    conda install anaconda
-    conda install --channel conda-forge eigen
-    conda install --channel conda-forge pkg-config
+    conda install cmake cairo pillow eigen pkg-config
+    conda install boost-cpp boost py-boost
 
 Optionally, add the following packages to your environment as useful development tools.
 
@@ -61,7 +55,7 @@ Then follow the usual build instructions. The PYTHON\_INCLUDE\_DIR must be set i
 cmake command.
 
 	PYROOT=<path to miniconda3>
-	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.5m  \
+	cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.6m  \
       -DRDK_BUILD_AVALON_SUPPORT=ON \
       -DRDK_BUILD_CAIRO_SUPPORT=ON \
       -DRDK_BUILD_INCHI_SUPPORT=ON \
@@ -300,7 +294,7 @@ Your system has a version of boost installed in /usr/lib, but you would like to 
 
 *Solution:*
 
-This can be solved by using cmake version 2.8.3 (or more recent) and providing the `-D Boost_NO_SYSTEM_PATHS=ON` argument:
+This can be solved by providing the `-D Boost_NO_SYSTEM_PATHS=ON` argument:
 
     cmake -D BOOST_ROOT=/usr/local -D Boost_NO_SYSTEM_PATHS=ON ..
 
