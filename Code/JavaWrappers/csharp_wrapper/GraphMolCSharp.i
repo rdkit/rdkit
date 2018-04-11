@@ -61,6 +61,10 @@
     #include <boost/shared_array.hpp>
 %}
 // The actual definition isn't in the top level hpp file!
+// The next two lines are to work around a problem caused by the fact that older versions of
+// SWIG don't work with newer versions of boost.
+#define BOOST_SP_NOEXCEPT
+#define BOOST_SP_NOEXCEPT_WITH_ASSERT
 #define BOOST_NOEXCEPT
 #define BOOST_NO_CXX11_RVALUE_REFERENCES
 #define BOOST_NO_CXX11_NULLPTR
