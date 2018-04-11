@@ -2,29 +2,50 @@
 (Changes relative to Release_2017.09.1)
 
 ## C++11 notes
-Starting with this release, the RDKit core C++ code is written in modern C++; for this release that means C++11.
-This means that the compilers used to build it cannot be completely ancient. Here are the minimum tested versions:
 
-- g++ v4.8: though note that the SLN parser code cannot be built with v4.8. It will automatically be disabled when this older compiler is used.
-- clang v3.9: it may be that older versions of the compiler also work, but we haven't tested them.
-- Visual Studio 2015: it may be that older versions of the compiler also work, but we haven't tested them.
+Starting with this release, the RDKit core C++ code is written in modern C++;
+for this release that means C++11. This means that the compilers used to build
+it cannot be completely ancient. Here are the minimum tested versions:
+- g++ v4.8: though note that the SLN parser code cannot be built with v4.8. It
+  will automatically be disabled when this older compiler is used.
+- clang v3.9: it may be that older versions of the compiler also work, but we
+  haven't tested them.
+- Visual Studio 2015: it may be that older versions of the compiler also work,
+  but we haven't tested them.
 
 ## Backwards incompatible changes
-This release includes a set of changes to make the default arguments to common functions less error prone (github #1679).
+
+This release includes a set of changes to make the default arguments to common
+functions less error prone (github #1679).
 - MolToSmiles() now generates isomeric SMILES by default.
 - The embedding code now uses the ETKDG method by default.
-- MolToMolBlock() will now by default generate a set of 2D coordinates for molecules when the includeStereo option is set to True. The changes are made to a copy of the molecule; the molecule itself will not be modified.
-- The Mol file (and SDF) parser now determines atomic stereochemisty based on the 3D coordinates provided (if 3D coordinates are provided).
-- The SMILES parser now supports CXSMILES by default (assuming that additional text that looks like CXSMILES extensions is there).
+- MolToMolBlock() will now by default generate a set of 2D coordinates for
+  molecules when the includeStereo option is set to True. The changes are made
+  to a copy of the molecule; the molecule itself will not be modified.
+- The Mol file (and SDF) parser now determines atomic stereochemisty based on
+  the 3D coordinates provided (if 3D coordinates are provided).
+- The SMILES parser now supports CXSMILES by default (assuming that additional
+  text that looks like CXSMILES extensions is there).
 
-In every case the old behavior can be obtained by providing an optional argument to the function(s) mentioned.
+In every case the old behavior can be obtained by providing an optional argument
+to the function(s) mentioned.
 
 ## Acknowledgements:
-Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian Cole, Andrew Dalke, JW Feng, Peter Gedeck, Thomas Heavy, Gareth Jones, Brian Kelley, Karl Leswing, Susan Leung, Chris Morris, Noel O'Boyle, Axel Pahl, Pavel Polishchuk, Sereina Riniker, Jeff van Santen, Roger Sayle, Matt Swain, Palo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta, 'clinntt', 'hjuinj', 'iwatobipen',
+
+Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian
+Cole, Andrew Dalke, JW Feng, Peter Gedeck, Thomas Heavy, Gareth Jones, Brian
+Kelley, Karl Leswing, Susan Leung, Chris Morris, Dan Nealschneider, Noel
+O'Boyle, Axel Pahl, Pavel Polishchuk, Sereina Riniker, Jeff van Santen, Roger
+Sayle, Matt Swain, Palo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
+'clinntt', 'hjuinj', 'iwatobipen',
 
 ## Highlights:
+  - An initial version of an integration with Schrodinger's coordgen library is
+    included. This produces much better 2D coordinates for complex molecules.
+  - Thanks to the move to modern C++ the RDKit is now faster and uses less
+    memory
   - A number of improvements were made to the PDB reader
-  - Thanks to the move to modern C++ the RDKit is now faster and uses less memory
+  - v2 of the ETKDG torsions and potentials is now available
 
 ## New Features and Enhancements:
   - Support InChi 1.05
@@ -45,7 +66,7 @@ Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian Co
   (github issue #1615 from greglandrum)  
   - Dev/substructlibrary docs
  (github pull #1620 from bp-kelley)
-  - Turns off exception throwing for certain classes Rlabel sanitization.…
+  - Turns off exception throwing for certain classes Rlabel sanitization.
  (github pull #1621 from bp-kelley)
   - Add an "MDL" aromaticity model
  (github issue #1622 from hjuinj)
@@ -199,6 +220,8 @@ Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian Co
  (github issue #1793 from chrishmorris)
   - Fix python linkage (primarily for conda builds)
  (github pull #1808 from greglandrum)
+  - removeHs() should not remove H atoms that are contributing to the definition of a stereo bond
+ (github pull #1810 from d-b-w)
 
 
 # Release_2017.09.1
