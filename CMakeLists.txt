@@ -146,7 +146,12 @@ install(FILES
 
 # disable some warnings that we don't care about
 if(MSVC)
-  target_compile_definitions(rdkit_base INTERFACE "/wd4267")  # conversion with possible loss of data. This should occasionally be enabled to check what's going on
+  # These should occasionally be enabled to check what's going on
+  # 4267 conversion with possible loss of data.
+  # 4305 truncation from 'double' to 'const float'
+  # 4244 conversion from 'uint64_t' to 'unsigned int', possible loss of data
+  target_compile_options(rdkit_base INTERFACE "/wd4267" "/wd4305" "/wd4244")
+  target_compile_definitions(rdkit_base INTERFACE "_CRT_SECURE_NO_WARNINGS")
 endif(MSVC)
 
 
@@ -405,6 +410,13 @@ if(RDK_USE_STRICT_ROTOR_DEFINITION)
     MESSAGE("== Using strict rotor definition")
     target_compile_definitions(rdkit_base INTERFACE "-DRDK_USE_STRICT_ROTOR_DEFINITION")
 endif()
+
+if (MSVC)
+  # disable warnings:
+  #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
+  add_definitions( "/wd4267" )
+endif(MSVC)
+
 
 add_subdirectory(External)
 add_subdirectory(Code)
