@@ -4648,7 +4648,7 @@ void _renumberTest(const ROMol *m) {
     delete nm;
   }
 }
-}
+}  // namespace
 
 void testRenumberAtoms() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing renumbering atoms"
@@ -4807,7 +4807,7 @@ void testGithubIssue190() {
 
 namespace {
 int getAtNum(const ROMol &, const Atom *at) { return at->getAtomicNum(); }
-}
+}  // namespace
 void testMolFragsWithQuery() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing getMolFragsWithQuery()."
@@ -5161,7 +5161,7 @@ void hypervalent_check(const char *smiles) {
   TEST_ASSERT(m->getAtomWithIdx(1)->getFormalCharge() == -1);
   delete m;
 }
-}
+}  // namespace
 void testGithubIssue510() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github issue 510: "
                           "Hexafluorophosphate cannot be handled"
@@ -6958,8 +6958,9 @@ void testGithub1605() {
       RWMol *m = SmilesToMol(smiles, 0, false);
       TEST_ASSERT(m);
       unsigned int failed;
-      MolOps::sanitizeMol(*m, failed, MolOps::SANITIZE_SETAROMATICITY |
-                                          MolOps::SANITIZE_ADJUSTHS);
+      MolOps::sanitizeMol(
+          *m, failed,
+          MolOps::SANITIZE_SETAROMATICITY | MolOps::SANITIZE_ADJUSTHS);
       TEST_ASSERT(!failed);
       delete m;
     }
@@ -6974,7 +6975,7 @@ void testGithub1622() {
   {
     // rings that should be aromatic
     string aromaticSmis[] = {"C1=CC=CC=C1",  // benzene, of course
-                             // heterocyclics
+                                             // heterocyclics
                              "N1=CC=CC=C1",  // pyridine
                              "N1=CC=CC=N1",  // pyridazine
                              "N1=CC=CN=C1",  // pyrimidine
@@ -7335,9 +7336,49 @@ void testGithub1614() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGithub1810() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue "
+                          "1810: removeHs() should not remove H atoms that are "
+                          "contributing to the definition of a stereo bond"
+                       << std::endl;
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C/[H]"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C(/F)[H]"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+  }
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("F/C=C(/[H])F"));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOZ);
+  }
+#if 1
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("FC=C(F)[H]",false, false));
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+    mol->getBondBetweenAtoms(1,2)->setStereoAtoms(0,4);
+    mol->getBondBetweenAtoms(1,2)->setStereo(Bond::STEREOTRANS);
+    MolOps::removeHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms()==4);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getStereoAtoms()[0]==0);
+    TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getStereoAtoms()[1]==3);
+  }
+#endif
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
+  // boost::logging::enable_logs("rdApp.debug");
 
 #if 1
   test1();
@@ -7439,8 +7480,10 @@ int main() {
   testGithub1439();
   testGithub1281();
   testGithub1605();
+  testGithub1614();
   testGithub1622();
 #endif
   testGithub1703();
+  testGithub1810();
   return 0;
 }

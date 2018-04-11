@@ -189,7 +189,7 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
     }
   }
 }
-}
+}  // namespace
 
 void cleanUp(RWMol &mol) {
   ROMol::AtomIterator ai;
@@ -467,7 +467,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     ROMol::EDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getEdges();
     while (beg != end) {
-      const Bond* bond = (mol)[*beg];
+      const Bond *bond = (mol)[*beg];
       ++beg;
       if (!copiedBonds[bond->getIdx()]) {
         continue;
@@ -583,14 +583,14 @@ unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
 }
 
 template <typename T>
-std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
+std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
   PRECONDITION(query, "no query");
 
   std::vector<T> assignments(mol.getNumAtoms());
   std::vector<int> ids(mol.getNumAtoms(), -1);
-  std::map<T, boost::shared_ptr<ROMol> > res;
+  std::map<T, boost::shared_ptr<ROMol>> res;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     T where = query(mol, mol.getAtomWithIdx(i));
     if (whiteList) {
@@ -645,13 +645,13 @@ std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
   }
   return res;
 }
-template std::map<std::string, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
+template std::map<std::string, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, std::string (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<std::string> *, bool);
-template std::map<int, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
+template std::map<int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, int (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<int> *, bool);
-template std::map<unsigned int, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
+template std::map<unsigned int, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     const ROMol &mol, unsigned int (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
