@@ -411,8 +411,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                  at->getIdx()) != onlyOnAtoms->end()) {
+    if (!onlyOnAtoms ||
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
+            onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -430,8 +431,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                 aidx) == onlyOnAtoms->end()) {
+    if (onlyOnAtoms &&
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
+            onlyOnAtoms->end()) {
       continue;
     }
 
@@ -511,6 +513,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
           if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx())
             continue;
           *sAtomIt = nbr->getIdx();
+          bool madeAdjustment = true;
           switch (bnd->getStereo()) {
             case Bond::STEREOCIS:
               bnd->setStereo(Bond::STEREOTRANS);
@@ -520,9 +523,10 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
               break;
             default:
               // I think we shouldn't need to do anything with E and Z...
+              madeAdjustment = false;
               break;
           }
-          return true;
+          return madeAdjustment;
         }
       }
     }
