@@ -30,7 +30,7 @@
 
 #include <GraphMol/RDKitBase.h>
 
-#include "WHIM.h"
+#include "EEM.h"
 #include "MolData3Ddescriptors.h"
 #include <math.h>
 #include <Eigen/Dense>
@@ -77,11 +77,12 @@ const float B2[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.2268,0.2319,0.4992,0.0,0.0,0.0,0.0
 const float B3[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 */
 
-// function to retreive the atomtype value based on the highest bond type of an atom
-// in the publication they don't have access to "Aromatic type"
-double getAtomtype(const RDKit::ROMol mol, const RDKit::Atom *atom) {
+// function to retreive the atomtype value based on the "highest" (e.g. max) bond type of an atom
+// potential improvement : in the original publication they don't have access to "Aromatic type" like in RDKit
+double getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
       double t=1.0;
       double a;
+      PRECONDITION(atom != nullptr,"bad atom argument")
       RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
       while (nbrIdx != endNbrs) {
@@ -95,16 +96,16 @@ double getAtomtype(const RDKit::ROMol mol, const RDKit::Atom *atom) {
             }
         if (a == 3.0) {
              t = 3.0;
-            }
+            }       
         ++nbrIdx;
   }
   return t;
 }
 
-double* getEEMMatrix(RDKit::ROMol mol, double * dist3D, int n, EEM_arrays EEMatoms) {
+double* getEEMMatrix(double * dist3D, int n, EEM_arrays EEMatoms) {
   int sizeArray = (n+1) * (n+1);
+  PRECONDITION(dist3D != nullptr,"bad dist3D argument")
   double* EEM = new double[sizeArray](); // declaration to set all elements to zeros!
-  #define IDX(x, y) (x * (n+1) + y)
     /* Fill the full n * n block */
     for(long int i = 0; i < n; i++) {
         double t = EEMatoms.EEMatomtype[i];
@@ -120,23 +121,22 @@ double* getEEMMatrix(RDKit::ROMol mol, double * dist3D, int n, EEM_arrays EEMato
                 v = B3[idx];
         }
 
-        EEM[IDX(i, i)] = v;
+        EEM[i * (n+1) + i] = v;
         for(long int j = i + 1; j < n; j++) {
-                EEM[IDX(i, j)] = kappa / dist3D[i*n+j];
-                EEM[IDX(j, i)] = EEM[IDX(i, j)];
+                EEM[i * (n+1) + j] = kappa / dist3D[i*n+j];
+                EEM[j * (n+1) + i] = EEM[i * (n+1) + j];
             }
         }
     /* Fill last column & row */
     for(long int i = 0; i < n; i++) {
-        EEM[IDX(n, i)] = 1.0; // column
-        EEM[IDX(i, n)] = -1.0; // row
+        EEM[n* (n+1) + i] = 1.0; // column
+        EEM[i* (n+1) + n] = -1.0; // row
 
     }
-    #undef IDX
     return EEM;
 }
 
-double* getBVector(RDKit::ROMol mol, int n, EEM_arrays EEMatoms) {
+double* getBVector(const ROMol &mol, int n, EEM_arrays EEMatoms) {
        /* Fill vector b i.e. -A */
         double * b = new double[n+1];
         for(int j = 0; j < n; j++) {
@@ -153,13 +153,13 @@ double* getBVector(RDKit::ROMol mol, int n, EEM_arrays EEMatoms) {
             }
         }
 
-        b[n] = RDKit::MolOps::getFormalCharge(mol); // sum of charges
+        b[n] = MolOps::getFormalCharge(mol); // sum of charges
 
     return b;
 }
 
 
-EEM_arrays calculate_EEM_parameters(RDKit::ROMol mol, int n) {
+EEM_arrays calculate_EEM_parameters(ROMol mol, int n) {
        /* Fill vector b i.e. -A */
         int * a = new int[n];
         double * b = new double[n];
@@ -174,11 +174,9 @@ EEM_arrays calculate_EEM_parameters(RDKit::ROMol mol, int n) {
 
 
 /* Calculate charges for a particular kappa_data structure */
-std::vector<double> calculate_charges(RDKit::ROMol mol, double * dist3D, int numAtoms, EEM_arrays EEMatoms) {
-        double * A = new double[(numAtoms+1)*(numAtoms+1)];
-        A = getEEMMatrix(mol,dist3D,numAtoms,EEMatoms);
-        double * b = new double[numAtoms+1];
-        b = getBVector(mol, numAtoms,EEMatoms);
+void calculate_charges(ROMol mol, double * dist3D, int numAtoms, EEM_arrays EEMatoms, std::vector<double> &res) {
+        double * A = getEEMMatrix(dist3D,numAtoms, EEMatoms);
+        double * b = getBVector(mol, numAtoms, EEMatoms);
 
         MatrixXd AM = Map<MatrixXd>(A, numAtoms+1, numAtoms+1);
         VectorXd bv = Map<VectorXd>(b, numAtoms+1);
@@ -187,16 +185,16 @@ std::vector<double> calculate_charges(RDKit::ROMol mol, double * dist3D, int num
         FullPivLU<MatrixXd> lu(AM);
         Res = lu.solve(bv);
 
-        std::vector<double> charges(Res.data(), Res.data() + Res.size());
+        std::vector<double>charges(Res.data(), Res.data() + Res.size());
 
         for(long int aix = 0; aix < numAtoms; aix++) {
             mol.getAtomWithIdx(aix)->setProp("_EEMCharge", charges[aix], true);
         }
 
+        res =  charges;
        delete[] A;
        delete[] b;
 
-    return charges;
 }
 
 
@@ -204,17 +202,12 @@ void getEEMs(const ROMol &mol, std::vector<double> &result, int numAtoms, int co
   // 3D distance matrix
   double * dist3D = MolOps::get3DDistanceMat(mol, confId, false, true);
   EEM_arrays EEMatoms = calculate_EEM_parameters(mol,  numAtoms);
-  std::vector<double> charges = calculate_charges(mol, dist3D, numAtoms, EEMatoms);
-
 
   result.clear();
   result.resize(numAtoms);
+  calculate_charges(mol, dist3D, numAtoms, EEMatoms, result);
 
-  for (int i = 0; i < numAtoms; i++) {
-    result[i] = charges[i];
-  }
 }
-
 
 }  // end of anonymous namespace
 
@@ -226,7 +219,9 @@ void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   res.resize(numAtoms);
   // cast ROMol to RWMol
   RWMol &wmol = static_cast<RWMol &>(mol);
-  // kekulize
+  // kekulize is currenlty required but it could be remove if and only if:
+  // we use "Aromatic type"  in RDKit retrain the model without Kekulize
+  // that would be part of a future release if it's really important
   MolOps::Kekulize(wmol, true);
   // recast to ROMol
   ROMol *remol = static_cast<ROMol *>(&wmol);
