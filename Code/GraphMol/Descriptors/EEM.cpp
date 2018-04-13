@@ -1,6 +1,6 @@
 //
 //  Copyright (c) 2017, Guillaume GODIN
-//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
+//  inspired by Thomas Racek's EEM reference implementation 
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,8 @@ namespace {
 
 
 struct EEM_arrays {
-  int* Atomindex;
-  double* EEMatomtype;
+  unsigned int* Atomindex;
+  unsigned int* EEMatomtype;
 };
 
 
@@ -79,8 +79,8 @@ const float B3[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
 
 // function to retreive the atomtype value based on the "highest" (e.g. max) bond type of an atom
 // potential improvement : in the original publication they don't have access to "Aromatic type" like in RDKit
-double getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
-      double t=1.0;
+unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
+      unsigned int t=1;
       double a;
       PRECONDITION(atom != nullptr,"bad atom argument")
       RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
@@ -89,13 +89,13 @@ double getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
         const RDKit::Bond *bond = mol.getBondBetweenAtoms(*nbrIdx, atom->getIdx());
         a = bond->getBondTypeAsDouble();
         if (a == 1.5) {
-             t = 2.0;
+             t = 2;
             }
         if (a == 2.0) {
-             t = 2.0;
+             t = 2;
             }
         if (a == 3.0) {
-             t = 3.0;
+             t = 3;
             }       
         ++nbrIdx;
   }
@@ -108,16 +108,16 @@ double* getEEMMatrix(double * dist3D, int n, EEM_arrays EEMatoms) {
   double* EEM = new double[sizeArray](); // declaration to set all elements to zeros!
     /* Fill the full n * n block */
     for(long int i = 0; i < n; i++) {
-        double t = EEMatoms.EEMatomtype[i];
-        int idx = EEMatoms.Atomindex[i];
+        unsigned int t = EEMatoms.EEMatomtype[i];
+        unsigned int idx = EEMatoms.Atomindex[i];
         double v;
-        if (t== 1.0) {
+        if (t== 1) {
                 v=  B1[idx];
         }
-        if (t== 2.0) {
+        if (t== 2) {
                 v = B2[idx];
         }
-        if (t== 3.0) {
+        if (t== 3) {
                 v = B3[idx];
         }
 
@@ -140,15 +140,15 @@ double* getBVector(const ROMol &mol, int n, EEM_arrays EEMatoms) {
        /* Fill vector b i.e. -A */
         double * b = new double[n+1];
         for(int j = 0; j < n; j++) {
-          double t = EEMatoms.EEMatomtype[j];
-          int idx = EEMatoms.Atomindex[j];
-            if ( t== 1.0) {
+          unsigned int t = EEMatoms.EEMatomtype[j];
+          unsigned int idx = EEMatoms.Atomindex[j];
+            if ( t== 1) {
                 b[j] = -A1[idx];
             }
-            if (t== 2.0) {
+            if (t== 2) {
                 b[j] = -A2[idx];
             }
-            if (t== 3.0) {
+            if (t== 3) {
                 b[j] = -A3[idx];
             }
         }
@@ -161,8 +161,8 @@ double* getBVector(const ROMol &mol, int n, EEM_arrays EEMatoms) {
 
 EEM_arrays calculate_EEM_parameters(ROMol mol, int n) {
        /* Fill vector b i.e. -A */
-        int * a = new int[n];
-        double * b = new double[n];
+        unsigned int * a = new unsigned int[n];
+        unsigned int * b = new unsigned int[n];
 
         for(int j = 0; j < n; j++) {
             b[j]=getAtomtype(mol,mol.getAtomWithIdx(j));

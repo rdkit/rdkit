@@ -1,5 +1,4 @@
 //  Created by Guillaume GODIN
-//  "Copyright 2013-2016 Tomas Racek (tom@krab1k.net)"
 //  Copyright (C) 2012-2017 Greg Landrum
 //   @@ All Rights Reserved @@
 //
@@ -112,7 +111,7 @@ void testEEM2() {
   std::cout << "=>start test EEM\n";
   std::string pathName = getenv("RDBASE");
   std::string sdfName =
-      pathName + "/Code/GraphMol/Descriptors/test_data/setEEM2.sdf.zip";
+      pathName + "/Code/GraphMol/Descriptors/test_data/setEEM2.sdf";
   auto start = std::chrono::high_resolution_clock::now();
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
@@ -164,9 +163,8 @@ void testEEM2() {
              ++errorAtoms;
            }
 
-      //TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
+      TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
     }
-    //if (nDone>1) {break;}
     if (nDone % 100== 0) {std::cout << nDone << "\n";}
     
     if(errorAtoms>0) {
@@ -176,7 +174,6 @@ void testEEM2() {
     }
 
     delete m;
-    //break;
     ++nDone;
   }
   auto finish = std::chrono::high_resolution_clock::now();
