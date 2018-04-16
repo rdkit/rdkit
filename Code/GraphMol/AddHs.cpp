@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -482,6 +482,59 @@ ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
   return static_cast<ROMol *>(res);
 };
 
+namespace {
+// returns whether or not an adjustment was made, in case we want that info
+bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
+                                 const Atom *heavyAtom) {
+  PRECONDITION(atom != nullptr, "bad atom");
+  PRECONDITION(heavyAtom != nullptr, "bad heavy atom");
+  // nothing we can do if the degree is only 2 (and we should have covered
+  // that earlier anyway)
+  if (heavyAtom->getDegree() == 2) return false;
+  const auto &cbnd =
+      mol.getBondBetweenAtoms(atom->getIdx(), heavyAtom->getIdx());
+  if (!cbnd) return false;
+  Bond *dblBond = nullptr;
+  for (const auto &nbri :
+       boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
+    Bond *bnd = mol[nbri];
+    if (bnd->getBondType() == Bond::DOUBLE &&
+        bnd->getStereo() > Bond::STEREOANY) {
+      auto sAtomIt = std::find(bnd->getStereoAtoms().begin(),
+                               bnd->getStereoAtoms().end(), atom->getIdx());
+      if (sAtomIt != bnd->getStereoAtoms().end()) {
+        // sAtomIt points to the position of this atom's index in the list.
+        // find the index of another atom attached to the heavy atom and
+        // use it to update sAtomIt
+        unsigned int dblNbrIdx = bnd->getOtherAtomIdx(heavyAtom->getIdx());
+        for (const auto &nbri :
+             boost::make_iterator_range(mol.getAtomNeighbors(heavyAtom))) {
+          const auto &nbr = mol[nbri];
+          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx())
+            continue;
+          *sAtomIt = nbr->getIdx();
+          bool madeAdjustment = true;
+          switch (bnd->getStereo()) {
+            case Bond::STEREOCIS:
+              bnd->setStereo(Bond::STEREOTRANS);
+              break;
+            case Bond::STEREOTRANS:
+              bnd->setStereo(Bond::STEREOCIS);
+              break;
+            default:
+              // I think we shouldn't need to do anything with E and Z...
+              madeAdjustment = false;
+              break;
+          }
+          return madeAdjustment;
+        }
+      }
+    }
+  }
+  return false;
+}
+}  // end of anonymous namespace
+
 //
 //  This routine removes hydrogens (and bonds to them) from the molecular graph.
 //  Other Atom and bond indices may be affected by the removal.
@@ -494,6 +547,8 @@ ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
 //     will not be removed.
 //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
 //   - Hs connected to dummy atoms will not be removed
+//   - Hs that are part of the definition of double bond Stereochemistry
+//     will not be removed
 //
 void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               bool sanitize) {
@@ -525,8 +580,25 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
                  atom->getDegree() == 1) {
         ROMol::ADJ_ITER begin, end;
         boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-        if (mol.getAtomWithIdx(*begin)->getAtomicNum() > 1) {
+        auto nbr = mol.getAtomWithIdx(*begin);
+        if (nbr->getAtomicNum() > 1) {
           removeIt = true;
+          // we're connected to a non-dummy, non H atom. Check to see
+          // if the neighbor has a double bond and we're the only neighbor
+          // at this end.  This was part of github #1810
+          if (nbr->getDegree() == 2) {
+            for (const auto &nbri :
+                 boost::make_iterator_range(mol.getAtomBonds(nbr))) {
+              const Bond *bnd = mol[nbri];
+              if (bnd->getBondType() == Bond::DOUBLE &&
+                  (bnd->getStereo() > Bond::STEREOANY ||
+                   mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                           ->getBondDir() > Bond::NONE)) {
+                removeIt = false;
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -595,14 +667,12 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
         if (bond->getBondDir() == Bond::UNKNOWN &&
             bond->getBeginAtomIdx() == heavyAtom->getIdx()) {
           heavyAtom->setProp(common_properties::_UnknownStereo, 1);
-        }
-
-        // if the direction is set on this bond and the atom it's connected to
-        // has no other single bonds with directions set, then we need to set
-        // direction on one of the other neighbors in order to avoid double bond
-        // stereochemistry possibly being lost. This was github #754
-        if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
-            bond->getBondDir() == Bond::ENDUPRIGHT) {
+        } else if (bond->getBondDir() == Bond::ENDDOWNRIGHT ||
+                   bond->getBondDir() == Bond::ENDUPRIGHT) {
+          // if the direction is set on this bond and the atom it's connected to
+          // has no other single bonds with directions set, then we need to set
+          // direction on one of the other neighbors in order to avoid double
+          // bond stereochemistry possibly being lost. This was github #754
           bool foundADir = false;
           Bond *oBond = nullptr;
           boost::tie(beg, end) = mol.getAtomBonds(heavyAtom);
@@ -628,8 +698,12 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
               oBond->setBondDir(bond->getBondDir());
             }
           }
+        } else {
+          // if this atom is one of the stereoatoms for a double bond we need
+          // to switch the stereo atom on this end to be the other neighbor
+          // This was part of github #1810
+          adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
         }
-
         mol.removeAtom(atom);
       } else {
         // only increment the atom idx if we don't remove the atom
@@ -738,7 +812,7 @@ bool isQueryH(const Atom *atom) {
   }
   return hasHQuery;
 }
-}
+}  // namespace
 
 //
 //  This routine removes explicit hydrogens (and bonds to them) from
