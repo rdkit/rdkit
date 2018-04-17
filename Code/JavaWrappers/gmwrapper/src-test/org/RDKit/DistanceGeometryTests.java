@@ -481,13 +481,21 @@ public class DistanceGeometryTests extends GraphMolTest {
 		ROMol ref=RWMol.MolFromMolFile(molFile.getPath(), true, false);;
 		ROMol test = RWMol.MolFromSmiles("OCCC").addHs(false,false);
     assertTrue(test.getNumAtoms()==ref.getNumAtoms());
-    EmbedParameters eps = RDKFuncs.getETKDG();
+    EmbedParameters eps = new EmbedParameters(RDKFuncs.getETKDG());
     eps.setRandomSeed(42);
 		int cid = DistanceGeom.EmbedMolecule(test,eps);
 		assertTrue(cid>-1);
     double ssd;
 		ssd = test.alignMol(ref);
 		assertTrue(ssd < 0.1);
+
+    // make sure we didn't change the global params
+    EmbedParameters eps2 = RDKFuncs.getETKDG();
+		cid = DistanceGeom.EmbedMolecule(test,eps2);
+		assertTrue(cid>-1);
+		ssd = test.alignMol(ref);
+		assertTrue(ssd > 0.1);
+
 	}
   @Test
 	public void test9ETDGParams2() {
@@ -520,10 +528,10 @@ public class DistanceGeometryTests extends GraphMolTest {
 		assertTrue(ssd < 0.1);
 	}
 
-
-
 	public static void main(String args[]) {
+    System.out.print("STARTING\n");
 		org.junit.runner.JUnitCore.main("org.RDKit.DistanceGeometryTests");
+    System.out.print("FINISHED\n");
 	}
 
 }
