@@ -57,7 +57,41 @@
 
 %ignore RDKit::DGeomHelpers::EmbedMolecule;
 %ignore RDKit::DGeomHelpers::EmbedMultipleConfs;
+// make sure the struct has a copy constructor:
+%copyctor RDKit::DGeomHelpers::EmbedParameters;
+
+// we want to ignore the const global parameter objects because SWIG does a
+// poor job of making them read-only when they are exposed to Java.
+%ignore RDKit::DGeomHelpers::KDG;
+%ignore RDKit::DGeomHelpers::ETDG;
+%ignore RDKit::DGeomHelpers::ETKDG;
+%ignore RDKit::DGeomHelpers::ETKDGv2;
+
 %include <GraphMol/DistGeomHelpers/Embedder.h>
+
+// create functions to return copies of the global parameter objects
+%newobject RDKit::DGeomHelpers::getKDG;
+%newobject RDKit::DGeomHelpers::getETDG;
+%newobject RDKit::DGeomHelpers::getETKDG;
+%newobject RDKit::DGeomHelpers::getETKDGv2;
+%inline {
+  namespace RDKit{
+    namespace DGeomHelpers {
+      EmbedParameters *getKDG() {
+        return new EmbedParameters(KDG);
+      }
+      EmbedParameters *getETDG() {
+        return new EmbedParameters(ETDG);
+      }
+      EmbedParameters *getETKDG() {
+        return new EmbedParameters(ETKDG);
+      }
+      EmbedParameters *getETKDGv2() {
+        return new EmbedParameters(ETKDGv2);
+      }
+    }
+  }
+}
 
 // A class to hang special distance geometry methods on.
 %inline {
