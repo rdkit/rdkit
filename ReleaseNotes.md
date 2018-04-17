@@ -36,7 +36,7 @@ Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian
 Cole, Andrew Dalke, JW Feng, Peter Gedeck, Thomas Heavy, Gareth Jones, Brian
 Kelley, Karl Leswing, Susan Leung, Chris Morris, Dan Nealschneider, Noel
 O'Boyle, Axel Pahl, Pavel Polishchuk, Sereina Riniker, Jeff van Santen, Roger
-Sayle, Matt Swain, Palo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
+Sayle, Matt Swain, Paolo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
 'clinntt', 'hjuinj', 'iwatobipen',
 
 ## Highlights:
