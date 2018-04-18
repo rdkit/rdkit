@@ -222,6 +222,8 @@ Sayle, Matt Swain, Paolo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
  (github pull #1808 from greglandrum)
   - removeHs() should not remove H atoms that are contributing to the definition of a stereo bond
  (github pull #1810 from d-b-w)
+  - global EmbedParameters objects should not be writeable in SWIG wrappers
+ (github issue #1826 from greglandrum)
 
 
 # Release_2017.09.1
