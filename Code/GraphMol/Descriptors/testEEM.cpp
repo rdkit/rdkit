@@ -18,7 +18,6 @@
 #include <fstream>
 #include <sstream>
 
-
 #include <chrono>  // for high_resolution_clock
 
 #include <GraphMol/Descriptors/EEM.h>
@@ -38,7 +37,7 @@ void testEEM1() {
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -49,7 +48,6 @@ void testEEM1() {
     }
     data.push_back(row);
   }
-
 
   int nDone = 0;
   int errorMols = 0;
@@ -65,7 +63,7 @@ void testEEM1() {
 
     TEST_ASSERT(inm == nm);
 
-    int confId=-1;
+    int confId = -1;
     std::vector<double> charges;
 
     RDKit::Descriptors::EEM(*m, charges, confId);
@@ -73,39 +71,39 @@ void testEEM1() {
 
     for (int i = 0; i < numAtoms; i++) {
       double ref = atof(myrow[i + 2].c_str());
-      if(fabs(ref - charges[i]) >= 0.01) {
+      if (fabs(ref - charges[i]) >= 0.01) {
+        std::cout << inm << ","
+                  << "ref: " << ref << " ,val: " << charges[i]
+                  << "Symbol: " << m->getAtomWithIdx(i)->getSymbol() << "\n";
+        ++errorAtoms;
+      }
 
-           std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "Symbol: "<< m->getAtomWithIdx(i)->getSymbol() <<"\n";
-             ++errorAtoms;
-           }
-
-      //TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
+      // TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
     }
-    //if (nDone>1) {break;}
-    if (nDone % 100== 0) {std::cout << nDone << "\n";}
-    
-    if(errorAtoms>0) {
-      std::cout << "id" << nDone << ", name:" << inm << "\n";
-      ++errorMols;
-      std::cout << RDKit::MolToSmiles(*m) << "\n";
+    // if (nDone>1) {break;}
+    if (nDone % 100 == 0) {
+      std::cout << nDone << "\n";
     }
 
+	if (errorAtoms > 0) {
+		std::cout << nDone << " " << inm << " " << errorAtoms << "\n";
+		++errorMols;
+	}
+	TEST_ASSERT(errorAtoms == 0);
     delete m;
-    //break;
+    // break;
     ++nDone;
   }
   auto finish = std::chrono::high_resolution_clock::now();
-std::chrono::duration<double> elapsed = finish - start;
-std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+  std::chrono::duration<double> elapsed = finish - start;
+  std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
-    std::cout << "Errors Mols:" <<  errorMols << "\n";
-
+  std::cout << "Errors:" << errorMols << "\n";
+  TEST_ASSERT(errorMols == 0);
 
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
                         << std::endl;
 }
-
-
 
 void testEEM2() {
   std::cout << "=>start test EEM\n";
@@ -122,7 +120,7 @@ void testEEM2() {
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -133,7 +131,6 @@ void testEEM2() {
     }
     data.push_back(row);
   }
-
 
   int nDone = 0;
   int errorMols = 0;
@@ -149,7 +146,7 @@ void testEEM2() {
 
     TEST_ASSERT(inm == nm);
 
-    int confId=-1;
+    int confId = -1;
     std::vector<double> charges;
 
     RDKit::Descriptors::EEM(*m, charges, confId);
@@ -157,17 +154,20 @@ void testEEM2() {
 
     for (int i = 0; i < numAtoms; i++) {
       double ref = atof(myrow[i + 2].c_str());
-      if(fabs(ref - charges[i]) >= 0.01) {
-
-           std::cout << inm << "," << "ref: " << ref << " ,val: "<<  charges[i] << "Symbol: "<< m->getAtomWithIdx(i)->getSymbol() <<"\n";
-             ++errorAtoms;
-           }
+      if (fabs(ref - charges[i]) >= 0.01) {
+        std::cout << inm << ","
+                  << "ref: " << ref << " ,val: " << charges[i]
+                  << "Symbol: " << m->getAtomWithIdx(i)->getSymbol() << "\n";
+        ++errorAtoms;
+      }
 
       TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
     }
-    if (nDone % 100== 0) {std::cout << nDone << "\n";}
-    
-    if(errorAtoms>0) {
+    if (nDone % 100 == 0) {
+      std::cout << nDone << "\n";
+    }
+
+    if (errorAtoms > 0) {
       std::cout << "id" << nDone << ", name:" << inm << "\n";
       ++errorMols;
       std::cout << RDKit::MolToSmiles(*m) << "\n";
@@ -177,11 +177,10 @@ void testEEM2() {
     ++nDone;
   }
   auto finish = std::chrono::high_resolution_clock::now();
-std::chrono::duration<double> elapsed = finish - start;
-std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+  std::chrono::duration<double> elapsed = finish - start;
+  std::cout << "Elapsed time: " << elapsed.count() << " s\n";
 
-    std::cout << "Errors Mols:" <<  errorMols << "\n";
-
+  std::cout << "Errors Mols:" << errorMols << "\n";
 
   BOOST_LOG(rdErrorLog) << "test on : " << nDone << " molecules done"
                         << std::endl;
