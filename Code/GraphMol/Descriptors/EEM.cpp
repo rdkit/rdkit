@@ -126,7 +126,7 @@ unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
   return t;
 }
 
-double *getEEMMatrix(double *dist3D, unsigned int n, EEM_arrays EEMatoms) {
+std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n, EEM_arrays EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
   double *EEM =
@@ -157,10 +157,10 @@ double *getEEMMatrix(double *dist3D, unsigned int n, EEM_arrays EEMatoms) {
     EEM[n * (n + 1) + i] = 1.0;   // column
     EEM[i * (n + 1) + n] = -1.0;  // row
   }
-  return EEM;
+  return std::unique_ptr<double[]>(EEM);
 }
 
-double *getBVector(const ROMol &mol, unsigned int n,
+std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
                    const EEM_arrays &EEMatoms) {
   /* Fill vector b i.e. -A */
   double *b = new double[n + 1];
@@ -180,7 +180,7 @@ double *getBVector(const ROMol &mol, unsigned int n,
 
   b[n] = MolOps::getFormalCharge(mol);  // sum of charges
 
-  return b;
+  return std::unique_ptr<double[]>(b);
 }
 
 EEM_arrays calculate_EEM_parameters(ROMol mol, unsigned int n) {
@@ -199,11 +199,11 @@ EEM_arrays calculate_EEM_parameters(ROMol mol, unsigned int n) {
 /* Calculate charges for a particular kappa_data structure */
 void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
                        EEM_arrays EEMatoms, std::vector<double> &res) {
-  double *A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
-  double *b = getBVector(mol, numAtoms, EEMatoms);
+	std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
+	std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
 
-  MatrixXd AM = Map<MatrixXd>(A, numAtoms + 1, numAtoms + 1);
-  VectorXd bv = Map<VectorXd>(b, numAtoms + 1);
+  MatrixXd AM = Map<MatrixXd>(A.get(), numAtoms + 1, numAtoms + 1);
+  VectorXd bv = Map<VectorXd>(b.get(), numAtoms + 1);
   VectorXd Res(numAtoms + 1);
 
   FullPivLU<MatrixXd> lu(AM);
@@ -216,9 +216,7 @@ void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
   }
 
   res = charges;
-  delete[] A;
-  delete[] b;
-}
+ }
 
 void getEEMs(const ROMol &mol, std::vector<double> &result,
              unsigned int numAtoms, int confId) {
