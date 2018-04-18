@@ -126,7 +126,8 @@ unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
   return t;
 }
 
-std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n, EEM_arrays EEMatoms) {
+std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
+                                       EEM_arrays EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
   double *EEM =
@@ -161,7 +162,7 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n, EEM_array
 }
 
 std::unique_ptr<double[]> getBVector(const ROMol &mol, unsigned int n,
-                   const EEM_arrays &EEMatoms) {
+                                     const EEM_arrays &EEMatoms) {
   /* Fill vector b i.e. -A */
   double *b = new double[n + 1];
   for (unsigned int j = 0; j < n; j++) {
@@ -199,8 +200,8 @@ EEM_arrays calculate_EEM_parameters(ROMol mol, unsigned int n) {
 /* Calculate charges for a particular kappa_data structure */
 void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
                        EEM_arrays EEMatoms, std::vector<double> &res) {
-	std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
-	std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
+  std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
+  std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
 
   MatrixXd AM = Map<MatrixXd>(A.get(), numAtoms + 1, numAtoms + 1);
   VectorXd bv = Map<VectorXd>(b.get(), numAtoms + 1);
@@ -209,14 +210,11 @@ void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
   FullPivLU<MatrixXd> lu(AM);
   Res = lu.solve(bv);
 
-  std::vector<double> charges(Res.data(), Res.data() + Res.size());
-
   for (unsigned int aix = 0; aix < numAtoms; aix++) {
-    mol.getAtomWithIdx(aix)->setProp("_EEMCharge", charges[aix], true);
+    res[aix] = Res.data()[aix];
+    mol.getAtomWithIdx(aix)->setProp("_EEMCharge", res[aix], true);
   }
-
-  res = charges;
- }
+}
 
 void getEEMs(const ROMol &mol, std::vector<double> &result,
              unsigned int numAtoms, int confId) {
