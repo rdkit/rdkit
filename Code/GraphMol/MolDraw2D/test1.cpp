@@ -139,6 +139,7 @@ void test2() {
     drawer.finishDrawing();
 
     std::string drawing = drawer.getDrawingText();
+    TEST_ASSERT(drawing.size() > 0);
     std::ofstream ofs("test2_2.png");
     ofs.write(drawing.c_str(), drawing.size());
     delete m;
