@@ -89,7 +89,7 @@ def main():
     ]):
         m = Chem.MolFromSmiles(smiles)
         fgs = identify_functional_groups(m)
-        print '%2d: %d fgs'%(ix+1, len(fgs)), fgs
+        print('%2d: %d fgs'%(ix+1, len(fgs)), fgs)
 
 
 if __name__ == "__main__":

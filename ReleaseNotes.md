@@ -31,13 +31,12 @@ In every case the old behavior can be obtained by providing an optional argument
 to the function(s) mentioned.
 
 ## Acknowledgements:
-
 Boran Adas, José Emilio Sánchez Aparicio, Patrick Avery, Jason Biggs, Brian
-Cole, Andrew Dalke, JW Feng, Peter Gedeck, Thomas Heavy, Gareth Jones, Brian
-Kelley, Karl Leswing, Susan Leung, Chris Morris, Dan Nealschneider, Noel
-O'Boyle, Axel Pahl, Pavel Polishchuk, Sereina Riniker, Jeff van Santen, Roger
-Sayle, Matt Swain, Paolo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
-'clinntt', 'hjuinj', 'iwatobipen',
+Cole, Andrew Dalke, JW Feng, Peter Gedeck, Guillaume Godin, Richard Hall, Thomas
+Heavy, Gareth Jones, Brian Kelley, Karl Leswing, Susan Leung, Chris Morris, Dan
+Nealschneider, Noel O'Boyle, Axel Pahl, Pavel Polishchuk, Sereina Riniker, Jeff
+van Santen, Roger Sayle, Matt Swain, Paolo Tosco, Sam Webb, Maciej Wójcikowski,
+Nicola Zonta, 'clinntt', 'hjuinj', 'iwatobipen',
 
 ## Highlights:
   - An initial version of an integration with Schrodinger's coordgen library is
@@ -46,6 +45,11 @@ Sayle, Matt Swain, Paolo Tosco, Sam Webb, Maciej Wójcikowski, Nicola Zonta,
     memory
   - A number of improvements were made to the PDB reader
   - v2 of the ETKDG torsions and potentials is now available
+
+## Contrib updates:
+  - Implementation of Peter Ertl's IFG method for identifying functional groups
+    from Guillaume Godin and Richard Hall
+    (github pull #1813 from thegodone)
 
 ## New Features and Enhancements:
   - Support InChi 1.05
