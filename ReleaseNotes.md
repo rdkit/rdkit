@@ -228,6 +228,8 @@ Wójcikowski, Nicola Zonta, 'clinntt', 'hjuinj', 'iwatobipen',
  (github pull #1810 from d-b-w)
   - global EmbedParameters objects should not be writeable in SWIG wrappers
  (github issue #1826 from greglandrum)
+  - RDKit crashes when MolsToGridImage function is called with an empty iterable.
+ (github issue #1829 from martin-sicho)
 
 
 # Release_2017.09.1
