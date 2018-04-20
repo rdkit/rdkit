@@ -2099,7 +2099,7 @@ void test15ContinuousHighlightingWithGrid() {
       drawer.drawOptions().continuousHighlight = true;
       drawer.drawMolecules(mols, nullptr, &atHighlights);
       drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
+      std::string text= drawer.getDrawingText();
       std::ofstream outs("test15_2.svg");
       outs << text;
       outs.flush();
@@ -2110,6 +2110,21 @@ void test15ContinuousHighlightingWithGrid() {
 
   std::cerr << " Done" << std::endl;
 }
+
+void testGithub1829() {
+  std::cerr << " ----------------- Testing github 1829: crash when drawMolecules() is called with an empty list"
+            << std::endl;
+  {
+    std::vector<ROMol *> mols;
+    MolDraw2DSVG drawer(750, 400, 250, 200);
+    // this should run quietly wihtout complaining
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+  }
+  std::cerr << " Done" << std::endl;
+}
+
 
 int main() {
 #ifdef BUILD_COORDGEN_SUPPORT
@@ -2150,4 +2165,5 @@ int main() {
   testGithub565();
   test14BWPalette();
   test15ContinuousHighlightingWithGrid();
+  testGithub1829();
 }

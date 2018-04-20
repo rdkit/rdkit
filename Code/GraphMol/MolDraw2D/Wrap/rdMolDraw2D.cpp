@@ -137,6 +137,9 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atom_radii,
                           python::object pconfIds, python::object plegends) {
   std::unique_ptr<std::vector<ROMol *>> mols = pythonObjectToVect<ROMol *>(pmols);
+  if(mols==nullptr || !mols->size() ){
+    return;
+  }
   unsigned int nThere = mols->size();
   std::unique_ptr<std::vector<std::vector<int>>> highlightAtoms;
   if (highlight_atoms) {

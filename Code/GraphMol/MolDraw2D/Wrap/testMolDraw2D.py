@@ -288,6 +288,12 @@ M  END""")
     self.assertTrue(txt.find("stroke:#00CC00")==-1)
     self.assertTrue(txt.find("stroke:#FFFF00")==-1)
 
+  def testGithub1829(self):
+    d = Draw.MolDraw2DSVG(300, 300, 100, 100)
+    d.DrawMolecules(tuple())
+    d.FinishDrawing()
+    d.GetDrawingText()
+
 
 if __name__ == "__main__":
   unittest.main()
