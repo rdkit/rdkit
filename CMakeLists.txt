@@ -44,6 +44,7 @@ option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires E
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecule interchange" ON )
+option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 if(NOT MSVC)
   if(RDK_OPTIMIZE_NATIVE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mpopcnt")
