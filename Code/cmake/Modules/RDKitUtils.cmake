@@ -39,10 +39,11 @@ macro(rdkit_library)
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
-    target_link_libraries(${RDKLIB_NAME} PUBLIC ${Boost_SYSTEM_LIBRARY} )
-    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
-            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-            COMPONENT dev )
+    if(RDK_INSTALL_DEV_COMPONENT)
+      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+              COMPONENT dev )
+    endif(RDK_INSTALL_DEV_COMPONENT)
   else(MSVC)
     # we're going to always build in shared mode since we
     # need exceptions to be (correctly) catchable across
@@ -65,9 +66,11 @@ macro(rdkit_library)
         endforeach()
         target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
         target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
-        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
-                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-                COMPONENT dev )
+        if(RDK_INSTALL_DEV_COMPONENT)
+          INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
+                  DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+                  COMPONENT dev )
+        endif(RDK_INSTALL_DEV_COMPONENT)
         set_target_properties(${RDKLIB_NAME}_static PROPERTIES
                               OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
 
@@ -99,9 +102,11 @@ macro(rdkit_headers)
       ""
       ${ARGN})
     # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
-    install(FILES ${RDKHDR_DEFAULT_ARGS}
-            DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
-            COMPONENT dev )
+    if(RDK_INSTALL_DEV_COMPONENT)
+      install(FILES ${RDKHDR_DEFAULT_ARGS}
+              DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
+              COMPONENT dev )
+    endif(RDK_INSTALL_DEV_COMPONENT)        
   endif(NOT RDK_INSTALL_INTREE)
 endmacro(rdkit_headers)
 
