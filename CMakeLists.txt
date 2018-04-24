@@ -85,7 +85,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 # Config variables:
 set(RDKit_Year "2018")
 set(RDKit_Month "03")
-set(RDKit_Revision "1.b1")
+set(RDKit_Revision "1")
+set(RDKit_RevisionModifier "")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
@@ -456,7 +457,7 @@ SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${RDKit_Year})
 SET(CPACK_PACKAGE_VERSION_MINOR ${RDKit_Month})
-SET(CPACK_PACKAGE_VERSION_PATCH ${RDKit_Revision})
+SET(CPACK_PACKAGE_VERSION_PATCH ${RDKit_Revision}${RDKit_RevisionModifier})
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
 #IF(WIN32 AND NOT UNIX)
 #  # There is a bug in NSI that does not handle full unix paths properly. Make
