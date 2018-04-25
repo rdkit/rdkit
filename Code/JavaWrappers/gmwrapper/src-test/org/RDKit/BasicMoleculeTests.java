@@ -219,6 +219,14 @@ public class BasicMoleculeTests extends GraphMolTest {
 		assertEquals(mol.getNumBonds(),1);
 		assertEquals(mol.getBondWithIdx(0).getBeginAtomIdx(),1);
 		assertEquals(mol.getBondWithIdx(0).getEndAtomIdx(),0);
+
+		// the molecule has copied the bond, so if we change it, there's
+		// no impact on the molecule itself:
+		single.setBeginAtomIdx(0);
+		single.setEndAtomIdx(1);
+		assertEquals(mol.getBondWithIdx(0).getBeginAtomIdx(),1);
+		assertEquals(mol.getBondWithIdx(0).getEndAtomIdx(),0);
+
 	}
 
 

@@ -41,6 +41,11 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
+// ignore the methods that allow the molecule to take ownership of atoms/Bonds
+// (instead of copying them). This just leads to memory problems with Java
+%ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
+%ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
+
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
 #if swifjava
