@@ -41,12 +41,6 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
-%ignore RDKit::RWMol::addAtom(Atom *atom);
-%ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel);
-%ignore RDKit::RWMol::addBond(Atom *beginAtom, Atom *endAtom, Bond::BondType order);
-%ignore RDKit::RWMol::addBond(Atom *beginAtom, Atom *endAtom);
-%ignore RDKit::RWMol::addBond(Bond *bond);
-
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
 #if swifjava
