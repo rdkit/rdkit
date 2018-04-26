@@ -1,21 +1,21 @@
-/* 
+/*
  * $Id: BasicMoleculeTests.java 131 2011-01-20 22:01:29Z ebakke $
  *
  *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
- * met: 
+ * met:
  *
- *     * Redistributions of source code must retain the above copyright 
+ *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following 
- *       disclaimer in the documentation and/or other materials provided 
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- *     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
- *       nor the names of its contributors may be used to endorse or promote 
+ *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+ *       nor the names of its contributors may be used to endorse or promote
  *       products derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 public class BasicMoleculeTests extends GraphMolTest {
-	
+
 	private ROMol mol1;
 	@Before public void setUp() {
 		String smiles="c1ccccc1";
@@ -117,7 +117,7 @@ public class BasicMoleculeTests extends GraphMolTest {
 		assertEquals(1,mv.get(0).getSecond());
 		assertEquals(1,mv.get(1).getFirst());
 		assertEquals(0,mv.get(1).getSecond());
-	}	
+	}
 	@Test public void testSubstruct4() {
 		ROMol p;
 		Match_Vect_Vect mvv;
@@ -201,8 +201,34 @@ public class BasicMoleculeTests extends GraphMolTest {
             assertEquals(failedAt,SanitizeFlags.SANITIZE_KEKULIZE.swigValue());
             ops ^= SanitizeFlags.SANITIZE_KEKULIZE.swigValue();
             failedAt=RDKFuncs.sanitizeMol(mol,ops);
-            assertEquals(failedAt,0);            
+            assertEquals(failedAt,0);
 	}
+
+	@Test public void testAddAtomsAndBonds() {
+		RWMol mol = new RWMol();
+		assertEquals(mol.getNumBonds(),0);
+		Atom carbon = new Atom(6);
+		mol.addAtom(carbon,false);
+		mol.addAtom(carbon,false);
+		assertEquals(mol.getNumAtoms(),2);
+		Bond single = new Bond(Bond.BondType.SINGLE);
+		single.setOwningMol(mol);
+		single.setBeginAtomIdx(1);
+		single.setEndAtomIdx(0);
+		mol.addBond(single);
+		assertEquals(mol.getNumBonds(),1);
+		assertEquals(mol.getBondWithIdx(0).getBeginAtomIdx(),1);
+		assertEquals(mol.getBondWithIdx(0).getEndAtomIdx(),0);
+
+		// the molecule has copied the bond, so if we change it, there's
+		// no impact on the molecule itself:
+		single.setBeginAtomIdx(0);
+		single.setEndAtomIdx(1);
+		assertEquals(mol.getBondWithIdx(0).getBeginAtomIdx(),1);
+		assertEquals(mol.getBondWithIdx(0).getEndAtomIdx(),0);
+
+	}
+
 
 /*	@Test -- the contents of this test now in UnitTestPickling, testIssue219
 	public void testConformer(){
