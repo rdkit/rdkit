@@ -89,6 +89,10 @@ set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "dev1")
 set(RDKit_ABI "1")
 
+# we need an integer version of the month later, so remove the zero padding
+# if there is any
+string(REGEX REPLACE "^0" "" RDKit_intMonth ${RDKit_Month} )
+
 set(RDKit_CodeDir "${CMAKE_CURRENT_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 

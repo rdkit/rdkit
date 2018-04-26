@@ -15,7 +15,7 @@
 #define RDKIT_VERSION_CHECK(year, month, rev) ((year*1000)+(month*10)+(rev))
 
 /* RDKIT_VERSION is (year*1000) + (month*10) + (rev) */
-#define RDKIT_VERSION RDKIT_VERSION_CHECK(@RDKit_Year@, @RDKit_Month@, @RDKit_Revision@)
+#define RDKIT_VERSION RDKIT_VERSION_CHECK(@RDKit_Year@, @RDKit_intMonth@, @RDKit_Revision@)
 
 namespace RDKit {
   extern const char * rdkitVersion;

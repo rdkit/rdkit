@@ -5,17 +5,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}")
-if (RDKit_Revision)
-  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}.${RDKit_Revision}")
-  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
-  if (RDKit_RevisionModifier)
-    set(RDKit_RELEASENAME "${RDKit_RELEASENAME}${RDKit_RevisionModifier}")
-    set(RDKit_VERSION "${RDKit_VERSION}${RDKit_RevisionModifier}")
-  endif (RDKit_RevisionModifier)
-else(RDKit_Revision)
-  set(RDKit_VERSION "${RDKit_VERSION}.0")
-endif(RDKit_Revision)
+set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}${RDKit_RevisionModifier}")
+set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier}")
 
 set(compilerID "${CMAKE_CXX_COMPILER_ID}")
 set(systemAttribute "")
@@ -86,10 +77,7 @@ macro(rdkit_library)
   if(WIN32)
     set_target_properties(${RDKLIB_NAME} PROPERTIES
                           OUTPUT_NAME "RDKit${RDKLIB_NAME}"
-                          VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}")
-  else(WIN32)
-    set_target_properties(${RDKLIB_NAME} PROPERTIES
-                          OUTPUT_NAME "RDKit${RDKLIB_NAME}"
+                          VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}"
                           VERSION ${RDKit_VERSION}
                           SOVERSION ${RDKit_ABI} )
   endif(WIN32)
