@@ -194,9 +194,7 @@ class RWMol : public ROMol {
   void clear() {
     destroy();
     d_confs.clear();
-    dp_props.reset();
-    STR_VECT computed;
-    dp_props.setVal(RDKit::detail::computedPropName, computed);
+    ROMol::initMol();  // make sure we have a "fresh" ready to go copy
     numBonds = 0;
   };
  
