@@ -32,9 +32,7 @@
 # Created by Greg Landrum, July 2007
 _version = "0.13.0"
 
-_usage = """
- CreateDb [optional arguments] <filename>
-
+_description = """
   NOTES:
 
     - the property names for the database are the union of those for
@@ -54,6 +52,8 @@ _usage = """
 
       
 """
+import argparse
+
 from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Dbase.DbConnection import DbConnect
@@ -69,85 +69,94 @@ from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory, LayeredOptions
 from rdkit.Chem.MolDb import FingerprintUtils
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
-from optparse import OptionParser
-parser = OptionParser(_usage, version='%prog ' + _version)
-parser.add_option('--outDir', '--dbDir', default='', help='name of the output directory')
-parser.add_option('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
-parser.add_option('--molIdName', default='compound_id', help='name of the database key column')
-parser.add_option('--regName', default='molecules', help='name of the molecular registry table')
-parser.add_option('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
-parser.add_option('--pairTableName', default='atompairs', help='name of the atom pairs table')
-parser.add_option('--fpDbName', default='Fingerprints.sqlt',
-                  help='name of the 2D fingerprints database')
-parser.add_option('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
-parser.add_option('--layeredTableName', default='layeredfps',
-                  help='name of the layered fingerprints table')
-parser.add_option('--descrDbName', default='Descriptors.sqlt',
-                  help='name of the descriptor database')
-parser.add_option('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
-parser.add_option('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
-                                                                   'DbCLI', 'moe_like.dsc'),
-                  help='name of the file containing the descriptor calculator')
-parser.add_option('--errFilename', default='loadErrors.txt',
-                  help='name of the file to contain information about molecules that fail to load')
-parser.add_option('--noPairs', default=True, dest='doPairs', action='store_false',
-                  help='skip calculating atom pairs')
-parser.add_option('--noFingerprints', default=True, dest='doFingerprints', action='store_false',
-                  help='skip calculating 2D fingerprints')
-parser.add_option('--noLayeredFps', default=True, dest='doLayered', action='store_false',
-                  help='skip calculating layered fingerprints')
-parser.add_option('--noDescriptors', default=True, dest='doDescriptors', action='store_false',
-                  help='skip calculating descriptors')
-parser.add_option('--noProps', default=False, dest='skipProps', action='store_true',
-                  help="don't include molecular properties in the database")
-parser.add_option('--noSmiles', default=False, dest='skipSmiles', action='store_true',
-                  help="don't include SMILES in the database (can make loading somewhat faster)")
-parser.add_option('--maxRowsCached', default=-1,
-                  help="maximum number of rows to cache before doing a database commit")
 
-parser.add_option('--silent', default=False, action='store_true',
-                  help='do not provide status messages')
+def initParser():
+  """ Initialize the command line parser """ 
+  parser = argparse.ArgumentParser(usage='CreateDB [optional arguments] <filename>',
+                                   description=_description,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
 
-parser.add_option('--molFormat', default='', choices=('smiles', 'sdf', ''),
-                  help='specify the format of the input file')
-parser.add_option(
-  '--nameProp', default='_Name',
-  help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
-parser.add_option(
-  '--missingPropertyVal', default='N/A',
-  help='value to insert in the database if a property value is missing. Default is %default.')
-parser.add_option('--addProps', default=False, action='store_true',
-                  help='add computed properties to the output')
-parser.add_option('--noExtras', default=False, action='store_true',
-                  help='skip all non-molecule databases')
-parser.add_option('--skipLoad', '--skipMols', action="store_false", dest='loadMols', default=True,
-                  help='skip the molecule loading (assumes mol db already exists)')
-parser.add_option('--updateDb', '--update', default=False, action='store_true',
-                  help='add to an existing database')
-parser.add_option('--doPharm2D', default=False, action='store_true',
-                  help='skip calculating Pharm2D fingerprints')
-parser.add_option('--pharm2DTableName', default='pharm2dfps',
-                  help='name of the Pharm2D fingerprints table')
-parser.add_option('--fdefFile', '--fdef',
-                  default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
-                  help='provide the name of the fdef file to use for 2d pharmacophores')
-parser.add_option('--doGobbi2D', default=False, action='store_true',
-                  help='skip calculating Gobbi 2D fingerprints')
-parser.add_option('--gobbi2DTableName', default='gobbi2dfps',
-                  help='name of the Gobbi 2D fingerprints table')
-
-parser.add_option('--noMorganFps', '--noCircularFps', default=True, dest='doMorganFps',
-                  action='store_false', help='skip calculating Morgan (circular) fingerprints')
-parser.add_option('--morganFpTableName', default='morganfps',
-                  help='name of the Morgan fingerprints table')
-
-parser.add_option('--delimiter', '--delim', default=' ', help='the delimiter in the input file')
-parser.add_option('--titleLine', default=False, action='store_true',
-                  help='the input file contains a title line')
-parser.add_option('--smilesColumn', '--smilesCol', default=0, type='int',
-                  help='the column index with smiles')
-parser.add_option('--nameColumn', '--nameCol', default=1, type='int',
-                  help='the column index with mol names')
+  parser.add_argument('filename', nargs='?', help='File containg molecules to load into database')
+  parser.add_argument('--version', action='version', version='%(prog)s ' + _version)
+  
+  parser.add_argument('--outDir', '--dbDir', default='', help='name of the output directory')
+  parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
+  parser.add_argument('--molIdName', default='compound_id', help='name of the database key column')
+  parser.add_argument('--regName', default='molecules', help='name of the molecular registry table')
+  parser.add_argument('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
+  parser.add_argument('--pairTableName', default='atompairs', help='name of the atom pairs table')
+  parser.add_argument('--fpDbName', default='Fingerprints.sqlt',
+                    help='name of the 2D fingerprints database')
+  parser.add_argument('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
+  parser.add_argument('--layeredTableName', default='layeredfps',
+                    help='name of the layered fingerprints table')
+  parser.add_argument('--descrDbName', default='Descriptors.sqlt',
+                    help='name of the descriptor database')
+  parser.add_argument('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
+  parser.add_argument('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
+                                                                     'DbCLI', 'moe_like.dsc'),
+                    help='name of the file containing the descriptor calculator')
+  parser.add_argument('--errFilename', default='loadErrors.txt',
+                    help='name of the file to contain information about molecules that fail to load')
+  parser.add_argument('--noPairs', default=True, dest='doPairs', action='store_false',
+                    help='skip calculating atom pairs')
+  parser.add_argument('--noFingerprints', default=True, dest='doFingerprints', action='store_false',
+                    help='skip calculating 2D fingerprints')
+  parser.add_argument('--noLayeredFps', default=True, dest='doLayered', action='store_false',
+                    help='skip calculating layered fingerprints')
+  parser.add_argument('--noDescriptors', default=True, dest='doDescriptors', action='store_false',
+                    help='skip calculating descriptors')
+  parser.add_argument('--noProps', default=False, dest='skipProps', action='store_true',
+                    help="don't include molecular properties in the database")
+  parser.add_argument('--noSmiles', default=False, dest='skipSmiles', action='store_true',
+                    help="don't include SMILES in the database (can make loading somewhat faster)")
+  parser.add_argument('--maxRowsCached', default=-1,
+                    help="maximum number of rows to cache before doing a database commit")
+  
+  parser.add_argument('--silent', default=False, action='store_true',
+                    help='do not provide status messages')
+  
+  parser.add_argument('--molFormat', default='', choices=('smiles', 'sdf', ''),
+                    help='specify the format of the input file')
+  parser.add_argument(
+    '--nameProp', default='_Name',
+    help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
+  parser.add_argument(
+    '--missingPropertyVal', default='N/A',
+    help='value to insert in the database if a property value is missing. Default is %(default)s.')
+  parser.add_argument('--addProps', default=False, action='store_true',
+                    help='add computed properties to the output')
+  parser.add_argument('--noExtras', default=False, action='store_true',
+                    help='skip all non-molecule databases')
+  parser.add_argument('--skipLoad', '--skipMols', action="store_false", dest='loadMols', default=True,
+                    help='skip the molecule loading (assumes mol db already exists)')
+  parser.add_argument('--updateDb', '--update', default=False, action='store_true',
+                    help='add to an existing database')
+  parser.add_argument('--doPharm2D', default=False, action='store_true',
+                    help='skip calculating Pharm2D fingerprints')
+  parser.add_argument('--pharm2DTableName', default='pharm2dfps',
+                    help='name of the Pharm2D fingerprints table')
+  parser.add_argument('--fdefFile', '--fdef',
+                    default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
+                    help='provide the name of the fdef file to use for 2d pharmacophores')
+  parser.add_argument('--doGobbi2D', default=False, action='store_true',
+                    help='skip calculating Gobbi 2D fingerprints')
+  parser.add_argument('--gobbi2DTableName', default='gobbi2dfps',
+                    help='name of the Gobbi 2D fingerprints table')
+  
+  parser.add_argument('--noMorganFps', '--noCircularFps', default=True, dest='doMorganFps',
+                    action='store_false', help='skip calculating Morgan (circular) fingerprints')
+  parser.add_argument('--morganFpTableName', default='morganfps',
+                    help='name of the Morgan fingerprints table')
+  
+  parser.add_argument('--delimiter', '--delim', default=' ', help='the delimiter in the input file')
+  parser.add_argument('--titleLine', default=False, action='store_true',
+                    help='the input file contains a title line')
+  parser.add_argument('--smilesColumn', '--smilesCol', default=0, type=int,
+                    help='the column index with smiles')
+  parser.add_argument('--nameColumn', '--nameCol', default=1, type=int,
+                    help='the column index with mol names')
+  return parser
 
 
 def CreateDb(options, dataFilename='', supplier=None):
@@ -431,11 +440,12 @@ def CreateDb(options, dataFilename='', supplier=None):
 
 
 if __name__ == '__main__':
-  options, args = parser.parse_args()
+  parser = initParser()
+  options = parser.parse_args()
   if options.loadMols:
-    if len(args) != 1:
+    if options.filename is None:
       parser.error('please provide a filename argument')
-    dataFilename = args[0]
+    dataFilename = options.filename
     try:
       dataFile = open(dataFilename, 'r')
     except IOError:

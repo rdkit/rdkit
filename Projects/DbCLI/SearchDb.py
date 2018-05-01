@@ -33,9 +33,7 @@
 #
 from __future__ import print_function
 _version = "0.14.0"
-_usage = """
- SearchDb [optional arguments] <sdfilename>
-
+_description = """
      The sd filename argument can be either an SD file or an MDL mol 
      file.
      
@@ -50,6 +48,10 @@ _usage = """
     - Property names are not case sensitive in the database.
 
  """
+import os
+import argparse
+import sys, time
+
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 
@@ -124,8 +126,8 @@ def GetMolsFromSmilesFile(dataFilename, errFile, nameProp):
       continue
     m = Chem.MolFromSmiles(smi)
     if not m:
-      if errfile:
-        print(idx, nm, smi, file=errfile)
+      if errFile:
+        print(idx, nm, smi, file=errFile)
       continue
     yield (nm, smi, m)
 
@@ -509,116 +511,121 @@ def RunSearch(options, queryFilename):
     logger.info('Done!')
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----
-import os
-from optparse import OptionParser
-parser = OptionParser(_usage, version='%prog ' + _version)
-parser.add_option(
-  '--dbDir', default='/db/camm/CURRENT/rdk_db',
-  help='name of the directory containing the database information. The default is %default')
-parser.add_option('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
-parser.add_option('--molIdName', default='compound_id', help='name of the database key column')
-parser.add_option('--regName', default='molecules', help='name of the molecular registry table')
-parser.add_option('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
-parser.add_option('--pairTableName', default='atompairs', help='name of the atom pairs table')
-parser.add_option('--pairColName', default='atompairfp', help='name of the atom pair column')
-parser.add_option(
-  '--torsionsDbName', default='AtomPairs.sqlt',
-  help='name of the topological torsions database (usually the same as the atom pairs database)')
-parser.add_option(
-  '--torsionsTableName', default='atompairs',
-  help='name of the topological torsions table (usually the same as the atom pairs table)')
-parser.add_option('--torsionsColName', default='torsionfp', help='name of the atom pair column')
-parser.add_option('--fpDbName', default='Fingerprints.sqlt',
-                  help='name of the 2D fingerprints database')
-parser.add_option('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
-parser.add_option('--layeredTableName', default='layeredfps',
-                  help='name of the layered fingerprints table')
-parser.add_option('--fpColName', default='',
-                  help='name of the 2D fingerprint column, a sensible default is used')
-parser.add_option('--descrDbName', default='Descriptors.sqlt',
-                  help='name of the descriptor database')
-parser.add_option('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
-parser.add_option('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
-                                                                   'DbCLI', 'moe_like.dsc'),
-                  help='name of the file containing the descriptor calculator')
-parser.add_option('--outputDelim', default=',',
-                  help='the delimiter for the output file. The default is %default')
-parser.add_option(
-  '--topN', default=20, type='int',
-  help='the number of neighbors to keep for each query compound. The default is %default')
 
-parser.add_option('--outF', '--outFile', default='-',
-                  help='The name of the output file. The default is the console (stdout).')
+def initParser():
+  """ Initialize the command line parser """ 
+  parser = argparse.ArgumentParser(usage='SearchDB [optional arguments] <sdffilename>',
+                                   description=_description,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
+  
+  parser.add_argument('filename', nargs='?', help='File containg molecules for searching')
+  parser.add_argument('--version', action='version', version='%(prog)s ' + _version)
 
-parser.add_option(
-  '--transpose', default=False, action="store_true",
-  help='print the results out in a transposed form: e.g. neighbors in rows and probe compounds in columns')
-
-parser.add_option('--molFormat', default='sdf', choices=('smiles', 'sdf'),
-                  help='specify the format of the input file')
-parser.add_option(
-  '--nameProp', default='_Name',
-  help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
-
-parser.add_option('--smartsQuery', '--smarts', '--sma', default='',
-                  help='provide a SMARTS to be used as a substructure query')
-parser.add_option('--smilesQuery', '--smiles', '--smi', default='',
-                  help='provide a SMILES to be used as a substructure query')
-parser.add_option('--negateQuery', '--negate', default=False, action='store_true',
-                  help='negate the results of the smarts query.')
-parser.add_option('--propQuery', '--query', '-q', default='',
-                  help='provide a property query (see the NOTE about property names)')
-
-parser.add_option('--sdfOut', '--sdOut', default='',
-                  help='export an SD file with the matching molecules')
-parser.add_option('--smilesOut', '--smiOut', default='',
-                  help='export a smiles file with the matching molecules')
-parser.add_option('--nonchiralSmiles', dest='chiralSmiles', default=True, action='store_false',
-                  help='do not use chiral SMILES in the output')
-parser.add_option('--silent', default=False, action='store_true',
-                  help='Do not generate status messages.')
-
-parser.add_option('--zipMols', '--zip', default=False, action='store_true',
-                  help='read compressed mols from the database')
-
-parser.add_option('--pharm2DTableName', default='pharm2dfps',
-                  help='name of the Pharm2D fingerprints table')
-parser.add_option('--fdefFile', '--fdef',
-                  default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
-                  help='provide the name of the fdef file to use for 2d pharmacophores')
-parser.add_option('--gobbi2DTableName', default='gobbi2dfps',
-                  help='name of the Gobbi2D fingerprints table')
-
-parser.add_option(
-  '--similarityType', '--simType', '--sim', default='RDK', choices=supportedSimilarityMethods,
-  help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Avalon, Morgan. The default is %default')
-parser.add_option('--morganFpDbName', default='Fingerprints.sqlt',
-                  help='name of the morgan fingerprints database')
-parser.add_option('--morganFpTableName', default='morganfps',
-                  help='name of the morgan fingerprints table')
-parser.add_option('--morganFpColName', default='morganfp',
-                  help='name of the morgan fingerprint column')
-
-parser.add_option(
-  '--similarityMetric', '--simMetric', '--metric', default='',
-  choices=('tanimoto', 'dice', 'tversky', ''),
-  help='Choose the type of similarity to use, possible values: tanimoto, dice, tversky. The default is determined by the fingerprint type')
-parser.add_option('--tverskyA', default=0.5, type='float', help='Tversky A value')
-parser.add_option('--tverskyB', default=0.5, type='float', help='Tversky B value')
-parser.add_option(
-  '--simThresh', default=-1, type='float',
-  help='threshold to use for similarity searching. If provided, this supersedes the topN argument')
+  parser.add_argument('--dbDir', default='',
+    help='name of the directory containing the database information. The default is the current directory')
+  parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
+  parser.add_argument('--molIdName', default='compound_id', help='name of the database key column')
+  parser.add_argument('--regName', default='molecules', help='name of the molecular registry table')
+  parser.add_argument('--pairDbName', default='AtomPairs.sqlt', help='name of the atom pairs database')
+  parser.add_argument('--pairTableName', default='atompairs', help='name of the atom pairs table')
+  parser.add_argument('--pairColName', default='atompairfp', help='name of the atom pair column')
+  parser.add_argument(
+    '--torsionsDbName', default='AtomPairs.sqlt',
+    help='name of the topological torsions database (usually the same as the atom pairs database)')
+  parser.add_argument(
+    '--torsionsTableName', default='atompairs',
+    help='name of the topological torsions table (usually the same as the atom pairs table)')
+  parser.add_argument('--torsionsColName', default='torsionfp', help='name of the atom pair column')
+  parser.add_argument('--fpDbName', default='Fingerprints.sqlt',
+                    help='name of the 2D fingerprints database')
+  parser.add_argument('--fpTableName', default='rdkitfps', help='name of the 2D fingerprints table')
+  parser.add_argument('--layeredTableName', default='layeredfps',
+                    help='name of the layered fingerprints table')
+  parser.add_argument('--fpColName', default='',
+                    help='name of the 2D fingerprint column, a sensible default is used')
+  parser.add_argument('--descrDbName', default='Descriptors.sqlt',
+                    help='name of the descriptor database')
+  parser.add_argument('--descrTableName', default='descriptors_v1', help='name of the descriptor table')
+  parser.add_argument('--descriptorCalcFilename', default=os.path.join(RDConfig.RDBaseDir, 'Projects',
+                                                                     'DbCLI', 'moe_like.dsc'),
+                    help='name of the file containing the descriptor calculator')
+  parser.add_argument('--outputDelim', default=',',
+                    help='the delimiter for the output file. The default is %(default)s')
+  parser.add_argument(
+    '--topN', default=20, type=int,
+    help='the number of neighbors to keep for each query compound. The default is %(default)s')
+  
+  parser.add_argument('--outF', '--outFile', default='-',
+                    help='The name of the output file. The default is the console (stdout).')
+  
+  parser.add_argument(
+    '--transpose', default=False, action="store_true",
+    help='print the results out in a transposed form: e.g. neighbors in rows and probe compounds in columns')
+  
+  parser.add_argument('--molFormat', default='sdf', choices=('smiles', 'sdf'),
+                    help='specify the format of the input file')
+  parser.add_argument(
+    '--nameProp', default='_Name',
+    help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
+  
+  parser.add_argument('--smartsQuery', '--smarts', '--sma', default='',
+                    help='provide a SMARTS to be used as a substructure query')
+  parser.add_argument('--smilesQuery', '--smiles', '--smi', default='',
+                    help='provide a SMILES to be used as a substructure query')
+  parser.add_argument('--negateQuery', '--negate', default=False, action='store_true',
+                    help='negate the results of the smarts query.')
+  parser.add_argument('--propQuery', '--query', '-q', default='',
+                    help='provide a property query (see the NOTE about property names)')
+  
+  parser.add_argument('--sdfOut', '--sdOut', default='',
+                    help='export an SD file with the matching molecules')
+  parser.add_argument('--smilesOut', '--smiOut', default='',
+                    help='export a smiles file with the matching molecules')
+  parser.add_argument('--nonchiralSmiles', dest='chiralSmiles', default=True, action='store_false',
+                    help='do not use chiral SMILES in the output')
+  parser.add_argument('--silent', default=False, action='store_true',
+                    help='Do not generate status messages.')
+  
+  parser.add_argument('--zipMols', '--zip', default=False, action='store_true',
+                    help='read compressed mols from the database')
+  
+  parser.add_argument('--pharm2DTableName', default='pharm2dfps',
+                    help='name of the Pharm2D fingerprints table')
+  parser.add_argument('--fdefFile', '--fdef',
+                    default=os.path.join(RDConfig.RDDataDir, 'Novartis1.fdef'),
+                    help='provide the name of the fdef file to use for 2d pharmacophores')
+  parser.add_argument('--gobbi2DTableName', default='gobbi2dfps',
+                    help='name of the Gobbi2D fingerprints table')
+  
+  parser.add_argument(
+    '--similarityType', '--simType', '--sim', default='RDK', choices=supportedSimilarityMethods,
+    help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Avalon, Morgan. The default is %(default)s')
+  parser.add_argument('--morganFpDbName', default='Fingerprints.sqlt',
+                    help='name of the morgan fingerprints database')
+  parser.add_argument('--morganFpTableName', default='morganfps',
+                    help='name of the morgan fingerprints table')
+  parser.add_argument('--morganFpColName', default='morganfp',
+                    help='name of the morgan fingerprint column')
+  
+  parser.add_argument(
+    '--similarityMetric', '--simMetric', '--metric', default='',
+    choices=('tanimoto', 'dice', 'tversky', ''),
+    help='Choose the type of similarity to use, possible values: tanimoto, dice, tversky. The default is determined by the fingerprint type')
+  parser.add_argument('--tverskyA', default=0.5, type=float, help='Tversky A value')
+  parser.add_argument('--tverskyB', default=0.5, type=float, help='Tversky B value')
+  parser.add_argument(
+    '--simThresh', default=-1, type=float,
+    help='threshold to use for similarity searching. If provided, this supersedes the topN argument')
+  return parser
 
 if __name__ == '__main__':
-  import sys, getopt, time
 
-  options, args = parser.parse_args()
-  if len(args) != 1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
+  parser = initParser()
+  options = parser.parse_args()
+  
+  if options.filename is None and not (options.smilesQuery or options.smartsQuery or options.propQuery):
     parser.error('please either provide a query filename argument or do a data or smarts query')
 
-  if len(args):
-    queryFilename = args[0]
-  else:
-    queryFilename = None
+  queryFilename = options.filename
   options.queryMol = None
   RunSearch(options, queryFilename)
