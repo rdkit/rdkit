@@ -68,7 +68,10 @@ struct coordgen_wrapper {
                        "for debugging use")
         .def_readwrite("templateFileDir",
                        &CoordGen::CoordGenParams::templateFileDir,
-                       "directory containing the templates.mae file");
+                       "directory containing the templates.mae file")
+        .def_readwrite("minimizerPrecision",
+                       &CoordGen::CoordGenParams::minimizerPrecision,
+                       "controls sketcher precision");
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
     docString =
         "Add 2D coordinates.\n"

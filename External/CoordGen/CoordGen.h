@@ -26,8 +26,10 @@ struct CoordGenParams {
   // returned coordinates with a single bond
   // length of 50.
   std::string templateFileDir = "";
-  bool dbg_useConstrained = true;  // debugging
-  bool dbg_useFixed = false;       // debugging
+  float minimizerPrecision =
+      SKETCHER_STANDARD_PRECISION;  // controls sketch precision
+  bool dbg_useConstrained = true;   // debugging
+  bool dbg_useFixed = false;        // debugging
 };
 
 static CoordGenParams defaultParams;
@@ -53,7 +55,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
   double scaleFactor = params->coordgenScaling;
 
-  sketcherMinimizer minimizer;
+  sketcherMinimizer minimizer(params->minimizerPrecision);
   auto min_mol = new sketcherMinimizerMolecule();
 
   // FIX: only do this check once.
