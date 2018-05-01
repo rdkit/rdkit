@@ -126,8 +126,8 @@ def GetMolsFromSmilesFile(dataFilename, errFile, nameProp):
       continue
     m = Chem.MolFromSmiles(smi)
     if not m:
-      if errfile:
-        print(idx, nm, smi, file=errfile)
+      if errFile:
+        print(idx, nm, smi, file=errFile)
       continue
     yield (nm, smi, m)
 
@@ -521,9 +521,8 @@ def initParser():
   parser.add_argument('filename', nargs='?', help='File containg molecules for searching')
   parser.add_argument('--version', action='version', version='%(prog)s ' + _version)
 
-  parser.add_argument(
-    '--dbDir', default='/db/camm/CURRENT/rdk_db',
-    help='name of the directory containing the database information. The default is %(default)s')
+  parser.add_argument('--dbDir', default='',
+    help='name of the directory containing the database information. The default is the current directory')
   parser.add_argument('--molDbName', default='Compounds.sqlt', help='name of the molecule database')
   parser.add_argument('--molIdName', default='compound_id', help='name of the database key column')
   parser.add_argument('--regName', default='molecules', help='name of the molecular registry table')
