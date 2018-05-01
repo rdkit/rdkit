@@ -106,27 +106,6 @@ PyObject *GetMolConformers(ROMol &mol) {
   return res;
 }
 
-int MolHasProp(const ROMol &mol, const char *key) {
-  int res = mol.hasProp(key);
-  // std::cout << "key: "  << key << ": " << res << std::endl;
-  return res;
-}
-
-template <class T>
-void MolSetProp(const ROMol &mol, const char *key, const T &val,
-                bool computed = false) {
-  mol.setProp<T>(key, val, computed);
-}
-
-void MolClearProp(const ROMol &mol, const char *key) {
-  if (!mol.hasProp(key)) {
-    return;
-  }
-  mol.clearProp(key);
-}
-
-void MolClearComputedProps(const ROMol &mol) { mol.clearComputedProps(); }
-
 void MolDebug(const ROMol &mol, bool useStdout) {
   if (useStdout) {
     mol.debugMol(std::cout);
@@ -459,7 +438,7 @@ struct mol_wrapper {
               python::arg("maxMatches") = 1000))
 
         // properties
-        .def("SetProp", MolSetProp<std::string>,
+        .def("SetProp", MolSetProp<ROMol, std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets a molecular property\n\n"
@@ -469,7 +448,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to False.\n\n")
-        .def("SetDoubleProp", MolSetProp<double>,
+        .def("SetDoubleProp", MolSetProp<ROMol, double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets a double valued molecular property\n\n"
@@ -479,7 +458,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to 0.\n\n")
-        .def("SetIntProp", MolSetProp<int>,
+        .def("SetIntProp", MolSetProp<ROMol, int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets an integer valued molecular property\n\n"
@@ -490,7 +469,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to False.\n\n")
-        .def("SetUnsignedProp", MolSetProp<unsigned int>,
+        .def("SetUnsignedProp", MolSetProp<ROMol, unsigned int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets an unsigned integer valued molecular property\n\n"
@@ -500,7 +479,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to False.\n\n")
-        .def("SetBoolProp", MolSetProp<bool>,
+        .def("SetBoolProp", MolSetProp<ROMol, bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "Sets a boolean valued molecular property\n\n"
@@ -510,7 +489,7 @@ struct mol_wrapper {
              "    - computed: (optional) marks the property as being "
              "computed.\n"
              "                Defaults to False.\n\n")
-        .def("HasProp", MolHasProp,
+        .def("HasProp", MolHasProp<ROMol>,
              "Queries a molecule to see if a particular property has been "
              "assigned.\n\n"
              "  ARGUMENTS:\n"
@@ -555,12 +534,12 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
-        .def("ClearProp", MolClearProp,
+        .def("ClearProp", MolClearProp<ROMol>,
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
 
-        .def("ClearComputedProps", MolClearComputedProps,
+        .def("ClearComputedProps", MolClearComputedProps<ROMol>,
              "Removes all computed properties from the molecule.\n\n")
 
         .def("UpdatePropertyCache", &ROMol::updatePropertyCache,
