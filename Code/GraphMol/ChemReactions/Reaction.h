@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef __RD_REACTION_H_17Aug2006__
-#define __RD_REACTION_H_17Aug2006__
+#ifndef RD_REACTION_H_17Aug2006
+#define RD_REACTION_H_17Aug2006
 
 #include <GraphMol/RDKitBase.h>
+#include <RDGeneral/RDProps.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <vector>
 
@@ -113,29 +114,31 @@ class ChemicalReactionException : public std::exception {
        \endverbatim
 
 */
-class ChemicalReaction {
+class ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
  public:
-  ChemicalReaction() : df_needsInit(true), df_implicitProperties(false){};
-  ChemicalReaction(const ChemicalReaction &other) {
+  ChemicalReaction()
+      : RDProps(), df_needsInit(true), df_implicitProperties(false){};
+  ChemicalReaction(const ChemicalReaction &other) : RDProps() {
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
     for (MOL_SPTR_VECT::const_iterator iter = other.beginReactantTemplates();
-             iter != other.endReactantTemplates(); ++iter) {
+         iter != other.endReactantTemplates(); ++iter) {
       ROMol *reactant = new ROMol(**iter);
       m_reactantTemplates.push_back(ROMOL_SPTR(reactant));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginProductTemplates();
-             iter != other.endProductTemplates(); ++iter) {
+         iter != other.endProductTemplates(); ++iter) {
       ROMol *product = new ROMol(**iter);
       m_productTemplates.push_back(ROMOL_SPTR(product));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginAgentTemplates();
-           iter != other.endAgentTemplates(); ++iter) {
+         iter != other.endAgentTemplates(); ++iter) {
       ROMol *agent = new ROMol(**iter);
       m_agentTemplates.push_back(ROMOL_SPTR(agent));
     }
+    dp_props = other.dp_props;
   }
   //! construct a reaction from a pickle string
   ChemicalReaction(const std::string &binStr);
@@ -426,8 +429,8 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
 void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
-    std::vector<std::vector<std::pair<unsigned int, std::string> > > *
-        reactantLabels = NULL);
+    std::vector<std::vector<std::pair<unsigned int, std::string>>>
+        *reactantLabels = NULL);
 
 }  // end of RDKit namespace
 
