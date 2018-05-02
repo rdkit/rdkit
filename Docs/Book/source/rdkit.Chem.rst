@@ -36,6 +36,276 @@ rdkit.Chem.rdchem module
     :show-inheritance:
 
 
+rdkit.Chem.rdDistGeom module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdDistGeom
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdqueries module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdqueries
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdFMCS module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdFMCS
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolAlign module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolAlign
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolHash module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolHash
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdReducedGraphs module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdReducedGraphs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdtrajectory module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdtrajectory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolTransforms module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolTransforms
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdmolfiles module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdmolfiles
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdPartialCharges module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdPartialCharges
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolCatalog module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolCatalog
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdCoordGen module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdCoordGen
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolChemicalFeatures module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolChemicalFeatures
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMMPA module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMMPA
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdRGroupDecomposition module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdRGroupDecomposition
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdForceFieldHelpers module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdForceFieldHelpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdDepictor module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdDepictor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdChemicalFeatures module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdChemicalFeatures
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdmolops module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdmolops
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdFreeSASA module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdFreeSASA
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolInterchange module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolInterchange
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdShapeHelpers module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdShapeHelpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdinchi module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdinchi
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdChemReactions module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdChemReactions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdSubstructLibrary module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdSubstructLibrary
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdfiltercatalog module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdfiltercatalog
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdfragcatalog module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdfragcatalog
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdStructChecker module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdStructChecker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdMolDescriptors module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdMolDescriptors
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+rdkit.Chem.rdSLNParse module
+-------------------------
+
+.. automodule:: rdkit.Chem.rdSLNParse
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 rdkit.Chem.AllChem module
 -------------------------
 

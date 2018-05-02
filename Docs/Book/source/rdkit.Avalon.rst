@@ -8,3 +8,11 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+
+rdkit.Avalon.pyAvalonTools module
+-------------------------
+
+.. automodule:: rdkit.Avalon.pyAvalonTools
+    :members:
+    :undoc-members:
+    :show-inheritance:
