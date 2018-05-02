@@ -24,7 +24,7 @@ Reading and Writing Molecules
 Reading single molecules
 ========================
 
-The majority of the basic molecular functionality is found in module :api:`rdkit.Chem`:
+The majority of the basic molecular functionality is found in module :py:mod:`rdkit.Chem`:
 
 >>> from __future__ import print_function
 >>> from rdkit import Chem
@@ -36,7 +36,7 @@ Individual molecules can be constructed using a variety of approaches:
 >>> stringWithMolData=open('data/input.mol','r').read()
 >>> m = Chem.MolFromMolBlock(stringWithMolData)
 
-All of these functions return a :api:`rdkit.Chem.rdchem.Mol` object on success:
+All of these functions return a :py:class:`rdkit.Chem.rdchem.Mol` object on success:
 
 >>> m
 <rdkit.Chem.rdchem.Mol object at 0x...>
@@ -66,7 +66,7 @@ True
 Reading sets of molecules
 =========================
 
-Groups of molecules are read using a Supplier (for example, an :api:`rdkit.Chem.rdmolfiles.SDMolSupplier` or a :api:`rdkit.Chem.rdmolfiles.SmilesMolSupplier`):
+Groups of molecules are read using a Supplier (for example, an :py:class:`rdkit.Chem.rdmolfiles.SDMolSupplier` or a :py:class:`rdkit.Chem.rdmolfiles.SmilesMolSupplier`):
 
 >>> suppl = Chem.SDMolSupplier('data/5ht3ligs.sdf')
 >>> for mol in suppl:
@@ -100,7 +100,7 @@ A good practice is to test each molecule to see if it was correctly read before 
 24
 26
 
-An alternate type of Supplier, the :api:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` can be used to read from file-like objects:
+An alternate type of Supplier, the :py:class:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` can be used to read from file-like objects:
 
 >>> inf = open('data/5ht3ligs.sdf','rb')
 >>> fsuppl = Chem.ForwardSDMolSupplier(inf)
@@ -133,7 +133,7 @@ TypeError: 'ForwardSDMolSupplier' object does not support indexing
 Writing molecules
 =================
 
-Single molecules can be converted to text using several functions present in the :api:`rdkit.Chem` module.
+Single molecules can be converted to text using several functions present in the :py:mod:`rdkit.Chem` module.
 
 For example, for SMILES:
 
@@ -206,7 +206,7 @@ Generating a mol block for a molecule that does not have coordinates will, by
 default, automatically cause coordinates to be generated. These are not,
 however, stored with the molecule.
 Coordinates can be generated and stored with the molecule using functionality
-in the :api:`rdkit.Chem.AllChem` module (see the `Chem vs AllChem`_ section for
+in the :py:mod:`rdkit.Chem.AllChem` module (see the `Chem vs AllChem`_ section for
 more information).
 
 You can either include 2D coordinates (i.e. a depiction):
@@ -286,7 +286,7 @@ If you'd like to write the molecules to a file, use Python file objects:
 Writing sets of molecules
 =========================
 
-Multiple molecules can be written to a file using an :api:`rdkit.Chem.rdmolfiles.SDWriter` object:
+Multiple molecules can be written to a file using an :py:class:`rdkit.Chem.rdmolfiles.SDWriter` object:
 
 >>> w = Chem.SDWriter('data/foo.sdf')
 >>> for m in mols: w.write(m)
@@ -318,7 +318,7 @@ $$$$
 
 
 
-Other available Writers include the :api:`rdkit.Chem.rdmolfiles.SmilesWriter` and the :api:`rdkit.Chem.rdmolfiles.TDTWriter`.
+Other available Writers include the :py:class:`rdkit.Chem.rdmolfiles.SmilesWriter` and the :py:class:`rdkit.Chem.rdmolfiles.TDTWriter`.
 
 
 Working with Molecules
@@ -406,7 +406,7 @@ As the name indicates, this is a symmetrized SSSR; if you are interested in the 
 
 The distinction between symmetrized and non-symmetrized SSSR is discussed in more detail below in the section `The SSSR Problem`_.
 
-For more efficient queries about a molecule's ring systems (avoiding repeated calls to Mol.GetAtomWithIdx), use the :api:`rdkit.Chem.rdchem.RingInfo` class:
+For more efficient queries about a molecule's ring systems (avoiding repeated calls to Mol.GetAtomWithIdx), use the :py:class:`rdkit.Chem.rdchem.RingInfo` class:
 
 >>> m = Chem.MolFromSmiles('OC1C2C1CC2')
 >>> ri = m.GetRingInfo()
@@ -425,7 +425,7 @@ Modifying molecules
 ===================
 
 Normally molecules are stored in the RDKit with the hydrogen atoms implicit (e.g. not explicitly present in the molecular graph.
-When it is useful to have the hydrogens explicitly present, for example when generating or optimizing the 3D geometry, the :api:`rdkit.Chem.rdmolops.AddHs` function can be used:
+When it is useful to have the hydrogens explicitly present, for example when generating or optimizing the 3D geometry, the :py:func:rdkit.Chem.rdmolops.AddHs function can be used:
 
 >>> m=Chem.MolFromSmiles('CCO')
 >>> m.GetNumAtoms()
@@ -434,14 +434,14 @@ When it is useful to have the hydrogens explicitly present, for example when gen
 >>> m2.GetNumAtoms()
 9
 
-The Hs can be removed again using the :api:`rdkit.Chem.rdmolops.RemoveHs` function:
+The Hs can be removed again using the :py:func:`rdkit.Chem.rdmolops.RemoveHs` function:
 
 >>> m3 = Chem.RemoveHs(m2)
 >>> m3.GetNumAtoms()
 3
 
 RDKit molecules are usually stored with the bonds in aromatic rings having aromatic bond types.
-This can be changed with the :api:`rdkit.Chem.rdmolops.Kekulize` function:
+This can be changed with the :py:func:`rdkit.Chem.rdmolops.Kekulize` function:
 
 >>> m = Chem.MolFromSmiles('c1ccccc1')
 >>> m.GetBondWithIdx(0).GetBondType()
@@ -468,7 +468,7 @@ True
 >>> m1.GetBondWithIdx(0).GetIsAromatic()
 False
 
-Bonds can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
+Bonds can be restored to the aromatic bond type using the :py:func:`rdkit.Chem.rdmolops.SanitizeMol` function:
 
 >>> Chem.SanitizeMol(m)
 rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
@@ -481,7 +481,7 @@ Working with 2D molecules: Generating Depictions
 ================================================
 
 The RDKit has a library for generating depictions (sets of 2D) coordinates for molecules.
-This library, which is part of the AllChem module, is accessed using the :api:`rdkit.Chem.rdDepictor.Compute2DCoords` function:
+This library, which is part of the AllChem module, is accessed using the :py:func:`rdkit.Chem.rdDepictor.Compute2DCoords` function:
 
 >>> m = Chem.MolFromSmiles('c1nccc2n1ccc2')
 >>> AllChem.Compute2DCoords(m)
@@ -507,7 +507,7 @@ following depictions:
 +---------------+---------------+---------------+
 
 Another option for Compute2DCoords allows you to generate 2D depictions for molecules that closely mimic 3D conformations.
-This is available using the function :api:`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure`.
+This is available using the function :py:func:`rdkit.Chem.AllChem.GenerateDepictionMatching3DStructure`.
 
 Here is an illustration of the results using the ligand from PDB structure 1XP0:
 
@@ -516,7 +516,7 @@ Here is an illustration of the results using the ligand from PDB structure 1XP0:
 +---------------+---------------+
 
 More fine-grained control can be obtained using the core function
-:api:`rdkit.Chem.rdDepictor.Compute2DCoordsMimicDistmat`, but that is
+:py:func:`rdkit.Chem.rdDepictor.Compute2DCoordsMimicDistmat`, but that is
 beyond the scope of this document.  See the implementation of
 GenerateDepictionMatching3DStructure in AllChem.py for an example of
 how it is used.
@@ -671,7 +671,7 @@ Drawing Molecules
 =================
 
 The RDKit has some built-in functionality for creating images from
-molecules found in the :api:`rdkit.Chem.Draw` package:
+molecules found in the :py:mod:`rdkit.Chem.Draw` package:
 
 >>> suppl = Chem.SDMolSupplier('data/cdk2.sdf')
 >>> ms = [x for x in suppl if x is not None]
@@ -898,8 +898,8 @@ They can also be labeled according by the number of that core-atom they're attac
 >>> Chem.MolToSmiles(tmp)
 '[1*]CCO.[5*]C(=O)O'
 
-:api:`rdkit.Chem.rdmolops.ReplaceCore` returns the sidechains in a single molecule.
-This can be split into separate molecules using :api:`rdkit.Chem.rdmolops.GetMolFrags` :
+:py:func:`rdkit.Chem.rdmolops.ReplaceCore` returns the sidechains in a single molecule.
+This can be split into separate molecules using :py:func:`rdkit.Chem.rdmolops.GetMolFrags` :
 
 >>> rs = Chem.GetMolFrags(tmp,asMols=True)
 >>> len(rs)
@@ -1080,14 +1080,14 @@ The default set of parameters used by the fingerprinter is:
 - target on-bit density 0.3
 
 You can control these by calling
-:api:`rdkit.Chem.rdmolops.RDKFingerprint` directly; this will return
+:py:func:`rdkit.Chem.rdmolops.RDKFingerprint` directly; this will return
 an unfolded fingerprint that you can then fold to the desired density.
 The function
-:api:`rdkit.Chem.Fingerprints.FingerprintMols.FingerprintMol` (written
+:py:func:`rdkit.Chem.Fingerprints.FingerprintMols.FingerprintMol` (written
 in python) shows how this is done.
 
 The default similarity metric used by
-:api:`rdkit.DataStructs.FingerprintSimilarity` is the Tanimoto
+:py:func:`rdkit.DataStructs.FingerprintSimilarity` is the Tanimoto
 similarity.  One can use different similarity metrics:
 
 >>> DataStructs.FingerprintSimilarity(fps[0],fps[1], metric=DataStructs.DiceSimilarity)
@@ -1155,7 +1155,7 @@ bit vector fingerprint (ignoring the count information):
 
 >>> pairFps = [Pairs.GetAtomPairFingerprintAsBitVect(x) for x in ms]
 
-Since these are standard bit vectors, the :api:`rdkit.DataStructs`
+Since these are standard bit vectors, the :py:mod:`rdkit.DataStructs`
 module can be used for similarity:
 
 >>> from rdkit import DataStructs
@@ -1233,7 +1233,7 @@ radius=2, are roughly equivalent to ECFP4 and FCFP4.
 
 The user can also provide their own atom invariants using the optional
 invariants argument to
-:api:`rdkit.Chem.rdMolDescriptors.GetMorganFingerprint`.  Here's a
+:py:func:`rdkit.Chem.rdMolDescriptors.GetMorganFingerprint`.  Here's a
 simple example that uses a constant for the invariant; the resulting
 fingerprints compare the topology of molecules:
 
@@ -1309,7 +1309,7 @@ This is more useful when the SMILES is rooted at the central atom:
 'c(nc)(C)cc'
 
 An alternate (and faster, particularly for large numbers of molecules)
-approach to do the same thing, using the function :api:`rdkit.Chem.MolFragmentToSmiles` :
+approach to do the same thing, using the function :py:func:`rdkit.Chem.MolFragmentToSmiles` :
 
 >>> atoms=set()
 >>> for bidx in env:
@@ -1325,7 +1325,7 @@ Picking Diverse Molecules Using Fingerprints
 
 A common task is to pick a small subset of diverse molecules from a
 larger set.  The RDKit provides a number of approaches for doing this
-in the :api:`rdkit.SimDivFilters` module.  The most efficient of these uses the
+in the :py:mod:`rdkit.SimDivFilters` module.  The most efficient of these uses the
 MaxMin algorithm. [#ashton]_ Here's an example:
 
 Start by reading in a set of molecules and generating Morgan fingerprints:
@@ -1364,7 +1364,7 @@ Generating Similarity Maps Using Fingerprints
 Similarity maps are a way to visualize the atomic contributions to
 the similarity between a molecule and a reference molecule. The
 methodology is described in Ref. [#riniker]_ .
-They are in the :api:`rdkit.Chem.Draw.SimilarityMaps` module :
+They are in the :py:mod:`rdkit.Chem.Draw.SimilarityMaps` module :
 
 Start by creating two molecules:
 
@@ -1431,7 +1431,7 @@ A variety of descriptors are available within the RDKit.
 The complete list is provided in `List of Available Descriptors`_.
 
 Most of the descriptors are straightforward to use from Python via the
-centralized :api:`rdkit.Chem.Descriptors` module :
+centralized :py:mod:`rdkit.Chem.Descriptors` module :
 
 >>> from rdkit.Chem import Descriptors
 >>> m = Chem.MolFromSmiles('c1ccccc1C(=O)O')
@@ -1612,7 +1612,7 @@ chemical transformations mimicking common reactions carried out in the
 lab in order to decompose a molecule into a series of reasonable
 fragments.
 
-The RDKit :api:`rdkit.Chem.Recap` implementation keeps track of the hierarchy of
+The RDKit :py:mod:`rdkit.Chem.Recap` implementation keeps track of the hierarchy of
 transformations that were applied:
 
 >>> from rdkit import Chem
@@ -1849,7 +1849,7 @@ required to generate the pharmacophore:
 
 The signature factory is now ready to be used to generate
 fingerprints, a task which is done using the
-:api:`rdkit.Chem.Pharm2D.Generate` module:
+:py:mod:`rdkit.Chem.Pharm2D.Generate` module:
 
 >>> from rdkit.Chem.Pharm2D import Generate
 >>> mol = Chem.MolFromSmiles('OCC(=O)CCCN')
@@ -1895,7 +1895,7 @@ within the SigFactory:
 Another possible set of feature definitions for 2D pharmacophore
 fingerprints in the RDKit are those published by Gobbi and
 Poppinger. [#gobbi]_ The module
-:api:`rdkit.Chem.Pharm2D.Gobbi_Pharm2D` has a pre-configured signature
+:py:mod:`rdkit.Chem.Pharm2D.Gobbi_Pharm2D` has a pre-configured signature
 factory for these fingerprint types.  Here's an example of using it:
 
 >>> from rdkit import Chem
@@ -1940,7 +1940,7 @@ This is more easily demonstrated than explained:
 'C<-C(=O)O>=CC<-O>'
 
 The fragments are stored as entries in a
-:api:`rdkit.Chem.rdfragcatalog.FragCatalog`.  Notice that the
+:py:class:`rdkit.Chem.rdfragcatalog.FragCatalog`.  Notice that the
 entry descriptions include pieces in angular brackets (e.g. between
 '<' and '>').  These describe the functional groups attached to the
 fragment.  For example, in the above example, the catalog entry 0
@@ -1949,7 +1949,7 @@ the carbons and entry 1 is an ethylene with a carboxylic acid on one
 carbon.  Detailed information about the functional groups can be
 obtained by asking the fragment for the ids of the functional groups
 it contains and then looking those ids up in the
-:api:`rdkit.Chem.rdfragcatalog.FragCatParams`
+:py:class:`rdkit.Chem.rdfragcatalog.FragCatParams`
 object:
 
 >>> list(fcat.GetEntryFuncGroupIds(2))
@@ -1968,7 +1968,7 @@ object:
 The catalog is hierarchical: smaller fragments are combined to form
 larger ones.  From a small fragment, one can find the larger fragments
 to which it contributes using the
-:api:`rdkit.Chem.rdfragcatalog.FragCatalog.GetEntryDownIds`
+:py:meth:`rdkit.Chem.rdfragcatalog.FragCatalog.GetEntryDownIds`
 method:
 
 >>> fcat=FragmentCatalog.FragCatalog(fparams)
@@ -2007,7 +2007,7 @@ time doesn't add any new entries:
 >>> fcat.GetNumEntries()
 1169
 
-Once a :api:`rdkit.Chem.rdfragcatalog.FragCatalog` has been
+Once a :py:class:`rdkit.Chem.rdfragcatalog.FragCatalog` has been
 generated, it can be used to fingerprint molecules:
 
 >>> fpgen = FragmentCatalog.FragFPGenerator()
@@ -2039,7 +2039,7 @@ another:
 'cccc(N)cc'
 
 Or we can use the bit ranking functionality from the
-:api:`rdkit.ML.InfoTheory.rdInfoTheory.InfoBitRanker` class to identify fragments
+:py:class:`rdkit.ML.InfoTheory.rdInfoTheory.InfoBitRanker` class to identify fragments
 that distinguish actives from inactives:
 
 >>> suppl = Chem.SDMolSupplier('data/bzr.sdf')
@@ -2166,7 +2166,7 @@ ValueError: Sanitization error: Can't kekulize mol
 <BLANKLINE>
 
 More complex transformations can be carried out using the
-:api:`rdkit.Chem.rdchem.RWMol` class:
+:py:class:`rdkit.Chem.rdchem.RWMol` class:
 
 >>> m = Chem.MolFromSmiles('CC(=O)C=CC=C')
 >>> mw = Chem.RWMol(m)
@@ -2209,8 +2209,8 @@ Chem vs AllChem
 
 The majority of “basic” chemical functionality (e.g. reading/writing
 molecules, substructure searching, molecular cleanup, etc.) is in the
-:api:`rdkit.Chem` module.  More advanced, or less frequently used,
-functionality is in :api:`rdkit.Chem.AllChem`.  The distinction has
+:py:mod:`rdkit.Chem` module.  More advanced, or less frequently used,
+functionality is in :py:mod:`rdkit.Chem.AllChem`.  The distinction has
 been made to speed startup and lower import times; there's no sense in
 loading the 2D->3D library and force field implementation if one is
 only interested in reading and writing a couple of molecules.  If you
@@ -2235,7 +2235,7 @@ symmetric results.  This is the approach that we took with the RDKit.
 
 Because it is sometimes useful to be able to count how many SSSR rings
 are present in the molecule, there is a
-:api:`rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
+:py:func:`rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
 SSSR count, not the potentially non-unique set of rings.
 
 
