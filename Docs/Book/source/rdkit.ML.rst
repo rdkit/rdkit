@@ -23,78 +23,16 @@ Subpackages
 Submodules
 ----------
 
-rdkit.ML.AnalyzeComposite module
---------------------------------
+.. toctree::
 
-.. automodule:: rdkit.ML.AnalyzeComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.BuildComposite module
-------------------------------
-
-.. automodule:: rdkit.ML.BuildComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.CompositeRun module
-----------------------------
-
-.. automodule:: rdkit.ML.CompositeRun
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.EnrichPlot module
---------------------------
-
-.. automodule:: rdkit.ML.EnrichPlot
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.GrowComposite module
------------------------------
-
-.. automodule:: rdkit.ML.GrowComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.MatOps module
-----------------------
-
-.. automodule:: rdkit.ML.MatOps
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.ScreenComposite module
--------------------------------
-
-.. automodule:: rdkit.ML.ScreenComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.files module
----------------------
-
-.. automodule:: rdkit.ML.files
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.test\_list module
---------------------------
-
-.. automodule:: rdkit.ML.test_list
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.ML.AnalyzeComposite
+   rdkit.ML.BuildComposite
+   rdkit.ML.CompositeRun
+   rdkit.ML.EnrichPlot
+   rdkit.ML.GrowComposite
+   rdkit.ML.MatOps
+   rdkit.ML.ScreenComposite
+   rdkit.ML.files
 
 Module contents
 ---------------

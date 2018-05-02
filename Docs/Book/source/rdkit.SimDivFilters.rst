@@ -4,22 +4,9 @@ rdkit.SimDivFilters package
 Submodules
 ----------
 
-rdkit.SimDivFilters.SimilarityPickers module
---------------------------------------------
+.. toctree::
 
-.. automodule:: rdkit.SimDivFilters.SimilarityPickers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.SimDivFilters.test\_list module
--------------------------------------
-
-.. automodule:: rdkit.SimDivFilters.test_list
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.SimDivFilters.SimilarityPickers
 
 Module contents
 ---------------

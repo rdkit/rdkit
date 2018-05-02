@@ -4,14 +4,9 @@ rdkit.Chem.fmcs package
 Submodules
 ----------
 
-rdkit.Chem.fmcs.fmcs module
----------------------------
+.. toctree::
 
-.. automodule:: rdkit.Chem.fmcs.fmcs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.Chem.fmcs.fmcs
 
 Module contents
 ---------------

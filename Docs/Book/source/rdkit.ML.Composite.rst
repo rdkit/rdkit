@@ -4,38 +4,11 @@ rdkit.ML.Composite package
 Submodules
 ----------
 
-rdkit.ML.Composite.AdjustComposite module
------------------------------------------
+.. toctree::
 
-.. automodule:: rdkit.ML.Composite.AdjustComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.Composite.BayesComposite module
-----------------------------------------
-
-.. automodule:: rdkit.ML.Composite.BayesComposite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.Composite.Composite module
------------------------------------
-
-.. automodule:: rdkit.ML.Composite.Composite
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.ML.Composite.test\_list module
-------------------------------------
-
-.. automodule:: rdkit.ML.Composite.test_list
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.ML.Composite.AdjustComposite
+   rdkit.ML.Composite.BayesComposite
+   rdkit.ML.Composite.Composite
 
 Module contents
 ---------------

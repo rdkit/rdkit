@@ -18,68 +18,19 @@ Subpackages
     rdkit.Numerics
     rdkit.SimDivFilters
     rdkit.VLib
-    rdkit.sping
     rdkit.utils
 
 Submodules
 ----------
 
-rdkit.RDConfig module
----------------------
+.. toctree::
 
-.. automodule:: rdkit.RDConfig
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.RDLogger module
----------------------
-
-.. automodule:: rdkit.RDLogger
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.RDPaths module
---------------------
-
-.. automodule:: rdkit.RDPaths
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.RDRandom module
----------------------
-
-.. automodule:: rdkit.RDRandom
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.TestRunner module
------------------------
-
-.. automodule:: rdkit.TestRunner
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.six module
-----------------
-
-.. automodule:: rdkit.six
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-rdkit.test\_list module
------------------------
-
-.. automodule:: rdkit.test_list
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.RDConfig
+   rdkit.RDLogger
+   rdkit.RDPaths
+   rdkit.RDRandom
+   rdkit.TestRunner
+   rdkit.six
 
 Module contents
 ---------------

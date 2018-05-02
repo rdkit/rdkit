@@ -4,14 +4,9 @@ rdkit.ML.MLUtils package
 Submodules
 ----------
 
-rdkit.ML.MLUtils.VoteImg module
--------------------------------
+.. toctree::
 
-.. automodule:: rdkit.ML.MLUtils.VoteImg
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   rdkit.ML.MLUtils.VoteImg
 
 Module contents
 ---------------
