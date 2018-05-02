@@ -50,9 +50,9 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 apidocs:
-	mkdir -p $(BUILDDIR)/html/api
+	#mkdir -p $(BUILDDIR)/html/api
 	mkdir -p $(BUILDDIR)/html/cppapi
-	cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
+	#cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
 	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
 html: apidocs $(RSTS_FROM_MD)
