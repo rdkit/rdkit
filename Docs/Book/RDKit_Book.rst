@@ -24,14 +24,16 @@ For example the fusing bonds here are not considered to be aromatic by the RDKit
 
 .. image:: images/picture_9.png
 
->>> from rdkit import Chem
->>> m = Chem.MolFromSmiles('C1=CC2=C(C=C1)C1=CC=CC=C21')
->>> m.GetAtomWithIdx(3).GetIsAromatic()
-True
->>> m.GetAtomWithIdx(6).GetIsAromatic()
-True
->>> m.GetBondBetweenAtoms(3,6).GetIsAromatic()
-False
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> m = Chem.MolFromSmiles('C1=CC2=C(C=C1)C1=CC=CC=C21')
+  >>> m.GetAtomWithIdx(3).GetIsAromatic()
+  True
+  >>> m.GetAtomWithIdx(6).GetIsAromatic()
+  True
+  >>> m.GetBondBetweenAtoms(3,6).GetIsAromatic()
+  False
 
 The RDKit supports a number of different aromaticity models and allows the user to define their own by providing a function that assigns aromaticity.
 
@@ -79,37 +81,43 @@ An extreme example, demonstrating both fused rings and the influence of exocycli
 
 .. image:: images/picture_7.png
 
->>> m=Chem.MolFromSmiles('O=C1C=CC(=O)C2=C1OC=CO2')
->>> m.GetAtomWithIdx(6).GetIsAromatic()
-True
->>> m.GetAtomWithIdx(7).GetIsAromatic()
-True
->>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
-False
+.. doctest::
+
+  >>> m=Chem.MolFromSmiles('O=C1C=CC(=O)C2=C1OC=CO2')
+  >>> m.GetAtomWithIdx(6).GetIsAromatic()
+  True
+  >>> m.GetAtomWithIdx(7).GetIsAromatic()
+  True
+  >>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
+  False
 
 A special case, heteroatoms with radicals are not considered candidates for aromaticity:
 
 .. image:: images/picture_10.png
 
->>> m = Chem.MolFromSmiles('C1=C[N]C=C1')
->>> m.GetAtomWithIdx(0).GetIsAromatic()
-False
->>> m.GetAtomWithIdx(2).GetIsAromatic()
-False
->>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
-1
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('C1=C[N]C=C1')
+  >>> m.GetAtomWithIdx(0).GetIsAromatic()
+  False
+  >>> m.GetAtomWithIdx(2).GetIsAromatic()
+  False
+  >>> m.GetAtomWithIdx(2).GetNumRadicalElectrons()
+  1
 
 Carbons with radicals, however, are still considered:
 
 .. image:: images/picture_11.png
 
->>> m = Chem.MolFromSmiles('C1=[C]NC=C1')
->>> m.GetAtomWithIdx(0).GetIsAromatic()
-True
->>> m.GetAtomWithIdx(1).GetIsAromatic()
-True
->>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
-1
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('C1=[C]NC=C1')
+  >>> m.GetAtomWithIdx(0).GetIsAromatic()
+  True
+  >>> m.GetAtomWithIdx(1).GetIsAromatic()
+  True
+  >>> m.GetAtomWithIdx(1).GetNumRadicalElectrons()
+  1
 
 The Simple Aromaticity Model
 ----------------------------
@@ -166,38 +174,46 @@ Here's the (likely partial) list of extensions:
    - ``^4`` matches SP3D hybridized atoms
    - ``^5`` matches SP3D2 hybridized atoms
 
->> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
-((1,), (2,))
+.. doctest::
+
+  >> Chem.MolFromSmiles('CC=CF').GetSubstructMatches(Chem.MolFromSmarts('[^2]'))
+  ((1,), (2,))
 
 - **Dative bonds**: ``<-`` and ``->`` match the corresponding dative bonds, direction does matter.
 
->>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('[#7]->*'))
-((5, 6),)
->>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
-((6, 5),)
+.. doctest::
+
+  >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('[#7]->*'))
+  ((5, 6),)
+  >>> Chem.MolFromSmiles('C1=CC=CC=N1->[Fe]').GetSubstructMatches(Chem.MolFromSmarts('*<-[#7]'))
+  ((6, 5),)
 
 - **Heteroatom neighbor queries**:
    - the atom query ``z`` matches atoms that have the specified number of heteroatom (i.e. not C or H) neighbors. For example, ``z2`` would match the second C in ``CC(=O)O``.
    - the atom query ``Z`` matches atoms that have the specified number of aliphatic heteroatom (i.e. not C or H) neighbors.
 
->>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
-((1,), (3,), (5,))
->>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z2]'))
-((1,),)
->>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
-((5,),)
+.. doctest::
+
+  >>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[z2]'))
+  ((1,), (3,), (5,))
+  >>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z2]'))
+  ((1,),)
+  >>> Chem.MolFromSmiles('O=C(O)c1nc(O)ccn1').GetSubstructMatches(Chem.MolFromSmarts('[Z1]'))
+  ((5,),)
 
 - **Range queries**: Ranges of values can be provided for many query types that expect numeric values. Some examples:
    - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
    - ``D{-3}`` matches atoms that have less than or equal to 3 explicit connections.
    - ``D{2-}`` matches atoms that have at least 2 explicit connections.
 
->>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
-((1,), (4,))
->>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[D{2-3}]'))
-((1,), (3,))
->>> Chem.MolFromSmiles('CC(=O)OC.C').GetSubstructMatches(Chem.MolFromSmarts('[D{-2}]'))
-((0,), (2,), (3,), (4,), (5,))
+.. doctest::
+
+  >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[z{1-}]'))
+  ((1,), (4,))
+  >>> Chem.MolFromSmiles('CC(=O)OC').GetSubstructMatches(Chem.MolFromSmarts('[D{2-3}]'))
+  ((1,), (3,))
+  >>> Chem.MolFromSmiles('CC(=O)OC.C').GetSubstructMatches(Chem.MolFromSmarts('[D{-2}]'))
+  ((0,), (2,), (3,), (4,), (5,))
 
 
 
@@ -241,38 +257,46 @@ Some features
 
 Mapped dummy atoms in the product template are replaced by the corresponding atom in the reactant:
 
->>> from rdkit.Chem import AllChem
->>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>[C:1][*:2]')
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
-['CCO']
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=N'),))[0]]
-['CCN']
+.. doctest::
+
+  >>> from rdkit.Chem import AllChem
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>[C:1][*:2]')
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
+  ['CCO']
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=N'),))[0]]
+  ['CCN']
 
 but unmapped dummy atoms are left as dummies:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>*[C:1][*:2]')
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
-['*C(C)O']
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1]=[O,N:2]>>*[C:1][*:2]')
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CC=O'),))[0]]
+  ['*C(C)O']
 
 “Any” bonds in the products are replaced by the corresponding bond in the reactant:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>*[C:1]~[*:2]')
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C=O'),))[0]]
-['*C=O']
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CO'),))[0]]
-['*CO']
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C#N'),))[0]]
-['*C#N']
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1]~[O,N:2]>>*[C:1]~[*:2]')
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C=O'),))[0]]
+  ['*C=O']
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('CO'),))[0]]
+  ['*CO']
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C#N'),))[0]]
+  ['*C#N']
 
 Intramolecular reactions can be expressed flexibly by including
 reactants in parentheses. This is demonstrated in this ring-closing
 metathesis example [#intramolRxn]_:
 
->>> rxn = AllChem.ReactionFromSmarts("([C:1]=[C;H2].[C:2]=[C;H2])>>[*:1]=[*:2]")
->>> m1 = Chem.MolFromSmiles('C=CCOCC=C')
->>> ps = rxn.RunReactants((m1,))
->>> Chem.MolToSmiles(ps[0][0])
-'C1=CCOC1'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts("([C:1]=[C;H2].[C:2]=[C;H2])>>[*:1]=[*:2]")
+  >>> m1 = Chem.MolFromSmiles('C=CCOCC=C')
+  >>> ps = rxn.RunReactants((m1,))
+  >>> Chem.MolToSmiles(ps[0][0])
+  'C1=CCOC1'
 
 
 Chirality
@@ -285,91 +309,103 @@ alcohols, is used throughout [#chiralRxn]_.
 If no chiral information is present in the reaction definition, the
 stereochemistry of the reactants is preserved:
 
->>> alcohol1 = Chem.MolFromSmiles('CC(CCN)O')
->>> alcohol2 = Chem.MolFromSmiles('C[C@H](CCN)O')
->>> alcohol3 = Chem.MolFromSmiles('C[C@@H](CCN)O')
->>> acid = Chem.MolFromSmiles('CC(=O)O')
->>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@@H](C)CCN'
+.. doctest::
+
+  >>> alcohol1 = Chem.MolFromSmiles('CC(CCN)O')
+  >>> alcohol2 = Chem.MolFromSmiles('C[C@H](CCN)O')
+  >>> alcohol3 = Chem.MolFromSmiles('C[C@@H](CCN)O')
+  >>> acid = Chem.MolFromSmiles('CC(=O)O')
+  >>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@@H](C)CCN'
 
 You get the same result (retention of stereochemistry) if a mapped atom has the same chirality
 in both reactants and products:
 
->>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@@H](C)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@@H](C)CCN'
 
 A mapped atom with different chirality in reactants and products leads
 to inversion of stereochemistry:
 
->>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@@:1][O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@@:1][O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
 
 If a mapped atom has chirality specified in the reactants, but not
 in the products, the reaction destroys chirality at that center:
 
->>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)OC(C)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)OC(C)CCN'
 
 And, finally, if chirality is specified in the products, but not the
 reactants, the reaction creates a stereocenter with the specified
 chirality:
 
->>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
 
 Note that this doesn't make sense without including a bit more
 context around the stereocenter in the reaction definition:
 
->>> rxn = AllChem.ReactionFromSmarts('[CH3:5][CH1:1]([C:6])[OH:2].[OH][C:3]=[O:4]>>[C:5][C@:1]([C:6])[O:2][C:3]=[O:4]')
->>> ps=rxn.RunReactants((alcohol1,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol2,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
->>> ps=rxn.RunReactants((alcohol3,acid))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(=O)O[C@H](C)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[CH3:5][CH1:1]([C:6])[OH:2].[OH][C:3]=[O:4]>>[C:5][C@:1]([C:6])[O:2][C:3]=[O:4]')
+  >>> ps=rxn.RunReactants((alcohol1,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol2,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
+  >>> ps=rxn.RunReactants((alcohol3,acid))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(=O)O[C@H](C)CCN'
 
 Note that the chirality specification is not being used as part of the
 query: a molecule with no chirality specified can match a reactant
@@ -379,19 +415,23 @@ In general, the reaction machinery tries to preserve as much
 stereochemistry information as possible. This works when a single new
 bond is formed to a chiral center:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2]-O>>[C:1][C:2]-S')
->>> alcohol2 = Chem.MolFromSmiles('C[C@@H](O)CCN')
->>> ps=rxn.RunReactants((alcohol2,))
->>> Chem.MolToSmiles(ps[0][0],True)
-'C[C@@H](S)CCN'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2]-O>>[C:1][C:2]-S')
+  >>> alcohol2 = Chem.MolFromSmiles('C[C@@H](O)CCN')
+  >>> ps=rxn.RunReactants((alcohol2,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'C[C@@H](S)CCN'
 
 But it fails if two or more bonds are formed:
 
->>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2](-O)-F>>[C:1][C:2](-S)-Cl')
->>> alcohol = Chem.MolFromSmiles('C[C@@H](O)F')
->>> ps=rxn.RunReactants((alcohol,))
->>> Chem.MolToSmiles(ps[0][0],True)
-'CC(S)Cl'
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2](-O)-F>>[C:1][C:2](-S)-Cl')
+  >>> alcohol = Chem.MolFromSmiles('C[C@@H](O)F')
+  >>> ps=rxn.RunReactants((alcohol,))
+  >>> Chem.MolToSmiles(ps[0][0],True)
+  'CC(S)Cl'
 
 In this case, there's just not sufficient information present to allow
 the information to be preserved. You can help by providing mapping
@@ -407,17 +447,21 @@ Rules and caveats
 2. Don't forget that unspecified bonds in SMARTS are either single or aromatic.
    Bond orders in product templates are assigned when the product template itself is constructed and it's not always possible to tell if the bond should be single or aromatic:
 
->>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1][#6:2]')
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C1NCCCC1'),))[0]]
-['C1CCCCC1']
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
-['c1ccccc-1']
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1][#6:2]')
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C1NCCCC1'),))[0]]
+  ['C1CCCCC1']
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
+  ['c1ccccc-1']
 
   So if you want to copy the bond order from the reactant, use an “Any” bond:
 
->>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1]~[#6:2]')
->>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
-['c1ccccc1']
+.. doctest::
+
+  >>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1]~[#6:2]')
+  >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
+  ['c1ccccc1']
 
 
 The Feature Definition File Format
@@ -631,42 +675,44 @@ This leads to the following behavior:
 
 Demonstrated here:
 
->>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
-True
->>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
-True
->>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
-False
->>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
-True
->>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
-True
->>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
-True
->>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
-True
->>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
-True
->>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
-True
->>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
-False
->>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
-True
->>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('C'))
-True
->>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH]'))
-False
->>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
-False
->>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH3]'))
-False
->>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('O[CH3]'))
-True
->>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('C'))
-True
->>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
-False
+.. doctest::
+
+  >>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+  True
+  >>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+  True
+  >>> Chem.MolFromSmiles('CCO').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
+  False
+  >>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[O-]'))
+  True
+  >>> Chem.MolFromSmiles('CC[O-]').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
+  True
+  >>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CC[OH]'))
+  True
+  >>> Chem.MolFromSmiles('CCOC').HasSubstructMatch(Chem.MolFromSmiles('CCO'))
+  True
+  >>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
+  True
+  >>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CCC'))
+  True
+  >>> Chem.MolFromSmiles('CCC').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
+  False
+  >>> Chem.MolFromSmiles('CC[14C]').HasSubstructMatch(Chem.MolFromSmiles('CC[14C]'))
+  True
+  >>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('C'))
+  True
+  >>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH]'))
+  False
+  >>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
+  False
+  >>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('[CH3]'))
+  False
+  >>> Chem.MolFromSmiles('OCO').HasSubstructMatch(Chem.MolFromSmiles('O[CH3]'))
+  True
+  >>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('C'))
+  True
+  >>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
+  False
 
 
 Molecular Sanitization
