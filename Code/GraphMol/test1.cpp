@@ -1475,6 +1475,20 @@ void testGithub1642() {
   BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
 }
 
+void testGithub1843() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test github1843: RWMol.clear() should not destroy ring pointer."
+      << std::endl;
+
+  RWMol *m = SmilesToMol("N1NN1");
+  m->clear();
+  MolOps::sanitizeMol(*m);
+  delete m;  
+  BOOST_LOG(rdErrorLog) << "Finished" << std::endl;
+  
+}
+
 // -------------------------------------------------------------------
 int main() {
   RDLog::InitLogs();
@@ -1506,6 +1520,7 @@ int main() {
   testGithub1453();
   testRanges();
   testGithub1642();
+  testGithub1843();
 
   return 0;
 }
