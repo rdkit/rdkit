@@ -8,9 +8,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _RD_RXNPICKLE_H_2JUNE2009_
-#define _RD_RXNPICKLE_H_2JUNE2009_
+#ifndef RD_RXNPICKLE_H_2JUNE2009
+#define RD_RXNPICKLE_H_2JUNE2009
 
+#include <GraphMol/MolPickler.h>
 // Std stuff
 #include <iostream>
 #include <string>
@@ -43,8 +44,7 @@ class ReactionPickler {
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
-  // otherwise
-  //! you will break old pickles.
+  //! otherwise you will break old pickles.
   typedef enum {
     VERSION = 10000,
     BEGINREACTANTS,
@@ -54,20 +54,35 @@ class ReactionPickler {
     BEGINAGENTS,
     ENDAGENTS,
     ENDREACTION,
+    BEGINPROPS,
+    ENDPROPS
   } Tags;
 
   //! pickles a reaction and sends the results to stream \c ss
+  static void pickleReaction(const ChemicalReaction *rxn, std::ostream &ss,
+                             unsigned int propertyFlags);
   static void pickleReaction(const ChemicalReaction *rxn, std::ostream &ss);
   static void pickleReaction(const ChemicalReaction &rxn, std::ostream &ss) {
     ReactionPickler::pickleReaction(&rxn, ss);
   };
+  static void pickleReaction(const ChemicalReaction &rxn, std::ostream &ss,
+                             unsigned int propertyFlags) {
+    ReactionPickler::pickleReaction(&rxn, ss, propertyFlags);
+  };
   //! pickles a reaction and adds the results to string \c res
+  static void pickleReaction(const ChemicalReaction *rxn, std::string &res,
+                             unsigned int propertyFlags);
   static void pickleReaction(const ChemicalReaction *rxn, std::string &res);
   static void pickleReaction(const ChemicalReaction &rxn, std::string &res) {
     ReactionPickler::pickleReaction(&rxn, res);
   };
+  static void pickleReaction(const ChemicalReaction &rxn, std::string &res,
+                             unsigned int propertyFlags) {
+    ReactionPickler::pickleReaction(&rxn, res, propertyFlags);
+  };
 
-  //! constructs a reaction from a pickle stored in a string
+  //! constructs a reaction from a pickle stored in a
+  //! string
   static void reactionFromPickle(const std::string &pickle,
                                  ChemicalReaction *rxn);
   static void reactionFromPickle(const std::string &pickle,
@@ -75,7 +90,8 @@ class ReactionPickler {
     ReactionPickler::reactionFromPickle(pickle, &rxn);
   };
 
-  //! constructs a reaction from a pickle stored in a stream
+  //! constructs a reaction from a pickle stored in a
+  //! stream
   static void reactionFromPickle(std::istream &ss, ChemicalReaction *rxn);
   static void reactionFromPickle(std::istream &ss, ChemicalReaction &rxn) {
     ReactionPickler::reactionFromPickle(ss, &rxn);
@@ -83,10 +99,17 @@ class ReactionPickler {
 
  private:
   //! do the actual work of pickling a reaction
-  static void _pickle(const ChemicalReaction *rxn, std::ostream &ss);
+  static void _pickle(const ChemicalReaction *rxn, std::ostream &ss,
+                      unsigned int propertyFlags);
 
   //! do the actual work of de-pickling a reaction
   static void _depickle(std::istream &ss, ChemicalReaction *rxn, int version);
+
+  //! pickle standard properties
+  static void _pickleProperties(std::ostream &ss, const RDProps &props,
+                                unsigned int pickleFlags);
+  //! unpickle standard properties
+  static void _unpickleProperties(std::istream &ss, RDProps &props);
 };
 };
 

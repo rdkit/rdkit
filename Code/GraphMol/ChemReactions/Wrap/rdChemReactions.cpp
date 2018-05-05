@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +29,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <GraphMol/MolPickler.h>
+#include <GraphMol/Wrap/props.hpp>
 #include <RDBoost/python.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -41,6 +42,7 @@
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
 #include <RDBoost/Wrap.h>
+
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
@@ -64,12 +66,17 @@ void rdChemicalReactionExceptionTranslator(
 }
 
 namespace RDKit {
-python::object ReactionToBinary(const ChemicalReaction &self) {
+python::object ReactionToBinaryWithProps(const ChemicalReaction &self,
+                                         unsigned int props) {
   std::string res;
-  ReactionPickler::pickleReaction(self, res);
+  ReactionPickler::pickleReaction(self, res, props);
   python::object retval = python::object(
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
+}
+python::object ReactionToBinary(const ChemicalReaction &self) {
+  return ReactionToBinaryWithProps(self,
+                                   MolPickler::getDefaultPickleProperties());
 }
 //
 // allows reactions to be pickled.
@@ -534,7 +541,10 @@ Sample Usage:\n\
            (python::arg("self")),
            "EXPERT USER: returns whether or not the reaction can have implicit "
            "properties")
-      .def("ToBinary", RDKit::ReactionToBinary,
+      .def("ToBinary", RDKit::ReactionToBinary, (python::arg("self")),
+           "Returns a binary string representation of the reaction.")
+      .def("ToBinary", RDKit::ReactionToBinaryWithProps,
+           (python::arg("self"), python::arg("propertyFlags")),
            "Returns a binary string representation of the reaction.")
       .def("IsMoleculeReactant", RDKit::IsMoleculeReactantOfReaction,
            "returns whether or not the molecule has a substructure match to "
@@ -565,6 +575,142 @@ Sample Usage:\n\
       .def("GetAgents", &RDKit::ChemicalReaction::getAgents,
            python::return_value_policy<python::reference_existing_object>(),
            "get the agent templates")
+
+      // properties
+      .def("SetProp", RDKit::MolSetProp<RDKit::ChemicalReaction, std::string>,
+           (python::arg("self"), python::arg("key"), python::arg("val"),
+            python::arg("computed") = false),
+           "Sets a molecular property\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to be set (a string).\n"
+           "    - value: the property value (a string).\n"
+           "    - computed: (optional) marks the property as being "
+           "computed.\n"
+           "                Defaults to False.\n\n")
+      .def("SetDoubleProp", RDKit::MolSetProp<RDKit::ChemicalReaction, double>,
+           (python::arg("self"), python::arg("key"), python::arg("val"),
+            python::arg("computed") = false),
+           "Sets a double valued molecular property\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to be set (a string).\n"
+           "    - value: the property value as a double.\n"
+           "    - computed: (optional) marks the property as being "
+           "computed.\n"
+           "                Defaults to 0.\n\n")
+      .def("SetIntProp", RDKit::MolSetProp<RDKit::ChemicalReaction, int>,
+           (python::arg("self"), python::arg("key"), python::arg("val"),
+            python::arg("computed") = false),
+           "Sets an integer valued molecular property\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to be set (an unsigned "
+           "number).\n"
+           "    - value: the property value as an integer.\n"
+           "    - computed: (optional) marks the property as being "
+           "computed.\n"
+           "                Defaults to False.\n\n")
+      .def("SetUnsignedProp",
+           RDKit::MolSetProp<RDKit::ChemicalReaction, unsigned int>,
+           (python::arg("self"), python::arg("key"), python::arg("val"),
+            python::arg("computed") = false),
+           "Sets an unsigned integer valued molecular property\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to be set (a string).\n"
+           "    - value: the property value as an unsigned integer.\n"
+           "    - computed: (optional) marks the property as being "
+           "computed.\n"
+           "                Defaults to False.\n\n")
+      .def("SetBoolProp", RDKit::MolSetProp<RDKit::ChemicalReaction, bool>,
+           (python::arg("self"), python::arg("key"), python::arg("val"),
+            python::arg("computed") = false),
+           "Sets a boolean valued molecular property\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to be set (a string).\n"
+           "    - value: the property value as a bool.\n"
+           "    - computed: (optional) marks the property as being "
+           "computed.\n"
+           "                Defaults to False.\n\n")
+      .def("HasProp", RDKit::MolHasProp<RDKit::ChemicalReaction>,
+           "Queries a molecule to see if a particular property has been "
+           "assigned.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to check for (a string).\n")
+      .def("GetProp", RDKit::GetProp<RDKit::ChemicalReaction, std::string>,
+           "Returns the value of the property.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to return (a string).\n\n"
+           "  RETURNS: a string\n\n"
+           "  NOTE:\n"
+           "    - If the property has not been set, a KeyError exception "
+           "will be raised.\n")
+      .def("GetDoubleProp", RDKit::GetProp<RDKit::ChemicalReaction, double>,
+           "Returns the double value of the property if possible.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to return (a string).\n\n"
+           "  RETURNS: a double\n\n"
+           "  NOTE:\n"
+           "    - If the property has not been set, a KeyError exception "
+           "will be raised.\n")
+      .def("GetIntProp", RDKit::GetProp<RDKit::ChemicalReaction, int>,
+           "Returns the integer value of the property if possible.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to return (a string).\n\n"
+           "  RETURNS: an integer\n\n"
+           "  NOTE:\n"
+           "    - If the property has not been set, a KeyError exception "
+           "will be raised.\n")
+      .def("GetUnsignedProp",
+           RDKit::GetProp<RDKit::ChemicalReaction, unsigned int>,
+           "Returns the unsigned int value of the property if possible.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to return (a string).\n\n"
+           "  RETURNS: an unsigned integer\n\n"
+           "  NOTE:\n"
+           "    - If the property has not been set, a KeyError exception "
+           "will be raised.\n")
+      .def("GetBoolProp", RDKit::GetProp<RDKit::ChemicalReaction, bool>,
+           "Returns the Bool value of the property if possible.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to return (a string).\n\n"
+           "  RETURNS: a bool\n\n"
+           "  NOTE:\n"
+           "    - If the property has not been set, a KeyError exception "
+           "will be raised.\n")
+      .def("ClearProp", RDKit::MolClearProp<RDKit::ChemicalReaction>,
+           "Removes a property from the reaction.\n\n"
+           "  ARGUMENTS:\n"
+           "    - key: the name of the property to clear (a string).\n")
+
+      .def("ClearComputedProps",
+           RDKit::MolClearComputedProps<RDKit::ChemicalReaction>,
+           "Removes all computed properties from the reaction.\n\n")
+
+      .def("GetPropNames", &RDKit::ChemicalReaction::getPropList,
+           (python::arg("self"), python::arg("includePrivate") = false,
+            python::arg("includeComputed") = false),
+           "Returns a tuple with all property names for this reaction.\n\n"
+           "  ARGUMENTS:\n"
+           "    - includePrivate: (optional) toggles inclusion of private "
+           "properties in the result set.\n"
+           "                      Defaults to 0.\n"
+           "    - includeComputed: (optional) toggles inclusion of computed "
+           "properties in the result set.\n"
+           "                      Defaults to 0.\n\n"
+           "  RETURNS: a tuple of strings\n")
+
+      .def("GetPropsAsDict", RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
+           (python::arg("self"), python::arg("includePrivate") = false,
+            python::arg("includeComputed") = false),
+           "Returns a dictionary populated with the reaction's properties.\n"
+           " n.b. Some properties are not able to be converted to python "
+           "types.\n\n"
+           "  ARGUMENTS:\n"
+           "    - includePrivate: (optional) toggles inclusion of private "
+           "properties in the result set.\n"
+           "                      Defaults to False.\n"
+           "    - includeComputed: (optional) toggles inclusion of computed "
+           "properties in the result set.\n"
+           "                      Defaults to False.\n\n"
+           "  RETURNS: a dictionary\n")
 
       // enable pickle support
       .def_pickle(RDKit::reaction_pickle_suite());

@@ -6567,6 +6567,42 @@ void testSanitizeException() {
   delete rxn;
 }
 
+void testReactionProperties() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Tests reaction properties" << std::endl;
+  {
+    const std::string smarts = "[CH3:1]>>[CH2:1]";
+
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smarts);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(!rxn->hasProp("fooprop"));
+    rxn->setProp("fooprop", 3);
+    TEST_ASSERT(rxn->hasProp("fooprop"));
+    TEST_ASSERT(rxn->getProp<int>("fooprop") == 3);
+
+    {
+      std::string pkl;
+      ReactionPickler::pickleReaction(rxn, pkl);
+      ChemicalReaction *lrxn = new ChemicalReaction();
+      ReactionPickler::reactionFromPickle(pkl, lrxn);
+      TEST_ASSERT(!lrxn->hasProp("fooprop"));
+      delete lrxn;
+    }
+
+    {
+      std::string pkl;
+      ReactionPickler::pickleReaction(rxn, pkl, PicklerOps::AllProps);
+      ChemicalReaction *lrxn = new ChemicalReaction();
+      ReactionPickler::reactionFromPickle(pkl, lrxn);
+      TEST_ASSERT(lrxn->hasProp("fooprop"));
+      TEST_ASSERT(lrxn->getProp<int>("fooprop") == 3);
+      delete lrxn;
+    }
+    delete rxn;
+  }
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -6651,6 +6687,7 @@ int main() {
   test69Github1387();
   test70Github1544();
   testSanitizeException();
+  testReactionProperties();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

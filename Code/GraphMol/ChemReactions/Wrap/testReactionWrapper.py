@@ -676,6 +676,23 @@ M  END
     self.assertEquals(res, (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), (
       (1, 'boronicacid'), ))))
 
+  def testProperties(self):
+    smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
+    rxn = rdChemReactions.ReactionFromSmarts(smirks_thiourea)
+    self.assertFalse(rxn.HasProp("fooprop"))
+    rxn.SetProp("fooprop","bar",computed=True)
+    rxn.SetIntProp("intprop",3)
+    self.assertTrue(rxn.HasProp("fooprop"))
+    self.assertTrue(rxn.HasProp("intprop"))
+    self.assertEquals(rxn.GetIntProp("intprop"),3)
+    nrxn = rdChemReactions.ChemicalReaction(rxn.ToBinary())
+    self.assertFalse(nrxn.HasProp("fooprop"))
+    nrxn = rdChemReactions.ChemicalReaction(rxn.ToBinary(Chem.PropertyPickleOptions.AllProps))
+    self.assertTrue(nrxn.HasProp("fooprop"))
+    nrxn.ClearComputedProps()
+    self.assertFalse(nrxn.HasProp("fooprop"))
+    self.assertTrue(nrxn.HasProp("intprop"))
+    self.assertEquals(nrxn.GetIntProp("intprop"),3)
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
