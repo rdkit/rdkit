@@ -2088,7 +2088,7 @@ void testGithub1338() {
     TEST_ASSERT(p);
     std::string asma = SmartsWrite::GetAtomSmarts(
         static_cast<QueryAtom *>(p->getAtomWithIdx(0)));
-    std::cerr << "  SMA: " << asma << std::endl;
+    // std::cerr << "  SMA: " << asma << std::endl;
     TEST_ASSERT(asma == "[N&2*&H1&+]");
     delete p;
   }
