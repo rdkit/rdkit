@@ -259,9 +259,9 @@ static bool checkRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,
       static_cast<FMCS::RingMatchTableSet*>(v_ringMatchMatrixSet);
 
   const std::vector<size_t>& ringsIdx1 =
-      ringMatchMatrixSet->getQueryBondRings(bond1);  // indeces of rings
+      ringMatchMatrixSet->getQueryBondRings(bond1);  // indices of rings
   const std::vector<size_t>& ringsIdx2 =
-      ringMatchMatrixSet->getTargetBondRings(&mol2, bond2);  // indeces of rings
+      ringMatchMatrixSet->getTargetBondRings(&mol2, bond2);  // indices of rings
   bool bond1inRing = !ringsIdx1.empty();
   bool bond2inRing = !ringsIdx2.empty();
 
