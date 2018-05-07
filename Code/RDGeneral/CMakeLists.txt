@@ -1,5 +1,7 @@
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp )
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
+               ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
 
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp
@@ -58,4 +60,3 @@ if (NOT RDK_INSTALL_INTREE)
 endif (NOT RDK_INSTALL_INTREE)
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 rdkit_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
-
