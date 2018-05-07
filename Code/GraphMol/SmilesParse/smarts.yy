@@ -492,6 +492,22 @@ atom_query:	simple_atom
     std::string("range_")+oq->getDescription());
   $1->setQuery(nq);
 }
+| number H_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomIsotopeQuery($1));
+  newQ->setIsotope($1);
+  newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
+  newQ->setNumExplicitHs(1);
+  $$=newQ;
+}
+| number H_TOKEN number {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomIsotopeQuery($1));
+  newQ->setIsotope($1);
+  newQ->expandQuery(makeAtomHCountQuery($3),Queries::COMPOSITE_AND,true);
+  newQ->setNumExplicitHs($3);
+  $$=newQ;
+}
 | H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery($2));
