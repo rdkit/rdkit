@@ -1,6 +1,6 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
-    set(RDKit_SERIALIZATION_LIBS Boost::serialization)
+    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
       message("== Making EnumerateLibrary without boost Serialization support")
     set(RDKit_SERIALIZATION_LIBS )
@@ -43,14 +43,14 @@ rdkit_headers(Reaction.h
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES
  ChemReactions ChemTransforms Descriptors Fingerprints
 Subgraphs DataStructs  FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_test(testReactionFingerprints testReactionFingerprints.cpp LINK_LIBRARIES
 ChemReactions Descriptors Fingerprints Subgraphs DataStructs ChemTransforms FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS})
 
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions ChemTransforms Descriptors Fingerprints Subgraphs DataStructs FileParsers SmilesParse SubstructMatch
-GraphMol RDGeneral RDGeometryLib )
+GraphMol RDGeneral RDGeometryLib ${RDKit_SERIALIZATION_LIBS} )
 
 add_subdirectory(Wrap)

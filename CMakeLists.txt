@@ -185,18 +185,15 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     foreach(Boost_Python_Lib "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
       find_package(Boost 1.56.0 COMPONENTS "${Boost_Python_Lib}" QUIET)
       if(Boost_FOUND)
-        list(APPEND Boost_IMPORTED_LIBRARIES "Boost::${Boost_Python_Lib}")
         break()
       endif()
     endforeach()
     # If boost-python3 not found, just find boost-python and hope that it is compatible with python3
     if(NOT Boost_FOUND)
       find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
-      list(APPEND Boost_IMPORTED_LIBRARIES "Boost::python")
     endif()
   else(PYTHON_VERSION_MAJOR EQUAL 3)
      find_package(Boost 1.56.0 COMPONENTS python REQUIRED)
-     list(APPEND Boost_IMPORTED_LIBRARIES "Boost::python")
   endif(PYTHON_VERSION_MAJOR EQUAL 3)
 
 
@@ -263,15 +260,6 @@ else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.56.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
-# set the boost include directories
-target_link_libraries(rdkit_base INTERFACE Boost::boost)
-
-target_include_directories(rdkit_base INTERFACE
-                           $<BUILD_INTERFACE:${RDKit_CodeDir}>
-                           $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           )
-
-
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
@@ -303,11 +291,22 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
+    set(T_LIBS ${Boost_LIBRARIES})
     find_package(Boost 1.56.0 COMPONENTS serialization)
     if (Boost_SERIALIZATION_LIBRARY)
-      list(APPEND Boost_IMPORTED_LIBRARIES "Boost::serialization")
+      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
     endif()
 endif()
+
+
+# set the boost include directories and linkage:
+target_include_directories(rdkit_base INTERFACE
+                           $<BUILD_INTERFACE:${RDKit_CodeDir}>
+                           $<INSTALL_INTERFACE:${RDKit_HdrDir}>
+                           ${Boost_INCLUDE_DIR}
+                           )
+target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
+
 
 if(RDK_BUILD_PGSQL)
   find_package(PostgreSQL REQUIRED)

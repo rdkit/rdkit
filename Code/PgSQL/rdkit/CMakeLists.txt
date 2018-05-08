@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.1)
 
 if(APPLE)
   set (EXTENSION_PREFIX "")
@@ -8,18 +8,18 @@ else(APPLE)
   set (EXTENSION_SUFFIX "")
 endif(APPLE)
 
+find_package(PostgreSQL REQUIRED)
+
 if(RDK_OPTIMIZE_NATIVE)
   add_definitions(-DUSE_BUILTIN_POPCOUNT)
 endif(RDK_OPTIMIZE_NATIVE)
 
 set(EXTENSION rdkit)
 if(NOT DEFINED Boost_INCLUDE_DIRS)
-  find_package(Boost 1.39.0 REQUIRED)
+  find_package(Boost 1.56.0 REQUIRED)
 endif(NOT DEFINED Boost_INCLUDE_DIRS)
 include_directories(${Boost_INCLUDE_DIRS})
-if(NOT DEFINED PostgreSQL_LIBRARY_DIRS)
-  find_package(PostgreSQL REQUIRED)
-endif(NOT DEFINED PostgreSQL_LIBRARY_DIRS)
+message("postgres: ${PostgreSQL_INCLUDE_DIRS}")
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 if(WIN32)
   include_directories(${PostgreSQL_INCLUDE_DIR}/server/port/win32)
