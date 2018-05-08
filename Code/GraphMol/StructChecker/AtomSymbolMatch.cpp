@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#if defined(__CYGWIN__) && !defined(_GNU_SOURCE)
+// -std=c++11 doesn't declare strtok_r
+#define _GNU_SOURCE
+#endif
+
 #include <string.h>
 #include <ctype.h>
 #include "Pattern.h"
