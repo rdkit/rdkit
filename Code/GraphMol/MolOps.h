@@ -78,7 +78,7 @@ unsigned int getMolFrags(const ROMol &mol, std::vector<int> &mapping);
 
 */
 unsigned int getMolFrags(const ROMol &mol,
-                         std::vector<std::vector<int>> &frags);
+                         std::vector<std::vector<int> > &frags);
 
 //! splits a molecule into its component fragments
 //  (disconnected components of the molecular graph)
@@ -98,9 +98,9 @@ unsigned int getMolFrags(const ROMol &mol,
   \return a vector of the fragments as smart pointers to ROMols
 
 */
-std::vector<boost::shared_ptr<ROMol>> getMolFrags(
+std::vector<boost::shared_ptr<ROMol> > getMolFrags(
     const ROMol &mol, bool sanitizeFrags = true, std::vector<int> *frags = 0,
-    std::vector<std::vector<int>> *fragsMolAtomMapping = 0,
+    std::vector<std::vector<int> > *fragsMolAtomMapping = 0,
     bool copyConformers = true);
 
 //! splits a molecule into pieces based on labels assigned using a query
@@ -118,7 +118,7 @@ std::vector<boost::shared_ptr<ROMol>> getMolFrags(
 
 */
 template <typename T>
-std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+std::map<T, boost::shared_ptr<ROMol> > getMolFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags = true, const std::vector<T> *whiteList = 0,
     bool negateList = false);
@@ -557,9 +557,9 @@ void setHybridization(ROMol &mol);
     - Since SSSR may not be unique, a post-SSSR step to symmetrize may be done.
       The extra rings this process adds can be quite useful.
 */
-int findSSSR(const ROMol &mol, std::vector<std::vector<int>> &res);
+int findSSSR(const ROMol &mol, std::vector<std::vector<int> > &res);
 //! \overload
-int findSSSR(const ROMol &mol, std::vector<std::vector<int>> *res = 0);
+int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res = 0);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -595,7 +595,7 @@ void fastFindRings(const ROMol &mol);
    - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called
   first
 */
-int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int>> &res);
+int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int> > &res);
 //! \overload
 int symmetrizeSSSR(ROMol &mol);
 
