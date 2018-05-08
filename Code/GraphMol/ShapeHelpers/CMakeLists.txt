@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_SHAPEHELPERS_BUILD)
 rdkit_library(ShapeHelpers ShapeEncoder.cpp ShapeUtils.cpp
               LINK_LIBRARIES MolTransforms)
 

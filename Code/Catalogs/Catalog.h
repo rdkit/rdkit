@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_CATALOG_H__
 #define __RD_CATALOG_H__
 

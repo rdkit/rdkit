@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_BOND_H
 #define _RD_BOND_H
 
@@ -43,7 +44,7 @@ class Atom;
           clients who need to store extra data on Bond objects.
 
 */
-class Bond : public RDProps {
+class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   friend class RWMol;
   friend class ROMol;
 
@@ -341,6 +342,6 @@ class Bond : public RDProps {
 };
 
 //! allows Bond objects to be dumped to streams
-extern std::ostream &operator<<(std::ostream &target, const RDKit::Bond &b);
+RDKIT_GRAPHMOL_EXPORT extern std::ostream &operator<<(std::ostream &target, const RDKit::Bond &b);
 
 #endif

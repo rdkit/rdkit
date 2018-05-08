@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SEQUENCEPARSE_H_
 #define _RD_SEQUENCEPARSE_H_
 #include <string>
@@ -24,9 +25,9 @@ class RWMol;
  *of the corresponding amino acid
  *
  */
-RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD);
+RDKIT_FILEPARSERS_EXPORT RWMol *SequenceToMol(const char *seq, bool sanitize, bool lowerD);
 //! \overload
-RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD);
+RDKIT_FILEPARSERS_EXPORT RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD);
 
 // \brief construct a protein, RNA or DNA molecule from a sequence string
 /*!
@@ -46,9 +47,9 @@ RWMol *SequenceToMol(const std::string &seq, bool sanitize, bool lowerD);
  *      9 DNA, both caps
  *
  */
-RWMol *SequenceToMol(const char *seq, bool sanitize = true, int flavor = 0);
+RDKIT_FILEPARSERS_EXPORT RWMol *SequenceToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
-RWMol *SequenceToMol(const std::string &seq, bool sanitize = true,
+RDKIT_FILEPARSERS_EXPORT RWMol *SequenceToMol(const std::string &seq, bool sanitize = true,
                      int flavor = 0);
 
 // \brief construct a molecule from a FASTA string (currently only supports
@@ -61,9 +62,9 @@ RWMol *SequenceToMol(const std::string &seq, bool sanitize = true,
  *of the corresponding amino acid
  *
  */
-RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD);
+RDKIT_FILEPARSERS_EXPORT RWMol *FASTAToMol(const char *seq, bool sanitize, bool lowerD);
 //! \overload
-RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD);
+RDKIT_FILEPARSERS_EXPORT RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD);
 
 // \brief construct a protein, DNA or RNA molecule from a FASTA string
 /*!
@@ -83,9 +84,9 @@ RWMol *FASTAToMol(const std::string &seq, bool sanitize, bool lowerD);
  *      9 DNA, both caps
  *
  */
-RWMol *FASTAToMol(const char *seq, bool sanitize = true, int flavor = 0);
+RDKIT_FILEPARSERS_EXPORT RWMol *FASTAToMol(const char *seq, bool sanitize = true, int flavor = 0);
 //! \overload
-RWMol *FASTAToMol(const std::string &seq, bool sanitize = true, int flavor = 0);
+RDKIT_FILEPARSERS_EXPORT RWMol *FASTAToMol(const std::string &seq, bool sanitize = true, int flavor = 0);
 
 // \brief construct a molecule from a HELM string (currently only supports
 // peptides)
@@ -95,9 +96,9 @@ RWMol *FASTAToMol(const std::string &seq, bool sanitize = true, int flavor = 0);
  *the molecule
  *
  */
-RWMol *HELMToMol(const char *helm, bool sanitize = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *HELMToMol(const char *helm, bool sanitize = true);
 //! \overload
-RWMol *HELMToMol(const std::string &helm, bool sanitize = true);
+RDKIT_FILEPARSERS_EXPORT RWMol *HELMToMol(const std::string &helm, bool sanitize = true);
 }
 
 #endif

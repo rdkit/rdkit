@@ -1,3 +1,4 @@
+#include <RDBoost/export.h>
 #include <list>
 #include <map>
 #include <DataStructs/BitOps.h>

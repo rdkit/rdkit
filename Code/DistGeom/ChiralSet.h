@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_CHIRAL_SET_H__
 #define __RD_CHIRAL_SET_H__
 
@@ -20,7 +21,7 @@ namespace DistGeom {
  *them
  *
  */
-class ChiralSet {
+class RDKIT_DISTGEOMETRY_EXPORT ChiralSet {
  public:
   unsigned int d_idx0;  // the centroid
   unsigned int d_idx1;

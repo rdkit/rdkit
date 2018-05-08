@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_PARTIALCHARGES_BUILD)
 rdkit_python_extension(rdPartialCharges
                        rdPartialCharges.cpp
                        DEST Chem 

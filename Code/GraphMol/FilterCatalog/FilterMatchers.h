@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_FILTER_MATCHER_H__
 #define __RD_FILTER_MATCHER_H__
 #include <GraphMol/RDKitBase.h>
@@ -46,7 +47,7 @@ std::string getArgName(const boost::shared_ptr<FilterMatcherBase> &arg) {
 }
 
 namespace FilterMatchOps {
-class And : public FilterMatcherBase {
+class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
   boost::shared_ptr<FilterMatcherBase> arg1;
   boost::shared_ptr<FilterMatcherBase> arg2;
 
@@ -111,7 +112,7 @@ class And : public FilterMatcherBase {
 #endif
 };
 
-class Or : public FilterMatcherBase {
+class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
   boost::shared_ptr<FilterMatcherBase> arg1;
   boost::shared_ptr<FilterMatcherBase> arg2;
 
@@ -170,7 +171,7 @@ class Or : public FilterMatcherBase {
 #endif
 };
 
-class Not : public FilterMatcherBase {
+class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
   boost::shared_ptr<FilterMatcherBase> arg1;
 
  public:
@@ -225,8 +226,8 @@ class Not : public FilterMatcherBase {
 };
 }
 
-extern const char *SMARTS_MATCH_NAME_DEFAULT;
-class SmartsMatcher : public FilterMatcherBase {
+RDKIT_FILTERCATALOG_EXPORT extern const char *SMARTS_MATCH_NAME_DEFAULT;
+class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   ROMOL_SPTR d_pattern;
   unsigned int d_min_count;
   unsigned int d_max_count;
@@ -367,7 +368,7 @@ class SmartsMatcher : public FilterMatcherBase {
 //
 //  which will return the SmartsMatcher FilterMatch only if no patterns
 //    in the exclusion list are found.
-class ExclusionList : public FilterMatcherBase {
+class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   std::vector<boost::shared_ptr<FilterMatcherBase> > d_offPatterns;
 
  public:
@@ -449,7 +450,7 @@ class ExclusionList : public FilterMatcherBase {
 #endif
 };
 
-class FilterHierarchyMatcher : public FilterMatcherBase {
+class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher : public FilterMatcherBase {
   std::vector<boost::shared_ptr<FilterHierarchyMatcher> > d_children;
   boost::shared_ptr<FilterMatcherBase> d_matcher;
   

@@ -1,4 +1,7 @@
 # moved back library build directives here
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_FORCEFIELDHELPERS_BUILD)
 rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
               MMFF/AtomTyper.cpp MMFF/Builder.cpp CrystalFF/TorsionAngleM6.cpp
               CrystalFF/TorsionPreferences.cpp

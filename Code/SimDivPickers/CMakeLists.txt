@@ -1,3 +1,5 @@
+
+add_definitions(-DRDKIT_SIMDIVPICKERS_BUILD)
 rdkit_library(SimDivPickers
               DistPicker.cpp MaxMinPicker.cpp HierarchicalClusterPicker.cpp
               LINK_LIBRARIES hc RDGeneral)

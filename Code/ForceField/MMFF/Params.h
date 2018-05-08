@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_MMFFPARAMS_H__
 #define __RD_MMFFPARAMS_H__
 
@@ -50,13 +51,13 @@ inline void clipToOne(double &x) {
 }
 
 //! class to store MMFF atom type equivalence levels
-class MMFFDef {
+class RDKIT_FORCEFIELD_EXPORT MMFFDef {
  public:
   boost::uint8_t eqLevel[4];
 };
 
 //! class to store MMFF Properties
-class MMFFProp {
+class RDKIT_FORCEFIELD_EXPORT MMFFProp {
  public:
   boost::uint8_t atno;
   boost::uint8_t crd;
@@ -69,7 +70,7 @@ class MMFFProp {
 };
 
 //! class to store MMFF Partial Bond Charge Increments
-class MMFFPBCI {
+class RDKIT_FORCEFIELD_EXPORT MMFFPBCI {
  public:
   double pbci;
   double fcadj;
@@ -77,13 +78,13 @@ class MMFFPBCI {
 
 //! class to store MMFF bond-charge-increment parameters used to
 //! construct MMFF partial atomic charges
-class MMFFChg {
+class RDKIT_FORCEFIELD_EXPORT MMFFChg {
  public:
   double bci;
 };
 
 //! class to store MMFF parameters for bond stretching
-class MMFFBond {
+class RDKIT_FORCEFIELD_EXPORT MMFFBond {
  public:
   double kb;
   double r0;
@@ -91,7 +92,7 @@ class MMFFBond {
 
 //! class to store parameters for Herschbach-Laurie's version
 //! of Badger's rule
-class MMFFHerschbachLaurie {
+class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurie {
  public:
   double a_ij;
   double d_ij;
@@ -100,34 +101,34 @@ class MMFFHerschbachLaurie {
 
 //! class to store covalent radius and Pauling electronegativity
 //! values for MMFF bond stretching empirical rule
-class MMFFCovRadPauEle {
+class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEle {
  public:
   double r0;
   double chi;
 };
 
 //! class to store MMFF parameters for angle bending
-class MMFFAngle {
+class RDKIT_FORCEFIELD_EXPORT MMFFAngle {
  public:
   double ka;
   double theta0;
 };
 
 //! class to store MMFF parameters for stretch-bending
-class MMFFStbn {
+class RDKIT_FORCEFIELD_EXPORT MMFFStbn {
  public:
   double kbaIJK;
   double kbaKJI;
 };
 
 //! class to store MMFF parameters for out-of-plane bending
-class MMFFOop {
+class RDKIT_FORCEFIELD_EXPORT MMFFOop {
  public:
   double koop;
 };
 
 //! class to store MMFF parameters for torsions
-class MMFFTor {
+class RDKIT_FORCEFIELD_EXPORT MMFFTor {
  public:
   double V1;
   double V2;
@@ -135,7 +136,7 @@ class MMFFTor {
 };
 
 //! class to store MMFF parameters for non-bonded Van der Waals
-class MMFFVdW {
+class RDKIT_FORCEFIELD_EXPORT MMFFVdW {
  public:
   double alpha_i;
   double N_i;
@@ -145,7 +146,7 @@ class MMFFVdW {
   boost::uint8_t DA;
 };
 
-class MMFFVdWRijstarEps {
+class RDKIT_FORCEFIELD_EXPORT MMFFVdWRijstarEps {
  public:
   double R_ij_starUnscaled;
   double epsilonUnscaled;
@@ -153,7 +154,7 @@ class MMFFVdWRijstarEps {
   double epsilon;
 };
 
-class MMFFAromCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
  public:
   //! gets a pointer to the singleton MMFFAromCollection
   /*!
@@ -193,7 +194,7 @@ class MMFFAromCollection {
   std::vector<boost::uint8_t> d_params;          //!< the aromatic type vector
 };
 
-class MMFFDefCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFDefCollection {
  public:
   //! gets a pointer to the singleton MMFFDefCollection
   /*!
@@ -242,7 +243,7 @@ class MMFFDefCollection {
 #endif
 };
 
-class MMFFPropCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFPropCollection {
  public:
   //! gets a pointer to the singleton MMFFPropCollection
   /*!
@@ -295,7 +296,7 @@ class MMFFPropCollection {
 #endif
 };
 
-class MMFFPBCICollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFPBCICollection {
  public:
   //! gets a pointer to the singleton MMFFPBCICollection
   /*!
@@ -343,7 +344,7 @@ class MMFFPBCICollection {
 #endif
 };
 
-class MMFFChgCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
  public:
   //! gets a pointer to the singleton MMFFChgCollection
   /*!
@@ -434,7 +435,7 @@ class MMFFChgCollection {
 #endif
 };
 
-class MMFFBondCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
  public:
   //! gets a pointer to the singleton MMFFBondCollection
   /*!
@@ -528,7 +529,7 @@ class MMFFBondCollection {
 #endif
 };
 
-class MMFFBndkCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
  public:
   //! gets a pointer to the singleton MMFFBndkCollection
   /*!
@@ -604,7 +605,7 @@ class MMFFBndkCollection {
 #endif
 };
 
-class MMFFHerschbachLaurieCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
  public:
   //! gets a pointer to the singleton MMFFHerschbachLaurieCollection
   /*!
@@ -684,7 +685,7 @@ class MMFFHerschbachLaurieCollection {
 #endif
 };
 
-class MMFFCovRadPauEleCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFCovRadPauEleCollection {
  public:
   //! gets a pointer to the singleton MMFFCovRadPauEleCollection
   /*!
@@ -742,7 +743,7 @@ class MMFFCovRadPauEleCollection {
 #endif
 };
 
-class MMFFAngleCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
  public:
   //! gets a pointer to the singleton MMFFAngleCollection
   /*!
@@ -876,7 +877,7 @@ class MMFFAngleCollection {
 #endif
 };
 
-class MMFFStbnCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
  public:
   //! gets a pointer to the singleton MMFFStbnCollection
   /*!
@@ -995,7 +996,7 @@ class MMFFStbnCollection {
 #endif
 };
 
-class MMFFDfsbCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFDfsbCollection {
  public:
   //! gets a pointer to the singleton MMFFDfsbCollection
   /*!
@@ -1063,7 +1064,7 @@ class MMFFDfsbCollection {
       d_params;  //!< the parameter 3D-map
 };
 
-class MMFFOopCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
  public:
   //! gets a pointer to the singleton MMFFOopCollection
   /*!
@@ -1192,7 +1193,7 @@ class MMFFOopCollection {
 #endif
 };
 
-class MMFFTorCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
  public:
   //! gets a pointer to the singleton MMFFTorCollection
   /*!
@@ -1381,7 +1382,7 @@ class MMFFTorCollection {
 #endif
 };
 
-class MMFFVdWCollection {
+class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
  public:
   //! gets a pointer to the singleton MMFFVdWCollection
   /*!

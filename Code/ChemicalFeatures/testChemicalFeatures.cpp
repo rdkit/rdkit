@@ -10,6 +10,7 @@
 //
 //
 
+#include <RDBoost/test.h>
 #include "FreeChemicalFeature.h"
 #include <Geometry/point.h>
 #include <iostream>

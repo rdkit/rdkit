@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_MOLTRANSFORMS_BUILD)
 rdkit_library(MolTransforms MolTransforms.cpp
               LINK_LIBRARIES GraphMol EigenSolvers)
 

@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_STRUCTCHECKER_BUILD)
 rdkit_library(StructChecker
               StructChecker.cpp StructCheckerOptions.cpp StructureFlags.cpp Utilites.cpp
               Pattern.cpp Stereo.cpp AtomSymbolMatch.cpp StripSmallFragments.cpp ReCharge.cpp Tautomer.cpp

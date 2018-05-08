@@ -6,6 +6,7 @@
 #define __AVALONTOOLS_H__
 #include <string>
 
+#include <RDBoost/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseIntVect.h>
@@ -15,43 +16,43 @@
 namespace AvalonTools {
 static int avalonSSSBits = 0x007FFF;
 static int avalonSimilarityBits = 0xF07FFF;
-std::string getCanonSmiles(RDKit::ROMol &mol, int flags = -1);
-void getAvalonCountFP(const RDKit::ROMol &mol,
+RDKIT_AVALONLIB_EXPORT std::string getCanonSmiles(RDKit::ROMol &mol, int flags = -1);
+RDKIT_AVALONLIB_EXPORT void getAvalonCountFP(const RDKit::ROMol &mol,
                       RDKit::SparseIntVect<boost::uint32_t> &res,
                       unsigned int nBits = 512, bool isQuery = false,
                       bool resetVect = true,
                       unsigned int bitFlags = avalonSSSBits);
-void getAvalonFP(const RDKit::ROMol &mol, ExplicitBitVect &res,
+RDKIT_AVALONLIB_EXPORT void getAvalonFP(const RDKit::ROMol &mol, ExplicitBitVect &res,
                  unsigned int nBits = 512, bool isQuery = false,
                  bool resetVect = true, unsigned int bitFlags = avalonSSSBits);
-void getAvalonFP(const RDKit::ROMol &mol, std::vector<boost::uint32_t> &res,
+RDKIT_AVALONLIB_EXPORT void getAvalonFP(const RDKit::ROMol &mol, std::vector<boost::uint32_t> &res,
                  unsigned int nBits = 512, bool isQuery = false,
                  bool resetVect = true, unsigned int bitFlags = avalonSSSBits);
-unsigned int set2DCoords(RDKit::ROMol &mol, bool clearConfs = true);
+RDKIT_AVALONLIB_EXPORT unsigned int set2DCoords(RDKit::ROMol &mol, bool clearConfs = true);
 
-std::string getCanonSmiles(const std::string &data, bool isSmiles,
+RDKIT_AVALONLIB_EXPORT std::string getCanonSmiles(const std::string &data, bool isSmiles,
                            int flags = -1);
-void getAvalonCountFP(const std::string &data, bool isSmiles,
+RDKIT_AVALONLIB_EXPORT void getAvalonCountFP(const std::string &data, bool isSmiles,
                       RDKit::SparseIntVect<boost::uint32_t> &res,
                       unsigned int nBits = 512, bool isQuery = false,
                       unsigned int bitFlags = avalonSSSBits);
-void getAvalonFP(const std::string &data, bool isSmiles, ExplicitBitVect &res,
+RDKIT_AVALONLIB_EXPORT void getAvalonFP(const std::string &data, bool isSmiles, ExplicitBitVect &res,
                  unsigned int nBits = 512, bool isQuery = false,
                  bool resetVect = true, unsigned int bitFlags = avalonSSSBits);
-void getAvalonFP(const std::string &data, bool isSmiles,
+RDKIT_AVALONLIB_EXPORT void getAvalonFP(const std::string &data, bool isSmiles,
                  std::vector<boost::uint32_t> &res, unsigned int nBits = 512,
                  bool isQuery = false, bool resetVect = true,
                  unsigned int bitFlags = avalonSSSBits);
 
-std::string set2DCoords(const std::string &data, bool isSmiles);
+RDKIT_AVALONLIB_EXPORT std::string set2DCoords(const std::string &data, bool isSmiles);
 
-int initCheckMol(const std::string &optString);
-RDKit::ROMOL_SPTR checkMol(int &errors, RDKit::ROMol &inMol);
-RDKit::ROMOL_SPTR checkMol(int &errors, const std::string &data, bool isSmiles);
-std::pair<std::string, int> checkMolString(const std::string &data,
+RDKIT_AVALONLIB_EXPORT int initCheckMol(const std::string &optString);
+RDKIT_AVALONLIB_EXPORT RDKit::ROMOL_SPTR checkMol(int &errors, RDKit::ROMol &inMol);
+RDKIT_AVALONLIB_EXPORT RDKit::ROMOL_SPTR checkMol(int &errors, const std::string &data, bool isSmiles);
+RDKIT_AVALONLIB_EXPORT std::pair<std::string, int> checkMolString(const std::string &data,
                                            bool isSmiles);
-std::string getCheckMolLog();
+RDKIT_AVALONLIB_EXPORT std::string getCheckMolLog();
 
-void closeCheckMolFiles();
+RDKIT_AVALONLIB_EXPORT void closeCheckMolFiles();
 }
 #endif

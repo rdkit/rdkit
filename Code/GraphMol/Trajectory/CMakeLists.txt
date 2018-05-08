@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_TRAJECTORY_BUILD)
 rdkit_library(Trajectory Trajectory.cpp
               LINK_LIBRARIES RDGeneral RDGeometryLib GraphMol)
 

@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RD_FILTER_CATALOG_PARAMS_
 #define _RD_FILTER_CATALOG_PARAMS_
 
@@ -38,7 +39,7 @@
 
 namespace RDKit {
 class FilterCatalog;
-class FilterCatalogParams : public RDCatalog::CatalogParams {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams : public RDCatalog::CatalogParams {
  public:
   enum FilterCatalogs {
     PAINS_A = (1u << 1),
@@ -107,7 +108,7 @@ class FilterCatalogParams : public RDCatalog::CatalogParams {
 };
 
 typedef RDCatalog::Catalog<FilterCatalogEntry, FilterCatalogParams> FCatalog;
-class FilterCatalog : public FCatalog {
+class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
  public:
   // syntactic sugar for getMatch(es) return values.
   typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
@@ -240,7 +241,7 @@ class FilterCatalog : public FCatalog {
   std::vector<SENTRY> d_entries;
 };
 
-bool FilterCatalogCanSerialize();
+RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
 }
 
 #endif

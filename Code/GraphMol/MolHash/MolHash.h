@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include <map>
 #include <vector>
@@ -20,7 +21,7 @@ namespace RDKit {
 namespace MolHash {
 typedef boost::uint32_t HashCodeType;
 
-HashCodeType generateMoleculeHashCode(
+RDKIT_MOLHASH_EXPORT HashCodeType generateMoleculeHashCode(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse =
         0,  // ?? listed bonds between/to/from excluded atom(s) ??
@@ -48,7 +49,7 @@ enum CodeFlags  // bitwise flags to combine and compute atom/bond codes
   CF_ALL = 0xFFFF,
 };
 
-void fillAtomBondCodes(
+RDKIT_MOLHASH_EXPORT void fillAtomBondCodes(
     const ROMol &mol, boost::uint64_t flags  // CodeFlags constants combination
     ,
     std::vector<boost::uint32_t> *atomCodes  // NULL is allowed
@@ -56,7 +57,7 @@ void fillAtomBondCodes(
     std::vector<boost::uint32_t> *bondCodes);  // NULL is allowed
 
 #pragma pack(push, 1)
-struct HashSet {
+struct RDKIT_MOLHASH_EXPORT HashSet {
   boost::uint16_t Version;
   boost::uint16_t Reserved;
   boost::uint16_t NumAtoms;
@@ -73,15 +74,15 @@ struct HashSet {
 };
 #pragma pack(pop)
 
-void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
+RDKIT_MOLHASH_EXPORT void generateMoleculeHashSet(const ROMol &mol, HashSet &res,
                              const std::vector<unsigned> *atomsToUse = 0,
                              const std::vector<unsigned> *bondsToUse = 0);
 
-std::string generateMoleculeHashSet(
+RDKIT_MOLHASH_EXPORT std::string generateMoleculeHashSet(
     const ROMol &mol, const std::vector<unsigned> *atomsToUse = 0,
     const std::vector<unsigned> *bondsToUse = 0);
 
-std::string encode(const void *bin,
+RDKIT_MOLHASH_EXPORT std::string encode(const void *bin,
                    size_t size);  // binary data to Base64 encoded string
 }
 }

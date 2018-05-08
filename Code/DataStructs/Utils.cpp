@@ -71,8 +71,8 @@ void FromDaylightString(T &sbv, const std::string &s) {
   }
 }
 
-template void FromDaylightString(SparseBitVect &sbv, const std::string &s);
-template void FromDaylightString(ExplicitBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromDaylightString(SparseBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromDaylightString(ExplicitBitVect &sbv, const std::string &s);
 
 //! \brief Construct a BitVect from the ASCII representation of a
 //! BitString
@@ -85,8 +85,8 @@ void FromBitString(T &sbv, const std::string &s) {
   }
 }
 
-template void FromBitString(SparseBitVect &sbv, const std::string &s);
-template void FromBitString(ExplicitBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromBitString(SparseBitVect &sbv, const std::string &s);
+template RDKIT_DATASTRUCTS_EXPORT void FromBitString(ExplicitBitVect &sbv, const std::string &s);
 
 //! converts 4 ascii bytes at a4 to 3 binary bytes
 /*!

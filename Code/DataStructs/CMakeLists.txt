@@ -2,6 +2,8 @@ if(RDK_OPTIMIZE_NATIVE)
   ADD_DEFINITIONS("-DUSE_BUILTIN_POPCOUNT")
 endif()
 
+
+add_definitions(-DRDKIT_DATASTRUCTS_BUILD)
 rdkit_library(DataStructs
               BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
               base64.cpp BitOps.cpp DiscreteDistMat.cpp

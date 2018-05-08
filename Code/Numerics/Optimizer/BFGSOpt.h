@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #include <math.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Trajectory/Snapshot.h>
@@ -15,6 +16,8 @@
 #include <algorithm>
 
 namespace BFGSOpt {
+RDKIT_OPTIMIZER_EXPORT extern int HEAD_ONLY_LIBRARY;
+RDKIT_OPTIMIZER_EXPORT extern int REALLY_A_HEADER_ONLY_LIBRARY;
 const double FUNCTOL =
     1e-4;  //!< Default tolerance for function convergence in the minimizer
 const double MOVETOL =

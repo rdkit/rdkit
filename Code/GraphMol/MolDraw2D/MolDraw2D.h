@@ -19,6 +19,7 @@
 // library-specific drawing code such as drawing lines, writing strings
 // etc.
 
+#include <RDBoost/export.h>
 #ifndef RDKITMOLDRAW2D_H
 #define RDKITMOLDRAW2D_H
 
@@ -59,7 +60,7 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
-struct MolDrawOptions {
+struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments;      // draws "breaks" at dummy atoms
   bool circleAtoms;                // draws circles under highlighted atoms
@@ -129,7 +130,7 @@ struct MolDrawOptions {
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
-class MolDraw2D {
+class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  public:
   typedef enum { C = 0, N, E, S, W } OrientType;
   typedef enum {

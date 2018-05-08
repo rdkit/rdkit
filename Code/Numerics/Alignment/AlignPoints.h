@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_ALIGN_POINTS_H__
 #define __RD_ALIGN_POINTS_H__
 
@@ -37,7 +38,7 @@ namespace Alignments {
   This function returns the sum of squared distance (SSR) not the RMSD
   RMSD = sqrt(SSR/numPoints)
 */
-double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
+double RDKIT_ALIGNMENT_EXPORT AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
                    const RDGeom::Point3DConstPtrVect &probePoints,
                    RDGeom::Transform3D &trans, const DoubleVector *weights = 0,
                    bool reflect = false, unsigned int maxIterations = 50);

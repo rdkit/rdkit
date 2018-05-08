@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_MMFFOopBend_H__
 #define __RD_MMFFOopBend_H__
 
@@ -20,7 +21,7 @@ namespace MMFF {
 class MMFFOop;
 
 //! the out-of-plane term for MMFF
-class OopBendContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT OopBendContrib : public ForceFieldContrib {
  public:
   OopBendContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
   //! Constructor
@@ -48,12 +49,12 @@ and the angle formed by atom1-atom2-atom3
 
 namespace Utils {
 //! calculates and returns the Wilson angle (in degrees)
-double calcOopChi(const RDGeom::Point3D &iPoint, const RDGeom::Point3D &jPoint,
+RDKIT_FORCEFIELD_EXPORT double calcOopChi(const RDGeom::Point3D &iPoint, const RDGeom::Point3D &jPoint,
                   const RDGeom::Point3D &kPoint, const RDGeom::Point3D &lPoint);
 //! returns the out-of-plane force constant koop
-double calcOopBendForceConstant(const MMFFOop *mmffOopParams);
+RDKIT_FORCEFIELD_EXPORT double calcOopBendForceConstant(const MMFFOop *mmffOopParams);
 //! calculates and returns the out-of-plane MMFF energy
-double calcOopBendEnergy(const double chi, const double koop);
+RDKIT_FORCEFIELD_EXPORT double calcOopBendEnergy(const double chi, const double koop);
 }
 }
 }

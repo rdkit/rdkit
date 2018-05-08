@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_FFCONTRIB_H__
 #define __RD_FFCONTRIB_H__
 
@@ -14,7 +15,7 @@ namespace ForceFields {
 class ForceField;
 
 //! abstract base class for contributions to ForceFields
-class ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT ForceFieldContrib {
  public:
   friend class ForceField;
 

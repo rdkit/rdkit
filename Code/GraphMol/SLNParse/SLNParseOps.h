@@ -31,6 +31,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
+#include <RDBoost/export.h>
 #ifndef __RD_SLNPARSEOPS_H__
 #define __RD_SLNPARSEOPS_H__
 

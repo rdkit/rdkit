@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef ENUMERATIONPICKLER_H
 #define ENUMERATIONPICKLER_H
 
@@ -37,18 +38,18 @@
 namespace RDKit {
 namespace EnumerationStrategyPickler {
 //! pickles a EnumerationStrategy and adds the results to a stream \c ss
-void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
+RDKIT_CHEMREACTIONS_EXPORT void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
             std::ostream &ss);
-void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
+RDKIT_CHEMREACTIONS_EXPORT void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
             std::string &s);
 
 //! constructs a EnumerationStrategy from a pickle stored in a string
 //!  Since an EnumerationStrategyBase is polymorphic, this must return
 //!  a shared pointer to the EnumerationStrategyBase
-boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle);
+RDKIT_CHEMREACTIONS_EXPORT boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle);
 
 //!  a pointer to the EnumerationStrategyBase
-boost::shared_ptr<EnumerationStrategyBase> fromPickle(
+RDKIT_CHEMREACTIONS_EXPORT boost::shared_ptr<EnumerationStrategyBase> fromPickle(
     const std::string &pickle);
 }
 }

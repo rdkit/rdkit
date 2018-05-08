@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SUBGRAPHUTILS_H_
 #define _RD_SUBGRAPHUTILS_H_
 
@@ -22,15 +23,15 @@ namespace Subgraphs {
 typedef boost::tuples::tuple<boost::uint32_t, boost::uint32_t, boost::uint32_t>
     DiscrimTuple;
 
-DiscrimTuple calcPathDiscriminators(
+RDKIT_SUBGRAPHS_EXPORT DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,
     std::vector<boost::uint32_t> *extraInvars = 0);
-PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPathsb,
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPathsb,
                         bool useBO = true);
 
 // Return the list of bond that connect a list of atoms
 // ASSUMPTION: the atoms specified in the list are connected
-PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds);
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds);
 
 // create a new molecule object from a part of molecule "mol". The part of
 // of the molecule is specified as a list of bonds in "path".
@@ -39,9 +40,9 @@ PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds);
 // and Bonds
 //  atomIdxMap provides a mapping between the atomsIds in mol to the atomIds in
 // the newly created sub-molecule (the molecule that is returned)
-ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
+RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
                     std::map<int, int> &atomIdxMap);
-ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path,
+RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path,
                     bool useQuery = false);
 }  // end of namespace Subgraphs
 }

@@ -12,6 +12,7 @@
 // This is a concrete class derived from MolDraw2D that uses RDKit to draw a
 // molecule into a cairo drawing context
 
+#include <RDBoost/export.h>
 #ifndef MOLDRAW2DCAIRO_H
 #define MOLDRAW2DCAIRO_H
 
@@ -22,7 +23,7 @@
 
 namespace RDKit {
 
-class MolDraw2DCairo : public MolDraw2D {
+class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
  public:
   // does not take ownership of the drawing context
   MolDraw2DCairo(int width, int height, cairo_t *cr, int panelWidth = -1,

@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_MOLCATALOG_BUILD)
 rdkit_python_extension(rdMolCatalog rdMolCatalog.cpp
                        DEST Chem
                        LINK_LIBRARIES 

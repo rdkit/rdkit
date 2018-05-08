@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_TORSIONANGLE_H__
 #define __RD_TORSIONANGLE_H__
 
@@ -25,7 +26,7 @@ namespace UFF {
 class AtomicParams;
 
 //! the torsion term for the Universal Force Field
-class TorsionAngleContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
   TorsionAngleContrib()
       : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1), d_order(0){};
@@ -94,14 +95,14 @@ class TorsionAngleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the cosine of a torsion angle
-double calculateCosTorsion(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
+RDKIT_FORCEFIELD_EXPORT double calculateCosTorsion(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
                            const RDGeom::Point3D &p3,
                            const RDGeom::Point3D &p4);
-void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
+RDKIT_FORCEFIELD_EXPORT void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
                      double **g, double &sinTerm, double &cosPhi);
-double equation17(double bondOrder23, const AtomicParams *at2Params,
+RDKIT_FORCEFIELD_EXPORT double equation17(double bondOrder23, const AtomicParams *at2Params,
                   const AtomicParams *at3Params);
-bool isInGroup6(int num);
+RDKIT_FORCEFIELD_EXPORT bool isInGroup6(int num);
 }
 }
 }

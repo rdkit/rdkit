@@ -29,6 +29,7 @@
   includeChirality is true.
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_ATOMPAIRS_H__
 #define __RD_ATOMPAIRS_H__
 
@@ -66,7 +67,7 @@ const unsigned int numAtomPairFingerprintBits =
   \param includeChirality toggles the inclusions of bits indicating R/S
   chirality
 */
-boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
+RDKIT_FINGERPRINTS_EXPORT boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
                             bool includeChirality = false);
 
 //! returns an atom pair hash based on two atom hashes and the
@@ -79,7 +80,7 @@ boost::uint32_t getAtomCode(const Atom *atom, unsigned int branchSubtract = 0,
   \param includeChirality toggles the inclusions of bits indicating R/S
   chirality
 */
-boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
+RDKIT_FINGERPRINTS_EXPORT boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
                                 unsigned int dist,
                                 bool includeChirality = false);
 
@@ -117,14 +118,14 @@ boost::uint32_t getAtomPairCode(boost::uint32_t codeI, boost::uint32_t codeJ,
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, unsigned int minLength, unsigned int maxLength,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     const std::vector<boost::uint32_t> *ignoreAtoms = 0,
     const std::vector<boost::uint32_t> *atomInvariants = 0,
     bool includeChirality = false, bool use2D = true, int confId = -1);
 //! \overload
-SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, const std::vector<boost::uint32_t> *fromAtoms = 0,
     const std::vector<boost::uint32_t> *ignoreAtoms = 0,
     const std::vector<boost::uint32_t> *atomInvariants = 0,
@@ -157,7 +158,7 @@ SparseIntVect<boost::int32_t> *getAtomPairFingerprint(
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
     unsigned int maxLength = maxPathLen - 1,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -193,7 +194,7 @@ SparseIntVect<boost::int32_t> *getHashedAtomPairFingerprint(
   responsible for calling delete on this.
 
 */
-ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int minLength = 1,
     unsigned int maxLength = maxPathLen - 1,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
@@ -207,7 +208,7 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
 /*!
   \param atomCodes  the vector of atom hashes
 */
-boost::uint64_t getTopologicalTorsionCode(
+RDKIT_FINGERPRINTS_EXPORT boost::uint64_t getTopologicalTorsionCode(
     const std::vector<boost::uint32_t> &atomCodes,
     bool includeChirality = false);
 
@@ -237,7 +238,7 @@ boost::uint64_t getTopologicalTorsionCode(
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int targetSize = 4,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     const std::vector<boost::uint32_t> *ignoreAtoms = 0,
@@ -270,7 +271,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
   responsible for calling delete on this.
 
 */
-SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
+RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     const std::vector<boost::uint32_t> *ignoreAtoms = 0,
@@ -300,7 +301,7 @@ SparseIntVect<boost::int64_t> *getHashedTopologicalTorsionFingerprint(
   responsible for calling delete on this.
 
 */
-ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
     const ROMol &mol, unsigned int nBits = 2048, unsigned int targetSize = 4,
     const std::vector<boost::uint32_t> *fromAtoms = 0,
     const std::vector<boost::uint32_t> *ignoreAtoms = 0,

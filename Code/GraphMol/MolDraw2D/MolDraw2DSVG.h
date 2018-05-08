@@ -12,6 +12,7 @@
 // This is a concrete class derived from MolDraw2D that uses RDKit to draw a
 // molecule into an SVG file
 
+#include <RDBoost/export.h>
 #ifndef MOLDRAW2DSVG_H
 #define MOLDRAW2DSVG_H
 
@@ -23,7 +24,7 @@
 
 namespace RDKit {
 
-class MolDraw2DSVG : public MolDraw2D {
+class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
  public:
   // initialize to use a particular ostream
   MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,

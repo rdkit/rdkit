@@ -1,3 +1,4 @@
+#include <RDBoost/export.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/python.hpp>
 #include <boost/python/scope.hpp>

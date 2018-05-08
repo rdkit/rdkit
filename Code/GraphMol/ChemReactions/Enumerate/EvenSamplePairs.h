@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef RGROUP_EVEN_SAMPLE_H
 #define RGROUP_EVEN_SAMPLE_H
 
@@ -51,7 +52,7 @@ namespace RDKit {
       See EnumeartionStrategyBase for more details.
 */
 
-class EvenSamplePairsStrategy : public EnumerationStrategyBase {
+class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy : public EnumerationStrategyBase {
   boost::uint64_t m_numPermutationsProcessed;
 
   std::vector<boost::int64_t> used_count;

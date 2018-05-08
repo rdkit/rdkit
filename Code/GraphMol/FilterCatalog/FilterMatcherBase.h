@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <GraphMol/RDKitBase.h>
@@ -48,7 +49,7 @@ namespace RDKit {
 class FilterMatcherBase;  // Forward declaration
 
 //! Holds the atomPairs matched by the underlying matcher
-struct FilterMatch {
+struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
   boost::shared_ptr<FilterMatcherBase> filterMatch;
   MatchVectType atomPairs;
 
@@ -72,8 +73,8 @@ struct FilterMatch {
 
 };
 
-extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
-class FilterMatcherBase
+RDKIT_FILTERCATALOG_EXPORT extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
+class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
     : public boost::enable_shared_from_this<FilterMatcherBase> {
   //------------------------------------
   //! Virtual API for filter matching

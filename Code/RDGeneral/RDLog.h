@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RDLOG_H_29JUNE2005_
 #define _RDLOG_H_29JUNE2005_
 
@@ -23,7 +24,7 @@ namespace logging {
 typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
 typedef boost::iostreams::stream<RDTee> RDTeeStream;
 
-class rdLogger {
+class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:
   std::ostream *dp_dest;
   bool df_owner, df_enabled;
@@ -75,26 +76,26 @@ class rdLogger {
   rdLogger(const rdLogger &);
   rdLogger &operator=(const rdLogger &);
 };
-void enable_logs(const char *arg);
-void enable_logs(const std::string &arg);
-void disable_logs(const char *arg);
-void disable_logs(const std::string &arg);
+RDKIT_RDGENERAL_EXPORT void enable_logs(const char *arg);
+RDKIT_RDGENERAL_EXPORT void enable_logs(const std::string &arg);
+RDKIT_RDGENERAL_EXPORT void disable_logs(const char *arg);
+RDKIT_RDGENERAL_EXPORT void disable_logs(const std::string &arg);
 }
 }
 namespace RDLog {
-std::ostream &toStream(std::ostream &);
+RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
 }
 #define BOOST_LOG(__arg__)                                      \
   if ((__arg__) && (__arg__->dp_dest) && (__arg__->df_enabled)) \
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-extern boost::logging::rdLogger *rdAppLog;
-extern boost::logging::rdLogger *rdDebugLog;
-extern boost::logging::rdLogger *rdInfoLog;
-extern boost::logging::rdLogger *rdErrorLog;
-extern boost::logging::rdLogger *rdWarningLog;
-extern boost::logging::rdLogger *rdStatusLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdAppLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdDebugLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdInfoLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdErrorLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdWarningLog;
+RDKIT_RDGENERAL_EXPORT extern boost::logging::rdLogger *rdStatusLog;
 
 #else
 #define BOOST_LOG_NO_LIB
@@ -107,6 +108,6 @@ BOOST_DECLARE_LOG(rdWarningLog)
 BOOST_DECLARE_LOG(rdStatusLog)
 #endif
 namespace RDLog {
-void InitLogs();
+RDKIT_RDGENERAL_EXPORT void InitLogs();
 }
 #endif

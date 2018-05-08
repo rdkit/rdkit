@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_NONBONDED_H__
 #define __RD_NONBONDED_H__
 #include <ForceField/Contrib.h>
@@ -27,7 +28,7 @@ class AtomicParams;
    length. This multiplier can be supplied to the constructor.
 
  */
-class vdWContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
  public:
   vdWContrib() : d_at1Idx(-1), d_at2Idx(-1){};
 
@@ -65,7 +66,7 @@ namespace Utils {
   \return the position of the minimum
 
 */
-double calcNonbondedMinimum(const AtomicParams *at1Params,
+RDKIT_FORCEFIELD_EXPORT double calcNonbondedMinimum(const AtomicParams *at1Params,
                             const AtomicParams *at2Params);
 
 //! calculates and returns the UFF well depth for a vdW contact
@@ -77,7 +78,7 @@ double calcNonbondedMinimum(const AtomicParams *at1Params,
   \return the depth of the well
 
 */
-double calcNonbondedDepth(const AtomicParams *at1Params,
+RDKIT_FORCEFIELD_EXPORT double calcNonbondedDepth(const AtomicParams *at1Params,
                           const AtomicParams *at2Params);
 }
 }

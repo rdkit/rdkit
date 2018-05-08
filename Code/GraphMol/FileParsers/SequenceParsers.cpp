@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 
+#include "SequenceParsers.h"
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MonomerInfo.h>

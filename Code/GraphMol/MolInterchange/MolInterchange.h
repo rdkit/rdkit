@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
 
@@ -35,7 +36,7 @@ class RWMol;
 namespace MolInterchange {
 
 // \brief parameters controlling parsing of MolJSON
-struct JSONParseParameters {
+struct RDKIT_MOLINTERCHANGE_EXPORT JSONParseParameters {
   bool setAromaticBonds =
       true; /*! toggles setting the BondType of aromatic bonds to Aromatic */
   bool strictValenceCheck =
@@ -52,7 +53,7 @@ static JSONParseParameters defaultJSONParseParameters;
  *   \param inStream - stream containing the data
  *   \param params   - parsing options
  */
-std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
     std::istream *inStream,
     const JSONParseParameters &params = defaultJSONParseParameters);
 
@@ -61,7 +62,7 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataStreamToMols(
  *   \param jsonBlock - string containing the mol block
  *   \param params   - parsing options
  */
-std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
     const std::string &jsonBlock,
     const JSONParseParameters &params = defaultJSONParseParameters);
 
@@ -70,7 +71,7 @@ std::vector<boost::shared_ptr<ROMol>> JSONDataToMols(
  *   \param mols  - the molecules to work with
  */
 template <typename T>
-std::string MolsToJSONData(const std::vector<T> &mols);
+RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData(const std::vector<T> &mols);
 
 // \brief returns MolJSON for a molecule
 /*!

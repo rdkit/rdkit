@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_SANITIZERXN_H
 #define RDKIT_SANITIZERXN_H
 
@@ -40,7 +41,7 @@
 namespace RDKit {
 
 //! class for flagging sanitization errors
-class RxnSanitizeException : public std::exception {
+class RDKIT_CHEMREACTIONS_EXPORT RxnSanitizeException : public std::exception {
  public:
   RxnSanitizeException(const char *msg) : _msg(msg){};
   RxnSanitizeException(const std::string &msg) : _msg(msg){};
@@ -56,18 +57,18 @@ namespace RxnOps {
 //! Any dummy atom with a map but no RGroup label, should be an RGroup
 //!  in RDKit's view of a reaction.
 //!  See if these atoms can be salvaged into RGroups.
-void fixRGroups(ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void fixRGroups(ChemicalReaction &rxn);
 
 //! If atom maps are not defined on rgroups, attempt to deduce them from the RGroup
 //!  labels, or add new ones if possible.
-void fixAtomMaps(ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void fixAtomMaps(ChemicalReaction &rxn);
 
 
 //! Adjusts the reactant templates to properly match reagents
-void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
+RDKIT_CHEMREACTIONS_EXPORT void adjustTemplates(ChemicalReaction &rxn, const MolOps::AdjustQueryParameters &params);
 
 //! merge query Hs if appropriate
-void fixHs(ChemicalReaction &rxn);
+RDKIT_CHEMREACTIONS_EXPORT void fixHs(ChemicalReaction &rxn);
 
 // Default adjustment parameters for matching reagents
 inline const MolOps::AdjustQueryParameters DefaultRxnAdjustParams() {
@@ -151,12 +152,12 @@ typedef enum {
       aromatic) may not have enough information.
 */
 
-void sanitizeRxn(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(ChemicalReaction &rxn,
                  unsigned int &operationsThatFailed,
                  unsigned int sanitizeOps = SANITIZE_ALL,
                  const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 //! \overload
-void sanitizeRxn(ChemicalReaction &rxn,
+RDKIT_CHEMREACTIONS_EXPORT void sanitizeRxn(ChemicalReaction &rxn,
                  const MolOps::AdjustQueryParameters &params = DefaultRxnAdjustParams());
 
 }

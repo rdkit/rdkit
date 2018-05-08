@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_FRAG_CAT_GENERATOR_H
 #define RD_FRAG_CAT_GENERATOR_H
 
@@ -21,7 +22,7 @@ class ROMol;
 typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
     FragCatalog;
 
-class FragCatGenerator {
+class RDKIT_FRAGCATALOG_EXPORT FragCatGenerator {
  public:
   FragCatGenerator() {}
 

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
@@ -20,30 +21,6 @@
 #include <boost/python/stl_iterator.hpp>
 #include <memory>
 
-// code for windows DLL handling taken from
-// http://www.boost.org/more/separate_compilation.html
-#include <boost/config.hpp>
-
-#ifdef BOOST_HAS_DECLSPEC  // defined in config system
-// we need to import/export our code only if the user has specifically
-// asked for it by defining either BOOST_ALL_DYN_LINK if they want all boost
-// libraries to be dynamically linked, or RDKIT_WRAP_DYN_LINK
-// if they want just this one to be dynamically liked:
-#if defined(BOOST_ALL_DYN_LINK) || defined(RDKIT_WRAP_DYN_LINK)
-// export if this is our own source, otherwise import:
-#ifdef RDKIT_WRAP_SOURCE
-#define RDKIT_WRAP_DECL __declspec(dllexport)
-#else
-#define RDKIT_WRAP_DECL __declspec(dllimport)
-#endif  // RDKIT_WRAP_SOURCE
-#endif  // DYN_LINK
-#endif  // BOOST_HAS_DECLSPEC
-//
-// if RDKIT_WRAP_DECL isn't defined yet define it now:
-#ifndef RDKIT_WRAP_DECL
-#define RDKIT_WRAP_DECL
-#endif
-
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/cstdint.hpp>
 #include "list_indexing_suite.hpp"
@@ -56,17 +33,17 @@
 
 namespace python = boost::python;
 
-RDKIT_WRAP_DECL void throw_index_error(
+RDKIT_RDBOOST_EXPORT void throw_index_error(
     int key);  //!< construct and throw an \c IndexError
-RDKIT_WRAP_DECL void throw_value_error(
+RDKIT_RDBOOST_EXPORT void throw_value_error(
     const std::string err);  //!< construct and throw a \c ValueError
-RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const &e);
-RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const &e);
+RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const &e);
+RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException const &e);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
-RDKIT_WRAP_DECL void throw_runtime_error(
+RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
-RDKIT_WRAP_DECL void translate_invariant_error(Invar::Invariant const &e);
+RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
@@ -163,7 +140,7 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
 //  on destruction - grab the lock
 //  no entry into the python interpreter can be performed
 //   between releasing and grabbing the lock
-class RDUNUSED NOGIL {
+class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
  public:
   inline NOGIL() { m_thread_state = PyEval_SaveThread(); }
 

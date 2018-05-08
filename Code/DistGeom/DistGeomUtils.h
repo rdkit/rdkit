@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_DISTGEOMUTILS_H_
 #define _RD_DISTGEOMUTILS_H_
 
@@ -32,10 +33,10 @@ namespace DistGeom {
 
   \return the largest element of the distance matrix
  */
-double pickRandomDistMat(const BoundsMatrix &mmat,
+RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distmat, int seed = -1);
 //! \overload
-double pickRandomDistMat(const BoundsMatrix &mmat,
+RDKIT_DISTGEOMETRY_EXPORT double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distmat,
                          RDKit::double_source_type &rng);
 
@@ -58,12 +59,12 @@ double pickRandomDistMat(const BoundsMatrix &mmat,
 
   \return true if the embedding was successful
 */
-bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
+RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
                           RDGeom::PointPtrVect &positions,
                           bool randNegEig = false, unsigned int numZeroFail = 2,
                           int seed = -1);
 //! \overload
-bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
+RDKIT_DISTGEOMETRY_EXPORT bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
                           RDGeom::PointPtrVect &positions,
                           RDKit::double_source_type &rng,
                           bool randNegEig = false,
@@ -78,10 +79,10 @@ bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,
 
   \return true if the coordinate generation was successful
 */
-bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
                          int seed = -1);
 //! \overload
-bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
+RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
                          RDKit::double_source_type &rng);
 
 //! Setup the error function for violation of distance bounds as a forcefield
@@ -109,7 +110,7 @@ bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
-ForceFields::ForceField *constructForceField(
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const VECT_CHIRALSET &csets, double weightChiral = 1.0,
     double weightFourthDim = 0.1,
@@ -137,7 +138,7 @@ ForceFields::ForceField *constructForceField(
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
-ForceFields::ForceField *construct3DForceField(
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
@@ -167,7 +168,7 @@ ForceFields::ForceField *construct3DForceField(
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
-ForceFields::ForceField *constructPlain3DForceField(
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::pair<int, int> > &bonds,
     const std::vector<std::vector<int> > &angles,
@@ -188,7 +189,7 @@ ForceFields::ForceField *constructPlain3DForceField(
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
-ForceFields::ForceField *construct3DImproperForceField(
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::vector<int> > &improperAtoms,
     const std::vector<int> &atomNums);

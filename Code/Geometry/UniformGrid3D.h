@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _UNIFORMGRID3D_H_20050124_1703
 #define _UNIFORMGRID3D_H_20050124_1703
 
@@ -16,7 +17,7 @@
 #include <iostream>
 
 namespace RDGeom {
-class UniformGrid3D : public Grid3D {
+class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
  public:
   //! \brief ctor
   /*
@@ -201,13 +202,13 @@ class UniformGrid3D : public Grid3D {
 /*
   The grid is written in GRD format
 */
-void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm);
+RDKIT_RDGEOMETRYLIB_EXPORT void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm);
 
 //! \brief writes the contents of the grid to a named file
 /*
   The grid is written in GRD format
 */
-void writeGridToFile(const UniformGrid3D &grid, const std::string &filename);
+RDKIT_RDGEOMETRYLIB_EXPORT void writeGridToFile(const UniformGrid3D &grid, const std::string &filename);
 }
 
 #endif

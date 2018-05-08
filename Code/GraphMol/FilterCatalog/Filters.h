@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <RDBoost/export.h>
 #ifndef __RDKIT_FILTERDATA__
 #define __RDKIT_FILTERDATA__
 

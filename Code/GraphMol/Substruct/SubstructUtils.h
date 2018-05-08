@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SUBSTRUCT_UTILS_H_
 #define _RD_SUBSTRUCT_UTILS_H_
 
@@ -18,12 +19,12 @@ class ROMol;
 class Atom;
 class Bond;
 
-double toPrime(const MatchVectType &v);
-void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms);
-bool atomCompat(const Atom* a1, const Atom* a2,
+RDKIT_SUBSTRUCTMATCH_EXPORT double toPrime(const MatchVectType &v);
+RDKIT_SUBSTRUCTMATCH_EXPORT void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms);
+RDKIT_SUBSTRUCTMATCH_EXPORT bool atomCompat(const Atom* a1, const Atom* a2,
                 bool useQueryQueryMatches = false);
-bool chiralAtomCompat(const Atom* a1, const Atom* a2);
-bool bondCompat(const Bond* b1, const Bond* b2,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool chiralAtomCompat(const Atom* a1, const Atom* a2);
+RDKIT_SUBSTRUCTMATCH_EXPORT bool bondCompat(const Bond* b1, const Bond* b2,
                 bool useQueryQueryMatches = false);
 }
 

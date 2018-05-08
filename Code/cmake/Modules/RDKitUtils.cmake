@@ -5,8 +5,13 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}${RDKit_RevisionModifier}")
-set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier}")
+set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}")
+if (RDKit_Revision)
+  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}.${RDKit_Revision}")
+  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
+else(RDKit_Revision)
+  set(RDKit_VERSION "${RDKit_VERSION}.0")
+endif(RDKit_Revision)
 
 set(compilerID "${CMAKE_CXX_COMPILER_ID}")
 set(systemAttribute "")
@@ -31,7 +36,7 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if(MSVC)
+  if(RDK_INSTALL_STATIC_LIBS AND NOT RDK_INSTALL_DYNAMIC_LIBS)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
@@ -39,38 +44,38 @@ macro(rdkit_library)
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT dev )
     endif(RDK_INSTALL_DEV_COMPONENT)
-  else(MSVC)
+  else()
     # we're going to always build in shared mode since we
     # need exceptions to be (correctly) catchable across
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
-      add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
-      target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
-      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-              COMPONENT runtime )
-      if(RDK_INSTALL_STATIC_LIBS)
-        add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+    target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
+    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+            COMPONENT runtime )
+    if(RDK_INSTALL_STATIC_LIBS)
+      add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
-        foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-          if(${linkLib} MATCHES "^(Boost)|(Thread)")
-            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
-          else()
-            set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
-          endif()
-        endforeach()
-        target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
-        target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
-        if(RDK_INSTALL_DEV_COMPONENT)
-          INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
+      foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+        if(${linkLib} MATCHES "^(Boost)|(Thread)")
+          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
+        else()
+          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+        endif()
+      endforeach()
+      target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
+      target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
+      if(RDK_INSTALL_DEV_COMPONENT)
+        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                   DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                   COMPONENT dev )
-        endif(RDK_INSTALL_DEV_COMPONENT)
-        set_target_properties(${RDKLIB_NAME}_static PROPERTIES
-                              OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
+      endif(RDK_INSTALL_DEV_COMPONENT)
+      set_target_properties(${RDKLIB_NAME}_static PROPERTIES
+                            OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
 
-      endif(RDK_INSTALL_STATIC_LIBS)
-  endif(MSVC)
+    endif(RDK_INSTALL_STATIC_LIBS)
+  endif()
   IF(RDKLIB_LINK_LIBRARIES)
     target_link_libraries(${RDKLIB_NAME} PUBLIC ${RDKLIB_LINK_LIBRARIES})
   ENDIF(RDKLIB_LINK_LIBRARIES)

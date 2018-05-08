@@ -20,6 +20,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <Geometry/point.h>
+#include "Chirality.h"
 
 // #define VERBOSE_CANON 1
 

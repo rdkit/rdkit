@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_SUBGRAPHS_BUILD)
 rdkit_library(Subgraphs Subgraphs.cpp SubgraphUtils.cpp
               LINK_LIBRARIES GraphMol )
 

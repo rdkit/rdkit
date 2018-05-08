@@ -1,3 +1,4 @@
+#include <RDBoost/export.h>
 #ifndef RDKIT_IMPORT_ARRAY_INCLUDED
 #define RDKIT_IMPORT_ARRAY_INCLUDED
 

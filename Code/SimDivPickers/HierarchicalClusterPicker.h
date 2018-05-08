@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _HIERARCHCLUSTERPICKER_H
 #define _HIERARCHCLUSTERPICKER_H
 
@@ -21,7 +22,7 @@ namespace RDPickers {
  *  for diversity picking. The clustering itself is done using the Murtagh
  *  code in $RDBASE/Code/ML/Cluster/Mutagh/
  */
-class HierarchicalClusterPicker : public DistPicker {
+class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
  public:
   /*! \brief The type of hierarchical clustering algorithm to use
    */

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_SUBSTRUCTMATCH_H
 #define RD_SUBSTRUCTMATCH_H
 
@@ -38,7 +39,7 @@ typedef std::vector<std::pair<int, int> > MatchVectType;
     \return whether or not a match was found
 
 */
-bool SubstructMatch(const ROMol &mol, const ROMol &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool SubstructMatch(const ROMol &mol, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
@@ -57,7 +58,7 @@ bool SubstructMatch(const ROMol &mol, const ROMol &query,
     \return whether or not a match was found
 
 */
-bool SubstructMatch(ResonanceMolSupplier &resMolSuppl, const ROMol &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool SubstructMatch(ResonanceMolSupplier &resMolSuppl, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
@@ -84,7 +85,7 @@ bool SubstructMatch(ResonanceMolSupplier &resMolSuppl, const ROMol &query,
     \return the number of matches found
 
 */
-unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,
@@ -119,7 +120,7 @@ unsigned int SubstructMatch(const ROMol &mol, const ROMol &query,
     \return the number of matches found
 
 */
-unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
                             const ROMol &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = false,
@@ -130,25 +131,25 @@ unsigned int SubstructMatch(ResonanceMolSupplier &resMolSuppl,
 
 //! \overload
 //! finds the first match in the bundle
-bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool SubstructMatch(const MolBundle &bundle, const ROMol &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
 //! \overload
 //! finds the first match in the bundle
-bool SubstructMatch(const ROMol &bundle, const MolBundle &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool SubstructMatch(const ROMol &bundle, const MolBundle &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
 //! \overload
 //! finds the first match in the bundle
-bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT bool SubstructMatch(const MolBundle &bundle, const MolBundle &query,
                     MatchVectType &matchVect, bool recursionPossible = true,
                     bool useChirality = false,
                     bool useQueryQueryMatches = false);
 //! \overload
 //! finds all matches in the first molecule of the bundle that matches the query
-unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,
@@ -157,7 +158,7 @@ unsigned int SubstructMatch(const MolBundle &mol, const ROMol &query,
 
 //! \overload
 //! finds all matches in the first molecule of the bundle that matches
-unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,
@@ -166,7 +167,7 @@ unsigned int SubstructMatch(const MolBundle &mol, const MolBundle &query,
 //! \overload
 //! finds all matches against the first molecule of the query bundle that
 //! matches
-unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatch(const ROMol &mol, const MolBundle &query,
                             std::vector<MatchVectType> &matchVect,
                             bool uniquify = true, bool recursionPossible = true,
                             bool useChirality = false,

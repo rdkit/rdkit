@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_BITVECT_H__
 #define __RD_BITVECT_H__
 
@@ -20,7 +21,7 @@ typedef DoubleVect::iterator DoubleVectIter;
 const int ci_BITVECT_VERSION = 0x0020;  //!< version number to use in pickles
 
 //! Abstract base class for storing BitVectors
-class BitVect {
+class RDKIT_DATASTRUCTS_EXPORT BitVect {
  public:
   virtual ~BitVect() = 0;
   //! sets a particular bit and returns its original value

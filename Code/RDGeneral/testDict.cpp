@@ -10,6 +10,7 @@
 //
 //
 
+#include <RDBoost/test.h>
 #include "types.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDAny.h>

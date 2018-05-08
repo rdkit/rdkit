@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_BITVECTS_UTILS_H__
 #define __RD_BITVECTS_UTILS_H__
 
@@ -16,12 +17,12 @@
 //! \brief Construct a BitVect from the ASCII representation of a
 //! Daylight fingerprint string
 template <typename T>
-void FromDaylightString(T &sbv, const std::string &s);
+RDKIT_DATASTRUCTS_EXPORT void FromDaylightString(T &sbv, const std::string &s);
 
 //! \brief Construct a BitVect from the ASCII representation of a
 //! bit string (i.e. a bunch of zeros and ones)
 template <typename T>
-void FromBitString(T &sbv, const std::string &s);
+RDKIT_DATASTRUCTS_EXPORT void FromBitString(T &sbv, const std::string &s);
 
 //! Convert a SparseBitVector to an ExplicitBitVector
 /*!
@@ -29,5 +30,5 @@ void FromBitString(T &sbv, const std::string &s);
   <b>Note:</b> the caller is responsible for <tt>delete</tt>ing this.
 
  */
-ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv);
+RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv);
 #endif

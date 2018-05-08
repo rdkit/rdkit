@@ -12,6 +12,7 @@
   \brief Defines Monomer information classes
 
 */
+#include <RDBoost/export.h>
 #ifndef _RD_MONOMERINFO_H
 #define _RD_MONOMERINFO_H
 
@@ -21,7 +22,7 @@
 namespace RDKit {
 
 //! The abstract base class for atom-level monomer info
-class AtomMonomerInfo {
+class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
  public:
   typedef enum { UNKNOWN = 0, PDBRESIDUE, OTHER } AtomMonomerType;
 
@@ -46,7 +47,7 @@ class AtomMonomerInfo {
 };
 
 //! Captures atom-level information about peptide residues
-class AtomPDBResidueInfo : public AtomMonomerInfo {
+class RDKIT_GRAPHMOL_EXPORT AtomPDBResidueInfo : public AtomMonomerInfo {
  public:
   AtomPDBResidueInfo() : AtomMonomerInfo(PDBRESIDUE){};
   AtomPDBResidueInfo(const AtomPDBResidueInfo &other)
@@ -132,7 +133,7 @@ class AtomPDBResidueInfo : public AtomMonomerInfo {
 };
 };
 //! allows AtomPDBResidueInfo objects to be dumped to streams
-std::ostream &operator<<(std::ostream &target,
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                          const RDKit::AtomPDBResidueInfo &apri);
 
 #endif

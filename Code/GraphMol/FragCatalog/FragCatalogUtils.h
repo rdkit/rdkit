@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FRAG_CATALOG_UTILS_H_
 #define _RD_FRAG_CATALOG_UTILS_H_
 
@@ -21,8 +22,8 @@ namespace RDKit {
 // get the functional groups from file or stream
 // each functional groups is read in as a molecule with queryatoms and
 // querybonds
-MOL_SPTR_VECT readFuncGroups(std::string fileName);
-MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead = -1);
+RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::string fileName);
+RDKIT_FRAGCATALOG_EXPORT MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead = -1);
 
 // REVIEW: should this return a vector of pairs or a map?
 // mark the functional groups of interest on the molecule
@@ -38,7 +39,7 @@ MOL_SPTR_VECT readFuncGroups(std::istream &inStream, int nToRead = -1);
 //            the connection bond is included. these need to be chopped from
 //            the molecule later
 
-MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
+RDKIT_FRAGCATALOG_EXPORT MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
                                   INT_VECT &fgBonds);
 
 // This functions is called before either adding the fragments from a molecule
@@ -52,7 +53,7 @@ MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
 // - return coreMol to the caller of this function and the enter the atom ids to
 // func
 //   group ids mapping into aToFmap argument
-ROMol *prepareMol(const ROMol &mol, const FragCatParams *fparams,
+RDKIT_FRAGCATALOG_EXPORT ROMol *prepareMol(const ROMol &mol, const FragCatParams *fparams,
                   MatchVectType &aToFmap);
 }
 

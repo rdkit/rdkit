@@ -1,3 +1,5 @@
+
+add_definitions(-DRDKIT_RDGEOMETRYLIB_BUILD)
 rdkit_library(RDGeometryLib 
               point.cpp Transform2D.cpp Transform3D.cpp 
               UniformGrid3D.cpp GridUtils.cpp

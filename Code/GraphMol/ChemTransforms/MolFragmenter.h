@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_MOLFRAGMENTER_H__
 #define _RD_MOLFRAGMENTER_H__
 
@@ -15,7 +16,7 @@
 
 namespace RDKit {
 namespace MolFragmenter {
-struct FragmenterBondType {
+struct RDKIT_CHEMTRANSFORMS_EXPORT FragmenterBondType {
   unsigned int atom1Label, atom2Label;
   unsigned int atom1Type, atom2Type;
   Bond::BondType bondType;
@@ -46,18 +47,18 @@ struct FragmenterBondType {
   The client is responsible for deleting this molecule.
 
 */
-ROMol *fragmentOnBonds(
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     bool addDummies = true,
     const std::vector<std::pair<unsigned int, unsigned int> > *dummyLabels = 0,
     const std::vector<Bond::BondType> *bondTypes = 0,
     std::vector<unsigned int> *nCutsPerAtom = 0);
 //! \overload
-ROMol *fragmentOnBonds(
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *fragmentOnBonds(
     const ROMol &mol, const std::vector<FragmenterBondType> &bondPatterns,
     const std::map<unsigned int, ROMOL_SPTR> *atomEnvirons = 0,
     std::vector<unsigned int> *nCutsPerAtom = 0);
-void fragmentOnSomeBonds(
+RDKIT_CHEMTRANSFORMS_EXPORT void fragmentOnSomeBonds(
     const ROMol &mol, const std::vector<unsigned int> &bondIndices,
     std::vector<ROMOL_SPTR> &resMols, unsigned int maxToCut = 1,
     bool addDummies = true,
@@ -71,29 +72,29 @@ void fragmentOnSomeBonds(
   The client is responsible for deleting this molecule.
 
 */
-ROMol *fragmentOnBRICSBonds(const ROMol &mol);
+RDKIT_CHEMTRANSFORMS_EXPORT ROMol *fragmentOnBRICSBonds(const ROMol &mol);
 
-void constructFragmenterAtomTypes(
+RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterAtomTypes(
     std::istream *inStream, std::map<unsigned int, std::string> &defs,
     const std::string &comment = "//", bool validate = true,
     std::map<unsigned int, ROMOL_SPTR> *environs = 0);
-void constructFragmenterAtomTypes(
+RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterAtomTypes(
     const std::string &str, std::map<unsigned int, std::string> &defs,
     const std::string &comment = "//", bool validate = true,
     std::map<unsigned int, ROMOL_SPTR> *environs = 0);
-void constructBRICSAtomTypes(std::map<unsigned int, std::string> &defs,
+RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSAtomTypes(std::map<unsigned int, std::string> &defs,
                              std::map<unsigned int, ROMOL_SPTR> *environs = 0);
-void constructFragmenterBondTypes(
+RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterBondTypes(
     std::istream *inStream,
     const std::map<unsigned int, std::string> &atomTypes,
     std::vector<FragmenterBondType> &defs, const std::string &comment = "//",
     bool validate = true, bool labelByConnector = true);
-void constructFragmenterBondTypes(
+RDKIT_CHEMTRANSFORMS_EXPORT void constructFragmenterBondTypes(
     const std::string &str,
     const std::map<unsigned int, std::string> &atomTypes,
     std::vector<FragmenterBondType> &defs, const std::string &comment = "//",
     bool validate = true, bool labelByConnector = true);
-void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs);
+RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs);
 }
 }
 #endif

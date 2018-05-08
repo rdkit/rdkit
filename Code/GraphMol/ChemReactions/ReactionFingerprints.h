@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <RDBoost/export.h>
 #ifndef RD_REACTIONFINGERPRINTS_H
 #define RD_REACTIONFINGERPRINTS_H
 
@@ -71,7 +72,7 @@ enum FingerprintType {
                                TopologicalTorsion and MorganFP were supported in
    the difference fingerprint.
  */
-struct ReactionFingerprintParams {
+struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
   ReactionFingerprintParams()
       : includeAgents(false),
         bitRatioAgents(0.2),
@@ -98,8 +99,8 @@ struct ReactionFingerprintParams {
   FingerprintType fpType;
 };
 
-extern const ReactionFingerprintParams DefaultStructuralFPParams;
-extern const ReactionFingerprintParams DefaultDifferenceFPParams;
+RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams DefaultStructuralFPParams;
+RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams DefaultDifferenceFPParams;
 
 //! Generates a structural fingerprint for a reaction
 //! to use in screening
@@ -119,7 +120,7 @@ extern const ReactionFingerprintParams DefaultDifferenceFPParams;
   <b>Notes:</b>
     - the caller is responsible for <tt>delete</tt>ing the result
 */
-ExplicitBitVect *StructuralFingerprintChemReaction(
+RDKIT_CHEMREACTIONS_EXPORT ExplicitBitVect *StructuralFingerprintChemReaction(
     const ChemicalReaction &rxn,
     const ReactionFingerprintParams &params = DefaultStructuralFPParams);
 
@@ -141,7 +142,7 @@ ExplicitBitVect *StructuralFingerprintChemReaction(
   <b>Notes:</b>
     - the caller is responsible for <tt>delete</tt>ing the result
 */
-SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
+RDKIT_CHEMREACTIONS_EXPORT SparseIntVect<boost::uint32_t> *DifferenceFingerprintChemReaction(
     const ChemicalReaction &rxn,
     const ReactionFingerprintParams &params = DefaultDifferenceFPParams);
 }

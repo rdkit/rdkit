@@ -1,6 +1,7 @@
 //
 // Created by Santosh Putta, Nov 2006
 //
+#include <RDBoost/export.h>
 #ifndef __RD_CHIRALVIOLATIONCONTRIB_H__
 #define __RD_CHIRALVIOLATIONCONTRIB_H__
 
@@ -12,7 +13,7 @@ class ChiralSet;
 
 //! A term to capture the violation of chirality at an atom center
 //!
-class ChiralViolationContrib : public ForceFields::ForceFieldContrib {
+class RDKIT_DISTGEOMETRY_EXPORT ChiralViolationContrib : public ForceFields::ForceFieldContrib {
  public:
   ChiralViolationContrib()
       : d_idx1(0),

@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_MOLCHEMICALFEATURES_BUILD)
 rdkit_python_extension(rdMolChemicalFeatures
                        rdMolChemicalFeatures.cpp MolChemicalFeature.cpp 
                        MolChemicalFeatureFactory.cpp ChemicalFeatureUtils.cpp

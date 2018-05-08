@@ -14,6 +14,7 @@
 
 */
 
+#include <RDBoost/export.h>
 #ifndef _RDKIT_BASE_H
 #define _RDKIT_BASE_H
 

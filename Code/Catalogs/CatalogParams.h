@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_CATALOGPARAMS_H__
 #define __RD_CATALOGPARAMS_H__
 
@@ -14,7 +15,7 @@
 
 namespace RDCatalog {
 //! abstract base class for the container used to create a catalog
-class CatalogParams {
+class RDKIT_CATALOGS_EXPORT CatalogParams {
  public:
   virtual ~CatalogParams() = 0;
 

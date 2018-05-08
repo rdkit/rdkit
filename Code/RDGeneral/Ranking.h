@@ -14,6 +14,7 @@
 
     Much of this used to be in GraphMol/RankAtoms.h
 */
+#include <RDBoost/export.h>
 #ifndef RD_RANKING_H
 #define RD_RANKING_H
 

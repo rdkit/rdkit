@@ -7,6 +7,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RDKITMULTIMOLDRAW2D_H
 #define RDKITMULTIMOLDRAW2D_H
 
@@ -17,7 +18,7 @@
 namespace RDKit {
 
 template <typename T>
-class MultiMolDraw2D {
+class RDKIT_MOLDRAW2D_EXPORT MultiMolDraw2D {
  public:
   //!
   MultiMolDraw2D(unsigned int nRows, unsigned int nCols, int width, int height,

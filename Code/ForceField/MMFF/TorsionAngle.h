@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_MMFFTORSIONANGLE_H__
 #define __RD_MMFFTORSIONANGLE_H__
 
@@ -24,7 +25,7 @@ namespace MMFF {
 class MMFFTor;
 
 //! the torsion term for MMFF
-class TorsionAngleContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
   TorsionAngleContrib()
       : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_at4Idx(-1){};
@@ -57,17 +58,17 @@ class TorsionAngleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the cosine of a torsion angle
-double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
+RDKIT_FORCEFIELD_EXPORT double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
                          const RDGeom::Point3D &jPoint,
                          const RDGeom::Point3D &kPoint,
                          const RDGeom::Point3D &lPoint);
 //! returns the 3-tuple of a torsion angle force constants
-boost::tuple<double, double, double> calcTorsionForceConstant(
+RDKIT_FORCEFIELD_EXPORT boost::tuple<double, double, double> calcTorsionForceConstant(
     const MMFFTor *mmffTorParams);
 //! calculates and returns the torsional MMFF energy
-double calcTorsionEnergy(const double V1, const double V2, const double V3,
+RDKIT_FORCEFIELD_EXPORT double calcTorsionEnergy(const double V1, const double V2, const double V3,
                          const double cosPhi);
-void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
+RDKIT_FORCEFIELD_EXPORT void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
                      double **g, double &sinTerm, double &cosPhi);
 }
 }

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #include <list>
 #include <algorithm>
 #include <math.h>
@@ -14,7 +15,7 @@
 
 namespace RDKit {
 namespace FMCS {
-class RingMatchTableSet {
+class RDKIT_FMCS_EXPORT RingMatchTableSet {
   class RingMatchTable {
     FMCS::MatchTable MatchMatrix;
     std::map<const INT_VECT*, unsigned> RingIndex;

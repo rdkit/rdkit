@@ -13,6 +13,7 @@
   \brief Pulls in all the query types.
 */
 
+#include <RDBoost/export.h>
 #ifndef __RD_QUERYOBJECTS_H__
 #define __RD_QUERYOBJECTS_H__
 

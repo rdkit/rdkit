@@ -29,6 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.n
 //
+#include <RDBoost/export.h>
 #ifndef RDKIT_ENUMERATE_H
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"
@@ -57,7 +58,7 @@ namespace RDKit {
      pass chemical sanitization.  Note that if the product template itself\n\
      does not pass sanitization, then none of the products will.
 */
-struct EnumerationParams
+struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams
 {
   int reagentMaxMatchCount;
   bool sanePartialProducts;
@@ -76,7 +77,7 @@ struct EnumerationParams
 //    with the reaction.
 //  rxn must be sanitized, initialized and preprocessed.
 //   this happens automatically in EnumerateLibrary
-EnumerationTypes::BBS removeNonmatchingReagents(
+RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn,
     EnumerationTypes::BBS bbs,
     const EnumerationParams &params=EnumerationParams());
@@ -115,7 +116,7 @@ EnumerationTypes::BBS removeNonmatchingReagents(
  */
 
 
-class EnumerateLibrary : public EnumerateLibraryBase {
+class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary : public EnumerateLibraryBase {
   EnumerationTypes::BBS m_bbs;
 
  public:
@@ -187,7 +188,7 @@ class EnumerateLibrary : public EnumerateLibraryBase {
 #endif
 };
 
-bool EnumerateLibraryCanSerialize();
+RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
 }
 #endif

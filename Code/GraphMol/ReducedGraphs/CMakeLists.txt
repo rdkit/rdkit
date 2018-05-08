@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_REDUCEDGRAPHS_BUILD)
 rdkit_library(ReducedGraphs
               ReducedGraphs.cpp
               LINK_LIBRARIES SubstructMatch SmilesParse GraphMol

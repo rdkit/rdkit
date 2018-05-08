@@ -31,6 +31,7 @@
 //
 // Created by Greg Landrum, September 2006
 //
+#include <RDBoost/export.h>
 #ifndef __RD_SLNATTRIBS_H__
 #define __RD_SLNATTRIBS_H__
 
@@ -50,7 +51,7 @@ typedef enum {
   AttribNot
 } AttribCombineOp;
 
-class AttribType {
+class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
   AttribType()
       : first(""), second(""), op(""), negated(false), structQuery(0){};

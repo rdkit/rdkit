@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_TRANSFORM3D_H__
 #define __RD_TRANSFORM3D_H__
 
@@ -18,7 +19,7 @@ namespace RDGeom {
 class Point3D;
 const unsigned int DIM_3D = 4;
 
-class Transform3D : public RDNumeric::SquareMatrix<double> {
+class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D : public RDNumeric::SquareMatrix<double> {
  public:
   //!  Constructor
   /*!
@@ -84,13 +85,13 @@ class Transform3D : public RDNumeric::SquareMatrix<double> {
  * The resulting transform t3 has the folliwng effect
  *  t3(point) = t1(t2(point))
  */
-RDGeom::Transform3D operator*(const RDGeom::Transform3D &t1,
+RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Transform3D operator*(const RDGeom::Transform3D &t1,
                               const RDGeom::Transform3D &t2);
 
 /*! \brief Transform a point:
  *
  */
-RDGeom::Point3D operator*(const RDGeom::Transform3D &t,
+RDKIT_RDGEOMETRYLIB_EXPORT RDGeom::Point3D operator*(const RDGeom::Transform3D &t,
                           const RDGeom::Point3D &pt);
 
 #endif

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RESONANCE_H__
 #define _RESONANCE_H__
 
@@ -29,7 +30,7 @@ typedef std::vector<ConjElectrons *> CEVect;
 typedef std::vector<CEVect2 *> CEVect3;
 typedef std::vector<boost::uint8_t> ConjFP;
 typedef boost::unordered_map<std::size_t, ConjElectrons *> CEMap;
-class ResonanceMolSupplier {
+class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
  public:
   typedef enum {
     /*! include resonance structures whose octets are less complete

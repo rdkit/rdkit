@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string>
 
+#include "SequenceWriters.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MonomerInfo.h>

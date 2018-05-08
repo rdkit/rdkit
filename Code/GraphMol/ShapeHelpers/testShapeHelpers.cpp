@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/test.h>
 #include <Geometry/UniformGrid3D.h>
 #include "ShapeEncoder.h"
 #include "ShapeUtils.h"

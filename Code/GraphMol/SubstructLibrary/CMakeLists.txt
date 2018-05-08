@@ -1,4 +1,7 @@
 if(RDK_BUILD_THREADSAFE_SSS)
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_SUBSTRUCTLIBRARY_BUILD)
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
               LINK_LIBRARIES Fingerprints SubstructMatch SmilesParse

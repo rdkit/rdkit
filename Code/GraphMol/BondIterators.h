@@ -14,6 +14,7 @@
    <b>WARNING:</b> If you go changing the molecule underneath one of
    these iterators you will be sad...
 */
+#include <RDBoost/export.h>
 #ifndef _RD_BOND_ITERATORS_H
 #define _RD_BOND_ITERATORS_H
 
@@ -23,7 +24,7 @@ namespace RDKit {
 
 //! \brief iterator for a molecule's bonds, currently BiDirectional,
 //! but it theoretically ought to be RandomAccess.
-class BondIterator_ {
+class RDKIT_GRAPHMOL_EXPORT BondIterator_ {
   // FIX: I'm not pleased with the lack of internal testing code
   //  (PREs and the like) in here
  public:
@@ -48,7 +49,7 @@ class BondIterator_ {
 };
 //! \brief const iterator for a molecule's bonds, currently BiDirectional,
 //! but it theoretically ought to be RandomAccess.
-class ConstBondIterator_ {
+class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
  public:
   ConstBondIterator_() : _mol(NULL){};
   ConstBondIterator_(ROMol const *mol);

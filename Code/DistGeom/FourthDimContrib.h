@@ -1,6 +1,7 @@
 //
 // Created by Santosh Putta, Nov 2006
 //
+#include <RDBoost/export.h>
 #ifndef __RD_FOURTHDIMCONTRIB_H__
 #define __RD_FOURTHDIMCONTRIB_H__
 
@@ -11,7 +12,7 @@
 namespace DistGeom {
 //! A term used in penalizing chirality violations
 //!
-class FourthDimContrib : public ForceFields::ForceFieldContrib {
+class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib : public ForceFields::ForceFieldContrib {
  public:
   FourthDimContrib() : d_idx(0), d_weight(0.0){};
 

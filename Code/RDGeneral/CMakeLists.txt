@@ -3,6 +3,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.cpp.cmake
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
 
+
+add_definitions(-DRDKIT_RDGENERAL_BUILD)
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp
               LocaleSwitcher.cpp versions.cpp SHARED

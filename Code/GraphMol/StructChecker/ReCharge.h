@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include "StructChecker.h"
 #include "Pattern.h"
@@ -19,7 +20,7 @@ namespace StructureCheck {
 */
 int TotalCharge(const ROMol &mol);
 
-class ChargeFix {
+class RDKIT_STRUCTCHECKER_EXPORT ChargeFix {
   const StructCheckerOptions &Options;
   RWMol &Mol;
   std::vector<unsigned> BondColor;

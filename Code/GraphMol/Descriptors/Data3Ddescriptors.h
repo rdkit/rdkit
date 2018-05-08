@@ -30,10 +30,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
+#include <RDBoost/export.h>
 #ifndef DATA3DDESCRIPTORS_2017
 #define DATA3DDESCRIPTORS_2017
 
-class Data3Ddescriptors {
+class RDKIT_DESCRIPTORS_EXPORT Data3Ddescriptors {
  private:
   static double mw[110];
   static double vdW[110];

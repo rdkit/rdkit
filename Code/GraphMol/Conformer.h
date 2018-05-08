@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_CONFORMER_H
 #define _RD_CONFORMER_H
 
@@ -18,7 +19,7 @@ namespace RDKit {
 class ROMol;
 
 //! used to indicate errors from incorrect confomer access
-class ConformerException : public std::exception {
+class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
  public:
   //! construct with an error message
   ConformerException(const char *msg) : _msg(msg){};
@@ -38,7 +39,7 @@ class ConformerException : public std::exception {
   - a pointer to the owing molecule
   - a vector of 3D points (positions of atoms)
 */
-class Conformer {
+class RDKIT_GRAPHMOL_EXPORT Conformer {
  public:
   friend class ROMol;
 

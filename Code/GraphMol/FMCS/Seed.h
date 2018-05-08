@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include <map>
 #include "../RDKitBase.h"
@@ -20,7 +21,7 @@ namespace FMCS {
 class MaximumCommonSubgraph;
 struct TargetMatch;
 
-struct MolFragment {  // Reference to a fragment of source molecule
+struct RDKIT_FMCS_EXPORT MolFragment {  // Reference to a fragment of source molecule
   std::vector<const Atom*> Atoms;
   std::vector<const Bond*> Bonds;
   std::vector<unsigned> AtomsIdx;
@@ -30,7 +31,7 @@ struct MolFragment {  // Reference to a fragment of source molecule
                                                 // map
 };
 
-struct NewBond {
+struct RDKIT_FMCS_EXPORT NewBond {
   unsigned SourceAtomIdx;  // index in the seed. Atom is already in the seed
   unsigned BondIdx;     // index in qmol of new bond scheduled to be added into
                         // seed. This is outgoing bond from SourceAtomIdx
@@ -57,7 +58,7 @@ struct NewBond {
         EndAtomIdx(to_atom) {}
 };
 
-class Seed {
+class RDKIT_FMCS_EXPORT Seed {
  private:
   mutable std::vector<NewBond> NewBonds;  // for multistage growing. all
                                           // directly connected outgoing bonds

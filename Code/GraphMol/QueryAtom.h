@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_QUERYATOM_H_
 #define _RD_QUERYATOM_H_
 
@@ -23,7 +24,7 @@ namespace RDKit {
   querying capabilities.
 
  */
-class QueryAtom : public Atom {
+class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
  public:
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 

@@ -2,6 +2,7 @@
 //
 //  Copyright (C) 2006 Greg Landrum
 //
+#include <RDBoost/test.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/RDLog.h>

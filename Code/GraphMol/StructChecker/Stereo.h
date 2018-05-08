@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include "StructChecker.h"
 #include "Utilites.h"
@@ -40,7 +41,7 @@ static const int CONVERTED_TO_2D = 8;
 * molecule *mp. The function returns a bit set integer which defines
 * the problems encountered.
 */
-int DubiousStereochemistry(RWMol &mol);
+RDKIT_STRUCTCHECKER_EXPORT int DubiousStereochemistry(RWMol &mol);
 
 /* FixDubious3DMolecule:
 * Checks if the structure has 3D coordinates and/or flat sp3-carbons with
@@ -49,37 +50,37 @@ int DubiousStereochemistry(RWMol &mol);
 * coordinates.
 * Real 3D structures without stereo designations go through untouched.
 */
-int FixDubious3DMolecule(RWMol &mol);
+RDKIT_STRUCTCHECKER_EXPORT int FixDubious3DMolecule(RWMol &mol);
 
 // Removes ill-defined stereodescriptors.
-void RemoveDubiousStereochemistry(RWMol &mol);
+RDKIT_STRUCTCHECKER_EXPORT void RemoveDubiousStereochemistry(RWMol &mol);
 
 /*
 * Checks if all potential stereocenters are either completely undefined
 * or attributed with hashes and wedges according to MDL rules.
 */
-bool CheckStereo(const ROMol &mol);
+RDKIT_STRUCTCHECKER_EXPORT bool CheckStereo(const ROMol &mol);
 
 /*
 * Checks if any two atoms in *mp come closer than 10% of the
 * average bond length or if an atom is too close the line
 * between two bonded atoms.
 */
-bool AtomClash(RWMol &mol, double clash_limit);
+RDKIT_STRUCTCHECKER_EXPORT bool AtomClash(RWMol &mol, double clash_limit);
 
 /*
 * Computes the stereo parity of atom number iatom in *mp relative
 * to its numbering. The immediate neighbours are defined by *nbp
 * to speed up processing.
 */
-int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp);
+RDKIT_STRUCTCHECKER_EXPORT int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp);
 
 /*
 * Sets the color field of the defined double bonds in *mp to CIS,
 * TRANS, or NONE depending on the ligands with the lowest numbering[].
 * It returns the number of defined double bonds found.
 */
-int CisTransPerception(const ROMol &mol,
+RDKIT_STRUCTCHECKER_EXPORT int CisTransPerception(const ROMol &mol,
                        const std::vector<RDGeom::Point3D> &points,
                        const std::vector<unsigned> &numbering,
                        std::vector<unsigned> &bondColor);

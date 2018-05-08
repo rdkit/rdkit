@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_DISTVIOLATIONCONTRIB_H__
 #define __RD_DISTVIOLATIONCONTRIB_H__
 
@@ -15,7 +16,7 @@
 namespace DistGeom {
 //! A term to capture the violation of the upper and lower bounds by
 //! distance between two points
-class DistViolationContrib : public ForceFields::ForceFieldContrib {
+class RDKIT_DISTGEOMETRY_EXPORT DistViolationContrib : public ForceFields::ForceFieldContrib {
  public:
   DistViolationContrib()
       : d_end1Idx(0), d_end2Idx(0), d_ub(1000.0), d_lb(0.0), d_weight(1.0){};

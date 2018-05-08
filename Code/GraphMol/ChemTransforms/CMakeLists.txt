@@ -1,3 +1,6 @@
+
+remove_definitions(-DRDKIT_GRAPHMOL_BUILD)
+add_definitions(-DRDKIT_CHEMTRANSFORMS_BUILD)
 rdkit_library(ChemTransforms ChemTransforms.cpp MolFragmenter.cpp LINK_LIBRARIES
   SubstructMatch SmilesParse 
   ${RDKit_THREAD_LIBS})

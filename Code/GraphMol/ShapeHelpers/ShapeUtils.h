@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_SHAPE_UTILS_H_20050128_
 #define _RD_SHAPE_UTILS_H_20050128_
 #include <DataStructs/DiscreteValueVect.h>
@@ -26,7 +27,7 @@ namespace MolShapes {
 //! Compute the size of the box that can fit the conformation, and offset of the
 // box
 //! from the origin
-void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
+RDKIT_SHAPEHELPERS_EXPORT void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
                               RDGeom::Point3D &offSet,
                               const RDGeom::Transform3D *trans = 0,
                               double padding = 2.5);
@@ -40,12 +41,12 @@ void computeConfDimsAndOffset(const Conformer &conf, RDGeom::Point3D &dims,
   coordinates
   \param padding         Padding added on the sides around the conformer
 */
-void computeConfBox(const Conformer &conf, RDGeom::Point3D &leftBottom,
+RDKIT_SHAPEHELPERS_EXPORT void computeConfBox(const Conformer &conf, RDGeom::Point3D &leftBottom,
                     RDGeom::Point3D &rightTop,
                     const RDGeom::Transform3D *trans = 0, double padding = 2.5);
 
 //! Compute the union of two boxes
-void computeUnionBox(const RDGeom::Point3D &leftBottom1,
+RDKIT_SHAPEHELPERS_EXPORT void computeUnionBox(const RDGeom::Point3D &leftBottom1,
                      const RDGeom::Point3D &rightTop1,
                      const RDGeom::Point3D &leftBottom2,
                      const RDGeom::Point3D &rightTop2,
@@ -58,7 +59,7 @@ void computeUnionBox(const RDGeom::Point3D &leftBottom1,
   \param center   Optionally specify the center
   \param ignoreHs if true, ignore the hydrogen atoms in computing the centroid
 */
-std::vector<double> getConfDimensions(const Conformer &conf,
+RDKIT_SHAPEHELPERS_EXPORT std::vector<double> getConfDimensions(const Conformer &conf,
                                       double padding = 2.5,
                                       const RDGeom::Point3D *center = 0,
                                       bool ignoreHs = true);
@@ -93,7 +94,7 @@ std::vector<double> getConfDimensions(const Conformer &conf,
   process
  */
 
-double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
+RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1 = -1,
                         int confId2 = -1, double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
@@ -126,7 +127,7 @@ double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double b
   process
  */
 
-double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
+RDKIT_SHAPEHELPERS_EXPORT double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
                         double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
@@ -162,7 +163,7 @@ double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha
   process
  */
 
-double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
+RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
                         int confId2 = -1, double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
@@ -192,7 +193,7 @@ double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
   process
  */
 
-double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
+RDKIT_SHAPEHELPERS_EXPORT double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
                         double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
@@ -231,7 +232,7 @@ double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
   one.
  */
 
-double protrudeDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
+RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
                         int confId2 = -1, double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,
@@ -266,7 +267,7 @@ double protrudeDistance(const ROMol &mol1, const ROMol &mol2, int confId1 = -1,
   one.
  */
 
-double protrudeDistance(const Conformer &conf1, const Conformer &conf2,
+RDKIT_SHAPEHELPERS_EXPORT double protrudeDistance(const Conformer &conf1, const Conformer &conf2,
                         double gridSpacing = 0.5,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint =
                             DiscreteValueVect::TWOBITVALUE,

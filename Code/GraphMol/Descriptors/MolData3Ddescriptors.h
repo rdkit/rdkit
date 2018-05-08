@@ -30,13 +30,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
+#include <RDBoost/export.h>
 #ifndef MOLDATA3DDESCRIPTORS_2017
 #define MOLDATA3DDESCRIPTORS_2017
 
 #include <GraphMol/RDKitBase.h>
 #include "Data3Ddescriptors.h"
 
-class MolData3Ddescriptors {
+class RDKIT_DESCRIPTORS_EXPORT MolData3Ddescriptors {
  private:
   Data3Ddescriptors data3D;
 

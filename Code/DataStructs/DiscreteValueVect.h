@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_DISCRETE_VALUE_VECT_20050124__
 #define __RD_DISCRETE_VALUE_VECT_20050124__
 
@@ -20,7 +21,7 @@ namespace RDKit {
 const unsigned int BITS_PER_INT = 32;
 
 //! a class for efficiently storing vectors of discrete values
-class DiscreteValueVect {
+class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
  public:
   typedef boost::shared_array<boost::uint32_t> DATA_SPTR;
 
@@ -131,12 +132,12 @@ class DiscreteValueVect {
   void initFromText(const char *pkl, const unsigned int len);
 };
 
-unsigned int computeL1Norm(const DiscreteValueVect &v1,
+RDKIT_DATASTRUCTS_EXPORT unsigned int computeL1Norm(const DiscreteValueVect &v1,
                            const DiscreteValueVect &v2);
 
-DiscreteValueVect operator+(const DiscreteValueVect &p1,
+RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect operator+(const DiscreteValueVect &p1,
                             const DiscreteValueVect &p2);
-DiscreteValueVect operator-(const DiscreteValueVect &p1,
+RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect operator-(const DiscreteValueVect &p1,
                             const DiscreteValueVect &p2);
 }
 

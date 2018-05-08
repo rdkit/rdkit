@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #pragma once
 #include <vector>
 #include <string>
@@ -31,7 +32,7 @@ bool FinalChiralityCheckFunction(const short unsigned c1[],
                                  const MCSParameters* p);
 
 namespace FMCS {
-class MaximumCommonSubgraph {
+class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   struct MCS {  // current result. Reference to a fragment of source molecule
     std::vector<const Atom*> Atoms;
     std::vector<const Bond*> Bonds;

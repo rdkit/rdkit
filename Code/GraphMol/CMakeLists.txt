@@ -1,3 +1,5 @@
+
+add_definitions(-DRDKIT_GRAPHMOL_BUILD)
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp

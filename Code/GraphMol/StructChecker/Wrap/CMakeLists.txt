@@ -1,3 +1,4 @@
+remove_definitions(-DRDKIT_STRUCTCHECKER_BUILD)
 rdkit_python_extension(rdStructChecker
         structchecker.cpp
         DEST Chem

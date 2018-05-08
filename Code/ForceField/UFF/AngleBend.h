@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_ANGLEBEND_H__
 #define __RD_ANGLEBEND_H__
 
@@ -18,7 +19,7 @@ namespace UFF {
 class AtomicParams;
 
 //! The angle-bend term for the Universal Force Field
-class AngleBendContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
  public:
   AngleBendContrib() : d_at1Idx(-1), d_at2Idx(-1), d_at3Idx(-1), d_order(0){};
   //! Constructor
@@ -75,11 +76,11 @@ namespace Utils {
   \param at3Params   pointer to the parameters for atom 3
 
 */
-double calcAngleForceConstant(double theta0, double bondOrder12,
+RDKIT_FORCEFIELD_EXPORT double calcAngleForceConstant(double theta0, double bondOrder12,
                               double bondOrder23, const AtomicParams *at1Params,
                               const AtomicParams *at2Params,
                               const AtomicParams *at3Params);
-void calcAngleBendGrad(RDGeom::Point3D *r, double *dist, double **g,
+RDKIT_FORCEFIELD_EXPORT void calcAngleBendGrad(RDGeom::Point3D *r, double *dist, double **g,
                        double &dE_dTheta, double &cosTheta, double &sinTheta);
 }
 }

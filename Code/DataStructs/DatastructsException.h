@@ -8,10 +8,11 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _DATASTRUCTS_EXCEPTION_H_20050126
 #define _DATASTRUCTS_EXCEPTION_H_20050126
 
-class DatastructsException : public std::exception {
+class RDKIT_DATASTRUCTS_EXPORT DatastructsException : public std::exception {
  public:
   //! construct with an error message
   DatastructsException(const char *msg) : _msg(msg){};

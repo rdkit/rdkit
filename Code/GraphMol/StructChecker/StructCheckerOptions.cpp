@@ -18,7 +18,7 @@
 #include "../FileParsers/FileParsers.h"
 #include "../FileParsers/MolSupplier.h"  //SDF
 #include "../SmilesParse/SmilesParse.h"
-#include "StructChecker.h"
+#include "StructCheckerOptions.h"
 
 #include "AugmentedAtomData.cpp"
 

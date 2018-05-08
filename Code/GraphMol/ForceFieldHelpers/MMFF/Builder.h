@@ -9,6 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef RD_MMFFBUILDER_H
 #define RD_MMFFBUILDER_H
 
@@ -51,7 +52,7 @@ class MMFFMolProperties;
 
   \return the new force field. The client is responsible for free'ing this.
 */
-ForceFields::ForceField *constructForceField(
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     ROMol &mol, double nonBondedThresh = 100.0, int confId = -1,
     bool ignoreInterfragInteractions = true);
 
@@ -74,13 +75,13 @@ ForceFields::ForceField *constructForceField(
 
   \return the new force field. The client is responsible for free'ing this.
 */
-ForceFields::ForceField *constructForceField(
+RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     ROMol &mol, MMFFMolProperties *mmffMolProperties,
     double nonBondedThresh = 100.0, int confId = -1,
     bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-class DefaultTorsionBondSmarts : private boost::noncopyable {
+class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts : private boost::noncopyable {
  public:
   static const std::string &string() { return ds_string; }
   static const ROMol *query();
@@ -97,30 +98,30 @@ class DefaultTorsionBondSmarts : private boost::noncopyable {
 
 enum { RELATION_1_2 = 0, RELATION_1_3 = 1, RELATION_1_4 = 2, RELATION_1_X = 3 };
 // these functions are primarily exposed so they can be tested.
-unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
-void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
+RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j);
+RDKIT_FORCEFIELDHELPERS_EXPORT void setTwoBitCell(boost::shared_array<boost::uint8_t> &res, unsigned int pos,
                    boost::uint8_t value);
-boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
+RDKIT_FORCEFIELDHELPERS_EXPORT boost::uint8_t getTwoBitCell(boost::shared_array<boost::uint8_t> &res,
                              unsigned int pos);
-boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol);
-void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT boost::shared_array<boost::uint8_t> buildNeighborMatrix(const ROMol &mol);
+RDKIT_FORCEFIELDHELPERS_EXPORT void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
               ForceFields::ForceField *field);
-void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                ForceFields::ForceField *field);
-void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                     ForceFields::ForceField *field);
-void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field);
-void addTorsions(
+RDKIT_FORCEFIELDHELPERS_EXPORT void addTorsions(
     const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     ForceFields::ForceField *field,
     const std::string &torsionBondSmarts = DefaultTorsionBondSmarts::string());
-void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
             boost::shared_array<boost::uint8_t> neighborMatrix,
             double nonBondedThresh = 100.0,
             bool ignoreInterfragInteractions = true);
-void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
+RDKIT_FORCEFIELDHELPERS_EXPORT void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
             ForceFields::ForceField *field,
             boost::shared_array<boost::uint8_t> neighborMatrix,
             double nonBondedThresh = 100.0,

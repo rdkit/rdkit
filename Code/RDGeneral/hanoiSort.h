@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef HANOISORT_H_
 #define HANOISORT_H_
 

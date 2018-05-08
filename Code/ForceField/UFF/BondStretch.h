@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef __RD_BONDSTRETCH_H__
 #define __RD_BONDSTRETCH_H__
 #include <ForceField/Contrib.h>
@@ -16,7 +17,7 @@ namespace UFF {
 class AtomicParams;
 
 //! The bond-stretch term for the Universal Force Field
-class BondStretchContrib : public ForceFieldContrib {
+class RDKIT_FORCEFIELD_EXPORT BondStretchContrib : public ForceFieldContrib {
  public:
   BondStretchContrib() : d_end1Idx(-1), d_end2Idx(-1){};
   //! Constructor
@@ -58,7 +59,7 @@ namespace Utils {
   \return the rest length
 
 */
-double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
+RDKIT_FORCEFIELD_EXPORT double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
                           const AtomicParams *end2Params);
 
 //! calculates and returns the UFF force constant for a bond
@@ -71,7 +72,7 @@ double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
   \return the force constant
 
 */
-double calcBondForceConstant(double restLength, const AtomicParams *end1Params,
+RDKIT_FORCEFIELD_EXPORT double calcBondForceConstant(double restLength, const AtomicParams *end1Params,
                              const AtomicParams *end2Params);
 }
 }

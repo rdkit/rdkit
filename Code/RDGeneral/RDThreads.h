@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef RDTHREADS_H_2015
 #define RDTHREADS_H_2015
 

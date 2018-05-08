@@ -1,3 +1,4 @@
+#include <RDBoost/export.h>
 #ifndef RDKIT_RDPROPS_H
 #define RDKIT_RDPROPS_H
 #include "Dict.h"

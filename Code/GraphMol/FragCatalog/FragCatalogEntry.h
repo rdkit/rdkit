@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/export.h>
 #ifndef _RD_FRAGCATALOGENTRY_H_
 #define _RD_FRAGCATALOGENTRY_H_
 
@@ -23,7 +24,7 @@
 
 namespace RDKit {
 
-class FragCatalogEntry : public RDCatalog::CatalogEntry {
+class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry : public RDCatalog::CatalogEntry {
  public:
   FragCatalogEntry() : dp_mol(0), d_descrip(""), d_order(0) {
     dp_props = new Dict();

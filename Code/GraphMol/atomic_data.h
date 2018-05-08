@@ -15,6 +15,7 @@
   This stuff is used by the PeriodicTable interface
 
 */
+#include <RDBoost/export.h>
 #ifndef __RD_ATOMIC_DATA_H
 #define __RD_ATOMIC_DATA_H
 
@@ -22,12 +23,12 @@
 #include <map>
 
 namespace RDKit {
-extern const std::string periodicTableAtomData;
-extern const std::string isotopesAtomData[];
+RDKIT_GRAPHMOL_EXPORT extern const std::string periodicTableAtomData;
+RDKIT_GRAPHMOL_EXPORT extern const std::string isotopesAtomData[];
 namespace constants {
-extern const double electronMass;
+RDKIT_GRAPHMOL_EXPORT extern const double electronMass;
 }
-class atomicData {
+class RDKIT_GRAPHMOL_EXPORT atomicData {
  public:
   atomicData(const std::string &dataLine);
   ~atomicData(){};

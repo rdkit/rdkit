@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <RDBoost/export.h>
 #ifndef _RD_POWER_EIGENSOLVER_H
 #define _RD_POWER_EIGENSOLVER_H
 
@@ -52,7 +53,7 @@ We use the iterative power method, which works like this:
 
 
 */
-bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
+bool RDKIT_EIGENSOLVERS_EXPORT powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                       DoubleVector &eigenValues, DoubleMatrix *eigenVectors = 0,
                       int seed = -1);
 //! \overload
