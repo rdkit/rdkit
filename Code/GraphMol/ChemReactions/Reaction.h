@@ -429,7 +429,7 @@ VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
 void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
     const std::string &propName,
-    std::vector<std::vector<std::pair<unsigned int, std::string>>>
+    std::vector<std::vector<std::pair<unsigned int, std::string> > >
         *reactantLabels = NULL);
 
 }  // end of RDKit namespace
