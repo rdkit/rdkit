@@ -27,13 +27,15 @@ class TestCase(unittest.TestCase):
 
   def testDoctest(self):
     if RDConfig.useSqlLite:
-      _, tempName = tempfile.mkstemp(suffix='sqlt')
+      fd, tempName = tempfile.mkstemp(suffix='sqlt')
+      StorageUtils.fd = fd
       StorageUtils.tempDbName = tempName
       shutil.copyfile(RDConfig.RDTestDatabase, StorageUtils.tempDbName)
     else:
       StorageUtils.tempDbName = '::RDTests'
     failed, _ = doctest.testmod(StorageUtils)
     if RDConfig.useSqlLite and os.path.exists(StorageUtils.tempDbName):
+      os.close(StorageUtils.fd)
       try:
         os.unlink(StorageUtils.tempDbName)
       except:
