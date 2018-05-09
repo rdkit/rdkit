@@ -266,6 +266,8 @@ std::vector<double> clusterArray2(std::vector<double> data, int precision) {
 }
 
 double* GetGeodesicMatrix(double* dist, int lag, int numAtoms) {
+  PRECONDITION(dist!=nullptr, "bad array");
+
   int sizeArray = numAtoms * numAtoms;
   double* Geodesic = new double[sizeArray];
   for (int i = 0; i < sizeArray; i++) {
@@ -340,6 +342,9 @@ std::vector<int> GetHeavyList(const ROMol& mol) {
 }
 
 double* AppendDouble(double* w, double* Append, int length, int pos) {
+  PRECONDITION(w!=nullptr, "bad array");
+  PRECONDITION(Append!=nullptr, "bad array");
+
   for (int i = pos; i < pos + length; i++) {
     w[i] = Append[i - pos];
   }
@@ -372,6 +377,7 @@ double getHATS(double W1, double W2, double H1, double H2) {
 double getH(double W1, double W2, double H) { return W1 * H * W2; }
 
 double getMax(double* Rk) {
+  PRECONDITION(Rk != nullptr,"bad rK");
   double RTp = 0;
   for (int j = 0; j < 8; j++) {
     if (Rk[j] > RTp) {
@@ -386,7 +392,7 @@ double getMax(double* Rk) {
     void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
                         std::vector<int> Heavylist, const ROMol& mol,
                         std::vector<double>& res, int precision,
-                        const std::string customAtomPropName) {
+                        const std::string &customAtomPropName) {
       // prepare data for Getaway parameter computation
       // compute parameters
 
@@ -1189,7 +1195,9 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
     void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                     const ROMol& mol, const Conformer& conf,
                     std::vector<int> Heavylist, std::vector<double>& res,
-                    int precision, const std::string customAtomPropName) {
+                    int precision, const std::string &customAtomPropName) {
+      PRECONDITION(dist3D != nullptr, "no distance matrix");
+      PRECONDITION(AdjMat != nullptr, "no adjacency matrix");
       int numAtoms = conf.getNumAtoms();
 
       Map<MatrixXd> ADJ(AdjMat, numAtoms, numAtoms);
@@ -1216,6 +1224,9 @@ void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                 const ROMol& mol, const Conformer& conf,
                 std::vector<int> Heavylist, std::vector<double>& res,
                 int precision) {
+  PRECONDITION(dist3D != nullptr, "no distance matrix");
+  PRECONDITION(AdjMat != nullptr, "no adjacency matrix");
+
   int numAtoms = conf.getNumAtoms();
 
   Map<MatrixXd> ADJ(AdjMat, numAtoms, numAtoms);
@@ -1240,7 +1251,7 @@ void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
 }  // end of anonymous namespace
 
 void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
-             int precision, const std::string customAtomPropName) {
+             int precision, const std::string &customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
 
   int numAtoms = mol.getNumAtoms();
@@ -1264,7 +1275,7 @@ void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
   double* AdjMat = MolOps::getAdjacencyMatrix(
       mol, false, 0, false, 0);  // false to have only the 1,0 matrix unweighted
 
-  if (customAtomPropName.size()>0) {
+  if (customAtomPropName != "") {
     res.clear();
     res.resize(45);
     GetGETAWAYone(dist3D, AdjMat, Vpoints, mol, conf, Heavylist, res, precision,

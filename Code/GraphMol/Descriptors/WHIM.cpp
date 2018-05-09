@@ -150,8 +150,8 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
                             3);  // round the matrix! same as eigen tolerance !
     }
   }
-  
-	  
+
+
 // we should take into account atoms that are in the axis too!!! which is not trivial
   for (int i = 0; i < 3; i++) {
     std::vector<double> Symetric(2*numAtoms, 0.0);
@@ -185,17 +185,17 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
     for (int aj = 0; aj < numAtoms; aj++) {
 	    if (Symetric[aj+numAtoms]<th && Symetric[aj]<1.0) {
 		    ns +=1;
-        na -=1;	
+        na -=1;
       }
     }
     gamma[i] = 0.0;
     double gammainv=1.0;
     if (ns == 0) {
-      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);  
+      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);
     }
     if (ns > 0) {
       gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2.) +
-                       (na / nAT) * log(1.0 / nAT) / log(2.));   
+                       (na / nAT) * log(1.0 / nAT) / log(2.));
     }
     gamma[i]=1.0/gammainv;
   }
@@ -269,7 +269,7 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
 
     void GetWHIMsCustom(const Conformer &conf, std::vector<double> &result,
                   double *Vpoints, double th,
-                        const std::string customAtomPropName) {
+                        const std::string &customAtomPropName) {
       std::vector<double> wc(18);
 
       int numAtoms = conf.getNumAtoms();
@@ -343,7 +343,7 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
     }
 
 void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
-             double th, const std::string customAtomPropName) {
+             double th, const std::string &customAtomPropName) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
   double *Vpoints = new double[3 * numAtoms];
@@ -373,11 +373,11 @@ void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
 }  // end of anonymous namespace
 
 void WHIM(const ROMol &mol, std::vector<double> &res, int confId, double th,
-          const std::string customAtomPropName) {
+          const std::string &customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
   // Tu   Au    Gu   Ku    Du   Vu
-  if (customAtomPropName.size()>0) {
+  if (customAtomPropName != "") {
     res.clear();
     res.resize(17);
     getWHIMone(mol, res, confId, th,

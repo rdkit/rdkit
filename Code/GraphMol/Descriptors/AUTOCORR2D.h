@@ -41,7 +41,7 @@ class ROMol;
 namespace Descriptors {
 const std::string AUTOCORR2DVersion = "1.0.0";
 void AUTOCORR2D(const ROMol &, std::vector<double> &res,
-                const std::string customAtomPropName="");
+                const std::string &customAtomPropName="");
 }
 }
 #endif

@@ -130,7 +130,7 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
 
 
 void getMORSEDescCustom(double *DM, const ROMol &mol, const Conformer &conf,
-                      std::vector<double> &res, const std::string customAtomPropName) {
+                      std::vector<double> &res, const std::string &customAtomPropName) {
       int numAtoms = conf.getNumAtoms();
       int confId = conf.getId();
 
@@ -165,13 +165,14 @@ void GetMORSE(double *dist3D, const ROMol &mol, const Conformer &conf,
 
 
 void GetMORSEone(double *dist3D, const ROMol &mol, const Conformer &conf,
-              std::vector<double> &res, const std::string customAtomPropName) {
+              std::vector<double> &res, const std::string &customAtomPropName) {
   getMORSEDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
 }  // end of anonymous namespace
 
-void MORSE(const ROMol &mol, std::vector<double> &res, int confId, const std::string customAtomPropName) {
+void MORSE(const ROMol &mol, std::vector<double> &res, int confId,
+           const std::string &customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
 
   // Mor01u Mor02u  Mor03u  Mor04u  Mor05u  Mor06u  Mor07u  Mor08u  Mor09u
@@ -207,7 +208,7 @@ void MORSE(const ROMol &mol, std::vector<double> &res, int confId, const std::st
 
   double *dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
- if (customAtomPropName.size()>0) {
+ if (customAtomPropName != "") {
   res.clear();
   res.resize(32);  // 7 * 32
   GetMORSEone(dist3D, mol, conf, res, customAtomPropName);

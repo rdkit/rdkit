@@ -42,7 +42,7 @@ namespace RDKit {
   namespace Descriptors {
     const std::string GETAWAYVersion = "1.0.0";
     void GETAWAY(const ROMol&, std::vector<double> &res, int confId=-1, int precision=2,
-                 const std::string customAtomPropName="");
+                 const std::string &customAtomPropName="");
   }
 }
 #endif

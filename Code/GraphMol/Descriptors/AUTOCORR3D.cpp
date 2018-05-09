@@ -169,7 +169,8 @@ void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance,
 
     void get3DautocorrelationDescCustom(double* dist3D, double* topologicaldistance,
                                   int numAtoms, const ROMol& mol,
-                                  std::vector<double>& res, const std::string customAtomPropName) {
+                                  std::vector<double>& res,
+                                  const std::string &customAtomPropName) {
       Map<MatrixXd> dm(dist3D, numAtoms, numAtoms);
       Map<MatrixXd> di(topologicaldistance, numAtoms, numAtoms);
 
@@ -206,14 +207,14 @@ void get3DautocorrelationDesc(double* dist3D, double* topologicaldistance,
 }
 
     void Get3Dautoone(double* dist3D, double* topologicaldistance, int numAtoms,
-                   const ROMol& mol, std::vector<double>& res, const std::string customAtomPropName) {
+                   const ROMol& mol, std::vector<double>& res, const std::string &customAtomPropName) {
       get3DautocorrelationDescCustom(dist3D, topologicaldistance, numAtoms, mol, res, customAtomPropName);
     }
 
 }  // end of anonymous namespace
 
 void AUTOCORR3D(const ROMol& mol, std::vector<double>& res, int confId,
-                const std::string customAtomPropName) {
+                const std::string &customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
   int numAtoms = mol.getNumAtoms();
 
@@ -223,7 +224,7 @@ void AUTOCORR3D(const ROMol& mol, std::vector<double>& res, int confId,
       MolOps::getDistanceMat(mol, false);  // topological matrix
   double* dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
-  if (customAtomPropName.size()>0) {
+  if (customAtomPropName != "") {
       res.clear();
       res.resize(10);
       Get3Dautoone(dist3D, topologicaldistance, numAtoms, mol, res, customAtomPropName);

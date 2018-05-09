@@ -124,8 +124,9 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
 }
 
 void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
-                    std::vector<double>& res, const std::string customAtomPropName) {
-        
+                    std::vector<double>& res,
+                    const std::string &customAtomPropName) {
+
         int numAtoms = conf.getNumAtoms();
 
         std::vector<double> R = getG(30);
@@ -146,13 +147,13 @@ void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
         res = R1;
     }
 
-    
+
 void GetRDF(double* dist3D, const ROMol& mol, const Conformer& conf,
             std::vector<double>& res) {
   getRDFDesc(dist3D, mol, conf, res);
 }
-    
-    
+
+
 void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
                 std::vector<double>& res,  const std::string customAtomPropName) {
         getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
@@ -161,7 +162,7 @@ void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
 
 }  // end of anonymous namespace
 
-void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::string customAtomPropName) {
+void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::string &customAtomPropName) {
   // RDF010u RDF015u RDF020u RDF025u RDF030u RDF035u RDF040u RDF045u RDF050u
   // RDF055u RDF060u RDF065u RDF070u RDF075u RDF080u RDF085u RDF090u RDF095u
   // RDF100u RDF105u RDF110u RDF115u RDF120u RDF125u RDF130u RDF135u RDF140u
@@ -198,13 +199,13 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::stri
   const Conformer& conf = mol.getConformer(confId);
   // if (!conf.is3D()) return reserror;
 
-    
-    
+
+
   double* dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
 
-    
-    if (customAtomPropName.size()>0) {
+
+    if (customAtomPropName != "") {
         //std::cout << " Using CustomAtomPropertie\n";
         // do something
         res.clear();
@@ -215,8 +216,8 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::stri
         res.resize(210);  // 7 * 30
         GetRDF(dist3D, mol, conf, res);
     }
-    
-    
+
+
 
 
 }
