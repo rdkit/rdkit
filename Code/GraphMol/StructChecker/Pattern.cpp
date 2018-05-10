@@ -7,6 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#if defined(__CYGWIN__) && !defined(_GNU_SOURCE)
+// -std=c++11 doesn't declare strtok_r
+#define _GNU_SOURCE
+#endif
+
 #include <map>
 #include "../QueryAtom.h"
 #include "Pattern.h"
@@ -96,7 +101,7 @@ static void applyAtomSymbolList(RWMol &mol, const std::string symbol,
   const char *atsym = symbol.c_str();
   char buf[512];
   char *tokp;
-  strcpy(buf, symbol.c_str());
+  strcpy(buf, atsym);
   tokp = strtok_r(buf, ",", &context);
   atom.setAtomicNum(getAtomicNumber(tokp));
   QueryAtom a(atom);
