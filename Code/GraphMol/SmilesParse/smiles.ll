@@ -11,6 +11,11 @@
 //   @@ All Rights Reserved  @@
 //
 
+#if defined(__CYGWIN__) && !defined(fileno)
+// -std=c++11 turns off recent posix features
+extern "C" int fileno(FILE*);
+#endif
+
 #include <cstdio>
 #ifdef WIN32
 #include <io.h>
