@@ -57,8 +57,9 @@ struct ringinfo_wrapper {
   static void wrap() {
     python::class_<RingInfo>("RingInfo", classDoc.c_str(), python::no_init)
         .def("IsAtomInRingOfSize", &RingInfo::isAtomInRingOfSize)
+        .def("MinAtomRingSize", &RingInfo::minAtomRingSize)
         .def("IsBondInRingOfSize", &RingInfo::isBondInRingOfSize)
-        .def("IsBondInRingOfSize", &RingInfo::isBondInRingOfSize)
+        .def("MinBondRingSize", &RingInfo::minBondRingSize)
         .def("NumAtomRings", &RingInfo::numAtomRings)
         .def("NumBondRings", &RingInfo::numBondRings)
         .def("NumRings", &RingInfo::numRings)
