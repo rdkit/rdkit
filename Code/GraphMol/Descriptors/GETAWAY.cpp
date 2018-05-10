@@ -389,7 +389,7 @@ double getMax(double* Rk) {
 
 
 
-    void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
+void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
                         std::vector<int> Heavylist, const ROMol& mol,
                         std::vector<double>& res, int precision,
                         const std::string &customAtomPropName) {
@@ -624,9 +624,12 @@ double getMax(double* Rk) {
 
       res[35] = roundn(RTc + R0ct, 3);
       res[44] = roundn(RTMc, 3);
-    }
+}
 
-    void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
+
+
+
+void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
                     std::vector<int> Heavylist, const ROMol& mol,
                     std::vector<double>& res, int precision) {
   // prepare data for Getaway parameter computation
@@ -1192,7 +1195,7 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
 "R7i+","R8i+","RTi+","R1s","R2s","R3s","R4s","R5s","R6s","R7s","R8s","RTs","R1s+","R2s+","R3s+","R4s+","R5s+","R6s+","R7s+","R8s+","RTs+"};
  */
 
-    void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
+void GetGETAWAYone(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                     const ROMol& mol, const Conformer& conf,
                     std::vector<int> Heavylist, std::vector<double>& res,
                     int precision, const std::string &customAtomPropName) {
@@ -1218,7 +1221,7 @@ GETAWAYNAMES={"ITH","ISH","HIC","HGM","H0u","H1u","H2u","H3u","H4u","H5u","H6u",
 
       getGETAWAYDescCustom(H, R, ADJ, numAtoms, Heavylist, mol, res, precision,
                            customAtomPropName);
-    }
+}
 
 void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                 const ROMol& mol, const Conformer& conf,

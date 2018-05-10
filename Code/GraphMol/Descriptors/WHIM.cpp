@@ -267,7 +267,7 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
   ws.clear();
 }
 
-    void GetWHIMsCustom(const Conformer &conf, std::vector<double> &result,
+void GetWHIMsCustom(const Conformer &conf, std::vector<double> &result,
                   double *Vpoints, double th,
                         const std::string &customAtomPropName) {
       std::vector<double> wc(18);
@@ -282,18 +282,15 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
 
       wc = getWhimD(weigthvector, MatOrigin, numAtoms, th);
 
-      result.clear();
-      result.resize(18);
-
       for (int i = 0; i < 18; i++) {
         result[i] = wc[i];
 
       }
       wc.clear();
 
-    }
+}
 
-    void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
+void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
                  double th) {
       int numAtoms = mol.getNumAtoms();
       const Conformer &conf = mol.getConformer(confId);
@@ -340,7 +337,7 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
                 roundn(w[5 + 18 * i],
                        3);  // 108 109 110 111 112 113 114 for Vu  Vm  Vv  Ve  Vp  Vi Vs
       }
-    }
+}
 
 void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
              double th, const std::string &customAtomPropName) {
@@ -362,7 +359,7 @@ void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
   // E3
   // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
 
-  int map1[17] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12, 3 , 4, 17 , 9 , 13 ,5};
+  int map1[17] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12, 3, 4, 17, 9, 13 ,5};
 
     for (int i = 0; i < 17; i++) {
       res[i] = roundn(w[map1[i]], 3);
