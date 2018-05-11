@@ -27,7 +27,7 @@ rdkit_test(fileParsersTest1 test1.cpp
 
 if(RDK_BUILD_TEST_GZIP)
     find_package(Boost 1.56.0 COMPONENTS iostreams REQUIRED)
-    set (link_iostreams "Boost::iostreams")
+    set (link_iostreams ${Boost_iostreams_LIBRARY})
     add_definitions("-DTEST_GZIP_SD")
     if (NOT Boost_USE_STATIC_LIBS)
       add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")

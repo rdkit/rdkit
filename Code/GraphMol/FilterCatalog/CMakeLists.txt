@@ -1,6 +1,6 @@
 if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     ADD_DEFINITIONS("-DRDK_USE_BOOST_SERIALIZATION")
-    set(RDKit_SERIALIZATION_LIBS Boost::serialization)
+    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
     message("== Making FilterCatalog without boost Serialization support")
     set(RDKit_SERIALIZATION_LIBS )
@@ -44,4 +44,5 @@ add_subdirectory(Wrap)
 
 rdkit_test(filterCatalogTest filtercatalogtest.cpp
            LINK_LIBRARIES FilterCatalog
-           Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral )
+           Catalogs SubstructMatch FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral
+           ${RDKit_SERIALIZATION_LIBS})

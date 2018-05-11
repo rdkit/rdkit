@@ -58,7 +58,7 @@ macro(rdkit_library)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-        if(${linkLib} MATCHES "^(Boost)|(Thread)")
+        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)")
           set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
         else()
           set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
@@ -68,8 +68,8 @@ macro(rdkit_library)
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
-                  DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-                  COMPONENT dev )
+                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+                COMPONENT dev )
       endif(RDK_INSTALL_DEV_COMPONENT)
       set_target_properties(${RDKLIB_NAME}_static PROPERTIES
                             OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
@@ -130,13 +130,12 @@ macro(rdkit_python_extension)
 
     if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES} )
+                            ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
     else()
       target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
-                            ${Boost_IMPORTED_LIBRARIES} )
+                            ${Boost_LIBRARIES} )
       if("${PYTHON_LDSHARED}" STREQUAL "")
       else()
-        message("set_target_properties ${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED}")
         set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
       endif()
     endif()

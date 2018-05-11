@@ -33,7 +33,8 @@ class TestCase(unittest.TestCase):
     self.baseDir = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'test_data')
     self.dbName = RDConfig.RDTestDatabase
     if RDConfig.useSqlLite:
-      _, tempName = tempfile.mkstemp(suffix='sqlt')
+      fd, tempName = tempfile.mkstemp(suffix='sqlt')
+      self.fd = fd
       self.tempDbName = tempName
     else:
       self.tempDbName = '::RDTests'
@@ -42,6 +43,7 @@ class TestCase(unittest.TestCase):
 
   def tearDown(self):
     if RDConfig.useSqlLite and os.path.exists(self.tempDbName):
+      os.close(self.fd)
       try:
         os.unlink(self.tempDbName)
       except:

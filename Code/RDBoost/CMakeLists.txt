@@ -2,12 +2,12 @@ if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
 
   add_definitions(-DRDKIT_RDBOOST_BUILD)
   rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_IMPORTED_LIBRARIES})
+                LINK_LIBRARIES RDGeneral ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 else()
 
     add_definitions(-DRDKIT_RDBOOST_BUILD)
     rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral ${Boost_IMPORTED_LIBRARIES})
+                LINK_LIBRARIES RDGeneral ${Boost_LIBRARIES})
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
        # fixes an apple issue
