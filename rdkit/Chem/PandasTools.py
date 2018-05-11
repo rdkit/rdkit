@@ -208,7 +208,7 @@ def _get_svg_image(mol, size=(200, 200), highlightAtoms=[]):
   drawer = rdMolDraw2D.MolDraw2DSVG(*size)
   drawer.DrawMolecule(mol, highlightAtoms=highlightAtoms)
   drawer.FinishDrawing()
-  svg = drawer.GetDrawingText().replace('svg:', '')
+  svg = drawer.GetDrawingText()
   return SVG(svg).data  # IPython's SVG clears the svg text
 
 

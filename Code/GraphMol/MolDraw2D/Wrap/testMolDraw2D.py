@@ -19,8 +19,8 @@ class TestCase(unittest.TestCase):
     d.DrawMolecule(m)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<svg:svg") != -1)
-    self.assertTrue(txt.find("</svg:svg>") != -1)
+    self.assertTrue(txt.find("<svg") != -1)
+    self.assertTrue(txt.find("</svg>") != -1)
 
   def test2(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
@@ -165,7 +165,7 @@ M  END""")
         bnds.append(tmp)
     drawer.DrawMolecules(tms,highlightAtoms=matches,highlightBonds=bnds,highlightAtomColors=acolors)
     drawer.FinishDrawing()
-    svg = drawer.GetDrawingText().replace('svg:','')
+    svg = drawer.GetDrawingText()
     # 4 molecules, 6 bonds each:
     self.assertEqual(svg.count('fill:none;fill-rule:evenodd;stroke:#FF7F7F'),24)
     # 4 molecules, one atom each:
@@ -191,8 +191,8 @@ M  END""")
     d.DrawReaction(rxn)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<svg:svg") != -1)
-    self.assertTrue(txt.find("</svg:svg>") != -1)
+    self.assertTrue(txt.find("<svg") != -1)
+    self.assertTrue(txt.find("</svg>") != -1)
     #print(txt,file=open('blah1.svg','w+'))
 
   def testReaction2(self):
@@ -201,8 +201,8 @@ M  END""")
     d.DrawReaction(rxn,highlightByReactant=True)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<svg:svg") != -1)
-    self.assertTrue(txt.find("</svg:svg>") != -1)
+    self.assertTrue(txt.find("<svg") != -1)
+    self.assertTrue(txt.find("</svg>") != -1)
     #print(txt,file=open('blah2.svg','w+'))
 
   def testReaction3(self):
@@ -212,8 +212,8 @@ M  END""")
     d.DrawReaction(rxn,highlightByReactant=True,highlightColorsReactants=colors)
     d.FinishDrawing()
     txt = d.GetDrawingText()
-    self.assertTrue(txt.find("<svg:svg") != -1)
-    self.assertTrue(txt.find("</svg:svg>") != -1)
+    self.assertTrue(txt.find("<svg") != -1)
+    self.assertTrue(txt.find("</svg>") != -1)
 
   def testReaction4(self):
     rxn = AllChem.ReactionFromSmarts('[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',useSmiles=True)
