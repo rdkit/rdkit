@@ -73,12 +73,21 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
   double *weigtharray = &weigthvector[0];
 
   Map<VectorXd> Weigth(weigtharray, numAtoms);
+  //std::cerr << "Weigth:\n" << Weigth << "\n";
 
   MatrixXd WeigthMat = Weigth.asDiagonal();
 
   double weigth = WeigthMat.diagonal().sum();
-
+  // fix issue if the sum is close to zeros 
+  // only for the charges cases normaly
+  if (abs(weigth) < 0.001) {
+    weigth=1.0;
+    //std::cerr << "fix weigth sum:\n";
+  }
+  
   MatrixXd Xmean = GetCenterMatrix(MatOrigin);
+  //std::cerr << "Xmean:\n" << Xmean << "\n";
+  
 
   MatrixXd covmat = GetCovMatrix(Xmean, WeigthMat, weigth);
 
@@ -191,7 +200,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
     gamma[i] = 0.0;
     double gammainv=1.0;
     if (ns == 0) {
-      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);
+      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);  
     }
     if (ns > 0) {
       gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2.) +
@@ -355,16 +364,13 @@ void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
   GetWHIMsCustom(conf, w, Vpoints, th, customAtomPropName);
   delete [] Vpoints;
 
-  // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2
-  // E3
+  // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2 E3
   // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
-
   int map1[17] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12, 3, 4, 17, 9, 13 ,5};
 
-    for (int i = 0; i < 17; i++) {
+  for (int i = 0; i < 17; i++) {
       res[i] = roundn(w[map1[i]], 3);
   }
-
 }
 
 }  // end of anonymous namespace
