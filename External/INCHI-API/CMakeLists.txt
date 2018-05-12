@@ -58,7 +58,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
       src/INCHI_API/libinchi/src/ixa/ixa_builder.c
       src/INCHI_API/libinchi/src/ixa/ixa_inchikey_builder.c
       src/INCHI_API/libinchi/src/ixa/ixa_mol.c
-      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c 
+      src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c
       src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
       src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
       if(MSVC AND RDK_INSTALL_DYNAMIC_LIBS)
@@ -81,7 +81,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 
-  add_definitions(-DBUILD_INCHI_SUPPORT)
+  add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES

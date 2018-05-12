@@ -321,10 +321,10 @@ typedef unsigned long long int	uintmax_t;
 
 %include "../Descriptors.i"
 
-#ifdef BUILD_AVALON_SUPPORT
+#ifdef RDK_BUILD_AVALON_SUPPORT
 %include "../AvalonLib.i"
 #endif
-#ifdef BUILD_INCHI_SUPPORT
+#ifdef RDK_BUILD_INCHI_SUPPORT
 %include "../Inchi.i"
 #endif
 

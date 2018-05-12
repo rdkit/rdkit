@@ -117,7 +117,7 @@ endif(RDK_BUILD_SWIG_WRAPPERS)
 
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
-    add_definitions(-DBUILD_COORDGEN_SUPPORT)
+    add_definitions(-DRDK_BUILD_COORDGEN_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
 

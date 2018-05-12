@@ -129,7 +129,7 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
 void setPreferCoordGen(bool value) {
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = value;
 #endif
 }
@@ -145,7 +145,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   rdkit_import_array();
 
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
               "Sets whether or not the CoordGen library should be prefered to "
               "the RDKit depiction library."
 #else

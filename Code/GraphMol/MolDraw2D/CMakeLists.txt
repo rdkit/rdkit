@@ -34,7 +34,7 @@ endif(RDK_BUILD_QT_SUPPORT)
 
 if(RDK_BUILD_CAIRO_SUPPORT)
   find_package(Cairo REQUIRED)
-  target_compile_definitions(MolDraw2D PUBLIC "-DRDK_CAIRO_BUILD")
+  target_compile_definitions(MolDraw2D PUBLIC "-DRDK_BUILD_CAIRO_SUPPORT")
   target_link_libraries(MolDraw2D PUBLIC Cairo::Cairo)
   target_sources(MolDraw2D PRIVATE MolDraw2DCairo.cpp)
   rdkit_headers(MolDraw2DCairo.h DEST GraphMol/MolDraw2D)

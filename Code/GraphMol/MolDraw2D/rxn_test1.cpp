@@ -33,7 +33,7 @@
 
 using namespace RDKit;
 
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 #endif
@@ -46,7 +46,7 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
   double width = panex * (rxn->getNumReactantTemplates() +
                           rxn->getNumProductTemplates() + 1);
   double height = paney;
-#ifdef RDK_CAIRO_BUILD
+#ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     MolDraw2DCairo drawer(width, height);
     drawer.drawReaction(*rxn, highlight_map, highlight_colors);

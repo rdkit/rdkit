@@ -22,7 +22,7 @@ class ROMol;
 
 namespace RDDepict {
 
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 RDKIT_DEPICTOR_EXPORT extern bool preferCoordGen;
 #endif
 

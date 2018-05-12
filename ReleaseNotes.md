@@ -1,3 +1,29 @@
+# Release_2018.09.1
+(Changes relative to Release_2018.03.1)
+
+## Deprecations
+
+- As part of the changes and cleaning up done for #1836 many of the `#defines`
+  used in the RDKit have been renamed.
+    - `USE_BUILTIN_POPCOUNT` -> `RDK_OPTIMIZE_NATIVE`
+    - `RDK_THREADSAFE_SSS` -> `RDK_BUILD_THREADSAFE_SSS`
+    - `BUILD_COORDGEN_SUPPORT` -> `RDK_BUILD_COORDGEN_SUPPORT`
+    - `BUILD_AVALON_SUPPORT` -> `RDK_BUILD_AVALON_SUPPORT`
+    - `BUILD_INCHI_SUPPORT` -> `RDK_BUILD_INCHI_SUPPORT`
+    - `BUILD_SLN_SUPPORT` -> `RDK_BUILD_SLN_SUPPORT`
+    - `RDK_CAIRO_BUILD` -> `RDK_BUILD_CAIRO_SUPPORT`
+
+
+## Backwards incompatible changes
+
+## Acknowledgements:
+
+## Highlights:
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
 # Release_2018.03.1
 (Changes relative to Release_2017.09.1)
 

@@ -62,10 +62,10 @@
 #include <boost/tokenizer.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-#ifdef BUILD_INCHI_SUPPORT
+#ifdef RDK_BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
 #endif
-#ifdef BUILD_AVALON_SUPPORT
+#ifdef RDK_BUILD_AVALON_SUPPORT
 #include <AvalonTools/AvalonTools.h>
 #endif
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
@@ -548,7 +548,7 @@ extern "C" char *makeMolFormulaText(CROMol data, int *len,
 
 extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
-#ifdef BUILD_INCHI_SUPPORT
+#ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
   ExtraInchiReturnValues rv;
   try {
@@ -569,7 +569,7 @@ extern "C" const char *MolInchi(CROMol i, const char *opts) {
 }
 extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
-#ifdef BUILD_INCHI_SUPPORT
+#ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
   ExtraInchiReturnValues rv;
   try {
@@ -1433,7 +1433,7 @@ extern "C" CBfp makeMACCSBFP(CROMol data) {
 
 extern "C" CBfp makeAvalonBFP(CROMol data, bool isQuery,
                               unsigned int bitFlags) {
-#ifdef BUILD_AVALON_SUPPORT
+#ifdef RDK_BUILD_AVALON_SUPPORT
   ROMol *mol = (ROMol *)data;
   ExplicitBitVect *res = nullptr;
   try {
