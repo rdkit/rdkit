@@ -128,44 +128,44 @@ void getMORSEDesc(double *DM, const ROMol &mol, const Conformer &conf,
   res = R1;
 }
 
-
 void getMORSEDescCustom(double *DM, const ROMol &mol, const Conformer &conf,
-                      std::vector<double> &res, const std::string &customAtomPropName) {
-      int numAtoms = conf.getNumAtoms();
-      int confId = conf.getId();
+                        std::vector<double> &res,
+                        const std::string &customAtomPropName) {
+  int numAtoms = conf.getNumAtoms();
+  int confId = conf.getId();
 
-      std::vector<double> R = getG(32);
-      std::vector<double> R1(32);
-      std::vector<double> customAtomArray = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
+  std::vector<double> R = getG(32);
+  std::vector<double> R1(32);
+  std::vector<double> customAtomArray =
+      moldata3D.GetCustomAtomProp(mol, customAtomPropName);
 
-      double p;
-      for (int i = 0; i < R.size(); i++) {
-        double res1 = 0.0;
+  double p;
+  for (int i = 0; i < R.size(); i++) {
+    double res1 = 0.0;
 
-        for (int j = 0; j < numAtoms - 1; j++) {
-          for (int k = j + 1; k < numAtoms; k++) {
-            if (i == 0) {
-              p = 1;
-            } else {
-              p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
-            }
-            res1 += customAtomArray[j] * customAtomArray[k] * p; // "custom"
-          }
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+        if (i == 0) {
+          p = 1;
+        } else {
+          p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
         }
-        R1[i] = round(1000 * res1) / 1000;
-
+        res1 += customAtomArray[j] * customAtomArray[k] * p;  // "custom"
       }
-      res = R1;
     }
+    R1[i] = round(1000 * res1) / 1000;
+  }
+  res = R1;
+}
 
 void GetMORSE(double *dist3D, const ROMol &mol, const Conformer &conf,
               std::vector<double> &res) {
   getMORSEDesc(dist3D, mol, conf, res);
 }
 
-
 void GetMORSEone(double *dist3D, const ROMol &mol, const Conformer &conf,
-              std::vector<double> &res, const std::string &customAtomPropName) {
+                 std::vector<double> &res,
+                 const std::string &customAtomPropName) {
   getMORSEDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
@@ -208,17 +208,17 @@ void MORSE(const ROMol &mol, std::vector<double> &res, int confId,
 
   double *dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
- if (customAtomPropName != "") {
-  res.clear();
-  res.resize(32);  // 7 * 32
-  GetMORSEone(dist3D, mol, conf, res, customAtomPropName);
+  if (customAtomPropName != "") {
+    res.clear();
+    res.resize(32);  // 7 * 32
+    GetMORSEone(dist3D, mol, conf, res, customAtomPropName);
 
- } else {
-  res.clear();
-  res.resize(224);  // 7 * 32
-  GetMORSE(dist3D, mol, conf, res);
+  } else {
+    res.clear();
+    res.resize(224);  // 7 * 32
+    GetMORSE(dist3D, mol, conf, res);
   }
 }
 
-}  // end of Descriptors namespace
-}  // end of RDKit namespace
+}  // namespace Descriptors
+}  // namespace RDKit

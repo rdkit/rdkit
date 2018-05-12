@@ -22,11 +22,10 @@
 #include <GraphMol/Descriptors/RDF.h>
 #include <GraphMol/Descriptors/MORSE.h>
 #include <GraphMol/Descriptors/AUTOCORR3D.h>
-#include <GraphMol/Descriptors/WHIM.h> // strange
+#include <GraphMol/Descriptors/WHIM.h>  // strange
 #include <GraphMol/Descriptors/GETAWAY.h>
 // make a 2D test of not ?
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
-
 
 void testRDFcustom() {
   std::cout << "=>start test rdf custom\n";
@@ -36,12 +35,13 @@ void testRDFcustom() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/RDFcustom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/RDFcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -72,19 +72,18 @@ void testRDFcustom() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-      
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - drdf[i]) < 0.001);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -94,8 +93,6 @@ void testRDFcustom() {
                         << std::endl;
 }
 
-
-
 void testMORSEcustom() {
   std::cout << "=>start test morse custom\n";
 
@@ -104,12 +101,13 @@ void testMORSEcustom() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/MORSEcustom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/MORSEcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -140,20 +138,19 @@ void testMORSEcustom() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-      
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < dmorse.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << dmorse[i] << ",";
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << dmorse[i] << ",";
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - dmorse[i]) < 0.001);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -163,9 +160,6 @@ void testMORSEcustom() {
                         << std::endl;
 }
 
-
-
-
 void testAUTOCORR3Dcustom() {
   std::cout << "=>start test AUTOCORR3D custom\n";
 
@@ -174,12 +168,13 @@ void testAUTOCORR3Dcustom() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/auto3Dcustom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/auto3Dcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -210,20 +205,19 @@ void testAUTOCORR3Dcustom() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-      
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < dauto3d.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << dauto3d[i] << ",";
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << dauto3d[i] << ",";
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - dauto3d[i]) < 0.001);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -241,12 +235,13 @@ void testWHIMcustom() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/WHIMcustom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/WHIMcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -272,29 +267,30 @@ void testWHIMcustom() {
 
     const std::string atomprop = "_GasteigerCharge";
     RDKit::Descriptors::WHIM(*m, dwhim, -1, 0.01, atomprop);
-/*
-    for (unsigned int aix = 0; aix < m->getNumAtoms(); aix++) {
-      std::cerr << m->getAtomWithIdx(aix)->getProp<double>("_GasteigerCharge") << ",";
-    }
-    std::cerr << "\n";
-*/
+    /*
+        for (unsigned int aix = 0; aix < m->getNumAtoms(); aix++) {
+          std::cerr <<
+       m->getAtomWithIdx(aix)->getProp<double>("_GasteigerCharge") << ",";
+        }
+        std::cerr << "\n";
+    */
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < dwhim.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << dwhim[i] << ",";
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << dwhim[i] << ",";
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -304,7 +300,6 @@ void testWHIMcustom() {
                         << std::endl;
 }
 
-
 void testWHIMcustom1() {
   std::cout << "=>start test 2 WHIM custom\n";
 
@@ -313,12 +308,13 @@ void testWHIMcustom1() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/WHIM1custom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/WHIM1custom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -351,19 +347,19 @@ void testWHIMcustom1() {
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < dwhim.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << dwhim[i] << ",";
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << dwhim[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << dwhim[i] << ",";
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << dwhim[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -381,12 +377,13 @@ void testGETAWAYcustom() {
       pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
-  std::string fName = pathName + "/Code/GraphMol/Descriptors/test_data/GETAWAYcustom.out";
+  std::string fName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/GETAWAYcustom.out";
 
   std::ifstream instrm(fName.c_str());
 
   std::string line;
-  std::vector<std::vector<std::string> > data;
+  std::vector<std::vector<std::string>> data;
 
   while (std::getline(instrm, line)) {
     std::string phrase;
@@ -413,25 +410,23 @@ void testGETAWAYcustom() {
     const std::string atomprop = "_GasteigerCharge";
     RDKit::Descriptors::GETAWAY(*m, dgetaway, -1, 0.0001, atomprop);
 
- 
     std::vector<std::string> myrow = data[nDone];
     std::string inm = myrow[0];
     TEST_ASSERT(inm == nm);
 
-      
-    //std::cerr << inm << ",";
+    // std::cerr << inm << ",";
     for (int i = 0; i < dgetaway.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
-        //std::cerr << dgetaway[i] << ",";
-        //std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-        //if (fabs(ref - drdf[i]) > 0.01) {
-        //  std::cerr << "pos" << i << " " << inm
-        //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
-        //}
-      
+      // std::cerr << dgetaway[i] << ",";
+      // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
+      // if (fabs(ref - drdf[i]) > 0.01) {
+      //  std::cerr << "pos" << i << " " << inm
+      //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
+      //}
+
       TEST_ASSERT(fabs(ref - dgetaway[i]) < 0.001);
     }
-    //std::cerr << "\n";
+    // std::cerr << "\n";
 
     delete m;
     ++nDone;
@@ -447,7 +442,7 @@ int main(int argc, char *argv[]) {
   testMORSEcustom();
   testAUTOCORR3Dcustom();
   testWHIMcustom1();
-  testWHIMcustom(); // case of divide by zeros (ie when the sum of weight are near zero!)
+  testWHIMcustom();  // case of divide by zeros (ie when the sum of weight are
+                     // near zero!)
   testGETAWAYcustom();
-
 }

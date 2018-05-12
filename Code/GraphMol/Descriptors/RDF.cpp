@@ -124,45 +124,43 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
 }
 
 void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
-                    std::vector<double>& res,
-                    const std::string &customAtomPropName) {
+                      std::vector<double>& res,
+                      const std::string& customAtomPropName) {
+  int numAtoms = conf.getNumAtoms();
 
-        int numAtoms = conf.getNumAtoms();
+  std::vector<double> R = getG(30);
+  std::vector<double> R1(30);
+  std::vector<double> customAtomArray =
+      moldata3D.GetCustomAtomProp(mol, customAtomPropName);
 
-        std::vector<double> R = getG(30);
-        std::vector<double> R1(30);
-        std::vector<double> customAtomArray = moldata3D.GetCustomAtomProp(mol,customAtomPropName);
-
-        double p;
-        for (int i = 0; i < R.size(); i++) {
-            double res = 0.0;
-            for (int j = 0; j < numAtoms - 1; j++) {
-                for (int k = j + 1; k < numAtoms; k++) {
-                    p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
-                    res += customAtomArray[j] * customAtomArray[k] * p; // "custom"
-                }
-            }
-            R1[i] = round(1000 * res) / 1000;
-        }
-        res = R1;
+  double p;
+  for (int i = 0; i < R.size(); i++) {
+    double res = 0.0;
+    for (int j = 0; j < numAtoms - 1; j++) {
+      for (int k = j + 1; k < numAtoms; k++) {
+        p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+        res += customAtomArray[j] * customAtomArray[k] * p;  // "custom"
+      }
     }
-
+    R1[i] = round(1000 * res) / 1000;
+  }
+  res = R1;
+}
 
 void GetRDF(double* dist3D, const ROMol& mol, const Conformer& conf,
             std::vector<double>& res) {
   getRDFDesc(dist3D, mol, conf, res);
 }
 
-
 void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
-                std::vector<double>& res,  const std::string customAtomPropName) {
-        getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
+               std::vector<double>& res, const std::string customAtomPropName) {
+  getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
-
 
 }  // end of anonymous namespace
 
-void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::string &customAtomPropName) {
+void RDF(const ROMol& mol, std::vector<double>& res, int confId,
+         const std::string& customAtomPropName) {
   // RDF010u RDF015u RDF020u RDF025u RDF030u RDF035u RDF040u RDF045u RDF050u
   // RDF055u RDF060u RDF065u RDF070u RDF075u RDF080u RDF085u RDF090u RDF095u
   // RDF100u RDF105u RDF110u RDF115u RDF120u RDF125u RDF130u RDF135u RDF140u
@@ -199,27 +197,20 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId, const std::stri
   const Conformer& conf = mol.getConformer(confId);
   // if (!conf.is3D()) return reserror;
 
-
-
   double* dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
 
-
-    if (customAtomPropName != "") {
-        //std::cout << " Using CustomAtomPropertie\n";
-        // do something
-        res.clear();
-        res.resize(30);  // 7 * 30
-        GetRDFone(dist3D, mol, conf, res, customAtomPropName);
-    } else {
-        res.clear();
-        res.resize(210);  // 7 * 30
-        GetRDF(dist3D, mol, conf, res);
-    }
-
-
-
-
+  if (customAtomPropName != "") {
+    // std::cout << " Using CustomAtomPropertie\n";
+    // do something
+    res.clear();
+    res.resize(30);  // 7 * 30
+    GetRDFone(dist3D, mol, conf, res, customAtomPropName);
+  } else {
+    res.clear();
+    res.resize(210);  // 7 * 30
+    GetRDF(dist3D, mol, conf, res);
+  }
 }
-}  // end of Descriptors namespace
-}
+}  // namespace Descriptors
+}  // namespace RDKit

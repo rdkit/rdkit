@@ -160,7 +160,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
   }
 
   // we should take into account atoms that are in the axis too!!! which is not
-  //trivial
+  // trivial
   for (int i = 0; i < 3; i++) {
     std::vector<double> Symetric(2 * numAtoms, 0.0);
     double ns = 0.0;
