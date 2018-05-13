@@ -1,6 +1,9 @@
 # Enhanced Stereochemistry in the RDKit
 Greg Landrum (greg.landrum@t5informatics.com)
+
 May 2018
+
+*This is still a DRAFT*
 
 ## Overview
 
