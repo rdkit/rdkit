@@ -80,7 +80,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
   double weigth = WeigthMat.diagonal().sum();
   // fix issue if the sum is close to zeros
   // only for the charges cases normaly
-  if (abs(weigth) < 0.001) {
+  if (fabs(weigth) < 1e-4) {
     weigth = 1.0;
     // std::cerr << "fix weigth sum:\n";
   }
