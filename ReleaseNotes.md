@@ -1,3 +1,31 @@
+# Release_2018.03.2
+(Changes relative to Release_2018.03.1)
+
+## Acknowledgements:
+Brian Kelley, Dan Nealschneider, Noel O'Boyle, Stephen Roughley, Roger Sayle,
+Paulo Tosco
+
+## Bug Fixes:
+  - Feature request: #defines to test RDKit version
+ (github issue #1454 from baoilleach)
+  - SMARTS parse failure for some queries involving Hs
+ (github issue #1719 from greglandrum)
+  - allow libs to not be installed
+ (github pull #1832 from greglandrum)
+  - RWMol::addAtom(Atom,bool) missing from Java wrappers
+ (github issue #1837 from greglandrum)
+  - RWMol::clear now calls ROMol::initMol
+ (github pull #1844 from bp-kelley)
+  - Allow types.h to be included in applications that use /D_USE_MATH_DEFINES
+ (github pull #1846 from d-b-w)
+  - Fixes failing Python tests on Windows
+ (github pull #1855 from ptosco)
+  - Allow building on cygwin using -std=c++11
+ (github pull #1856 from greglandrum)
+  - Stop using the cmake Boost:: targets
+ (github pull #1858 from greglandrum)
+
+
 # Release_2018.03.1
 (Changes relative to Release_2017.09.1)
 
