@@ -1,4 +1,4 @@
-
+createExportTestHeaders()
 add_subdirectory(RDGeneral)
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(RDBoost)

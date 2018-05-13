@@ -5,13 +5,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Month}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}")
-if (RDKit_Revision)
-  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}.${RDKit_Revision}")
-  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
-else(RDKit_Revision)
-  set(RDKit_VERSION "${RDKit_VERSION}.0")
-endif(RDKit_Revision)
+set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}${RDKit_RevisionModifier}")
+set(RDKit_RELEASENAME "${RDKit_Year}.${RDKit_Month}.${RDKit_Revision}${RDKit_RevisionModifier}")
 
 set(compilerID "${CMAKE_CXX_COMPILER_ID}")
 set(systemAttribute "")
@@ -201,3 +196,56 @@ function(downloadAndCheckMD5 url target md5chksum)
     endif()
   endif()
 endfunction(downloadAndCheckMD5)
+
+function(createExportTestHeaders)
+  file(GLOB_RECURSE cmakeLists LIST_DIRECTORIES false
+       ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
+  set(exportLibs "")
+  foreach(cmakeList ${cmakeLists})
+    file(STRINGS ${cmakeList} rdkitLibraryItems REGEX "rdkit_library[ ]*\\([ ]*[^ ]+.*$")
+    if (NOT "${rdkitLibraryItems}" STREQUAL "")
+      foreach (rdkitLibrary ${rdkitLibraryItems})
+        string(REGEX REPLACE "^[ ]*rdkit_library[ ]*\\([ ]*([^ ]+).*$" "\\1" libName "${rdkitLibrary}")
+        list(APPEND exportLibs "${libName}")
+      endforeach()
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES exportLibs)
+  list(SORT exportLibs)
+  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+    "// auto-generated __declspec definition header\n"
+    "#pragma once\n"
+    "#ifndef SWIG\n"
+    "#ifdef _MSC_VER\n"
+    "#pragma warning(disable:4251)\n"
+    "#pragma warning(disable:4275)\n"
+    "#endif\n"
+    "\n"
+    "#include <boost/config.hpp>\n"
+    "#endif\n")
+  file(WRITE "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+    "// auto-generated header to be imported in all cpp tests\n"
+    "#pragma once\n")
+  foreach(exportLib ${exportLibs})
+    string(TOUPPER "${exportLib}" exportLib)
+    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/export.h"
+      "\n"
+      "// RDKIT_${exportLib}_EXPORT definitions\n"
+      "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
+      "#ifdef RDKIT_${exportLib}_BUILD\n"
+      "#define RDKIT_${exportLib}_EXPORT __declspec(dllexport)\n"
+      "#else\n"
+      "#define RDKIT_${exportLib}_EXPORT __declspec(dllimport)\n"
+      "#endif\n"
+      "#endif\n"
+      "#ifndef RDKIT_${exportLib}_EXPORT\n"
+      "#define RDKIT_${exportLib}_EXPORT\n"
+      "#endif\n"
+      "// RDKIT_${exportLib}_EXPORT end definitions\n")
+    file(APPEND "${CMAKE_SOURCE_DIR}/Code/RDBoost/test.h"
+      "\n"
+      "#ifdef RDKIT_${exportLib}_BUILD\n"
+      "#undef RDKIT_${exportLib}_BUILD\n"
+      "#endif\n")
+  endforeach()
+endfunction(createExportTestHeaders)
