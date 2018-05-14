@@ -52,8 +52,8 @@ void test1() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    TEST_ASSERT(text.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(text.find("</svg:svg>") != std::string::npos);
+    TEST_ASSERT(text.find("<svg") != std::string::npos);
+    TEST_ASSERT(text.find("</svg>") != std::string::npos);
     delete m;
   }
   {
@@ -521,8 +521,8 @@ void testMultiThreaded() {
     drawer.drawMolecule(*(mols[i]));
     drawer.finishDrawing();
     refData[i] = drawer.getDrawingText();
-    TEST_ASSERT(refData[i].find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(refData[i].find("</svg:svg>") != std::string::npos);
+    TEST_ASSERT(refData[i].find("<svg") != std::string::npos);
+    TEST_ASSERT(refData[i].find("</svg>") != std::string::npos);
   }
 
   boost::thread_group tg;
@@ -555,7 +555,7 @@ void test6() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs("test6_1.svg");
     outs << txt;
-    // TEST_ASSERT(txt.find("<svg:svg")!=std::string::npos);
+    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -575,8 +575,8 @@ void test7() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs((nameBase + ".svg").c_str());
     outs << txt;
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:rect") == std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<rect") == std::string::npos);
   }
 #ifdef RDK_CAIRO_BUILD
   {
@@ -597,8 +597,8 @@ void test7() {
     std::string txt = drawer.getDrawingText();
     std::ofstream outs((nameBase + ".svg").c_str());
     outs << txt;
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:rect") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<rect") != std::string::npos);
     TEST_ASSERT(txt.find("fill:#CCCCCC") != std::string::npos);
   }
 #ifdef RDK_CAIRO_BUILD
@@ -628,8 +628,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
     delete m;
   }
   {
@@ -641,8 +641,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>C</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>C</tspan>") != std::string::npos);
     delete m;
   }
   {
@@ -654,9 +654,9 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>CH</svg:tspan>") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>Cl</svg:tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>CH</tspan>") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>Cl</tspan>") != std::string::npos);
     delete m;
   }
   {  // empty molecule
@@ -667,8 +667,8 @@ void testGithub781() {
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg:svg") != std::string::npos);
-    TEST_ASSERT(txt.find("<svg:tspan>") == std::string::npos);
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    TEST_ASSERT(txt.find("<tspan>") == std::string::npos);
     delete m;
   }
   std::cerr << " Done" << std::endl;

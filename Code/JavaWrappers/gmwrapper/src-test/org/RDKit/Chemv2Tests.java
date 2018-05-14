@@ -139,8 +139,8 @@ public class Chemv2Tests extends GraphMolTest {
 		Conformer c = m.getConformer();
 		m.WedgeMolBonds(c);
                 String svg=m.ToSVG(8,50);
-                assertTrue(svg.indexOf("<svg:svg")>-1);
-                assertTrue(svg.indexOf("</svg:svg>")>-1);
+                assertTrue(svg.indexOf("<svg")>-1);
+                assertTrue(svg.indexOf("</svg>")>-1);
 	}
 
 	@Test
@@ -153,8 +153,8 @@ public class Chemv2Tests extends GraphMolTest {
           drawer.drawMolecule(m);
           drawer.finishDrawing();
           String svg = drawer.getDrawingText();
-          assertTrue(svg.indexOf("<svg:svg") > -1);
-          assertTrue(svg.indexOf("</svg:svg>") > -1);
+          assertTrue(svg.indexOf("<svg") > -1);
+          assertTrue(svg.indexOf("</svg>") > -1);
         }
         @Test
         public void testMolDraw2DSVGSingleAtomMol() {
@@ -166,8 +166,8 @@ public class Chemv2Tests extends GraphMolTest {
           drawer.drawMolecule(m);
           drawer.finishDrawing();
           String svg = drawer.getDrawingText();
-          assertTrue(svg.indexOf("<svg:svg") > -1);
-          assertTrue(svg.indexOf("</svg:svg>") > -1);
+          assertTrue(svg.indexOf("<svg") > -1);
+          assertTrue(svg.indexOf("</svg>") > -1);
         }
         @Test
         public void testPrepareMolForDrawing() {
@@ -182,8 +182,8 @@ public class Chemv2Tests extends GraphMolTest {
           drawer.drawMolecule(m);
           drawer.finishDrawing();
           String svg = drawer.getDrawingText();
-          assertTrue(svg.indexOf("<svg:svg") > -1);
-          assertTrue(svg.indexOf("</svg:svg>") > -1);
+          assertTrue(svg.indexOf("<svg") > -1);
+          assertTrue(svg.indexOf("</svg>") > -1);
         }
         @Test
         public void testMolDraw2DHighlight() {
@@ -210,8 +210,8 @@ public class Chemv2Tests extends GraphMolTest {
           drawer.finishDrawing();
           String svg = drawer.getDrawingText();
           // System.out.print(svg);
-          assertTrue(svg.indexOf("<svg:svg") > -1);
-          assertTrue(svg.indexOf("</svg:svg>") > -1);
+          assertTrue(svg.indexOf("<svg") > -1);
+          assertTrue(svg.indexOf("</svg>") > -1);
           assertTrue(svg.indexOf("THE_LEGEND") > -1);
           assertTrue(svg.indexOf("fill:#FFFF00;") > -1);
           assertTrue(svg.indexOf("fill:#FF00FF;") > -1);

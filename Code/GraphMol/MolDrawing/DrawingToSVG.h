@@ -93,7 +93,7 @@ void drawLine(std::vector<int>::const_iterator &pos, std::ostringstream &sstr,
   std::string c1 = getColor(an1);
   std::string c2 = getColor(an2);
   if (c1 == c2) {
-    sstr << "<svg:path ";
+    sstr << "<path ";
     sstr << "d='M " << *pos << "," << *(pos + 1) << " " << *(pos + 2) << ","
          << *(pos + 3) << "' ";
     pos += 4;
@@ -109,14 +109,14 @@ void drawLine(std::vector<int>::const_iterator &pos, std::ostringstream &sstr,
     int yp2 = *pos++;
     int mx = xp1 + (xp2 - xp1) / 2;
     int my = yp1 + (yp2 - yp1) / 2;
-    sstr << "<svg:path ";
+    sstr << "<path ";
     sstr << "d='M " << xp1 << "," << yp1 << " " << mx << "," << my << "' ";
     sstr << "style='fill:none;fill-rule:evenodd;stroke:" << c1
          << ";stroke-width:" << width
          << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          << dashString << "'";
     sstr << " />\n";
-    sstr << "<svg:path ";
+    sstr << "<path ";
     sstr << "d='M " << mx << "," << my << " " << xp2 << "," << yp2 << "' ";
     sstr << "style='fill:none;fill-rule:evenodd;stroke:" << c2
          << ";stroke-width:" << width
@@ -140,29 +140,29 @@ void drawAtom(std::vector<int>::const_iterator &pos, std::ostringstream &sstr,
   if (label.length()) {
     int width = fontSz * label.length();
     int height = fontSz;
-    sstr << "<svg:g transform='translate(" << xp << "," << yp
-         << ")'><svg:rect ";
+    sstr << "<g transform='translate(" << xp << "," << yp
+         << ")'><rect ";
     sstr << "style='opacity:1.0;fill:#FFFFFF;stroke:none'";
     sstr << " width='" << width << "' height='" << height << "'";
     sstr << " x='-" << width / 2 << "' y='-" << height / 2 << "'";
-    sstr << "> </svg:rect>\n";
-    sstr << "<svg:text";
+    sstr << "> </rect>\n";
+    sstr << "<text";
     sstr << " style='font-size:" << fontSz
          << "px;font-style:normal;font-weight:normal;line-height:125%;letter-"
             "spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-"
             "family:sans-serif;text-anchor:middle"
          << ";fill:" << getColor(atNum) << "'";
     sstr << " y='" << .75 * fontSz / 2 << "'>";
-    sstr << "<svg:tspan>";
-    sstr << label << "</svg:tspan>";
-    sstr << "</svg:text>";
-    sstr << "</svg:g>\n";
+    sstr << "<tspan>";
+    sstr << label << "</tspan>";
+    sstr << "</text>";
+    sstr << "</g>\n";
   }
   if (includeAtomCircles) {
 #if 0          
-          sstr<<"<svg:circle cx='"<<xp<<"' cy='"<<yp<<"' r='5' />\n";
+          sstr<<"<circle cx='"<<xp<<"' cy='"<<yp<<"' r='5' />\n";
 #else
-    sstr << "<svg:circle cx='" << xp << "' cy='" << yp
+    sstr << "<circle cx='" << xp << "' cy='" << yp
          << "' r='0' style='fill:none;stroke:none' />\n";
 #endif
   }
@@ -184,17 +184,17 @@ std::string DrawingToSVG(const std::vector<int> &drawing,
   height = *pos++;
   std::ostringstream sstr;
   sstr << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
-  sstr << "<svg:svg version='1.1' baseProfile='full'\n      \
-        xmlns:svg='http://www.w3.org/2000/svg'\n                \
+  sstr << "<svg version='1.1' baseProfile='full'\n      \
+        xmlns='http://www.w3.org/2000/svg'\n                \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
   sstr << "width='" << width << "px' height='" << height << "px' >\n";
-  sstr << "<svg:rect ";
+  sstr << "<rect ";
   sstr << "style='opacity:1.0;fill:#FFFFFF;stroke:none'";
   sstr << " width='" << width << "' height='" << height << "'";
   sstr << " x='0' y='0'";
-  sstr << "> </svg:rect>\n";
-  sstr << "<svg:g transform='translate(" << width * .05 << "," << height * .05
+  sstr << "> </rect>\n";
+  sstr << "<g transform='translate(" << width * .05 << "," << height * .05
        << ") scale(.85,.85)'>";
   while (pos != drawing.end()) {
     int token = *pos++;
@@ -209,7 +209,7 @@ std::string DrawingToSVG(const std::vector<int> &drawing,
         std::cerr << "unrecognized token: " << token << std::endl;
     }
   }
-  sstr << "</svg:g></svg:svg>";
+  sstr << "</g></svg>";
   return sstr.str();
 }
 }  // end of namespace Drawing
