@@ -63,7 +63,8 @@ MatrixXd GetCovMatrix(MatrixXd &X, MatrixXd &Weigth, double weigth) {
 }
 
 JacobiSVD<MatrixXd> *getSVD(MatrixXd &Mat) {
-  auto *svd = new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
+  JacobiSVD<MatrixXd> *svd =
+      new JacobiSVD<MatrixXd>(Mat, ComputeThinU | ComputeThinV);
   return svd;
 }
 
@@ -72,12 +73,20 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
   double *weigtharray = &weigthvector[0];
 
   Map<VectorXd> Weigth(weigtharray, numAtoms);
+  // std::cerr << "Weigth:\n" << Weigth << "\n";
 
   MatrixXd WeigthMat = Weigth.asDiagonal();
 
   double weigth = WeigthMat.diagonal().sum();
+  // fix issue if the sum is close to zeros
+  // only for the charges cases normaly
+  if (fabs(weigth) < 1e-4) {
+    weigth = 1.0;
+    // std::cerr << "fix weigth sum:\n";
+  }
 
   MatrixXd Xmean = GetCenterMatrix(MatOrigin);
+  // std::cerr << "Xmean:\n" << Xmean << "\n";
 
   MatrixXd covmat = GetCovMatrix(Xmean, WeigthMat, weigth);
 
@@ -151,7 +160,7 @@ std::vector<double> getWhimD(std::vector<double> weigthvector,
   }
 
   // we should take into account atoms that are in the axis too!!! which is not
-  //trivial
+  // trivial
   for (int i = 0; i < 3; i++) {
     std::vector<double> Symetric(2 * numAtoms, 0.0);
     double ns = 0.0;
@@ -266,11 +275,36 @@ void GetWHIMs(const Conformer &conf, std::vector<double> &result,
   ws.clear();
 }
 
+void GetWHIMsCustom(const Conformer &conf, std::vector<double> &result,
+                    double *Vpoints, double th,
+                    const std::string &customAtomPropName) {
+  std::vector<double> wc(18);
+
+  result.clear();
+  result.resize(18);
+
+  int numAtoms = conf.getNumAtoms();
+  Map<MatrixXd> matorigin(Vpoints, 3, numAtoms);
+  MatrixXd MatOrigin = matorigin.transpose();
+
+  // intermediate 18 values stored in this order per weighted vector :
+  // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
+  std::vector<double> weigthvector =
+      moldata3D.GetCustomAtomProp(conf.getOwningMol(), customAtomPropName);
+
+  wc = getWhimD(weigthvector, MatOrigin, numAtoms, th);
+
+  for (int i = 0; i < 18; i++) {
+    result[i] = wc[i];
+  }
+  wc.clear();
+}
+
 void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
              double th) {
   int numAtoms = mol.getNumAtoms();
   const Conformer &conf = mol.getConformer(confId);
-  auto *Vpoints = new double[3 * numAtoms];
+  double *Vpoints = new double[3 * numAtoms];
 
   for (int i = 0; i < numAtoms; ++i) {
     Vpoints[3 * i] = conf.getAtomPos(i).x;
@@ -315,21 +349,48 @@ void getWHIM(const ROMol &mol, std::vector<double> &res, int confId,
   }
 }
 
+void getWHIMone(const ROMol &mol, std::vector<double> &res, int confId,
+                double th, const std::string &customAtomPropName) {
+  int numAtoms = mol.getNumAtoms();
+  const Conformer &conf = mol.getConformer(confId);
+  double *Vpoints = new double[3 * numAtoms];
+
+  for (int i = 0; i < numAtoms; ++i) {
+    Vpoints[3 * i] = conf.getAtomPos(i).x;
+    Vpoints[3 * i + 1] = conf.getAtomPos(i).y;
+    Vpoints[3 * i + 2] = conf.getAtomPos(i).z;
+  }
+
+  std::vector<double> w(18);
+  GetWHIMsCustom(conf, w, Vpoints, th, customAtomPropName);
+  delete[] Vpoints;
+
+  // Dragon extract only this list in this order : L1 L2 L3 P1 P2 G1 G2 G3 E1 E2
+  // E3
+  // "L1","L2","L3","T","A","V","P1","P2","P3","K","E1","E2","E3","D","G1","G2","G3","G"
+  int map1[17] = {0, 1, 2, 6, 7, 14, 15, 16, 10, 11, 12, 3, 4, 17, 9, 13, 5};
+
+  for (int i = 0; i < 17; i++) {
+    res[i] = roundn(w[map1[i]], 3);
+  }
+}
+
 }  // end of anonymous namespace
 
-void WHIM(const ROMol &mol, std::vector<double> &res, int confId, double th) {
+void WHIM(const ROMol &mol, std::vector<double> &res, int confId, double th,
+          const std::string &customAtomPropName) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")
-  // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u L1m L2m
-  // L3m P1m P2m G1m G2m G3m E1m E2m E3m L1v L2v L3v P1v P2v G1v G2v G3v E1v E2v
-  // E3v L1e L2e L3e P1e P2e G1e G2e G3e E1e E2e E3e L1p L2p L3p P1p P2p G1p G2p
-  // G3p E1p E2p E3p L1i L2i L3i P1i P2i G1i G2i G3i E1i E2i E3i L1s L2s L3s P1s
-  // P2s G1s G2s G3s E1s E2s E3s Tu  Tm  Tv  Te  Tp  Ti  Ts  Au  Am  Av  Ae  Ap
-  // Ai  As  Gu  Gm  Ku  Km  Kv  Ke  Kp  Ki  Ks  Du  Dm  Dv  De  Dp  Di  Ds  Vu
-  // Vm  Vv  Ve  Vp  Vi  Vs
-
-  res.clear();
-  res.resize(114);
-  getWHIM(mol, res, confId, th);
+  // Dragon final list is: L1u L2u L3u P1u P2u G1u G2u G3u E1u E2u E3u
+  // Tu   Au    Gu   Ku    Du   Vu
+  if (customAtomPropName != "") {
+    res.clear();
+    res.resize(17);
+    getWHIMone(mol, res, confId, th, customAtomPropName);
+  } else {
+    res.clear();
+    res.resize(114);
+    getWHIM(mol, res, confId, th);
+  }
 }
-}  // end of Descriptors namespace
-}  // end of RDKit namespace
+}  // namespace Descriptors
+}  // namespace RDKit

@@ -18,7 +18,7 @@
 
 namespace RDKit {
 namespace Descriptors {
-std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
+std::vector<unsigned int> calcMQNs(const ROMol& mol, bool force) {
   RDUNUSED_PARAM(force);
   // FIX: use force value to enable caching
   std::vector<unsigned int> res(42, 0);
@@ -174,7 +174,7 @@ std::vector<unsigned int> calcMQNs(const ROMol &mol, bool force) {
 
   // ---------------------------------------------------
   //  ring size counts
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->atomRings()) {
+  BOOST_FOREACH (const INT_VECT& iv, mol.getRingInfo()->atomRings()) {
     if (iv.size() < 10) {
       res[iv.size() + 29]++;
     } else {
