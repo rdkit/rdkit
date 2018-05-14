@@ -41,7 +41,8 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string AUTOCORR2DVersion = "1.0.0";
-RDKIT_DESCRIPTORS_EXPORT void AUTOCORR2D(const ROMol &, std::vector<double> &res);
+RDKIT_DESCRIPTORS_EXPORT void AUTOCORR2D(const ROMol &, std::vector<double> &res,
+                const std::string &customAtomPropName="");
 }
 }
 #endif

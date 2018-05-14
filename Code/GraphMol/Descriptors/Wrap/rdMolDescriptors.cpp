@@ -120,50 +120,50 @@ python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
         return pyres;
 }
 
-python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh) {
+python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::WHIM(mol, res, confId, thresh);
+  RDKit::Descriptors::WHIM(mol, res, confId, thresh, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
 python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId,
-                          double precision) {
+                          double precision, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::GETAWAY(mol, res, confId, precision);
+  RDKit::Descriptors::GETAWAY(mol, res, confId, precision, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
-python::list calcRDFs(const RDKit::ROMol &mol, int confId) {
+python::list calcRDFs(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::RDF(mol, res, confId);
+  RDKit::Descriptors::RDF(mol, res, confId, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
-python::list calcMORSEs(const RDKit::ROMol &mol, int confId) {
+python::list calcMORSEs(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::MORSE(mol, res, confId);
+  RDKit::Descriptors::MORSE(mol, res, confId, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
-python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId) {
+python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::AUTOCORR3D(mol, res, confId);
+  RDKit::Descriptors::AUTOCORR3D(mol, res, confId, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
 }
 
-python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol) {
+python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol, const std::string CustomAtomProperty) {
   std::vector<double> res;
-  RDKit::Descriptors::AUTOCORR2D(mol, res);
+  RDKit::Descriptors::AUTOCORR2D(mol, res, CustomAtomProperty);
   python::list pyres;
   BOOST_FOREACH (double iv, res) { pyres.append(iv); }
   return pyres;
@@ -1506,7 +1506,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "Returns the WHIM descriptors vector";
   python::def("CalcWHIM", calcWHIMs,
               (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("thresh") = 0.001),
+               python::arg("thresh") = 0.001,
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
   python::scope().attr("_CalcGETAWAY_version") =
@@ -1514,13 +1515,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString = "Returns the GETAWAY descriptors vector";
   python::def("CalcGETAWAY", calcGETAWAYs,
               (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("precision") = 2),
+               python::arg("precision") = 2,
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
   python::scope().attr("_CalcRDF_version") = RDKit::Descriptors::RDFVersion;
   docString = "Returns radial distribution fonction descriptors (RDF)";
   python::def("CalcRDF", calcRDFs,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
   python::scope().attr("_CalcMORSE_version") = RDKit::Descriptors::MORSEVersion;
@@ -1528,14 +1531,16 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "Returns Molecule Representation of Structures based on Electron "
       "diffraction descriptors";
   python::def("CalcMORSE", calcMORSEs,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
   python::scope().attr("_CalcAUTOCORR3D_version") =
       RDKit::Descriptors::AUTOCORR3DVersion;
   docString = "Returns 3D Autocorrelation descriptors vector";
   python::def("CalcAUTOCORR3D", calcAUTOCORR3Ds,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
   python::scope().attr("_CalcPBF_version") = RDKit::Descriptors::PBFVersion;
@@ -1616,7 +1621,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcAUTOCORR2D_version") =
       RDKit::Descriptors::AUTOCORR2DVersion;
   docString = "Returns 2D Autocorrelation descriptors vector";
-  python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol")),
+  python::def("CalcAUTOCORR2D", calcAUTOCORR2Ds, (python::arg("mol"),
+               python::arg("CustomAtomProperty") = ""),
               docString.c_str());
 
 #endif

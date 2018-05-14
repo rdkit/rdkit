@@ -43,8 +43,8 @@ class ROMol;
 namespace Descriptors {
 const std::string WHIMVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT void WHIM(const ROMol &, std::vector<double> &res, int confId = -1,
-          double th = 0.001);
-}
-}
+          double th = 0.001, const std::string &customAtomPropName = "");
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif
 #endif

@@ -42,8 +42,10 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string RDFVersion = "1.0.0";
-RDKIT_DESCRIPTORS_EXPORT void RDF(const ROMol&, std::vector<double>& res, int confId = -1);
-}
-}
+RDKIT_DESCRIPTORS_EXPORT void RDF(const ROMol &, std::vector<double> &res, int confId = -1,
+         const std::string &customAtomPropName = "");
+
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif
 #endif

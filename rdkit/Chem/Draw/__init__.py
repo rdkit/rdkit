@@ -364,7 +364,7 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, **kwargs):
   d2d.DrawMolecule(mc, legend=legend, highlightAtoms=highlights)
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
-  return svg.replace("svg:", "")
+  return svg
 
 
 
@@ -406,8 +406,7 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
 
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
-                   highlightAtomLists=None, highlightBondLists=None,
-                   stripSVGNamespace=True, **kwargs):
+                   highlightAtomLists=None, highlightBondLists=None, **kwargs):
   """ returns an SVG of the grid
   """
   if legends is None:
@@ -426,8 +425,6 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
                     highlightBonds=highlightBondLists,**kwargs)
   d2d.FinishDrawing()
   res = d2d.GetDrawingText()
-  if stripSVGNamespace:
-    res = res.replace('svg:', '')
   return res
 
 
@@ -503,7 +500,7 @@ def ReactionToImage(rxn, subImgSize=(200, 200), useSVG=False, **kwargs):
       d.DrawReaction(rxn,**kwargs)
       d.FinishDrawing()
       if useSVG:
-          return d.GetDrawingText().replace('svg:', '')
+          return d.GetDrawingText()
       else:
           return _drawerToImage(d)
 
